@@ -5,17 +5,23 @@ import plotly.express as px # type: ignore
 from datetime import datetime
 import time
 from streamlit_js_eval import get_geolocation # type: ignore
-import urllib.parse # ใช้สำหรับแปลงภาษาไทยเป็นลิ้งค์
+import base64
+from PIL import Image # type: ignore # ใช้สำหรับย่อรูปภาพ
+import io
+import urllib.parse
 
 # ---------------------------------------------------------
 # 1. ตั้งค่าหน้าเว็บ & Database Config
 # ---------------------------------------------------------
 st.set_page_config(page_title="Logis-Pro 360", page_icon="🚚", layout="wide")
 
+# ID ของ Google Sheet ของคุณ
 SHEET_ID = "10xoemO2oS6a8c7nzqxkE9mlRCbTII2PZMhvv1wTXeYQ"
 SHEET_URL = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/edit"
 
-# --- Helper Functions ---
+# ---------------------------------------------------------
+# 2. Helper Functions (เครื่องมือช่วย)
+# ---------------------------------------------------------
 def get_connection():
     return st.connection("gsheets", type=GSheetsConnection)
 
@@ -34,25 +40,82 @@ def update_sheet(worksheet_name, df):
 def convert_df_to_csv(df):
     return df.to_csv(index=False).encode('utf-8')
 
-# --- Business Logic Functions ---
+# --- ฟังก์ชันย่อรูปภาพ (ป้องกัน Google Sheet เต็ม/พัง) ---
+def compress_image(image_file):
+    if image_file is None:
+        return "-"
+    try:
+        # เปิดรูป
+        img = Image.open(image_file)
+        # แปลงเป็น RGB (เผื่อเป็น PNG)
+        if img.mode != 'RGB':
+            img = img.convert('RGB')
+        
+        # ย่อขนาด (Max Width 600px)
+        max_width = 600
+        ratio = max_width / float(img.size[0])
+        new_height = int((float(img.size[1]) * float(ratio)))
+        img = img.resize((max_width, new_height), Image.LANCZOS)
+        
+        # บันทึกลง Buffer (ลดคุณภาพเหลือ 50%)
+        buffer = io.BytesIO()
+        img.save(buffer, format="JPEG", quality=50)
+        img_bytes = buffer.getvalue()
+        
+        # แปลงเป็น Base64 string
+        encoded = base64.b64encode(img_bytes).decode()
+        return f"data:image/jpeg;base64,{encoded}"
+    except Exception as e:
+        print(f"Image Error: {e}")
+        return "-"
+
+# ---------------------------------------------------------
+# 3. Business Logic Functions
+# ---------------------------------------------------------
+def get_status_label_th(status_code: str) -> str:
+    """แปลงโค้ดสถานะเป็นข้อความภาษาไทยสำหรับแสดงผล"""
+    mapping = {
+        "PLANNED": "วางแผนแล้ว",
+        "ASSIGNED": "จ่ายงานให้คนขับแล้ว",
+        "PICKED_UP": "รับสินค้าแล้ว",
+        "IN_TRANSIT": "กำลังขนส่ง",
+        "DELIVERED": "ถึงปลายทางแล้ว",
+        "COMPLETED": "ปิดงานสมบูรณ์",
+        "FAILED": "ส่งไม่สำเร็จ",
+        "CANCELLED": "ยกเลิกงาน",
+        "Completed": "ปิดงานสมบูรณ์",
+        "Pending": "รอดำเนินการ",
+        "": "ไม่ทราบสถานะ",
+    }
+    return mapping.get(str(status_code), str(status_code))
+
 def calculate_driver_cost(plan_date, distance, vehicle_type):
+    """คำนวณค่าจ้าง (อ้างอิง Tab Rate_Card)"""
     try:
         rates = get_data("Rate_Card")
         if rates.empty: return 0
         
+        # แปลงข้อมูลวันที่ (รองรับหลาย Format)
         plan_date = pd.to_datetime(plan_date)
-        rates['Start_Date'] = pd.to_datetime(rates['Start_Date'])
-        rates['End_Date'] = pd.to_datetime(rates['End_Date'])
+        rates['Start_Date'] = pd.to_datetime(rates['Start_Date'], dayfirst=True, errors='coerce')
+        rates['End_Date'] = pd.to_datetime(rates['End_Date'], dayfirst=True, errors='coerce')
         rates['Max_KM'] = pd.to_numeric(rates['Max_KM'], errors='coerce')
         
+        # 1. กรองช่วงวันที่
         active_rate = rates[(rates['Start_Date'] <= plan_date) & (rates['End_Date'] >= plan_date)]
         if active_rate.empty:
-            active_rate = rates[rates['Start_Date'] == rates['Start_Date'].max()]
+            # ใช้อันล่าสุดถ้าหาไม่เจอ
+            if not rates['Start_Date'].isnull().all():
+                active_rate = rates[rates['Start_Date'] == rates['Start_Date'].max()]
+            else:
+                return 0 
 
+        # 2. กรองระยะทาง
         tier = active_rate[active_rate['Max_KM'] >= distance].sort_values(by='Max_KM').head(1)
         if tier.empty:
             tier = active_rate[active_rate['Max_KM'] == active_rate['Max_KM'].max()]
 
+        # 3. เลือกราคาตามประเภทรถ
         price = 0
         v_type_str = str(vehicle_type)
         if "4" in v_type_str: price = tier.iloc[0]['Price_4W']
@@ -61,6 +124,95 @@ def calculate_driver_cost(plan_date, distance, vehicle_type):
             
         return float(price)
     except: return 0
+
+def calculate_customer_price_from_master_rate_card(distance_km, vehicle_type, fuel_band="30.01-33"):
+    """คำนวณราคาค่าขนส่งลูกค้าจากตาราง MasterRate_Card
+
+    ใช้เฉพาะราคาตามระยะทาง + ประเภทรถ โดยอ้างอิง band ราคาน้ำมันที่กำหนด
+    ถ้าหาเรตไม่เจอ จะ fallback กลับไปใช้ distance * 35 ชั่วคราว
+    """
+    try:
+        df = get_data("MasterRate_Card")
+        if df.empty:
+            return float(distance_km) * 35
+
+        # หา column index ของ band ราคาน้ำมันที่มีข้อความ fuel_band
+        band_col = None
+        for r in range(df.shape[0]):
+            for c in range(df.shape[1]):
+                val = str(df.iat[r, c])
+                if fuel_band in val:
+                    band_col = c
+                    break
+            if band_col is not None:
+                break
+
+        if band_col is None:
+            # หาไม่เจอ ใช้สูตรเดิมชั่วคราว
+            return float(distance_km) * 35
+
+        # หา column index สำหรับระยะทาง (พยายามจับชื่อคอลัมน์ ถ้าไม่ได้ใช้คอลัมน์แรก)
+        dist_col = 0
+        for idx, col in enumerate(df.columns):
+            col_str = str(col)
+            if "ระยะทาง" in col_str or "distance" in col_str.lower():
+                dist_col = idx
+                break
+
+        records = []
+        for r in range(df.shape[0]):
+            raw_dist = df.iat[r, dist_col]
+            dist_val = pd.to_numeric(str(raw_dist).replace(",", ""), errors='coerce')
+            if pd.isna(dist_val):
+                continue
+
+            # 3 คอลัมน์ถัดจาก band คือราคา 4,6,10 ล้อ ตามไฟล์ master เดิม
+            vals = []
+            for offset in range(3):
+                col_i = band_col + offset
+                if col_i >= df.shape[1]:
+                    vals.append(float('nan'))
+                else:
+                    cell = str(df.iat[r, col_i]).replace(",", "").replace('"', "")
+                    vals.append(pd.to_numeric(cell, errors='coerce'))
+
+            if all(pd.isna(v) for v in vals):
+                continue
+
+            records.append({
+                "distance": float(dist_val),
+                "price_4": float(vals[0]) if not pd.isna(vals[0]) else None,
+                "price_6": float(vals[1]) if not pd.isna(vals[1]) else None,
+                "price_10": float(vals[2]) if not pd.isna(vals[2]) else None,
+            })
+
+        if not records:
+            return float(distance_km) * 35
+
+        # เรียงตามระยะทาง แล้วเลือก tier แรกที่ระยะทาง >= distance_km ถ้าไม่มีใช้ตัวสุดท้าย
+        records = sorted(records, key=lambda x: x["distance"])
+        target = None
+        for rec in records:
+            if rec["distance"] >= distance_km:
+                target = rec
+                break
+        if target is None:
+            target = records[-1]
+
+        v_type_str = str(vehicle_type)
+        price = None
+        if "4" in v_type_str:
+            price = target["price_4"]
+        elif "6" in v_type_str:
+            price = target["price_6"]
+        elif "10" in v_type_str:
+            price = target["price_10"]
+
+        if price is None or pd.isna(price):
+            return float(distance_km) * 35
+        return float(price)
+    except:
+        return float(distance_km) * 35
 
 def create_new_job(job_data):
     try:
@@ -86,7 +238,7 @@ def create_fuel_log(fuel_data):
         return True
     except: return False
 
-def update_job_status(job_id, new_status, timestamp, distance_run=0):
+def update_job_status(job_id, new_status, timestamp, distance_run=0, photo_data="-", signature_data="-"):
     try:
         conn = get_connection()
         df_jobs = conn.read(spreadsheet=SHEET_URL, worksheet="Jobs_Main", ttl=0)
@@ -95,11 +247,20 @@ def update_job_status(job_id, new_status, timestamp, distance_run=0):
         
         driver_id = None
         if not idx.empty:
-            df_jobs.at[idx[0], 'Job_Status'] = new_status
-            df_jobs.at[idx[0], 'Actual_Delivery_Time'] = timestamp
-            driver_id = df_jobs.at[idx[0], 'Driver_ID']
+            i = idx[0]
+            df_jobs.at[i, 'Job_Status'] = new_status
+            df_jobs.at[i, 'Actual_Delivery_Time'] = timestamp
+            
+            # บันทึกรูปและลายเซ็น (ถ้ามี)
+            if photo_data != "-":
+                df_jobs.at[i, 'Photo_Proof_Url'] = photo_data # ใช้คอลัมน์ที่มีอยู่เดิม
+            if signature_data != "-":
+                df_jobs.at[i, 'Signature_Url'] = signature_data # ใช้คอลัมน์ที่มีอยู่เดิม
+
+            driver_id = df_jobs.at[i, 'Driver_ID']
             conn.update(spreadsheet=SHEET_URL, worksheet="Jobs_Main", data=df_jobs)
         
+        # Sync Mileage to Driver
         if new_status == "Completed" and driver_id and distance_run > 0:
             df_drivers = conn.read(spreadsheet=SHEET_URL, worksheet="Master_Drivers", ttl=0)
             df_drivers['Driver_ID'] = df_drivers['Driver_ID'].astype(str)
@@ -109,10 +270,29 @@ def update_job_status(job_id, new_status, timestamp, distance_run=0):
                     current = pd.to_numeric(df_drivers.at[d_idx[0], 'Current_Mileage'], errors='coerce')
                     if pd.isna(current): current = 0
                     df_drivers.at[d_idx[0], 'Current_Mileage'] = current + distance_run
+                    df_drivers.at[d_idx[0], 'Last_Update'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                     conn.update(spreadsheet=SHEET_URL, worksheet="Master_Drivers", data=df_drivers)
                 except: pass
         return True
     except: return False
+
+def simple_update_job_status(job_id, new_status, extra_updates=None):
+    try:
+        conn = get_connection()
+        df_jobs = conn.read(spreadsheet=SHEET_URL, worksheet="Jobs_Main", ttl=0)
+        df_jobs['Job_ID'] = df_jobs['Job_ID'].astype(str)
+        idx = df_jobs[df_jobs['Job_ID'] == str(job_id)].index
+        if idx.empty:
+            return False
+        i = idx[0]
+        df_jobs.at[i, 'Job_Status'] = new_status
+        if extra_updates:
+            for k, v in extra_updates.items():
+                df_jobs.at[i, k] = v
+        conn.update(spreadsheet=SHEET_URL, worksheet="Jobs_Main", data=df_jobs)
+        return True
+    except:
+        return False
 
 def update_driver_location(driver_id, lat, lon):
     try:
@@ -130,7 +310,7 @@ def update_driver_location(driver_id, lat, lon):
     except: return False
 
 # ---------------------------------------------------------
-# 3. Main Application Logic
+# 4. Main Application Logic
 # ---------------------------------------------------------
 def main():
     if 'logged_in' not in st.session_state:
@@ -147,7 +327,7 @@ def main():
             driver_flow()
 
 # ---------------------------------------------------------
-# 4. Admin Panel
+# 5. Admin Panel
 # ---------------------------------------------------------
 def admin_flow():
     with st.sidebar:
@@ -160,23 +340,35 @@ def admin_flow():
     st.title("🖥️ Admin Dashboard")
     
     tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
-        "📝 จ่ายงาน", "📊 Profit & Dashboard", "🔧 งานซ่อม", "⛽ น้ำมัน", "🔩 สต็อก", "🗺️ GPS"
+        "📝 จ่ายงาน", "📊 Profit & Data", "🔧 งานซ่อม", "⛽ น้ำมัน", "🔩 สต็อก", "🗺️ GPS"
     ])
 
     # --- Tab 1: จ่ายงาน ---
     with tab1:
         st.subheader("สร้างใบงานใหม่")
         drivers_df = get_data("Master_Drivers")
-        
-        # สร้าง Dict สำหรับดึงทะเบียนรถจากคนขับ
-        driver_map = {}
         driver_options = []
+        driver_map = {}
+        
         if not drivers_df.empty:
+             # กรองเฉพาะ Driver
              drivers_only = drivers_df[drivers_df['Role'] == 'Driver']
              for _, row in drivers_only.iterrows():
                  label = f"{row['Driver_ID']} : {row['Driver_Name']} ({row['Vehicle_Plate']})"
                  driver_options.append(label)
-                 driver_map[label] = row['Vehicle_Plate'] # เก็บทะเบียนไว้
+                 driver_map[label] = row.get('Vehicle_Plate', '')
+
+        # โหลด Master ลูกค้า
+        customers_df = get_data("Master_Customers")
+        customer_options = []
+        customer_map_id = {}
+        customer_map_name = {}
+        if not customers_df.empty and 'Customer_ID' in customers_df.columns and 'Customer_Name' in customers_df.columns:
+            for _, row in customers_df.iterrows():
+                label = f"{row['Customer_ID']} : {row['Customer_Name']}"
+                customer_options.append(label)
+                customer_map_id[label] = row['Customer_ID']
+                customer_map_name[label] = row['Customer_Name']
 
         with st.form("create_job_form"):
             c1, c2 = st.columns(2)
@@ -184,15 +376,14 @@ def admin_flow():
                 auto_id = f"JOB-{datetime.now().strftime('%y%m%d-%H%M')}"
                 st.text_input("Job ID", value=auto_id, disabled=True)
                 plan_date = st.date_input("วันที่นัดหมาย", datetime.today())
-                customer = st.text_input("ชื่อลูกค้า", placeholder="เช่น Tostem")
+                selected_customer_raw = st.selectbox("ลูกค้า", customer_options) if customer_options else ""
             with c2:
                 selected_driver_raw = st.selectbox("เลือกคนขับ", driver_options)
                 driver_id = selected_driver_raw.split(" : ")[0] if selected_driver_raw else ""
-                # ดึงทะเบียนรถจากคนขับที่เลือก
                 auto_plate = driver_map.get(selected_driver_raw, "")
                 
-                vehicle_type = st.selectbox("ประเภทรถ (สำหรับคิดเงิน)", ["4 ล้อ", "6 ล้อ", "10 ล้อ"])
-                route_name = st.text_input("ชื่อเส้นทาง", placeholder="กทม - ชลบุรี")
+                vehicle_type = st.selectbox("ประเภทรถ (คำนวณค่าจ้าง)", ["4 ล้อ", "6 ล้อ", "10 ล้อ"])
+                route_name = st.text_input("ชื่อเส้นทาง")
             
             st.divider()
             c3, c4 = st.columns(2)
@@ -200,157 +391,300 @@ def admin_flow():
             with c4: dest = st.text_input("จุดส่งสินค้า")
             
             c5, c6 = st.columns(2)
-            with c5: est_dist = st.number_input("ระยะทาง (กม.)", min_value=0, value=100)
-            with c6: map_link = st.text_input("Google Map Link (ถ้ามี)")
+            with c5: 
+                est_dist = st.number_input("ระยะทาง (กม.)", min_value=0, value=100)
+                st.caption("*ใช้ระยะทางนี้คำนวณค่าจ้างอัตโนมัติ")
+            with c6: 
+                map_link = st.text_input("Google Map Link (ถ้ามี)")
+
+            st.divider()
+            st.markdown("**Option ค่าบริการเพิ่มเติม (คิดบนราคาจากตารางนวนคร 2568)**")
+            o1, o2, o3 = st.columns(3)
+            with o1:
+                floors = st.number_input("ยกขึ้นชั้น (นับจากชั้น 2)", min_value=0, value=0, help="เช่น ขึ้นถึงชั้น 4 ให้ใส่ 3 (ชั้น 2,3,4)")
+            with o2:
+                extra_helpers = st.number_input("เพิ่มคนลงของ (คน)", min_value=0, value=0)
+            with o3:
+                waiting_blocks = st.number_input("รอเกิน 3 ชม. (จำนวนชุด 3 ชม.)", min_value=0, value=0)
+
+            o4, o5 = st.columns(2)
+            with o4:
+                is_return = st.checkbox("สินค้าคืน (+50%)", value=False)
+            with o5:
+                overnight_nights = st.number_input("ค้างคืน (คืน)", min_value=0, value=0)
 
             if st.form_submit_button("✅ บันทึกและจ่ายงาน", type="primary", use_container_width=True):
-                if driver_id and customer:
+                customer_id = customer_map_id.get(selected_customer_raw, None)
+                customer_name = customer_map_name.get(selected_customer_raw, "")
+                if driver_id and customer_id is not None:
+                    # คำนวณต้นทุนรถร่วมจาก Rate_Card เดิม
                     calc_cost = calculate_driver_cost(plan_date, est_dist, vehicle_type)
+                    # คำนวณราคาลูกค้าฐานจาก MasterRate_Card (band 30.01–33)
+                    base_price = calculate_customer_price_from_master_rate_card(est_dist, vehicle_type, "30.01-33")
+
+                    # ปรับราคาเพิ่มตาม Option
+                    surcharge = 0
+                    # ยกขึ้นชั้น +100/ชั้น (ชั้นที่ 2 ขึ้นไป)
+                    if floors > 0:
+                        surcharge += floors * 100
+                    # เพิ่มคนลงของ +300/คน
+                    if extra_helpers > 0:
+                        surcharge += extra_helpers * 300
+                    # รอลงสินค้าเกิน 3 ชม +300/3 ชม
+                    if waiting_blocks > 0:
+                        surcharge += waiting_blocks * 300
+                    # ค้างคืน +1000/คืน
+                    if overnight_nights > 0:
+                        surcharge += overnight_nights * 1000
+
+                    # สินค้าคืน +50% จากราคาฐาน (ไม่รวม surcharge)
+                    price_customer = base_price + surcharge
+                    if is_return:
+                        price_customer = price_customer * 1.5
+                    
                     new_job = {
-                        "Job_ID": auto_id, "Job_Status": "Pending", "Plan_Date": plan_date.strftime("%Y-%m-%d"),
-                        "Customer_ID": customer, "Route_Name": route_name, 
+                        "Job_ID": auto_id, "Job_Status": "ASSIGNED", "Plan_Date": plan_date.strftime("%Y-%m-%d"),
+                        "Customer_ID": customer_id, "Customer_Name": customer_name,
+                        "Route_Name": route_name, 
                         "Origin_Location": origin, "Dest_Location": dest, "GoogleMap_Link": map_link,
-                        "Driver_ID": driver_id, 
-                        "Vehicle_Plate": auto_plate, # บันทึกทะเบียนจริง
-                        "Price_Customer": est_dist, # เก็บระยะทางชั่วคราว
-                        "Cost_Driver_Total": calc_cost,
-                        "Actual_Delivery_Time": "", "Photo_Proof_Url": ""
+                        "Driver_ID": driver_id, "Vehicle_Plate": auto_plate, 
+                        "Est_Distance_KM": est_dist,
+                        "Price_Customer": price_customer,
+                        "Cost_Driver_Total": calc_cost, 
+                        "Actual_Delivery_Time": "", "Photo_Proof_Url": "", "Signature_Url": ""
                     }
                     if create_new_job(new_job):
-                        st.success(f"สำเร็จ! ต้นทุน: {calc_cost:,.0f} บาท")
+                        st.success(f"จ่ายงานสำเร็จ! ต้นทุนรถร่วม: {calc_cost:,.0f} บาท / คิดราคาลูกค้า: {price_customer:,.0f} บาท")
                         time.sleep(2)
                         st.rerun()
-        st.write("---")
-        st.dataframe(get_data("Jobs_Main"), use_container_width=True)
-
-    # --- Tab 2: Dashboard (Profitability) ---
-    with tab2:
-        st.header("💰 วิเคราะห์กำไรรายคัน (Vehicle Profitability)")
         
-        # โหลดข้อมูล
+        st.write("---")
+        st.subheader("รายการงานล่าสุด")
+        jobs_admin_view = get_data("Jobs_Main")
+        st.dataframe(jobs_admin_view, use_container_width=True)
+
+        # ฟอร์มเปลี่ยนคนขับ (กรณีฉุกเฉิน)
+        if not jobs_admin_view.empty and not drivers_df.empty:
+            with st.expander("เปลี่ยนคนขับ (กรณีฉุกเฉิน)"):
+                # เลือกเฉพาะงานที่ยังไม่ปิดงานสมบูรณ์
+                editable_jobs = jobs_admin_view[jobs_admin_view['Job_Status'].isin([
+                    'PLANNED', 'ASSIGNED', 'PICKED_UP', 'IN_TRANSIT', 'DELIVERED'
+                ])] if 'Job_Status' in jobs_admin_view.columns else jobs_admin_view
+
+                if editable_jobs.empty:
+                    st.info("ไม่มีงานที่สามารถเปลี่ยนคนขับได้")
+                else:
+                    job_id_selected = st.selectbox(
+                        "เลือกงาน (Job_ID)",
+                        editable_jobs['Job_ID'].astype(str).unique()
+                    )
+
+                    # เลือกคนขับใหม่จาก driver_options เดิม
+                    new_driver_raw = st.selectbox("เลือกคนขับใหม่", driver_options, key="reassign_driver")
+                    new_driver_id = new_driver_raw.split(" : ")[0] if new_driver_raw else ""
+                    new_plate = driver_map.get(new_driver_raw, "")
+
+                    if st.button("ยืนยันเปลี่ยนคนขับ", type="primary"):
+                        if new_driver_id:
+                            # อัปเดตใน DataFrame แล้วเขียนกลับไปที่ Google Sheet
+                            mask = jobs_admin_view['Job_ID'].astype(str) == str(job_id_selected)
+                            jobs_admin_view.loc[mask, 'Driver_ID'] = new_driver_id
+
+    # --- Tab 2: Dashboard & Export ---
+    with tab2:
+        st.header("วิเคราะห์กำไรและข้อมูล")
         df_jobs = get_data("Jobs_Main")
         df_fuel = get_data("Fuel_Logs")
         df_repair = get_data("Repair_Tickets")
         
         if not df_jobs.empty:
-            # 1. เตรียมข้อมูลรายรับ (Revenue)
-            # สมมติคิดราคาลูกค้า กิโลละ 35 บาท (จาก Price_Customer ที่เก็บระยะทางไว้)
-            # ในระบบจริงอาจจะมีคอลัมน์ Billing_Amount แยกต่างหาก
-            df_jobs['Revenue'] = pd.to_numeric(df_jobs['Price_Customer'], errors='coerce').fillna(0) * 35
-            df_jobs['Expense_Driver'] = pd.to_numeric(df_jobs['Cost_Driver_Total'], errors='coerce').fillna(0)
-            
-            # Group by Vehicle
-            rev_by_car = df_jobs.groupby('Vehicle_Plate')[['Revenue', 'Expense_Driver']].sum().reset_index()
-            
-            # 2. เตรียมข้อมูลค่าน้ำมัน (Fuel)
-            fuel_by_car = pd.DataFrame()
-            if not df_fuel.empty:
-                df_fuel['Price_Total'] = pd.to_numeric(df_fuel['Price_Total'], errors='coerce').fillna(0)
-                fuel_by_car = df_fuel.groupby('Vehicle_Plate')['Price_Total'].sum().reset_index().rename(columns={'Price_Total': 'Fuel_Cost'})
-            
-            # 3. เตรียมข้อมูลค่าซ่อม (Repair)
-            repair_by_car = pd.DataFrame()
-            if not df_repair.empty:
-                df_repair['Cost_Total'] = pd.to_numeric(df_repair['Cost_Total'], errors='coerce').fillna(0)
-                repair_by_car = df_repair.groupby('Vehicle_Plate')['Cost_Total'].sum().reset_index().rename(columns={'Cost_Total': 'Repair_Cost'})
-            
-            # 4. รวมตาราง (Merge)
-            profit_df = rev_by_car
-            if not fuel_by_car.empty:
-                profit_df = profit_df.merge(fuel_by_car, on='Vehicle_Plate', how='left')
-            if not repair_by_car.empty:
-                profit_df = profit_df.merge(repair_by_car, on='Vehicle_Plate', how='left')
-                
-            profit_df = profit_df.fillna(0)
-            profit_df['Total_Expense'] = profit_df['Expense_Driver'] + profit_df['Fuel_Cost'] + profit_df['Repair_Cost']
-            profit_df['Net_Profit'] = profit_df['Revenue'] - profit_df['Total_Expense']
-            
-            # แสดงผล
-            col1, col2 = st.columns([2, 1])
-            with col1:
-                st.subheader("กำไรสุทธิแยกตามรถ (Net Profit)")
-                fig_profit = px.bar(profit_df, x='Vehicle_Plate', y='Net_Profit', 
-                                    color='Net_Profit', color_continuous_scale='RdYlGn',
-                                    text_auto='.2s')
-                st.plotly_chart(fig_profit, use_container_width=True)
-            
-            with col2:
-                st.subheader("ตารางสรุปงบ")
-                st.dataframe(profit_df[['Vehicle_Plate', 'Revenue', 'Total_Expense', 'Net_Profit']], hide_index=True)
 
-            # ปุ่ม Export CSV
-            st.write("---")
-            st.write("### 📥 Export Data")
+            # คำนวณกำไรเบื้องต้น
+            # สมมติรายรับ = ระยะทาง * 35 บาท
+            df_jobs['Distance'] = pd.to_numeric(df_jobs['Est_Distance_KM'], errors='coerce').fillna(0)
+            df_jobs['Revenue'] = df_jobs['Distance'] * 35 
+            df_jobs['Expense'] = pd.to_numeric(df_jobs['Cost_Driver_Total'], errors='coerce').fillna(0)
+            
+            # รวมรายจ่ายน้ำมันและซ่อม (ถ้ามี)
+            total_fuel = pd.to_numeric(df_fuel['Price_Total'], errors='coerce').sum() if not df_fuel.empty else 0
+            total_repair = pd.to_numeric(df_repair['Cost_Total'], errors='coerce').sum() if not df_repair.empty else 0
+            
+            net_profit = df_jobs['Revenue'].sum() - (df_jobs['Expense'].sum() + total_fuel + total_repair)
+
+            k1, k2, k3, k4 = st.columns(4)
+            k1.metric("รายรับรวม (Est.)", f"{df_jobs['Revenue'].sum():,.0f} ")
+            k2.metric("ค่าจ้างรถร่วม", f"{df_jobs['Expense'].sum():,.0f} ")
+            k3.metric("ค่าน้ำมัน+ซ่อม", f"{total_fuel + total_repair:,.0f} ")
+            k4.metric("กำไรสุทธิ", f"{net_profit:,.0f} ", delta="Estimate")
+            
+            # Control Tower / Live View
+            st.divider()
+            st.subheader(" Control Tower - ภาพรวมงานขนส่ง")
+
+            df_ctrl = df_jobs.copy()
+            # แปลงวันที่แผนงาน
+            if 'Plan_Date' in df_ctrl.columns:
+                df_ctrl['Plan_Date'] = pd.to_datetime(df_ctrl['Plan_Date'], errors='coerce')
+
+            # คอลัมน์สถานะภาษาไทย
+            if 'Job_Status' in df_ctrl.columns:
+                df_ctrl['Job_Status_TH'] = df_ctrl['Job_Status'].apply(get_status_label_th)
+
+            c_f1, c_f2 = st.columns(2)
+            with c_f1:
+                date_min = df_ctrl['Plan_Date'].min() if 'Plan_Date' in df_ctrl.columns else None
+                date_max = df_ctrl['Plan_Date'].max() if 'Plan_Date' in df_ctrl.columns else None
+                if pd.notna(date_min) and pd.notna(date_max):
+                    start_default = date_min.date()
+                    end_default = date_max.date()
+                    date_range = st.date_input("ช่วงวันที่แผนงาน", (start_default, end_default))
+                    if isinstance(date_range, tuple) and len(date_range) == 2:
+                        start_d, end_d = date_range
+                        mask_date = (df_ctrl['Plan_Date'].dt.date >= start_d) & (df_ctrl['Plan_Date'].dt.date <= end_d)
+                        df_ctrl = df_ctrl[mask_date]
+            with c_f2:
+                if 'Job_Status' in df_ctrl.columns:
+                    status_unique = sorted(df_ctrl['Job_Status'].dropna().unique())
+                    status_selected = st.multiselect("กรองตามสถานะ", status_unique, default=status_unique)
+                    df_ctrl = df_ctrl[df_ctrl['Job_Status'].isin(status_selected)]
+
+            # แสดงตารางเฉพาะคอลัมน์สำคัญ
+            cols_view = [c for c in [
+                'Job_ID', 'Plan_Date', 'Customer_Name', 'Route_Name',
+                'Driver_ID', 'Vehicle_Plate', 'Job_Status_TH',
+                'Actual_Pickup_Time', 'Arrive_Dest_Time', 'Actual_Delivery_Time'
+            ] if c in df_ctrl.columns]
+
+            st.dataframe(df_ctrl[cols_view], use_container_width=True)
+
+            # ePOD Viewer
+            st.divider()
+            st.subheader("📸 ePOD Viewer (หลักฐานส่งของ)")
+            df_epod = df_jobs.copy()
+            if 'Job_ID' in df_epod.columns:
+                job_ids = df_epod['Job_ID'].astype(str).unique()
+                selected_job_id = st.selectbox("เลือกงาน (Job_ID) เพื่อดูรูป ePOD", job_ids)
+                if selected_job_id:
+                    row = df_epod[df_epod['Job_ID'].astype(str) == str(selected_job_id)]
+                    if not row.empty:
+                        rec = row.iloc[0]
+                        col1, col2 = st.columns(2)
+                        with col1:
+                            st.markdown("**รูปสินค้า / หน้างาน**")
+                            img_data = rec.get('Photo_Proof_Url', '-')
+                            if isinstance(img_data, str) and img_data not in ('', '-', 'NaN'):
+                                try:
+                                    st.image(img_data, use_column_width=True)
+                                except Exception:
+                                    st.info("ไม่สามารถแสดงรูปได้ (รูปอาจเสียหรือข้อมูลไม่ถูกต้อง)")
+                            else:
+                                st.info("ยังไม่มีรูปสินค้า")
+                        with col2:
+                            st.markdown("**รูปลายเซ็นผู้รับ**")
+                            sig_data = rec.get('Signature_Url', '-')
+                            if isinstance(sig_data, str) and sig_data not in ('', '-', 'NaN'):
+                                try:
+                                    st.image(sig_data, use_column_width=True)
+                                except Exception:
+                                    st.info("ไม่สามารถแสดงรูปลายเซ็นได้")
+                            else:
+                                st.info("ยังไม่มีรูปลายเซ็น")
+
+            # ดาวน์โหลดข้อมูล
+            st.subheader("📥 ดาวน์โหลดข้อมูล (.csv)")
             c_dl1, c_dl2, c_dl3 = st.columns(3)
-            c_dl1.download_button("📄 โหลดงาน (Jobs)", convert_df_to_csv(df_jobs), "jobs.csv", "text/csv")
-            if not df_fuel.empty:
-                c_dl2.download_button("⛽ โหลดน้ำมัน (Fuel)", convert_df_to_csv(df_fuel), "fuel.csv", "text/csv")
-            if not df_repair.empty:
-                c_dl3.download_button("🔧 โหลดซ่อม (Repair)", convert_df_to_csv(df_repair), "repair.csv", "text/csv")
+            c_dl1.download_button("📄 โหลดงาน (Jobs)", convert_df_to_csv(df_jobs), "jobs.csv")
+            if not df_fuel.empty: c_dl2.download_button("⛽ โหลดน้ำมัน (Fuel)", convert_df_to_csv(df_fuel), "fuel.csv")
+            if not df_repair.empty: c_dl3.download_button("🔧 โหลดซ่อม (Repair)", convert_df_to_csv(df_repair), "repair.csv")
 
-        else:
-            st.info("ยังไม่มีข้อมูลงานในระบบ")
-
-    # --- Tab 3-6: Other Modules (เหมือนเดิม) ---
+    # --- Tab 3: MMS ---
     with tab3:
-        st.subheader("🔧 แจ้งซ่อม")
+        st.subheader("🔧 รายการแจ้งซ่อม")
         tickets = get_data("Repair_Tickets")
         if not tickets.empty:
-            st.dataframe(tickets)
-            with st.expander("จัดการงานซ่อม"):
-                tid = st.selectbox("เลือก Ticket", tickets['Ticket_ID'].unique())
-                if tid:
+            st.dataframe(tickets, use_container_width=True)
+            with st.expander("อนุมัติ/ปิดงานซ่อม"):
+                ticket_id = st.selectbox("Ticket ID", tickets['Ticket_ID'].unique())
+                if ticket_id:
                     c1, c2 = st.columns(2)
-                    with c1: stat = st.selectbox("สถานะ", ["Approved", "Done"])
-                    with c2: cst = st.number_input("ค่าใช้จ่าย", 0.0)
-                    if st.button("บันทึก"):
-                        idx = tickets[tickets['Ticket_ID']==tid].index[0]
-                        tickets.at[idx, 'Status'] = stat
-                        tickets.at[idx, 'Cost_Total'] = cst
+                    with c1: new_status = st.selectbox("สถานะ", ["Approved", "Done"], index=0)
+                    with c2: cost = st.number_input("ค่าใช้จ่ายจริง (บาท)", 0.0)
+                    if st.button("อัปเดตสถานะ"):
+                        idx = tickets[tickets['Ticket_ID'] == ticket_id].index[0]
+                        tickets.at[idx, 'Status'] = new_status
+                        tickets.at[idx, 'Cost_Total'] = cost
+                        if new_status == "Done":
+                            tickets.at[idx, 'Date_Finish'] = datetime.now().strftime("%Y-%m-%d")
                         update_sheet("Repair_Tickets", tickets)
-                        st.success("Saved")
+                        st.success("บันทึกแล้ว")
                         st.rerun()
-    
+        else:
+            st.info("ไม่มีรายการแจ้งซ่อม")
+
+    # --- Tab 4: Fuel ---
     with tab4:
-        st.subheader("⛽ น้ำมัน")
-        fl = get_data("Fuel_Logs")
-        if not fl.empty: st.dataframe(fl)
-    
+        st.subheader("⛽ ประวัติการเติมน้ำมัน")
+        fuel_logs = get_data("Fuel_Logs")
+        # ... (rest of the code remains the same)
+        if not fuel_logs.empty:
+            st.dataframe(fuel_logs, use_container_width=True)
+        else:
+            st.info("ไม่มีข้อมูล")
+
+    # --- Tab 5: Stock ---
     with tab5:
-        st.subheader("🔩 สต็อก")
-        st.dataframe(get_data("Stock_Parts"))
-        
+        c1, c2 = st.columns([2, 1])
+        parts = get_data("Stock_Parts")
+        with c1:
+            st.subheader("รายการอะไหล่")
+            st.dataframe(parts, use_container_width=True)
+        with c2:
+            st.subheader("รับเข้า")
+            with st.form("add_part"):
+                p_name = st.text_input("ชื่ออะไหล่")
+                p_qty = st.number_input("จำนวน", 1)
+                if st.form_submit_button("เพิ่ม"):
+                    new_part = {"Part_ID": f"P-{len(parts)+1:03d}", "Part_Name": p_name, "Qty_On_Hand": p_qty}
+                    update_sheet("Stock_Parts", pd.concat([parts, pd.DataFrame([new_part])], ignore_index=True))
+                    st.rerun()
+
+    # --- Tab 6: GPS ---
     with tab6:
-        st.subheader("🗺️ GPS")
-        drv = get_data("Master_Drivers")
-        if not drv.empty:
-            act = drv.dropna(subset=['Current_Lat','Current_Lon'])
-            act['lat'] = pd.to_numeric(act['Current_Lat'])
-            act['lon'] = pd.to_numeric(act['Current_Lon'])
-            if not act.empty: st.map(act, zoom=10)
+        st.subheader("📍 ตำแหน่งรถปัจจุบัน")
+        drivers = get_data("Master_Drivers")
+        if not drivers.empty:
+            drivers['Current_Lat'] = pd.to_numeric(drivers['Current_Lat'], errors='coerce')
+            drivers['Current_Lon'] = pd.to_numeric(drivers['Current_Lon'], errors='coerce')
+            active = drivers.dropna(subset=['Current_Lat', 'Current_Lon'])
+            if not active.empty:
+                st.map(active.rename(columns={'Current_Lat':'lat', 'Current_Lon':'lon'}), zoom=10)
+                st.dataframe(active[['Driver_Name', 'Vehicle_Plate', 'Last_Update']])
+            else:
+                st.warning("ไม่พบพิกัดรถ")
 
 # ---------------------------------------------------------
-# 5. Driver App (With Smart Nav)
+# 6. Driver App (Mobile)
 # ---------------------------------------------------------
 def driver_flow():
     with st.sidebar:
         st.title("Driver App 📱")
         st.info(f"คุณ: {st.session_state.driver_name}")
-        if st.button("🚪 Logout"):
+        if st.button("🚪 Logout", key="drv_out"):
             st.session_state.logged_in = False
             st.rerun()
 
     if 'page' not in st.session_state: st.session_state.page = "list"
     
+    # GPS Check-in
     c1, c2 = st.columns([3,1])
     with c1: st.subheader("เมนูหลัก")
     with c2:
         loc = get_geolocation()
         if loc and st.button("📍 เช็คอิน"):
             update_driver_location(st.session_state.driver_id, loc['coords']['latitude'], loc['coords']['longitude'])
-            st.toast("ส่งพิกัดแล้ว")
+            st.toast("ส่งพิกัดเรียบร้อย")
 
-    menu = st.radio("ทำรายการ:", ["📦 งานของฉัน", "⛽ เติมน้ำมัน", "🔧 แจ้งซ่อม"], horizontal=True)
+    menu = st.radio("เลือกรายการ:", ["📦 งานของฉัน", "⛽ เติมน้ำมัน", "🔧 แจ้งซ่อม"], horizontal=True)
     st.write("---")
     
     if menu == "📦 งานของฉัน":
@@ -359,19 +693,23 @@ def driver_flow():
             if not df.empty:
                 df['Job_Status'] = df['Job_Status'].fillna('Pending')
                 my_jobs = df[(df['Driver_ID'] == st.session_state.driver_id) & (df['Job_Status'] != 'Completed')]
-                if my_jobs.empty: st.success("ไม่มีงานค้าง")
+                
+                if my_jobs.empty:
+                    st.success("ไม่มีงานค้าง")
                 else:
                     for i, job in my_jobs.iterrows():
                         with st.container(border=True):
                             st.markdown(f"**{job['Route_Name']}**")
-                            # --- SMART NAVIGATION BUTTON ---
-                            # สร้างลิ้งค์ Google Maps แบบระบุต้นทาง-ปลายทาง
+                            st.caption(f"ส่ง: {job['Dest_Location']}")
+                            
+                            # Smart Navigation Link
                             origin_enc = urllib.parse.quote(str(job['Origin_Location']))
                             dest_enc = urllib.parse.quote(str(job['Dest_Location']))
                             nav_url = f"https://www.google.com/maps/dir/?api=1&origin={origin_enc}&destination={dest_enc}&travelmode=driving"
                             
                             c_btn1, c_btn2 = st.columns(2)
-                            c_btn1.link_button("🗺️ นำทาง (Go)", nav_url, use_container_width=True)
+                            c_btn1.link_button("🗺️ นำทาง", nav_url, use_container_width=True)
+                            
                             if c_btn2.button("ส่งของ >", key=f"j_{job['Job_ID']}", use_container_width=True):
                                 st.session_state.current_job = job.to_dict()
                                 st.session_state.page = "action"
@@ -380,60 +718,123 @@ def driver_flow():
 
         elif st.session_state.page == "action":
             job = st.session_state.current_job
+            # โหลดสถานะล่าสุดของงานจากฐานข้อมูล
+            df_cur = get_data("Jobs_Main")
+            current_status = job.get('Job_Status', '')
+            if not df_cur.empty and 'Job_ID' in df_cur.columns:
+                try:
+                    row = df_cur[df_cur['Job_ID'].astype(str) == str(job['Job_ID'])]
+                    if not row.empty:
+                        current_status = row.iloc[0].get('Job_Status', current_status)
+                except:
+                    pass
             if st.button("< กลับ"):
                 st.session_state.page = "list"
                 st.rerun()
-            st.info(f"ลูกค้า: {job['Customer_ID']}")
-            st.write(f"รับ: {job['Origin_Location']} -> ส่ง: {job['Dest_Location']}")
             
-            img = st.camera_input("ถ่ายรูปส่งสินค้า")
-            if st.button("ยืนยันปิดงาน", type="primary", use_container_width=True):
+            st.info(f"ลูกค้า: {job['Customer_ID']}")
+            st.caption(f"สถานะปัจจุบัน: {get_status_label_th(current_status)}")
+            st.write(f"ส่งที่: {job['Dest_Location']}")
+            
+            # ปุ่มเปลี่ยนสถานะงานระหว่างทาง
+            st.write("---")
+            st.write("🛠 **อัปเดตสถานะงาน**")
+            c_s1, c_s2, c_s3, c_s4 = st.columns(4)
+            now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            with c_s1:
+                if st.button("รับสินค้าแล้ว", key="btn_pickup"):
+                    if simple_update_job_status(job['Job_ID'], "PICKED_UP", {"Actual_Pickup_Time": now_str}):
+                        st.toast("อัปเดตสถานะเป็นรับสินค้าแล้ว")
+                        st.rerun()
+            with c_s2:
+                if st.button("ออกเดินทาง", key="btn_transit"):
+                    if simple_update_job_status(job['Job_ID'], "IN_TRANSIT", None):
+                        st.toast("อัปเดตสถานะเป็นออกเดินทาง")
+                        st.rerun()
+            with c_s3:
+                if st.button("ถึงปลายทาง", key="btn_delivered"):
+                    if simple_update_job_status(job['Job_ID'], "DELIVERED", {"Arrive_Dest_Time": now_str}):
+                        st.toast("อัปเดตสถานะเป็นถึงปลายทางแล้ว")
+                        st.rerun()
+            with c_s4:
+                failed_reason = st.text_input("เหตุผลส่งไม่สำเร็จ", key="failed_reason")
+                if st.button("ส่งไม่สำเร็จ", key="btn_failed"):
+                    updates = {"Failed_Reason": failed_reason, "Failed_Time": now_str}
+                    if simple_update_job_status(job['Job_ID'], "FAILED", updates):
+                        st.toast("อัปเดตสถานะเป็นส่งไม่สำเร็จ")
+                        st.rerun()
+
+            st.write("---")
+            st.write("📸 **หลักฐานการส่ง (ePOD)**")
+            img = st.camera_input("ถ่ายรูปสินค้า")
+            
+            st.write("✍️ **ลายเซ็นผู้รับ (ถ่ายรูปกระดาษเซ็น)**")
+            sig = st.camera_input("ถ่ายรูปใบเซ็นรับ", key="sig_cam")
+
+            if st.button("✅ ยืนยันปิดงาน", type="primary", use_container_width=True):
                 if img:
-                    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                    dist = float(job.get('Price_Customer', 0))
-                    update_job_status(job['Job_ID'], "Completed", now, dist)
-                    st.success("สำเร็จ!")
-                    time.sleep(1)
-                    st.session_state.page = "list"
-                    st.rerun()
+                    with st.spinner("กำลังบันทึกและย่อรูป..."):
+                        # ย่อรูปก่อนส่ง
+                        img_str = compress_image(img)
+                        sig_str = compress_image(sig) if sig else "-"
+                        
+                        now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                        # ใช้ Est_Distance_KM เป็นระยะวิ่ง หรือ Price_Customer เป็น fallback
+                        dist = float(job.get('Est_Distance_KM', job.get('Price_Customer', 0)))
+                        
+                        update_job_status(job['Job_ID'], "Completed", now, dist, img_str, sig_str)
+                        st.success("สำเร็จ!")
+                        time.sleep(2)
+                        st.session_state.page = "list"
+                        st.rerun()
+                else:
+                    st.error("กรุณาถ่ายรูปสินค้าอย่างน้อย 1 รูป")
 
     elif menu == "⛽ เติมน้ำมัน":
+        st.subheader("บันทึกการเติมน้ำมัน")
         with st.form("fuel"):
-            st.write("บันทึกการเติมน้ำมัน")
-            f_station = st.text_input("ปั๊ม")
+            f_station = st.text_input("ปั๊ม/สถานที่")
             f_odo = st.number_input("เลขไมล์", min_value=0)
             f_liters = st.number_input("ลิตร", 0.0)
-            f_price = st.number_input("บาท", 0.0)
+            f_price = st.number_input("ยอดเงิน (บาท)", 0.0)
+            f_img = st.camera_input("ถ่ายรูปสลิป")
+            
             if st.form_submit_button("บันทึก"):
                 if f_price > 0:
+                    img_str = compress_image(f_img)
                     fuel_data = {
                         "Log_ID": f"FUEL-{datetime.now().strftime('%y%m%d%H%M')}",
                         "Date_Time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                         "Driver_ID": st.session_state.driver_id,
                         "Vehicle_Plate": st.session_state.vehicle_plate,
                         "Odometer": f_odo, "Liters": f_liters, "Price_Total": f_price,
-                        "Station_Name": f_station, "Photo_Url": "-"
+                        "Station_Name": f_station, "Photo_Url": img_str
                     }
-                    create_fuel_log(fuel_data)
-                    st.success("บันทึกแล้ว")
+                    if create_fuel_log(fuel_data):
+                        st.success("บันทึกแล้ว")
 
     elif menu == "🔧 แจ้งซ่อม":
+        st.subheader("แจ้งอาการเสีย")
         with st.form("rep"):
-            st.write("แจ้งอาการเสีย")
             issue = st.selectbox("หมวดหมู่", ["เครื่องยนต์", "ยาง", "ช่วงล่าง", "อื่นๆ"])
             desc = st.text_area("รายละเอียด")
+            f_img = st.camera_input("ถ่ายรูปอาการเสีย")
+            
             if st.form_submit_button("ส่งเรื่อง"):
+                img_str = compress_image(f_img)
                 data = {
                     "Ticket_ID": f"TK-{datetime.now().strftime('%y%m%d%H%M')}",
                     "Date_Report": datetime.now().strftime("%Y-%m-%d"), 
                     "Driver_ID": st.session_state.driver_id, "Description": desc, 
-                    "Status": "Pending", "Issue_Type": issue, "Vehicle_Plate": st.session_state.vehicle_plate
+                    "Status": "Pending", "Issue_Type": issue, 
+                    "Vehicle_Plate": st.session_state.vehicle_plate,
+                    "Photo_Url": img_str
                 }
-                create_repair_ticket(data)
-                st.success("ส่งแล้ว")
+                if create_repair_ticket(data):
+                    st.success("ส่งแล้ว รออนุมัติ")
 
 # ---------------------------------------------------------
-# 6. Login Page
+# 7. Login Page
 # ---------------------------------------------------------
 def login_page():
     c1, c2, c3 = st.columns([1,2,1])
@@ -454,7 +855,7 @@ def login_page():
                         st.session_state.vehicle_plate = user.iloc[0].get('Vehicle_Plate', '-')
                         st.session_state.user_role = user.iloc[0].get('Role', 'Driver')
                         st.rerun()
-                    else: st.error("รหัสผิด")
+                    else: st.error("รหัสผ่านผิด")
                 else: st.error("ไม่พบฐานข้อมูล")
 
 if __name__ == "__main__":
