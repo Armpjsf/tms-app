@@ -41,7 +41,8 @@ def update_sheet(worksheet_name, df):
 
 @st.cache_data
 def convert_df_to_csv(df):
-    return df.to_csv(index=False).encode('utf-8')
+    # ใช้ utf-8-sig เพื่อแก้ภาษาต่างดาวใน Excel
+    return df.to_csv(index=False).encode('utf-8-sig')
 
 def compress_image(image_file):
     if image_file is None: return "-"
@@ -386,7 +387,7 @@ def main():
             driver_flow()
 
 # ---------------------------------------------------------
-# 5. Admin Panel
+# 5. Admin Panel (แก้ไข Tab 1: เพิ่มช่องใส่ราคาเอง)
 # ---------------------------------------------------------
 def admin_flow():
     with st.sidebar:
@@ -402,7 +403,7 @@ def admin_flow():
         "📝 จ่ายงาน", "📊 Profit & Data", "🔧 งานซ่อม", "⛽ น้ำมัน", "🔩 สต็อก", "🗺️ GPS", "⛽ ราคาน้ำมัน & 🧮 คำนวณราคา"
     ])
 
-    # --- Tab 1: จ่ายงาน ---
+    # --- Tab 1: จ่ายงาน (แก้ไขใหม่) ---
     with tab1:
         st.subheader("สร้างใบงานใหม่")
         drivers_df = get_data("Master_Drivers")
@@ -448,11 +449,11 @@ def admin_flow():
             c5, c6 = st.columns(2)
             with c5: 
                 est_dist = st.number_input("ระยะทาง (กม.)", min_value=0, value=100)
-                st.caption("*ใช้ระยะทางนี้คำนวณค่าจ้างอัตโนมัติ")
+                st.caption("*ใช้ระยะทางนี้คำนวณค่าจ้างอัตโนมัติ (หากไม่กรอกราคาเอง)")
             with c6: map_link = st.text_input("Google Map Link (ถ้ามี)")
 
             st.divider()
-            st.markdown("**Option ค่าบริการเพิ่มเติม**")
+            st.markdown("**Option ค่าบริการเพิ่มเติม (คำนวณ Auto)**")
             o1, o2, o3 = st.columns(3)
             with o1: floors = st.number_input("ยกขึ้นชั้น (นับจากชั้น 2)", min_value=0, value=0)
             with o2: extra_helpers = st.number_input("เพิ่มคนลงของ (คน)", min_value=0, value=0)
@@ -462,11 +463,22 @@ def admin_flow():
             with o4: is_return = st.checkbox("สินค้าคืน (+50%)", value=False)
             with o5: overnight_nights = st.number_input("ค้างคืน (คืน)", min_value=0, value=0)
 
+            # --- ส่วนที่เพิ่มใหม่: ช่องใส่ราคาเอง (Manual Override) ---
+            st.divider()
+            st.markdown("### 💰 กำหนดราคาเอง (Manual Override)")
+            st.caption("หากกรอกช่องนี้ ระบบจะใช้ตัวเลขนี้แทนการคำนวณอัตโนมัติทันที")
+            
+            m_col1, m_col2 = st.columns(2)
+            with m_col1:
+                manual_customer_price = st.number_input("ราคาเสนอลูกค้า (บาท) [ปล่อย 0 หากใช้ Auto]", min_value=0.0, step=100.0)
+            with m_col2:
+                manual_driver_cost = st.number_input("ต้นทุนรถร่วม (บาท) [ปล่อย 0 หากใช้ Auto]", min_value=0.0, step=100.0)
+
             if st.form_submit_button("✅ บันทึกและจ่ายงาน", type="primary", use_container_width=True):
                 customer_id = customer_map_id.get(selected_customer_raw, None)
                 customer_name = customer_map_name.get(selected_customer_raw, "")
                 if driver_id and customer_id is not None:
-                    # 1. ดึงราคาน้ำมันอัตโนมัติเพื่อคำนวณต้นทุน
+                    # 1. คำนวณ Auto ไว้ก่อน (เผื่อใช้)
                     current_diesel = 30.00
                     try:
                         prices = get_fuel_prices()
@@ -478,20 +490,25 @@ def admin_flow():
                                     break
                     except: pass
 
-                    calc_cost = calculate_driver_cost(plan_date, est_dist, vehicle_type, current_diesel_price=current_diesel)
+                    # Auto Cost
+                    auto_cost = calculate_driver_cost(plan_date, est_dist, vehicle_type, current_diesel_price=current_diesel)
                     
-                    # สูตรใหม่: Cost + 1000
-                    base_price = calc_cost + 1000 if calc_cost > 0 else 0
-
+                    # Auto Price (Cost + 1000 + Options)
+                    base_price = auto_cost + 1000 if auto_cost > 0 else 0
                     surcharge = 0
                     if floors > 0: surcharge += floors * 100
                     if extra_helpers > 0: surcharge += extra_helpers * 300
                     if waiting_blocks > 0: surcharge += waiting_blocks * 300
                     if overnight_nights > 0: surcharge += overnight_nights * 1000
 
-                    price_customer = base_price + surcharge
-                    if is_return: price_customer = price_customer * 1.5
+                    auto_price_customer = base_price + surcharge
+                    if is_return: auto_price_customer = auto_price_customer * 1.5
                     
+                    # 2. ตัดสินใจว่าจะใช้ Manual หรือ Auto
+                    final_customer_price = manual_customer_price if manual_customer_price > 0 else auto_price_customer
+                    final_driver_cost = manual_driver_cost if manual_driver_cost > 0 else auto_cost
+
+                    # 3. สร้าง Job
                     new_job = {
                         "Job_ID": auto_id, "Job_Status": "ASSIGNED", "Plan_Date": plan_date.strftime("%Y-%m-%d"),
                         "Customer_ID": customer_id, "Customer_Name": customer_name,
@@ -499,12 +516,13 @@ def admin_flow():
                         "Origin_Location": origin, "Dest_Location": dest, "GoogleMap_Link": map_link,
                         "Driver_ID": driver_id, "Vehicle_Plate": auto_plate, 
                         "Est_Distance_KM": est_dist,
-                        "Price_Customer": price_customer,
-                        "Cost_Driver_Total": calc_cost, 
+                        "Price_Customer": final_customer_price,  # ใช้ค่าที่เลือกแล้ว
+                        "Cost_Driver_Total": final_driver_cost,  # ใช้ค่าที่เลือกแล้ว
                         "Actual_Delivery_Time": "", "Photo_Proof_Url": "", "Signature_Url": ""
                     }
                     if create_new_job(new_job):
-                        st.success(f"จ่ายงานสำเร็จ! ต้นทุน: {calc_cost:,.0f} / ราคา: {price_customer:,.0f}")
+                        msg_type = "Manual" if (manual_customer_price > 0 or manual_driver_cost > 0) else "Auto"
+                        st.success(f"จ่ายงานสำเร็จ ({msg_type})! ต้นทุน: {final_driver_cost:,.0f} / ราคา: {final_customer_price:,.0f}")
                         time.sleep(1)
                         st.rerun()
         
@@ -532,50 +550,176 @@ def admin_flow():
                             time.sleep(1)
                             st.rerun()
 
-    # --- Tab 2: Profit & Data ---
+    # --- Tab 2: Profit & Data (Report แก้ไข Error) ---
     with tab2:
-        st.subheader("📊 วิเคราะห์กำไรและข้อมูล")
+        st.subheader("📊 สรุปข้อมูลการเดินรถและต้นทุน")
+        
+        # 1. โหลดข้อมูล
         df_jobs = get_data("Jobs_Main")
-        df_repair = get_data("Repair_Tickets") 
         df_fuel = get_data("Fuel_Logs")
+        df_drivers = get_data("Master_Drivers")
         
-        if not df_jobs.empty and 'Plan_Date' in df_jobs.columns:
-            df_jobs['Plan_Date'] = pd.to_datetime(df_jobs['Plan_Date'], errors='coerce')
-            df_jobs['Month_Year'] = df_jobs['Plan_Date'].dt.strftime('%Y-%m')
+        # เตรียมข้อมูล Driver Name และ Vehicle Type เพื่อ Map ใส่ตาราง
+        driver_map_name = {}
+        driver_map_type = {} # เพิ่มตัวแปรเก็บประเภทรถ
         
-        col1, col2 = st.columns(2)
-        with col1: start_date = st.date_input("วันที่เริ่มต้น", value=datetime.today())
-        with col2: end_date = st.date_input("วันที่สิ้นสุด", value=datetime.today())
-        
+        if not df_drivers.empty:
+            df_drivers['Driver_ID'] = df_drivers['Driver_ID'].astype(str)
+            for _, r in df_drivers.iterrows():
+                driver_map_name[r['Driver_ID']] = r.get('Driver_Name', '-')
+                driver_map_type[r['Driver_ID']] = r.get('Vehicle_Type', '-') # ดึงประเภทรถมาด้วย
+
+        # 2. ตัวเลือกกรองวันที่
+        with st.container(border=True):
+            col_d1, col_d2 = st.columns(2)
+            with col_d1: start_date = st.date_input("📅 ตั้งแต่วันที่", value=datetime.today().replace(day=1))
+            with col_d2: end_date = st.date_input("📅 ถึงวันที่", value=datetime.today())
+
         if not df_jobs.empty:
-            mask = (df_jobs['Plan_Date'].dt.date >= start_date) & (df_jobs['Plan_Date'].dt.date <= end_date)
-            filtered_df = df_jobs[mask].copy()
-            if 'Price_Customer' in filtered_df.columns: filtered_df['Revenue'] = pd.to_numeric(filtered_df['Price_Customer'], errors='coerce').fillna(0)
-            else: filtered_df['Revenue'] = 0
-            if 'Cost_Driver_Total' in filtered_df.columns: filtered_df['Expense'] = pd.to_numeric(filtered_df['Cost_Driver_Total'], errors='coerce').fillna(0)
-            else: filtered_df['Expense'] = 0
-            filtered_df['Profit'] = filtered_df['Revenue'] - filtered_df['Expense']
+            # แปลงวันที่และกรอง
+            if 'Plan_Date' in df_jobs.columns:
+                df_jobs['Plan_Date'] = pd.to_datetime(df_jobs['Plan_Date'], errors='coerce')
+                mask = (df_jobs['Plan_Date'].dt.date >= start_date) & (df_jobs['Plan_Date'].dt.date <= end_date)
+                df_filtered = df_jobs[mask].copy()
+            else:
+                df_filtered = df_jobs.copy()
+
+            # แปลงตัวเลขที่จำเป็น
+            cols_to_num = ['Est_Distance_KM', 'Price_Customer', 'Cost_Driver_Total']
+            for c in cols_to_num:
+                if c in df_filtered.columns:
+                    df_filtered[c] = pd.to_numeric(df_filtered[c], errors='coerce').fillna(0)
             
-            total_fuel = pd.to_numeric(df_fuel['Price_Total'], errors='coerce').sum() if not df_fuel.empty else 0
-            total_repair = pd.to_numeric(df_repair['Cost_Total'], errors='coerce').sum() if not df_repair.empty else 0
-            total_revenue = filtered_df['Revenue'].sum()
-            total_expense = filtered_df['Expense'].sum()
-            net_profit = total_revenue - (total_expense + total_fuel + total_repair)
+            # --- 🔥 แก้ไขจุดที่ Error: เพิ่มคอลัมน์ที่ขาดหายไปโดยการ Map ข้อมูล ---
+            # 1. Map ชื่อคนขับ
+            df_filtered['Driver_Name'] = df_filtered['Driver_ID'].astype(str).map(driver_map_name).fillna(df_filtered['Driver_ID'])
             
-            k1, k2, k3, k4 = st.columns(4)
-            k1.metric("รายรับรวม", f"{total_revenue:,.0f} บาท")
-            k2.metric("ค่าจ้างรถร่วม", f"{total_expense:,.0f} บาท")
-            k3.metric("ค่าน้ำมัน+ซ่อม", f"{total_fuel + total_repair:,.0f} บาท")
-            k4.metric("กำไรสุทธิ", f"{net_profit:,.0f} บาท")
+            # 2. Map ประเภทรถ (แก้ KeyError: Vehicle_Type)
+            # ถ้าใน Job ไม่มี Vehicle_Type ให้ดึงจาก Driver Master แทน
+            if 'Vehicle_Type' not in df_filtered.columns:
+                df_filtered['Vehicle_Type'] = df_filtered['Driver_ID'].astype(str).map(driver_map_type).fillna('-')
             
-            if 'Month_Year' in filtered_df.columns:
-                monthly_data = filtered_df.groupby('Month_Year').agg({'Revenue': 'sum', 'Expense': 'sum'}).reset_index()
-                if not monthly_data.empty:
-                    fig = px.bar(monthly_data, x='Month_Year', y=['Revenue', 'Expense'], barmode='group')
-                    st.plotly_chart(fig, use_container_width=True)
+            # 3. ตรวจสอบ Customer_Name (ถ้าไม่มีให้สร้างว่างๆ)
+            if 'Customer_Name' not in df_filtered.columns:
+                 df_filtered['Customer_Name'] = '-'
+
+            # =========================================================
+            # ส่วนที่ 1: ตารางสรุปภาพรวมรถ (Fleet Summary)
+            # =========================================================
+            st.markdown("### 🏆 สรุปสมรรถนะรถรายคัน (Fleet Performance)")
             
-            csv = convert_df_to_csv(filtered_df)
-            st.download_button("ดาวน์โหลดข้อมูล (CSV)", data=csv, file_name='profit_report.csv', mime='text/csv')
+            # 1.1 รวมยอดจากงานขนส่ง
+            summary_jobs = df_filtered.groupby('Vehicle_Plate').agg({
+                'Job_ID': 'count',
+                'Est_Distance_KM': 'sum',
+                'Price_Customer': 'sum',
+                'Cost_Driver_Total': 'sum',
+                'Driver_Name': 'first',
+                'Customer_Name': lambda x: ", ".join(sorted(set([str(i) for i in x if str(i) != '-']))) # รวมชื่อลูกค้า
+            }).reset_index()
+            
+            # 1.2 รวมยอดน้ำมัน
+            fuel_summary = pd.DataFrame()
+            if not df_fuel.empty:
+                df_fuel['Date_Time'] = pd.to_datetime(df_fuel['Date_Time'], errors='coerce')
+                mask_fuel = (df_fuel['Date_Time'].dt.date >= start_date) & (df_fuel['Date_Time'].dt.date <= end_date)
+                df_fuel_filt = df_fuel[mask_fuel].copy()
+                
+                df_fuel_filt['Liters'] = pd.to_numeric(df_fuel_filt['Liters'], errors='coerce').fillna(0)
+                df_fuel_filt['Price_Total'] = pd.to_numeric(df_fuel_filt['Price_Total'], errors='coerce').fillna(0)
+                
+                fuel_summary = df_fuel_filt.groupby('Vehicle_Plate').agg({
+                    'Liters': 'sum',
+                    'Price_Total': 'sum'
+                }).reset_index().rename(columns={'Price_Total': 'Fuel_Cost_Total'})
+
+            # 1.3 Merge รวมกัน
+            if not summary_jobs.empty:
+                fleet_stats = pd.merge(summary_jobs, fuel_summary, on='Vehicle_Plate', how='left').fillna(0)
+                fleet_stats['Profit'] = fleet_stats['Price_Customer'] - fleet_stats['Cost_Driver_Total'] - fleet_stats['Fuel_Cost_Total']
+                
+                fleet_view = fleet_stats[[
+                    'Vehicle_Plate', 'Driver_Name', 'Job_ID', 'Customer_Name',
+                    'Est_Distance_KM', 'Liters', 'Fuel_Cost_Total',
+                    'Cost_Driver_Total', 'Price_Customer', 'Profit'
+                ]]
+                
+                fleet_view.columns = [
+                    'ทะเบียนรถ', 'คนขับ', 'จำนวนเที่ยว', 'ลูกค้าที่วิ่ง',
+                    'ระยะทางรวม (กม.)', 'ใช้น้ำมัน (ลิตร)', 'ค่าน้ำมัน (บาท)',
+                    'ค่าจ้างรถร่วม', 'รายรับรวม', 'กำไรสุทธิ'
+                ]
+                st.dataframe(fleet_view, use_container_width=True)
+                st.download_button("📥 ดาวน์โหลดสรุปรายคัน (.csv)", convert_df_to_csv(fleet_view), "fleet_summary.csv")
+            else:
+                st.info("ไม่พบข้อมูลงานในช่วงวันที่เลือก")
+
+            st.divider()
+
+            # =========================================================
+            # ส่วนที่ 2: ตารางลูกค้า (Customer View)
+            # =========================================================
+            st.markdown(f"### 🌸 รายละเอียดงานฝั่งลูกค้า (Customer View)")
+            
+            if not df_filtered.empty:
+                # เลือกคอลัมน์ (ตอนนี้ Vehicle_Type และ Customer_Name มีอยู่จริงแล้วจากการ Map ข้างบน)
+                cols_cust = [
+                    'Plan_Date', 'Customer_ID', 'Customer_Name', 'Vehicle_Type', 
+                    'Origin_Location', 'Dest_Location', 'Est_Distance_KM', 'Price_Customer'
+                ]
+                # กรองเอาเฉพาะคอลัมน์ที่มีจริง (กันพลาด)
+                cols_cust = [c for c in cols_cust if c in df_filtered.columns]
+                
+                customer_view = df_filtered[cols_cust].copy()
+                
+                if 'Plan_Date' in customer_view.columns:
+                    customer_view['Plan_Date'] = customer_view['Plan_Date'].dt.strftime('%d/%m/%Y')
+                
+                # เปลี่ยนชื่อหัวตารางเป็นภาษาไทย
+                rename_map = {
+                    'Plan_Date': 'วันที่', 'Customer_ID': 'รหัสลูกค้า', 'Customer_Name': 'ลูกค้า',
+                    'Vehicle_Type': 'ประเภทรถ', 'Origin_Location': 'ต้นทาง', 
+                    'Dest_Location': 'ปลายทาง', 'Est_Distance_KM': 'ระยะทาง (กม.)', 
+                    'Price_Customer': 'ราคาขาย (บาท)'
+                }
+                customer_view = customer_view.rename(columns=rename_map)
+                
+                st.dataframe(customer_view, use_container_width=True)
+                st.download_button("📥 ดาวน์โหลดตารางลูกค้า (.csv)", convert_df_to_csv(customer_view), "customer_report.csv")
+
+            st.divider()
+
+            # =========================================================
+            # ส่วนที่ 3: ตารางรถร่วม (Driver View)
+            # =========================================================
+            st.markdown(f"### 🚙 รายละเอียดต้นทุนรถร่วม (Driver View)")
+            
+            if not df_filtered.empty:
+                cols_drv = [
+                    'Vehicle_Plate', 'Driver_Name', 'Vehicle_Type',
+                    'Origin_Location', 'Dest_Location', 'Est_Distance_KM', 'Cost_Driver_Total'
+                ]
+                cols_drv = [c for c in cols_drv if c in df_filtered.columns]
+                
+                driver_view = df_filtered[cols_drv].copy()
+                
+                # เพิ่มคอลัมน์ระยะทางไป-กลับ
+                if 'Est_Distance_KM' in driver_view.columns:
+                    driver_view['Round_Trip_Dist'] = driver_view['Est_Distance_KM'] # ปรับสูตรตามจริง
+                
+                rename_map_drv = {
+                    'Vehicle_Plate': 'ทะเบียน', 'Driver_Name': 'ชื่อคนขับ', 'Vehicle_Type': 'ประเภทรถ',
+                    'Origin_Location': 'ต้นทาง', 'Dest_Location': 'ปลายทาง', 
+                    'Est_Distance_KM': 'ระยะทาง', 'Cost_Driver_Total': 'ค่าจ้าง (บาท)',
+                    'Round_Trip_Dist': 'ระยะทาง ไป-กลับ'
+                }
+                driver_view = driver_view.rename(columns=rename_map_drv)
+                
+                st.dataframe(driver_view, use_container_width=True)
+                st.download_button("📥 ดาวน์โหลดตารางรถร่วม (.csv)", convert_df_to_csv(driver_view), "driver_report.csv")
+                
+        else:
+            st.warning("ยังไม่มีข้อมูลงานในระบบ")
 
     # --- Tab 3: MMS ---
     with tab3:
