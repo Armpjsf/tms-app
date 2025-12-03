@@ -59,6 +59,51 @@ def compress_image(image_file):
         return f"data:image/jpeg;base64,{encoded}"
     except Exception as e:
         return "-"
+    
+# --- ฟังก์ชันรวมรูปภาพหลายใบเป็นใบเดียว (Merge) และย่อขนาด ---
+def process_multiple_images(image_file_list):
+    """รับ List ของไฟล์รูปภาพ -> รวมเป็นภาพยาวแนวตั้ง -> แปลงเป็น Base64"""
+    if not image_file_list:
+        return "-"
+    
+    try:
+        images = []
+        total_height = 0
+        max_width = 400 # ลดขนาดลงหน่อยเพื่อให้เก็บใน Google Sheet ได้หลายรูป
+        
+        # 1. เปิดไฟล์และคำนวณขนาด
+        for img_file in image_file_list:
+            img = Image.open(img_file)
+            if img.mode != 'RGB': img = img.convert('RGB')
+            
+            # ย่อขนาดโดยยึดความกว้าง
+            ratio = max_width / float(img.size[0])
+            new_height = int(float(img.size[1]) * float(ratio))
+            img = img.resize((max_width, new_height), Image.LANCZOS)
+            
+            images.append(img)
+            total_height += new_height
+        
+        # 2. สร้างภาพพื้นหลังเปล่าๆ ขนาดเท่าผลรวม
+        merged_img = Image.new('RGB', (max_width, total_height), (255, 255, 255))
+        
+        # 3. แปะรูปทีละรูปลงไป
+        y_offset = 0
+        for img in images:
+            merged_img.paste(img, (0, y_offset))
+            y_offset += img.size[1]
+            
+        # 4. แปลงเป็น Base64 (ลดคุณภาพเหลือ 40% เพื่อประหยัดพื้นที่ Sheet)
+        buffer = io.BytesIO()
+        merged_img.save(buffer, format="JPEG", quality=40)
+        img_bytes = buffer.getvalue()
+        encoded = base64.b64encode(img_bytes).decode()
+        
+        return f"data:image/jpeg;base64,{encoded}"
+        
+    except Exception as e:
+        print(f"Merge Error: {e}")
+        return "-"    
 
 # --- ฟังก์ชันช่วยคำนวณน้ำมันสำหรับ Driver ---
 def get_consumption_rate_by_driver(driver_id):
