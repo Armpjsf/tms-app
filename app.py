@@ -6,9 +6,12 @@ from datetime import datetime
 import time
 from streamlit_js_eval import get_geolocation # type: ignore
 import base64
-from PIL import Image # type: ignore # ใช้สำหรับย่อรูปภาพ
+from PIL import Image # type: ignore
 import io
 import urllib.parse
+import requests
+from bs4 import BeautifulSoup # type: ignore
+import re
 
 # ---------------------------------------------------------
 # 1. ตั้งค่าหน้าเว็บ & Database Config
@@ -29,7 +32,8 @@ def get_data(worksheet_name):
     conn = get_connection()
     try:
         return conn.read(spreadsheet=SHEET_URL, worksheet=worksheet_name, ttl=0)
-    except:
+    except Exception as e:
+        # st.error(f"Error reading {worksheet_name}: {e}")
         return pd.DataFrame()
 
 def update_sheet(worksheet_name, df):
@@ -126,11 +130,7 @@ def calculate_driver_cost(plan_date, distance, vehicle_type):
     except: return 0
 
 def calculate_customer_price_from_master_rate_card(distance_km, vehicle_type, fuel_band="30.01-33"):
-    """คำนวณราคาค่าขนส่งลูกค้าจากตาราง MasterRate_Card
-
-    ใช้เฉพาะราคาตามระยะทาง + ประเภทรถ โดยอ้างอิง band ราคาน้ำมันที่กำหนด
-    ถ้าหาเรตไม่เจอ จะ fallback กลับไปใช้ distance * 35 ชั่วคราว
-    """
+    """คำนวณราคาค่าขนส่งลูกค้าจากตาราง MasterRate_Card"""
     try:
         df = get_data("MasterRate_Card")
         if df.empty:
@@ -148,10 +148,9 @@ def calculate_customer_price_from_master_rate_card(distance_km, vehicle_type, fu
                 break
 
         if band_col is None:
-            # หาไม่เจอ ใช้สูตรเดิมชั่วคราว
             return float(distance_km) * 35
 
-        # หา column index สำหรับระยะทาง (พยายามจับชื่อคอลัมน์ ถ้าไม่ได้ใช้คอลัมน์แรก)
+        # หา column index สำหรับระยะทาง
         dist_col = 0
         for idx, col in enumerate(df.columns):
             col_str = str(col)
@@ -189,7 +188,7 @@ def calculate_customer_price_from_master_rate_card(distance_km, vehicle_type, fu
         if not records:
             return float(distance_km) * 35
 
-        # เรียงตามระยะทาง แล้วเลือก tier แรกที่ระยะทาง >= distance_km ถ้าไม่มีใช้ตัวสุดท้าย
+        # เรียงตามระยะทาง แล้วเลือก tier แรกที่ระยะทาง >= distance_km
         records = sorted(records, key=lambda x: x["distance"])
         target = None
         for rec in records:
@@ -253,9 +252,9 @@ def update_job_status(job_id, new_status, timestamp, distance_run=0, photo_data=
             
             # บันทึกรูปและลายเซ็น (ถ้ามี)
             if photo_data != "-":
-                df_jobs.at[i, 'Photo_Proof_Url'] = photo_data # ใช้คอลัมน์ที่มีอยู่เดิม
+                df_jobs.at[i, 'Photo_Proof_Url'] = photo_data
             if signature_data != "-":
-                df_jobs.at[i, 'Signature_Url'] = signature_data # ใช้คอลัมน์ที่มีอยู่เดิม
+                df_jobs.at[i, 'Signature_Url'] = signature_data
 
             driver_id = df_jobs.at[i, 'Driver_ID']
             conn.update(spreadsheet=SHEET_URL, worksheet="Jobs_Main", data=df_jobs)
@@ -309,6 +308,59 @@ def update_driver_location(driver_id, lat, lon):
         return False
     except: return False
 
+def get_fuel_prices():
+    """ดึงราคาน้ำมันล่าสุดจาก kapook.com (แก้ไข Regex แล้ว)"""
+    try:
+        url = "https://gasprice.kapook.com/gasprice.php#ptt"
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+            'Accept-Language': 'th-TH,th;q=0.9,en;q=0.8'
+        }
+        
+        response = requests.get(url, headers=headers, timeout=10)
+        response.encoding = 'utf-8'
+        
+        if response.status_code != 200:
+            print(f"Server returned status: {response.status_code}")
+            return {}
+            
+        soup = BeautifulSoup(response.text, 'html.parser')
+        fuel_prices = {}
+        current_section = ""
+        
+        for section in soup.find_all(['h3', 'ul']):
+            if section.name == 'h3':
+                current_section = section.get_text(strip=True)
+                fuel_prices[current_section] = {}
+            elif section.name == 'ul' and current_section:
+                for item in section.find_all('li'):
+                    # ใช้ separator=" " เพื่อกันชื่อกับราคาติดกัน เช่น "Gasohol 9535.50" -> "Gasohol 95 35.50"
+                    text = item.get_text(separator=" ", strip=True)
+                    
+                    # Regex ใหม่: 
+                    # (.+?)   = ชื่อน้ำมัน (เอาทั้งหมดข้างหน้า)
+                    # \s+     = ช่องว่าง
+                    # ([\d,]+\.\d{2}) = ตัวเลขที่มีจุดทศนิยม 2 ตำแหน่ง (ราคา)
+                    match = re.search(r'(.+?)\s+([\d,]+\.\d{2})', text)
+                    
+                    if match:
+                        fuel_type = match.group(1).strip()
+                        price = match.group(2).strip()
+                        
+                        # ลบพวกตัวเลขที่อาจติดมาในชื่อน้ำมัน (Clean up) ถ้าจำเป็น
+                        # แต่ Regex นี้จะแยก "แก๊สโซฮอล์ 95" (Group 1) กับ "31.85" (Group 2) ออกจากกันได้ถูกต้อง
+                        
+                        fuel_prices[current_section][fuel_type] = price
+        
+        return fuel_prices
+        
+    except requests.RequestException as e:
+        print(f"Connection error: {str(e)}")
+        return {}
+    except Exception as e:
+        print(f"Parsing error: {str(e)}")
+        return {}
+
 # ---------------------------------------------------------
 # 4. Main Application Logic
 # ---------------------------------------------------------
@@ -327,7 +379,7 @@ def main():
             driver_flow()
 
 # ---------------------------------------------------------
-# 5. Admin Panel
+# 5. Admin Panel (แก้ไข Tab 7 เพิ่มเครื่องมือคำนวณราคา)
 # ---------------------------------------------------------
 def admin_flow():
     with st.sidebar:
@@ -339,8 +391,9 @@ def admin_flow():
             
     st.title("🖥️ Admin Dashboard")
     
-    tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
-        "📝 จ่ายงาน", "📊 Profit & Data", "🔧 งานซ่อม", "⛽ น้ำมัน", "🔩 สต็อก", "🗺️ GPS"
+    # เปลี่ยนชื่อ Tab 7 เป็น "⛽ ราคาน้ำมัน & 🧮 คำนวณราคา"
+    tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
+        "📝 จ่ายงาน", "📊 Profit & Data", "🔧 งานซ่อม", "⛽ น้ำมัน", "🔩 สต็อก", "🗺️ GPS", "⛽ ราคาน้ำมัน & 🧮 คำนวณราคา"
     ])
 
     # --- Tab 1: จ่ายงาน ---
@@ -351,14 +404,12 @@ def admin_flow():
         driver_map = {}
         
         if not drivers_df.empty:
-             # กรองเฉพาะ Driver
              drivers_only = drivers_df[drivers_df['Role'] == 'Driver']
              for _, row in drivers_only.iterrows():
                  label = f"{row['Driver_ID']} : {row['Driver_Name']} ({row['Vehicle_Plate']})"
                  driver_options.append(label)
                  driver_map[label] = row.get('Vehicle_Plate', '')
 
-        # โหลด Master ลูกค้า
         customers_df = get_data("Master_Customers")
         customer_options = []
         customer_map_id = {}
@@ -398,14 +449,14 @@ def admin_flow():
                 map_link = st.text_input("Google Map Link (ถ้ามี)")
 
             st.divider()
-            st.markdown("**Option ค่าบริการเพิ่มเติม (คิดบนราคาจากตารางนวนคร 2568)**")
+            st.markdown("**Option ค่าบริการเพิ่มเติม**")
             o1, o2, o3 = st.columns(3)
             with o1:
-                floors = st.number_input("ยกขึ้นชั้น (นับจากชั้น 2)", min_value=0, value=0, help="เช่น ขึ้นถึงชั้น 4 ให้ใส่ 3 (ชั้น 2,3,4)")
+                floors = st.number_input("ยกขึ้นชั้น (นับจากชั้น 2)", min_value=0, value=0)
             with o2:
                 extra_helpers = st.number_input("เพิ่มคนลงของ (คน)", min_value=0, value=0)
             with o3:
-                waiting_blocks = st.number_input("รอเกิน 3 ชม. (จำนวนชุด 3 ชม.)", min_value=0, value=0)
+                waiting_blocks = st.number_input("รอเกิน 3 ชม. (ชุด 3 ชม.)", min_value=0, value=0)
 
             o4, o5 = st.columns(2)
             with o4:
@@ -417,30 +468,17 @@ def admin_flow():
                 customer_id = customer_map_id.get(selected_customer_raw, None)
                 customer_name = customer_map_name.get(selected_customer_raw, "")
                 if driver_id and customer_id is not None:
-                    # คำนวณต้นทุนรถร่วมจาก Rate_Card เดิม
                     calc_cost = calculate_driver_cost(plan_date, est_dist, vehicle_type)
-                    # คำนวณราคาลูกค้าฐานจาก MasterRate_Card (band 30.01–33)
                     base_price = calculate_customer_price_from_master_rate_card(est_dist, vehicle_type, "30.01-33")
 
-                    # ปรับราคาเพิ่มตาม Option
                     surcharge = 0
-                    # ยกขึ้นชั้น +100/ชั้น (ชั้นที่ 2 ขึ้นไป)
-                    if floors > 0:
-                        surcharge += floors * 100
-                    # เพิ่มคนลงของ +300/คน
-                    if extra_helpers > 0:
-                        surcharge += extra_helpers * 300
-                    # รอลงสินค้าเกิน 3 ชม +300/3 ชม
-                    if waiting_blocks > 0:
-                        surcharge += waiting_blocks * 300
-                    # ค้างคืน +1000/คืน
-                    if overnight_nights > 0:
-                        surcharge += overnight_nights * 1000
+                    if floors > 0: surcharge += floors * 100
+                    if extra_helpers > 0: surcharge += extra_helpers * 300
+                    if waiting_blocks > 0: surcharge += waiting_blocks * 300
+                    if overnight_nights > 0: surcharge += overnight_nights * 1000
 
-                    # สินค้าคืน +50% จากราคาฐาน (ไม่รวม surcharge)
                     price_customer = base_price + surcharge
-                    if is_return:
-                        price_customer = price_customer * 1.5
+                    if is_return: price_customer = price_customer * 1.5
                     
                     new_job = {
                         "Job_ID": auto_id, "Job_Status": "ASSIGNED", "Plan_Date": plan_date.strftime("%Y-%m-%d"),
@@ -454,8 +492,8 @@ def admin_flow():
                         "Actual_Delivery_Time": "", "Photo_Proof_Url": "", "Signature_Url": ""
                     }
                     if create_new_job(new_job):
-                        st.success(f"จ่ายงานสำเร็จ! ต้นทุนรถร่วม: {calc_cost:,.0f} บาท / คิดราคาลูกค้า: {price_customer:,.0f} บาท")
-                        time.sleep(2)
+                        st.success(f"จ่ายงานสำเร็จ! ต้นทุน: {calc_cost:,.0f} / ราคา: {price_customer:,.0f}")
+                        time.sleep(1)
                         st.rerun()
         
         st.write("---")
@@ -466,7 +504,6 @@ def admin_flow():
         # ฟอร์มเปลี่ยนคนขับ (กรณีฉุกเฉิน)
         if not jobs_admin_view.empty and not drivers_df.empty:
             with st.expander("เปลี่ยนคนขับ (กรณีฉุกเฉิน)"):
-                # เลือกเฉพาะงานที่ยังไม่ปิดงานสมบูรณ์
                 editable_jobs = jobs_admin_view[jobs_admin_view['Job_Status'].isin([
                     'PLANNED', 'ASSIGNED', 'PICKED_UP', 'IN_TRANSIT', 'DELIVERED'
                 ])] if 'Job_Status' in jobs_admin_view.columns else jobs_admin_view
@@ -474,45 +511,31 @@ def admin_flow():
                 if editable_jobs.empty:
                     st.info("ไม่มีงานที่สามารถเปลี่ยนคนขับได้")
                 else:
-                    job_id_selected = st.selectbox(
-                        "เลือกงาน (Job_ID)",
-                        editable_jobs['Job_ID'].astype(str).unique()
-                    )
+                    c_ch1, c_ch2 = st.columns(2)
+                    with c_ch1:
+                        job_id_selected = st.selectbox(
+                            "เลือกงาน (Job_ID)",
+                            editable_jobs['Job_ID'].astype(str).unique()
+                        )
+                    with c_ch2:
+                        new_driver_select = st.selectbox("เลือกคนขับใหม่", driver_options, key="new_drv_sel")
+                    
+                    if st.button("บันทึกการเปลี่ยนคนขับ"):
+                        new_d_id = new_driver_select.split(" : ")[0]
+                        new_plate = driver_map.get(new_driver_select, "")
+                        updates = {"Driver_ID": new_d_id, "Vehicle_Plate": new_plate}
+                        if simple_update_job_status(job_id_selected, "ASSIGNED", updates):
+                            st.success(f"เปลี่ยนคนขับงาน {job_id_selected} เป็น {new_d_id} สำเร็จ")
+                            time.sleep(1)
+                            st.rerun()
 
-        df_repair = get_data("Repair_Tickets")
-        df_jobs = get_data("Jobs_Main")
-        df_fuel = get_data("Fuel_Logs") if 'df_fuel' not in locals() else df_fuel
-        
-        if not df_jobs.empty:
-            # คำนวณกำไรเบื้องต้น
-            # ใช้ Price_Customer เป็นรายรับจริงแทนการคำนวณจากระยะทาง
-            df_jobs['Distance'] = pd.to_numeric(df_jobs['Est_Distance_KM'], errors='coerce').fillna(0)
-            df_jobs['Revenue'] = pd.to_numeric(df_jobs['Price_Customer'], errors='coerce').fillna(0)
-            df_jobs['Expense'] = pd.to_numeric(df_jobs['Cost_Driver_Total'], errors='coerce').fillna(0)
-            
-            # รวมรายจ่ายน้ำมันและซ่อม (ถ้ามี)
-            total_fuel = pd.to_numeric(df_fuel['Price_Total'], errors='coerce').sum() if not df_fuel.empty else 0
-            total_repair = pd.to_numeric(df_repair['Cost_Total'], errors='coerce').sum() if not df_repair.empty else 0
-            
-            # คำนวณกำไรสุทธิ
-            net_profit = df_jobs['Revenue'].sum() - (df_jobs['Expense'].sum() + total_fuel + total_repair)
-
-            k1, k2, k3, k4 = st.columns(4)
-            k1.metric("รายรับรวม (Est.)", f"{df_jobs['Revenue'].sum():,.0f} ")
-            k2.metric("ค่าจ้างรถร่วม", f"{df_jobs['Expense'].sum():,.0f} ")
-            k3.metric("ค่าน้ำมัน+ซ่อม", f"{total_fuel + total_repair:,.0f} ")
-            k4.metric("กำไรสุทธิ", f"{net_profit:,.0f} ", delta="Estimate")
-            
-            # Control Tower / Live View
-            st.divider()
-            st.subheader(" Control Tower - ภาพรวมงานขนส่ง")
-
-            df_ctrl = df_jobs.copy()
-            # แปลงวันที่แผนงาน
+        # Dashboard Summary in Tab 1 (Optional)
+        st.divider()
+        st.subheader("Control Tower - ภาพรวมงานขนส่ง")
+        df_ctrl = get_data("Jobs_Main")
+        if not df_ctrl.empty:
             if 'Plan_Date' in df_ctrl.columns:
                 df_ctrl['Plan_Date'] = pd.to_datetime(df_ctrl['Plan_Date'], errors='coerce')
-
-            # คอลัมน์สถานะภาษาไทย
             if 'Job_Status' in df_ctrl.columns:
                 df_ctrl['Job_Status_TH'] = df_ctrl['Job_Status'].apply(get_status_label_th)
 
@@ -523,7 +546,7 @@ def admin_flow():
                 if pd.notna(date_min) and pd.notna(date_max):
                     start_default = date_min.date()
                     end_default = date_max.date()
-                    date_range = st.date_input("ช่วงวันที่แผนงาน", (start_default, end_default))
+                    date_range = st.date_input("ช่วงวันที่", (start_default, end_default))
                     if isinstance(date_range, tuple) and len(date_range) == 2:
                         start_d, end_d = date_range
                         mask_date = (df_ctrl['Plan_Date'].dt.date >= start_d) & (df_ctrl['Plan_Date'].dt.date <= end_d)
@@ -531,169 +554,91 @@ def admin_flow():
             with c_f2:
                 if 'Job_Status' in df_ctrl.columns:
                     status_unique = sorted(df_ctrl['Job_Status'].dropna().unique())
-                    status_selected = st.multiselect("กรองตามสถานะ", status_unique, default=status_unique)
+                    status_selected = st.multiselect("สถานะ", status_unique, default=status_unique)
                     df_ctrl = df_ctrl[df_ctrl['Job_Status'].isin(status_selected)]
 
-            # แสดงตารางเฉพาะคอลัมน์สำคัญ
             cols_view = [c for c in [
                 'Job_ID', 'Plan_Date', 'Customer_Name', 'Route_Name',
                 'Driver_ID', 'Vehicle_Plate', 'Job_Status_TH',
-                'Actual_Pickup_Time', 'Arrive_Dest_Time', 'Actual_Delivery_Time'
+                'Actual_Delivery_Time'
             ] if c in df_ctrl.columns]
-
             st.dataframe(df_ctrl[cols_view], use_container_width=True)
-
+            
             # ePOD Viewer
-            st.divider()
-            st.subheader("📸 ePOD Viewer (หลักฐานส่งของ)")
-            df_epod = df_jobs.copy()
-            if 'Job_ID' in df_epod.columns:
-                job_ids = df_epod['Job_ID'].astype(str).unique()
-                selected_job_id = st.selectbox("เลือกงาน (Job_ID) เพื่อดูรูป ePOD", job_ids)
-                if selected_job_id:
-                    row = df_epod[df_epod['Job_ID'].astype(str) == str(selected_job_id)]
-                    if not row.empty:
-                        rec = row.iloc[0]
-                        col1, col2 = st.columns(2)
-                        with col1:
-                            st.markdown("**รูปสินค้า / หน้างาน**")
-                            img_data = rec.get('Photo_Proof_Url', '-')
-                            if isinstance(img_data, str) and img_data not in ('', '-', 'NaN'):
-                                try:
-                                    st.image(img_data, use_container_width=True)
-                                except Exception:
-                                    st.info("ไม่สามารถแสดงรูปได้ (รูปอาจเสียหรือข้อมูลไม่ถูกต้อง)")
-                            else:
-                                st.info("ยังไม่มีรูปสินค้า")
-                        with col2:
-                            st.markdown("**รูปลายเซ็นผู้รับ**")
-                            sig_data = rec.get('Signature_Url', '-')
-                            if isinstance(sig_data, str) and sig_data not in ('', '-', 'NaN'):
-                                try:
-                                    st.image(sig_data, use_container_width=True)
-                                except Exception:
-                                    st.info("ไม่สามารถแสดงรูปลายเซ็นได้")
-                            else:
-                                st.info("ยังไม่มีรูปลายเซ็น")
-
-            # ดาวน์โหลดข้อมูล
-            st.subheader("📥 ดาวน์โหลดข้อมูล (.csv)")
-            c_dl1, c_dl2, c_dl3 = st.columns(3)
-            c_dl1.download_button("📄 โหลดงาน (Jobs)", convert_df_to_csv(df_jobs), "jobs.csv")
-            if not df_fuel.empty: c_dl2.download_button("⛽ โหลดน้ำมัน (Fuel)", convert_df_to_csv(df_fuel), "fuel.csv")
-            if not df_repair.empty: c_dl3.download_button("🔧 โหลดซ่อม (Repair)", convert_df_to_csv(df_repair), "repair.csv")
+            st.markdown("**ePOD Viewer**")
+            job_ids = df_ctrl['Job_ID'].astype(str).unique()
+            selected_job_id_epod = st.selectbox("เลือกงานดูรูป ePOD", job_ids, key="epod_sel")
+            if selected_job_id_epod:
+                row = df_ctrl[df_ctrl['Job_ID'].astype(str) == str(selected_job_id_epod)]
+                if not row.empty:
+                    rec = row.iloc[0]
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        st.caption("รูปสินค้า")
+                        img_data = rec.get('Photo_Proof_Url', '-')
+                        if len(str(img_data)) > 50: # Check if base64/url
+                            st.image(img_data, use_container_width=True)
+                        else: st.info("-")
+                    with col2:
+                        st.caption("ลายเซ็น")
+                        sig_data = rec.get('Signature_Url', '-')
+                        if len(str(sig_data)) > 50:
+                            st.image(sig_data, use_container_width=True)
+                        else: st.info("-")
 
     # --- Tab 2: Profit & Data ---
     with tab2:
         st.subheader("📊 วิเคราะห์กำไรและข้อมูล")
         
-        # โหลดข้อมูลที่จำเป็น
         df_jobs = get_data("Jobs_Main")
         df_repair = get_data("Repair_Tickets") 
         df_fuel = get_data("Fuel_Logs")
         
-        # แปลงคอลัมน์วันที่
         if not df_jobs.empty and 'Plan_Date' in df_jobs.columns:
             df_jobs['Plan_Date'] = pd.to_datetime(df_jobs['Plan_Date'], errors='coerce')
-            
-            # เพิ่มคอลัมน์เดือน-ปีสำหรับการกรอง
             df_jobs['Month_Year'] = df_jobs['Plan_Date'].dt.strftime('%Y-%m')
         
-        # กรองตามช่วงวันที่
-        st.markdown("### กรองข้อมูล")
         col1, col2 = st.columns(2)
         with col1:
-            start_date = st.date_input("วันที่เริ่มต้น", 
-                                     value=df_jobs['Plan_Date'].min().date() if not df_jobs.empty else datetime.today())
+            start_date = st.date_input("วันที่เริ่มต้น", value=datetime.today())
         with col2:
-            end_date = st.date_input("วันที่สิ้นสุด", 
-                                   value=df_jobs['Plan_Date'].max().date() if not df_jobs.empty else datetime.today())
+            end_date = st.date_input("วันที่สิ้นสุด", value=datetime.today())
         
-        # กรองข้อมูลตามวันที่
         if not df_jobs.empty:
             mask = (df_jobs['Plan_Date'].dt.date >= start_date) & (df_jobs['Plan_Date'].dt.date <= end_date)
             filtered_df = df_jobs[mask].copy()
             
-            # ตรวจสอบและเพิ่มคอลัมน์ที่จำเป็นถ้ายังไม่มี
             if 'Price_Customer' in filtered_df.columns:
                 filtered_df['Revenue'] = pd.to_numeric(filtered_df['Price_Customer'], errors='coerce').fillna(0)
-            else:
-                filtered_df['Revenue'] = 0
+            else: filtered_df['Revenue'] = 0
                 
             if 'Cost_Driver_Total' in filtered_df.columns:
                 filtered_df['Expense'] = pd.to_numeric(filtered_df['Cost_Driver_Total'], errors='coerce').fillna(0)
-            else:
-                filtered_df['Expense'] = 0
+            else: filtered_df['Expense'] = 0
                 
-            # คำนวณกำไร
             filtered_df['Profit'] = filtered_df['Revenue'] - filtered_df['Expense']
             
-            if not filtered_df.empty:
-                # คำนวณค่าใช้จ่ายทั้งหมด
-                total_fuel = pd.to_numeric(df_fuel['Price_Total'], errors='coerce').sum() if not df_fuel.empty else 0
-                total_repair = pd.to_numeric(df_repair['Cost_Total'], errors='coerce').sum() if not df_repair.empty else 0
-                
-                # สรุปยอดรวม
-                total_revenue = filtered_df['Revenue'].sum() if 'Revenue' in filtered_df.columns else 0
-                total_expense = filtered_df['Expense'].sum() if 'Expense' in filtered_df.columns else 0
-                net_profit = total_revenue - (total_expense + total_fuel + total_repair)
-                
-                # แสดงเมตริกหลัก
-                st.markdown("### สรุปยอดรวม")
-                k1, k2, k3, k4 = st.columns(4)
-                k1.metric("รายรับรวม", f"{total_revenue:,.0f} บาท")
-                k2.metric("ค่าใช้จ่ายรถร่วม", f"{total_expense:,.0f} บาท")
-                k3.metric("ค่าน้ำมัน+ซ่อม", f"{total_fuel + total_repair:,.0f} บาท")
-                k4.metric("กำไรสุทธิ", f"{net_profit:,.0f} บาท")
-                
-                # กราฟแสดงรายได้และกำไรต่อเดือน
-                st.markdown("### รายได้และกำไรต่อเดือน")
-                if 'Month_Year' in filtered_df.columns:
-                    monthly_data = filtered_df.groupby('Month_Year').agg({
-                        'Revenue': 'sum',
-                        'Expense': 'sum'
-                    }).reset_index()
-                    monthly_data['Profit'] = monthly_data['Revenue'] - monthly_data['Expense']
-                    
-                    if not monthly_data.empty:
-                        fig = px.bar(monthly_data, x='Month_Year', y=['Revenue', 'Expense', 'Profit'],
-                                    title='รายได้และค่าใช้จ่ายต่อเดือน',
-                                    labels={'value': 'จำนวนเงิน (บาท)', 'variable': 'ประเภท'},
-                                    barmode='group')
-                        st.plotly_chart(fig, use_container_width=True)
-                
-                # แสดงตารางข้อมูล
-                st.markdown("### รายละเอียดงาน")
-                display_cols = ['Job_ID', 'Plan_Date', 'Customer_Name', 'Route_Name', 
-                              'Distance', 'Revenue', 'Expense', 'Profit']
-                display_cols = [col for col in display_cols if col in filtered_df.columns]
-                st.dataframe(filtered_df[display_cols], use_container_width=True)
-                
-                # ปุ่มดาวน์โหลด
-                csv = convert_df_to_csv(filtered_df)
-                st.download_button(
-                    label="ดาวน์โหลดข้อมูล (CSV)",
-                    data=csv,
-                    file_name=f'profit_report_{start_date}_to_{end_date}.csv',
-                    mime='text/csv',
-                )
-            else:
-                st.warning("ไม่พบข้อมูลในช่วงวันที่เลือก")
-        else:
-            st.info("ยังไม่มีข้อมูลงาน")
+            total_fuel = pd.to_numeric(df_fuel['Price_Total'], errors='coerce').sum() if not df_fuel.empty else 0
+            total_repair = pd.to_numeric(df_repair['Cost_Total'], errors='coerce').sum() if not df_repair.empty else 0
             
-        # แสดงสถิติเพิ่มเติม
-        if not df_jobs.empty:
-            st.markdown("---")
-            st.markdown("### สถิติเพิ่มเติม")
+            total_revenue = filtered_df['Revenue'].sum()
+            total_expense = filtered_df['Expense'].sum()
+            net_profit = total_revenue - (total_expense + total_fuel + total_repair)
             
-            col1, col2 = st.columns(2)
-            with col1:
-                st.metric("งานทั้งหมด", len(df_jobs))
-                st.metric("รายได้เฉลี่ยต่องาน", f"{df_jobs['Revenue'].mean():,.0f} บาท" if 'Revenue' in df_jobs.columns else "N/A")
-            with col2:
-                st.metric("ระยะทางรวม", f"{df_jobs['Distance'].sum():,.0f} กม." if 'Distance' in df_jobs.columns else "N/A")
-                st.metric("กำไรเฉลี่ยต่องาน", f"{df_jobs['Profit'].mean():,.0f} บาท" if 'Profit' in df_jobs.columns else "N/A")
+            k1, k2, k3, k4 = st.columns(4)
+            k1.metric("รายรับรวม", f"{total_revenue:,.0f} บาท")
+            k2.metric("ค่าจ้างรถร่วม", f"{total_expense:,.0f} บาท")
+            k3.metric("ค่าน้ำมัน+ซ่อม", f"{total_fuel + total_repair:,.0f} บาท")
+            k4.metric("กำไรสุทธิ", f"{net_profit:,.0f} บาท")
+            
+            if 'Month_Year' in filtered_df.columns:
+                monthly_data = filtered_df.groupby('Month_Year').agg({'Revenue': 'sum', 'Expense': 'sum'}).reset_index()
+                if not monthly_data.empty:
+                    fig = px.bar(monthly_data, x='Month_Year', y=['Revenue', 'Expense'], barmode='group')
+                    st.plotly_chart(fig, use_container_width=True)
+            
+            csv = convert_df_to_csv(filtered_df)
+            st.download_button("ดาวน์โหลดข้อมูล (CSV)", data=csv, file_name='profit_report.csv', mime='text/csv')
 
     # --- Tab 3: MMS ---
     with tab3:
@@ -723,7 +668,6 @@ def admin_flow():
     with tab4:
         st.subheader("⛽ ประวัติการเติมน้ำมัน")
         fuel_logs = get_data("Fuel_Logs")
-        # ... (rest of the code remains the same)
         if not fuel_logs.empty:
             st.dataframe(fuel_logs, use_container_width=True)
         else:
@@ -751,14 +695,120 @@ def admin_flow():
         st.subheader("📍 ตำแหน่งรถปัจจุบัน")
         drivers = get_data("Master_Drivers")
         if not drivers.empty:
-            drivers['Current_Lat'] = pd.to_numeric(drivers['Current_Lat'], errors='coerce')
-            drivers['Current_Lon'] = pd.to_numeric(drivers['Current_Lon'], errors='coerce')
-            active = drivers.dropna(subset=['Current_Lat', 'Current_Lon'])
+            drivers = drivers.rename(columns={'Current_Lat': 'lat', 'Current_Lon': 'lon'})
+            drivers['lat'] = pd.to_numeric(drivers['lat'], errors='coerce')
+            drivers['lon'] = pd.to_numeric(drivers['lon'], errors='coerce')
+            active = drivers.dropna(subset=['lat', 'lon'])
+            
             if not active.empty:
-                st.map(active.rename(columns={'Current_Lat':'lat', 'Current_Lon':'lon'}), zoom=10)
-                st.dataframe(active[['Driver_Name', 'Vehicle_Plate', 'Last_Update']])
+                st.map(active[['lat', 'lon']])
+                display_cols = ['Driver_Name', 'Vehicle_Plate', 'Last_Update']
+                display_cols = [col for col in display_cols if col in active.columns]
+                st.dataframe(active[display_cols])
             else:
                 st.warning("ไม่พบพิกัดรถ")
+        else:
+            st.warning("ไม่พบข้อมูลคนขับ")
+    
+    # --- Tab 7: Fuel Prices & Price Calculator (ส่วนที่เพิ่มใหม่) ---
+    with tab7:
+        # ส่วนที่ 1: เครื่องมือคำนวณราคา (Price Calculator)
+        st.subheader("🧮 ประเมินราคาค่าขนส่ง (Quotation Check)")
+        st.caption("ตรวจสอบราคาก่อนเปิดงานจริง (ใช้เรตเดียวกับหน้าจ่ายงาน)")
+        
+        with st.container(border=True):
+            col_cal1, col_cal2 = st.columns(2)
+            
+            with col_cal1:
+                calc_date = st.date_input("วันที่ขนส่ง (เพื่อดึงเรต)", datetime.today(), key="calc_date")
+                calc_vehicle = st.selectbox("ประเภทรถ", ["4 ล้อ", "6 ล้อ", "10 ล้อ"], key="calc_veh")
+                calc_dist = st.number_input("ระยะทางประมาณการ (กม.)", min_value=0, value=100, key="calc_dist")
+                
+            with col_cal2:
+                st.markdown("**Option เสริม**")
+                c_opt1, c_opt2 = st.columns(2)
+                with c_opt1:
+                    calc_floors = st.number_input("ยกขึ้นชั้น", 0, key="calc_fl")
+                    calc_helpers = st.number_input("เพิ่มคนยก", 0, key="calc_hlp")
+                with c_opt2:
+                    calc_wait = st.number_input("รอเกิน 3 ชม.", 0, key="calc_wt")
+                    calc_night = st.number_input("ค้างคืน", 0, key="calc_nt")
+                calc_return = st.checkbox("สินค้าคืน (+50%)", key="calc_ret")
+
+            if st.button("🚀 คำนวณราคา", type="primary", use_container_width=True):
+                # 1. คำนวณต้นทุน Driver
+                est_cost = calculate_driver_cost(calc_date, calc_dist, calc_vehicle)
+                
+                # 2. คำนวณราคาลูกค้า Base Price
+                est_base_price = calculate_customer_price_from_master_rate_card(calc_dist, calc_vehicle, "30.01-33")
+                
+                # 3. คำนวณ Surcharge
+                surcharge = 0
+                if calc_floors > 0: surcharge += calc_floors * 100
+                if calc_helpers > 0: surcharge += calc_helpers * 300
+                if calc_wait > 0: surcharge += calc_wait * 300
+                if calc_night > 0: surcharge += calc_night * 1000
+                
+                est_total_price = est_base_price + surcharge
+                if calc_return:
+                    est_total_price = est_total_price * 1.5
+                
+                est_profit = est_total_price - est_cost
+                margin_percent = (est_profit / est_total_price * 100) if est_total_price > 0 else 0
+                
+                # แสดงผลลัพธ์
+                st.divider()
+                r1, r2, r3 = st.columns(3)
+                r1.metric("💰 ราคาเสนอขาย (Revenue)", f"{est_total_price:,.2f} บาท")
+                r2.metric("🚚 ต้นทุนรถร่วม (Cost)", f"{est_cost:,.2f} บาท")
+                r3.metric("📈 กำไรเบื้องต้น (Profit)", f"{est_profit:,.2f} บาท", f"{margin_percent:.1f}%")
+                
+                st.info(f"หมายเหตุ: ราคาพื้นฐาน {est_base_price:,.2f} บาท + Option {surcharge:,.2f} บาท")
+
+        st.divider()
+
+        # ส่วนที่ 2: ราคาน้ำมัน (Fuel Prices) - ของเดิม
+        st.subheader("⛽ ราคาน้ำมันล่าสุด")
+        st.caption("อัปเดตล่าสุดจาก kapook.com")
+        
+        if 'fuel_prices' not in st.session_state:
+            st.session_state.fuel_prices = {}
+        
+        if st.button("🔄 อัปเดตราคาล่าสุด", key="update_fuel"):
+            with st.spinner("กำลังดึงข้อมูลราคาน้ำมันล่าสุด..."):
+                fuel_prices = get_fuel_prices()
+                if fuel_prices:
+                    st.session_state.fuel_prices = fuel_prices
+                    st.success("อัปเดตราคาน้ำมันเรียบร้อยแล้ว!")
+                else:
+                    st.error("ไม่สามารถดึงข้อมูลราคาน้ำมันได้")
+        
+        if st.session_state.fuel_prices:
+            # PTT
+            if 'ราคาน้ำมัน ปตท. (ptt)' in st.session_state.fuel_prices:
+                ptt = st.session_state.fuel_prices['ราคาน้ำมัน ปตท. (ptt)']
+                st.markdown("### ปตท. (PTT)")
+                fuel_data = []
+                for fuel, price in ptt.items():
+                    unit = "บาท/กก." if "NGV" in fuel else "บาท/ลิตร"
+                    fuel_data.append([fuel, f"{price} {unit}"])
+                st.table(pd.DataFrame(fuel_data, columns=["ประเภทน้ำมัน", "ราคา"]))
+            
+            # Others
+            other_stations = [s for s in st.session_state.fuel_prices.keys() if s != 'ราคาน้ำมัน ปตท. (ptt)']
+            if other_stations:
+                with st.expander("🔄 ดูราคาจากปั้มอื่นๆ"):
+                    for station in other_stations:
+                        st.markdown(f"#### {station}")
+                        station_prices = st.session_state.fuel_prices[station]
+                        station_data = []
+                        for fuel, price in station_prices.items():
+                            unit = "บาท/กก." if "NGV" in fuel else "บาท/ลิตร"
+                            station_data.append([fuel, f"{price} {unit}"])
+                        if station_data:
+                            st.table(pd.DataFrame(station_data, columns=["ประเภทน้ำมัน", "ราคา"]))
+        else:
+            st.info("กรุณากดปุ่ม 'อัปเดตราคาล่าสุด' เพื่อดึงข้อมูล")
 
 # ---------------------------------------------------------
 # 6. Driver App (Mobile)
@@ -771,11 +821,13 @@ def driver_flow():
             st.session_state.logged_in = False
             st.rerun()
 
-    if 'page' not in st.session_state: st.session_state.page = "list"
+    if 'page' not in st.session_state: 
+        st.session_state.page = "list"
     
     # GPS Check-in
     c1, c2 = st.columns([3,1])
-    with c1: st.subheader("เมนูหลัก")
+    with c1: 
+        st.subheader("เมนูหลัก")
     with c2:
         loc = get_geolocation()
         if loc and st.button("📍 เช็คอิน"):
@@ -790,7 +842,7 @@ def driver_flow():
             df = get_data("Jobs_Main")
             if not df.empty:
                 df['Job_Status'] = df['Job_Status'].fillna('Pending')
-                my_jobs = df[(df['Driver_ID'] == st.session_state.driver_id) & (df['Job_Status'] != 'Completed')]
+                my_jobs = df[(df['Driver_ID'] == str(st.session_state.driver_id)) & (df['Job_Status'] != 'Completed')]
                 
                 if my_jobs.empty:
                     st.success("ไม่มีงานค้าง")
@@ -800,7 +852,6 @@ def driver_flow():
                             st.markdown(f"**{job['Route_Name']}**")
                             st.caption(f"ส่ง: {job['Dest_Location']}")
                             
-                            # Smart Navigation Link
                             origin_enc = urllib.parse.quote(str(job['Origin_Location']))
                             dest_enc = urllib.parse.quote(str(job['Dest_Location']))
                             nav_url = f"https://www.google.com/maps/dir/?api=1&origin={origin_enc}&destination={dest_enc}&travelmode=driving"
@@ -816,7 +867,6 @@ def driver_flow():
 
         elif st.session_state.page == "action":
             job = st.session_state.current_job
-            # โหลดสถานะล่าสุดของงานจากฐานข้อมูล
             df_cur = get_data("Jobs_Main")
             current_status = job.get('Job_Status', '')
             if not df_cur.empty and 'Job_ID' in df_cur.columns:
@@ -824,8 +874,8 @@ def driver_flow():
                     row = df_cur[df_cur['Job_ID'].astype(str) == str(job['Job_ID'])]
                     if not row.empty:
                         current_status = row.iloc[0].get('Job_Status', current_status)
-                except:
-                    pass
+                except: pass
+            
             if st.button("< กลับ"):
                 st.session_state.page = "list"
                 st.rerun()
@@ -834,7 +884,6 @@ def driver_flow():
             st.caption(f"สถานะปัจจุบัน: {get_status_label_th(current_status)}")
             st.write(f"ส่งที่: {job['Dest_Location']}")
             
-            # ปุ่มเปลี่ยนสถานะงานระหว่างทาง
             st.write("---")
             st.write("🛠 **อัปเดตสถานะงาน**")
             c_s1, c_s2, c_s3, c_s4 = st.columns(4)
@@ -865,19 +914,15 @@ def driver_flow():
             st.write("---")
             st.write("📸 **หลักฐานการส่ง (ePOD)**")
             img = st.camera_input("ถ่ายรูปสินค้า")
-            
             st.write("✍️ **ลายเซ็นผู้รับ (ถ่ายรูปกระดาษเซ็น)**")
             sig = st.camera_input("ถ่ายรูปใบเซ็นรับ", key="sig_cam")
 
             if st.button("✅ ยืนยันปิดงาน", type="primary", use_container_width=True):
                 if img:
                     with st.spinner("กำลังบันทึกและย่อรูป..."):
-                        # ย่อรูปก่อนส่ง
                         img_str = compress_image(img)
                         sig_str = compress_image(sig) if sig else "-"
-                        
                         now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                        # ใช้ Est_Distance_KM เป็นระยะวิ่ง หรือ Price_Customer เป็น fallback
                         dist = float(job.get('Est_Distance_KM', job.get('Price_Customer', 0)))
                         
                         update_job_status(job['Job_ID'], "Completed", now, dist, img_str, sig_str)
