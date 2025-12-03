@@ -62,31 +62,44 @@ def compress_image(image_file):
 
 # --- ฟังก์ชันช่วยคำนวณน้ำมันสำหรับ Driver ---
 def get_consumption_rate_by_driver(driver_id):
-    """หาอัตรากินน้ำมันจากประเภทรถ (รองรับการใส่แค่ตัวเลข)"""
+    """
+    หาอัตรากินน้ำมันเฉลี่ย (ไป-กลับ)
+    สูตร: (เรตวิ่งหนัก + เรตวิ่งเบา) / 2
+    """
     try:
         drivers = get_data("Master_Drivers")
-        if drivers.empty: return 10.0 
+        if drivers.empty: return 11.5 
         
         drivers['Driver_ID'] = drivers['Driver_ID'].astype(str)
         row = drivers[drivers['Driver_ID'] == str(driver_id)]
         
-        if row.empty: return 10.0 
+        if row.empty: return 11.5 
         
-        # ดึงค่าและแปลงเป็น Text เพื่อค้นหาคำ
         v_type = str(row.iloc[0].get('Vehicle_Type', '4 ล้อ'))
         
-        # เช็คจากเลขที่เจอในข้อความ
-        if "10" in v_type:
-            return 3.0   # 10 ล้อ = 3 กม./ลิตร
+        # กำหนดค่า หนัก/เบา ตามประเภทรถ
+        heavy_rate = 10.0
+        light_rate = 13.0
+        
+        if "พ่วง" in v_type or "เทรลเลอร์" in v_type:
+            heavy_rate = 2.5
+            light_rate = 3.0
+        elif "10" in v_type:
+            heavy_rate = 3.0
+            light_rate = 4.0
         elif "6" in v_type:
-            return 4.5   # 6 ล้อ = 4.5 กม./ลิตร
-        elif "พ่วง" in v_type or "เทรลเลอร์" in v_type:
-            return 2.5   # รถพ่วง
-        else:
-            return 10.0  # 4 ล้อ / กระบะ / หรือใส่เลข 4 เฉยๆ ก็จะตกที่นี่
+            heavy_rate = 4.5
+            light_rate = 6.5
+        elif "4" in v_type or "กระบะ" in v_type:
+            heavy_rate = 10.0
+            light_rate = 13.0
+            
+        # คำนวณค่าเฉลี่ย (ไป-กลับ)
+        avg_rate = (heavy_rate + light_rate) / 2
+        return avg_rate
             
     except Exception as e:
-        return 10.0
+        return 11.5 # ค่า Default (4 ล้อเฉลี่ย)
 
 def get_last_fuel_odometer(plate):
     try:
