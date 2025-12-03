@@ -886,7 +886,7 @@ def admin_flow():
                             st.table(pd.DataFrame(station_data, columns=["ประเภทน้ำมัน", "ราคา"]))
 
 # ---------------------------------------------------------
-# 6. Driver App (Mobile - Full Code: Multi Upload, Real-time Calc)
+# 6. Driver App (Mobile - แก้ไขปัญหากล้องเปิดไม่ได้)
 # ---------------------------------------------------------
 def driver_flow():
     with st.sidebar:
@@ -980,31 +980,46 @@ def driver_flow():
             st.write("---")
             st.write("📸 **หลักฐานการส่ง (ePOD)**")
             
+            # --- ส่วนที่ 1: เลือกรูปจากเครื่อง (หลายรูป) ---
             uploaded_files = st.file_uploader(
-                "ถ่ายรูปสินค้า (เลือกได้หลายรูป)", 
+                "📂 1. เลือกรูปจากอัลบั้ม (ได้หลายรูป)", 
                 type=['png', 'jpg', 'jpeg'], 
                 accept_multiple_files=True,
-                key="epod_imgs",
-                help="กดปุ่มนี้เพื่อถ่ายรูป -> ถ้าต้องการเพิ่มอีกรูป ให้กดปุ่มเดิมซ้ำอีกครั้ง"
+                key="epod_imgs_upload"
             )
-            if uploaded_files: st.info(f"✅ เลือกมาแล้ว {len(uploaded_files)} รูป (กดปุ่มยืนยันด้านล่างเพื่อส่ง)")
+            
+            # --- ส่วนที่ 2: เปิดกล้องถ่ายสด (ทีละรูป) ---
+            st.write("📸 **2. หรือ ถ่ายรูปเดี๋ยวนี้**")
+            cam_pic = st.camera_input("กดปุ่มเพื่อถ่ายรูป", key="epod_cam_input")
+            
+            # รวมรูปทั้งหมด
+            all_images = []
+            if uploaded_files:
+                all_images.extend(uploaded_files) # ใส่รูปจากอัลบั้ม
+            if cam_pic:
+                all_images.append(cam_pic) # ใส่รูปจากกล้องสด
+            
+            if all_images:
+                st.info(f"✅ รวมทั้งหมด {len(all_images)} รูป (พร้อมส่ง)")
             
             st.write("✍️ **ลายเซ็นผู้รับ**")
             sig = st.camera_input("ถ่ายรูปใบเซ็นรับ", key="sig_cam")
 
             if st.button("✅ ยืนยันปิดงาน", type="primary", use_container_width=True):
-                if uploaded_files:
+                if all_images:
                     with st.spinner("กำลังรวมรูปและบันทึก..."):
-                        img_str = process_multiple_images(uploaded_files)
+                        # ส่ง list รูปทั้งหมดไปรวมกัน
+                        img_str = process_multiple_images(all_images)
                         sig_str = compress_image(sig) if sig else "-"
                         now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                         dist = float(job.get('Est_Distance_KM', job.get('Price_Customer', 0)))
+                        
                         update_job_status(job['Job_ID'], "Completed", now, dist, img_str, sig_str)
                         st.success("สำเร็จ!")
                         time.sleep(2)
                         st.session_state.page = "list"
                         st.rerun()
-                else: st.error("กรุณาถ่ายรูปสินค้าอย่างน้อย 1 รูป")
+                else: st.error("กรุณาใส่รูปสินค้า (จากอัลบั้ม หรือ ถ่ายใหม่)")
 
     # --- 2. เติมน้ำมัน ---
     elif menu == "⛽ เติมน้ำมัน":
@@ -1040,13 +1055,14 @@ def driver_flow():
         f_liters = st.number_input("จำนวนลิตรที่เติมจริง", 0.0)
         f_price = st.number_input("ยอดเงิน (บาท)", 0.0)
         
-        f_imgs = st.file_uploader(
-            "ถ่ายรูปสลิป/ไมล์ (เลือกได้หลายรูป)", 
-            type=['png', 'jpg', 'jpeg'], 
-            accept_multiple_files=True,
-            key="fuel_imgs"
-        )
-        if f_imgs: st.caption(f"เลือกแล้ว {len(f_imgs)} รูป")
+        # --- รวมระบบรูปภาพ 2 แบบ ---
+        st.markdown("**หลักฐานการเติม**")
+        f_upload = st.file_uploader("📂 เลือกรูปสลิป/ไมล์ (จากอัลบั้ม)", type=['png', 'jpg', 'jpeg'], accept_multiple_files=True, key="fuel_upload")
+        f_cam = st.camera_input("📸 หรือ ถ่ายรูปเดี๋ยวนี้", key="fuel_cam")
+        
+        all_fuel_imgs = []
+        if f_upload: all_fuel_imgs.extend(f_upload)
+        if f_cam: all_fuel_imgs.append(f_cam)
 
         if st.button("บันทึกข้อมูล", type="primary", use_container_width=True):
             if f_price > 0 and f_liters > 0:
@@ -1054,10 +1070,11 @@ def driver_flow():
                     st.warning(f"⚠️ เตือน: เติมน้ำมันเยอะผิดปกติ")
                     time.sleep(2)
                 
-                if not f_imgs: st.error("กรุณาถ่ายรูปสลิป")
+                if not all_fuel_imgs:
+                    st.error("กรุณาใส่รูปสลิป (จากอัลบั้ม หรือ ถ่ายใหม่)")
                 else:
-                    with st.spinner("กำลังรวมรูปและบันทึก..."):
-                        img_str = process_multiple_images(f_imgs)
+                    with st.spinner("กำลังบันทึก..."):
+                        img_str = process_multiple_images(all_fuel_imgs)
                         fuel_data = {
                             "Log_ID": f"FUEL-{datetime.now().strftime('%y%m%d%H%M')}",
                             "Date_Time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
@@ -1079,19 +1096,21 @@ def driver_flow():
             issue = st.selectbox("หมวดหมู่", ["เครื่องยนต์", "ยาง", "ช่วงล่าง", "อื่นๆ"])
             desc = st.text_area("รายละเอียด")
             
-            f_imgs = st.file_uploader(
-                "ถ่ายรูปอาการเสีย (ได้หลายรูป)", 
-                type=['png', 'jpg', 'jpeg'], 
-                accept_multiple_files=True,
-                key="repair_imgs"
-            )
+            # --- รวมระบบรูปภาพ 2 แบบ ---
+            r_upload = st.file_uploader("📂 เลือกรูปอาการเสีย (จากอัลบั้ม)", type=['png', 'jpg', 'jpeg'], accept_multiple_files=True, key="rep_upload")
+            r_cam = st.camera_input("📸 หรือ ถ่ายรูปเดี๋ยวนี้", key="rep_cam")
             
             if st.form_submit_button("ส่งเรื่อง"):
-                if not f_imgs:
-                    st.error("กรุณาถ่ายรูปอาการเสีย")
+                # รวมรูปใน Form ต้องทำแบบนี้
+                all_rep_imgs = []
+                if r_upload: all_rep_imgs.extend(r_upload)
+                if r_cam: all_rep_imgs.append(r_cam)
+                
+                if not all_rep_imgs:
+                    st.error("กรุณาใส่รูปอาการเสีย")
                 else:
                     with st.spinner("กำลังส่งเรื่อง..."):
-                        img_str = process_multiple_images(f_imgs)
+                        img_str = process_multiple_images(all_rep_imgs)
                         data = {
                             "Ticket_ID": f"TK-{datetime.now().strftime('%y%m%d%H%M')}",
                             "Date_Report": datetime.now().strftime("%Y-%m-%d"), 
