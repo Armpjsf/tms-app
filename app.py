@@ -62,16 +62,31 @@ def compress_image(image_file):
 
 # --- ฟังก์ชันช่วยคำนวณน้ำมันสำหรับ Driver ---
 def get_consumption_rate_by_driver(driver_id):
+    """หาอัตรากินน้ำมันจากประเภทรถ (รองรับการใส่แค่ตัวเลข)"""
     try:
         drivers = get_data("Master_Drivers")
-        if drivers.empty: return 10.0
+        if drivers.empty: return 10.0 
+        
         drivers['Driver_ID'] = drivers['Driver_ID'].astype(str)
         row = drivers[drivers['Driver_ID'] == str(driver_id)]
-        if row.empty: return 10.0
-        # สมมติ Logic ประเภทรถจาก Role หรือข้อมูลที่มี (หรือใช้ Default ตามที่คุณแจ้ง)
-        # ถ้ามีคอลัมน์ Vehicle_Type ให้ดึงจากตรงนั้น
-        return 10.0 # Default (4 ล้อ = 10, 6 ล้อ = 4.5, 10 ล้อ = 3.0)
-    except: return 10.0
+        
+        if row.empty: return 10.0 
+        
+        # ดึงค่าและแปลงเป็น Text เพื่อค้นหาคำ
+        v_type = str(row.iloc[0].get('Vehicle_Type', '4 ล้อ'))
+        
+        # เช็คจากเลขที่เจอในข้อความ
+        if "10" in v_type:
+            return 3.0   # 10 ล้อ = 3 กม./ลิตร
+        elif "6" in v_type:
+            return 4.5   # 6 ล้อ = 4.5 กม./ลิตร
+        elif "พ่วง" in v_type or "เทรลเลอร์" in v_type:
+            return 2.5   # รถพ่วง
+        else:
+            return 10.0  # 4 ล้อ / กระบะ / หรือใส่เลข 4 เฉยๆ ก็จะตกที่นี่
+            
+    except Exception as e:
+        return 10.0
 
 def get_last_fuel_odometer(plate):
     try:
