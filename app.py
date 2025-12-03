@@ -757,68 +757,70 @@ def driver_flow():
     elif menu == "⛽ เติมน้ำมัน":
         st.subheader("บันทึกการเติมน้ำมัน")
         
-        # ดึงข้อมูลตั้งต้น
+        # 1. ข้อมูลตั้งต้น
         plate = st.session_state.vehicle_plate
         last_odo = get_last_fuel_odometer(plate)
         rate = get_consumption_rate_by_driver(st.session_state.driver_id)
         
         # แสดงข้อมูลรถ
         st.caption(f"รถทะเบียน: {plate} | อัตรากินน้ำมันเฉลี่ย: {rate} กม./ลิตร")
-        
-        # แสดงเลขไมล์ล่าสุด (ถ้ามี)
         if last_odo > 0:
             st.info(f"🔢 เลขไมล์เติมล่าสุด: {last_odo:,.0f}")
         else:
-            st.warning("⚠️ ไม่พบประวัติการเติมน้ำมัน (เป็นการเติมครั้งแรก?)")
+            st.warning("⚠️ ไม่พบประวัติการเติมน้ำมัน")
 
-        with st.form("fuel"):
-            f_station = st.text_input("ปั๊ม/สถานที่")
-            
-            # Input เลขไมล์
-            f_odo = st.number_input("เลขไมล์ปัจจุบัน (กด Enter เพื่อคำนวณ)", min_value=int(last_odo), value=int(last_odo))
-            
-            # คำนวณ Real-time
-            dist_run = f_odo - last_odo
-            suggest_liters = dist_run / rate if rate > 0 else 0
-            
-            # --- ส่วนแสดงผลการคำนวณ (ปรับปรุงใหม่) ---
-            if dist_run > 0:
-                # ใช้ st.success แทน HTML เพื่อความชัวร์
-                st.success(f"💡 วิ่งมาแล้ว: {dist_run:,.0f} กม. | ⛽ ควรเติมประมาณ: {suggest_liters:,.1f} ลิตร")
-            else:
-                # แสดงข้อความบอกให้กรอกเลขไมล์
-                st.caption("👈 กรุณากรอก 'เลขไมล์ปัจจุบัน' ที่มากกว่าเลขเดิม เพื่อให้ระบบคำนวณน้ำมัน")
-            # ----------------------------------------
-            
-            f_liters = st.number_input("จำนวนลิตรที่เติมจริง", 0.0)
-            f_price = st.number_input("ยอดเงิน (บาท)", 0.0)
-            f_img = st.camera_input("ถ่ายรูปสลิป")
-            
-            if st.form_submit_button("บันทึกข้อมูล"):
-                if f_price > 0 and f_liters > 0:
-                    # แจ้งเตือนถ้าเติมเยอะผิดปกติ (แต่ยอมให้บันทึก)
-                    if suggest_liters > 0 and f_liters > (suggest_liters * 1.2):
-                        st.warning(f"⚠️ แจ้งเตือน: เติมน้ำมันเกินค่าเฉลี่ยปกติ (ระบบคำนวณไว้ {suggest_liters:.1f} ลิตร)")
-                        time.sleep(2) # ให้เห็นข้อความเตือนแป๊บนึง
-                        
-                    img_str = compress_image(f_img)
-                    fuel_data = {
-                        "Log_ID": f"FUEL-{datetime.now().strftime('%y%m%d%H%M')}",
-                        "Date_Time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                        "Driver_ID": st.session_state.driver_id,
-                        "Vehicle_Plate": st.session_state.vehicle_plate,
-                        "Odometer": f_odo, 
-                        "Liters": f_liters, 
-                        "Price_Total": f_price,
-                        "Station_Name": f_station, 
-                        "Photo_Url": img_str
-                    }
-                    if create_fuel_log(fuel_data):
-                        st.success("บันทึกข้อมูลสำเร็จ!")
-                        time.sleep(1)
-                        st.rerun()
+        # --- ส่วนกรอกข้อมูล (ถอด st.form ออกเพื่อให้คำนวณทันที) ---
+        
+        f_station = st.text_input("ปั๊ม/สถานที่")
+        
+        # Input เลขไมล์
+        # บนมือถือ: เมื่อพิมพ์เสร็จแล้ว ให้แตะพื้นที่ว่างๆ นอกกล่อง 1 ครั้ง ระบบจะคำนวณให้ครับ
+        f_odo = st.number_input("เลขไมล์ปัจจุบัน", min_value=int(last_odo), value=int(last_odo))
+        
+        # --- ส่วนคำนวณ Real-time ---
+        dist_run = f_odo - last_odo
+        suggest_liters = dist_run / rate if rate > 0 else 0
+        
+        if dist_run > 0:
+            st.success(f"💡 วิ่งมา: {dist_run:,.0f} กม. | ⛽ ควรเติม: {suggest_liters:,.1f} ลิตร")
+        else:
+            st.caption("👈 กรุณากรอกเลขไมล์ปัจจุบัน เพื่อคำนวณยอดน้ำมัน")
+        # ---------------------------
+
+        f_liters = st.number_input("จำนวนลิตรที่เติมจริง", 0.0)
+        f_price = st.number_input("ยอดเงิน (บาท)", 0.0)
+        f_img = st.camera_input("ถ่ายรูปสลิป")
+        
+        # ปุ่มบันทึก (ใช้ st.button ธรรมดา แทน form_submit)
+        if st.button("บันทึกข้อมูล", type="primary", use_container_width=True):
+            if f_price > 0 and f_liters > 0:
+                # Check เตือน
+                if suggest_liters > 0 and f_liters > (suggest_liters * 1.2):
+                    st.warning(f"⚠️ เตือน: เติมน้ำมันเยอะผิดปกติ (ปกติประมาณ {suggest_liters:.1f} ลิตร)")
+                    time.sleep(2)
+                
+                if not f_img:
+                    st.error("กรุณาถ่ายรูปสลิป")
                 else:
-                    st.error("กรุณากรอกข้อมูลให้ครบถ้วน")
+                    with st.spinner("กำลังบันทึก..."):
+                        img_str = compress_image(f_img)
+                        fuel_data = {
+                            "Log_ID": f"FUEL-{datetime.now().strftime('%y%m%d%H%M')}",
+                            "Date_Time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                            "Driver_ID": st.session_state.driver_id,
+                            "Vehicle_Plate": st.session_state.vehicle_plate,
+                            "Odometer": f_odo, 
+                            "Liters": f_liters, 
+                            "Price_Total": f_price,
+                            "Station_Name": f_station, 
+                            "Photo_Url": img_str
+                        }
+                        if create_fuel_log(fuel_data):
+                            st.success("บันทึกข้อมูลสำเร็จ!")
+                            time.sleep(1)
+                            st.rerun()
+            else:
+                st.error("กรุณากรอกจำนวนลิตรและยอดเงิน")
 
     elif menu == "🔧 แจ้งซ่อม":
         st.subheader("แจ้งอาการเสีย")
