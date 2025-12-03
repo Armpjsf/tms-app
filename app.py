@@ -100,6 +100,41 @@ def get_consumption_rate_by_driver(driver_id):
             
     except Exception as e:
         return 11.5 # ค่า Default (4 ล้อเฉลี่ย)
+    
+def calculate_actual_consumption(plate):
+    """คำนวณอัตราสิ้นเปลืองน้ำมันจริงจากประวัติ (กม./ลิตร)"""
+    try:
+        df = get_data("Fuel_Logs")
+        if df.empty: return 0, 0, 0 # rate, total_dist, total_liters
+        
+        # กรองเฉพาะรถคันนี้ และเรียงตามเลขไมล์
+        df['Vehicle_Plate'] = df['Vehicle_Plate'].astype(str)
+        df['Odometer'] = pd.to_numeric(df['Odometer'], errors='coerce')
+        df['Liters'] = pd.to_numeric(df['Liters'], errors='coerce')
+        
+        my_logs = df[df['Vehicle_Plate'] == str(plate)].sort_values(by='Odometer')
+        
+        # ต้องมีข้อมูลอย่างน้อย 2 ครั้งถึงจะคำนวณช่วงได้
+        if len(my_logs) < 2:
+            return 0, 0, 0
+            
+        # คำนวณระยะทางรวม (ไมล์ล่าสุด - ไมล์แรก)
+        first_odo = my_logs.iloc[0]['Odometer']
+        last_odo = my_logs.iloc[-1]['Odometer']
+        total_dist = last_odo - first_odo
+        
+        # คำนวณน้ำมันที่ใช้ (รวมทุกครั้ง ยกเว้นครั้งแรก)
+        # เพราะการเติมครั้งที่ 2 คือปริมาณที่ใช้ไปจากการวิ่งระหว่าง ครั้งที่ 1 -> 2
+        total_liters_used = my_logs.iloc[1:]['Liters'].sum()
+        
+        if total_liters_used > 0:
+            actual_rate = total_dist / total_liters_used
+            return actual_rate, total_dist, total_liters_used
+        else:
+            return 0, 0, 0
+            
+    except Exception as e:
+        return 0, 0, 0
 
 def get_last_fuel_odometer(plate):
     try:
@@ -770,46 +805,77 @@ def driver_flow():
     elif menu == "⛽ เติมน้ำมัน":
         st.subheader("บันทึกการเติมน้ำมัน")
         
-        # 1. ข้อมูลตั้งต้น
+        # 1. ดึงข้อมูล
         plate = st.session_state.vehicle_plate
         last_odo = get_last_fuel_odometer(plate)
-        rate = get_consumption_rate_by_driver(st.session_state.driver_id)
         
-        # แสดงข้อมูลรถ
-        st.caption(f"รถทะเบียน: {plate} | อัตรากินน้ำมันเฉลี่ย: {rate} กม./ลิตร")
+        # ดึงค่ามาตรฐาน (Benchmark)
+        std_rate = get_consumption_rate_by_driver(st.session_state.driver_id)
+        
+        # ดึงค่าจริง (Actual)
+        act_rate, total_km, total_fuel = calculate_actual_consumption(plate)
+        
+        # --- ส่วนแสดงผล Dashboard สถิติน้ำมัน ---
+        with st.container(border=True):
+            st.markdown(f"**📊 สถิติการใช้น้ำมัน: {plate}**")
+            k1, k2 = st.columns(2)
+            
+            # แสดงค่ามาตรฐาน
+            with k1:
+                st.metric(
+                    "เกณฑ์มาตรฐาน", 
+                    f"{std_rate:.1f} กม./ลิตร",
+                    help="ค่าเฉลี่ยกลางที่ควรรักษามาตรฐานไว้"
+                )
+                
+            # แสดงค่าจริงที่ทำได้
+            with k2:
+                if act_rate > 0:
+                    # ถ้าประหยัดกว่าเกณฑ์ (เลขมากกว่า) เป็นสีเขียว, ถ้ากินน้ำมัน (เลขน้อยกว่า) เป็นสีแดง
+                    delta_val = act_rate - std_rate
+                    st.metric(
+                        "ทำได้จริงเฉลี่ย", 
+                        f"{act_rate:.2f} กม./ลิตร",
+                        delta=f"{delta_val:.2f}",
+                        delta_color="normal" # normal = มากกว่าสีเขียว (ดี), น้อยกว่าสีแดง (แย่)
+                    )
+                else:
+                    st.metric("ทำได้จริงเฉลี่ย", "- กม./ลิตร", "รอข้อมูลเพิ่ม")
+            
+            if act_rate > 0:
+                st.caption(f"ℹ️ คำนวณจากประวัติวิ่งจริง {total_km:,.0f} กม. ใช้น้ำมัน {total_fuel:,.1f} ลิตร")
+
+        # --- ส่วนกรอกข้อมูลเติมน้ำมัน ---
         if last_odo > 0:
             st.info(f"🔢 เลขไมล์เติมล่าสุด: {last_odo:,.0f}")
         else:
             st.warning("⚠️ ไม่พบประวัติการเติมน้ำมัน")
 
-        # --- ส่วนกรอกข้อมูล (ถอด st.form ออกเพื่อให้คำนวณทันที) ---
-        
+        # ถอด Form ออกเพื่อให้คำนวณ Real-time
         f_station = st.text_input("ปั๊ม/สถานที่")
         
-        # Input เลขไมล์
-        # บนมือถือ: เมื่อพิมพ์เสร็จแล้ว ให้แตะพื้นที่ว่างๆ นอกกล่อง 1 ครั้ง ระบบจะคำนวณให้ครับ
         f_odo = st.number_input("เลขไมล์ปัจจุบัน", min_value=int(last_odo), value=int(last_odo))
         
-        # --- ส่วนคำนวณ Real-time ---
+        # คำนวณ Real-time สำหรับรอบปัจจุบัน
+        # ใช้ act_rate (ค่าจริง) ในการแนะนำ ถ้าไม่มีให้ใช้ std_rate (ค่าเกณฑ์)
+        calc_base_rate = act_rate if act_rate > 0 else std_rate
+        
         dist_run = f_odo - last_odo
-        suggest_liters = dist_run / rate if rate > 0 else 0
+        suggest_liters = dist_run / calc_base_rate if calc_base_rate > 0 else 0
         
         if dist_run > 0:
-            st.success(f"💡 วิ่งมา: {dist_run:,.0f} กม. | ⛽ ควรเติม: {suggest_liters:,.1f} ลิตร")
+            st.success(f"💡 วิ่งมา: {dist_run:,.0f} กม. | ⛽ ควรเติมประมาณ: {suggest_liters:,.1f} ลิตร (คิดจากเรต {calc_base_rate:.1f})")
         else:
-            st.caption("👈 กรุณากรอกเลขไมล์ปัจจุบัน เพื่อคำนวณยอดน้ำมัน")
-        # ---------------------------
+            st.caption("👈 กรุณากรอกเลขไมล์ปัจจุบัน")
 
         f_liters = st.number_input("จำนวนลิตรที่เติมจริง", 0.0)
         f_price = st.number_input("ยอดเงิน (บาท)", 0.0)
         f_img = st.camera_input("ถ่ายรูปสลิป")
         
-        # ปุ่มบันทึก (ใช้ st.button ธรรมดา แทน form_submit)
         if st.button("บันทึกข้อมูล", type="primary", use_container_width=True):
             if f_price > 0 and f_liters > 0:
-                # Check เตือน
                 if suggest_liters > 0 and f_liters > (suggest_liters * 1.2):
-                    st.warning(f"⚠️ เตือน: เติมน้ำมันเยอะผิดปกติ (ปกติประมาณ {suggest_liters:.1f} ลิตร)")
+                    st.warning(f"⚠️ เตือน: เติมน้ำมันเยอะผิดปกติ")
                     time.sleep(2)
                 
                 if not f_img:
