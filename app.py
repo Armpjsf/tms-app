@@ -479,36 +479,22 @@ def admin_flow():
                         editable_jobs['Job_ID'].astype(str).unique()
                     )
 
-                    # เลือกคนขับใหม่จาก driver_options เดิม
-                    new_driver_raw = st.selectbox("เลือกคนขับใหม่", driver_options, key="reassign_driver")
-                    new_driver_id = new_driver_raw.split(" : ")[0] if new_driver_raw else ""
-                    new_plate = driver_map.get(new_driver_raw, "")
-
-                    if st.button("ยืนยันเปลี่ยนคนขับ", type="primary"):
-                        if new_driver_id:
-                            # อัปเดตใน DataFrame แล้วเขียนกลับไปที่ Google Sheet
-                            mask = jobs_admin_view['Job_ID'].astype(str) == str(job_id_selected)
-                            jobs_admin_view.loc[mask, 'Driver_ID'] = new_driver_id
-
-    # --- Tab 2: Dashboard & Export ---
-    with tab2:
-        st.header("วิเคราะห์กำไรและข้อมูล")
-        df_jobs = get_data("Jobs_Main")
-        df_fuel = get_data("Fuel_Logs")
         df_repair = get_data("Repair_Tickets")
+        df_jobs = get_data("Jobs_Main")
+        df_fuel = get_data("Fuel_Logs") if 'df_fuel' not in locals() else df_fuel
         
         if not df_jobs.empty:
-
             # คำนวณกำไรเบื้องต้น
-            # สมมติรายรับ = ระยะทาง * 35 บาท
+            # ใช้ Price_Customer เป็นรายรับจริงแทนการคำนวณจากระยะทาง
             df_jobs['Distance'] = pd.to_numeric(df_jobs['Est_Distance_KM'], errors='coerce').fillna(0)
-            df_jobs['Revenue'] = df_jobs['Distance'] * 35 
+            df_jobs['Revenue'] = pd.to_numeric(df_jobs['Price_Customer'], errors='coerce').fillna(0)
             df_jobs['Expense'] = pd.to_numeric(df_jobs['Cost_Driver_Total'], errors='coerce').fillna(0)
             
             # รวมรายจ่ายน้ำมันและซ่อม (ถ้ามี)
             total_fuel = pd.to_numeric(df_fuel['Price_Total'], errors='coerce').sum() if not df_fuel.empty else 0
             total_repair = pd.to_numeric(df_repair['Cost_Total'], errors='coerce').sum() if not df_repair.empty else 0
             
+            # คำนวณกำไรสุทธิ
             net_profit = df_jobs['Revenue'].sum() - (df_jobs['Expense'].sum() + total_fuel + total_repair)
 
             k1, k2, k3, k4 = st.columns(4)
@@ -574,7 +560,7 @@ def admin_flow():
                             img_data = rec.get('Photo_Proof_Url', '-')
                             if isinstance(img_data, str) and img_data not in ('', '-', 'NaN'):
                                 try:
-                                    st.image(img_data, use_column_width=True)
+                                    st.image(img_data, use_container_width=True)
                                 except Exception:
                                     st.info("ไม่สามารถแสดงรูปได้ (รูปอาจเสียหรือข้อมูลไม่ถูกต้อง)")
                             else:
@@ -584,7 +570,7 @@ def admin_flow():
                             sig_data = rec.get('Signature_Url', '-')
                             if isinstance(sig_data, str) and sig_data not in ('', '-', 'NaN'):
                                 try:
-                                    st.image(sig_data, use_column_width=True)
+                                    st.image(sig_data, use_container_width=True)
                                 except Exception:
                                     st.info("ไม่สามารถแสดงรูปลายเซ็นได้")
                             else:
@@ -596,6 +582,118 @@ def admin_flow():
             c_dl1.download_button("📄 โหลดงาน (Jobs)", convert_df_to_csv(df_jobs), "jobs.csv")
             if not df_fuel.empty: c_dl2.download_button("⛽ โหลดน้ำมัน (Fuel)", convert_df_to_csv(df_fuel), "fuel.csv")
             if not df_repair.empty: c_dl3.download_button("🔧 โหลดซ่อม (Repair)", convert_df_to_csv(df_repair), "repair.csv")
+
+    # --- Tab 2: Profit & Data ---
+    with tab2:
+        st.subheader("📊 วิเคราะห์กำไรและข้อมูล")
+        
+        # โหลดข้อมูลที่จำเป็น
+        df_jobs = get_data("Jobs_Main")
+        df_repair = get_data("Repair_Tickets") 
+        df_fuel = get_data("Fuel_Logs")
+        
+        # แปลงคอลัมน์วันที่
+        if not df_jobs.empty and 'Plan_Date' in df_jobs.columns:
+            df_jobs['Plan_Date'] = pd.to_datetime(df_jobs['Plan_Date'], errors='coerce')
+            
+            # เพิ่มคอลัมน์เดือน-ปีสำหรับการกรอง
+            df_jobs['Month_Year'] = df_jobs['Plan_Date'].dt.strftime('%Y-%m')
+        
+        # กรองตามช่วงวันที่
+        st.markdown("### กรองข้อมูล")
+        col1, col2 = st.columns(2)
+        with col1:
+            start_date = st.date_input("วันที่เริ่มต้น", 
+                                     value=df_jobs['Plan_Date'].min().date() if not df_jobs.empty else datetime.today())
+        with col2:
+            end_date = st.date_input("วันที่สิ้นสุด", 
+                                   value=df_jobs['Plan_Date'].max().date() if not df_jobs.empty else datetime.today())
+        
+        # กรองข้อมูลตามวันที่
+        if not df_jobs.empty:
+            mask = (df_jobs['Plan_Date'].dt.date >= start_date) & (df_jobs['Plan_Date'].dt.date <= end_date)
+            filtered_df = df_jobs[mask].copy()
+            
+            # ตรวจสอบและเพิ่มคอลัมน์ที่จำเป็นถ้ายังไม่มี
+            if 'Price_Customer' in filtered_df.columns:
+                filtered_df['Revenue'] = pd.to_numeric(filtered_df['Price_Customer'], errors='coerce').fillna(0)
+            else:
+                filtered_df['Revenue'] = 0
+                
+            if 'Cost_Driver_Total' in filtered_df.columns:
+                filtered_df['Expense'] = pd.to_numeric(filtered_df['Cost_Driver_Total'], errors='coerce').fillna(0)
+            else:
+                filtered_df['Expense'] = 0
+                
+            # คำนวณกำไร
+            filtered_df['Profit'] = filtered_df['Revenue'] - filtered_df['Expense']
+            
+            if not filtered_df.empty:
+                # คำนวณค่าใช้จ่ายทั้งหมด
+                total_fuel = pd.to_numeric(df_fuel['Price_Total'], errors='coerce').sum() if not df_fuel.empty else 0
+                total_repair = pd.to_numeric(df_repair['Cost_Total'], errors='coerce').sum() if not df_repair.empty else 0
+                
+                # สรุปยอดรวม
+                total_revenue = filtered_df['Revenue'].sum() if 'Revenue' in filtered_df.columns else 0
+                total_expense = filtered_df['Expense'].sum() if 'Expense' in filtered_df.columns else 0
+                net_profit = total_revenue - (total_expense + total_fuel + total_repair)
+                
+                # แสดงเมตริกหลัก
+                st.markdown("### สรุปยอดรวม")
+                k1, k2, k3, k4 = st.columns(4)
+                k1.metric("รายรับรวม", f"{total_revenue:,.0f} บาท")
+                k2.metric("ค่าใช้จ่ายรถร่วม", f"{total_expense:,.0f} บาท")
+                k3.metric("ค่าน้ำมัน+ซ่อม", f"{total_fuel + total_repair:,.0f} บาท")
+                k4.metric("กำไรสุทธิ", f"{net_profit:,.0f} บาท")
+                
+                # กราฟแสดงรายได้และกำไรต่อเดือน
+                st.markdown("### รายได้และกำไรต่อเดือน")
+                if 'Month_Year' in filtered_df.columns:
+                    monthly_data = filtered_df.groupby('Month_Year').agg({
+                        'Revenue': 'sum',
+                        'Expense': 'sum'
+                    }).reset_index()
+                    monthly_data['Profit'] = monthly_data['Revenue'] - monthly_data['Expense']
+                    
+                    if not monthly_data.empty:
+                        fig = px.bar(monthly_data, x='Month_Year', y=['Revenue', 'Expense', 'Profit'],
+                                    title='รายได้และค่าใช้จ่ายต่อเดือน',
+                                    labels={'value': 'จำนวนเงิน (บาท)', 'variable': 'ประเภท'},
+                                    barmode='group')
+                        st.plotly_chart(fig, use_container_width=True)
+                
+                # แสดงตารางข้อมูล
+                st.markdown("### รายละเอียดงาน")
+                display_cols = ['Job_ID', 'Plan_Date', 'Customer_Name', 'Route_Name', 
+                              'Distance', 'Revenue', 'Expense', 'Profit']
+                display_cols = [col for col in display_cols if col in filtered_df.columns]
+                st.dataframe(filtered_df[display_cols], use_container_width=True)
+                
+                # ปุ่มดาวน์โหลด
+                csv = convert_df_to_csv(filtered_df)
+                st.download_button(
+                    label="ดาวน์โหลดข้อมูล (CSV)",
+                    data=csv,
+                    file_name=f'profit_report_{start_date}_to_{end_date}.csv',
+                    mime='text/csv',
+                )
+            else:
+                st.warning("ไม่พบข้อมูลในช่วงวันที่เลือก")
+        else:
+            st.info("ยังไม่มีข้อมูลงาน")
+            
+        # แสดงสถิติเพิ่มเติม
+        if not df_jobs.empty:
+            st.markdown("---")
+            st.markdown("### สถิติเพิ่มเติม")
+            
+            col1, col2 = st.columns(2)
+            with col1:
+                st.metric("งานทั้งหมด", len(df_jobs))
+                st.metric("รายได้เฉลี่ยต่องาน", f"{df_jobs['Revenue'].mean():,.0f} บาท" if 'Revenue' in df_jobs.columns else "N/A")
+            with col2:
+                st.metric("ระยะทางรวม", f"{df_jobs['Distance'].sum():,.0f} กม." if 'Distance' in df_jobs.columns else "N/A")
+                st.metric("กำไรเฉลี่ยต่องาน", f"{df_jobs['Profit'].mean():,.0f} บาท" if 'Profit' in df_jobs.columns else "N/A")
 
     # --- Tab 3: MMS ---
     with tab3:
