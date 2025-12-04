@@ -409,6 +409,105 @@ def log_maintenance_record(record):
         return True
     except: return False
 
+# ... (ต่อจากฟังก์ชัน log_maintenance_record) ...
+
+def sync_to_legacy_sheet(start_date, end_date):
+    """ส่งข้อมูลเข้า Sheet สรุปงาน (แยกไฟล์คนละ ID)"""
+    # --- 📌 กำหนด ID ของไฟล์ปลายทางที่นี่ ---
+    TARGET_ID = "1yy7TPgjW34rra6pBRCXaXb0IIDm1UpkuPcyRQ9POGw4"
+    TARGET_URL = f"https://docs.google.com/spreadsheets/d/{TARGET_ID}/edit"
+    TARGET_WORKSHEET = "MASTER" # ชื่อแท็บในไฟล์ปลายทาง (ต้องสร้างรอไว้)
+    # -----------------------------------------------------
+    
+    try:
+        # 1. ดึงข้อมูลจาก Database หลัก (ไฟล์เดิม)
+        df_jobs = get_data("Jobs_Main")
+        df_drivers = get_data("Master_Drivers")
+        
+        if df_jobs.empty: return False, "ไม่มีข้อมูลงานในระบบ"
+
+        # 2. เตรียม Map ข้อมูล
+        driver_map = {}
+        veh_map = {}
+        if not df_drivers.empty:
+            df_drivers['Driver_ID'] = df_drivers['Driver_ID'].astype(str)
+            for _, r in df_drivers.iterrows():
+                driver_map[r['Driver_ID']] = r.get('Driver_Name', '-')
+                veh_map[r['Driver_ID']] = r.get('Vehicle_Type', '-')
+
+        # 3. เตรียมราคาน้ำมัน
+        current_fuel_price = "-"
+        try:
+            fuel_data = get_fuel_prices()
+            if fuel_data:
+                ptt = fuel_data.get('ราคาน้ำมัน ปตท. (ptt)', {})
+                for k, v in ptt.items():
+                    if "ดีเซล" in k:
+                        current_fuel_price = v.replace(" บาท/ลิตร", "")
+                        break
+        except: pass
+
+        # 4. กรองวันที่
+        if 'Plan_Date' in df_jobs.columns:
+            df_jobs['Plan_Date'] = pd.to_datetime(df_jobs['Plan_Date'], errors='coerce')
+            mask = (df_jobs['Plan_Date'].dt.date >= start_date) & (df_jobs['Plan_Date'].dt.date <= end_date)
+            df_export = df_jobs[mask].copy()
+        else:
+            return False, "ไม่พบคอลัมน์วันที่"
+        
+        if df_export.empty: return False, "ไม่พบงานในช่วงวันที่เลือก"
+
+        # 5. จัดเรียงข้อมูล A-AA
+        final_data = []
+        for _, row in df_export.iterrows():
+            d_id = str(row.get('Driver_ID', ''))
+            price_cust = float(pd.to_numeric(row.get('Price_Customer', 0), errors='coerce'))
+            price_drv = float(pd.to_numeric(row.get('Cost_Driver_Total', 0), errors='coerce'))
+            
+            date_str = row['Plan_Date'].strftime('%d/%m/%Y') if pd.notna(row['Plan_Date']) else "-"
+
+            record = {
+                'วันที่': date_str,                                   
+                'รหัสลูกค้า': row.get('Customer_ID', '-'),            
+                'ลูกค้า': row.get('Customer_Name', '-'),              
+                'ประเภทรถ (ลูกค้า)': row.get('Vehicle_Type', '-'),    
+                'จำนวนสินค้า': '-',                                   
+                'ต้นทาง': row.get('Origin_Location', '-'),            
+                'ปลายทาง': row.get('Dest_Location', '-'),             
+                'ระยะทาง (ลูกค้า)': row.get('Est_Distance_KM', 0),    
+                'ราคาน้ำมัน': current_fuel_price,                     
+                'ราคา (ลูกค้า)': price_cust,                          
+                'ค่าจัดเรียง/ค้างคืน': '-',                           
+                'พ่วง (ลูกค้า)': '-',                                 
+                'อื่นๆ (ลูกค้า)': '-',                                
+                'ตีกลับ (ลูกค้า)': '-',                               
+                'รวม (ลูกค้า)': price_cust,                           
+                'ทะเบียน': row.get('Vehicle_Plate', '-'),             
+                'ชื่อคนขับ': driver_map.get(d_id, '-'),               
+                'ประเภทรถ (คนขับ)': veh_map.get(d_id, '-'),           
+                'ต้นทาง (รถร่วม)': row.get('Origin_Location', '-'),   
+                'ปลายทาง (รถร่วม)': row.get('Dest_Location', '-'),    
+                'ระยะทาง (รถร่วม)': row.get('Est_Distance_KM', 0),    
+                'ราคา (รถร่วม)': price_drv,                           
+                'ค่าจัดเรียง (รถร่วม)': '-',                          
+                'พ่วง (รถร่วม)': '-',                                 
+                'อื่นๆ (รถร่วม)': '-',                                
+                'ตีกลับ (รถร่วม)': '-',                               
+                'รวม (รถร่วม)': price_drv                             
+            }
+            final_data.append(record)
+
+        df_final = pd.DataFrame(final_data)
+
+        # 6. บันทึกลง Sheet ปลายทาง (คนละไฟล์)
+        conn = get_connection()
+        conn.update(spreadsheet=TARGET_URL, worksheet=TARGET_WORKSHEET, data=df_final)
+        
+        return True, f"ส่งข้อมูล {len(df_final)} รายการ ไปยังไฟล์สรุปปลายทางเรียบร้อย!"
+
+    except Exception as e:
+        return False, f"เกิดข้อผิดพลาด: {str(e)} (อย่าลืมแชร์ไฟล์ปลายทางให้บอทด้วย)"
+
 # ---------------------------------------------------------
 # 4. Main
 # ---------------------------------------------------------
@@ -644,6 +743,24 @@ def admin_flow():
                 st.dataframe(drv, use_container_width=True)
                 st.download_button("📥 Load Driver CSV", convert_df_to_csv(drv), "drv_report.csv")
         else: st.warning("ไม่มีข้อมูล")
+
+            # ... (ต่อจากปุ่มดาวน์โหลด Driver Report ใน Tab 2) ...
+
+        st.divider()
+        st.subheader("📤 เชื่อมต่อบัญชี (Sync to Summary_Admin)")
+            
+        c_sync1, c_sync2 = st.columns([3, 1])
+        with c_sync1:
+                st.info("ส่งข้อมูลงาน (ตามช่วงวันที่เลือกด้านบน) ไปยัง Google Sheet 'Summary_Admin' (คอลัมน์ A-AA)")
+        with c_sync2:
+                if st.button("🚀 ส่งข้อมูลเข้า Sheet เดิม", type="primary", use_container_width=True):
+                    with st.spinner("กำลังส่งข้อมูล..."):
+                        # เรียกใช้ฟังก์ชันที่เราเพิ่งวางไป
+                        success, msg = sync_to_legacy_sheet(start_date, end_date)
+                        if success:
+                            st.success(msg)
+                        else:
+                            st.error(msg)
 
     # --- Tab 3: MMS ---
     with tab3:
