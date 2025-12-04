@@ -504,7 +504,7 @@ def admin_flow():
         "📝 จ่ายงาน", "📊 Profit & Data", "🔧 MMS", "⛽ น้ำมัน", "🔩 สต็อก", "🗺️ GPS", "⛽ ราคาน้ำมัน/คำนวณ", "⚙️ ตั้งค่าระบบ"
     ])
 
-    # --- Tab 1: จ่ายงาน (ระบบเลือกเส้นทางแบบ 2 ขั้นตอน) ---
+    # --- Tab 1: จ่ายงาน ---
     with tab1:
         st.subheader("สร้างใบงานใหม่")
         
@@ -513,17 +513,31 @@ def admin_flow():
         customers_df = get_data("Master_Customers")
         routes_df = get_data("Master_Routes")
         
-        # Dropdown Driver
+        # --- [จุดที่แก้ไข] เตรียม Dropdown Driver (แบบกันเหนียว) ---
         driver_options = []
         driver_map = {}
+        
         if not drivers_df.empty:
-             mask_driver = drivers_df['Role'].astype(str).str.lower().str.strip() == 'driver'
-             drivers_only = drivers_df[mask_driver]
-             for _, row in drivers_only.iterrows():
-                 d_id = str(row['Driver_ID'])
-                 d_name = str(row['Driver_Name'])
+             target_drivers = pd.DataFrame()
+             
+             # 1. ลองกรองเฉพาะ Driver (รองรับทั้งภาษาไทยและอังกฤษ)
+             if 'Role' in drivers_df.columns:
+                 # แปลงเป็นตัวเล็กและตัดช่องว่างออกเพื่อให้แม่นยำ
+                 roles = drivers_df['Role'].astype(str).str.lower().str.strip()
+                 target_drivers = drivers_df[roles.isin(['driver', 'คนขับ'])]
+             
+             # 2. ถ้ากรองแล้ว "ไม่เจอใครเลย" (หรือไม่มีคอลัมน์ Role) -> ให้เอามา "ทุกคน" (Fallback)
+             if target_drivers.empty:
+                 target_drivers = drivers_df
+             
+             # 3. สร้างตัวเลือก
+             for _, row in target_drivers.iterrows():
+                 d_id = str(row.get('Driver_ID', ''))
+                 d_name = str(row.get('Driver_Name', ''))
                  d_plate = str(row.get('Vehicle_Plate', ''))
-                 if d_id and d_id != 'nan':
+                 
+                 # กรองพวก ID ว่าง/NaN ทิ้งไป
+                 if d_id and d_id.lower() not in ['nan', 'none', '', 'null']:
                      label = f"{d_id} : {d_name} ({d_plate})"
                      driver_options.append(label)
                      driver_map[label] = d_plate
