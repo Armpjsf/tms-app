@@ -4,7 +4,9 @@ from datetime import datetime
 import time
 import urllib.parse
 import plotly.express as px # type: ignore
-import pytz # type: ignore # เพิ่ม Library จัดการเวลา
+import pytz # type: ignore
+
+# Import ฟังก์ชันจากไฟล์อื่น
 from modules.database import get_data, update_sheet, load_all_data
 from modules.utils import (
     get_config_value, get_fuel_prices, calculate_driver_cost, create_new_job,
@@ -16,16 +18,18 @@ def admin_flow():
     with st.sidebar:
         st.title("Control Tower")
         st.success(f"Admin: {st.session_state.driver_name}")
+        
         if st.button("🔄 รีเฟรชข้อมูลล่าสุด"):
             st.session_state.data_store = load_all_data()
             st.rerun()
+            
         if st.button("🚪 Logout", type="secondary"):
             st.session_state.logged_in = False
             st.rerun()
             
     st.title("🖥️ Admin Dashboard")
     
-    # Init Session
+    # Init Session Vars (ป้องกัน Error)
     if 'form_route_name' not in st.session_state: st.session_state.form_route_name = ""
     if 'form_origin' not in st.session_state: st.session_state.form_origin = ""
     if 'form_dest' not in st.session_state: st.session_state.form_dest = ""
@@ -33,10 +37,13 @@ def admin_flow():
     if 'form_link_dest' not in st.session_state: st.session_state.form_link_dest = ""
     if 'form_dist' not in st.session_state: st.session_state.form_dist = 100.0
 
+    # --- [จุดที่แก้] ประกาศ Tab ให้ครบ 9 ตัว ---
     tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9 = st.tabs([
-        "📝 จ่ายงาน", "📊 Profit & Data", "🔧 MMS", "⛽ น้ำมัน", "🔩 สต็อก", "🗺️ GPS", "⛽ ราคาน้ำมัน/คำนวณ", "⚙️ ตั้งค่าระบบ", "📖 คู่มือ"
+        "📝 จ่ายงาน", "📊 Profit & Data", "🔧 MMS", "⛽ น้ำมัน", 
+        "🔩 สต็อก", "🗺️ GPS", "⛽ ราคาน้ำมัน/คำนวณ", "⚙️ ตั้งค่าระบบ", "📖 คู่มือ"
     ])
 
+    # --- Tab 1: จ่ายงาน ---
     with tab1:
         st.subheader("สร้างใบงานใหม่")
         drivers_df = get_data("Master_Drivers")
@@ -120,7 +127,11 @@ def admin_flow():
             est_dist = st.number_input("ระยะทาง (กม.)", min_value=0.0, key="form_dist")
             
             st.divider()
-            def_p, def_f, def_h, def_w, def_n = get_config_value("price_profit", 1000), get_config_value("opt_floor", 100), get_config_value("opt_helper", 300), get_config_value("opt_wait", 300), get_config_value("opt_night", 1000)
+            def_p = get_config_value("price_profit", 1000)
+            def_f = get_config_value("opt_floor", 100)
+            def_h = get_config_value("opt_helper", 300)
+            def_w = get_config_value("opt_wait", 300)
+            def_n = get_config_value("opt_night", 1000)
             
             st.markdown("**Option**")
             o1, o2, o3 = st.columns(3)
@@ -205,7 +216,7 @@ def admin_flow():
                 lat, lon = r.get('Current_Lat'), r.get('Current_Lon')
                 driver_map_link[d_id] = f"https://www.google.com/maps?q={lat},{lon}" if pd.notna(lat) and pd.notna(lon) else "-"
 
-        # 🔥 แก้ไข: ใช้เวลาไทยสำหรับ Default Date Picker
+        # ใช้เวลาไทยสำหรับตัวกรอง (แก้ปัญหากราฟไม่ขึ้นบน Cloud)
         tz_th = pytz.timezone('Asia/Bangkok')
         now_th = datetime.now(tz_th)
 
@@ -276,7 +287,7 @@ def admin_flow():
             
             st.divider()
             c_s1, c_s2 = st.columns([3, 1])
-            with c_s1: st.info("ส่งข้อมูลให้บัญชี")
+            with c_s1: st.info("ส่งข้อมูลเข้า master")
             with c_s2:
                 if st.button("🚀 Sync Accounting"):
                     with st.spinner("Sending..."):
@@ -285,6 +296,7 @@ def admin_flow():
                         else: st.error(msg)
         else: st.warning("ไม่มีข้อมูล")
 
+    # --- Tab 3: MMS ---
     with tab3:
         st.subheader("🔔 แจ้งเตือนเช็คระยะ")
         maint_df = get_maintenance_status_all()
@@ -315,10 +327,12 @@ def admin_flow():
                         if ns=="Done": tk.at[idx, 'Date_Finish'] = datetime.now().strftime("%Y-%m-%d")
                         update_sheet("Repair_Tickets", tk); st.success("Updated"); st.rerun()
 
+    # --- Tab 4: Fuel ---
     with tab4:
         st.subheader("⛽ ประวัติเติมน้ำมัน")
         st.dataframe(get_data("Fuel_Logs"), use_container_width=True, column_config={"Photo_Url": st.column_config.ImageColumn("รูป")})
 
+    # --- Tab 5: Stock ---
     with tab5:
         c1, c2 = st.columns([2,1])
         with c1: st.dataframe(get_data("Stock_Parts"), use_container_width=True)
@@ -327,6 +341,7 @@ def admin_flow():
                 pn = st.text_input("อะไหล่"); pq = st.number_input("จำนวน", 1)
                 if st.form_submit_button("เพิ่ม"): update_sheet("Stock_Parts", pd.concat([get_data("Stock_Parts"), pd.DataFrame([{"Part_ID": f"P-{int(time.time())}", "Part_Name": pn, "Qty_On_Hand": pq}])], ignore_index=True)); st.rerun()
 
+    # --- Tab 6: GPS ---
     with tab6:
         st.subheader("📍 GPS")
         d = get_data("Master_Drivers")
@@ -338,6 +353,7 @@ def admin_flow():
                 act['Link'] = act.apply(lambda r: f"https://www.google.com/maps?q={r['lat']},{r['lon']}", axis=1)
                 st.dataframe(act[['Driver_Name', 'Vehicle_Plate', 'Last_Update', 'Link']], use_container_width=True, column_config={"Link": st.column_config.LinkColumn("Map")})
 
+    # --- Tab 7: Calc ---
     with tab7:
         st.subheader("🧮 คำนวณราคา")
         with st.container(border=True):
@@ -348,6 +364,7 @@ def admin_flow():
                 cost = calculate_driver_cost(cd, dst, cv)
                 st.success(f"ต้นทุน: {cost:,.0f} | ราคาขาย: {cost+1000+(fl*100):,.0f}")
 
+    # --- Tab 8: Config ---
     with tab8:
         st.subheader("⚙️ Config")
         conf = get_data("System_Config")
@@ -355,8 +372,9 @@ def admin_flow():
             ed = st.data_editor(conf, num_rows="dynamic")
             if st.button("Save Config"): update_sheet("System_Config", ed); st.success("Saved"); st.rerun()
 
+    # --- Tab 9: Manual ---
     with tab9:
-        st.subheader("📘 คู่มือการใช้งาน")
+        st.subheader("📘 คู่มือ")
         manual = get_manual_content()
-        st.download_button("📥 Download Manual", manual, "manual.txt")
+        st.download_button("📥 Download", manual, "manual.txt")
         st.markdown(manual)
