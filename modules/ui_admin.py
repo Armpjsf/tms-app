@@ -4,6 +4,7 @@ from datetime import datetime
 import time
 import urllib.parse
 import plotly.express as px # type: ignore
+import pytz # type: ignore # เพิ่ม Library จัดการเวลา
 from modules.database import get_data, update_sheet, load_all_data
 from modules.utils import (
     get_config_value, get_fuel_prices, calculate_driver_cost, create_new_job,
@@ -16,8 +17,7 @@ def admin_flow():
         st.title("Control Tower")
         st.success(f"Admin: {st.session_state.driver_name}")
         if st.button("🔄 รีเฟรชข้อมูลล่าสุด"):
-            # เรียก load_all_data จาก database.py ได้แล้ว
-            st.session_state.data_store = load_all_data() 
+            st.session_state.data_store = load_all_data()
             st.rerun()
         if st.button("🚪 Logout", type="secondary"):
             st.session_state.logged_in = False
@@ -25,7 +25,7 @@ def admin_flow():
             
     st.title("🖥️ Admin Dashboard")
     
-    # Init Session Vars
+    # Init Session
     if 'form_route_name' not in st.session_state: st.session_state.form_route_name = ""
     if 'form_origin' not in st.session_state: st.session_state.form_origin = ""
     if 'form_dest' not in st.session_state: st.session_state.form_dest = ""
@@ -95,7 +95,7 @@ def admin_flow():
                      st.success("ดึงข้อมูลแล้ว")
 
         st.divider()
-        with st.form("create_job_form"):
+        with st.form("job_form"):
             st.markdown("##### 📝 ข้อมูลงาน")
             c1, c2 = st.columns(2)
             with c1:
@@ -118,11 +118,7 @@ def admin_flow():
             with c6: link_dest = st.text_input("ลิ้งค์ปลายทาง", key="form_link_dest")
             
             est_dist = st.number_input("ระยะทาง (กม.)", min_value=0.0, key="form_dist")
-            with st.container():
-                st.write("")
-                if origin and dest:
-                    st.link_button("🗺️ เช็คระยะทาง", f"https://www.google.com/maps/dir/?api=1&origin={urllib.parse.quote(origin)}&destination={urllib.parse.quote(dest)}")
-
+            
             st.divider()
             def_p, def_f, def_h, def_w, def_n = get_config_value("price_profit", 1000), get_config_value("opt_floor", 100), get_config_value("opt_helper", 300), get_config_value("opt_wait", 300), get_config_value("opt_night", 1000)
             
@@ -209,10 +205,14 @@ def admin_flow():
                 lat, lon = r.get('Current_Lat'), r.get('Current_Lon')
                 driver_map_link[d_id] = f"https://www.google.com/maps?q={lat},{lon}" if pd.notna(lat) and pd.notna(lon) else "-"
 
+        # 🔥 แก้ไข: ใช้เวลาไทยสำหรับ Default Date Picker
+        tz_th = pytz.timezone('Asia/Bangkok')
+        now_th = datetime.now(tz_th)
+
         with st.container(border=True):
             c1, c2 = st.columns(2)
-            with c1: start_date = st.date_input("📅 เริ่ม", datetime.today().replace(day=1))
-            with c2: end_date = st.date_input("📅 ถึง", datetime.today())
+            with c1: start_date = st.date_input("📅 เริ่ม", now_th.replace(day=1))
+            with c2: end_date = st.date_input("📅 ถึง", now_th)
 
         if not df_jobs.empty:
             mask = (df_jobs['Plan_Date'].dt.date >= start_date) & (df_jobs['Plan_Date'].dt.date <= end_date)
@@ -356,4 +356,7 @@ def admin_flow():
             if st.button("Save Config"): update_sheet("System_Config", ed); st.success("Saved"); st.rerun()
 
     with tab9:
-        st.markdown(get_manual_content())
+        st.subheader("📘 คู่มือการใช้งาน")
+        manual = get_manual_content()
+        st.download_button("📥 Download Manual", manual, "manual.txt")
+        st.markdown(manual)
