@@ -310,13 +310,17 @@ def log_maintenance_record(record):
     except: return False
 
 def sync_to_legacy_sheet(start_date, end_date):
-    TARGET_ID = "1yy7TPgjW34rra6pBRCXaXb0IIDm1UpkuPcyRQ9POGw4" # <-- ID ปลายทาง
+    # --- 📌 ตั้งค่าไฟล์ปลายทาง ---
+    TARGET_ID = "1yy7TPgjW34rra6pBRCXaXb0IIDm1UpkuPcyRQ9POGw4"
     TARGET_URL = f"https://docs.google.com/spreadsheets/d/{TARGET_ID}/edit"
-    TARGET_WORKSHEET = "Summary_Admin"
+    TARGET_WORKSHEET = "MASTER" 
+    # --------------------------
+    
     try:
+        # 1. เตรียมข้อมูลใหม่ (New Data)
         df_jobs = get_data("Jobs_Main")
         df_drivers = get_data("Master_Drivers")
-        if df_jobs.empty: return False, "ไม่มีข้อมูล"
+        if df_jobs.empty: return False, "ไม่มีข้อมูลงานในระบบ"
         
         driver_map, veh_map = {}, {}
         if not df_drivers.empty:
@@ -335,35 +339,108 @@ def sync_to_legacy_sheet(start_date, end_date):
         except: pass
 
         if 'Plan_Date' in df_jobs.columns:
+            df_jobs['Plan_Date'] = pd.to_datetime(df_jobs['Plan_Date'], errors='coerce')
             mask = (df_jobs['Plan_Date'].dt.date >= start_date) & (df_jobs['Plan_Date'].dt.date <= end_date)
             df_export = df_jobs[mask].copy()
         else: return False, "ไม่พบคอลัมน์วันที่"
         
-        if df_export.empty: return False, "ไม่พบงาน"
+        if df_export.empty: return False, "ไม่พบงานในช่วงวันที่เลือก"
 
+        # สร้าง Data ใหม่ (List of Dicts)
         final_data = []
         for _, row in df_export.iterrows():
             d_id = str(row.get('Driver_ID', ''))
             price_cust = float(pd.to_numeric(row.get('Price_Customer', 0), errors='coerce'))
             price_drv = float(pd.to_numeric(row.get('Cost_Driver_Total', 0), errors='coerce'))
             date_str = row['Plan_Date'].strftime('%d/%m/%Y') if pd.notna(row['Plan_Date']) else "-"
+
+            # สร้าง dict ให้ตรงกับหัวตารางเดิม (A-AA)
+            # หมายเหตุ: ชื่อ Key ต้องตรงกับชื่อหัวตารางใน Google Sheet เป๊ะๆ (ถ้ามี)
+            # แต่ถ้า Google Sheet ไม่มีหัวตาราง หรือเป็นแถวว่างๆ เราจะใช้วิธี "ตำแหน่งคอลัมน์" แทน
             record = {
-                'วันที่': date_str, 'รหัสลูกค้า': row.get('Customer_ID', '-'), 'ลูกค้า': row.get('Customer_Name', '-'),
-                'ประเภทรถ (ลูกค้า)': row.get('Vehicle_Type', '-'), 'จำนวนสินค้า': '-', 'ต้นทาง': row.get('Origin_Location', '-'),
-                'ปลายทาง': row.get('Dest_Location', '-'), 'ระยะทาง (ลูกค้า)': row.get('Est_Distance_KM', 0),
-                'ราคาน้ำมัน': current_fuel_price, 'ราคา (ลูกค้า)': price_cust, 'ค่าจัดเรียง/ค้างคืน': '-',
-                'พ่วง (ลูกค้า)': '-', 'อื่นๆ (ลูกค้า)': '-', 'ตีกลับ (ลูกค้า)': '-', 'รวม (ลูกค้า)': price_cust,
-                'ทะเบียน': row.get('Vehicle_Plate', '-'), 'ชื่อคนขับ': driver_map.get(d_id, '-'),
-                'ประเภทรถ (คนขับ)': veh_map.get(d_id, '-'), 'ต้นทาง (รถร่วม)': row.get('Origin_Location', '-'),
-                'ปลายทาง (รถร่วม)': row.get('Dest_Location', '-'), 'ระยะทาง (รถร่วม)': row.get('Est_Distance_KM', 0),
-                'ราคา (รถร่วม)': price_drv, 'ค่าจัดเรียง (รถร่วม)': '-', 'พ่วง (รถร่วม)': '-',
-                'อื่นๆ (รถร่วม)': '-', 'ตีกลับ (รถร่วม)': '-', 'รวม (รถร่วม)': price_drv
+                'วันที่': date_str,                                   # A
+                'รหัสลูกค้า': row.get('Customer_ID', '-'),            # B
+                'ลูกค้า': row.get('Customer_Name', '-'),              # C
+                'ประเภทรถ': row.get('Vehicle_Type', '-'),             # D (ชื่อซ้ำระวัง!) -> ถ้าชื่อซ้ำให้ใช้ชื่ออื่นแล้วค่อยแก้ตอน map
+                # ** เพื่อความชัวร์ เราจะใช้ DataFrame แบบไม่มี Header แล้วอ้างอิงตำแหน่งเอา **
+                # (ข้ามไปสร้าง DataFrame ด้านล่าง)
             }
-            final_data.append(record)
+            
+            # สร้าง Row แบบ List เรียงลำดับ A -> AA (27 คอลัมน์)
+            row_list = [
+                date_str,                                   # A วันที่
+                row.get('Customer_ID', '-'),                # B รหัสลูกค้า
+                row.get('Customer_Name', '-'),              # C ลูกค้า
+                row.get('Vehicle_Type', '-'),               # D ประเภทรถ (ลูกค้า)
+                '-',                                        # E จำนวนสินค้า
+                row.get('Origin_Location', '-'),            # F ต้นทาง
+                row.get('Dest_Location', '-'),              # G ปลายทาง
+                row.get('Est_Distance_KM', 0),              # H ระยะทาง
+                current_fuel_price,                         # I ราคาน้ำมัน
+                price_cust,                                 # J ราคา (ลูกค้า)
+                '-',                                        # K ค่าจัดเรียง
+                '-',                                        # L พ่วง
+                '-',                                        # M อื่นๆ
+                '-',                                        # N ตีกลับ
+                price_cust,                                 # O รวม (ลูกค้า)
+                row.get('Vehicle_Plate', '-'),              # P ทะเบียน
+                driver_map.get(d_id, '-'),                  # Q ชื่อ
+                veh_map.get(d_id, '-'),                     # R ประเภทรถ (รถร่วม)
+                row.get('Origin_Location', '-'),            # S ต้นทาง
+                row.get('Dest_Location', '-'),              # T ปลายทาง
+                row.get('Est_Distance_KM', 0),              # U ระยะทาง
+                price_drv,                                  # V ราคา (รถร่วม)
+                '-',                                        # W ค่าจัดเรียง
+                '-',                                        # X พ่วง
+                '-',                                        # Y อื่นๆ
+                '-',                                        # Z ตีกลับ
+                price_drv                                   # AA รวม (รถร่วม)
+            ]
+            final_data.append(row_list)
         
+        # แปลงเป็น DataFrame (ข้อมูลใหม่)
+        df_new = pd.DataFrame(final_data)
+
+        # --- 🔥 ส่วนที่เพิ่ม: อ่านของเก่า + ต่อท้าย ---
         conn = get_connection_direct()
-        conn.update(spreadsheet=TARGET_URL, worksheet=TARGET_WORKSHEET, data=pd.DataFrame(final_data))
-        return True, f"ส่งข้อมูล {len(final_data)} รายการ เรียบร้อย!"
+        
+        try:
+            # 1. อ่านข้อมูลเก่าทั้งหมดมาก่อน (แบบไม่มี Header เพื่อกันเรื่องชื่อซ้ำ)
+            # header=None จะทำให้อ่านบรรทัดที่ 1, 2, 3 มาเป็น Data ด้วย
+            df_old = conn.read(spreadsheet=TARGET_URL, worksheet=TARGET_WORKSHEET, ttl=0, header=None)
+            
+            # 2. ตรวจสอบความกว้าง (จำนวนคอลัมน์)
+            # ถ้าของเก่ามีคอลัมน์มากกว่าของใหม่ ให้เติมของใหม่ให้ครบ
+            if not df_old.empty:
+                max_cols = max(df_old.shape[1], 27)
+                # ปรับ df_new ให้มีจำนวนคอลัมน์เท่ากับ max_cols
+                # (เติม NaN ไปก่อนถ้าขาด)
+                if df_new.shape[1] < max_cols:
+                    for i in range(df_new.shape[1], max_cols):
+                        df_new[i] = None
+                # ปรับ df_old ให้เท่ากัน (เผื่อของเก่าสั้นกว่า)
+                if df_old.shape[1] < max_cols:
+                    for i in range(df_old.shape[1], max_cols):
+                        df_old[i] = None
+                
+                # ตั้งชื่อคอลัมน์ให้เหมือนกัน (เป็นตัวเลข 0, 1, 2...) เพื่อให้ concat ได้
+                df_old.columns = range(max_cols)
+                df_new.columns = range(max_cols)
+
+                # 3. รวมร่าง (เอาของเก่าตั้ง + ต่อด้วยของใหม่)
+                df_final = pd.concat([df_old, df_new], ignore_index=True)
+            else:
+                df_final = df_new
+        except:
+            # ถ้าอ่านของเก่าไม่ได้ (เช่น ไฟล์ว่าง)
+            df_final = df_new
+
+        # 4. เขียนกลับลงไป (แบบไม่มี Header เพราะเราอ่านมาแบบดิบๆ รวมหัวตารางมาแล้ว)
+        # ใช้ update แต่เขียนข้อมูลชุดใหญ่ทับลงไปเลย
+        conn.update(spreadsheet=TARGET_URL, worksheet=TARGET_WORKSHEET, data=df_final)
+        
+        return True, f"✅ เพิ่มข้อมูล {len(final_data)} รายการ ต่อท้ายเรียบร้อย (รวม {len(df_final)} บรรทัด)"
+
     except Exception as e: return False, f"Error: {str(e)}"
 
 def get_manual_content():
