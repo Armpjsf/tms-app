@@ -23,21 +23,27 @@ SHEET_ID = "10xoemO2oS6a8c7nzqxkE9mlRCbTII2PZMhvv1wTXeYQ"
 SHEET_URL = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/edit"
 
 # ---------------------------------------------------------
-# 2. Helper Functions (เครื่องมือช่วย)
+# 2. Helper Functions (ปรับปรุง: เพิ่ม Cache เพื่อแก้ปัญหาตัวเลือกหาย)
 # ---------------------------------------------------------
 def get_connection():
     return st.connection("gsheets", type=GSheetsConnection)
 
+# 🔥 เพิ่ม @st.cache_data เพื่อให้จำข้อมูลไว้ 5 นาที (300 วินาที)
+# ตัวเลือกจะไม่กระพริบหาย และแอพจะลื่นขึ้นมาก
+@st.cache_data(ttl=300)
 def get_data(worksheet_name):
     conn = get_connection()
     try:
+        # ttl=0 ใน read หมายถึงดึงสด แต่เราครอบด้วย cache_data ของ streamlit ไว้แล้ว
         return conn.read(spreadsheet=SHEET_URL, worksheet=worksheet_name, ttl=0)
-    except:
+    except Exception as e:
         return pd.DataFrame()
 
+# 🔥 ฟังก์ชันอัปเดต ต้องสั่งล้างความจำ (Clear Cache) ด้วย ข้อมูลใหม่จะได้ขึ้นทันที
 def update_sheet(worksheet_name, df):
     conn = get_connection()
     conn.update(spreadsheet=SHEET_URL, worksheet=worksheet_name, data=df)
+    st.cache_data.clear() # ล้าง Cache ทันทีที่มีการบันทึกข้อมูลใหม่
 
 @st.cache_data
 def convert_df_to_csv(df):
@@ -86,41 +92,24 @@ def process_multiple_images(image_file_list):
         return f"data:image/jpeg;base64,{encoded}"
     except: return "-"
 
-# --- ระบบ Config (ดึงค่าจาก Sheet System_Config) ---
-# --- ระบบ Config (ฉบับแก้ปัญหาชื่อคอลัมน์ไม่ตรง) ---
+# --- ระบบ Config ---
 def get_config_value(key, default_value):
     try:
         df = get_data("System_Config")
         if df.empty: return default_value
         
-        # 1. พยายามหาคอลัมน์ Key (ไม่ว่าจะชื่อ Key เฉยๆ หรือ Key (ห้ามแก้))
-        key_col = "Key"
+        key_col, val_col = "Key", "Value"
         for col in df.columns:
-            if "Key" in col: # ขอแค่มีคำว่า Key ก็เอา
-                key_col = col
-                break
-                
-        # 2. พยายามหาคอลัมน์ Value
-        val_col = "Value"
-        for col in df.columns:
-            if "Value" in col: # ขอแค่มีคำว่า Value ก็เอา
-                val_col = col
-                break
+            if "Key" in col: key_col = col
+            if "Value" in col: val_col = col
         
-        # 3. ค้นหาค่า
-        if key_col in df.columns and val_col in df.columns:
-            row = df[df[key_col] == key]
-            if not row.empty:
-                return float(row.iloc[0][val_col])
-                
+        row = df[df[key_col] == key]
+        if not row.empty: return float(row.iloc[0][val_col])
         return default_value
-    except:
-        return default_value
+    except: return default_value
 
 def get_consumption_rate_by_driver(driver_id):
-    """หาอัตรากินน้ำมัน (ดึงค่าจาก Config)"""
     try:
-        # ดึง Config มารอไว้
         rate_4w = get_config_value("fuel_4w", 11.5)
         rate_6w = get_config_value("fuel_6w", 5.5)
         rate_10w = get_config_value("fuel_10w", 3.5)
@@ -134,15 +123,13 @@ def get_consumption_rate_by_driver(driver_id):
         
         v_type = str(row.iloc[0].get('Vehicle_Type', '4 ล้อ'))
         
-        if "พ่วง" in v_type or "เทรลเลอร์" in v_type: return 2.75 # Hardcode ไว้ก่อนหรือเพิ่ม config ได้
+        if "พ่วง" in v_type or "เทรลเลอร์" in v_type: return 2.75
         elif "10" in v_type: return rate_10w
         elif "6" in v_type: return rate_6w
         else: return rate_4w
-            
     except: return 11.5
 
 def get_maintenance_status_all():
-    """คำนวณสถานะซ่อมบำรุง (ดึงเกณฑ์จาก Config)"""
     try:
         drivers = get_data("Master_Drivers")
         maint_logs = get_data("Maintenance_Logs")
@@ -151,7 +138,6 @@ def get_maintenance_status_all():
         drivers['Driver_ID'] = drivers['Driver_ID'].astype(str)
         drivers['Current_Mileage'] = pd.to_numeric(drivers['Current_Mileage'], errors='coerce').fillna(0)
         
-        # ดึงเกณฑ์จาก Config
         oil_km = get_config_value("maint_oil_km", 10000)
         oil_days = get_config_value("maint_oil_days", 180)
         tire_km = get_config_value("maint_tire_km", 50000)
@@ -189,16 +175,11 @@ def get_maintenance_status_all():
                 note = ""
                 
                 if distance_run >= limit_km:
-                    status = "⚠️ ครบระยะทาง"
-                    note = f"เกิน {distance_run - limit_km:,.0f} กม."
-                    is_due = True
+                    status = "⚠️ ครบระยะทาง"; note = f"เกิน {distance_run - limit_km:,.0f} กม."; is_due = True
                 elif days_run >= limit_days:
-                    status = "⚠️ ครบกำหนดเวลา"
-                    note = f"เกิน {days_run - limit_days} วัน"
-                    is_due = True
+                    status = "⚠️ ครบกำหนดเวลา"; note = f"เกิน {days_run - limit_days} วัน"; is_due = True
                 elif distance_run >= (limit_km * 0.9):
-                    status = "🟡 ใกล้ครบระยะ"
-                    note = f"เหลือ {limit_km - distance_run:,.0f} กม."
+                    status = "🟡 ใกล้ครบระยะ"; note = f"เหลือ {limit_km - distance_run:,.0f} กม."
                 
                 status_list.append({
                     "Vehicle_Plate": plate, "Driver_Name": car['Driver_Name'], "Service_Type": service_name,
@@ -302,7 +283,6 @@ def create_fuel_log(fuel_data):
         updated_df = pd.concat([df, pd.DataFrame([fuel_data])], ignore_index=True)
         update_sheet("Fuel_Logs", updated_df)
         
-        # อัปเดตเลขไมล์ล่าสุดลง Master_Drivers ด้วย
         if 'Odometer' in fuel_data and 'Vehicle_Plate' in fuel_data:
             drv = get_data("Master_Drivers")
             drv['Vehicle_Plate'] = drv['Vehicle_Plate'].astype(str)
@@ -329,6 +309,7 @@ def update_job_status(job_id, new_status, timestamp, distance_run=0, photo_data=
             if signature_data != "-": df_jobs.at[i, 'Signature_Url'] = signature_data
             driver_id = df_jobs.at[i, 'Driver_ID']
             conn.update(spreadsheet=SHEET_URL, worksheet="Jobs_Main", data=df_jobs)
+            st.cache_data.clear() # Clear cache
         
         if new_status == "Completed" and driver_id and distance_run > 0:
             df_drivers = conn.read(spreadsheet=SHEET_URL, worksheet="Master_Drivers", ttl=0)
@@ -341,6 +322,7 @@ def update_job_status(job_id, new_status, timestamp, distance_run=0, photo_data=
                     df_drivers.at[d_idx[0], 'Current_Mileage'] = current + distance_run
                     df_drivers.at[d_idx[0], 'Last_Update'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                     conn.update(spreadsheet=SHEET_URL, worksheet="Master_Drivers", data=df_drivers)
+                    st.cache_data.clear() # Clear cache
                 except: pass
         return True
     except: return False
@@ -358,6 +340,7 @@ def simple_update_job_status(job_id, new_status, extra_updates=None):
             for k, v in extra_updates.items():
                 df_jobs.at[i, k] = v
         conn.update(spreadsheet=SHEET_URL, worksheet="Jobs_Main", data=df_jobs)
+        st.cache_data.clear() # Clear cache
         return True
     except: return False
 
@@ -372,6 +355,7 @@ def update_driver_location(driver_id, lat, lon):
             df.at[idx[0], 'Current_Lon'] = lon
             df.at[idx[0], 'Last_Update'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             conn.update(spreadsheet=SHEET_URL, worksheet="Master_Drivers", data=df)
+            st.cache_data.clear() # Clear cache
             return True
         return False
     except: return False
@@ -409,33 +393,23 @@ def log_maintenance_record(record):
         return True
     except: return False
 
-# ... (ต่อจากฟังก์ชัน log_maintenance_record) ...
-
 def sync_to_legacy_sheet(start_date, end_date):
-    """ส่งข้อมูลเข้า Sheet สรุปงาน (แยกไฟล์คนละ ID)"""
-    # --- 📌 กำหนด ID ของไฟล์ปลายทางที่นี่ ---
     TARGET_ID = "1yy7TPgjW34rra6pBRCXaXb0IIDm1UpkuPcyRQ9POGw4"
     TARGET_URL = f"https://docs.google.com/spreadsheets/d/{TARGET_ID}/edit"
-    TARGET_WORKSHEET = "MASTER" # ชื่อแท็บในไฟล์ปลายทาง (ต้องสร้างรอไว้)
-    # -----------------------------------------------------
+    TARGET_WORKSHEET = "Summary_Admin"
     
     try:
-        # 1. ดึงข้อมูลจาก Database หลัก (ไฟล์เดิม)
         df_jobs = get_data("Jobs_Main")
         df_drivers = get_data("Master_Drivers")
-        
-        if df_jobs.empty: return False, "ไม่มีข้อมูลงานในระบบ"
+        if df_jobs.empty: return False, "ไม่มีข้อมูล"
 
-        # 2. เตรียม Map ข้อมูล
-        driver_map = {}
-        veh_map = {}
+        driver_map, veh_map = {}, {}
         if not df_drivers.empty:
             df_drivers['Driver_ID'] = df_drivers['Driver_ID'].astype(str)
             for _, r in df_drivers.iterrows():
                 driver_map[r['Driver_ID']] = r.get('Driver_Name', '-')
                 veh_map[r['Driver_ID']] = r.get('Vehicle_Type', '-')
 
-        # 3. เตรียมราคาน้ำมัน
         current_fuel_price = "-"
         try:
             fuel_data = get_fuel_prices()
@@ -447,66 +421,40 @@ def sync_to_legacy_sheet(start_date, end_date):
                         break
         except: pass
 
-        # 4. กรองวันที่
         if 'Plan_Date' in df_jobs.columns:
             df_jobs['Plan_Date'] = pd.to_datetime(df_jobs['Plan_Date'], errors='coerce')
             mask = (df_jobs['Plan_Date'].dt.date >= start_date) & (df_jobs['Plan_Date'].dt.date <= end_date)
             df_export = df_jobs[mask].copy()
-        else:
-            return False, "ไม่พบคอลัมน์วันที่"
+        else: return False, "ไม่พบคอลัมน์วันที่"
         
         if df_export.empty: return False, "ไม่พบงานในช่วงวันที่เลือก"
 
-        # 5. จัดเรียงข้อมูล A-AA
         final_data = []
         for _, row in df_export.iterrows():
             d_id = str(row.get('Driver_ID', ''))
             price_cust = float(pd.to_numeric(row.get('Price_Customer', 0), errors='coerce'))
             price_drv = float(pd.to_numeric(row.get('Cost_Driver_Total', 0), errors='coerce'))
-            
             date_str = row['Plan_Date'].strftime('%d/%m/%Y') if pd.notna(row['Plan_Date']) else "-"
 
             record = {
-                'วันที่': date_str,                                   
-                'รหัสลูกค้า': row.get('Customer_ID', '-'),            
-                'ลูกค้า': row.get('Customer_Name', '-'),              
-                'ประเภทรถ (ลูกค้า)': row.get('Vehicle_Type', '-'),    
-                'จำนวนสินค้า': '-',                                   
-                'ต้นทาง': row.get('Origin_Location', '-'),            
-                'ปลายทาง': row.get('Dest_Location', '-'),             
-                'ระยะทาง (ลูกค้า)': row.get('Est_Distance_KM', 0),    
-                'ราคาน้ำมัน': current_fuel_price,                     
-                'ราคา (ลูกค้า)': price_cust,                          
-                'ค่าจัดเรียง/ค้างคืน': '-',                           
-                'พ่วง (ลูกค้า)': '-',                                 
-                'อื่นๆ (ลูกค้า)': '-',                                
-                'ตีกลับ (ลูกค้า)': '-',                               
-                'รวม (ลูกค้า)': price_cust,                           
-                'ทะเบียน': row.get('Vehicle_Plate', '-'),             
-                'ชื่อคนขับ': driver_map.get(d_id, '-'),               
-                'ประเภทรถ (คนขับ)': veh_map.get(d_id, '-'),           
-                'ต้นทาง (รถร่วม)': row.get('Origin_Location', '-'),   
-                'ปลายทาง (รถร่วม)': row.get('Dest_Location', '-'),    
-                'ระยะทาง (รถร่วม)': row.get('Est_Distance_KM', 0),    
-                'ราคา (รถร่วม)': price_drv,                           
-                'ค่าจัดเรียง (รถร่วม)': '-',                          
-                'พ่วง (รถร่วม)': '-',                                 
-                'อื่นๆ (รถร่วม)': '-',                                
-                'ตีกลับ (รถร่วม)': '-',                               
-                'รวม (รถร่วม)': price_drv                             
+                'วันที่': date_str, 'รหัสลูกค้า': row.get('Customer_ID', '-'), 'ลูกค้า': row.get('Customer_Name', '-'),
+                'ประเภทรถ (ลูกค้า)': row.get('Vehicle_Type', '-'), 'จำนวนสินค้า': '-', 'ต้นทาง': row.get('Origin_Location', '-'),
+                'ปลายทาง': row.get('Dest_Location', '-'), 'ระยะทาง (ลูกค้า)': row.get('Est_Distance_KM', 0),
+                'ราคาน้ำมัน': current_fuel_price, 'ราคา (ลูกค้า)': price_cust, 'ค่าจัดเรียง/ค้างคืน': '-',
+                'พ่วง (ลูกค้า)': '-', 'อื่นๆ (ลูกค้า)': '-', 'ตีกลับ (ลูกค้า)': '-', 'รวม (ลูกค้า)': price_cust,
+                'ทะเบียน': row.get('Vehicle_Plate', '-'), 'ชื่อคนขับ': driver_map.get(d_id, '-'),
+                'ประเภทรถ (คนขับ)': veh_map.get(d_id, '-'), 'ต้นทาง (รถร่วม)': row.get('Origin_Location', '-'),
+                'ปลายทาง (รถร่วม)': row.get('Dest_Location', '-'), 'ระยะทาง (รถร่วม)': row.get('Est_Distance_KM', 0),
+                'ราคา (รถร่วม)': price_drv, 'ค่าจัดเรียง (รถร่วม)': '-', 'พ่วง (รถร่วม)': '-',
+                'อื่นๆ (รถร่วม)': '-', 'ตีกลับ (รถร่วม)': '-', 'รวม (รถร่วม)': price_drv
             }
             final_data.append(record)
 
         df_final = pd.DataFrame(final_data)
-
-        # 6. บันทึกลง Sheet ปลายทาง (คนละไฟล์)
         conn = get_connection()
         conn.update(spreadsheet=TARGET_URL, worksheet=TARGET_WORKSHEET, data=df_final)
-        
-        return True, f"ส่งข้อมูล {len(df_final)} รายการ ไปยังไฟล์สรุปปลายทางเรียบร้อย!"
-
-    except Exception as e:
-        return False, f"เกิดข้อผิดพลาด: {str(e)} (อย่าลืมแชร์ไฟล์ปลายทางให้บอทด้วย)"
+        return True, f"ส่งข้อมูล {len(df_final)} รายการ เรียบร้อย!"
+    except Exception as e: return False, f"Error: {str(e)}"
 
 # ---------------------------------------------------------
 # 4. Main
@@ -526,37 +474,61 @@ def main():
             driver_flow()
 
 # ---------------------------------------------------------
-# 5. Admin Panel
+# 5. Admin Panel (Fix: Multi-Destination Route Selection)
 # ---------------------------------------------------------
 def admin_flow():
     with st.sidebar:
         st.title("Control Tower")
         st.success(f"Admin: {st.session_state.driver_name}")
+        
+        # เพิ่มปุ่มรีเฟรช
+        if st.button("🔄 รีเฟรชข้อมูลล่าสุด"):
+            st.cache_data.clear()
+            st.rerun()
+            
         if st.button("🚪 Logout", type="secondary"):
             st.session_state.logged_in = False
             st.rerun()
             
     st.title("🖥️ Admin Dashboard")
     
-    # เพิ่ม Tab 8 (ตั้งค่า)
+    # Init Session State
+    if 'form_origin' not in st.session_state: st.session_state.form_origin = ""
+    if 'form_dest' not in st.session_state: st.session_state.form_dest = ""
+    if 'form_link_org' not in st.session_state: st.session_state.form_link_org = ""
+    if 'form_link_dest' not in st.session_state: st.session_state.form_link_dest = ""
+    if 'form_dist' not in st.session_state: st.session_state.form_dist = 100.0
+    if 'form_route_name' not in st.session_state: st.session_state.form_route_name = ""
+
     tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
         "📝 จ่ายงาน", "📊 Profit & Data", "🔧 MMS", "⛽ น้ำมัน", "🔩 สต็อก", "🗺️ GPS", "⛽ ราคาน้ำมัน/คำนวณ", "⚙️ ตั้งค่าระบบ"
     ])
 
-    # --- Tab 1: จ่ายงาน ---
+    # --- Tab 1: จ่ายงาน (ระบบเลือกเส้นทางแบบ 2 ขั้นตอน) ---
     with tab1:
         st.subheader("สร้างใบงานใหม่")
+        
+        # 1. โหลดข้อมูล
         drivers_df = get_data("Master_Drivers")
+        customers_df = get_data("Master_Customers")
+        routes_df = get_data("Master_Routes")
+        
+        # Dropdown Driver
         driver_options = []
         driver_map = {}
         if not drivers_df.empty:
-             drivers_only = drivers_df[drivers_df['Role'] == 'Driver']
+             mask_driver = drivers_df['Role'].astype(str).str.lower().str.strip() == 'driver'
+             drivers_only = drivers_df[mask_driver]
              for _, row in drivers_only.iterrows():
-                 label = f"{row['Driver_ID']} : {row['Driver_Name']} ({row['Vehicle_Plate']})"
-                 driver_options.append(label)
-                 driver_map[label] = row.get('Vehicle_Plate', '')
+                 d_id = str(row['Driver_ID'])
+                 d_name = str(row['Driver_Name'])
+                 d_plate = str(row.get('Vehicle_Plate', ''))
+                 if d_id and d_id != 'nan':
+                     label = f"{d_id} : {d_name} ({d_plate})"
+                     driver_options.append(label)
+                     driver_map[label] = d_plate
 
-        customers_df = get_data("Master_Customers")
+        # Dropdown Customer
         customer_options = []
         customer_map_id = {}
         customer_map_name = {}
@@ -567,7 +539,59 @@ def admin_flow():
                 customer_map_id[label] = row['Customer_ID']
                 customer_map_name[label] = row['Customer_Name']
 
+        # --- ส่วนที่ 1: เลือกเส้นทาง (อยู่นอก Form) ---
+        # Logic: 1. เลือก Route Name -> 2. เลือก Destination จาก Route นั้น -> 3. Auto-fill
+        
+        st.markdown("##### 📍 เลือกเส้นทางมาตรฐาน (Step-by-Step)")
+        
+        # Step 1: เตรียมรายชื่อ Route Name (ไม่ซ้ำ)
+        unique_routes = ["-- กำหนดเอง (Custom) --"]
+        if not routes_df.empty:
+            # ดึงเฉพาะชื่อเส้นทางที่ไม่ซ้ำ
+            raw_routes = routes_df['Route_Name'].dropna().astype(str).unique()
+            unique_routes += [r for r in raw_routes if r.strip() != '']
+
+        c_sel1, c_sel2 = st.columns(2)
+        
+        # กล่องที่ 1: เลือกชื่อเส้นทาง
+        with c_sel1:
+            selected_main_route = st.selectbox("1. เลือกกลุ่มงาน/เส้นทาง", unique_routes, key="sel_main_route")
+
+        # กล่องที่ 2: เลือกปลายทาง (จะเปลี่ยนตามกล่องที่ 1)
+        target_row = None
+        if selected_main_route != "-- กำหนดเอง (Custom) --":
+            # กรองข้อมูลเฉพาะ Route Name ที่เลือก
+            sub_df = routes_df[routes_df['Route_Name'] == selected_main_route]
+            
+            # ดึงรายชื่อปลายทางทั้งหมดของ Route นี้
+            dest_options = sub_df['Destination'].unique().tolist()
+            
+            with c_sel2:
+                selected_dest_point = st.selectbox("2. เลือกปลายทาง", dest_options, key="sel_dest_point")
+                
+            # หาบรรทัดข้อมูลที่ตรงกับ (Route Name + Destination)
+            if selected_dest_point:
+                # ใช้ iloc[0] เพื่อเอาบรรทัดแรกที่เจอ (กรณีมีซ้ำอีก)
+                target_row = sub_df[sub_df['Destination'] == selected_dest_point].iloc[0]
+                
+                # --- อัปเดตค่าลง Session State (Auto-fill) ---
+                st.session_state.form_route_name = selected_main_route
+                st.session_state.form_origin = target_row.get('Origin', '')
+                st.session_state.form_dest = target_row.get('Destination', '')
+                st.session_state.form_dist = float(pd.to_numeric(target_row.get('Distance_KM', 0), errors='coerce'))
+                
+                # จัดการลิ้งค์ (รองรับทั้งชื่อคอลัมน์เก่าและใหม่)
+                st.session_state.form_link_org = target_row.get('Map_Link Origin', target_row.get('Map_Link', ''))
+                st.session_state.form_link_dest = target_row.get('Map_Link Destination', '')
+        else:
+            with c_sel2:
+                st.selectbox("2. เลือกปลายทาง", ["-"], disabled=True)
+
+        st.divider()
+
+        # --- ส่วนที่ 2: แบบฟอร์มบันทึกงาน (ภายใน Form) ---
         with st.form("create_job_form"):
+            st.markdown("##### 📝 ข้อมูลงาน (แก้ไขได้)")
             c1, c2 = st.columns(2)
             with c1:
                 auto_id = f"JOB-{datetime.now().strftime('%y%m%d-%H%M')}"
@@ -579,18 +603,38 @@ def admin_flow():
                 driver_id = selected_driver_raw.split(" : ")[0] if selected_driver_raw else ""
                 auto_plate = driver_map.get(selected_driver_raw, "")
                 vehicle_type = st.selectbox("ประเภทรถ", ["4 ล้อ", "6 ล้อ", "10 ล้อ"])
-                route_name = st.text_input("ชื่อเส้นทาง")
             
-            st.divider()
-            c3, c4 = st.columns(2)
-            with c3: origin = st.text_input("จุดรับสินค้า", value="คลังสินค้า A")
-            with c4: dest = st.text_input("จุดส่งสินค้า")
-            c5, c6 = st.columns(2)
-            with c5: est_dist = st.number_input("ระยะทาง (กม.)", min_value=0, value=100)
-            with c6: map_link = st.text_input("Google Map Link")
+            # ชื่อเส้นทาง
+            route_name = st.text_input("ชื่อเส้นทาง (Job Name)", value=st.session_state.form_route_name)
+
+            # Input แยก 4 ช่อง
+            col_org1, col_org2 = st.columns(2)
+            with col_org1: 
+                origin = st.text_input("จุดรับสินค้า (ต้นทาง)", value=st.session_state.form_origin)
+            with col_org2: 
+                link_org = st.text_input("ลิ้งค์แผนที่ต้นทาง", value=st.session_state.form_link_org)
+
+            col_dest1, col_dest2 = st.columns(2)
+            with col_dest1: 
+                dest = st.text_input("จุดส่งสินค้า (ปลายทาง)", value=st.session_state.form_dest)
+            with col_dest2: 
+                link_dest = st.text_input("ลิ้งค์แผนที่ปลายทาง", value=st.session_state.form_link_dest)
+            
+            # ระยะทาง & ปุ่มเช็คระยะ
+            col_dist1, col_dist2 = st.columns([1, 1])
+            with col_dist1:
+                est_dist = st.number_input("ระยะทาง (กม.)", min_value=0.0, value=float(st.session_state.form_dist))
+            with col_dist2:
+                st.write("") 
+                st.write("") 
+                if origin and dest:
+                    dir_url = f"https://www.google.com/maps/dir/?api=1&origin={urllib.parse.quote(origin)}&destination={urllib.parse.quote(dest)}"
+                    st.link_button("🗺️ เช็คระยะทาง (Google Maps)", dir_url)
+                else:
+                    st.caption("พิมพ์ชื่อสถานที่เพื่อสร้างปุ่มเช็คระยะ")
 
             st.divider()
-            # ดึงค่า Config มาใช้แสดง Default
+            # Config
             def_profit = get_config_value("price_profit", 1000)
             def_floor = get_config_value("opt_floor", 100)
             def_helper = get_config_value("opt_helper", 300)
@@ -609,15 +653,24 @@ def admin_flow():
             st.divider()
             st.markdown("### 💰 กำหนดราคาเอง (Override)")
             m_col1, m_col2 = st.columns(2)
-            with m_col1: manual_customer_price = st.number_input("ราคาขาย (บาท)", 0.0)
-            with m_col2: manual_driver_cost = st.number_input("ต้นทุน (บาท)", 0.0)
+            with m_col1: manual_customer_price = st.number_input("ราคาขาย (บาท) [0=Auto]", 0.0)
+            with m_col2: manual_driver_cost = st.number_input("ต้นทุน (บาท) [0=Auto]", 0.0)
 
-            if st.form_submit_button("✅ จ่ายงาน", type="primary"):
+            if st.form_submit_button("✅ บันทึกและจ่ายงาน", type="primary"):
                 customer_id = customer_map_id.get(selected_customer_raw, None)
                 customer_name = customer_map_name.get(selected_customer_raw, "")
                 if driver_id and customer_id is not None:
-                    # Auto Price
-                    auto_cost = calculate_driver_cost(plan_date, est_dist, vehicle_type)
+                    # Calc
+                    current_diesel = 30.00
+                    try:
+                        prices = get_fuel_prices()
+                        if prices:
+                            ptt = prices.get('ราคาน้ำมัน ปตท. (ptt)', {})
+                            for k, v in ptt.items():
+                                if "ดีเซล" in k: current_diesel = float(v.replace(',','')); break
+                    except: pass
+
+                    auto_cost = calculate_driver_cost(plan_date, est_dist, vehicle_type, current_diesel_price=current_diesel)
                     base_price = auto_cost + def_profit if auto_cost > 0 else 0
                     
                     surcharge = 0
@@ -632,10 +685,17 @@ def admin_flow():
                     final_customer_price = manual_customer_price if manual_customer_price > 0 else auto_price_customer
                     final_driver_cost = manual_driver_cost if manual_driver_cost > 0 else auto_cost
 
+                    # Create Map Link
+                    final_map_link = ""
+                    if link_dest: final_map_link = link_dest
+                    elif link_org: final_map_link = link_org
+                    elif origin and dest: final_map_link = f"https://www.google.com/maps/dir/?api=1&origin={urllib.parse.quote(origin)}&destination={urllib.parse.quote(dest)}"
+
                     new_job = {
                         "Job_ID": auto_id, "Job_Status": "ASSIGNED", "Plan_Date": plan_date.strftime("%Y-%m-%d"),
                         "Customer_ID": customer_id, "Customer_Name": customer_name,
-                        "Route_Name": route_name, "Origin_Location": origin, "Dest_Location": dest, "GoogleMap_Link": map_link,
+                        "Route_Name": route_name, "Origin_Location": origin, "Dest_Location": dest, 
+                        "GoogleMap_Link": final_map_link,
                         "Driver_ID": driver_id, "Vehicle_Plate": auto_plate, 
                         "Est_Distance_KM": est_dist, "Price_Customer": final_customer_price,
                         "Cost_Driver_Total": final_driver_cost, "Actual_Delivery_Time": "", "Photo_Proof_Url": "", "Signature_Url": ""
@@ -655,7 +715,27 @@ def admin_flow():
                     "GoogleMap_Link": st.column_config.LinkColumn("แผนที่งาน", display_text="เปิด Map")
                 }
             )
-
+        
+        if not jobs_admin_view.empty and not drivers_df.empty:
+            with st.expander("เปลี่ยนคนขับ (กรณีฉุกเฉิน)"):
+                editable_jobs = jobs_admin_view[jobs_admin_view['Job_Status'].isin(['PLANNED', 'ASSIGNED', 'PICKED_UP', 'IN_TRANSIT', 'DELIVERED'])] if 'Job_Status' in jobs_admin_view.columns else jobs_admin_view
+                if not editable_jobs.empty:
+                    c_ch1, c_ch2 = st.columns(2)
+                    with c_ch1:
+                        job_id_selected = st.selectbox("เลือกงาน (Job_ID)", editable_jobs['Job_ID'].astype(str).unique())
+                    with c_ch2:
+                        new_driver_select = st.selectbox("เลือกคนขับใหม่", driver_options, key="new_drv_sel")
+                    
+                    if st.button("บันทึกการเปลี่ยนคนขับ"):
+                        new_d_id = new_driver_select.split(" : ")[0]
+                        new_plate = driver_map.get(new_driver_select, "")
+                        updates = {"Driver_ID": new_d_id, "Vehicle_Plate": new_plate}
+                        if simple_update_job_status(job_id_selected, "ASSIGNED", updates):
+                            st.success(f"เปลี่ยนคนขับงาน {job_id_selected} สำเร็จ")
+                            time.sleep(1)
+                            st.rerun()
+        
+        
     # --- Tab 2: Profit ---
     with tab2:
         st.subheader("📊 สรุปข้อมูล")
