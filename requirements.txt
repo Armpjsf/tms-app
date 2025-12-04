@@ -6,3 +6,4 @@ streamlit-js-eval
 Pillow
 requests
 beautifulsoup4
+pytz
