@@ -4,7 +4,7 @@ from datetime import datetime
 import time
 import urllib.parse
 import plotly.express as px # type: ignore
-import pytz  # type: ignore # <--- เติมบรรทัดนี้เพื่อให้รู้จัก Timezone
+import pytz  # type: ignore
 
 from modules.database import get_data, update_sheet, load_all_data
 from modules.utils import (
@@ -18,7 +18,6 @@ def admin_flow():
         st.title("Control Tower")
         st.success(f"Admin: {st.session_state.driver_name}")
         
-        # ปุ่มรีเฟรช (Manual Refresh)
         if st.button("🔄 รีเฟรชข้อมูลล่าสุด"):
             st.session_state.data_store = load_all_data() # Force reload
             st.rerun()
@@ -36,9 +35,21 @@ def admin_flow():
     if 'form_link_org' not in st.session_state: st.session_state.form_link_org = ""
     if 'form_link_dest' not in st.session_state: st.session_state.form_link_dest = ""
     if 'form_dist' not in st.session_state: st.session_state.form_dist = 100.0
+    
+    # Auto Reset
+    if 'need_reset' not in st.session_state: st.session_state.need_reset = False
+    if st.session_state.need_reset:
+        st.session_state.form_route_name = ""
+        st.session_state.form_origin = ""
+        st.session_state.form_dest = ""
+        st.session_state.form_link_org = ""
+        st.session_state.form_link_dest = ""
+        st.session_state.form_dist = 100.0
+        st.session_state.need_reset = False
 
     tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9 = st.tabs([
-        "📝 จ่ายงาน", "📊 Profit & Data", "🔧 MMS", "⛽ น้ำมัน", "🔩 สต็อก", "🗺️ GPS", "⛽ ราคาน้ำมัน/คำนวณ", "⚙️ ตั้งค่าระบบ", "📖 คู่มือ"
+        "📝 จ่ายงาน", "📊 Profit & Data", "🔧 MMS", "⛽ น้ำมัน", 
+        "🔩 สต็อก", "🗺️ GPS", "⛽ ราคาน้ำมัน/คำนวณ", "⚙️ ตั้งค่าระบบ", "📖 คู่มือ"
     ])
 
     # --- Tab 1: จ่ายงาน ---
@@ -149,15 +160,12 @@ def admin_flow():
             submitted = st.form_submit_button("✅ บันทึกและจ่ายงาน", type="primary", use_container_width=True)
             
             if submitted:
-                with st.status("⏳ กำลังดำเนินการ... กรุณารอสักครู่", expanded=True) as status:
-                    if not d_id:
-                        status.update(label="❌ ผิดพลาด: กรุณาเลือกคนขับ", state="error")
-                        st.error("กรุณาเลือกคนขับ")
-                    elif not sel_cust:
-                        status.update(label="❌ ผิดพลาด: กรุณาเลือกลูกค้า", state="error")
-                        st.error("กรุณาเลือกลูกค้า")
+                with st.status("⏳ กำลังดำเนินการ...", expanded=True) as status:
+                    if not d_id or not sel_cust:
+                        status.update(label="❌ กรุณากรอกข้อมูลให้ครบ", state="error")
+                        st.error("เลือกคนขับและลูกค้า")
                     else:
-                        st.write("⚙️ กำลังคำนวณราคาและต้นทุน...")
+                        st.write("⚙️ คำนวณราคา...")
                         cust_id = customer_map_id.get(sel_cust, None)
                         cust_name = customer_map_name.get(sel_cust, "")
                         
@@ -183,7 +191,7 @@ def admin_flow():
                         if not final_link and origin and dest:
                             final_link = f"https://www.google.com/maps/dir/?api=1&origin={urllib.parse.quote(origin)}&destination={urllib.parse.quote(dest)}"
 
-                        st.write("💾 กำลังบันทึกลง Google Sheets...")
+                        st.write("💾 บันทึกข้อมูล (Append)...")
                         new_job = {
                             "Job_ID": auto_id, "Job_Status": "ASSIGNED", "Plan_Date": p_date.strftime("%Y-%m-%d"),
                             "Customer_ID": cust_id, "Customer_Name": cust_name, "Route_Name": r_name,
@@ -194,14 +202,13 @@ def admin_flow():
                         }
                         
                         if create_new_job(new_job):
-                            status.update(label="✅ จ่ายงานสำเร็จ!", state="complete", expanded=False)
-                            st.success(f"บันทึกข้อมูลเรียบร้อย! (Job ID: {auto_id})")
-                            st.balloons()
-                            time.sleep(2)
+                            st.session_state.need_reset = True # Set Flag
+                            status.update(label="✅ สำเร็จ!", state="complete", expanded=False)
+                            st.success(f"บันทึกแล้ว! (ID: {auto_id})")
+                            time.sleep(0.5)
                             st.rerun()
                         else:
-                            status.update(label="❌ เกิดข้อผิดพลาดในการบันทึก", state="error")
-                            st.error("ไม่สามารถเชื่อมต่อ Google Sheet ได้ กรุณาลองใหม่อีกครั้ง")
+                            status.update(label="❌ ผิดพลาด", state="error")
 
         st.write("---"); st.subheader("รายการงานล่าสุด")
         jobs_view = get_data("Jobs_Main")
@@ -235,7 +242,6 @@ def admin_flow():
                 lat, lon = r.get('Current_Lat'), r.get('Current_Lon')
                 driver_map_link[d_id] = f"https://www.google.com/maps?q={lat},{lon}" if pd.notna(lat) and pd.notna(lon) else "-"
 
-        # ใช้เวลาไทย
         tz_th = pytz.timezone('Asia/Bangkok')
         now_th = datetime.now(tz_th)
 
@@ -257,10 +263,15 @@ def admin_flow():
             total_rev = df_filtered['Price_Customer'].sum()
             total_cost = df_filtered['Cost_Driver_Total'].sum()
             fuel_cost = 0
-            if not df_fuel.empty:
+            
+            # Fuel Calculation (Fix Date)
+            df_fuel_clean = pd.DataFrame()
+            if not df_fuel.empty and 'Date_Time' in df_fuel.columns:
                 df_fuel['Date_Time'] = pd.to_datetime(df_fuel['Date_Time'], errors='coerce')
-                f_mask = (df_fuel['Date_Time'].dt.date >= start_date) & (df_fuel['Date_Time'].dt.date <= end_date)
-                fuel_cost = df_fuel[f_mask]['Price_Total'].sum()
+                df_fuel_clean = df_fuel.dropna(subset=['Date_Time'])
+                if not df_fuel_clean.empty:
+                    f_mask = (df_fuel_clean['Date_Time'].dt.date >= start_date) & (df_fuel_clean['Date_Time'].dt.date <= end_date)
+                    fuel_cost = df_fuel_clean[f_mask]['Price_Total'].sum()
                 
             net_profit = total_rev - total_cost - fuel_cost
             margin = (net_profit / total_rev * 100) if total_rev > 0 else 0
@@ -283,11 +294,11 @@ def admin_flow():
                 fig2 = px.pie(cust_share, values='Price_Customer', names='Customer_Name', title="สัดส่วนลูกค้า", hole=0.4)
                 st.plotly_chart(fig2, use_container_width=True)
 
-            if not df_fuel.empty:
+            if not df_fuel_clean.empty:
                 st.divider()
                 eff_data = []
                 for plate in df_filtered['Vehicle_Plate'].unique():
-                    fl = df_fuel[(df_fuel['Vehicle_Plate']==str(plate)) & f_mask].sort_values('Odometer')
+                    fl = df_fuel_clean[df_fuel_clean['Vehicle_Plate']==str(plate)].sort_values('Odometer')
                     if len(fl) >= 2:
                         dist = fl.iloc[-1]['Odometer'] - fl.iloc[0]['Odometer']
                         lit = fl.iloc[1:]['Liters'].sum()
@@ -300,8 +311,10 @@ def admin_flow():
             st.divider()
             st.markdown("### 🏆 Fleet Performance")
             summ = df_filtered.groupby('Vehicle_Plate').agg({'Job_ID': 'count', 'Est_Distance_KM': 'sum', 'Price_Customer': 'sum', 'Cost_Driver_Total': 'sum', 'Driver_Name': 'first', 'Current_Location_Link': 'first'}).reset_index()
-            if not df_fuel.empty:
-                f_grp = df_fuel[f_mask].groupby('Vehicle_Plate')['Price_Total'].sum().reset_index()
+            
+            if not df_fuel_clean.empty:
+                f_period = df_fuel_clean[(df_fuel_clean['Date_Time'].dt.date >= start_date) & (df_fuel_clean['Date_Time'].dt.date <= end_date)]
+                f_grp = f_period.groupby('Vehicle_Plate')['Price_Total'].sum().reset_index()
                 summ = summ.merge(f_grp, on='Vehicle_Plate', how='left').fillna(0)
             else: summ['Price_Total'] = 0
             
@@ -310,7 +323,7 @@ def admin_flow():
             
             st.divider()
             c_s1, c_s2 = st.columns([3, 1])
-            with c_s1: st.info("ส่งข้อมูลเข้า master")
+            with c_s1: st.info("ส่งข้อมูลให้บัญชี")
             with c_s2:
                 if st.button("🚀 Sync Accounting"):
                     with st.spinner("Sending..."):
@@ -366,17 +379,25 @@ def admin_flow():
 
     # --- Tab 6: GPS ---
     with tab6:
-        st.subheader("📍 GPS")
-        d = get_data("Master_Drivers")
-        if not d.empty:
-            d['lat'] = pd.to_numeric(d['Current_Lat'], errors='coerce'); d['lon'] = pd.to_numeric(d['Current_Lon'], errors='coerce')
-            act = d.dropna(subset=['lat', 'lon']).copy()
-            if not act.empty:
-                st.map(act[['lat', 'lon']])
-                act['Link'] = act.apply(lambda r: f"https://www.google.com/maps?q={r['lat']},{r['lon']}", axis=1)
-                st.dataframe(act[['Driver_Name', 'Vehicle_Plate', 'Last_Update', 'Link']], use_container_width=True, column_config={"Link": st.column_config.LinkColumn("Map")})
+        st.subheader("📍 ตำแหน่งรถปัจจุบัน")
+        drivers = get_data("Master_Drivers")
+        if not drivers.empty:
+            drivers = drivers.rename(columns={'Current_Lat': 'lat', 'Current_Lon': 'lon'})
+            drivers['lat'] = pd.to_numeric(drivers['lat'], errors='coerce')
+            drivers['lon'] = pd.to_numeric(drivers['lon'], errors='coerce')
+            active_cars = drivers.dropna(subset=['lat', 'lon']).copy()
+            
+            if not active_cars.empty:
+                st.map(active_cars[['lat', 'lon']])
+                st.divider()
+                st.markdown("### 📋 รายละเอียดรายคัน")
+                active_cars['Google_Maps_Link'] = active_cars.apply(lambda row: f"https://www.google.com/maps?q={row['lat']},{row['lon']}", axis=1)
+                display_cols = ['Driver_Name', 'Vehicle_Plate', 'Last_Update', 'Google_Maps_Link']
+                display_cols = [c for c in display_cols if c in active_cars.columns]
+                st.dataframe(active_cars[display_cols], use_container_width=True, column_config={"Google_Maps_Link": st.column_config.LinkColumn("📍 แผนที่", display_text="เปิด Google Maps 🗺️")})
+            else: st.warning("⚠️ ไม่พบพิกัดรถ")
+        else: st.warning("ไม่พบข้อมูลคนขับ")
 
-    # --- Tab 7: Calc ---
     with tab7:
         st.subheader("🧮 คำนวณราคา")
         with st.container(border=True):
@@ -386,6 +407,52 @@ def admin_flow():
             if st.button("คำนวณ"):
                 cost = calculate_driver_cost(cd, dst, cv)
                 st.success(f"ต้นทุน: {cost:,.0f} | ราคาขาย: {cost+1000+(fl*100):,.0f}")
+        
+        st.divider()
+        st.subheader("⛽ ราคาน้ำมันล่าสุด")
+        
+        # ปุ่มกดอัปเดต
+        if st.button("🔄 อัปเดตราคาล่าสุด", key="update_fuel_new"):
+            with st.spinner("กำลังดึงข้อมูล..."):
+                fuel_prices = get_fuel_prices()
+                if fuel_prices: 
+                    st.session_state.fuel_prices = fuel_prices
+                    st.success("อัปเดตแล้ว!")
+                    time.sleep(1)
+                    st.rerun() # รีเฟรชหน้าเพื่อให้ตารางแสดงผล
+                else: 
+                    st.error("ดึงข้อมูลไม่สำเร็จ")
+        
+        # ส่วนแสดงผลตาราง (อยู่นอก if button เพื่อให้แสดงตลอดเวลาที่มีข้อมูล)
+        if 'fuel_prices' in st.session_state and st.session_state.fuel_prices:
+            fuel_data_source = st.session_state.fuel_prices
+            
+            # แสดงราคา PTT
+            if 'ราคาน้ำมัน ปตท. (ptt)' in fuel_data_source:
+                ptt = fuel_data_source['ราคาน้ำมัน ปตท. (ptt)']
+                st.markdown("### ปตท. (PTT)")
+                
+                # แปลง Dict เป็น List เพื่อสร้าง DataFrame
+                fuel_list = []
+                for k, v in ptt.items():
+                    fuel_list.append({"ประเภทน้ำมัน": k, "ราคา": v})
+                
+                st.table(pd.DataFrame(fuel_list))
+            
+            # แสดงปั๊มอื่นๆ (ซ่อนใน Expander)
+            other_stations = [s for s in fuel_data_source.keys() if s != 'ราคาน้ำมัน ปตท. (ptt)']
+            if other_stations:
+                with st.expander("🔄 ดูราคาจากปั้มอื่นๆ"):
+                    for station in other_stations:
+                        st.markdown(f"#### {station}")
+                        station_prices = fuel_data_source[station]
+                        station_list = []
+                        for k, v in station_prices.items():
+                            station_list.append({"ประเภทน้ำมัน": k, "ราคา": v})
+                        if station_list:
+                            st.table(pd.DataFrame(station_list))
+        else:
+            st.info("กดปุ่ม 'อัปเดตราคาล่าสุด' เพื่อดูข้อมูล")
 
     # --- Tab 8: Config ---
     with tab8:
@@ -397,7 +464,9 @@ def admin_flow():
 
     # --- Tab 9: Manual ---
     with tab9:
-        st.subheader("📘 คู่มือ")
-        manual = get_manual_content()
-        st.download_button("📥 Download", manual, "manual.txt")
-        st.markdown(manual)
+        st.subheader("📘 คู่มือการใช้งานระบบ")
+        try:
+            manual_text = get_manual_content()
+            st.download_button("📥 ดาวน์โหลดคู่มือ", manual_text, "manual.txt")
+            st.markdown(manual_text)
+        except: st.error("ไม่พบเนื้อหาคู่มือ")

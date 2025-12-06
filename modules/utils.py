@@ -8,7 +8,7 @@ import base64
 import requests
 from bs4 import BeautifulSoup # type: ignore
 import re
-from modules.database import get_data, update_sheet, get_connection_direct
+from modules.database import get_data, update_sheet, append_to_sheet, get_connection_direct, get_connection
 
 # --- Utility Functions ---
 @st.cache_data
@@ -139,6 +139,7 @@ def get_maintenance_status_all():
             merged = drivers.copy()
             merged['Last_Service_Odo'] = 0
             merged['Date_Service'] = pd.NaT
+            
             if not maint_logs.empty:
                 svc_logs = maint_logs[maint_logs['Service_Type'] == service_name].copy()
                 if not svc_logs.empty:
@@ -151,18 +152,17 @@ def get_maintenance_status_all():
                         if plate in last_svc.index:
                             merged.at[idx, 'Last_Service_Odo'] = last_svc.at[plate, 'Odometer']
                             merged.at[idx, 'Date_Service'] = last_svc.at[plate, 'Date_Service']
+
             merged['Dist_Run'] = merged['Current_Mileage'] - merged['Last_Service_Odo']
             now = datetime.now()
             merged['Days_Run'] = (now - merged['Date_Service']).dt.days.fillna(0)
             
             for _, row in merged.iterrows():
-                dist_run = row['Dist_Run']
-                days_run = row['Days_Run']
                 status = "✅ ปกติ"; is_due = False; note = ""
-                if dist_run >= limit_km: status = "⚠️ ครบระยะทาง"; note = f"เกิน {dist_run - limit_km:,.0f} กม."; is_due = True
-                elif days_run >= limit_days: status = "⚠️ ครบกำหนดเวลา"; note = f"เกิน {days_run - limit_days:,.0f} วัน"; is_due = True
-                elif dist_run >= (limit_km * 0.9): status = "🟡 ใกล้ครบระยะ"; note = f"เหลือ {limit_km - dist_run:,.0f} กม."
-                all_status.append({"Vehicle_Plate": row['Vehicle_Plate'], "Driver_Name": row['Driver_Name'], "Service_Type": service_name, "Current_Mileage": row['Current_Mileage'], "Last_Service_Odo": row['Last_Service_Odo'], "Distance_Run": f"{dist_run:,.0f} กม.", "Status": status, "Note": note, "Is_Due": is_due})
+                if row['Dist_Run'] >= limit_km: status = "⚠️ ครบระยะทาง"; note = f"เกิน {row['Dist_Run'] - limit_km:,.0f} กม."; is_due = True
+                elif row['Days_Run'] >= limit_days: status = "⚠️ ครบกำหนดเวลา"; note = f"เกิน {row['Days_Run'] - limit_days:,.0f} วัน"; is_due = True
+                elif row['Dist_Run'] >= (limit_km * 0.9): status = "🟡 ใกล้ครบระยะ"; note = f"เหลือ {limit_km - row['Dist_Run']:,.0f} กม."
+                all_status.append({"Vehicle_Plate": row['Vehicle_Plate'], "Driver_Name": row['Driver_Name'], "Service_Type": service_name, "Current_Mileage": row['Current_Mileage'], "Last_Service_Odo": row['Last_Service_Odo'], "Distance_Run": f"{row['Dist_Run']:,.0f} กม.", "Status": status, "Note": note, "Is_Due": is_due})
         return pd.DataFrame(all_status)
     except: return pd.DataFrame()
 
@@ -186,7 +186,7 @@ def calculate_actual_consumption(plate):
     except: return 0, 0, 0
 
 def get_status_label_th(status_code: str) -> str:
-    mapping = {"PLANNED": "วางแผนแล้ว", "ASSIGNED": "จ่ายงานแล้ว", "PICKED_UP": "รับของแล้ว", "IN_TRANSIT": "กำลังส่ง", "DELIVERED": "ถึงแล้ว", "COMPLETED": "ปิดงาน", "FAILED": "ส่งไม่สำเร็จ"}
+    mapping = {"PLANNED": "วางแผนแล้ว", "ASSIGNED": "จ่ายงานให้คนขับแล้ว", "PICKED_UP": "รับสินค้าแล้ว", "IN_TRANSIT": "กำลังขนส่ง", "DELIVERED": "ถึงปลายทางแล้ว", "COMPLETED": "ปิดงานสมบูรณ์", "FAILED": "ส่งไม่สำเร็จ", "CANCELLED": "ยกเลิกงาน", "Completed": "ปิดงานสมบูรณ์", "Pending": "รอดำเนินการ"}
     return mapping.get(str(status_code), str(status_code))
 
 def get_fuel_prices():
@@ -211,40 +211,50 @@ def get_fuel_prices():
 # --- Database Update Wrappers ---
 def create_new_job(job_data):
     try:
-        df = get_data("Jobs_Main")
-        updated_df = pd.concat([df, pd.DataFrame([job_data])], ignore_index=True)
-        update_sheet("Jobs_Main", updated_df)
-        return True
-    except: return False
-
-def create_repair_ticket(ticket_data):
-    try:
-        df = get_data("Repair_Tickets")
-        updated_df = pd.concat([df, pd.DataFrame([ticket_data])], ignore_index=True)
-        update_sheet("Repair_Tickets", updated_df)
-        return True
+        df_schema = get_data("Jobs_Main")
+        columns = df_schema.columns.tolist()
+        row_values = []
+        for col in columns:
+            val = job_data.get(col, "")
+            row_values.append(val)
+        return append_to_sheet("Jobs_Main", row_values)
     except: return False
 
 def create_fuel_log(fuel_data):
     try:
-        df = get_data("Fuel_Logs")
-        updated_df = pd.concat([df, pd.DataFrame([fuel_data])], ignore_index=True)
-        update_sheet("Fuel_Logs", updated_df)
-        if 'Odometer' in fuel_data and 'Vehicle_Plate' in fuel_data:
-            drv = get_data("Master_Drivers")
-            drv['Vehicle_Plate'] = drv['Vehicle_Plate'].astype(str)
-            idx = drv[drv['Vehicle_Plate'] == str(fuel_data['Vehicle_Plate'])].index
-            if not idx.empty:
-                drv.at[idx[0], 'Current_Mileage'] = fuel_data['Odometer']
-                update_sheet("Master_Drivers", drv)
-        return True
+        df_schema = get_data("Fuel_Logs")
+        columns = df_schema.columns.tolist()
+        row_values = [fuel_data.get(c, "") for c in columns]
+        if append_to_sheet("Fuel_Logs", row_values):
+            if 'Odometer' in fuel_data and 'Vehicle_Plate' in fuel_data:
+                drv = get_data("Master_Drivers")
+                drv['Vehicle_Plate'] = drv['Vehicle_Plate'].astype(str)
+                idx = drv[drv['Vehicle_Plate'] == str(fuel_data['Vehicle_Plate'])].index
+                if not idx.empty:
+                    drv.at[idx[0], 'Current_Mileage'] = fuel_data['Odometer']
+                    update_sheet("Master_Drivers", drv)
+            return True
+        return False
+    except: return False
+
+def log_maintenance_record(record):
+    try:
+        df_schema = get_data("Maintenance_Logs")
+        columns = df_schema.columns.tolist()
+        row_values = [record.get(c, "") for c in columns]
+        return append_to_sheet("Maintenance_Logs", row_values)
+    except: return False
+
+def create_repair_ticket(ticket_data):
+    try:
+        df_schema = get_data("Repair_Tickets")
+        columns = df_schema.columns.tolist()
+        row_values = [ticket_data.get(c, "") for c in columns]
+        return append_to_sheet("Repair_Tickets", row_values)
     except: return False
 
 def update_job_status(job_id, new_status, timestamp, distance_run=0, photo_data="-", signature_data="-"):
     try:
-        conn = get_connection_direct()
-        # To avoid circular logic with cache, we use direct connection update here logic if complex,
-        # but for simplicity, we reload full df, update, and save.
         df_jobs = get_data("Jobs_Main")
         df_jobs['Job_ID'] = df_jobs['Job_ID'].astype(str)
         idx = df_jobs[df_jobs['Job_ID'] == str(job_id)].index
@@ -301,14 +311,6 @@ def update_driver_location(driver_id, lat, lon):
         return False
     except: return False
 
-def log_maintenance_record(record):
-    try:
-        df = get_data("Maintenance_Logs")
-        updated_df = pd.concat([df, pd.DataFrame([record])], ignore_index=True)
-        update_sheet("Maintenance_Logs", updated_df)
-        return True
-    except: return False
-
 def sync_to_legacy_sheet(start_date, end_date):
     # --- 📌 ตั้งค่าไฟล์ปลายทาง ---
     TARGET_ID = "1yy7TPgjW34rra6pBRCXaXb0IIDm1UpkuPcyRQ9POGw4"
@@ -322,12 +324,15 @@ def sync_to_legacy_sheet(start_date, end_date):
         df_drivers = get_data("Master_Drivers")
         if df_jobs.empty: return False, "ไม่มีข้อมูลงานในระบบ"
         
-        driver_map, veh_map = {}, {}
+        driver_info = {}
         if not df_drivers.empty:
             df_drivers['Driver_ID'] = df_drivers['Driver_ID'].astype(str)
             for _, r in df_drivers.iterrows():
-                driver_map[r['Driver_ID']] = r.get('Driver_Name', '-')
-                veh_map[r['Driver_ID']] = r.get('Vehicle_Type', '-')
+                driver_info[str(r.get('Driver_ID', ''))] = {
+                    'Name': r.get('Driver_Name', '-'),
+                    'Plate': r.get('Vehicle_Plate', '-'),
+                    'Type': r.get('Vehicle_Type', '-')
+                }
 
         current_fuel_price = "-"
         try:
@@ -346,111 +351,85 @@ def sync_to_legacy_sheet(start_date, end_date):
         
         if df_export.empty: return False, "ไม่พบงานในช่วงวันที่เลือก"
 
-        # สร้าง Data ใหม่ (List of Dicts)
-        final_data = []
-        for _, row in df_export.iterrows():
-            d_id = str(row.get('Driver_ID', ''))
-            price_cust = float(pd.to_numeric(row.get('Price_Customer', 0), errors='coerce'))
-            price_drv = float(pd.to_numeric(row.get('Cost_Driver_Total', 0), errors='coerce'))
-            date_str = row['Plan_Date'].strftime('%d/%m/%Y') if pd.notna(row['Plan_Date']) else "-"
-
-            # สร้าง dict ให้ตรงกับหัวตารางเดิม (A-AA)
-            # หมายเหตุ: ชื่อ Key ต้องตรงกับชื่อหัวตารางใน Google Sheet เป๊ะๆ (ถ้ามี)
-            # แต่ถ้า Google Sheet ไม่มีหัวตาราง หรือเป็นแถวว่างๆ เราจะใช้วิธี "ตำแหน่งคอลัมน์" แทน
-            record = {
-                'วันที่': date_str,                                   # A
-                'รหัสลูกค้า': row.get('Customer_ID', '-'),            # B
-                'ลูกค้า': row.get('Customer_Name', '-'),              # C
-                'ประเภทรถ': row.get('Vehicle_Type', '-'),             # D (ชื่อซ้ำระวัง!) -> ถ้าชื่อซ้ำให้ใช้ชื่ออื่นแล้วค่อยแก้ตอน map
-                # ** เพื่อความชัวร์ เราจะใช้ DataFrame แบบไม่มี Header แล้วอ้างอิงตำแหน่งเอา **
-                # (ข้ามไปสร้าง DataFrame ด้านล่าง)
-            }
-            
-            # สร้าง Row แบบ List เรียงลำดับ A -> AA (27 คอลัมน์)
-            row_list = [
-                date_str,                                   # A วันที่
-                row.get('Customer_ID', '-'),                # B รหัสลูกค้า
-                row.get('Customer_Name', '-'),              # C ลูกค้า
-                row.get('Vehicle_Type', '-'),               # D ประเภทรถ (ลูกค้า)
-                '-',                                        # E จำนวนสินค้า
-                row.get('Origin_Location', '-'),            # F ต้นทาง
-                row.get('Dest_Location', '-'),              # G ปลายทาง
-                row.get('Est_Distance_KM', 0),              # H ระยะทาง
-                current_fuel_price,                         # I ราคาน้ำมัน
-                price_cust,                                 # J ราคา (ลูกค้า)
-                '-',                                        # K ค่าจัดเรียง
-                '-',                                        # L พ่วง
-                '-',                                        # M อื่นๆ
-                '-',                                        # N ตีกลับ
-                price_cust,                                 # O รวม (ลูกค้า)
-                row.get('Vehicle_Plate', '-'),              # P ทะเบียน
-                driver_map.get(d_id, '-'),                  # Q ชื่อ
-                veh_map.get(d_id, '-'),                     # R ประเภทรถ (รถร่วม)
-                row.get('Origin_Location', '-'),            # S ต้นทาง
-                row.get('Dest_Location', '-'),              # T ปลายทาง
-                row.get('Est_Distance_KM', 0),              # U ระยะทาง
-                price_drv,                                  # V ราคา (รถร่วม)
-                '-',                                        # W ค่าจัดเรียง
-                '-',                                        # X พ่วง
-                '-',                                        # Y อื่นๆ
-                '-',                                        # Z ตีกลับ
-                price_drv                                   # AA รวม (รถร่วม)
-            ]
-            final_data.append(row_list)
+        # --- 🔥 อ่านข้อมูลเก่ามาเช็คซ้ำ (Duplicate Check) ---
+        from modules.database import get_connection
+        conn = get_connection()
         
-        # แปลงเป็น DataFrame (ข้อมูลใหม่)
-        df_new = pd.DataFrame(final_data)
-
-        # --- 🔥 ส่วนที่เพิ่ม: อ่านของเก่า + ต่อท้าย ---
-        conn = get_connection_direct()
-        
+        existing_keys = set() # เก็บ "ลายนิ้วมือ" ของงานที่มีอยู่แล้ว
         try:
-            # 1. อ่านข้อมูลเก่าทั้งหมดมาก่อน (แบบไม่มี Header เพื่อกันเรื่องชื่อซ้ำ)
-            # header=None จะทำให้อ่านบรรทัดที่ 1, 2, 3 มาเป็น Data ด้วย
+            # อ่านข้อมูลเก่า (ไม่เอา Header)
             df_old = conn.read(spreadsheet=TARGET_URL, worksheet=TARGET_WORKSHEET, ttl=0, header=None)
             
-            # 2. ตรวจสอบความกว้าง (จำนวนคอลัมน์)
-            # ถ้าของเก่ามีคอลัมน์มากกว่าของใหม่ ให้เติมของใหม่ให้ครบ
-            if not df_old.empty:
-                max_cols = max(df_old.shape[1], 27)
-                # ปรับ df_new ให้มีจำนวนคอลัมน์เท่ากับ max_cols
-                # (เติม NaN ไปก่อนถ้าขาด)
-                if df_new.shape[1] < max_cols:
-                    for i in range(df_new.shape[1], max_cols):
-                        df_new[i] = None
-                # ปรับ df_old ให้เท่ากัน (เผื่อของเก่าสั้นกว่า)
-                if df_old.shape[1] < max_cols:
-                    for i in range(df_old.shape[1], max_cols):
-                        df_old[i] = None
-                
-                # ตั้งชื่อคอลัมน์ให้เหมือนกัน (เป็นตัวเลข 0, 1, 2...) เพื่อให้ concat ได้
-                df_old.columns = range(max_cols)
-                df_new.columns = range(max_cols)
-
-                # 3. รวมร่าง (เอาของเก่าตั้ง + ต่อด้วยของใหม่)
-                df_final = pd.concat([df_old, df_new], ignore_index=True)
-            else:
-                df_final = df_new
+            # สร้าง Key จากข้อมูลเก่า (วันที่ + ทะเบียน + ราคา) เพื่อใช้ตรวจสอบ
+            # (Column 0=วันที่, 15=ทะเบียน, 26=ราคารวมคนขับ) *อิงตามลำดับ A-AA*
+            if not df_old.empty and len(df_old.columns) >= 27:
+                for _, row in df_old.iterrows():
+                    # สร้างคีย์: "วันที่|ทะเบียน|ราคาคนขับ"
+                    key = f"{str(row[0]).strip()}|{str(row[15]).strip()}|{str(row[26]).strip()}"
+                    existing_keys.add(key)
         except:
-            # ถ้าอ่านของเก่าไม่ได้ (เช่น ไฟล์ว่าง)
+            df_old = pd.DataFrame()
+
+        # 2. สร้าง Data ใหม่ (เฉพาะที่ไม่ซ้ำ)
+        final_data_list = []
+        duplicate_count = 0
+        
+        for _, row in df_export.iterrows():
+            d_id = str(row.get('Driver_ID', ''))
+            d_data = driver_info.get(d_id, {'Name': '-', 'Plate': '-', 'Type': '-'})
+            
+            price_cust = float(pd.to_numeric(row.get('Price_Customer', 0), errors='coerce'))
+            price_drv = float(pd.to_numeric(row.get('Cost_Driver_Total', 0), errors='coerce'))
+            dist_one_way = float(pd.to_numeric(row.get('Est_Distance_KM', 0), errors='coerce'))
+            dist_round_trip = dist_one_way * 2
+            date_str = row['Plan_Date'].strftime('%d/%m/%Y') if pd.notna(row['Plan_Date']) else "-"
+            
+            # สร้าง Key ของงานใหม่เพื่อเทียบ
+            current_key = f"{date_str}|{d_data['Plate']}|{price_drv}"
+            
+            # ถ้ามีอยู่แล้ว ให้ข้าม
+            if current_key in existing_keys:
+                duplicate_count += 1
+                continue 
+
+            row_list = [
+                date_str, row.get('Customer_ID', '-'), row.get('Customer_Name', '-'), d_data['Type'], '-',
+                row.get('Origin_Location', '-'), row.get('Dest_Location', '-'), dist_round_trip, current_fuel_price, price_cust,
+                '-', '-', '-', '-', price_cust, d_data['Plate'], d_data['Name'], d_data['Type'],
+                row.get('Origin_Location', '-'), row.get('Dest_Location', '-'), dist_round_trip, price_drv,
+                '-', '-', '-', '-', price_drv
+            ]
+            final_data_list.append(row_list)
+        
+        if not final_data_list:
+            return True, f"⚠️ ข้อมูลทั้งหมด ({duplicate_count} รายการ) เคยส่งไปแล้ว ไม่มีการเพิ่มซ้ำ"
+
+        # 3. รวมร่างและบันทึก
+        df_new = pd.DataFrame(final_data_list)
+        
+        # จัดการเรื่องคอลัมน์ให้เท่ากัน
+        if not df_old.empty:
+            max_cols = max(df_old.shape[1], 27)
+            if df_new.shape[1] < max_cols:
+                for i in range(df_new.shape[1], max_cols): df_new[i] = None
+            if df_old.shape[1] < max_cols:
+                for i in range(df_old.shape[1], max_cols): df_old[i] = None
+            df_old.columns = range(max_cols); df_new.columns = range(max_cols)
+            df_final = pd.concat([df_old, df_new], ignore_index=True)
+        else:
             df_final = df_new
 
-        # 4. เขียนกลับลงไป (แบบไม่มี Header เพราะเราอ่านมาแบบดิบๆ รวมหัวตารางมาแล้ว)
-        # ใช้ update แต่เขียนข้อมูลชุดใหญ่ทับลงไปเลย
         conn.update(spreadsheet=TARGET_URL, worksheet=TARGET_WORKSHEET, data=df_final)
         
-        return True, f"✅ เพิ่มข้อมูล {len(final_data)} รายการ ต่อท้ายเรียบร้อย (รวม {len(df_final)} บรรทัด)"
+        msg = f"✅ เพิ่มข้อมูลใหม่ {len(final_data_list)} รายการ"
+        if duplicate_count > 0:
+            msg += f" (ข้ามข้อมูลซ้ำ {duplicate_count} รายการ)"
+            
+        return True, msg
 
     except Exception as e: return False, f"Error: {str(e)}"
 
-def get_manual_content():
-    return """
-# 📘 คู่มือการใช้งานระบบ Logis-Pro 360
-(รายละเอียดคู่มือย่อ...)
-    """
-
-# --- (วางต่อท้ายสุดของไฟล์ modules/utils.py) ---
-
+# --- 📘 เนื้อหาคู่มือฉบับเต็ม (แก้ไขแล้ว) ---
 def get_manual_content():
     return """
 # 📘 คู่มือการใช้งานระบบ Logis-Pro 360
