@@ -4,7 +4,6 @@ from datetime import datetime
 import time
 from streamlit_js_eval import get_geolocation # type: ignore
 import urllib.parse
-import logging
 
 from modules.database import get_data
 from modules.utils import (
@@ -14,18 +13,10 @@ from modules.utils import (
     create_fuel_log, create_repair_ticket, get_maintenance_status_all, get_status_label_th
 )
 
-logger = logging.getLogger("tms.modules.ui_driver")
-logger.setLevel(logging.INFO)
-
-def _safe_df(df):
-    if df is None:
-        return pd.DataFrame()
-    return df
-
 def driver_flow():
     with st.sidebar:
         st.title("Driver App 📱")
-        st.info(f"คุณ: {st.session_state.get('driver_name','(Unknown)')}")
+        st.info(f"คุณ: {st.session_state.driver_name}")
         
         with st.expander("❓ วิธีใช้งาน"):
             st.markdown("""
@@ -37,7 +28,8 @@ def driver_flow():
             
         if st.button("🚪 Logout", key="drv_out"):
             st.session_state.logged_in = False
-            st.experimental_rerun()
+            # ✅ แก้ไขจุดที่ 1: เปลี่ยนเป็น st.rerun()
+            st.rerun()
 
     if 'page' not in st.session_state: st.session_state.page = "list"
     
@@ -45,17 +37,11 @@ def driver_flow():
     c1, c2 = st.columns([3,1])
     with c1: st.subheader("เมนูหลัก")
     with c2:
-        try:
-            loc = get_geolocation()
-        except Exception:
-            loc = None
+        loc = get_geolocation()
         if loc and st.button("📍 เช็คอิน"):
-            try:
-                update_driver_location(st.session_state.get('driver_id'), loc['coords']['latitude'], loc['coords']['longitude'])
+            with st.spinner("Sending..."):
+                update_driver_location(st.session_state.driver_id, loc['coords']['latitude'], loc['coords']['longitude'])
                 st.toast("ส่งพิกัดเรียบร้อย")
-            except Exception:
-                logger.exception("Failed to update location")
-                st.error("ไม่สามารถส่งพิกัดได้")
 
     menu = st.radio("เลือกรายการ:", ["📦 งานของฉัน", "⛽ เติมน้ำมัน", "🔧 แจ้งซ่อม"], horizontal=True)
     st.write("---")
@@ -63,19 +49,11 @@ def driver_flow():
     # --- 1. งานของฉัน ---
     if menu == "📦 งานของฉัน":
         if st.session_state.page == "list":
-            df = _safe_df(get_data("Jobs_Main"))
+            df = get_data("Jobs_Main")
             if not df.empty:
-                try:
-                    if 'Job_Status' in df.columns:
-                        df['Job_Status'] = df['Job_Status'].fillna('Pending')
-                    # filter: Driver_ID present and not Completed (guard columns)
-                    if 'Driver_ID' in df.columns:
-                        my_jobs = df[(df['Driver_ID'].astype(str) == str(st.session_state.get('driver_id'))) & (df.get('Job_Status','') != 'Completed')]
-                    else:
-                        my_jobs = pd.DataFrame()
-                except Exception:
-                    logger.exception("Error filtering my_jobs")
-                    my_jobs = pd.DataFrame()
+                df['Job_Status'] = df['Job_Status'].fillna('Pending')
+                # กรองงาน: ของคนนี้ AND ยังไม่เสร็จ
+                my_jobs = df[(df['Driver_ID'] == str(st.session_state.driver_id)) & (df['Job_Status'] != 'Completed')]
                 
                 if my_jobs.empty:
                     st.info("🎉 ไม่มีงานค้างครับ")
@@ -87,44 +65,33 @@ def driver_flow():
                                 st.markdown(f"**{job.get('Route_Name', 'งานทั่วไป')}**")
                                 st.caption(f"📍 ส่ง: {job.get('Dest_Location', '-')}")
                             with c_j2:
-                                job_id = job.get('Job_ID', f"job_{i}")
-                                if st.button("ทำ >", key=f"btn_{job_id}"):
+                                if st.button("ทำ >", key=f"btn_{job['Job_ID']}"):
                                     st.session_state.current_job = job.to_dict()
                                     st.session_state.page = "action"
-                                    st.experimental_rerun()
+                                    # ✅ แก้ไขจุดที่ 2 (จุดที่ Error): เปลี่ยนเป็น st.rerun()
+                                    st.rerun()
                             
-                            # นำทาง (safe url)
-                            try:
-                                origin = str(job.get('Origin_Location',''))
-                                dest = str(job.get('Dest_Location',''))
-                                url = f"https://www.google.com/maps/dir/?api=1&origin={urllib.parse.quote(origin)}&destination={urllib.parse.quote(dest)}"
-                                if job.get('GoogleMap_Link') and str(job.get('GoogleMap_Link')) not in ['nan','None','NoneType','']:
-                                    url = job.get('GoogleMap_Link')
-                            except Exception:
-                                url = "https://www.google.com/maps"
-                            try:
-                                st.link_button("🗺️ นำทาง", url, use_container_width=True)
-                            except Exception:
-                                # if link_button not available, fallback to markdown link
-                                st.markdown(f"[🗺️ นำทาง]({url})")
+                            # ปุ่มนำทาง (แก้ Link Format ให้แล้ว)
+                            org = urllib.parse.quote(str(job.get('Origin_Location', '')))
+                            dst = urllib.parse.quote(str(job.get('Dest_Location', '')))
+                            url = f"https://www.google.com/maps/dir/?api=1&origin={org}&destination={dst}"
+                            
+                            if job.get('GoogleMap_Link') and str(job['GoogleMap_Link']) != 'nan':
+                                url = job['GoogleMap_Link']
+                            st.link_button("🗺️ นำทาง", url, use_container_width=True)
             else:
                 st.warning("ไม่พบข้อมูลงาน")
 
         elif st.session_state.page == "action":
-            job = st.session_state.get('current_job')
-            if not job:
-                st.error("ไม่พบข้อมูลงาน (กลับไปหน้ารายการ)")
-                if st.button("กลับไปหน้ารายการ"):
-                    st.session_state.page = "list"
-                    st.experimental_rerun()
-                return
+            job = st.session_state.current_job
             
             # Header
             if st.button("⬅️ กลับหน้ารายการ"):
                 st.session_state.page = "list"
-                st.experimental_rerun()
+                # ✅ แก้ไขจุดที่ 3: เปลี่ยนเป็น st.rerun()
+                st.rerun()
             
-            st.markdown(f"#### 📦 Job: {job.get('Job_ID','-')}")
+            st.markdown(f"#### 📦 Job: {job['Job_ID']}")
             st.info(f"ลูกค้า: {job.get('Customer_Name', '-')}")
             st.write(f"📍 **ปลายทาง:** {job.get('Dest_Location', '-')}")
             
@@ -136,38 +103,22 @@ def driver_flow():
             
             with c_s1: 
                 if st.button("📦 รับของ", use_container_width=True):
-                    try:
-                        simple_update_job_status(job.get('Job_ID'), "PICKED_UP", {"Actual_Pickup_Time": now})
-                        st.toast("สถานะ: รับของแล้ว")
-                    except Exception:
-                        logger.exception("Failed to update PICKED_UP")
-                        st.error("ไม่สามารถอัปเดตสถานะได้")
+                    simple_update_job_status(job['Job_ID'], "PICKED_UP", {"Actual_Pickup_Time": now})
+                    st.toast("สถานะ: รับของแล้ว")
             with c_s2:
                 if st.button("🚚 ออกเดินทาง", use_container_width=True):
-                    try:
-                        simple_update_job_status(job.get('Job_ID'), "IN_TRANSIT", None)
-                        st.toast("สถานะ: กำลังเดินทาง")
-                    except Exception:
-                        logger.exception("Failed to update IN_TRANSIT")
-                        st.error("ไม่สามารถอัปเดตสถานะได้")
+                    simple_update_job_status(job['Job_ID'], "IN_TRANSIT", None)
+                    st.toast("สถานะ: กำลังเดินทาง")
             with c_s3:
                 if st.button("🏁 ถึงแล้ว", use_container_width=True):
-                    try:
-                        simple_update_job_status(job.get('Job_ID'), "DELIVERED", {"Arrive_Dest_Time": now})
-                        st.toast("สถานะ: ถึงปลายทาง")
-                    except Exception:
-                        logger.exception("Failed to update DELIVERED")
-                        st.error("ไม่สามารถอัปเดตสถานะได้")
+                    simple_update_job_status(job['Job_ID'], "DELIVERED", {"Arrive_Dest_Time": now})
+                    st.toast("สถานะ: ถึงปลายทาง")
             
             fail_reason = st.text_input("หมายเหตุ/เหตุผล (ถ้าส่งไม่ได้)")
             if st.button("❌ ส่งไม่สำเร็จ", type="secondary", use_container_width=True):
                 if fail_reason:
-                    try:
-                        simple_update_job_status(job.get('Job_ID'), "FAILED", {"Failed_Reason": fail_reason, "Failed_Time": now})
-                        st.error("บันทึกสถานะส่งไม่สำเร็จ")
-                    except Exception:
-                        logger.exception("Failed to update FAILED")
-                        st.error("ไม่สามารถอัปเดตสถานะได้")
+                    simple_update_job_status(job['Job_ID'], "FAILED", {"Failed_Reason": fail_reason, "Failed_Time": now})
+                    st.error("บันทึกสถานะส่งไม่สำเร็จ")
                 else:
                     st.error("กรุณาระบุเหตุผล")
 
@@ -186,22 +137,21 @@ def driver_flow():
             
             st.write("✍️ **ลายเซ็นผู้รับ**")
             sig = st.camera_input("ถ่ายลายเซ็น", key="sig_cam")
-            
+
             if st.button("✅ ยืนยันปิดงาน", type="primary", use_container_width=True):
                 if all_imgs:
                     with st.spinner("กำลังบันทึกข้อมูล..."):
-                        try:
-                            img_str = process_multiple_images(all_imgs)
-                            sig_str = compress_image(sig) if sig else "-"
-                            dist = float(job.get('Est_Distance_KM', 0) or 0)
-                            update_job_status(job.get('Job_ID'), "Completed", get_thai_time_str(), dist, img_str, sig_str)
-                            st.success("🎉 ปิดงานสำเร็จ!")
-                            time.sleep(2)
-                            st.session_state.page = "list"
-                            st.experimental_rerun()
-                        except Exception:
-                            logger.exception("Failed to complete job")
-                            st.error("เกิดข้อผิดพลาดขณะบันทึกงาน")
+                        img_str = process_multiple_images(all_imgs)
+                        sig_str = compress_image(sig) if sig else "-"
+                        dist = float(job.get('Est_Distance_KM', 0))
+                        
+                        update_job_status(job['Job_ID'], "Completed", get_thai_time_str(), dist, img_str, sig_str)
+                        
+                        st.success("🎉 ปิดงานสำเร็จ!")
+                        time.sleep(2)
+                        st.session_state.page = "list"
+                        # ✅ แก้ไขจุดที่ 4: เปลี่ยนเป็น st.rerun()
+                        st.rerun()
                 else:
                     st.error("กรุณาถ่ายรูปสินค้าอย่างน้อย 1 รูป")
 
@@ -209,68 +159,51 @@ def driver_flow():
     elif menu == "⛽ เติมน้ำมัน":
         st.subheader("บันทึกการเติมน้ำมัน")
         
-        plate = st.session_state.get('vehicle_plate', '')
+        plate = st.session_state.vehicle_plate
         last_odo = get_last_fuel_odometer(plate)
         
-        # protect against NaN / None
-        if pd.isna(last_odo) or last_odo is None:
-            last_odo = 0.0
+        if pd.isna(last_odo): last_odo = 0.0
         
-        std_rate = get_consumption_rate_by_driver(st.session_state.get('driver_id'))
+        std_rate = get_consumption_rate_by_driver(st.session_state.driver_id)
         act_rate, _, _ = calculate_actual_consumption(plate)
         
         # Dashboard
         with st.container(border=True):
             c_d1, c_d2 = st.columns(2)
-            try:
-                with c_d1: st.metric("เกณฑ์มาตรฐาน", f"{std_rate:.1f} กม./ลิตร")
-            except Exception:
-                with c_d1: st.metric("เกณฑ์มาตรฐาน", "-")
+            with c_d1: st.metric("เกณฑ์มาตรฐาน", f"{std_rate:.1f} กม./ลิตร")
             with c_d2: 
-                val = f"{act_rate:.2f}" if (act_rate is not None and act_rate > 0) else "-"
-                st.metric("ทำได้จริง", f"{val} กม./ลิตร" if val != "-" else "-")
-        
-        if last_odo > 0: 
-            st.info(f"🔢 เลขไมล์ล่าสุดในระบบ: {last_odo:,.0f}")
-        else: 
-            st.warning("⚠️ ไม่พบประวัติไมล์ (เติมครั้งแรก)")
-        
+                val = f"{act_rate:.2f}" if act_rate > 0 else "-"
+                st.metric("ทำได้จริง", f"{val} กม./ลิตร")
+
+        if last_odo > 0: st.info(f"🔢 เลขไมล์ล่าสุดในระบบ: {last_odo:,.0f}")
+        else: st.warning("⚠️ ไม่พบประวัติไมล์ (เติมครั้งแรก)")
+
         f_station = st.text_input("ชื่อปั๊ม/สถานที่")
         
-        # protect default for number_input
-        try:
-            default_odo = int(last_odo)
-        except Exception:
-            default_odo = 0
-        f_odo = st.number_input("เลขไมล์ปัจจุบัน (ต้องมากกว่าครั้งก่อน)", min_value=0, value=default_odo)
+        f_odo = st.number_input("เลขไมล์ปัจจุบัน (ต้องมากกว่าครั้งก่อน)", min_value=0, value=int(last_odo))
         
         is_odo_error = False
         if last_odo > 0 and f_odo < last_odo:
             st.error(f"❌ เลขไมล์ผิดปกติ! (น้อยกว่าครั้งล่าสุด {last_odo:,.0f}) กรุณาตรวจสอบ")
             is_odo_error = True
         
-        # Calc
-        calc_rate = act_rate if (act_rate is not None and act_rate > 0) else std_rate
+        calc_rate = act_rate if act_rate > 0 else std_rate
         dist_run = f_odo - last_odo
         suggest_liters = dist_run / calc_rate if calc_rate > 0 else 0
         
         if dist_run > 0:
-            st.success(f"💡 วิ่งมา: {dist_run:,.0f} กม. | ⛽ ควรเติม: {suggest_liters:.1f} ลิตร")
+            st.success(f"💡 วิ่งมา: {dist_run} กม. | ⛽ ควรเติม: {suggest_liters:.1f} ลิตร")
         
         f_liters = st.number_input("จำนวนลิตรที่เติม", 0.0)
         f_price = st.number_input("ยอดเงิน (บาท)", 0.0)
         
-        # Protection 2: ตรวจสอบอัตราสิ้นเปลือง
         fraud_warning = False
         if dist_run > 0 and f_liters > 0:
-            try:
-                current_km_l = dist_run / f_liters
-                if current_km_l < (std_rate * 0.5) or current_km_l > (std_rate * 1.5):
-                    fraud_warning = True
-                    st.warning(f"⚠️ แจ้งเตือนความผิดปกติ: อัตรากินน้ำมันรอบนี้คือ {current_km_l:.1f} กม./ลิตร")
-            except Exception:
-                logger.exception("Error validating fuel consumption")
-
+            current_km_l = dist_run / f_liters
+            if current_km_l < (std_rate * 0.5) or current_km_l > (std_rate * 1.5):
+                fraud_warning = True
+                st.warning(f"⚠️ แจ้งเตือนความผิดปกติ: อัตรากินน้ำมันรอบนี้คือ {current_km_l:.1f} กม./ลิตร (ปกติ {std_rate}) กรุณาถ่ายรูปให้ชัดเจน")
+        
         st.markdown("**หลักฐาน**")
         u2 = st.file_uploader("📂 รูปสลิป/ไมล์", type=['png', 'jpg', 'jpeg'], accept_multiple_files=True, key="fuel_up")
         c2 = st.camera_input("📸 ถ่ายรูปสลิป", key="fuel_cam")
@@ -283,33 +216,25 @@ def driver_flow():
             if f_price > 0 and f_liters > 0:
                 if not fuel_imgs:
                     st.error("กรุณาถ่ายรูปสลิป")
-                elif is_odo_error:
-                    st.error("ไม่สามารถบันทึกได้ เลขไมล์ต่ำกว่าความเป็นจริง")
                 else:
                     with st.spinner("บันทึก..."):
-                        try:
-                            img_str = process_multiple_images(fuel_imgs)
-                            fuel_data = {
-                                "Log_ID": f"F-{datetime.now().strftime('%y%m%d%H%M')}",
-                                "Date_Time": get_thai_time_str(),
-                                "Driver_ID": st.session_state.get('driver_id'),
-                                "Vehicle_Plate": plate,
-                                "Odometer": f_odo,
-                                "Liters": f_liters,
-                                "Price_Total": f_price,
-                                "Station_Name": f_station,
-                                "Photo_Url": img_str
-                            }
-                            ok = create_fuel_log(fuel_data)
-                            if ok:
-                                st.success("บันทึกสำเร็จ!")
-                                time.sleep(1)
-                                st.experimental_rerun()
-                            else:
-                                st.error("บันทึกไม่สำเร็จ โปรดลองอีกครั้ง")
-                        except Exception:
-                            logger.exception("Failed to create fuel log")
-                            st.error("เกิดข้อผิดพลาดขณะบันทึกข้อมูล")
+                        img_str = process_multiple_images(fuel_imgs)
+                        fuel_data = {
+                            "Log_ID": f"F-{datetime.now().strftime('%y%m%d%H%M')}",
+                            "Date_Time": get_thai_time_str(),
+                            "Driver_ID": st.session_state.driver_id,
+                            "Vehicle_Plate": plate,
+                            "Odometer": f_odo,
+                            "Liters": f_liters,
+                            "Price_Total": f_price,
+                            "Station_Name": f_station,
+                            "Photo_Url": img_str
+                        }
+                        if create_fuel_log(fuel_data):
+                            st.success("บันทึกสำเร็จ!")
+                            time.sleep(1)
+                            # ✅ แก้ไขจุดที่ 5: เปลี่ยนเป็น st.rerun()
+                            st.rerun()
             else:
                 st.error("กรุณากรอกข้อมูลให้ครบ")
 
@@ -317,16 +242,13 @@ def driver_flow():
     elif menu == "🔧 แจ้งซ่อม":
         st.subheader("แจ้งซ่อม/อุบัติเหตุ")
         
-        try:
-            maint_df = get_maintenance_status_all()
-        except Exception:
-            maint_df = pd.DataFrame()
+        maint_df = get_maintenance_status_all()
         if not maint_df.empty:
-            my_alerts = maint_df[(maint_df.get('Vehicle_Plate','') == str(st.session_state.get('vehicle_plate'))) & (maint_df.get('Is_Due', False) == True)]
+            my_alerts = maint_df[(maint_df['Vehicle_Plate'] == str(st.session_state.vehicle_plate)) & (maint_df['Is_Due'] == True)]
             if not my_alerts.empty:
                 st.error("⚠️ รถถึงรอบเช็คระยะแล้ว (แจ้งหัวหน้าด่วน)")
                 for _, r in my_alerts.iterrows():
-                    st.write(f"- {r.get('Service_Type','-')}")
+                    st.write(f"- {r['Service_Type']}")
         
         with st.form("repair_form"):
             issue = st.selectbox("หมวดหมู่", ["เครื่องยนต์", "ยาง", "ช่วงล่าง", "อุบัติเหตุ", "อื่นๆ"])
@@ -343,23 +265,16 @@ def driver_flow():
                 if not rep_imgs:
                     st.error("กรุณาถ่ายรูปอาการเสีย")
                 else:
-                    try:
-                        img_str = process_multiple_images(rep_imgs)
-                        ticket_data = {
-                            "Ticket_ID": f"TK-{datetime.now().strftime('%y%m%d%H%M')}",
-                            "Date_Report": get_thai_time_str(),
-                            "Driver_ID": st.session_state.get('driver_id'),
-                            "Description": desc,
-                            "Status": "Pending",
-                            "Issue_Type": issue,
-                            "Vehicle_Plate": st.session_state.get('vehicle_plate'),
-                            "Photo_Url": img_str
-                        }
-                        ok = create_repair_ticket(ticket_data)
-                        if ok:
-                            st.success("ส่งเรื่องแล้ว! รออนุมัติ")
-                        else:
-                            st.error("ส่งเรื่องไม่สำเร็จ โปรดลองอีกครั้ง")
-                    except Exception:
-                        logger.exception("Failed to create repair ticket")
-                        st.error("เกิดข้อผิดพลาดขณะส่งเรื่อง")
+                    img_str = process_multiple_images(rep_imgs)
+                    ticket_data = {
+                        "Ticket_ID": f"TK-{datetime.now().strftime('%y%m%d%H%M')}",
+                        "Date_Report": get_thai_time_str(),
+                        "Driver_ID": st.session_state.driver_id,
+                        "Description": desc,
+                        "Status": "Pending",
+                        "Issue_Type": issue,
+                        "Vehicle_Plate": st.session_state.vehicle_plate,
+                        "Photo_Url": img_str
+                    }
+                    if create_repair_ticket(ticket_data):
+                        st.success("ส่งเรื่องแล้ว! รออนุมัติ")
