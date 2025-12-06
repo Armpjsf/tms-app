@@ -89,7 +89,9 @@ def login_page():
                         st.session_state.driver_name = safe_get_cell(user.iloc[0], "Driver_Name", u)
                         st.session_state.vehicle_plate = safe_get_cell(user.iloc[0], "Vehicle_Plate", "-")
                         st.session_state.user_role = safe_get_cell(user.iloc[0], "Role", "Driver")
-                        st.experimental_rerun()
+                        
+                        # ✅ แก้ไข 1: เปลี่ยนเป็น st.rerun()
+                        st.rerun()
                     else:
                         st.error("รหัสผ่านผิด")
                 except Exception:
@@ -101,7 +103,8 @@ def do_logout():
     for k in keys_to_clear:
         if k in st.session_state:
             del st.session_state[k]
-    st.experimental_rerun()
+    # ✅ แก้ไข 2: เปลี่ยนเป็น st.rerun()
+    st.rerun()
 
 # Provide a cached wrapper if Streamlit supports it; otherwise fallback to direct call
 def get_full_data(force_reload=False):
@@ -130,7 +133,8 @@ def main():
         st.markdown("## ควบคุมระบบ")
         if st.button("รีโหลดข้อมูล (Reload Data)"):
             get_full_data(force_reload=True)
-            st.experimental_rerun()
+            # ✅ แก้ไข 3: เปลี่ยนเป็น st.rerun()
+            st.rerun()
         if st.button("Logout"):
             do_logout()
         if DEBUG:
@@ -147,16 +151,11 @@ def main():
                 return
 
         # At this point, data_store exists (could be dict/dfs depending on implementation)
-        try:
-            if st.session_state.get("user_role") == "Admin":
-                admin_flow()
-            else:
-                driver_flow()
-        except Exception:
-            logger.exception("Error in UI flow")
-            st.error("เกิดข้อผิดพลาดขณะแสดงหน้า UI")
-            if st.button("กลับไปหน้า Login"):
-                do_logout()
+        # ✅ แก้ไข 4: ลบ try...except ออก เพื่อให้ st.rerun() ทำงานได้ปกติ
+        if st.session_state.get("user_role") == "Admin":
+            admin_flow()
+        else:
+            driver_flow()
 
 if __name__ == "__main__":
     main()
