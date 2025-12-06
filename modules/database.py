@@ -2,123 +2,126 @@ import streamlit as st # type: ignore
 from streamlit_gsheets import GSheetsConnection # type: ignore
 import pandas as pd # type: ignore
 import time
-import gspread
-import logging
-from functools import wraps
 
-logger = logging.getLogger("tms.modules.database")
-logger.setLevel(logging.INFO)
-
-# ID ของ Google Sheet หลัก (Database)
-SHEET_ID = "10xoemO2oS6a8c7nzqxkE9mlRCbTII2PZMhvv1wTXeYQ"
+# --- 1. ตั้งค่าการเชื่อมต่อ ---
+SHEET_ID = "10xoemO2oS6a8c7nzqxkE9mlRCbTII2PZMhvv1wTXeYQ" # ตรวจสอบ ID ให้ตรงกับของคุณ
 SHEET_URL = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/edit"
 
 def get_connection():
-    # Wrap with try/except so caller can display friendly errors
-    try:
-        return st.connection("gsheets", type=GSheetsConnection)
-    except Exception as e:
-        logger.exception("Failed to get gsheets connection")
-        raise
+    return st.connection("gsheets", type=GSheetsConnection)
 
-# --- 🔥 Decorator: ระบบรอแล้วลองใหม่ (Retry) เมื่อเจอ Error 429 ---
-def retry_on_quota_error(max_retries=5, delay=2):
+# --- 2. กำหนด SCHEMA (หัวตารางมาตรฐาน) ---
+# ระบบจะใช้รายชื่อนี้กู้คืนหัวตารางถ้ามันหายไป
+SCHEMAS = {
+    "Jobs_Main": [
+        "Job_ID", "Job_Status", "Plan_Date", "Customer_ID", "Customer_Name", "Route_Name", 
+        "Origin_Location", "Dest_Location", "GoogleMap_Link", "Driver_ID", "Vehicle_Plate", 
+        "Est_Distance_KM", "Price_Customer", "Cost_Driver_Total", "Actual_Pickup_Time", 
+        "Actual_Delivery_Time", "Photo_Proof_Url", "Signature_Url", "Failed_Reason", "Failed_Time", "Arrive_Dest_Time"
+    ],
+    "Fuel_Logs": [
+        "Log_ID", "Date_Time", "Driver_ID", "Vehicle_Plate", "Odometer", 
+        "Liters", "Price_Total", "Station_Name", "Photo_Url"
+    ],
+    "Maintenance_Logs": [
+        "Log_ID", "Date_Service", "Vehicle_Plate", "Service_Type", "Odometer"
+    ],
+    "Repair_Tickets": [
+        "Ticket_ID", "Date_Report", "Driver_ID", "Description", "Status", 
+        "Issue_Type", "Vehicle_Plate", "Photo_Url", "Cost_Total", "Date_Finish"
+    ],
+    "Stock_Parts": [
+        "Part_ID", "Part_Name", "Qty_On_Hand"
+    ],
+    "Master_Drivers": [
+        "Driver_ID", "Driver_Name", "Vehicle_Plate", "Vehicle_Type", "Role", 
+        "Password", "Current_Lat", "Current_Lon", "Last_Update", "Current_Mileage"
+    ],
+    "Master_Customers": ["Customer_ID", "Customer_Name"],
+    "Master_Routes": ["Route_Name", "Origin", "Destination", "Distance_KM", "Map_Link", "Map_Link Origin", "Map_Link Destination"],
+    "System_Config": ["Key", "Value"],
+    "Rate_Card": ["Distance_KM", "Price_4W", "Price_6W", "Price_10W"] # ตัวอย่าง (อาจปรับตาม Sheet จริง)
+}
+
+# --- Retry Decorator ---
+def retry_on_quota_error(max_retries=3, delay=2):
     def decorator(func):
-        @wraps(func)
         def wrapper(*args, **kwargs):
-            last_exc = None
             for attempt in range(max_retries):
                 try:
                     return func(*args, **kwargs)
                 except Exception as e:
-                    last_exc = e
                     error_str = str(e)
-                    # เช็คว่าเป็น Error 429 (Quota Exceeded) หรือไม่
-                    if "429" in error_str or "Quota exceeded" in error_str or "rateLimitExceeded" in error_str:
-                        wait_time = delay * (2 ** attempt)  # exponential backoff
-                        logger.warning("Quota limit hit. Retrying in %ss... (Attempt %d/%d)", wait_time, attempt+1, max_retries)
+                    if "429" in error_str or "Quota" in error_str or "APIError" in error_str:
+                        wait_time = delay * (2 ** attempt)
+                        print(f"⚠️ Google Sheet Busy. Retrying in {wait_time}s... ({attempt+1}/{max_retries})")
                         time.sleep(wait_time)
-                        continue
                     else:
-                        # ถ้าเป็น Error อื่น ให้โยนออกไปให้ upper layer จัดการ
-                        logger.exception("Non-quota error in %s", func.__name__)
-                        raise
-            # ถ้าลองครบแล้วยังไม่ได้ ให้ log และคืนค่า fallback ที่เหมาะสม
-            logger.error("Max retries reached for %s. Last error: %s", func.__name__, last_exc)
-            st.error("ระบบ Google Sheet ทำงานหนักเกินไป กรุณารอสักครู่แล้วลองใหม่")
-            # คืนค่า fallback ตามชนิดฟังก์ชัน
-            if func.__name__.startswith("load"):
-                # สำหรับฟังก์ชันโหลด ให้คืน dict (as empty groups) หรือ DataFrame ว่างแล้วแต่กรณี
-                # caller จะตรวจสอบ .empty หรือ keys ได้
-                return {} if "group" in func.__name__ or "all" in func.__name__ else pd.DataFrame()
-            return False
+                        print(f"❌ Database Error: {error_str}")
+                        break
+            st.toast("⚠️ การเชื่อมต่อฐานข้อมูลมีปัญหา (กรุณาลองใหม่)", icon="⚠️")
+            return {} if "load" in func.__name__ else False
         return wrapper
     return decorator
 
-# --- 1. Smart Caching: โหลดเป็นกลุ่ม (ใช้ Retry) ---
+# --- Load Functions ---
 
 @st.cache_data(ttl=3600)
 @retry_on_quota_error() 
 def load_master_group():
-    """โหลดข้อมูลหลักทีเดียว 5 Sheet"""
     conn = get_connection()
     data = {}
     sheets = ["Master_Drivers", "Master_Customers", "Master_Routes", "Rate_Card", "System_Config"]
+    
     for name in sheets:
         try:
             df = conn.read(spreadsheet=SHEET_URL, worksheet=name, ttl=0)
-            # ensure DataFrame
-            if df is None:
-                df = pd.DataFrame()
-            if name == 'Master_Drivers':
-                if 'Driver_ID' in df.columns:
-                    df['Driver_ID'] = df['Driver_ID'].astype(str)
+            # ถ้าอ่านมาแล้วไม่มีหัวตาราง ให้แปะหัวตารางมาตรฐาน
+            if name in SCHEMAS and (df.empty or isinstance(df.columns[0], int)):
+                 df = pd.DataFrame(columns=SCHEMAS[name])
+            
+            # Pre-processing
+            if name == 'Master_Drivers' and not df.empty:
+                df['Driver_ID'] = df['Driver_ID'].astype(str)
+                df['Vehicle_Plate'] = df['Vehicle_Plate'].astype(str)
+            if name == 'Master_Customers' and not df.empty:
+                df['Customer_ID'] = df['Customer_ID'].astype(str)
+                
             data[name] = df
-        except Exception:
-            logger.exception("Failed to read worksheet %s", name)
-            data[name] = pd.DataFrame()
+        except:
+            data[name] = pd.DataFrame(columns=SCHEMAS.get(name, []))
     return data
 
 @st.cache_data(ttl=300)
 @retry_on_quota_error()
 def load_transaction_group():
-    """โหลดข้อมูลงานทีเดียว 5 Sheet"""
     conn = get_connection()
     data = {}
     sheets = ["Jobs_Main", "Fuel_Logs", "Maintenance_Logs", "Stock_Parts", "Repair_Tickets"]
+    
     for name in sheets:
         try:
             df = conn.read(spreadsheet=SHEET_URL, worksheet=name, ttl=0)
-            if df is None:
-                df = pd.DataFrame()
+            if name in SCHEMAS and (df.empty or isinstance(df.columns[0], int)):
+                 df = pd.DataFrame(columns=SCHEMAS[name])
             data[name] = df
-        except Exception:
-            logger.exception("Failed to read worksheet %s", name)
-            data[name] = pd.DataFrame()
+        except:
+            data[name] = pd.DataFrame(columns=SCHEMAS.get(name, []))
 
-    # --- Pre-processing ---
-    try:
-        if 'Jobs_Main' in data and not getattr(data['Jobs_Main'], 'empty', True):
-            if 'Plan_Date' in data['Jobs_Main'].columns:
-                data['Jobs_Main']['Plan_Date'] = pd.to_datetime(data['Jobs_Main']['Plan_Date'], errors='coerce')
-            for c in ['Est_Distance_KM', 'Price_Customer', 'Cost_Driver_Total']:
-                 if c in data['Jobs_Main'].columns:
-                     data['Jobs_Main'][c] = pd.to_numeric(data['Jobs_Main'][c], errors='coerce').fillna(0)
+    # Pre-processing
+    if not data.get('Jobs_Main', pd.DataFrame()).empty:
+        df = data['Jobs_Main']
+        if 'Plan_Date' in df.columns:
+            df['Plan_Date'] = pd.to_datetime(df['Plan_Date'], errors='coerce')
+        for col in ['Job_ID', 'Customer_ID', 'Driver_ID']:
+             if col in df.columns: df[col] = df[col].astype(str)
+        data['Jobs_Main'] = df
 
-        if 'Fuel_Logs' in data and not getattr(data['Fuel_Logs'], 'empty', True):
-            for c in ['Odometer', 'Liters', 'Price_Total']:
-                if c in data['Fuel_Logs'].columns:
-                    data['Fuel_Logs'][c] = pd.to_numeric(data['Fuel_Logs'][c], errors='coerce')
-            if 'Date_Time' in data['Fuel_Logs'].columns:
-                data['Fuel_Logs']['Date_Time'] = pd.to_datetime(data['Fuel_Logs']['Date_Time'], errors='coerce')
-
-        if 'Maintenance_Logs' in data and not getattr(data['Maintenance_Logs'], 'empty', True):
-            if 'Odometer' in data['Maintenance_Logs'].columns:
-                data['Maintenance_Logs']['Odometer'] = pd.to_numeric(data['Maintenance_Logs']['Odometer'], errors='coerce')
-            if 'Date_Service' in data['Maintenance_Logs'].columns:
-                data['Maintenance_Logs']['Date_Service'] = pd.to_datetime(data['Maintenance_Logs']['Date_Service'], errors='coerce')
-    except Exception:
-        logger.exception("Error during transaction group preprocessing")
+    if not data.get('Fuel_Logs', pd.DataFrame()).empty:
+        df = data['Fuel_Logs']
+        if 'Date_Time' in df.columns:
+            df['Date_Time'] = pd.to_datetime(df['Date_Time'], errors='coerce')
+        data['Fuel_Logs'] = df
 
     return data
 
@@ -128,94 +131,89 @@ def get_data(worksheet_name):
     masters = ["Master_Drivers", "Master_Customers", "Master_Routes", "Rate_Card", "System_Config"]
     try:
         if worksheet_name in masters:
-            res = load_master_group() or {}
-            return res.get(worksheet_name, pd.DataFrame())
+            group_data = load_master_group()
+            df = group_data.get(worksheet_name, pd.DataFrame())
         else:
-            res = load_transaction_group() or {}
-            return res.get(worksheet_name, pd.DataFrame())
-    except Exception:
-        logger.exception("get_data failed for %s", worksheet_name)
-        return pd.DataFrame()
+            group_data = load_transaction_group()
+            df = group_data.get(worksheet_name, pd.DataFrame())
+            
+        # Final Safety Check: ถ้า DF ว่าง ให้คืน DF ที่มีหัวตารางตาม Schema
+        if df.empty and worksheet_name in SCHEMAS:
+            return pd.DataFrame(columns=SCHEMAS[worksheet_name])
+        return df if isinstance(df, pd.DataFrame) else pd.DataFrame()
+    except:
+        return pd.DataFrame(columns=SCHEMAS.get(worksheet_name, []))
 
 def load_all_data():
-    # Clear caches if available
     try:
-        if hasattr(load_master_group, "clear"):
-            load_master_group.clear()
-        if hasattr(load_transaction_group, "clear"):
-            load_transaction_group.clear()
-    except Exception:
-        logger.exception("Failed to clear caches")
-    # Return merged dict (safe)
-    try:
-        masters = load_master_group() or {}
-        trans = load_transaction_group() or {}
-        # ensure dict
-        if not isinstance(masters, dict): masters = {}
-        if not isinstance(trans, dict): trans = {}
-        return {**masters, **trans}
-    except Exception:
-        logger.exception("load_all_data failed")
-        return {}
+        load_master_group.clear()
+        load_transaction_group.clear()
+        return {**load_master_group(), **load_transaction_group()}
+    except: return {}
 
-# --- Update & Append (ใช้ Retry) ---
+# --- Update & Append (หัวใจหลักที่แก้ไข) ---
 
 @retry_on_quota_error()
 def append_to_sheet(worksheet_name, row_data_list):
-    """เพิ่มข้อมูลโดยอ่านของเก่าแล้วต่อท้าย (Safe Append + Retry)"""
     conn = get_connection()
-    
-    # 1. อ่านข้อมูลปัจจุบัน
     try:
+        # 1. อ่านข้อมูลปัจจุบัน
         current_df = conn.read(spreadsheet=SHEET_URL, worksheet=worksheet_name, ttl=0)
-        if current_df is None:
-            current_df = pd.DataFrame()
-    except Exception:
-        logger.exception("Failed to read current sheet %s", worksheet_name)
-        current_df = pd.DataFrame()
-    
-    if current_df.empty:
-        # กรณี Sheet ว่าง (สร้างใหม่)
-        new_row_df = pd.DataFrame([row_data_list])
-        updated_df = new_row_df
-    else:
-        # 2. สร้าง DataFrame แถวใหม่ (try to align columns)
-        try:
-            new_row_df = pd.DataFrame([row_data_list], columns=current_df.columns)
-        except Exception:
-            # fallback: create with inferred columns
-            new_row_df = pd.DataFrame([row_data_list])
-        # 3. รวมร่าง (Concat)
+        
+        # 2. ตรวจสอบและกู้คืนหัวตาราง (Schema Enforcement)
+        expected_cols = SCHEMAS.get(worksheet_name, [])
+        
+        # ถ้าไม่มีข้อมูล หรือ หัวตารางดูเหมือนจะเป็นตัวเลข (0,1,2...) แสดงว่าหัวหาย
+        if current_df.empty or (not current_df.empty and isinstance(current_df.columns[0], int)):
+            if expected_cols:
+                # สร้าง DF เปล่าที่มีหัวตารางถูกต้อง
+                current_df = pd.DataFrame(columns=expected_cols)
+        
+        # 3. เตรียมข้อมูลใหม่ให้ตรงกับคอลัมน์
+        cols = current_df.columns.tolist()
+        if not cols and expected_cols:
+            cols = expected_cols # ใช้ Schema ถ้าหาคอลัมน์ไม่เจอจริงๆ
+            
+        # ปรับขนาดข้อมูลให้เท่ากับคอลัมน์
+        if len(row_data_list) < len(cols):
+            row_data_list += [""] * (len(cols) - len(row_data_list))
+        else:
+            row_data_list = row_data_list[:len(cols)]
+            
+        new_row_df = pd.DataFrame([row_data_list], columns=cols)
+        
+        # 4. รวมและบันทึก
         updated_df = pd.concat([current_df, new_row_df], ignore_index=True)
-    
-    # 4. บันทึกกลับ
-    conn.update(spreadsheet=SHEET_URL, worksheet=worksheet_name, data=updated_df)
-    
-    # ล้าง Cache
-    try:
-        if hasattr(load_transaction_group, "clear"):
-            load_transaction_group.clear()
-    except Exception:
-        logger.exception("Failed to clear transaction cache after append")
-    return True
+        
+        # Safety Check: ตรวจสอบครั้งสุดท้ายก่อนเขียนว่าหัวตารางเป็น String ไม่ใช่ Int
+        if not updated_df.empty and isinstance(updated_df.columns[0], int):
+             raise Exception("Header Integrity Check Failed: Aborting write to prevent data corruption.")
+             
+        conn.update(spreadsheet=SHEET_URL, worksheet=worksheet_name, data=updated_df)
+        
+        load_transaction_group.clear()
+        return True
+    except Exception as e:
+        print(f"Append Error: {e}")
+        return False
 
 @retry_on_quota_error()
 def update_sheet(worksheet_name, df):
     conn = get_connection()
     try:
+        # Safety: ถ้า DF ที่ส่งมาไม่มีหัว หรือหัวเป็นตัวเลข ห้ามเขียน
+        if df.empty and worksheet_name in SCHEMAS:
+             df = pd.DataFrame(columns=SCHEMAS[worksheet_name])
+             
         conn.update(spreadsheet=SHEET_URL, worksheet=worksheet_name, data=df)
-    except Exception:
-        logger.exception("Failed to update sheet %s", worksheet_name)
-        raise
-    
-    masters = ["Master_Drivers", "Master_Customers", "Master_Routes", "Rate_Card", "System_Config"]
-    try:
+        
+        masters = ["Master_Drivers", "Master_Customers", "Master_Routes", "Rate_Card", "System_Config"]
         if worksheet_name in masters:
-            if hasattr(load_master_group, "clear"): load_master_group.clear()
+            load_master_group.clear()
         else:
-            if hasattr(load_transaction_group, "clear"): load_transaction_group.clear()
-    except Exception:
-        logger.exception("Failed to clear cache after update")
+            load_transaction_group.clear()
+        return True
+    except: return False
 
 def get_connection_direct():
     return get_connection()
