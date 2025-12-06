@@ -8,7 +8,8 @@ import base64
 import requests
 from bs4 import BeautifulSoup # type: ignore
 import re
-from modules.database import get_data, update_sheet, append_to_sheet, get_connection_direct, get_connection
+import urllib.parse
+from modules.database import get_data, update_sheet, append_to_sheet
 
 # --- Utility Functions ---
 @st.cache_data
@@ -41,18 +42,24 @@ def process_multiple_images(image_file_list):
         total_height = 0
         max_width = 400
         for img_file in image_file_list:
-            img = Image.open(img_file)
-            if img.mode != 'RGB': img = img.convert('RGB')
-            ratio = max_width / float(img.size[0])
-            new_height = int(float(img.size[1]) * float(ratio))
-            img = img.resize((max_width, new_height), Image.LANCZOS)
-            images.append(img)
-            total_height += new_height
+            try:
+                img = Image.open(img_file)
+                if img.mode != 'RGB': img = img.convert('RGB')
+                ratio = max_width / float(img.size[0])
+                new_height = int(float(img.size[1]) * float(ratio))
+                img = img.resize((max_width, new_height), Image.LANCZOS)
+                images.append(img)
+                total_height += new_height
+            except: continue # Skip bad images
+            
+        if not images: return "-"
+
         merged_img = Image.new('RGB', (max_width, total_height), (255, 255, 255))
         y_offset = 0
         for img in images:
             merged_img.paste(img, (0, y_offset))
             y_offset += img.size[1]
+        
         buffer = io.BytesIO()
         merged_img.save(buffer, format="JPEG", quality=40)
         encoded = base64.b64encode(buffer.getvalue()).decode()
@@ -65,11 +72,15 @@ def get_config_value(key, default_value):
         df = get_data("System_Config")
         if df.empty: return default_value
         key_col, val_col = "Key", "Value"
+        # Fallback column search
         for col in df.columns:
             if "Key" in col: key_col = col
             if "Value" in col: val_col = col
+            
         row = df[df[key_col] == key]
-        if not row.empty: return float(row.iloc[0][val_col])
+        if not row.empty: 
+            val = str(row.iloc[0][val_col]).replace(',', '')
+            return float(val)
         return default_value
     except: return default_value
 
@@ -78,11 +89,17 @@ def get_consumption_rate_by_driver(driver_id):
         rate_4w = get_config_value("fuel_4w", 11.5)
         rate_6w = get_config_value("fuel_6w", 5.5)
         rate_10w = get_config_value("fuel_10w", 3.5)
+        
         drivers = get_data("Master_Drivers")
         if drivers.empty: return rate_4w
-        row = drivers[drivers['Driver_ID'].astype(str) == str(driver_id)]
+        
+        # Ensure Driver_ID is string for comparison
+        drivers['Driver_ID'] = drivers['Driver_ID'].astype(str)
+        row = drivers[drivers['Driver_ID'] == str(driver_id)]
+        
         if row.empty: return rate_4w
         v_type = str(row.iloc[0].get('Vehicle_Type', '4 ล้อ'))
+        
         if "พ่วง" in v_type or "เทรลเลอร์" in v_type: return 2.75
         elif "10" in v_type: return rate_10w
         elif "6" in v_type: return rate_6w
@@ -93,29 +110,41 @@ def calculate_driver_cost(plan_date, distance, vehicle_type, current_diesel_pric
     try:
         df = get_data("Rate_Card")
         if df.empty: return 0
+        
+        # Auto-detect Distance Column
         dist_col_idx = 0
         for i, col_name in enumerate(df.columns):
-            if "ระยะทาง" in str(col_name) or "Distance" in str(col_name): dist_col_idx = i; break
-        else:
-            if "Unnamed" in str(df.columns[0]): dist_col_idx = 1
+            if "ระยะทาง" in str(col_name) or "Distance" in str(col_name): 
+                dist_col_idx = i; break
         
         dist_col_name = df.columns[dist_col_idx]
-        df[dist_col_name] = pd.to_numeric(df[dist_col_name], errors='coerce')
+        df[dist_col_name] = pd.to_numeric(df[dist_col_name], errors='coerce').fillna(0)
+        
+        # Find Tier
         tier = df[df[dist_col_name] >= distance].sort_values(by=dist_col_name).head(1)
-        if tier.empty: tier = df.sort_values(by=dist_col_name).tail(1)
+        if tier.empty: tier = df.sort_values(by=dist_col_name).tail(1) # Max distance
         if tier.empty: return 0
 
-        price = float(current_diesel_price) if current_diesel_price else 30.00
-        group_offset = 1
+        # Handle Price Logic
+        try:
+            price = float(str(current_diesel_price).replace(',','')) if current_diesel_price else 30.00
+        except: price = 30.00
+
+        group_offset = 1 # Default Group
         if price <= 27.00: group_offset = 0
         elif 27.01 <= price <= 30.00: group_offset = 1
         elif 30.01 <= price <= 32.00: group_offset = 2
         elif price > 32.00: group_offset = 3
+        
         veh_offset = 0 
         if "6" in str(vehicle_type): veh_offset = 1
         elif "10" in str(vehicle_type): veh_offset = 2
         
-        cost = tier.iloc[0, dist_col_idx + 1 + (group_offset * 3) + veh_offset]
+        # Calculate safe index
+        target_col_idx = dist_col_idx + 1 + (group_offset * 3) + veh_offset
+        if target_col_idx >= len(df.columns): return 0
+        
+        cost = tier.iloc[0, target_col_idx]
         return float(str(cost).replace(',', ''))
     except: return 0
 
@@ -124,7 +153,9 @@ def get_maintenance_status_all():
     try:
         drivers = get_data("Master_Drivers").copy()
         maint_logs = get_data("Maintenance_Logs").copy()
+        
         if drivers.empty: return pd.DataFrame()
+        
         drivers['Vehicle_Plate'] = drivers['Vehicle_Plate'].astype(str)
         drivers['Current_Mileage'] = pd.to_numeric(drivers['Current_Mileage'], errors='coerce').fillna(0)
         
@@ -132,61 +163,112 @@ def get_maintenance_status_all():
         oil_days = get_config_value("maint_oil_days", 180)
         tire_km = get_config_value("maint_tire_km", 50000)
         tire_days = get_config_value("maint_tire_days", 730)
-        rules = {"ถ่ายน้ำมันเครื่อง": [oil_km, oil_days], "เปลี่ยนยาง/ช่วงล่าง": [tire_km, tire_days], "เช็คระยะทั่วไป": [20000, 365]}
+        
+        rules = {
+            "ถ่ายน้ำมันเครื่อง": [oil_km, oil_days], 
+            "เปลี่ยนยาง/ช่วงล่าง": [tire_km, tire_days], 
+            "เช็คระยะทั่วไป": [20000, 365]
+        }
         
         all_status = []
+        # Pre-process logs
+        if not maint_logs.empty:
+            maint_logs['Odometer'] = pd.to_numeric(maint_logs['Odometer'], errors='coerce').fillna(0)
+            maint_logs['Date_Service'] = pd.to_datetime(maint_logs['Date_Service'], errors='coerce')
+        
         for service_name, (limit_km, limit_days) in rules.items():
-            merged = drivers.copy()
-            merged['Last_Service_Odo'] = 0
-            merged['Date_Service'] = pd.NaT
-            
-            if not maint_logs.empty:
-                svc_logs = maint_logs[maint_logs['Service_Type'] == service_name].copy()
-                if not svc_logs.empty:
-                    svc_logs['Odometer'] = pd.to_numeric(svc_logs['Odometer'], errors='coerce')
-                    svc_logs['Date_Service'] = pd.to_datetime(svc_logs['Date_Service'], errors='coerce')
-                    svc_logs = svc_logs.sort_values('Date_Service')
-                    last_svc = svc_logs.groupby('Vehicle_Plate').last()[['Odometer', 'Date_Service']]
-                    for idx, row in merged.iterrows():
-                        plate = row['Vehicle_Plate']
-                        if plate in last_svc.index:
-                            merged.at[idx, 'Last_Service_Odo'] = last_svc.at[plate, 'Odometer']
-                            merged.at[idx, 'Date_Service'] = last_svc.at[plate, 'Date_Service']
+            for _, row in drivers.iterrows():
+                plate = row['Vehicle_Plate']
+                last_odo = 0
+                last_date = pd.NaT
+                
+                # Find last service
+                if not maint_logs.empty:
+                    svc = maint_logs[
+                        (maint_logs['Service_Type'] == service_name) & 
+                        (maint_logs['Vehicle_Plate'].astype(str) == plate)
+                    ]
+                    if not svc.empty:
+                        last = svc.sort_values('Date_Service').iloc[-1]
+                        last_odo = last['Odometer']
+                        last_date = last['Date_Service']
 
-            merged['Dist_Run'] = merged['Current_Mileage'] - merged['Last_Service_Odo']
-            now = datetime.now()
-            merged['Days_Run'] = (now - merged['Date_Service']).dt.days.fillna(0)
-            
-            for _, row in merged.iterrows():
-                status = "✅ ปกติ"; is_due = False; note = ""
-                if row['Dist_Run'] >= limit_km: status = "⚠️ ครบระยะทาง"; note = f"เกิน {row['Dist_Run'] - limit_km:,.0f} กม."; is_due = True
-                elif row['Days_Run'] >= limit_days: status = "⚠️ ครบกำหนดเวลา"; note = f"เกิน {row['Days_Run'] - limit_days:,.0f} วัน"; is_due = True
-                elif row['Dist_Run'] >= (limit_km * 0.9): status = "🟡 ใกล้ครบระยะ"; note = f"เหลือ {limit_km - row['Dist_Run']:,.0f} กม."
-                all_status.append({"Vehicle_Plate": row['Vehicle_Plate'], "Driver_Name": row['Driver_Name'], "Service_Type": service_name, "Current_Mileage": row['Current_Mileage'], "Last_Service_Odo": row['Last_Service_Odo'], "Distance_Run": f"{row['Dist_Run']:,.0f} กม.", "Status": status, "Note": note, "Is_Due": is_due})
+                dist_run = row['Current_Mileage'] - last_odo
+                days_run = 0
+                if pd.notna(last_date):
+                    days_run = (datetime.now() - last_date).days
+                
+                status = "✅ ปกติ"
+                is_due = False
+                note = "-"
+                
+                if dist_run >= limit_km: 
+                    status = "⚠️ ครบระยะทาง"
+                    note = f"เกิน {dist_run - limit_km:,.0f} กม."
+                    is_due = True
+                elif days_run >= limit_days: 
+                    status = "⚠️ ครบกำหนดเวลา"
+                    note = f"เกิน {days_run - limit_days:,.0f} วัน"
+                    is_due = True
+                elif dist_run >= (limit_km * 0.9): 
+                    status = "🟡 ใกล้ครบระยะ"
+                    note = f"เหลือ {limit_km - dist_run:,.0f} กม."
+
+                all_status.append({
+                    "Vehicle_Plate": plate, 
+                    "Driver_Name": row.get('Driver_Name','-'), 
+                    "Service_Type": service_name, 
+                    "Current_Mileage": row['Current_Mileage'],
+                    "Last_Service_Odo": last_odo,
+                    "Distance_Run": dist_run,
+                    "Status": status, 
+                    "Note": note, 
+                    "Is_Due": is_due
+                })
         return pd.DataFrame(all_status)
-    except: return pd.DataFrame()
+    except Exception as e: 
+        print(f"Maint Error: {e}")
+        return pd.DataFrame()
 
 def get_last_fuel_odometer(plate):
     try:
         df = get_data("Fuel_Logs")
         if df.empty: return 0
-        return float(df[df['Vehicle_Plate'].astype(str) == str(plate)]['Odometer'].max())
+        # Filter and Convert
+        df_plate = df[df['Vehicle_Plate'].astype(str) == str(plate)].copy()
+        if df_plate.empty: return 0
+        df_plate['Odometer'] = pd.to_numeric(df_plate['Odometer'], errors='coerce').fillna(0)
+        return float(df_plate['Odometer'].max())
     except: return 0
 
 def calculate_actual_consumption(plate):
     try:
         df = get_data("Fuel_Logs")
         if df.empty: return 0, 0, 0
-        my_logs = df[df['Vehicle_Plate'].astype(str) == str(plate)].sort_values(by='Odometer')
+        
+        df['Odometer'] = pd.to_numeric(df['Odometer'], errors='coerce')
+        df['Liters'] = pd.to_numeric(df['Liters'], errors='coerce')
+        
+        my_logs = df[df['Vehicle_Plate'].astype(str) == str(plate)].dropna(subset=['Odometer']).sort_values(by='Odometer')
+        
         if len(my_logs) < 2: return 0, 0, 0
+        
         total_dist = my_logs.iloc[-1]['Odometer'] - my_logs.iloc[0]['Odometer']
+        # Sum liters excluding the first entry (since the first entry starts the distance count)
         total_liters = my_logs.iloc[1:]['Liters'].sum()
+        
         if total_liters > 0: return total_dist / total_liters, total_dist, total_liters
         else: return 0, 0, 0
     except: return 0, 0, 0
 
 def get_status_label_th(status_code: str) -> str:
-    mapping = {"PLANNED": "วางแผนแล้ว", "ASSIGNED": "จ่ายงานให้คนขับแล้ว", "PICKED_UP": "รับสินค้าแล้ว", "IN_TRANSIT": "กำลังขนส่ง", "DELIVERED": "ถึงปลายทางแล้ว", "COMPLETED": "ปิดงานสมบูรณ์", "FAILED": "ส่งไม่สำเร็จ", "CANCELLED": "ยกเลิกงาน", "Completed": "ปิดงานสมบูรณ์", "Pending": "รอดำเนินการ"}
+    mapping = {
+        "PLANNED": "วางแผนแล้ว", "ASSIGNED": "จ่ายงานแล้ว", 
+        "PICKED_UP": "รับสินค้าแล้ว", "IN_TRANSIT": "กำลังขนส่ง", 
+        "DELIVERED": "ถึงปลายทางแล้ว", "COMPLETED": "ปิดงานสมบูรณ์", 
+        "FAILED": "ส่งไม่สำเร็จ", "CANCELLED": "ยกเลิกงาน", 
+        "Completed": "ปิดงานสมบูรณ์", "Pending": "รอดำเนินการ"
+    }
     return mapping.get(str(status_code), str(status_code))
 
 def get_fuel_prices():
@@ -207,13 +289,10 @@ def get_fuel_prices():
             elif section.name == 'ul' and current_section:
                 for item in section.find_all('li'):
                     text = item.get_text(separator=" ", strip=True)
-                    # 🔥 Regex ใหม่: หาตัวเลขที่มีจุดทศนิยม (เช่น 30.94)
-                    # และต้องอยู่ท้ายประโยค หรือมี space ข้างหน้า
                     match = re.search(r'(.+?)\s+([\d]+\.\d{2})', text)
                     if match:
                         name = match.group(1).strip()
                         price = match.group(2).strip()
-                        # กรองชื่อน้ำมันไม่ให้มีเลขประหลาดติดมา
                         fuel_prices[current_section][name] = price
         return fuel_prices
     except: return {}
@@ -221,28 +300,41 @@ def get_fuel_prices():
 # --- Database Update Wrappers ---
 def create_new_job(job_data):
     try:
+        # Check integrity
+        if not job_data.get('Job_ID'): return False
+        
         df_schema = get_data("Jobs_Main")
         columns = df_schema.columns.tolist()
         row_values = []
         for col in columns:
             val = job_data.get(col, "")
+            # Ensure links are proper strings
+            if "Link" in col and val:
+                val = str(val).strip()
             row_values.append(val)
         return append_to_sheet("Jobs_Main", row_values)
-    except: return False
+    except Exception as e: 
+        print(f"Create Job Error: {e}")
+        return False
 
 def create_fuel_log(fuel_data):
     try:
         df_schema = get_data("Fuel_Logs")
         columns = df_schema.columns.tolist()
         row_values = [fuel_data.get(c, "") for c in columns]
+        
         if append_to_sheet("Fuel_Logs", row_values):
+            # Update Driver Mileage Logic
             if 'Odometer' in fuel_data and 'Vehicle_Plate' in fuel_data:
                 drv = get_data("Master_Drivers")
                 drv['Vehicle_Plate'] = drv['Vehicle_Plate'].astype(str)
                 idx = drv[drv['Vehicle_Plate'] == str(fuel_data['Vehicle_Plate'])].index
                 if not idx.empty:
-                    drv.at[idx[0], 'Current_Mileage'] = fuel_data['Odometer']
-                    update_sheet("Master_Drivers", drv)
+                    try:
+                        new_odo = float(fuel_data['Odometer'])
+                        drv.at[idx[0], 'Current_Mileage'] = new_odo
+                        update_sheet("Master_Drivers", drv)
+                    except: pass
             return True
         return False
     except: return False
@@ -250,16 +342,14 @@ def create_fuel_log(fuel_data):
 def log_maintenance_record(record):
     try:
         df_schema = get_data("Maintenance_Logs")
-        columns = df_schema.columns.tolist()
-        row_values = [record.get(c, "") for c in columns]
+        row_values = [record.get(c, "") for c in df_schema.columns]
         return append_to_sheet("Maintenance_Logs", row_values)
     except: return False
 
 def create_repair_ticket(ticket_data):
     try:
         df_schema = get_data("Repair_Tickets")
-        columns = df_schema.columns.tolist()
-        row_values = [ticket_data.get(c, "") for c in columns]
+        row_values = [ticket_data.get(c, "") for c in df_schema.columns]
         return append_to_sheet("Repair_Tickets", row_values)
     except: return False
 
@@ -268,6 +358,7 @@ def update_job_status(job_id, new_status, timestamp, distance_run=0, photo_data=
         df_jobs = get_data("Jobs_Main")
         df_jobs['Job_ID'] = df_jobs['Job_ID'].astype(str)
         idx = df_jobs[df_jobs['Job_ID'] == str(job_id)].index
+        
         driver_id = None
         if not idx.empty:
             i = idx[0]
@@ -278,6 +369,7 @@ def update_job_status(job_id, new_status, timestamp, distance_run=0, photo_data=
             driver_id = df_jobs.at[i, 'Driver_ID']
             update_sheet("Jobs_Main", df_jobs)
         
+        # Update Mileage if completed
         if new_status == "Completed" and driver_id and distance_run > 0:
             df_drivers = get_data("Master_Drivers")
             df_drivers['Driver_ID'] = df_drivers['Driver_ID'].astype(str)
@@ -286,7 +378,7 @@ def update_job_status(job_id, new_status, timestamp, distance_run=0, photo_data=
                 try:
                     current = pd.to_numeric(df_drivers.at[d_idx[0], 'Current_Mileage'], errors='coerce')
                     if pd.isna(current): current = 0
-                    df_drivers.at[d_idx[0], 'Current_Mileage'] = current + distance_run
+                    df_drivers.at[d_idx[0], 'Current_Mileage'] = current + float(distance_run)
                     df_drivers.at[d_idx[0], 'Last_Update'] = get_thai_time_str()
                     update_sheet("Master_Drivers", df_drivers)
                 except: pass
@@ -299,10 +391,12 @@ def simple_update_job_status(job_id, new_status, extra_updates=None):
         df_jobs['Job_ID'] = df_jobs['Job_ID'].astype(str)
         idx = df_jobs[df_jobs['Job_ID'] == str(job_id)].index
         if idx.empty: return False
+        
         i = idx[0]
         df_jobs.at[i, 'Job_Status'] = new_status
         if extra_updates:
-            for k, v in extra_updates.items(): df_jobs.at[i, k] = v
+            for k, v in extra_updates.items(): 
+                df_jobs.at[i, k] = v
         update_sheet("Jobs_Main", df_jobs)
         return True
     except: return False
@@ -322,17 +416,14 @@ def update_driver_location(driver_id, lat, lon):
     except: return False
 
 def sync_to_legacy_sheet(start_date, end_date):
-    # --- 📌 ตั้งค่าไฟล์ปลายทาง ---
     TARGET_ID = "1yy7TPgjW34rra6pBRCXaXb0IIDm1UpkuPcyRQ9POGw4"
     TARGET_URL = f"https://docs.google.com/spreadsheets/d/{TARGET_ID}/edit"
     TARGET_WORKSHEET = "MASTER" 
-    # --------------------------
     
     try:
-        # 1. เตรียมข้อมูลใหม่ (New Data)
         df_jobs = get_data("Jobs_Main")
         df_drivers = get_data("Master_Drivers")
-        if df_jobs.empty: return False, "ไม่มีข้อมูลงานในระบบ"
+        if df_jobs.empty: return False, "ไม่มีข้อมูลงาน"
         
         driver_info = {}
         if not df_drivers.empty:
@@ -344,14 +435,10 @@ def sync_to_legacy_sheet(start_date, end_date):
                     'Type': r.get('Vehicle_Type', '-')
                 }
 
-        current_fuel_price = "-"
-        try:
-            fuel_data = get_fuel_prices()
-            if fuel_data:
-                ptt = fuel_data.get('ราคาน้ำมัน ปตท. (ptt)', {})
-                for k, v in ptt.items():
-                    if "ดีเซล" in k: current_fuel_price = v.replace(" บาท/ลิตร", ""); break
-        except: pass
+        # Safe Numeric Conversion
+        df_jobs['Price_Customer'] = pd.to_numeric(df_jobs['Price_Customer'], errors='coerce').fillna(0)
+        df_jobs['Cost_Driver_Total'] = pd.to_numeric(df_jobs['Cost_Driver_Total'], errors='coerce').fillna(0)
+        df_jobs['Est_Distance_KM'] = pd.to_numeric(df_jobs['Est_Distance_KM'], errors='coerce').fillna(0)
 
         if 'Plan_Date' in df_jobs.columns:
             df_jobs['Plan_Date'] = pd.to_datetime(df_jobs['Plan_Date'], errors='coerce')
@@ -361,81 +448,56 @@ def sync_to_legacy_sheet(start_date, end_date):
         
         if df_export.empty: return False, "ไม่พบงานในช่วงวันที่เลือก"
 
-        # --- 🔥 อ่านข้อมูลเก่ามาเช็คซ้ำ (Duplicate Check) ---
+        # Duplicate Check Logic (Simplified)
         from modules.database import get_connection
         conn = get_connection()
-        
-        existing_keys = set() # เก็บ "ลายนิ้วมือ" ของงานที่มีอยู่แล้ว
         try:
-            # อ่านข้อมูลเก่า (ไม่เอา Header)
             df_old = conn.read(spreadsheet=TARGET_URL, worksheet=TARGET_WORKSHEET, ttl=0, header=None)
-            
-            # สร้าง Key จากข้อมูลเก่า (วันที่ + ทะเบียน + ราคา) เพื่อใช้ตรวจสอบ
-            # (Column 0=วันที่, 15=ทะเบียน, 26=ราคารวมคนขับ) *อิงตามลำดับ A-AA*
-            if not df_old.empty and len(df_old.columns) >= 27:
-                for _, row in df_old.iterrows():
-                    # สร้างคีย์: "วันที่|ทะเบียน|ราคาคนขับ"
-                    key = f"{str(row[0]).strip()}|{str(row[15]).strip()}|{str(row[26]).strip()}"
-                    existing_keys.add(key)
-        except:
-            df_old = pd.DataFrame()
+        except: df_old = pd.DataFrame()
 
-        # 2. สร้าง Data ใหม่ (เฉพาะที่ไม่ซ้ำ)
+        existing_keys = set()
+        if not df_old.empty:
+            for _, row in df_old.iterrows():
+                # Safe String conversion for Key
+                key = f"{str(row[0]).strip()}|{str(row[15]).strip()}" 
+                existing_keys.add(key)
+
         final_data_list = []
         duplicate_count = 0
         
         for _, row in df_export.iterrows():
             d_id = str(row.get('Driver_ID', ''))
             d_data = driver_info.get(d_id, {'Name': '-', 'Plate': '-', 'Type': '-'})
-            
-            price_cust = float(pd.to_numeric(row.get('Price_Customer', 0), errors='coerce'))
-            price_drv = float(pd.to_numeric(row.get('Cost_Driver_Total', 0), errors='coerce'))
-            dist_one_way = float(pd.to_numeric(row.get('Est_Distance_KM', 0), errors='coerce'))
-            dist_round_trip = dist_one_way * 2
             date_str = row['Plan_Date'].strftime('%d/%m/%Y') if pd.notna(row['Plan_Date']) else "-"
             
-            # สร้าง Key ของงานใหม่เพื่อเทียบ
-            current_key = f"{date_str}|{d_data['Plate']}|{price_drv}"
-            
-            # ถ้ามีอยู่แล้ว ให้ข้าม
-            if current_key in existing_keys:
+            check_key = f"{date_str}|{d_data['Plate']}"
+            if check_key in existing_keys:
                 duplicate_count += 1
                 continue 
 
             row_list = [
                 date_str, row.get('Customer_ID', '-'), row.get('Customer_Name', '-'), d_data['Type'], '-',
-                row.get('Origin_Location', '-'), row.get('Dest_Location', '-'), dist_round_trip, current_fuel_price, price_cust,
-                '-', '-', '-', '-', price_cust, d_data['Plate'], d_data['Name'], d_data['Type'],
-                row.get('Origin_Location', '-'), row.get('Dest_Location', '-'), dist_round_trip, price_drv,
-                '-', '-', '-', '-', price_drv
+                row.get('Origin_Location', '-'), row.get('Dest_Location', '-'), row['Est_Distance_KM']*2, "-", row['Price_Customer'],
+                '-', '-', '-', '-', row['Price_Customer'], d_data['Plate'], d_data['Name'], d_data['Type'],
+                row.get('Origin_Location', '-'), row.get('Dest_Location', '-'), row['Est_Distance_KM']*2, row['Cost_Driver_Total'],
+                '-', '-', '-', '-', row['Cost_Driver_Total']
             ]
             final_data_list.append(row_list)
         
         if not final_data_list:
-            return True, f"⚠️ ข้อมูลทั้งหมด ({duplicate_count} รายการ) เคยส่งไปแล้ว ไม่มีการเพิ่มซ้ำ"
+            return True, f"⚠️ ข้อมูลซ้ำทั้งหมด ({duplicate_count} รายการ)"
 
-        # 3. รวมร่างและบันทึก
         df_new = pd.DataFrame(final_data_list)
-        
-        # จัดการเรื่องคอลัมน์ให้เท่ากัน
         if not df_old.empty:
             max_cols = max(df_old.shape[1], 27)
-            if df_new.shape[1] < max_cols:
-                for i in range(df_new.shape[1], max_cols): df_new[i] = None
-            if df_old.shape[1] < max_cols:
-                for i in range(df_old.shape[1], max_cols): df_old[i] = None
-            df_old.columns = range(max_cols); df_new.columns = range(max_cols)
+            df_new = df_new.reindex(columns=range(max_cols))
+            df_old.columns = range(max_cols)
             df_final = pd.concat([df_old, df_new], ignore_index=True)
         else:
             df_final = df_new
 
         conn.update(spreadsheet=TARGET_URL, worksheet=TARGET_WORKSHEET, data=df_final)
-        
-        msg = f"✅ เพิ่มข้อมูลใหม่ {len(final_data_list)} รายการ"
-        if duplicate_count > 0:
-            msg += f" (ข้ามข้อมูลซ้ำ {duplicate_count} รายการ)"
-            
-        return True, msg
+        return True, f"✅ เพิ่ม {len(final_data_list)} รายการ (ซ้ำ {duplicate_count})"
 
     except Exception as e: return False, f"Error: {str(e)}"
 
@@ -526,3 +588,4 @@ def deduct_stock_item(part_name, qty_used):
         
     except Exception as e:
         return False, f"Error: {str(e)}"
+    
