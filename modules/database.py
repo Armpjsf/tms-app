@@ -2,7 +2,7 @@ import streamlit as st # type: ignore
 from streamlit_gsheets import GSheetsConnection # type: ignore
 import pandas as pd # type: ignore
 
-# ID ของ Google Sheet
+# ID ของ Google Sheet หลัก (Database)
 SHEET_ID = "10xoemO2oS6a8c7nzqxkE9mlRCbTII2PZMhvv1wTXeYQ"
 SHEET_URL = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/edit"
 
@@ -13,15 +13,13 @@ def get_connection():
 
 @st.cache_data(ttl=3600) 
 def load_master_group():
-    """โหลดข้อมูลหลักทีเดียว 5 Sheet (Drivers, Customers, Routes, Rate, Config)"""
+    """โหลดข้อมูลหลักทีเดียว 5 Sheet"""
     conn = get_connection()
     data = {}
     sheets = ["Master_Drivers", "Master_Customers", "Master_Routes", "Rate_Card", "System_Config"]
-    
     for name in sheets:
         try:
             df = conn.read(spreadsheet=SHEET_URL, worksheet=name, ttl=0)
-            # Pre-process Master Data
             if name == 'Master_Drivers':
                 df['Driver_ID'] = df['Driver_ID'].astype(str)
             data[name] = df
@@ -31,11 +29,10 @@ def load_master_group():
 
 @st.cache_data(ttl=300) 
 def load_transaction_group():
-    """โหลดข้อมูลงานทีเดียว 5 Sheet (Jobs, Fuel, Maintenance, Stock, Tickets)"""
+    """โหลดข้อมูลงานทีเดียว 5 Sheet"""
     conn = get_connection()
     data = {}
     sheets = ["Jobs_Main", "Fuel_Logs", "Maintenance_Logs", "Stock_Parts", "Repair_Tickets"]
-    
     for name in sheets:
         try:
             df = conn.read(spreadsheet=SHEET_URL, worksheet=name, ttl=0)
@@ -43,7 +40,7 @@ def load_transaction_group():
         except:
             data[name] = pd.DataFrame()
 
-    # --- Pre-processing (ทำทีเดียวตรงนี้เลย) ---
+    # --- Pre-processing ---
     if not data['Jobs_Main'].empty:
         if 'Plan_Date' in data['Jobs_Main'].columns:
             data['Jobs_Main']['Plan_Date'] = pd.to_datetime(data['Jobs_Main']['Plan_Date'], errors='coerce')
@@ -69,46 +66,53 @@ def load_transaction_group():
 # --- Interface Functions ---
 
 def get_data(worksheet_name):
-    """ดึงข้อมูลจาก Cache กลุ่มที่ถูกต้อง"""
     masters = ["Master_Drivers", "Master_Customers", "Master_Routes", "Rate_Card", "System_Config"]
-    
     if worksheet_name in masters:
-        # ดึงจาก Master Group (ถ้ายังไม่มีใน Cache ระบบจะโหลด 5 แผ่นนี้พร้อมกัน)
         return load_master_group().get(worksheet_name, pd.DataFrame())
     else:
-        # ดึงจาก Transaction Group
         return load_transaction_group().get(worksheet_name, pd.DataFrame())
 
 def load_all_data():
-    """โหลดข้อมูลทั้งหมด (ใช้สำหรับปุ่ม Refresh หรือตอนเริ่มแอพ)"""
-    # การเรียกฟังก์ชันนี้จะไปกระตุ้นให้ Cache ทำงาน
-    m = load_master_group()
-    t = load_transaction_group()
-    return {**m, **t} # คืนค่าเป็น Dict รวม
+    load_master_group.clear()
+    load_transaction_group.clear()
+    return {**load_master_group(), **load_transaction_group()}
 
-# --- Update & Append ---
+# --- Update & Append (แก้กลับเป็น Standard Update เพื่อความเสถียร) ---
 
 def append_to_sheet(worksheet_name, row_data_list):
-    """เพิ่มแถวใหม่ (Append) - เร็วที่สุด"""
+    """เพิ่มข้อมูลโดยอ่านของเก่าแล้วต่อท้าย (Safe Append)"""
     try:
         conn = get_connection()
-        sh = conn.client.open_by_key(SHEET_ID)
-        wks = sh.worksheet(worksheet_name)
-        wks.append_row(row_data_list)
         
-        # ล้าง Cache เฉพาะกลุ่ม Transaction (เพื่อให้โหลดใหม่ครั้งหน้า)
+        # 1. อ่านข้อมูลปัจจุบัน (แบบ Real-time เพื่อความชัวร์)
+        current_df = conn.read(spreadsheet=SHEET_URL, worksheet=worksheet_name, ttl=0)
+        
+        # 2. สร้าง DataFrame แถวใหม่
+        # ใช้ชื่อคอลัมน์จาก current_df เพื่อให้ตรงกันเป๊ะ
+        if current_df.empty:
+            # กรณี Sheet ว่างเปล่า (ไม่ควรเกิดขึ้นถ้ามี Header)
+            return False
+            
+        new_row_df = pd.DataFrame([row_data_list], columns=current_df.columns)
+        
+        # 3. รวมร่าง (Concat)
+        updated_df = pd.concat([current_df, new_row_df], ignore_index=True)
+        
+        # 4. บันทึกกลับ (Update ทั้ง Sheet)
+        conn.update(spreadsheet=SHEET_URL, worksheet=worksheet_name, data=updated_df)
+        
+        # ล้าง Cache กลุ่ม Transaction เพื่อให้เห็นข้อมูลใหม่ทันที
         load_transaction_group.clear()
+        
         return True
     except Exception as e:
-        print(f"Append Error: {e}")
+        st.error(f"เกิดข้อผิดพลาดในการบันทึก ({worksheet_name}): {str(e)}")
         return False
 
 def update_sheet(worksheet_name, df):
-    """เขียนทับทั้ง Sheet (Update)"""
     conn = get_connection()
     conn.update(spreadsheet=SHEET_URL, worksheet=worksheet_name, data=df)
     
-    # ล้าง Cache ตามกลุ่ม
     masters = ["Master_Drivers", "Master_Customers", "Master_Routes", "Rate_Card", "System_Config"]
     if worksheet_name in masters:
         load_master_group.clear()

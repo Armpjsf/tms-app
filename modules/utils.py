@@ -195,16 +195,26 @@ def get_fuel_prices():
         headers = {'User-Agent': 'Mozilla/5.0'}
         response = requests.get(url, headers=headers, timeout=10)
         if response.status_code != 200: return {}
+        
         soup = BeautifulSoup(response.content.decode('utf-8', 'ignore'), 'html.parser')
         fuel_prices = {}
         current_section = ""
+        
         for section in soup.find_all(['h3', 'ul']):
-            if section.name == 'h3': current_section = section.get_text(strip=True); fuel_prices[current_section] = {}
+            if section.name == 'h3': 
+                current_section = section.get_text(strip=True)
+                fuel_prices[current_section] = {}
             elif section.name == 'ul' and current_section:
                 for item in section.find_all('li'):
                     text = item.get_text(separator=" ", strip=True)
-                    match = re.search(r'(.+?)\s+([\d,]+\.\d{2})', text)
-                    if match: fuel_prices[current_section][match.group(1).strip()] = match.group(2).strip()
+                    # 🔥 Regex ใหม่: หาตัวเลขที่มีจุดทศนิยม (เช่น 30.94)
+                    # และต้องอยู่ท้ายประโยค หรือมี space ข้างหน้า
+                    match = re.search(r'(.+?)\s+([\d]+\.\d{2})', text)
+                    if match:
+                        name = match.group(1).strip()
+                        price = match.group(2).strip()
+                        # กรองชื่อน้ำมันไม่ให้มีเลขประหลาดติดมา
+                        fuel_prices[current_section][name] = price
         return fuel_prices
     except: return {}
 
