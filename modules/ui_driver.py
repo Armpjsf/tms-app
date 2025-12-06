@@ -148,12 +148,18 @@ def driver_flow():
                 else:
                     st.error("กรุณาถ่ายรูปสินค้าอย่างน้อย 1 รูป")
 
-    # --- 2. เติมน้ำมัน (Fraud Protection) ---
+    # --- 2. เติมน้ำมัน (แก้ไขจุด Error: NaN to Int) ---
     elif menu == "⛽ เติมน้ำมัน":
         st.subheader("บันทึกการเติมน้ำมัน")
         
         plate = st.session_state.vehicle_plate
         last_odo = get_last_fuel_odometer(plate)
+        
+        # --- 🔥 [จุดที่แก้] ป้องกันค่าว่าง (NaN) ก่อนแปลงเป็น Int ---
+        if pd.isna(last_odo):
+            last_odo = 0.0
+        # -------------------------------------------------------
+        
         std_rate = get_consumption_rate_by_driver(st.session_state.driver_id)
         act_rate, _, _ = calculate_actual_consumption(plate)
         
@@ -172,7 +178,7 @@ def driver_flow():
 
         f_station = st.text_input("ชื่อปั๊ม/สถานที่")
         
-        # --- 🔥 [Protection 1] ตรวจสอบเลขไมล์ ---
+        # --- Protection 1: ตรวจสอบเลขไมล์ ---
         f_odo = st.number_input("เลขไมล์ปัจจุบัน (ต้องมากกว่าครั้งก่อน)", min_value=0, value=int(last_odo))
         
         is_odo_error = False
@@ -192,11 +198,10 @@ def driver_flow():
         f_liters = st.number_input("จำนวนลิตรที่เติม", 0.0)
         f_price = st.number_input("ยอดเงิน (บาท)", 0.0)
         
-        # --- 🔥 [Protection 2] ตรวจสอบอัตราสิ้นเปลือง ---
+        # --- Protection 2: ตรวจสอบอัตราสิ้นเปลือง ---
         fraud_warning = False
         if dist_run > 0 and f_liters > 0:
             current_km_l = dist_run / f_liters
-            # ถ้ารถกินน้ำมันผิดปกติ (ต่ำกว่าเกณฑ์ 50% หรือ เกินเกณฑ์ 50%)
             if current_km_l < (std_rate * 0.5) or current_km_l > (std_rate * 1.5):
                 fraud_warning = True
                 st.warning(f"⚠️ แจ้งเตือนความผิดปกติ: อัตรากินน้ำมันรอบนี้คือ {current_km_l:.1f} กม./ลิตร (ปกติ {std_rate}) กรุณาถ่ายรูปให้ชัดเจน")
