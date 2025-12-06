@@ -1,6 +1,8 @@
 import streamlit as st # type: ignore
 from streamlit_gsheets import GSheetsConnection # type: ignore
 import pandas as pd # type: ignore
+import time
+import gspread
 
 # ID ของ Google Sheet หลัก (Database)
 SHEET_ID = "10xoemO2oS6a8c7nzqxkE9mlRCbTII2PZMhvv1wTXeYQ"
@@ -9,9 +11,33 @@ SHEET_URL = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/edit"
 def get_connection():
     return st.connection("gsheets", type=GSheetsConnection)
 
-# --- 1. Smart Caching: โหลดเป็นกลุ่ม (Group Load) ---
+# --- 🔥 Decorator: ระบบรอแล้วลองใหม่ (Retry) เมื่อเจอ Error 429 ---
+def retry_on_quota_error(max_retries=5, delay=2):
+    def decorator(func):
+        def wrapper(*args, **kwargs):
+            for attempt in range(max_retries):
+                try:
+                    return func(*args, **kwargs)
+                except Exception as e:
+                    # เช็คว่าเป็น Error 429 (Quota Exceeded) หรือไม่
+                    error_str = str(e)
+                    if "429" in error_str or "Quota exceeded" in error_str:
+                        wait_time = delay * (2 ** attempt) # รอแบบทวีคูณ (2, 4, 8... วิ)
+                        print(f"⚠️ Quota limit hit. Retrying in {wait_time}s... (Attempt {attempt+1}/{max_retries})")
+                        time.sleep(wait_time)
+                    else:
+                        # ถ้าเป็น Error อื่น ให้แจ้งเตือนตามปกติ
+                        raise e
+            # ถ้าลองครบแล้วยังไม่ได้
+            st.error("ระบบ Google Sheet ทำงานหนักเกินไป กรุณารอสักครู่แล้วลองใหม่")
+            return pd.DataFrame() if "load" in func.__name__ else False
+        return wrapper
+    return decorator
 
-@st.cache_data(ttl=3600) 
+# --- 1. Smart Caching: โหลดเป็นกลุ่ม (ใช้ Retry) ---
+
+@st.cache_data(ttl=3600)
+@retry_on_quota_error() 
 def load_master_group():
     """โหลดข้อมูลหลักทีเดียว 5 Sheet"""
     conn = get_connection()
@@ -27,7 +53,8 @@ def load_master_group():
             data[name] = pd.DataFrame()
     return data
 
-@st.cache_data(ttl=300) 
+@st.cache_data(ttl=300)
+@retry_on_quota_error()
 def load_transaction_group():
     """โหลดข้อมูลงานทีเดียว 5 Sheet"""
     conn = get_connection()
@@ -77,38 +104,34 @@ def load_all_data():
     load_transaction_group.clear()
     return {**load_master_group(), **load_transaction_group()}
 
-# --- Update & Append (แก้กลับเป็น Standard Update เพื่อความเสถียร) ---
+# --- Update & Append (ใช้ Retry) ---
 
+@retry_on_quota_error()
 def append_to_sheet(worksheet_name, row_data_list):
-    """เพิ่มข้อมูลโดยอ่านของเก่าแล้วต่อท้าย (Safe Append)"""
-    try:
-        conn = get_connection()
-        
-        # 1. อ่านข้อมูลปัจจุบัน (แบบ Real-time เพื่อความชัวร์)
-        current_df = conn.read(spreadsheet=SHEET_URL, worksheet=worksheet_name, ttl=0)
-        
+    """เพิ่มข้อมูลโดยอ่านของเก่าแล้วต่อท้าย (Safe Append + Retry)"""
+    conn = get_connection()
+    
+    # 1. อ่านข้อมูลปัจจุบัน
+    current_df = conn.read(spreadsheet=SHEET_URL, worksheet=worksheet_name, ttl=0)
+    
+    if current_df.empty:
+        # กรณี Sheet ว่าง (สร้างใหม่)
+        new_row_df = pd.DataFrame([row_data_list])
+        updated_df = new_row_df
+    else:
         # 2. สร้าง DataFrame แถวใหม่
-        # ใช้ชื่อคอลัมน์จาก current_df เพื่อให้ตรงกันเป๊ะ
-        if current_df.empty:
-            # กรณี Sheet ว่างเปล่า (ไม่ควรเกิดขึ้นถ้ามี Header)
-            return False
-            
         new_row_df = pd.DataFrame([row_data_list], columns=current_df.columns)
-        
         # 3. รวมร่าง (Concat)
         updated_df = pd.concat([current_df, new_row_df], ignore_index=True)
-        
-        # 4. บันทึกกลับ (Update ทั้ง Sheet)
-        conn.update(spreadsheet=SHEET_URL, worksheet=worksheet_name, data=updated_df)
-        
-        # ล้าง Cache กลุ่ม Transaction เพื่อให้เห็นข้อมูลใหม่ทันที
-        load_transaction_group.clear()
-        
-        return True
-    except Exception as e:
-        st.error(f"เกิดข้อผิดพลาดในการบันทึก ({worksheet_name}): {str(e)}")
-        return False
+    
+    # 4. บันทึกกลับ
+    conn.update(spreadsheet=SHEET_URL, worksheet=worksheet_name, data=updated_df)
+    
+    # ล้าง Cache
+    load_transaction_group.clear()
+    return True
 
+@retry_on_quota_error()
 def update_sheet(worksheet_name, df):
     conn = get_connection()
     conn.update(spreadsheet=SHEET_URL, worksheet=worksheet_name, data=df)
