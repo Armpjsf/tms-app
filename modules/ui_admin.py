@@ -52,27 +52,64 @@ def admin_flow():
         "🔩 สต็อก", "🗺️ GPS", "⛽ ราคาน้ำมัน/คำนวณ", "⚙️ ตั้งค่าระบบ", "📖 คู่มือ"
     ])
 
-    # --- Tab 1: จ่ายงาน ---
+    # --- Tab 1: จ่ายงาน (Update: แสดงสถานะคนขับ ว่าง/ติดงาน/ซ่อม) ---
     with tab1:
         st.subheader("สร้างใบงานใหม่")
         drivers_df = get_data("Master_Drivers")
         customers_df = get_data("Master_Customers")
         routes_df = get_data("Master_Routes")
         
-        driver_options, driver_map = [], {}
+        # โหลดข้อมูลเพื่อเช็คสถานะ (Jobs & Repairs)
+        jobs_all = get_data("Jobs_Main")
+        repairs_all = get_data("Repair_Tickets")
+        
+        # 1. หาคนขับที่ "ติดงาน" (Job ยังไม่ Completed)
+        busy_drivers = []
+        if not jobs_all.empty:
+            # กรองงานที่สถานะไม่ใช่ Completed และไม่ใช่ Cancelled
+            active_jobs = jobs_all[~jobs_all['Job_Status'].isin(['Completed', 'CANCELLED', 'Selected'])]
+            busy_drivers = active_jobs['Driver_ID'].astype(str).unique().tolist()
+
+        # 2. หาคนขับที่ "รถเสีย" (Ticket ยังไม่ Done)
+        broken_drivers = []
+        if not repairs_all.empty:
+            active_repairs = repairs_all[repairs_all['Status'] != 'Done']
+            broken_drivers = active_repairs['Driver_ID'].astype(str).unique().tolist()
+        
+        driver_options = []
+        driver_map = {}
+        
         if not drivers_df.empty:
              target_drivers = drivers_df
              if 'Role' in drivers_df.columns:
                  roles = drivers_df['Role'].astype(str).str.lower().str.strip()
                  target_drivers = drivers_df[roles.isin(['driver', 'คนขับ'])]
                  if target_drivers.empty: target_drivers = drivers_df
+             
              for _, row in target_drivers.iterrows():
                  d_id = str(row.get('Driver_ID', ''))
+                 d_name = str(row.get('Driver_Name', ''))
                  d_plate = str(row.get('Vehicle_Plate', ''))
+                 
                  if d_id and d_id.lower() not in ['nan', 'none', '', 'null']:
-                     label = f"{d_id} : {row.get('Driver_Name', '')} ({d_plate})"
+                     # --- Logic เช็คสถานะ ---
+                     status_icon = "🟢"
+                     status_text = "ว่าง"
+                     
+                     if d_id in broken_drivers:
+                         status_icon = "🔧"
+                         status_text = "แจ้งซ่อม"
+                     elif d_id in busy_drivers:
+                         status_icon = "🔴"
+                         status_text = "ติดงาน"
+                     # ----------------------
+
+                     label = f"{status_icon} {d_id} : {d_name} ({status_text})"
                      driver_options.append(label)
-                     driver_map[label] = d_plate
+                     driver_map[label] = d_plate # เก็บทะเบียนรถไว้ Map ตอนเลือก
+
+        # จัดเรียง: เอาคน "ว่าง" ขึ้นก่อน
+        driver_options.sort(key=lambda x: x.startswith("🟢"), reverse=True)
 
         customer_options, customer_map_id, customer_map_name = [], {}, {}
         if not customers_df.empty:
