@@ -368,16 +368,18 @@ def admin_flow():
         else:
             st.warning("ไม่มีข้อมูล")
 
-    # --- Tab 3: MMS ---
+    # --- Tab 3: MMS (งานซ่อม & สต็อก) ---
     with tab3:
-        st.subheader("🔔 แจ้งเตือนเช็คระยะ")
+        st.subheader("🔔 แจ้งเตือนเช็คระยะ (Maintenance Alert)")
+        # ... (ส่วนแจ้งเตือนเช็คระยะ คงเดิม) ...
         maint_df = get_maintenance_status_all()
         if not maint_df.empty:
             alerts = maint_df[maint_df['Is_Due'] == True]
             if not alerts.empty: st.error(f"⚠️ ถึงกำหนด {len(alerts)} รายการ"); st.dataframe(alerts)
             else: st.success("✅ รถปกติ")
         
-        with st.expander("🛠️ บันทึกการเข้าศูนย์"):
+        # ... (ส่วนบันทึกเข้าศูนย์ คงเดิม) ...
+        with st.expander("🛠️ บันทึกการเข้าศูนย์/เปลี่ยนถ่าย (Reset รอบ)"):
             with st.form("maint_f"):
                 d = get_data("Master_Drivers"); pl = d['Vehicle_Plate'].unique() if not d.empty else []
                 mp = st.selectbox("ทะเบียน", pl); mt = st.selectbox("รายการ", ["ถ่ายน้ำมันเครื่อง", "เปลี่ยนยาง/ช่วงล่าง"])
@@ -385,19 +387,71 @@ def admin_flow():
                 if st.form_submit_button("บันทึก"):
                     if log_maintenance_record({"Log_ID": f"MT-{int(time.time())}", "Date_Service": md.strftime("%Y-%m-%d"), "Vehicle_Plate": mp, "Service_Type": mt, "Odometer": mo}): st.success("Saved"); st.rerun()
 
-        st.divider(); st.subheader("🔧 แจ้งซ่อม")
+        st.divider(); st.subheader("🔧 รายการแจ้งซ่อม (Breakdown Tickets)")
         tk = get_data("Repair_Tickets")
+        
+        # โหลดสต็อกมารอไว้
+        stock_df = get_data("Stock_Parts")
+        stock_list = stock_df['Part_Name'].unique().tolist() if not stock_df.empty else []
+
         if not tk.empty:
             st.dataframe(tk, use_container_width=True, column_config={"Photo_Url": st.column_config.ImageColumn("รูป")})
-            with st.expander("อนุมัติ"):
-                tid = st.selectbox("Ticket ID", tk['Ticket_ID'].unique())
+            
+            # กล่องอนุมัติงาน (ที่เพิ่มฟีเจอร์ตัดสต็อก)
+            with st.expander("✍️ อนุมัติ / ปิดงานซ่อม"):
+                tid = st.selectbox("เลือก Ticket ID", tk['Ticket_ID'].unique())
+                
                 if tid:
-                    ns = st.selectbox("Status", ["Approved", "Done"]); co = st.number_input("Cost", 0.0)
-                    if st.button("Update"):
-                        idx = tk[tk['Ticket_ID']==tid].index[0]
-                        tk.at[idx, 'Status'] = ns; tk.at[idx, 'Cost_Total'] = co
-                        if ns=="Done": tk.at[idx, 'Date_Finish'] = datetime.now().strftime("%Y-%m-%d")
-                        update_sheet("Repair_Tickets", tk); st.success("Updated"); st.rerun()
+                    selected_ticket = tk[tk['Ticket_ID'] == tid].iloc[0]
+                    st.info(f"อาการ: {selected_ticket.get('Description', '-')}")
+
+                    c1, c2 = st.columns(2)
+                    with c1: ns = st.selectbox("สถานะใหม่", ["Approved (กำลังซ่อม)", "Done (ซ่อมเสร็จ)"], index=1)
+                    with c2: co = st.number_input("ค่าใช้จ่าย (ค่าแรง/ค่าของอู่นอก)", 0.0, help="ใส่เฉพาะยอดเงินที่จ่ายให้อู่")
+                    
+                    # --- ส่วนตัดสต็อก (Optional) ---
+                    st.markdown("---")
+                    st.write("📦 **เบิกอะไหล่บริษัท (ถ้ามี)**")
+                    use_stock = st.checkbox("มีการใช้อะไหล่ในสต็อก")
+                    
+                    stock_msg = ""
+                    p_name, p_qty = None, 0
+                    
+                    if use_stock:
+                        cs1, cs2 = st.columns([2, 1])
+                        with cs1: p_name = st.selectbox("เลือกอะไหล่", stock_list)
+                        with cs2: p_qty = st.number_input("จำนวนที่ใช้", 1, step=1)
+                        st.caption("⚠️ เมื่อกดอัปเดต ระบบจะตัดยอดสต็อกทันที")
+
+                    if st.button("💾 อัปเดตสถานะ & ตัดสต็อก", type="primary"):
+                        # 1. ตัดสต็อกก่อน (ถ้าเลือก)
+                        stock_cut_success = True
+                        if use_stock and p_name:
+                            # เรียกฟังก์ชันตัดสต็อกใหม่ใน utils.py (ต้องไปเพิ่มตามข้อ 1 ก่อน)
+                            from modules.utils import deduct_stock_item 
+                            ok, msg = deduct_stock_item(p_name, p_qty)
+                            if ok:
+                                st.toast(msg, icon="✂️")
+                                # บันทึก log ลง note (Optional)
+                            else:
+                                st.error(msg)
+                                stock_cut_success = False # บล็อกไม่ให้ปิดงานถ้าตัดของไม่ได้
+                        
+                        # 2. อัปเดตสถานะงานซ่อม
+                        if stock_cut_success:
+                            idx = tk[tk['Ticket_ID']==tid].index[0]
+                            tk.at[idx, 'Status'] = ns
+                            tk.at[idx, 'Cost_Total'] = co
+                            
+                            # ถ้าซ่อมเสร็จ ให้ลงวันที่
+                            if ns == "Done": 
+                                tk.at[idx, 'Date_Finish'] = datetime.now().strftime("%Y-%m-%d")
+                            
+                            update_sheet("Repair_Tickets", tk)
+                            st.success("บันทึกข้อมูลเรียบร้อย!")
+                            time.sleep(1.5)
+                            st.rerun()
+        else: st.info("ไม่มีรายการแจ้งซ่อม")
 
     # --- Tab 4: Fuel ---
     with tab4:

@@ -495,3 +495,34 @@ def get_manual_content():
 ---
 **💡 Tips:** หากข้อมูลไม่ขึ้น ให้กดปุ่ม "🔄 รีเฟรชข้อมูลล่าสุด" ที่เมนูซ้ายมือ
     """
+
+def deduct_stock_item(part_name, qty_used):
+    """ตัดจำนวนสต็อกอะไหล่"""
+    try:
+        # 1. อ่านสต็อกปัจจุบัน
+        df_stock = get_data("Stock_Parts")
+        if df_stock.empty: return False, "ไม่พบข้อมูลสต็อก"
+        
+        # 2. แปลงตัวเลขให้พร้อมคำนวณ
+        df_stock['Qty_On_Hand'] = pd.to_numeric(df_stock['Qty_On_Hand'], errors='coerce').fillna(0)
+        
+        # 3. หาอะไหล่ตัวนั้น
+        idx = df_stock[df_stock['Part_Name'] == part_name].index
+        if idx.empty: return False, f"ไม่พบอะไหล่ชื่อ '{part_name}'"
+        
+        # 4. เช็คของพอไหม
+        current_qty = df_stock.at[idx[0], 'Qty_On_Hand']
+        if current_qty < qty_used:
+            return False, f"ของไม่พอ! (มี {current_qty} / จะเบิก {qty_used})"
+        
+        # 5. ตัดยอด
+        new_qty = current_qty - qty_used
+        df_stock.at[idx[0], 'Qty_On_Hand'] = new_qty
+        
+        # 6. บันทึกกลับ (Update)
+        update_sheet("Stock_Parts", df_stock)
+        
+        return True, f"ตัดสต็อก '{part_name}' ออก {qty_used} หน่วย เรียบร้อย (เหลือ {new_qty})"
+        
+    except Exception as e:
+        return False, f"Error: {str(e)}"
