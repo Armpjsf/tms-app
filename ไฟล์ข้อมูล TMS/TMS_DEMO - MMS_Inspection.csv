@@ -1,0 +1,2 @@
+Inspection_ID,Date_Time,Driver_ID,Check_Tire,Check_Engine,Check_Driver_Health,Photo_Meter,Manager_Approve
+INS-001,2025-01-01 8:00,DRV-001,Normal,Normal,Ready,http://image-link,Yes
