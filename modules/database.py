@@ -14,7 +14,13 @@ from typing import Dict, Any, Optional, Union, List, Tuple, Type, TypeVar, Calla
 import pandas as pd # type: ignore
 import streamlit as st # type: ignore
 from streamlit_gsheets import GSheetsConnection # type: ignore
-from dotenv import load_dotenv # type: ignore
+
+# ทำให้ dotenv เป็น optional: ถ้าไม่มี lib นี้ (เช่น บน cloud) ก็ไม่ต้อง error
+try:
+    from dotenv import load_dotenv # type: ignore
+except ImportError:  # บาง environment อาจไม่ได้ติดตั้ง python-dotenv
+    def load_dotenv(*args, **kwargs):
+        return False
 
 # Load environment variables
 load_dotenv()
