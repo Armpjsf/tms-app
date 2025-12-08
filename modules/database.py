@@ -269,7 +269,8 @@ def load_transaction_group() -> Dict[str, pd.DataFrame]:
     conn = get_connection()
     data = {}
     sheets_config = {
-        "Jobs_Main": {"dtype": {'Job_ID': str, 'Est_Distance_KM': float, 'Price_Customer': float, 'Cost_Driver_Total': float}, "date_columns": ['Plan_Date'], "required_cols": None},
+        # NOTE: ไม่แปลง Job_ID เป็นตัวเลข เพื่อไม่ให้กลายเป็น NaN
+        "Jobs_Main": {"dtype": {'Est_Distance_KM': float, 'Price_Customer': float, 'Cost_Driver_Total': float}, "date_columns": ['Plan_Date'], "required_cols": None},
         "Fuel_Logs": {"dtype": {'Log_ID': str, 'Odometer': float, 'Liters': float, 'Price_Total': float}, "date_columns": ['Date_Time'], "required_cols": None},
         "Maintenance_Logs": {"dtype": {"Log_ID": str, "Odometer": float}, "date_columns": ['Date_Service'], "required_cols": None},
         "Stock_Parts": {"dtype": {"Part_ID": str, "Qty_On_Hand": float}, "required_cols": None},
@@ -288,7 +289,9 @@ def load_transaction_group() -> Dict[str, pd.DataFrame]:
 
             for col, dtype in config["dtype"].items():
                 if col in df.columns:
-                    df[col] = pd.to_numeric(df[col], errors='coerce').astype(dtype, errors='ignore')
+                    # แปลงเฉพาะคอลัมน์ตัวเลขเท่านั้น ไม่แตะคอลัมน์รหัสที่เป็นข้อความ
+                    if dtype != str:
+                        df[col] = pd.to_numeric(df[col], errors='coerce').astype(dtype, errors='ignore')
             
             for col in config.get("date_columns", []):
                 if col in df.columns:

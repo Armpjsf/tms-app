@@ -742,7 +742,7 @@ def admin_flow():
                             "Date_Time": st.column_config.DatetimeColumn("วันที่/เวลา", format="D MMM YYYY, HH:mm"),
                             "Odometer": st.column_config.NumberColumn("เลขไมล์", format="%,d"),
                             "Liters": st.column_config.NumberColumn("จำนวนลิตร", format="%.2f"),
-                            "Price_Total": st.column_config.NumberColumn("ยอดรวม (บาท)", format="#,##0.00")
+                            "Price_Total": st.column_config.NumberColumn("ยอดรวม (บาท)", format="%0.2f")
                         },
                         hide_index=True
                     )
@@ -788,7 +788,7 @@ def admin_flow():
                                 "Vehicle_Plate": "ทะเบียนรถ",
                                 "Log_ID": st.column_config.NumberColumn("จำนวนครั้งที่เติม", format="%d ครั้ง"),
                                 "Liters": st.column_config.NumberColumn("รวมลิตร", format="%.2f"),
-                                "Price_Total": st.column_config.NumberColumn("รวมเงิน (บาท)", format="#,##0.00"),
+                                "Price_Total": st.column_config.NumberColumn("รวมเงิน (บาท)", format="%0.2f"),
                                 "Avg_Cost_Per_Liter": st.column_config.NumberColumn("เฉลี่ย (บาท/ลิตร)", format="%.2f"),
                             },
                             hide_index=True
