@@ -436,31 +436,34 @@ def create_new_job(job_data):
     """สร้างใบงานใหม่พร้อมแมปชื่อ field ให้ตรงกับคอลัมน์จริงใน Google Sheet.
 
     ฝั่งโค้ดภายในระบบใช้ key แบบมีขีดล่าง เช่น Job_ID, Customer_ID
-    แต่ใน Sheet จริงใช้ชื่อคอลัมน์แบบมีช่องว่าง เช่น "Job ID", "Customer ID" เป็นต้น
+    แต่ใน Sheet จริงใช้ชื่อคอลัมน์แบบมีขีดล่าง เช่น Job_ID, Customer_ID
     ฟังก์ชันนี้จะทำการแมป key เหล่านี้ให้ตรงก่อนส่งเข้า append_to_sheet
     เพื่อไม่ให้คอลัมน์ใน Sheet เป็นช่องว่าง
     """
 
     # mapping: internal_key -> sheet_column_name (อิงตาม Jobs_Main ใน Google Sheet)
+    # หมายเหตุ: จาก header ล่าสุดในชีต ใช้ชื่อแบบมีขีดล่าง เช่น Job_ID, Customer_ID
+    # ดังนั้นส่วนใหญ่ให้แมปแบบ 1:1 ยกเว้นบางตัวที่ชื่อคอลัมน์ไม่ตรงกันจริง ๆ
     key_map = {
-        "Job_ID": "Job ID",
-        "Job_Status": "Job Status",
-        "Plan_Date": "Plan Date",
-        "Customer_ID": "Customer ID",
-        "Route_Name": "Route Name",
-        "Origin_Location": "Origin Location",
-        "Dest_Location": "Dest Location",
-        "GoogleMap_Link": "GoogleMap Link",
-        "Driver_ID": "Driver ID",
-        "Vehicle_Plate": "Vehicle Plate",
-        "Actual_Pickup_Time": "Actual Pickup Time",
-        "Actual_Delivery_Time": "Actual Delivery Time",
+        "Job_ID": "Job_ID",
+        "Job_Status": "Job_Status",
+        "Plan_Date": "Plan_Date",
+        "Customer_ID": "Customer_ID",
+        "Route_Name": "Route_Name",
+        "Origin_Location": "Origin_Location",
+        "Dest_Location": "Dest_Location",
+        "GoogleMap_Link": "GoogleMap_Link",
+        "Driver_ID": "Driver_ID",
+        "Vehicle_Plate": "Vehicle_Plate",
+        "Actual_Pickup_Time": "Actual_Pickup_Time",
+        "Actual_Delivery_Time": "Actual_Delivery_Time",
         "Photo_Proof_Url": "Photo_Proof_Url",
         "Signature_Url": "Signature_Url",
         "Price_Customer": "Price_Customer",
         "Cost_Driver_Total": "Cost_Driver_Total",
         "Cost_Fuel": "Cost_Fuel",
-        "Cost_Labor_Extra": "st_Labor_Extra",  # ตาม header ใน Sheet
+        # ในชีตใช้ชื่อคอลัมน์ st_Labor_Extra จึงต้องแมปต่างชื่อ
+        "Cost_Labor_Extra": "st_Labor_Extra",
         "Est_Distance_KM": "Est_Distance_KM",
         "Arrive_Dest_Time": "Arrive_Dest_Time",
     }
