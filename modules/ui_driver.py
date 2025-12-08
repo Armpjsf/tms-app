@@ -94,6 +94,10 @@ def driver_flow():
         st.error("เกิดข้อผิดพลาดในการโหลดหน้าจอ")
         st.stop()
         
+    # ตั้งค่า default ให้ session_state.page ถ้ายังไม่มี เพื่อกัน AttributeError
+    if "page" not in st.session_state:
+        st.session_state.page = "list"
+    
     if menu == "📦 งานของฉัน":
         if st.session_state.page == "list":
             df = get_data("Jobs_Main")
