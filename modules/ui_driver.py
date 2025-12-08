@@ -467,20 +467,12 @@ def show_maintenance_section():
                             st.success("✅ ส่งรายการแจ้งซ่อมเรียบร้อยแล้ว!")
                             st.balloons()
                             
-                            # รีเซ็ตฟอร์ม
-                            st.session_state.repair_form = {
-                                'issue_type': 'เครื่องยนต์',
-                                'priority': 'ปกติ',
-                                'description': '',
-                                'images': []
-                            }
-                            
-                            # รีโหลดหน้าเว็บหลังจาก 2 วินาที
+                            # ไม่เขียนทับ st.session_state.repair_form เพื่อหลีกเลี่ยง StreamlitAPIException
+                            # ให้ผู้ใช้เริ่มกรอกใหม่จากหน้าฟอร์มเดิมหลังจาก rerun
                             time.sleep(2)
                             st.rerun()
                         else:
                             st.error("เกิดข้อผิดพลาดในการบันทึกข้อมูล กรุณาลองใหม่อีกครั้ง")
-                            
                     except Exception as e:
                         show_error("เกิดข้อผิดพลาดในการส่งรายการ", e)
                         logger.exception("Error submitting repair ticket")
