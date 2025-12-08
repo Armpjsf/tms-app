@@ -1,52 +1,99 @@
 import streamlit as st # type: ignore
 import pandas as pd # type: ignore
-from datetime import datetime
+from datetime import datetime, timedelta
 import time
+import logging
 from streamlit_js_eval import get_geolocation # type: ignore
 import urllib.parse
+from typing import Dict, Any, Optional, List, Union
 
-from modules.database import get_data
-from modules.utils import (
-    get_thai_time_str, get_consumption_rate_by_driver, get_last_fuel_odometer, 
-    calculate_actual_consumption, compress_image, process_multiple_images,
-    update_driver_location, simple_update_job_status, update_job_status,
-    create_fuel_log, create_repair_ticket, get_maintenance_status_all, get_status_label_th
-)
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Import with error handling
+try:
+    from modules.database import get_data, cache
+    from modules.utils import (
+        get_thai_time_str, get_consumption_rate_by_driver, get_last_fuel_odometer, 
+        calculate_actual_consumption, compress_image, process_multiple_images,
+        update_driver_location, simple_update_job_status, update_job_status,
+        create_fuel_log, create_repair_ticket, get_maintenance_status_all, 
+        get_status_label_th
+    )
+except ImportError as e:
+    logger.error(f"Error importing modules: {e}")
+    raise
+
+@st.cache_data(ttl=300, show_spinner="กำลังโหลดข้อมูล...")
+def load_driver_data(driver_id: str) -> Dict[str, Any]:
+    """โหลดข้อมูลที่จำเป็นสำหรับหน้าจอคนขับ"""
+    try:
+        # ข้อมูลงาน
+        df_jobs = get_data("Jobs_Main")
+        my_jobs = df_jobs[(df_jobs['Driver_ID'] == str(driver_id)) & 
+                         (df_jobs['Job_Status'] != 'Completed')] if not df_jobs.empty else pd.DataFrame()
+        
+        # ข้อมูลการบำรุงรักษา
+        maint_df = get_maintenance_status_all()
+        my_alerts = maint_df[(maint_df['Vehicle_Plate'] == str(st.session_state.get('vehicle_plate', ''))) & 
+                            (maint_df['Is_Due'] == True)] if not maint_df.empty else pd.DataFrame()
+        
+        # ข้อมูลน้ำมันล่าสุด
+        last_odo = get_last_fuel_odometer(st.session_state.get('vehicle_plate', ''))
+        
+        return {
+            'jobs': my_jobs,
+            'alerts': my_alerts,
+            'last_odometer': last_odo if not pd.isna(last_odo) else 0.0
+        }
+    except Exception as e:
+        logger.error(f"Error loading driver data: {e}")
+        return {'jobs': pd.DataFrame(), 'alerts': pd.DataFrame(), 'last_odometer': 0.0}
+
+def show_loading_overlay(message: str = "กำลังโหลด..."):
+    """แสดง overlay ขณะโหลดข้อมูล"""
+    return st.spinner(message)
+
+def show_error(message: str, error: Optional[Exception] = None):
+    """แสดงข้อความผิดพลาด"""
+    if error:
+        logger.error(f"{message}: {str(error)}", exc_info=True)
+    st.error(message)
+    st.stop()
 
 def driver_flow():
-    with st.sidebar:
-        st.title("Driver App 📱")
-        st.info(f"คุณ: {st.session_state.driver_name}")
-        
-        with st.expander("❓ วิธีใช้งาน"):
-            st.markdown("""
-            1. **เช็คอิน:** กดปุ่ม 📍 เมื่อถึงจุดสำคัญ
-            2. **งาน:** กด 'ส่งของ >' เพื่อเริ่มงาน
-            3. **ปิดงาน:** ต้องถ่ายรูปของ + ลายเซ็น
-            4. **เติมน้ำมัน:** ใส่เลขไมล์ > ระบบจะบอกยอดที่ควรเติม
-            """)
-            
-        if st.button("🚪 Logout", key="drv_out"):
+    """หน้าจอหลักสำหรับคนขับ"""
+    # ตรวจสอบ session state
+    try:
+        # ตรวจสอบ session state
+        if not hasattr(st.session_state, 'driver_id') or not st.session_state.get('logged_in'):
+            st.error("กรุณาล็อกอินใหม่")
             st.session_state.logged_in = False
-            # ✅ แก้ไขจุดที่ 1: เปลี่ยนเป็น st.rerun()
             st.rerun()
+            return
+        
+        # Sidebar
+        with st.sidebar:
+            st.title("Driver App ")
+            c1, c2 = st.columns([1, 1])
+            with c1: 
+                st.subheader("เมนูหลัก")
+            with c2:
+                loc = get_geolocation()
+                if loc and st.button("📍 เช็คอิน"):
+                    with st.spinner("Sending..."):
+                        update_driver_location(st.session_state.driver_id, loc['coords']['latitude'], loc['coords']['longitude'])
+                        st.toast("ส่งพิกัดเรียบร้อย")
 
-    if 'page' not in st.session_state: st.session_state.page = "list"
-    
-    # --- GPS Check-in ---
-    c1, c2 = st.columns([3,1])
-    with c1: st.subheader("เมนูหลัก")
-    with c2:
-        loc = get_geolocation()
-        if loc and st.button("📍 เช็คอิน"):
-            with st.spinner("Sending..."):
-                update_driver_location(st.session_state.driver_id, loc['coords']['latitude'], loc['coords']['longitude'])
-                st.toast("ส่งพิกัดเรียบร้อย")
-
-    menu = st.radio("เลือกรายการ:", ["📦 งานของฉัน", "⛽ เติมน้ำมัน", "🔧 แจ้งซ่อม"], horizontal=True)
-    st.write("---")
-    
-    # --- 1. งานของฉัน ---
+        menu = st.radio("เลือกรายการ:", ["📦 งานของฉัน", "⛽ เติมน้ำมัน", "🔧 แจ้งซ่อม"], horizontal=True)
+        st.write("---")
+        
+    except Exception as e:
+        logger.error(f"Error in driver_flow: {str(e)}")
+        st.error("เกิดข้อผิดพลาดในการโหลดหน้าจอ")
+        st.stop()
+        
     if menu == "📦 งานของฉัน":
         if st.session_state.page == "list":
             df = get_data("Jobs_Main")
@@ -74,7 +121,7 @@ def driver_flow():
                             # ปุ่มนำทาง (แก้ Link Format ให้แล้ว)
                             org = urllib.parse.quote(str(job.get('Origin_Location', '')))
                             dst = urllib.parse.quote(str(job.get('Dest_Location', '')))
-                            url = f"https://www.google.com/maps/dir/?api=1&origin={org}&destination={dst}"
+                            url = f"https://www.google.com/maps/dir/?api=1&origin={org_enc}&destination={dest_enc}&travelmode=driving" # type: ignore
                             
                             if job.get('GoogleMap_Link') and str(job['GoogleMap_Link']) != 'nan':
                                 url = job['GoogleMap_Link']
@@ -196,85 +243,153 @@ def driver_flow():
         
         f_liters = st.number_input("จำนวนลิตรที่เติม", 0.0)
         f_price = st.number_input("ยอดเงิน (บาท)", 0.0)
-        
-        fraud_warning = False
-        if dist_run > 0 and f_liters > 0:
-            current_km_l = dist_run / f_liters
-            if current_km_l < (std_rate * 0.5) or current_km_l > (std_rate * 1.5):
-                fraud_warning = True
-                st.warning(f"⚠️ แจ้งเตือนความผิดปกติ: อัตรากินน้ำมันรอบนี้คือ {current_km_l:.1f} กม./ลิตร (ปกติ {std_rate}) กรุณาถ่ายรูปให้ชัดเจน")
-        
-        st.markdown("**หลักฐาน**")
-        u2 = st.file_uploader("📂 รูปสลิป/ไมล์", type=['png', 'jpg', 'jpeg'], accept_multiple_files=True, key="fuel_up")
-        c2 = st.camera_input("📸 ถ่ายรูปสลิป", key="fuel_cam")
-        
-        fuel_imgs = []
-        if u2: fuel_imgs.extend(u2)
-        if c2: fuel_imgs.append(c2)
-
-        if st.button("บันทึกข้อมูล", type="primary", use_container_width=True, disabled=is_odo_error):
-            if f_price > 0 and f_liters > 0:
-                if not fuel_imgs:
-                    st.error("กรุณาถ่ายรูปสลิป")
-                else:
-                    with st.spinner("บันทึก..."):
-                        img_str = process_multiple_images(fuel_imgs)
-                        fuel_data = {
-                            "Log_ID": f"F-{datetime.now().strftime('%y%m%d%H%M')}",
-                            "Date_Time": get_thai_time_str(),
-                            "Driver_ID": st.session_state.driver_id,
-                            "Vehicle_Plate": plate,
-                            "Odometer": f_odo,
-                            "Liters": f_liters,
-                            "Price_Total": f_price,
-                            "Station_Name": f_station,
-                            "Photo_Url": img_str
-                        }
-                        if create_fuel_log(fuel_data):
-                            st.success("บันทึกสำเร็จ!")
-                            time.sleep(1)
-                            # ✅ แก้ไขจุดที่ 5: เปลี่ยนเป็น st.rerun()
-                            st.rerun()
-            else:
-                st.error("กรุณากรอกข้อมูลให้ครบ")
-
     # --- 3. แจ้งซ่อม ---
     elif menu == "🔧 แจ้งซ่อม":
-        st.subheader("แจ้งซ่อม/อุบัติเหตุ")
-        
-        maint_df = get_maintenance_status_all()
-        if not maint_df.empty:
-            my_alerts = maint_df[(maint_df['Vehicle_Plate'] == str(st.session_state.vehicle_plate)) & (maint_df['Is_Due'] == True)]
-            if not my_alerts.empty:
-                st.error("⚠️ รถถึงรอบเช็คระยะแล้ว (แจ้งหัวหน้าด่วน)")
-                for _, r in my_alerts.iterrows():
-                    st.write(f"- {r['Service_Type']}")
-        
-        with st.form("repair_form"):
-            issue = st.selectbox("หมวดหมู่", ["เครื่องยนต์", "ยาง", "ช่วงล่าง", "อุบัติเหตุ", "อื่นๆ"])
-            desc = st.text_area("รายละเอียดอาการ")
-            
-            u3 = st.file_uploader("รูปอาการเสีย", accept_multiple_files=True, key="rep_up")
-            c3 = st.camera_input("ถ่ายรูป", key="rep_cam")
-            
-            if st.form_submit_button("ส่งเรื่องแจ้งซ่อม", type="primary", use_container_width=True):
-                rep_imgs = []
-                if u3: rep_imgs.extend(u3)
-                if c3: rep_imgs.append(c3)
-                
-                if not rep_imgs:
-                    st.error("กรุณาถ่ายรูปอาการเสีย")
+        show_maintenance_section()
+
+def show_maintenance_section():
+    """แสดงส่วนแจ้งซ่อมและบำรุงรักษา"""
+    st.header("🔧 แจ้งซ่อมและบำรุงรักษา")
+    
+    # แสดงการแจ้งเตือนการบำรุงรักษา
+    with st.container(border=True):
+        st.subheader("📋 รายการบำรุงรักษาครั้งถัดไป")
+        with st.spinner("กำลังโหลดข้อมูลการบำรุงรักษา..."):
+            try:
+                maint_df = get_maintenance_status_all()
+                if not maint_df.empty:
+                    my_alerts = maint_df[
+                        (maint_df['Vehicle_Plate'] == str(st.session_state.vehicle_plate)) & 
+                        (maint_df['Is_Due'] == True)
+                    ]
+                    
+                    if not my_alerts.empty:
+                        st.error("⚠️ **มีรายการบำรุงรักษาค้าง**")
+                        for _, alert in my_alerts.iterrows():
+                            with st.expander(f"🔴 {alert.get('Service_Type', 'บำรุงรักษา')}", expanded=True):
+                                st.markdown(f"""
+                                - 🚗 **รถ:** {alert.get('Vehicle_Plate', '')}
+                                - 📅 ถึงกำหนด: {alert.get('Next_Service_Date', '')}
+                                - 📏 ระยะทาง: {alert.get('Next_Service_Odometer', 0):,.0f} กม.
+                                - 📝 {alert.get('Message', '')}
+                                """)
+                        st.divider()
+                    else:
+                        st.success("✅ ไม่มีการแจ้งเตือนการบำรุงรักษา")
                 else:
-                    img_str = process_multiple_images(rep_imgs)
-                    ticket_data = {
-                        "Ticket_ID": f"TK-{datetime.now().strftime('%y%m%d%H%M')}",
-                        "Date_Report": get_thai_time_str(),
-                        "Driver_ID": st.session_state.driver_id,
-                        "Description": desc,
-                        "Status": "Pending",
-                        "Issue_Type": issue,
-                        "Vehicle_Plate": st.session_state.vehicle_plate,
-                        "Photo_Url": img_str
-                    }
-                    if create_repair_ticket(ticket_data):
-                        st.success("ส่งเรื่องแล้ว! รออนุมัติ")
+                    st.info("ℹ️ ไม่พบข้อมูลการบำรุงรักษา")
+            except Exception as e:
+                show_error("ไม่สามารถโหลดข้อมูลการบำรุงรักษา", e)
+    
+    # แบบฟอร์มแจ้งซ่อม
+    with st.form("repair_form"):
+        st.subheader("📝 แจ้งซ่อม/อุบัติเหตุ")
+        
+        # ข้อมูลพื้นฐาน
+        col1, col2 = st.columns(2)
+        with col1:
+            issue_type = st.selectbox(
+                "ประเภทปัญหา",
+                ["เครื่องยนต์", "ระบบไฟฟ้า", "ยางและล้อ", "ช่วงล่าง", 
+                 "เบรก", "ระบบแอร์", "ตัวถัง", "อุบัติเหตุ", "อื่นๆ"]
+            )
+        with col2:
+            priority = st.selectbox(
+                "ความเร่งด่วน",
+                ["ปกติ", "ด่วน", "ฉุกเฉิน"],
+                help="เลือกความเร่งด่วนของงานซ่อม"
+            )
+        
+        # รายละเอียดปัญหา
+        desc = st.text_area(
+            "รายละเอียดอาการ",
+            placeholder="อธิบายอาการเสียให้ชัดเจน พร้อมรายละเอียดเพิ่มเติมที่เกี่ยวข้อง...",
+            height=100
+        )
+        
+        # อัปโหลดรูปภาพ
+        st.markdown("**รูปภาพประกอบ**")
+        st.caption("ถ่ายภาพอาการเสียให้ชัดเจน พร้อมแสดงความเสียหาย (สูงสุด 5 ภาพ)")
+        
+        uploaded_files = st.file_uploader(
+            "อัปโหลดรูปภาพ",
+            type=['png', 'jpg', 'jpeg'],
+            accept_multiple_files=True,
+            key="repair_upload"
+        )
+        
+        camera_image = st.camera_input("หรือถ่ายภาพได้ที่นี่", key="repair_camera")
+        
+        # รวบรวมรูปภาพทั้งหมด
+        all_images = list(uploaded_files)
+        if camera_image:
+            all_images.append(camera_image)
+        
+        # แสดงตัวอย่างรูปภาพ
+        if all_images:
+            st.markdown("**ตัวอย่างรูปภาพ**")
+            cols = st.columns(min(3, len(all_images)))
+            for idx, img in enumerate(all_images[:3]):  # แสดงสูงสุด 3 รูปตัวอย่าง
+                with cols[idx % 3]:
+                    st.image(img, use_column_width=True)
+            if len(all_images) > 3:
+                st.info(f"+ อีก {len(all_images) - 3} รูป")
+        
+        # ปุ่มส่งแบบฟอร์ม
+        submitted = st.form_submit_button(
+            "📤 ส่งรายการแจ้งซ่อม",
+            type="primary",
+            use_container_width=True,
+            help="ตรวจสอบข้อมูลให้ถูกต้องก่อนกดส่ง"
+        )
+        
+        if submitted:
+            if not desc.strip():
+                st.error("กรุณาระบุรายละเอียดอาการเสีย")
+            elif not all_images:
+                st.error("กรุณาอัปโหลดรูปภาพอย่างน้อย 1 รูป")
+            else:
+                with st.spinner("กำลังส่งข้อมูล..."):
+                    try:
+                        # ประมวลผลรูปภาพ
+                        img_str = process_multiple_images(all_images)
+                        
+                        # สร้างข้อมูลรายการแจ้งซ่อม
+                        ticket_data = {
+                            "Ticket_ID": f"TK-{datetime.now().strftime('%y%m%d%H%M%S')}",
+                            "Date_Report": get_thai_time_str(),
+                            "Driver_ID": st.session_state.driver_id,
+                            "Driver_Name": st.session_state.get('driver_name', ''),
+                            "Description": desc,
+                            "Status": "รอดำเนินการ",
+                            "Priority": priority,
+                            "Issue_Type": issue_type,
+                            "Vehicle_Plate": st.session_state.vehicle_plate,
+                            "Photo_Url": img_str,
+                            "Location": "",  # สามารถเพิ่มพิกัดได้ในอนาคต
+                            "Assigned_To": "",
+                            "Resolution": ""
+                        }
+                        
+                        # บันทึกลงฐานข้อมูล
+                        if create_repair_ticket(ticket_data):
+                            st.success("✅ ส่งรายการแจ้งซ่อมเรียบร้อยแล้ว!")
+                            st.balloons()
+                            
+                            # รีเซ็ตฟอร์ม
+                            st.session_state.repair_form = {
+                                'issue_type': 'เครื่องยนต์',
+                                'priority': 'ปกติ',
+                                'description': '',
+                                'images': []
+                            }
+                            
+                            # รีโหลดหน้าเว็บหลังจาก 2 วินาที
+                            time.sleep(2)
+                            st.rerun()
+                        else:
+                            st.error("เกิดข้อผิดพลาดในการบันทึกข้อมูล กรุณาลองใหม่อีกครั้ง")
+                            
+                    except Exception as e:
+                        show_error("เกิดข้อผิดพลาดในการส่งรายการ", e)
+                        logger.exception("Error submitting repair ticket")
