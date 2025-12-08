@@ -176,15 +176,32 @@ def driver_flow():
             # ePOD Section
             st.write("---")
             st.write("📸 **หลักฐานการส่ง (ePOD)**")
-            
-            u1 = st.file_uploader("📂 เลือกรูปสินค้า (ได้หลายรูป)", type=['png', 'jpg', 'jpeg'], accept_multiple_files=True, key="epod_up")
-            c1 = st.camera_input("📸 หรือถ่ายรูปเดี๋ยวนี้", key="epod_cam")
-            
+
+            # อัปโหลดจากไฟล์ (หลายรูป)
+            u1 = st.file_uploader(
+                "📂 เลือกรูปสินค้า (ได้หลายรูป)",
+                type=['png', 'jpg', 'jpeg'],
+                accept_multiple_files=True,
+                key="epod_up"
+            )
+
+            # เก็บรูปจากกล้องหลายรูปด้วย session_state
+            if "epod_cam_images" not in st.session_state:
+                st.session_state.epod_cam_images = []
+
+            c1 = st.camera_input("📸 ถ่ายรูปสินค้า (ถ่ายซ้ำได้หลายครั้ง)", key="epod_cam")
+            if c1 is not None:
+                st.session_state.epod_cam_images.append(c1)
+
+            # รวมรูปทั้งหมด: จากไฟล์ + จากกล้องสะสม
             all_imgs = []
-            if u1: all_imgs.extend(u1)
-            if c1: all_imgs.append(c1)
-            
-            if all_imgs: st.caption(f"✅ มีรูปแล้ว {len(all_imgs)} รูป")
+            if u1:
+                all_imgs.extend(u1)
+            if st.session_state.epod_cam_images:
+                all_imgs.extend(st.session_state.epod_cam_images)
+
+            if all_imgs:
+                st.caption(f"✅ มีรูปแล้ว {len(all_imgs)} รูป")
             
             st.write("✍️ **ลายเซ็นผู้รับ**")
             sig = st.camera_input("ถ่ายลายเซ็น", key="sig_cam")
@@ -201,7 +218,6 @@ def driver_flow():
                         st.success("🎉 ปิดงานสำเร็จ!")
                         time.sleep(2)
                         st.session_state.page = "list"
-                        # ✅ แก้ไขจุดที่ 4: เปลี่ยนเป็น st.rerun()
                         st.rerun()
                 else:
                     st.error("กรุณาถ่ายรูปสินค้าอย่างน้อย 1 รูป")
@@ -313,21 +329,27 @@ def show_maintenance_section():
         
         # อัปโหลดรูปภาพ
         st.markdown("**รูปภาพประกอบ**")
-        st.caption("ถ่ายภาพอาการเสียให้ชัดเจน พร้อมแสดงความเสียหาย (สูงสุด 5 ภาพ)")
-        
+        st.caption("ถ่ายภาพอาการเสียให้ชัดเจน พร้อมแสดงความเสียหาย (ถ่าย/อัปโหลดได้หลายรูป)")
+
         uploaded_files = st.file_uploader(
             "อัปโหลดรูปภาพ",
             type=['png', 'jpg', 'jpeg'],
             accept_multiple_files=True,
             key="repair_upload"
         )
-        
-        camera_image = st.camera_input("หรือถ่ายภาพได้ที่นี่", key="repair_camera")
-        
+
+        # เก็บรูปจากกล้องหลายรูปด้วย session_state
+        if "repair_cam_images" not in st.session_state:
+            st.session_state.repair_cam_images = []
+
+        camera_image = st.camera_input("หรือถ่ายภาพได้ที่นี่ (ถ่ายซ้ำได้หลายครั้ง)", key="repair_camera")
+        if camera_image is not None:
+            st.session_state.repair_cam_images.append(camera_image)
+
         # รวบรวมรูปภาพทั้งหมด
         all_images = list(uploaded_files)
-        if camera_image:
-            all_images.append(camera_image)
+        if st.session_state.repair_cam_images:
+            all_images.extend(st.session_state.repair_cam_images)
         
         # แสดงตัวอย่างรูปภาพ
         if all_images:
