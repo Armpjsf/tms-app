@@ -229,21 +229,25 @@ def driver_flow():
         plate = st.session_state.vehicle_plate
         last_odo = get_last_fuel_odometer(plate)
         
-        if pd.isna(last_odo): last_odo = 0.0
+        if pd.isna(last_odo):
+            last_odo = 0.0
         
         std_rate = get_consumption_rate_by_driver(st.session_state.driver_id)
         act_rate, _, _ = calculate_actual_consumption(plate)
         
-        # Dashboard
+        # Dashboard แสดงอัตราสิ้นเปลือง
         with st.container(border=True):
             c_d1, c_d2 = st.columns(2)
-            with c_d1: st.metric("เกณฑ์มาตรฐาน", f"{std_rate:.1f} กม./ลิตร")
-            with c_d2: 
+            with c_d1:
+                st.metric("เกณฑ์มาตรฐาน", f"{std_rate:.1f} กม./ลิตร")
+            with c_d2:
                 val = f"{act_rate:.2f}" if act_rate > 0 else "-"
                 st.metric("ทำได้จริง", f"{val} กม./ลิตร")
 
-        if last_odo > 0: st.info(f"🔢 เลขไมล์ล่าสุดในระบบ: {last_odo:,.0f}")
-        else: st.warning("⚠️ ไม่พบประวัติไมล์ (เติมครั้งแรก)")
+        if last_odo > 0:
+            st.info(f"🔢 เลขไมล์ล่าสุดในระบบ: {last_odo:,.0f}")
+        else:
+            st.warning("⚠️ ไม่พบประวัติไมล์ (เติมครั้งแรก)")
 
         f_station = st.text_input("ชื่อปั๊ม/สถานที่")
         
@@ -263,6 +267,67 @@ def driver_flow():
         
         f_liters = st.number_input("จำนวนลิตรที่เติม", 0.0)
         f_price = st.number_input("ยอดเงิน (บาท)", 0.0)
+
+        # แนบรูปใบเสร็จ/หัวจ่ายน้ำมัน
+        st.write("---")
+        st.write("📸 **รูปประกอบการเติมน้ำมัน**")
+
+        uploaded_receipts = st.file_uploader(
+            "อัปโหลดรูป (ได้หลายรูป)",
+            type=["png", "jpg", "jpeg"],
+            accept_multiple_files=True,
+            key="fuel_upload"
+        )
+
+        if "fuel_cam_images" not in st.session_state:
+            st.session_state.fuel_cam_images = []
+
+        cam_img = st.camera_input("หรือถ่ายรูป ณ จุดเติม (ถ่ายซ้ำได้หลายครั้ง)", key="fuel_camera")
+        if cam_img is not None:
+            st.session_state.fuel_cam_images.append(cam_img)
+
+        fuel_images: List[Any] = []
+        if uploaded_receipts:
+            fuel_images.extend(uploaded_receipts)
+        if st.session_state.fuel_cam_images:
+            fuel_images.extend(st.session_state.fuel_cam_images)
+
+        if fuel_images:
+            st.caption(f"✅ แนบรูปประกอบแล้ว {len(fuel_images)} รูป")
+
+        # ปุ่มบันทึกการเติมน้ำมัน
+        if st.button("✅ บันทึกการเติมน้ำมัน", type="primary", use_container_width=True):
+            if is_odo_error:
+                st.error("ไม่สามารถบันทึกได้ เนื่องจากเลขไมล์ปัจจุบันน้อยกว่าครั้งก่อน")
+            elif f_liters <= 0 or f_price <= 0:
+                st.error("กรุณากรอกจำนวนลิตรและยอดเงินให้ถูกต้อง")
+            elif not f_station.strip():
+                st.error("กรุณาระบุชื่อปั๊ม/สถานที่")
+            else:
+                try:
+                    photo_str = process_multiple_images(fuel_images) if fuel_images else "-"
+                    log_id = f"FUEL-{datetime.now().strftime('%y%m%d%H%M%S')}"
+                    fuel_data = {
+                        "Log_ID": log_id,
+                        "Date_Time": get_thai_time_str(),
+                        "Driver_ID": st.session_state.driver_id,
+                        "Vehicle_Plate": plate,
+                        "Odometer": float(f_odo),
+                        "Liters": float(f_liters),
+                        "Price_Total": float(f_price),
+                        "Station_Name": f_station.strip(),
+                        "Photo_Url": photo_str,
+                    }
+
+                    if create_fuel_log(fuel_data):
+                        st.success("บันทึกการเติมน้ำมันเรียบร้อยแล้ว")
+                        time.sleep(1.5)
+                        st.rerun()
+                    else:
+                        st.error("เกิดข้อผิดพลาดในการบันทึกข้อมูลการเติมน้ำมัน")
+                except Exception as e:
+                    show_error("ไม่สามารถบันทึกข้อมูลการเติมน้ำมัน", e)
+
     # --- 3. แจ้งซ่อม ---
     elif menu == "🔧 แจ้งซ่อม":
         show_maintenance_section()
