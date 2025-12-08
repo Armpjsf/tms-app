@@ -433,8 +433,45 @@ def get_fuel_prices():
 
 # Wrappers for database ops
 def create_new_job(job_data): 
-    # ส่ง dict ตรง ๆ ให้ append_to_sheet เพื่อแมปตามชื่อคอลัมน์ในชีต
-    return append_to_sheet("Jobs_Main", job_data)
+    """สร้างใบงานใหม่พร้อมแมปชื่อ field ให้ตรงกับคอลัมน์จริงใน Google Sheet.
+
+    ฝั่งโค้ดภายในระบบใช้ key แบบมีขีดล่าง เช่น Job_ID, Customer_ID
+    แต่ใน Sheet จริงใช้ชื่อคอลัมน์แบบมีช่องว่าง เช่น "Job ID", "Customer ID" เป็นต้น
+    ฟังก์ชันนี้จะทำการแมป key เหล่านี้ให้ตรงก่อนส่งเข้า append_to_sheet
+    เพื่อไม่ให้คอลัมน์ใน Sheet เป็นช่องว่าง
+    """
+
+    # mapping: internal_key -> sheet_column_name (อิงตาม Jobs_Main ใน Google Sheet)
+    key_map = {
+        "Job_ID": "Job ID",
+        "Job_Status": "Job Status",
+        "Plan_Date": "Plan Date",
+        "Customer_ID": "Customer ID",
+        "Route_Name": "Route Name",
+        "Origin_Location": "Origin Location",
+        "Dest_Location": "Dest Location",
+        "GoogleMap_Link": "GoogleMap Link",
+        "Driver_ID": "Driver ID",
+        "Vehicle_Plate": "Vehicle Plate",
+        "Actual_Pickup_Time": "Actual Pickup Time",
+        "Actual_Delivery_Time": "Actual Delivery Time",
+        "Photo_Proof_Url": "Photo_Proof_Url",
+        "Signature_Url": "Signature_Url",
+        "Price_Customer": "Price_Customer",
+        "Cost_Driver_Total": "Cost_Driver_Total",
+        "Cost_Fuel": "Cost_Fuel",
+        "Cost_Labor_Extra": "st_Labor_Extra",  # ตาม header ใน Sheet
+        "Est_Distance_KM": "Est_Distance_KM",
+        "Arrive_Dest_Time": "Arrive_Dest_Time",
+    }
+
+    # แปลง dict ตาม key_map ถ้ามี key ที่ไม่อยู่ใน map จะถูกส่งผ่านไปตามชื่อเดิม
+    mapped_data = {}
+    for k, v in job_data.items():
+        sheet_key = key_map.get(k, k)
+        mapped_data[sheet_key] = v
+
+    return append_to_sheet("Jobs_Main", mapped_data)
 
 def create_fuel_log(fuel_data):
     # ใช้ dict โดยตรงให้คอลัมน์ไม่สลับตำแหน่ง
