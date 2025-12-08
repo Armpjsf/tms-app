@@ -102,9 +102,22 @@ def driver_flow():
         if st.session_state.page == "list":
             df = get_data("Jobs_Main")
             if not df.empty:
-                df['Job_Status'] = df['Job_Status'].fillna('Pending')
-                # กรองงาน: ของคนนี้ AND ยังไม่เสร็จ
-                my_jobs = df[(df['Driver_ID'] == str(st.session_state.driver_id)) & (df['Job_Status'] != 'Completed')]
+                # ทำความสะอาด Driver_ID และสถานะให้เป็น string ชัดเจน
+                df['Driver_ID'] = df['Driver_ID'].astype(str).str.strip()
+                df['Job_Status'] = df['Job_Status'].fillna('Pending').astype(str).str.strip()
+
+                current_driver = str(st.session_state.driver_id).strip()
+
+                # กรองงาน: ของคนนี้ AND ยังไม่เสร็จสมบูรณ์
+                my_jobs = df[(df['Driver_ID'] == current_driver) & (df['Job_Status'] != 'Completed')]
+
+                # Debug ช่วยเช็กว่ามีงานดิบเข้ามาหรือไม่
+                with st.expander("🔍 Debug: งานของฉัน (ดิบ)", expanded=False):
+                    st.write(f"Driver_ID ใน session: {current_driver}")
+                    st.write("ตัวอย่างข้อมูล Jobs_Main (5 แถวแรก):")
+                    st.dataframe(df.head())
+                    st.write("ตัวอย่างงานของฉัน (5 แถวแรก):")
+                    st.dataframe(my_jobs.head())
                 
                 if my_jobs.empty:
                     st.info("🎉 ไม่มีงานค้างครับ")
