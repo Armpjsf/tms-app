@@ -479,8 +479,14 @@ def admin_flow():
                 # Convert date only once
                 if 'Plan_Date_Converted' not in df_jobs.columns:
                     df_jobs['Plan_Date_Converted'] = smart_date_parse(df_jobs['Plan_Date'])
+
+                # Ensure Plan_Date_Converted is datetime before using .dt
+                if not pd.api.types.is_datetime64_any_dtype(df_jobs['Plan_Date_Converted']):
+                    df_jobs['Plan_Date_Converted'] = pd.to_datetime(
+                        df_jobs['Plan_Date_Converted'], errors='coerce'
+                    )
                 
-                # Filter by date range
+                # Filter by date range (safe .dt usage)
                 date_mask = (df_jobs['Plan_Date_Converted'].dt.date >= start_date) & \
                            (df_jobs['Plan_Date_Converted'].dt.date <= end_date)
                 df_filtered = df_jobs[date_mask].copy()
@@ -519,13 +525,27 @@ def admin_flow():
             fuel_cost = 0
             df_fuel_clean = pd.DataFrame()
             if not df_fuel.empty and 'Date_Time' in df_fuel.columns:
+                # Parse date column robustly
                 df_fuel['Date_Time'] = smart_date_parse(df_fuel['Date_Time'])
+
+                # Ensure Date_Time is datetime before using .dt
+                if not pd.api.types.is_datetime64_any_dtype(df_fuel['Date_Time']):
+                    df_fuel['Date_Time'] = pd.to_datetime(df_fuel['Date_Time'], errors='coerce')
+
                 for col in ['Price_Total', 'Odometer', 'Liters']:
                     if col in df_fuel.columns:
-                        df_fuel[col] = pd.to_numeric(df_fuel[col].astype(str).str.replace(',', ''), errors='coerce').fillna(0)
+                        df_fuel[col] = pd.to_numeric(
+                            df_fuel[col].astype(str).str.replace(',', ''),
+                            errors='coerce'
+                        ).fillna(0)
                 
                 df_fuel_clean = df_fuel.dropna(subset=['Date_Time'])
-                f_mask = (df_fuel_clean['Date_Time'].dt.date >= start_date) & (df_fuel_clean['Date_Time'].dt.date <= end_date)
+                # Safe .dt usage after enforcing datetime type
+                f_mask = (
+                    df_fuel_clean['Date_Time'].dt.date >= start_date
+                ) & (
+                    df_fuel_clean['Date_Time'].dt.date <= end_date
+                )
                 fuel_cost = df_fuel_clean[f_mask]['Price_Total'].sum()
 
             net_profit = total_rev - total_cost - fuel_cost
@@ -561,7 +581,13 @@ def admin_flow():
             else: summ['Price_Total'] = 0
             
             summ['Net_Profit'] = summ['Price_Customer'] - summ['Cost_Driver_Total'] - summ['Price_Total']
-            st.dataframe(summ, use_container_width=True, column_config={"Current_Location_Link": st.column_config.LinkColumn("Map")})
+            st.dataframe(
+                summ,
+                width='stretch',
+                column_config={
+                    "Current_Location_Link": st.column_config.LinkColumn("Map")
+                }
+            )
             
             st.divider()
             if st.button("🚀 Sync Accounting", use_container_width=True):
@@ -736,7 +762,7 @@ def admin_flow():
                     # 1. ตารางรายการเติมน้ำมัน (Log Table)
                     st.dataframe(
                         fuel_logs, 
-                        use_container_width=True, 
+                        width='stretch',
                         column_config={
                             "Photo_Url": st.column_config.ImageColumn("รูป"),
                             "Date_Time": st.column_config.DatetimeColumn("วันที่/เวลา", format="D MMM YYYY, HH:mm"),
@@ -783,7 +809,7 @@ def admin_flow():
                         # Display Statistics Table
                         st.dataframe(
                             stats_df,
-                            use_container_width=True,
+                            width='stretch',
                             column_config={
                                 "Vehicle_Plate": "ทะเบียนรถ",
                                 "Log_ID": st.column_config.NumberColumn("จำนวนครั้งที่เติม", format="%d ครั้ง"),
