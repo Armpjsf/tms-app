@@ -125,7 +125,7 @@ def driver_flow():
                             # ปุ่มนำทาง (แก้ Link Format ให้แล้ว)
                             org = urllib.parse.quote(str(job.get('Origin_Location', '')))
                             dst = urllib.parse.quote(str(job.get('Dest_Location', '')))
-                            url = f"https://www.google.com/maps/dir/?api=1&origin={org_enc}&destination={dest_enc}&travelmode=driving" # type: ignore
+                            url = f"https://www.google.com/maps/dir/?api=1&origin={org}&destination={dst}&travelmode=driving"  # type: ignore
                             
                             if job.get('GoogleMap_Link') and str(job['GoogleMap_Link']) != 'nan':
                                 url = job['GoogleMap_Link']
