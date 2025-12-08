@@ -309,8 +309,9 @@ def get_data(worksheet_name: str, force_refresh: bool = False) -> pd.DataFrame:
     masters = ["Master_Drivers", "Master_Customers", "Master_Routes", "Rate_Card", "System_Config"]
     
     if force_refresh:
-        if worksheet_name in masters: load_master_group.clear()
-        else: load_transaction_group.clear()
+        # เดิมเคยเรียก load_master_group.clear() / load_transaction_group.clear()
+        # แต่ฟังก์ชันเหล่านี้ถูกห่อด้วย decorator ทำให้ไม่มี attribute clear และเกิด error
+        # ที่นี่เราจะล้างเฉพาะ cache ภายในของเราเองให้เพียงพอ
         cache.clear(f"{worksheet_name}_data")
     
     # Try custom cache first
@@ -318,9 +319,11 @@ def get_data(worksheet_name: str, force_refresh: bool = False) -> pd.DataFrame:
     cached_df = cache.get(cache_key)
     if cached_df is not None and not force_refresh: return cached_df
     
-    # Load from group
-    if worksheet_name in masters: group_data = load_master_group()
-    else: group_data = load_transaction_group()
+    # Load from group (ตัว loader จะมี retry_on_quota_error อยู่แล้ว)
+    if worksheet_name in masters:
+        group_data = load_master_group()
+    else:
+        group_data = load_transaction_group()
     
     df = group_data.get(worksheet_name, pd.DataFrame())
     
