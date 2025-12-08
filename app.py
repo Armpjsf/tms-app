@@ -1,27 +1,26 @@
 import os
 import logging
 import streamlit as st  # type: ignore
-from modules.database import load_all_data, get_data, SHEET_URL, get_connection
+from modules.database import load_all_data, get_data, get_connection, Config
 from modules.ui_admin import admin_flow
 from modules.ui_driver import driver_flow
 
-# Debug control via env var: export TMS_DEBUG=1
+# Debug control
 DEBUG = os.environ.get("TMS_DEBUG", "0") == "1"
 logging.basicConfig(level=logging.DEBUG if DEBUG else logging.INFO)
 logger = logging.getLogger("tms-app")
 
 st.set_page_config(page_title="Logis-Pro 360", page_icon="🚚", layout="wide")
 
-# --- 🔥 Helper: Safe Rerun (แก้ปัญหาเวอร์ชันต่างกัน) ---
+# --- Helper Functions ---
 def safe_rerun():
-    """สั่งรีเฟรชหน้าจอ โดยตรวจสอบเวอร์ชัน Streamlit อัตโนมัติ"""
     try:
         if hasattr(st, "rerun"):
             st.rerun()
         else:
             st.experimental_rerun()
     except Exception:
-        pass # ถ้า Rerun ไม่ได้จริงๆ ให้ปล่อยผ่าน (ดีกว่า Crash)
+        pass
 
 def safe_get_cell(row, col, default=""):
     try:
@@ -33,134 +32,114 @@ def safe_get_cell(row, col, default=""):
 
 def show_reload_button(msg="เกิดข้อผิดพลาด, กรุณาลองอีกครั้ง"):
     st.error(msg)
-    if st.button("รีโหลด"):
-        # Clear cached/stored data and rerun
+    # ปุ่มนี้จะกดได้แล้ว เพราะเราย้าย Logic ออกมานอก Form
+    if st.button("🔄 ลองโหลดใหม่ (Reload)"):
         if "data_store" in st.session_state:
             del st.session_state["data_store"]
-        safe_rerun() # ✅ ใช้ Safe Rerun
+        safe_rerun()
 
 def login_page():
     c1, c2, c3 = st.columns([1, 2, 1])
     with c2:
         st.title("🚚 เข้าสู่ระบบ")
+        
+        # 1. ส่วนรับข้อมูล (Form)
         with st.form("login"):
             u = st.text_input("User ID").strip()
             p = st.text_input("Password", type="password")
             submitted = st.form_submit_button("Login", use_container_width=True)
-            if submitted:
-                # Get drivers data, but guard against failure
+            
+        # 2. ส่วนตรวจสอบ (Logic) -> ย้ายออกมาอยู่นอก with st.form
+        if submitted:
+            try:
+                # ใช้ get_connection โดยตรงเพื่อความชัวร์
+                conn = get_connection()
+                # ttl=0 คือโหลดสด (อาจติด Quota ได้ถ้ากดรัว)
+                drivers = conn.read(spreadsheet=Config.SHEET_URL, worksheet="Master_Drivers", ttl=0)
+            except Exception as e:
+                logger.exception("Login fetch failed")
+                # แสดง Error ที่อ่านง่ายขึ้น
+                if "429" in str(e) or "Quota" in str(e):
+                    show_reload_button("⚠️ ระบบ Google Sheet กำลังยุ่ง (Quota Exceeded) กรุณารอ 1 นาทีแล้วกดปุ่มด้านล่าง")
+                else:
+                    show_reload_button(f"ไม่สามารถดึงข้อมูลได้: {e}")
+                return
+
+            if drivers is None or getattr(drivers, "empty", True):
+                st.error("ไม่พบข้อมูลผู้ขับในระบบ")
+                return
+
+            # Validate Columns
+            if "Driver_ID" not in drivers.columns:
                 try:
-                    # ✅ ปรับปรุง: ใช้ conn.read โดยตรงเพื่อความชัวร์ (เหมือน Safe Mode)
-                    conn = get_connection()
-                    drivers = conn.read(spreadsheet=SHEET_URL, worksheet="Master_Drivers", ttl=0)
-                except Exception as e:
-                    logger.exception("get_data(Master_Drivers) failed")
-                    show_reload_button(f"ไม่สามารถดึงข้อมูลผู้ขับได้: {e}")
-                    return
-
-                if drivers is None or getattr(drivers, "empty", True):
-                    st.error("ไม่พบข้อมูลผู้ขับในระบบ")
-                    return
-
-                # Ensure Driver_ID exists before astype
+                    drivers = drivers.reset_index()
+                except: pass
                 if "Driver_ID" not in drivers.columns:
-                    logger.warning("Master_Drivers missing Driver_ID column")
-                    try:
-                        drivers = drivers.reset_index()
-                        if "Driver_ID" not in drivers.columns:
-                            st.error("ข้อมูลผู้ขับไม่สมบูรณ์ (ไม่มีคอลัมน์ Driver_ID)")
-                            return
-                    except Exception:
-                        st.error("ข้อมูลผู้ขับไม่สมบูรณ์")
-                        return
-
-                # Normalize Driver_ID column safely
-                try:
-                    drivers["Driver_ID"] = drivers["Driver_ID"].astype(str).str.strip()
-                except Exception:
-                    logger.exception("Failed to convert Driver_ID to str")
-                    st.error("ข้อมูลผู้ขับไม่ถูกต้อง (Driver_ID)")
+                    st.error("ตาราง Master_Drivers ผิดพลาด (ไม่มีคอลัมน์ Driver_ID)")
                     return
 
+            # Check User
+            try:
+                drivers["Driver_ID"] = drivers["Driver_ID"].astype(str).str.strip()
                 user = drivers[drivers["Driver_ID"] == u]
-                if user.empty:
-                    st.error("ไม่พบผู้ใช้ (User ID ไม่ถูกต้อง)")
-                    return
+            except Exception:
+                st.error("ข้อมูล Driver_ID ผิดพลาด")
+                return
 
-                # Access password field safely
-                stored_pw = safe_get_cell(user.iloc[0], "Password", "")
-                if stored_pw is None or stored_pw == "":
-                    st.error("บัญชีผู้ใช้ยังไม่มีการตั้งรหัสผ่าน")
-                    return
+            if user.empty:
+                st.error("ไม่พบ User ID นี้")
+                return
 
-                # NOTE: For now compare plaintext
-                try:
-                    if str(stored_pw) == p:
-                        st.session_state.logged_in = True
-                        st.session_state.driver_id = u
-                        st.session_state.driver_name = safe_get_cell(user.iloc[0], "Driver_Name", u)
-                        st.session_state.vehicle_plate = safe_get_cell(user.iloc[0], "Vehicle_Plate", "-")
-                        st.session_state.user_role = safe_get_cell(user.iloc[0], "Role", "Driver")
-                        safe_rerun() # ✅ ใช้ Safe Rerun
-                    else:
-                        st.error("รหัสผ่านผิด")
-                except Exception:
-                    logger.exception("Error while comparing password")
-                    st.error("เกิดข้อผิดพลาดในการตรวจสอบรหัสผ่าน")
+            # Check Password
+            stored_pw = safe_get_cell(user.iloc[0], "Password", "")
+            if str(stored_pw) == p:
+                st.session_state.logged_in = True
+                st.session_state.driver_id = u
+                st.session_state.driver_name = safe_get_cell(user.iloc[0], "Driver_Name", u)
+                st.session_state.vehicle_plate = safe_get_cell(user.iloc[0], "Vehicle_Plate", "-")
+                st.session_state.user_role = safe_get_cell(user.iloc[0], "Role", "Driver")
+                st.success("Login สำเร็จ!")
+                safe_rerun()
+            else:
+                st.error("รหัสผ่านผิด")
 
 def do_logout():
-    keys_to_clear = ["logged_in", "driver_id", "driver_name", "vehicle_plate", "user_role", "data_store"]
-    for k in keys_to_clear:
-        if k in st.session_state:
-            del st.session_state[k]
-    safe_rerun() # ✅ ใช้ Safe Rerun
+    keys = ["logged_in", "driver_id", "driver_name", "vehicle_plate", "user_role", "data_store"]
+    for k in keys:
+        if k in st.session_state: del st.session_state[k]
+    safe_rerun()
 
-# Provide a cached wrapper if Streamlit supports it; otherwise fallback to direct call
 def get_full_data(force_reload=False):
     if force_reload and "data_store" in st.session_state:
         del st.session_state["data_store"]
-
     if "data_store" in st.session_state:
         return st.session_state["data_store"]
-
     try:
         data = load_all_data()
         st.session_state["data_store"] = data
         return data
-    except Exception as e:
-        logger.exception("load_all_data failed")
-        st.session_state["data_store"] = {}
-        return st.session_state["data_store"]
+    except Exception:
+        return {}
 
 def main():
     if "logged_in" not in st.session_state:
         st.session_state.logged_in = False
 
-    # Sidebar controls
     with st.sidebar:
-        # st.markdown("## ควบคุมระบบ") # ปิดไว้ก่อนเพื่อความสะอาดของ UI
-        if st.button("รีโหลดข้อมูล (Reload Data)"):
+        if st.button("รีโหลดข้อมูล"):
             get_full_data(force_reload=True)
-            safe_rerun() # ✅ ใช้ Safe Rerun
-            
+            safe_rerun()
         if st.button("Logout"):
             do_logout()
-            
-        if DEBUG:
-            st.markdown("**DEBUG MODE**")
+        if DEBUG: st.write("DEBUG MODE")
 
     if not st.session_state.logged_in:
         login_page()
     else:
-        # Pre-load data once
-        # with st.spinner("กำลังโหลดข้อมูล..."): # ปิด spinner เพื่อลดการกระพริบ
+        # Pre-load data
         data_store = get_full_data()
-        if data_store == {}:
-             # ถ้าโหลดไม่ผ่านจริงๆ ค่อยแสดงปุ่ม
-             pass 
-
-        # 🔥🔥 จุดสำคัญ: เอา try...except ออกจาก flow หลัก 🔥🔥
-        # เพื่อป้องกันไม่ให้ st.rerun() ถูกจับเป็น Error จนหน้าแดง
+        
+        # Route Flow
         if st.session_state.get("user_role") == "Admin":
             admin_flow()
         else:
