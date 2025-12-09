@@ -212,20 +212,25 @@ def driver_flow():
 
             if st.button("✅ ยืนยันปิดงาน", type="primary", use_container_width=True):
                 if all_imgs:
-                    with st.spinner("บันทึกข้อมูล..."):
-                        img_str = process_multiple_images(all_imgs)
+                    with st.spinner("กำลังบันทึกข้อมูล..."):
+                        img_str = process_multiple_images(all_images) # type: ignore
                         sig_str = compress_image(sig) if sig else "-"
                         dist = float(job.get('Est_Distance_KM', 0))
                         
+                        # อัปเดตสถานะ
                         update_job_status(job['Job_ID'], "Completed", get_thai_time_str(), dist, img_str, sig_str)
                         
-                        st.success("ปิดงานสำเร็จ!")
-                        st.session_state.epod_cam_images = []
+                        st.success("🎉 ปิดงานสำเร็จ!")
+                        
+                        # --- แก้ไขตรงนี้: ล้าง Cache ---
+                        load_driver_data.clear() 
+                        # ---------------------------
+                        
                         time.sleep(2)
                         st.session_state.page = "list"
                         st.rerun()
                 else:
-                    st.error("ต้องมีรูปสินค้า")
+                    st.error("กรุณาถ่ายรูปสินค้าอย่างน้อย 1 รูป")
 
     # --- 2. ประวัติงาน ---
     elif menu == "🕒 ประวัติงาน":
@@ -250,27 +255,66 @@ def driver_flow():
                     (my_hist['PD_Obj'].dt.date <= end_d)
                 ]
             
-            if not my_hist.empty:
-                col_income = 'Cost_Driver_Total' if 'Cost_Driver_Total' in my_hist.columns else 'Cost_Driver'
-                if col_income in my_hist.columns:
-                    my_hist[col_income] = pd.to_numeric(my_hist[col_income].astype(str).str.replace(',', ''), errors='coerce').fillna(0)
-                    total_income = my_hist[col_income].sum()
-                else:
-                    total_income = 0
-                
-                c_sum1, c_sum2 = st.columns(2)
-                c_sum1.metric("จำนวนเที่ยว", f"{len(my_hist)} งาน")
-                c_sum2.metric("รายได้รวม", f"{total_income:,.0f} บ.")
-                
-                st.write("---")
-                for _, job in my_hist.iterrows():
-                    with st.expander(f"✅ {job.get('Plan_Date')} - {job.get('Route_Name')}"):
-                        st.write(f"**ลูกค้า:** {job.get('Customer_Name')}")
-                        st.write(f"**รายได้:** {job.get(col_income, 0):,.0f} บาท")
-            else:
-                st.info("ไม่พบประวัติงาน")
+            # --- เริ่มต้นส่วนแสดงประวัติงาน (ฉบับแก้ไขสมบูรณ์) ---
+        st.subheader("📅 ประวัติงานย้อนหลัง")
+
+        # 1. สร้างตัวเลือกวันที่ (ตั้งค่าเริ่มต้นย้อนหลัง 7 วัน เพื่อให้เห็นงานเก่าด้วย)
+        c_date1, c_date2 = st.columns(2)
+        with c_date1:
+            # ใช้ timedelta เพื่อย้อนหลัง 7 วัน
+            start_d = st.date_input("ตั้งแต่วันที่", datetime.now() - timedelta(days=7))
+        with c_date2:
+            end_d = st.date_input("ถึงวันที่", datetime.now())
+
+        # 2. ดึงข้อมูลและกรองเฉพาะคนขับปัจจุบัน
+        df_all = get_data("Jobs_Main")
+        
+        # ตรวจสอบว่ามีข้อมูลและมีคอลัมน์ Driver_ID หรือไม่
+        if not df_all.empty and 'Driver_ID' in df_all.columns:
+            # กรองเอาเฉพาะงานของคนขับที่ล็อกอินอยู่
+            current_driver = str(st.session_state.driver_id).strip()
+            # แปลง Driver_ID ในตารางเป็น string เพื่อความชัวร์ในการเปรียบเทียบ
+            df_all['Driver_ID'] = df_all['Driver_ID'].astype(str).str.strip()
+            my_hist = df_all[df_all['Driver_ID'] == current_driver].copy()
         else:
-            st.info("ยังไม่มีข้อมูลงาน")
+            my_hist = pd.DataFrame()
+
+        # 3. ประมวลผลวันที่และแสดงผล
+        if not my_hist.empty and 'Plan_Date' in my_hist.columns:
+            try:
+                # แปลงคอลัมน์ Plan_Date ให้เป็นวันที่ (datetime)
+                my_hist['PD_Obj'] = pd.to_datetime(my_hist['Plan_Date'], dayfirst=True, errors='coerce')
+                
+                # ลบรายการที่วันที่ไม่สมบูรณ์
+                my_hist = my_hist.dropna(subset=['PD_Obj'])
+                
+                # กรองข้อมูลตามช่วงวันที่ที่เลือก
+                mask = (my_hist['PD_Obj'].dt.date >= start_d) & \
+                       (my_hist['PD_Obj'].dt.date <= end_d)
+                
+                my_hist_filtered = my_hist[mask]
+
+                if not my_hist_filtered.empty:
+                    # เลือกแสดงเฉพาะคอลัมน์ที่จำเป็น
+                    cols_to_show = ['Job_ID', 'Route_Name', 'Job_Status', 'Plan_Date']
+                    # ตรวจสอบว่าคอลัมน์มีอยู่จริงก่อนเลือกมาแสดง
+                    cols_exists = [c for c in cols_to_show if c in my_hist_filtered.columns]
+                    
+                    st.info(f"พบงานจำนวน: {len(my_hist_filtered)} รายการ")
+                    st.dataframe(my_hist_filtered[cols_exists], use_container_width=True)
+                else:
+                    st.warning(f"ไม่พบงานในช่วงวันที่ {start_d} ถึง {end_d}")
+
+            except Exception as e:
+                st.error(f"เกิดข้อผิดพลาด: {e}")
+        else:
+            st.info("ยังไม่มีประวัติงานในระบบ")
+            
+        # ปุ่มรีเฟรชข้อมูล (เผื่อข้อมูลยังไม่มา)
+        if st.button("🔄 รีเฟรชประวัติงาน"):
+            st.cache_data.clear()
+            st.rerun()
+        # --- จบโค้ดส่วนแก้ไข ---
 
     # --- 3. เติมน้ำมัน ---
     elif menu == "⛽ เติมน้ำมัน":
@@ -327,7 +371,9 @@ def driver_flow():
                     }
                     if create_fuel_log(data):
                         st.success("บันทึกสำเร็จ!")
-                        time.sleep(1)
+                        load_driver_data.clear()
+                        time.sleep(1.5)
+                        st.session_state.page = "list" # กลับหน้าแรก
                         st.rerun()
 
     # --- 4. แจ้งซ่อม ---
