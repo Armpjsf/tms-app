@@ -25,15 +25,35 @@ def get_thai_date_str():
     tz = pytz.timezone('Asia/Bangkok')
     return datetime.now(tz).strftime("%Y-%m-%d")
 
-# ✅ เพิ่มฟังก์ชันนี้กลับมาให้แล้วครับ (แก้ ImportError)
 def parse_flexible_date(s):
     try:
         s = str(s).strip()
-        if not s or s.lower() == 'nan': return pd.NaT
-        if len(s) > 4 and s[-4:].isdigit() and int(s[-4:]) > 2400:
-            s = s[:-4] + str(int(s[-4:])-543)
-        return pd.to_datetime(s, dayfirst=True, errors='coerce')
-    except: return pd.NaT
+        if not s or s.lower() == 'nan' or s.lower() == 'nat': return pd.NaT
+        
+        # 1. แก้ไขปี พ.ศ. (ถ้ามี 4 หลักและมากกว่า 2400 ให้ลบ 543)
+        # รองรับทั้งแบบ 2568-12-01 และ 01/12/2568
+        if len(s) >= 4:
+            # หาปี 4 หลักในข้อความ
+            import re
+            years = re.findall(r'\d{4}', s)
+            for year in years:
+                if int(year) > 2400: # สันนิษฐานว่าเป็น พ.ศ.
+                    s = s.replace(year, str(int(year) - 543))
+        
+        # 2. พยายามแปลงวันที่ (ลองหลายแบบ)
+        try:
+            # ลองแบบ Day First ก่อน (ไทย/UK: 31/12/2025)
+            return pd.to_datetime(s, dayfirst=True)
+        except:
+            try:
+                # ถ้าไม่ได้ ลองแบบมาตรฐาน (ISO: 2025-12-31)
+                return pd.to_datetime(s)
+            except:
+                # ถ้ายังมี format แปลกๆ เช่น 12/31/2025 (US)
+                return pd.to_datetime(s, errors='coerce')
+                
+    except: 
+        return pd.NaT
 
 # --- Image Processing ---
 def compress_image(image_file):
@@ -341,8 +361,11 @@ def create_repair_ticket(ticket_data):
         return append_to_sheet("Repair_Tickets", ticket_data)
     except: return False
 
-def update_job_status(job_id, new_status, timestamp, distance_run=0, photo_data="-", signature_data="-"):
+# modules/utils.py
+
+def update_job_status(job_id, new_status, timestamp, distance_run=0, photo_data="-", signature_data="-", rating=0, comment="-"):
     try:
+        # 1. อัปเดตสถานะงานใน Jobs_Main
         df_jobs = get_data("Jobs_Main")
         df_jobs['Job_ID'] = df_jobs['Job_ID'].astype(str)
         idx = df_jobs[df_jobs['Job_ID'] == str(job_id)].index
@@ -351,26 +374,57 @@ def update_job_status(job_id, new_status, timestamp, distance_run=0, photo_data=
         if not idx.empty:
             i = idx[0]
             df_jobs.at[i, 'Job_Status'] = new_status
-            df_jobs.at[i, 'Actual_Delivery_Time'] = timestamp
+            
+            # บันทึกเวลาตามสถานะ
+            if new_status == "DELIVERED":
+                df_jobs.at[i, 'Arrive_Dest_Time'] = timestamp
+            elif new_status == "Completed":
+                df_jobs.at[i, 'Actual_Delivery_Time'] = timestamp
+                
             if photo_data != "-": df_jobs.at[i, 'Photo_Proof_Url'] = photo_data
             if signature_data != "-": df_jobs.at[i, 'Signature_Url'] = signature_data
+            
+            # --- ส่วนที่เพิ่มใหม่: บันทึกความพึงพอใจ ---
+            if rating > 0: df_jobs.at[i, 'Rating'] = rating
+            if comment != "-": df_jobs.at[i, 'Customer_Comment'] = comment
+            # ---------------------------------------
+            
             driver_id = df_jobs.at[i, 'Driver_ID']
             update_sheet("Jobs_Main", df_jobs)
         
-        if new_status in ["Completed", "DELIVERED"] and driver_id and distance_run > 0:
+        # 2. อัปเดตข้อมูลคนขับ (เลขไมล์ และ สถานะ Offline)
+        if driver_id:
             df_drivers = get_data("Master_Drivers")
             df_drivers['Driver_ID'] = df_drivers['Driver_ID'].astype(str)
             d_idx = df_drivers[df_drivers['Driver_ID'] == str(driver_id)].index
+            
             if not d_idx.empty:
-                try:
-                    current = pd.to_numeric(df_drivers.at[d_idx[0], 'Current_Mileage'], errors='coerce')
-                    if pd.isna(current): current = 0
-                    df_drivers.at[d_idx[0], 'Current_Mileage'] = current + float(distance_run)
-                    df_drivers.at[d_idx[0], 'Last_Update'] = get_thai_time_str()
+                i_drv = d_idx[0]
+                need_update = False
+                
+                # 2.1 อัปเดตเลขไมล์ (สะสมระยะทาง)
+                if new_status in ["Completed", "DELIVERED"] and distance_run > 0:
+                    try:
+                        current = pd.to_numeric(df_drivers.at[i_drv, 'Current_Mileage'], errors='coerce')
+                        if pd.isna(current): current = 0
+                        df_drivers.at[i_drv, 'Current_Mileage'] = current + float(distance_run)
+                        need_update = True
+                    except: pass
+
+                # 2.2 ตั้งค่า Offline (ล้างพิกัด GPS) เมื่อจบงาน
+                if new_status == "Completed":
+                    df_drivers.at[i_drv, 'Current_Lat'] = ""
+                    df_drivers.at[i_drv, 'Current_Lon'] = ""
+                    need_update = True
+
+                if need_update:
+                    df_drivers.at[i_drv, 'Last_Update'] = get_thai_time_str()
                     update_sheet("Master_Drivers", df_drivers)
-                except: pass
+
         return True
-    except: return False
+    except Exception as e:
+        print(f"Update Job Error: {e}") 
+        return False
 
 def simple_update_job_status(job_id, new_status, extra_updates=None):
     try:
