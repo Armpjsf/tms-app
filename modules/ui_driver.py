@@ -7,11 +7,7 @@ import time
 import logging
 from streamlit_js_eval import get_geolocation # type: ignore
 import urllib.parse
-from typing import Dict, Any, Optional, List, Union
-
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+from typing import Dict, Any
 
 # Import with error handling
 try:
@@ -24,468 +20,461 @@ try:
         get_status_label_th, parse_flexible_date
     )
 except ImportError as e:
-    logger.error(f"Error importing modules: {e}")
     st.error(f"System Error: {e}")
     st.stop()
 
-@st.cache_data(ttl=300, show_spinner="กำลังโหลดข้อมูล...")
-def load_driver_data(driver_id: str) -> Dict[str, Any]:
-    """โหลดข้อมูลที่จำเป็นสำหรับหน้าจอคนขับ"""
-    try:
-        df_jobs = get_data("Jobs_Main")
-        my_jobs = df_jobs[df_jobs['Driver_ID'] == str(driver_id)] if not df_jobs.empty else pd.DataFrame()
-        
-        maint_df = get_maintenance_status_all()
-        plate = st.session_state.get('vehicle_plate', '')
-        my_alerts = maint_df[(maint_df['Vehicle_Plate'] == str(plate)) & (maint_df['Is_Due'] == True)] if not maint_df.empty else pd.DataFrame()
-        
-        last_odo = get_last_fuel_odometer(plate)
-        
-        return {
-            'jobs': my_jobs,
-            'alerts': my_alerts,
-            'last_odometer': last_odo if not pd.isna(last_odo) else 0.0
-        }
-    except Exception as e:
-        logger.error(f"Error loading driver data: {e}")
-        return {'jobs': pd.DataFrame(), 'alerts': pd.DataFrame(), 'last_odometer': 0.0}
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 def driver_flow():
-    """หน้าจอหลักสำหรับคนขับ"""
-    try:
-        if not hasattr(st.session_state, 'driver_id') or not st.session_state.get('logged_in'):
-            st.error("กรุณาล็อกอินใหม่")
-            st.session_state.logged_in = False
-            if hasattr(st, "rerun"): st.rerun()
-            else: st.experimental_rerun()
-            return
+    """หน้าจอหลักสำหรับคนขับ (Driver App v2.0)"""
+    
+    # 1. Check Login
+    if not hasattr(st.session_state, 'driver_id') or not st.session_state.get('logged_in'):
+        st.error("กรุณาล็อกอินใหม่")
+        st.session_state.logged_in = False
+        st.rerun()
+        return
         
-        # Sidebar
+    try:
+        # Load Driver Info
+        driver_id = str(st.session_state.driver_id).strip()
+        drivers_df = get_data("Master_Drivers")
+        my_info = drivers_df[drivers_df['Driver_ID'] == driver_id].iloc[0] if not drivers_df.empty else {}
+        
+        # --- Sidebar & Profile ---
         with st.sidebar:
-            st.title(f"สวัสดี, {st.session_state.driver_name}")
-            st.caption(f"รถทะเบียน: {st.session_state.vehicle_plate}")
+            st.title(f"👮‍♂️ {st.session_state.driver_name}")
+            st.caption(f"🆔 {driver_id} | 🚛 {st.session_state.vehicle_plate}")
             
-            c1, c2 = st.columns([1, 1])
-            with c1: st.write("📍")
-            with c2:
-                loc = get_geolocation()
-                if loc and st.button("เช็คอิน"):
-                    with st.spinner(".."):
-                        update_driver_location(st.session_state.driver_id, loc['coords']['latitude'], loc['coords']['longitude'])
-                        st.toast("ส่งพิกัดแล้ว")
+            # Feature: แจ้งเตือนเอกสารใกล้หมดอายุ
+            check_expiry_alert(my_info)
             
             st.divider()
-            if st.button("ออกจากระบบ", type="secondary"):
+            
+            # GPS Check-in
+            loc = get_geolocation()
+            if loc:
+                lat, lon = loc['coords']['latitude'], loc['coords']['longitude']
+                st.caption(f"พิกัด: {lat:.4f}, {lon:.4f}")
+                if st.button("📍 เช็คอินจุดนี้"):
+                    update_driver_location(driver_id, lat, lon)
+                    st.toast("✅ อัปเดตตำแหน่งแล้ว")
+            
+            st.divider()
+            if st.button("🚪 ออกจากระบบ", type="primary"):
                 st.session_state.logged_in = False
-                if hasattr(st, "rerun"): st.rerun()
-                else: st.experimental_rerun()
+                st.rerun()
 
-        menu = st.radio("เลือกรายการ:", ["📦 งานของฉัน", "🕒 ประวัติงาน", "⛽ เติมน้ำมัน", "🔧 แจ้งซ่อม"], horizontal=True)
-        st.write("---")
+        # --- Main Menu ---
+        # เพิ่มเมนู "💰 รายได้"
+        menu = st.radio("เมนูหลัก", ["📦 งานของฉัน", "💰 รายได้", "⛽ เติมน้ำมัน", "🔧 แจ้งซ่อม"], horizontal=True)
+        st.divider()
         
+        # Routing
+        if menu == "📦 งานของฉัน":
+            render_my_jobs(driver_id)
+        elif menu == "💰 รายได้":
+            render_my_earnings(driver_id)
+        elif menu == "⛽ เติมน้ำมัน":
+            render_fuel_record(driver_id)
+        elif menu == "🔧 แจ้งซ่อม":
+            render_maintenance(driver_id)
+            
     except Exception as e:
-        st.error("เกิดข้อผิดพลาดในการโหลดหน้าจอ")
-        st.stop()
-        
+        st.error(f"เกิดข้อผิดพลาด: {e}")
+        # st.exception(e) # Debug mode only
+
+# ==========================================
+# Sub-Functions (แยกส่วนทำงานให้เป็นระเบียบ)
+# ==========================================
+
+def check_expiry_alert(driver_row):
+    """ตรวจสอบและแจ้งเตือนวันหมดอายุเอกสาร"""
+    alerts = []
+    cols_check = {
+        'Insurance_Expiry': 'ประกันภัย',
+        'Tax_Expiry': 'ภาษีรถ',
+        'Act_Expiry': 'พ.ร.บ.'
+    }
+    
+    for col, name in cols_check.items():
+        val = str(driver_row.get(col, ''))
+        if len(val) >= 10:
+            try:
+                exp_date = parse_flexible_date(val)
+                days_left = (exp_date - datetime.now()).days
+                if days_left < 0:
+                    alerts.append(f"🔴 {name} หมดอายุแล้ว!")
+                elif days_left < 30:
+                    alerts.append(f"🟡 {name} เหลือ {days_left} วัน")
+            except: pass
+            
+    if alerts:
+        with st.expander("⚠️ แจ้งเตือนเอกสาร", expanded=True):
+            for a in alerts: st.write(a)
+
+def render_my_jobs(driver_id):
+    """หน้ารายการงาน (Job List & Action)"""
     if "page" not in st.session_state: st.session_state.page = "list"
     
-    # --- 1. งานของฉัน ---
-    if menu == "📦 งานของฉัน":
-        if st.session_state.page == "list":
-            df = get_data("Jobs_Main")
-            if not df.empty:
-                df['Driver_ID'] = df['Driver_ID'].astype(str).str.strip()
-                df['Job_Status'] = df['Job_Status'].fillna('Pending').astype(str).str.strip()
-                current_driver = str(st.session_state.driver_id).strip()
+    # Page 1: List
+    if st.session_state.page == "list":
+        jobs = get_data("Jobs_Main")
+        if not jobs.empty:
+            jobs['Driver_ID'] = jobs['Driver_ID'].astype(str).str.strip()
+            # กรองงานที่ยังไม่จบ หรือ จบวันนี้
+            my_jobs = jobs[
+                (jobs['Driver_ID'] == driver_id) & 
+                (~jobs['Job_Status'].isin(['CANCELLED'])) &
+                (
+                    (jobs['Job_Status'] != 'Completed') | 
+                    (pd.to_datetime(jobs['Plan_Date'], errors='coerce').dt.date == datetime.now().date())
+                )
+            ].copy()
+            
+            # Sort: งานที่ยังไม่เสร็จขึ้นก่อน
+            my_jobs['Sort_Key'] = my_jobs['Job_Status'].apply(lambda x: 0 if x != 'Completed' else 1)
+            my_jobs = my_jobs.sort_values('Sort_Key')
 
-                my_jobs = df[(df['Driver_ID'] == current_driver) & (~df['Job_Status'].isin(['Completed', 'CANCELLED', 'DELIVERED']))]
-
-                if my_jobs.empty:
-                    st.info("🎉 ไม่มีงานค้างในขณะนี้")
-                else:
-                    st.markdown(f"**งานค้าง ({len(my_jobs)})**")
-                    for i, job in my_jobs.iterrows():
-                        with st.container():
-                            st.markdown(f"### 🚚 {job.get('Route_Name', 'งานขนส่ง')}")
-                            
-                            c1, c2 = st.columns(2)
-                            with c1:
-                                st.caption("ต้นทาง")
-                                st.write(f"🏠 {job.get('Origin_Location', '-')}")
-                            with c2:
-                                st.caption("ปลายทาง")
-                                st.write(f"🏁 {job.get('Dest_Location', '-')}")
-                                
-                            c3, c4 = st.columns(2)
-                            with c3:
-                                st.caption("สินค้า")
-                                st.info(f"{job.get('Cargo_Qty', '-')}")
-                            with c4:
-                                st.caption("กำหนดส่ง")
-                                st.write(f"📅 {job.get('Plan_Date', '-')}")
-
-                            c_btn1, c_btn2 = st.columns([3, 1])
-                            with c_btn1:
-                                status_th = get_status_label_th(job.get('Job_Status', ''))
-                                st.markdown(f"สถานะ: **{status_th}**")
-                            with c_btn2:
-                                if st.button("เริ่ม >", key=f"btn_{job['Job_ID']}", type="primary"):
-                                    st.session_state.current_job = job.to_dict()
-                                    st.session_state.page = "action"
-                                    # Reset Job Items state when opening new job
-                                    if 'job_items_job_id' in st.session_state and st.session_state.job_items_job_id != job['Job_ID']:
-                                        del st.session_state.job_items
-                                    st.rerun()
-                            st.divider()
+            if my_jobs.empty:
+                st.info("🎉 ไม่มีงานค้างในขณะนี้")
+                if st.button("ดูประวัติงานย้อนหลัง"): st.toast("ไปที่เมนู 'รายได้' เพื่อดูประวัติ")
             else:
-                st.info("ยังไม่มีข้อมูลในระบบ")
+                for _, job in my_jobs.iterrows():
+                    with st.container(border=True):
+                        c1, c2 = st.columns([3, 1])
+                        c1.markdown(f"#### 🚚 {job.get('Route_Name', 'งานขนส่ง')}")
+                        status = job.get('Job_Status', 'Pending')
+                        
+                        # Badge สีสถานะ
+                        color = "orange" if status == "ASSIGNED" else "blue" if status == "IN_TRANSIT" else "green"
+                        c2.markdown(f":{color}[{get_status_label_th(status)}]")
+                        
+                        c3, c4 = st.columns(2)
+                        c3.caption(f"ต้นทาง: {job.get('Origin_Location', '-')}")
+                        c4.caption(f"ปลายทาง: {job.get('Dest_Location', '-')}")
+                        
+                        if status != "Completed":
+                            if st.button("คลิกเพื่อทำงาน >", key=f"btn_{job['Job_ID']}", type="primary", use_container_width=True):
+                                st.session_state.current_job = job.to_dict()
+                                st.session_state.page = "action"
+                                # Reset items state
+                                if 'job_items_job_id' in st.session_state and st.session_state.job_items_job_id != job['Job_ID']:
+                                    if 'job_items' in st.session_state: del st.session_state.job_items
+                                st.rerun()
+                        else:
+                            st.button("ดูรายละเอียด (จบแล้ว)", key=f"view_{job['Job_ID']}", disabled=True)
 
-        elif st.session_state.page == "action":
-            job = st.session_state.current_job
+        else: st.info("ยังไม่มีข้อมูลในระบบ")
+
+    # Page 2: Action (รายละเอียดงาน)
+    elif st.session_state.page == "action":
+        job = st.session_state.current_job
+        
+        c_back, c_title = st.columns([1, 4])
+        if c_back.button("⬅️"):
+            st.session_state.page = "list"
+            st.rerun()
+        c_title.markdown(f"### {job['Route_Name']}")
+        
+        # 1. รายละเอียด & แผนที่
+        with st.expander("📍 รายละเอียดการเดินทาง", expanded=True):
+            st.write(f"**ลูกค้า:** {job.get('Customer_Name', '-')}")
+            st.write(f"**สินค้า:** {job.get('Cargo_Qty', '-')}")
             
-            if st.button("⬅️ กลับ"):
-                st.session_state.page = "list"
+            org = job.get('Origin_Location', '')
+            dst = job.get('Dest_Location', '')
+            
+            # Map Link
+            map_url = job.get('GoogleMap_Link')
+            if not map_url or str(map_url) == 'nan':
+                # Fallback gen link
+                map_url = f"https://www.google.com/maps/dir/?api=1&origin={urllib.parse.quote(str(org))}&destination={urllib.parse.quote(str(dst))}&travelmode=driving"
+            
+            st.link_button("🗺️ เปิด Google Maps นำทาง", map_url, type="primary", use_container_width=True)
+
+        # 2. ปุ่มสถานะ (Timestamp)
+        st.markdown("#### ⏱️ อัปเดตสถานะ")
+        col_s1, col_s2, col_s3 = st.columns(3)
+        now_str = get_thai_time_str()
+        
+        # Logic ปุ่ม: กดแล้ว disable หรือเปลี่ยนสี
+        curr_status = job.get('Job_Status')
+        
+        if col_s1.button("📦 1. รับของ", disabled=(curr_status!='ASSIGNED'), use_container_width=True):
+            simple_update_job_status(job['Job_ID'], "PICKED_UP", {"Actual_Pickup_Time": now_str})
+            st.toast("บันทึกเวลา รับของ แล้ว"); time.sleep(1); st.rerun()
+            
+        if col_s2.button("🚚 2. เดินทาง", disabled=(curr_status!='PICKED_UP'), use_container_width=True):
+            simple_update_job_status(job['Job_ID'], "IN_TRANSIT", None)
+            st.toast("บันทึกสถานะ กำลังเดินทาง"); time.sleep(1); st.rerun()
+            
+        if col_s3.button("🏁 3. ถึงแล้ว", disabled=(curr_status!='IN_TRANSIT'), use_container_width=True):
+            simple_update_job_status(job['Job_ID'], "DELIVERED", {"Arrive_Dest_Time": now_str})
+            st.toast("บันทึกเวลา ถึงปลายทาง แล้ว"); time.sleep(1); st.rerun()
+
+        st.divider()
+
+        # 3. รายการสินค้า (Checklist)
+        st.markdown("#### ✅ ตรวจเช็คสินค้า")
+        
+        # Init Items List
+        if 'job_items' not in st.session_state:
+            items_mock = []
+            # Try parsing barcodes
+            barcodes = str(job.get('Barcodes', '')).strip()
+            if barcodes and barcodes != 'nan':
+                for i, code in enumerate(barcodes.split(',')):
+                    if code.strip():
+                        items_mock.append({"id": i+1, "name": f"สินค้า #{code.strip()}", "code": code.strip(), "status": "pending"})
+            
+            # Fallback
+            if not items_mock:
+                qty = str(job.get('Cargo_Qty', 'สินค้าทั่วไป'))
+                items_mock = [{"id": 1, "name": f"รายการ: {qty}", "code": "", "status": "pending"}]
+            
+            st.session_state.job_items = items_mock
+            st.session_state.job_items_job_id = job['Job_ID']
+
+        # Render Items
+        all_pass = True
+        items = st.session_state.job_items
+        
+        for i, item in enumerate(items):
+            c_name, c_act = st.columns([2, 1.5])
+            c_name.write(f"**{item['name']}**")
+            
+            # Action
+            status_opts = ["รอตรวจ", "✅ ครบ", "❌ ขาด/เสีย"]
+            curr_idx = 1 if item['status'] == 'pass' else (2 if item['status'] == 'fail' else 0)
+            
+            # Barcode Scan Input
+            if item['code']:
+                scan = c_name.text_input(f"สแกน ({item['code']})", key=f"sc_{i}", placeholder="ยิงบาร์โค้ด")
+                if scan == item['code']: 
+                    item['status'] = 'pass'
+                    curr_idx = 1
+            
+            sel = c_act.selectbox("", status_opts, index=curr_idx, key=f"sl_{i}", label_visibility="collapsed")
+            
+            if sel == "✅ ครบ": item['status'] = 'pass'
+            elif sel == "❌ ขาด/เสีย": item['status'] = 'fail'
+            else: item['status'] = 'pending'
+            
+            if item['status'] == 'pending': all_pass = False
+            
+            # ถ้ามีปัญหา ให้ถ่ายรูป
+            if item['status'] == 'fail':
+                item['reason'] = st.text_input(f"สาเหตุ #{i}", key=f"rs_{i}")
+                item['photo'] = st.camera_input(f"รูปสินค้าเสียหาย #{i}", key=f"cm_{i}")
+
+        st.divider()
+
+        # 4. ปิดงาน (ePOD)
+        st.markdown("#### 📸 หลักฐานการส่ง (ePOD)")
+        
+        # Camera
+        if "epod_imgs" not in st.session_state: st.session_state.epod_imgs = []
+        cam = st.camera_input("ถ่ายรูปสินค้าที่ส่งมอบ (รวม)")
+        if cam: st.session_state.epod_imgs.append(cam)
+        
+        # Show taken photos
+        if st.session_state.epod_imgs:
+            st.write(f"ถ่ายแล้ว {len(st.session_state.epod_imgs)} รูป")
+            st.image(st.session_state.epod_imgs, width=100)
+
+        # Signature
+        st.write("ลายเซ็นผู้รับสินค้า:")
+        # (ใน Streamlit Cloud มือถือ การใช้ camera_input ถ่ายรูปลายเซ็นกระดาษจะเสถียรกว่า canvas)
+        sig = st.camera_input("ถ่ายรูปลายเซ็น (บนกระดาษ/บิล)", key="sig_cam")
+
+        # Satisfaction
+        st.markdown("---")
+        st.markdown("#### ⭐ ความพึงพอใจลูกค้า")
+        rating = st.slider("ระดับคะแนน", 1, 5, 5)
+        comment = st.text_area("ข้อเสนอแนะ")
+
+        # Submit
+        if st.button("🚀 ยืนยันปิดงาน", type="primary", use_container_width=True):
+            if not all_pass:
+                st.error("กรุณาตรวจสอบสินค้าให้ครบทุกรายการ")
+            elif not st.session_state.epod_imgs:
+                st.error("กรุณาถ่ายรูปสินค้าอย่างน้อย 1 รูป")
+            else:
+                with st.spinner("กำลังอัปโหลดข้อมูล..."):
+                    # Process Images
+                    all_photos = st.session_state.epod_imgs
+                    # Add reject photos
+                    for it in items:
+                        if it.get('photo'): all_photos.append(it['photo'])
+                    
+                    img_str = process_multiple_images(all_photos)
+                    sig_str = compress_image(sig) if sig else "-"
+                    
+                    # Reason String
+                    reasons = [f"{i['name']}:{i.get('reason','')}" for i in items if i['status']=='fail']
+                    reason_str = "|".join(reasons) if reasons else ""
+                    
+                    # Update DB
+                    update_job_status(
+                        job['Job_ID'], "Completed", get_thai_time_str(),
+                        distance_run=float(job.get('Est_Distance_KM', 0)),
+                        photo_data=img_str, signature_data=sig_str,
+                        rating=rating, comment=comment
+                    )
+                    
+                    if reason_str:
+                        simple_update_job_status(job['Job_ID'], "Completed", {"Failed_Reason": reason_str})
+                    
+                    st.balloons()
+                    st.success("ปิดงานเรียบร้อย!")
+                    
+                    # Cleanup
+                    if 'job_items' in st.session_state: del st.session_state.job_items
+                    if 'epod_imgs' in st.session_state: del st.session_state.epod_imgs
+                    time.sleep(2)
+                    st.session_state.page = "list"
+                    st.rerun()
+
+def render_my_earnings(driver_id):
+    """หน้าแสดงรายได้และประวัติ (New Feature)"""
+    st.subheader("💰 รายได้ของฉัน")
+    
+    # Filter Date
+    c1, c2 = st.columns(2)
+    start_d = c1.date_input("ตั้งแต่", datetime.now().replace(day=1))
+    end_d = c2.date_input("ถึง", datetime.now())
+    
+    jobs = get_data("Jobs_Main")
+    if not jobs.empty:
+        # Filter My Jobs
+        jobs['Driver_ID'] = jobs['Driver_ID'].astype(str).str.strip()
+        jobs['PD_Obj'] = pd.to_datetime(jobs['Plan_Date'], errors='coerce')
+        
+        mask = (jobs['Driver_ID'] == driver_id) & \
+               (jobs['Job_Status'] == 'Completed') & \
+               (jobs['PD_Obj'].dt.date >= start_d) & \
+               (jobs['PD_Obj'].dt.date <= end_d)
+        
+        my_earnings = jobs[mask].copy()
+        
+        if not my_earnings.empty:
+            # Calculate Totals
+            my_earnings['Cost_Val'] = pd.to_numeric(my_earnings['Cost_Driver_Total'].astype(str).str.replace(',',''), errors='coerce').fillna(0)
+            
+            total_income = my_earnings['Cost_Val'].sum()
+            paid_income = my_earnings[my_earnings['Payment_Status']=='Paid']['Cost_Val'].sum()
+            pending_income = total_income - paid_income
+            
+            # Summary Cards
+            c_tot, c_pd, c_pen = st.columns(3)
+            c_tot.metric("ยอดรวม", f"{total_income:,.0f} บ.")
+            c_pd.metric("รับเงินแล้ว", f"{paid_income:,.0f} บ.", delta="เข้าบัญชีแล้ว")
+            c_pen.metric("รอจ่าย", f"{pending_income:,.0f} บ.", delta_color="inverse")
+            
+            st.divider()
+            
+            # Table
+            st.markdown("##### 📜 รายการเที่ยววิ่ง")
+            for i, row in my_earnings.iterrows():
+                with st.expander(f"{row['Plan_Date']} | {row['Route_Name']} ({row['Cost_Val']:,.0f} บ.)"):
+                    st.write(f"**เลขงาน:** {row['Job_ID']}")
+                    st.write(f"**เส้นทาง:** {row['Origin_Location']} -> {row['Dest_Location']}")
+                    
+                    # Status & Slip
+                    st.markdown("---")
+                    if row['Payment_Status'] == 'Paid':
+                        st.success(f"✅ โอนแล้วเมื่อ: {row.get('Payment_Date', '-')}")
+                        slip_url = str(row.get('Payment_Slip_Url', ''))
+                        if len(slip_url) > 10: # Check valid url
+                            st.image(slip_url, caption="สลิปโอนเงิน", width=200)
+                    else:
+                        st.warning("⏳ รอรอบจ่ายเงิน")
+        else:
+            st.info("ไม่พบประวัติงานในช่วงวันที่เลือก")
+    else:
+        st.info("ไม่พบข้อมูล")
+
+def render_fuel_record(driver_id):
+    """หน้าบันทึกน้ำมัน"""
+    st.subheader("⛽ บันทึกการเติมน้ำมัน")
+    
+    plate = st.session_state.vehicle_plate
+    last_odo = get_last_fuel_odometer(plate)
+    std_rate = get_consumption_rate_by_driver(driver_id)
+    
+    st.info(f"รถ: {plate} | เลขไมล์ล่าสุด: {last_odo:,.0f}")
+    
+    with st.form("driver_fuel"):
+        c1, c2 = st.columns(2)
+        f_odo = c1.number_input("เลขไมล์ปัจจุบัน", min_value=int(last_odo), step=1)
+        f_liters = c2.number_input("จำนวนลิตร", min_value=0.0, step=0.1)
+        
+        c3, c4 = st.columns(2)
+        f_price = c3.number_input("ยอดเงิน (บาท)", min_value=0.0, step=10.0)
+        f_station = c4.text_input("ปั๊มน้ำมัน", "ปตท.")
+        
+        img = st.camera_input("ถ่ายรูปสลิป + หน้าปัดไมล์")
+        
+        if st.form_submit_button("บันทึกข้อมูล", type="primary"):
+            if f_odo <= last_odo and last_odo > 0:
+                st.warning("⚠️ เลขไมล์ต้องมากกว่าครั้งล่าสุด")
+            elif f_liters <= 0:
+                st.warning("⚠️ จำนวนลิตรต้องมากกว่า 0")
+            else:
+                img_str = compress_image(img) if img else "-"
+                log_data = {
+                    "Log_ID": f"FUEL-{datetime.now().strftime('%y%m%d%H%M')}",
+                    "Date_Time": get_thai_time_str(),
+                    "Driver_ID": driver_id,
+                    "Vehicle_Plate": plate,
+                    "Odometer": f_odo,
+                    "Liters": f_liters,
+                    "Price_Total": f_price,
+                    "Station_Name": f_station,
+                    "Photo_Url": img_str
+                }
+                create_fuel_log(log_data)
+                st.success("บันทึกสำเร็จ!")
+                time.sleep(2)
                 st.rerun()
-            
-            st.markdown(f"## 📦 งาน: {job['Job_ID']}")
-            
-            # ข้อมูลงาน
-            with st.expander("📋 รายละเอียดงาน", expanded=True):
-                st.write(f"**ลูกค้า:** {job.get('Customer_Name', '-')}")
-                st.write(f"**สินค้า:** {job.get('Cargo_Qty', '-')}")
-                st.write(f"**ปลายทาง:** {job.get('Dest_Location', '-')}")
-                
-                org = urllib.parse.quote(str(job.get('Origin_Location', '')))
-                dst = urllib.parse.quote(str(job.get('Dest_Location', '')))
-                url = f"https://maps.app.goo.gl/up5bdPHqne3c2gFBA7{org}&destination={dst}&travelmode=driving"
-                if job.get('GoogleMap_Link') and str(job['GoogleMap_Link']) != 'nan' and str(job['GoogleMap_Link']) != '':
-                    url = job['GoogleMap_Link']
-                
-                st.link_button("🗺️ นำทาง (Google Maps)", url, type="primary", use_container_width=True)
-            
-            # Update Status
-            st.markdown("#### 🔄 อัปเดตสถานะ")
-            c_s1, c_s2, c_s3 = st.columns(3)
-            now = get_thai_time_str()
-            
-            with c_s1: 
-                if st.button("1. รับของ", use_container_width=True):
-                    simple_update_job_status(job['Job_ID'], "PICKED_UP", {"Actual_Pickup_Time": now})
-                    st.toast(f"รับของ: {now}")
-                    time.sleep(1)
-                    st.rerun()
-            with c_s2:
-                if st.button("2. เดินทาง", use_container_width=True):
-                    simple_update_job_status(job['Job_ID'], "IN_TRANSIT", None)
-                    st.toast("กำลังเดินทาง")
-            with c_s3:
-                if st.button("3. ถึงแล้ว", use_container_width=True):
-                    simple_update_job_status(job['Job_ID'], "DELIVERED", {"Arrive_Dest_Time": now})
-                    st.toast(f"ถึงแล้ว: {now}")
-                    time.sleep(1)
-                    st.rerun()
 
+def render_maintenance(driver_id):
+    """หน้าแจ้งซ่อม"""
+    st.subheader("🔧 แจ้งซ่อม / ปัญหาการใช้งาน")
+    
+    # Show Active Tickets
+    tickets = get_data("Repair_Tickets")
+    if not tickets.empty:
+        my_tk = tickets[(tickets['Vehicle_Plate'] == st.session_state.vehicle_plate) & (tickets['Status'] != 'เสร็จสิ้น')]
+        if not my_tk.empty:
+            st.info(f"มีรายการแจ้งซ่อมค้างอยู่ {len(my_tk)} รายการ")
+            for _, tk in my_tk.iterrows():
+                st.caption(f"📅 {tk['Date_Report']} | อาการ: {tk['Issue_Type']} | สถานะ: {tk['Status']}")
             st.divider()
 
-            # --- ITEM CHECKING & BARCODE VERIFICATION (FEATURE 4) ---
-            st.markdown("#### ✅ ตรวจเช็คสินค้า (Item & Barcode)")
-            
-            # Logic สร้างรายการสินค้าจาก Barcodes (ถ้ามี) หรือ Mockup
-            if 'job_items' not in st.session_state or st.session_state.get('job_items_job_id') != job['Job_ID']:
-                items_mock = []
-                
-                # 1. ลองดึงจาก Barcodes ที่ Admin กรอก
-                barcodes_str = str(job.get('Barcodes', '')).strip()
-                if barcodes_str and barcodes_str != 'nan':
-                    code_list = [c.strip() for c in barcodes_str.split(',') if c.strip()]
-                    for i, code in enumerate(code_list):
-                        items_mock.append({
-                            "id": i+1, 
-                            "name": f"สินค้า #{code}", 
-                            "expected_barcode": code, # รหัสที่ต้องสแกนให้ตรง
-                            "scanned_barcode": "",
-                            "status": "pending", "reason": "", "photo": None
-                        })
-                
-                # 2. ถ้าไม่มี Barcodes ให้ใช้ Mockup เดิม (ตามจำนวน Cargo_Qty)
-                if not items_mock:
-                    qty_text = str(job.get('Cargo_Qty', '1'))
-                    items_mock = [{"id": 1, "name": f"สินค้าล็อตหลัก ({qty_text})", "expected_barcode": "", "scanned_barcode": "", "status": "pending", "reason": "", "photo": None}]
-                    if "พาเลท" in qty_text or "กล่อง" in qty_text:
-                         items_mock = [
-                            {"id": 1, "name": "📦 สินค้าหลัก (Main Cargo)", "expected_barcode": "", "status": "pending"},
-                            {"id": 2, "name": "📄 เอกสารกำกับ (Doc)", "expected_barcode": "", "status": "pending"}
-                        ]
-
-                st.session_state.job_items = items_mock
-                st.session_state.job_items_job_id = job['Job_ID']
-
-            # แสดงรายการ
-            items_data = st.session_state.job_items
-            all_items_checked = True
-            
-            for idx, item in enumerate(items_data):
-                with st.container():
-                    c_name, c_action = st.columns([2, 2])
-                    
-                    # แสดงชื่อและ Barcode ที่คาดหวัง
-                    display_name = f"**{idx+1}. {item['name']}**"
-                    if item.get('expected_barcode'):
-                        display_name += f" (Code: `{item['expected_barcode']}`)"
-                    c_name.markdown(display_name)
-                    
-                    # --- Barcode Input ---
-                    if item.get('expected_barcode'):
-                        # ช่องรับค่า (ใช้ปืนยิงบาร์โค้ด หรือพิมพ์)
-                        scan_val = c_action.text_input(
-                            f"สแกน/พิมพ์รหัส ({item['id']})", 
-                            value=item.get('scanned_barcode', ''),
-                            key=f"scan_{idx}",
-                            placeholder="ยิงบาร์โค้ดที่นี่..."
-                        )
-                        item['scanned_barcode'] = scan_val
-                        
-                        # Auto Verify
-                        if scan_val == item['expected_barcode']:
-                            item['status'] = 'pass'
-                            c_action.success("✅ ถูกต้อง")
-                        elif scan_val:
-                            c_action.error("❌ รหัสไม่ตรง")
-                            item['status'] = 'pending'
-                    # ---------------------
-
-                    # Manual Status Select (กรณีไม่มีบาร์โค้ด หรือสแกนไม่ได้)
-                    status_opts = ["รอตรวจสอบ", "✅ ครบถ้วน", "❌ มีปัญหา"]
-                    curr_idx = 1 if item['status'] == 'pass' else (2 if item['status'] == 'fail' else 0)
-                    
-                    # ถ้าสแกนผ่านแล้ว ให้ล็อกสถานะเป็นครบถ้วน
-                    disable_select = True if item.get('expected_barcode') and item.get('status') == 'pass' else False
-                    
-                    sel_stat = c_action.selectbox("สถานะ", status_opts, index=curr_idx, key=f"st_{idx}", label_visibility="collapsed", disabled=disable_select)
-                    
-                    if not disable_select:
-                        if sel_stat == "✅ ครบถ้วน": item['status'] = 'pass'
-                        elif sel_stat == "❌ มีปัญหา": 
-                            item['status'] = 'fail'
-                            item['reason'] = st.text_input(f"สาเหตุ #{idx}", key=f"rs_{idx}")
-                            item['photo'] = st.camera_input(f"หลักฐาน #{idx}", key=f"cm_{idx}")
-                        else: 
-                            item['status'] = 'pending'
-                    
-                    if item['status'] == 'pending': all_items_checked = False
-                    st.write("---")
-
-            # --- EPOD Section ---
-            st.markdown("#### 📸 ปิดงาน (ePOD)")
-
-            u1 = st.file_uploader("รูปสินค้า (เพิ่มเติม)", type=['png', 'jpg', 'jpeg'], accept_multiple_files=True, key="epod_up")
-
-            if "epod_cam_images" not in st.session_state: st.session_state.epod_cam_images = []
-            c1 = st.camera_input("ถ่ายรูปหน้างาน (รวม)", key="epod_cam")
-            if c1: st.session_state.epod_cam_images.append(c1)
-
-            all_imgs = []
-            if u1: all_imgs.extend(u1)
-            if st.session_state.epod_cam_images: all_imgs.extend(st.session_state.epod_cam_images)
-            
-            # รวมรูปจากรายการที่มีปัญหาด้วย
-            reject_photos = [item['photo'] for item in items_data if item['status'] == 'fail' and item['photo'] is not None]
-            all_imgs.extend(reject_photos)
-
-            if all_imgs: st.success(f"✅ มีรูปทั้งหมด {len(all_imgs)} รูป")
-            
-            sig = st.camera_input("ลายเซ็นลูกค้า", key="sig_cam")
-
-            # --- ส่วนที่เพิ่มใหม่: Customer Satisfaction ---
-            st.markdown("---")
-            st.markdown("#### 😀 ประเมินความพึงพอใจ")
-            
-            # ใช้ feedback widget (ถ้า streamlit version รองรับ) หรือใช้ select_slider แทน
-            try:
-                satisfaction = st.feedback("stars") # ถ้า version ใหม่ใช้ตัวนี้ได้เลย
-            except:
-                # Fallback สำหรับ version เก่า
-                sentiment_mapping = ["😡 แย่มาก", "☹️ แย่", "😐 พอใช้", "🙂 ดี", "😄 ดีมาก"]
-                selected_sentiment = st.select_slider(
-                    "ระดับความพึงพอใจ",
-                    options=sentiment_mapping,
-                    value="🙂 ดี"
-                )
-                # แปลงกลับเป็นคะแนน 1-5
-                satisfaction = sentiment_mapping.index(selected_sentiment) + 1
-
-            cust_comment = st.text_area("ข้อเสนอแนะเพิ่มเติมจากลูกค้า (ถ้ามี)", placeholder="เช่น พนักงานบริการดีมาก, ส่งช้ากว่ากำหนด")
-            # ---------------------------------------------
-
-            # Submit Button
-            if st.button("✅ ยืนยันปิดงาน", type="primary", use_container_width=True):
-                if not all_items_checked:
-                    st.error("⚠️ กรุณาตรวจสอบรายการสินค้าให้ครบทุกรายการ")
-                elif not all_imgs:
-                    st.error("📷 กรุณาถ่ายรูปสินค้าอย่างน้อย 1 รูป")
-                else:
-                    with st.spinner("กำลังบันทึกข้อมูล..."):
-                        img_str = process_multiple_images(all_imgs)
-                        sig_str = compress_image(sig) if sig else "-"
-                        dist = float(job.get('Est_Distance_KM', 0))
-                        
-                        # รวบรวมเหตุผลการตีกลับ (ถ้ามี)
-                        failed_reasons = [f"{i['name']}: {i['reason']}" for i in items_data if i['status'] == 'fail']
-                        reason_str = ", ".join(failed_reasons) if failed_reasons else ""
-                        
-                        # บันทึกสถานะ พร้อมคะแนน (Rating) และคอมเมนต์
-                        # ค่า satisfaction จาก st.feedback จะเริ่มที่ 0 (ถ้ายังไม่เลือกจะเป็น None)
-                        final_rating = (satisfaction + 1) if satisfaction is not None else 0
-                        # กรณีใช้ slider ค่าจะเป็น 1-5 อยู่แล้ว
-                        if isinstance(satisfaction, int) and satisfaction >= 1: final_rating = satisfaction
-
-                        update_job_status(
-                            job['Job_ID'], "Completed", get_thai_time_str(), 
-                            distance_run=dist, photo_data=img_str, signature_data=sig_str,
-                            rating=final_rating, comment=cust_comment
-                        )
-                        
-                        # ถ้ามีเหตุผลการตีกลับ ให้บันทึกเพิ่ม
-                        if reason_str:
-                            simple_update_job_status(job['Job_ID'], "Completed", {"Failed_Reason": reason_str})
-                        
-                        st.success("🎉 ปิดงานสำเร็จ! ขอบคุณสำหรับการประเมิน")
-                        load_driver_data.clear() # Clear Cache
-                        
-                        # Reset session items
-                        if 'job_items' in st.session_state: del st.session_state.job_items
-                        if 'epod_cam_images' in st.session_state: del st.session_state.epod_cam_images
-                        
-                        time.sleep(2)
-                        st.session_state.page = "list"
-                        st.rerun()
-
-    # --- 2. ประวัติงาน ---
-    elif menu == "🕒 ประวัติงาน":
-        st.subheader("📅 ประวัติงานย้อนหลัง")
-        c_date1, c_date2 = st.columns(2)
-        with c_date1:
-            start_d = st.date_input("ตั้งแต่วันที่", datetime.now() - timedelta(days=7))
-        with c_date2:
-            end_d = st.date_input("ถึงวันที่", datetime.now())
-
-        df_all = get_data("Jobs_Main")
-        if not df_all.empty and 'Driver_ID' in df_all.columns:
-            current_driver = str(st.session_state.driver_id).strip()
-            df_all['Driver_ID'] = df_all['Driver_ID'].astype(str).str.strip()
-            my_hist = df_all[df_all['Driver_ID'] == current_driver].copy()
-            
-            if not my_hist.empty and 'Plan_Date' in my_hist.columns:
-                try:
-                    my_hist['PD_Obj'] = pd.to_datetime(my_hist['Plan_Date'], dayfirst=True, errors='coerce')
-                    my_hist = my_hist.dropna(subset=['PD_Obj'])
-                    
-                    if isinstance(start_d, datetime): start_d = start_d.date()
-                    if isinstance(end_d, datetime): end_d = end_d.date()
-                    
-                    mask = (my_hist['PD_Obj'].dt.date >= start_d) & (my_hist['PD_Obj'].dt.date <= end_d)
-                    my_hist_filtered = my_hist[mask]
-
-                    if not my_hist_filtered.empty:
-                        cols_to_show = ['Job_ID', 'Route_Name', 'Job_Status', 'Plan_Date', 'Failed_Reason']
-                        st.info(f"พบงานจำนวน: {len(my_hist_filtered)} รายการ")
-                        st.dataframe(my_hist_filtered[cols_to_show], use_container_width=True)
-                    else:
-                        st.warning(f"ไม่พบงานในช่วงวันที่เลือก")
-                except Exception as e:
-                    st.error(f"Error filtering dates: {e}")
-        else:
-            st.info("ยังไม่มีประวัติงาน")
-            
-        if st.button("🔄 รีเฟรชประวัติงาน"):
-            st.cache_data.clear()
+    with st.form("driver_repair"):
+        issue = st.selectbox("หมวดหมู่ปัญหา", ["เครื่องยนต์ผิดปกติ", "ยาง/ช่วงล่าง", "ระบบไฟ/แอร์", "อุบัติเหตุ", "ถึงรอบถ่ายน้ำมันเครื่อง", "อื่นๆ"])
+        urgency = st.radio("ความเร่งด่วน", ["ปกติ (ขับต่อได้)", "ด่วน (ต้องระวัง)", "ฉุกเฉิน (รถวิ่งไม่ได้)"])
+        desc = st.text_area("รายละเอียดอาการ")
+        img = st.camera_input("ถ่ายรูปจุดที่มีปัญหา")
+        
+        if st.form_submit_button("ส่งแจ้งซ่อม"):
+            img_str = compress_image(img) if img else "-"
+            ticket = {
+                "Ticket_ID": f"TK-{datetime.now().strftime('%y%m%d%H%M')}",
+                "Date_Report": get_thai_time_str(),
+                "Driver_ID": driver_id,
+                "Vehicle_Plate": st.session_state.vehicle_plate,
+                "Issue_Type": issue,
+                "Priority": urgency,
+                "Description": desc,
+                "Photo_Url": img_str,
+                "Status": "รอดำเนินการ"
+            }
+            create_repair_ticket(ticket)
+            st.success("ส่งเรื่องแจ้งซ่อมแล้ว! ช่างจะตรวจสอบและอนุมัติในระบบ")
+            time.sleep(2)
             st.rerun()
-
-    # --- 3. เติมน้ำมัน ---
-    elif menu == "⛽ เติมน้ำมัน":
-        st.subheader("⛽ บันทึกการเติมน้ำมัน")
-        
-        plate = st.session_state.vehicle_plate
-        last_odo = get_last_fuel_odometer(plate)
-        if pd.isna(last_odo): last_odo = 0.0
-        
-        std_rate = get_consumption_rate_by_driver(st.session_state.driver_id)
-        act_rate, _, _ = calculate_actual_consumption(plate)
-        
-        c1, c2 = st.columns(2)
-        c1.metric("เกณฑ์มาตรฐาน", f"{std_rate:.1f} กม./ลิตร")
-        c2.metric("ทำได้จริง (เฉลี่ย)", f"{act_rate:.2f} กม./ลิตร")
-
-        with st.form("fuel_form"):
-            st.info(f"🔢 เลขไมล์ล่าสุดในระบบ: {last_odo:,.0f}")
-            f_station = st.text_input("ชื่อปั๊มน้ำมัน", "ปตท.")
-            f_odo = st.number_input("เลขไมล์ปัจจุบัน", min_value=int(last_odo))
-            
-            calc_rate = std_rate if std_rate > 0 else 10.0
-            dist_run = f_odo - last_odo
-            suggest_liters = dist_run / calc_rate if dist_run > 0 else 0
-            
-            if dist_run > 0:
-                st.success(f"💡 วิ่งมา: {dist_run:,.0f} กม. | ⛽ ควรเติม: {suggest_liters:.1f} ลิตร")
-            
-            f_liters = st.number_input("จำนวนลิตร", 0.0)
-            f_price = st.number_input("จำนวนเงิน (บาท)", 0.0)
-            uploaded = st.file_uploader("รูปสลิป/หน้าปัด", accept_multiple_files=True)
-            
-            if st.form_submit_button("บันทึกข้อมูล"):
-                if f_odo <= last_odo and last_odo > 0:
-                    st.error("เลขไมล์ต้องมากกว่าครั้งก่อน")
-                elif f_liters <= 0 or f_price <= 0:
-                    st.error("กรุณากรอกข้อมูลให้ครบ")
-                else:
-                    img_str = process_multiple_images(uploaded) if uploaded else "-"
-                    log_id = f"FUEL-{datetime.now().strftime('%y%m%d%H%M%S')}"
-                    data = {
-                        "Log_ID": log_id, "Date_Time": get_thai_time_str(),
-                        "Driver_ID": st.session_state.driver_id, "Vehicle_Plate": plate,
-                        "Odometer": f_odo, "Liters": f_liters, "Price_Total": f_price,
-                        "Station_Name": f_station, "Photo_Url": img_str
-                    }
-                    if create_fuel_log(data):
-                        st.success("บันทึกสำเร็จ!")
-                        load_driver_data.clear()
-                        time.sleep(1.5)
-                        st.rerun()
-
-    # --- 4. แจ้งซ่อม ---
-    elif menu == "🔧 แจ้งซ่อม":
-        st.subheader("🔧 แจ้งซ่อม / บำรุงรักษา")
-        
-        maint_df = get_maintenance_status_all()
-        if not maint_df.empty:
-            plate = str(st.session_state.vehicle_plate)
-            my_alerts = maint_df[(maint_df['Vehicle_Plate'] == plate) & (maint_df['Is_Due'] == True)]
-            if not my_alerts.empty:
-                st.error(f"⚠️ มีรายการต้องบำรุงรักษา {len(my_alerts)} รายการ")
-                for _, row in my_alerts.iterrows():
-                    st.write(f"- {row['Service_Type']} ({row['Note']})")
-                st.divider()
-
-        with st.form("repair_form"):
-            issue = st.selectbox("หมวดหมู่", ["เครื่องยนต์", "ยาง/ล้อ", "ช่วงล่าง", "ระบบไฟ", "อุบัติเหตุ", "อื่นๆ"])
-            priority = st.selectbox("ความเร่งด่วน", ["ปกติ", "ด่วน", "ฉุกเฉิน (รถวิ่งไม่ได้)"])
-            desc = st.text_area("รายละเอียดปัญหา")
-            imgs = st.file_uploader("รูปภาพประกอบ", accept_multiple_files=True)
-            
-            if st.form_submit_button("ส่งแจ้งซ่อม"):
-                if not desc:
-                    st.error("กรุณาระบุรายละเอียด")
-                else:
-                    img_str = process_multiple_images(imgs) if imgs else "-"
-                    ticket = {
-                        "Ticket_ID": f"TK-{datetime.now().strftime('%y%m%d%H%M%S')}",
-                        "Date_Report": get_thai_time_str(),
-                        "Driver_ID": st.session_state.driver_id,
-                        "Vehicle_Plate": st.session_state.vehicle_plate,
-                        "Issue_Type": issue, "Priority": priority,
-                        "Description": desc, "Photo_Url": img_str, "Status": "รอดำเนินการ"
-                    }
-                    if create_repair_ticket(ticket):
-                        st.success("ส่งเรื่องแล้ว")
-                        time.sleep(2)
-                        st.rerun()

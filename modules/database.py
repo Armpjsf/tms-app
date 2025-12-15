@@ -27,21 +27,40 @@ SCHEMAS = {
         "Cost_Driver_Return", "Cost_Driver_Other", "Cost_Driver_Total",
         "Payment_Status", "PD", "Failed_Reason", "Failed_Time",
         "Rating", "Customer_Comment", "Barcodes",
-        "Payment_Date", "Payment_Slip_Url" # <--- เพิ่ม: วันที่จ่ายเงิน, รูปสลิป
+        "Payment_Date", "Payment_Slip_Url",
+        "Billing_Status", "Invoice_No", "Billing_Date"
     ],
     "Fuel_Logs": ["Log_ID", "Date_Time", "Driver_ID", "Vehicle_Plate", "Odometer", "Liters", "Price_Total", "Station_Name", "Photo_Url"],
     "Maintenance_Logs": ["Log_ID", "Date_Service", "Vehicle_Plate", "Service_Type", "Odometer", "Next_Due_Odometer", "Notes"],
     "Repair_Tickets": ["Ticket_ID", "Date_Report", "Driver_ID", "Vehicle_Plate", "Issue_Type", "Description", "Photo_Url", "Status", "Approver", "Cost_Total", "Date_Finish"],
     "Stock_Parts": ["Part_ID", "Part_Name", "Qty_On_Hand", "Unit_Price"],
+    
+    # --- จัดเรียงคอลัมน์ Master_Drivers ใหม่ ให้เป็นหมวดหมู่ ---
     "Master_Drivers": [
-        "Driver_ID", "Driver_Name", "Vehicle_Plate", "Vehicle_Type", 
-        "Mobile_No", "Line_User_ID", "Password", "Driver_Score", 
-        "Current_Lat", "Current_Lon", "Last_Update", "Current_Mileage",
-        "Next_Service_Mileage", "Last_Service_Date", "Insurance_Expiry", "Role",
-        "Max_Weight_kg", "Max_Volume_cbm",
-        "Bank_Name", "Bank_Account_No", "Bank_Account_Name" # <--- เพิ่ม: ข้อมูลธนาคาร
+        # 1. ข้อมูลส่วนตัว
+        "Driver_ID", "Driver_Name", "Role", "Mobile_No", "Line_User_ID", "Password",
+        
+        # 2. ข้อมูลรถ
+        "Vehicle_Plate", "Vehicle_Type", "Max_Weight_kg", "Max_Volume_cbm",
+        
+        # 3. เอกสารและวันหมดอายุ (Grouped)
+        "Insurance_Expiry", "Tax_Expiry", "Act_Expiry",
+        
+        # 4. การบำรุงรักษา
+        "Current_Mileage", "Next_Service_Mileage", "Last_Service_Date",
+        
+        # 5. ข้อมูลการเงิน
+        "Bank_Name", "Bank_Account_No", "Bank_Account_Name",
+        
+        # 6. ระบบติดตาม
+        "Driver_Score", "Current_Lat", "Current_Lon", "Last_Update"
     ],
-    "Master_Customers": ["Customer_ID", "Customer_Name", "Default_Origin", "Contact_Person", "Phone"],
+    # --------------------------------------------------------
+
+    "Master_Customers": [
+        "Customer_ID", "Customer_Name", "Default_Origin", "Contact_Person", "Phone",
+        "Address", "Tax_ID"  # <--- เพิ่ม 2 คอลัมน์นี้
+    ],
     "Master_Routes": ["Route_Name", "Origin", "Map_Link Origin", "Destination", "Map_Link Destination", "Distance_KM"],
     "System_Config": ["Key", "Value", "Description"],
     "Rate_Card": ["Distance_KM", "Price_4W", "Price_6W", "Price_10W"]
@@ -80,18 +99,21 @@ def load_all_data():
             if missing_cols:
                 for c in missing_cols: df[c] = ""
 
-            # เพิ่ม 'Bank_Account_No', 'Mobile_No' เข้าไปในรายการที่ต้องบังคับเป็น Text
+            # Force specific columns to string
             cols_to_force_string = [
                 'Job_ID', 'Driver_ID', 'Customer_ID', 'Vehicle_Plate', 
                 'Bank_Account_No', 'Mobile_No', 'Bank_Account_Name'
             ]
-            
             for col in cols_to_force_string:
                 if col in df.columns:
-                    # แปลงเป็น string, ตัด .0 และช่องว่าง
                     df[col] = df[col].astype(str).str.replace(r'\.0$', '', regex=True).str.strip()
-                    # เปลี่ยนค่า 'nan' ให้เป็นค่าว่าง
                     df.loc[df[col] == 'nan', col] = ""
+            
+            # *** สำคัญ: จัดเรียงคอลัมน์ใหม่ตาม Schema เพื่อความสวยงาม ***
+            # ถ้ามีคอลัมน์เกินมา (เช่น User สร้างเองใน Excel) ก็จะเก็บไว้ต่อท้าย
+            valid_cols = [c for c in schema_cols if c in df.columns]
+            extra_cols = [c for c in df.columns if c not in schema_cols]
+            df = df[valid_cols + extra_cols]
             
             data[name] = df
         except:
