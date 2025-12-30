@@ -106,13 +106,16 @@ class MaintenancePriority:
 
 # Repair Ticket Status
 class RepairStatus:
-    OPEN = "รอดำเนินการ"
-    IN_PROGRESS = "กำลังซ่อม"
-    WAITING_PARTS = "รออะไหล่"
-    COMPLETED = "เสร็จสิ้น"
-    CANCELLED = "ยกเลิก"
+    OPEN = "Open"
+    IN_PROGRESS = "In Progress"
+    WAITING_PARTS = "Waiting Parts"
+    APPROVED = "Approved"
+    REJECTED = "Rejected"
+    COMPLETED = "Completed"
+    CANCELLED = "Cancelled"
     
-    ALL = [OPEN, IN_PROGRESS, WAITING_PARTS, COMPLETED, CANCELLED]
+    # Map for Thai display if needed, but keeping internal keys simple
+    ALL = [OPEN, APPROVED, REJECTED, IN_PROGRESS, WAITING_PARTS, COMPLETED, CANCELLED]
 
 # WMS Transaction Types
 class WMSTransactionType:

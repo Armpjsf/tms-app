@@ -164,6 +164,16 @@ def get_label(key: str) -> str:
     lang = st.session_state.get("lang", "th")
     return LABELS.get(lang, LABELS["th"]).get(key, key)
 
+def _update_ticket_status(ticket_id, status, note):
+    if repo.update_field_bulk("Repair_Tickets", "Ticket_ID", [ticket_id], "Status", status):
+        if note:
+            # Append note if exists
+            repo.update_field_bulk("Repair_Tickets", "Ticket_ID", [ticket_id], "Remark", note)
+        st.success(f"Ticket {ticket_id} updated to {status}")
+        st.rerun()
+    else:
+        st.error(f"Failed to update ticket: {repo.last_error}")
+
 def render_maintenance_view():
     st.markdown(f"### {get_label('title')}")
     
@@ -203,10 +213,58 @@ def _render_repair_tickets():
         col1, col2, col3, col4 = st.columns(4)
         with col1: st.markdown(render_metric_card(get_label('total'), f"{len(tickets)}", icon="📋"), unsafe_allow_html=True)
         with col2: st.markdown(render_metric_card(get_label('open'), f"{len(tickets[tickets['Status'] == RepairStatus.OPEN])}", icon="🔴", accent_color="accent-red"), unsafe_allow_html=True)
-        with col3: st.markdown(render_metric_card(get_label('in_progress'), f"{len(tickets[tickets['Status'] == RepairStatus.IN_PROGRESS])}", icon="🟡", accent_color="accent-orange"), unsafe_allow_html=True)
+        with col3: st.markdown(render_metric_card(get_label('in_progress'), f"{len(tickets[tickets['Status'].isin([RepairStatus.IN_PROGRESS, RepairStatus.APPROVED])])}", icon="🟡", accent_color="accent-orange"), unsafe_allow_html=True)
         with col4: st.markdown(render_metric_card(get_label('completed'), f"{len(tickets[tickets['Status'] == RepairStatus.COMPLETED])}", icon="✅", accent_color="accent-green"), unsafe_allow_html=True)
     
     st.markdown("---")
+    
+    # --- New Approval Section ---
+    pending_tickets = tickets[tickets['Status'] == RepairStatus.OPEN]
+    if not pending_tickets.empty:
+        st.warning(f"⚠️ มีใบแจ้งซ่อมรออนุมัติ {len(pending_tickets)} รายการ (Pending Approval)")
+        for _, tk in pending_tickets.iterrows():
+             with st.expander(f"🛠️ {tk['Ticket_ID']} | {tk.get('Issue_Type', 'N/A')} | {tk.get('Vehicle_Plate', '-')}", expanded=True):
+                c1, c2, c3 = st.columns([2, 1, 1])
+                with c1:
+                    st.write(f"**Desc:** {tk.get('Description', '-')}")
+                    st.write(f"**Est Cost:** {tk.get('Cost_Total', 0)}")
+                    # Show image
+                    img_url = tk.get('Photo_Url')
+                    if img_url:
+                        try:
+                            import json
+                            imgs = json.loads(img_url)
+                            if imgs and isinstance(imgs, list): st.image(imgs[0], width=200)
+                        except: pass
+                with c2:
+                     note = st.text_input("หมายเหตุ", key=f"note_tk_{tk['Ticket_ID']}")
+                with c3:
+                    if st.button("✅ อนุมัติ (Approve)", key=f"app_tk_{tk['Ticket_ID']}", type="primary"):
+                        _update_ticket_status(tk['Ticket_ID'], "Approved", note)
+                    if st.button("❌ ไม่อนุมัติ (Reject)", key=f"rej_tk_{tk['Ticket_ID']}"):
+                        _update_ticket_status(tk['Ticket_ID'], "Rejected", note)
+        st.markdown("---")
+
+    # --- Active / Approved Section ---
+    active_tickets = tickets[tickets['Status'].isin([RepairStatus.APPROVED, RepairStatus.IN_PROGRESS])]
+    if not active_tickets.empty:
+        st.info(f"🔧 กำลังดำเนินการซ่อม {len(active_tickets)} รายการ (InProgress)")
+        for _, tk in active_tickets.iterrows():
+            with st.expander(f"⚙️ {tk['Ticket_ID']} | {tk['Status']} | {tk.get('Vehicle_Plate', '-')}", expanded=False):
+                c1, c2 = st.columns([3, 1])
+                with c1:
+                    st.write(f"**Issue:** {tk.get('Description', '-')}")
+                    st.write(f"**Approver Note:** {tk.get('Remark', '-')}")
+                    
+                with c2:
+                    # Admin can close the ticket
+                    if st.button("🏁 ปิดงาน (Complete)", key=f"comp_{tk['Ticket_ID']}"):
+                         _update_ticket_status(tk['Ticket_ID'], "Completed", "Closed by Admin")
+
+    st.markdown("---")
+
+
+
     
     # Create new ticket
     with st.expander(f"➕ {get_label('create_ticket')}", expanded=False):
@@ -334,9 +392,11 @@ def _render_repair_tickets():
                         if tk.get('Vendor_ID') and pay_status != 'Paid':
                              tickets.loc[tickets['Ticket_ID'] == tk['Ticket_ID'], 'Payment_Status'] = 'รอจ่าย'
                     
-                    repo.update_data("Repair_Tickets", tickets)
-                    st.success(get_label('success'))
-                    st.rerun()
+                    if repo.update_data("Repair_Tickets", tickets):
+                        st.success(get_label('success'))
+                        st.rerun()
+                    else:
+                        st.error(f"Failed to update: {repo.last_error}")
 
 def _render_preventive_maintenance():
     """Preventive maintenance scheduler."""

@@ -81,7 +81,7 @@ SCHEMAS = {
     ],
     "Fuel_Logs": [
         "Log_ID", "Date_Time", "Driver_ID", "Vehicle_Plate", "Odometer", "Liters", 
-        "Price_Total", "Station_Name", "Photo_Url", "Branch_ID", "Created_By"
+        "Price_Total", "Station_Name", "Photo_Url", "Branch_ID", "Created_By", "Status", "Reviewer_Note"
     ],
     "Maintenance_Logs": [
         "Log_ID", "Date_Service", "Vehicle_Plate", "Service_Type", "Odometer", 

@@ -15,11 +15,82 @@ def render_fuel_view():
     
     tab1, tab2 = st.tabs(["📊 ภาพรวม & วิเคราะห์ (Analytics)", "📝 รายการเติมน้ำมัน (Transaction Logs)"])
     
+    display_approval_section()
+    
     with tab1:
         _render_analytics()
         
     with tab2:
         _render_logs()
+
+def display_approval_section():
+    """Section for approving pending fuel requests."""
+    fuel = repo.get_data("Fuel_Logs")
+    
+    # Filter for 'Pending' status (case-insensitive)
+    if not fuel.empty and 'Status' in fuel.columns:
+        pending = fuel[fuel['Status'].fillna('Pending').str.lower() == 'pending'].copy()
+    else:
+        # Backward compatibility: if no status col, assume approved or handle migration?
+        # For new feature, we handle those without status as pending or ignore?
+        # Let's treat NaN as Pending for now if column exists
+        pending = pd.DataFrame()
+        
+    if not pending.empty:
+        st.warning(f"⚠️ มีรายการขออนุมัติเติมน้ำมัน {len(pending)} รายการ (Pending Requests)")
+        
+        for _, row in pending.iterrows():
+            with st.expander(f"⛽ {row['Log_ID']} | {row.get('Driver_ID', 'N/A')} | ฿{row.get('Price_Total', 0):,.2f}", expanded=True):
+                c1, c2, c3 = st.columns([2, 1, 1])
+                with c1:
+                    st.write(f"**Station:** {row.get('Station_Name', '-')}")
+                    st.write(f"**Liters:** {row.get('Liters', 0)} L")
+                    st.write(f"**Time:** {row.get('Date_Time', '-')}")
+                    
+                    # Show image if exists
+                    img_url = row.get('Photo_Url')
+                    if img_url:
+                        # Simple check for array string
+                        import json
+                        try:
+                            imgs = json.loads(img_url)
+                            if imgs and isinstance(imgs, list): st.image(imgs[0], width=200)
+                        except:
+                            if isinstance(img_url, str) and img_url.startswith('http'):
+                                st.image(img_url, width=200)
+
+                with c2:
+                    remark = st.text_input("หมายเหตุ (Note)", key=f"note_{row['Log_ID']}")
+                    
+                with c3:
+                    if st.button("✅ อนุมัติ", key=f"app_{row['Log_ID']}", type="primary"):
+                        _update_fuel_status(row['Log_ID'], "Approved", remark)
+                    if st.button("❌ ไม่อนุมัติ", key=f"rej_{row['Log_ID']}"):
+                        _update_fuel_status(row['Log_ID'], "Rejected", remark)
+
+    # --- Recent Approved Section (Last 20) ---
+    if 'Status' in fuel.columns:
+        approved = fuel[fuel['Status'].str.lower() == 'approved'].sort_values('Date_Time', ascending=False).head(20)
+        if not approved.empty:
+            with st.expander(f"✅ รายการอนุมัติล่าสุด ({len(approved)})", expanded=False):
+                st.dataframe(
+                    approved[['Log_ID', 'Date_Time', 'Driver_ID', 'Station_Name', 'Liters', 'Price_Total', 'Reviewer_Note']],
+                    use_container_width=True,
+                    hide_index=True
+                )
+    
+    st.markdown("---")
+
+def _update_fuel_status(log_id, status, note):
+    try:
+        repo.update_field_bulk("Fuel_Logs", "Log_ID", [log_id], "Status", status)
+        if note:
+            repo.update_field_bulk("Fuel_Logs", "Log_ID", [log_id], "Reviewer_Note", note)
+        st.success(f"Status updated to {status}")
+        st.rerun()
+    except Exception as e:
+        st.error(f"Error: {e}")
+
 
 def _render_fuel_form():
     """Form to record new fuel transaction."""

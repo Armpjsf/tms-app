@@ -228,13 +228,21 @@ class Repository:
 
     def update_field_bulk(self, table_name: str, id_col: str, ids: list, field: str, value: any) -> bool:
         """Update a specific field for multiple records."""
-        if not self.client: return False
+        # Authenticate if needed
+        if not self.client:
+             self.client = self._init_supabase()
+             
+        if not self.client:
+            self.last_error = "Supabase Client Connection Failed"
+            return False
+            
         try:
             self.client.table(table_name).update({field: value}).in_(id_col, ids).execute()
             clear_cache_for_table(table_name)
             return True
         except Exception as e:
             logger.error(f"Bulk Update Error ({table_name}): {e}")
+            self.last_error = str(e)
             return False
 
     def _sanitize_record(self, record: dict) -> dict:
