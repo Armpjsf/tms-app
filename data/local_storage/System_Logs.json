@@ -133,5 +133,149 @@
     "Target": "AuthService",
     "Details": "User logged in",
     "Status": "Success"
+  },
+  {
+    "Log_ID": "LOG-1767156974954",
+    "Timestamp": "2025-12-31 11:56:14",
+    "User_ID": "admin",
+    "Action": "CREATE_JOB",
+    "Target": "TEST-001",
+    "Details": "Created job for Test Customer",
+    "Status": "Success"
+  },
+  {
+    "Log_ID": "LOG-1767157021959",
+    "Timestamp": "2025-12-31 11:57:01",
+    "User_ID": "admin",
+    "Action": "CREATE_JOB",
+    "Target": "TEST-001",
+    "Details": "Created job for Test Customer",
+    "Status": "Success"
+  },
+  {
+    "Log_ID": "LOG-1767157140358",
+    "Timestamp": "2025-12-31 11:59:00",
+    "User_ID": "admin",
+    "Action": "CREATE_JOB",
+    "Target": "TEST-001",
+    "Details": "Created job for Test Customer",
+    "Status": "Success"
+  },
+  {
+    "Log_ID": "LOG-1767157347947",
+    "Timestamp": "2025-12-31 12:02:27",
+    "User_ID": "admin",
+    "Action": "CREATE_JOB",
+    "Target": "TEST-001",
+    "Details": "Created job for Test Customer",
+    "Status": "Success"
+  },
+  {
+    "Log_ID": "LOG-1767157416416",
+    "Timestamp": "2025-12-31 12:03:36",
+    "User_ID": "admin",
+    "Action": "CREATE_JOB",
+    "Target": "TEST-001",
+    "Details": "Created job for Test Customer",
+    "Status": "Success"
+  },
+  {
+    "Log_ID": "LOG-1767157821458",
+    "Timestamp": "2025-12-31 12:10:21",
+    "User_ID": "admin",
+    "Action": "CREATE_JOB",
+    "Target": "TEST-001",
+    "Details": "Created job for Test Customer",
+    "Status": "Success"
+  },
+  {
+    "Log_ID": "LOG-1767158104678",
+    "Timestamp": "2025-12-31 12:15:04",
+    "User_ID": "admin",
+    "Action": "CREATE_JOB",
+    "Target": "JOB-001",
+    "Details": "Created new job",
+    "Status": "Success"
+  },
+  {
+    "Log_ID": "LOG-1767158104801",
+    "Timestamp": "2025-12-31 12:15:04",
+    "User_ID": "admin",
+    "Action": "DELETE_JOB",
+    "Target": "JOB-001",
+    "Details": "Job deleted",
+    "Status": "Failed"
+  },
+  {
+    "Log_ID": "LOG-1767158104918",
+    "Timestamp": "2025-12-31 12:15:04",
+    "User_ID": "admin",
+    "Action": "TEST",
+    "Target": "TEST-001",
+    "Details": null,
+    "Status": "Success"
+  },
+  {
+    "Log_ID": "LOG-1767158106587",
+    "Timestamp": "2025-12-31 12:15:06",
+    "User_ID": "admin",
+    "Action": "CREATE_JOB",
+    "Target": "TEST-001",
+    "Details": "Created job for Test Customer",
+    "Status": "Success"
+  },
+  {
+    "Log_ID": "LOG-1767158247315",
+    "Timestamp": "2025-12-31 12:17:27",
+    "User_ID": "admin",
+    "Action": "CREATE_JOB",
+    "Target": "JOB-001",
+    "Details": "Created new job",
+    "Status": "Success"
+  },
+  {
+    "Log_ID": "LOG-1767158247575",
+    "Timestamp": "2025-12-31 12:17:27",
+    "User_ID": "admin",
+    "Action": "DELETE_JOB",
+    "Target": "JOB-001",
+    "Details": "Job deleted",
+    "Status": "Failed"
+  },
+  {
+    "Log_ID": "LOG-1767158247701",
+    "Timestamp": "2025-12-31 12:17:27",
+    "User_ID": "admin",
+    "Action": "TEST",
+    "Target": "TEST-001",
+    "Details": null,
+    "Status": "Success"
+  },
+  {
+    "Log_ID": "LOG-1767158594036",
+    "Timestamp": "2025-12-31 12:23:14",
+    "User_ID": "admin",
+    "Action": "CREATE_JOB",
+    "Target": "JOB-001",
+    "Details": "Created new job",
+    "Status": "Success"
+  },
+  {
+    "Log_ID": "LOG-1767158594137",
+    "Timestamp": "2025-12-31 12:23:14",
+    "User_ID": "admin",
+    "Action": "DELETE_JOB",
+    "Target": "JOB-001",
+    "Details": "Job deleted",
+    "Status": "Failed"
+  },
+  {
+    "Log_ID": "LOG-1767158594257",
+    "Timestamp": "2025-12-31 12:23:14",
+    "User_ID": "admin",
+    "Action": "TEST",
+    "Target": "TEST-001",
+    "Details": null,
+    "Status": "Success"
   }
 ]

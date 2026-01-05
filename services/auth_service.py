@@ -16,27 +16,70 @@ ROLES = {
 }
 
 import os
+from argon2 import PasswordHasher
+from argon2.exceptions import VerifyMismatchError, InvalidHash
 
-# --- Password Hashing Utilities ---
+# Initialize Argon2 hasher with OWASP recommended parameters
+ph = PasswordHasher(
+    time_cost=2,        # Number of iterations
+    memory_cost=65536,  # 64 MB
+    parallelism=4,      # Number of parallel threads
+    hash_len=32,        # Length of hash in bytes
+    salt_len=16         # Length of salt in bytes
+)
+
+# --- Password Hashing Utilities (Upgraded to Argon2) ---
 def hash_password(password: str) -> str:
-    """Hash a password using SHA-256 with salt from environment."""
-    # SECURITY: Use unique salt from environment variable
-    salt = os.getenv("TMS_PASSWORD_SALT", "CHANGE_THIS_IN_PRODUCTION_12345")
-    if salt == "CHANGE_THIS_IN_PRODUCTION_12345":
-        logger.warning("⚠️ Using default password salt - SET TMS_PASSWORD_SALT environment variable in production!")
-    return hashlib.sha256(f"{salt}{password}".encode()).hexdigest()
+    """
+    Hash a password using Argon2id (OWASP recommended).
+    
+    Argon2id is the winner of the Password Hashing Competition and is
+    recommended by OWASP for password storage.
+    
+    Args:
+        password: Plain text password
+        
+    Returns:
+        Argon2 hash string (starts with $argon2id$)
+    """
+    return ph.hash(password)
 
 def verify_password(password: str, stored_password: str) -> bool:
     """
     Verify password against stored value.
-    Supports both plain text (for migration) and hashed passwords.
+    Supports Argon2, SHA-256 (legacy), and plain text (for migration).
+    
+    Args:
+        password: Plain text password to verify
+        stored_password: Stored hash or plain text password
+        
+    Returns:
+        True if password matches, False otherwise
     """
-    # Check if stored password is a SHA-256 hash (64 hex characters)
-    if len(stored_password) == 64 and all(c in '0123456789abcdef' for c in stored_password.lower()):
-        # It's hashed, verify against hash
-        return hash_password(password) == stored_password.lower()
+    # Check if it's an Argon2 hash
+    if stored_password.startswith('$argon2'):
+        try:
+            ph.verify(stored_password, password)
+            
+            # Check if hash needs rehashing (parameters changed)
+            if ph.check_needs_rehash(stored_password):
+                logger.info("Password hash needs rehashing with new parameters")
+                # Note: Actual rehashing should be done after successful login
+                
+            return True
+        except (VerifyMismatchError, InvalidHash):
+            return False
+    
+    # Legacy SHA-256 hash (64 hex characters)
+    elif len(stored_password) == 64 and all(c in '0123456789abcdef' for c in stored_password.lower()):
+        logger.warning("⚠️ Legacy SHA-256 password detected - will be upgraded on next login")
+        salt = os.getenv("TMS_PASSWORD_SALT", "CHANGE_THIS_IN_PRODUCTION_12345")
+        legacy_hash = hashlib.sha256(f"{salt}{password}".encode()).hexdigest()
+        return legacy_hash == stored_password.lower()
+    
+    # Plain text password (legacy) - direct comparison
     else:
-        # Plain text password (legacy) - direct comparison
+        logger.warning("⚠️ Plain text password detected - will be upgraded on next login")
         return password == stored_password
 
 class AuthService:
@@ -63,6 +106,19 @@ class AuthService:
         if verify_password(password, raw_pw):
             user = target.iloc[0]
             role = user.get("Role", "DRIVER").upper()
+            
+            # Auto-migrate legacy passwords to Argon2
+            if not raw_pw.startswith('$argon2'):
+                try:
+                    new_hash = hash_password(password)
+                    repo.update_data(
+                        "Master_Users",
+                        {"Password": new_hash},
+                        {"Username": username}
+                    )
+                    logger.info(f"✅ Migrated password for user '{username}' to Argon2")
+                except Exception as e:
+                    logger.error(f"Failed to migrate password for '{username}': {e}")
             
             # Log success
             AuditService.log_action(username, "LOGIN", "AuthService", "User logged in")

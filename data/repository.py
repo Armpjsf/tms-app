@@ -80,51 +80,60 @@ def _cached_fetch(table_name: str, branch_id: str = "ALL", filters: dict = None,
     """
     Cached fetch from Supabase using st.cache_data.
     Supports filtering and limiting to optimize performance.
+    Includes Retry Logic for '[Errno 11] Resource temporarily unavailable'.
     """
-    try:
-        from services.supabase_client import get_supabase_client
-        client = get_supabase_client()
-        
-        # Optimize selection: select specific columns if needed, else *
-        query = client.table(table_name).select(columns)
-        # Apply branch filter if needed
-        tables_with_branch = ["Jobs_Main", "Master_Drivers", "Master_Customers", "Fuel_Logs"]
-        if branch_id not in ["ALL", "HEAD"] and table_name in tables_with_branch:
-            query = query.eq("Branch_ID", branch_id)
-        # Apply custom filters
-        if filters:
-            for col, val in filters.items():
-                query = query.eq(col, val)
-        # Apply date filtering
-        if date_column and days_back:
-            cutoff_date = (datetime.now() - timedelta(days=days_back)).strftime('%Y-%m-%d')
-            query = query.gte(date_column, cutoff_date)
-
-        # Apply limit using range to ensure correct row count
-        if limit:
-            query = query.range(0, limit - 1)
-        response = query.execute()
-        data = response.data
-        if not data:
-            cols = SCHEMAS.get(table_name, [])
-            return pd.DataFrame(columns=cols)
-        return pd.DataFrame(data)
-        
-    except Exception as e:
-        logger.error(f"Cached Fetch Error ({table_name}): {e}")
-        
-        # Handle "Table not found" (PGRST205) -> Use Local Fallback
-        if "PGRST205" in str(e) or "Could not find the table" in str(e):
-             logger.info(f"Table '{table_name}' not found in DB. switching to local storage.")
-             return _load_local_fallback(table_name)
-                
-        # Show specific error in UI (Admin friendly)
-        if hasattr(st, "session_state"):
-            if "PGRST205" not in str(e):
-                st.error(f"❌ Error fetching '{table_name}': {str(e)}")
+    import time
+    import random
+    
+    max_retries = 3
+    base_delay = 1
+    
+    for attempt in range(max_retries):
+        try:
+            from services.supabase_client import get_supabase_client
+            client = get_supabase_client()
             
-        cols = SCHEMAS.get(table_name, [])
-        return pd.DataFrame(columns=cols)
+            # Optimize selection: select specific columns if needed, else *
+            query = client.table(table_name).select(columns)
+            # Apply branch filter if needed
+            tables_with_branch = ["Jobs_Main", "Master_Drivers", "Master_Customers", "Fuel_Logs"]
+            if branch_id not in ["ALL", "HEAD"] and table_name in tables_with_branch:
+                query = query.eq("Branch_ID", branch_id)
+            # Apply custom filters
+            if filters:
+                for col, val in filters.items():
+                    query = query.eq(col, val)
+            # Apply date filtering
+            if date_column and days_back:
+                cutoff_date = (datetime.now() - timedelta(days=days_back)).strftime('%Y-%m-%d')
+                query = query.gte(date_column, cutoff_date)
+            # Apply limit
+            if limit:
+                query = query.limit(limit)
+                
+            response = query.execute()
+            
+            df = pd.DataFrame(response.data)
+            return df
+            
+        except Exception as e:
+            # Check for resource unavailable error
+            error_msg = str(e)
+            if "Errno 11" in error_msg or "Resource temporarily unavailable" in error_msg:
+                if attempt < max_retries - 1:
+                    sleep_time = (base_delay * (2 ** attempt)) + (random.randint(0, 1000) / 1000)
+                    logger.warning(f"Resource unavailable for {table_name}, retrying in {sleep_time:.2f}s... (Attempt {attempt+1}/{max_retries})")
+                    time.sleep(sleep_time)
+                    continue
+            
+            # For other errors or final attempt, log and fallback
+            logger.error(f"Error fetching {table_name}: {e}")
+            break
+            
+    # Fallback to local
+    return _load_local_fallback(table_name)
+
+
 
 
 def clear_cache_for_table(table_name: str):

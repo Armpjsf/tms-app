@@ -1,0 +1,23 @@
+[MASTER]
+max-line-length=120
+disable=C0111,R0903,C0103,W0703,R0913,R0914
+
+[MESSAGES CONTROL]
+confidence=HIGH
+
+[FORMAT]
+max-line-length=120
+indent-string='    '
+
+[BASIC]
+good-names=i,j,k,ex,Run,_,id,df,sb,ph
+
+[DESIGN]
+max-args=7
+max-attributes=10
+max-locals=20
+
+[SIMILARITIES]
+min-similarity-lines=10
+ignore-comments=yes
+ignore-docstrings=yes

@@ -1,0 +1,541 @@
+[
+  {
+    "Txn_Type": "INBOUND",
+    "Item_ID": "ITEM-001",
+    "Qty": 100,
+    "Date": "2025-12-31T12:12:49.589913",
+    "Ref_Job": NaN
+  },
+  {
+    "Txn_Type": "INBOUND",
+    "Item_ID": "ITEM-002",
+    "Qty": 0,
+    "Date": "2025-12-31T12:12:51.168376",
+    "Ref_Job": NaN
+  },
+  {
+    "Txn_Type": "INBOUND",
+    "Item_ID": "ITEM-003",
+    "Qty": 10000,
+    "Date": "2025-12-31T12:12:51.478924",
+    "Ref_Job": NaN
+  },
+  {
+    "Txn_Type": "INBOUND",
+    "Item_ID": "ITEM-004",
+    "Qty": 50,
+    "Date": "2025-12-31T12:12:51.633015",
+    "Ref_Job": NaN
+  },
+  {
+    "Txn_Type": "INBOUND",
+    "Item_ID": "ITEM-004",
+    "Qty": 50,
+    "Date": "2025-12-31T12:12:51.717242",
+    "Ref_Job": NaN
+  },
+  {
+    "Txn_Type": "INBOUND",
+    "Item_ID": "ITEM-004",
+    "Qty": 50,
+    "Date": "2025-12-31T12:12:51.833441",
+    "Ref_Job": NaN
+  },
+  {
+    "Txn_Type": "INBOUND",
+    "Item_ID": "ITEM-004",
+    "Qty": 50,
+    "Date": "2025-12-31T12:12:51.953126",
+    "Ref_Job": NaN
+  },
+  {
+    "Txn_Type": "INBOUND",
+    "Item_ID": "ITEM-WORKFLOW",
+    "Qty": 100,
+    "Date": "2025-12-31T12:12:53.932979",
+    "Ref_Job": NaN
+  },
+  {
+    "Txn_Type": "INBOUND",
+    "Item_ID": "ITEM-BATCH-1",
+    "Qty": 100,
+    "Date": "2025-12-31T12:12:54.528309",
+    "Ref_Job": NaN
+  },
+  {
+    "Txn_Type": "INBOUND",
+    "Item_ID": "ITEM-BATCH-2",
+    "Qty": 200,
+    "Date": "2025-12-31T12:12:54.630726",
+    "Ref_Job": NaN
+  },
+  {
+    "Txn_Type": "INBOUND",
+    "Item_ID": "ITEM-BATCH-3",
+    "Qty": 150,
+    "Date": "2025-12-31T12:12:54.728961",
+    "Ref_Job": NaN
+  },
+  {
+    "Txn_Type": "INBOUND",
+    "Item_ID": "ITEM-001",
+    "Qty": 100,
+    "Date": "2025-12-31T12:15:07.484292",
+    "Ref_Job": NaN
+  },
+  {
+    "Txn_Type": "INBOUND",
+    "Item_ID": "ITEM-002",
+    "Qty": 0,
+    "Date": "2025-12-31T12:15:07.598634",
+    "Ref_Job": NaN
+  },
+  {
+    "Txn_Type": "INBOUND",
+    "Item_ID": "ITEM-003",
+    "Qty": 10000,
+    "Date": "2025-12-31T12:15:07.726838",
+    "Ref_Job": NaN
+  },
+  {
+    "Txn_Type": "INBOUND",
+    "Item_ID": "ITEM-004",
+    "Qty": 50,
+    "Date": "2025-12-31T12:15:07.844017",
+    "Ref_Job": NaN
+  },
+  {
+    "Txn_Type": "INBOUND",
+    "Item_ID": "ITEM-004",
+    "Qty": 50,
+    "Date": "2025-12-31T12:15:07.964853",
+    "Ref_Job": NaN
+  },
+  {
+    "Txn_Type": "INBOUND",
+    "Item_ID": "ITEM-004",
+    "Qty": 50,
+    "Date": "2025-12-31T12:15:08.063232",
+    "Ref_Job": NaN
+  },
+  {
+    "Txn_Type": "INBOUND",
+    "Item_ID": "ITEM-004",
+    "Qty": 50,
+    "Date": "2025-12-31T12:15:08.172253",
+    "Ref_Job": NaN
+  },
+  {
+    "Txn_Type": "OUTBOUND",
+    "Item_ID": "ITEM-001",
+    "Qty": 50,
+    "Date": "2025-12-31T12:15:08.295826",
+    "Ref_Job": "JOB-001"
+  },
+  {
+    "Txn_Type": "OUTBOUND",
+    "Item_ID": "ITEM-001",
+    "Qty": 10,
+    "Date": "2025-12-31T12:15:08.437349",
+    "Ref_Job": "JOB-002"
+  },
+  {
+    "Txn_Type": "OUTBOUND",
+    "Item_ID": "ITEM-002",
+    "Qty": 20,
+    "Date": "2025-12-31T12:15:08.539969",
+    "Ref_Job": "JOB-002"
+  },
+  {
+    "Txn_Type": "OUTBOUND",
+    "Item_ID": "ITEM-003",
+    "Qty": 30,
+    "Date": "2025-12-31T12:15:08.669095",
+    "Ref_Job": "JOB-002"
+  },
+  {
+    "Txn_Type": "OUTBOUND",
+    "Item_ID": "ITEM-005",
+    "Qty": 25,
+    "Date": "2025-12-31T12:15:08.783761",
+    "Ref_Job": "JOB-001"
+  },
+  {
+    "Txn_Type": "OUTBOUND",
+    "Item_ID": "ITEM-005",
+    "Qty": 25,
+    "Date": "2025-12-31T12:15:08.894155",
+    "Ref_Job": "JOB-002"
+  },
+  {
+    "Txn_Type": "OUTBOUND",
+    "Item_ID": "ITEM-005",
+    "Qty": 25,
+    "Date": "2025-12-31T12:15:09.002127",
+    "Ref_Job": "JOB-003"
+  },
+  {
+    "Txn_Type": "INBOUND",
+    "Item_ID": "ITEM-WORKFLOW",
+    "Qty": 100,
+    "Date": "2025-12-31T12:15:09.115012",
+    "Ref_Job": NaN
+  },
+  {
+    "Txn_Type": "OUTBOUND",
+    "Item_ID": "ITEM-WORKFLOW",
+    "Qty": 30,
+    "Date": "2025-12-31T12:15:09.215548",
+    "Ref_Job": "JOB-WORKFLOW"
+  },
+  {
+    "Txn_Type": "INBOUND",
+    "Item_ID": "ITEM-BATCH-1",
+    "Qty": 100,
+    "Date": "2025-12-31T12:15:09.389118",
+    "Ref_Job": NaN
+  },
+  {
+    "Txn_Type": "INBOUND",
+    "Item_ID": "ITEM-BATCH-2",
+    "Qty": 200,
+    "Date": "2025-12-31T12:15:09.531463",
+    "Ref_Job": NaN
+  },
+  {
+    "Txn_Type": "INBOUND",
+    "Item_ID": "ITEM-BATCH-3",
+    "Qty": 150,
+    "Date": "2025-12-31T12:15:09.672156",
+    "Ref_Job": NaN
+  },
+  {
+    "Txn_Type": "OUTBOUND",
+    "Item_ID": "ITEM-A",
+    "Qty": 10,
+    "Date": "2025-12-31T12:15:09.784640",
+    "Ref_Job": "JOB-BATCH-001"
+  },
+  {
+    "Txn_Type": "OUTBOUND",
+    "Item_ID": "ITEM-B",
+    "Qty": 20,
+    "Date": "2025-12-31T12:15:09.895733",
+    "Ref_Job": "JOB-BATCH-001"
+  },
+  {
+    "Txn_Type": "OUTBOUND",
+    "Item_ID": "ITEM-C",
+    "Qty": 15,
+    "Date": "2025-12-31T12:15:09.996725",
+    "Ref_Job": "JOB-BATCH-001"
+  },
+  {
+    "Txn_Type": "INBOUND",
+    "Item_ID": "ITEM-001",
+    "Qty": 100,
+    "Date": "2025-12-31T12:17:30.695585",
+    "Ref_Job": NaN
+  },
+  {
+    "Txn_Type": "INBOUND",
+    "Item_ID": "ITEM-002",
+    "Qty": 0,
+    "Date": "2025-12-31T12:17:31.111583",
+    "Ref_Job": NaN
+  },
+  {
+    "Txn_Type": "INBOUND",
+    "Item_ID": "ITEM-003",
+    "Qty": 10000,
+    "Date": "2025-12-31T12:17:31.341255",
+    "Ref_Job": NaN
+  },
+  {
+    "Txn_Type": "INBOUND",
+    "Item_ID": "ITEM-004",
+    "Qty": 50,
+    "Date": "2025-12-31T12:17:31.443551",
+    "Ref_Job": NaN
+  },
+  {
+    "Txn_Type": "INBOUND",
+    "Item_ID": "ITEM-004",
+    "Qty": 50,
+    "Date": "2025-12-31T12:17:31.547980",
+    "Ref_Job": NaN
+  },
+  {
+    "Txn_Type": "INBOUND",
+    "Item_ID": "ITEM-004",
+    "Qty": 50,
+    "Date": "2025-12-31T12:17:31.653080",
+    "Ref_Job": NaN
+  },
+  {
+    "Txn_Type": "INBOUND",
+    "Item_ID": "ITEM-004",
+    "Qty": 50,
+    "Date": "2025-12-31T12:17:31.770309",
+    "Ref_Job": NaN
+  },
+  {
+    "Txn_Type": "OUTBOUND",
+    "Item_ID": "ITEM-001",
+    "Qty": 50,
+    "Date": "2025-12-31T12:17:31.892143",
+    "Ref_Job": "JOB-001"
+  },
+  {
+    "Txn_Type": "OUTBOUND",
+    "Item_ID": "ITEM-001",
+    "Qty": 10,
+    "Date": "2025-12-31T12:17:32.126673",
+    "Ref_Job": "JOB-002"
+  },
+  {
+    "Txn_Type": "OUTBOUND",
+    "Item_ID": "ITEM-002",
+    "Qty": 20,
+    "Date": "2025-12-31T12:17:32.232227",
+    "Ref_Job": "JOB-002"
+  },
+  {
+    "Txn_Type": "OUTBOUND",
+    "Item_ID": "ITEM-003",
+    "Qty": 30,
+    "Date": "2025-12-31T12:17:32.334225",
+    "Ref_Job": "JOB-002"
+  },
+  {
+    "Txn_Type": "OUTBOUND",
+    "Item_ID": "ITEM-005",
+    "Qty": 25,
+    "Date": "2025-12-31T12:17:32.465903",
+    "Ref_Job": "JOB-001"
+  },
+  {
+    "Txn_Type": "OUTBOUND",
+    "Item_ID": "ITEM-005",
+    "Qty": 25,
+    "Date": "2025-12-31T12:17:32.565822",
+    "Ref_Job": "JOB-002"
+  },
+  {
+    "Txn_Type": "OUTBOUND",
+    "Item_ID": "ITEM-005",
+    "Qty": 25,
+    "Date": "2025-12-31T12:17:32.669728",
+    "Ref_Job": "JOB-003"
+  },
+  {
+    "Txn_Type": "INBOUND",
+    "Item_ID": "ITEM-WORKFLOW",
+    "Qty": 100,
+    "Date": "2025-12-31T12:17:32.794021",
+    "Ref_Job": NaN
+  },
+  {
+    "Txn_Type": "OUTBOUND",
+    "Item_ID": "ITEM-WORKFLOW",
+    "Qty": 30,
+    "Date": "2025-12-31T12:17:32.896390",
+    "Ref_Job": "JOB-WORKFLOW"
+  },
+  {
+    "Txn_Type": "INBOUND",
+    "Item_ID": "ITEM-BATCH-1",
+    "Qty": 100,
+    "Date": "2025-12-31T12:17:33.023812",
+    "Ref_Job": NaN
+  },
+  {
+    "Txn_Type": "INBOUND",
+    "Item_ID": "ITEM-BATCH-2",
+    "Qty": 200,
+    "Date": "2025-12-31T12:17:33.132436",
+    "Ref_Job": NaN
+  },
+  {
+    "Txn_Type": "INBOUND",
+    "Item_ID": "ITEM-BATCH-3",
+    "Qty": 150,
+    "Date": "2025-12-31T12:17:33.241033",
+    "Ref_Job": NaN
+  },
+  {
+    "Txn_Type": "OUTBOUND",
+    "Item_ID": "ITEM-A",
+    "Qty": 10,
+    "Date": "2025-12-31T12:17:33.367188",
+    "Ref_Job": "JOB-BATCH-001"
+  },
+  {
+    "Txn_Type": "OUTBOUND",
+    "Item_ID": "ITEM-B",
+    "Qty": 20,
+    "Date": "2025-12-31T12:17:33.473706",
+    "Ref_Job": "JOB-BATCH-001"
+  },
+  {
+    "Txn_Type": "OUTBOUND",
+    "Item_ID": "ITEM-C",
+    "Qty": 15,
+    "Date": "2025-12-31T12:17:33.576894",
+    "Ref_Job": "JOB-BATCH-001"
+  },
+  {
+    "Txn_Type": "INBOUND",
+    "Item_ID": "ITEM-001",
+    "Qty": 100,
+    "Date": "2025-12-31T12:23:17.388074",
+    "Ref_Job": NaN
+  },
+  {
+    "Txn_Type": "INBOUND",
+    "Item_ID": "ITEM-002",
+    "Qty": 0,
+    "Date": "2025-12-31T12:23:17.511680",
+    "Ref_Job": NaN
+  },
+  {
+    "Txn_Type": "INBOUND",
+    "Item_ID": "ITEM-003",
+    "Qty": 10000,
+    "Date": "2025-12-31T12:23:17.641800",
+    "Ref_Job": NaN
+  },
+  {
+    "Txn_Type": "INBOUND",
+    "Item_ID": "ITEM-004",
+    "Qty": 50,
+    "Date": "2025-12-31T12:23:17.760484",
+    "Ref_Job": NaN
+  },
+  {
+    "Txn_Type": "INBOUND",
+    "Item_ID": "ITEM-004",
+    "Qty": 50,
+    "Date": "2025-12-31T12:23:17.865964",
+    "Ref_Job": NaN
+  },
+  {
+    "Txn_Type": "INBOUND",
+    "Item_ID": "ITEM-004",
+    "Qty": 50,
+    "Date": "2025-12-31T12:23:17.972289",
+    "Ref_Job": NaN
+  },
+  {
+    "Txn_Type": "INBOUND",
+    "Item_ID": "ITEM-004",
+    "Qty": 50,
+    "Date": "2025-12-31T12:23:18.084236",
+    "Ref_Job": NaN
+  },
+  {
+    "Txn_Type": "OUTBOUND",
+    "Item_ID": "ITEM-001",
+    "Qty": 50,
+    "Date": "2025-12-31T12:23:18.200084",
+    "Ref_Job": "JOB-001"
+  },
+  {
+    "Txn_Type": "OUTBOUND",
+    "Item_ID": "ITEM-001",
+    "Qty": 10,
+    "Date": "2025-12-31T12:23:18.315337",
+    "Ref_Job": "JOB-002"
+  },
+  {
+    "Txn_Type": "OUTBOUND",
+    "Item_ID": "ITEM-002",
+    "Qty": 20,
+    "Date": "2025-12-31T12:23:18.433379",
+    "Ref_Job": "JOB-002"
+  },
+  {
+    "Txn_Type": "OUTBOUND",
+    "Item_ID": "ITEM-003",
+    "Qty": 30,
+    "Date": "2025-12-31T12:23:18.543916",
+    "Ref_Job": "JOB-002"
+  },
+  {
+    "Txn_Type": "OUTBOUND",
+    "Item_ID": "ITEM-005",
+    "Qty": 25,
+    "Date": "2025-12-31T12:23:18.663715",
+    "Ref_Job": "JOB-001"
+  },
+  {
+    "Txn_Type": "OUTBOUND",
+    "Item_ID": "ITEM-005",
+    "Qty": 25,
+    "Date": "2025-12-31T12:23:18.770692",
+    "Ref_Job": "JOB-002"
+  },
+  {
+    "Txn_Type": "OUTBOUND",
+    "Item_ID": "ITEM-005",
+    "Qty": 25,
+    "Date": "2025-12-31T12:23:18.877030",
+    "Ref_Job": "JOB-003"
+  },
+  {
+    "Txn_Type": "INBOUND",
+    "Item_ID": "ITEM-WORKFLOW",
+    "Qty": 100,
+    "Date": "2025-12-31T12:23:18.994141",
+    "Ref_Job": NaN
+  },
+  {
+    "Txn_Type": "OUTBOUND",
+    "Item_ID": "ITEM-WORKFLOW",
+    "Qty": 30,
+    "Date": "2025-12-31T12:23:19.370497",
+    "Ref_Job": "JOB-WORKFLOW"
+  },
+  {
+    "Txn_Type": "INBOUND",
+    "Item_ID": "ITEM-BATCH-1",
+    "Qty": 100,
+    "Date": "2025-12-31T12:23:19.462992",
+    "Ref_Job": NaN
+  },
+  {
+    "Txn_Type": "INBOUND",
+    "Item_ID": "ITEM-BATCH-2",
+    "Qty": 200,
+    "Date": "2025-12-31T12:23:19.564588",
+    "Ref_Job": NaN
+  },
+  {
+    "Txn_Type": "INBOUND",
+    "Item_ID": "ITEM-BATCH-3",
+    "Qty": 150,
+    "Date": "2025-12-31T12:23:19.666911",
+    "Ref_Job": NaN
+  },
+  {
+    "Txn_Type": "OUTBOUND",
+    "Item_ID": "ITEM-A",
+    "Qty": 10,
+    "Date": "2025-12-31T12:23:19.782655",
+    "Ref_Job": "JOB-BATCH-001"
+  },
+  {
+    "Txn_Type": "OUTBOUND",
+    "Item_ID": "ITEM-B",
+    "Qty": 20,
+    "Date": "2025-12-31T12:23:19.886658",
+    "Ref_Job": "JOB-BATCH-001"
+  },
+  {
+    "Txn_Type": "OUTBOUND",
+    "Item_ID": "ITEM-C",
+    "Qty": 15,
+    "Date": "2025-12-31T12:23:19.990774",
+    "Ref_Job": "JOB-BATCH-001"
+  }
+]

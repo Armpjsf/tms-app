@@ -1,0 +1,35 @@
+{
+    "recommendations": [
+        // Python Essential
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "ms-python.black-formatter",
+        "ms-python.isort",
+        // Testing
+        "littlefoxteam.vscode-python-test-adapter",
+        "ryanluker.vscode-coverage-gutters",
+        // JavaScript/React Native
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "msjsdiag.vscode-react-native",
+        "dsznajder.es7-react-js-snippets",
+        // Git
+        "eamodio.gitlens",
+        "mhutchie.git-graph",
+        // Productivity
+        "usernamehw.errorlens",
+        "Gruntfuggly.todo-tree",
+        "rangav.vscode-thunder-client",
+        // Database
+        "mtxr.sqltools",
+        // UI Enhancement
+        "PKief.material-icon-theme",
+        "oderwat.indent-rainbow",
+        // Documentation
+        "yzhang.markdown-all-in-one",
+        "bierner.markdown-mermaid",
+        // Config Files
+        "redhat.vscode-yaml",
+        "mikestead.dotenv"
+    ]
+}

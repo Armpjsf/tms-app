@@ -1,0 +1,56 @@
+{
+    // Python
+    "python.linting.enabled": true,
+    "python.linting.pylintEnabled": true,
+    "python.formatting.provider": "black",
+    "python.testing.pytestEnabled": true,
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestArgs": [
+        "tests"
+    ],
+    // Formatting
+    "editor.formatOnSave": true,
+    "[python]": {
+        "editor.defaultFormatter": "ms-python.black-formatter",
+        "editor.codeActionsOnSave": {
+            "source.organizeImports": "explicit"
+        }
+    },
+    "[javascript]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[json]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    // Coverage
+    "coverage-gutters.coverageFileNames": [
+        "coverage.xml",
+        "htmlcov/index.html"
+    ],
+    "coverage-gutters.showLineCoverage": true,
+    // Editor
+    "editor.rulers": [
+        120
+    ],
+    "editor.minimap.enabled": true,
+    "editor.bracketPairColorization.enabled": true,
+    "editor.guides.bracketPairs": true,
+    // Files
+    "files.exclude": {
+        "**/__pycache__": true,
+        "**/*.pyc": true,
+        "**/.pytest_cache": true,
+        "**/htmlcov": true,
+        "**/.coverage": true
+    },
+    // Git
+    "git.autofetch": true,
+    "git.confirmSync": false,
+    // Terminal
+    "terminal.integrated.defaultProfile.windows": "PowerShell",
+    // Pylint
+    "python.linting.pylintArgs": [
+        "--max-line-length=120",
+        "--disable=C0111,R0903,C0103"
+    ]
+}
