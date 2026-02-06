@@ -1,0 +1,136 @@
+import { DashboardLayout } from "@/components/layout/dashboard-layout"
+import { Card, CardContent } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { 
+  MapPin, 
+  Search,
+  Signal,
+  SignalZero,
+  Truck,
+  RefreshCw,
+} from "lucide-react"
+import { getAllGPSData, getGPSStats } from "@/lib/supabase/gps"
+
+export default async function GPSPage() {
+  const [gpsData, stats] = await Promise.all([
+    getAllGPSData(),
+    getGPSStats(),
+  ])
+
+  // คำนวณว่า online หรือ offline (5 นาที)
+  const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString()
+
+  return (
+    <DashboardLayout>
+      {/* Page Header */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
+        <div>
+          <h1 className="text-3xl font-bold text-white mb-2 flex items-center gap-3">
+            <MapPin className="text-emerald-400" />
+            GPS ติดตามรถ
+          </h1>
+          <p className="text-slate-400">ติดตามตำแหน่งรถแบบ Real-time</p>
+        </div>
+        <Button size="lg" className="gap-2">
+          <RefreshCw size={20} />
+          รีเฟรช
+        </Button>
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-3 gap-4 mb-6">
+        <div className="rounded-xl p-4 bg-indigo-500/10 border border-indigo-500/20">
+          <p className="text-2xl font-bold text-indigo-400">{stats.total}</p>
+          <p className="text-xs text-slate-400">รถทั้งหมด</p>
+        </div>
+        <div className="rounded-xl p-4 bg-emerald-500/10 border border-emerald-500/20">
+          <div className="flex items-center gap-2">
+            <Signal size={16} className="text-emerald-400" />
+            <p className="text-2xl font-bold text-emerald-400">{stats.online}</p>
+          </div>
+          <p className="text-xs text-slate-400">ออนไลน์</p>
+        </div>
+        <div className="rounded-xl p-4 bg-slate-500/10 border border-slate-500/20">
+          <div className="flex items-center gap-2">
+            <SignalZero size={16} className="text-slate-400" />
+            <p className="text-2xl font-bold text-slate-400">{stats.offline}</p>
+          </div>
+          <p className="text-xs text-slate-400">ออฟไลน์</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Map Placeholder */}
+        <Card variant="glass" className="lg:col-span-2">
+          <CardContent className="p-0">
+            <div className="h-[500px] flex items-center justify-center bg-slate-800/50 rounded-xl">
+              <div className="text-center text-slate-500">
+                <MapPin size={64} className="mx-auto mb-4 opacity-50" />
+                <p className="text-lg">แผนที่ GPS</p>
+                <p className="text-sm mt-1">(เชื่อมต่อ Google Maps API)</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Vehicle List */}
+        <Card variant="glass" className="lg:col-span-1 overflow-hidden">
+          <CardContent className="p-0 h-[500px] flex flex-col">
+            {/* Search */}
+            <div className="p-4 border-b border-white/10">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                <Input placeholder="ค้นหาทะเบียน..." className="pl-10" />
+              </div>
+            </div>
+
+            {/* List */}
+            <div className="flex-1 overflow-y-auto">
+              {gpsData.length === 0 ? (
+                <div className="text-center py-8 text-slate-500">
+                  ไม่พบข้อมูลรถ
+                </div>
+              ) : gpsData.map((driver) => {
+                const isOnline = driver.Last_Update && driver.Last_Update > fiveMinutesAgo
+                
+                return (
+                  <div
+                    key={driver.Driver_ID}
+                    className="flex items-center gap-3 p-4 hover:bg-white/5 cursor-pointer transition-colors border-b border-white/5"
+                  >
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-lg ${
+                      isOnline 
+                        ? 'bg-gradient-to-br from-emerald-500 to-green-600' 
+                        : 'bg-gradient-to-br from-slate-500 to-slate-600'
+                    }`}>
+                      <Truck className="text-white" size={20} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-medium text-white truncate">{driver.Vehicle_Plate || "-"}</h3>
+                        <span className={`w-2 h-2 rounded-full ${isOnline ? 'bg-emerald-400' : 'bg-slate-400'}`} />
+                      </div>
+                      <p className="text-xs text-slate-500 truncate">{driver.Driver_Name}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className={`text-xs font-medium ${isOnline ? 'text-emerald-400' : 'text-slate-400'}`}>
+                        {isOnline ? 'Online' : 'Offline'}
+                      </p>
+                      <p className="text-[10px] text-slate-500">
+                        {driver.Last_Update 
+                          ? new Date(driver.Last_Update).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })
+                          : '-'
+                        }
+                      </p>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </DashboardLayout>
+  )
+}
