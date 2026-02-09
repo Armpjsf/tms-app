@@ -2,8 +2,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Switch } from "@/components/ui/switch" // We don't have switch yet, so use simple checkbox or skip
-import { Bell, Lock, User } from "lucide-react"
+// import { Switch } from "@/components/ui/switch" // We don't have switch yet, so use simple checkbox or skip
+import { Bell, User } from "lucide-react"
 
 export default function SettingsPage() {
   return (
@@ -47,11 +47,11 @@ export default function SettingsPage() {
             <CardContent className="space-y-4 text-slate-300">
                <div className="flex items-center justify-between p-2 hover:bg-slate-800/50 rounded">
                     <span>Email Alerts for New Jobs</span>
-                    <div className="h-5 w-10 bg-green-500 rounded-full relative cursor-pointer"><div className="absolute right-1 top-1 h-3 w-3 bg-white rounded-full shadow" /></div>
+                    <input type="checkbox" className="h-5 w-5 rounded border-slate-700 bg-slate-900" defaultChecked />
                </div>
                <div className="flex items-center justify-between p-2 hover:bg-slate-800/50 rounded">
                     <span>SMS Alerts for SOS</span>
-                    <div className="h-5 w-10 bg-green-500 rounded-full relative cursor-pointer"><div className="absolute right-1 top-1 h-3 w-3 bg-white rounded-full shadow" /></div>
+                    <input type="checkbox" className="h-5 w-5 rounded border-slate-700 bg-slate-900" defaultChecked />
                </div>
             </CardContent>
         </Card>

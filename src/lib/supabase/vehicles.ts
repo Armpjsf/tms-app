@@ -166,23 +166,32 @@ export async function getAllVehicles(page?: number, limit?: number, query?: stri
 }
 
 // Get vehicle stats for dashboard
+// Get vehicle stats for dashboard
 export async function getVehicleStats() {
   try {
     const supabase = await createClient()
     const { data, error } = await supabase
       .from('master_vehicles')
-      .select('vehicle_plate, active_status')
+      .select('vehicle_plate, active_status, current_mileage, next_service_mileage')
     
     if (error) {
-      return { total: 0, active: 0, maintenance: 0 }
+      return { total: 0, active: 0, maintenance: 0, dueSoon: 0 }
     }
     
     const total = data?.length || 0
-    const active = data?.filter(v => v.active_status === 'Active').length || total
+    const active = data?.filter(v => v.active_status === 'Active').length || 0
     const maintenance = data?.filter(v => v.active_status === 'Maintenance').length || 0
     
-    return { total, active, maintenance }
+    // Calculate dueSoon (within 1000km of service)
+    const dueSoon = data?.filter(v => {
+      if (v.current_mileage && v.next_service_mileage) {
+        return (v.next_service_mileage - v.current_mileage) <= 1000
+      }
+      return false
+    }).length || 0
+    
+    return { total, active, maintenance, dueSoon }
   } catch {
-    return { total: 0, active: 0, maintenance: 0 }
+    return { total: 0, active: 0, maintenance: 0, dueSoon: 0 }
   }
 }

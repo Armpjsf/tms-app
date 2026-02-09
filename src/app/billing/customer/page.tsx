@@ -160,7 +160,7 @@ export default function CustomerBillingPage() {
               <Banknote className="w-6 h-6 text-blue-400" />
             </div>
             <div>
-              <p className new="text-2xl font-bold text-blue-400">฿{pendingTotal.toLocaleString()}</p>
+              <p className="text-2xl font-bold text-blue-400">฿{pendingTotal.toLocaleString()}</p>
               <p className="text-xs text-slate-400">ยอดรอวางบิล</p>
             </div>
           </CardContent>

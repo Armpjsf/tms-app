@@ -1,3 +1,5 @@
+"use server"
+
 import { createClient } from '@/utils/supabase/server'
 
 // Type matching actual Supabase schema (lowercase columns!)

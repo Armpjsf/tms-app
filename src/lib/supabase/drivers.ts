@@ -180,3 +180,9 @@ export async function getDriverStats() {
     return { total: 0, active: 0, onJob: 0 }
   }
 }
+
+// Get active drivers for chat (currently returns all drivers)
+export async function getActiveDrivers(): Promise<Driver[]> {
+  return getAllDriversFromTable()
+}
+
