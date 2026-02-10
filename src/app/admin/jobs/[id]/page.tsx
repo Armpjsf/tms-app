@@ -7,17 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { ArrowLeft, MapPin, Calendar, Truck, User, Phone, Package, FileText, Navigation } from "lucide-react"
-import dynamic from 'next/dynamic'
-
-// Dynamic import for Map to avoid SSR issues
-const LeafletMap = dynamic(() => import('@/components/maps/leaflet-map'), {
-  ssr: false,
-  loading: () => (
-    <div className="h-[400px] bg-slate-800 rounded-lg flex items-center justify-center">
-      <div className="text-slate-400 animate-pulse">Loading Route History...</div>
-    </div>
-  )
-})
+import JobMapClient from "@/components/maps/job-map-client"
 
 // Force dynamic rendering (server-side) to ensure fresh data
 export const dynamicParams = true
@@ -121,13 +111,7 @@ export default async function AdminJobDetailPage({
                         เส้นทางการวิ่งรถ (GPS History)
                     </CardTitle>
                 </CardHeader>
-                <div className="h-[400px] w-full relative">
-                    <LeafletMap 
-                        routeHistory={routeHistory}
-                        zoom={12}
-                        height="400px"
-                    />
-                </div>
+                <JobMapClient routeHistory={routeHistory} />
             </Card>
           )}
 
