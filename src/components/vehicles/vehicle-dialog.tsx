@@ -8,10 +8,11 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { createVehicle, updateVehicle } from "@/app/vehicles/actions"
 import { Loader2 } from "lucide-react"
+import { Vehicle } from "@/lib/supabase/vehicles"
 
 type VehicleDialogProps = {
   mode?: 'create' | 'edit'
-  vehicle?: any
+  vehicle?: Partial<Vehicle>
   trigger?: React.ReactNode
   open?: boolean
   onOpenChange?: (open: boolean) => void
@@ -33,11 +34,13 @@ export function VehicleDialog({
   const setShow = isControlled ? onOpenChange! : setInternalOpen
 
   const [formData, setFormData] = useState({
-    Vehicle_Plate: vehicle?.Vehicle_Plate || '',
-    Vehicle_Type: vehicle?.Vehicle_Type || '4W',
-    Brand: vehicle?.Brand || '',
-    Model: vehicle?.Model || '',
-    Active_Status: vehicle?.Active_Status || 'Active'
+    vehicle_plate: vehicle?.vehicle_plate || '',
+    vehicle_type: vehicle?.vehicle_type || '4-Wheel',
+    brand: vehicle?.brand || '',
+    model: vehicle?.model || '',
+    active_status: vehicle?.active_status || 'Active',
+    current_mileage: vehicle?.current_mileage || 0,
+    next_service_mileage: vehicle?.next_service_mileage || 0
   })
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -46,18 +49,22 @@ export function VehicleDialog({
 
     try {
       if (mode === 'create') {
+        // @ts-ignore
         await createVehicle(formData)
       } else {
-        await updateVehicle(vehicle.Vehicle_Plate, formData)
+        // @ts-ignore
+        await updateVehicle(vehicle.vehicle_plate, formData)
       }
       setShow(false)
       if (!isControlled) {
         setFormData({
-            Vehicle_Plate: '',
-            Vehicle_Type: '4W',
-            Brand: '',
-            Model: '',
-            Active_Status: 'Active'
+            vehicle_plate: '',
+            vehicle_type: '4-Wheel',
+            brand: '',
+            model: '',
+            active_status: 'Active',
+            current_mileage: 0,
+            next_service_mileage: 0
         })
       }
       router.refresh()
@@ -78,67 +85,90 @@ export function VehicleDialog({
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 mt-4">
           <div className="space-y-2">
-            <Label htmlFor="Vehicle_Plate">ทะเบียนรถ</Label>
+            <Label htmlFor="vehicle_plate">ทะเบียนรถ</Label>
             <Input
-              id="Vehicle_Plate"
-              value={formData.Vehicle_Plate}
-              onChange={(e) => setFormData({ ...formData, Vehicle_Plate: e.target.value })}
-              placeholder="70-1234"
+              id="vehicle_plate"
+              value={formData.vehicle_plate}
+              onChange={(e) => setFormData({ ...formData, vehicle_plate: e.target.value })}
+              placeholder="1กข-1234"
               required
               disabled={mode === 'edit'}
               className="bg-white/5 border-white/10"
             />
           </div>
           
-           <div className="space-y-2">
-              <Label htmlFor="Vehicle_Type">ประเภทรถ</Label>
-              <select
-                id="Vehicle_Type"
-                value={formData.Vehicle_Type}
-                onChange={(e) => setFormData({ ...formData, Vehicle_Type: e.target.value })}
-                className="flex h-10 w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              >
-                 <option value="4W" className="text-black">4 ล้อ</option>
-                 <option value="6W" className="text-black">6 ล้อ</option>
-                 <option value="10W" className="text-black">10 ล้อ</option>
-              </select>
-            </div>
-
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-                <Label htmlFor="Brand">ยี่ห้อ</Label>
+                <Label htmlFor="brand">ยี่ห้อ</Label>
                 <Input
-                id="Brand"
-                value={formData.Brand}
-                onChange={(e) => setFormData({ ...formData, Brand: e.target.value })}
-                placeholder="Isuzu"
+                id="brand"
+                value={formData.brand}
+                onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
+                placeholder="Toyota"
                 className="bg-white/5 border-white/10"
                 />
             </div>
             <div className="space-y-2">
-                <Label htmlFor="Model">รุ่น</Label>
+                <Label htmlFor="model">รุ่น</Label>
                 <Input
-                id="Model"
-                value={formData.Model}
-                onChange={(e) => setFormData({ ...formData, Model: e.target.value })}
-                placeholder="FTR"
+                id="model"
+                value={formData.model}
+                onChange={(e) => setFormData({ ...formData, model: e.target.value })}
+                placeholder="Hilux Revo"
                 className="bg-white/5 border-white/10"
                 />
             </div>
           </div>
 
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+                <Label htmlFor="current_mileage">เลขไมล์ปัจจุบัน</Label>
+                <Input
+                id="current_mileage"
+                type="number"
+                value={formData.current_mileage}
+                onChange={(e) => setFormData({ ...formData, current_mileage: Number(e.target.value) })}
+                className="bg-white/5 border-white/10"
+                />
+            </div>
+            <div className="space-y-2">
+                <Label htmlFor="next_service_mileage">แจ้งซ่อมครั้งถัดไป</Label>
+                <Input
+                id="next_service_mileage"
+                type="number"
+                value={formData.next_service_mileage}
+                onChange={(e) => setFormData({ ...formData, next_service_mileage: Number(e.target.value) })}
+                className="bg-white/5 border-white/10"
+                />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="vehicle_type">ประเภทรถ</Label>
+            <select
+                id="vehicle_type"
+                value={formData.vehicle_type}
+                onChange={(e) => setFormData({ ...formData, vehicle_type: e.target.value })}
+                className="flex h-10 w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+            >
+                <option value="4-Wheel" className="bg-slate-900">4 ล้อ (4-Wheel)</option>
+                <option value="6-Wheel" className="bg-slate-900">6 ล้อ (6-Wheel)</option>
+                <option value="10-Wheel" className="bg-slate-900">10 ล้อ (10-Wheel)</option>
+            </select>
+          </div>
+
           {mode === 'edit' && (
              <div className="space-y-2">
-              <Label htmlFor="Active_Status">สถานะ</Label>
+              <Label htmlFor="active_status">สถานะ</Label>
               <select
-                id="Active_Status"
-                value={formData.Active_Status}
-                onChange={(e) => setFormData({ ...formData, Active_Status: e.target.value })}
-                className="flex h-10 w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                id="active_status"
+                value={formData.active_status}
+                onChange={(e) => setFormData({ ...formData, active_status: e.target.value })}
+                className="flex h-10 w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
               >
-                 <option value="Active" className="text-black">Active</option>
-                 <option value="Inactive" className="text-black">Inactive</option>
-                 <option value="Maintenance" className="text-black">Maintenance</option>
+                 <option value="Active" className="text-black">Active (พร้อมใช้)</option>
+                 <option value="Maintenance" className="text-black">Maintenance (ซ่อมบำรุง)</option>
+                 <option value="Inactive" className="text-black">Inactive (เลิกใช้)</option>
               </select>
             </div>
           )}
@@ -147,9 +177,9 @@ export function VehicleDialog({
             <Button type="button" variant="ghost" onClick={() => setShow(false)}>
               ยกเลิก
             </Button>
-            <Button type="submit" disabled={loading} className="bg-gradient-to-r from-purple-500 to-indigo-600">
+            <Button type="submit" disabled={loading} className="bg-gradient-to-r from-purple-500 to-pink-600">
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {mode === 'create' ? 'เพิ่มรถ' : 'บันทึก'}
+              {mode === 'create' ? 'เพิ่มรถใหม่' : 'บันทึก'}
             </Button>
           </div>
         </form>

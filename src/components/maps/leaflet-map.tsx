@@ -1,6 +1,6 @@
 "use client"
 
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet'
+import { MapContainer, TileLayer, Marker, Popup, useMap, Polyline } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { useEffect } from 'react'
@@ -25,6 +25,24 @@ const driverIcon = L.icon({
   shadowSize: [41, 41]
 })
 
+const startIcon = L.icon({
+    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
+    shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowSize: [41, 41]
+  })
+  
+  const endIcon = L.icon({
+    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+    shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowSize: [41, 41]
+  })
+
 L.Marker.prototype.options.icon = defaultIcon
 
 export type DriverLocation = {
@@ -44,6 +62,7 @@ type LeafletMapProps = {
   currentPosition?: [number, number]
   height?: string
   showCurrentPosition?: boolean
+  routeHistory?: [number, number][]
 }
 
 function RecenterMap({ position }: { position: [number, number] }) {
@@ -54,15 +73,27 @@ function RecenterMap({ position }: { position: [number, number] }) {
   return null
 }
 
+function FitBounds({ route }: { route: [number, number][] }) {
+    const map = useMap()
+    useEffect(() => {
+      if (route.length > 0) {
+        const bounds = L.latLngBounds(route.map(pos => L.latLng(pos[0], pos[1])))
+        map.fitBounds(bounds, { padding: [50, 50] })
+      }
+    }, [map, route])
+    return null
+  }
+
 export default function LeafletMap({
   center = [13.7563, 100.5018],
   zoom = 12,
   drivers = [],
   currentPosition,
   height = "400px",
-  showCurrentPosition = false
+  showCurrentPosition = false,
+  routeHistory = []
 }: LeafletMapProps) {
-  const mapCenter = currentPosition || center
+  const mapCenter = currentPosition || (routeHistory.length > 0 ? routeHistory[0] : center)
 
   return (
     <MapContainer
@@ -100,6 +131,19 @@ export default function LeafletMap({
               </div>
             </Popup>
           </Marker>
+        </>
+      )}
+
+      {routeHistory.length > 0 && (
+        <>
+            <Polyline positions={routeHistory} color="blue" weight={4} opacity={0.7} />
+            <Marker position={routeHistory[0]} icon={startIcon}>
+                <Popup>Start Point</Popup>
+            </Marker>
+            <Marker position={routeHistory[routeHistory.length - 1]} icon={endIcon}>
+                <Popup>End Point</Popup>
+            </Marker>
+            <FitBounds route={routeHistory} />
         </>
       )}
     </MapContainer>

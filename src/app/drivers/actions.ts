@@ -7,6 +7,7 @@ export type DriverFormData = {
   Driver_ID: string
   Driver_Name: string
   Mobile_No: string
+  Password?: string
   Vehicle_Plate: string
   Active_Status: string
 }
@@ -20,7 +21,11 @@ export async function createDriver(data: DriverFormData) {
       Driver_ID: data.Driver_ID,
       Driver_Name: data.Driver_Name,
       Mobile_No: data.Mobile_No,
+      Password: data.Password || '123456', // Default password if missing
       Vehicle_Plate: data.Vehicle_Plate || null,
+      Vehicle_Type: '4-Wheel', // Default
+      Role: 'Driver',
+      Company_Code: 'LGP', // Default
       Active_Status: 'Active',
     })
 
@@ -36,9 +41,21 @@ export async function createDriver(data: DriverFormData) {
 export async function updateDriver(driverId: string, data: Partial<DriverFormData>) {
   const supabase = await createClient()
 
+  const updateData: any = {
+    Driver_Name: data.Driver_Name,
+    Mobile_No: data.Mobile_No,
+    Vehicle_Plate: data.Vehicle_Plate,
+    Active_Status: data.Active_Status,
+  }
+
+  // Only update password if provided
+  if (data.Password && data.Password.trim() !== '') {
+    updateData.Password = data.Password
+  }
+
   const { error } = await supabase
     .from('Master_Drivers')
-    .update(data)
+    .update(updateData)
     .eq('Driver_ID', driverId)
 
   if (error) {

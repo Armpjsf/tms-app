@@ -16,11 +16,14 @@ export type RepairTicket = {
   Remark: string | null
 }
 
-// ดึง Repair Tickets ทั้งหมด (pagination + search)
+// ดึง Repair Tickets ทั้งหมด (pagination + search + filters)
 export async function getAllRepairTickets(
   page = 1, 
   limit = 20, 
-  query = ''
+  query = '',
+  startDate?: string,
+  endDate?: string,
+  status?: string
 ): Promise<{ data: RepairTicket[], count: number }> {
   try {
     const supabase = await createClient()
@@ -33,6 +36,18 @@ export async function getAllRepairTickets(
 
     if (query) {
       dbQuery = dbQuery.or(`Ticket_ID.ilike.%${query}%,Vehicle_Plate.ilike.%${query}%`)
+    }
+
+    if (startDate) {
+      dbQuery = dbQuery.gte('Date_Report', `${startDate}T00:00:00`)
+    }
+
+    if (endDate) {
+      dbQuery = dbQuery.lte('Date_Report', `${endDate}T23:59:59`)
+    }
+
+    if (status && status !== 'All') {
+      dbQuery = dbQuery.eq('Status', status)
     }
 
     const { data, error, count } = await dbQuery.range(offset, offset + limit - 1)

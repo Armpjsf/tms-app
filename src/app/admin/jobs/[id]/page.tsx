@@ -2,13 +2,26 @@ import Link from "next/link"
 import Image from "next/image"
 import { notFound } from "next/navigation"
 import { getJobById } from "@/lib/supabase/jobs"
+import { getDriverRouteForDate } from "@/lib/supabase/gps"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { ArrowLeft, MapPin, Calendar, Truck, User, Phone, Package, FileText } from "lucide-react"
+import { ArrowLeft, MapPin, Calendar, Truck, User, Phone, Package, FileText, Navigation } from "lucide-react"
+import dynamic from 'next/dynamic'
+
+// Dynamic import for Map to avoid SSR issues
+const LeafletMap = dynamic(() => import('@/components/maps/leaflet-map'), {
+  ssr: false,
+  loading: () => (
+    <div className="h-[400px] bg-slate-800 rounded-lg flex items-center justify-center">
+      <div className="text-slate-400 animate-pulse">Loading Route History...</div>
+    </div>
+  )
+})
 
 // Force dynamic rendering (server-side) to ensure fresh data
-export const dynamic = 'force-dynamic'
+export const dynamicParams = true
+export const revalidate = 0
 
 export default async function AdminJobDetailPage({
   params,
@@ -20,6 +33,13 @@ export default async function AdminJobDetailPage({
 
   if (!job) {
     notFound()
+  }
+
+  // Fetch Route History if driver and date exist
+  let routeHistory: [number, number][] = []
+  if (job.Driver_ID && job.Plan_Date) {
+    const logs = await getDriverRouteForDate(job.Driver_ID, job.Plan_Date)
+    routeHistory = logs.map(log => [log.Latitude, log.Longitude])
   }
 
   return (
@@ -91,6 +111,25 @@ export default async function AdminJobDetailPage({
               </div>
             </CardContent>
           </Card>
+
+           {/* Route History Map */}
+           {routeHistory.length > 0 && (
+            <Card className="bg-slate-900 border-slate-800 overflow-hidden">
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-white">
+                        <Navigation className="h-5 w-5 text-indigo-400" />
+                        เส้นทางการวิ่งรถ (GPS History)
+                    </CardTitle>
+                </CardHeader>
+                <div className="h-[400px] w-full relative">
+                    <LeafletMap 
+                        routeHistory={routeHistory}
+                        zoom={12}
+                        height="400px"
+                    />
+                </div>
+            </Card>
+          )}
 
           {/* Proof of Delivery (POD) Section */}
           <Card className="bg-slate-900 border-slate-800">

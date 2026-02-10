@@ -16,6 +16,7 @@ export type Driver = {
   Tax_Expiry: string | null
   Act_Expiry: string | null
   Current_Mileage: number | null
+  Active_Status: string | null
 }
 
 // Get all drivers from Master_Drivers table

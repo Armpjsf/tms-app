@@ -1,7 +1,6 @@
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { 
   Truck, 
   Search,
@@ -86,7 +85,7 @@ export default async function VehiclesPage(props: Props) {
             ไม่พบข้อมูลรถ
           </div>
         ) : vehicles.map((vehicle) => (
-          <Card key={vehicle.Vehicle_Plate} variant="glass" hover={true}>
+          <Card key={vehicle.vehicle_plate} variant="glass" hover={true}>
             <CardContent className="p-5">
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3">
@@ -94,17 +93,17 @@ export default async function VehiclesPage(props: Props) {
                     <Truck size={24} />
                   </div>
                   <div>
-                    <h3 className="font-bold text-white">{vehicle.Vehicle_Plate}</h3>
-                    <p className="text-xs text-slate-400">{vehicle.Brand} {vehicle.Model}</p>
+                    <h3 className="font-bold text-white">{vehicle.vehicle_plate}</h3>
+                    <p className="text-xs text-slate-400">{vehicle.brand} {vehicle.model}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
                     <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                    vehicle.Active_Status === 'Active' ? 'bg-emerald-500/20 text-emerald-400' :
-                    vehicle.Active_Status === 'Maintenance' ? 'bg-amber-500/20 text-amber-400' :
+                    vehicle.active_status === 'Active' ? 'bg-emerald-500/20 text-emerald-400' :
+                    vehicle.active_status === 'Maintenance' ? 'bg-amber-500/20 text-amber-400' :
                     'bg-slate-500/20 text-slate-400'
                     }`}>
-                    {vehicle.Active_Status}
+                    {vehicle.active_status}
                     </span>
                     <VehicleActions vehicle={vehicle} />
                 </div>
@@ -113,15 +112,15 @@ export default async function VehiclesPage(props: Props) {
               <div className="space-y-2 text-sm mb-4">
                 <div className="flex items-center gap-2 text-slate-300">
                   <Gauge size={14} className="text-slate-500" />
-                  <span>Mileage: {vehicle.Current_Mileage ? vehicle.Current_Mileage.toLocaleString() : "-"} km</span>
+                  <span>Mileage: {vehicle.current_mileage ? vehicle.current_mileage.toLocaleString() : "-"} km</span>
                 </div>
                 <div className="flex items-center gap-2 text-slate-300">
                   <Wrench size={14} className="text-slate-500" />
-                  <span>Last Service: {vehicle.Last_Service_Date ? new Date(vehicle.Last_Service_Date).toLocaleDateString('th-TH') : "-"}</span>
+                  <span>Last Service: {vehicle.last_service_date ? new Date(vehicle.last_service_date).toLocaleDateString('th-TH') : "-"}</span>
                 </div>
                 <div className="flex items-center gap-2 text-slate-300">
                   <Calendar size={14} className="text-slate-500" />
-                  <span>Next Service: {vehicle.Next_Service_Mileage ? `${vehicle.Next_Service_Mileage.toLocaleString()} km` : "-"}</span>
+                  <span>Next Service: {vehicle.next_service_mileage ? `${vehicle.next_service_mileage.toLocaleString()} km` : "-"}</span>
                 </div>
               </div>
             </CardContent>

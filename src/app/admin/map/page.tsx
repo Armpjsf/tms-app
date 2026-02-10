@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { MapPin, Navigation, RefreshCw } from "lucide-react"
 import type { DriverLocation } from '@/components/maps/leaflet-map'
+import { getLatestDriverLocations } from '@/lib/supabase/gps'
 
 // Dynamic import to avoid SSR issues with Leaflet
 const LeafletMap = dynamic(() => import('@/components/maps/leaflet-map'), {
@@ -25,14 +26,19 @@ export default function AdminMapPage() {
   const fetchDriverLocations = async () => {
     setIsLoading(true)
     try {
-      // In production, this would fetch from GPS_Logs table
-      // For now, using mock data
-      const mockDrivers: DriverLocation[] = [
-        { id: '1', name: 'สมชาย ใจดี', lat: 13.7563, lng: 100.5018, status: 'Active', speed: 45, lastUpdate: '2 min ago' },
-        { id: '2', name: 'สมหญิง รักงาน', lat: 13.7450, lng: 100.5200, status: 'Active', speed: 30, lastUpdate: '5 min ago' },
-        { id: '3', name: 'เอกชัย เดินทาง', lat: 13.7300, lng: 100.4800, status: 'In Transit', speed: 60, lastUpdate: '1 min ago' },
-      ]
-      setDrivers(mockDrivers)
+      const logs = await getLatestDriverLocations()
+      
+      const mappedDrivers: DriverLocation[] = logs.map((log: any) => ({
+        id: log.Driver_ID,
+        name: log.Driver_Name || 'Unknown Driver',
+        lat: log.Latitude,
+        lng: log.Longitude,
+        status: new Date(log.Timestamp).getTime() > Date.now() - 5 * 60 * 1000 ? 'Active' : 'Idle',
+        speed: log.Speed || 0,
+        lastUpdate: new Date(log.Timestamp).toLocaleTimeString('th-TH')
+      }))
+
+      setDrivers(mappedDrivers)
       setLastRefresh(new Date().toLocaleTimeString('th-TH'))
     } catch (error) {
       console.error('Failed to fetch driver locations:', error)
@@ -107,7 +113,7 @@ export default function AdminMapPage() {
                     <span className={`text-xs px-2 py-1 rounded-full ${
                       driver.status === 'Active' 
                         ? 'bg-emerald-500/10 text-emerald-400' 
-                        : 'bg-blue-500/10 text-blue-400'
+                        : 'bg-amber-500/10 text-amber-400'
                     }`}>
                       {driver.status}
                     </span>

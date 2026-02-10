@@ -35,11 +35,13 @@ export async function getTodayFuelLogs(): Promise<FuelLog[]> {
   return data || []
 }
 
-// ดึงบันทึกเติมน้ำมันทั้งหมด (pagination + search)
+// ดึงบันทึกเติมน้ำมันทั้งหมด (pagination + search + date filter)
 export async function getAllFuelLogs(
   page = 1, 
   limit = 20, 
-  query = ''
+  query = '',
+  startDate?: string,
+  endDate?: string
 ): Promise<{ data: FuelLog[], count: number }> {
   try {
     const supabase = await createClient()
@@ -51,17 +53,37 @@ export async function getAllFuelLogs(
       .order('Date_Time', { ascending: false })
 
     if (query) {
-      dbQuery = dbQuery.or(`Vehicle_Plate.ilike.%${query}%,Driver_Name.ilike.%${query}%`)
+      dbQuery = dbQuery.or(`Vehicle_Plate.ilike.%${query}%`)
     }
 
-    const { data, error, count } = await dbQuery.range(offset, offset + limit - 1)
+    if (startDate) {
+      dbQuery = dbQuery.gte('Date_Time', `${startDate}T00:00:00`)
+    }
+
+    if (endDate) {
+      dbQuery = dbQuery.lte('Date_Time', `${endDate}T23:59:59`)
+    }
+
+    const { data: logs, error, count } = await dbQuery.range(offset, offset + limit - 1)
   
     if (error) {
       console.error('Error fetching fuel logs:', error)
       return { data: [], count: 0 }
     }
+
+    // Fetch Drivers to map names
+    const { data: drivers } = await supabase
+      .from('Master_Drivers')
+      .select('Driver_ID, Driver_Name')
+    
+    const driverMap = new Map(drivers?.map(d => [d.Driver_ID, d.Driver_Name]) || [])
+
+    const enrichedLogs = logs?.map(log => ({
+      ...log,
+      Driver_Name: driverMap.get(log.Driver_ID) || 'Unknown'
+    })) || []
   
-    return { data: data || [], count: count || 0 }
+    return { data: enrichedLogs, count: count || 0 }
   } catch (e) {
     console.error('Exception fetching fuel logs:', e)
     return { data: [], count: 0 }

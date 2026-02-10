@@ -14,6 +14,7 @@ import { getAllFuelLogs, getTodayFuelStats } from "@/lib/supabase/fuel"
 import { getAllDrivers } from "@/lib/supabase/drivers"
 import { getAllVehicles } from "@/lib/supabase/vehicles"
 import { FuelDialog } from "@/components/fuel/fuel-dialog"
+import { FuelActions } from "@/components/fuel/fuel-actions"
 
 import { SearchInput } from "@/components/ui/search-input"
 import { Pagination } from "@/components/ui/pagination"
@@ -26,10 +27,12 @@ export default async function FuelPage(props: Props) {
   const searchParams = await props.searchParams
   const page = Number(searchParams.page) || 1
   const query = (searchParams.q as string) || ''
+  const startDate = (searchParams.startDate as string) || ''
+  const endDate = (searchParams.endDate as string) || ''
   const limit = 20
 
   const [{ data: logs, count }, stats, drivers, vehicles] = await Promise.all([
-    getAllFuelLogs(page, limit, query),
+    getAllFuelLogs(page, limit, query, startDate, endDate),
     getTodayFuelStats(),
     getAllDrivers(),
     getAllVehicles(),
@@ -81,9 +84,29 @@ export default async function FuelPage(props: Props) {
         </div>
       </div>
 
-      {/* Search */}
-      <div className="mb-6">
-        <SearchInput placeholder="ค้นหาทะเบียน, คนขับ..." />
+      {/* Search and Filter */}
+      <div className="flex flex-col md:flex-row gap-4 mb-6">
+        <div className="flex-1">
+            <SearchInput placeholder="ค้นหาทะเบียน, คนขับ..." />
+        </div>
+        <div className="flex gap-2">
+            <form className="flex gap-2 items-center">
+                <Input 
+                    type="date" 
+                    name="startDate"
+                    defaultValue={startDate}
+                    className="bg-slate-900 border-slate-700 text-white w-auto"
+                />
+                <span className="text-slate-500">-</span>
+                <Input 
+                    type="date" 
+                    name="endDate"
+                    defaultValue={endDate}
+                    className="bg-slate-900 border-slate-700 text-white w-auto"
+                />
+                <Button type="submit" variant="secondary">กรอง</Button>
+            </form>
+        </div>
       </div>
 
       {/* Fuel Logs Table */}
@@ -102,11 +125,12 @@ export default async function FuelPage(props: Props) {
                     <th className="text-left p-4 text-xs font-medium text-slate-400 uppercase">วันที่/เวลา</th>
                     <th className="text-left p-4 text-xs font-medium text-slate-400 uppercase">คนขับ</th>
                     <th className="text-left p-4 text-xs font-medium text-slate-400 uppercase">ทะเบียนรถ</th>
-                    <th className="text-left p-4 text-xs font-medium text-slate-400 uppercase">ประเภท</th>
+                    <th className="text-left p-4 text-xs font-medium text-slate-400 uppercase">สถานี/ปั๊ม</th>
                     <th className="text-right p-4 text-xs font-medium text-slate-400 uppercase">จำนวน (L)</th>
                     <th className="text-right p-4 text-xs font-medium text-slate-400 uppercase">ราคา/L</th>
                     <th className="text-right p-4 text-xs font-medium text-slate-400 uppercase">รวมเงิน</th>
                     <th className="text-right p-4 text-xs font-medium text-slate-400 uppercase">เลขไมล์</th>
+                    <th className="p-4 w-[50px]"></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -122,11 +146,8 @@ export default async function FuelPage(props: Props) {
                       </td>
                       <td className="p-4 text-white font-medium text-sm">{log.Driver_Name || "-"}</td>
                       <td className="p-4 text-slate-300 text-sm">{log.Vehicle_Plate || "-"}</td>
-                      <td className="p-4">
-                        <span className="flex items-center gap-1.5 text-xs font-medium px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 w-fit">
-                          <Droplets size={12} />
-                          {log.Fuel_Type}
-                        </span>
+                      <td className="p-4 text-slate-300 text-sm">
+                        {log.Station_Name || "-"}
                       </td>
                       <td className="p-4 text-right text-slate-300 text-sm">{log.Liters?.toFixed(2)}</td>
                       <td className="p-4 text-right text-slate-300 text-sm">{(log.Price_Total / log.Liters)?.toFixed(2) || "-"}</td>
@@ -136,6 +157,13 @@ export default async function FuelPage(props: Props) {
                         </span>
                       </td>
                       <td className="p-4 text-right text-slate-400 text-sm">{log.Odometer?.toLocaleString()}</td>
+                      <td className="p-4">
+                        <FuelActions 
+                            log={log} 
+                            drivers={drivers.data || []}
+                            vehicles={vehicles.data || []}
+                        />
+                      </td>
                     </tr>
                   ))}
                 </tbody>

@@ -6,18 +6,19 @@ import { Pencil, Trash2 } from "lucide-react"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { VehicleDialog } from "./vehicle-dialog"
+import { Vehicle } from "@/lib/supabase/vehicles"
 
-export function VehicleActions({ vehicle }: { vehicle: any }) {
+export function VehicleActions({ vehicle }: { vehicle: Vehicle }) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [showEdit, setShowEdit] = useState(false)
 
   const handleDelete = async () => {
-    if (!confirm(`ยืนยันการลบรถ ${vehicle.Vehicle_Plate}?`)) return
+    if (!confirm(`ยืนยันการลบรถทะเบียน ${vehicle.vehicle_plate}?`)) return
     
     setLoading(true)
     try {
-      await deleteVehicle(vehicle.Vehicle_Plate)
+      await deleteVehicle(vehicle.vehicle_plate)
       router.refresh()
     } catch (error) {
       console.error(error)

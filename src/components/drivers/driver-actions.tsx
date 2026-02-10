@@ -6,8 +6,10 @@ import { Pencil, Trash2 } from "lucide-react"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { DriverDialog } from "./driver-dialog"
+import { Driver } from "@/lib/supabase/drivers"
+import { Vehicle } from "@/lib/supabase/vehicles"
 
-export function DriverActions({ driver, vehicles }: { driver: any, vehicles: any[] }) {
+export function DriverActions({ driver, vehicles }: { driver: Driver, vehicles: Vehicle[] }) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [showEdit, setShowEdit] = useState(false)

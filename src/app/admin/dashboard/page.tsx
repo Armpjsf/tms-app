@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Package, Truck, Users, CheckCircle, Clock } from "lucide-react"
 import { getTodayJobStats, getWeeklyJobStats, getJobStatusDistribution } from "@/lib/supabase/jobs"

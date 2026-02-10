@@ -351,3 +351,34 @@ export async function getAllVehicles() {
         return []
     }
 }
+
+// ดึงข้อมูลสำหรับหน้า Billing (Completed/Delivered)
+export async function getJobsForBilling(startDate?: string, endDate?: string): Promise<Job[]> {
+    try {
+        const supabase = await createClient()
+        let query = supabase
+            .from('Jobs_Main')
+            .select('*')
+            .in('Job_Status', ['Completed', 'Delivered'])
+            .order('Plan_Date', { ascending: false })
+            
+        if (startDate) {
+            query = query.gte('Plan_Date', startDate)
+        }
+        if (endDate) {
+            query = query.lte('Plan_Date', endDate)
+        }
+        
+        const { data, error } = await query
+        
+        if (error) {
+            console.error('Error fetching billing jobs:', error)
+            return []
+        }
+        
+        return data || []
+    } catch (e) {
+        console.error('Exception fetching billing jobs:', e)
+        return []
+    }
+}

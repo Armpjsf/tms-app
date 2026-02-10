@@ -4,24 +4,28 @@ import { createClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
 
 export type VehicleFormData = {
-  Vehicle_Plate: string
-  Vehicle_Type: string
-  Brand: string
-  Model: string
-  Active_Status: string
+  vehicle_plate: string
+  vehicle_type: string
+  brand: string
+  model: string
+  active_status: string
+  current_mileage?: number
+  next_service_mileage?: number
 }
 
 export async function createVehicle(data: VehicleFormData) {
   const supabase = await createClient()
 
   const { error } = await supabase
-    .from('Master_Vehicles')
+    .from('master_vehicles')
     .insert({
-      Vehicle_Plate: data.Vehicle_Plate,
-      Vehicle_Type: data.Vehicle_Type,
-      Brand: data.Brand,
-      Model: data.Model,
-      Active_Status: 'Active',
+      vehicle_plate: data.vehicle_plate,
+      vehicle_type: data.vehicle_type,
+      brand: data.brand,
+      model: data.model,
+      active_status: 'Active',
+      current_mileage: data.current_mileage || 0,
+      next_service_mileage: data.next_service_mileage || 0
     })
 
   if (error) {
@@ -37,9 +41,16 @@ export async function updateVehicle(plate: string, data: Partial<VehicleFormData
   const supabase = await createClient()
 
   const { error } = await supabase
-    .from('Master_Vehicles')
-    .update(data)
-    .eq('Vehicle_Plate', plate)
+    .from('master_vehicles')
+    .update({
+        vehicle_type: data.vehicle_type,
+        brand: data.brand,
+        model: data.model,
+        active_status: data.active_status,
+        current_mileage: data.current_mileage,
+        next_service_mileage: data.next_service_mileage
+    })
+    .eq('vehicle_plate', plate)
 
   if (error) {
     console.error('Error updating vehicle:', error)
@@ -54,9 +65,9 @@ export async function deleteVehicle(plate: string) {
   const supabase = await createClient()
 
   const { error } = await supabase
-    .from('Master_Vehicles')
+    .from('master_vehicles')
     .delete()
-    .eq('Vehicle_Plate', plate)
+    .eq('vehicle_plate', plate)
 
   if (error) {
     console.error('Error deleting vehicle:', error)

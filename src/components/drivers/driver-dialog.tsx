@@ -8,10 +8,11 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { createDriver, updateDriver } from "@/app/drivers/actions"
 import { Loader2 } from "lucide-react"
+import { Driver } from "@/lib/supabase/drivers"
 
 type DriverDialogProps = {
   mode?: 'create' | 'edit'
-  driver?: any
+  driver?: Partial<Driver>
   vehicles?: any[] // Optional: for selecting assigned vehicle
   trigger?: React.ReactNode
   open?: boolean
@@ -38,8 +39,9 @@ export function DriverDialog({
     Driver_ID: driver?.Driver_ID || '',
     Driver_Name: driver?.Driver_Name || '',
     Mobile_No: driver?.Mobile_No || '',
+    Password: driver?.Password || '',
     Vehicle_Plate: driver?.Vehicle_Plate || '',
-    Active_Status: driver?.Active_Status || 'Active'
+    Active_Status: 'Active' // default
   })
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -51,6 +53,7 @@ export function DriverDialog({
         // @ts-ignore
         await createDriver(formData)
       } else {
+        // @ts-ignore
         await updateDriver(driver.Driver_ID, formData)
       }
       setShow(false)
@@ -59,6 +62,7 @@ export function DriverDialog({
             Driver_ID: '',
             Driver_Name: '',
             Mobile_No: '',
+            Password: '',
             Vehicle_Plate: '',
             Active_Status: 'Active'
         })
@@ -94,7 +98,7 @@ export function DriverDialog({
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="Driver_Name">ดื่อ-นามสกุล</Label>
+            <Label htmlFor="Driver_Name">ชื่อ-นามสกุล</Label>
             <Input
               id="Driver_Name"
               value={formData.Driver_Name}
@@ -113,6 +117,19 @@ export function DriverDialog({
               onChange={(e) => setFormData({ ...formData, Mobile_No: e.target.value })}
               placeholder="081-234-5678"
               required
+              className="bg-white/5 border-white/10"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="Password">รหัสผ่าน (สำหรับเข้าสู่ระบบ)</Label>
+            <Input
+              id="Password"
+              type="text"
+              value={formData.Password}
+              onChange={(e) => setFormData({ ...formData, Password: e.target.value })}
+              placeholder="ตั้งรหัสผ่าน"
+              required={mode === 'create'}
               className="bg-white/5 border-white/10"
             />
           </div>

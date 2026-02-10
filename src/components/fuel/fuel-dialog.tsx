@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { createFuelLog } from "@/app/fuel/actions"
+import { updateFuelLog, createFuelLog } from "@/app/fuel/actions"
 import { Loader2 } from "lucide-react"
 
 type FuelDialogProps = {
@@ -15,6 +15,7 @@ type FuelDialogProps = {
   trigger?: React.ReactNode
   open?: boolean
   onOpenChange?: (open: boolean) => void
+  initialData?: any // Should be FuelLog type but using any for loose coupling for now
 }
 
 export function FuelDialog({
@@ -22,7 +23,8 @@ export function FuelDialog({
   vehicles,
   trigger,
   open,
-  onOpenChange
+  onOpenChange,
+  initialData
 }: FuelDialogProps) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
@@ -32,22 +34,51 @@ export function FuelDialog({
   const show = isControlled ? open : internalOpen
   const setShow = isControlled ? onOpenChange! : setInternalOpen
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    Date_Time: string
+    Driver_ID: string
+    Vehicle_Plate: string
+    Liter: string
+    Price: string
+    Total_Amount: number
+    Mileage: string
+    Station_Name: string
+    Fuel_Type?: string
+  }>({
     Date_Time: new Date().toISOString().slice(0, 16),
     Driver_ID: '',
     Vehicle_Plate: '',
-    Fuel_Type: 'Diesel',
     Liter: '',
     Price: '',
     Total_Amount: 0,
-    Mileage: ''
+    Mileage: '',
+    Station_Name: ''
   })
 
-  // Auto calculate total
+  useEffect(() => {
+    if (initialData) {
+      setFormData({
+        Date_Time: initialData.Date_Time ? new Date(initialData.Date_Time).toISOString().slice(0, 16) : new Date().toISOString().slice(0, 16),
+        Driver_ID: initialData.Driver_ID || '',
+        Vehicle_Plate: initialData.Vehicle_Plate || '',
+        Liter: initialData.Liters?.toString() || '',
+        Price: (initialData.Price_Total && initialData.Liters) ? (initialData.Price_Total / initialData.Liters).toFixed(2) : '',
+        Total_Amount: initialData.Price_Total || 0,
+        Mileage: initialData.Odometer?.toString() || '',
+        Station_Name: initialData.Station_Name || ''
+      })
+    }
+  }, [initialData, show])
+
+  // Auto calculate total (Only if user is typing, might conflict with initial load if not careful)
+  // We can add a check if focused or just rely on manual input
   useEffect(() => {
     const liter = parseFloat(formData.Liter) || 0
     const price = parseFloat(formData.Price) || 0
-    setFormData(prev => ({ ...prev, Total_Amount: liter * price }))
+    // Only update total if values are valid numbers
+    if (liter > 0 && price > 0) {
+        setFormData(prev => ({ ...prev, Total_Amount: liter * price }))
+    }
   }, [formData.Liter, formData.Price])
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -55,25 +86,32 @@ export function FuelDialog({
     setLoading(true)
 
     try {
-      await createFuelLog({
+      const payload = {
         ...formData,
         Liter: parseFloat(formData.Liter),
         Price: parseFloat(formData.Price),
         Mileage: parseInt(formData.Mileage),
-        Date_Time: new Date(formData.Date_Time).toISOString()
-      })
+        Date_Time: new Date(formData.Date_Time).toISOString(),
+        Station_Name: formData.Station_Name || ''
+      }
+
+      if (initialData) {
+        await updateFuelLog(initialData.Log_ID, payload)
+      } else {
+        await createFuelLog(payload)
+      }
       
       setShow(false)
-      if (!isControlled) {
+      if (!isControlled && !initialData) {
         setFormData({
             Date_Time: new Date().toISOString().slice(0, 16),
             Driver_ID: '',
             Vehicle_Plate: '',
-            Fuel_Type: 'Diesel',
             Liter: '',
             Price: '',
             Total_Amount: 0,
-            Mileage: ''
+            Mileage: '',
+            Station_Name: ''
         })
       }
       router.refresh()
@@ -90,7 +128,7 @@ export function FuelDialog({
       {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
       <DialogContent className="sm:max-w-[425px] bg-slate-900/95 border-white/10 text-white">
         <DialogHeader>
-          <DialogTitle>บันทึกการเติมน้ำมัน</DialogTitle>
+          <DialogTitle>{initialData ? 'แก้ไขข้อมูลการเติมน้ำมัน' : 'บันทึกการเติมน้ำมัน'}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 mt-4">
           <div className="space-y-2">
@@ -144,17 +182,14 @@ export function FuelDialog({
 
           <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="Fuel_Type">ประเภท</Label>
-                <select
-                    id="Fuel_Type"
-                    value={formData.Fuel_Type}
-                    onChange={(e) => setFormData({ ...formData, Fuel_Type: e.target.value })}
-                    className="flex h-10 w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                >
-                    <option value="Diesel" className="bg-slate-900">Diesel</option>
-                    <option value="Gasohol 95" className="bg-slate-900">Gasohol 95</option>
-                    <option value="NGV" className="bg-slate-900">NGV</option>
-                </select>
+                <Label htmlFor="Station_Name">สถานีบริการ / ปั๊ม</Label>
+                <Input
+                    id="Station_Name"
+                    value={formData.Station_Name}
+                    onChange={(e) => setFormData({ ...formData, Station_Name: e.target.value })}
+                    placeholder="เช่น ปตท. สาขา..."
+                    className="bg-white/5 border-white/10"
+                />
             </div>
             <div className="space-y-2">
                  <Label htmlFor="Mileage">เลขไมล์</Label>
@@ -212,7 +247,7 @@ export function FuelDialog({
             </Button>
             <Button type="submit" disabled={loading} className="bg-gradient-to-r from-emerald-500 to-teal-600">
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              บันทึก
+              {initialData ? 'บันทึกการแก้ไข' : 'บันทึก'}
             </Button>
           </div>
         </form>

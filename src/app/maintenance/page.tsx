@@ -4,19 +4,20 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { 
   Wrench, 
-  Search,
   Plus,
   AlertTriangle,
-  CheckCircle2,
   Clock,
+  Filter
 } from "lucide-react"
 import { getAllRepairTickets, getRepairTicketStats } from "@/lib/supabase/maintenance"
 import { getAllDrivers } from "@/lib/supabase/drivers"
 import { getAllVehicles } from "@/lib/supabase/vehicles"
 import { MaintenanceDialog } from "@/components/maintenance/maintenance-dialog"
+import { MaintenanceActions } from "@/components/maintenance/maintenance-actions"
 
 import { SearchInput } from "@/components/ui/search-input"
 import { Pagination } from "@/components/ui/pagination"
+import Image from "next/image"
 
 type Props = {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
@@ -27,19 +28,19 @@ export default async function MaintenancePage(props: Props) {
   const page = Number(searchParams.page) || 1
   const query = (searchParams.q as string) || ''
   const limit = 20
+  
+  const startDate = (searchParams.startDate as string) || ''
+  const endDate = (searchParams.endDate as string) || ''
+  const status = (searchParams.status as string) || ''
 
   const [{ data: tickets, count }, stats, drivers, vehicles] = await Promise.all([
-    getAllRepairTickets(page, limit, query),
+    getAllRepairTickets(page, limit, query, startDate, endDate, status),
     getRepairTicketStats(),
     getAllDrivers(),
     getAllVehicles(),
   ])
 
-  const priorityColors: Record<string, string> = {
-    High: "text-red-400",
-    Medium: "text-amber-400",
-    Low: "text-blue-400",
-  }
+
 
   return (
     <DashboardLayout>
@@ -84,9 +85,42 @@ export default async function MaintenancePage(props: Props) {
         </div>
       </div>
 
-      {/* Search */}
-      <div className="mb-6">
-        <SearchInput placeholder="ค้นหา Ticket ID, ทะเบียนรถ..." />
+      {/* Search and Filter */}
+      <div className="flex flex-col md:flex-row gap-4 mb-6">
+        <div className="flex-1">
+            <SearchInput placeholder="ค้นหา Ticket ID, ทะเบียนรถ..." />
+        </div>
+        <div className="flex gap-2 flex-wrap">
+            <form className="flex gap-2 items-center flex-wrap">
+                <Input 
+                    type="date" 
+                    name="startDate"
+                    defaultValue={startDate}
+                    className="bg-slate-900 border-slate-700 text-white w-auto"
+                />
+                <span className="text-slate-500">-</span>
+                <Input 
+                    type="date" 
+                    name="endDate"
+                    defaultValue={endDate}
+                    className="bg-slate-900 border-slate-700 text-white w-auto"
+                />
+                <select 
+                    name="status" 
+                    defaultValue={status}
+                    className="h-10 rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+                >
+                    <option value="">ทุกสถานะ</option>
+                    <option value="Pending">รอดำเนินการ</option>
+                    <option value="In Progress">กำลังซ่อม</option>
+                    <option value="Completed">เสร็จสิ้น</option>
+                </select>
+                <Button type="submit" variant="secondary" className="gap-2">
+                    <Filter size={16} />
+                    กรอง
+                </Button>
+            </form>
+        </div>
       </div>
 
       {/* Ticket Cards */}
@@ -96,7 +130,15 @@ export default async function MaintenancePage(props: Props) {
             ไม่พบรายการแจ้งซ่อม
           </div>
         ) : tickets.map((ticket) => (
-          <Card key={ticket.Ticket_ID} variant="glass" hover={true}>
+          <Card key={ticket.Ticket_ID} variant="glass" hover={true} className="relative group">
+            <div className="absolute top-2 right-2 opacity-100 z-10 bg-slate-900/50 rounded-full backdrop-blur-sm">
+                 <MaintenanceActions 
+                    ticket={ticket} 
+                    drivers={drivers.data || []} 
+                    vehicles={vehicles.data || []} 
+                 />
+            </div>
+            
             <CardContent className="p-5">
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3">
@@ -110,7 +152,7 @@ export default async function MaintenancePage(props: Props) {
                     <p className="text-xs text-slate-400">#{ticket.Ticket_ID}</p>
                   </div>
                 </div>
-                <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                <span className={`px-2 py-0.5 rounded-full text-xs font-medium mt-1 mr-8 ${
                   ticket.Status === 'Completed' ? 'bg-emerald-500/20 text-emerald-400' :
                   ticket.Status === 'In Progress' ? 'bg-blue-500/20 text-blue-400' :
                   'bg-amber-500/20 text-amber-400'
@@ -119,9 +161,31 @@ export default async function MaintenancePage(props: Props) {
                 </span>
               </div>
 
-              <div className="mb-4">
-                <p className="text-sm text-white font-medium mb-1">{ticket.Issue_Type}</p>
-                <p className="text-xs text-slate-400 line-clamp-2">{ticket.Issue_Desc}</p>
+              <div className="mb-4 space-y-2">
+                 {ticket.Photo_Url && (
+                    <div className="relative w-full h-32 rounded-lg overflow-hidden border border-white/5 mb-2">
+                        <Image 
+                            src={(() => {
+                                try {
+                                    if (ticket.Photo_Url.startsWith('[') && ticket.Photo_Url.endsWith(']')) {
+                                        const parsed = JSON.parse(ticket.Photo_Url)
+                                        return Array.isArray(parsed) && parsed.length > 0 ? parsed[0] : ticket.Photo_Url
+                                    }
+                                    return ticket.Photo_Url
+                                } catch {
+                                    return ticket.Photo_Url
+                                }
+                            })()}
+                            alt="Issue Photo" 
+                            fill 
+                            className="object-cover"
+                        />
+                    </div>
+                 )}
+                <div>
+                    <p className="text-sm text-white font-medium mb-1">{ticket.Issue_Type}</p>
+                    <p className="text-xs text-slate-400 line-clamp-2">{ticket.Issue_Desc}</p>
+                </div>
               </div>
 
               <div className="flex items-center justify-between text-xs text-slate-500 pt-4 border-t border-white/10">
@@ -129,9 +193,15 @@ export default async function MaintenancePage(props: Props) {
                   <Clock size={12} />
                   <span>{ticket.Date_Report ? new Date(ticket.Date_Report).toLocaleDateString('th-TH') : "-"}</span>
                 </div>
-                <div className="flex items-center gap-1 font-medium">
-                  Priority: <span className={priorityColors[ticket.Priority || 'Medium']}>{ticket.Priority}</span>
-                </div>
+                {ticket.Cost_Total && ticket.Cost_Total > 0 ? (
+                    <div className="text-emerald-400 font-bold">
+                        ฿{ticket.Cost_Total.toLocaleString()}
+                    </div>
+                ) : (
+                    <div className="flex items-center gap-1 font-medium">
+                        {ticket.Priority}
+                    </div>
+                )}
               </div>
             </CardContent>
           </Card>
