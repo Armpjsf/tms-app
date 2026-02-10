@@ -87,7 +87,7 @@ export default function SettingsPage() {
                 <p className="text-slate-400">admin@company.com</p>
                 <p className="text-xs text-indigo-400 mt-1">Super Admin</p>
               </div>
-              <Button variant="outline">แก้ไขโปรไฟล์</Button>
+              <Button variant="outline" onClick={() => alert("Edit Profile Feature Coming Soon")}>แก้ไขโปรไฟล์</Button>
             </div>
           </CardContent>
         </Card>
@@ -115,6 +115,7 @@ export default function SettingsPage() {
                     key={item.label}
                     whileHover={{ x: 4 }}
                     className="flex items-center justify-between p-3 rounded-xl hover:bg-white/5 cursor-pointer transition-colors group"
+                    onClick={() => alert(`Opening ${item.label}...`)}
                   >
                     <div>
                       <p className="font-medium text-white">{item.label}</p>
@@ -145,15 +146,15 @@ export default function SettingsPage() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Button variant="outline" className="gap-2 h-auto py-4 flex-col">
+              <Button variant="outline" className="gap-2 h-auto py-4 flex-col hover:bg-indigo-500/10 hover:text-indigo-400 hover:border-indigo-500/50 transition-all" onClick={() => alert("ระบบสำรองข้อมูลยังไม่เปิดใช้งาน")}>
                 <Database size={24} />
                 <span>สำรองข้อมูล</span>
               </Button>
-              <Button variant="outline" className="gap-2 h-auto py-4 flex-col">
+              <Button variant="outline" className="gap-2 h-auto py-4 flex-col hover:bg-emerald-500/10 hover:text-emerald-400 hover:border-emerald-500/50 transition-all" onClick={() => alert("API Connection: Connected")}>
                 <Globe size={24} />
                 <span>เชื่อมต่อ API</span>
               </Button>
-              <Button variant="destructive" className="gap-2 h-auto py-4 flex-col">
+              <Button variant="destructive" className="gap-2 h-auto py-4 flex-col hover:bg-red-600 hover:text-white transition-all" onClick={() => window.location.href = "/"}>
                 <LogOut size={24} />
                 <span>ออกจากระบบ</span>
               </Button>

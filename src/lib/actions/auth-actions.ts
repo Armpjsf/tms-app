@@ -26,10 +26,10 @@ export async function loginDriver(formData: FormData) {
     return { error: "ไม่พบเบอร์โทรศัพท์นี้ในระบบ" }
   }
 
-  // 2. Simple password check (In production, use hashed passwords or Supabase Auth)
-  // For this prototype, we'll assume a default password or check a column if it existed
-  // Let's assume default password for all drivers is '123456' for MVP demo unless strictly required otherwise
-  if (password !== "123456") { 
+  // 2. Password Check
+  // In production, we should use hashed passwords (Argon2/Bcrypt)
+  // For now, we compare with the plain text password stored in DB (as per current implementation)
+  if (password !== driver.Password) { 
       return { error: "รหัสผ่านไม่ถูกต้อง" }
   }
 
