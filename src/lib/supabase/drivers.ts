@@ -66,7 +66,9 @@ export async function createDriver(driverData: Partial<Driver>) {
         Mobile_No: driverData.Mobile_No,
         Role: driverData.Role || 'Driver',
         Vehicle_Plate: driverData.Vehicle_Plate,
-        Vehicle_Type: driverData.Vehicle_Type
+        Vehicle_Type: driverData.Vehicle_Type,
+        Password: driverData.Password, // Added
+        Active_Status: driverData.Active_Status || 'Active' // Added
       })
       .select()
       .single()
@@ -92,7 +94,9 @@ export async function updateDriver(id: string, driverData: Partial<Driver>) {
         Mobile_No: driverData.Mobile_No,
         Role: driverData.Role,
         Vehicle_Plate: driverData.Vehicle_Plate,
-        Vehicle_Type: driverData.Vehicle_Type
+        Vehicle_Type: driverData.Vehicle_Type,
+        Password: driverData.Password, // Added
+        Active_Status: driverData.Active_Status // Added
       })
       .eq('Driver_ID', id)
       .select()

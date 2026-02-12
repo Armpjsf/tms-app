@@ -132,16 +132,16 @@ export async function getTodayJobStats() {
 }
 
 // ดึงงานของ Driver เฉพาะคน
+// ดึงงานของ Driver เฉพาะคน
 export async function getDriverJobs(driverId: string): Promise<Job[]> {
   try {
     const supabase = await createClient()
     
-    // In a real scenario, filtering by Driver_ID is needed, but assuming we pass the 'Name' or 'ID' correctly
-    // Since our mock data might use Driver_Name or Driver_ID (string)
+    // STRICT filtering by Driver_ID
     const { data, error } = await supabase
       .from('Jobs_Main')
       .select('*')
-      .or(`Driver_ID.eq.${driverId},Driver_Name.eq.${driverId}`) // Try both just in case of inconsistent data
+      .eq('Driver_ID', driverId) 
       .order('Plan_Date', { ascending: false })
       .order('Created_At', { ascending: false })
       .limit(50)
@@ -381,4 +381,47 @@ export async function getJobsForBilling(startDate?: string, endDate?: string): P
         console.error('Exception fetching billing jobs:', e)
         return []
     }
+}
+// ดึงข้อมูล Dashboard สำหรับ Driver (Mobile)
+export async function getDriverDashboardStats(driverId: string) {
+  try {
+    const supabase = await createClient()
+    const today = new Date().toISOString().split('T')[0]
+    
+    // 1. Get today's jobs for this driver
+    const { data: jobs, error } = await supabase
+      .from('Jobs_Main')
+      .select('*')
+      .eq('Driver_ID', driverId)
+      .eq('Plan_Date', today)
+      .order('Created_At', { ascending: true }) // Order by time to find next job
+
+    if (error) {
+      console.error('Error fetching driver dashboard stats:', error)
+      return { 
+        stats: { total: 0, completed: 0 }, 
+        currentJob: null 
+      }
+    }
+
+    const total = jobs?.length || 0
+    const completed = jobs?.filter(j => ['Completed', 'Delivered'].includes(j.Job_Status || '')).length || 0
+    
+    // Find current active job (In Progress/Transit) OR the first Pending/New job
+    // Priority: In Progress > In Transit > Assigned > New
+    const currentJob = jobs?.find(j => ['In Progress', 'In Transit'].includes(j.Job_Status || '')) 
+      || jobs?.find(j => ['Assigned', 'New'].includes(j.Job_Status || '')) 
+      || null
+
+    return {
+      stats: { total, completed },
+      currentJob
+    }
+  } catch (e) {
+    console.error('Exception fetching driver dashboard stats:', e)
+     return { 
+        stats: { total: 0, completed: 0 }, 
+        currentJob: null 
+      }
+  }
 }

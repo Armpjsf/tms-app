@@ -37,9 +37,9 @@ export async function createRepairTicket(data: TicketFormData) {
   // Update vehicle status to Maintenance if priority is High
   if (data.Priority === 'High') {
       await supabase
-        .from('Master_Vehicles')
-        .update({ Status: 'Maintenance' })
-        .eq('Vehicle_Plate', data.Vehicle_Plate)
+        .from('master_vehicles')
+        .update({ active_status: 'Maintenance' })
+        .eq('vehicle_plate', data.Vehicle_Plate)
   }
 
   revalidatePath('/maintenance')
@@ -77,9 +77,9 @@ export async function updateRepairTicket(ticketId: string, data: any) {
   // Ideally, if finished, Vehicle Status might need to go back to 'Active'.
   if (data.Status === 'Completed' && data.Vehicle_Plate) {
      await supabase
-        .from('Master_Vehicles')
-        .update({ Status: 'Active' })
-        .eq('Vehicle_Plate', data.Vehicle_Plate)
+        .from('master_vehicles')
+        .update({ active_status: 'Active' })
+        .eq('vehicle_plate', data.Vehicle_Plate)
   }
 
   revalidatePath('/maintenance')

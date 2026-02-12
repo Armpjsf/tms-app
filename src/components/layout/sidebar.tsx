@@ -26,6 +26,7 @@ import {
   Building,
   History,
   Coins,
+  PieChart,
 } from "lucide-react"
 
 interface NavItem {
@@ -72,7 +73,8 @@ const navigation: NavGroup[] = [
   {
     title: "รายงาน",
     items: [
-      { title: "รายงาน", href: "/reports", icon: <BarChart3 size={20} /> },
+      { title: "Dashboard ผู้บริหาร", href: "/admin/analytics", icon: <PieChart size={20} /> },
+      { title: "รายงานทั่วไป", href: "/reports", icon: <BarChart3 size={20} /> },
     ],
   },
   {
@@ -167,7 +169,7 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
                 const isActive = pathname === item.href
                 
                 return (
-                  <Link key={item.href} href={item.href}>
+                  <Link key={item.href} href={item.href} prefetch={false}>
                     <motion.div
                       whileHover={{ x: 4 }}
                       whileTap={{ scale: 0.98 }}

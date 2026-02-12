@@ -1,12 +1,13 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { getCompanyProfile, saveCompanyProfile, uploadCompanyLogo } from "@/lib/supabase/settings"
 import {
   Building,
   Upload,
@@ -23,6 +24,7 @@ import {
 
 export default function CompanySettingsPage() {
   const [loading, setLoading] = useState(false)
+  const [uploading, setUploading] = useState(false)
   const [logoPreview, setLogoPreview] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -42,30 +44,62 @@ export default function CompanySettingsPage() {
     logo_url: ""
   })
 
+  useEffect(() => {
+    loadSettings()
+  }, [])
+
+  const loadSettings = async () => {
+    const profile = await getCompanyProfile()
+    if (profile) {
+        setFormData(prev => ({ ...prev, ...profile }))
+        if (profile.logo_url) setLogoPreview(profile.logo_url)
+    }
+  }
+
   const updateForm = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }))
   }
 
-  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
-    if (file) {
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        setLogoPreview(reader.result as string)
+    if (!file) return
+
+    // Preview
+    const reader = new FileReader()
+    reader.onloadend = () => {
+      setLogoPreview(reader.result as string)
+    }
+    reader.readAsDataURL(file)
+
+    // Upload
+    setUploading(true)
+    try {
+      const result = await uploadCompanyLogo(file)
+      if (result.success && result.url) {
+        updateForm("logo_url", result.url)
+      } else {
+        alert("อัปโหลดไม่สำเร็จ: " + (result.error?.message || "Unknown error"))
       }
-      reader.readAsDataURL(file)
+    } catch (e) {
+      console.error(e)
+      alert("Upload failed")
+    } finally {
+      setUploading(false)
     }
   }
 
   const handleSave = async () => {
     setLoading(true)
     try {
-      // TODO: Save to Supabase System_Config table
-      await new Promise(r => setTimeout(r, 1000))
-      alert("บันทึกข้อมูลสำเร็จ!")
+      const result = await saveCompanyProfile(formData)
+      if (result.success) {
+        alert("บันทึกข้อมูลสำเร็จ!")
+      } else {
+        throw result.error
+      }
     } catch (e) {
       console.error(e)
-      alert("เกิดข้อผิดพลาด")
+      alert("เกิดข้อผิดพลาดในการบันทึก")
     } finally {
       setLoading(false)
     }
@@ -99,9 +133,14 @@ export default function CompanySettingsPage() {
           </CardHeader>
           <CardContent className="text-center">
             <div 
-              className="w-48 h-48 mx-auto rounded-xl border-2 border-dashed border-slate-700 flex items-center justify-center cursor-pointer hover:border-blue-500 transition-colors bg-slate-800/50 overflow-hidden"
-              onClick={() => fileInputRef.current?.click()}
+              className="w-48 h-48 mx-auto rounded-xl border-2 border-dashed border-slate-700 flex items-center justify-center cursor-pointer hover:border-blue-500 transition-colors bg-slate-800/50 overflow-hidden relative"
+              onClick={() => !uploading && fileInputRef.current?.click()}
             >
+              {uploading && (
+                <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-10">
+                  <Loader2 className="w-8 h-8 text-white animate-spin" />
+                </div>
+              )}
               {logoPreview ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={logoPreview} alt="Logo" className="w-full h-full object-contain p-2" />

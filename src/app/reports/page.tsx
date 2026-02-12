@@ -19,6 +19,7 @@ import { getDriverStats } from "@/lib/supabase/drivers"
 import { getVehicleStats } from "@/lib/supabase/vehicles"
 import { getTodayFuelStats } from "@/lib/supabase/fuel"
 import { getRepairTicketStats } from "@/lib/supabase/maintenance"
+import { DownloadButton } from "@/components/reports/download-button"
 
 export default async function ReportsPage() {
   const [{ count: jobCount }, driverStats, vehicleStats, fuelStats, maintenanceStats] = await Promise.all([
@@ -29,8 +30,11 @@ export default async function ReportsPage() {
     getRepairTicketStats(),
   ])
 
+// ... imports
+
   const reports = [
     {
+      key: "jobs",
       title: "รายงานงานจัดส่ง",
       description: "สรุปการจัดส่งรายวัน/รายเดือน",
       icon: <Package className="text-indigo-400" size={24} />,
@@ -38,6 +42,7 @@ export default async function ReportsPage() {
       color: "indigo",
     },
     {
+      key: "drivers",
       title: "รายงานคนขับ",
       description: "ผลงานและประสิทธิภาพคนขับ",
       icon: <Users className="text-blue-400" size={24} />,
@@ -45,6 +50,7 @@ export default async function ReportsPage() {
       color: "blue",
     },
     {
+      key: "vehicles",
       title: "รายงานรถ",
       description: "สถานะและการใช้งานรถ",
       icon: <Truck className="text-purple-400" size={24} />,
@@ -52,6 +58,7 @@ export default async function ReportsPage() {
       color: "purple",
     },
     {
+      key: "fuel",
       title: "รายงานน้ำมัน",
       description: "การเติมน้ำมันและค่าใช้จ่าย",
       icon: <Fuel className="text-emerald-400" size={24} />,
@@ -59,6 +66,7 @@ export default async function ReportsPage() {
       color: "emerald",
     },
     {
+      key: "maintenance",
       title: "รายงานซ่อมบำรุง",
       description: "การแจ้งซ่อมและค่าใช้จ่าย",
       icon: <Wrench className="text-amber-400" size={24} />,
@@ -66,6 +74,7 @@ export default async function ReportsPage() {
       color: "amber",
     },
     {
+      key: "performance",
       title: "รายงานประสิทธิภาพ",
       description: "KPI และตัวชี้วัดหลัก",
       icon: <TrendingUp className="text-cyan-400" size={24} />,
@@ -106,9 +115,8 @@ export default async function ReportsPage() {
                 <div className={`w-12 h-12 rounded-xl bg-${report.color}-500/20 flex items-center justify-center`}>
                   {report.icon}
                 </div>
-                <Button variant="ghost" size="sm">
-                  <Download size={16} />
-                </Button>
+                {/* Download Button Component */}
+                <DownloadButton reportType={report.key} fileName={report.title} />
               </div>
               <h3 className="text-lg font-bold text-white mb-1">{report.title}</h3>
               <p className="text-sm text-slate-400 mb-4">{report.description}</p>

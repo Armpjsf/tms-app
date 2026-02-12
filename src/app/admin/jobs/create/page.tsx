@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { createJob, getJobCreationData } from "@/app/planning/actions"
 import { 
   ArrowLeft, 
   Package,
@@ -59,6 +61,17 @@ export default function CreateJobPage() {
   const [currentStep, setCurrentStep] = useState(0)
   const [loading, setLoading] = useState(false)
   
+  // Real data lists
+  const [lists, setLists] = useState<{
+    drivers: any[],
+    vehicles: any[],
+    customers: any[]
+  }>({ drivers: [], vehicles: [], customers: [] })
+
+  useEffect(() => {
+    getJobCreationData().then(setLists)
+  }, [])
+
   const steps = ['ข้อมูลงาน', 'ข้อมูลลูกค้า', 'มอบหมายงาน', 'ยืนยัน']
   
   const [formData, setFormData] = useState({
@@ -80,6 +93,34 @@ export default function CreateJobPage() {
     Weight: ''
   })
 
+  // Autofill customer data when name matches
+  const handleCustomerChange = (name: string) => {
+    updateForm('Customer_Name', name)
+    const existing = lists.customers.find(c => c.Customer_Name === name)
+    if (existing) {
+      setFormData(prev => ({
+        ...prev,
+        Customer_Name: name,
+        Customer_Phone: existing.Customer_Phone || '',
+        Customer_Address: existing.Customer_Address || '',
+        Origin_Location: existing.Origin_Location || '', // Optional
+        Dest_Location: existing.Dest_Location || '' // Optional
+      }))
+    }
+  }
+
+  const handleDriverChange = (driverId: string) => {
+    const driver = lists.drivers.find(d => d.Driver_ID === driverId)
+    updateForm('Driver_ID', driverId)
+    if (driver) {
+      updateForm('Driver_Name', driver.Driver_Name || '')
+      // Auto-select vehicle if driver has one assigned and current is empty
+      if (driver.Vehicle_Plate && !formData.Vehicle_Plate) {
+        updateForm('Vehicle_Plate', driver.Vehicle_Plate)
+      }
+    }
+  }
+
   const updateForm = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }))
   }
@@ -87,9 +128,21 @@ export default function CreateJobPage() {
   const handleSubmit = async () => {
     setLoading(true)
     try {
-      // TODO: Connect to actual API
-      await new Promise(r => setTimeout(r, 1000))
-      router.push('/planning')
+      const result = await createJob({
+        Job_ID: formData.Job_ID,
+        Plan_Date: formData.Plan_Date, // You might want to combine with Time
+        Customer_Name: formData.Customer_Name,
+        Route_Name: `${formData.Origin_Location} - ${formData.Dest_Location}`, // Auto-generate route name
+        Driver_ID: formData.Driver_ID,
+        Vehicle_Plate: formData.Vehicle_Plate,
+        Job_Status: 'New'
+      })
+
+      if (result.success) {
+        router.push('/planning')
+      } else {
+        alert('เกิดข้อผิดพลาด: ' + result.message)
+      }
     } catch (e) {
       console.error(e)
       alert('เกิดข้อผิดพลาด กรุณาลองใหม่')
@@ -112,7 +165,7 @@ export default function CreateJobPage() {
         </Link>
         <div>
           <h1 className="text-2xl font-bold text-white">สร้างงานใหม่</h1>
-          <p className="text-sm text-slate-400">กรอกข้อมูลเพื่อสร้างงานขนส่ง</p>
+          <p className="text-sm text-slate-400">กรอกข้อมูลเพื่อสร้างงานขนส่ง (เชื่อมต่อฐานข้อมูลจริง)</p>
         </div>
       </div>
 
@@ -147,15 +200,16 @@ export default function CreateJobPage() {
                 </div>
                 <div className="space-y-2">
                   <Label className="text-slate-300">ความเร่งด่วน</Label>
-                  <select 
-                    value={formData.Priority}
-                    onChange={(e) => updateForm('Priority', e.target.value)}
-                    className="w-full h-10 px-3 rounded-md bg-slate-800 border border-slate-700 text-white"
-                  >
-                    <option value="Normal">ปกติ</option>
-                    <option value="High">เร่งด่วน</option>
-                    <option value="Urgent">ด่วนมาก</option>
-                  </select>
+                  <Select value={formData.Priority} onValueChange={(val) => updateForm('Priority', val)}>
+                    <SelectTrigger className="bg-slate-800 border-slate-700 text-white">
+                      <SelectValue placeholder="เลือกความเร่งด่วน" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Normal">ปกติ</SelectItem>
+                      <SelectItem value="High">เร่งด่วน</SelectItem>
+                      <SelectItem value="Urgent">ด่วนมาก</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="space-y-2">
                   <Label className="text-slate-300 flex items-center gap-2">
@@ -224,11 +278,17 @@ export default function CreateJobPage() {
                     <Building2 className="w-4 h-4" /> ชื่อลูกค้า / บริษัท
                   </Label>
                   <Input 
-                    placeholder="ชื่อผู้รับ"
+                    placeholder="พิมพ์เพื่อค้นหาหรือสร้างใหม่"
+                    list="customers-list"
                     value={formData.Customer_Name}
-                    onChange={(e) => updateForm('Customer_Name', e.target.value)}
+                    onChange={(e) => handleCustomerChange(e.target.value)}
                     className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-500"
                   />
+                  <datalist id="customers-list">
+                    {lists.customers.map((c, i) => (
+                      <option key={i} value={c.Customer_Name} />
+                    ))}
+                  </datalist>
                 </div>
                 <div className="space-y-2">
                   <Label className="text-slate-300 flex items-center gap-2">
@@ -294,21 +354,33 @@ export default function CreateJobPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label className="text-slate-300">คนขับ</Label>
-                  <Input 
-                    placeholder="ชื่อคนขับ"
-                    value={formData.Driver_Name}
-                    onChange={(e) => updateForm('Driver_Name', e.target.value)}
-                    className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-500"
-                  />
+                  <Select value={formData.Driver_ID} onValueChange={handleDriverChange}>
+                    <SelectTrigger className="bg-slate-800 border-slate-700 text-white">
+                      <SelectValue placeholder="เลือกคนขับ" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {lists.drivers.map(d => (
+                        <SelectItem key={d.Driver_ID} value={d.Driver_ID}>
+                          {d.Driver_Name} ({d.Mobile_No})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="space-y-2">
                   <Label className="text-slate-300">ทะเบียนรถ</Label>
-                  <Input 
-                    placeholder="เช่น 1กก-1234"
-                    value={formData.Vehicle_Plate}
-                    onChange={(e) => updateForm('Vehicle_Plate', e.target.value)}
-                    className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-500"
-                  />
+                  <Select value={formData.Vehicle_Plate} onValueChange={(val) => updateForm('Vehicle_Plate', val)}>
+                    <SelectTrigger className="bg-slate-800 border-slate-700 text-white">
+                      <SelectValue placeholder="เลือกทะเบียนรถ" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {lists.vehicles.map(v => (
+                        <SelectItem key={v.vehicle_plate} value={v.vehicle_plate}>
+                          {v.vehicle_plate} ({v.vehicle_type})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 

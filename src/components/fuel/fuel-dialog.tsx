@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { updateFuelLog, createFuelLog } from "@/app/fuel/actions"
 import { Loader2 } from "lucide-react"
+import { ImageUpload } from "@/components/ui/image-upload"
 
 type FuelDialogProps = {
   drivers: any[]
@@ -131,6 +132,13 @@ export function FuelDialog({
           <DialogTitle>{initialData ? 'แก้ไขข้อมูลการเติมน้ำมัน' : 'บันทึกการเติมน้ำมัน'}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 mt-4">
+          <div className="flex justify-center mb-4">
+             <ImageUpload 
+                value={formData.Photo_Url} 
+                onChange={(url) => setFormData({ ...formData, Photo_Url: url })}
+             />
+          </div>
+
           <div className="space-y-2">
             <Label htmlFor="Date_Time">วัน-เวลา</Label>
             <Input

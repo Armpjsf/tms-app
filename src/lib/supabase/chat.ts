@@ -1,122 +1,127 @@
-import { createClient } from "@/utils/supabase/server";
+import { createClient } from '@/utils/supabase/server'
 
 export type ChatMessage = {
-  id?: number;
-  driver_id: string;
-  driver_name: string;
-  sender: string; // 'driver' | 'admin'
-  message: string;
-  created_at: string;
-  read: boolean;
-};
-
-// ดึงข้อความทั้งหมดของคนขับ
-export async function getMessagesByDriver(
-  driverId: string,
-): Promise<ChatMessage[]> {
-  try {
-    const supabase = await createClient();
-
-    const { data, error } = await supabase
-      .from("chat_messages")
-      .select("*")
-      .eq("driver_id", driverId)
-      .order("created_at", { ascending: true });
-
-    if (error) {
-      console.error("Error fetching messages:", JSON.stringify(error));
-      return [];
-    }
-
-    return data || [];
-  } catch (e) {
-    console.error("Exception fetching messages:", e);
-    return [];
-  }
+  id: number
+  driver_id: string
+  driver_name: string
+  sender: 'admin' | 'driver'
+  message: string
+  created_at: string
+  read: boolean
 }
 
-// ดึงรายชื่อคนขับที่มีข้อความ (contacts)
-export async function getChatContacts(): Promise<
-  {
-    driver_id: string;
-    driver_name: string;
-    last_message: string;
-    unread: number;
-  }[]
-> {
-  try {
-    const supabase = await createClient();
+export type ChatContact = {
+  driver_id: string
+  driver_name: string
+  last_message: string
+  unread: number
+  updated_at: string
+}
 
-    // ดึงข้อความล่าสุดของแต่ละคนขับ
-    const { data, error } = await supabase
-      .from("chat_messages")
-      .select("driver_id, driver_name, message, created_at, read")
-      .order("created_at", { ascending: false });
+// Get list of drivers with their last message
+export async function getChatContacts(): Promise<ChatContact[]> {
+  try {
+    const supabase = await createClient()
+
+    // 1. Get all messages ordered by time
+    const { data: messages, error } = await supabase
+      .from('chat_messages')
+      .select('*')
+      .order('created_at', { ascending: false })
 
     if (error) {
-      console.error("Error fetching chat contacts:", JSON.stringify(error));
-      return [];
+      console.error('Error fetching chat messages:', error)
+      return []
     }
 
-    // Group by driver and get latest message
-    const contactMap = new Map<
-      string,
-      {
-        driver_id: string;
-        driver_name: string;
-        last_message: string;
-        unread: number;
-      }
-    >();
+    // 2. Group by driver and find last message
+    const contactMap = new Map<string, ChatContact>()
 
-    for (const msg of data || []) {
+    messages?.forEach((msg) => {
       if (!contactMap.has(msg.driver_id)) {
         contactMap.set(msg.driver_id, {
           driver_id: msg.driver_id,
-          driver_name: msg.driver_name,
-          last_message: msg.message,
-          unread: msg.read ? 0 : 1,
-        });
-      } else if (!msg.read) {
-        const existing = contactMap.get(msg.driver_id)!;
-        existing.unread += 1;
+          driver_name: msg.driver_name || 'Unknown Driver',
+          last_message: msg.sender === 'admin' ? `You: ${msg.message}` : msg.message,
+          unread: 0,
+          updated_at: msg.created_at
+        })
       }
-    }
 
-    return Array.from(contactMap.values());
-  } catch (e) {
-    console.error("Exception fetching chat contacts:", e);
-    return [];
+      // Count unread messages from driver
+      if (msg.sender === 'driver' && !msg.read) {
+        const contact = contactMap.get(msg.driver_id)
+        if (contact) {
+          contact.unread += 1
+        }
+      }
+    })
+
+    return Array.from(contactMap.values())
+  } catch (error) {
+    console.error('Error getting chat contacts:', error)
+    return []
   }
 }
 
-// ส่งข้อความใหม่
-export async function sendMessage(
-  driverId: string,
-  driverName: string,
-  message: string,
-  sender: string = "admin",
-) {
+// Get messages for a specific driver
+export async function getMessages(driverId: string): Promise<ChatMessage[]> {
   try {
-    const supabase = await createClient();
+    const supabase = await createClient()
+    const { data, error } = await supabase
+      .from('chat_messages')
+      .select('*')
+      .eq('driver_id', driverId)
+      .order('created_at', { ascending: true })
 
-    const { error } = await supabase.from("chat_messages").insert({
-      driver_id: driverId,
-      driver_name: driverName,
-      sender,
-      message,
-      created_at: new Date().toISOString(),
-      read: false,
-    });
+    if (error) throw error
+    return data || []
+  } catch (error) {
+    console.error('Error fetching messages:', error)
+    return []
+  }
+}
 
-    if (error) {
-      console.error("Error sending message:", JSON.stringify(error));
-      return false;
-    }
+// Send a message (as admin)
+export async function sendMessage(driverId: string, driverName: string, message: string) {
+  try {
+    const supabase = await createClient()
+    const { data, error } = await supabase
+      .from('chat_messages')
+      .insert({
+        driver_id: driverId,
+        driver_name: driverName,
+        sender: 'admin',
+        message: message,
+        read: false,
+        created_at: new Date().toISOString()
+      })
+      .select()
+      .single()
 
-    return true;
-  } catch (e) {
-    console.error("Exception sending message:", e);
-    return false;
+    if (error) throw error
+    return { success: true, data }
+  } catch (error) {
+    console.error('Error sending message:', error)
+    return { success: false, error }
+  }
+}
+
+// Mark messages as read
+export async function markAsRead(driverId: string) {
+  try {
+    const supabase = await createClient()
+    const { error } = await supabase
+      .from('chat_messages')
+      .update({ read: true })
+      .eq('driver_id', driverId)
+      .eq('sender', 'driver')
+      .eq('read', false)
+
+    if (error) throw error
+    return { success: true }
+  } catch (error) {
+    console.error('Error marking messages as read:', error)
+    return { success: false, error }
   }
 }

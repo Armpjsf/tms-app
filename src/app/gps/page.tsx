@@ -15,6 +15,7 @@ import {
   RefreshCw,
 } from "lucide-react"
 import type { DriverLocation } from '@/components/maps/leaflet-map'
+import { getFleetGPSStatus } from '@/lib/supabase/gps'
 
 const LeafletMap = dynamic(() => import('@/components/maps/leaflet-map'), {
   ssr: false,
@@ -29,7 +30,9 @@ type GPSDriver = {
   Driver_ID: string
   Driver_Name: string
   Vehicle_Plate: string
-  Last_Update: string
+  Last_Update: string | null
+  Latitude: number | null
+  Longitude: number | null
 }
 
 export default function GPSPage() {
@@ -39,17 +42,20 @@ export default function GPSPage() {
   const [selectedDriver, setSelectedDriver] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
 
-  const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString()
-
-  const fetchData = async () => {
+  const loadData = async () => {
     setIsLoading(true)
     try {
-      const res = await fetch('/api/gps/data')
-      if (res.ok) {
-        const data = await res.json()
-        setGpsData(data.drivers || [])
-        setStats(data.stats || { total: 0, online: 0, offline: 0 })
-      }
+      const data = await getFleetGPSStatus()
+      setGpsData(data)
+      
+      const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).getTime()
+      const online = data.filter(d => d.Last_Update && new Date(d.Last_Update).getTime() > fiveMinutesAgo).length
+      
+      setStats({
+        total: data.length,
+        online,
+        offline: data.length - online
+      })
     } catch (e) {
       console.error('Failed to fetch GPS data:', e)
     } finally {
@@ -58,40 +64,33 @@ export default function GPSPage() {
   }
 
   useEffect(() => {
-    // Initial mock data
-    const mockDrivers: GPSDriver[] = [
-      { Driver_ID: '1', Driver_Name: 'สมชาย ใจดี', Vehicle_Plate: '70-0977', Last_Update: new Date(Date.now() - 120000).toISOString() },
-      { Driver_ID: '2', Driver_Name: 'มา', Vehicle_Plate: '-2592', Last_Update: new Date(Date.now() - 360000).toISOString() },
-      { Driver_ID: '3', Driver_Name: 'กาซิม', Vehicle_Plate: '3ฌร-6404', Last_Update: new Date(Date.now() - 60000).toISOString() },
-      { Driver_ID: '4', Driver_Name: 'ปัทวี', Vehicle_Plate: '3ฌร-6404', Last_Update: new Date(Date.now() - 30000).toISOString() },
-      { Driver_ID: '5', Driver_Name: 'วิคัน', Vehicle_Plate: '-2592', Last_Update: new Date(Date.now() - 600000).toISOString() },
-      { Driver_ID: '6', Driver_Name: 'มอนลล', Vehicle_Plate: '-2592', Last_Update: new Date(Date.now() - 900000).toISOString() },
-    ]
-    
-    setGpsData(mockDrivers)
-    const online = mockDrivers.filter(d => d.Last_Update > fiveMinutesAgo).length
-    setStats({
-      total: mockDrivers.length,
-      online,
-      offline: mockDrivers.length - online
-    })
-    setIsLoading(false)
+    loadData()
+    // Periodic refresh every 30 seconds
+    const interval = setInterval(loadData, 30000)
+    return () => clearInterval(interval)
   }, [])
 
   // Convert GPS data to map markers
-  const driverLocations: DriverLocation[] = gpsData.map((d, i) => ({
-    id: d.Driver_ID,
-    name: `${d.Vehicle_Plate} - ${d.Driver_Name}`,
-    lat: 13.7563 + (Math.random() - 0.5) * 0.1,
-    lng: 100.5018 + (Math.random() - 0.5) * 0.1,
-    status: d.Last_Update > fiveMinutesAgo ? 'Online' : 'Offline',
-    lastUpdate: new Date(d.Last_Update).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })
-  }))
+  const driverLocations: DriverLocation[] = gpsData
+    .filter(d => d.Latitude && d.Longitude) // Only show drivers with location
+    .map((d) => {
+      const isOnline = d.Last_Update && new Date(d.Last_Update).getTime() > (Date.now() - 5 * 60 * 1000)
+      return {
+        id: d.Driver_ID,
+        name: `${d.Vehicle_Plate} - ${d.Driver_Name}`,
+        lat: d.Latitude!,
+        lng: d.Longitude!,
+        status: isOnline ? 'Online' : 'Offline',
+        lastUpdate: d.Last_Update ? new Date(d.Last_Update).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) : '-'
+      }
+    })
 
   const filteredData = gpsData.filter(d => 
-    d.Vehicle_Plate.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    d.Driver_Name.toLowerCase().includes(searchQuery.toLowerCase())
+    (d.Vehicle_Plate || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (d.Driver_Name || '').toLowerCase().includes(searchQuery.toLowerCase())
   )
+
+  const fiveMinutesAgoTime = Date.now() - 5 * 60 * 1000
 
   return (
     <DashboardLayout>
@@ -104,7 +103,7 @@ export default function GPSPage() {
           </h1>
           <p className="text-slate-400">ติดตามตำแหน่งรถแบบ Real-time</p>
         </div>
-        <Button size="lg" className="gap-2" onClick={fetchData} disabled={isLoading}>
+        <Button size="lg" className="gap-2" onClick={loadData} disabled={isLoading}>
           <RefreshCw size={20} className={isLoading ? 'animate-spin' : ''} />
           รีเฟรช
         </Button>
@@ -140,6 +139,14 @@ export default function GPSPage() {
               drivers={driverLocations}
               height="500px"
               zoom={11}
+              focusPosition={
+                selectedDriver 
+                  ? (() => {
+                      const d = gpsData.find(d => d.Driver_ID === selectedDriver)
+                      return (d?.Latitude && d?.Longitude) ? [d.Latitude, d.Longitude] : undefined
+                    })()
+                  : undefined
+              }
             />
           </CardContent>
         </Card>
@@ -167,7 +174,7 @@ export default function GPSPage() {
                   ไม่พบข้อมูลรถ
                 </div>
               ) : filteredData.map((driver) => {
-                const isOnline = driver.Last_Update && driver.Last_Update > fiveMinutesAgo
+                const isOnline = driver.Last_Update && new Date(driver.Last_Update).getTime() > fiveMinutesAgoTime
                 
                 return (
                   <div

@@ -1,8 +1,9 @@
 "use client"
 
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { ChevronLeft, ChevronRight } from "lucide-react"
-import { usePathname, useRouter, useSearchParams } from "next/navigation"
+import { usePathname, useSearchParams } from "next/navigation"
 
 interface PaginationProps {
   totalItems: number
@@ -10,7 +11,6 @@ interface PaginationProps {
 }
 
 export function Pagination({ totalItems, limit = 50 }: PaginationProps) {
-  const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
 
@@ -18,15 +18,9 @@ export function Pagination({ totalItems, limit = 50 }: PaginationProps) {
   const totalPages = Math.ceil(totalItems / limit)
 
   const createPageURL = (pageNumber: number | string) => {
-    const params = new URLSearchParams(searchParams)
+    const params = new URLSearchParams(searchParams.toString())
     params.set("page", pageNumber.toString())
     return `${pathname}?${params.toString()}`
-  }
-
-  const handlePageChange = (page: number) => {
-    if (page >= 1 && page <= totalPages) {
-      router.push(createPageURL(page))
-    }
   }
 
   if (totalPages <= 1) return null
@@ -40,23 +34,29 @@ export function Pagination({ totalItems, limit = 50 }: PaginationProps) {
         <Button
           variant="outline"
           size="sm"
-          onClick={() => handlePageChange(currentPage - 1)}
-          disabled={currentPage <= 1}
           className="h-8 w-8 p-0 bg-transparent border-white/10 hover:bg-white/5"
+          disabled={currentPage <= 1}
+          asChild
         >
-          <ChevronLeft size={16} />
+          <Link href={currentPage <= 1 ? "#" : createPageURL(currentPage - 1)} aria-disabled={currentPage <= 1}>
+            <ChevronLeft size={16} />
+          </Link>
         </Button>
+        
         <span className="text-white font-medium px-2">
           {currentPage} / {totalPages}
         </span>
+        
         <Button
           variant="outline"
           size="sm"
-          onClick={() => handlePageChange(currentPage + 1)}
-          disabled={currentPage >= totalPages}
           className="h-8 w-8 p-0 bg-transparent border-white/10 hover:bg-white/5"
+          disabled={currentPage >= totalPages}
+          asChild
         >
-          <ChevronRight size={16} />
+          <Link href={currentPage >= totalPages ? "#" : createPageURL(currentPage + 1)} aria-disabled={currentPage >= totalPages}>
+            <ChevronRight size={16} />
+          </Link>
         </Button>
       </div>
     </div>

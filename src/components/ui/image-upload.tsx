@@ -4,20 +4,19 @@ import { useState, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { ImagePlus, X, Loader2 } from "lucide-react"
 import Image from "next/image"
-import { createClient } from "@/utils/supabase/client"
+import { uploadImageToDrive } from "@/lib/actions/upload-actions"
 
 interface ImageUploadProps {
   value?: string
   onChange: (url: string) => void
   disabled?: boolean
-  bucket?: string
+  // bucket prop removed as it's not used for Drive
 }
 
 export function ImageUpload({ 
   value, 
   onChange, 
   disabled,
-  bucket = 'images' // Default bucket
 }: ImageUploadProps) {
   const [loading, setLoading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -28,24 +27,20 @@ export function ImageUpload({
 
     setLoading(true)
     try {
-      const supabase = createClient()
-      const fileExt = file.name.split('.').pop()
-      const fileName = `${Math.random()}.${fileExt}`
-      const filePath = `${fileName}`
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('folder', 'Web_Uploads') // Default folder for generic uploads
 
-      const { error: uploadError } = await supabase.storage
-        .from(bucket)
-        .upload(filePath, file)
+      const result = await uploadImageToDrive(formData)
 
-      if (uploadError) {
-        throw uploadError
+      if (!result.success || !result.directLink) {
+        throw new Error(result.error || 'Upload failed')
       }
 
-      const { data } = supabase.storage.from(bucket).getPublicUrl(filePath)
-      onChange(data.publicUrl)
+      onChange(result.directLink)
     } catch (error) {
       console.error('Error uploading image:', error)
-      alert('เกิดข้อผิดพลาดในการอัปโหลดรูปภาพ')
+      alert('เกิดข้อผิดพลาดในการอัปโหลดรูปภาพไปยัง Google Drive')
     } finally {
       setLoading(false)
     }

@@ -9,7 +9,8 @@ import {
   Settings, 
   LogOut,
   Package,
-  Users
+  Users,
+  PieChart
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -19,6 +20,11 @@ const sidebarItems = [
     title: "Dashboard",
     href: "/admin/dashboard",
     icon: LayoutDashboard
+  },
+  {
+    title: "Executive Dashboard",
+    href: "/admin/analytics",
+    icon: PieChart
   },
   {
     title: "Jobs",
@@ -67,6 +73,7 @@ export function AdminSidebar() {
             <Link
               key={item.href}
               href={item.href}
+              prefetch={false}
               className={cn(
                 "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-sm font-medium",
                 isActive 

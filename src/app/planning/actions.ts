@@ -3,6 +3,9 @@
 import { createClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
 
+import { getAllDriversFromTable } from '@/lib/supabase/drivers'
+import { getAllVehiclesFromTable } from '@/lib/supabase/vehicles'
+
 export type JobFormData = {
   Job_ID: string
   Plan_Date: string
@@ -94,4 +97,45 @@ export async function deleteJob(jobId: string) {
 
   revalidatePath('/planning')
   return { success: true, message: 'Job deleted successfully' }
+}
+
+export async function getUniqueCustomers() {
+  const supabase = await createClient()
+  
+  // Fetch distinct Customer_Name, Customer_Phone, Customer_Address, Origin_Location, Dest_Location
+  // PostgREST doesn't support distinct on specific columns easily with other columns, 
+  // so we'll fetch all and dedup in JS (assuming reasonable dataset size for now)
+  const { data, error } = await supabase
+    .from('Jobs_Main')
+    .select('Customer_Name, Customer_Phone, Customer_Address, Origin_Location, Dest_Location')
+    .order('Created_At', { ascending: false })
+    .limit(500) // Limit to recent jobs to get recent customers
+
+  if (error) {
+    console.error('Error fetching customers:', error)
+    return []
+  }
+
+  const uniqueMap = new Map()
+  data?.forEach(item => {
+    if (item.Customer_Name && !uniqueMap.has(item.Customer_Name)) {
+      uniqueMap.set(item.Customer_Name, item)
+    }
+  })
+
+  return Array.from(uniqueMap.values())
+}
+
+export async function getJobCreationData() {
+  const [drivers, vehicles, customers] = await Promise.all([
+    getAllDriversFromTable(),
+    getAllVehiclesFromTable(),
+    getUniqueCustomers()
+  ])
+  
+  return {
+    drivers,
+    vehicles,
+    customers
+  }
 }

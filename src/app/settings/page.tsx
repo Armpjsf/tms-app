@@ -4,6 +4,7 @@ import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { motion } from "framer-motion"
+import { useRouter } from "next/navigation"
 import { 
   Settings, 
   User,
@@ -14,7 +15,6 @@ import {
   Database,
   LogOut,
   ChevronRight,
-
 } from "lucide-react"
 
 const settingsSections = [
@@ -22,38 +22,40 @@ const settingsSections = [
     title: "บัญชีผู้ใช้",
     icon: User,
     items: [
-      { label: "ข้อมูลโปรไฟล์", desc: "ชื่อ, อีเมล, รูปภาพ" },
-      { label: "เปลี่ยนรหัสผ่าน", desc: "อัพเดทรหัสผ่านของคุณ" },
+      { label: "ข้อมูลโปรไฟล์", desc: "ชื่อ, อีเมล, รูปภาพ", path: "/settings/profile" },
+      { label: "เปลี่ยนรหัสผ่าน", desc: "อัพเดทรหัสผ่านของคุณ", path: "/settings/security" },
     ]
   },
   {
     title: "การแจ้งเตือน",
     icon: Bell,
     items: [
-      { label: "Push Notifications", desc: "รับการแจ้งเตือนบนอุปกรณ์" },
-      { label: "แจ้งเตือน Email", desc: "รับสรุปรายวันทาง Email" },
-      { label: "แจ้งเตือน SOS", desc: "รับแจ้งเมื่อมีเหตุฉุกเฉิน" },
+      { label: "ตั้งค่าการแจ้งเตือน", desc: "Push, Email, SOS", path: "/settings/notifications" },
     ]
   },
   {
     title: "ธีมและการแสดงผล",
     icon: Palette,
     items: [
-      { label: "โหมดมืด/สว่าง", desc: "เปลี่ยนธีมการแสดงผล" },
-      { label: "ขนาดตัวอักษร", desc: "ปรับขนาดตัวอักษร" },
+      { label: "ปรับแต่งธีม", desc: "โหมดมืด/สว่าง, ขนาดตัวอักษร", path: "/settings/theme" },
     ]
   },
   {
     title: "ความปลอดภัย",
     icon: Shield,
     items: [
-      { label: "การยืนยันตัวตน 2 ขั้น", desc: "เพิ่มความปลอดภัยบัญชี" },
-      { label: "อุปกรณ์ที่เข้าสู่ระบบ", desc: "ดูอุปกรณ์ที่เชื่อมต่อ" },
+      { label: "การตั้งค่าความปลอดภัย", desc: "2FA, อุปกรณ์ที่เข้าสู่ระบบ", path: "/settings/security" },
     ]
   },
 ]
 
 export default function SettingsPage() {
+  const router = useRouter()
+  
+  const handleNavigate = (path: string) => {
+    router.push(path)
+  }
+
   return (
     <DashboardLayout>
       {/* Page Header */}
@@ -76,7 +78,7 @@ export default function SettingsPage() {
         transition={{ delay: 0.1 }}
         className="mb-8"
       >
-        <Card variant="gradient">
+        <Card className="bg-gradient-to-br from-slate-900 to-slate-900/50 border-slate-800">
           <CardContent className="p-6">
             <div className="flex items-center gap-4">
               <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-2xl font-bold shadow-lg">
@@ -87,7 +89,7 @@ export default function SettingsPage() {
                 <p className="text-slate-400">admin@company.com</p>
                 <p className="text-xs text-indigo-400 mt-1">Super Admin</p>
               </div>
-              <Button variant="outline" onClick={() => alert("Edit Profile Feature Coming Soon")}>แก้ไขโปรไฟล์</Button>
+              <Button variant="outline" onClick={() => handleNavigate("/settings/profile")}>แก้ไขโปรไฟล์</Button>
             </div>
           </CardContent>
         </Card>
@@ -102,9 +104,9 @@ export default function SettingsPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.15 + sectionIndex * 0.05 }}
           >
-            <Card variant="glass">
+            <Card className="bg-slate-900/50 border-slate-800 h-full">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-lg">
+                <CardTitle className="flex items-center gap-2 text-lg text-white">
                   <section.icon className="text-indigo-400" size={20} />
                   {section.title}
                 </CardTitle>
@@ -115,7 +117,7 @@ export default function SettingsPage() {
                     key={item.label}
                     whileHover={{ x: 4 }}
                     className="flex items-center justify-between p-3 rounded-xl hover:bg-white/5 cursor-pointer transition-colors group"
-                    onClick={() => alert(`Opening ${item.label}...`)}
+                    onClick={() => handleNavigate(item.path)}
                   >
                     <div>
                       <p className="font-medium text-white">{item.label}</p>
@@ -137,20 +139,20 @@ export default function SettingsPage() {
         transition={{ delay: 0.4 }}
         className="mt-8"
       >
-        <Card variant="glass">
+        <Card className="bg-slate-900/50 border-slate-800">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg">
+            <CardTitle className="flex items-center gap-2 text-lg text-white">
               <Database className="text-indigo-400" size={20} />
               ระบบ
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Button variant="outline" className="gap-2 h-auto py-4 flex-col hover:bg-indigo-500/10 hover:text-indigo-400 hover:border-indigo-500/50 transition-all" onClick={() => alert("ระบบสำรองข้อมูลยังไม่เปิดใช้งาน")}>
+              <Button variant="outline" className="gap-2 h-auto py-4 flex-col hover:bg-indigo-500/10 hover:text-indigo-400 hover:border-indigo-500/50 transition-all border-slate-700 text-slate-300" onClick={() => handleNavigate("/settings/backup")}>
                 <Database size={24} />
                 <span>สำรองข้อมูล</span>
               </Button>
-              <Button variant="outline" className="gap-2 h-auto py-4 flex-col hover:bg-emerald-500/10 hover:text-emerald-400 hover:border-emerald-500/50 transition-all" onClick={() => alert("API Connection: Connected")}>
+              <Button variant="outline" className="gap-2 h-auto py-4 flex-col hover:bg-emerald-500/10 hover:text-emerald-400 hover:border-emerald-500/50 transition-all border-slate-700 text-slate-300" onClick={() => handleNavigate("/settings/api")}>
                 <Globe size={24} />
                 <span>เชื่อมต่อ API</span>
               </Button>
@@ -176,3 +178,4 @@ export default function SettingsPage() {
     </DashboardLayout>
   )
 }
+

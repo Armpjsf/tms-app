@@ -1,11 +1,12 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { getExpenseTypes, addExpenseType, updateExpenseType, deleteExpenseType, ExpenseType } from "@/lib/supabase/master-data"
 import {
   Coins,
   Plus,
@@ -16,56 +17,52 @@ import {
   GripVertical
 } from "lucide-react"
 
-interface ExpenseType {
-  id: string
-  name: string
-  default_amount?: number
-  is_active: boolean
-}
-
-// Mock data
-const defaultExpenseTypes: ExpenseType[] = [
-  { id: "1", name: "ค่าแรงยกของ", default_amount: 500, is_active: true },
-  { id: "2", name: "ค่าพาเลท", default_amount: 200, is_active: true },
-  { id: "3", name: "ค่าทางด่วน", default_amount: 100, is_active: true },
-  { id: "4", name: "ค่าล่วงเวลา", default_amount: 300, is_active: true },
-  { id: "5", name: "ค่าจอดรถ", default_amount: 50, is_active: true },
-  { id: "6", name: "ค่าน้ำมันเพิ่ม", default_amount: 0, is_active: true },
-]
-
 export default function ExpenseTypesPage() {
-  const [expenseTypes, setExpenseTypes] = useState(defaultExpenseTypes)
+  const [expenseTypes, setExpenseTypes] = useState<ExpenseType[]>([])
   const [editingId, setEditingId] = useState<string | null>(null)
   const [newType, setNewType] = useState({ name: "", default_amount: 0 })
   const [showAddForm, setShowAddForm] = useState(false)
 
-  const handleAdd = () => {
-    if (!newType.name.trim()) return
-    const newItem: ExpenseType = {
-      id: Date.now().toString(),
-      name: newType.name,
-      default_amount: newType.default_amount,
-      is_active: true
-    }
-    setExpenseTypes([...expenseTypes, newItem])
-    setNewType({ name: "", default_amount: 0 })
-    setShowAddForm(false)
+  useEffect(() => {
+    loadData()
+  }, [])
+
+  const loadData = async () => {
+    const data = await getExpenseTypes()
+    setExpenseTypes(data)
   }
 
-  const handleUpdate = (id: string, updates: Partial<ExpenseType>) => {
+  const handleAdd = async () => {
+    if (!newType.name.trim()) return
+    await addExpenseType(newType.name, newType.default_amount)
+    setNewType({ name: "", default_amount: 0 })
+    setShowAddForm(false)
+    loadData()
+  }
+
+  const handleUpdate = async (id: string, updates: Partial<ExpenseType>) => {
+    // Optimistic update for inputs
     setExpenseTypes(prev => prev.map(et => et.id === id ? { ...et, ...updates } : et))
   }
 
-  const handleDelete = (id: string) => {
+  const saveUpdate = async (id: string) => {
+    const item = expenseTypes.find(e => e.id === id)
+    if (item) {
+        await updateExpenseType(id, { name: item.name, default_amount: item.default_amount })
+    }
+    setEditingId(null)
+  }
+
+  const handleDelete = async (id: string) => {
     if (confirm("ยืนยันลบประเภทค่าใช้จ่ายนี้?")) {
-      setExpenseTypes(prev => prev.filter(et => et.id !== id))
+      await deleteExpenseType(id)
+      loadData()
     }
   }
 
-  const handleToggleActive = (id: string) => {
-    setExpenseTypes(prev => 
-      prev.map(et => et.id === id ? { ...et, is_active: !et.is_active } : et)
-    )
+  const handleToggleActive = async (id: string, currentStatus: boolean) => {
+    await updateExpenseType(id, { is_active: !currentStatus })
+    loadData()
   }
 
   return (
@@ -161,7 +158,7 @@ export default function ExpenseTypesPage() {
                         />
                       </div>
                     </div>
-                    <Button size="sm" onClick={() => setEditingId(null)} className="bg-emerald-600">
+                    <Button size="sm" onClick={() => saveUpdate(et.id)} className="bg-emerald-600">
                       <Save className="w-4 h-4" />
                     </Button>
                   </>
@@ -175,7 +172,7 @@ export default function ExpenseTypesPage() {
                     </div>
                     <div className="flex items-center gap-2">
                       <button
-                        onClick={() => handleToggleActive(et.id)}
+                        onClick={() => handleToggleActive(et.id, et.is_active)}
                         className={`px-2 py-1 rounded text-xs font-medium ${
                           et.is_active 
                             ? 'bg-emerald-500/20 text-emerald-400' 

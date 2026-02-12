@@ -49,13 +49,19 @@ export function DriverDialog({
     setLoading(true)
 
     try {
+      let result;
       if (mode === 'create') {
         // @ts-ignore
-        await createDriver(formData)
+        result = await createDriver(formData)
       } else {
         // @ts-ignore
-        await updateDriver(driver.Driver_ID, formData)
+        result = await updateDriver(driver.Driver_ID, formData)
       }
+      
+      if (!result.success) {
+        throw new Error(result.message || 'Operation failed')
+      }
+
       setShow(false)
       if (!isControlled) {
         setFormData({
@@ -68,9 +74,9 @@ export function DriverDialog({
         })
       }
       router.refresh()
-    } catch (error) {
+    } catch (error: any) {
       console.error(error)
-      alert('เกิดข้อผิดพลาด กรุณาลองใหม่')
+      alert(error.message || 'เกิดข้อผิดพลาด กรุณาลองใหม่')
     } finally {
       setLoading(false)
     }
@@ -144,8 +150,8 @@ export function DriverDialog({
             >
                 <option value="" className="bg-slate-900">ไม่ระบุ / ไม่มีรถประจำ</option>
                 {vehicles.map((v) => (
-                    <option key={v.Vehicle_Plate} value={v.Vehicle_Plate} className="bg-slate-900">
-                      {v.Vehicle_Plate}
+                    <option key={v.vehicle_plate} value={v.vehicle_plate} className="bg-slate-900">
+                      {v.vehicle_plate} {v.brand ? `(${v.brand})` : ''}
                     </option>
                 ))}
             </select>

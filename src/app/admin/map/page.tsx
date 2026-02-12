@@ -22,6 +22,7 @@ export default function AdminMapPage() {
   const [drivers, setDrivers] = useState<DriverLocation[]>([])
   const [lastRefresh, setLastRefresh] = useState<string>('')
   const [isLoading, setIsLoading] = useState(false)
+  const [focusedLocation, setFocusedLocation] = useState<[number, number] | undefined>(undefined)
 
   const fetchDriverLocations = async () => {
     setIsLoading(true)
@@ -83,6 +84,7 @@ export default function AdminMapPage() {
               drivers={drivers} 
               height="500px" 
               zoom={11}
+              focusPosition={focusedLocation}
             />
           </Card>
         </div>
@@ -101,6 +103,7 @@ export default function AdminMapPage() {
                 <div 
                   key={driver.id}
                   className="p-3 rounded-lg bg-slate-800/50 border border-slate-700 hover:border-blue-500/50 transition-colors cursor-pointer"
+                  onClick={() => setFocusedLocation([driver.lat, driver.lng])}
                 >
                   <div className="flex items-start justify-between">
                     <div>

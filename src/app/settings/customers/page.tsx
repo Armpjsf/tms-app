@@ -1,8 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -19,7 +19,8 @@ import {
   Trash2,
   Save,
   X,
-  CreditCard
+  CreditCard,
+  Loader2
 } from "lucide-react"
 import {
   Dialog,
@@ -28,30 +29,23 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-
-interface Customer {
-  Customer_ID: string
-  Customer_Name: string
-  Contact_Person: string
-  Phone: string
-  Email?: string
-  Address: string
-  Tax_ID?: string
-}
-
-// Mock data - will be replaced with real Supabase data
-const mockCustomers: Customer[] = [
-  { Customer_ID: "CUST-001", Customer_Name: "บริษัท ABC จำกัด", Contact_Person: "คุณสมชาย", Phone: "02-111-1111", Email: "abc@company.com", Address: "123 ถนนสุขุมวิท กรุงเทพฯ", Tax_ID: "0123456789012" },
-  { Customer_ID: "CUST-002", Customer_Name: "บริษัท XYZ จำกัด", Contact_Person: "คุณสมหญิง", Phone: "02-222-2222", Email: "xyz@company.com", Address: "456 ถนนพระราม 9 กรุงเทพฯ", Tax_ID: "0123456789013" },
-]
+import { 
+  getAllCustomers, 
+  createCustomer, 
+  updateCustomer, 
+  deleteCustomer, 
+  Customer 
+} from "@/lib/supabase/customers"
 
 export default function CustomersSettingsPage() {
-  const [customers, setCustomers] = useState(mockCustomers)
+  const [customers, setCustomers] = useState<Customer[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
   
-  const [formData, setFormData] = useState<Customer>({
+  const [formData, setFormData] = useState<Partial<Customer>>({
     Customer_ID: "",
     Customer_Name: "",
     Contact_Person: "",
@@ -61,10 +55,24 @@ export default function CustomersSettingsPage() {
     Tax_ID: ""
   })
 
-  const filteredCustomers = customers.filter(c => 
-    c.Customer_Name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    c.Customer_ID.toLowerCase().includes(searchQuery.toLowerCase())
-  )
+  const fetchCustomers = useCallback(async () => {
+    setLoading(true)
+    const { data } = await getAllCustomers(1, 100, searchQuery)
+    setCustomers(data)
+    setLoading(false)
+  }, [searchQuery])
+
+  useEffect(() => {
+    fetchCustomers()
+  }, [fetchCustomers])
+
+  // Debounce search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchCustomers()
+    }, 500)
+    return () => clearTimeout(timer)
+  }, [searchQuery, fetchCustomers])
 
   const updateForm = (field: keyof Customer, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }))
@@ -72,7 +80,7 @@ export default function CustomersSettingsPage() {
 
   const resetForm = () => {
     setFormData({
-      Customer_ID: `CUST-${Date.now().toString().slice(-4)}`,
+      Customer_ID: "",
       Customer_Name: "",
       Contact_Person: "",
       Phone: "",
@@ -93,21 +101,39 @@ export default function CustomersSettingsPage() {
     setIsDialogOpen(true)
   }
 
-  const handleSave = () => {
-    if (editingCustomer) {
-      // Update existing
-      setCustomers(prev => prev.map(c => c.Customer_ID === formData.Customer_ID ? formData : c))
-    } else {
-      // Add new
-      setCustomers(prev => [...prev, formData])
+  const handleSave = async () => {
+    if (!formData.Customer_Name) {
+      alert("กรุณาระบุชื่อลูกค้า")
+      return
     }
-    setIsDialogOpen(false)
-    resetForm()
+
+    setSaving(true)
+    try {
+      if (editingCustomer && editingCustomer.Customer_ID) {
+        // Update
+        const result = await updateCustomer(editingCustomer.Customer_ID, formData)
+        if (!result.success) throw result.error
+      } else {
+        // Create
+        const result = await createCustomer(formData)
+        if (!result.success) throw result.error
+      }
+      
+      setIsDialogOpen(false)
+      resetForm()
+      fetchCustomers()
+    } catch (e) {
+      console.error(e)
+      alert("เกิดข้อผิดพลาดในการบันทึก")
+    } finally {
+      setSaving(false)
+    }
   }
 
-  const handleDelete = (customerId: string) => {
+  const handleDelete = async (customerId: string) => {
     if (confirm("ยืนยันลบข้อมูลลูกค้านี้?")) {
-      setCustomers(prev => prev.filter(c => c.Customer_ID !== customerId))
+      await deleteCustomer(customerId)
+      fetchCustomers()
     }
   }
 
@@ -120,7 +146,7 @@ export default function CustomersSettingsPage() {
             <Users className="text-emerald-400" />
             จัดการลูกค้า
           </h1>
-          <p className="text-sm text-slate-400 mt-1">ข้อมูลลูกค้าสำหรับใช้ในเอกสารวางบิล</p>
+          <p className="text-sm text-slate-400 mt-1">ฐานข้อมูลลูกค้า (Master Data)</p>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
@@ -138,10 +164,11 @@ export default function CustomersSettingsPage() {
             <div className="space-y-4 mt-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label className="text-slate-400">รหัสลูกค้า</Label>
+                  <Label className="text-slate-400">รหัสลูกค้า (Auto if empty)</Label>
                   <Input
-                    value={formData.Customer_ID}
+                    value={formData.Customer_ID || ""}
                     onChange={(e) => updateForm("Customer_ID", e.target.value)}
+                    placeholder="Auto Generate"
                     className="bg-slate-800 border-slate-700 text-white"
                     disabled={!!editingCustomer}
                   />
@@ -151,7 +178,7 @@ export default function CustomersSettingsPage() {
                     <CreditCard className="w-3 h-3" /> เลขประจำตัวผู้เสียภาษี
                   </Label>
                   <Input
-                    value={formData.Tax_ID}
+                    value={formData.Tax_ID || ""}
                     onChange={(e) => updateForm("Tax_ID", e.target.value)}
                     placeholder="0123456789012"
                     className="bg-slate-800 border-slate-700 text-white"
@@ -164,7 +191,7 @@ export default function CustomersSettingsPage() {
                   <Building2 className="w-3 h-3" /> ชื่อบริษัท/ลูกค้า *
                 </Label>
                 <Input
-                  value={formData.Customer_Name}
+                  value={formData.Customer_Name || ""}
                   onChange={(e) => updateForm("Customer_Name", e.target.value)}
                   placeholder="บริษัท ตัวอย่าง จำกัด"
                   className="bg-slate-800 border-slate-700 text-white"
@@ -175,7 +202,7 @@ export default function CustomersSettingsPage() {
                 <div className="space-y-2">
                   <Label className="text-slate-400">ผู้ติดต่อ</Label>
                   <Input
-                    value={formData.Contact_Person}
+                    value={formData.Contact_Person || ""}
                     onChange={(e) => updateForm("Contact_Person", e.target.value)}
                     placeholder="คุณสมชาย"
                     className="bg-slate-800 border-slate-700 text-white"
@@ -186,7 +213,7 @@ export default function CustomersSettingsPage() {
                     <Phone className="w-3 h-3" /> เบอร์โทร
                   </Label>
                   <Input
-                    value={formData.Phone}
+                    value={formData.Phone || ""}
                     onChange={(e) => updateForm("Phone", e.target.value)}
                     placeholder="02-XXX-XXXX"
                     className="bg-slate-800 border-slate-700 text-white"
@@ -200,7 +227,7 @@ export default function CustomersSettingsPage() {
                 </Label>
                 <Input
                   type="email"
-                  value={formData.Email}
+                  value={formData.Email || ""}
                   onChange={(e) => updateForm("Email", e.target.value)}
                   placeholder="contact@company.com"
                   className="bg-slate-800 border-slate-700 text-white"
@@ -212,7 +239,7 @@ export default function CustomersSettingsPage() {
                   <MapPin className="w-3 h-3" /> ที่อยู่
                 </Label>
                 <Textarea
-                  value={formData.Address}
+                  value={formData.Address || ""}
                   onChange={(e) => updateForm("Address", e.target.value)}
                   placeholder="ที่อยู่สำหรับออกใบแจ้งหนี้/ใบเสร็จ"
                   className="bg-slate-800 border-slate-700 text-white min-h-[80px]"
@@ -220,8 +247,9 @@ export default function CustomersSettingsPage() {
               </div>
 
               <div className="flex gap-3 pt-4">
-                <Button onClick={handleSave} className="flex-1 bg-emerald-600 hover:bg-emerald-700">
-                  <Save className="w-4 h-4 mr-2" /> บันทึก
+                <Button onClick={handleSave} disabled={saving} className="flex-1 bg-emerald-600 hover:bg-emerald-700">
+                  {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+                  บันทึก
                 </Button>
                 <Button variant="outline" onClick={() => setIsDialogOpen(false)} className="flex-1 border-slate-700">
                   <X className="w-4 h-4 mr-2" /> ยกเลิก
@@ -246,74 +274,73 @@ export default function CustomersSettingsPage() {
       </div>
 
       {/* Customer Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filteredCustomers.map((customer) => (
-          <Card key={customer.Customer_ID} className="bg-slate-900/50 border-slate-800 hover:border-slate-700 transition-colors">
-            <CardContent className="p-5">
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center">
-                    <Building2 className="w-6 h-6 text-white" />
+      {loading ? (
+        <div className="text-slate-400 text-center py-12 flex items-center justify-center gap-2">
+            <Loader2 className="animate-spin" /> กำลังโหลดข้อมูลลูกค้า...
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {customers.map((customer) => (
+            <Card key={customer.Customer_ID} className="bg-slate-900/50 border-slate-800 hover:border-slate-700 transition-colors">
+              <CardContent className="p-5">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center">
+                      <Building2 className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-white">{customer.Customer_Name}</h3>
+                      <p className="text-xs text-slate-500">{customer.Customer_ID}</p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="font-bold text-white">{customer.Customer_Name}</h3>
-                    <p className="text-xs text-slate-500">{customer.Customer_ID}</p>
+                </div>
+
+                <div className="space-y-2 text-sm mb-4">
+                  <div className="flex items-center gap-2 text-slate-400">
+                    <CreditCard className="w-4 h-4 text-slate-500" />
+                    <span>Tax ID: {customer.Tax_ID || "-"}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-slate-400">
+                    <Phone className="w-4 h-4 text-slate-500" />
+                    <span>{customer.Phone || "-"}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-slate-400">
+                    <MapPin className="w-4 h-4 text-slate-500" />
+                    <span className="truncate">{customer.Address || "-"}</span>
                   </div>
                 </div>
-              </div>
 
-              <div className="space-y-2 text-sm mb-4">
-                <div className="flex items-center gap-2 text-slate-400">
-                  <CreditCard className="w-4 h-4 text-slate-500" />
-                  <span>Tax ID: {customer.Tax_ID || "-"}</span>
+                <div className="flex gap-2 pt-3 border-t border-slate-800">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="flex-1 border-slate-700"
+                    onClick={() => handleOpenDialog(customer)}
+                  >
+                    <Edit className="w-4 h-4 mr-1" /> แก้ไข
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="border-slate-700 text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                    onClick={() => handleDelete(customer.Customer_ID)}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
                 </div>
-                <div className="flex items-center gap-2 text-slate-400">
-                  <Phone className="w-4 h-4 text-slate-500" />
-                  <span>{customer.Phone}</span>
-                </div>
-                <div className="flex items-center gap-2 text-slate-400">
-                  <MapPin className="w-4 h-4 text-slate-500" />
-                  <span className="truncate">{customer.Address}</span>
-                </div>
-              </div>
-
-              <div className="flex gap-2 pt-3 border-t border-slate-800">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="flex-1 border-slate-700"
-                  onClick={() => handleOpenDialog(customer)}
-                >
-                  <Edit className="w-4 h-4 mr-1" /> แก้ไข
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="border-slate-700 text-red-400 hover:text-red-300 hover:bg-red-500/10"
-                  onClick={() => handleDelete(customer.Customer_ID)}
-                >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-
-        {/* Empty State */}
-        {filteredCustomers.length === 0 && (
-          <div className="col-span-full text-center py-12">
-            <Building2 className="w-12 h-12 text-slate-600 mx-auto mb-4" />
-            <p className="text-slate-500">ไม่พบข้อมูลลูกค้า</p>
-            <Button 
-              variant="outline" 
-              className="mt-4 border-slate-700"
-              onClick={() => handleOpenDialog()}
-            >
-              <Plus className="w-4 h-4 mr-2" /> เพิ่มลูกค้าใหม่
-            </Button>
-          </div>
-        )}
-      </div>
+              </CardContent>
+            </Card>
+          ))}
+          
+          {/* Empty State */}
+          {customers.length === 0 && (
+            <div className="col-span-full text-center py-12">
+              <Building2 className="w-12 h-12 text-slate-600 mx-auto mb-4" />
+              <p className="text-slate-500">ไม่พบข้อมูลลูกค้า</p>
+            </div>
+          )}
+        </div>
+      )}
     </DashboardLayout>
   )
 }

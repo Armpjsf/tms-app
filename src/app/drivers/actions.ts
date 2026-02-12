@@ -25,13 +25,12 @@ export async function createDriver(data: DriverFormData) {
       Vehicle_Plate: data.Vehicle_Plate || null,
       Vehicle_Type: '4-Wheel', // Default
       Role: 'Driver',
-      Company_Code: 'LGP', // Default
       Active_Status: 'Active',
     })
 
   if (error) {
     console.error('Error creating driver:', error)
-    return { success: false, message: 'Failed to create driver' }
+    return { success: false, message: `Failed to create driver: ${error.message} ${error.details || ''}` }
   }
 
   revalidatePath('/drivers')
@@ -60,7 +59,7 @@ export async function updateDriver(driverId: string, data: Partial<DriverFormDat
 
   if (error) {
     console.error('Error updating driver:', error)
-    return { success: false, message: 'Failed to update driver' }
+    return { success: false, message: `Failed to update driver: ${error.message} ${error.details || ''}` }
   }
 
   revalidatePath('/drivers')
@@ -77,7 +76,7 @@ export async function deleteDriver(driverId: string) {
 
   if (error) {
     console.error('Error deleting driver:', error)
-    return { success: false, message: 'Failed to delete driver' }
+    return { success: false, message: `Failed to delete driver: ${error.message} ${error.details || ''}` }
   }
 
   revalidatePath('/drivers')
