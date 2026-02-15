@@ -1,3 +1,5 @@
+"use server"
+
 import { createClient } from '@/utils/supabase/server'
 
 // Type matching actual Supabase schema
@@ -29,21 +31,18 @@ import { getUserBranchId, isSuperAdmin } from "@/lib/permissions"
 export async function getAllDriversFromTable(): Promise<Driver[]> {
   try {
     const supabase = await createClient()
-    const { data, error } = await supabase
-      .from('Master_Drivers')
-      .select('*')
+    let dbQuery = supabase.from('Master_Drivers').select('*')
     
     // Filter by Branch
     const branchId = await getUserBranchId()
     const isAdmin = await isSuperAdmin()
     
     if (branchId && !isAdmin) {
-        // @ts-ignore - Dynamic query
+        // @ts-ignore
         dbQuery = dbQuery.eq('Branch_ID', branchId)
-        const { data, error } = await dbQuery
-        if (error) throw error
-        return data || []
     }
+
+    const { data, error } = await dbQuery
     
     if (error) {
       console.error('Error fetching drivers:', JSON.stringify(error))

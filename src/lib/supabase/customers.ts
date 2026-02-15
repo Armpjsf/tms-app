@@ -1,4 +1,6 @@
-import { createClient } from '@/utils/supabase/client'
+"use server"
+
+import { createClient } from '@/utils/supabase/server'
 
 export type Customer = {
   Customer_ID: string
@@ -64,6 +66,9 @@ export async function createCustomer(customerData: Partial<Customer>) {
         const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0')
         customerId = `CUST-${dateStr}-${random}`
     }
+
+    // Get User Branch
+    const branchId = await getUserBranchId()
 
     const { data, error } = await supabase
       .from('Master_Customers')
