@@ -13,19 +13,25 @@ import {
   Clock,
   History,
   ArrowRight,
+  FileSpreadsheet
 } from "lucide-react"
 import { getTodayJobStats, getTodayJobs } from "@/lib/supabase/jobs"
-import { getAllDrivers } from "@/lib/supabase/drivers"
-import { getAllVehicles } from "@/lib/supabase/vehicles"
+import { getJobCreationData, createBulkJobs } from "@/app/planning/actions"
 import { JobDialog } from "@/components/planning/job-dialog"
+import { CreateJobButton } from "@/components/planning/create-job-button"
+import { ExcelImport } from "@/components/ui/excel-import"
+import { RecentJobItem } from "@/components/planning/recent-job-item"
+// ...
 
 export default async function PlanningPage() {
-  const [stats, todayJobs, drivers, vehicles] = await Promise.all([
+  const [stats, todayJobs, jobCreationData] = await Promise.all([
     getTodayJobStats(),
     getTodayJobs(),
-    getAllDrivers(),
-    getAllVehicles(),
+    getJobCreationData(),
   ])
+
+  const { drivers, vehicles, customers, routes } = jobCreationData
+
 
   // Get a few recent jobs for quick preview
   const recentJobs = todayJobs.slice(0, 5)
@@ -48,16 +54,26 @@ export default async function PlanningPage() {
               ดูประวัติงาน
             </Button>
           </Link>
-          <JobDialog 
-              mode="create" 
-              drivers={drivers.data} 
-              vehicles={vehicles.data}
-              trigger={
-                  <Button size="lg" className="gap-2">
-                      <Plus size={20} />
-                      สร้างงานใหม่
-                  </Button>
-              }
+          <ExcelImport 
+                trigger={
+                    <Button variant="outline" className="gap-2 border-slate-700 hover:bg-slate-800">
+                        <FileSpreadsheet size={16} /> 
+                        นำเข้า Excel
+                    </Button>
+                }
+                title="นำเข้างาน (Jobs)"
+                onImport={createBulkJobs}
+                templateData={[
+                    { Customer_Name: "ลูกค้า A", Plan_Date: "2024-03-20", Job_ID: "JOB-001", Route_Name: "BKK-CNX" },
+                    { Customer_Name: "ลูกค้า B", Plan_Date: "2024-03-21", Job_ID: "JOB-002", Route_Name: "BKK-HKT" }
+                ]}
+                templateFilename="template_jobs.xlsx"
+            />
+          <CreateJobButton 
+              drivers={drivers || []} 
+              vehicles={vehicles || []}
+              customers={customers || []}
+              routes={routes || []}
           />
         </div>
       </div>
@@ -134,46 +150,48 @@ export default async function PlanningPage() {
             <div className="text-center py-12">
               <Package className="w-12 h-12 text-slate-600 mx-auto mb-4" />
               <p className="text-slate-500 mb-4">ยังไม่มีงานวันนี้</p>
-              <JobDialog 
-                  mode="create" 
-                  drivers={drivers.data} 
-                  vehicles={vehicles.data}
-                  trigger={
-                      <Button className="gap-2">
-                          <Plus size={18} />
-                          สร้างงานใหม่
-                      </Button>
-                  }
-              />
+              <div className="flex justify-center gap-2">
+                 <ExcelImport 
+                    trigger={
+                        <Button variant="outline" className="gap-2 border-slate-700 hover:bg-slate-800">
+                            <FileSpreadsheet size={16} /> 
+                            นำเข้า Excel
+                        </Button>
+                    }
+                    title="นำเข้างาน (Jobs)"
+                    onImport={createBulkJobs}
+                    templateData={[
+                        { Customer_Name: "ลูกค้า A", Plan_Date: "2024-03-20", Job_ID: "JOB-001", Route_Name: "BKK-CNX" },
+                        { Customer_Name: "ลูกค้า B", Plan_Date: "2024-03-21", Job_ID: "JOB-002", Route_Name: "BKK-HKT" }
+                    ]}
+                    templateFilename="template_jobs.xlsx"
+                />
+                <JobDialog 
+                    mode="create" 
+                    drivers={drivers} 
+                    vehicles={vehicles}
+                    customers={customers}
+                    routes={routes}
+                    trigger={
+                        <Button className="gap-2">
+                            <Plus size={18} />
+                            สร้างงานใหม่
+                        </Button>
+                    }
+                />
+              </div>
             </div>
           ) : (
             <div className="divide-y divide-slate-800">
               {recentJobs.map((job) => (
-                <div key={job.Job_ID} className="p-4 hover:bg-slate-800/30 transition-colors">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-lg bg-indigo-500/20 flex items-center justify-center">
-                        <Package className="w-5 h-5 text-indigo-400" />
-                      </div>
-                      <div>
-                        <p className="text-white font-medium">{job.Job_ID}</p>
-                        <p className="text-sm text-slate-400">{job.Customer_Name || "-"}</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        job.Job_Status === 'Complete' || job.Job_Status === 'Delivered' 
-                          ? 'bg-emerald-500/20 text-emerald-400'
-                          : job.Job_Status === 'In Transit' || job.Job_Status === 'Picked Up'
-                          ? 'bg-blue-500/20 text-blue-400'
-                          : 'bg-amber-500/20 text-amber-400'
-                      }`}>
-                        {job.Job_Status}
-                      </span>
-                      <p className="text-xs text-slate-500 mt-1">{job.Plan_Date}</p>
-                    </div>
-                  </div>
-                </div>
+                <RecentJobItem 
+                    key={job.Job_ID} 
+                    job={job}
+                    drivers={drivers || []}
+                    vehicles={vehicles || []}
+                    customers={customers || []}
+                    routes={routes || []}
+                />
               ))}
             </div>
           )}

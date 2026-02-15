@@ -109,12 +109,11 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
       transition={{ duration: 0.3, ease: "easeInOut" }}
       className={cn(
         "fixed top-0 left-0 h-screen z-50 flex flex-col",
-        "bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950",
-        "border-r border-white/5"
+        "bg-sidebar border-r border-border transition-colors duration-300"
       )}
     >
       {/* Logo */}
-      <div className="flex items-center justify-between h-16 px-4 border-b border-white/5">
+      <div className="flex items-center justify-between h-16 px-4 border-b border-sidebar-border">
         <AnimatePresence>
           {!collapsed && (
             <motion.div
@@ -129,7 +128,7 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
                 className="h-10 w-auto object-contain"
               />
               <div>
-                <h1 className="text-white font-bold text-lg leading-tight">LOGIS-PRO</h1>
+                <h1 className="text-sidebar-foreground font-bold text-lg leading-tight">LOGIS-PRO</h1>
                 <p className="text-[10px] text-indigo-400 font-medium">360</p>
               </div>
             </motion.div>
@@ -138,7 +137,7 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
         
         <button
           onClick={onToggle}
-          className="p-2 rounded-lg hover:bg-white/5 transition-colors text-slate-400 hover:text-white"
+          className="p-2 rounded-lg hover:bg-sidebar-accent transition-colors text-sidebar-foreground/60 hover:text-sidebar-foreground"
         >
           <ChevronLeft
             size={20}
@@ -157,7 +156,7 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  className="px-3 mb-2 text-[10px] font-bold uppercase tracking-wider text-slate-500"
+                  className="px-3 mb-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground"
                 >
                   {group.title}
                 </motion.h2>
@@ -176,8 +175,8 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
                       className={cn(
                         "relative flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group",
                         isActive
-                          ? "bg-gradient-to-r from-indigo-500/20 to-purple-500/10 text-white"
-                          : "text-slate-400 hover:text-white hover:bg-white/5"
+                          ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                          : "text-muted-foreground hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
                       )}
                     >
                       {/* Active Indicator */}
@@ -234,11 +233,11 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
       </nav>
 
       {/* Bottom Section */}
-      <div className="p-2 border-t border-white/5">
+      <div className="p-2 border-t border-sidebar-border">
         <Link href="/settings">
           <motion.div
             whileHover={{ x: 4 }}
-            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-all"
+            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-muted-foreground hover:text-sidebar-foreground hover:bg-sidebar-accent/50 transition-all"
           >
             <Settings size={20} />
             {!collapsed && <span className="text-sm font-medium">ตั้งค่า</span>}

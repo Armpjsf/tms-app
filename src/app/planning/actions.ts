@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache'
 
 import { getAllDriversFromTable } from '@/lib/supabase/drivers'
 import { getAllVehiclesFromTable } from '@/lib/supabase/vehicles'
+import { getAllCustomers } from '@/lib/supabase/customers'
 
 export type JobFormData = {
   Job_ID: string
@@ -53,10 +54,41 @@ export async function createJob(data: JobFormData) {
   return { success: true, message: 'Job created successfully' }
 }
 
+export async function createBulkJobs(jobs: Partial<JobFormData>[]) {
+  const supabase = await createClient()
+
+  const cleanData = jobs.map(j => ({
+      Job_ID: j.Job_ID || `JOB-${Date.now().toString().slice(-6)}-${Math.floor(Math.random()*1000)}`,
+      Plan_Date: j.Plan_Date || new Date().toISOString().split('T')[0],
+      Customer_Name: j.Customer_Name,
+      Route_Name: j.Route_Name || 'Direct',
+      Driver_ID: j.Driver_ID || null,
+      Vehicle_Plate: j.Vehicle_Plate || null,
+      Job_Status: 'New',
+      Created_At: new Date().toISOString(),
+  })).filter(j => j.Customer_Name)
+
+  if (cleanData.length === 0) {
+     return { success: false, message: 'No valid data found' }
+  }
+
+  const { error } = await supabase
+    .from('Jobs_Main')
+    .insert(cleanData)
+
+  if (error) {
+    console.error('Error bulk creating jobs:', error)
+    return { success: false, message: `Failed to import: ${error.message}` }
+  }
+
+  revalidatePath('/planning')
+  return { success: true, message: `Successfully imported ${cleanData.length} jobs` }
+}
+
 export async function updateJob(jobId: string, data: Partial<JobFormData>) {
   const supabase = await createClient()
 
-  const updateData: any = { ...data }
+  const updateData: Record<string, unknown> = { ...data }
   
   // Update Driver Name if Driver_ID specifically changes
   if (data.Driver_ID) {
@@ -99,43 +131,27 @@ export async function deleteJob(jobId: string) {
   return { success: true, message: 'Job deleted successfully' }
 }
 
-export async function getUniqueCustomers() {
-  const supabase = await createClient()
-  
-  // Fetch distinct Customer_Name, Customer_Phone, Customer_Address, Origin_Location, Dest_Location
-  // PostgREST doesn't support distinct on specific columns easily with other columns, 
-  // so we'll fetch all and dedup in JS (assuming reasonable dataset size for now)
-  const { data, error } = await supabase
-    .from('Jobs_Main')
-    .select('Customer_Name, Customer_Phone, Customer_Address, Origin_Location, Dest_Location')
-    .order('Created_At', { ascending: false })
-    .limit(500) // Limit to recent jobs to get recent customers
-
-  if (error) {
-    console.error('Error fetching customers:', error)
-    return []
-  }
-
-  const uniqueMap = new Map()
-  data?.forEach(item => {
-    if (item.Customer_Name && !uniqueMap.has(item.Customer_Name)) {
-      uniqueMap.set(item.Customer_Name, item)
-    }
-  })
-
-  return Array.from(uniqueMap.values())
-}
+// Remove getAllCustomers import if it's the only usage
+// ...
 
 export async function getJobCreationData() {
-  const [drivers, vehicles, customers] = await Promise.all([
+  const supabase = await createClient()
+
+  const [driversResult, vehiclesResult, customersResult, routesResult] = await Promise.all([
     getAllDriversFromTable(),
     getAllVehiclesFromTable(),
-    getUniqueCustomers()
+    supabase.from('Master_Customers').select('*').order('Customer_Name', { ascending: true }),
+    supabase.from('Master_Routes').select('*').order('Route_Name', { ascending: true })
   ])
-  
+
+  if (customersResult.error) {
+    console.error('Error fetching customers:', customersResult.error)
+  }
+
   return {
-    drivers,
-    vehicles,
-    customers
+    drivers: driversResult,
+    vehicles: vehiclesResult,
+    customers: customersResult.data || [],
+    routes: routesResult.data || []
   }
 }

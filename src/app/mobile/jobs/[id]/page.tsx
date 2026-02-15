@@ -5,6 +5,7 @@ import { MobileHeader } from "@/components/mobile/mobile-header"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { MapPin, Phone, User, Package, Navigation, Camera, CheckSquare } from "lucide-react"
+import { JobActionButton } from "@/components/mobile/job-action-button"
 
 type Props = {
   params: Promise<{ id: string }>
@@ -105,17 +106,9 @@ export default async function JobDetailPage(props: Props) {
              </CardContent>
         </Card>
       
+      
         {/* Action Button */}
-        {job.Job_Status !== 'Completed' ? (
-             <Button className="w-full h-14 text-lg bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-500/20 gap-2 font-bold">
-                <Camera />
-                บันทึกส่งงาน (POD)
-             </Button>
-        ) : (
-            <div className="text-center p-4 bg-emerald-500/10 rounded-xl text-emerald-400 font-medium flex items-center justify-center gap-2">
-                <CheckSquare /> งานเสร็จสิ้นแล้ว
-            </div>
-        )}
+        <JobActionButton job={job} />
 
       </div>
     </div>

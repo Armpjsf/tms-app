@@ -7,12 +7,15 @@ import {
   Phone,
   Truck,
 } from "lucide-react"
-import { getAllDrivers, getDriverStats } from "@/lib/supabase/drivers"
+import { getAllDrivers, getDriverStats, getDriverScore } from "@/lib/supabase/drivers"
 import { getAllVehicles } from "@/lib/supabase/vehicles"
 import { DriverDialog } from "@/components/drivers/driver-dialog"
 import { DriverActions } from "@/components/drivers/driver-actions"
 import { SearchInput } from "@/components/ui/search-input"
 import { Pagination } from "@/components/ui/pagination"
+import { createBulkDrivers } from "@/app/drivers/actions"
+import { ExcelImport } from "@/components/ui/excel-import"
+import { FileSpreadsheet } from "lucide-react"
 
 type Props = {
   searchParams: { [key: string]: string | string[] | undefined }
@@ -29,6 +32,12 @@ export async function DriversContent({ searchParams }: Props) {
     getAllVehicles(),
   ])
 
+  // Fetch scores for all drivers
+  const driversWithScores = await Promise.all(drivers.map(async (driver) => {
+      const score = await getDriverScore(driver.Driver_ID)
+      return { ...driver, score }
+  }))
+
   return (
     <>
       {/* Page Header */}
@@ -40,7 +49,24 @@ export async function DriversContent({ searchParams }: Props) {
           </h1>
           <p className="text-slate-400">รายชื่อและข้อมูลคนขับรถทั้งหมด</p>
         </div>
-        <DriverDialog 
+
+        <div className="flex gap-2">
+            <ExcelImport 
+                trigger={
+                    <Button variant="outline" className="gap-2 border-slate-700 hover:bg-slate-800">
+                        <FileSpreadsheet size={16} /> 
+                        นำเข้า Excel
+                    </Button>
+                }
+                title="นำเข้าข้อมูลคนขับ"
+                onImport={createBulkDrivers}
+                templateData={[
+                    { Driver_Name: "นาย สมชาย ใจดี", Mobile_No: "0812345678", Vehicle_Plate: "1กข-1234" },
+                    { Driver_Name: "นางสาว สมหญิง รักงาน", Mobile_No: "0898765432", Vehicle_Plate: "" }
+                ]}
+                templateFilename="template_drivers.xlsx"
+            />
+            <DriverDialog 
             mode="create" 
             vehicles={vehicles.data}
             trigger={
@@ -50,6 +76,7 @@ export async function DriversContent({ searchParams }: Props) {
                 </Button>
             }
         />
+        </div>
       </div>
 
       {/* Stats */}
@@ -83,16 +110,15 @@ export async function DriversContent({ searchParams }: Props) {
           <div className="col-span-full text-center py-12 text-slate-500">
             ไม่พบข้อมูลคนขับ
           </div>
-        ) : drivers.map((driver) => (
+        ) : driversWithScores.map((driver) => (
           <Card key={driver.Driver_ID} className="bg-slate-900 border-slate-800 hover:border-slate-700 transition-colors">
             <CardContent className="p-5">
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold shadow-lg">
-                    {/* @ts-ignore */}
                     {driver.Image_Url ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={(driver as any).Image_Url} alt={driver.Driver_Name || ''} className="w-full h-full rounded-xl object-cover" />
+                      <img src={driver.Image_Url} alt={driver.Driver_Name || ''} className="w-full h-full rounded-xl object-cover" />
                     ) : (
                       driver.Driver_Name?.charAt(0) || "?"
                     )}
@@ -103,21 +129,54 @@ export async function DriversContent({ searchParams }: Props) {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                    <span className={`w-2 h-2 rounded-full ${
-                        driver.Active_Status === 'Active' ? 'bg-emerald-400' : 'bg-slate-400'
-                    }`} />
+                    <div className={`flex flex-col items-end px-2 py-1 rounded-md ${
+                        driver.score.totalScore >= 80 ? 'bg-emerald-500/10 text-emerald-400' :
+                        driver.score.totalScore >= 60 ? 'bg-amber-500/10 text-amber-400' :
+                        'bg-red-500/10 text-red-400'
+                    }`}>
+                        <span className="text-xs font-bold leading-none">{driver.score.totalScore}</span>
+                        <span className="text-[10px] opacity-80">คะแนน</span>
+                    </div>
                     <DriverActions driver={driver} vehicles={vehicles.data} />
                 </div>
               </div>
 
               <div className="space-y-2 text-sm mb-4">
                 <div className="flex items-center gap-2 text-slate-300">
-                  <Phone size={14} className="text-slate-500" />
-                  <span>{driver.Mobile_No || "-"}</span>
+                    <Phone size={14} className="text-slate-500" />
+                    <span>{driver.Mobile_No || "-"}</span>
                 </div>
                 <div className="flex items-center gap-2 text-slate-300">
-                  <Truck size={14} className="text-slate-500" />
+                    <Truck size={14} className="text-slate-500" />
                   <span>{driver.Vehicle_Plate || "ไม่มีรถประจำ"}</span>
+                </div>
+                {driver.License_Expiry && (
+                   <div className={`flex items-center gap-2 text-xs ${
+                       new Date(driver.License_Expiry) < new Date() ? 'text-red-400 font-bold' :
+                       new Date(driver.License_Expiry) < new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) ? 'text-amber-400' : 'text-slate-500'
+                   }`}>
+                       <span>ใบขับขี่: {new Date(driver.License_Expiry).toLocaleDateString('th-TH')}</span>
+                       {new Date(driver.License_Expiry) < new Date() && <span>(หมดอายุ)</span>}
+                       {new Date(driver.License_Expiry) >= new Date() && new Date(driver.License_Expiry) < new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) && <span>(ใกล้หมด)</span>}
+                   </div>
+                )}
+                <div className="grid grid-cols-3 gap-2 mt-2 pt-2 border-t border-slate-800">
+                    <div className="text-center">
+                        <p className="text-[10px] text-slate-500">ตรงเวลา</p>
+                        <p className={`text-xs font-bold ${
+                            driver.score.onTimeScore >= 90 ? 'text-emerald-400' : 'text-slate-300'
+                        }`}>{driver.score.onTimeScore}%</p>
+                    </div>
+                    <div className="text-center border-l border-slate-800">
+                        <p className="text-[10px] text-slate-500">ปลอดภัย</p>
+                        <p className="text-xs font-bold text-slate-300">{driver.score.safetyScore}%</p>
+                    </div>
+                    <div className="text-center border-l border-slate-800">
+                        <p className="text-[10px] text-slate-500">รับงาน</p>
+                        <p className={`text-xs font-bold ${
+                            driver.score.acceptanceScore >= 90 ? 'text-emerald-400' : 'text-slate-300'
+                        }`}>{driver.score.acceptanceScore}%</p>
+                    </div>
                 </div>
               </div>
 

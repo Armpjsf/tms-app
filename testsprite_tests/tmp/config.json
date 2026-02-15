@@ -1,0 +1,17 @@
+{
+  "status": "commited",
+  "type": "frontend",
+  "scope": "codebase",
+  "localEndpoint": "http://localhost:3000",
+  "executionArgs": {
+    "projectName": "TMS_ePOD",
+    "projectPath": "C:\\Users\\Armdd\\TMS_ePOD",
+    "testIds": [],
+    "additionalInstruction": "Generate Playwright tests. Focus on critical flows: Login, Dashboard access, and Excel Import on Drivers page.",
+    "envs": {
+      "API_KEY": "sk-user-l25GhbbfoJcwR4PbCFuCEwi4DtKEDaLfoGaTdjvb1ddp9v9rSttkSShdO4xalAs2qK8_PeuCu4J3caWxglV1oQiLm1jBX1ahiuG8rtZzGekf8MBRmJcHmfslT8rsRt-9E5s"
+    }
+  },
+  "serverPort": 63134,
+  "proxy": "http://ee9cfe72-61f8-443a-967b-2bf8751c45b6:BivX7ZgQ7n4km6AOidp8JO8iouBoiB8O@tun.testsprite.com:8080"
+}

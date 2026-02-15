@@ -18,8 +18,12 @@ import {
   Download,
   Filter,
   ArrowLeft,
+  ExternalLink,
 } from "lucide-react"
 import { getAllJobs } from "@/lib/supabase/jobs"
+import { getJobCreationData } from "@/app/planning/actions"
+import { ExcelExport } from "@/components/ui/excel-export"
+import { JobHistoryActions } from "@/components/jobs/job-history-actions"
 
 type Props = {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
@@ -34,13 +38,17 @@ export default async function JobHistoryPage(props: Props) {
   const status = (searchParams.status as string) || ''
   const limit = 25
 
-  // For now, fetch all jobs (history includes completed + failed)
-  const { data: jobs, count } = await getAllJobs(page, limit, query)
+  // Fetch jobs and creation data for dialog
+  const [jobsResult, creationData] = await Promise.all([
+    getAllJobs(page, limit, query, status),
+    getJobCreationData()
+  ])
+
+  const { data: jobs, count } = jobsResult
+  const { drivers, vehicles, customers, routes } = creationData
   
-  // Filter completed/history jobs
-  const historyJobs = jobs.filter(j => 
-    ['Complete', 'Delivered', 'Failed', 'Cancelled'].includes(j.Job_Status) || !status
-  )
+  // Use jobs directly as they are already filtered
+  const historyJobs = jobs
 
   const statusConfig: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
     New: { label: "ใหม่", color: "text-blue-400 bg-blue-500/20", icon: <Package size={14} /> },
@@ -72,16 +80,23 @@ export default async function JobHistoryPage(props: Props) {
           </div>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" className="border-slate-700">
-            <Download className="w-4 h-4 mr-2" /> Export
-          </Button>
+           <ExcelExport 
+              data={historyJobs} 
+              filename={`job_history_${new Date().toISOString().split('T')[0]}`}
+              title="ประวัติงาน"
+              trigger={
+                <Button variant="outline" className="border-slate-700 bg-slate-900 hover:bg-slate-800 text-slate-300">
+                    <Download className="w-4 h-4 mr-2" /> Export Excel
+                </Button>
+              }
+           />
         </div>
       </div>
 
       {/* Filters */}
       <Card className="bg-slate-900/50 border-slate-800 mb-6">
         <CardContent className="p-4">
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+          <form className="grid grid-cols-1 md:grid-cols-5 gap-4">
             <div className="md:col-span-2">
               <SearchInput placeholder="ค้นหา Job ID, ลูกค้า, เส้นทาง..." />
             </div>
@@ -110,52 +125,50 @@ export default async function JobHistoryPage(props: Props) {
                 <Filter className="w-3 h-3" /> สถานะ
               </Label>
               <select
+                name="status"
                 defaultValue={status}
                 className="w-full h-10 px-3 rounded-md bg-slate-800 border border-slate-700 text-white"
               >
                 <option value="">ทั้งหมด</option>
+                <option value="New">ใหม่</option>
+                <option value="Assigned">มอบหมายแล้ว</option>
+                <option value="In Progress">กำลังดำเนินงาน</option>
                 <option value="Complete">เสร็จสิ้น</option>
                 <option value="Delivered">ส่งแล้ว</option>
                 <option value="Failed">ล้มเหลว</option>
                 <option value="Cancelled">ยกเลิก</option>
               </select>
             </div>
-          </div>
+            {/* Added implicit submit button for non-search inputs if needed, or rely on Enter/Form submission logic */}
+            <button type="submit" className="hidden" /> 
+          </form>
         </CardContent>
       </Card>
 
-      {/* Summary Stats */}
+      {/* Summary Stats (Compact) */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        <Card className="bg-slate-900/50 border-slate-800">
-          <CardContent className="p-4">
-            <p className="text-2xl font-bold text-white">{count || 0}</p>
-            <p className="text-xs text-slate-400">รายการทั้งหมด</p>
-          </CardContent>
-        </Card>
-        <Card className="bg-emerald-500/10 border-emerald-500/20">
-          <CardContent className="p-4">
-            <p className="text-2xl font-bold text-emerald-400">
-              {jobs.filter(j => j.Job_Status === 'Complete' || j.Job_Status === 'Delivered').length}
-            </p>
-            <p className="text-xs text-slate-400">สำเร็จ</p>
-          </CardContent>
-        </Card>
-        <Card className="bg-red-500/10 border-red-500/20">
-          <CardContent className="p-4">
-            <p className="text-2xl font-bold text-red-400">
-              {jobs.filter(j => j.Job_Status === 'Failed').length}
-            </p>
-            <p className="text-xs text-slate-400">ล้มเหลว</p>
-          </CardContent>
-        </Card>
-        <Card className="bg-slate-500/10 border-slate-500/20">
-          <CardContent className="p-4">
-            <p className="text-2xl font-bold text-slate-400">
-              {jobs.filter(j => j.Job_Status === 'Cancelled').length}
-            </p>
-            <p className="text-xs text-slate-400">ยกเลิก</p>
-          </CardContent>
-        </Card>
+        <div className="bg-slate-900/50 border border-slate-800 rounded-lg p-3 flex items-center justify-between">
+            <span className="text-sm text-slate-400">ทั้งหมด</span>
+            <span className="text-lg font-bold text-white">{count || 0}</span>
+        </div>
+        <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-3 flex items-center justify-between">
+            <span className="text-sm text-emerald-400/80">สำเร็จ</span>
+            <span className="text-lg font-bold text-emerald-400">
+               {jobs.filter(j => j.Job_Status === 'Complete' || j.Job_Status === 'Delivered').length}
+            </span>
+        </div>
+        <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 flex items-center justify-between">
+            <span className="text-sm text-red-400/80">ล้มเหลว</span>
+            <span className="text-lg font-bold text-red-400">
+               {jobs.filter(j => j.Job_Status === 'Failed').length}
+            </span>
+        </div>
+        <div className="bg-slate-500/10 border border-slate-500/20 rounded-lg p-3 flex items-center justify-between">
+            <span className="text-sm text-slate-400/80">ยกเลิก</span>
+            <span className="text-lg font-bold text-slate-400">
+               {jobs.filter(j => j.Job_Status === 'Cancelled').length}
+            </span>
+        </div>
       </div>
 
       {/* Table */}
@@ -180,6 +193,7 @@ export default async function JobHistoryPage(props: Props) {
                     <th className="text-left p-4 text-xs font-medium text-slate-400 uppercase">คนขับ</th>
                     <th className="text-left p-4 text-xs font-medium text-slate-400 uppercase">ทะเบียน</th>
                     <th className="text-left p-4 text-xs font-medium text-slate-400 uppercase">สถานะ</th>
+                    <th className="text-right p-4 text-xs font-medium text-slate-400 uppercase">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -219,6 +233,15 @@ export default async function JobHistoryPage(props: Props) {
                           {statusConfig[job.Job_Status]?.icon}
                           {statusConfig[job.Job_Status]?.label || job.Job_Status}
                         </span>
+                      </td>
+                      <td className="p-4 text-right">
+                          <JobHistoryActions 
+                              job={job}
+                              drivers={drivers}
+                              vehicles={vehicles}
+                              customers={customers}
+                              routes={routes}
+                          />
                       </td>
                     </tr>
                   ))}

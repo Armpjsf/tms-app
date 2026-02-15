@@ -40,7 +40,7 @@ export default function ApiSettingsPage() {
   if (loading) {
       return (
           <DashboardLayout>
-              <div className="flex items-center justify-center h-full text-slate-400">Loading settings...</div>
+              <div className="flex items-center justify-center h-full text-muted-foreground">Loading settings...</div>
           </DashboardLayout>
       )
   }
@@ -48,31 +48,31 @@ export default function ApiSettingsPage() {
   return (
     <DashboardLayout>
       <div className="mb-6">
-        <Button variant="ghost" className="mb-4 pl-0 hover:bg-transparent hover:text-white" onClick={() => router.back()}>
+        <Button variant="ghost" className="mb-4 pl-0 hover:bg-transparent hover:text-foreground" onClick={() => router.back()}>
           <ArrowLeft className="mr-2" size={20} />
           กลับไปตั้งค่า
         </Button>
-        <h1 className="text-3xl font-bold text-white mb-2 flex items-center gap-3">
-          <Globe className="text-emerald-400" />
+        <h1 className="text-3xl font-bold text-foreground mb-2 flex items-center gap-3">
+          <Globe className="text-green-500" />
           การเชื่อมต่อ API
         </h1>
-        <p className="text-slate-400">จัดการ API Key สำหรับเชื่อมต่อกับระบบภายนอก</p>
+        <p className="text-muted-foreground">จัดการ API Key สำหรับเชื่อมต่อกับระบบภายนอก</p>
       </div>
 
-      <Card className="bg-slate-900/50 border-slate-800 max-w-2xl">
+      <Card className="bg-card border-border max-w-2xl">
         <CardContent className="p-6 space-y-6">
             <div>
-                <h3 className="text-white font-bold mb-2 flex items-center gap-2">
-                    <Key size={18} className="text-indigo-400" />
+                <h3 className="text-foreground font-bold mb-2 flex items-center gap-2">
+                    <Key size={18} className="text-primary" />
                     Public API Key
                 </h3>
-                <p className="text-sm text-slate-500 mb-4">ใช้คีย์นี้สำหรับเชื่อมต่อกับระบบ ERP หรือ Wesbite ภายนอก</p>
+                <p className="text-sm text-muted-foreground mb-4">ใช้คีย์นี้สำหรับเชื่อมต่อกับระบบ ERP หรือ Wesbite ภายนอก</p>
                 
                 <div className="flex gap-2">
                     <Input 
                         value={apiKey} 
                         readOnly 
-                        className="bg-slate-950 font-mono text-slate-300 border-slate-700"
+                        className="bg-muted font-mono text-foreground border-border"
                     />
                     <Button variant="outline" onClick={copyToClipboard}>
                         <Copy size={16} />
@@ -80,7 +80,7 @@ export default function ApiSettingsPage() {
                 </div>
             </div>
 
-            <div className="pt-4 border-t border-slate-800">
+            <div className="pt-4 border-t border-border">
                 <Button 
                     variant="outline" 
                     className="border-red-500/50 text-red-400 hover:bg-red-500/10 hover:text-red-300"

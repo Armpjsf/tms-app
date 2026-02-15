@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Sarabun } from "next/font/google";
 import "./globals.css";
+import { Toaster } from "sonner";
 
 const sarabun = Sarabun({
   variable: "--font-sarabun",
@@ -39,6 +40,7 @@ export default function RootLayout({
         className={`${sarabun.variable} antialiased`}
       >
         {children}
+        <Toaster />
       </body>
     </html>
   );

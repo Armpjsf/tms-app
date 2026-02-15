@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Eraser, Check } from "lucide-react"
 
 type Props = {
-  onSave: (blob: Blob) => void
+  onSave: (blob: Blob | null) => void
 }
 
 export function SignaturePad({ onSave }: Props) {
@@ -16,14 +16,32 @@ export function SignaturePad({ onSave }: Props) {
   const clear = () => {
     sigCanvas.current?.clear()
     setIsEmpty(true)
+    onSave(null) // Notify parent it's cleared
   }
 
-  const save = () => {
-    if (sigCanvas.current && !sigCanvas.current.isEmpty()) {
-      sigCanvas.current.getTrimmedCanvas().toBlob((blob) => {
-        if (blob) onSave(blob);
-      });
+  const save = async () => {
+    if (sigCanvas.current) {
+        if (sigCanvas.current.isEmpty()) {
+            onSave(null)
+            setIsEmpty(true)
+        } else {
+            // Use getCanvas() instead of trimmed for reliability
+            // Convert to Base64 then Blob to ensure compatibility
+            try {
+                const dataURL = sigCanvas.current.getCanvas().toDataURL("image/png")
+                const blob = await (await fetch(dataURL)).blob()
+                onSave(blob)
+                setIsEmpty(false)
+            } catch (e) {
+                console.error("Signature save error:", e)
+            }
+        }
     }
+  }
+
+  const handleEnd = () => {
+      // Short timeout to ensure canvas updates
+      setTimeout(() => save(), 100) 
   }
 
   return (
@@ -37,6 +55,7 @@ export function SignaturePad({ onSave }: Props) {
             className: "w-full h-48 cursor-crosshair block",
           }}
           onBegin={() => setIsEmpty(false)}
+          onEnd={handleEnd}
         />
         {isEmpty && (
            <div className="absolute inset-0 flex items-center justify-center pointer-events-none text-slate-600">

@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/utils/supabase/server'
 import argon2 from 'argon2'
+import { createSession } from '@/lib/session'
 // import { cookies } from 'next/headers' // Used in createClient
 
 export async function login(formData: FormData) {
@@ -51,11 +52,10 @@ export async function login(formData: FormData) {
   }
 
   // 3. Create Session (Custom)
-  // For this proof-of-concept, we'll assume a successful login
-  // In reality, you'd mint a JWT or set a session cookie here.
-  // We will simply redirect for now, but to persist logic we'd need a session lib.
+  const roleId = users.Role_ID || 3 // Default to Staff if null
+  const branchId = users.Branch_ID || null
   
-  // Because we lack Supabase Auth user, we can't use supabase.auth.signInWithPassword
+  await createSession(users.User_ID, roleId, branchId, users.Username)
   
   redirect('/dashboard')
 }

@@ -1,0 +1,85 @@
+{
+  "tech_stack": [
+    "TypeScript",
+    "Next.js",
+    "Supabase",
+    "Tailwind CSS",
+    "Radix UI",
+    "Lucide React",
+    "Leaflet",
+    "XLSX"
+  ],
+  "features": [
+    {
+      "name": "Authentication",
+      "description": "User login and session management using Supabase Auth.",
+      "files": [
+        "src/app/login/page.tsx",
+        "src/app/login/actions.ts",
+        "src/utils/supabase/middleware.ts"
+      ]
+    },
+    {
+      "name": "Dashboard",
+      "description": "Overview of daily tasks, vehicle status, and job statistics.",
+      "files": [
+        "src/app/dashboard/page.tsx",
+        "src/components/layout/dashboard-layout.tsx"
+      ]
+    },
+    {
+      "name": "Drivers Management",
+      "description": "Manage driver profiles, including creation, updating, deletion, and bulk import from Excel.",
+      "files": [
+        "src/app/drivers/page.tsx",
+        "src/app/drivers/actions.ts",
+        "src/components/drivers/drivers-content.tsx",
+        "src/components/drivers/driver-dialog.tsx",
+        "src/components/ui/excel-import.tsx"
+      ]
+    },
+    {
+      "name": "Vehicles Management",
+      "description": "Manage vehicle fleet, tracking status, maintenance alerts, and bulk import.",
+      "files": [
+        "src/app/vehicles/page.tsx",
+        "src/app/vehicles/actions.ts",
+        "src/components/vehicles/vehicle-dialog.tsx",
+        "src/components/ui/excel-import.tsx"
+      ]
+    },
+    {
+      "name": "Planning & Jobs",
+      "description": "Job creation, planning, routing, and history view. Includes bulk import capabilities.",
+      "files": [
+        "src/app/planning/page.tsx",
+        "src/app/planning/actions.ts",
+        "src/components/planning/job-dialog.tsx",
+        "src/components/ui/excel-import.tsx"
+      ]
+    },
+    {
+      "name": "GPS Tracking",
+      "description": "Real-time visualization of vehicle locations on a map using Leaflet.",
+      "files": [
+        "src/app/admin/map/page.tsx",
+        "src/components/map/MapComponent.tsx"
+      ]
+    },
+    {
+      "name": "Mobile PWA",
+      "description": "Progressive Web App for drivers to view jobs, update status, upload POD, and sign.",
+      "files": [
+        "src/app/mobile/dashboard/page.tsx",
+        "src/app/mobile/jobs/[id]/page.tsx",
+        "src/components/mobile/signature-pad.tsx",
+        "src/components/mobile/camera-input.tsx"
+      ]
+    },
+    {
+      "name": "Excel Import",
+      "description": "Reusable component for importing data from Excel files.",
+      "files": ["src/components/ui/excel-import.tsx"]
+    }
+  ]
+}

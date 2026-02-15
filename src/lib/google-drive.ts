@@ -1,16 +1,44 @@
 import { google } from 'googleapis'
 import { join } from 'path'
+import { Readable } from 'stream'
 
-// Load credentials from file
-const KEY_FILE_PATH = join(process.cwd(), 'service_account.json')
+// OAuth 2.0 Credentials (Provided by User)
+const CLIENT_ID = process.env.GOOGLE_CLIENT_ID!
+const CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET!
+const REDIRECT_URI = process.env.GOOGLE_REDIRECT_URI!
+
+// Refresh Token (To be filled after auth flow)
+// Once obtained, we will paste it here to make it permanent
+const REFRESH_TOKEN = process.env.GOOGLE_REFRESH_TOKEN! 
 
 // Scopes for Drive API
-const SCOPES = ['https://www.googleapis.com/auth/drive.file']
+// 'https://www.googleapis.com/auth/drive' : Full access needed to see folders created by User manually
+const SCOPES = ['https://www.googleapis.com/auth/drive']
 
-// Rate limiting / Concurrency control could be added here if needed
-// For now, simple initialization
+export function getOAuth2Client() {
+  const oAuth2Client = new google.auth.OAuth2(
+    CLIENT_ID,
+    CLIENT_SECRET,
+    REDIRECT_URI
+  )
+  
+  if (REFRESH_TOKEN) {
+      oAuth2Client.setCredentials({ refresh_token: REFRESH_TOKEN })
+  }
+  
+  return oAuth2Client
+}
 
 export async function getDriveClient() {
+  // If we have a refresh token, use OAuth (User Storage)
+  if (REFRESH_TOKEN) {
+      const auth = getOAuth2Client()
+      return google.drive({ version: 'v3', auth })
+  }
+
+  // Fallback to Service Account (System Storage - 0GB)
+  // This is what we are migrating AWAY from.
+  const KEY_FILE_PATH = join(process.cwd(), 'service_account.json')
   const auth = new google.auth.GoogleAuth({
     keyFile: KEY_FILE_PATH,
     scopes: SCOPES,
@@ -65,6 +93,48 @@ export async function getOrCreateFolder(folderName: string, parentId?: string): 
     return id
 }
 
+// Exported helper to upload directly to a known folder ID (Avoids repeated lookups)
+export async function uploadFileByFolderId(
+    fileBuffer: Buffer,
+    fileName: string,
+    mimeType: string,
+    folderId: string
+) {
+    const drive = await getDriveClient()
+    
+    const media = {
+        mimeType,
+        body: Readable.from(fileBuffer),
+    }
+
+    const res = await drive.files.create({
+        requestBody: {
+            name: fileName,
+            parents: [folderId],
+        },
+        media: media,
+        fields: 'id, webViewLink, webContentLink, thumbnailLink',
+    })
+
+    await drive.permissions.create({
+        fileId: res.data.id!,
+        requestBody: {
+            role: 'reader',
+            type: 'anyone',
+        },
+    })
+
+    return {
+        fileId: res.data.id,
+        webViewLink: res.data.webViewLink,
+        webContentLink: res.data.webContentLink,
+        directLink: `https://drive.google.com/uc?export=view&id=${res.data.id}` 
+    }
+}
+
+// User provided shared folder ID
+export const ROOT_FOLDER_ID = '1FCbXBITvRfl6EeIQb_8eYd-HzJNPkHnn'
+
 export async function uploadFileToDrive(
     fileBuffer: Buffer, 
     fileName: string, 
@@ -72,48 +142,14 @@ export async function uploadFileToDrive(
     folderName: string = 'TMS_Uploads'
 ) {
     try {
-        const drive = await getDriveClient()
+        // 1. Use the shared root folder directly
+        const rootFolderId = ROOT_FOLDER_ID
         
-        // 1. Get or Create "TMS_App_Data" root folder to keep things tidy
-        const rootFolderId = await getOrCreateFolder('TMS_App_Data')
-        
-        // 2. Get or Create specific subfolder (e.g. "Maintenance", "Fuel", "POD")
+        // 2. Get or Create specific subfolder inside the shared folder
         const targetFolderId = await getOrCreateFolder(folderName, rootFolderId)
 
-        // 3. Upload file
-        const media = {
-            mimeType,
-            body: Readable.from(fileBuffer),
-        }
-
-        const res = await drive.files.create({
-            requestBody: {
-                name: fileName,
-                parents: [targetFolderId],
-            },
-            media: media,
-            fields: 'id, webViewLink, webContentLink, thumbnailLink',
-        })
-
-        // 4. Make it readable by anyone with the link (Optional: or restrict to organization)
-        // For this use case, we probably need it public or at least accessible to the app users.
-        // Granting 'reader' permission to 'anyone' makes it publicly accessible via link.
-        await drive.permissions.create({
-            fileId: res.data.id!,
-            requestBody: {
-                role: 'reader',
-                type: 'anyone',
-            },
-        })
-
-        return {
-            fileId: res.data.id,
-            webViewLink: res.data.webViewLink, // View in Drive
-            webContentLink: res.data.webContentLink, // Direct download
-            // Unofficial direct link format often used for standard img tags (beware quotas)
-            // https://drive.google.com/uc?export=view&id=FILE_ID
-            directLink: `https://drive.google.com/uc?export=view&id=${res.data.id}` 
-        }
+        // 3. Upload using the ID
+        return await uploadFileByFolderId(fileBuffer, fileName, mimeType, targetFolderId)
 
     } catch (error) {
         console.error('Google Drive Upload Error:', error)
@@ -121,4 +157,4 @@ export async function uploadFileToDrive(
     }
 }
 
-import { Readable } from 'stream'
+

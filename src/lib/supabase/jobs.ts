@@ -21,15 +21,28 @@ export type Job = {
 }
 
 // ดึงงานทั้งหมดวันนี้
+import { getUserBranchId, isSuperAdmin } from "@/lib/permissions"
+
 export async function getTodayJobs(): Promise<Job[]> {
   try {
     const supabase = await createClient()
     const today = new Date().toISOString().split('T')[0]
     
-    const { data, error } = await supabase
+    let dbQuery = supabase
       .from('Jobs_Main')
       .select('*')
       .eq('Plan_Date', today)
+    
+    // Filter by Branch
+    const branchId = await getUserBranchId()
+    const isAdmin = await isSuperAdmin()
+    
+    if (branchId && !isAdmin) {
+        // @ts-ignore - Dynamic query
+        dbQuery = dbQuery.eq('Branch_ID', branchId)
+    }
+
+    const { data, error } = await dbQuery
       .order('Created_At', { ascending: false })
     
     if (error) {
@@ -68,11 +81,12 @@ export async function getJobsByStatus(status: string): Promise<Job[]> {
   }
 }
 
-// ดึงงานทั้งหมด (pagination + search)
+// ดึงงานทั้งหมด (pagination + search + status filter)
 export async function getAllJobs(
   page = 1, 
   limit = 50, 
-  query = ''
+  query = '',
+  status = '' // Add status parameter
 ): Promise<{ data: Job[], count: number }> {
   try {
     const supabase = await createClient()
@@ -81,11 +95,25 @@ export async function getAllJobs(
     let dbQuery = supabase
       .from('Jobs_Main')
       .select('*', { count: 'exact' })
+    
+    // Filter by Branch
+    const branchId = await getUserBranchId()
+    const isAdmin = await isSuperAdmin()
+    
+    if (branchId && !isAdmin) {
+        dbQuery = dbQuery.eq('Branch_ID', branchId)
+    }
+
+    dbQuery = dbQuery
       .order('Plan_Date', { ascending: false })
       .order('Created_At', { ascending: false })
 
     if (query) {
       dbQuery = dbQuery.or(`Job_ID.ilike.%${query}%,Customer_Name.ilike.%${query}%,Route_Name.ilike.%${query}%`)
+    }
+
+    if (status) {
+      dbQuery = dbQuery.eq('Job_Status', status)
     }
 
     const { data, error, count } = await dbQuery.range(offset, offset + limit - 1)
@@ -131,20 +159,58 @@ export async function getTodayJobStats() {
   }
 }
 
+// ยอดเงินวันนี้ (Estimated)
+export async function getTodayFinancials() {
+  try {
+    const supabase = await createClient()
+    const today = new Date().toISOString().split('T')[0]
+    
+    const { data, error } = await supabase
+      .from('Jobs_Main')
+      .select('Price_Cust_Total')
+      .eq('Plan_Date', today)
+      .neq('Job_Status', 'Cancelled') // Exclude cancelled jobs
+    
+    if (error) return { revenue: 0 }
+
+    const revenue = data?.reduce((sum, job) => sum + (job.Price_Cust_Total || 0), 0) || 0
+    return { revenue }
+  } catch {
+    return { revenue: 0 }
+  }
+}
+
 // ดึงงานของ Driver เฉพาะคน
 // ดึงงานของ Driver เฉพาะคน
-export async function getDriverJobs(driverId: string): Promise<Job[]> {
+// ดึงงานของ Driver เฉพาะคน (รองรับ Filter)
+export async function getDriverJobs(
+  driverId: string, 
+  options: { startDate?: string, endDate?: string, status?: string } = {}
+): Promise<Job[]> {
   try {
     const supabase = await createClient()
     
-    // STRICT filtering by Driver_ID
-    const { data, error } = await supabase
+    let query = supabase
       .from('Jobs_Main')
       .select('*')
       .eq('Driver_ID', driverId) 
+
+    if (options.startDate) {
+        query = query.gte('Plan_Date', options.startDate)
+    }
+
+    if (options.endDate) {
+        query = query.lte('Plan_Date', options.endDate)
+    }
+
+    if (options.status && options.status !== 'All') {
+        query = query.eq('Job_Status', options.status)
+    }
+
+    const { data, error } = await query
       .order('Plan_Date', { ascending: false })
       .order('Created_At', { ascending: false })
-      .limit(50)
+      .limit(100)
     
     if (error) {
       console.error('Error fetching driver jobs:', JSON.stringify(error))
@@ -286,6 +352,7 @@ export async function createJob(jobData: Partial<Job>) {
                 ...jobData,
                 Job_ID: newJobId,
                 Job_Status: 'New',
+                Branch_ID: await getUserBranchId() || 'HQ',
                 Created_At: new Date().toISOString()
             })
             .select()

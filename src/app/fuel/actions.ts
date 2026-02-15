@@ -67,6 +67,23 @@ export async function updateFuelLog(logId: string, data: FuelFormData) {
   return { success: true, message: 'Fuel Log updated successfully' }
 }
 
+export async function updateFuelLogStatus(logId: string, status: string) {
+  const supabase = await createClient()
+
+  const { error } = await supabase
+    .from('Fuel_Logs')
+    .update({ Status: status })
+    .eq('Log_ID', logId)
+
+  if (error) {
+    console.error('Error updating fuel log status:', error)
+    return { success: false, message: 'Failed to update status' }
+  }
+
+  revalidatePath('/fuel')
+  return { success: true, message: 'Status updated successfully' }
+}
+
 export async function deleteFuelLog(logId: string) {
   const supabase = await createClient()
 

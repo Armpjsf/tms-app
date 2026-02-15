@@ -1,0 +1,259 @@
+"use server"
+
+import { createClient } from "@/utils/supabase/server"
+import { getUserBranchId, isSuperAdmin } from "@/lib/permissions"
+
+export interface BillingNote {
+  Billing_Note_ID: string
+  Customer_Name: string
+  Billing_Date: string
+  Due_Date: string | null
+  Total_Amount: number
+  Status: string
+  Created_At: string
+  Updated_At: string
+  Customer_Email?: string
+}
+
+export async function createBillingNote(
+    jobIds: string[], 
+    customerName: string, 
+    date: string,
+    dueDate?: string
+) {
+    try {
+        const supabase = await createClient()
+
+        // 1. Calculate Total Amount
+        const { data: jobs, error: jobsError } = await supabase
+            .from('Jobs_Main')
+            .select('Price_Cust_Total')
+            .in('Job_ID', jobIds)
+
+        if (jobsError) throw new Error("Failed to fetch jobs for calculation")
+        
+        const totalAmount = jobs?.reduce((sum, job) => sum + (job.Price_Cust_Total || 0), 0) || 0
+
+        // 2. Generate Billing Note ID (BN-YYYYMM-XXXX)
+        const dateObj = new Date()
+        const ym = dateObj.toISOString().slice(0, 7).replace('-', '') // 202402
+        const randomSuffix = Math.floor(Math.random() * 10000).toString().padStart(4, '0')
+        const billingNoteId = `BN-${ym}-${randomSuffix}`
+
+        // 3. Insert Billing Note
+        // 3. Insert Billing Note
+        const branchId = await getUserBranchId()
+
+        const { error: insertError } = await supabase
+            .from('Billing_Notes')
+            .insert({
+                Billing_Note_ID: billingNoteId,
+                Customer_Name: customerName,
+                Billing_Date: date,
+                Due_Date: dueDate || null,
+                Total_Amount: totalAmount,
+                Status: 'Pending',
+                Created_At: new Date().toISOString(),
+                Updated_At: new Date().toISOString()
+            })
+
+        if (insertError) throw insertError
+
+        // 4. Update Jobs with Billing Note ID
+        const { error: updateError } = await supabase
+            .from('Jobs_Main')
+            .update({ Billing_Note_ID: billingNoteId })
+            .in('Job_ID', jobIds)
+
+        if (updateError) {
+             // Rollback (Optional: Delete created billing note if critical)
+             console.error("Failed to link jobs to billing note")
+             throw updateError
+        }
+
+        return { success: true, id: billingNoteId }
+
+    } catch (e: any) {
+        console.error("createBillingNote Error:", e)
+        return { success: false, error: e.message }
+    }
+}
+
+export async function createDriverPayment(
+    jobIds: string[], 
+    driverName: string, 
+    date: string
+) {
+    try {
+        const supabase = await createClient()
+
+        // 1. Calculate Total Amount
+        const { data: jobs, error: jobsError } = await supabase
+            .from('Jobs_Main')
+            .select('Cost_Driver_Total')
+            .in('Job_ID', jobIds)
+
+        if (jobsError) throw new Error("Failed to fetch jobs for calculation")
+        
+        const totalAmount = jobs?.reduce((sum, job) => sum + (job.Cost_Driver_Total || 0), 0) || 0
+
+        // 2. Generate Driver Payment ID (DP-YYYYMM-XXXX)
+        const dateObj = new Date()
+        const ym = dateObj.toISOString().slice(0, 7).replace('-', '') // 202402
+        const randomSuffix = Math.floor(Math.random() * 10000).toString().padStart(4, '0')
+        const paymentId = `DP-${ym}-${randomSuffix}`
+
+        // 3. Insert Driver Payment
+        const { error: insertError } = await supabase
+            .from('Driver_Payments')
+            .insert({
+                Driver_Payment_ID: paymentId,
+                Driver_Name: driverName,
+                Payment_Date: date,
+                Total_Amount: totalAmount,
+                Status: 'Pending',
+                Created_At: new Date().toISOString(),
+                Updated_At: new Date().toISOString()
+            })
+
+        if (insertError) throw insertError
+
+        // 4. Update Jobs with Driver Payment ID
+        const { error: updateError } = await supabase
+            .from('Jobs_Main')
+            .update({ Driver_Payment_ID: paymentId })
+            .in('Job_ID', jobIds)
+
+        if (updateError) {
+             console.error("Failed to link jobs to driver payment")
+             throw updateError
+        }
+
+        return { success: true, id: paymentId }
+
+    } catch (e: any) {
+        console.error("createDriverPayment Error:", e)
+        return { success: false, error: e.message }
+    }
+}
+
+export async function getBillingNotes() {
+    try {
+        const supabase = await createClient()
+        
+        // Filter by Branch
+        const branchId = await getUserBranchId()
+        const isAdmin = await isSuperAdmin()
+        
+        let query = supabase.from('Billing_Notes').select('*')
+        
+        if (branchId && !isAdmin) {
+            // @ts-ignore
+            query = query.eq('Branch_ID', branchId)
+        }
+
+        const { data, error } = await query
+            .order('Created_At', { ascending: false })
+        
+        if (error) {
+            console.error("Error fetching billing notes:", error)
+            return []
+        }
+        return data as BillingNote[]
+    } catch (e) {
+        return []
+    }
+}
+
+export async function getBillingNoteByIdWithJobs(id: string) {
+    try {
+        const supabase = await createClient()
+        
+        // 1. Get Billing Note
+        const { data: note, error: noteError } = await supabase
+            .from('Billing_Notes')
+            .select('*')
+            .eq('Billing_Note_ID', id)
+            .single()
+        
+        if (noteError) throw noteError
+
+        // 2. Get Associated Jobs
+        const { data: jobs, error: jobsError } = await supabase
+            .from('Jobs_Main')
+            .select('*')
+            .eq('Billing_Note_ID', id)
+        
+        if (jobsError) throw jobsError
+
+        // 3. Get Company Profile
+        const { data: profileData } = await supabase
+            .from('System_Settings')
+            .select('value')
+            .eq('key', 'company_profile')
+            .single()
+
+        let companyProfile = null
+        if (profileData?.value) {
+            try {
+                companyProfile = typeof profileData.value === 'string' ? JSON.parse(profileData.value) : profileData.value
+            } catch (e) {
+                console.error("Error parsing company profile:", e)
+            }
+        }
+
+        // 4. Get Customer Email (Try to match by name if ID not available)
+        // Ideally Billing_Notes should have Customer_ID, but for now we use Name.
+        let customerEmail = ""
+        if (note && note.Customer_Name) {
+            const { data: customer } = await supabase
+                .from('Master_Customers')
+                .select('Email')
+                .eq('Customer_Name', note.Customer_Name) // Potential issue if names duplicate
+                .single()
+            
+            if (customer) {
+                customerEmail = customer.Email
+            }
+        }
+
+        const billingNoteWithEmail: BillingNote = {
+            ...note as BillingNote,
+            Customer_Email: customerEmail
+        }
+
+        return { note: billingNoteWithEmail, jobs: jobs || [], company: companyProfile }
+
+    } catch (e) {
+        console.error("Error fetching billing note details:", e)
+        return null
+    }
+}
+
+export interface DriverPayment {
+    Driver_Payment_ID: string
+    Driver_Name: string
+    Payment_Date: string
+    Total_Amount: number
+    Status: string
+    Created_At: string
+    Updated_At: string
+}
+
+export async function getDriverPayments() {
+    try {
+        const supabase = await createClient()
+        const { data, error } = await supabase
+            .from('Driver_Payments')
+            .select('*')
+            .order('Created_At', { ascending: false })
+        
+        if (error) {
+            console.error("Error fetching driver payments:", error)
+            return []
+        }
+        return data as DriverPayment[]
+    } catch {
+        return []
+    }
+}

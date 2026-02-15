@@ -37,6 +37,37 @@ export async function createVehicle(data: VehicleFormData) {
   return { success: true, message: 'Vehicle created successfully' }
 }
 
+export async function createBulkVehicles(vehicles: Partial<VehicleFormData>[]) {
+  const supabase = await createClient()
+
+  // Prepare data
+  const cleanData = vehicles.map(v => ({
+    vehicle_plate: v.vehicle_plate,
+    vehicle_type: v.vehicle_type || '4-Wheel',
+    brand: v.brand,
+    model: v.model,
+    active_status: 'Active',
+    current_mileage: v.current_mileage || 0,
+    next_service_mileage: v.next_service_mileage || 0
+  })).filter(v => v.vehicle_plate)
+
+  if (cleanData.length === 0) {
+     return { success: false, message: 'No valid data found' }
+  }
+
+  const { error } = await supabase
+    .from('master_vehicles')
+    .insert(cleanData)
+
+  if (error) {
+    console.error('Error bulk creating vehicles:', error)
+    return { success: false, message: `Failed to import: ${error.message}` }
+  }
+
+  revalidatePath('/vehicles')
+  return { success: true, message: `Successfully imported ${cleanData.length} vehicles` }
+}
+
 export async function updateVehicle(plate: string, data: Partial<VehicleFormData>) {
   const supabase = await createClient()
 

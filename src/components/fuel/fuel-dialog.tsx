@@ -10,13 +10,22 @@ import { updateFuelLog, createFuelLog } from "@/app/fuel/actions"
 import { Loader2 } from "lucide-react"
 import { ImageUpload } from "@/components/ui/image-upload"
 
+interface Driver {
+  Driver_ID: string;
+  Driver_Name: string;
+}
+
+interface Vehicle {
+  Vehicle_Plate: string;
+}
+
 type FuelDialogProps = {
-  drivers: any[]
-  vehicles: any[]
+  drivers: Driver[]
+  vehicles: Vehicle[]
   trigger?: React.ReactNode
   open?: boolean
   onOpenChange?: (open: boolean) => void
-  initialData?: any // Should be FuelLog type but using any for loose coupling for now
+  initialData?: any // Keeping loose for now as refactor is minimal
 }
 
 export function FuelDialog({
@@ -45,6 +54,7 @@ export function FuelDialog({
     Mileage: string
     Station_Name: string
     Fuel_Type?: string
+    Photo_Url?: string
   }>({
     Date_Time: new Date().toISOString().slice(0, 16),
     Driver_ID: '',
@@ -53,7 +63,8 @@ export function FuelDialog({
     Price: '',
     Total_Amount: 0,
     Mileage: '',
-    Station_Name: ''
+    Station_Name: '',
+    Photo_Url: ''
   })
 
   useEffect(() => {
@@ -66,7 +77,8 @@ export function FuelDialog({
         Price: (initialData.Price_Total && initialData.Liters) ? (initialData.Price_Total / initialData.Liters).toFixed(2) : '',
         Total_Amount: initialData.Price_Total || 0,
         Mileage: initialData.Odometer?.toString() || '',
-        Station_Name: initialData.Station_Name || ''
+        Station_Name: initialData.Station_Name || '',
+        Photo_Url: initialData.Photo_Url || ''
       })
     }
   }, [initialData, show])
@@ -112,7 +124,8 @@ export function FuelDialog({
             Price: '',
             Total_Amount: 0,
             Mileage: '',
-            Station_Name: ''
+            Station_Name: '',
+            Photo_Url: ''
         })
       }
       router.refresh()
@@ -132,11 +145,46 @@ export function FuelDialog({
           <DialogTitle>{initialData ? 'แก้ไขข้อมูลการเติมน้ำมัน' : 'บันทึกการเติมน้ำมัน'}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 mt-4">
-          <div className="flex justify-center mb-4">
+          <div className="flex flex-col items-center mb-4 gap-2">
              <ImageUpload 
                 value={formData.Photo_Url} 
                 onChange={(url) => setFormData({ ...formData, Photo_Url: url })}
              />
+             {formData.Photo_Url && (
+                <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="sm"
+                    onClick={async () => {
+                        if (!formData.Photo_Url) return
+                        setLoading(true)
+                        try {
+                            const { parseFuelReceipt } = await import('@/lib/ocr/fuel-receipt-parser')
+                            const result = await parseFuelReceipt(formData.Photo_Url)
+                            
+                            setFormData(prev => ({
+                                ...prev,
+                                Date_Time: result.date ? `${result.date}T${result.time || '12:00'}` : prev.Date_Time,
+                                Liter: result.liters?.toString() || prev.Liter,
+                                Price: result.pricePerLiter?.toString() || prev.Price,
+                                Total_Amount: result.totalAmount || prev.Total_Amount,
+                                Station_Name: result.stationName || prev.Station_Name
+                            }))
+                            alert('สแกนข้อมูลเรียบร้อย! กรุณาตรวจสอบความถูกต้อง')
+                        } catch (e) {
+                            console.error(e)
+                            alert('ไม่สามารถอ่านข้อมูลได้')
+                        } finally {
+                            setLoading(false)
+                        }
+                    }}
+                    disabled={loading}
+                    className="text-xs flex items-center gap-1"
+                >
+                    {loading ? <Loader2 className="w-3 h-3 animate-spin"/> : <span className="text-emerald-400">⚡</span>}
+                    สแกนใบเสร็จ
+                </Button>
+             )}
           </div>
 
           <div className="space-y-2">

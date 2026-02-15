@@ -7,18 +7,24 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { createJob, updateJob } from "@/app/planning/actions"
+import { createJob, updateJob, createBulkJobs, deleteJob } from "@/app/planning/actions"
+import { CustomerAutocomplete } from "@/components/customer-autocomplete"
+import { LocationAutocomplete } from "@/components/location-autocomplete"
+import { VehicleAutocomplete } from "@/components/vehicle-autocomplete"
+import { DriverAutocomplete } from "@/components/driver-autocomplete"
 import { 
   Loader2, 
   Plus, 
   X, 
   MapPin, 
-  Truck, 
+  Truck,
+  User, 
   Package,
   Building2,
   Calendar,
   Banknote,
-  FileText
+  FileText,
+  Trash2
 } from "lucide-react"
 
 type LocationPoint = {
@@ -39,6 +45,7 @@ type JobDialogProps = {
   drivers: any[]
   vehicles: any[]
   customers?: any[]
+  routes?: any[]
   trigger?: React.ReactNode
   open?: boolean
   onOpenChange?: (open: boolean) => void
@@ -67,37 +74,49 @@ function generateJobId() {
 export function JobDialog({
   mode = 'create',
   job,
-  drivers,
-  vehicles,
+  drivers = [],
+  vehicles = [],
   customers = [],
+  routes = [],
   trigger,
-  open,
-  onOpenChange
+  open: controlledOpen,
+  onOpenChange: setControlledOpen
 }: JobDialogProps) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
-  const [internalOpen, setInternalOpen] = useState(false)
+  const [open, setOpen] = useState(false)
   const [activeTab, setActiveTab] = useState<'info' | 'location' | 'assign' | 'price'>('info')
   
-  const isControlled = open !== undefined
-  const show = isControlled ? open : internalOpen
-  const setShow = isControlled ? onOpenChange! : setInternalOpen
+  const isControlled = controlledOpen !== undefined
+  const show = isControlled ? controlledOpen : open
+  const setShow = isControlled ? setControlledOpen! : setOpen
 
   // Form State
   const [formData, setFormData] = useState({
     Job_ID: job?.Job_ID || generateJobId(),
-    Pickup_Date: job?.Pickup_Date || job?.Plan_Date || new Date().toISOString().split('T')[0],
+    Plan_Date: job?.Pickup_Date || job?.Plan_Date || new Date().toISOString().split('T')[0],
     Delivery_Date: job?.Delivery_Date || new Date().toISOString().split('T')[0],
     Customer_Name: job?.Customer_Name || '',
-    Cargo_Type: job?.Cargo_Type || '',
-    Vehicle_Type: job?.Vehicle_Type || '4-Wheel',
-    Vehicle_Plate: job?.Vehicle_Plate || '',
+    Route_Name: job?.Route_Name || '', // Not used directly in UI but kept for compatibility
+    
+    // Legacy single assignment fields (will be syncing with first assignment or ignored in multi-mode)
     Driver_ID: job?.Driver_ID || '',
+    Vehicle_Plate: job?.Vehicle_Plate || '',
+    Vehicle_Type: job?.Vehicle_Type || '4-Wheel',
+
+    Cargo_Type: job?.Cargo_Type || '',
     Notes: job?.Notes || '',
     Price_Cust_Total: job?.Price_Cust_Total || 0,
     Cost_Driver_Total: job?.Cost_Driver_Total || 0,
     Job_Status: job?.Job_Status || 'New'
   })
+
+  // Multi-Assignment State
+  const [assignments, setAssignments] = useState(
+    job?.assignments && job.assignments.length > 0
+      ? job.assignments
+      : [{ Vehicle_Type: '4-Wheel', Vehicle_Plate: '', Driver_ID: '' }]
+  )
 
   // Multi-point origins
   const [origins, setOrigins] = useState<LocationPoint[]>(
@@ -121,6 +140,20 @@ export function JobDialog({
     }
   }, [show, mode])
 
+  // Sync initial assignment state from job prop if editing
+  useEffect(() => {
+    if (show && mode === 'edit' && job) {
+        setAssignments([{
+            Vehicle_Type: job.Vehicle_Type || '4-Wheel',
+            Vehicle_Plate: job.Vehicle_Plate || '',
+            Driver_ID: job.Driver_ID || ''
+        }])
+    } else if (show && mode === 'create') {
+        // Reset to one empty assignment
+        setAssignments([{ Vehicle_Type: '4-Wheel', Vehicle_Plate: '', Driver_ID: '' }])
+    }
+  }, [show, mode, job])
+
   const addOrigin = () => setOrigins([...origins, { name: '', lat: '', lng: '' }])
   const removeOrigin = (index: number) => {
     if (origins.length > 1) setOrigins(origins.filter((_, i) => i !== index))
@@ -133,7 +166,7 @@ export function JobDialog({
 
   const addDestination = () => setDestinations([...destinations, { name: '', lat: '', lng: '' }])
   const removeDestination = (index: number) => {
-    if (destinations.length > 1) setDestinations(destinations.filter((_, i) => i !== index))
+    if (destinations.length > 1) setDestinations(destinations.filter((_: any, i: number) => i !== index))
   }
   const updateDestination = (index: number, field: keyof LocationPoint, value: string) => {
     const updated = [...destinations]
@@ -141,8 +174,29 @@ export function JobDialog({
     setDestinations(updated)
   }
 
+  const addAssignment = () => {
+    setAssignments([...assignments, { Vehicle_Type: '4-Wheel', Vehicle_Plate: '', Driver_ID: '' }])
+  }
+
+  const removeAssignment = (index: number) => {
+    if (assignments.length > 1) {
+        setAssignments(assignments.filter((_: any, i: number) => i !== index))
+    }
+  }
+
+  const updateAssignment = (index: number, field: string, value: string) => {
+    const newAssignments = [...assignments]
+    newAssignments[index] = { ...newAssignments[index], [field]: value }
+    setAssignments(newAssignments)
+    
+    // Sync first assignment to main form data for backward compatibility / validation
+    if (index === 0) {
+        setFormData(prev => ({ ...prev, [field]: value }))
+    }
+  }
+
   const addExtraCost = () => setExtraCosts([...extraCosts, { type: EXPENSE_TYPES[0], cost_driver: 0, charge_cust: 0 }])
-  const removeExtraCost = (index: number) => setExtraCosts(extraCosts.filter((_, i) => i !== index))
+  const removeExtraCost = (index: number) => setExtraCosts(extraCosts.filter((_: any, i: number) => i !== index))
   const updateExtraCost = (index: number, field: keyof ExtraCost, value: string | number) => {
     const updated = [...extraCosts]
     if (field === 'cost_driver' || field === 'charge_cust') {
@@ -153,40 +207,137 @@ export function JobDialog({
     setExtraCosts(updated)
   }
 
+
+  const validateForm = () => {
+    const errors: string[] = []
+
+    if (!formData.Customer_Name) errors.push("กรุณาระบุชื่อลูกค้า")
+    if (!origins[0].name) errors.push("กรุณาระบุต้นทางอย่างน้อย 1 แห่ง")
+    if (!destinations[0].name) errors.push("กรุณาระบุปลายทางอย่างน้อย 1 แห่ง")
+    
+    // Check assignments
+    if (mode === 'create') {
+        const invalidAssignment = assignments.find((a: any) => !a.Vehicle_Plate && !a.Driver_ID)
+        // Strictly, user might want to assign LATER? 
+        // User request: "Force to fill info completely"
+        // So we should require at least Vehicle OR Driver? Or both?
+        // Let's require at least Vehicle Plate OR Driver ID for each row.
+        // Or maybe just ensure at least ONE assignment exists and is valid.
+        
+        assignments.forEach((a: any, i: number) => {
+            if (!a.Vehicle_Plate && !a.Driver_ID) {
+                errors.push(`กรุณาระบุข้อมูลรถหรือคนขับ สำหรับรถคันที่ ${i + 1}`)
+            }
+        })
+    }
+    
+    return errors
+  }
+
+  const handleDelete = async () => {
+    if (!confirm('คุณแน่ใจหรือไม่ว่าต้องการลบงานนี้?')) return
+    
+    setLoading(true)
+    try {
+        const result = await deleteJob(job.Job_ID)
+        if (!result.success) throw new Error(result.message)
+        setShow(false)
+        router.refresh()
+    } catch (error: any) {
+        console.error(error)
+        alert(error.message || 'ลบงานไม่สำเร็จ')
+    } finally {
+        setLoading(false)
+    }
+  }
+
+  const handleCustomerSelect = (customer: any) => {
+    setFormData(prev => ({
+      ...prev,
+      Customer_Name: customer.Customer_Name
+    }))
+
+    // Autofill Origin if empty
+    if (customer.Origin_Location && origins.length === 1 && !origins[0].name) {
+       setOrigins([{ name: customer.Origin_Location, lat: '', lng: '' }])
+    }
+    
+    // Autofill Destination if empty
+    if (customer.Dest_Location && destinations.length === 1 && !destinations[0].name) {
+       setDestinations([{ name: customer.Dest_Location, lat: '', lng: '' }])
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    // Validation
+    const errors = validateForm()
+    if (errors.length > 0) {
+        alert(errors.join('\n'))
+        return
+    }
+
     setLoading(true)
 
     try {
-      // Combine form data with arrays
-      const jobData = {
+      // Base data common to all jobs
+      const baseData = {
         ...formData,
-        Plan_Date: formData.Pickup_Date,
+        Plan_Date: formData.Plan_Date, // Ensure Plan_Date is used
         Origin_Location: origins.map(o => o.name).join(' → '),
         Dest_Location: destinations.map(d => d.name).join(' → '),
         Route_Name: `${origins[0]?.name || ''} → ${destinations[destinations.length-1]?.name || ''}`,
-        Driver_Name: drivers.find(d => d.Driver_ID === formData.Driver_ID)?.Driver_Name || '',
-        // Store arrays as JSON strings for now
-        origins_json: JSON.stringify(origins),
-        destinations_json: JSON.stringify(destinations),
+        // Serialize complex fields
+        original_origins_json: JSON.stringify(origins),
+        original_destinations_json: JSON.stringify(destinations),
         extra_costs_json: JSON.stringify(extraCosts),
       }
 
       if (mode === 'create') {
-        await createJob(jobData)
+        // Prepare array for bulk creation
+        const jobsToCreate = assignments.map((assignment: any) => ({
+            ...baseData,
+            // Per-job assignment details
+            Vehicle_Type: assignment.Vehicle_Type,
+            Vehicle_Plate: assignment.Vehicle_Plate,
+            Driver_ID: assignment.Driver_ID,
+            Driver_Name: drivers.find(d => d.Driver_ID === assignment.Driver_ID)?.Driver_Name || '',
+        }))
+
+        const result = await createBulkJobs(jobsToCreate)
+        if (!result.success) throw new Error(result.message)
+
       } else {
-        await updateJob(job.Job_ID, jobData)
+        // For update, we only support updating specific fields of the SINGLE job being edited.
+        // We take the FIRST assignment if user modified it in the list (though UI might show multiple, 
+        // editing usually focuses on one ID).
+        // If we strictly want to support "Split Job" during edit, that's complex logic (Delete 1 -> Create N?).
+        // For now, we update the CURRENT Job_ID with the details from the first assignment (or formData which is synced).
+        
+        const assignment = assignments[0]
+        const updateData = {
+            ...baseData,
+            Vehicle_Type: assignment.Vehicle_Type,
+            Vehicle_Plate: assignment.Vehicle_Plate,
+            Driver_ID: assignment.Driver_ID,
+            Driver_Name: drivers.find(d => d.Driver_ID === assignment.Driver_ID)?.Driver_Name || '',
+        }
+
+        const result = await updateJob(job.Job_ID, updateData)
+        if (!result.success) throw new Error(result.message)
       }
       
       setShow(false)
       router.refresh()
-    } catch (error) {
+    } catch (error: any) {
       console.error(error)
-      alert('เกิดข้อผิดพลาด กรุณาลองใหม่')
+      alert(error.message || 'เกิดข้อผิดพลาด กรุณาลองใหม่')
     } finally {
       setLoading(false)
     }
   }
+
 
   const tabs = [
     { id: 'info', label: 'ข้อมูลงาน', icon: <FileText className="w-4 h-4" /> },
@@ -244,8 +395,8 @@ export function JobDialog({
                   </Label>
                   <Input
                     type="date"
-                    value={formData.Pickup_Date}
-                    onChange={(e) => setFormData({ ...formData, Pickup_Date: e.target.value })}
+                    value={formData.Plan_Date}
+                    onChange={(e) => setFormData({ ...formData, Plan_Date: e.target.value })}
                     required
                     className="bg-slate-800 border-slate-700"
                   />
@@ -269,28 +420,13 @@ export function JobDialog({
                   <Label className="flex items-center gap-1">
                     <Building2 className="w-3 h-3" /> ลูกค้า
                   </Label>
-                  {customers.length > 0 ? (
-                    <select
-                      value={formData.Customer_Name}
-                      onChange={(e) => setFormData({ ...formData, Customer_Name: e.target.value })}
-                      className="w-full h-10 px-3 rounded-md bg-slate-800 border border-slate-700 text-white"
-                    >
-                      <option value="">เลือกลูกค้า</option>
-                      {customers.map((c: any) => (
-                        <option key={c.Customer_ID} value={c.Customer_Name}>
-                          {c.Customer_Name}
-                        </option>
-                      ))}
-                    </select>
-                  ) : (
-                    <Input
-                      value={formData.Customer_Name}
-                      onChange={(e) => setFormData({ ...formData, Customer_Name: e.target.value })}
-                      placeholder="ชื่อลูกค้า"
-                      required
-                      className="bg-slate-800 border-slate-700"
-                    />
-                  )}
+                   <CustomerAutocomplete
+                    value={formData.Customer_Name}
+                    onChange={(val) => setFormData(prev => ({ ...prev, Customer_Name: val }))}
+                    customers={customers}
+                    onSelect={handleCustomerSelect}
+                    className="bg-slate-800 border-slate-700"
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label className="flex items-center gap-1">
@@ -308,191 +444,242 @@ export function JobDialog({
           )}
 
           {/* Tab: สถานที่ */}
+          {/* Tab: สถานที่ */}
           {activeTab === 'location' && (
             <div className="space-y-6">
-              {/* Origins */}
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <Label className="text-emerald-400 flex items-center gap-2">
-                    <MapPin className="w-4 h-4" /> จุดต้นทาง
-                  </Label>
-                  <Button type="button" size="sm" variant="outline" onClick={addOrigin} className="border-emerald-500/50 text-emerald-400 hover:bg-emerald-500/10 hover:text-emerald-300">
-                    <Plus className="w-4 h-4 mr-1" /> เพิ่มจุด
-                  </Button>
-                </div>
-                {origins.map((origin, index) => (
-                  <div key={index} className="grid grid-cols-12 gap-2 p-3 bg-slate-800/50 rounded-lg">
-                    <div className="col-span-5">
-                      <Input
-                        placeholder="ชื่อโรงงาน/สถานที่"
-                        value={origin.name}
-                        onChange={(e) => updateOrigin(index, 'name', e.target.value)}
-                        className="bg-slate-900 border-slate-700"
-                      />
-                    </div>
-                    <div className="col-span-3">
-                      <Input
-                        placeholder="Latitude"
-                        value={origin.lat}
-                        onChange={(e) => updateOrigin(index, 'lat', e.target.value)}
-                        className="bg-slate-900 border-slate-700"
-                      />
-                    </div>
-                    <div className="col-span-3">
-                      <Input
-                        placeholder="Longitude"
-                        value={origin.lng}
-                        onChange={(e) => updateOrigin(index, 'lng', e.target.value)}
-                        className="bg-slate-900 border-slate-700"
-                      />
-                    </div>
-                    <div className="col-span-1 flex items-center justify-center">
-                      <Button 
-                        type="button" 
-                        size="icon" 
-                        variant="ghost"
-                        onClick={() => removeOrigin(index)}
-                        disabled={origins.length === 1}
-                        className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
-                      >
-                        <X className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
+              
+              {/* Derive Unique Locations for Autocomplete */}
+              {(() => {
+                 // Separate lists for Origin and Destination as requested
+                 const originLocations = Array.from(new Set(
+                    routes.map((r: any) => r.Origin).filter(Boolean)
+                 )) as string[]
 
-              {/* Destinations */}
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <Label className="text-blue-400 flex items-center gap-2">
-                    <MapPin className="w-4 h-4" /> จุดปลายทาง
-                  </Label>
-                  <Button type="button" size="sm" variant="outline" onClick={addDestination} className="border-blue-500/50 text-blue-400 hover:bg-blue-500/10 hover:text-blue-300">
-                    <Plus className="w-4 h-4 mr-1" /> เพิ่มจุด
-                  </Button>
-                </div>
-                {destinations.map((dest, index) => (
-                  <div key={index} className="grid grid-cols-12 gap-2 p-3 bg-slate-800/50 rounded-lg">
-                    <div className="col-span-5">
-                      <Input
-                        placeholder="ชื่อโรงงาน/สถานที่"
-                        value={dest.name}
-                        onChange={(e) => updateDestination(index, 'name', e.target.value)}
-                        className="bg-slate-900 border-slate-700"
-                      />
+                 const destinationLocations = Array.from(new Set(
+                    routes.map((r: any) => r.Destination).filter(Boolean)
+                 )) as string[]
+                 
+                 return (
+                   <>
+                    {/* Origins */}
+                    <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                        <Label className="text-emerald-400 flex items-center gap-2">
+                            <MapPin className="w-4 h-4" /> จุดต้นทาง <span className="text-slate-500 text-xs">({originLocations.length})</span>
+                        </Label>
+                        <Button type="button" size="sm" variant="outline" onClick={addOrigin} className="border-emerald-500/50 text-emerald-400 hover:bg-emerald-500/10 hover:text-emerald-300">
+                            <Plus className="w-4 h-4 mr-1" /> เพิ่มจุด
+                        </Button>
+                        </div>
+                        {origins.map((origin, index) => (
+                        <div key={index} className="grid grid-cols-12 gap-2 p-3 bg-slate-800/50 rounded-lg">
+                            <div className="col-span-1 flex items-center justify-center text-slate-500">
+                                {index + 1}
+                            </div>
+                            <div className="col-span-11 grid grid-cols-1 gap-2">
+                                <LocationAutocomplete
+                                    placeholder="ชื่อโรงงาน/สถานที่"
+                                    value={origin.name}
+                                    onChange={(val) => updateOrigin(index, 'name', val)}
+                                    locations={originLocations}
+                                    className="bg-slate-900 border-slate-700"
+                                />
+                                <div className="grid grid-cols-2 gap-2">
+                                    <Input
+                                        placeholder="Latitude"
+                                        value={origin.lat}
+                                        onChange={(e) => updateOrigin(index, 'lat', e.target.value)}
+                                        className="bg-slate-900 border-slate-700 text-xs"
+                                    />
+                                    <Input
+                                        placeholder="Longitude"
+                                        value={origin.lng}
+                                        onChange={(e) => updateOrigin(index, 'lng', e.target.value)}
+                                        className="bg-slate-900 border-slate-700 text-xs"
+                                    />
+                                </div>
+                            </div>
+                            <div className="col-span-12 flex justify-end">
+                                <Button 
+                                    type="button" 
+                                    size="sm" 
+                                    variant="ghost"
+                                    onClick={() => removeOrigin(index)}
+                                    disabled={origins.length === 1}
+                                    className="text-red-400 hover:text-red-300 hover:bg-red-500/10 h-6 text-xs"
+                                >
+                                    ลบ
+                                </Button>
+                            </div>
+                        </div>
+                        ))}
                     </div>
-                    <div className="col-span-3">
-                      <Input
-                        placeholder="Latitude"
-                        value={dest.lat}
-                        onChange={(e) => updateDestination(index, 'lat', e.target.value)}
-                        className="bg-slate-900 border-slate-700"
-                      />
+
+                    {/* Destinations */}
+                    <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                        <Label className="text-indigo-400 flex items-center gap-2">
+                            <MapPin className="w-4 h-4" /> จุดปลายทาง <span className="text-slate-500 text-xs">({destinationLocations.length})</span>
+                        </Label>
+                        <Button type="button" size="sm" variant="outline" onClick={addDestination} className="border-indigo-500/50 text-indigo-400 hover:bg-indigo-500/10 hover:text-indigo-300">
+                            <Plus className="w-4 h-4 mr-1" /> เพิ่มจุด
+                        </Button>
+                        </div>
+                        {destinations.map((dest, index) => (
+                        <div key={index} className="grid grid-cols-12 gap-2 p-3 bg-slate-800/50 rounded-lg">
+                            <div className="col-span-1 flex items-center justify-center text-slate-500">
+                                {index + 1}
+                            </div>
+                            <div className="col-span-11 grid grid-cols-1 gap-2">
+                                <LocationAutocomplete
+                                    placeholder="ชื่อลูกค้า/สถานที่ส่ง"
+                                    value={dest.name}
+                                    onChange={(val) => updateDestination(index, 'name', val)}
+                                    locations={destinationLocations}
+                                    className="bg-slate-900 border-slate-700"
+                                />
+                                <div className="grid grid-cols-2 gap-2">
+                                    <Input
+                                        placeholder="Latitude"
+                                        value={dest.lat}
+                                        onChange={(e) => updateDestination(index, 'lat', e.target.value)}
+                                        className="bg-slate-900 border-slate-700 text-xs"
+                                    />
+                                    <Input
+                                        placeholder="Longitude"
+                                        value={dest.lng}
+                                        onChange={(e) => updateDestination(index, 'lng', e.target.value)}
+                                        className="bg-slate-900 border-slate-700 text-xs"
+                                    />
+                                </div>
+                            </div>
+                            <div className="col-span-12 flex justify-end">
+                                <Button 
+                                    type="button" 
+                                    size="sm" 
+                                    variant="ghost"
+                                    onClick={() => removeDestination(index)}
+                                    disabled={destinations.length === 1}
+                                    className="text-red-400 hover:text-red-300 hover:bg-red-500/10 h-6 text-xs"
+                                >
+                                    ลบ
+                                </Button>
+                            </div>
+                        </div>
+                        ))}
                     </div>
-                    <div className="col-span-3">
-                      <Input
-                        placeholder="Longitude"
-                        value={dest.lng}
-                        onChange={(e) => updateDestination(index, 'lng', e.target.value)}
-                        className="bg-slate-900 border-slate-700"
-                      />
-                    </div>
-                    <div className="col-span-1 flex items-center justify-center">
-                      <Button 
-                        type="button" 
-                        size="icon" 
-                        variant="ghost"
-                        onClick={() => removeDestination(index)}
-                        disabled={destinations.length === 1}
-                        className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
-                      >
-                        <X className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                   </>
+                 )
+              })()}
             </div>
           )}
 
           {/* Tab: มอบหมาย */}
           {activeTab === 'assign' && (
             <div className="space-y-4">
-              <div className="grid grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label>ประเภทรถ</Label>
-                  <select
-                    value={formData.Vehicle_Type}
-                    onChange={(e) => setFormData({ ...formData, Vehicle_Type: e.target.value })}
-                    className="w-full h-10 px-3 rounded-md bg-slate-800 border border-slate-700 text-white"
-                  >
-                    <option value="4-Wheel">4 ล้อ</option>
-                    <option value="6-Wheel">6 ล้อ</option>
-                    <option value="10-Wheel">10 ล้อ</option>
-                    <option value="Trailer">หางพ่วง</option>
-                  </select>
-                </div>
-                <div className="space-y-2">
-                  <Label>ทะเบียนรถ</Label>
-                  <select
-                    value={formData.Vehicle_Plate}
-                    onChange={(e) => setFormData({ ...formData, Vehicle_Plate: e.target.value })}
-                    className="w-full h-10 px-3 rounded-md bg-slate-800 border border-slate-700 text-white"
-                  >
-                    <option value="">เลือกทะเบียน</option>
-                    {vehicles.map((v: any) => (
-                      <option key={v.vehicle_plate || v.Vehicle_Plate} value={v.vehicle_plate || v.Vehicle_Plate}>
-                        {v.vehicle_plate || v.Vehicle_Plate} {v.vehicle_type ? `(${v.vehicle_type})` : ''}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="space-y-2">
-                  <Label>คนขับ</Label>
-                  <select
-                    value={formData.Driver_ID}
-                    onChange={(e) => setFormData({ ...formData, Driver_ID: e.target.value })}
-                    className="w-full h-10 px-3 rounded-md bg-slate-800 border border-slate-700 text-white"
-                  >
-                    <option value="">เลือกคนขับ</option>
-                    {drivers.map((d: any) => (
-                      <option key={d.Driver_ID} value={d.Driver_ID}>
-                        {d.Driver_Name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
+              {/* Assignment List */}
+              {assignments.map((assignment: any, index: number) => (
+                <div key={index} className="p-4 bg-slate-800/50 rounded-lg border border-slate-700 relative group">
+                    {/* Header with Remove Button */}
+                    <div className="flex justify-between items-center mb-3">
+                        <Label className="text-indigo-400 font-medium">
+                            รถคันที่ {index + 1}
+                        </Label>
+                        {assignments.length > 1 && (
+                            <Button
+                                type="button"
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => removeAssignment(index)}
+                                className="text-red-400 hover:text-red-300 hover:bg-red-500/10 h-6 px-2 text-xs"
+                            >
+                                <X className="w-3 h-3 mr-1" /> ลบ
+                            </Button>
+                        )}
+                    </div>
 
-              <div className="space-y-2">
-                <Label>หมายเหตุ</Label>
+                    <div className="grid grid-cols-2 gap-4 mb-4">
+                        <div className="space-y-2">
+                        <Label className="flex items-center gap-1 text-xs text-slate-400">
+                            <Truck className="w-3 h-3" /> ประเภทรถ
+                        </Label>
+                        <select
+                            value={assignment.Vehicle_Type}
+                            onChange={(e) => updateAssignment(index, 'Vehicle_Type', e.target.value)}
+                            className="w-full h-10 px-3 rounded-md bg-slate-800 border border-slate-700 text-white text-sm"
+                        >
+                            <option value="">ทั้งหมด (ไม่ระบุ)</option>
+                            {/* Unique Vehicle Types from Data */}
+                            {Array.from(new Set(vehicles.map((v: any) => v.vehicle_type).filter(Boolean))).map((type: any) => (
+                            <option key={type} value={type}>{type}</option>
+                            ))}
+                        </select>
+                        </div>
+                        <div className="space-y-2">
+                        <Label className="flex items-center gap-1 text-xs text-slate-400">
+                            <Truck className="w-3 h-3" /> ทะเบียนรถ
+                        </Label>
+                        <VehicleAutocomplete
+                            value={assignment.Vehicle_Plate}
+                            onChange={(val) => updateAssignment(index, 'Vehicle_Plate', val)}
+                            vehicles={assignment.Vehicle_Type 
+                                ? vehicles.filter((v: any) => v.vehicle_type === assignment.Vehicle_Type) 
+                                : vehicles
+                            }
+                            onSelect={(v) => {
+                                // Auto-set Type if not set or different
+                                if (v.vehicle_type) {
+                                    const newAssignments = [...assignments]
+                                    newAssignments[index] = {
+                                        ...newAssignments[index],
+                                        Vehicle_Plate: v.vehicle_plate,
+                                        Vehicle_Type: v.vehicle_type
+                                    }
+                                    setAssignments(newAssignments)
+                                }
+                            }}
+                            placeholder="พิมพ์ทะเบียนรถ..."
+                            className="bg-slate-800 border-slate-700 text-sm"
+                        />
+                        </div>
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label className="flex items-center gap-1 text-xs text-slate-400">
+                           <User className="w-3 h-3" /> คนขับ
+                        </Label>
+                        <DriverAutocomplete
+                            value={assignment.Driver_ID}
+                            onChange={(val) => updateAssignment(index, 'Driver_ID', val)}
+                            drivers={drivers}
+                            className="bg-slate-800 border-slate-700 text-sm"
+                        />
+                    </div>
+                </div>
+              ))}
+
+              {/* Add Vehicle Button */}
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={addAssignment}
+                className="w-full border-dashed border-slate-600 hover:bg-slate-800 text-slate-400 hover:text-white"
+              >
+                <Plus className="w-4 h-4 mr-2" /> เพิ่มรถอีกคัน
+              </Button>
+
+               <div className="space-y-2 pt-2">
+                <Label className="flex items-center gap-1">
+                   หมายเหตุ (ทุกคัน)
+                </Label>
                 <Textarea
                   value={formData.Notes}
                   onChange={(e) => setFormData({ ...formData, Notes: e.target.value })}
-                  placeholder="หมายเหตุเพิ่มเติม..."
-                  className="bg-slate-800 border-slate-700 min-h-[100px]"
+                  placeholder="รายละเอียดเพิ่มเติม"
+                  className="bg-slate-800 border-slate-700"
+                  rows={3}
                 />
               </div>
-
-              {mode === 'edit' && (
-                <div className="space-y-2">
-                  <Label>สถานะ</Label>
-                  <select
-                    value={formData.Job_Status}
-                    onChange={(e) => setFormData({ ...formData, Job_Status: e.target.value })}
-                    className="w-full h-10 px-3 rounded-md bg-slate-800 border border-slate-700 text-white"
-                  >
-                    <option value="New">New</option>
-                    <option value="Assigned">Assigned</option>
-                    <option value="Picked Up">Picked Up</option>
-                    <option value="In Transit">In Transit</option>
-                    <option value="Delivered">Delivered</option>
-                    <option value="Complete">Complete</option>
-                    <option value="Failed">Failed</option>
-                  </select>
-                </div>
-              )}
             </div>
           )}
 
@@ -500,220 +687,111 @@ export function JobDialog({
           {activeTab === 'price' && (
             <div className="space-y-6">
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2 p-4 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
-                  <Label className="text-emerald-400">ค่าขนส่งวางบิลลูกค้า</Label>
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">฿</span>
-                    <Input
-                      type="number"
-                      value={formData.Price_Cust_Total}
-                      onChange={(e) => setFormData({ ...formData, Price_Cust_Total: Number(e.target.value) })}
-                      className="pl-8 bg-slate-900 border-slate-700"
-                    />
-                  </div>
+                <div className="space-y-2">
+                  <Label>ราคาลูกค้า (บาท)</Label>
+                  <Input
+                    type="number"
+                    value={formData.Price_Cust_Total}
+                    onChange={(e) => setFormData({ ...formData, Price_Cust_Total: Number(e.target.value) })}
+                    className="bg-slate-800 border-slate-700"
+                  />
                 </div>
-                <div className="space-y-2 p-4 rounded-lg bg-indigo-500/10 border border-indigo-500/20">
-                  <Label className="text-indigo-400">ค่าขนส่งจ่ายรถ</Label>
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">฿</span>
-                    <Input
-                      type="number"
-                      value={formData.Cost_Driver_Total}
-                      onChange={(e) => setFormData({ ...formData, Cost_Driver_Total: Number(e.target.value) })}
-                      className="pl-8 bg-slate-900 border-slate-700"
-                    />
-                  </div>
+                <div className="space-y-2">
+                   <Label>ค่าจ้างรถ (บาท)</Label>
+                   <Input
+                    type="number"
+                    value={formData.Cost_Driver_Total}
+                    onChange={(e) => setFormData({ ...formData, Cost_Driver_Total: Number(e.target.value) })}
+                    className="bg-slate-800 border-slate-700"
+                  />
                 </div>
               </div>
 
-              {/* Extra Costs */}
               <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <Label className="text-amber-400">ค่าใช้จ่ายอื่น</Label>
-                  <Button type="button" size="sm" variant="outline" onClick={addExtraCost} className="border-amber-500/50 text-amber-400 hover:bg-amber-500/10 hover:text-amber-300">
+                 <div className="flex items-center justify-between">
+                  <Label className="flex items-center gap-2">
+                    <Banknote className="w-4 h-4" /> ค่าใช้จ่ายเพิ่มเติม
+                  </Label>
+                  <Button type="button" size="sm" variant="outline" onClick={addExtraCost} className="border-slate-700 hover:bg-slate-800">
                     <Plus className="w-4 h-4 mr-1" /> เพิ่มรายการ
                   </Button>
                 </div>
-                
-                {/* Header */}
-                {extraCosts.length > 0 && (
-                  <div className="grid grid-cols-12 gap-2 px-3 text-xs text-slate-400">
-                    <div className="col-span-4">ประเภท</div>
-                    <div className="col-span-3 text-center">จ่ายรถ</div>
-                    <div className="col-span-3 text-center">เก็บลูกค้า</div>
-                    <div className="col-span-2"></div>
-                  </div>
-                )}
-                
-                {extraCosts.length === 0 ? (
-                  <p className="text-sm text-slate-500 text-center py-4">ยังไม่มีค่าใช้จ่ายเพิ่มเติม</p>
-                ) : (
-                  extraCosts.map((cost, index) => (
-                    <div key={index} className="grid grid-cols-12 gap-2 p-3 bg-slate-800/50 rounded-lg">
-                      <div className="col-span-4">
+                {extraCosts.map((cost, index) => (
+                  <div key={index} className="grid grid-cols-12 gap-2 p-3 bg-slate-800/50 rounded-lg items-end">
+                    <div className="col-span-4 space-y-1">
+                        <Label className="text-xs text-slate-400">รายการ</Label>
                         <select
-                          value={cost.type}
-                          onChange={(e) => updateExtraCost(index, 'type', e.target.value)}
-                          className="w-full h-10 px-3 rounded-md bg-slate-900 border border-slate-700 text-white text-sm"
+                            value={cost.type}
+                            onChange={(e) => updateExtraCost(index, 'type', e.target.value)}
+                            className="w-full h-9 px-2 rounded-md bg-slate-900 border border-slate-700 text-white text-sm"
                         >
-                          {EXPENSE_TYPES.map(type => (
-                            <option key={type} value={type}>{type}</option>
-                          ))}
+                            {EXPENSE_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
                         </select>
-                      </div>
-                      <div className="col-span-3">
-                        <div className="relative">
-                          <span className="absolute left-2 top-1/2 -translate-y-1/2 text-indigo-400 text-xs">฿</span>
-                          <Input
+                    </div>
+                    <div className="col-span-3 space-y-1">
+                        <Label className="text-xs text-slate-400">จ่ายรถ</Label>
+                        <Input
                             type="number"
                             value={cost.cost_driver}
                             onChange={(e) => updateExtraCost(index, 'cost_driver', e.target.value)}
-                            placeholder="จ่ายรถ"
-                            className="pl-6 bg-slate-900 border-slate-700 text-sm"
-                          />
-                        </div>
-                      </div>
-                      <div className="col-span-3">
-                        <div className="relative">
-                          <span className="absolute left-2 top-1/2 -translate-y-1/2 text-emerald-400 text-xs">฿</span>
-                          <Input
+                            className="bg-slate-900 border-slate-700 h-9"
+                        />
+                    </div>
+                     <div className="col-span-3 space-y-1">
+                        <Label className="text-xs text-slate-400">เก็บลูกค้า</Label>
+                        <Input
                             type="number"
                             value={cost.charge_cust}
                             onChange={(e) => updateExtraCost(index, 'charge_cust', e.target.value)}
-                            placeholder="เก็บลูกค้า"
-                            className="pl-6 bg-slate-900 border-slate-700 text-sm"
-                          />
-                        </div>
-                      </div>
-                      <div className="col-span-2 flex items-center justify-center gap-1">
-                        <span className={`text-xs ${cost.charge_cust - cost.cost_driver >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                          {cost.charge_cust - cost.cost_driver >= 0 ? '+' : ''}{(cost.charge_cust - cost.cost_driver).toLocaleString()}
-                        </span>
-                        <Button 
-                          type="button" 
-                          size="icon" 
-                          variant="ghost"
-                          onClick={() => removeExtraCost(index)}
-                          className="text-red-400 hover:text-red-300 hover:bg-red-500/10 h-8 w-8"
+                            className="bg-slate-900 border-slate-700 h-9"
+                        />
+                    </div>
+                    <div className="col-span-2 flex justify-end">
+                         <Button 
+                            type="button" 
+                            size="icon" 
+                            variant="ghost"
+                            onClick={() => removeExtraCost(index)}
+                            className="text-red-400 hover:text-red-300 hover:bg-red-500/10 h-9 w-9"
                         >
-                          <X className="w-4 h-4" />
+                            <X size={16} />
                         </Button>
-                      </div>
-                    </div>
-                  ))
-                )}
-                
-                {/* Summary */}
-                {extraCosts.length > 0 && (
-                  <div className="p-3 bg-slate-800/30 rounded-lg border border-slate-700">
-                    <div className="grid grid-cols-3 gap-4 text-sm">
-                      <div className="text-center">
-                        <p className="text-slate-400 text-xs mb-1">รวมจ่ายรถ</p>
-                        <p className="text-indigo-400 font-medium">฿{extraCosts.reduce((sum, c) => sum + c.cost_driver, 0).toLocaleString()}</p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-slate-400 text-xs mb-1">รวมเก็บลูกค้า</p>
-                        <p className="text-emerald-400 font-medium">฿{extraCosts.reduce((sum, c) => sum + c.charge_cust, 0).toLocaleString()}</p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-slate-400 text-xs mb-1">กำไร</p>
-                        <p className={`font-medium ${extraCosts.reduce((sum, c) => sum + (c.charge_cust - c.cost_driver), 0) >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                          ฿{extraCosts.reduce((sum, c) => sum + (c.charge_cust - c.cost_driver), 0).toLocaleString()}
-                        </p>
-                      </div>
                     </div>
                   </div>
-                )}
-              </div>
+                ))}
 
-              {/* Grand Total Summary */}
-              <div className="p-4 bg-gradient-to-r from-slate-800/50 to-slate-700/30 rounded-lg border border-slate-600">
-                <h4 className="text-white font-medium mb-3">สรุปรายรับ-รายจ่าย</h4>
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-slate-400">ค่าขนส่ง (ลูกค้า)</span>
-                      <span className="text-emerald-400">฿{formData.Price_Cust_Total.toLocaleString()}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-slate-400">ค่าใช้จ่ายอื่น (ลูกค้า)</span>
-                      <span className="text-emerald-400">฿{extraCosts.reduce((sum, c) => sum + c.charge_cust, 0).toLocaleString()}</span>
-                    </div>
-                    <div className="flex justify-between border-t border-slate-600 pt-2">
-                      <span className="text-white font-medium">รวมรายรับ</span>
-                      <span className="text-emerald-400 font-bold">฿{(formData.Price_Cust_Total + extraCosts.reduce((sum, c) => sum + c.charge_cust, 0)).toLocaleString()}</span>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-slate-400">ค่าขนส่ง (จ่ายรถ)</span>
-                      <span className="text-indigo-400">฿{formData.Cost_Driver_Total.toLocaleString()}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-slate-400">ค่าใช้จ่ายอื่น (จ่ายรถ)</span>
-                      <span className="text-indigo-400">฿{extraCosts.reduce((sum, c) => sum + c.cost_driver, 0).toLocaleString()}</span>
-                    </div>
-                    <div className="flex justify-between border-t border-slate-600 pt-2">
-                      <span className="text-white font-medium">รวมรายจ่าย</span>
-                      <span className="text-indigo-400 font-bold">฿{(formData.Cost_Driver_Total + extraCosts.reduce((sum, c) => sum + c.cost_driver, 0)).toLocaleString()}</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="mt-3 pt-3 border-t border-slate-600 flex justify-between items-center">
-                  <span className="text-white font-medium">กำไรขั้นต้น</span>
-                  <span className={`text-lg font-bold ${
-                    (formData.Price_Cust_Total + extraCosts.reduce((sum, c) => sum + c.charge_cust, 0)) - 
-                    (formData.Cost_Driver_Total + extraCosts.reduce((sum, c) => sum + c.cost_driver, 0)) >= 0 
-                      ? 'text-emerald-400' : 'text-red-400'
-                  }`}>
-                    ฿{(
-                      (formData.Price_Cust_Total + extraCosts.reduce((sum, c) => sum + c.charge_cust, 0)) - 
-                      (formData.Cost_Driver_Total + extraCosts.reduce((sum, c) => sum + c.cost_driver, 0))
-                    ).toLocaleString()}
-                  </span>
+                <div className="p-3 bg-slate-800 rounded-lg flex justify-between items-center text-sm">
+                    <span className="text-slate-400">รวมกำไรเบื้องต้น</span>
+                    <span className="font-bold text-emerald-400">
+                        {(
+                            (formData.Price_Cust_Total + extraCosts.reduce((sum, c) => sum + c.charge_cust, 0)) - 
+                            (formData.Cost_Driver_Total + extraCosts.reduce((sum, c) => sum + c.cost_driver, 0))
+                        ).toLocaleString()} บาท
+                    </span>
                 </div>
               </div>
             </div>
           )}
 
-          {/* Navigation + Submit */}
-          <div className="flex justify-between pt-4 border-t border-slate-700">
-            <div className="flex gap-2">
-              {activeTab !== 'info' && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    const currentIndex = tabs.findIndex(t => t.id === activeTab)
-                    if (currentIndex > 0) setActiveTab(tabs[currentIndex - 1].id)
-                  }}
-                  className="border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-white"
+          <div className="flex justify-between pt-4 border-t border-slate-700/50">
+            {mode === 'edit' && (
+                <Button 
+                    type="button" 
+                    variant="ghost" 
+                    onClick={handleDelete}
+                    className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
                 >
-                  ← ก่อนหน้า
+                    <Trash2 className="w-4 h-4 mr-2" /> ลบงาน
                 </Button>
-              )}
-            </div>
-            <div className="flex gap-2">
-              <Button type="button" variant="ghost" onClick={() => setShow(false)}>
+            )}
+            <div className={`flex gap-3 ${mode === 'create' ? 'w-full justify-end' : ''}`}>
+                <Button type="button" variant="outline" onClick={() => setShow(false)} className="border-slate-700 hover:bg-slate-800 text-slate-300">
                 ยกเลิก
-              </Button>
-              {activeTab !== 'price' ? (
-                <Button
-                  type="button"
-                  onClick={() => {
-                    const currentIndex = tabs.findIndex(t => t.id === activeTab)
-                    if (currentIndex < tabs.length - 1) setActiveTab(tabs[currentIndex + 1].id)
-                  }}
-                  className="bg-gradient-to-r from-indigo-500 to-purple-600"
-                >
-                  ถัดไป →
                 </Button>
-              ) : (
-                <Button type="submit" disabled={loading} className="bg-gradient-to-r from-emerald-500 to-green-600">
-                  {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  {mode === 'create' ? 'สร้างงาน' : 'บันทึก'}
+                <Button type="submit" disabled={loading} className="bg-indigo-600 hover:bg-indigo-700">
+                    {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                    {mode === 'create' ? 'สร้างงาน' : 'บันทึกการแก้ไข'}
                 </Button>
-              )}
             </div>
           </div>
         </form>

@@ -1,6 +1,8 @@
 export const dynamic = 'force-dynamic'
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import Link from "next/link"
 import { 
   getFinancialStats, 
   getRevenueTrend, 
@@ -12,7 +14,7 @@ import { RevenueTrendChart } from "@/components/analytics/revenue-chart"
 import { CostBreakdownChart } from "@/components/analytics/cost-pie-chart"
 import { CustomerRanking } from "@/components/analytics/customer-ranking"
 import { MonthFilter } from "@/components/analytics/month-filter"
-import { BarChart3, PieChart, TrendingUp, Users } from "lucide-react"
+import { BarChart3, PieChart, TrendingUp, Users, ArrowLeft } from "lucide-react"
 
 export default async function AnalyticsPage(props: { searchParams: Promise<{ [key: string]: string | undefined }> }) {
   const searchParams = await props.searchParams
@@ -30,9 +32,16 @@ export default async function AnalyticsPage(props: { searchParams: Promise<{ [ke
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-white mb-2">Executive Dashboard</h1>
-          <p className="text-slate-400">ภาพรวมผลประกอบการและประสิทธิภาพการดำเนินงาน</p>
+        <div className="flex items-center gap-4">
+          <Link href="/dashboard">
+            <Button variant="outline" size="icon" className="border-slate-700 bg-slate-900">
+               <ArrowLeft className="h-5 w-5 text-slate-400" />
+            </Button>
+          </Link>
+          <div>
+            <h1 className="text-3xl font-bold text-white mb-2">Executive Dashboard</h1>
+            <p className="text-slate-400">ภาพรวมผลประกอบการและประสิทธิภาพการดำเนินงาน</p>
+          </div>
         </div>
         
         <div className="flex items-center gap-4">

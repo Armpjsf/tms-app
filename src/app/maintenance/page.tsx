@@ -155,9 +155,10 @@ export default async function MaintenancePage(props: Props) {
                 <span className={`px-2 py-0.5 rounded-full text-xs font-medium mt-1 mr-8 ${
                   ticket.Status === 'Completed' ? 'bg-emerald-500/20 text-emerald-400' :
                   ticket.Status === 'In Progress' ? 'bg-blue-500/20 text-blue-400' :
+                  ticket.Status === 'Rejected' ? 'bg-red-500/20 text-red-400' :
                   'bg-amber-500/20 text-amber-400'
                 }`}>
-                  {ticket.Status}
+                  {ticket.Status === 'Rejected' ? 'ไม่อนุมัติ' : ticket.Status}
                 </span>
               </div>
 

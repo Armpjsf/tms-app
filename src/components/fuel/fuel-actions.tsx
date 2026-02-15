@@ -10,9 +10,10 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { deleteFuelLog } from "@/app/fuel/actions"
+import { deleteFuelLog, updateFuelLogStatus } from "@/app/fuel/actions"
 import { FuelLog } from "@/lib/supabase/fuel"
 import { FuelDialog } from "./fuel-dialog"
+import { CheckCircle2, XCircle } from "lucide-react"
 
 interface FuelActionsProps {
   log: FuelLog
@@ -41,6 +42,21 @@ export function FuelActions({ log, drivers, vehicles }: FuelActionsProps) {
     }
   }
 
+  const handleStatusUpdate = async (status: string) => {
+    setLoading(true)
+    try {
+      const result = await updateFuelLogStatus(log.Log_ID, status)
+      if (!result.success) {
+        alert(result.message)
+      }
+    } catch (error) {
+      console.error(error)
+      alert("เกิดข้อผิดพลาดในการอัปเดตสถานะ")
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <>
       <DropdownMenu>
@@ -52,6 +68,23 @@ export function FuelActions({ log, drivers, vehicles }: FuelActionsProps) {
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="bg-slate-900 border-slate-800 text-slate-200">
           <DropdownMenuLabel>การจัดการ</DropdownMenuLabel>
+          
+          <DropdownMenuItem 
+            className="cursor-pointer hover:bg-slate-800 hover:text-emerald-400 focus:bg-slate-800 focus:text-emerald-400"
+            onClick={() => handleStatusUpdate('Approved')}
+          >
+            <CheckCircle2 className="mr-2 h-4 w-4" />
+            อนุมัติ
+          </DropdownMenuItem>
+
+          <DropdownMenuItem 
+            className="cursor-pointer hover:bg-slate-800 hover:text-red-400 focus:bg-slate-800 focus:text-red-400"
+            onClick={() => handleStatusUpdate('Rejected')}
+          >
+            <XCircle className="mr-2 h-4 w-4" />
+            ไม่อนุมัติ
+          </DropdownMenuItem>
+
           <DropdownMenuItem 
             className="cursor-pointer hover:bg-slate-800 hover:text-white focus:bg-slate-800 focus:text-white"
             onClick={() => setShowEditDialog(true)}

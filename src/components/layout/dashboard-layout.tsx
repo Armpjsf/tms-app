@@ -14,7 +14,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = React.useState(false)
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950">
+    <div className="min-h-screen bg-background text-foreground transition-colors duration-300">
       {/* Background Effects */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         {/* Gradient Orbs */}

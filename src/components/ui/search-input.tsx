@@ -41,6 +41,18 @@ export function SearchInput({ placeholder = "Search...", className, ...props }: 
       <Input
         value={value}
         onChange={(e) => setValue(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            const params = new URLSearchParams(searchParams)
+            if (value) {
+              params.set("q", value)
+            } else {
+              params.delete("q")
+            }
+            params.set("page", "1")
+            router.push(`${pathname}?${params.toString()}`)
+          }
+        }}
         placeholder={placeholder}
         className="pl-10 h-11 bg-white/5 border-white/10 text-white placeholder:text-slate-500"
         {...props}

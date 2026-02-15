@@ -4,11 +4,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { 
   Fuel, 
-  Search,
   Plus,
   TrendingUp,
-  Droplets,
-  Wallet,
 } from "lucide-react"
 import { getAllFuelLogs, getTodayFuelStats } from "@/lib/supabase/fuel"
 import { getAllDrivers } from "@/lib/supabase/drivers"
@@ -130,6 +127,7 @@ export default async function FuelPage(props: Props) {
                     <th className="text-right p-4 text-xs font-medium text-slate-400 uppercase">ราคา/L</th>
                     <th className="text-right p-4 text-xs font-medium text-slate-400 uppercase">รวมเงิน</th>
                     <th className="text-right p-4 text-xs font-medium text-slate-400 uppercase">เลขไมล์</th>
+                    <th className="text-right p-4 text-xs font-medium text-slate-400 uppercase">ความประหยัด</th>
                     <th className="p-4 w-[50px]"></th>
                   </tr>
                 </thead>
@@ -147,16 +145,59 @@ export default async function FuelPage(props: Props) {
                       <td className="p-4 text-white font-medium text-sm">{log.Driver_Name || "-"}</td>
                       <td className="p-4 text-slate-300 text-sm">{log.Vehicle_Plate || "-"}</td>
                       <td className="p-4 text-slate-300 text-sm">
-                        {log.Station_Name || "-"}
+                        <div className="flex flex-col">
+                            <span>{log.Station_Name || "-"}</span>
+                            <span className={`text-[10px] px-1.5 py-0.5 rounded-full w-fit ${
+                                log.Status === 'Approved' ? 'bg-emerald-500/20 text-emerald-400' :
+                                log.Status === 'Rejected' ? 'bg-red-500/20 text-red-400' :
+                                'bg-slate-500/20 text-slate-400'
+                            }`}>
+                                {log.Status === 'Approved' ? 'อนุมัติแล้ว' : 
+                                 log.Status === 'Rejected' ? 'ไม่อนุมัติ' : 'รอตรวจสอบ'}
+                            </span>
+                        </div>
                       </td>
-                      <td className="p-4 text-right text-slate-300 text-sm">{log.Liters?.toFixed(2)}</td>
-                      <td className="p-4 text-right text-slate-300 text-sm">{(log.Price_Total / log.Liters)?.toFixed(2) || "-"}</td>
+                      <td className="p-4 text-right">
+                         {/* Capacity Alert */}
+                         <div className="flex flex-col items-end">
+                            <span className={`text-sm ${log.Capacity_Status === 'Overflow' ? 'text-red-400 font-bold' : 'text-slate-300'}`}>
+                                {log.Liters?.toFixed(2)}
+                            </span>
+                            {log.Capacity_Status === 'Overflow' && (
+                                <span className="text-[10px] text-red-400 bg-red-400/10 px-1 rounded">
+                                    Over ({log.Tank_Capacity}L)
+                                </span>
+                            )}
+                         </div>
+                      </td>
                       <td className="p-4 text-right">
                         <span className="text-emerald-400 font-bold text-sm">
                           ฿{log.Price_Total?.toLocaleString()}
                         </span>
                       </td>
                       <td className="p-4 text-right text-slate-400 text-sm">{log.Odometer?.toLocaleString()}</td>
+                      <td className="p-4 text-right">
+                         {log.Km_Per_Liter && log.Km_Per_Liter > 0 ? (
+                            <div className="flex flex-col items-end">
+                                <div className={`flex items-center justify-end gap-1 ${
+                                    log.Efficiency_Status === 'Normal' ? 'text-emerald-400' : 
+                                    log.Efficiency_Status === 'Warning' ? 'text-amber-400' : 'text-red-400'
+                                }`}>
+                                    <span className="font-bold text-sm">{log.Km_Per_Liter.toFixed(1)}</span>
+                                    <span className="text-xs text-slate-500">km/L</span>
+                                </div>
+                                {log.Efficiency_Status !== 'Normal' && (
+                                    <span className={`text-[10px] px-1 rounded ${
+                                        log.Efficiency_Status === 'Warning' ? 'text-amber-400 bg-amber-400/10' : 'text-red-400 bg-red-400/10'
+                                    }`}>
+                                        {log.Efficiency_Status === 'Warning' ? 'Low' : 'Critical'}
+                                    </span>
+                                )}
+                            </div>
+                         ) : (
+                            <span className="text-slate-600 text-xs">-</span>
+                         )}
+                      </td>
                       <td className="p-4">
                         <FuelActions 
                             log={log} 

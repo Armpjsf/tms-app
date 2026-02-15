@@ -17,6 +17,8 @@ export type RepairTicket = {
 }
 
 // ดึง Repair Tickets ทั้งหมด (pagination + search + filters)
+import { getUserBranchId, isSuperAdmin } from "@/lib/permissions"
+
 export async function getAllRepairTickets(
   page = 1, 
   limit = 20, 
@@ -32,7 +34,17 @@ export async function getAllRepairTickets(
     let dbQuery = supabase
       .from('Repair_Tickets')
       .select('*', { count: 'exact' })
-      .order('Date_Report', { ascending: false })
+    
+    // Filter by Branch
+    const branchId = await getUserBranchId()
+    const isAdmin = await isSuperAdmin()
+    
+    if (branchId && !isAdmin) {
+        // @ts-ignore
+        dbQuery = dbQuery.eq('Branch_ID', branchId)
+    }
+
+    dbQuery = dbQuery.order('Date_Report', { ascending: false })
 
     if (query) {
       dbQuery = dbQuery.or(`Ticket_ID.ilike.%${query}%,Vehicle_Plate.ilike.%${query}%`)
@@ -68,10 +80,21 @@ export async function getAllRepairTickets(
 export async function getPendingRepairTickets(): Promise<RepairTicket[]> {
   const supabase = await createClient()
   
-  const { data, error } = await supabase
+  // Filter by Branch
+  const branchId = await getUserBranchId()
+  const isAdmin = await isSuperAdmin()
+  
+  let query = supabase
     .from('Repair_Tickets')
     .select('*')
     .in('Status', ['Pending', 'In Progress', 'รอดำเนินการ', 'กำลังซ่อม'])
+
+  if (branchId && !isAdmin) {
+      // @ts-ignore
+      query = query.eq('Branch_ID', branchId)
+  }
+
+  const { data, error } = await query
     .order('Date_Report', { ascending: false })
   
   if (error) {
@@ -86,9 +109,17 @@ export async function getPendingRepairTickets(): Promise<RepairTicket[]> {
 export async function getRepairTicketStats() {
   const supabase = await createClient()
   
-  const { data, error } = await supabase
-    .from('Repair_Tickets')
-    .select('Status')
+  const branchId = await getUserBranchId()
+  const isAdmin = await isSuperAdmin()
+  
+  let query = supabase.from('Repair_Tickets').select('Status')
+
+  if (branchId && !isAdmin) {
+      // @ts-ignore
+      query = query.eq('Branch_ID', branchId)
+  }
+
+  const { data, error } = await query
   
   if (error) {
     console.error('Error fetching repair stats:', error)

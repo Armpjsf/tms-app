@@ -26,6 +26,7 @@ import {
   CheckCircle2,
   ChevronRight
 } from "lucide-react"
+import { CustomerAutocomplete } from "@/components/customer-autocomplete"
 
 // Step indicator component
 function StepIndicator({ steps, currentStep }: { steps: string[], currentStep: number }) {
@@ -69,7 +70,11 @@ export default function CreateJobPage() {
   }>({ drivers: [], vehicles: [], customers: [] })
 
   useEffect(() => {
-    getJobCreationData().then(setLists)
+    getJobCreationData().then(data => {
+        console.log("Job Creation Data Loaded:", data)
+        console.log("Customers Count:", data.customers.length)
+        setLists(data)
+    })
   }, [])
 
   const steps = ['ข้อมูลงาน', 'ข้อมูลลูกค้า', 'มอบหมายงาน', 'ยืนยัน']
@@ -93,20 +98,17 @@ export default function CreateJobPage() {
     Weight: ''
   })
 
-  // Autofill customer data when name matches
-  const handleCustomerChange = (name: string) => {
-    updateForm('Customer_Name', name)
-    const existing = lists.customers.find(c => c.Customer_Name === name)
-    if (existing) {
-      setFormData(prev => ({
-        ...prev,
-        Customer_Name: name,
-        Customer_Phone: existing.Customer_Phone || '',
-        Customer_Address: existing.Customer_Address || '',
-        Origin_Location: existing.Origin_Location || '', // Optional
-        Dest_Location: existing.Dest_Location || '' // Optional
-      }))
-    }
+  // Autofill customer data when selected
+  const handleCustomerSelect = (customer: any) => {
+    setFormData(prev => ({
+      ...prev,
+      Customer_Name: customer.Customer_Name,
+      Customer_Phone: customer.Phone || customer.Customer_Phone || '',
+      Customer_Address: customer.Address || customer.Customer_Address || '',
+      // Master Customers doesn't have location defaults, but we keep it safe
+      Origin_Location: customer.Origin_Location || '', 
+      Dest_Location: customer.Dest_Location || '' 
+    }))
   }
 
   const handleDriverChange = (driverId: string) => {
@@ -277,18 +279,12 @@ export default function CreateJobPage() {
                   <Label className="text-slate-300 flex items-center gap-2">
                     <Building2 className="w-4 h-4" /> ชื่อลูกค้า / บริษัท
                   </Label>
-                  <Input 
-                    placeholder="พิมพ์เพื่อค้นหาหรือสร้างใหม่"
-                    list="customers-list"
+                  <CustomerAutocomplete 
                     value={formData.Customer_Name}
-                    onChange={(e) => handleCustomerChange(e.target.value)}
-                    className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-500"
+                    onChange={(val) => updateForm('Customer_Name', val)}
+                    customers={lists.customers}
+                    onSelect={handleCustomerSelect}
                   />
-                  <datalist id="customers-list">
-                    {lists.customers.map((c, i) => (
-                      <option key={i} value={c.Customer_Name} />
-                    ))}
-                  </datalist>
                 </div>
                 <div className="space-y-2">
                   <Label className="text-slate-300 flex items-center gap-2">

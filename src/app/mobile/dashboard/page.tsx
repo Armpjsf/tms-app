@@ -2,7 +2,8 @@ import { getDriverSession } from "@/lib/actions/auth-actions"
 import { redirect } from "next/navigation"
 import { MobileHeader } from "@/components/mobile/mobile-header"
 import { Card, CardContent } from "@/components/ui/card"
-import { Truck, CheckCircle, Clock, MapPin } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Truck, CheckCircle, Clock } from "lucide-react"
 import { getDriverDashboardStats } from "@/lib/supabase/jobs"
 import Link from "next/link"
 
@@ -97,6 +98,19 @@ export default async function MobileDashboard() {
                 </CardContent>
             </Card>
         )}
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <Link href="/mobile/jobs">
+            <Button variant="outline" className="w-full border-slate-700 bg-slate-900 text-slate-300 hover:text-white">
+                ดูงานทั้งหมด
+            </Button>
+        </Link>
+        <Link href="/mobile/profile">
+             <Button variant="outline" className="w-full border-slate-700 bg-slate-900 text-slate-300 hover:text-white">
+                โปรไฟล์
+            </Button>
+        </Link>
       </div>
 
     </div>

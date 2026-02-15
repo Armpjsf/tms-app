@@ -8,14 +8,26 @@ export type Customer = {
   Email: string | null
   Address: string | null
   Tax_ID: string | null
+  Branch_ID: string | null
   Is_Active: boolean | null
 }
 
 // Get all customers
+import { getUserBranchId, isSuperAdmin } from "@/lib/permissions"
+
 export async function getAllCustomers(page?: number, limit?: number, query?: string) {
   try {
     const supabase = await createClient()
     let queryBuilder = supabase.from('Master_Customers').select('*', { count: 'exact' })
+    
+    // Filter by Branch
+    const branchId = await getUserBranchId()
+    const isAdmin = await isSuperAdmin()
+    
+    if (branchId && !isAdmin) {
+        // @ts-ignore
+        queryBuilder = queryBuilder.eq('Branch_ID', branchId)
+    }
     
     if (query) {
       queryBuilder = queryBuilder.or(`Customer_Name.ilike.%${query}%,Customer_ID.ilike.%${query}%`)
@@ -63,6 +75,7 @@ export async function createCustomer(customerData: Partial<Customer>) {
         Email: customerData.Email,
         Address: customerData.Address,
         Tax_ID: customerData.Tax_ID,
+        Branch_ID: branchId || 'HQ', // Default to HQ if not found
         Is_Active: true
       })
       .select()

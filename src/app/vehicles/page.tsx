@@ -3,18 +3,19 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { 
   Truck, 
-  Search,
   Plus,
   Wrench,
   Gauge,
   Calendar,
+  FileSpreadsheet
 } from "lucide-react"
 import { getAllVehicles, getVehicleStats } from "@/lib/supabase/vehicles"
 import { VehicleDialog } from "@/components/vehicles/vehicle-dialog"
 import { VehicleActions } from "@/components/vehicles/vehicle-actions"
-
 import { SearchInput } from "@/components/ui/search-input"
 import { Pagination } from "@/components/ui/pagination"
+import { createBulkVehicles } from "@/app/vehicles/actions"
+import { ExcelImport } from "@/components/ui/excel-import"
 
 type Props = {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
@@ -42,15 +43,32 @@ export default async function VehiclesPage(props: Props) {
           </h1>
           <p className="text-slate-400">ข้อมูลรถและสถานะการซ่อมบำรุง</p>
         </div>
-        <VehicleDialog 
-            mode="create" 
-            trigger={
-                <Button size="lg" className="gap-2 bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700">
-                    <Plus size={20} />
-                    เพิ่มรถใหม่
-                </Button>
-            }
-        />
+        <div className="flex gap-2">
+            <ExcelImport 
+                trigger={
+                    <Button variant="outline" className="gap-2 border-slate-700 hover:bg-slate-800">
+                        <FileSpreadsheet size={16} /> 
+                        นำเข้า Excel
+                    </Button>
+                }
+                title="นำเข้าข้อมูลรถ"
+                onImport={createBulkVehicles}
+                templateData={[
+                    { vehicle_plate: "1กข-1234", vehicle_type: "4-Wheel", brand: "Toyota", model: "Revo" },
+                    { vehicle_plate: "2กข-5678", vehicle_type: "6-Wheel", brand: "Isuzu", model: "Elf" }
+                ]}
+                templateFilename="template_vehicles.xlsx"
+            />
+            <VehicleDialog 
+                mode="create" 
+                trigger={
+                    <Button size="lg" className="gap-2 bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700">
+                        <Plus size={20} />
+                        เพิ่มรถใหม่
+                    </Button>
+                }
+            />
+        </div>
       </div>
 
       {/* Stats */}

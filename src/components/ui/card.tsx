@@ -14,10 +14,10 @@ interface CardProps {
 const Card = React.forwardRef<HTMLDivElement, CardProps>(
   ({ className, variant = "default", hover = true, children }, ref) => {
     const variants = {
-      default: "bg-slate-800/50 border-white/10",
+      default: "bg-card text-card-foreground border-border",
       glass: "glass-card",
-      gradient: "bg-gradient-to-br from-slate-800/80 to-slate-900/80 border-white/10",
-      glow: "bg-slate-800/50 border-indigo-500/30 shadow-lg shadow-indigo-500/10",
+      gradient: "bg-gradient-to-br from-card/80 to-muted/80 border-border",
+      glow: "bg-card/50 border-primary/30 shadow-lg shadow-primary/10",
     }
 
     return (
@@ -30,7 +30,7 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(
         className={cn(
           "rounded-2xl border p-6 backdrop-blur-sm transition-all duration-300",
           variants[variant],
-          hover && "hover:border-white/20 hover:shadow-xl",
+          hover && "hover:border-primary/50 hover:shadow-xl",
           className
         )}
       >
@@ -63,7 +63,7 @@ const CardTitle = React.forwardRef<HTMLHeadingElement, CardSubProps>(
     <h3
       ref={ref}
       className={cn(
-        "text-xl font-semibold leading-none tracking-tight text-white",
+        "text-xl font-semibold leading-none tracking-tight text-foreground",
         className
       )}
     >

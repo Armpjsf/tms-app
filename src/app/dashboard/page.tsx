@@ -13,7 +13,7 @@ import {
   CheckCircle2,
   Clock,
 } from "lucide-react"
-import { getTodayJobStats, getWeeklyJobStats, getJobStatusDistribution } from "@/lib/supabase/jobs"
+import { getTodayJobStats, getWeeklyJobStats, getJobStatusDistribution, getTodayFinancials } from "@/lib/supabase/jobs"
 import { getDriverStats } from "@/lib/supabase/drivers"
 import { getVehicleStats } from "@/lib/supabase/vehicles"
 import { createClient } from "@/utils/supabase/server"
@@ -23,13 +23,14 @@ import { JobStatusChart } from "@/components/dashboard/charts/job-status-chart"
 export default async function DashboardPage() {
   // ดึงข้อมูลจาก Supabase
   // ดึงข้อมูลจาก Supabase
-  const [jobStats, driverStats, vehicleStats, sosCount, weeklyStats, statusDist] = await Promise.all([
+  const [jobStats, driverStats, vehicleStats, sosCount, weeklyStats, statusDist, financials] = await Promise.all([
     getTodayJobStats(),
     getDriverStats(),
     getVehicleStats(),
     getSosCount(),
     getWeeklyJobStats(),
     getJobStatusDistribution(),
+    getTodayFinancials(),
   ])
 
   return (
@@ -42,60 +43,41 @@ export default async function DashboardPage() {
         </p>
       </div>
 
-      {/* Metrics Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      {/* Metrics Grid (Consolidated 5 KPIs) */}
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
         <MetricCard
           title="งานวันนี้"
           value={jobStats.total}
-          icon={<CalendarDays size={24} />}
+          icon={<Package size={20} />}
           gradient="primary"
+          trend={jobStats.total > 0 ? { value: jobStats.inProgress, label: "กำลังดำเนินการ" } : undefined}
         />
         <MetricCard
-          title="ส่งสำเร็จ"
-          value={jobStats.delivered}
-          icon={<CheckCircle2 size={24} />}
+          title="ความสำเร็จ"
+          value={`${jobStats.total > 0 ? Math.round((jobStats.delivered / jobStats.total) * 100) : 0}%`}
+          icon={<CheckCircle2 size={20} />}
           gradient="success"
-          trend={jobStats.total > 0 ? { value: Math.round((jobStats.delivered / jobStats.total) * 100), label: "ของงานวันนี้" } : undefined}
+          trend={{ value: jobStats.delivered, label: "งานเสร็จสิ้น" }}
         />
         <MetricCard
-          title="SOS Alerts"
-          value={sosCount}
-          icon={<AlertTriangle size={24} />}
+          title="แจ้งเตือน/ปัญหา"
+          value={sosCount + jobStats.pending} // Including pending as 'needs attention' loosely, or just sosCount
+          icon={<AlertTriangle size={20} />}
           gradient="danger"
+          trend={{ value: sosCount, label: "SOS Alerts" }}
         />
         <MetricCard
-          title="รถ Active"
-          value={vehicleStats.active}
-          icon={<Truck size={24} />}
-          gradient="purple"
-        />
-      </div>
-
-      {/* Second Row */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <MetricCard
-          title="คนขับ Active"
-          value={driverStats.active}
-          icon={<Users size={24} />}
+          title="รถและคนขับ"
+          value={vehicleStats.active + driverStats.active}
+          icon={<Truck size={20} />}
           gradient="warning"
+          trend={{ value: driverStats.active, label: "คนขับออนไลน์" }}
         />
         <MetricCard
-          title="กำลังจัดส่ง"
-          value={jobStats.inProgress}
-          icon={<Package size={24} />}
-          gradient="primary"
-        />
-        <MetricCard
-          title="รอดำเนินการ"
-          value={jobStats.pending}
-          icon={<Clock size={24} />}
+          title="รายได้วันนี้ (Est.)"
+          value={`฿${financials.revenue.toLocaleString()}`}
+          icon={<CalendarDays size={20} />}
           gradient="purple"
-        />
-        <MetricCard
-          title="รถใกล้ถึงกำหนดซ่อม"
-          value={vehicleStats.dueSoon}
-          icon={<Fuel size={24} />}
-          gradient="warning"
         />
       </div>
 

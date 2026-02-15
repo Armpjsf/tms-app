@@ -12,6 +12,7 @@ export type Vehicle = {
   chassis_no: string | null
   max_weight_kg: number | null
   max_volume_cbm: number | null
+  tank_capacity: number | null // Added for fuel fraud detection
   insurance_company: string | null
   insurance_expiry: string | null
   tax_expiry: string | null
@@ -26,12 +27,25 @@ export type Vehicle = {
 }
 
 // Get all vehicles from master_vehicles table
+import { getUserBranchId, isSuperAdmin } from "@/lib/permissions"
+
 export async function getAllVehiclesFromTable(): Promise<Vehicle[]> {
   try {
     const supabase = await createClient()
-    const { data, error } = await supabase
+    let query = supabase
       .from('master_vehicles')
       .select('*')
+    
+    // Filter by Branch
+    const branchId = await getUserBranchId()
+    const isAdmin = await isSuperAdmin()
+    
+    if (branchId && !isAdmin) {
+        // @ts-ignore
+        query = query.eq('Branch_ID', branchId)
+    }
+
+    const { data, error } = await query
     
     if (error) {
       console.error('Error fetching vehicles:', JSON.stringify(error))
@@ -139,6 +153,15 @@ export async function getAllVehicles(page?: number, limit?: number, query?: stri
   try {
     const supabase = await createClient()
     let queryBuilder = supabase.from('master_vehicles').select('*', { count: 'exact' })
+    
+    // Filter by Branch
+    const branchId = await getUserBranchId()
+    const isAdmin = await isSuperAdmin()
+    
+    if (branchId && !isAdmin) {
+        // @ts-ignore
+        queryBuilder = queryBuilder.eq('Branch_ID', branchId)
+    }
     
     // Apply search filter if query provided
     if (query) {

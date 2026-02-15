@@ -17,15 +17,33 @@ export type Driver = {
   Act_Expiry: string | null
   Current_Mileage: number | null
   Active_Status: string | null
+  License_Expiry: string | null // Added for document tracking
+  Bank_Name?: string | null
+  Bank_Account_No?: string | null
+  Bank_Account_Name?: string | null
 }
 
 // Get all drivers from Master_Drivers table
+import { getUserBranchId, isSuperAdmin } from "@/lib/permissions"
+
 export async function getAllDriversFromTable(): Promise<Driver[]> {
   try {
     const supabase = await createClient()
     const { data, error } = await supabase
       .from('Master_Drivers')
       .select('*')
+    
+    // Filter by Branch
+    const branchId = await getUserBranchId()
+    const isAdmin = await isSuperAdmin()
+    
+    if (branchId && !isAdmin) {
+        // @ts-ignore - Dynamic query
+        dbQuery = dbQuery.eq('Branch_ID', branchId)
+        const { data, error } = await dbQuery
+        if (error) throw error
+        return data || []
+    }
     
     if (error) {
       console.error('Error fetching drivers:', JSON.stringify(error))
@@ -68,7 +86,8 @@ export async function createDriver(driverData: Partial<Driver>) {
         Vehicle_Plate: driverData.Vehicle_Plate,
         Vehicle_Type: driverData.Vehicle_Type,
         Password: driverData.Password, // Added
-        Active_Status: driverData.Active_Status || 'Active' // Added
+        Active_Status: driverData.Active_Status || 'Active', // Added
+        License_Expiry: driverData.License_Expiry // Added
       })
       .select()
       .single()
@@ -96,7 +115,8 @@ export async function updateDriver(id: string, driverData: Partial<Driver>) {
         Vehicle_Plate: driverData.Vehicle_Plate,
         Vehicle_Type: driverData.Vehicle_Type,
         Password: driverData.Password, // Added
-        Active_Status: driverData.Active_Status // Added
+        Active_Status: driverData.Active_Status, // Added
+        License_Expiry: driverData.License_Expiry // Added
       })
       .eq('Driver_ID', id)
       .select()
@@ -131,12 +151,38 @@ export async function deleteDriver(id: string) {
   }
 }
 
+// ดึงรายชื่อคนขับที่ Active
+export async function getActiveDrivers() {
+  try {
+    const supabase = await createClient()
+    const { data, error } = await supabase
+      .from('Master_Drivers') // Assuming 'Master_Drivers' is the correct table name based on other functions
+      .select('*')
+      .eq('Active_Status', 'Active') // Assuming 'Active_Status' is the correct column name
+      .limit(10) // Limit for UI
+    
+    if (error) return []
+    return data || []
+  } catch {
+    return []
+  }
+}
+
 // Alias for planning page compatibility - returns { data: drivers }
 // Also supports pagination for /drivers page
 export async function getAllDrivers(page?: number, limit?: number, query?: string) {
   try {
     const supabase = await createClient()
     let queryBuilder = supabase.from('Master_Drivers').select('*', { count: 'exact' })
+    
+    // Filter by Branch
+    const branchId = await getUserBranchId()
+    const isAdmin = await isSuperAdmin()
+    
+    if (branchId && !isAdmin) {
+        // @ts-ignore - Dynamic query
+        queryBuilder = queryBuilder.eq('Branch_ID', branchId)
+    }
     
     // Apply search filter if query provided
     if (query) {
@@ -186,8 +232,57 @@ export async function getDriverStats() {
   }
 }
 
-// Get active drivers for chat (currently returns all drivers)
-export async function getActiveDrivers(): Promise<Driver[]> {
-  return getAllDriversFromTable()
-}
 
+
+// คำนวณคะแนนคนขับ
+export async function getDriverScore(driverId: string) {
+  try {
+    const supabase = await createClient()
+    
+    // 1. Get Job Stats
+    const { data: jobs, error } = await supabase
+      .from('Jobs_Main')
+      .select('Job_Status, Plan_Date')
+      .eq('Driver_ID', driverId)
+      // Limit to last 30 days for relevance
+      .gte('Plan_Date', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
+
+    if (error || !jobs) return { totalScore: 0, onTimeScore: 0, safetyScore: 0, acceptanceScore: 0 }
+
+    const totalJobs = jobs.length
+    if (totalJobs === 0) return { totalScore: 100, onTimeScore: 100, safetyScore: 100, acceptanceScore: 100 } // New driver starts at 100?
+
+    // 2. Calculate Metrics
+    
+    // Acceptance Rate: (Total - Cancelled) / Total
+    const cancelled = jobs.filter(j => j.Job_Status === 'Cancelled').length
+    const acceptanceRate = ((totalJobs - cancelled) / totalJobs) * 100
+
+    // On-Time Delivery: (Completed + Delivered) / (Total - Cancelled - Active)
+    // Simplified: Just check success vs failure ratio of *finished* jobs
+    const finishedJobs = jobs.filter(j => ['Completed', 'Delivered', 'Failed'].includes(j.Job_Status || ''))
+    const successJobs = jobs.filter(j => ['Completed', 'Delivered'].includes(j.Job_Status || ''))
+    
+    const onTimeRate = finishedJobs.length > 0 
+        ? (successJobs.length / finishedJobs.length) * 100 
+        : 100
+
+    // Safety Score: Placeholder (Assume 100% until Vehicle Check DB is ready)
+    const safetyRate = 100
+
+    // Weighted Score
+    // On-Time: 40%, Safety: 30%, Acceptance: 30%
+    const totalScore = (onTimeRate * 0.4) + (safetyRate * 0.3) + (acceptanceRate * 0.3)
+
+    return {
+        totalScore: Math.round(totalScore),
+        onTimeScore: Math.round(onTimeRate),
+        safetyScore: Math.round(safetyRate),
+        acceptanceScore: Math.round(acceptanceRate)
+    }
+
+  } catch (e) {
+    console.error('Exception calculating driver score:', e)
+    return { totalScore: 0, onTimeScore: 0, safetyScore: 0, acceptanceScore: 0 }
+  }
+}

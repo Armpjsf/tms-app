@@ -89,10 +89,13 @@ export function MaintenanceActions({ ticket, drivers, vehicles }: MaintenanceAct
               <DropdownMenuItem onClick={() => handleStatusUpdate('Pending')} className="cursor-pointer hover:bg-slate-800">
                 รอดำเนินการ
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleStatusUpdate('In Progress')} className="cursor-pointer hover:bg-slate-800">
-                กำลังซ่อม
+              <DropdownMenuItem onClick={() => handleStatusUpdate('In Progress')} className="cursor-pointer hover:bg-slate-800 text-blue-400">
+                อนุมัติ / กำลังซ่อม
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleStatusUpdate('Completed')} className="cursor-pointer hover:bg-slate-800">
+              <DropdownMenuItem onClick={() => handleStatusUpdate('Rejected')} className="cursor-pointer hover:bg-slate-800 text-red-400">
+                ไม่อนุมัติ / ปฏิเสธ
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleStatusUpdate('Completed')} className="cursor-pointer hover:bg-slate-800 text-emerald-400">
                 เสร็จสิ้น
               </DropdownMenuItem>
             </DropdownMenuSubContent>

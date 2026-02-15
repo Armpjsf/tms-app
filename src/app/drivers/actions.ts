@@ -37,10 +37,42 @@ export async function createDriver(data: DriverFormData) {
   return { success: true, message: 'Driver created successfully' }
 }
 
+export async function createBulkDrivers(drivers: Partial<DriverFormData>[]) {
+  const supabase = await createClient()
+  
+  // Prepare data with defaults
+  const cleanData = drivers.map(d => ({
+    Driver_ID: d.Driver_ID || `DRV-${Math.floor(Math.random()*100000)}`, // Fallback ID
+    Driver_Name: d.Driver_Name,
+    Mobile_No: d.Mobile_No,
+    Password: d.Password || '123456',
+    Vehicle_Plate: d.Vehicle_Plate || null,
+    Vehicle_Type: '4-Wheel',
+    Role: 'Driver',
+    Active_Status: 'Active',
+  })).filter(d => d.Driver_Name) // Ensure name exists
+
+  if (cleanData.length === 0) {
+     return { success: false, message: 'No valid data found' }
+  }
+
+  const { error } = await supabase
+    .from('Master_Drivers')
+    .insert(cleanData)
+
+  if (error) {
+    console.error('Error bulk creating drivers:', error)
+    return { success: false, message: `Failed to import: ${error.message}` }
+  }
+
+  revalidatePath('/drivers')
+  return { success: true, message: `Successfully imported ${cleanData.length} drivers` }
+}
+
 export async function updateDriver(driverId: string, data: Partial<DriverFormData>) {
   const supabase = await createClient()
 
-  const updateData: any = {
+  const updateData: Record<string, unknown> = {
     Driver_Name: data.Driver_Name,
     Mobile_No: data.Mobile_No,
     Vehicle_Plate: data.Vehicle_Plate,
@@ -52,14 +84,19 @@ export async function updateDriver(driverId: string, data: Partial<DriverFormDat
     updateData.Password = data.Password
   }
 
-  const { error } = await supabase
-    .from('Master_Drivers')
-    .update(updateData)
-    .eq('Driver_ID', driverId)
+  try {
+    const { error } = await supabase
+      .from('Master_Drivers')
+      .update(updateData)
+      .eq('Driver_ID', driverId)
 
-  if (error) {
+    if (error) {
+      console.error('Error updating driver:', error)
+      return { success: false, message: `Failed to update driver: ${error.message} ${error.details || ''}` }
+    }
+  } catch (error: unknown) {
     console.error('Error updating driver:', error)
-    return { success: false, message: `Failed to update driver: ${error.message} ${error.details || ''}` }
+    return { success: false, message: error instanceof Error ? error.message : 'Database error' }
   }
 
   revalidatePath('/drivers')

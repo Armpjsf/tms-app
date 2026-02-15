@@ -6,16 +6,26 @@ import { MapPin, Clock } from "lucide-react"
 import Link from "next/link"
 import { getDriverJobs } from "@/lib/supabase/jobs"
 
-export default async function DriverJobsPage() {
+import { MobileJobFilter } from "@/components/mobile/job-filter"
+
+type Props = {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+}
+
+export default async function DriverJobsPage(props: Props) {
+  const searchParams = await props.searchParams
   const session = await getDriverSession()
   if (!session) redirect("/login")
 
-  // Fetch jobs for this driver
-  const jobs = await getDriverJobs(session.driverId)
+  const date = (searchParams.date as string) || undefined
+  const status = (searchParams.status as string) || undefined
+
+  // Fetch jobs for this driver with filters
+  const jobs = await getDriverJobs(session.driverId, { startDate: date, endDate: date, status })
 
   return (
     <div className="min-h-screen bg-slate-950 pb-24 pt-16 px-4">
-      <MobileHeader title="วันนี้" />
+      <MobileHeader title="งานของฉัน" rightElement={<MobileJobFilter />} />
       
       <div className="space-y-4">
         {jobs.length === 0 ? (

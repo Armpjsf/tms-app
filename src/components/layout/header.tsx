@@ -12,13 +12,38 @@ interface HeaderProps {
 export function Header({ sidebarCollapsed = false }: HeaderProps) {
   const [isDark, setIsDark] = React.useState(true)
 
+  React.useEffect(() => {
+    // Sync with global theme
+    const stored = localStorage.getItem('theme')
+    const isDarkMode = stored === 'dark' || (!stored && window.matchMedia('(prefers-color-scheme: dark)').matches)
+    setIsDark(isDarkMode)
+    if (isDarkMode) {
+        document.documentElement.classList.add('dark')
+    } else {
+        document.documentElement.classList.remove('dark')
+    }
+  }, [])
+
+  const toggleTheme = () => {
+    const newIsDark = !isDark
+    setIsDark(newIsDark)
+    const newTheme = newIsDark ? 'dark' : 'light'
+    localStorage.setItem('theme', newTheme)
+    
+    if (newIsDark) {
+        document.documentElement.classList.add('dark')
+    } else {
+        document.documentElement.classList.remove('dark')
+    }
+  }
+
   return (
     <motion.header
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
       className={cn(
         "fixed top-0 right-0 h-16 z-40 flex items-center justify-between px-6",
-        "bg-slate-900/50 backdrop-blur-xl border-b border-white/5",
+        "bg-background/80 backdrop-blur-xl border-b border-border transition-colors duration-300",
         sidebarCollapsed ? "left-20" : "left-[280px]"
       )}
       style={{ transition: "left 0.3s ease-in-out" }}
@@ -30,7 +55,7 @@ export function Header({ sidebarCollapsed = false }: HeaderProps) {
           <input
             type="text"
             placeholder="ค้นหา..."
-            className="w-80 h-10 pl-10 pr-4 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-slate-500 focus:outline-none focus:border-indigo-500/50 focus:ring-2 focus:ring-indigo-500/20 transition-all"
+            className="w-80 h-10 pl-10 pr-4 rounded-xl bg-muted/50 border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all"
           />
         </div>
       </div>
@@ -41,8 +66,8 @@ export function Header({ sidebarCollapsed = false }: HeaderProps) {
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          onClick={() => setIsDark(!isDark)}
-          className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-all"
+          onClick={toggleTheme}
+          className="p-2 rounded-xl bg-muted/50 hover:bg-muted text-muted-foreground hover:text-foreground transition-all"
         >
           {isDark ? <Sun size={20} /> : <Moon size={20} />}
         </motion.button>
@@ -51,7 +76,8 @@ export function Header({ sidebarCollapsed = false }: HeaderProps) {
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          className="relative p-2 rounded-xl bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-all"
+          onClick={() => alert("ยังไม่มีการแจ้งเตือนใหม่")}
+          className="relative p-2 rounded-xl bg-muted/50 hover:bg-muted text-muted-foreground hover:text-foreground transition-all"
         >
           <Bell size={20} />
           <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse" />
@@ -60,14 +86,14 @@ export function Header({ sidebarCollapsed = false }: HeaderProps) {
         {/* Profile */}
         <motion.button
           whileHover={{ scale: 1.02 }}
-          className="flex items-center gap-3 h-10 px-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 transition-all"
+          className="flex items-center gap-3 h-10 px-3 rounded-xl bg-muted/50 hover:bg-muted border border-border hover:border-border/80 transition-all"
         >
           <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
             <User size={14} className="text-white" />
           </div>
           <div className="text-left hidden lg:block">
-            <p className="text-sm font-medium text-white leading-tight">Admin</p>
-            <p className="text-[10px] text-slate-400">Super Admin</p>
+            <p className="text-sm font-medium text-foreground leading-tight">Admin</p>
+            <p className="text-[10px] text-muted-foreground">Super Admin</p>
           </div>
         </motion.button>
       </div>

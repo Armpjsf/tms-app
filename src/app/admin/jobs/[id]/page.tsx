@@ -125,44 +125,90 @@ export default async function AdminJobDetailPage({
             </CardHeader>
             <CardContent>
               {job.Job_Status === "Delivered" || job.Job_Status === "Completed" ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Photo Evidence */}
-                    <div>
-                        <h3 className="text-sm font-medium text-slate-300 mb-3 flex items-center gap-2">
-                            <Package className="h-4 w-4" /> ภาพถ่ายสินค้า
-                        </h3>
-                        {job.Photo_Proof_Url ? (
-                            <div className="relative aspect-video rounded-lg overflow-hidden border border-slate-700 bg-black/40">
-                                <Image 
-                                    src={job.Photo_Proof_Url} 
-                                    alt="Delivery Proof" 
-                                    fill 
-                                    className="object-contain"
-                                />
-                            </div>
-                        ) : (
-                            <div className="aspect-video rounded-lg border border-dashed border-slate-700 flex items-center justify-center text-slate-500 bg-slate-950">
-                                <p>ไม่มีรูปภาพ</p>
-                            </div>
-                        )}
-                    </div>
+                <div className="space-y-6">
+                    {/* 1. Digital Report (Smart POD) - First Image */}
+                    {(() => {
+                        const proofUrls = job.Photo_Proof_Url ? job.Photo_Proof_Url.split(',') : []
+                        const reportUrl = proofUrls.length > 0 ? proofUrls[0] : null
+                        const itemPhotos = proofUrls.length > 1 ? proofUrls.slice(1) : []
 
-                    {/* Signature */}
-                    <div>
-                        <h3 className="text-sm font-medium text-slate-300 mb-3 flex items-center gap-2">
-                            <FileText className="h-4 w-4" /> ลายเซ็นลูกค้า
+                        return (
+                            <>
+                                {/* Report Viewer */}
+                                <div>
+                                    <h3 className="text-sm font-medium text-slate-300 mb-3 flex items-center gap-2">
+                                        <FileText className="h-4 w-4 text-blue-400" /> ใบเสร็จ/ใบส่งสินค้า (Digital Report)
+                                    </h3>
+                                    {reportUrl ? (
+                                        <div className="relative w-full aspect-[1/1.4] md:aspect-[1.4/1] bg-slate-950 rounded-lg overflow-hidden border border-slate-700">
+                                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                                            <img 
+                                                src={reportUrl} 
+                                                alt="Digital POD Report" 
+                                                className="w-full h-full object-contain"
+                                            />
+                                            <div className="absolute top-2 right-2">
+                                                <a href={reportUrl} target="_blank" rel="noreferrer">
+                                                    <Button size="sm" variant="secondary" className="bg-white/90 hover:bg-white text-black text-xs h-8">
+                                                        เปิดไฟล์เต็ม
+                                                    </Button>
+                                                </a>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="p-8 text-center text-slate-500 border border-dashed border-slate-800 rounded-lg">
+                                            ไม่พบไฟล์ใบงาน
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Product Photos Grid */}
+                                {itemPhotos.length > 0 && (
+                                    <div>
+                                        <h3 className="text-sm font-medium text-slate-300 mb-3 flex items-center gap-2">
+                                            <Package className="h-4 w-4 text-emerald-400" /> รูปถ่ายสินค้าเพิ่มเติม ({itemPhotos.length})
+                                        </h3>
+                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                            {itemPhotos.map((url, i) => (
+                                                <div key={i} className="relative aspect-square bg-slate-950 rounded-lg overflow-hidden border border-slate-700 group cursor-pointer">
+                                                     {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                    <img 
+                                                        src={url} 
+                                                        alt={`Product ${i+1}`} 
+                                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                                                    />
+                                                     <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                                        <a href={url} target="_blank" rel="noreferrer">
+                                                            <Button size="icon" variant="secondary" className="h-8 w-8 rounded-full">
+                                                                <Navigation className="h-4 w-4 rotate-45" />
+                                                            </Button>
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </>
+                        )
+                    })()}
+                    
+                    {/* Signature Section */}
+                    <div className="border-t border-slate-800 pt-6">
+                         <h3 className="text-sm font-medium text-slate-300 mb-3 flex items-center gap-2">
+                            <FileText className="h-4 w-4" /> ลายเซ็นลูกค้า (Digital Signature)
                         </h3>
                         {job.Signature_Url ? (
-                             <div className="relative aspect-video rounded-lg overflow-hidden border border-slate-700 bg-white">
-                                <Image 
+                             <div className="relative h-32 w-64 bg-white rounded-lg overflow-hidden border border-slate-700">
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img 
                                     src={job.Signature_Url} 
                                     alt="Customer Signature" 
-                                    fill 
-                                    className="object-contain p-2"
+                                    className="w-full h-full object-contain p-2"
                                 />
                             </div>
                         ) : (
-                            <div className="aspect-video rounded-lg border border-dashed border-slate-700 flex items-center justify-center text-slate-500 bg-slate-950">
+                            <div className="h-32 w-64 rounded-lg border border-dashed border-slate-700 flex items-center justify-center text-slate-500 bg-slate-950">
                                 <p>ไม่มีลายเซ็น</p>
                             </div>
                         )}

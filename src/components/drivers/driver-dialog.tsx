@@ -41,7 +41,8 @@ export function DriverDialog({
     Mobile_No: driver?.Mobile_No || '',
     Password: driver?.Password || '',
     Vehicle_Plate: driver?.Vehicle_Plate || '',
-    Active_Status: 'Active' // default
+    Active_Status: 'Active', // default
+    License_Expiry: driver?.License_Expiry || ''
   })
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -70,7 +71,8 @@ export function DriverDialog({
             Mobile_No: '',
             Password: '',
             Vehicle_Plate: '',
-            Active_Status: 'Active'
+            Active_Status: 'Active',
+            License_Expiry: ''
         })
       }
       router.refresh()
@@ -125,6 +127,17 @@ export function DriverDialog({
               required
               className="bg-white/5 border-white/10"
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="License_Expiry">วันหมดอายุใบขับขี่</Label>
+             <Input
+                id="License_Expiry"
+                type="date"
+                value={formData.License_Expiry}
+                onChange={(e) => setFormData({ ...formData, License_Expiry: e.target.value })}
+                className="bg-white/5 border-white/10"
+             />
           </div>
 
           <div className="space-y-2">

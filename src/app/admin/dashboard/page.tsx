@@ -1,7 +1,9 @@
 export const dynamic = 'force-dynamic'
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Package, Truck, Users, CheckCircle, Clock } from "lucide-react"
+import { Package, Truck, Users, CheckCircle, Clock, ArrowLeft } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import Link from "next/link"
 import { getTodayJobStats, getWeeklyJobStats, getJobStatusDistribution } from "@/lib/supabase/jobs"
 import { getDriverStats } from "@/lib/supabase/drivers"
 import { getVehicleStats } from "@/lib/supabase/vehicles"
@@ -21,9 +23,17 @@ export default async function AdminDashboardPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-white mb-2">Dashboard</h1>
-        <p className="text-slate-400">ภาพรวมการขนส่งประจำวัน</p>
+      <div className="flex items-center justify-between">
+        <div>
+            <h1 className="text-3xl font-bold text-white mb-2">Dashboard</h1>
+            <p className="text-slate-400">ภาพรวมการขนส่งประจำวัน</p>
+        </div>
+        <Link href="/planning">
+            <Button variant="outline" className="gap-2 border-slate-700 bg-slate-900 text-slate-300 hover:text-white hover:bg-slate-800">
+                <ArrowLeft size={16} />
+                กลับสู่หน้าทำงาน
+            </Button>
+        </Link>
       </div>
 
       {/* Stats Grid */}

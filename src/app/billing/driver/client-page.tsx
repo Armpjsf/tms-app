@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -18,24 +19,45 @@ import {
   CheckCircle2,
   Clock,
   Banknote,
-  Percent
+  Percent,
+  Loader2,
+  FileDown,
+  History,
+  Eye
 } from "lucide-react"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
 import { Job } from "@/lib/supabase/jobs"
+import { Driver } from "@/lib/supabase/drivers"
+import { createDriverPayment } from "@/lib/supabase/billing"
+
+import { CompanyProfile } from "@/lib/supabase/settings"
 
 const WITHHOLDING_TAX_RATE = 0.01 // 1%
 
 interface DriverPaymentClientProps {
   initialJobs: Job[]
+  drivers: Driver[]
+  companyProfile: CompanyProfile | null
 }
 
-export default function DriverPaymentClient({ initialJobs }: DriverPaymentClientProps) {
+export default function DriverPaymentClient({ initialJobs, drivers, companyProfile }: DriverPaymentClientProps) {
+  const router = useRouter()
   const [dateFrom, setDateFrom] = useState("")
   const [dateTo, setDateTo] = useState("")
   const [selectedDriver, setSelectedDriver] = useState("")
   const [selectedItems, setSelectedItems] = useState<string[]>([])
+  const [loading, setLoading] = useState(false)
+  const [showPreview, setShowPreview] = useState(false)
 
-  // Get unique drivers
-  const drivers = [...new Set(initialJobs.filter(j=>j.Driver_Name).map(item => item.Driver_Name!))]
+  // Get unique drivers from jobs (for filter dropdown) - or use drivers list passed from prop?
+  // Using drivers list from prop allows accessing bank details
+  const driverNames = drivers.map(d => d.Driver_Name).filter(Boolean) as string[]
 
   // Filter data (Client-side)
   const filteredData = initialJobs.filter(item => {
@@ -70,7 +92,288 @@ export default function DriverPaymentClient({ initialJobs }: DriverPaymentClient
     setSelectedItems([])
   }
 
+  const handleCreatePayment = async () => {
+    if (selectedItems.length === 0) return
+    if (!selectedDriver) {
+        alert("กรุณาเลือกคนขับก่อนสร้างใบสรุปจ่าย")
+        return
+    }
+
+    if (!confirm(`ยืนยันการสร้างใบสรุปจ่ายสำหรับ ${selectedItems.length} รายการ?`)) return
+
+    setLoading(true)
+    try {
+        const today = new Date().toISOString().split('T')[0]
+
+        const result = await createDriverPayment(
+            selectedItems, 
+            selectedDriver, 
+            today
+        )
+
+        if (result.success) {
+            alert(`สร้างใบสรุปจ่ายเลขที่ ${result.id} สำเร็จ!`)
+            setSelectedItems([])
+            router.refresh() 
+        } else {
+            alert(`เกิดข้อผิดพลาด: ${result.error}`)
+        }
+    } catch (e) {
+        console.error(e)
+        alert("เกิดข้อผิดพลาดในการสร้างใบสรุปจ่าย")
+    } finally {
+        setLoading(false)
+    }
+  }
+
+  const handleExportSCB = () => {
+    if (selectedItems.length === 0) return
+
+    // 1. Get selected job objects
+    const jobsToExport = initialJobs.filter(j => selectedItems.includes(j.Job_ID))
+
+    // 2. Group by Driver
+    const jobsByDriver: Record<string, Job[]> = {}
+    jobsToExport.forEach(job => {
+        const dName = job.Driver_Name || 'Unknown'
+        if (!jobsByDriver[dName]) jobsByDriver[dName] = []
+        jobsByDriver[dName].push(job)
+    })
+
+    // 3. Generate Lines
+    const lines = ["Bank Code,Account No,Amount,Beneficiary Name,Ref1,Ref2"]
+    const missingBankDrivers: string[] = []
+
+    Object.entries(jobsByDriver).forEach(([driverName, p_jobs]) => {
+         const driverInfo = drivers.find(d => d.Driver_Name === driverName)
+         
+         // If no bank account found, add to missing list
+         if (!driverInfo?.Bank_Account_No) {
+             missingBankDrivers.push(driverName)
+             return
+         }
+         
+         const subtotal = p_jobs.reduce((sum, j) => sum + (j.Cost_Driver_Total || 0), 0)
+         const withholding = Math.round(subtotal * WITHHOLDING_TAX_RATE)
+         const netTotal = subtotal - withholding
+
+         // SCB Line Format (Example)
+         // Bank Code, Account No, Amount, Name, ...
+         lines.push(`${driverInfo.Bank_Name || 'SCB'},${driverInfo.Bank_Account_No},${netTotal.toFixed(2)},${driverInfo.Bank_Account_Name || driverName},Salary,${new Date().toISOString().split('T')[0]}`)
+    })
+
+    if (missingBankDrivers.length > 0) {
+        alert(`ไม่สามารถ Export ของคนขับเหล่านี้ได้เนื่องจากไม่มีเลขบัญชี:\n${missingBankDrivers.join(", ")}\n\n(รายการอื่นๆ จะถูก Export ตามปกติ)`)
+        if (lines.length === 1) return // header only, nothing to export
+    }
+
+    const csvContent = "data:text/csv;charset=utf-8," + lines.join("\n")
+    const encodedUri = encodeURI(csvContent)
+    const link = document.createElement("a")
+    link.setAttribute("href", encodedUri)
+    link.setAttribute("download", `SCB_Bulk_Export_${new Date().toISOString().split('T')[0]}.csv`)
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
+
+  const handlePrint = () => {
+    window.print()
+  }
+
+  // Preview Component
+  const PaymentPreview = () => {
+    // Find driver bank details
+    const driverInfo = drivers.find(d => d.Driver_Name === selectedDriver)
+    const today = new Date().toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric'})
+
+    return (
+    <div className="p-8 bg-white text-black max-w-[210mm] mx-auto min-h-[297mm] relative">
+        {/* Document Border (Optional, for visual) */}
+        <div className="absolute inset-0 border border-slate-300 pointer-events-none print:hidden"></div>
+
+        {/* Header Section */}
+        <div className="flex justify-between items-start mb-6">
+            {/* Left: Logo & Company Info */}
+            <div className="flex flex-col gap-4 max-w-[60%]">
+                {companyProfile?.logo_url && (
+                    <div>
+                        <img 
+                            src={companyProfile.logo_url} 
+                            alt="Company Logo" 
+                            className="h-24 w-auto object-contain" 
+                        />
+                    </div>
+                )}
+                <div className="text-sm">
+                    {companyProfile ? (
+                        <>
+                            <h2 className="font-bold text-lg">{companyProfile.company_name}</h2>
+                            {companyProfile.company_name_en && (
+                                <p className="text-slate-600 font-medium">{companyProfile.company_name_en}</p>
+                            )}
+                            <p className="mt-2 text-slate-700">{companyProfile.address}</p>
+                            <div className="flex gap-4 mt-1">
+                                <p><span className="font-semibold">Tax ID:</span> {companyProfile.tax_id}</p>
+                            </div>
+                        </>
+                    ) : (
+                        <p className="text-slate-400">Loading company info...</p>
+                    )}
+                </div>
+            </div>
+
+            {/* Right: Document Title */}
+            <div className="text-right">
+                <h1 className="text-4xl font-bold text-slate-900 tracking-wide">ใบสำคัญจ่าย</h1>
+                <p className="text-slate-500 text-lg font-medium tracking-widest uppercase mt-1">Payment Voucher</p>
+                <div className="mt-4">
+                     <span className="px-3 py-1 bg-slate-100 rounded text-xs font-mono border border-slate-200">
+                        ORIGINAL (ต้นฉบับ)
+                     </span>
+                </div>
+            </div>
+        </div>
+
+        <hr className="border-slate-300 mb-6" />
+
+        {/* Info Grid: Payer & Payee */}
+        <div className="grid grid-cols-2 gap-8 mb-8">
+            {/* Payer Info (Company) */}
+            <div className="border border-slate-200 rounded p-4 bg-slate-50/50">
+                 <h3 className="font-bold text-slate-800 border-b border-slate-200 pb-2 mb-2">ผู้ทำจ่าย (Payer)</h3>
+                 {companyProfile ? (
+                    <div className="text-sm text-slate-600 mt-2 space-y-1">
+                        <p className="font-semibold text-lg text-slate-900">{companyProfile.company_name}</p>
+                        <p>{companyProfile.address}</p>
+                        <p><span className="font-semibold">Tax ID:</span> {companyProfile.tax_id}</p>
+                    </div>
+                 ) : (
+                    <p className="text-sm text-slate-400">Loading...</p>
+                 )}
+            </div>
+
+            {/* Payee Info (Driver) */}
+            <div className="border border-slate-200 rounded p-4">
+                <h3 className="font-bold text-slate-800 border-b border-slate-200 pb-2 mb-2">ผู้รับเงิน (Payee)</h3>
+                <p className="font-semibold text-lg text-slate-900">{selectedDriver}</p>
+                {driverInfo ? (
+                     <div className="text-sm text-slate-600 mt-2 space-y-1">
+                        {driverInfo.Bank_Name && driverInfo.Bank_Account_No ? (
+                            <>
+                                <p><span className="font-semibold">Bank:</span> {driverInfo.Bank_Name}</p>
+                                <p><span className="font-semibold">Account No:</span> {driverInfo.Bank_Account_No} <span className="text-xs text-slate-400">({driverInfo.Bank_Account_Name})</span></p>
+                            </>
+                        ) : (
+                            <p className="text-amber-600 italic">* ไม่พบข้อมูลบัญชีธนาคาร</p>
+                        )}
+                        {/* Add other driver details if needed */}
+                     </div>
+                ) : (
+                    <p className="text-sm text-red-400 mt-2 italic">* ไม่พบข้อมูลคนขับในระบบ</p>
+                )}
+            </div>
+        </div>
+
+        {/* Document Details Row */}
+        <div className="flex justify-between items-center mb-6 text-sm bg-slate-50 p-3 rounded border border-slate-200">
+             <div>
+                <span className="text-slate-500 mr-2">เลขที่เอกสาร (No.):</span>
+                <span className="font-mono font-bold">- (Draft)</span>
+             </div>
+             <div>
+                <span className="text-slate-500 mr-2">วันที่ (Date):</span>
+                <span className="font-medium">{today}</span>
+             </div>
+             <div>
+                <span className="text-slate-500 mr-2">วิธีการชำระ (Payment Method):</span>
+                <span className="font-medium">Bank Transfer</span>
+             </div>
+        </div>
+
+        {/* Table */}
+        <div className="mb-8">
+            <table className="w-full text-sm border-collapse">
+                <thead>
+                    <tr className="bg-slate-100 text-slate-700 border-y-2 border-slate-300">
+                        <th className="py-3 px-4 text-center font-bold w-16">ลำดับ<br/><span className="text-xs font-normal">No.</span></th>
+                        <th className="py-3 px-4 text-left font-bold">รายละเอียด<br/><span className="text-xs font-normal">Description</span></th>
+                        <th className="py-3 px-4 text-left font-bold">วันที่<br/><span className="text-xs font-normal">Date</span></th>
+                        <th className="py-3 px-4 text-left font-bold">เส้นทาง<br/><span className="text-xs font-normal">Route</span></th>
+                        <th className="py-3 px-4 text-right font-bold w-32">จำนวนเงิน<br/><span className="text-xs font-normal">Amount</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {selectedData.map((item, index) => (
+                        <tr key={item.Job_ID} className="border-b border-slate-200">
+                            <td className="py-3 px-4 text-center text-slate-500">{index + 1}</td>
+                            <td className="py-3 px-4 font-medium text-slate-800">
+                                ค่าเที่ยววิ่ง (Job: {item.Job_ID})
+                            </td>
+                            <td className="py-3 px-4 text-slate-600">
+                                {item.Plan_Date ? new Date(item.Plan_Date).toLocaleDateString('th-TH') : '-'}
+                            </td>
+                            <td className="py-3 px-4 text-slate-600 text-xs">
+                                {item.Route_Name || '-'}
+                            </td>
+                            <td className="py-3 px-4 text-right font-medium text-slate-800">
+                                {item.Cost_Driver_Total?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </td>
+                        </tr>
+                    ))}
+                    {Array.from({ length: Math.max(0, 5 - selectedData.length) }).map((_, i) => (
+                         <tr key={`empty-${i}`} className="border-b border-slate-100 h-10">
+                            <td colSpan={5}></td>
+                         </tr>
+                    ))}
+                </tbody>
+                <tfoot>
+                     <tr>
+                        <td colSpan={3} rowSpan={3} className="pt-4 pr-8 align-top">
+                            <div className="border border-slate-300 bg-slate-50 p-3 rounded text-xs text-slate-500">
+                                <p className="font-bold mb-1">หมายเหตุ (Remarks):</p>
+                                <p>- ยอดเงินนี้รวมค่าแรงและค่าพาหนะแล้ว</p>
+                            </div>
+                        </td>
+                        <td className="py-2 px-4 text-right font-bold text-slate-600">รวมเป็นเงิน</td>
+                        <td className="py-2 px-4 text-right font-bold text-slate-800">{selectedSubtotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                    </tr>
+                    <tr>
+                        <td className="py-2 px-4 text-right text-slate-600 text-sm">หัก ณ ที่จ่าย 1%</td>
+                        <td className="py-2 px-4 text-right text-red-500 font-medium">-{selectedWithholding.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                    </tr>
+                    <tr className="bg-slate-50 border-t-2 border-slate-300 border-b-2">
+                        <td className="py-3 px-4 text-right font-bold text-slate-900 text-lg">ยอดสุทธิ</td>
+                        <td className="py-3 px-4 text-right font-bold text-indigo-700 text-lg decoration-double underline">
+                            {selectedNetTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                        </td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+
+         {/* Footer Signatures */}
+        <div className="flex justify-between mt-16 text-sm text-slate-600 pb-8">
+             <div className="text-center w-1/3">
+                <div className="border-b border-slate-400 mb-2 h-8 w-3/4 mx-auto"></div>
+                <p className="font-bold">ผู้รับเงิน</p>
+                <p className="text-xs">(Payee)</p>
+                <div className="mt-4 text-xs">วันที่ (Date): _____/_____/_______</div>
+            </div>
+            <div className="text-center w-1/3">
+                <div className="border-b border-slate-400 mb-2 h-8 w-3/4 mx-auto"></div>
+                <p className="font-bold">ผู้จ่ายเงิน / ผู้มีอำนาจลงนาม</p>
+                <p className="text-xs">(Payer / Authorized Signature)</p>
+                <div className="mt-4 text-xs">วันที่ (Date): _____/_____/_______</div>
+            </div>
+        </div>
+    </div>
+    )
+  }
+
   return (
+    <>
+    <div className="print:hidden">
     <DashboardLayout>
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
@@ -81,6 +384,13 @@ export default function DriverPaymentClient({ initialJobs }: DriverPaymentClient
           </h1>
           <p className="text-sm text-slate-400 mt-1">สร้างเอกสารสรุปการทำจ่ายให้คนขับ (หัก ณ ที่จ่าย 1%)</p>
         </div>
+        <Button 
+            variant="outline" 
+            className="border-slate-700 text-slate-300 gap-2"
+            onClick={() => router.push('/billing/driver/history')}
+        >
+            <History className="w-4 h-4" /> ประวัติการจ่าย
+        </Button>
       </div>
 
       {/* Filters */}
@@ -95,7 +405,7 @@ export default function DriverPaymentClient({ initialJobs }: DriverPaymentClient
                 className="w-full h-10 px-3 rounded-md bg-slate-800 border border-slate-700 text-white"
               >
                 <option value="">ทั้งหมด</option>
-                {drivers.map(d => (
+                {driverNames.map(d => (
                   <option key={d} value={d}>{d}</option>
                 ))}
               </select>
@@ -214,10 +524,52 @@ export default function DriverPaymentClient({ initialJobs }: DriverPaymentClient
             <Button variant="outline" size="sm" onClick={selectAll} className="border-slate-700 text-slate-300">
               เลือกทั้งหมด
             </Button>
-            <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700" disabled={selectedItems.length === 0}>
-              <FileText className="w-4 h-4 mr-2" /> สร้างใบสรุปจ่าย
+            <Dialog open={showPreview} onOpenChange={setShowPreview}>
+                <DialogTrigger asChild>
+                    <Button 
+                        size="sm" 
+                        variant="outline" 
+                        className="border-slate-700 text-slate-300"
+                        disabled={selectedItems.length === 0}
+                    >
+                        <Eye className="w-4 h-4 mr-2" /> ดูตัวอย่าง
+                    </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-white p-0">
+                    <DialogHeader className="p-4 border-b">
+                        <DialogTitle className="text-slate-900">ตัวอย่างใบสำคัญจ่าย</DialogTitle>
+                    </DialogHeader>
+                    <div className="p-6">
+                        <PaymentPreview />
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            <Button 
+                size="sm" 
+                className="bg-indigo-600 hover:bg-indigo-700" 
+                disabled={selectedItems.length === 0 || loading}
+                onClick={handleCreatePayment}
+            >
+              {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FileText className="w-4 h-4 mr-2" />}
+              สร้างใบสรุปจ่าย
             </Button>
-            <Button size="sm" variant="outline" className="border-slate-700 text-slate-300" disabled={selectedItems.length === 0}>
+            <Button 
+                size="sm" 
+                variant="outline" 
+                className="border-slate-700 text-slate-300" 
+                disabled={selectedItems.length === 0 || loading}
+                onClick={handleExportSCB}
+            >
+              <FileDown className="w-4 h-4 mr-2" /> Export SCB
+            </Button>
+            <Button 
+                size="sm" 
+                variant="outline" 
+                className="border-slate-700 text-slate-300" 
+                disabled={selectedItems.length === 0}
+                onClick={handlePrint}
+            >
               <Printer className="w-4 h-4 mr-2" /> พิมพ์
             </Button>
             <Button size="sm" variant="outline" className="border-slate-700 text-slate-300" disabled={selectedItems.length === 0}>
@@ -293,5 +645,12 @@ export default function DriverPaymentClient({ initialJobs }: DriverPaymentClient
         </CardContent>
       </Card>
     </DashboardLayout>
+    </div>
+
+    {/* Hidden Print Area */}
+    <div className="hidden print:block fixed inset-0 bg-white z-[9999] p-8">
+        <PaymentPreview />
+    </div>
+    </>
   )
 }

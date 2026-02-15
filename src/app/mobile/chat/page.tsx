@@ -1,0 +1,189 @@
+"use client"
+
+import { useState, useRef, useEffect } from "react"
+import { useRouter } from "next/navigation"
+import { MobileHeader } from "@/components/mobile/mobile-header"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Send, User, Bot, Loader2 } from "lucide-react"
+import { createClient } from "@/utils/supabase/client" // Client side supabase for realtime
+import { getChatHistory, sendChatMessage, ChatMessage } from "@/lib/actions/chat-actions"
+import { getDriverSession } from "@/lib/actions/auth-actions"
+
+export default function MobileChatPage() {
+  const router = useRouter()
+  const [messages, setMessages] = useState<ChatMessage[]>([])
+  const [inputText, setInputText] = useState("")
+  const [driverId, setDriverId] = useState<string | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [sending, setSending] = useState(false)
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const supabase = createClient()
+
+  // 1. Init Session & Load History
+  useEffect(() => {
+    const init = async () => {
+        const session = await getDriverSession()
+        if (!session) {
+            router.push('/mobile/login')
+            return
+        }
+        setDriverId(session.driverId)
+        
+        const history = await getChatHistory(session.driverId)
+        setMessages(history)
+        setLoading(false)
+    }
+    init()
+  }, [])
+
+  // 2. Realtime Subscription
+  useEffect(() => {
+    if (!driverId) return
+
+    const channel = supabase
+        .channel('chat_room')
+        .on(
+            'postgres_changes',
+            {
+                event: 'INSERT',
+                schema: 'public',
+                table: 'Chat_Messages',
+                filter: `sender_id=eq.admin` // Listen for messages FROM admin
+                // Or listen to all related to this driver? 
+                // Simple: Listen to all INSERTs and filter in callback if needed, 
+                // but filter params are better. 
+                // We want: My messages (echo) AND Admin messages to me.
+            },
+            (payload) => {
+                const newMsg = payload.new as ChatMessage
+                // Only add if it belongs to this conversation (sender uses driverId or receiver uses driverId)
+                if (newMsg.sender_id === driverId || newMsg.receiver_id === driverId) {
+                     setMessages(prev => {
+                        // Avoid duplicates
+                        if (prev.find(m => m.id === newMsg.id)) return prev
+                        return [...prev, newMsg]
+                     })
+                }
+            }
+        )
+        .subscribe()
+
+    return () => {
+        supabase.removeChannel(channel)
+    }
+  }, [driverId])
+
+  // 3. Auto Scroll
+  useEffect(() => {
+    if (scrollRef.current) {
+        scrollRef.current.scrollTop = scrollRef.current.scrollHeight
+    }
+  }, [messages, loading])
+
+  const handleSend = async () => {
+    if (!inputText.trim() || !driverId || sending) return
+
+    const text = inputText
+    setInputText("") // Optimistic clear
+    setSending(true)
+
+    // Optimistic UI Update (optional, but good for UX)
+    // We wait for server response or realtime echo? 
+    // Let's rely on server revalidation or realtime for consistency, 
+    // OR add optimistic msg.
+    
+    // Server Action
+    await sendChatMessage(driverId, text)
+    
+    // Re-fetch is one way, but Realtime should push it back if we listen to our own inserts?
+    // Supabase Realtime triggers on INSERT. If we listen to everything, we get it back.
+    // If we filtered `sender_id=eq.admin`, we WON'T get our own back.
+    // So usually better to fetch updated list or append locally.
+    // Let's append locally for speed.
+    // Note: The ID will be temp/missing until refresh, but UI doesn't need it strictly for display.
+    
+    /* 
+    setMessages(prev => [...prev, {
+        id: Date.now(),
+        sender_id: driverId,
+        receiver_id: 'admin',
+        message: text,
+        created_at: new Date().toISOString(),
+        is_read: false
+    }])
+    */
+
+    // Since we didn't subscribe to our own inserts above (maybe?), let's refresh.
+    // Actually, let's just refresh history to be safe and simple.
+    const history = await getChatHistory(driverId)
+    setMessages(history)
+    
+    setSending(false)
+  }
+
+  return (
+    <div className="flex flex-col h-[100dvh] bg-slate-950">
+      <MobileHeader title="แชทกับเจ้าหน้าที่" showBack />
+
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 pt-16 pb-20" ref={scrollRef}>
+        {loading ? (
+            <div className="flex justify-center pt-10">
+                <Loader2 className="animate-spin text-slate-500" />
+            </div>
+        ) : messages.length === 0 ? (
+            <div className="text-center text-slate-500 mt-10">
+                <p>ยังไม่มีข้อความ</p>
+                <p className="text-xs">พิมพ์ข้อความเพื่อเริ่มการสนทนา</p>
+            </div>
+        ) : (
+            messages.map((msg) => {
+                const isMe = msg.sender_id === driverId
+                return (
+                    <div 
+                        key={msg.id} 
+                        className={`flex gap-3 ${isMe ? "flex-row-reverse" : "flex-row"}`}
+                    >
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${isMe ? "bg-indigo-600" : "bg-slate-700"}`}>
+                            {isMe ? <User size={16} className="text-white" /> : <Bot size={16} className="text-blue-400" />}
+                        </div>
+                        
+                        <div className={`max-w-[70%] p-3 rounded-2xl text-sm ${
+                            isMe 
+                                ? "bg-indigo-600 text-white rounded-tr-none" 
+                                : "bg-slate-800 text-slate-200 rounded-tl-none border border-slate-700"
+                        }`}>
+                            <p>{msg.message}</p>
+                            <p className={`text-[10px] mt-1 text-right ${isMe ? "text-indigo-200" : "text-slate-500"}`}>
+                                {new Date(msg.created_at).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })}
+                            </p>
+                        </div>
+                    </div>
+                )
+            })
+        )}
+      </div>
+
+      <div className="p-4 bg-slate-900 border-t border-slate-800 shrink-0">
+        <div className="flex gap-2">
+            <Input 
+                value={inputText}
+                onChange={(e) => setInputText(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleSend()}
+                placeholder="พิมพ์ข้อความ..."
+                className="bg-slate-950 border-slate-700 text-white focus-visible:ring-indigo-500"
+                disabled={sending}
+            />
+            <Button 
+                onClick={handleSend}
+                size="icon" 
+                className="bg-indigo-600 hover:bg-indigo-700 shrink-0"
+                disabled={sending || !inputText.trim()}
+            >
+                {sending ? <Loader2 className="animate-spin" size={18} /> : <Send size={18} />}
+            </Button>
+        </div>
+      </div>
+    </div>
+  )
+}
