@@ -22,8 +22,6 @@ export async function getUsers() {
         .from("Master_Users")
         .select(`
             *,
-            Master_Roles ( Role_Name ),
-            Master_Branches ( Branch_Name ),
             Master_Customers ( Customer_Name )
         `)
         .order("Username")
@@ -50,6 +48,14 @@ export async function createUser(user: UserData) {
         return { success: false, error: "ชื่อผู้ใช้นี้มีอยู่ในระบบแล้ว" }
     }
 
+    const roleMap: Record<number, string> = {
+        1: 'Super Admin',
+        2: 'Admin',
+        3: 'Staff',
+        4: 'Driver',
+        5: 'Customer'
+    }
+
     const { error } = await supabase
         .from("Master_Users")
         .insert([{
@@ -57,7 +63,7 @@ export async function createUser(user: UserData) {
             Password: user.Password,
             Name: user.Name,
             Branch_ID: user.Branch_ID,
-            Role_ID: user.Role_ID,
+            Role: roleMap[user.Role_ID] || 'Staff',
             Customer_ID: user.Customer_ID || null,
             Permissions: user.Permissions || {},
             Active_Status: 'Active'
@@ -74,17 +80,33 @@ export async function createUser(user: UserData) {
 export async function updateUser(username: string, updates: Partial<UserData>) {
     const supabase = await createClient()
     
+    const roleMap: Record<number, string> = {
+        1: 'Super Admin',
+        2: 'Admin',
+        3: 'Staff',
+        4: 'Driver',
+        5: 'Customer'
+    }
+
+    const updatePayload: any = {
+        Name: updates.Name,
+        Branch_ID: updates.Branch_ID,
+        Active_Status: updates.Active_Status,
+        Customer_ID: updates.Customer_ID,
+        Permissions: updates.Permissions,
+    }
+
+    if (updates.Role_ID) {
+        updatePayload.Role = roleMap[updates.Role_ID] || 'Staff'
+    }
+
+    if (updates.Password) {
+        updatePayload.Password = updates.Password
+    }
+
     const { error } = await supabase
         .from("Master_Users")
-        .update({
-            Name: updates.Name,
-            Branch_ID: updates.Branch_ID,
-            Role_ID: updates.Role_ID,
-            Active_Status: updates.Active_Status,
-            Customer_ID: updates.Customer_ID,
-            Permissions: updates.Permissions,
-            ...(updates.Password ? { Password: updates.Password } : {})
-        })
+        .update(updatePayload)
         .eq("Username", username)
 
     if (error) {

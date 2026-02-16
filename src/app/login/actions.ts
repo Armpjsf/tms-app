@@ -17,13 +17,12 @@ export async function login(formData: FormData) {
   // 1. Query Master_Users
   const { data: users, error } = await supabase
     .from('Master_Users')
-    .select('*, Master_Roles(Role_Name)')
+    .select('*')
     .eq('Username', data.email)
     .single()
 
   if (error || !users) {
     console.error("Login failed: User not found or DB error", error)
-    // In a real app, return error state to form
     redirect('/login?error=Invalid credentials')
   }
 
@@ -46,7 +45,21 @@ export async function login(formData: FormData) {
   }
 
   // 3. Create Session (Custom)
-  const roleId = users.Role_ID || 3 // Default to Staff if null
+  // Map string Role to numeric Role_ID if Role_ID is missing
+  let roleId = users.Role_ID
+  if (roleId === undefined && users.Role) {
+    const roleMap: Record<string, number> = {
+      'Super Admin': 1,
+      'Admin': 2,
+      'Staff': 3,
+      'Driver': 4,
+      'Customer': 5
+    }
+    roleId = roleMap[users.Role] || 3
+  } else if (roleId === undefined) {
+    roleId = 3
+  }
+
   const branchId = users.Branch_ID || null
   const customerId = users.Customer_ID || null
   const permissions = users.Permissions || {}

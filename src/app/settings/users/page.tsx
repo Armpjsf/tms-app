@@ -69,11 +69,23 @@ export default function UserSettingsPage() {
                 Password: "", // Don't show password
                 Name: user.Name,
                 Branch_ID: user.Branch_ID,
-                Role_ID: user.Role_ID,
+                Role_ID: 0, // Will map from user.Role
                 Active_Status: user.Active_Status,
                 Customer_ID: user.Customer_ID,
                 Permissions: user.Permissions || { view_history: true, track_jobs: true }
             })
+
+            // Map string Role to ID for the Select component
+            const roleMap: Record<string, number> = {
+                'Super Admin': 1,
+                'Admin': 2,
+                'Staff': 3,
+                'Driver': 4,
+                'Customer': 5
+            }
+            if (user.Role && roleMap[user.Role]) {
+                setFormData(prev => ({ ...prev, Role_ID: roleMap[user.Role] }))
+            }
         } else {
             setEditingUser(null)
             setFormData({
