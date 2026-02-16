@@ -11,35 +11,47 @@ export type UserProfile = {
   Email: string | null
   Role: string | null
   Branch_ID: string | null
+  Name?: string | null
 }
 
 // Get current user profile
 export async function getUserProfile() {
   try {
     const session = await getSession()
+    console.log('[getUserProfile] Session:', session)
     
     if (!session || !session.userId) {
+        console.warn('[getUserProfile] No valid session found')
         return null
     }
 
     const supabase = createAdminClient()
 
-    // Get profile from Master_Users
-    // Note: session.userId currently stores Username from the login action
-    const { data, error } = await supabase
+    const { data: rawData, error } = await supabase
       .from('Master_Users')
       .select('*')
       .eq('Username', session.userId)
       .single()
     
     if (error) {
-      console.error('Error fetching user profile:', error)
+      console.error('[getUserProfile] DB Error:', error)
       return null
     }
 
-    return data as UserProfile
+    console.log('[getUserProfile] Raw Data from DB:', rawData)
+    const data = rawData as UserProfile
+    
+    // Auto-fill First_Name/Last_Name from Name if they are empty
+    if ((!data.First_Name || !data.Last_Name) && data.Name) {
+        console.log('[getUserProfile] Auto-filling names from Name:', data.Name)
+        const parts = data.Name.trim().split(/\s+/)
+        if (!data.First_Name) data.First_Name = parts[0] || ""
+        if (!data.Last_Name) data.Last_Name = parts.slice(1).join(" ") || ""
+    }
+
+    return data
   } catch (e) {
-    console.error('Exception fetching user profile:', e)
+    console.error('[getUserProfile] Exception:', e)
     return null
   }
 }
@@ -48,27 +60,40 @@ export async function getUserProfile() {
 export async function updateUserProfile(data: Partial<UserProfile>) {
   try {
     const session = await getSession()
+    console.log('[updateUserProfile] Session:', session)
     if (!session || !session.userId) return { success: false, error: 'Not authenticated' }
 
     const supabase = createAdminClient()
 
-    const { error } = await supabase
-      .from('Master_Users')
-      .update({
+    const updatePayload: any = {
         First_Name: data.First_Name,
         Last_Name: data.Last_Name,
-        Email: data.Email
-      })
+        Email: data.Email,
+    }
+
+    // Sync Name column if First_Name and Last_Name are provided
+    if (data.First_Name || data.Last_Name) {
+        updatePayload.Name = `${data.First_Name || ''} ${data.Last_Name || ''}`.trim()
+    }
+
+    console.log('[updateUserProfile] Updating with payload:', updatePayload)
+
+    const { error, count } = await supabase
+      .from('Master_Users')
+      .update(updatePayload, { count: 'exact' })
       .eq('Username', session.userId)
 
     if (error) {
-      console.error('Error updating user profile:', error)
+      console.error('[updateUserProfile] DB Error:', error)
       return { success: false, error: error.message }
     }
 
+    console.log('[updateUserProfile] Rows updated:', count)
+
     revalidatePath('/settings/profile')
     return { success: true }
-  } catch {
-    return { success: false, error: 'Failed to update profile' }
+  } catch (e: any) {
+    console.error('[updateUserProfile] Exception:', e)
+    return { success: false, error: e.message || 'Failed to update profile' }
   }
 }

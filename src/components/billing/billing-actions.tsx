@@ -10,15 +10,16 @@ import { Textarea } from "@/components/ui/textarea"
 import { AttachmentList } from "./attachment-list"
 import { sendBillingEmail } from "@/lib/actions/email-actions"
 import { toast } from "sonner"
-import { Attachment, getAttachments } from "@/lib/actions/attachment-actions"
+import { getAttachments } from "@/lib/actions/attachment-actions"
 
 interface BillingActionsProps {
     billingNoteId: string;
     customerEmail?: string;
     customerName: string;
+    trigger?: React.ReactNode;
 }
 
-export function BillingActions({ billingNoteId, customerEmail = "", customerName }: BillingActionsProps) {
+export function BillingActions({ billingNoteId, customerEmail = "", customerName, trigger }: BillingActionsProps) {
     const [isEmailOpen, setIsEmailOpen] = useState(false)
     const [isAttachmentsOpen, setIsAttachmentsOpen] = useState(false)
     
@@ -77,10 +78,16 @@ export function BillingActions({ billingNoteId, customerEmail = "", customerName
                     <Paperclip className="w-4 h-4 mr-2" />
                     {isAttachmentsOpen ? "ซ่อนไฟล์แนบ" : "ไฟล์แนบ"}
                 </Button>
-                <Button variant="outline" onClick={() => setIsEmailOpen(true)} className="border-slate-300">
-                    <Mail className="w-4 h-4 mr-2" />
-                    ส่งอีเมล
-                </Button>
+                {trigger ? (
+                    <div onClick={() => setIsEmailOpen(true)}>
+                        {trigger}
+                    </div>
+                ) : (
+                    <Button variant="outline" onClick={() => setIsEmailOpen(true)} className="border-slate-300">
+                        <Mail className="w-4 h-4 mr-2" />
+                        ส่งอีเมล
+                    </Button>
+                )}
                 <Button onClick={handlePrint} className="bg-blue-600 hover:bg-blue-700 text-white">
                     <Printer className="w-4 h-4 mr-2" />
                     พิมพ์ / Print

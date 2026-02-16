@@ -58,6 +58,11 @@ export default function AdminProfilePage() {
         const result = await updateUserProfile(formData)
         if (result.success) {
             toast.success("บันทึกข้อมูลสำเร็จ")
+            // Re-load profile to get synced Name or other DB-side updates
+            const updatedProfile = await getUserProfile()
+            if (updatedProfile) {
+                setFormData(updatedProfile)
+            }
         } else {
             toast.error(result.error || "เกิดข้อผิดพลาดในการบันทึก")
         }

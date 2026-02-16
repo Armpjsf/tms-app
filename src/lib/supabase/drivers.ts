@@ -23,6 +23,7 @@ export type Driver = {
   Bank_Name?: string | null
   Bank_Account_No?: string | null
   Bank_Account_Name?: string | null
+  Sub_ID?: string | null
 }
 
 // Get all drivers from Master_Drivers table

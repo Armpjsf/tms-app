@@ -4,22 +4,18 @@ import { useState, useEffect } from "react"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog"
+import { Card, CardContent } from "@/components/ui/card"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Users, Plus, Edit, Trash2, Search, Loader2 } from "lucide-react"
-import { getUsers, createUser, updateUser, deleteUser, UserData } from "@/lib/actions/user-actions"
-import { getRoles } from "@/lib/actions/role-actions"
-import { getBranches, Branch } from "@/lib/actions/branch-actions"
+import { getUsers, createUser, updateUser, deleteUser, UserData, getCurrentUserRole } from "@/lib/actions/user-actions"
 import { getAllCustomers, Customer } from "@/lib/supabase/customers"
-import { Role } from "@/types/role"
 
 export default function UserSettingsPage() {
-    const [users, setUsers] = useState<any[]>([])
-    const [roles, setRoles] = useState<Role[]>([])
-    const [branches, setBranches] = useState<Branch[]>([])
+    const [userList, setUserList] = useState<any[]>([])
     const [customers, setCustomers] = useState<Customer[]>([])
+    const [currentRoleId, setCurrentRoleId] = useState<number | null>(null)
     
     const [loading, setLoading] = useState(true)
     const [isDialogOpen, setIsDialogOpen] = useState(false)
@@ -38,7 +34,8 @@ export default function UserSettingsPage() {
         Customer_ID: null,
         Permissions: {
             view_history: true,
-            track_jobs: true
+            track_jobs: true,
+            show_income: true
         }
     })
 
@@ -48,16 +45,14 @@ export default function UserSettingsPage() {
 
     const loadData = async () => {
         setLoading(true)
-        const [usersData, rolesData, branchesData, customersData] = await Promise.all([
+        const [usersData, customersData, userInfo] = await Promise.all([
             getUsers(),
-            getRoles(),
-            getBranches(),
-            getAllCustomers()
+            getAllCustomers(),
+            getCurrentUserRole()
         ])
-        setUsers(usersData || [])
-        setRoles(rolesData || [])
-        setBranches(branchesData || [])
+        setUserList(usersData || [])
         setCustomers(customersData?.data || [])
+        setCurrentRoleId(userInfo?.roleId || 3)
         setLoading(false)
     }
 
@@ -68,24 +63,14 @@ export default function UserSettingsPage() {
                 Username: user.Username,
                 Password: "", // Don't show password
                 Name: user.Name,
-                Branch_ID: user.Branch_ID,
-                Role_ID: 0, // Will map from user.Role
+                Branch_ID: user.Branch_ID || "",
+                Role: user.Role || "",
                 Active_Status: user.Active_Status,
                 Customer_ID: user.Customer_ID,
-                Permissions: user.Permissions || { view_history: true, track_jobs: true }
+                Permissions: user.Permissions || { view_history: true, track_jobs: true, show_income: true }
             })
 
-            // Map string Role to ID for the Select component
-            const roleMap: Record<string, number> = {
-                'Super Admin': 1,
-                'Admin': 2,
-                'Staff': 3,
-                'Driver': 4,
-                'Customer': 5
-            }
-            if (user.Role && roleMap[user.Role]) {
-                setFormData(prev => ({ ...prev, Role_ID: roleMap[user.Role] }))
-            }
+            // Legacy role map logic removed as we use string Role now
         } else {
             setEditingUser(null)
             setFormData({
@@ -93,17 +78,17 @@ export default function UserSettingsPage() {
                 Password: "",
                 Name: "",
                 Branch_ID: "",
-                Role_ID: 0,
+                Role: "", // Now using string Role
                 Active_Status: "Active",
                 Customer_ID: null,
-                Permissions: { view_history: true, track_jobs: true }
+                Permissions: { view_history: true, track_jobs: true, show_income: true }
             })
         }
         setIsDialogOpen(true)
     }
 
     const handleSave = async () => {
-        if (!formData.Username || !formData.Name || !formData.Branch_ID || !formData.Role_ID) {
+        if (!formData.Username || !formData.Name || !formData.Branch_ID || !formData.Role) {
             return alert("กรุณากรอกข้อมูลให้ครบถ้วน")
         }
 
@@ -140,7 +125,7 @@ export default function UserSettingsPage() {
         loadData()
     }
 
-    const filteredUsers = users.filter(u => 
+    const filteredUsers = userList.filter(u => 
         u.Name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         u.Username?.toLowerCase().includes(searchTerm.toLowerCase())
     )
@@ -203,11 +188,11 @@ export default function UserSettingsPage() {
                                             </td>
                                             <td className="px-6 py-4 text-slate-300">{user.Name}</td>
                                             <td className="px-6 py-4 text-slate-300">
-                                                {user.Master_Branches?.Branch_Name || user.Branch_ID || "-"}
+                                                {user.Branch_ID || "-"}
                                             </td>
                                             <td className="px-6 py-4 text-slate-300">
-                                                <span className="px-2 py-1 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 text-xs">
-                                                    {user.Master_Roles?.Role_Name || "No Role"}
+                                                <span className="px-2 py-1 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 text-xs text-center inline-block min-w-[80px]">
+                                                    {user.Role || "No Role"}
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4">
@@ -215,14 +200,26 @@ export default function UserSettingsPage() {
                                                     {user.Active_Status}
                                                 </span>
                                             </td>
-                                            <td className="px-6 py-4 text-right space-x-2">
-                                                <Button variant="ghost" size="icon" onClick={() => handleOpenDialog(user)} className="text-slate-400 hover:text-white hover:bg-slate-700">
-                                                    <Edit className="w-4 h-4" />
-                                                </Button>
-                                                <Button variant="ghost" size="icon" onClick={() => handleDelete(user.Username)} className="text-red-400 hover:text-red-300 hover:bg-red-900/20">
-                                                    <Trash2 className="w-4 h-4" />
-                                                </Button>
-                                            </td>
+                                             <td className="px-6 py-4 text-right space-x-2">
+                                                 <Button 
+                                                    variant="ghost" 
+                                                    size="icon" 
+                                                    onClick={() => handleOpenDialog(user)} 
+                                                    className="text-slate-400 hover:text-white hover:bg-slate-700 disabled:opacity-30"
+                                                    disabled={user.Role === "Super Admin" && currentRoleId !== 1}
+                                                 >
+                                                     <Edit className="w-4 h-4" />
+                                                 </Button>
+                                                 <Button 
+                                                    variant="ghost" 
+                                                    size="icon" 
+                                                    onClick={() => handleDelete(user.Username)} 
+                                                    className="text-red-400 hover:text-red-300 hover:bg-red-900/20 disabled:opacity-30"
+                                                    disabled={user.Role === "Super Admin" && currentRoleId !== 1}
+                                                 >
+                                                     <Trash2 className="w-4 h-4" />
+                                                 </Button>
+                                             </td>
                                         </tr>
                                     ))
                                 )}
@@ -255,7 +252,7 @@ export default function UserSettingsPage() {
                                 <Label>Password {editingUser && "(เว้นว่างถ้าไม่เปลี่ยน)"}</Label>
                                 <Input 
                                     type="password"
-                                    value={formData.Password} 
+                                    value={formData.Password || ""} 
                                     onChange={e => setFormData({...formData, Password: e.target.value})} 
                                     className="bg-slate-800 border-slate-700" 
                                 />
@@ -274,93 +271,77 @@ export default function UserSettingsPage() {
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label>สาขา (Branch) *</Label>
-                                <Select 
-                                    value={formData.Branch_ID} 
-                                    onValueChange={v => setFormData({...formData, Branch_ID: v})}
-                                >
-                                    <SelectTrigger className="bg-slate-800 border-slate-700">
-                                        <SelectValue placeholder="เลือกสาขา" />
-                                    </SelectTrigger>
-                                    <SelectContent className="bg-slate-800 border-slate-700 text-white">
-                                        {branches.map(b => (
-                                            <SelectItem key={b.Branch_ID} value={b.Branch_ID}>
-                                                {b.Branch_Name}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
+                                <Input 
+                                    value={formData.Branch_ID || ""} 
+                                    onChange={e => setFormData({...formData, Branch_ID: e.target.value})}
+                                    placeholder="เช่น สำนักงานใหญ่, สาขา 1"
+                                    className="bg-slate-800 border-slate-700" 
+                                />
                             </div>
                             <div className="space-y-2">
                                 <Label>บทบาท (Role) *</Label>
-                                <Select 
-                                    value={formData.Role_ID?.toString()} 
-                                    onValueChange={v => setFormData({...formData, Role_ID: parseInt(v)})}
-                                >
-                                    <SelectTrigger className="bg-slate-800 border-slate-700">
-                                        <SelectValue placeholder="เลือกบทบาท" />
-                                    </SelectTrigger>
-                                    <SelectContent className="bg-slate-800 border-slate-700 text-white">
-                                        {roles.map(r => (
-                                            <SelectItem key={r.Role_ID} value={r.Role_ID.toString()}>
-                                                {r.Role_Name}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
+                                <Input 
+                                    value={formData.Role || ""} 
+                                    onChange={e => setFormData({...formData, Role: e.target.value})}
+                                    placeholder="เช่น Admin, Staff, Driver"
+                                    className="bg-slate-800 border-slate-700" 
+                                />
                             </div>
                         </div>
 
-                        {/* Customer Link Section */}
+                        {/* Permissions Section (For Customer Portal) */}
                         <div className="space-y-4 p-4 rounded-lg bg-slate-950/50 border border-slate-800">
-                            <div className="space-y-2">
-                                <Label className="text-blue-400 text-xs font-bold uppercase">Customer Link (สำหรับลูกค้า)</Label>
-                                <Select 
-                                    value={formData.Customer_ID || "none"} 
-                                    onValueChange={v => setFormData({...formData, Customer_ID: v === "none" ? null : v})}
-                                >
-                                    <SelectTrigger className="bg-slate-800 border-slate-700">
-                                        <SelectValue placeholder="เชื่อมโยงกับลูกค้า (Optional)" />
-                                    </SelectTrigger>
-                                    <SelectContent className="bg-slate-800 border-slate-700 text-white">
-                                        <SelectItem value="none">-- ไม่ระบุ (พนักงานทั่วไป) --</SelectItem>
-                                        {customers.map(c => (
-                                            <SelectItem key={c.Customer_ID} value={c.Customer_ID}>
-                                                {c.Customer_Name}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
+                            <Label className="text-blue-400 text-xs font-bold uppercase">
+                                Portal Permissions (สำหรับลูกค้า)
+                            </Label>
+                            
+                            <div className="space-y-2 pt-1">
+                                {[
+                                    { id: 'view_history', label: 'ดูประวัติงาน (View History)' },
+                                    { id: 'track_jobs', label: 'ติดตามงาน (Track Jobs)' },
+                                    { id: 'show_income', label: 'แสดงรายได้ (Show Income)' },
+                                ].map((p) => (
+                                    <div key={p.id} className="flex items-center justify-between p-2 rounded bg-slate-800/30">
+                                        <span className="text-sm text-slate-300">{p.label}</span>
+                                        <input 
+                                            type="checkbox" 
+                                            className="h-4 w-4 rounded border-slate-700 bg-slate-900 cursor-pointer"
+                                            checked={formData.Permissions?.[p.id]}
+                                            onChange={e => setFormData({
+                                                ...formData, 
+                                                Permissions: { ...formData.Permissions, [p.id]: e.target.checked }
+                                            })}
+                                        />
+                                    </div>
+                                ))}
                             </div>
 
-                            {formData.Customer_ID && (
-                                <div className="space-y-3 pt-2">
-                                    <Label className="text-slate-400 text-[11px] mb-2 block">กำหนดสิทธิ์การเข้าถึง (Permissions):</Label>
-                                    <div className="flex items-center justify-between p-2 rounded bg-slate-800/30">
-                                        <span className="text-sm">ดูประวัติงาน (View History)</span>
-                                        <input 
-                                            type="checkbox" 
-                                            className="h-4 w-4 rounded border-slate-700 bg-slate-900"
-                                            checked={formData.Permissions?.view_history}
-                                            onChange={e => setFormData({
-                                                ...formData, 
-                                                Permissions: { ...formData.Permissions, view_history: e.target.checked }
-                                            })}
-                                        />
-                                    </div>
-                                    <div className="flex items-center justify-between p-2 rounded bg-slate-800/30">
-                                        <span className="text-sm">ติดตามงาน Real-time (Track Jobs)</span>
-                                        <input 
-                                            type="checkbox" 
-                                            className="h-4 w-4 rounded border-slate-700 bg-slate-900"
-                                            checked={formData.Permissions?.track_jobs}
-                                            onChange={e => setFormData({
-                                                ...formData, 
-                                                Permissions: { ...formData.Permissions, track_jobs: e.target.checked }
-                                            })}
-                                        />
-                                    </div>
+                            {!formData.Customer_ID && (
+                                <div className="mt-2 p-2 bg-slate-800/50 border border-slate-700/50 rounded text-[10px] text-slate-400">
+                                    * สำหรับพนักงานทั่วไป สิทธิ์หลักจะถูกกำหนดผ่านหน้า &quot;บทบาทและสิทธิ์&quot;
                                 </div>
                             )}
+                        </div>
+
+                        {/* Customer Link (Optional) */}
+                        <div className="space-y-2 p-4 rounded-lg bg-slate-950/50 border border-slate-800">
+                            <Label className="text-slate-400 text-xs font-bold uppercase">เชื่อมโยงลูกค้า (Customer Link)</Label>
+                            <Select 
+                                value={formData.Customer_ID || "none"} 
+                                onValueChange={v => setFormData({...formData, Customer_ID: v === "none" ? null : v})}
+                            >
+                                <SelectTrigger className="bg-slate-800 border-slate-700">
+                                    <SelectValue placeholder="เชื่อมโยงกับลูกค้า (Optional)" />
+                                </SelectTrigger>
+                                <SelectContent className="bg-slate-800 border-slate-700 text-white">
+                                    <SelectItem value="none">-- ไม่ระบุ (พนักงานทั่วไป) --</SelectItem>
+                                    {customers.map(c => (
+                                        <SelectItem key={c.Customer_ID} value={c.Customer_ID}>
+                                            {c.Customer_Name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </div>
 
                         <div className="space-y-2">

@@ -257,3 +257,101 @@ export async function getDriverPayments() {
         return []
     }
 }
+
+export async function updateBillingNoteStatus(id: string, status: string) {
+    try {
+        const supabase = await createClient()
+        const { error } = await supabase
+            .from('Billing_Notes')
+            .update({ 
+                Status: status,
+                Updated_At: new Date().toISOString()
+            })
+            .eq('Billing_Note_ID', id)
+
+        if (error) throw error
+        return { success: true }
+    } catch (e: any) {
+        console.error("updateBillingNoteStatus Error:", e)
+        return { success: false, error: e.message }
+    }
+}
+
+export async function updateDriverPaymentStatus(id: string, status: string) {
+    try {
+        const supabase = await createClient()
+        const { error } = await supabase
+            .from('Driver_Payments')
+            .update({ 
+                Status: status,
+                Updated_At: new Date().toISOString()
+            })
+            .eq('Driver_Payment_ID', id)
+
+        if (error) throw error
+        return { success: true }
+    } catch (e: any) {
+        console.error("updateDriverPaymentStatus Error:", e)
+        return { success: false, error: e.message }
+    }
+}
+
+export async function recallBillingNote(id: string) {
+    try {
+        const isAdmin = await isSuperAdmin()
+        if (!isAdmin) throw new Error("Only SuperAdmins can recall billing notes")
+
+        const supabase = await createClient()
+
+        // 1. Unlink jobs
+        const { error: unlinkError } = await supabase
+            .from('Jobs_Main')
+            .update({ Billing_Note_ID: null })
+            .eq('Billing_Note_ID', id)
+
+        if (unlinkError) throw unlinkError
+
+        // 2. Delete billing note
+        const { error: deleteError } = await supabase
+            .from('Billing_Notes')
+            .delete()
+            .eq('Billing_Note_ID', id)
+
+        if (deleteError) throw deleteError
+
+        return { success: true }
+    } catch (e: any) {
+        console.error("recallBillingNote Error:", e)
+        return { success: false, error: e.message }
+    }
+}
+
+export async function recallDriverPayment(id: string) {
+    try {
+        const isAdmin = await isSuperAdmin()
+        if (!isAdmin) throw new Error("Only SuperAdmins can recall payments")
+
+        const supabase = await createClient()
+
+        // 1. Unlink jobs
+        const { error: unlinkError } = await supabase
+            .from('Jobs_Main')
+            .update({ Driver_Payment_ID: null })
+            .eq('Driver_Payment_ID', id)
+
+        if (unlinkError) throw unlinkError
+
+        // 2. Delete payment
+        const { error: deleteError } = await supabase
+            .from('Driver_Payments')
+            .delete()
+            .eq('Driver_Payment_ID', id)
+
+        if (deleteError) throw deleteError
+
+        return { success: true }
+    } catch (e: any) {
+        console.error("recallDriverPayment Error:", e)
+        return { success: false, error: e.message }
+    }
+}

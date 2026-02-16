@@ -37,6 +37,7 @@ import { Driver } from "@/lib/supabase/drivers"
 import { createDriverPayment } from "@/lib/supabase/billing"
 
 import { CompanyProfile } from "@/lib/supabase/settings"
+import { Subcontractor } from "@/types/subcontractor"
 
 const WITHHOLDING_TAX_RATE = 0.01 // 1%
 
@@ -44,24 +45,32 @@ interface DriverPaymentClientProps {
   initialJobs: Job[]
   drivers: Driver[]
   companyProfile: CompanyProfile | null
+  subcontractors: Subcontractor[]
 }
 
-export default function DriverPaymentClient({ initialJobs, drivers, companyProfile }: DriverPaymentClientProps) {
+export default function DriverPaymentClient({ initialJobs, drivers, companyProfile, subcontractors }: DriverPaymentClientProps) {
   const router = useRouter()
   const [dateFrom, setDateFrom] = useState("")
   const [dateTo, setDateTo] = useState("")
-  const [selectedDriver, setSelectedDriver] = useState("")
+  const [paymentModel, setPaymentModel] = useState<'individual' | 'subcontractor'>('individual')
+  const [selectedEntityId, setSelectedEntityId] = useState("")
   const [selectedItems, setSelectedItems] = useState<string[]>([])
   const [loading, setLoading] = useState(false)
   const [showPreview, setShowPreview] = useState(false)
 
-  // Get unique drivers from jobs (for filter dropdown) - or use drivers list passed from prop?
-  // Using drivers list from prop allows accessing bank details
-  const driverNames = drivers.map(d => d.Driver_Name).filter(Boolean) as string[]
+  // Selected items calculations
 
   // Filter data (Client-side)
   const filteredData = initialJobs.filter(item => {
-    if (selectedDriver && item.Driver_Name !== selectedDriver) return false
+    // Determine if this job belongs to the selected entity
+    if (paymentModel === 'individual') {
+        if (selectedEntityId && item.Driver_Name !== selectedEntityId) return false
+    } else {
+        // For subcontractor mode, we need to know which subcontractor the driver belongs to
+        const driver = drivers.find(d => d.Driver_Name === item.Driver_Name)
+        if (selectedEntityId && driver?.Sub_ID !== selectedEntityId) return false
+    }
+
     if (dateFrom && item.Plan_Date && item.Plan_Date < dateFrom) return false
     if (dateTo && item.Plan_Date && item.Plan_Date > dateTo) return false
     return true
@@ -94,8 +103,8 @@ export default function DriverPaymentClient({ initialJobs, drivers, companyProfi
 
   const handleCreatePayment = async () => {
     if (selectedItems.length === 0) return
-    if (!selectedDriver) {
-        alert("กรุณาเลือกคนขับก่อนสร้างใบสรุปจ่าย")
+    if (!selectedEntityId) {
+        alert(paymentModel === 'individual' ? "กรุณาเลือกคนขับก่อนสร้างใบสรุปจ่าย" : "กรุณาเลือกบริษัทรถร่วมก่อนสร้างใบสรุปจ่าย")
         return
     }
 
@@ -107,7 +116,9 @@ export default function DriverPaymentClient({ initialJobs, drivers, companyProfi
 
         const result = await createDriverPayment(
             selectedItems, 
-            selectedDriver, 
+            paymentModel === 'individual' 
+                ? selectedEntityId 
+                : (subcontractors.find(s => s.Sub_ID === selectedEntityId)?.Sub_Name || selectedEntityId), 
             today
         )
 
@@ -132,38 +143,54 @@ export default function DriverPaymentClient({ initialJobs, drivers, companyProfi
     // 1. Get selected job objects
     const jobsToExport = initialJobs.filter(j => selectedItems.includes(j.Job_ID))
 
-    // 2. Group by Driver
-    const jobsByDriver: Record<string, Job[]> = {}
-    jobsToExport.forEach(job => {
-        const dName = job.Driver_Name || 'Unknown'
-        if (!jobsByDriver[dName]) jobsByDriver[dName] = []
-        jobsByDriver[dName].push(job)
-    })
-
-    // 3. Generate Lines
+    // 2. Group by Payment Entity
     const lines = ["Bank Code,Account No,Amount,Beneficiary Name,Ref1,Ref2"]
-    const missingBankDrivers: string[] = []
+    const missingBankEntities: string[] = []
 
-    Object.entries(jobsByDriver).forEach(([driverName, p_jobs]) => {
-         const driverInfo = drivers.find(d => d.Driver_Name === driverName)
-         
-         // If no bank account found, add to missing list
-         if (!driverInfo?.Bank_Account_No) {
-             missingBankDrivers.push(driverName)
-             return
-         }
-         
-         const subtotal = p_jobs.reduce((sum, j) => sum + (j.Cost_Driver_Total || 0), 0)
-         const withholding = Math.round(subtotal * WITHHOLDING_TAX_RATE)
-         const netTotal = subtotal - withholding
+    if (paymentModel === 'individual') {
+        const jobsByDriver: Record<string, Job[]> = {}
+        jobsToExport.forEach(job => {
+            const dName = job.Driver_Name || 'Unknown'
+            if (!jobsByDriver[dName]) jobsByDriver[dName] = []
+            jobsByDriver[dName].push(job)
+        })
 
-         // SCB Line Format (Example)
-         // Bank Code, Account No, Amount, Name, ...
-         lines.push(`${driverInfo.Bank_Name || 'SCB'},${driverInfo.Bank_Account_No},${netTotal.toFixed(2)},${driverInfo.Bank_Account_Name || driverName},Salary,${new Date().toISOString().split('T')[0]}`)
-    })
+        Object.entries(jobsByDriver).forEach(([driverName, p_jobs]) => {
+            const driverInfo = drivers.find(d => d.Driver_Name === driverName)
+            if (!driverInfo?.Bank_Account_No) {
+                missingBankEntities.push(driverName)
+                return
+            }
+            const subtotal = p_jobs.reduce((sum, j) => sum + (j.Cost_Driver_Total || 0), 0)
+            const withholding = Math.round(subtotal * WITHHOLDING_TAX_RATE)
+            const netTotal = subtotal - withholding
+            lines.push(`${driverInfo.Bank_Name || 'SCB'},${driverInfo.Bank_Account_No},${netTotal.toFixed(2)},${driverInfo.Bank_Account_Name || driverName},Salary,${new Date().toISOString().split('T')[0]}`)
+        })
+    } else {
+        // Subcontractor grouping
+        const jobsBySub: Record<string, Job[]> = {}
+        jobsToExport.forEach(job => {
+            const driver = drivers.find(d => d.Driver_Name === job.Driver_Name)
+            const subId = driver?.Sub_ID || 'Independent'
+            if (!jobsBySub[subId]) jobsBySub[subId] = []
+            jobsBySub[subId].push(job)
+        })
 
-    if (missingBankDrivers.length > 0) {
-        alert(`ไม่สามารถ Export ของคนขับเหล่านี้ได้เนื่องจากไม่มีเลขบัญชี:\n${missingBankDrivers.join(", ")}\n\n(รายการอื่นๆ จะถูก Export ตามปกติ)`)
+        Object.entries(jobsBySub).forEach(([subId, p_jobs]) => {
+            const subInfo = subcontractors.find(s => s.Sub_ID === subId)
+            if (!subInfo?.Bank_Account_No) {
+                missingBankEntities.push(subInfo?.Sub_Name || subId)
+                return
+            }
+            const subtotal = p_jobs.reduce((sum, j) => sum + (j.Cost_Driver_Total || 0), 0)
+            const withholding = Math.round(subtotal * WITHHOLDING_TAX_RATE)
+            const netTotal = subtotal - withholding
+            lines.push(`${subInfo.Bank_Name || 'SCB'},${subInfo.Bank_Account_No},${netTotal.toFixed(2)},${subInfo.Bank_Account_Name || subInfo.Sub_Name},Salary,${new Date().toISOString().split('T')[0]}`)
+        })
+    }
+
+    if (missingBankEntities.length > 0) {
+        alert(`ไม่สามารถ Export รายการเหล่านี้ได้เนื่องจากไม่มีเลขบัญชี:\n${missingBankEntities.join(", ")}\n\n(รายการอื่นๆ จะถูก Export ตามปกติ)`)
         if (lines.length === 1) return // header only, nothing to export
     }
 
@@ -183,8 +210,15 @@ export default function DriverPaymentClient({ initialJobs, drivers, companyProfi
 
   // Preview Component
   const PaymentPreview = () => {
-    // Find driver bank details
-    const driverInfo = drivers.find(d => d.Driver_Name === selectedDriver)
+    // Find info
+    const entityInfo = paymentModel === 'individual' 
+        ? drivers.find(d => d.Driver_Name === selectedEntityId)
+        : subcontractors.find(s => s.Sub_ID === selectedEntityId)
+    
+    const entityName = paymentModel === 'individual'
+        ? selectedEntityId
+        : subcontractors.find(s => s.Sub_ID === selectedEntityId)?.Sub_Name || selectedEntityId
+
     const today = new Date().toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric'})
 
     return (
@@ -256,21 +290,20 @@ export default function DriverPaymentClient({ initialJobs, drivers, companyProfi
             {/* Payee Info (Driver) */}
             <div className="border border-slate-200 rounded p-4">
                 <h3 className="font-bold text-slate-800 border-b border-slate-200 pb-2 mb-2">ผู้รับเงิน (Payee)</h3>
-                <p className="font-semibold text-lg text-slate-900">{selectedDriver}</p>
-                {driverInfo ? (
+                <p className="font-semibold text-lg text-slate-900">{entityName}</p>
+                {entityInfo ? (
                      <div className="text-sm text-slate-600 mt-2 space-y-1">
-                        {driverInfo.Bank_Name && driverInfo.Bank_Account_No ? (
+                        {entityInfo.Bank_Name && entityInfo.Bank_Account_No ? (
                             <>
-                                <p><span className="font-semibold">Bank:</span> {driverInfo.Bank_Name}</p>
-                                <p><span className="font-semibold">Account No:</span> {driverInfo.Bank_Account_No} <span className="text-xs text-slate-400">({driverInfo.Bank_Account_Name})</span></p>
+                                <p><span className="font-semibold">Bank:</span> {entityInfo.Bank_Name}</p>
+                                <p><span className="font-semibold">Account No:</span> {entityInfo.Bank_Account_No} <span className="text-xs text-slate-400">({entityInfo.Bank_Account_Name})</span></p>
                             </>
                         ) : (
                             <p className="text-amber-600 italic">* ไม่พบข้อมูลบัญชีธนาคาร</p>
                         )}
-                        {/* Add other driver details if needed */}
                      </div>
                 ) : (
-                    <p className="text-sm text-red-400 mt-2 italic">* ไม่พบข้อมูลคนขับในระบบ</p>
+                    <p className="text-sm text-red-400 mt-2 italic">* ไม่พบข้อมูลผู้รับเงินในระบบ</p>
                 )}
             </div>
         </div>
@@ -396,18 +429,38 @@ export default function DriverPaymentClient({ initialJobs, drivers, companyProfi
       {/* Filters */}
       <Card className="bg-slate-900/50 border-slate-800 mb-6">
         <CardContent className="p-4">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
             <div className="space-y-2">
-              <Label className="text-slate-400 text-sm">คนขับ</Label>
+              <Label className="text-slate-400 text-sm">รูปแบบการจ่าย</Label>
               <select
-                value={selectedDriver}
-                onChange={(e) => setSelectedDriver(e.target.value)}
+                value={paymentModel}
+                onChange={(e) => {
+                    setPaymentModel(e.target.value as 'individual' | 'subcontractor')
+                    setSelectedEntityId("")
+                }}
+                className="w-full h-10 px-3 rounded-md bg-slate-800 border border-slate-700 text-white"
+              >
+                <option value="individual">คนขับรายบุคคล (Individual)</option>
+                <option value="subcontractor">บริษัทรถร่วม (Subcontractor)</option>
+              </select>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-slate-400 text-sm">{paymentModel === 'individual' ? 'เลือกคนขับ' : 'เลือกบริษัทรถร่วม'}</Label>
+              <select
+                value={selectedEntityId || ""}
+                onChange={(e) => setSelectedEntityId(e.target.value)}
                 className="w-full h-10 px-3 rounded-md bg-slate-800 border border-slate-700 text-white"
               >
                 <option value="">ทั้งหมด</option>
-                {driverNames.map(d => (
-                  <option key={d} value={d}>{d}</option>
-                ))}
+                {paymentModel === 'individual' ? (
+                    drivers.map(d => (
+                        <option key={d.Driver_Name} value={d.Driver_Name}>{d.Driver_Name}</option>
+                    ))
+                ) : (
+                    subcontractors.map(s => (
+                        <option key={s.Sub_ID} value={s.Sub_ID}>{s.Sub_Name}</option>
+                    ))
+                )}
               </select>
             </div>
             <div className="space-y-2">

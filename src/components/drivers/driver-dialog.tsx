@@ -9,11 +9,13 @@ import { Label } from "@/components/ui/label"
 import { createDriver, updateDriver } from "@/app/drivers/actions"
 import { Loader2 } from "lucide-react"
 import { Driver } from "@/lib/supabase/drivers"
+import { Subcontractor } from "@/types/subcontractor"
 
 type DriverDialogProps = {
   mode?: 'create' | 'edit'
   driver?: Partial<Driver>
-  vehicles?: any[] // Optional: for selecting assigned vehicle
+  vehicles?: any[]
+  subcontractors?: Subcontractor[]
   trigger?: React.ReactNode
   open?: boolean
   onOpenChange?: (open: boolean) => void
@@ -23,6 +25,7 @@ export function DriverDialog({
   mode = 'create',
   driver,
   vehicles = [],
+  subcontractors = [],
   trigger,
   open,
   onOpenChange
@@ -41,8 +44,9 @@ export function DriverDialog({
     Mobile_No: driver?.Mobile_No || '',
     Password: driver?.Password || '',
     Vehicle_Plate: driver?.Vehicle_Plate || '',
-    Active_Status: 'Active', // default
-    License_Expiry: driver?.License_Expiry || ''
+    Active_Status: driver?.Active_Status || 'Active',
+    License_Expiry: driver?.License_Expiry || '',
+    Sub_ID: driver?.Sub_ID || ''
   })
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -72,7 +76,8 @@ export function DriverDialog({
             Password: '',
             Vehicle_Plate: '',
             Active_Status: 'Active',
-            License_Expiry: ''
+            License_Expiry: '',
+            Sub_ID: ''
         })
       }
       router.refresh()
@@ -151,6 +156,23 @@ export function DriverDialog({
               required={mode === 'create'}
               className="bg-white/5 border-white/10"
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="Sub_ID">สังกัดบริษัทรถร่วม (Subcontractor)</Label>
+            <select
+                id="Sub_ID"
+                value={formData.Sub_ID}
+                onChange={(e) => setFormData({ ...formData, Sub_ID: e.target.value })}
+                className="flex h-10 w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            >
+                <option value="" className="bg-slate-900">อิสระ / รถบริษัท (Independent)</option>
+                {subcontractors.map((s) => (
+                    <option key={s.Sub_ID} value={s.Sub_ID} className="bg-slate-900">
+                      {s.Sub_Name} ({s.Sub_ID})
+                    </option>
+                ))}
+            </select>
           </div>
 
         <div className="space-y-2">

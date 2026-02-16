@@ -9,21 +9,34 @@ import {
   Receipt,
   ArrowLeft,
   Printer,
-  FileText,
   Search,
-  Calendar
+  Calendar,
+  Undo2,
+  CheckCircle2,
+  Mail
 } from "lucide-react"
-import { getBillingNotes, BillingNote } from "@/lib/supabase/billing"
+import { getBillingNotes, BillingNote, updateBillingNoteStatus, recallBillingNote } from "@/lib/supabase/billing"
+import { toast } from "sonner"
+import { isSuperAdmin } from "@/lib/permissions"
+import { BillingActions } from "@/components/billing/billing-actions"
 
 export default function CustomerBillingHistory() {
   const router = useRouter()
   const [notes, setNotes] = useState<BillingNote[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
+  const [isAdmin, setIsAdmin] = useState(false)
+  const [processingId, setProcessingId] = useState<string | null>(null)
 
   useEffect(() => {
     loadData()
+    checkAdmin()
   }, [])
+
+  const checkAdmin = async () => {
+    const adminStatus = await isSuperAdmin()
+    setIsAdmin(adminStatus)
+  }
 
   const loadData = async () => {
     try {
@@ -31,8 +44,45 @@ export default function CustomerBillingHistory() {
         setNotes(data)
     } catch (error) {
         console.error("Failed to load billing history", error)
+        toast.error("โหลดข้อมูลไม่สำเร็จ")
     } finally {
         setLoading(false)
+    }
+  }
+
+  const handleMarkAsPaid = async (id: string) => {
+    if (!confirm("ยืนยันการเปลี่ยนสถานะเป็น 'ชำระเงินแล้ว'?")) return
+    setProcessingId(id)
+    try {
+        const res = await updateBillingNoteStatus(id, "Paid")
+        if (res.success) {
+            toast.success("อัปเดตสถานะเรียบร้อย")
+            loadData()
+        } else {
+            toast.error(res.error || "เกิดข้อผิดพลาด")
+        }
+    } catch (e) {
+        toast.error("เกิดข้อผิดพลาด")
+    } finally {
+        setProcessingId(null)
+    }
+  }
+
+  const handleRecall = async (id: string) => {
+    if (!confirm("⚠️ คำเตือน: คุณกำลังจะดึงรายการบิลนี้กลับไปแก้ไข\\n\\nเอกสารนี้จะถูกลบ และรายการงานในบิลจะกลับไปสถานะ 'รอวางบิล'\\nยืนยันการดำเนินการ?")) return
+    setProcessingId(id)
+    try {
+        const res = await recallBillingNote(id)
+        if (res.success) {
+            toast.success("ดึงรายการกลับสำเร็จ")
+            loadData()
+        } else {
+            toast.error(res.error || "เกิดข้อผิดพลาด")
+        }
+    } catch (e) {
+        toast.error("เกิดข้อผิดพลาด")
+    } finally {
+        setProcessingId(null)
     }
   }
 
@@ -40,6 +90,17 @@ export default function CustomerBillingHistory() {
     n.Billing_Note_ID.toLowerCase().includes(searchTerm.toLowerCase()) ||
     n.Customer_Name.toLowerCase().includes(searchTerm.toLowerCase())
   )
+
+  const getStatusBadge = (status: string) => {
+    switch(status) {
+        case 'Paid':
+            return <span className="px-2 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">ชำระแล้ว</span>
+        case 'Pending':
+            return <span className="px-2 py-1 rounded-full text-xs font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20">รอดำเนินการ</span>
+        default:
+            return <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-500/10 text-blue-400 border border-blue-500/20">{status}</span>
+    }
+  }
 
   return (
     <DashboardLayout>
@@ -119,19 +180,63 @@ export default function CustomerBillingHistory() {
                             ฿{item.Total_Amount.toLocaleString()}
                         </td>
                         <td className="py-3 px-4 text-center">
-                            <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-500/10 text-blue-400">
-                                {item.Status}
-                            </span>
+                            {getStatusBadge(item.Status)}
                         </td>
                         <td className="py-3 px-4 text-right">
-                            <Button 
-                                size="sm" 
-                                variant="ghost" 
-                                className="text-slate-400 hover:text-white"
-                                onClick={() => window.open(`/billing/print/${item.Billing_Note_ID}`, '_blank')}
-                            >
-                                <Printer className="w-4 h-4" />
-                            </Button>
+                            <div className="flex justify-end gap-1">
+                                {item.Status !== 'Paid' && (
+                                    <Button 
+                                        size="sm" 
+                                        variant="ghost" 
+                                        className="text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10"
+                                        onClick={() => handleMarkAsPaid(item.Billing_Note_ID)}
+                                        disabled={processingId === item.Billing_Note_ID}
+                                        title="ทำจ่ายแล้ว"
+                                    >
+                                        <CheckCircle2 className="w-4 h-4" />
+                                    </Button>
+                                )}
+                                
+                                <BillingActions 
+                                    billingNoteId={item.Billing_Note_ID}
+                                    customerName={item.Customer_Name}
+                                    customerEmail={item.Customer_Email}
+                                    // Custom trigger since we use it in a table
+                                    trigger={
+                                        <Button 
+                                            size="sm" 
+                                            variant="ghost" 
+                                            className="text-blue-400 hover:text-blue-300"
+                                            title="ส่งอีเมล"
+                                        >
+                                            <Mail className="w-4 h-4" />
+                                        </Button>
+                                    }
+                                />
+
+                                <Button 
+                                    size="sm" 
+                                    variant="ghost" 
+                                    className="text-slate-400 hover:text-white"
+                                    onClick={() => window.open(`/billing/print/${item.Billing_Note_ID}`, '_blank')}
+                                    title="พิมพ์"
+                                >
+                                    <Printer className="w-4 h-4" />
+                                </Button>
+
+                                {isAdmin && (
+                                    <Button 
+                                        size="sm" 
+                                        variant="ghost" 
+                                        className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                                        onClick={() => handleRecall(item.Billing_Note_ID)}
+                                        disabled={processingId === item.Billing_Note_ID}
+                                        title="ดึงรายการกลับ (Recall)"
+                                    >
+                                        <Undo2 className="w-4 h-4" />
+                                    </Button>
+                                )}
+                            </div>
                         </td>
                     </tr>
                     ))

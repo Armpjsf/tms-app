@@ -33,11 +33,19 @@ export async function loginDriver(formData: FormData) {
       return { error: "รหัสผ่านไม่ถูกต้อง" }
   }
 
-  // 3. Create Session (Cookie)
+  // 3. Fetch permissions from Master_Users (linked by phone/username)
+  const { data: userData } = await supabase
+    .from("Master_Users")
+    .select("Permissions")
+    .eq("Username", phone)
+    .single()
+
+  // 4. Create Session (Cookie)
   const sessionData = {
     driverId: driver.Driver_ID,
     driverName: driver.Driver_Name,
-    role: "driver"
+    role: "driver",
+    permissions: userData?.Permissions || { show_income: true } // Default to true if not found for backward compatibility
   }
   
   const cookieStore = await cookies()

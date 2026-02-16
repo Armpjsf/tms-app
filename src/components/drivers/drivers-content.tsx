@@ -9,6 +9,7 @@ import {
 } from "lucide-react"
 import { getAllDrivers, getDriverStats, getDriverScore } from "@/lib/supabase/drivers"
 import { getAllVehicles } from "@/lib/supabase/vehicles"
+import { getAllSubcontractors } from "@/lib/supabase/subcontractors"
 import { DriverDialog } from "@/components/drivers/driver-dialog"
 import { DriverActions } from "@/components/drivers/driver-actions"
 import { SearchInput } from "@/components/ui/search-input"
@@ -26,10 +27,11 @@ export async function DriversContent({ searchParams }: Props) {
   const query = (searchParams.q as string) || ''
   const limit = 12
 
-  const [{ data: drivers, count }, stats, vehicles] = await Promise.all([
+  const [{ data: drivers, count }, stats, vehicles, subcontractors] = await Promise.all([
     getAllDrivers(page, limit, query),
     getDriverStats(),
     getAllVehicles(),
+    getAllSubcontractors(),
   ])
 
   // Fetch scores for all drivers
@@ -37,6 +39,9 @@ export async function DriversContent({ searchParams }: Props) {
       const score = await getDriverScore(driver.Driver_ID)
       return { ...driver, score }
   }))
+
+  const now = new Date()
+  const thirtyDaysFromNow = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
 
   return (
     <>
@@ -69,6 +74,7 @@ export async function DriversContent({ searchParams }: Props) {
             <DriverDialog 
             mode="create" 
             vehicles={vehicles.data}
+            subcontractors={subcontractors}
             trigger={
                 <Button size="lg" className="gap-2 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700">
                     <Plus size={20} />
@@ -137,7 +143,7 @@ export async function DriversContent({ searchParams }: Props) {
                         <span className="text-xs font-bold leading-none">{driver.score.totalScore}</span>
                         <span className="text-[10px] opacity-80">คะแนน</span>
                     </div>
-                    <DriverActions driver={driver} vehicles={vehicles.data} />
+                    <DriverActions driver={driver} vehicles={vehicles.data} subcontractors={subcontractors} />
                 </div>
               </div>
 
@@ -152,12 +158,12 @@ export async function DriversContent({ searchParams }: Props) {
                 </div>
                 {driver.License_Expiry && (
                    <div className={`flex items-center gap-2 text-xs ${
-                       new Date(driver.License_Expiry) < new Date() ? 'text-red-400 font-bold' :
-                       new Date(driver.License_Expiry) < new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) ? 'text-amber-400' : 'text-slate-500'
+                       new Date(driver.License_Expiry) < now ? 'text-red-400 font-bold' :
+                       new Date(driver.License_Expiry) < thirtyDaysFromNow ? 'text-amber-400' : 'text-slate-500'
                    }`}>
                        <span>ใบขับขี่: {new Date(driver.License_Expiry).toLocaleDateString('th-TH')}</span>
-                       {new Date(driver.License_Expiry) < new Date() && <span>(หมดอายุ)</span>}
-                       {new Date(driver.License_Expiry) >= new Date() && new Date(driver.License_Expiry) < new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) && <span>(ใกล้หมด)</span>}
+                       {new Date(driver.License_Expiry) < now && <span>(หมดอายุ)</span>}
+                       {new Date(driver.License_Expiry) >= now && new Date(driver.License_Expiry) < thirtyDaysFromNow && <span>(ใกล้หมด)</span>}
                    </div>
                 )}
                 <div className="grid grid-cols-3 gap-2 mt-2 pt-2 border-t border-slate-800">

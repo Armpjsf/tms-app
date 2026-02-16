@@ -37,6 +37,7 @@ const settingsSections = [
         { label: "ข้อมูลบริษัท", desc: "โลโก้, ที่อยู่, เลขผู้เสียภาษี", path: "/settings/company" },
         { label: "บทบาทและสิทธิ์", desc: "กำหนดสิทธิ์การใช้งาน", path: "/settings/roles" },
         { label: "จัดการผู้ใช้งาน", desc: "เพิ่ม/ลบ พนักงาน", path: "/settings/users" },
+        { label: "จัดการบริษัทรถร่วม", desc: "จัดการนิติบุคคลและบัญชีธนาคารส่วนกลาง", path: "/settings/subcontractors" },
     ]
   },
   {

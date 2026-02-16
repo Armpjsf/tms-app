@@ -10,6 +10,7 @@ export type DriverFormData = {
   Password?: string
   Vehicle_Plate: string
   Active_Status: string
+  Sub_ID?: string
 }
 
 export async function createDriver(data: DriverFormData) {
@@ -26,6 +27,7 @@ export async function createDriver(data: DriverFormData) {
       Vehicle_Type: '4-Wheel', // Default
       Role: 'Driver',
       Active_Status: 'Active',
+      Sub_ID: data.Sub_ID || null,
     })
 
   if (error) {
@@ -50,6 +52,7 @@ export async function createBulkDrivers(drivers: Partial<DriverFormData>[]) {
     Vehicle_Type: '4-Wheel',
     Role: 'Driver',
     Active_Status: 'Active',
+    Sub_ID: d.Sub_ID || null,
   })).filter(d => d.Driver_Name) // Ensure name exists
 
   if (cleanData.length === 0) {
@@ -77,6 +80,7 @@ export async function updateDriver(driverId: string, data: Partial<DriverFormDat
     Mobile_No: data.Mobile_No,
     Vehicle_Plate: data.Vehicle_Plate,
     Active_Status: data.Active_Status,
+    Sub_ID: data.Sub_ID,
   }
 
   // Only update password if provided

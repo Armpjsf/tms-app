@@ -2,6 +2,8 @@
 
 import { createClient } from "@/utils/supabase/server"
 import { revalidatePath } from "next/cache"
+import { getSession } from "@/lib/session"
+import argon2 from "argon2"
 
 export interface UserData {
     Username: string;
@@ -48,22 +50,23 @@ export async function createUser(user: UserData) {
         return { success: false, error: "ชื่อผู้ใช้นี้มีอยู่ในระบบแล้ว" }
     }
 
-    const roleMap: Record<number, string> = {
-        1: 'Super Admin',
-        2: 'Admin',
-        3: 'Staff',
-        4: 'Driver',
-        5: 'Customer'
+    const session = await getSession()
+    if (!session) return { success: false, error: "Not authenticated" }
+
+    if (user.Role === "Super Admin" && session.roleId !== 1) {
+        return { success: false, error: "คุณไม่มีสิทธิ์สร้างผู้ใช้งานระดับ Super Admin" }
     }
+
+    const hashedPassword = await argon2.hash(user.Password || "123456")
 
     const { error } = await supabase
         .from("Master_Users")
         .insert([{
             Username: user.Username,
-            Password: user.Password,
+            Password: hashedPassword,
             Name: user.Name,
             Branch_ID: user.Branch_ID,
-            Role: roleMap[user.Role_ID] || 'Staff',
+            Role: user.Role || 'Staff',
             Customer_ID: user.Customer_ID || null,
             Permissions: user.Permissions || {},
             Active_Status: 'Active'
@@ -80,12 +83,18 @@ export async function createUser(user: UserData) {
 export async function updateUser(username: string, updates: Partial<UserData>) {
     const supabase = await createClient()
     
-    const roleMap: Record<number, string> = {
-        1: 'Super Admin',
-        2: 'Admin',
-        3: 'Staff',
-        4: 'Driver',
-        5: 'Customer'
+    const session = await getSession()
+    if (!session) return { success: false, error: "Not authenticated" }
+
+    // Check target user's current role
+    const { data: targetUser } = await supabase
+        .from("Master_Users")
+        .select("Role")
+        .eq("Username", username)
+        .single()
+
+    if (targetUser?.Role === "Super Admin" && session.roleId !== 1) {
+        return { success: false, error: "คุณไม่มีสิทธิ์แก้ไขข้อมูลของ Super Admin" }
     }
 
     const updatePayload: any = {
@@ -94,14 +103,11 @@ export async function updateUser(username: string, updates: Partial<UserData>) {
         Active_Status: updates.Active_Status,
         Customer_ID: updates.Customer_ID,
         Permissions: updates.Permissions,
-    }
-
-    if (updates.Role_ID) {
-        updatePayload.Role = roleMap[updates.Role_ID] || 'Staff'
+        Role: updates.Role
     }
 
     if (updates.Password) {
-        updatePayload.Password = updates.Password
+        updatePayload.Password = await argon2.hash(updates.Password)
     }
 
     const { error } = await supabase
@@ -117,9 +123,32 @@ export async function updateUser(username: string, updates: Partial<UserData>) {
     return { success: true }
 }
 
+export async function getCurrentUserRole() {
+    const session = await getSession()
+    if (!session) return { roleId: 3, username: null } // Default to Staff
+    return {
+        roleId: session.roleId,
+        username: session.username
+    }
+}
+
 export async function deleteUser(username: string) {
     const supabase = await createClient()
     
+    const session = await getSession()
+    if (!session) return { success: false, error: "Not authenticated" }
+
+    // Check target user's current role
+    const { data: targetUser } = await supabase
+        .from("Master_Users")
+        .select("Role")
+        .eq("Username", username)
+        .single()
+
+    if (targetUser?.Role === "Super Admin" && session.roleId !== 1) {
+        return { success: false, error: "คุณไม่มีสิทธิ์ลบข้อมูลของ Super Admin" }
+    }
+
     const { error } = await supabase
         .from("Master_Users")
         .delete()

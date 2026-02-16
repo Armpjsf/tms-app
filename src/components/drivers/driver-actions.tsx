@@ -9,7 +9,9 @@ import { DriverDialog } from "./driver-dialog"
 import { Driver } from "@/lib/supabase/drivers"
 import { Vehicle } from "@/lib/supabase/vehicles"
 
-export function DriverActions({ driver, vehicles }: { driver: Driver, vehicles: Vehicle[] }) {
+import { Subcontractor } from "@/types/subcontractor"
+
+export function DriverActions({ driver, vehicles, subcontractors }: { driver: Driver, vehicles: Vehicle[], subcontractors: Subcontractor[] }) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [showEdit, setShowEdit] = useState(false)
@@ -35,6 +37,7 @@ export function DriverActions({ driver, vehicles }: { driver: Driver, vehicles: 
         mode="edit" 
         driver={driver}
         vehicles={vehicles}
+        subcontractors={subcontractors}
         open={showEdit}
         onOpenChange={setShowEdit}
       />
