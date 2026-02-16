@@ -454,7 +454,7 @@ export default function DriverPaymentClient({ initialJobs, drivers, companyProfi
                 <option value="">ทั้งหมด</option>
                 {paymentModel === 'individual' ? (
                     drivers.map(d => (
-                        <option key={d.Driver_Name} value={d.Driver_Name}>{d.Driver_Name}</option>
+                        <option key={d.Driver_Name || ""} value={d.Driver_Name || ""}>{d.Driver_Name}</option>
                     ))
                 ) : (
                     subcontractors.map(s => (

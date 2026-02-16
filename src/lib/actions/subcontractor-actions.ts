@@ -4,8 +4,12 @@ import { createClient } from "@/utils/supabase/server"
 import { revalidatePath } from "next/cache"
 import { Subcontractor } from "@/types/subcontractor"
 
-export async function createSubcontractor(data: Subcontractor) {
+export async function createSubcontractor(data: Partial<Subcontractor>) {
     try {
+        if (!data.Sub_ID || !data.Sub_Name) {
+            throw new Error("Missing Sub_ID or Sub_Name")
+        }
+
         const supabase = await createClient()
         const { error } = await supabase
             .from("Master_Subcontractors")
@@ -23,9 +27,10 @@ export async function createSubcontractor(data: Subcontractor) {
         
         revalidatePath("/settings/subcontractors")
         return { success: true }
-    } catch (error: any) {
+    } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : String(error)
         console.error("Error creating subcontractor:", error)
-        return { success: false, error: error.message }
+        return { success: false, error: message }
     }
 }
 
@@ -41,9 +46,10 @@ export async function updateSubcontractor(id: string, data: Partial<Subcontracto
         
         revalidatePath("/settings/subcontractors")
         return { success: true }
-    } catch (error: any) {
+    } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : String(error)
         console.error("Error updating subcontractor:", error)
-        return { success: false, error: error.message }
+        return { success: false, error: message }
     }
 }
 
@@ -59,8 +65,9 @@ export async function deleteSubcontractor(id: string) {
         
         revalidatePath("/settings/subcontractors")
         return { success: true }
-    } catch (error: any) {
+    } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : String(error)
         console.error("Error deleting subcontractor:", error)
-        return { success: false, error: error.message }
+        return { success: false, error: message }
     }
 }
