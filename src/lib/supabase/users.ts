@@ -1,6 +1,6 @@
 "use server"
 
-import { createAdminClient } from '@/lib/supabase/admin'
+import { createClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { getSession } from '@/lib/session'
 
@@ -25,7 +25,7 @@ export async function getUserProfile() {
         return null
     }
 
-    const supabase = createAdminClient()
+    const supabase = await createClient()
 
     const { data: rawData, error } = await supabase
       .from('Master_Users')
@@ -63,7 +63,7 @@ export async function updateUserProfile(data: Partial<UserProfile>) {
     console.log('[updateUserProfile] Session:', session)
     if (!session || !session.userId) return { success: false, error: 'Not authenticated' }
 
-    const supabase = createAdminClient()
+    const supabase = await createClient()
 
     const updatePayload: any = {
         First_Name: data.First_Name,
