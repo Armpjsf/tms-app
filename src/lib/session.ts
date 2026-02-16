@@ -9,6 +9,8 @@ export type SessionPayload = {
   userId: string
   roleId: number
   branchId: string | null
+  customerId: string | null
+  permissions: Record<string, boolean>
   username: string
   expiresAt: Date
 }
@@ -32,9 +34,24 @@ export async function decrypt(session: string | undefined = '') {
   }
 }
 
-export async function createSession(userId: string, roleId: number, branchId: string | null, username: string) {
+export async function createSession(
+  userId: string, 
+  roleId: number, 
+  branchId: string | null, 
+  username: string,
+  customerId: string | null = null,
+  permissions: Record<string, boolean> = {}
+) {
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
-  const session = await encrypt({ userId, roleId, branchId, username, expiresAt })
+  const session = await encrypt({ 
+    userId, 
+    roleId, 
+    branchId, 
+    username, 
+    customerId, 
+    permissions,
+    expiresAt 
+  })
   const cookieStore = await cookies()
 
   cookieStore.set('session', session, {

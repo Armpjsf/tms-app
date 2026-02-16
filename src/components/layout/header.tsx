@@ -1,28 +1,41 @@
 "use client"
 
 import * as React from "react"
+import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { cn } from "@/lib/utils"
-import { Bell, Search, Moon, Sun, User } from "lucide-react"
+import { Bell, Search, Moon, Sun } from "lucide-react"
+import { getUserProfile, UserProfile } from "@/lib/supabase/users"
 
 interface HeaderProps {
   sidebarCollapsed?: boolean
 }
 
 export function Header({ sidebarCollapsed = false }: HeaderProps) {
-  const [isDark, setIsDark] = React.useState(true)
+  const [isDark, setIsDark] = useState(() => {
+    if (typeof window !== 'undefined') {
+        const stored = localStorage.getItem('theme')
+        return stored === 'dark' || (!stored && window.matchMedia('(prefers-color-scheme: dark)').matches)
+    }
+    return true
+  })
+  const [profile, setProfile] = useState<UserProfile | null>(null)
 
-  React.useEffect(() => {
-    // Sync with global theme
-    const stored = localStorage.getItem('theme')
-    const isDarkMode = stored === 'dark' || (!stored && window.matchMedia('(prefers-color-scheme: dark)').matches)
-    setIsDark(isDarkMode)
-    if (isDarkMode) {
+  useEffect(() => {
+    // Sync theme class
+    if (isDark) {
         document.documentElement.classList.add('dark')
     } else {
         document.documentElement.classList.remove('dark')
     }
-  }, [])
+
+    // Load profile
+    async function loadProfile() {
+      const data = await getUserProfile()
+      setProfile(data)
+    }
+    loadProfile()
+  }, [isDark])
 
   const toggleTheme = () => {
     const newIsDark = !isDark
@@ -88,12 +101,14 @@ export function Header({ sidebarCollapsed = false }: HeaderProps) {
           whileHover={{ scale: 1.02 }}
           className="flex items-center gap-3 h-10 px-3 rounded-xl bg-muted/50 hover:bg-muted border border-border hover:border-border/80 transition-all"
         >
-          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
-            <User size={14} className="text-white" />
+          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-[10px] font-bold text-white">
+            {(profile?.First_Name || profile?.Username || "A").charAt(0)}
           </div>
           <div className="text-left hidden lg:block">
-            <p className="text-sm font-medium text-foreground leading-tight">Admin</p>
-            <p className="text-[10px] text-muted-foreground">Super Admin</p>
+            <p className="text-sm font-medium text-foreground leading-tight">
+              {profile ? `${profile.First_Name || ""} ${profile.Last_Name || ""}`.trim() || profile.Username : "Admin"}
+            </p>
+            <p className="text-[10px] text-muted-foreground">{profile?.Role || "Super Admin"}</p>
           </div>
         </motion.button>
       </div>

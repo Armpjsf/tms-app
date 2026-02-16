@@ -8,10 +8,7 @@ import {
   Truck, 
   AlertTriangle, 
   Package,
-  Users,
-  Fuel,
   CheckCircle2,
-  Clock,
 } from "lucide-react"
 import { getTodayJobStats, getWeeklyJobStats, getJobStatusDistribution, getTodayFinancials } from "@/lib/supabase/jobs"
 import { getDriverStats } from "@/lib/supabase/drivers"
@@ -19,9 +16,11 @@ import { getVehicleStats } from "@/lib/supabase/vehicles"
 import { createClient } from "@/utils/supabase/server"
 import { WeeklyShipmentChart } from "@/components/dashboard/charts/weekly-shipment-chart"
 import { JobStatusChart } from "@/components/dashboard/charts/job-status-chart"
+import { isCustomer } from "@/lib/permissions"
 
 export default async function DashboardPage() {
-  // ดึงข้อมูลจาก Supabase
+  const customerMode = await isCustomer()
+  
   // ดึงข้อมูลจาก Supabase
   const [jobStats, driverStats, vehicleStats, sosCount, weeklyStats, statusDist, financials] = await Promise.all([
     getTodayJobStats(),
@@ -44,7 +43,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* Metrics Grid (Consolidated 5 KPIs) */}
-      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
+      <div className={`grid grid-cols-1 md:grid-cols-3 ${customerMode ? 'lg:grid-cols-4' : 'lg:grid-cols-5'} gap-4 mb-8`}>
         <MetricCard
           title="งานวันนี้"
           value={jobStats.total}
@@ -66,13 +65,15 @@ export default async function DashboardPage() {
           gradient="danger"
           trend={{ value: sosCount, label: "SOS Alerts" }}
         />
-        <MetricCard
-          title="รถและคนขับ"
-          value={vehicleStats.active + driverStats.active}
-          icon={<Truck size={20} />}
-          gradient="warning"
-          trend={{ value: driverStats.active, label: "คนขับออนไลน์" }}
-        />
+        {!customerMode && (
+          <MetricCard
+            title="รถและคนขับ"
+            value={vehicleStats.active + driverStats.active}
+            icon={<Truck size={20} />}
+            gradient="warning"
+            trend={{ value: driverStats.active, label: "คนขับออนไลน์" }}
+          />
+        )}
         <MetricCard
           title="รายได้วันนี้ (Est.)"
           value={`฿${financials.revenue.toLocaleString()}`}
@@ -112,13 +113,23 @@ export default async function DashboardPage() {
 }
 
 // ฟังก์ชันเสริมสำหรับนับ SOS
+import { getCustomerId as getAuthCustomerId } from "@/lib/permissions"
+
 async function getSosCount(): Promise<number> {
   try {
     const supabase = await createClient()
-    const { count, error } = await supabase
+    const customerId = await getAuthCustomerId()
+
+    let dbQuery = supabase
       .from('Jobs_Main')
       .select('*', { count: 'exact', head: true })
       .eq('Job_Status', 'SOS')
+    
+    if (customerId) {
+        dbQuery = dbQuery.eq('Customer_ID', customerId)
+    }
+
+    const { count, error } = await dbQuery
 
     if (error) return 0
     return count || 0

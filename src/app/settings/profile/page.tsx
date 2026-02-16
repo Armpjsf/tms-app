@@ -19,7 +19,7 @@ export default function AdminProfilePage() {
     Last_Name: "",
     Email: "",
     Username: "",
-    Role_ID: 0
+    Role: ""
   })
 
   useEffect(() => {
@@ -34,6 +34,25 @@ export default function AdminProfilePage() {
   }, [])
 
   const handleSave = async () => {
+    // Validation
+    if (!formData.First_Name?.trim()) {
+        toast.error("กรุณาระบุชื่อจริง")
+        return
+    }
+    if (!formData.Last_Name?.trim()) {
+        toast.error("กรุณาระบุนามสกุล")
+        return
+    }
+    if (!formData.Email?.trim()) {
+        toast.error("กรุณาระบุอีเมล")
+        return
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(formData.Email)) {
+        toast.error("รูปแบบอีเมลไม่ถูกต้อง")
+        return
+    }
+
     setSaving(true)
     try {
         const result = await updateUserProfile(formData)
@@ -42,7 +61,7 @@ export default function AdminProfilePage() {
         } else {
             toast.error(result.error || "เกิดข้อผิดพลาดในการบันทึก")
         }
-    } catch (e) {
+    } catch {
         toast.error("เกิดข้อผิดพลาด")
     } finally {
         setSaving(false)
@@ -129,7 +148,7 @@ export default function AdminProfilePage() {
             <div className="space-y-2">
                 <Label className="text-slate-400">บทบาท</Label>
                 <Input 
-                    value={formData.Role_ID === 1 ? "Super Admin" : "User"}
+                    value={formData.Role || "User"}
                     disabled
                     className="bg-slate-800/50 border-slate-800 text-slate-500 cursor-not-allowed"
                 />

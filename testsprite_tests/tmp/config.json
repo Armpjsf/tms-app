@@ -5,13 +5,13 @@
   "localEndpoint": "http://localhost:3000",
   "executionArgs": {
     "projectName": "TMS_ePOD",
-    "projectPath": "C:\\Users\\Armdd\\TMS_ePOD",
+    "projectPath": "c:\\Users\\Armdd\\TMS_ePOD",
     "testIds": [],
-    "additionalInstruction": "Generate Playwright tests. Focus on critical flows: Login, Dashboard access, and Excel Import on Drivers page.",
+    "additionalInstruction": "Use credentials admin / 123456. The UI is in Thai. Success toast message is 'บันทึกข้อมูลสำเร็จ'. Validation messages are 'กรุณาระบุชื่อจริง' and 'รูปแบบอีเมลไม่ถูกต้อง'. Login starts at /login. Driver login is at /mobile/login. Use the provided testIds or run all.",
     "envs": {
       "API_KEY": "sk-user-l25GhbbfoJcwR4PbCFuCEwi4DtKEDaLfoGaTdjvb1ddp9v9rSttkSShdO4xalAs2qK8_PeuCu4J3caWxglV1oQiLm1jBX1ahiuG8rtZzGekf8MBRmJcHmfslT8rsRt-9E5s"
     }
   },
-  "serverPort": 63134,
-  "proxy": "http://ee9cfe72-61f8-443a-967b-2bf8751c45b6:BivX7ZgQ7n4km6AOidp8JO8iouBoiB8O@tun.testsprite.com:8080"
+  "serverPort": 56946,
+  "proxy": "http://d2b27635-dfe2-4a06-8619-e99207d6bd2d:LG2ASWR0AkYKA6lig8tmCxxDVIg5ka5h@tun.testsprite.com:8080"
 }

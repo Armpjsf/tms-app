@@ -18,18 +18,19 @@ import {
   Download,
   Filter,
   ArrowLeft,
-  ExternalLink,
 } from "lucide-react"
 import { getAllJobs } from "@/lib/supabase/jobs"
 import { getJobCreationData } from "@/app/planning/actions"
 import { ExcelExport } from "@/components/ui/excel-export"
 import { JobHistoryActions } from "@/components/jobs/job-history-actions"
+import { isCustomer } from "@/lib/permissions"
 
 type Props = {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }
 
 export default async function JobHistoryPage(props: Props) {
+  const customerMode = await isCustomer()
   const searchParams = await props.searchParams
   const page = Number(searchParams.page) || 1
   const query = (searchParams.q as string) || ''
@@ -235,13 +236,15 @@ export default async function JobHistoryPage(props: Props) {
                         </span>
                       </td>
                       <td className="p-4 text-right">
-                          <JobHistoryActions 
-                              job={job}
-                              drivers={drivers}
-                              vehicles={vehicles}
-                              customers={customers}
-                              routes={routes}
-                          />
+                          {!customerMode && (
+                              <JobHistoryActions 
+                                  job={job}
+                                  drivers={drivers}
+                                  vehicles={vehicles}
+                                  customers={customers}
+                                  routes={routes}
+                              />
+                          )}
                       </td>
                     </tr>
                   ))}

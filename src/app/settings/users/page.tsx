@@ -12,12 +12,14 @@ import { Users, Plus, Edit, Trash2, Search, Loader2 } from "lucide-react"
 import { getUsers, createUser, updateUser, deleteUser, UserData } from "@/lib/actions/user-actions"
 import { getRoles } from "@/lib/actions/role-actions"
 import { getBranches, Branch } from "@/lib/actions/branch-actions"
+import { getAllCustomers, Customer } from "@/lib/supabase/customers"
 import { Role } from "@/types/role"
 
 export default function UserSettingsPage() {
     const [users, setUsers] = useState<any[]>([])
     const [roles, setRoles] = useState<Role[]>([])
     const [branches, setBranches] = useState<Branch[]>([])
+    const [customers, setCustomers] = useState<Customer[]>([])
     
     const [loading, setLoading] = useState(true)
     const [isDialogOpen, setIsDialogOpen] = useState(false)
@@ -32,7 +34,12 @@ export default function UserSettingsPage() {
         Name: "",
         Branch_ID: "",
         Role_ID: 0,
-        Active_Status: "Active"
+        Active_Status: "Active",
+        Customer_ID: null,
+        Permissions: {
+            view_history: true,
+            track_jobs: true
+        }
     })
 
     useEffect(() => {
@@ -41,14 +48,16 @@ export default function UserSettingsPage() {
 
     const loadData = async () => {
         setLoading(true)
-        const [usersData, rolesData, branchesData] = await Promise.all([
+        const [usersData, rolesData, branchesData, customersData] = await Promise.all([
             getUsers(),
             getRoles(),
-            getBranches()
+            getBranches(),
+            getAllCustomers()
         ])
         setUsers(usersData || [])
         setRoles(rolesData || [])
         setBranches(branchesData || [])
+        setCustomers(customersData?.data || [])
         setLoading(false)
     }
 
@@ -61,7 +70,9 @@ export default function UserSettingsPage() {
                 Name: user.Name,
                 Branch_ID: user.Branch_ID,
                 Role_ID: user.Role_ID,
-                Active_Status: user.Active_Status
+                Active_Status: user.Active_Status,
+                Customer_ID: user.Customer_ID,
+                Permissions: user.Permissions || { view_history: true, track_jobs: true }
             })
         } else {
             setEditingUser(null)
@@ -71,7 +82,9 @@ export default function UserSettingsPage() {
                 Name: "",
                 Branch_ID: "",
                 Role_ID: 0,
-                Active_Status: "Active"
+                Active_Status: "Active",
+                Customer_ID: null,
+                Permissions: { view_history: true, track_jobs: true }
             })
         }
         setIsDialogOpen(true)
@@ -168,7 +181,14 @@ export default function UserSettingsPage() {
                                 ) : (
                                     filteredUsers.map((user) => (
                                         <tr key={user.Username} className="hover:bg-slate-800/50 transition-colors">
-                                            <td className="px-6 py-4 font-medium text-white">{user.Username}</td>
+                                            <td className="px-6 py-4 font-medium text-white">
+                                                {user.Username}
+                                                {user.Customer_ID && (
+                                                    <div className="text-[10px] text-blue-400 font-normal">
+                                                        Client: {user.Master_Customers?.Customer_Name || user.Customer_ID}
+                                                    </div>
+                                                )}
+                                            </td>
                                             <td className="px-6 py-4 text-slate-300">{user.Name}</td>
                                             <td className="px-6 py-4 text-slate-300">
                                                 {user.Master_Branches?.Branch_Name || user.Branch_ID || "-"}
@@ -276,6 +296,59 @@ export default function UserSettingsPage() {
                                     </SelectContent>
                                 </Select>
                             </div>
+                        </div>
+
+                        {/* Customer Link Section */}
+                        <div className="space-y-4 p-4 rounded-lg bg-slate-950/50 border border-slate-800">
+                            <div className="space-y-2">
+                                <Label className="text-blue-400 text-xs font-bold uppercase">Customer Link (สำหรับลูกค้า)</Label>
+                                <Select 
+                                    value={formData.Customer_ID || "none"} 
+                                    onValueChange={v => setFormData({...formData, Customer_ID: v === "none" ? null : v})}
+                                >
+                                    <SelectTrigger className="bg-slate-800 border-slate-700">
+                                        <SelectValue placeholder="เชื่อมโยงกับลูกค้า (Optional)" />
+                                    </SelectTrigger>
+                                    <SelectContent className="bg-slate-800 border-slate-700 text-white">
+                                        <SelectItem value="none">-- ไม่ระบุ (พนักงานทั่วไป) --</SelectItem>
+                                        {customers.map(c => (
+                                            <SelectItem key={c.Customer_ID} value={c.Customer_ID}>
+                                                {c.Customer_Name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                            {formData.Customer_ID && (
+                                <div className="space-y-3 pt-2">
+                                    <Label className="text-slate-400 text-[11px] mb-2 block">กำหนดสิทธิ์การเข้าถึง (Permissions):</Label>
+                                    <div className="flex items-center justify-between p-2 rounded bg-slate-800/30">
+                                        <span className="text-sm">ดูประวัติงาน (View History)</span>
+                                        <input 
+                                            type="checkbox" 
+                                            className="h-4 w-4 rounded border-slate-700 bg-slate-900"
+                                            checked={formData.Permissions?.view_history}
+                                            onChange={e => setFormData({
+                                                ...formData, 
+                                                Permissions: { ...formData.Permissions, view_history: e.target.checked }
+                                            })}
+                                        />
+                                    </div>
+                                    <div className="flex items-center justify-between p-2 rounded bg-slate-800/30">
+                                        <span className="text-sm">ติดตามงาน Real-time (Track Jobs)</span>
+                                        <input 
+                                            type="checkbox" 
+                                            className="h-4 w-4 rounded border-slate-700 bg-slate-900"
+                                            checked={formData.Permissions?.track_jobs}
+                                            onChange={e => setFormData({
+                                                ...formData, 
+                                                Permissions: { ...formData.Permissions, track_jobs: e.target.checked }
+                                            })}
+                                        />
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
                         <div className="space-y-2">

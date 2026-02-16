@@ -1,6 +1,5 @@
 'use server'
 
-import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/utils/supabase/server'
 import argon2 from 'argon2'
@@ -18,7 +17,7 @@ export async function login(formData: FormData) {
   // 1. Query Master_Users
   const { data: users, error } = await supabase
     .from('Master_Users')
-    .select('*')
+    .select('*, Master_Roles(Role_Name)')
     .eq('Username', data.email)
     .single()
 
@@ -28,17 +27,12 @@ export async function login(formData: FormData) {
     redirect('/login?error=Invalid credentials')
   }
 
-  // 2. Verify Password
-  // app.py: ph = PasswordHasher(...)
-  // We need to verify standard Argon2 hash
-  
+  // ... (Password verification logic) ...
   let isValid = false
   try {
     if (users.Password.startsWith('$argon2')) {
        isValid = await argon2.verify(users.Password, data.password)
     } else {
-       // Legacy fallback (SHA256) - NOT IMPLEMENTED for security in this demo
-       // You should migrate users using the Python app or implement SHA256 here if needed
        console.warn("Legacy password format detected")
        isValid = false 
     }
@@ -54,8 +48,17 @@ export async function login(formData: FormData) {
   // 3. Create Session (Custom)
   const roleId = users.Role_ID || 3 // Default to Staff if null
   const branchId = users.Branch_ID || null
+  const customerId = users.Customer_ID || null
+  const permissions = users.Permissions || {}
   
-  await createSession(users.User_ID, roleId, branchId, users.Username)
+  await createSession(
+    users.Username, 
+    roleId, 
+    branchId, 
+    users.Username, 
+    customerId, 
+    permissions
+  )
   
   redirect('/dashboard')
 }

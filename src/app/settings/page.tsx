@@ -1,5 +1,6 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -16,8 +17,9 @@ import {
   LogOut,
   ChevronRight,
   Building,
+  Loader2,
 } from "lucide-react"
-import { logout } from "@/app/login/actions"
+import { getUserProfile, UserProfile } from "@/lib/supabase/users"
 
 const settingsSections = [
   {
@@ -62,7 +64,18 @@ const settingsSections = [
 
 export default function SettingsPage() {
   const router = useRouter()
+  const [profile, setProfile] = useState<UserProfile | null>(null)
+  const [loading, setLoading] = useState(true)
   
+  useEffect(() => {
+    async function loadProfile() {
+      const data = await getUserProfile()
+      setProfile(data)
+      setLoading(false)
+    }
+    loadProfile()
+  }, [])
+
   const handleNavigate = (path: string) => {
     router.push(path)
   }
@@ -91,17 +104,25 @@ export default function SettingsPage() {
       >
         <Card className="bg-card border-border">
           <CardContent className="p-6">
-            <div className="flex items-center gap-4">
-              <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center text-primary-foreground text-2xl font-bold shadow-lg">
-                A
+            {loading ? (
+              <div className="flex items-center justify-center py-4">
+                <Loader2 className="w-6 h-6 animate-spin text-primary" />
               </div>
-              <div className="flex-1">
-                <h2 className="text-xl font-bold text-foreground">Admin User</h2>
-                <p className="text-muted-foreground">admin@company.com</p>
-                <p className="text-xs text-primary mt-1">Super Admin</p>
+            ) : (
+              <div className="flex items-center gap-4">
+                <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center text-primary-foreground text-2xl font-bold shadow-lg">
+                  {(profile?.First_Name || profile?.Username || "A").charAt(0)}
+                </div>
+                <div className="flex-1">
+                  <h2 className="text-xl font-bold text-foreground">
+                    {profile ? `${profile.First_Name || ""} ${profile.Last_Name || ""}`.trim() || profile.Username : "User"}
+                  </h2>
+                  <p className="text-muted-foreground">{profile?.Email || "no email provided"}</p>
+                  <p className="text-xs text-primary mt-1">{profile?.Role || "Staff"}</p>
+                </div>
+                <Button variant="outline" onClick={() => handleNavigate("/settings/profile")}>แก้ไขโปรไฟล์</Button>
               </div>
-              <Button variant="outline" onClick={() => handleNavigate("/settings/profile")}>แก้ไขโปรไฟล์</Button>
-            </div>
+            )}
           </CardContent>
         </Card>
       </motion.div>

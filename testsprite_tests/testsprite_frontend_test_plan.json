@@ -1,489 +1,97 @@
 [
   {
     "id": "TC001",
-    "title": "Authentication success with valid credentials",
-    "description": "Verify that a user can successfully log in using valid credentials and receive appropriate session tokens.",
-    "category": "functional",
+    "title": "Update profile successfully and see Toast notification",
+    "description": "Verifies an authenticated user can update first name and see the success toast.",
+    "category": "Profile Management",
     "priority": "High",
     "steps": [
+      { "type": "action", "description": "Navigate to /login" },
       {
         "type": "action",
-        "description": "Navigate to the login page"
+        "description": "Type \"admin\" into the first input field"
       },
       {
         "type": "action",
-        "description": "Enter valid username/email and password"
+        "description": "Type \"123456\" into the second input field"
       },
       {
         "type": "action",
-        "description": "Submit the login form"
+        "description": "Click the button with text \"เข้าสู่ระบบ\" or \"Login\""
       },
       {
         "type": "assertion",
-        "description": "Verify the user is redirected to the dashboard and a session is established"
+        "description": "Verify URL contains \"/dashboard\""
+      },
+      { "type": "action", "description": "Navigate to /settings/profile" },
+      {
+        "type": "action",
+        "description": "Change the First Name field to \"Pongamon\""
+      },
+      {
+        "type": "action",
+        "description": "Click the button with text \"บันทึกการเปลี่ยนแปลง\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"บันทึกข้อมูลสำเร็จ\" is visible"
       }
     ]
   },
   {
     "id": "TC002",
-    "title": "Authentication failure with invalid credentials",
-    "description": "Verify that the system rejects login attempts with invalid username or password and shows an error message.",
-    "category": "error handling",
+    "title": "Invalid email validation triggered",
+    "description": "Verifies that entering an invalid email shows the correct Thai error message.",
+    "category": "Profile Management",
     "priority": "High",
     "steps": [
+      { "type": "action", "description": "Navigate to /login" },
+      { "type": "action", "description": "Login as admin" },
+      { "type": "action", "description": "Navigate to /settings/profile" },
       {
         "type": "action",
-        "description": "Navigate to the login page"
+        "description": "Type \"not-an-email\" into the email field"
       },
-      {
-        "type": "action",
-        "description": "Enter invalid username/email or password"
-      },
-      {
-        "type": "action",
-        "description": "Submit the login form"
-      },
+      { "type": "action", "description": "Click \"บันทึกการเปลี่ยนแปลง\"" },
       {
         "type": "assertion",
-        "description": "Verify that the login is rejected and an appropriate error message is shown"
+        "description": "Verify text \"รูปแบบอีเมลไม่ถูกต้อง\" is visible"
       }
     ]
   },
   {
     "id": "TC003",
-    "title": "Role-based access control enforcement",
-    "description": "Verify that users can only access features and pages according to their assigned roles and permissions.",
-    "category": "security",
+    "title": "Required field validation triggered",
+    "description": "Verifies that clearing a name field shows the correct Thai error message.",
+    "category": "Profile Management",
     "priority": "High",
     "steps": [
-      {
-        "type": "action",
-        "description": "Log in as a user with limited permissions"
-      },
-      {
-        "type": "action",
-        "description": "Attempt to access admin-only pages and perform restricted actions"
-      },
+      { "type": "action", "description": "Navigate to /login" },
+      { "type": "action", "description": "Login as admin" },
+      { "type": "action", "description": "Navigate to /settings/profile" },
+      { "type": "action", "description": "Clear the First Name field" },
+      { "type": "action", "description": "Click \"บันทึกการเปลี่ยนแปลง\"" },
       {
         "type": "assertion",
-        "description": "Verify that access is denied or UI elements are disabled/hidden appropriately"
+        "description": "Verify text \"กรุณาระบุชื่อจริง\" is visible"
       }
     ]
   },
   {
     "id": "TC004",
-    "title": "Dashboard displays correct summary information",
-    "description": "Verify that the dashboard accurately displays the daily tasks, vehicle statuses, and job statistics reflective of the system data.",
-    "category": "functional",
+    "title": "Driver Login Page Accessibility",
+    "description": "Verifies that the driver login page renders correctly at /mobile/login.",
+    "category": "Authentication",
     "priority": "High",
     "steps": [
+      { "type": "action", "description": "Navigate to /mobile/login" },
       {
-        "type": "action",
-        "description": "Log in as an authorized user"
-      },
-      {
-        "type": "action",
-        "description": "Navigate to the dashboard page"
+        "type": "assertion",
+        "description": "Verify the text \"Driver Login\" or logo is visible"
       },
       {
         "type": "assertion",
-        "description": "Verify that daily tasks, vehicle status, and job statistics are displayed correctly and match the backend data"
-      }
-    ]
-  },
-  {
-    "id": "TC005",
-    "title": "Driver profile CRUD operations",
-    "description": "Verify that user can create, read, update, and delete driver profiles through the UI.",
-    "category": "functional",
-    "priority": "High",
-    "steps": [
-      {
-        "type": "action",
-        "description": "Navigate to the drivers management page"
-      },
-      {
-        "type": "action",
-        "description": "Create a new driver profile with valid details"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify the new driver appears in the list with correct information"
-      },
-      {
-        "type": "action",
-        "description": "Update the driver profile with new information"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify the updated information is saved and displayed"
-      },
-      {
-        "type": "action",
-        "description": "Delete the driver profile"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify the driver no longer appears in the list"
-      }
-    ]
-  },
-  {
-    "id": "TC006",
-    "title": "Bulk import drivers via Excel with valid data",
-    "description": "Verify that bulk import of driver data using an Excel file imports all valid records and updates the system correctly.",
-    "category": "functional",
-    "priority": "High",
-    "steps": [
-      {
-        "type": "action",
-        "description": "Navigate to the drivers management page"
-      },
-      {
-        "type": "action",
-        "description": "Initiate the bulk import process and upload a well-formed Excel file with multiple driver records"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify that all drivers in the file are imported and displayed correctly"
-      }
-    ]
-  },
-  {
-    "id": "TC007",
-    "title": "Bulk import drivers via Excel with malformed data",
-    "description": "Verify the system handles invalid or corrupted Excel files gracefully and provides relevant error messages during bulk import of drivers.",
-    "category": "error handling",
-    "priority": "Medium",
-    "steps": [
-      {
-        "type": "action",
-        "description": "Navigate to the drivers management page"
-      },
-      {
-        "type": "action",
-        "description": "Attempt to upload a corrupted or incorrectly formatted Excel file for bulk driver import"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify that the system rejects the file and shows appropriate error messages without importing data"
-      }
-    ]
-  },
-  {
-    "id": "TC008",
-    "title": "Vehicle profile CRUD operations",
-    "description": "Verify creating, reading, updating, and deleting vehicle profiles with status tracking and maintenance alert settings.",
-    "category": "functional",
-    "priority": "High",
-    "steps": [
-      {
-        "type": "action",
-        "description": "Navigate to the vehicles management page"
-      },
-      {
-        "type": "action",
-        "description": "Create a new vehicle with valid details"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify the vehicle appears in the list with correct details"
-      },
-      {
-        "type": "action",
-        "description": "Update the vehicle details and maintenance alert parameters"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify updates are saved and reflected in the UI"
-      },
-      {
-        "type": "action",
-        "description": "Delete the vehicle record"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify the vehicle no longer appears in the list"
-      }
-    ]
-  },
-  {
-    "id": "TC009",
-    "title": "Bulk import vehicles via Excel with valid data",
-    "description": "Verify successful import of multiple vehicles from a valid Excel spreadsheet updating vehicle fleet accurately.",
-    "category": "functional",
-    "priority": "High",
-    "steps": [
-      {
-        "type": "action",
-        "description": "Navigate to the vehicles management page"
-      },
-      {
-        "type": "action",
-        "description": "Upload a properly formatted Excel file containing vehicle data for bulk import"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify all vehicles in the file are imported and visible in the vehicles list"
-      }
-    ]
-  },
-  {
-    "id": "TC010",
-    "title": "Planning and job creation with VRP settings",
-    "description": "Verify that jobs can be created and planned effectively using the configurable Vehicle Routing Problem (VRP) settings including vehicle types, job types, and time windows.",
-    "category": "functional",
-    "priority": "High",
-    "steps": [
-      {
-        "type": "action",
-        "description": "Navigate to the planning page"
-      },
-      {
-        "type": "action",
-        "description": "Create new job entries with all required details"
-      },
-      {
-        "type": "action",
-        "description": "Configure VRP settings such as vehicle types, time windows, and route preferences"
-      },
-      {
-        "type": "action",
-        "description": "Execute the route optimization process"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify that jobs are assigned correctly and optimized routes are displayed on the map"
-      }
-    ]
-  },
-  {
-    "id": "TC011",
-    "title": "Bulk import jobs via Excel",
-    "description": "Verify that job records are successfully imported in bulk from Excel files and correctly processed in the system.",
-    "category": "functional",
-    "priority": "High",
-    "steps": [
-      {
-        "type": "action",
-        "description": "Go to the planning page"
-      },
-      {
-        "type": "action",
-        "description": "Upload a valid Excel file containing multiple job records for bulk import"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify all jobs from the file are created successfully and visible in the job list"
-      }
-    ]
-  },
-  {
-    "id": "TC012",
-    "title": "Handling invalid job data in bulk import",
-    "description": "Verify that invalid or incomplete job entries in bulk Excel import are rejected or reported with clear errors without corrupting valid data entries.",
-    "category": "error handling",
-    "priority": "Medium",
-    "steps": [
-      {
-        "type": "action",
-        "description": "Navigate to the planning page"
-      },
-      {
-        "type": "action",
-        "description": "Upload an Excel file containing some invalid or incomplete job data"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify system reports errors for invalid rows and imports only valid job records without data corruption"
-      }
-    ]
-  },
-  {
-    "id": "TC013",
-    "title": "Real-time GPS tracking map updates",
-    "description": "Verify that the admin map interface displays real-time and accurate vehicle locations on Leaflet maps with frequent updates.",
-    "category": "functional",
-    "priority": "High",
-    "steps": [
-      {
-        "type": "action",
-        "description": "Log in as admin and open the GPS tracking map page"
-      },
-      {
-        "type": "action",
-        "description": "Verify initial display of all tracked vehicles with their last known locations"
-      },
-      {
-        "type": "assertion",
-        "description": "Confirm vehicle locations update dynamically in real-time as tracking data changes"
-      }
-    ]
-  },
-  {
-    "id": "TC014",
-    "title": "Job status update via Mobile PWA",
-    "description": "Verify drivers can update job statuses from assigned tasks using the mobile PWA, and that status changes sync correctly to the backend.",
-    "category": "functional",
-    "priority": "High",
-    "steps": [
-      {
-        "type": "action",
-        "description": "Log in on Mobile PWA as a driver"
-      },
-      {
-        "type": "action",
-        "description": "View assigned jobs and select one job"
-      },
-      {
-        "type": "action",
-        "description": "Update job status through available options"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify status update is saved and reflected correctly in the backend and visible to admin"
-      }
-    ]
-  },
-  {
-    "id": "TC015",
-    "title": "Offline support and sync for Mobile PWA job updates",
-    "description": "Verify that Mobile PWA allows offline access to assigned jobs, enables status updates offline, and correctly syncs data when network is restored.",
-    "category": "functional",
-    "priority": "Medium",
-    "steps": [
-      {
-        "type": "action",
-        "description": "Log in to Mobile PWA with internet connection"
-      },
-      {
-        "type": "action",
-        "description": "Go offline and access assigned jobs"
-      },
-      {
-        "type": "action",
-        "description": "Update job status while offline"
-      },
-      {
-        "type": "action",
-        "description": "Restore network connectivity"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify offline job status updates are synced and reflected in the backend after reconnection"
-      }
-    ]
-  },
-  {
-    "id": "TC016",
-    "title": "Filtering and searching jobs and orders",
-    "description": "Verify that users can effectively filter and search jobs and shipments based on criteria such as status, date range, vehicle, driver, and other parameters.",
-    "category": "functional",
-    "priority": "Medium",
-    "steps": [
-      {
-        "type": "action",
-        "description": "Navigate to job or shipment management page"
-      },
-      {
-        "type": "action",
-        "description": "Apply various filters and search queries with valid criteria"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify that job and shipment lists update correctly reflecting the filter and search parameters"
-      }
-    ]
-  },
-  {
-    "id": "TC017",
-    "title": "Shipment assignment via tap menu",
-    "description": "Verify users can assign jobs or shipments to vehicles through the tap menu and that assignment status updates correctly.",
-    "category": "functional",
-    "priority": "Medium",
-    "steps": [
-      {
-        "type": "action",
-        "description": "Navigate to the shipment/job assignment interface"
-      },
-      {
-        "type": "action",
-        "description": "Select one or more jobs and assign to a vehicle using tap menu"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify assignments are recorded, shown in UI, and vehicle assignments reflect accurately in routing"
-      }
-    ]
-  },
-  {
-    "id": "TC018",
-    "title": "VRP routing parameter validations",
-    "description": "Verify that the Vehicle Routing Problem configuration interface validates inputs for vehicle types, job types, time windows, and route preferences preventing invalid settings.",
-    "category": "error handling",
-    "priority": "Medium",
-    "steps": [
-      {
-        "type": "action",
-        "description": "Access VRP configuration settings"
-      },
-      {
-        "type": "action",
-        "description": "Input invalid or conflicting parameters such as overlapping time windows, invalid vehicle types, or negative preferences"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify that the system provides validation warnings/errors and prevents saving invalid configurations"
-      }
-    ]
-  },
-  {
-    "id": "TC019",
-    "title": "UI responsiveness and accessibility compliance",
-    "description": "Verify that all main pages including dashboard, drivers, vehicles, planning and maps render correctly on various screen sizes and support keyboard navigation and screen readers.",
-    "category": "ui",
-    "priority": "Medium",
-    "steps": [
-      {
-        "type": "action",
-        "description": "Access key pages on desktop, tablet, and mobile screen sizes"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify layout adapts correctly and no content is clipped or distorted"
-      },
-      {
-        "type": "action",
-        "description": "Navigate UI using keyboard only and activate all clickable elements"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify focus states are visible and navigation is logical and complete"
-      },
-      {
-        "type": "action",
-        "description": "Use screen reader to inspect main content and controls"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify all important elements have accessible labels and no critical information is missing"
-      }
-    ]
-  },
-  {
-    "id": "TC020",
-    "title": "API input validation and error responses",
-    "description": "Verify all API endpoints related to authentication, driver/vehicle/job management, routing, and tracking enforce strict input validation and return appropriate error responses for invalid or malicious inputs.",
-    "category": "error handling",
-    "priority": "High",
-    "steps": [
-      {
-        "type": "action",
-        "description": "Send API requests with missing mandatory fields, invalid data types, and malicious payloads"
-      },
-      {
-        "type": "assertion",
-        "description": "Confirm APIs reject invalid requests with correct HTTP status codes and error messages without compromising system stability"
+        "description": "Verify login form inputs are present"
       }
     ]
   }

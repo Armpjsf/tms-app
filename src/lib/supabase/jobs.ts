@@ -23,7 +23,7 @@ export type Job = {
 }
 
 // ดึงงานทั้งหมดวันนี้
-import { getUserBranchId, isSuperAdmin } from "@/lib/permissions"
+import { getUserBranchId, isSuperAdmin, getCustomerId } from "@/lib/permissions"
 
 export async function getTodayJobs(): Promise<Job[]> {
   try {
@@ -38,10 +38,14 @@ export async function getTodayJobs(): Promise<Job[]> {
     // Filter by Branch
     const branchId = await getUserBranchId()
     const isAdmin = await isSuperAdmin()
+    const customerId = await getCustomerId()
     
     if (branchId && !isAdmin) {
-        // @ts-ignore - Dynamic query
         dbQuery = dbQuery.eq('Branch_ID', branchId)
+    }
+
+    if (customerId) {
+        dbQuery = dbQuery.eq('Customer_ID', customerId)
     }
 
     const { data, error } = await dbQuery
@@ -101,9 +105,14 @@ export async function getAllJobs(
     // Filter by Branch
     const branchId = await getUserBranchId()
     const isAdmin = await isSuperAdmin()
+    const customerId = await getCustomerId()
     
     if (branchId && !isAdmin) {
         dbQuery = dbQuery.eq('Branch_ID', branchId)
+    }
+
+    if (customerId) {
+        dbQuery = dbQuery.eq('Customer_ID', customerId)
     }
 
     dbQuery = dbQuery
@@ -137,11 +146,18 @@ export async function getTodayJobStats() {
   try {
     const supabase = await createClient()
     const today = new Date().toISOString().split('T')[0]
+    const customerId = await getCustomerId()
     
-    const { data, error } = await supabase
+    let dbQuery = supabase
       .from('Jobs_Main')
       .select('Job_Status')
       .eq('Plan_Date', today)
+
+    if (customerId) {
+        dbQuery = dbQuery.eq('Customer_ID', customerId)
+    }
+    
+    const { data, error } = await dbQuery
     
     if (error) {
       console.error('Error fetching job stats:', JSON.stringify(error))
@@ -166,11 +182,18 @@ export async function getTodayFinancials() {
   try {
     const supabase = await createClient()
     const today = new Date().toISOString().split('T')[0]
-    
-    const { data, error } = await supabase
+    const customerId = await getCustomerId()
+
+    let dbQuery = supabase
       .from('Jobs_Main')
       .select('Price_Cust_Total')
       .eq('Plan_Date', today)
+
+    if (customerId) {
+        dbQuery = dbQuery.eq('Customer_ID', customerId)
+    }
+
+    const { data, error } = await dbQuery
       .neq('Job_Status', 'Cancelled') // Exclude cancelled jobs
     
     if (error) return { revenue: 0 }
@@ -252,12 +275,19 @@ export async function getWeeklyJobStats() {
     sevenDaysAgo.setDate(today.getDate() - 6)
 
     const startDate = sevenDaysAgo.toISOString().split('T')[0]
+    const customerId = await getCustomerId()
     
     // ดึงข้อมูล 7 วันล่าสุด
-    const { data, error } = await supabase
+    let dbQuery = supabase
       .from('Jobs_Main')
       .select('Plan_Date, Job_Status')
       .gte('Plan_Date', startDate)
+
+    if (customerId) {
+        dbQuery = dbQuery.eq('Customer_ID', customerId)
+    }
+
+    const { data, error } = await dbQuery
       .order('Plan_Date', { ascending: true })
 
     if (error) {
@@ -298,9 +328,17 @@ export async function getWeeklyJobStats() {
 export async function getJobStatusDistribution() {
     try {
         const supabase = await createClient()
-        const { data, error } = await supabase
+        const customerId = await getCustomerId()
+
+        let dbQuery = supabase
             .from('Jobs_Main')
             .select('Job_Status')
+
+        if (customerId) {
+            dbQuery = dbQuery.eq('Customer_ID', customerId)
+        }
+
+        const { data, error } = await dbQuery
 
         if (error) return []
 
@@ -425,10 +463,18 @@ export async function getAllVehicles() {
 export async function getJobsForBilling(startDate?: string, endDate?: string): Promise<Job[]> {
     try {
         const supabase = await createClient()
-        let query = supabase
+        const customerId = await getCustomerId()
+
+        let dbQuery = supabase
             .from('Jobs_Main')
             .select('*')
             .in('Job_Status', ['Completed', 'Delivered'])
+        
+        if (customerId) {
+            dbQuery = dbQuery.eq('Customer_ID', customerId)
+        }
+
+        let query = dbQuery
             .order('Plan_Date', { ascending: false })
             
         if (startDate) {

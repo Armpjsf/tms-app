@@ -5,12 +5,11 @@ import { revalidatePath } from 'next/cache'
 import { getSession } from '@/lib/session'
 
 export type UserProfile = {
-  User_ID: string
   Username: string
   First_Name: string | null
   Last_Name: string | null
   Email: string | null
-  Role_ID: number
+  Role: string | null
   Branch_ID: string | null
 }
 
@@ -26,10 +25,11 @@ export async function getUserProfile() {
     const supabase = createAdminClient()
 
     // Get profile from Master_Users
+    // Note: session.userId currently stores Username from the login action
     const { data, error } = await supabase
       .from('Master_Users')
       .select('*')
-      .eq('User_ID', session.userId)
+      .eq('Username', session.userId)
       .single()
     
     if (error) {
@@ -59,7 +59,7 @@ export async function updateUserProfile(data: Partial<UserProfile>) {
         Last_Name: data.Last_Name,
         Email: data.Email
       })
-      .eq('User_ID', session.userId)
+      .eq('Username', session.userId)
 
     if (error) {
       console.error('Error updating user profile:', error)
@@ -68,7 +68,7 @@ export async function updateUserProfile(data: Partial<UserProfile>) {
 
     revalidatePath('/settings/profile')
     return { success: true }
-  } catch (e) {
-    return { success: false, error: 'Internal Server Error' }
+  } catch {
+    return { success: false, error: 'Failed to update profile' }
   }
 }

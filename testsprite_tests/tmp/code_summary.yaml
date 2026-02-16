@@ -1,0 +1,75 @@
+version: "2"
+type: frontend
+tech_stack:
+  - Language: TypeScript
+  - Framework: Next.js 16 (App Router)
+  - Database/Auth: Supabase
+  - UI library: Tailwind CSS 4, Radix UI
+  - Animations: Framer Motion
+  - Icons: Lucide React
+routes:
+  - path: /login
+    file: src/app/login/page.tsx
+    auth_required: false
+    description: Staff/Admin login page
+  - path: /mobile/login
+    file: src/app/mobile/login/page.tsx
+    auth_required: false
+    description: Driver login page
+  - path: /dashboard
+    file: src/app/dashboard/page.tsx
+    auth_required: true
+    description: Main admin dashboard
+  - path: /settings
+    file: src/app/settings/page.tsx
+    auth_required: true
+    description: System settings overview
+  - path: /settings/profile
+    file: src/app/settings/profile/page.tsx
+    auth_required: true
+    description: User profile management
+features:
+  - name: Staff Login
+    description: Login with username/email and password for administrative users
+    files:
+      - src/app/login/page.tsx
+      - src/app/login/actions.ts
+    entry_route: /login
+    user_interactions:
+      - Enter Username or Email
+      - Enter Password
+      - Click Login button
+    api_calls:
+      - method: POST
+        endpoint: src/app/login/actions.ts (login function)
+    auth_required: false
+  - name: Driver Login
+    description: Login for drivers at the mobile-specific route
+    files:
+      - src/app/mobile/login/page.tsx
+      - src/lib/actions/auth-actions.ts
+    entry_route: /mobile/login
+    user_interactions:
+      - Enter Driver ID/Username
+      - Enter Password
+      - Click Login button
+    api_calls:
+      - method: POST
+        endpoint: src/lib/actions/auth-actions.ts (loginDriver function)
+    auth_required: false
+  - name: Profile Management
+    description: Users can update their first name, last name, and email
+    files:
+      - src/app/settings/profile/page.tsx
+      - src/lib/supabase/users.ts
+    entry_route: /settings/profile
+    user_interactions:
+      - Update First Name field
+      - Update Last Name field
+      - Update Email field
+      - Click "บันทึกการเปลี่ยนแปลง" (Save Changes) button
+    api_calls:
+      - method: UPDATE (via server action)
+        endpoint: src/lib/supabase/users.ts (updateUserProfile function)
+    auth_required: true
+known_limitations: []
