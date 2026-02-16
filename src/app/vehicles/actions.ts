@@ -2,6 +2,7 @@
 
 import { createClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { getUserBranchId, isSuperAdmin } from '@/lib/permissions'
 
 export type VehicleFormData = {
   vehicle_plate: string
@@ -11,10 +12,15 @@ export type VehicleFormData = {
   active_status: string
   current_mileage?: number
   next_service_mileage?: number
+  Branch_ID?: string
 }
 
 export async function createVehicle(data: VehicleFormData) {
   const supabase = await createClient()
+  const userBranchId = await getUserBranchId()
+  const isAdmin = await isSuperAdmin()
+
+  const finalBranchId = (isAdmin && data.Branch_ID) ? data.Branch_ID : userBranchId
 
   const { error } = await supabase
     .from('master_vehicles')
@@ -25,7 +31,8 @@ export async function createVehicle(data: VehicleFormData) {
       model: data.model,
       active_status: 'Active',
       current_mileage: data.current_mileage || 0,
-      next_service_mileage: data.next_service_mileage || 0
+      next_service_mileage: data.next_service_mileage || 0,
+      Branch_ID: finalBranchId
     })
 
   if (error) {
@@ -39,6 +46,7 @@ export async function createVehicle(data: VehicleFormData) {
 
 export async function createBulkVehicles(vehicles: Partial<VehicleFormData>[]) {
   const supabase = await createClient()
+  const branchId = await getUserBranchId()
 
   // Prepare data
   const cleanData = vehicles.map(v => ({
@@ -48,7 +56,8 @@ export async function createBulkVehicles(vehicles: Partial<VehicleFormData>[]) {
     model: v.model,
     active_status: 'Active',
     current_mileage: v.current_mileage || 0,
-    next_service_mileage: v.next_service_mileage || 0
+    next_service_mileage: v.next_service_mileage || 0,
+    Branch_ID: branchId
   })).filter(v => v.vehicle_plate)
 
   if (cleanData.length === 0) {
@@ -70,10 +79,12 @@ export async function createBulkVehicles(vehicles: Partial<VehicleFormData>[]) {
 
 export async function updateVehicle(plate: string, data: Partial<VehicleFormData>) {
   const supabase = await createClient()
+  const branchId = await getUserBranchId()
+  const isAdmin = await isSuperAdmin()
 
-  const { error } = await supabase
-    .from('master_vehicles')
-    .update({
+    let query = supabase
+      .from('master_vehicles')
+      .update({
         vehicle_type: data.vehicle_type,
         brand: data.brand,
         model: data.model,
@@ -81,7 +92,19 @@ export async function updateVehicle(plate: string, data: Partial<VehicleFormData
         current_mileage: data.current_mileage,
         next_service_mileage: data.next_service_mileage
     })
-    .eq('vehicle_plate', plate)
+    
+  if (isAdmin && data.Branch_ID) {
+     // @ts-ignore
+     query = query.update({ Branch_ID: data.Branch_ID })
+  }
+  
+  query = query.eq('vehicle_plate', plate)
+
+  if (branchId && !isAdmin) {
+      query = query.eq('Branch_ID', branchId)
+  }
+
+  const { error } = await query
 
   if (error) {
     console.error('Error updating vehicle:', error)
@@ -94,11 +117,19 @@ export async function updateVehicle(plate: string, data: Partial<VehicleFormData
 
 export async function deleteVehicle(plate: string) {
   const supabase = await createClient()
+  const branchId = await getUserBranchId()
+  const isAdmin = await isSuperAdmin()
 
-  const { error } = await supabase
+  let query = supabase
     .from('master_vehicles')
     .delete()
     .eq('vehicle_plate', plate)
+
+  if (branchId && !isAdmin) {
+      query = query.eq('Branch_ID', branchId)
+  }
+
+  const { error } = await query
 
   if (error) {
     console.error('Error deleting vehicle:', error)

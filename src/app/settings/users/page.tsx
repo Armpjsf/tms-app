@@ -206,7 +206,7 @@ export default function UserSettingsPage() {
                                                     size="icon" 
                                                     onClick={() => handleOpenDialog(user)} 
                                                     className="text-slate-400 hover:text-white hover:bg-slate-700 disabled:opacity-30"
-                                                    disabled={user.Role === "Super Admin" && currentRoleId !== 1}
+                                                    disabled={(user.Role === "Super Admin" || user.Role === "Admin") && currentRoleId !== 1}
                                                  >
                                                      <Edit className="w-4 h-4" />
                                                  </Button>
@@ -215,7 +215,7 @@ export default function UserSettingsPage() {
                                                     size="icon" 
                                                     onClick={() => handleDelete(user.Username)} 
                                                     className="text-red-400 hover:text-red-300 hover:bg-red-900/20 disabled:opacity-30"
-                                                    disabled={user.Role === "Super Admin" && currentRoleId !== 1}
+                                                    disabled={(user.Role === "Super Admin" || user.Role === "Admin") && currentRoleId !== 1}
                                                  >
                                                      <Trash2 className="w-4 h-4" />
                                                  </Button>

@@ -39,8 +39,11 @@ export async function getAllDriversFromTable(): Promise<Driver[]> {
     const isAdmin = await isSuperAdmin()
     
     if (branchId && !isAdmin) {
+        console.log(`[getAllDriversFromTable] Filtering by Branch: ${branchId}`)
         // @ts-ignore
         dbQuery = dbQuery.eq('Branch_ID', branchId)
+    } else if (!isAdmin && !branchId) {
+        return []
     }
 
     const { data, error } = await dbQuery
@@ -87,7 +90,8 @@ export async function createDriver(driverData: Partial<Driver>) {
         Vehicle_Type: driverData.Vehicle_Type,
         Password: driverData.Password, // Added
         Active_Status: driverData.Active_Status || 'Active', // Added
-        License_Expiry: driverData.License_Expiry // Added
+        License_Expiry: driverData.License_Expiry, // Added
+        Branch_ID: await getUserBranchId()
       })
       .select()
       .single()
@@ -182,6 +186,8 @@ export async function getAllDrivers(page?: number, limit?: number, query?: strin
     if (branchId && !isAdmin) {
         // @ts-ignore - Dynamic query
         queryBuilder = queryBuilder.eq('Branch_ID', branchId)
+    } else if (!isAdmin && !branchId) {
+        return { data: [], count: 0 }
     }
     
     // Apply search filter if query provided
@@ -213,9 +219,22 @@ export async function getAllDrivers(page?: number, limit?: number, query?: strin
 export async function getDriverStats() {
   try {
     const supabase = await createClient()
-    const { data, error } = await supabase
+    let query = supabase
       .from('Master_Drivers')
       .select('Driver_ID, Role')
+
+    // Filter by Branch
+    const branchId = await getUserBranchId()
+    const isAdmin = await isSuperAdmin()
+    
+    if (branchId && !isAdmin) {
+        // @ts-ignore
+        query = query.eq('Branch_ID', branchId)
+    } else if (!isAdmin && !branchId) {
+        return { total: 0, active: 0, onJob: 0 }
+    }
+
+    const { data, error } = await query
     
     if (error) {
       return { total: 0, active: 0, onJob: 0 }

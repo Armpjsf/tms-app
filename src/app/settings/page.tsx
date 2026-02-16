@@ -130,7 +130,18 @@ export default function SettingsPage() {
 
       {/* Settings Sections */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {settingsSections.map((section, sectionIndex) => (
+        {settingsSections.map((section, sectionIndex) => {
+            // Filter items based on role
+            const filteredItems = section.items.filter(item => {
+                if (item.path === '/settings/roles') {
+                    return profile?.Role === 'Super Admin'
+                }
+                return true
+            })
+
+            if (filteredItems.length === 0) return null
+
+            return (
           <motion.div
             key={section.title}
             initial={{ opacity: 0, y: 20 }}
@@ -145,7 +156,7 @@ export default function SettingsPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-1">
-                {section.items.map((item) => (
+                {filteredItems.map((item) => (
                   <motion.div
                     key={item.label}
                     whileHover={{ x: 4 }}
@@ -162,7 +173,7 @@ export default function SettingsPage() {
               </CardContent>
             </Card>
           </motion.div>
-        ))}
+        )})}
       </div>
 
       {/* Quick Actions */}

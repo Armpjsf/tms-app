@@ -10,12 +10,14 @@ import { createDriver, updateDriver } from "@/app/drivers/actions"
 import { Loader2 } from "lucide-react"
 import { Driver } from "@/lib/supabase/drivers"
 import { Subcontractor } from "@/types/subcontractor"
+import { Branch } from "@/lib/supabase/branches"
 
 type DriverDialogProps = {
   mode?: 'create' | 'edit'
   driver?: Partial<Driver>
   vehicles?: any[]
   subcontractors?: Subcontractor[]
+  branches?: Branch[]
   trigger?: React.ReactNode
   open?: boolean
   onOpenChange?: (open: boolean) => void
@@ -26,6 +28,7 @@ export function DriverDialog({
   driver,
   vehicles = [],
   subcontractors = [],
+  branches = [],
   trigger,
   open,
   onOpenChange
@@ -46,7 +49,8 @@ export function DriverDialog({
     Vehicle_Plate: driver?.Vehicle_Plate || '',
     Active_Status: driver?.Active_Status || 'Active',
     License_Expiry: driver?.License_Expiry || '',
-    Sub_ID: driver?.Sub_ID || ''
+    Sub_ID: driver?.Sub_ID || '',
+    Branch_ID: (driver as any)?.Branch_ID || ''
   })
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -77,7 +81,8 @@ export function DriverDialog({
             Vehicle_Plate: '',
             Active_Status: 'Active',
             License_Expiry: '',
-            Sub_ID: ''
+            Sub_ID: '',
+            Branch_ID: ''
         })
       }
       router.refresh()
@@ -97,6 +102,26 @@ export function DriverDialog({
           <DialogTitle>{mode === 'create' ? 'เพิ่มคนขับ' : 'แก้ไขข้อมูลคนขับ'}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 mt-4">
+          {branches.length > 0 && (
+            <div className="space-y-2">
+                <Label htmlFor="Branch_ID" className="text-yellow-400">เลือกสาขา (Super Admin)</Label>
+                <select
+                    id="Branch_ID"
+                    value={formData.Branch_ID}
+                    onChange={(e) => setFormData({ ...formData, Branch_ID: e.target.value })}
+                    className="flex h-10 w-full rounded-md border border-yellow-500/50 bg-yellow-500/10 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                    required={mode === 'create'}
+                >
+                    <option value="" className="bg-slate-900">-- เลือกสาขา --</option>
+                    {branches.map((b) => (
+                        <option key={b.Branch_ID} value={b.Branch_ID} className="bg-slate-900">
+                        {b.Branch_Name} ({b.Branch_ID})
+                        </option>
+                    ))}
+                </select>
+            </div>
+          )}
+
           <div className="space-y-2">
             <Label htmlFor="Driver_ID">รหัสพนักงาน (ID)</Label>
             <Input

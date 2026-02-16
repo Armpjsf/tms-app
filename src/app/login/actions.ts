@@ -60,9 +60,28 @@ export async function login(formData: FormData) {
     roleId = 3
   }
 
+  // 2. Fetch Role Permissions
+  let rolePermissions = {}
+  if (users.Role) {
+      try {
+        const { data: rolePerms } = await supabase
+            .from('Master_Role_Permissions')
+            .select('Permissions')
+            .eq('Role', users.Role)
+            .single()
+        
+        if (rolePerms) {
+            rolePermissions = rolePerms.Permissions
+        }
+      } catch (e) {
+          console.error("Failed to load role permissions", e)
+      }
+  }
+
   const branchId = users.Branch_ID || null
   const customerId = users.Customer_ID || null
-  const permissions = users.Permissions || {}
+  // Merge Role Permissions with User Specific Permissions
+  const permissions = { ...rolePermissions, ...(users.Permissions || {}) }
   
   await createSession(
     users.Username, 

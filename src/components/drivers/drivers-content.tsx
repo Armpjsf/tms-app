@@ -13,6 +13,7 @@ import { getAllSubcontractors } from "@/lib/supabase/subcontractors"
 import { DriverDialog } from "@/components/drivers/driver-dialog"
 import { DriverActions } from "@/components/drivers/driver-actions"
 import { SearchInput } from "@/components/ui/search-input"
+import { Branch } from "@/lib/supabase/branches"
 import { Pagination } from "@/components/ui/pagination"
 import { createBulkDrivers } from "@/app/drivers/actions"
 import { ExcelImport } from "@/components/ui/excel-import"
@@ -20,9 +21,11 @@ import { FileSpreadsheet } from "lucide-react"
 
 type Props = {
   searchParams: { [key: string]: string | string[] | undefined }
+  branches?: Branch[]
+  isSuperAdmin?: boolean
 }
 
-export async function DriversContent({ searchParams }: Props) {
+export async function DriversContent({ searchParams, branches = [], isSuperAdmin = false }: Props) {
   const page = Number(searchParams.page) || 1
   const query = (searchParams.q as string) || ''
   const limit = 12
@@ -74,6 +77,7 @@ export async function DriversContent({ searchParams }: Props) {
             <DriverDialog 
             mode="create" 
             vehicles={vehicles.data}
+            branches={branches}
             subcontractors={subcontractors}
             trigger={
                 <Button size="lg" className="gap-2 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700">
@@ -143,7 +147,7 @@ export async function DriversContent({ searchParams }: Props) {
                         <span className="text-xs font-bold leading-none">{driver.score.totalScore}</span>
                         <span className="text-[10px] opacity-80">คะแนน</span>
                     </div>
-                    <DriverActions driver={driver} vehicles={vehicles.data} subcontractors={subcontractors} />
+                    <DriverActions driver={driver} vehicles={vehicles.data} subcontractors={subcontractors} branches={branches} />
                 </div>
               </div>
 

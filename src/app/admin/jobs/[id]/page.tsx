@@ -1,5 +1,4 @@
 import Link from "next/link"
-import Image from "next/image"
 import { notFound } from "next/navigation"
 import { getJobById } from "@/lib/supabase/jobs"
 import { getDriverRouteForDate } from "@/lib/supabase/gps"
@@ -8,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { ArrowLeft, MapPin, Calendar, Truck, User, Phone, Package, FileText, Navigation } from "lucide-react"
 import JobMapClient from "@/components/maps/job-map-client"
+import { AdminJobActions } from "@/components/admin/admin-job-actions"
 
 // Force dynamic rendering (server-side) to ensure fresh data
 export const dynamicParams = true
@@ -47,8 +47,10 @@ export default async function AdminJobDetailPage({
             <StatusBadge status={job.Job_Status} />
           </div>
           <p className="text-slate-400 text-sm mt-1">
-            สร้างเมื่อ: {new Date(job.Created_At || "").toLocaleDateString("th-TH", { dateStyle: 'medium', timeStyle: 'short' })}
           </p>
+        </div>
+        <div className="ml-auto">
+            <AdminJobActions jobId={job.Job_ID} currentStatus={job.Job_Status || 'New'} />
         </div>
       </div>
 

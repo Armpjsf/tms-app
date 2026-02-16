@@ -16,6 +16,8 @@ import { SearchInput } from "@/components/ui/search-input"
 import { Pagination } from "@/components/ui/pagination"
 import { createBulkVehicles } from "@/app/vehicles/actions"
 import { ExcelImport } from "@/components/ui/excel-import"
+import { isSuperAdmin } from "@/lib/permissions"
+import { getAllBranches, Branch } from "@/lib/supabase/branches"
 
 type Props = {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
@@ -31,6 +33,9 @@ export default async function VehiclesPage(props: Props) {
     getAllVehicles(page, limit, query),
     getVehicleStats(),
   ])
+
+  const isAdmin = await isSuperAdmin()
+  const branches: Branch[] = isAdmin ? await getAllBranches() : []
 
   return (
     <DashboardLayout>
@@ -61,6 +66,7 @@ export default async function VehiclesPage(props: Props) {
             />
             <VehicleDialog 
                 mode="create" 
+                branches={branches}
                 trigger={
                     <Button size="lg" className="gap-2 bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700">
                         <Plus size={20} />
@@ -123,7 +129,7 @@ export default async function VehiclesPage(props: Props) {
                     }`}>
                     {vehicle.active_status}
                     </span>
-                    <VehicleActions vehicle={vehicle} />
+                    <VehicleActions vehicle={vehicle} branches={branches} />
                 </div>
               </div>
 

@@ -45,6 +45,8 @@ export async function getAllVehiclesFromTable(): Promise<Vehicle[]> {
     if (branchId && !isAdmin) {
         // @ts-ignore
         query = query.eq('Branch_ID', branchId)
+    } else if (!isAdmin && !branchId) {
+        return []
     }
 
     const { data, error } = await query
@@ -88,7 +90,8 @@ export async function createVehicle(vehicleData: Partial<Vehicle>) {
         brand: vehicleData.brand,
         model: vehicleData.model,
         driver_id: vehicleData.driver_id,
-        active_status: vehicleData.active_status || 'Active'
+        active_status: vehicleData.active_status || 'Active',
+        Branch_ID: await getUserBranchId()
       })
       .select()
       .single()
@@ -163,6 +166,8 @@ export async function getAllVehicles(page?: number, limit?: number, query?: stri
     if (branchId && !isAdmin) {
         // @ts-ignore
         queryBuilder = queryBuilder.eq('Branch_ID', branchId)
+    } else if (!isAdmin && !branchId) {
+        return { data: [], count: 0 }
     }
     
     // Apply search filter if query provided
@@ -191,14 +196,26 @@ export async function getAllVehicles(page?: number, limit?: number, query?: stri
 }
 
 // Get vehicle stats for dashboard
-// Get vehicle stats for dashboard
 export async function getVehicleStats() {
   try {
     const supabase = await createClient()
-    const { data, error } = await supabase
+    let query = supabase
       .from('master_vehicles')
       .select('vehicle_plate, active_status, current_mileage, next_service_mileage')
     
+    // Filter by Branch
+    const branchId = await getUserBranchId()
+    const isAdmin = await isSuperAdmin()
+    
+    if (branchId && !isAdmin) {
+        // @ts-ignore
+        query = query.eq('Branch_ID', branchId)
+    } else if (!isAdmin && !branchId) {
+        return { total: 0, active: 0, maintenance: 0, dueSoon: 0 }
+    }
+
+    const { data, error } = await query
+
     if (error) {
       return { total: 0, active: 0, maintenance: 0, dueSoon: 0 }
     }

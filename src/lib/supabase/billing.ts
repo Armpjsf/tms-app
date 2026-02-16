@@ -151,6 +151,8 @@ export async function getBillingNotes() {
         if (branchId && !isAdmin) {
             // @ts-ignore
             query = query.eq('Branch_ID', branchId)
+        } else if (!isAdmin && !branchId) {
+            return []
         }
 
         const { data, error } = await query

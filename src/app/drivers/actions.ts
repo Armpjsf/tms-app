@@ -2,6 +2,7 @@
 
 import { createClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { getUserBranchId, isSuperAdmin } from '@/lib/permissions'
 
 export type DriverFormData = {
   Driver_ID: string
@@ -11,10 +12,15 @@ export type DriverFormData = {
   Vehicle_Plate: string
   Active_Status: string
   Sub_ID?: string
+  Branch_ID?: string
 }
 
 export async function createDriver(data: DriverFormData) {
   const supabase = await createClient()
+  const userBranchId = await getUserBranchId()
+  const isAdmin = await isSuperAdmin()
+
+  const finalBranchId = (isAdmin && data.Branch_ID) ? data.Branch_ID : userBranchId
 
   const { error } = await supabase
     .from('Master_Drivers')
@@ -28,6 +34,7 @@ export async function createDriver(data: DriverFormData) {
       Role: 'Driver',
       Active_Status: 'Active',
       Sub_ID: data.Sub_ID || null,
+      Branch_ID: finalBranchId
     })
 
   if (error) {
@@ -41,6 +48,7 @@ export async function createDriver(data: DriverFormData) {
 
 export async function createBulkDrivers(drivers: Partial<DriverFormData>[]) {
   const supabase = await createClient()
+  const branchId = await getUserBranchId()
   
   // Prepare data with defaults
   const cleanData = drivers.map(d => ({
@@ -53,6 +61,7 @@ export async function createBulkDrivers(drivers: Partial<DriverFormData>[]) {
     Role: 'Driver',
     Active_Status: 'Active',
     Sub_ID: d.Sub_ID || null,
+    Branch_ID: branchId
   })).filter(d => d.Driver_Name) // Ensure name exists
 
   if (cleanData.length === 0) {
@@ -74,6 +83,8 @@ export async function createBulkDrivers(drivers: Partial<DriverFormData>[]) {
 
 export async function updateDriver(driverId: string, data: Partial<DriverFormData>) {
   const supabase = await createClient()
+  const branchId = await getUserBranchId()
+  const isAdmin = await isSuperAdmin()
 
   const updateData: Record<string, unknown> = {
     Driver_Name: data.Driver_Name,
@@ -83,16 +94,26 @@ export async function updateDriver(driverId: string, data: Partial<DriverFormDat
     Sub_ID: data.Sub_ID,
   }
 
+  if (isAdmin && data.Branch_ID) {
+    updateData.Branch_ID = data.Branch_ID
+  }
+
   // Only update password if provided
   if (data.Password && data.Password.trim() !== '') {
     updateData.Password = data.Password
   }
 
   try {
-    const { error } = await supabase
+    let query = supabase
       .from('Master_Drivers')
       .update(updateData)
       .eq('Driver_ID', driverId)
+
+    if (branchId && !isAdmin) {
+        query = query.eq('Branch_ID', branchId)
+    }
+
+    const { error } = await query
 
     if (error) {
       console.error('Error updating driver:', error)
@@ -109,11 +130,19 @@ export async function updateDriver(driverId: string, data: Partial<DriverFormDat
 
 export async function deleteDriver(driverId: string) {
   const supabase = await createClient()
+  const branchId = await getUserBranchId()
+  const isAdmin = await isSuperAdmin()
 
-  const { error } = await supabase
+  let query = supabase
     .from('Master_Drivers')
     .delete()
     .eq('Driver_ID', driverId)
+
+  if (branchId && !isAdmin) {
+      query = query.eq('Branch_ID', branchId)
+  }
+
+  const { error } = await query
 
   if (error) {
     console.error('Error deleting driver:', error)

@@ -97,7 +97,14 @@ export async function updateUser(username: string, updates: Partial<UserData>) {
         return { success: false, error: "คุณไม่มีสิทธิ์แก้ไขข้อมูลของ Super Admin" }
     }
 
-    const updatePayload: any = {
+    // New Rule: Admin usage restricted
+    // Assuming Role ID 2 is Admin. If session.roleId is NOT 1 (Super Admin), they cannot edit another Admin.
+    // We strictly check if target is Admin and current user is NOT Super Admin.
+    if (targetUser?.Role === "Admin" && session.roleId !== 1) {
+        return { success: false, error: "คุณไม่มีสิทธิ์แก้ไขข้อมูลของ Admin" }
+    }
+
+    const updatePayload: Partial<UserData> = {
         Name: updates.Name,
         Branch_ID: updates.Branch_ID,
         Active_Status: updates.Active_Status,
@@ -147,6 +154,10 @@ export async function deleteUser(username: string) {
 
     if (targetUser?.Role === "Super Admin" && session.roleId !== 1) {
         return { success: false, error: "คุณไม่มีสิทธิ์ลบข้อมูลของ Super Admin" }
+    }
+
+    if (targetUser?.Role === "Admin" && session.roleId !== 1) {
+        return { success: false, error: "คุณไม่มีสิทธิ์ลบข้อมูลของ Admin" }
     }
 
     const { error } = await supabase

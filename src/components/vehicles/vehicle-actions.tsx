@@ -7,8 +7,9 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { VehicleDialog } from "./vehicle-dialog"
 import { Vehicle } from "@/lib/supabase/vehicles"
+import { Branch } from "@/lib/supabase/branches"
 
-export function VehicleActions({ vehicle }: { vehicle: Vehicle }) {
+export function VehicleActions({ vehicle, branches = [] }: { vehicle: Vehicle, branches?: Branch[] }) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [showEdit, setShowEdit] = useState(false)
@@ -33,6 +34,7 @@ export function VehicleActions({ vehicle }: { vehicle: Vehicle }) {
       <VehicleDialog 
         mode="edit" 
         vehicle={vehicle}
+        branches={branches}
         open={showEdit}
         onOpenChange={setShowEdit}
       />
