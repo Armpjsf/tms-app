@@ -73,9 +73,10 @@ export async function createBillingNote(
 
         return { success: true, id: billingNoteId }
 
-    } catch (e: any) {
+    } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : String(e)
         console.error("createBillingNote Error:", e)
-        return { success: false, error: e.message }
+        return { success: false, error: message }
     }
 }
 
@@ -131,9 +132,9 @@ export async function createDriverPayment(
 
         return { success: true, id: paymentId }
 
-    } catch (e: any) {
-        console.error("createDriverPayment Error:", e)
-        return { success: false, error: e.message }
+    } catch {
+        console.error("createDriverPayment Error")
+        return { success: false, error: "เกิดข้อผิดพลาดในการบันทึกข้อมูล" }
     }
 }
 
@@ -271,9 +272,10 @@ export async function updateBillingNoteStatus(id: string, status: string) {
 
         if (error) throw error
         return { success: true }
-    } catch (e: any) {
+    } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : String(e)
         console.error("updateBillingNoteStatus Error:", e)
-        return { success: false, error: e.message }
+        return { success: false, error: message }
     }
 }
 
@@ -290,9 +292,10 @@ export async function updateDriverPaymentStatus(id: string, status: string) {
 
         if (error) throw error
         return { success: true }
-    } catch (e: any) {
+    } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : String(e)
         console.error("updateDriverPaymentStatus Error:", e)
-        return { success: false, error: e.message }
+        return { success: false, error: message }
     }
 }
 
@@ -320,9 +323,10 @@ export async function recallBillingNote(id: string) {
         if (deleteError) throw deleteError
 
         return { success: true }
-    } catch (e: any) {
+    } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : String(e)
         console.error("recallBillingNote Error:", e)
-        return { success: false, error: e.message }
+        return { success: false, error: message }
     }
 }
 
@@ -350,8 +354,9 @@ export async function recallDriverPayment(id: string) {
         if (deleteError) throw deleteError
 
         return { success: true }
-    } catch (e: any) {
+    } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : String(e)
         console.error("recallDriverPayment Error:", e)
-        return { success: false, error: e.message }
+        return { success: false, error: message }
     }
 }
