@@ -21,6 +21,11 @@ ADD COLUMN IF NOT EXISTS "Branch_ID" TEXT REFERENCES public."Master_Branches"("B
 ALTER TABLE public."Billing_Notes"
 ADD COLUMN IF NOT EXISTS "Branch_ID" TEXT REFERENCES public."Master_Branches"("Branch_ID");
 -- Note: Fuel_Logs already has Branch_ID. 
+-- 7. Add Profile Columns to Master_Users
+ALTER TABLE public."Master_Users"
+ADD COLUMN IF NOT EXISTS "First_Name" TEXT,
+    ADD COLUMN IF NOT EXISTS "Last_Name" TEXT,
+    ADD COLUMN IF NOT EXISTS "Email" TEXT;
 -- =============================================
 -- RLS Policy Updates (Examples)
 -- =============================================

@@ -1,43 +1,62 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { User, Save, Loader2, ArrowLeft } from "lucide-react"
 import Link from "next/link"
-import { createClient } from "@/utils/supabase/client"
+import { getUserProfile, updateUserProfile, UserProfile } from "@/lib/supabase/users"
+import { toast } from "sonner"
 
 export default function AdminProfilePage() {
-  const [loading, setLoading] = useState(false)
-  const [formData, setFormData] = useState({
-    firstName: "Admin",
-    lastName: "User",
-    email: "admin@company.com",
-    role: "Super Admin"
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [formData, setFormData] = useState<Partial<UserProfile>>({
+    First_Name: "",
+    Last_Name: "",
+    Email: "",
+    Username: "",
+    Role_ID: 0
   })
 
-  // TODO: Load real profile from Supabase Auth or Profile table
-  // For now, we mock the initial state but allow editing
+  useEffect(() => {
+    async function loadProfile() {
+      const profile = await getUserProfile()
+      if (profile) {
+        setFormData(profile)
+      }
+      setLoading(false)
+    }
+    loadProfile()
+  }, [])
 
   const handleSave = async () => {
-    setLoading(true)
+    setSaving(true)
     try {
-        // Simulate API call
-        await new Promise(r => setTimeout(r, 1000))
-        
-        // In reality:
-        // const supabase = createClient()
-        // await supabase.auth.updateUser({ ... })
-        
-        alert("บันทึกข้อมูลสำเร็จ (จำลอง)")
+        const result = await updateUserProfile(formData)
+        if (result.success) {
+            toast.success("บันทึกข้อมูลสำเร็จ")
+        } else {
+            toast.error(result.error || "เกิดข้อผิดพลาดในการบันทึก")
+        }
     } catch (e) {
-        alert("เกิดข้อผิดพลาด")
+        toast.error("เกิดข้อผิดพลาด")
     } finally {
-        setLoading(false)
+        setSaving(false)
     }
+  }
+
+  if (loading) {
+      return (
+          <DashboardLayout>
+              <div className="flex items-center justify-center h-[50vh]">
+                  <Loader2 className="w-8 h-8 animate-spin text-slate-400" />
+              </div>
+          </DashboardLayout>
+      )
   }
 
   return (
@@ -58,7 +77,7 @@ export default function AdminProfilePage() {
         <CardContent className="space-y-6 pt-6">
             <div className="flex items-center gap-4 mb-6">
                 <div className="w-20 h-20 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-3xl font-bold shadow-lg">
-                    {formData.firstName.charAt(0)}
+                    {(formData.First_Name || "A").charAt(0)}
                 </div>
                 <div>
                    <Button variant="outline" className="border-slate-700 text-slate-300">
@@ -71,43 +90,54 @@ export default function AdminProfilePage() {
                 <div className="space-y-2">
                     <Label className="text-slate-400">ชื่อจริง</Label>
                     <Input 
-                        value={formData.firstName}
-                        onChange={(e) => setFormData({...formData, firstName: e.target.value})}
+                        value={formData.First_Name || ""}
+                        onChange={(e) => setFormData({...formData, First_Name: e.target.value})}
                         className="bg-slate-800 border-slate-700 text-white"
+                        placeholder="ชื่อจริง"
                     />
                 </div>
                 <div className="space-y-2">
                     <Label className="text-slate-400">นามสกุล</Label>
                     <Input 
-                        value={formData.lastName}
-                        onChange={(e) => setFormData({...formData, lastName: e.target.value})}
+                        value={formData.Last_Name || ""}
+                        onChange={(e) => setFormData({...formData, Last_Name: e.target.value})}
                         className="bg-slate-800 border-slate-700 text-white"
+                        placeholder="นามสกุล"
                     />
                 </div>
             </div>
 
             <div className="space-y-2">
-                <Label className="text-slate-400">อีเมล</Label>
+                <Label className="text-slate-400">อีเมล (ติดต่อ)</Label>
                 <Input 
-                    value={formData.email}
+                    value={formData.Email || ""}
+                    onChange={(e) => setFormData({...formData, Email: e.target.value})}
+                    className="bg-slate-800 border-slate-700 text-white"
+                    placeholder="example@company.com"
+                />
+            </div>
+
+            <div className="space-y-2">
+                <Label className="text-slate-400">Username (สำหรับเข้าสู่ระบบ)</Label>
+                <Input 
+                    value={formData.Username || ""}
                     disabled
                     className="bg-slate-800/50 border-slate-800 text-slate-500 cursor-not-allowed"
                 />
-                <p className="text-xs text-slate-500">อีเมลไม่สามารถเปลี่ยนผ่านหน้านี้ได้</p>
             </div>
 
             <div className="space-y-2">
                 <Label className="text-slate-400">บทบาท</Label>
                 <Input 
-                    value={formData.role}
+                    value={formData.Role_ID === 1 ? "Super Admin" : "User"}
                     disabled
                     className="bg-slate-800/50 border-slate-800 text-slate-500 cursor-not-allowed"
                 />
             </div>
 
             <div className="pt-4 flex justify-end">
-                <Button onClick={handleSave} disabled={loading} className="bg-indigo-600 hover:bg-indigo-700">
-                    {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+                <Button onClick={handleSave} disabled={saving} className="bg-indigo-600 hover:bg-indigo-700">
+                    {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
                     บันทึกการเปลี่ยนแปลง
                 </Button>
             </div>

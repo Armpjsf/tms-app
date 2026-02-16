@@ -57,7 +57,7 @@ export async function loginDriver(formData: FormData) {
 export async function logoutDriver() {
   const cookieStore = await cookies()
   cookieStore.delete("driver_session")
-  redirect("/login")
+  redirect("/mobile/login")
 }
 
 export async function getDriverSession() {

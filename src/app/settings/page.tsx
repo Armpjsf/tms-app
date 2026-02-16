@@ -17,6 +17,7 @@ import {
   ChevronRight,
   Building,
 } from "lucide-react"
+import { logout } from "@/app/login/actions"
 
 const settingsSections = [
   {
@@ -166,7 +167,7 @@ export default function SettingsPage() {
                 <Globe size={24} />
                 <span>เชื่อมต่อ API</span>
               </Button>
-              <Button variant="destructive" className="gap-2 h-auto py-4 flex-col hover:bg-red-600 hover:text-white transition-all" onClick={() => window.location.href = "/"}>
+              <Button variant="destructive" className="gap-2 h-auto py-4 flex-col hover:bg-red-600 hover:text-white transition-all w-full" onClick={() => window.location.href = "/api/auth/logout"}>
                 <LogOut size={24} />
                 <span>ออกจากระบบ</span>
               </Button>

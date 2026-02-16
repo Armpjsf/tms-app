@@ -7,7 +7,6 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
 import { LogOut, Globe, Bell, Shield, Smartphone } from "lucide-react"
-import Link from "next/link"
 
 export default function MobileSettingsPage() {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true)
@@ -89,12 +88,17 @@ export default function MobileSettingsPage() {
             </Card>
         </div>
 
-        <Link href="/login" className="block mt-8">
-            <Button variant="outline" className="w-full border-red-500/30 text-red-400 hover:bg-red-500/10 hover:text-red-300 h-12">
-            <LogOut className="w-4 h-4 mr-2" />
-            ออกจากระบบ
-            </Button>
-        </Link>
+        <div className="mt-8">
+            <form action={async () => {
+                const { logoutDriver } = await import("@/lib/actions/auth-actions")
+                await logoutDriver()
+            }}>
+                <Button type="submit" variant="outline" className="w-full border-red-500/30 text-red-400 hover:bg-red-500/10 hover:text-red-300 h-12">
+                <LogOut className="w-4 h-4 mr-2" />
+                ออกจากระบบ
+                </Button>
+            </form>
+        </div>
       </div>
     </div>
   )

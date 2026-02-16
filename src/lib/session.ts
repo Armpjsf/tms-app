@@ -39,7 +39,7 @@ export async function createSession(userId: string, roleId: number, branchId: st
 
   cookieStore.set('session', session, {
     httpOnly: true,
-    secure: true,
+    secure: process.env.NODE_ENV === 'production',
     expires: expiresAt,
     sameSite: 'lax',
     path: '/',

@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/utils/supabase/server'
 import argon2 from 'argon2'
-import { createSession } from '@/lib/session'
+import { createSession, deleteSession } from '@/lib/session'
 // import { cookies } from 'next/headers' // Used in createClient
 
 export async function login(formData: FormData) {
@@ -58,4 +58,9 @@ export async function login(formData: FormData) {
   await createSession(users.User_ID, roleId, branchId, users.Username)
   
   redirect('/dashboard')
+}
+
+export async function logout() {
+  await deleteSession()
+  redirect('/login')
 }
