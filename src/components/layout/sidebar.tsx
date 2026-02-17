@@ -29,6 +29,8 @@ import {
   PieChart,
 } from "lucide-react"
 
+import { SidebarProfile } from "./sidebar-profile"
+
 interface NavItem {
   title: string
   href: string
@@ -46,7 +48,7 @@ const navigation: NavGroup[] = [
   {
     title: "หลัก",
     items: [
-      { title: "Dashboard", href: "/dashboard", icon: <LayoutDashboard size={20} /> },
+      { title: "Dashboard ปฏิบัติการ", href: "/dashboard", icon: <LayoutDashboard size={20} /> },
     ],
   },
   {
@@ -109,11 +111,11 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
       transition={{ duration: 0.3, ease: "easeInOut" }}
       className={cn(
         "fixed top-0 left-0 h-screen z-50 flex flex-col",
-        "bg-sidebar border-r border-border transition-colors duration-300"
+        "bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 border-r border-white/10 text-white shadow-2xl"
       )}
     >
       {/* Logo */}
-      <div className="flex items-center justify-between h-16 px-4 border-b border-sidebar-border">
+      <div className="flex items-center justify-between h-20 px-4 border-b border-white/5 bg-white/5 backdrop-blur-sm">
         <AnimatePresence>
           {!collapsed && (
             <motion.div
@@ -122,14 +124,17 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
               exit={{ opacity: 0 }}
               className="flex items-center gap-3"
             >
-              <img 
-                src="/logo.png" 
-                alt="LOGIS-PRO 360" 
-                className="h-10 w-auto object-contain"
-              />
+              <div className="relative">
+                <div className="absolute inset-0 bg-blue-500 blur-lg opacity-50 rounded-full"></div>
+                <img 
+                    src="/logo.png" 
+                    alt="LOGIS-PRO 360" 
+                    className="relative h-10 w-auto object-contain drop-shadow-lg"
+                />
+              </div>
               <div>
-                <h1 className="text-sidebar-foreground font-bold text-lg leading-tight">LOGIS-PRO</h1>
-                <p className="text-[10px] text-indigo-400 font-medium">360</p>
+                <h1 className="text-white font-bold text-lg leading-tight tracking-tight">LOGIS-PRO</h1>
+                <p className="text-[10px] text-indigo-400 font-medium tracking-widest">360 ENTERPRISE</p>
               </div>
             </motion.div>
           )}
@@ -137,17 +142,17 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
         
         <button
           onClick={onToggle}
-          className="p-2 rounded-lg hover:bg-sidebar-accent transition-colors text-sidebar-foreground/60 hover:text-sidebar-foreground"
+          className="p-2 rounded-xl hover:bg-white/10 transition-colors text-slate-400 hover:text-white"
         >
           <ChevronLeft
             size={20}
-            className={cn("transition-transform", collapsed && "rotate-180")}
+            className={cn("transition-transform duration-300", collapsed && "rotate-180")}
           />
         </button>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto py-4 px-2">
+      <nav className="flex-1 overflow-y-auto py-6 px-3 custom-scrollbar">
         {navigation.map((group) => (
           <div key={group.title} className="mb-6">
             <AnimatePresence>
@@ -156,7 +161,7 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  className="px-3 mb-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground"
+                  className="px-4 mb-3 text-[10px] font-bold uppercase tracking-widest text-slate-500"
                 >
                   {group.title}
                 </motion.h2>
@@ -169,91 +174,94 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
                 
                 return (
                   <Link key={item.href} href={item.href} prefetch={false}>
-                    <motion.div
-                      whileHover={{ x: 4 }}
-                      whileTap={{ scale: 0.98 }}
-                      className={cn(
-                        "relative flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group",
-                        isActive
-                          ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                          : "text-muted-foreground hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
-                      )}
-                    >
-                      {/* Active Indicator */}
-                      {isActive && (
-                        <motion.div
-                          layoutId="activeIndicator"
-                          className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-gradient-to-b from-indigo-400 to-purple-500 rounded-r-full"
-                        />
-                      )}
-                      
-                      <span className={cn(
-                        "flex-shrink-0",
-                        isActive && "text-indigo-400"
-                      )}>
-                        {item.icon}
-                      </span>
-                      
-                      <AnimatePresence>
-                        {!collapsed && (
-                          <motion.span
-                            initial={{ opacity: 0, width: 0 }}
-                            animate={{ opacity: 1, width: "auto" }}
-                            exit={{ opacity: 0, width: 0 }}
-                            className="text-sm font-medium whitespace-nowrap"
-                          >
-                            {item.title}
-                          </motion.span>
+                    <div className="relative group">
+                        {isActive && (
+                            <motion.div
+                                layoutId="activeGlow"
+                                className="absolute inset-0 bg-indigo-500/20 rounded-xl blur-md"
+                                transition={{ duration: 0.2 }}
+                            />
                         )}
-                      </AnimatePresence>
-                      
-                      {/* Badge */}
-                      {item.badge && !collapsed && (
-                        <motion.span
-                          initial={{ scale: 0 }}
-                          animate={{ scale: 1 }}
-                          className={cn(
-                            "ml-auto px-2 py-0.5 text-[10px] font-bold rounded-full",
-                            item.badgeColor === "red" && "bg-red-500/20 text-red-400",
-                            item.badgeColor === "blue" && "bg-blue-500/20 text-blue-400",
-                            item.badgeColor === "green" && "bg-emerald-500/20 text-emerald-400",
-                            item.badgeColor === "yellow" && "bg-yellow-500/20 text-yellow-400"
-                          )}
+                        <motion.div
+                        whileHover={{ x: 4 }}
+                        whileTap={{ scale: 0.98 }}
+                        className={cn(
+                            "relative flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-200",
+                            isActive
+                            ? "bg-gradient-to-r from-indigo-500/20 to-purple-500/10 text-white border border-indigo-500/30 shadow-lg shadow-indigo-500/10"
+                            : "text-slate-400 hover:text-white hover:bg-white/5 border border-transparent"
+                        )}
                         >
-                          {item.badge}
-                        </motion.span>
-                      )}
-                    </motion.div>
+                        {/* Active Indicator Strip */}
+                        {isActive && (
+                            <motion.div
+                            layoutId="activeStrip"
+                            className="absolute left-0 top-1/2 -translate-y-1/2 h-8 w-1 bg-indigo-500 rounded-r-full shadow-[0_0_10px_2px_rgba(99,102,241,0.5)]"
+                            />
+                        )}
+                        
+                        <span className={cn(
+                            "flex-shrink-0 transition-colors duration-300",
+                            isActive ? "text-indigo-400 drop-shadow-[0_0_8px_rgba(129,140,248,0.5)]" : "group-hover:text-indigo-400"
+                        )}>
+                            {item.icon}
+                        </span>
+                        
+                        <AnimatePresence>
+                            {!collapsed && (
+                            <motion.span
+                                initial={{ opacity: 0, width: 0 }}
+                                animate={{ opacity: 1, width: "auto" }}
+                                exit={{ opacity: 0, width: 0 }}
+                                className="text-sm font-medium whitespace-nowrap"
+                            >
+                                {item.title}
+                            </motion.span>
+                            )}
+                        </AnimatePresence>
+                        
+                        {/* Badge */}
+                        {item.badge && !collapsed && (
+                            <motion.span
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            className={cn(
+                                "ml-auto px-2 py-0.5 text-[10px] font-bold rounded-full shadow-sm",
+                                item.badgeColor === "red" && "bg-red-500/20 text-red-400 border border-red-500/30",
+                                item.badgeColor === "blue" && "bg-blue-500/20 text-blue-400 border border-blue-500/30",
+                                item.badgeColor === "green" && "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30",
+                                item.badgeColor === "yellow" && "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30"
+                            )}
+                            >
+                            {item.badge}
+                            </motion.span>
+                        )}
+                        </motion.div>
+                    </div>
                   </Link>
                 )
               })}
             </div>
           </div>
         ))}
+
+        {/* Extra Settings Link */}
+        <div className="pb-2">
+            <Link href="/settings">
+                <motion.div
+                    whileHover={{ x: 4 }}
+                    className="flex items-center gap-3 px-3 py-3 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-all group"
+                >
+                    <Settings size={20} className="group-hover:text-indigo-400 transition-colors" />
+                    {!collapsed && <span className="text-sm font-medium">ตั้งค่า</span>}
+                </motion.div>
+            </Link>
+        </div>
       </nav>
 
-      {/* Bottom Section */}
-      <div className="p-2 border-t border-sidebar-border">
-        <Link href="/settings">
-          <motion.div
-            whileHover={{ x: 4 }}
-            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-muted-foreground hover:text-sidebar-foreground hover:bg-sidebar-accent/50 transition-all"
-          >
-            <Settings size={20} />
-            {!collapsed && <span className="text-sm font-medium">ตั้งค่า</span>}
-          </motion.div>
-        </Link>
-        
-        <button
-          onClick={() => window.location.href = '/api/auth/logout'}
-          className={cn(
-            "w-full flex items-center gap-3 px-3 py-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors group",
-            collapsed && "justify-center px-2"
-          )}
-        >
-          <LogOut size={20} className="group-hover:text-red-400 transition-colors" />
-          {!collapsed && <span className="text-sm font-medium">ออกจากระบบ</span>}
-        </button>
+      {/* Bottom Profile Section */}
+      <div className="p-4 border-t border-white/5 bg-black/20 backdrop-blur-md">
+        <SidebarProfile collapsed={collapsed} />
       </div>
     </motion.aside>
   )

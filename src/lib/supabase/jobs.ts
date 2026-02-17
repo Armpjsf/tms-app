@@ -146,11 +146,11 @@ export async function getAllJobs(
 }
 
 // นับสถิติงานวันนี้
-export async function getTodayJobStats() {
+export async function getTodayJobStats(branchId?: string) {
   try {
     const supabase = await createClient()
     const today = new Date().toISOString().split('T')[0]
-    const branchId = await getUserBranchId()
+    const userBranchId = await getUserBranchId()
     const isAdmin = await isSuperAdmin()
     const customerId = await getCustomerId()
     
@@ -161,9 +161,13 @@ export async function getTodayJobStats() {
 
     if (customerId) {
         dbQuery = dbQuery.eq('Customer_ID', customerId)
-    } else if (branchId && !isAdmin) {
-        dbQuery = dbQuery.eq('Branch_ID', branchId)
-    } else if (!isAdmin && !branchId) {
+    } else if (isAdmin) {
+        if (branchId && branchId !== 'All') {
+            dbQuery = dbQuery.eq('Branch_ID', branchId)
+        }
+    } else if (userBranchId) {
+        dbQuery = dbQuery.eq('Branch_ID', userBranchId)
+    } else {
         return { total: 0, delivered: 0, inProgress: 0, pending: 0 }
     }
     
@@ -188,11 +192,11 @@ export async function getTodayJobStats() {
 }
 
 // ยอดเงินวันนี้ (Estimated)
-export async function getTodayFinancials() {
+export async function getTodayFinancials(branchId?: string) {
   try {
     const supabase = await createClient()
     const today = new Date().toISOString().split('T')[0]
-    const branchId = await getUserBranchId()
+    const userBranchId = await getUserBranchId()
     const isAdmin = await isSuperAdmin()
     const customerId = await getCustomerId()
 
@@ -203,9 +207,13 @@ export async function getTodayFinancials() {
 
     if (customerId) {
         dbQuery = dbQuery.eq('Customer_ID', customerId)
-    } else if (branchId && !isAdmin) {
-        dbQuery = dbQuery.eq('Branch_ID', branchId)
-    } else if (!isAdmin && !branchId) {
+    } else if (isAdmin) {
+        if (branchId && branchId !== 'All') {
+            dbQuery = dbQuery.eq('Branch_ID', branchId)
+        }
+    } else if (userBranchId) {
+        dbQuery = dbQuery.eq('Branch_ID', userBranchId)
+    } else {
         return { revenue: 0 }
     }
 
@@ -303,7 +311,7 @@ export async function getJobById(jobId: string): Promise<Job | null> {
     }
 }
 // สถิติยอดจัดส่งย้อนหลัง 7 วัน
-export async function getWeeklyJobStats() {
+export async function getWeeklyJobStats(branchId?: string) {
   try {
     const supabase = await createClient()
     const today = new Date()
@@ -311,7 +319,7 @@ export async function getWeeklyJobStats() {
     sevenDaysAgo.setDate(today.getDate() - 6)
 
     const startDate = sevenDaysAgo.toISOString().split('T')[0]
-    const branchId = await getUserBranchId()
+    const userBranchId = await getUserBranchId()
     const isAdmin = await isSuperAdmin()
     const customerId = await getCustomerId()
     
@@ -323,9 +331,13 @@ export async function getWeeklyJobStats() {
 
     if (customerId) {
         dbQuery = dbQuery.eq('Customer_ID', customerId)
-    } else if (branchId && !isAdmin) {
-        dbQuery = dbQuery.eq('Branch_ID', branchId)
-    } else if (!isAdmin && !branchId) {
+    } else if (isAdmin) {
+        if (branchId && branchId !== 'All') {
+            dbQuery = dbQuery.eq('Branch_ID', branchId)
+        }
+    } else if (userBranchId) {
+        dbQuery = dbQuery.eq('Branch_ID', userBranchId)
+    } else {
         return []
     }
 
@@ -367,10 +379,10 @@ export async function getWeeklyJobStats() {
 }
 
 // สัดส่วนสถานะงาน (ทั้งหมด)
-export async function getJobStatusDistribution() {
+export async function getJobStatusDistribution(branchId?: string) {
     try {
         const supabase = await createClient()
-        const branchId = await getUserBranchId()
+        const userBranchId = await getUserBranchId()
         const isAdmin = await isSuperAdmin()
         const customerId = await getCustomerId()
 
@@ -380,9 +392,13 @@ export async function getJobStatusDistribution() {
 
         if (customerId) {
             dbQuery = dbQuery.eq('Customer_ID', customerId)
-        } else if (branchId && !isAdmin) {
-            dbQuery = dbQuery.eq('Branch_ID', branchId)
-        } else if (!isAdmin && !branchId) {
+        } else if (isAdmin) {
+            if (branchId && branchId !== 'All') {
+                dbQuery = dbQuery.eq('Branch_ID', branchId)
+            }
+        } else if (userBranchId) {
+            dbQuery = dbQuery.eq('Branch_ID', userBranchId)
+        } else {
             return []
         }
 

@@ -5,7 +5,7 @@ import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { cn } from "@/lib/utils"
 import { Bell, Search, Moon, Sun } from "lucide-react"
-import { getUserProfile, UserProfile } from "@/lib/supabase/users"
+
 
 interface HeaderProps {
   sidebarCollapsed?: boolean
@@ -19,7 +19,7 @@ export function Header({ sidebarCollapsed = false }: HeaderProps) {
     }
     return true
   })
-  const [profile, setProfile] = useState<UserProfile | null>(null)
+
 
   useEffect(() => {
     // Sync theme class
@@ -29,12 +29,7 @@ export function Header({ sidebarCollapsed = false }: HeaderProps) {
         document.documentElement.classList.remove('dark')
     }
 
-    // Load profile
-    async function loadProfile() {
-      const data = await getUserProfile()
-      setProfile(data)
-    }
-    loadProfile()
+
   }, [isDark])
 
   const toggleTheme = () => {
@@ -97,20 +92,7 @@ export function Header({ sidebarCollapsed = false }: HeaderProps) {
         </motion.button>
 
         {/* Profile */}
-        <motion.button
-          whileHover={{ scale: 1.02 }}
-          className="flex items-center gap-3 h-10 px-3 rounded-xl bg-muted/50 hover:bg-muted border border-border hover:border-border/80 transition-all"
-        >
-          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-[10px] font-bold text-white">
-            {(profile?.First_Name || profile?.Username || "A").charAt(0)}
-          </div>
-          <div className="text-left hidden lg:block">
-            <p className="text-sm font-medium text-foreground leading-tight">
-              {profile ? `${profile.First_Name || ""} ${profile.Last_Name || ""}`.trim() || profile.Username : "Admin"}
-            </p>
-            <p className="text-[10px] text-muted-foreground">{profile?.Role || "Super Admin"}</p>
-          </div>
-        </motion.button>
+
       </div>
     </motion.header>
   )

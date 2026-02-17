@@ -11,35 +11,46 @@ import {
   CheckCircle2,
 } from "lucide-react"
 import { getTodayJobStats, getWeeklyJobStats, getJobStatusDistribution, getTodayFinancials } from "@/lib/supabase/jobs"
-import { getDriverStats } from "@/lib/supabase/drivers"
-import { getVehicleStats } from "@/lib/supabase/vehicles"
+
 import { createClient } from "@/utils/supabase/server"
 import { WeeklyShipmentChart } from "@/components/dashboard/charts/weekly-shipment-chart"
 import { JobStatusChart } from "@/components/dashboard/charts/job-status-chart"
-import { isCustomer } from "@/lib/permissions"
+import { isSuperAdmin, isCustomer } from "@/lib/permissions"
+import { BranchFilter } from "@/components/dashboard/branch-filter"
+import { getFinancialStats } from "@/lib/supabase/analytics"
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: { branch?: string }
+}) {
   const customerMode = await isCustomer()
-  
-  // ดึงข้อมูลจาก Supabase
-  const [jobStats, driverStats, vehicleStats, sosCount, weeklyStats, statusDist, financials] = await Promise.all([
-    getTodayJobStats(),
-    getDriverStats(),
-    getVehicleStats(),
+  const superAdmin = await isSuperAdmin()
+  const branchId = searchParams?.branch
+
+  // ดึงข้อมูลจาก Supabase (Pass branchId if SuperAdmin)
+  const [jobStats, sosCount, weeklyStats, statusDist, financials, financialStats] = await Promise.all([
+    getTodayJobStats(branchId),
     getSosCount(),
-    getWeeklyJobStats(),
-    getJobStatusDistribution(),
-    getTodayFinancials(),
+    getWeeklyJobStats(branchId),
+    getJobStatusDistribution(branchId),
+    getTodayFinancials(branchId),
+    getFinancialStats(undefined, undefined, branchId), // New Financial Stats (Month to date)
   ])
 
   return (
     <DashboardLayout>
       {/* Page Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-white mb-2">Dashboard</h1>
-        <p className="text-slate-400">
-          ยินดีต้อนรับ! นี่คือภาพรวมของระบบวันนี้
-        </p>
+      <div className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
+        <div>
+           <h1 className="text-3xl font-bold text-white mb-2">
+            Operations Dashboard {branchId && branchId !== 'All' ? `(${branchId})` : ''}
+           </h1>
+           <p className="text-slate-400">
+             ยินดีต้อนรับ! นี่คือภาพรวมของระบบวันนี้
+           </p>
+        </div>
+        <BranchFilter isSuperAdmin={superAdmin} />
       </div>
 
       {/* Metrics Grid (Consolidated 5 KPIs) */}
@@ -60,18 +71,18 @@ export default async function DashboardPage() {
         />
         <MetricCard
           title="แจ้งเตือน/ปัญหา"
-          value={sosCount + jobStats.pending} // Including pending as 'needs attention' loosely, or just sosCount
+          value={sosCount + jobStats.pending}
           icon={<AlertTriangle size={20} />}
           gradient="danger"
           trend={{ value: sosCount, label: "SOS Alerts" }}
         />
         {!customerMode && (
           <MetricCard
-            title="รถและคนขับ"
-            value={vehicleStats.active + driverStats.active}
+            title="กำไรสุทธิ (เดือนนี้)"
+            value={`฿${financialStats.netProfit.toLocaleString()}`}
             icon={<Truck size={20} />}
             gradient="warning"
-            trend={{ value: driverStats.active, label: "คนขับออนไลน์" }}
+            trend={{ value: financialStats.revenue, label: "รายรับรวม" }}
           />
         )}
         <MetricCard

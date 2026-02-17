@@ -12,6 +12,7 @@ export type UserProfile = {
   Role: string | null
   Branch_ID: string | null
   Name?: string | null
+  Avatar_Url?: string | null
 }
 
 // Get current user profile

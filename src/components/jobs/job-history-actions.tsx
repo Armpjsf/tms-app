@@ -4,6 +4,7 @@ import { useState } from "react"
 import { ExternalLink, Image, Banknote } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { JobDialog } from "@/components/planning/job-dialog"
+import { PODDialog } from "@/components/jobs/pod-dialog"
 import { accountingService } from "@/services/accounting"
 
 
@@ -17,6 +18,7 @@ type Props = {
 
 export function JobHistoryActions({ job, drivers, vehicles, customers, routes }: Props) {
   const [open, setOpen] = useState(false)
+  const [viewPod, setViewPod] = useState(false)
   const [syncing, setSyncing] = useState(false)
 
   const handleSyncToAccounting = async () => {
@@ -53,12 +55,7 @@ export function JobHistoryActions({ job, drivers, vehicles, customers, routes }:
             variant="ghost" 
             size="sm" 
             className="h-8 w-8 p-0 text-blue-400 hover:text-blue-300 hover:bg-blue-500/10"
-            onClick={() => {
-                const urls = job.Photo_Proof_Url.split(',')
-                if (urls.length > 0) {
-                    window.open(urls[0], '_blank')
-                }
-            }}
+            onClick={() => setViewPod(true)}
             title="ดูรูปใบงาน"
           >
             <Image className="h-4 w-4" />
@@ -85,6 +82,12 @@ export function JobHistoryActions({ job, drivers, vehicles, customers, routes }:
         vehicles={vehicles}
         customers={customers}
         routes={routes}
+      />
+
+      <PODDialog 
+        open={viewPod} 
+        onOpenChange={setViewPod} 
+        job={job} 
       />
     </>
   )

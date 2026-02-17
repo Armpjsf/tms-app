@@ -1,9 +1,20 @@
 "use server"
 
 import { createClient } from '@/utils/supabase/server'
+import { getUserBranchId, isSuperAdmin } from "@/lib/permissions"
+
+// Helper to get vehicle plates for a branch
+async function getBranchPlates(branchId: string) {
+    const supabase = await createClient()
+    const { data } = await supabase
+        .from('master_vehicles')
+        .select('vehicle_plate')
+        .eq('branch_id', branchId)
+    return data?.map(v => v.vehicle_plate) || []
+}
 
 // 1. Financial Stats
-export async function getFinancialStats(startDate?: string, endDate?: string) {
+export async function getFinancialStats(startDate?: string, endDate?: string, branchId?: string) {
   const supabase = await createClient()
   
   // Default to current month if no date provided
@@ -11,33 +22,71 @@ export async function getFinancialStats(startDate?: string, endDate?: string) {
   const firstDay = startDate || new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0]
   const lastDay = endDate || new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0]
 
+  // Determine effective branch
+  const userBranchId = await getUserBranchId()
+  const isAdmin = await isSuperAdmin()
+  const targetBranchId = isAdmin ? (branchId && branchId !== 'All' ? branchId : null) : userBranchId
+
   // 1.1 Revenue & Driver Cost from Jobs
-  const { data: jobs } = await supabase
+  let jobsQuery = supabase
     .from('Jobs_Main')
     .select('Price_Cust_Total, Cost_Driver_Total')
     .gte('Plan_Date', firstDay)
     .lte('Plan_Date', lastDay)
-    .in('Job_Status', ['Completed', 'Delivered']) // Only count completed jobs
+    .in('Job_Status', ['Completed', 'Delivered'])
+
+  if (targetBranchId) {
+      jobsQuery = jobsQuery.eq('Branch_ID', targetBranchId)
+  }
+
+  const { data: jobs } = await jobsQuery
 
   const revenue = jobs?.reduce((sum, job) => sum + (job.Price_Cust_Total || 0), 0) || 0
   const driverCost = jobs?.reduce((sum, job) => sum + (job.Cost_Driver_Total || 0), 0) || 0
 
+  // For Fuel and Maintenance, we need vehicle plates if branch filtering is active
+  let activePlates: string[] = []
+  if (targetBranchId) {
+      activePlates = await getBranchPlates(targetBranchId)
+  }
+
   // 1.2 Fuel Cost
-  const { data: fuel } = await supabase
+  let fuelQuery = supabase
     .from('Fuel_Logs')
     .select('Price_Total')
     .gte('Date_Time', `${firstDay}T00:00:00`)
     .lte('Date_Time', `${lastDay}T23:59:59`)
 
+  if (targetBranchId) {
+      if (activePlates.length > 0) {
+        fuelQuery = fuelQuery.in('Vehicle_Plate', activePlates)
+      } else {
+        // If no vehicles in branch, no fuel cost
+        fuelQuery = fuelQuery.in('Vehicle_Plate', ['NO_MATCH']) 
+      }
+  }
+
+  const { data: fuel } = await fuelQuery
+
   const fuelCost = fuel?.reduce((sum, log) => sum + (log.Price_Total || 0), 0) || 0
 
   // 1.3 Maintenance Cost
-  const { data: maintenance } = await supabase
+  let maintenanceQuery = supabase
     .from('Repair_Tickets')
     .select('Cost_Total')
     .gte('Date_Report', `${firstDay}T00:00:00`)
     .lte('Date_Report', `${lastDay}T23:59:59`)
-    .neq('Status', 'Cancelled') // Exclude cancelled tickets
+    .neq('Status', 'Cancelled')
+
+  if (targetBranchId) {
+       if (activePlates.length > 0) {
+        maintenanceQuery = maintenanceQuery.in('Vehicle_Plate', activePlates)
+      } else {
+        maintenanceQuery = maintenanceQuery.in('Vehicle_Plate', ['NO_MATCH'])
+      }
+  }
+
+  const { data: maintenance } = await maintenanceQuery
 
   const maintenanceCost = maintenance?.reduce((sum, ticket) => sum + (ticket.Cost_Total || 0), 0) || 0
 
@@ -59,13 +108,13 @@ export async function getFinancialStats(startDate?: string, endDate?: string) {
 }
 
 // 2. Revenue Trend (Daily for the selected range)
-export async function getRevenueTrend(startDate?: string, endDate?: string) {
+export async function getRevenueTrend(startDate?: string, endDate?: string, branchId?: string) {
   const supabase = await createClient()
   
   // Default to last 30 days if no range provided
   const today = new Date()
   let start = startDate
-  let end = endDate
+  const end = endDate
 
   if (!start) {
       const thirtyDaysAgo = new Date(today)
@@ -73,11 +122,20 @@ export async function getRevenueTrend(startDate?: string, endDate?: string) {
       start = thirtyDaysAgo.toISOString().split('T')[0]
   }
 
+  // Determine effective branch
+  const userBranchId = await getUserBranchId()
+  const isAdmin = await isSuperAdmin()
+  const targetBranchId = isAdmin ? (branchId && branchId !== 'All' ? branchId : null) : userBranchId
+
   let query = supabase
     .from('Jobs_Main')
     .select('Plan_Date, Price_Cust_Total, Cost_Driver_Total')
     .in('Job_Status', ['Completed', 'Delivered'])
     .order('Plan_Date', { ascending: true })
+
+  if (targetBranchId) {
+      query = query.eq('Branch_ID', targetBranchId)
+  }
 
   if (start) query = query.gte('Plan_Date', start)
   if (end) query = query.lte('Plan_Date', end)
@@ -100,13 +158,22 @@ export async function getRevenueTrend(startDate?: string, endDate?: string) {
 }
 
 // 3. Customer Performance (Top 5)
-export async function getTopCustomers(startDate?: string, endDate?: string) {
+export async function getTopCustomers(startDate?: string, endDate?: string, branchId?: string) {
     const supabase = await createClient()
     
+    // Determine effective branch
+    const userBranchId = await getUserBranchId()
+    const isAdmin = await isSuperAdmin()
+    const targetBranchId = isAdmin ? (branchId && branchId !== 'All' ? branchId : null) : userBranchId
+
     let query = supabase
         .from('Jobs_Main')
         .select('Customer_Name, Price_Cust_Total')
         .in('Job_Status', ['Completed', 'Delivered'])
+
+    if (targetBranchId) {
+        query = query.eq('Branch_ID', targetBranchId)
+    }
 
     if (startDate) query = query.gte('Plan_Date', startDate)
     if (endDate) query = query.lte('Plan_Date', endDate)
@@ -131,48 +198,76 @@ export async function getTopCustomers(startDate?: string, endDate?: string) {
 
 // 4. Operational Stats
 // 4. Operational Stats
-export async function getOperationalStats() {
+export async function getOperationalStats(branchId?: string) {
     const supabase = await createClient()
 
+    // Determine effective branch
+    const userBranchId = await getUserBranchId()
+    const isAdmin = await isSuperAdmin()
+    const targetBranchId = isAdmin ? (branchId && branchId !== 'All' ? branchId : null) : userBranchId
+
     // 4.1 Fleet Utilization (Active vs Total Vehicles)
-    // Fix: Table name is lowercase 'master_vehicles'
-    const { count: totalVehicles } = await supabase
+    let vehicleQuery = supabase
         .from('master_vehicles') 
         .select('*', { count: 'exact', head: true })
+    
+    if (targetBranchId) {
+        vehicleQuery = vehicleQuery.eq('branch_id', targetBranchId)
+    }
+
+    const { count: totalVehicles } = await vehicleQuery
 
     // Vehicles active today (assigned to a job)
     const today = new Date().toISOString().split('T')[0]
-    const { data: activeJobs } = await supabase
+    let activeJobsQuery = supabase
         .from('Jobs_Main')
         .select('Vehicle_Plate')
         .eq('Plan_Date', today)
         .not('Vehicle_Plate', 'is', null)
 
-    // Count unique vehicles
+    if (targetBranchId) {
+        activeJobsQuery = activeJobsQuery.eq('Branch_ID', targetBranchId)
+    }
+
+    const { data: activeJobs } = await activeJobsQuery
+
     const uniqueActiveVehicles = new Set(activeJobs?.map(j => j.Vehicle_Plate)).size
 
     // 4.2 On-Time Delivery
-    const { data: jobStats } = await supabase
+    let jobStatsQuery = supabase
         .from('Jobs_Main')
         .select('Job_Status')
+    
+    if (targetBranchId) {
+        jobStatsQuery = jobStatsQuery.eq('Branch_ID', targetBranchId)
+    }
+        
+    const { data: jobStats } = await jobStatsQuery
         
     const totalJobs = jobStats?.length || 0
     const completedJobs = jobStats?.filter(j => ['Completed', 'Delivered'].includes(j.Job_Status || '')).length || 0
     const onTimeDelivery = totalJobs > 0 ? (completedJobs / totalJobs) * 100 : 0
 
     // 4.3 Fuel Efficiency (km/L)
-    // Calculate from Fuel Logs: Sum(Odometer) / Sum(Liters) - simplified approximation
-    // Better: Average of (Odometer - PrevOdometer) / Liters. 
-    // For now: Sum(Liters) and assume Total Distance from Jobs if available, or just placeholder logic.
-    // Let's use: Total Distance of Completed Jobs / Total Fuel Liters
-    
-    // We don't have "Distance" in Jobs_Main yet. 
-    // Alternative: Use Odometer max - min from Fuel Logs for active vehicles.
-    
-    const { data: fuelLogs } = await supabase
+    let activePlates: string[] = []
+    if (targetBranchId) {
+        activePlates = await getBranchPlates(targetBranchId)
+    }
+
+    let fuelLogsQuery = supabase
         .from('Fuel_Logs')
         .select('Liters, Odometer, Vehicle_Plate')
         .order('Date_Time', { ascending: true })
+
+    if (targetBranchId) {
+        if (activePlates.length > 0) {
+            fuelLogsQuery = fuelLogsQuery.in('Vehicle_Plate', activePlates)
+        } else {
+             fuelLogsQuery = fuelLogsQuery.in('Vehicle_Plate', ['NO_MATCH'])
+        }
+    }
+    
+    const { data: fuelLogs } = await fuelLogsQuery
 
     let totalDistanceApprox = 0
     let totalFuelUsed = 0
@@ -194,10 +289,6 @@ export async function getOperationalStats() {
                 const maxOdo = logs[logs.length - 1].Odometer
                 totalDistanceApprox += (maxOdo - minOdo)
                 
-                // Sum liters excluding the first fill (since it sets the start point)
-                // actually simpler: Sum liters of all records except the FIRST one? 
-                // Or just sum all liters? standard is Liters filled covers NEXT distance, but here we look back.
-                // Let's sum liters of 2nd record onwards.
                 for (let i = 1; i < logs.length; i++) {
                     totalFuelUsed += logs[i].Liters
                 }
@@ -209,8 +300,8 @@ export async function getOperationalStats() {
 
     return {
         fleet: {
-            total: totalVehicles || 0,
             active: uniqueActiveVehicles || 0,
+            total: totalVehicles || 0,
             utilization: totalVehicles ? (uniqueActiveVehicles / totalVehicles) * 100 : 0,
             onTimeDelivery,
             fuelEfficiency

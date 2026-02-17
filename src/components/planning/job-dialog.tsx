@@ -24,7 +24,10 @@ import {
   Calendar,
   Banknote,
   FileText,
-  Trash2
+  Trash2,
+
+  Link as LinkIcon,
+  Check
 } from "lucide-react"
 
 type LocationPoint = {
@@ -90,6 +93,7 @@ export function JobDialog({
   const isControlled = controlledOpen !== undefined
   const show = isControlled ? controlledOpen : open
   const setShow = isControlled ? setControlledOpen! : setOpen
+  const [copied, setCopied] = useState(false)
 
   // Form State
   const [formData, setFormData] = useState({
@@ -153,6 +157,17 @@ export function JobDialog({
         setAssignments([{ Vehicle_Type: '4-Wheel', Vehicle_Plate: '', Driver_ID: '' }])
     }
   }, [show, mode, job])
+
+  const handleCopyTrackingLink = () => {
+    const origin = window.location.origin
+    const url = `${origin}/track/${formData.Job_ID}`
+    navigator.clipboard.writeText(url)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  
+
 
   const addOrigin = () => setOrigins([...origins, { name: '', lat: '', lng: '' }])
   const removeOrigin = (index: number) => {
@@ -388,6 +403,16 @@ export function JobDialog({
                     className="bg-slate-800/50 border-slate-700 text-slate-400"
                   />
                   <p className="text-xs text-slate-500">สร้างอัตโนมัติ</p>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleCopyTrackingLink}
+                    className="w-full mt-1 border-indigo-500/30 text-indigo-400 hover:bg-indigo-500/10"
+                  >
+                    {copied ? <Check className="w-3 h-3 mr-2" /> : <LinkIcon className="w-3 h-3 mr-2" />}
+                    {copied ? 'คัดลอกแล้ว' : 'Copy Tracking Link'}
+                  </Button>
                 </div>
                 <div className="space-y-2">
                   <Label className="flex items-center gap-1">

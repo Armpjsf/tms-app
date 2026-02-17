@@ -16,17 +16,39 @@ import { CustomerRanking } from "@/components/analytics/customer-ranking"
 import { MonthFilter } from "@/components/analytics/month-filter"
 import { BarChart3, PieChart, TrendingUp, Users, ArrowLeft } from "lucide-react"
 
+import { isSuperAdmin } from "@/lib/permissions"
+import { BranchFilter } from "@/components/dashboard/branch-filter"
+
 export default async function AnalyticsPage(props: { searchParams: Promise<{ [key: string]: string | undefined }> }) {
   const searchParams = await props.searchParams
   const startDate = searchParams.startDate
   const endDate = searchParams.endDate
+  const branchId = searchParams.branch
+  const superAdmin = await isSuperAdmin()
+
+  if (!superAdmin) {
+     return (
+        <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 text-center">
+            <h1 className="text-3xl font-bold text-red-500">Access Denied</h1>
+            <p className="text-slate-400">
+                คุณไม่มีสิทธิ์เข้าถึงหน้านี้ (สำหรับ Super Admin เท่านั้น) <br/>
+                กรุณาติดต่อผู้ดูแลระบบหากต้องการสิทธิ์
+            </p>
+            <Link href="/dashboard">
+                <Button variant="secondary">กลับสู่ Dashboard ปกติ</Button>
+            </Link>
+        </div>
+     )
+  }
+
+
 
   // Fetch all analytics data in parallel with filters
   const [financials, revenueTrend, topCustomers, opStats] = await Promise.all([
-    getFinancialStats(startDate, endDate),
-    getRevenueTrend(startDate, endDate),
-    getTopCustomers(startDate, endDate),
-    getOperationalStats(),
+    getFinancialStats(startDate, endDate, branchId),
+    getRevenueTrend(startDate, endDate, branchId),
+    getTopCustomers(startDate, endDate, branchId),
+    getOperationalStats(branchId),
   ])
 
   return (
@@ -39,13 +61,14 @@ export default async function AnalyticsPage(props: { searchParams: Promise<{ [ke
             </Button>
           </Link>
           <div>
-            <h1 className="text-3xl font-bold text-white mb-2">Executive Dashboard</h1>
+            <h1 className="text-3xl font-bold text-white mb-2">Executive Dashboard {branchId && branchId !== 'All' ? `(${branchId})` : ''}</h1>
             <p className="text-slate-400">ภาพรวมผลประกอบการและประสิทธิภาพการดำเนินงาน</p>
           </div>
         </div>
-        
+
         <div className="flex items-center gap-4">
-            <span className="text-sm text-slate-500">ข้อมูลประจำเดือน:</span>
+            <BranchFilter isSuperAdmin={superAdmin} />
+            <span className="text-sm text-slate-500">|</span>
             <MonthFilter />
         </div>
       </div>
