@@ -10,6 +10,8 @@ import { createVehicle, updateVehicle } from "@/app/vehicles/actions"
 import { Loader2 } from "lucide-react"
 import { Vehicle } from "@/lib/supabase/vehicles"
 import { Branch } from "@/lib/supabase/branches"
+import { getVehicleTypes, VehicleType } from "@/lib/actions/vehicle-type-actions"
+import { useEffect } from "react"
 
 type VehicleDialogProps = {
   mode?: 'create' | 'edit'
@@ -35,6 +37,16 @@ export function VehicleDialog({
   const isControlled = open !== undefined
   const show = isControlled ? open : internalOpen
   const setShow = isControlled ? onOpenChange! : setInternalOpen
+
+  const [vehicleTypes, setVehicleTypes] = useState<VehicleType[]>([])
+
+  useEffect(() => {
+    const fetchTypes = async () => {
+        const types = await getVehicleTypes()
+        setVehicleTypes(types)
+    }
+    fetchTypes()
+  }, [])
 
   const [formData, setFormData] = useState({
     vehicle_plate: vehicle?.vehicle_plate || '',
@@ -168,6 +180,10 @@ export function VehicleDialog({
             </div>
           </div>
 
+
+
+
+
           <div className="space-y-2">
             <Label htmlFor="vehicle_type">ประเภทรถ</Label>
             <select
@@ -176,9 +192,19 @@ export function VehicleDialog({
                 onChange={(e) => setFormData({ ...formData, vehicle_type: e.target.value })}
                 className="flex h-10 w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
             >
-                <option value="4-Wheel" className="bg-slate-900">4 ล้อ (4-Wheel)</option>
-                <option value="6-Wheel" className="bg-slate-900">6 ล้อ (6-Wheel)</option>
-                <option value="10-Wheel" className="bg-slate-900">10 ล้อ (10-Wheel)</option>
+                {vehicleTypes.length > 0 ? (
+                    vehicleTypes.map((type) => (
+                        <option key={type.type_id} value={type.type_name} className="bg-slate-900">
+                            {type.type_name} {type.description ? `(${type.description})` : ''}
+                        </option>
+                    ))
+                ) : (
+                    <>
+                        <option value="4-Wheel" className="bg-slate-900">4 ล้อ (4-Wheel)</option>
+                        <option value="6-Wheel" className="bg-slate-900">6 ล้อ (6-Wheel)</option>
+                        <option value="10-Wheel" className="bg-slate-900">10 ล้อ (10-Wheel)</option>
+                    </>
+                )}
             </select>
           </div>
 

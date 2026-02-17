@@ -11,20 +11,35 @@ import { toast } from "sonner"
 import { Switch } from "@/components/ui/switch"
 
 const DEFINED_PERMISSIONS = [
-    { id: 'manage_drivers', label: 'Manage Drivers', desc: 'Create, Edit, Delete Drivers' },
-    { id: 'manage_vehicles', label: 'Manage Vehicles', desc: 'Create, Edit, Delete Vehicles' },
-    { id: 'manage_jobs', label: 'Manage Jobs', desc: 'Create, Specific Edit Jobs' },
-    { id: 'job_admin_actions', label: 'Job Admin Actions', desc: 'Override status, Close jobs' },
-    { id: 'view_reports', label: 'View Reports', desc: 'Access Analytics & Financials' },
-    { id: 'manage_users', label: 'Manage Users', desc: 'Create, Edit Users (Restricted)' },
-    { id: 'view_history', label: 'View History', desc: 'View Job History' },
-    { id: 'manage_subcontractors', label: 'Manage Subcontractors', desc: 'Manage Subcontractor list' },
+    // Driver Management
+    { id: 'manage_drivers', label: 'จัดการข้อมูลคนขับ (Drivers)', desc: 'เพิ่ม แก้ไข และลบข้อมูลคนขับรถ' },
+    { id: 'view_drivers', label: 'ดูข้อมูลคนขับ (View Drivers)', desc: 'ดูรายชื่อและรายละเอียดคนขับรถ' },
+    
+    // Vehicle Management
+    { id: 'manage_vehicles', label: 'จัดการข้อมูลรถ (Vehicles)', desc: 'เพิ่ม แก้ไข และลบข้อมูลยานพาหนะ' },
+    { id: 'manage_vehicle_types', label: 'จัดการประเภทรถ (Vehicle Types)', desc: 'เพิ่ม แก้ไข และลบประเภทรถ' },
+    { id: 'view_vehicles', label: 'ดูข้อมูลรถ (View Vehicles)', desc: 'ดูรายการและรายละเอียดรถ' },
+
+    // Job Management
+    { id: 'manage_jobs', label: 'จัดการงานขนส่ง (Jobs)', desc: 'สร้างและแก้ไขรายละเอียดงาน' },
+    { id: 'job_admin_actions', label: 'ผู้ดูแลงานพิเศษ (Job Admin)', desc: 'แก้ไขสถานะงาน, ปิดงาน, และยกเลิกงาน' },
+    { id: 'view_history', label: 'ดูประวัติงาน (History)', desc: 'ดูประวัติการขนส่งย้อนหลังทั้งหมด' },
+
+    // Subcontractors
+    { id: 'manage_subcontractors', label: 'จัดการรถร่วม (Subcontractors)', desc: 'จัดการข้อมูลบริษัทรถร่วม' },
+
+    // Reports & Analytics
+    { id: 'view_reports', label: 'ดูรายงาน (Reports)', desc: 'เข้าถึงรายงานและแดชบอร์ดผู้บริหาร' },
+    
+    // User Management
+    { id: 'manage_users', label: 'จัดการผู้ใช้งาน (Users)', desc: 'จัดการบัญชีผู้ใช้งานและพนักงาน' },
 ]
 
 export default function RolesPage() {
     const [roles, setRoles] = useState<RolePermission[]>([])
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
+    const [error, setError] = useState<string | null>(null)
 
     useEffect(() => {
         loadData()
@@ -32,20 +47,28 @@ export default function RolesPage() {
 
     const loadData = async () => {
         setLoading(true)
+        setError(null)
         const result = await getRolePermissions()
+        
+        let fetchedData: RolePermission[] = []
         if (result.success && result.data) {
-             // Ensure we have entries for standard roles even if DB is empty
-             const standardRoles = ['Super Admin', 'Admin', 'Staff', 'Driver']
-             const mergedData = [...result.data]
-             
-             standardRoles.forEach(role => {
-                 if (!mergedData.find(r => r.Role === role)) {
-                     mergedData.push({ Role: role, Permissions: {} })
-                 }
-             })
-             
-             setRoles(mergedData)
+             fetchedData = result.data
+        } else if (result.error) {
+             console.error(result.error)
+             setError(result.error) // Show error to user
         }
+
+        // Always populate standard roles so the page isn't empty
+        const standardRoles = ['Super Admin', 'Admin', 'Staff', 'Driver', 'Customer']
+        const mergedData = [...fetchedData]
+        
+        standardRoles.forEach(role => {
+            if (!mergedData.find(r => r.Role === role)) {
+                mergedData.push({ Role: role, Permissions: {} })
+            }
+        })
+             
+        setRoles(mergedData)
         setLoading(false)
     }
 
@@ -88,6 +111,19 @@ export default function RolesPage() {
                 </h1>
                 <p className="text-slate-400">กำหนดสิทธิ์การเข้าถึงเมนูและการจัดการข้อมูลสำหรับแต่ละตำแหน่ง</p>
             </div>
+
+            {error && (
+                <div className="bg-red-500/10 border border-red-500/20 text-red-500 p-4 rounded-lg mb-6 flex items-center gap-2">
+                    <Shield className="h-5 w-5" />
+                    <div>
+                        <p className="font-bold">เกิดข้อผิดพลาดในการโหลดข้อมูล</p>
+                        <p className="text-sm opacity-80">{error}</p>
+                        {error.includes('relation "Master_Role_Permissions" does not exist') && (
+                            <p className="text-sm mt-1 underline">กรุณารัน SQL เพื่อสร้างตาราง Master_Role_Permissions</p>
+                        )}
+                    </div>
+                </div>
+            )}
 
             {loading ? (
                 <div className="flex justify-center py-12">

@@ -1,6 +1,7 @@
 "use server"
 
 import { createClient } from '@/utils/supabase/server'
+import { getUserBranchId, isSuperAdmin } from "@/lib/permissions"
 
 // Type matching actual Supabase schema (lowercase columns!)
 export type Vehicle = {
@@ -28,9 +29,6 @@ export type Vehicle = {
   notes: string | null
 }
 
-// Get all vehicles from master_vehicles table
-import { getUserBranchId, isSuperAdmin } from "@/lib/permissions"
-
 export async function getAllVehiclesFromTable(): Promise<Vehicle[]> {
   try {
     const supabase = await createClient()
@@ -43,8 +41,7 @@ export async function getAllVehiclesFromTable(): Promise<Vehicle[]> {
     const isAdmin = await isSuperAdmin()
     
     if (branchId && !isAdmin) {
-        // @ts-ignore
-        query = query.eq('Branch_ID', branchId)
+        query = query.eq('branch_id', branchId)
     } else if (!isAdmin && !branchId) {
         return []
     }
@@ -91,7 +88,7 @@ export async function createVehicle(vehicleData: Partial<Vehicle>) {
         model: vehicleData.model,
         driver_id: vehicleData.driver_id,
         active_status: vehicleData.active_status || 'Active',
-        Branch_ID: await getUserBranchId()
+        branch_id: await getUserBranchId()
       })
       .select()
       .single()
@@ -164,8 +161,7 @@ export async function getAllVehicles(page?: number, limit?: number, query?: stri
     const isAdmin = await isSuperAdmin()
     
     if (branchId && !isAdmin) {
-        // @ts-ignore
-        queryBuilder = queryBuilder.eq('Branch_ID', branchId)
+        queryBuilder = queryBuilder.eq('branch_id', branchId)
     } else if (!isAdmin && !branchId) {
         return { data: [], count: 0 }
     }
@@ -185,9 +181,16 @@ export async function getAllVehicles(page?: number, limit?: number, query?: stri
     const { data, error, count } = await queryBuilder
     
     if (error) {
-      console.error('Error fetching vehicles:', JSON.stringify(error))
+      console.error('[getAllVehicles] Error fetching vehicles:', JSON.stringify(error))
       return { data: [], count: 0 }
     }
+    
+    console.log('[getAllVehicles] Fetched:', { 
+        count: data?.length, 
+        branchId, 
+        isAdmin,
+        sample: data?.[0] ? { plate: data[0].vehicle_plate, branch: data[0].branch_id } : 'No data'
+    })
     
     return { data: data || [], count: count || 0 }
   } catch {
@@ -208,8 +211,7 @@ export async function getVehicleStats() {
     const isAdmin = await isSuperAdmin()
     
     if (branchId && !isAdmin) {
-        // @ts-ignore
-        query = query.eq('Branch_ID', branchId)
+        query = query.eq('branch_id', branchId)
     } else if (!isAdmin && !branchId) {
         return { total: 0, active: 0, maintenance: 0, dueSoon: 0 }
     }

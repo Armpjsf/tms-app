@@ -21,6 +21,13 @@ export async function createVehicle(data: VehicleFormData) {
   const isAdmin = await isSuperAdmin()
 
   const finalBranchId = (isAdmin && data.Branch_ID) ? data.Branch_ID : userBranchId
+  
+  console.log('[createVehicle] Attempting to create vehicle:', { 
+      plate: data.vehicle_plate, 
+      finalBranchId, 
+      userBranchId,
+      isAdmin 
+  })
 
   const { error } = await supabase
     .from('master_vehicles')
@@ -32,14 +39,15 @@ export async function createVehicle(data: VehicleFormData) {
       active_status: 'Active',
       current_mileage: data.current_mileage || 0,
       next_service_mileage: data.next_service_mileage || 0,
-      Branch_ID: finalBranchId
+      branch_id: finalBranchId
     })
 
   if (error) {
-    console.error('Error creating vehicle:', error)
+    console.error('[createVehicle] DB Error:', error)
     return { success: false, message: 'Failed to create vehicle' }
   }
 
+  console.log('[createVehicle] Success')
   revalidatePath('/vehicles')
   return { success: true, message: 'Vehicle created successfully' }
 }
@@ -57,7 +65,7 @@ export async function createBulkVehicles(vehicles: Partial<VehicleFormData>[]) {
     active_status: 'Active',
     current_mileage: v.current_mileage || 0,
     next_service_mileage: v.next_service_mileage || 0,
-    Branch_ID: branchId
+    branch_id: branchId
   })).filter(v => v.vehicle_plate)
 
   if (cleanData.length === 0) {
@@ -82,26 +90,27 @@ export async function updateVehicle(plate: string, data: Partial<VehicleFormData
   const branchId = await getUserBranchId()
   const isAdmin = await isSuperAdmin()
 
-    let query = supabase
-      .from('master_vehicles')
-      .update({
+    const updatePayload: any = {
         vehicle_type: data.vehicle_type,
         brand: data.brand,
         model: data.model,
         active_status: data.active_status,
         current_mileage: data.current_mileage,
         next_service_mileage: data.next_service_mileage
-    })
-    
-  if (isAdmin && data.Branch_ID) {
-     // @ts-ignore
-     query = query.update({ Branch_ID: data.Branch_ID })
-  }
+    }
+
+    if (isAdmin && data.Branch_ID) {
+        updatePayload.branch_id = data.Branch_ID
+    }
+
+    let query = supabase
+      .from('master_vehicles')
+      .update(updatePayload)
   
   query = query.eq('vehicle_plate', plate)
 
   if (branchId && !isAdmin) {
-      query = query.eq('Branch_ID', branchId)
+      query = query.eq('branch_id', branchId)
   }
 
   const { error } = await query
@@ -126,7 +135,7 @@ export async function deleteVehicle(plate: string) {
     .eq('vehicle_plate', plate)
 
   if (branchId && !isAdmin) {
-      query = query.eq('Branch_ID', branchId)
+      query = query.eq('branch_id', branchId)
   }
 
   const { error } = await query

@@ -33,7 +33,7 @@ export async function createDriver(data: DriverFormData) {
       Vehicle_Type: '4-Wheel', // Default
       Role: 'Driver',
       Active_Status: 'Active',
-      Sub_ID: data.Sub_ID || null,
+      Sub_ID: data.Sub_ID || null, // Fix: Convert empty string to null
       Branch_ID: finalBranchId
     })
 
@@ -60,7 +60,7 @@ export async function createBulkDrivers(drivers: Partial<DriverFormData>[]) {
     Vehicle_Type: '4-Wheel',
     Role: 'Driver',
     Active_Status: 'Active',
-    Sub_ID: d.Sub_ID || null,
+    Sub_ID: d.Sub_ID || null, // Fix: Convert empty string to null
     Branch_ID: branchId
   })).filter(d => d.Driver_Name) // Ensure name exists
 
@@ -91,7 +91,7 @@ export async function updateDriver(driverId: string, data: Partial<DriverFormDat
     Mobile_No: data.Mobile_No,
     Vehicle_Plate: data.Vehicle_Plate,
     Active_Status: data.Active_Status,
-    Sub_ID: data.Sub_ID,
+    Sub_ID: data.Sub_ID || null, // Fix: Convert empty string to null
   }
 
   if (isAdmin && data.Branch_ID) {
