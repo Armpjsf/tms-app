@@ -19,14 +19,14 @@ import { isSuperAdmin, isCustomer } from "@/lib/permissions"
 import { BranchFilter } from "@/components/dashboard/branch-filter"
 import { getFinancialStats } from "@/lib/supabase/analytics"
 
-export default async function DashboardPage({
-  searchParams,
-}: {
-  searchParams: { branch?: string }
+export default async function DashboardPage(props: {
+  searchParams: Promise<{ branch?: string }>
 }) {
+  const searchParams = await props.searchParams
+  const branchId = searchParams?.branch
+  
   const customerMode = await isCustomer()
   const superAdmin = await isSuperAdmin()
-  const branchId = searchParams?.branch
 
   // ดึงข้อมูลจาก Supabase (Pass branchId if SuperAdmin)
   const [jobStats, sosCount, weeklyStats, statusDist, financials, financialStats] = await Promise.all([

@@ -7,8 +7,9 @@ import Image from "next/image"
 
 export const dynamic = 'force-dynamic'
 
-export default async function TrackingPage({ params }: { params: { jobId: string } }) {
-  const { jobId } = await params
+export default async function TrackingPage(props: { params: Promise<{ jobId: string }> }) {
+  const params = await props.params
+  const { jobId } = params
   const job = await getPublicJobDetails(jobId)
 
   if (!job) {
