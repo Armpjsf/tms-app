@@ -7,12 +7,11 @@ class AccountingServiceManager {
 
     constructor() {
         // Using Akaunting Provider with user-provided key
-        // Key: api c0c29410-e07c-49b1-9dc2-fe7699fe927b
-        // We'll treat the whole string as the token for now, or just the UUID if "api" is username.
-        // Common Akaunting Cloud API Key is just the token. The user wrote "api <UUID>".
-        // Use just the UUID for Bearer.
-        const apiKey = "c0c29410-e07c-49b1-9dc2-fe7699fe927b";
-        this.provider = new AkauntingProvider(apiKey); 
+        // Key: process.env.AKAUNTING_API_KEY
+        // Company ID: process.env.AKAUNTING_COMPANY_ID
+        const apiKey = process.env.AKAUNTING_API_KEY || "";
+        const companyId = process.env.AKAUNTING_COMPANY_ID || "1";
+        this.provider = new AkauntingProvider(apiKey, companyId); 
     }
 
     public async syncJobToInvoice(job: any): Promise<{ success: boolean; message: string }> {
