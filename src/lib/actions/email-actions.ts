@@ -2,7 +2,8 @@
 
 import { Resend } from 'resend';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Initialize Resend conditionally or lazily
+const resend = new Resend(process.env.RESEND_API_KEY || 're_123'); // Default dummy key to prevent crash on init, but check before send
 
 interface EmailAttachment {
     filename: string;
@@ -19,6 +20,7 @@ interface SendBillingEmailProps {
 
 export async function sendBillingEmail({ to, subject, html, attachments }: SendBillingEmailProps) {
     if (!process.env.RESEND_API_KEY) {
+        console.error("RESEND_API_KEY is missing in environment variables");
         return { success: false, error: "RESEND_API_KEY is not configured" };
     }
 
