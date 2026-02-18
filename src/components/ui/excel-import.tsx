@@ -71,7 +71,9 @@ export function ExcelImport({
           const sheetName = workbook.SheetNames[0]
           const sheet = workbook.Sheets[sheetName]
           const jsonData = XLSX.utils.sheet_to_json(sheet)
-          resolve(jsonData)
+          // Fix: Ensure data is plain objects by stripping any non-serializable properties (e.g. prototypes)
+          const plainData = JSON.parse(JSON.stringify(jsonData))
+          resolve(plainData)
         } catch (error) {
           reject(error)
         }

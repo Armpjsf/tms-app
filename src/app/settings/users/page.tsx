@@ -9,8 +9,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Users, Plus, Edit, Trash2, Search, Loader2 } from "lucide-react"
-import { getUsers, createUser, updateUser, deleteUser, UserData, getCurrentUserRole } from "@/lib/actions/user-actions"
+import { getUsers, createUser, updateUser, deleteUser, UserData, getCurrentUserRole, createBulkUsers } from "@/lib/actions/user-actions"
 import { getAllCustomers, Customer } from "@/lib/supabase/customers"
+import { ExcelImport } from "@/components/ui/excel-import"
+import { FileSpreadsheet } from "lucide-react"
 
 export default function UserSettingsPage() {
     const [userList, setUserList] = useState<any[]>([])
@@ -140,10 +142,27 @@ export default function UserSettingsPage() {
                     </h1>
                     <p className="text-sm text-slate-400 mt-1">เพิ่ม ลบ แก้ไข ข้อมูลพนักงานและผู้ใช้งานระบบ</p>
                 </div>
-                <Button onClick={() => handleOpenDialog()} className="bg-blue-600 hover:bg-blue-700">
-                    <Plus className="w-4 h-4 mr-2" />
-                    เพิ่มผู้ใช้งาน
-                </Button>
+                <div className="flex gap-2">
+                     <ExcelImport 
+                        trigger={
+                            <Button variant="outline" className="gap-2 border-slate-700 hover:bg-slate-800">
+                                <FileSpreadsheet size={16} /> 
+                                นำเข้า Excel
+                            </Button>
+                        }
+                        title="นำเข้าผู้ใช้งาน"
+                        onImport={createBulkUsers}
+                        templateData={[
+                            { Username: "user01", Name: "นาย สมชาย ใจดี", Branch: "สำนักงานใหญ่", Role: "Staff", Password: "change_me" },
+                            { Username: "driver01", Name: "นาย ขับรถ เก่ง", Branch: "สาขา 1", Role: "Driver" }
+                        ]}
+                        templateFilename="template_users.xlsx"
+                    />
+                    <Button onClick={() => handleOpenDialog()} className="bg-blue-600 hover:bg-blue-700">
+                        <Plus className="w-4 h-4 mr-2" />
+                        เพิ่มผู้ใช้งาน
+                    </Button>
+                </div>
             </div>
 
             <div className="flex items-center space-x-2 mb-6 bg-slate-900/50 p-2 rounded-xl border border-slate-800">

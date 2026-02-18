@@ -91,6 +91,7 @@ const navigation: NavGroup[] = [
     items: [
       { title: "ข้อมูลบริษัท", href: "/settings/company", icon: <Building size={20} /> },
       { title: "จัดการลูกค้า", href: "/settings/customers", icon: <Users size={20} /> },
+      { title: "จัดการเส้นทาง", href: "/routes", icon: <MapPin size={20} /> },
       { title: "ประเภทค่าใช้จ่าย", href: "/settings/expense-types", icon: <Coins size={20} /> },
     ],
   },

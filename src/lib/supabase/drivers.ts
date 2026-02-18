@@ -1,6 +1,8 @@
 "use server"
 
 import { createClient } from '@/utils/supabase/server'
+import { cookies } from 'next/headers'
+import { getUserBranchId, isSuperAdmin } from "@/lib/permissions"
 
 // Type matching actual Supabase schema
 export type Driver = {
@@ -27,7 +29,7 @@ export type Driver = {
 }
 
 // Get all drivers from Master_Drivers table
-import { getUserBranchId, isSuperAdmin } from "@/lib/permissions"
+
 
 export async function getAllDriversFromTable(): Promise<Driver[]> {
   try {
@@ -37,8 +39,16 @@ export async function getAllDriversFromTable(): Promise<Driver[]> {
     // Filter by Branch
     const branchId = await getUserBranchId()
     const isAdmin = await isSuperAdmin()
+
+    // Check for Admin Override Cookie
+    const cookieStore = await cookies()
+    const selectedBranch = cookieStore.get('selectedBranch')?.value
     
-    if (branchId && !isAdmin) {
+    if (isAdmin && selectedBranch && selectedBranch !== 'All') {
+        console.log(`[getAllDriversFromTable] Admin Filtering by Branch: ${selectedBranch}`)
+        // @ts-ignore
+        dbQuery = dbQuery.eq('Branch_ID', selectedBranch)
+    } else if (branchId && !isAdmin) {
         console.log(`[getAllDriversFromTable] Filtering by Branch: ${branchId}`)
         // @ts-ignore
         dbQuery = dbQuery.eq('Branch_ID', branchId)
@@ -183,7 +193,14 @@ export async function getAllDrivers(page?: number, limit?: number, query?: strin
     const branchId = await getUserBranchId()
     const isAdmin = await isSuperAdmin()
     
-    if (branchId && !isAdmin) {
+    // Check for Admin Override Cookie
+    const cookieStore = await cookies()
+    const selectedBranch = cookieStore.get('selectedBranch')?.value
+
+    if (isAdmin && selectedBranch && selectedBranch !== 'All') {
+        // @ts-ignore - Dynamic query
+        queryBuilder = queryBuilder.eq('Branch_ID', selectedBranch)
+    } else if (branchId && !isAdmin) {
         // @ts-ignore - Dynamic query
         queryBuilder = queryBuilder.eq('Branch_ID', branchId)
     } else if (!isAdmin && !branchId) {
@@ -227,7 +244,14 @@ export async function getDriverStats() {
     const branchId = await getUserBranchId()
     const isAdmin = await isSuperAdmin()
     
-    if (branchId && !isAdmin) {
+    // Check for Admin Override Cookie
+    const cookieStore = await cookies()
+    const selectedBranch = cookieStore.get('selectedBranch')?.value
+
+    if (isAdmin && selectedBranch && selectedBranch !== 'All') {
+        // @ts-ignore
+        query = query.eq('Branch_ID', selectedBranch)
+    } else if (branchId && !isAdmin) {
         // @ts-ignore
         query = query.eq('Branch_ID', branchId)
     } else if (!isAdmin && !branchId) {
@@ -250,8 +274,6 @@ export async function getDriverStats() {
     return { total: 0, active: 0, onJob: 0 }
   }
 }
-
-
 
 // คำนวณคะแนนคนขับ
 export async function getDriverScore(driverId: string) {

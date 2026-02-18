@@ -52,37 +52,81 @@ export async function createVehicle(data: VehicleFormData) {
   return { success: true, message: 'Vehicle created successfully' }
 }
 
-export async function createBulkVehicles(vehicles: Partial<VehicleFormData>[]) {
+export async function createBulkVehicles(vehicles: any[]) {
   const supabase = await createClient()
   const branchId = await getUserBranchId()
 
-  // Prepare data
-  const cleanData = vehicles.map(v => ({
-    vehicle_plate: v.vehicle_plate,
-    vehicle_type: v.vehicle_type || '4-Wheel',
-    brand: v.brand,
-    model: v.model,
-    active_status: 'Active',
-    current_mileage: v.current_mileage || 0,
-    next_service_mileage: v.next_service_mileage || 0,
-    branch_id: branchId
-  })).filter(v => v.vehicle_plate)
+  // Helper to normalize keys
+  const normalizeData = (row: any) => {
+    const normalized: any = {}
+    
+    // Helper to find value by possible keys (case-insensitive)
+    const getValue = (keys: string[]) => {
+      const rowKeys = Object.keys(row)
+      for (const key of keys) {
+        const foundKey = rowKeys.find(k => k.toLowerCase().replace(/\s+/g, '') === key.toLowerCase().replace(/\s+/g, ''))
+        if (foundKey && row[foundKey] !== undefined && row[foundKey] !== null) {
+          return row[foundKey]
+        }
+      }
+      return undefined
+    }
 
-  if (cleanData.length === 0) {
-     return { success: false, message: 'No valid data found' }
+    // Mapping rules
+    normalized.vehicle_plate = getValue(['vehicle_plate', 'plate', 'ทะเบียน', 'ทะเบียนรถ', 'license_plate', 'licenseplate'])
+    normalized.vehicle_type = getValue(['vehicle_type', 'type', 'ประเภท', 'ประเภทรถ', 'vehicletype']) || '4-Wheel'
+    normalized.brand = getValue(['brand', 'make', 'ยี่ห้อ'])
+    normalized.model = getValue(['model', 'รุ่น'])
+    normalized.active_status = getValue(['active_status', 'status', 'สถานะ']) || 'Active'
+    normalized.current_mileage = getValue(['current_mileage', 'mileage', 'เลขไมล์', 'currentmileage']) || 0
+    normalized.next_service_mileage = getValue(['next_service_mileage', 'next_service', 'เช็คระยะถัดไป', 'nextservicemileage', 'nextservice']) || 0
+    
+    // Keep internal fields
+    if (row.Branch_ID) normalized.Branch_ID = row.Branch_ID
+
+    return normalized
   }
 
+  // Prepare data
+  const cleanData = vehicles.map(v => {
+    const data = normalizeData(v)
+    return {
+      vehicle_plate: data.vehicle_plate ? String(data.vehicle_plate).trim() : null,
+      vehicle_type: data.vehicle_type,
+      brand: data.brand,
+      model: data.model,
+      active_status: data.active_status,
+      current_mileage: Number(data.current_mileage) || 0,
+      next_service_mileage: Number(data.next_service_mileage) || 0,
+      branch_id: branchId
+    }
+  }).filter(v => v.vehicle_plate) // Filter out rows without active_status or vehicle_plate
+
+  // Deduplicate input data by vehicle_plate
+  const uniqueData = Array.from(new Map(cleanData.map(item => [item.vehicle_plate, item])).values())
+
+  console.log('[createBulkVehicles] Input:', vehicles.length, 'Clean:', cleanData.length, 'Unique:', uniqueData.length)
+
+  if (uniqueData.length === 0) {
+     return { success: false, message: 'ไม่พบข้อมูลที่ถูกต้อง (กรุณาตรวจสอบชื่อคอลัมน์ เช่น ทะเบียนรถ, ยี่ห้อ, รุ่น)' }
+  }
+
+  // Use upsert to handle duplicates (update existing or insert new)
   const { error } = await supabase
     .from('master_vehicles')
-    .insert(cleanData)
+    .upsert(uniqueData, { 
+      onConflict: 'vehicle_plate',
+      ignoreDuplicates: false // Update if exists
+    })
+    .select()
 
   if (error) {
     console.error('Error bulk creating vehicles:', error)
-    return { success: false, message: `Failed to import: ${error.message}` }
+    return { success: false, message: `นำเข้าไม่สำเร็จ: ${error.message}` }
   }
 
   revalidatePath('/vehicles')
-  return { success: true, message: `Successfully imported ${cleanData.length} vehicles` }
+  return { success: true, message: `นำเข้าข้อมูลสำเร็จ ${uniqueData.length} รายการ` }
 }
 
 export async function updateVehicle(plate: string, data: Partial<VehicleFormData>) {

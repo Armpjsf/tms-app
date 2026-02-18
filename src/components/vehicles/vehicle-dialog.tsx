@@ -10,6 +10,7 @@ import { createVehicle, updateVehicle } from "@/app/vehicles/actions"
 import { Loader2 } from "lucide-react"
 import { Vehicle } from "@/lib/supabase/vehicles"
 import { Branch } from "@/lib/supabase/branches"
+import { Subcontractor } from "@/types/subcontractor" // Ensure this type exists or is imported correctly
 import { getVehicleTypes, VehicleType } from "@/lib/actions/vehicle-type-actions"
 import { useEffect } from "react"
 
@@ -17,6 +18,7 @@ type VehicleDialogProps = {
   mode?: 'create' | 'edit'
   vehicle?: Partial<Vehicle>
   branches?: Branch[]
+  subcontractors?: Subcontractor[]
   trigger?: React.ReactNode
   open?: boolean
   onOpenChange?: (open: boolean) => void
@@ -26,6 +28,7 @@ export function VehicleDialog({
   mode = 'create',
   vehicle,
   branches = [],
+  subcontractors = [],
   trigger,
   open,
   onOpenChange
@@ -56,7 +59,9 @@ export function VehicleDialog({
     active_status: vehicle?.active_status || 'Active',
     current_mileage: vehicle?.current_mileage || 0,
     next_service_mileage: vehicle?.next_service_mileage || 0,
-    Branch_ID: vehicle?.branch_id || ''
+    next_service_mileage: vehicle?.next_service_mileage || 0,
+    Branch_ID: vehicle?.branch_id || '',
+    sub_id: vehicle?.sub_id || ''
   })
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -81,7 +86,10 @@ export function VehicleDialog({
             active_status: 'Active',
             current_mileage: 0,
             next_service_mileage: 0,
-            Branch_ID: ''
+            current_mileage: 0,
+            next_service_mileage: 0,
+            Branch_ID: '',
+            sub_id: ''
         })
       }
       router.refresh()

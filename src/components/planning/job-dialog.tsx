@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { createJob, updateJob, createBulkJobs, deleteJob } from "@/app/planning/actions"
 import { CustomerAutocomplete } from "@/components/customer-autocomplete"
 import { LocationAutocomplete } from "@/components/location-autocomplete"
@@ -122,19 +123,33 @@ export function JobDialog({
       : [{ Vehicle_Type: '4-Wheel', Vehicle_Plate: '', Driver_ID: '' }]
   )
 
+  // Helper to safely parse JSON or return existing array
+  const parseJson = (val: any, defaultVal: any) => {
+    if (!val) return defaultVal
+    if (Array.isArray(val)) return val
+    if (typeof val === 'string') {
+      try {
+        return JSON.parse(val)
+      } catch (e) {
+        return defaultVal
+      }
+    }
+    return defaultVal
+  }
+
   // Multi-point origins
   const [origins, setOrigins] = useState<LocationPoint[]>(
-    job?.origins || [{ name: '', lat: '', lng: '' }]
+    parseJson(job?.origins || job?.original_origins_json, [{ name: '', lat: '', lng: '' }])
   )
 
   // Multi-point destinations
   const [destinations, setDestinations] = useState<LocationPoint[]>(
-    job?.destinations || [{ name: '', lat: '', lng: '' }]
+    parseJson(job?.destinations || job?.original_destinations_json, [{ name: '', lat: '', lng: '' }])
   )
 
   // Extra costs
   const [extraCosts, setExtraCosts] = useState<ExtraCost[]>(
-    job?.extra_costs || []
+    parseJson(job?.extra_costs || job?.extra_costs_json, [])
   )
 
   // Generate new ID on dialog open (create mode)
@@ -394,7 +409,7 @@ export function JobDialog({
           {/* Tab: ข้อมูลงาน */}
           {activeTab === 'info' && (
             <div className="space-y-4">
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-4 gap-4">
                 <div className="space-y-2">
                   <Label>Job ID</Label>
                   <Input
@@ -414,6 +429,27 @@ export function JobDialog({
                     {copied ? 'คัดลอกแล้ว' : 'Copy Tracking Link'}
                   </Button>
                 </div>
+                
+                <div className="space-y-2">
+                   <Label>สถานะงาน</Label>
+                   <Select 
+                      value={formData.Job_Status} 
+                      onValueChange={(val) => setFormData({ ...formData, Job_Status: val })}
+                   >
+                    <SelectTrigger className="bg-slate-800 border-slate-700">
+                        <SelectValue placeholder="เลือกสถานะ" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="New">งานใหม่ (New)</SelectItem>
+                        <SelectItem value="Assigned">มอบหมายแล้ว (Assigned)</SelectItem>
+                        <SelectItem value="In Transit">กำลังขนส่ง (In Transit)</SelectItem>
+                        <SelectItem value="Delivered">ส่งสินค้าแล้ว (Delivered)</SelectItem>
+                        <SelectItem value="Completed">เสร็จสิ้น/ปิดงาน (Completed)</SelectItem>
+                        <SelectItem value="Cancelled">ยกเลิก (Cancelled)</SelectItem>
+                    </SelectContent>
+                   </Select>
+                </div>
+
                 <div className="space-y-2">
                   <Label className="flex items-center gap-1">
                     <Calendar className="w-3 h-3" /> วันที่รับ

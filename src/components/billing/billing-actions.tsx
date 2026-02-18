@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Printer, Mail, Paperclip, Send, Loader2, X } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog"
@@ -17,9 +17,10 @@ interface BillingActionsProps {
     customerEmail?: string;
     customerName: string;
     trigger?: React.ReactNode;
+    hidePrint?: boolean;
 }
 
-export function BillingActions({ billingNoteId, customerEmail = "", customerName, trigger }: BillingActionsProps) {
+export function BillingActions({ billingNoteId, customerEmail = "", customerName, trigger, hidePrint = false }: BillingActionsProps) {
     const [isEmailOpen, setIsEmailOpen] = useState(false)
     const [isAttachmentsOpen, setIsAttachmentsOpen] = useState(false)
     
@@ -28,6 +29,18 @@ export function BillingActions({ billingNoteId, customerEmail = "", customerName
     const [subject, setSubject] = useState(`ใบวางบิล / Billing Note #${billingNoteId}`)
     const [message, setMessage] = useState(`เรียน ${customerName},\n\nทางบริษัทขอส่งใบวางบิลเลขที่ ${billingNoteId} ดังแนบ\n\nขอบคุณครับ`)
     const [sending, setSending] = useState(false)
+
+    useEffect(() => {
+        // Append link to message on client side to avoid hydration mismatch
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL || window.location.origin
+        const link = `${appUrl}/billing/print/${billingNoteId}`
+        
+        setMessage(prev => {
+            // Prevent duplicate appending
+            if (prev.includes("สามารถดูเอกสารออนไลน์ได้ที่:")) return prev
+            return `${prev}\n\nสามารถดูเอกสารออนไลน์ได้ที่: ${link}`
+        })
+    }, [billingNoteId])
 
     // Handle Print
     const handlePrint = () => {
@@ -40,17 +53,39 @@ export function BillingActions({ billingNoteId, customerEmail = "", customerName
         
         setSending(true)
         try {
-            // Fetch current attachments to send
-            // Note: In a real app, you might want to let user select which files to send.
-            // Here we just send the links or just a notification.
-            // For Resend with Attachments, we need public URLs.
-            // Let's first just send the text.
+            const appUrl = process.env.NEXT_PUBLIC_APP_URL || window.location.origin
             
+            // 1. Fetch Billing Note HTML
+            let billingHtml = ""
+            try {
+                // Fetch from current origin to avoid CORS, but use appUrl for links in the HTML
+                const res = await fetch(`/billing/print/${billingNoteId}`)
+                if (res.ok) {
+                    const text = await res.text()
+                    // Fix relative paths (css, js, images) to be absolute so they load in attachment
+                    // Use the Public URL for these links so they work for the recipient
+                    billingHtml = text
+                        .replace(/href="\//g, `href="${appUrl}/`)
+                        .replace(/src="\//g, `src="${appUrl}/`)
+                }
+            } catch (e) {
+                console.error("Failed to fetch billing html", e)
+            }
+
+            // 2. Fetch current attachments
             const attachments = await getAttachments(billingNoteId)
-            const emailAttachments = attachments?.map(a => ({
+            const emailAttachments: any[] = attachments?.map(a => ({
                 filename: a.File_Name,
                 path: `${process.env.NEXT_PUBLIC_SUPABASE_URL!}/storage/v1/object/public/billing-documents/${a.File_Path}`
-            }))
+            })) || []
+
+            // 3. Add Billing Note As Attachment (Default)
+            if (billingHtml) {
+                emailAttachments.push({
+                    filename: `BillingNote-${billingNoteId}.html`,
+                    content: billingHtml // Pass content string
+                })
+            }
 
             const { success, error } = await sendBillingEmail({
                 to: emailTo,
@@ -88,10 +123,12 @@ export function BillingActions({ billingNoteId, customerEmail = "", customerName
                         ส่งอีเมล
                     </Button>
                 )}
-                <Button onClick={handlePrint} className="bg-blue-600 hover:bg-blue-700 text-white">
-                    <Printer className="w-4 h-4 mr-2" />
-                    พิมพ์ / Print
-                </Button>
+                {!hidePrint && (
+                    <Button onClick={handlePrint} className="bg-blue-600 hover:bg-blue-700 text-white">
+                        <Printer className="w-4 h-4 mr-2" />
+                        พิมพ์ / Print
+                    </Button>
+                )}
             </div>
 
             {/* Attachments Section (Collapsible) */}
@@ -113,19 +150,28 @@ export function BillingActions({ billingNoteId, customerEmail = "", customerName
 
                     <div className="grid gap-4 py-4">
                         <div className="space-y-2">
-                            <Label>ถึง (Email)</Label>
-                            <Input value={emailTo} onChange={e => setEmailTo(e.target.value)} />
+                            <Label className="text-slate-200">ถึง (Email)</Label>
+                            <Input 
+                                value={emailTo} 
+                                onChange={e => setEmailTo(e.target.value)} 
+                                className="bg-slate-950 border-slate-700 text-slate-100 placeholder:text-slate-500"
+                            />
                         </div>
                         <div className="space-y-2">
-                            <Label>หัวข้อ (Subject)</Label>
-                            <Input value={subject} onChange={e => setSubject(e.target.value)} />
+                            <Label className="text-slate-200">หัวข้อ (Subject)</Label>
+                            <Input 
+                                value={subject} 
+                                onChange={e => setSubject(e.target.value)} 
+                                className="bg-slate-950 border-slate-700 text-slate-100 placeholder:text-slate-500"
+                            />
                         </div>
                         <div className="space-y-2">
-                            <Label>ข้อความ</Label>
+                            <Label className="text-slate-200">ข้อความ</Label>
                             <Textarea 
                                 value={message} 
                                 onChange={e => setMessage(e.target.value)} 
-                                rows={5}
+                                rows={8}
+                                className="bg-slate-950 border-slate-700 text-slate-100 placeholder:text-slate-500 min-h-[150px]"
                             />
                         </div>
                     </div>

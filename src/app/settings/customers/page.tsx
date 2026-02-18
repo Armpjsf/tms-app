@@ -20,7 +20,8 @@ import {
   Save,
   X,
   CreditCard,
-  Loader2
+  Loader2,
+  FileSpreadsheet
 } from "lucide-react"
 import {
   Dialog,
@@ -34,8 +35,10 @@ import {
   createCustomer, 
   updateCustomer, 
   deleteCustomer, 
-  Customer 
+  Customer,
+  createBulkCustomers
 } from "@/lib/supabase/customers"
+import { ExcelImport } from "@/components/ui/excel-import"
 
 export default function CustomersSettingsPage() {
   const [customers, setCustomers] = useState<Customer[]>([])
@@ -148,7 +151,22 @@ export default function CustomersSettingsPage() {
           </h1>
           <p className="text-sm text-slate-400 mt-1">ฐานข้อมูลลูกค้า (Master Data)</p>
         </div>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <div className="flex gap-2">
+            <ExcelImport 
+                trigger={
+                    <Button variant="outline" className="gap-2 border-slate-700 hover:bg-slate-800">
+                        <FileSpreadsheet size={16} /> 
+                        นำเข้า Excel
+                    </Button>
+                }
+                title="นำเข้าข้อมูลลูกค้า"
+                onImport={createBulkCustomers}
+                templateData={[
+                    { Customer_Name: "บริษัท ตัวอย่าง จำกัด", Contact_Person: "คุณสมชาย", Phone: "02-123-4567", Tax_ID: "1234567890123" }
+                ]}
+                templateFilename="template_customers.xlsx"
+            />
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button onClick={() => handleOpenDialog()} className="bg-emerald-600 hover:bg-emerald-700">
               <Plus className="w-4 h-4 mr-2" /> เพิ่มลูกค้า
@@ -258,6 +276,7 @@ export default function CustomersSettingsPage() {
             </div>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       {/* Search */}

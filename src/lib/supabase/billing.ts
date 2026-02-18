@@ -13,6 +13,8 @@ export interface BillingNote {
   Created_At: string
   Updated_At: string
   Customer_Email?: string
+  Customer_Address?: string
+  Customer_Tax_ID?: string
 }
 
 export async function createBillingNote(
@@ -27,12 +29,36 @@ export async function createBillingNote(
         // 1. Calculate Total Amount
         const { data: jobs, error: jobsError } = await supabase
             .from('Jobs_Main')
-            .select('Price_Cust_Total')
+            .select('Price_Cust_Total, extra_costs_json')
             .in('Job_ID', jobIds)
 
         if (jobsError) throw new Error("Failed to fetch jobs for calculation")
         
-        const totalAmount = jobs?.reduce((sum, job) => sum + (job.Price_Cust_Total || 0), 0) || 0
+        const totalAmount = jobs?.reduce((sum, job) => {
+             const basePrice = job.Price_Cust_Total || 0
+             let extra = 0
+             
+             if (job.extra_costs_json) {
+                 try {
+                     let costs = job.extra_costs_json
+                     if (typeof costs === 'string') {
+                        try { costs = JSON.parse(costs) } catch {}
+                     }
+                     // Handle double stringification if necessary
+                     if (typeof costs === 'string') {
+                        try { costs = JSON.parse(costs) } catch {}
+                     }
+                     
+                     if (Array.isArray(costs)) {
+                         extra = costs.reduce((cHigh: number, c: any) => cHigh + (Number(c.charge_cust) || 0), 0)
+                     }
+                 } catch (e) {
+                     console.error("Error parsing extra costs for job", job, e)
+                 }
+             }
+
+             return sum + basePrice + extra
+        }, 0) || 0
 
         // 2. Generate Billing Note ID (BN-YYYYMM-XXXX)
         const dateObj = new Date()
@@ -168,6 +194,22 @@ export async function getBillingNotes() {
     }
 }
 
+export interface BillingNote {
+  Billing_Note_ID: string
+  Customer_Name: string
+  Billing_Date: string
+  Due_Date: string | null
+  Total_Amount: number
+  Status: string
+  Created_At: string
+  Updated_At: string
+  Customer_Email?: string
+  Customer_Address?: string
+  Customer_Tax_ID?: string
+}
+
+// ... (in createBillingNote, createDriverPayment, getBillingNotes - unchanged)
+
 export async function getBillingNoteByIdWithJobs(id: string) {
     try {
         const supabase = await createClient()
@@ -184,7 +226,7 @@ export async function getBillingNoteByIdWithJobs(id: string) {
         // 2. Get Associated Jobs
         const { data: jobs, error: jobsError } = await supabase
             .from('Jobs_Main')
-            .select('*')
+            .select('*, extra_costs_json')
             .eq('Billing_Note_ID', id)
         
         if (jobsError) throw jobsError
@@ -205,27 +247,41 @@ export async function getBillingNoteByIdWithJobs(id: string) {
             }
         }
 
-        // 4. Get Customer Email (Try to match by name if ID not available)
-        // Ideally Billing_Notes should have Customer_ID, but for now we use Name.
+        // 4. Get Customer Details
         let customerEmail = ""
+        let customerAddress = ""
+        let customerTaxId = ""
+
         if (note && note.Customer_Name) {
-            const { data: customer } = await supabase
+            // Note: Email is not in Master_Customers schema provided by user.
+            const { data: customer, error: custError } = await supabase
                 .from('Master_Customers')
-                .select('Email')
-                .eq('Customer_Name', note.Customer_Name) // Potential issue if names duplicate
-                .single()
+                .select('Address, Tax_ID') 
+                .eq('Customer_Name', note.Customer_Name)
+                .limit(1) // Safely handle duplicates by taking the first one
+                .maybeSingle()
             
+            if (custError) {
+                console.error("Error fetching Customer for Billing:", custError)
+            }
+
             if (customer) {
-                customerEmail = customer.Email
+                // customerEmail = customer.Email // Column doesn't exist
+                customerAddress = customer.Address
+                customerTaxId = customer.Tax_ID
+            } else {
+                console.warn(`Customer '${note.Customer_Name}' not found in Master_Customers`)
             }
         }
 
-        const billingNoteWithEmail: BillingNote = {
+        const billingNoteWithDetails: BillingNote = {
             ...note as BillingNote,
-            Customer_Email: customerEmail
+            Customer_Email: customerEmail,
+            Customer_Address: customerAddress,
+            Customer_Tax_ID: customerTaxId
         }
 
-        return { note: billingNoteWithEmail, jobs: jobs || [], company: companyProfile }
+        return { note: billingNoteWithDetails, jobs: jobs || [], company: companyProfile }
 
     } catch (e) {
         console.error("Error fetching billing note details:", e)

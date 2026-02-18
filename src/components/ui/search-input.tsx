@@ -20,13 +20,20 @@ export function SearchInput({ placeholder = "Search...", className, ...props }: 
   // Debounce search update
   React.useEffect(() => {
     const timer = setTimeout(() => {
-      const params = new URLSearchParams(searchParams)
+      // Create new params from current searchParams
+      // We must use toString() to ensure we get a string compatible with URLSearchParams constructor
+      const params = new URLSearchParams(searchParams.toString())
+      const currentQuery = params.get("q") || ""
+
+      // If the query hasn't changed (e.g. just navigating pages), don't update/reset page
+      if (currentQuery === value) return
+
       if (value) {
         params.set("q", value)
       } else {
         params.delete("q")
       }
-      // Reset page to 1 when search changes
+      // Reset page to 1 ONLY when search changes
       params.set("page", "1")
       
       router.push(`${pathname}?${params.toString()}`)

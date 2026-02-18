@@ -18,6 +18,7 @@ import { createBulkVehicles } from "@/app/vehicles/actions"
 import { ExcelImport } from "@/components/ui/excel-import"
 import { isSuperAdmin } from "@/lib/permissions"
 import { getAllBranches, Branch } from "@/lib/supabase/branches"
+import { getAllSubcontractors } from "@/lib/supabase/subcontractors"
 
 type Props = {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
@@ -29,9 +30,10 @@ export default async function VehiclesPage(props: Props) {
   const query = (searchParams.q as string) || ''
   const limit = 12
 
-  const [{ data: vehicles, count }, stats] = await Promise.all([
+  const [{ data: vehicles, count }, stats, subcontractors] = await Promise.all([
     getAllVehicles(page, limit, query),
     getVehicleStats(),
+    getAllSubcontractors()
   ])
 
   const isAdmin = await isSuperAdmin()
@@ -67,6 +69,7 @@ export default async function VehiclesPage(props: Props) {
             <VehicleDialog 
                 mode="create" 
                 branches={branches}
+                subcontractors={subcontractors}
                 trigger={
                     <Button size="lg" className="gap-2 bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700">
                         <Plus size={20} />
@@ -119,6 +122,11 @@ export default async function VehiclesPage(props: Props) {
                   <div>
                     <h3 className="font-bold text-white">{vehicle.vehicle_plate}</h3>
                     <p className="text-xs text-slate-400">{vehicle.brand} {vehicle.model}</p>
+                    {vehicle.sub_id && (
+                        <p className="text-[10px] text-blue-400">
+                            {subcontractors.find(s => s.Sub_ID === vehicle.sub_id)?.Sub_Name || vehicle.sub_id}
+                        </p>
+                    )}
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -129,7 +137,7 @@ export default async function VehiclesPage(props: Props) {
                     }`}>
                     {vehicle.active_status}
                     </span>
-                    <VehicleActions vehicle={vehicle} branches={branches} />
+                    <VehicleActions vehicle={vehicle} branches={branches} subcontractors={subcontractors} />
                 </div>
               </div>
 

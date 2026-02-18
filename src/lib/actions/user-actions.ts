@@ -172,3 +172,95 @@ export async function deleteUser(username: string) {
     revalidatePath("/settings/users")
     return { success: true }
 }
+
+export async function createBulkUsers(users: any[]) {
+    const supabase = await createClient()
+    const session = await getSession()
+    
+    if (!session) return { success: false, message: "Not authenticated" }
+    
+    // Permission check:
+    // - Super Admin (1): Can create anyone
+    // - Admin (2): Can create Staff/Drivers, cannot create Super Admin
+    // - Staff/Manager (3): Can create Staff/Drivers? -> Matching createUser logic which allows creation but restricts Super Admin. 
+    //   However, usually Role 3 shouldn't create Users. But since they have access to the page, we allow it but restricted.
+    
+    // Prevent creating Super Admin if not Super Admin
+    const hasSuperAdminInList = users.some(u => 
+        String(u.Role).toLowerCase() === 'super admin' || 
+        String(u.Role).toLowerCase() === 'superadmin' ||
+        String(u.role).toLowerCase() === 'super admin'
+    )
+
+    if (hasSuperAdminInList && session.roleId !== 1) {
+         return { success: false, message: "คุณไม่มีสิทธิ์สร้างผู้ใช้งานระดับ Super Admin" }
+    }
+
+    // Optional: Prevent creating Admin if not Super Admin (Logic from deleteUser/updateUser implies strictness)
+    // For now, we allow it but maybe warn? Or just stick to the checks we have.
+    // The previous check was (session.roleId > 2), we remove it to allow Role 3.
+
+    // Normalize keys
+    const normalizeData = (row: any) => {
+        const normalized: any = {}
+        const getValue = (keys: string[]) => {
+            const rowKeys = Object.keys(row)
+            for (const key of keys) {
+                const foundKey = rowKeys.find(k => k.toLowerCase().replace(/\s+/g, '') === key.toLowerCase().replace(/\s+/g, ''))
+                if (foundKey && row[foundKey] !== undefined && row[foundKey] !== null) {
+                    return row[foundKey]
+                }
+            }
+            return undefined
+        }
+
+        normalized.Username = getValue(['username', 'user', 'ชื่อผู้ใช้'])
+        normalized.Name = getValue(['name', 'fullname', 'ชื่อ', 'ชื่อ-นามสกุล', 'ชื่อนามสกุล'])
+        normalized.Branch_ID = getValue(['branch_id', 'branch', 'สาขา'])
+        normalized.Role = getValue(['role', 'position', 'ตำแหน่ง', 'บทบาท']) || 'Staff'
+        normalized.Password = getValue(['password', 'pass', 'รหัสผ่าน']) || '123456'
+        
+        return normalized
+    }
+
+    const cleanData = users.map(u => normalizeData(u)).filter(u => u.Username && u.Name) // Filter invalid
+
+    if (cleanData.length === 0) {
+        return { success: false, message: "ไม่พบข้อมูลที่ถูกต้อง (ต้องมี Username และ Name)" }
+    }
+
+    // Deduplicate input
+    const uniqueData = Array.from(new Map(cleanData.map(item => [item.Username, item])).values())
+
+    // Hash passwords efficiently
+    const hashedData = await Promise.all(uniqueData.map(async (u) => ({
+        Username: u.Username,
+        Password: await argon2.hash(String(u.Password)),
+        Name: u.Name,
+        Branch_ID: u.Branch_ID || 'Head Office', // Default branch?
+        Role: u.Role,
+        Active_Status: 'Active'
+    })))
+
+    // Use upsert or insert? creating users usually shouldn't overwrite existing ones easily to avoid password reset
+    // But for bulk import, maybe skip existing?
+    
+    // Let's use insert with ignoreDuplicates? Supabase js insert doesn't support ignoreDuplicates on some adapters easily without onConflict
+    // We will use upsert but preserve password if exists? No, that's too complex for bulk.
+    // Let's iterate and check or use onConflict DO NOTHING (ignoreDuplicates: true)
+    
+    const { error } = await supabase
+        .from('Master_Users')
+        .upsert(hashedData, { 
+            onConflict: 'Username', 
+            ignoreDuplicates: true 
+        })
+
+    if (error) {
+        console.error("Bulk create users error:", error)
+        return { success: false, message: `Failed to import: ${error.message}` }
+    }
+
+    revalidatePath("/settings/users")
+    return { success: true, message: `นำเข้าสำเร็จ ${uniqueData.length} รายการ (ข้ามรายการที่ซ้ำ)` }
+}

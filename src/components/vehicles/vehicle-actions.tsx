@@ -8,8 +8,9 @@ import { useRouter } from "next/navigation"
 import { VehicleDialog } from "./vehicle-dialog"
 import { Vehicle } from "@/lib/supabase/vehicles"
 import { Branch } from "@/lib/supabase/branches"
+import { Subcontractor } from "@/types/subcontractor"
 
-export function VehicleActions({ vehicle, branches = [] }: { vehicle: Vehicle, branches?: Branch[] }) {
+export function VehicleActions({ vehicle, branches = [], subcontractors = [] }: { vehicle: Vehicle, branches?: Branch[], subcontractors?: Subcontractor[] }) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [showEdit, setShowEdit] = useState(false)
@@ -35,6 +36,7 @@ export function VehicleActions({ vehicle, branches = [] }: { vehicle: Vehicle, b
         mode="edit" 
         vehicle={vehicle}
         branches={branches}
+        subcontractors={subcontractors}
         open={showEdit}
         onOpenChange={setShowEdit}
       />

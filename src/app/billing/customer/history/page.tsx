@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -201,6 +202,7 @@ export default function CustomerBillingHistory() {
                                     billingNoteId={item.Billing_Note_ID}
                                     customerName={item.Customer_Name}
                                     customerEmail={item.Customer_Email}
+                                    hidePrint={true}
                                     // Custom trigger since we use it in a table
                                     trigger={
                                         <Button 
@@ -214,15 +216,16 @@ export default function CustomerBillingHistory() {
                                     }
                                 />
 
-                                <Button 
-                                    size="sm" 
-                                    variant="ghost" 
-                                    className="text-slate-400 hover:text-white"
-                                    onClick={() => window.open(`/billing/print/${item.Billing_Note_ID}`, '_blank')}
-                                    title="พิมพ์"
-                                >
-                                    <Printer className="w-4 h-4" />
-                                </Button>
+                                <Link href={`/billing/print/${item.Billing_Note_ID}`} target="_blank">
+                                    <Button 
+                                        size="sm" 
+                                        variant="ghost" 
+                                        className="text-slate-400 hover:text-white"
+                                        title="พิมพ์"
+                                    >
+                                        <Printer className="w-4 h-4" />
+                                    </Button>
+                                </Link>
 
                                 {isAdmin && (
                                     <Button 

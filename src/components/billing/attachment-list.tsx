@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Paperclip, Trash2, Download, Loader2, FileText, Upload } from "lucide-react"
-import { getAttachments, saveAttachment, deleteAttachment, Attachment } from "@/lib/actions/attachment-actions"
+import { getAttachments, uploadAttachment, deleteAttachment, Attachment } from "@/lib/actions/attachment-actions"
 import { createClient } from "@/utils/supabase/client"
 import { toast } from "sonner"
 
@@ -36,33 +36,21 @@ export function AttachmentList({ billingNoteId, readonly = false }: AttachmentLi
         setUploading(true)
 
         try {
-            const supabase = createClient()
-            const fileExt = file.name.split('.').pop()
-            const fileName = `${billingNoteId}/${Date.now()}.${fileExt}`
-            const filePath = fileName // Path in bucket
+            const formData = new FormData()
+            formData.append('billingNoteId', billingNoteId)
+            formData.append('file', file)
 
-            // 1. Upload to Storage
-            const { error: uploadError } = await supabase.storage
-                .from('billing-documents')
-                .upload(filePath, file)
-
-            if (uploadError) throw uploadError
-
-            // 2. Save to DB
-            const { success, error } = await saveAttachment({
-                Billing_Note_ID: billingNoteId,
-                File_Name: file.name,
-                File_Path: filePath,
-                File_Type: file.type || 'application/octet-stream',
-            })
-
-            if (!success) throw new Error(error)
+            const result = await uploadAttachment(formData)
+            
+            if (!result.success) {
+                throw new Error(result.error)
+            }
 
             toast.success("อัปโหลดไฟล์เรียบร้อย")
             loadAttachments()
         } catch (error: any) {
             console.error("Upload failed:", error)
-            toast.error("อัปโหลดล้มเหลว: " + error.message)
+            toast.error(error.message || "อัปโหลดล้มเหลว")
         } finally {
             setUploading(false)
             // Reset input

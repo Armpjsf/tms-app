@@ -10,11 +10,20 @@ import { getAllCustomers } from '@/lib/supabase/customers'
 export type JobFormData = {
   Job_ID: string
   Plan_Date: string
+  Delivery_Date?: string
   Customer_Name: string
   Route_Name: string
   Driver_ID: string
   Vehicle_Plate: string
+  Vehicle_Type?: string
   Job_Status: string
+  Cargo_Type?: string
+  Notes?: string
+  Price_Cust_Total?: number
+  Cost_Driver_Total?: number
+  original_origins_json?: string
+  original_destinations_json?: string
+  extra_costs_json?: string
 }
 
 export async function createJob(data: JobFormData) {
@@ -31,23 +40,38 @@ export async function createJob(data: JobFormData) {
     if (driver) driverName = driver.Driver_Name
   }
 
+  // helper to parse if string
+  const parseIfString = (val: string | undefined) => {
+      if (!val) return null
+      try { return JSON.parse(val) } catch { return val }
+  }
+
   const { error } = await supabase
     .from('Jobs_Main')
     .insert({
       Job_ID: data.Job_ID,
       Plan_Date: data.Plan_Date,
+      Delivery_Date: data.Delivery_Date,
       Customer_Name: data.Customer_Name,
       Route_Name: data.Route_Name,
       Driver_ID: data.Driver_ID,
       Driver_Name: driverName,
       Vehicle_Plate: data.Vehicle_Plate,
+      Vehicle_Type: data.Vehicle_Type,
       Job_Status: 'New',
+      Cargo_Type: data.Cargo_Type,
+      Notes: data.Notes,
+      Price_Cust_Total: data.Price_Cust_Total || 0,
+      Cost_Driver_Total: data.Cost_Driver_Total || 0,
+      original_origins_json: parseIfString(data.original_origins_json),
+      original_destinations_json: parseIfString(data.original_destinations_json),
+      extra_costs_json: parseIfString(data.extra_costs_json),
       Created_At: new Date().toISOString(),
     })
 
   if (error) {
     console.error('Error creating job:', error)
-    return { success: false, message: 'Failed to create job' }
+    return { success: false, message: `Failed to create job: ${error.message}` }
   }
 
   revalidatePath('/planning')
@@ -57,14 +81,28 @@ export async function createJob(data: JobFormData) {
 export async function createBulkJobs(jobs: Partial<JobFormData>[]) {
   const supabase = await createClient()
 
+  const parseIfString = (val: string | undefined) => {
+      if (!val) return null
+      try { return JSON.parse(val) } catch { return val }
+  }
+
   const cleanData = jobs.map(j => ({
       Job_ID: j.Job_ID || `JOB-${Date.now().toString().slice(-6)}-${Math.floor(Math.random()*1000)}`,
       Plan_Date: j.Plan_Date || new Date().toISOString().split('T')[0],
+      Delivery_Date: j.Delivery_Date,
       Customer_Name: j.Customer_Name,
       Route_Name: j.Route_Name || 'Direct',
       Driver_ID: j.Driver_ID || null,
       Vehicle_Plate: j.Vehicle_Plate || null,
+      Vehicle_Type: j.Vehicle_Type,
       Job_Status: 'New',
+      Cargo_Type: j.Cargo_Type,
+      Notes: j.Notes,
+      Price_Cust_Total: j.Price_Cust_Total || 0,
+      Cost_Driver_Total: j.Cost_Driver_Total || 0,
+      original_origins_json: parseIfString(j.original_origins_json),
+      original_destinations_json: parseIfString(j.original_destinations_json),
+      extra_costs_json: parseIfString(j.extra_costs_json),
       Created_At: new Date().toISOString(),
   })).filter(j => j.Customer_Name)
 
@@ -88,7 +126,20 @@ export async function createBulkJobs(jobs: Partial<JobFormData>[]) {
 export async function updateJob(jobId: string, data: Partial<JobFormData>) {
   const supabase = await createClient()
 
+  console.log(`[DEBUG] updateJob RCVD JobID: ${jobId}`, JSON.stringify(data, null, 2))
+
+  const parseIfString = (val: string | undefined) => {
+      if (!val) return null
+      try { return JSON.parse(val) } catch { return val }
+  }
+
   const updateData: Record<string, unknown> = { ...data }
+  
+  // Ensure JSON fields are parsed if they are strings
+  if (data.extra_costs_json) updateData.extra_costs_json = parseIfString(data.extra_costs_json)
+  if (data.original_origins_json) updateData.original_origins_json = parseIfString(data.original_origins_json)
+  if (data.original_destinations_json) updateData.original_destinations_json = parseIfString(data.original_destinations_json)
+
   
   // Update Driver Name if Driver_ID specifically changes
   if (data.Driver_ID) {
@@ -99,6 +150,8 @@ export async function updateJob(jobId: string, data: Partial<JobFormData>) {
       .single()
     if (driver) updateData.Driver_Name = driver.Driver_Name
   }
+  
+  console.log(`[DEBUG] updateJob SENT:`, JSON.stringify(updateData, null, 2))
 
   const { error } = await supabase
     .from('Jobs_Main')
@@ -107,7 +160,7 @@ export async function updateJob(jobId: string, data: Partial<JobFormData>) {
 
   if (error) {
     console.error('Error updating job:', error)
-    return { success: false, message: 'Failed to update job' }
+    return { success: false, message: `Failed to update job: ${error.message}` }
   }
 
   revalidatePath('/planning')

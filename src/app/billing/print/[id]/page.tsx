@@ -1,6 +1,9 @@
 import { getBillingNoteByIdWithJobs } from "@/lib/supabase/billing"
 import { notFound } from "next/navigation"
 import { BillingActions } from "@/components/billing/billing-actions"
+import { AutoPrint } from "@/components/utils/auto-print"
+
+export const dynamic = 'force-dynamic'
 
 type Props = {
     params: Promise<{ id: string }>
@@ -17,27 +20,49 @@ export default async function BillingPrintPage(props: Props) {
 
     const { note, jobs, company } = data
 
-    // Calculate totals
-    const subtotal = note.Total_Amount
-    const vat = subtotal * 0.07 // 7% VAT (Assuming exclude VAT for now or adjust based on business logic)
+    // Calculate totals dynamically to ensure consistency with displayed items
+    const subtotal = jobs.reduce((sum, job) => {
+        const base = job.Price_Cust_Total || 0
+        let extra = 0
+        try {
+            if (job.extra_costs_json) {
+                let costs = job.extra_costs_json
+                if (typeof costs === 'string') {
+                    try { costs = JSON.parse(costs) } catch {}
+                }
+                if (typeof costs === 'string') {
+                    try { costs = JSON.parse(costs) } catch {}
+                }
+                
+                if (Array.isArray(costs)) {
+                    extra = costs
+                        .filter((c: any) => c.charge_cust > 0)
+                        .reduce((acc: number, c: any) => acc + (Number(c.charge_cust) || 0), 0)
+                }
+            }
+        } catch (e) {
+            console.error("Error calculating extra costs", e)
+        }
+        return sum + base + extra
+    }, 0)
+
+    // const subtotal = note.Total_Amount // Legacy: Don't use stored total as it might be outdated
+    const vat = subtotal * 0.07 
     const total = subtotal + vat
+
+    // DEBUG: Check data
+    console.log("DEBUG BILLING JOBS:", JSON.stringify(jobs.map(j => ({ id: j.Job_ID, extra: j.extra_costs_json })), null, 2))
 
     return (
         <div className="bg-white min-h-screen p-8 text-black print:p-0">
-            {/* Actions Bar (Hidden when printing) */}
-            <div className="max-w-4xl mx-auto mb-8 print:hidden flex flex-col gap-4">
-                 <BillingActions 
-                    billingNoteId={id} 
-                    customerEmail={note.Customer_Email || ""} // Assuming we fetched email or need to join customer
-                    customerName={note.Customer_Name}
-                 />
-            </div>
-
+            <AutoPrint />
+            {/* ... (Actions Bar skipped in replacement mostly) */}
+            
             {/* A4 Page Container */}
-            <div className="max-w-[210mm] mx-auto bg-white print:w-full print:max-w-none">
+            <div id="printable-content" className="max-w-[210mm] mx-auto bg-white p-8 print:w-full print:max-w-none print:px-12 print:py-6">
                 
                 {/* Header */}
-                <div className="flex justify-between items-start mb-8 border-b pb-6">
+                <div className="flex justify-between items-start mb-4 border-b pb-4">
                     <div>
                         <h1 className="text-3xl font-bold text-slate-800">ใบวางบิล</h1>
                         <h2 className="text-xl text-slate-500 font-light">BILLING NOTE</h2>
@@ -52,7 +77,7 @@ export default async function BillingPrintPage(props: Props) {
                 </div>
 
                 {/* Addresses */}
-                <div className="grid grid-cols-2 gap-8 mb-8">
+                <div className="grid grid-cols-2 gap-8 mb-4">
                     <div>
                         <h3 className="font-bold text-slate-700 mb-2">ผู้วางบิล (Bill From)</h3>
                         {company ? (
@@ -76,42 +101,84 @@ export default async function BillingPrintPage(props: Props) {
                         <h3 className="font-bold text-slate-700 mb-2">ลูกค้า (Bill To)</h3>
                         <p className="text-sm text-slate-600 leading-relaxed">
                             <strong>{note.Customer_Name}</strong><br/>
-                            (ที่อยู่ลูกค้า)<br/>
-                            (เลขประจำตัวผู้เสียภาษี)
+                            {note.Customer_Address ? (
+                                <>
+                                {note.Customer_Address}<br/>
+                                <span>เลขประจำตัวผู้เสียภาษี: {note.Customer_Tax_ID}</span>
+                                </>
+                            ) : (
+                                <span className="text-red-400">ไม่พบที่อยู่ลูกค้า (กรุณาตวจสอบใน Master Data)</span>
+                            )}
                         </p>
                     </div>
                 </div>
 
                 {/* Table */}
-                <table className="w-full mb-8">
+                <table className="w-full mb-4">
                     <thead>
                         <tr className="bg-slate-100 text-slate-600 text-sm">
-                            <th className="py-3 px-4 text-left">ลำดับ</th>
-                            <th className="py-3 px-4 text-left">รายละเอียด (Job ID / Route)</th>
-                            <th className="py-3 px-4 text-center">วันที่ขนส่ง</th>
-                            <th className="py-3 px-4 text-right">จำนวนเงิน</th>
+                            <th className="py-2 px-4 text-left">ลำดับ</th>
+                            <th className="py-2 px-4 text-left">รายละเอียด (Job ID / Route)</th>
+                            <th className="py-2 px-4 text-center">วันที่ขนส่ง</th>
+                            <th className="py-2 px-4 text-right">จำนวนเงิน</th>
                         </tr>
                     </thead>
-                    <tbody className="text-sm text-slate-700">
-                        {jobs.map((job, index) => (
-                            <tr key={job.Job_ID} className="border-b border-slate-200">
-                                <td className="py-3 px-4">{index + 1}</td>
-                                <td className="py-3 px-4">
-                                    <div className="font-bold">{job.Job_ID}</div>
-                                    <div className="text-slate-500 text-xs">{job.Route_Name}</div>
-                                    <div className="text-slate-500 text-xs">{job.Origin_Location} - {job.Dest_Location}</div>
-                                </td>
-                                <td className="py-3 px-4 text-center">
-                                    {new Date(job.Plan_Date).toLocaleDateString('th-TH')}
-                                </td>
-                                <td className="py-3 px-4 text-right">{job.Price_Cust_Total?.toLocaleString()}</td>
-                            </tr>
-                        ))}
-                    </tbody>
+                    {jobs.map((job, index) => {
+                            let extraCosts: any[] = []
+                            try {
+                                if (job.extra_costs_json) {
+                                    let parsed = job.extra_costs_json
+                                    if (typeof parsed === 'string') {
+                                        try { parsed = JSON.parse(parsed) } catch {}
+                                    }
+                                    if (typeof parsed === 'string') {
+                                        try { parsed = JSON.parse(parsed) } catch {}
+                                    }
+                                    if (Array.isArray(parsed)) {
+                                        extraCosts = parsed
+                                    }
+                                }
+                            } catch {}
+
+                            const chargeableExtras = extraCosts.filter(c => c.charge_cust > 0)
+
+                            return (
+                                <tbody key={job.Job_ID} className="text-sm text-slate-700 border-b border-slate-200">
+                                    {/* Main Job Row */}
+                                    <tr>
+                                        <td className="py-2 px-4 align-top">{index + 1}</td>
+                                        <td className="py-2 px-4">
+                                            <div className="font-bold">ค่าขนส่ง (Job: {job.Job_ID})</div>
+                                            <div className="text-slate-500 text-xs">{job.Route_Name}</div>
+                                        </td>
+                                        <td className="py-2 px-4 text-center align-top">
+                                            {new Date(job.Plan_Date).toLocaleDateString('th-TH')}
+                                        </td>
+                                        <td className="py-2 px-4 text-right align-top">{job.Price_Cust_Total?.toLocaleString()}</td>
+                                    </tr>
+
+                                    {/* Extra Costs Rows */}
+                                    {chargeableExtras.map((extra, i) => (
+                                        <tr key={`${job.Job_ID}-extra-${i}`} className="text-slate-600">
+                                            <td className="py-1 px-4"></td>
+                                            <td className="py-1 px-4">
+                                                <div className="text-sm border-l-2 border-slate-300 pl-2">
+                                                    {extra.type}
+                                                </div>
+                                            </td>
+                                            <td className="py-1 px-4 text-center">
+                                                {/* Same Date or empty */}
+                                            </td>
+                                            <td className="py-1 px-4 text-right">{Number(extra.charge_cust).toLocaleString()}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            )
+                        })}
                 </table>
 
                 {/* Totals */}
-                <div className="flex justify-end mb-12">
+                <div className="flex justify-end mb-6">
                     <div className="w-64 space-y-2">
                         <div className="flex justify-between text-sm text-slate-600">
                             <span>รวมเป็นเงิน</span>
@@ -129,17 +196,15 @@ export default async function BillingPrintPage(props: Props) {
                 </div>
 
                 {/* Signatures */}
-                <div className="grid grid-cols-2 gap-12 mt-20">
+                <div className="grid grid-cols-2 gap-12 mt-8 break-inside-avoid">
                     <div className="border-t border-slate-300 pt-4 text-center">
-                        <div className="h-12"></div>
                         <p className="text-sm text-slate-600">ลงชื่อ ผู้วางบิล</p>
-                         <p className="text-sm font-bold text-slate-800 mt-1">{company?.company_name}</p>
+                        <div className="h-8 mt-2"></div>
                         <p className="text-xs text-slate-400 mt-1">วันที่ .......................................</p>
                     </div>
                     <div className="border-t border-slate-300 pt-4 text-center">
-                        <div className="h-12"></div>
                         <p className="text-sm text-slate-600">ลงชื่อ ผู้รับวางบิล</p>
-                        <p className="text-sm font-bold text-slate-800 mt-1">{note.Customer_Name}</p>
+                        <div className="h-8 mt-2"></div>
                         <p className="text-xs text-slate-400 mt-1">วันที่ .......................................</p>
                     </div>
                 </div>
@@ -148,7 +213,14 @@ export default async function BillingPrintPage(props: Props) {
 
             <style type="text/css" media="print">{`
                 @page { size: auto;  margin: 0mm; }
-                body { background-color: white; }
+                body { visibility: hidden; }
+                #printable-content, #printable-content * { visibility: visible; }
+                #printable-content {
+                    position: absolute;
+                    left: 0;
+                    top: 0;
+                    width: 100%;
+                }
             `}</style>
         </div>
     )

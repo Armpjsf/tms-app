@@ -6,7 +6,8 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 
 interface EmailAttachment {
     filename: string;
-    path: string; // URL
+    path?: string; // URL
+    content?: Buffer | string;
 }
 
 interface SendBillingEmailProps {

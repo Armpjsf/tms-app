@@ -6,17 +6,24 @@ export type Job = {
   Job_ID: string
   Job_Status: string
   Plan_Date: string | null
+  Delivery_Date: string | null
   Customer_ID: string | null
   Customer_Name: string | null
   Route_Name: string | null
   Driver_ID: string | null
   Driver_Name: string | null
   Vehicle_Plate: string | null
+  Vehicle_Type: string | null
   Origin_Location: string | null
   Dest_Location: string | null
   Total_Drop: number | null
   Price_Cust_Total: number
   Cost_Driver_Total: number
+  Cargo_Type: string | null
+  Notes: string | null
+  original_origins_json: any
+  original_destinations_json: any
+  extra_costs_json: any
   Created_At: string | null
   Photo_Proof_Url: string | null
   Signature_Url: string | null

@@ -2,6 +2,7 @@
 
 import { createClient } from '@/utils/supabase/server'
 import { getUserBranchId, isSuperAdmin } from "@/lib/permissions"
+import { cookies } from 'next/headers'
 
 // Type matching actual Supabase schema (lowercase columns!)
 export type Vehicle = {
@@ -27,6 +28,7 @@ export type Vehicle = {
   branch_id: string | null
   active_status: string | null
   notes: string | null
+  sub_id?: string | null // Added for Subcontractor
 }
 
 export async function getAllVehiclesFromTable(): Promise<Vehicle[]> {
@@ -40,7 +42,13 @@ export async function getAllVehiclesFromTable(): Promise<Vehicle[]> {
     const branchId = await getUserBranchId()
     const isAdmin = await isSuperAdmin()
     
-    if (branchId && !isAdmin) {
+    // Check for Admin Override Cookie
+    const cookieStore = await cookies()
+    const selectedBranch = cookieStore.get('selectedBranch')?.value
+
+    if (isAdmin && selectedBranch && selectedBranch !== 'All') {
+        query = query.eq('branch_id', selectedBranch)
+    } else if (branchId && !isAdmin) {
         query = query.eq('branch_id', branchId)
     } else if (!isAdmin && !branchId) {
         return []
@@ -88,6 +96,7 @@ export async function createVehicle(vehicleData: Partial<Vehicle>) {
         model: vehicleData.model,
         driver_id: vehicleData.driver_id,
         active_status: vehicleData.active_status || 'Active',
+        sub_id: vehicleData.sub_id, // Added
         branch_id: await getUserBranchId()
       })
       .select()
@@ -114,7 +123,8 @@ export async function updateVehicle(plate: string, vehicleData: Partial<Vehicle>
         brand: vehicleData.brand,
         model: vehicleData.model,
         driver_id: vehicleData.driver_id,
-        active_status: vehicleData.active_status
+        active_status: vehicleData.active_status,
+        sub_id: vehicleData.sub_id // Added
       })
       .eq('vehicle_plate', plate)
       .select()
@@ -160,7 +170,13 @@ export async function getAllVehicles(page?: number, limit?: number, query?: stri
     const branchId = await getUserBranchId()
     const isAdmin = await isSuperAdmin()
     
-    if (branchId && !isAdmin) {
+    // Check for Admin Override Cookie
+    const cookieStore = await cookies()
+    const selectedBranch = cookieStore.get('selectedBranch')?.value
+
+    if (isAdmin && selectedBranch && selectedBranch !== 'All') {
+        queryBuilder = queryBuilder.eq('branch_id', selectedBranch)
+    } else if (branchId && !isAdmin) {
         queryBuilder = queryBuilder.eq('branch_id', branchId)
     } else if (!isAdmin && !branchId) {
         return { data: [], count: 0 }
@@ -185,13 +201,6 @@ export async function getAllVehicles(page?: number, limit?: number, query?: stri
       return { data: [], count: 0 }
     }
     
-    console.log('[getAllVehicles] Fetched:', { 
-        count: data?.length, 
-        branchId, 
-        isAdmin,
-        sample: data?.[0] ? { plate: data[0].vehicle_plate, branch: data[0].branch_id } : 'No data'
-    })
-    
     return { data: data || [], count: count || 0 }
   } catch {
     return { data: [], count: 0 }
@@ -210,7 +219,13 @@ export async function getVehicleStats() {
     const branchId = await getUserBranchId()
     const isAdmin = await isSuperAdmin()
     
-    if (branchId && !isAdmin) {
+    // Check for Admin Override Cookie
+    const cookieStore = await cookies()
+    const selectedBranch = cookieStore.get('selectedBranch')?.value
+
+    if (isAdmin && selectedBranch && selectedBranch !== 'All') {
+        query = query.eq('branch_id', selectedBranch)
+    } else if (branchId && !isAdmin) {
         query = query.eq('branch_id', branchId)
     } else if (!isAdmin && !branchId) {
         return { total: 0, active: 0, maintenance: 0, dueSoon: 0 }
