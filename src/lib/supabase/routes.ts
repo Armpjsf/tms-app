@@ -20,7 +20,15 @@ export type Branch = {
 }
 
 export async function getCurrentUserRole() {
-  return await getUserRole()
+  console.log("[DEBUG] getCurrentUserRole: Starting")
+  try {
+    const role = await getUserRole()
+    console.log("[DEBUG] getCurrentUserRole: Role =", role)
+    return role
+  } catch (e) {
+    console.error("[DEBUG] getCurrentUserRole: Error", e)
+    return null
+  }
 }
 
 // Get all routes
