@@ -179,7 +179,8 @@ export async function getBillingNotes() {
         
         if (branchId && !isAdmin) {
             // @ts-ignore
-            query = query.eq('Branch_ID', branchId)
+            // Allow seeing notes for their branch OR legacy notes with no branch assigned
+            query = query.or(`Branch_ID.eq.${branchId},Branch_ID.is.null`)
         } else if (!isAdmin && !branchId) {
             console.warn("getBillingNotes: No branch ID and not admin. Returning empty.")
             return []
