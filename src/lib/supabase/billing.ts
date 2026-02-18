@@ -29,7 +29,7 @@ export async function createBillingNote(
         // 1. Calculate Total Amount
         const { data: jobs, error: jobsError } = await supabase
             .from('Jobs_Main')
-            .select('Price_Cust_Total, extra_costs_json')
+            .select('Price_Cust_Total, extra_costs_json, Branch_ID')
             .in('Job_ID', jobIds)
 
         if (jobsError) throw new Error("Failed to fetch jobs for calculation")
@@ -68,7 +68,9 @@ export async function createBillingNote(
 
         // 3. Insert Billing Note
         // 3. Insert Billing Note
-        const branchId = await getUserBranchId()
+        const userBranchId = await getUserBranchId()
+        // Use Branch_ID from the first job if available, otherwise fallback to user's branch
+        const branchId = jobs?.[0]?.Branch_ID || userBranchId || 'HQ'
 
         const { error: insertError } = await supabase
             .from('Billing_Notes')
