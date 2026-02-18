@@ -210,9 +210,12 @@ export async function createBulkRoutes(routes: any[]) {
              if (r.Branch_ID) {
                  const key = String(r.Branch_ID).trim()
                  if (branchMap.has(key)) {
-                     branchId = branchMap.get(key)
+                     branchId = branchMap.get(key) || 'HQ'
                  } else {
-                     const found = branches?.find(b => b.Branch_Name.includes(key) || key.includes(b.Branch_Name))
+                     const found = branches?.find(b => {
+                         const bName = String(b.Branch_Name || '')
+                         return bName && (bName.includes(key) || key.includes(bName))
+                     })
                      if (found) {
                          branchId = found.Branch_ID
                      }

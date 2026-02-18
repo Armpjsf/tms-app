@@ -59,7 +59,6 @@ export function VehicleDialog({
     active_status: vehicle?.active_status || 'Active',
     current_mileage: vehicle?.current_mileage || 0,
     next_service_mileage: vehicle?.next_service_mileage || 0,
-    next_service_mileage: vehicle?.next_service_mileage || 0,
     Branch_ID: vehicle?.branch_id || '',
     sub_id: vehicle?.sub_id || ''
   })
@@ -86,8 +85,7 @@ export function VehicleDialog({
             active_status: 'Active',
             current_mileage: 0,
             next_service_mileage: 0,
-            current_mileage: 0,
-            next_service_mileage: 0,
+
             Branch_ID: '',
             sub_id: ''
         })
