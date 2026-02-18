@@ -80,7 +80,8 @@ export async function createBillingNote(
                 Total_Amount: totalAmount,
                 Status: 'Pending',
                 Created_At: new Date().toISOString(),
-                Updated_At: new Date().toISOString()
+                Updated_At: new Date().toISOString(),
+                Branch_ID: branchId
             })
 
         if (insertError) throw insertError
@@ -178,8 +179,11 @@ export async function getBillingNotes() {
             // @ts-ignore
             query = query.eq('Branch_ID', branchId)
         } else if (!isAdmin && !branchId) {
+            console.warn("getBillingNotes: No branch ID and not admin. Returning empty.")
             return []
         }
+        
+        console.log(`getBillingNotes: Admin=${isAdmin}, Branch=${branchId}`)
 
         const { data, error } = await query
             .order('Created_At', { ascending: false })
@@ -194,19 +198,7 @@ export async function getBillingNotes() {
     }
 }
 
-export interface BillingNote {
-  Billing_Note_ID: string
-  Customer_Name: string
-  Billing_Date: string
-  Due_Date: string | null
-  Total_Amount: number
-  Status: string
-  Created_At: string
-  Updated_At: string
-  Customer_Email?: string
-  Customer_Address?: string
-  Customer_Tax_ID?: string
-}
+// Interface moved to top of file
 
 // ... (in createBillingNote, createDriverPayment, getBillingNotes - unchanged)
 
