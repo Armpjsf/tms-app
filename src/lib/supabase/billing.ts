@@ -2,6 +2,7 @@
 
 import { createClient } from "@/utils/supabase/server"
 import { getUserBranchId, isSuperAdmin } from "@/lib/permissions"
+import { accountingService } from "@/services/accounting"
 
 export interface BillingNote {
   Billing_Note_ID: string
@@ -29,7 +30,7 @@ export async function createBillingNote(
         // 1. Calculate Total Amount
         const { data: jobs, error: jobsError } = await supabase
             .from('Jobs_Main')
-            .select('Price_Cust_Total, extra_costs_json, Branch_ID')
+            .select('Job_ID, Route_Name, Price_Cust_Total, extra_costs_json, Branch_ID')
             .in('Job_ID', jobIds)
 
         if (jobsError) throw new Error("Failed to fetch jobs for calculation")
@@ -98,6 +99,24 @@ export async function createBillingNote(
              // Rollback (Optional: Delete created billing note if critical)
              console.error("Failed to link jobs to billing note")
              throw updateError
+        }
+
+        // 5. Automatic Sync to Accounting
+        try {
+            const noteData = {
+                Billing_Note_ID: billingNoteId,
+                Customer_Name: customerName,
+                Billing_Date: date,
+                Due_Date: dueDate,
+                Total_Amount: totalAmount
+            };
+            
+            // Trigger sync in background
+            accountingService.syncBillingNoteToInvoice(noteData, jobs || []).then(res => {
+                if (!res.success) console.error("Auto-sync to accounting failed:", res.message);
+            });
+        } catch (e) {
+            console.error("Error triggering auto-sync:", e);
         }
 
         return { success: true, id: billingNoteId }

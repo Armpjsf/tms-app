@@ -14,6 +14,30 @@ class AccountingServiceManager {
         this.provider = new AkauntingProvider(apiKey, companyId); 
     }
 
+    public async syncBillingNoteToInvoice(note: any, jobs: any[]): Promise<{ success: boolean; message: string }> {
+        try {
+            // 1. Transform Billing Note + Jobs to Accounting Invoice
+            const invoice = this.transformBillingNoteToInvoice(note, jobs);
+
+            // 2. Validate
+            if (!invoice.customer.name) {
+                return { success: false, message: "Customer name is missing" };
+            }
+
+            // 3. Send to Provider
+            const result = await this.provider.createInvoice(invoice);
+            
+            return {
+                success: result.success,
+                message: result.message || (result.success ? "Synced successfully" : "Failed to sync")
+            };
+
+        } catch (error) {
+            console.error("Accounting Sync Error:", error);
+            return { success: false, message: "Internal error during sync" };
+        }
+    }
+
     public async syncJobToInvoice(job: any): Promise<{ success: boolean; message: string }> {
         try {
             // 1. Transform Job Data to Accounting Invoice
@@ -36,6 +60,49 @@ class AccountingServiceManager {
             console.error("Accounting Sync Error:", error);
             return { success: false, message: "Internal error during sync" };
         }
+    }
+
+    private transformBillingNoteToInvoice(note: any, jobs: any[]): AccountingInvoice {
+        const totalAmount = Number(note.Total_Amount) || 0;
+        
+        // Map jobs to invoice items
+        const items = jobs.map(job => {
+            const price = parseFloat(job.Price_Cust_Total) || 0;
+            // Handle extra costs if present
+            let extra = 0;
+            if (job.extra_costs_json) {
+                try {
+                    let costs = job.extra_costs_json;
+                    if (typeof costs === 'string') costs = JSON.parse(costs);
+                    if (Array.isArray(costs)) {
+                        extra = costs.reduce((sum, c) => sum + (Number(c.charge_cust) || 0), 0);
+                    }
+                } catch {}
+            }
+
+            return {
+                description: `Transport: ${job.Job_ID} - ${job.Route_Name || 'Standard'}`,
+                quantity: 1,
+                unitPrice: price + extra,
+                amount: price + extra,
+            };
+        });
+
+        return {
+            referenceId: note.Billing_Note_ID,
+            issueDate: note.Billing_Date || new Date().toISOString().split('T')[0],
+            dueDate: note.Due_Date,
+            customer: {
+                id: note.Customer_Name || "unknown", // Using name as ID for now or lookup logic
+                name: note.Customer_Name || "Unknown Customer",
+                address: note.Customer_Address,
+            },
+            items: items,
+            subtotal: totalAmount,
+            vatAmount: 0,
+            totalAmount: totalAmount,
+            notes: `Auto-synced from TMS Billing Note #${note.Billing_Note_ID}`
+        };
     }
 
     private transformJobToInvoice(job: any): AccountingInvoice {
