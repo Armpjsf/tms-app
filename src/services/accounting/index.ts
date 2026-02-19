@@ -82,7 +82,7 @@ class AccountingServiceManager {
         const totalAmount = Number(note.Total_Amount) || 0;
         
         const items = jobs.map(job => {
-            const price = parseFloat(job.Price_Cust_Total || "0") || 0;
+            const price = parseFloat(String(job.Price_Cust_Total || "0")) || 0;
             let extra = 0;
             if (job.extra_costs_json) {
                 try {
@@ -105,7 +105,7 @@ class AccountingServiceManager {
         return {
             referenceId: note.Billing_Note_ID,
             issueDate: note.Billing_Date || new Date().toISOString().split('T')[0],
-            dueDate: note.Due_Date,
+            dueDate: note.Due_Date || undefined,
             customer: {
                 id: note.Customer_Name || "unknown",
                 name: note.Customer_Name || "Unknown Customer",
@@ -123,7 +123,7 @@ class AccountingServiceManager {
         const totalAmount = Number(payment.Total_Amount) || 0;
         
         const items = jobs.map(job => {
-            const cost = parseFloat(job.Cost_Driver_Total || "0") || 0;
+            const cost = parseFloat(String(job.Cost_Driver_Total || "0")) || 0;
             return {
                 description: `Driver Cost: ${job.Job_ID} - ${job.Route_Name || 'Standard'}`,
                 quantity: 1,
@@ -144,7 +144,7 @@ class AccountingServiceManager {
     }
 
     private transformJobToInvoice(job: Job): AccountingInvoice {
-        const price = parseFloat(job.Price_Cust_Total || "0") || 0;
+        const price = parseFloat(String(job.Price_Cust_Total || "0")) || 0;
 
         return {
             referenceId: job.Job_ID,

@@ -1,9 +1,9 @@
 "use server"
-// Build Trigger: 2026-02-19
 
 import { createClient } from "@/utils/supabase/server"
 import { getUserBranchId, isSuperAdmin } from "@/lib/permissions"
 import { accountingService } from "@/services/accounting"
+import { Job, Billing_Note, Driver_Payment } from "@/types/database"
 
 export interface BillingNote {
   Billing_Note_ID: string
@@ -113,7 +113,7 @@ export async function createBillingNote(
             };
             
             // Trigger sync in background
-            accountingService.syncBillingNoteToInvoice(noteData, jobs || []).then(res => {
+            accountingService.syncBillingNoteToInvoice(noteData, (jobs as unknown as Job[]) || []).then(res => {
                 if (!res.success) console.error("Auto-sync to accounting failed:", res.message);
             });
         } catch (e) {
@@ -181,7 +181,7 @@ export async function createDriverPayment(
 
         // 5. Automatic Sync to Accounting
         try {
-            const paymentData = {
+            const paymentData: Driver_Payment = {
                 Driver_Payment_ID: paymentId,
                 Driver_Name: driverName,
                 Payment_Date: date,
@@ -189,7 +189,7 @@ export async function createDriverPayment(
             };
             
             // Trigger sync in background
-            accountingService.syncDriverPaymentToBill(paymentData, jobs || []).then(res => {
+            accountingService.syncDriverPaymentToBill(paymentData, (jobs as unknown as Job[]) || []).then(res => {
                 if (!res.success) console.error("Auto-sync to accounting (payout) failed:", res.message);
             });
         } catch (e) {
