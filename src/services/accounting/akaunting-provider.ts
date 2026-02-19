@@ -44,12 +44,10 @@ export class AkauntingProvider implements AccountingProvider {
     async isConnected(): Promise<{ connected: boolean; message?: string }> {
         if (!this.apiKey) return { connected: false, message: "API Key is missing" };
         
-        // Strategy 1: URL Patterns for Cloud v3
         const patterns = [
             `https://app.akaunting.com/api`,
             `https://app.akaunting.com/api/v3`,
             `https://app.akaunting.com/${this.companyId}/api`,
-            `https://app.akaunting.com/${this.companyId}/api/v2`,
             `https://app.akaunting.com/${this.companyId}/api/v3`
         ];
 
@@ -59,45 +57,49 @@ export class AkauntingProvider implements AccountingProvider {
             { name: 'Basic (Token:)', header: `Basic ${Buffer.from(`${this.apiKey}:`).toString('base64')}` }
         ];
 
-        const results: { url: string; strat: string; status: number }[] = [];
+        const results: { url: string; strat: string; status: number; location?: string }[] = [];
 
         for (const pattern of patterns) {
             for (const auth of authStrats) {
-                // Try neutral endpoint first
-                const url = `${pattern}/user`;
+                // Try neutral endpoint with company_id query
+                const url = `${pattern}/user?company_id=${this.companyId}`;
                 try {
                     const res = await fetch(url, {
                         headers: {
                             "Authorization": auth.header,
                             "Accept": "application/json",
-                            "X-Company-ID": this.companyId,
-                            "X-Company-Id": this.companyId
+                            "X-Company-ID": this.companyId
                         },
                         redirect: 'manual'
                     });
 
-                    results.push({ url, strat: auth.name, status: res.status });
+                    const location = res.headers.get("location") || undefined;
+                    results.push({ url, strat: auth.name, status: res.status, location });
 
-                    if (res.status === 200) {
-                        return { connected: true };
-                    }
+                    if (res.status === 200) return { connected: true };
                 } catch {
                     results.push({ url, strat: auth.name, status: 0 });
                 }
             }
         }
 
-        // If no 200, try /contacts on the most likely URLs
-        const bestLead = results.find(r => r.status === 401 || r.status === 403) || results[0];
+        // Analyze Results
+        const redirected = results.find(r => r.status === 302 || r.status === 301);
+        const unauthorized = results.find(r => r.status === 401 || r.status === 403);
+        const best = redirected || unauthorized || results[0];
+
+        let msg = `FAILED. Best Lead: [${best.strat}] on ${best.url.split('?')[0]} -> ${best.status}`;
+        if (best.location) msg += ` (Redirect -> ${best.location.split('/').pop()})`;
         
         const summary = results
             .filter(r => r.status > 0 && r.status !== 404)
-            .map(r => `${r.strat}@${r.url.replace('https://app.akaunting.com', '')}->${r.status}`)
+            .map(r => `${r.strat}@${r.status}`)
+            .filter((v, i, a) => a.indexOf(v) === i) // Uniq
             .join(' | ');
 
         return { 
             connected: false, 
-            message: `FAILED. Lead: [${bestLead.strat}] on ${bestLead.url} -> ${bestLead.status}. Patterns: ${summary.substring(0, 100)}...`
+            message: `${msg}. Status patterns: ${summary}. Check Trial API settings!`
         };
     }
 
