@@ -22,39 +22,61 @@ export default async function DriverPaymentPrintPage(props: Props) {
     const WITHHOLDING_TAX_RATE = 0.01
 
     // Calculate totals to ensure consistency
-    const subtotal = jobs.reduce((sum, job) => sum + (job.Cost_Driver_Total || 0), 0)
+    const subtotal = jobs.reduce((sum, job) => {
+        const base = job.Cost_Driver_Total || 0
+        let extra = 0
+        try {
+            if (job.extra_costs_json) {
+                let costs = job.extra_costs_json
+                if (typeof costs === 'string') {
+                    try { costs = JSON.parse(costs) } catch {}
+                }
+                if (typeof costs === 'string') {
+                    try { costs = JSON.parse(costs) } catch {}
+                }
+                
+                if (Array.isArray(costs)) {
+                    extra = costs
+                        .filter((c: any) => c.cost_driver > 0)
+                        .reduce((acc: number, c: any) => acc + (Number(c.cost_driver) || 0), 0)
+                }
+            }
+        } catch (e) {
+            console.error("Error calculating extra costs", e)
+        }
+        return sum + base + extra
+    }, 0)
+
     const withholding = Math.round(subtotal * WITHHOLDING_TAX_RATE)
     const netTotal = subtotal - withholding
 
-    const totalAmount = subtotal // or netTotal depending on preference, subtotal is gross
-    
     return (
-        <div className="bg-white min-h-screen p-8 text-black print:p-0">
+        <div className="bg-white min-h-screen p-4 text-black print:p-0">
             <AutoPrint />
             
-            <div id="printable-content" className="max-w-[210mm] mx-auto bg-white p-8 print:w-full print:max-w-none print:px-12 print:py-6 relative">
+            <div id="printable-content" className="max-w-[210mm] mx-auto bg-white p-6 print:w-full print:max-w-none print:px-10 print:py-4 relative">
                 
                 {/* Header Section */}
-                <div className="flex justify-between items-start mb-6">
+                <div className="flex justify-between items-start mb-4">
                     {/* Left: Logo & Company Info */}
-                    <div className="flex flex-col gap-4 max-w-[60%]">
+                    <div className="flex flex-col gap-2 max-w-[60%]">
                         {company?.logo_url && (
                             <div>
                                 <img 
                                     src={company.logo_url} 
                                     alt="Company Logo" 
-                                    className="h-24 w-auto object-contain" 
+                                    className="h-16 w-auto object-contain" 
                                 />
                             </div>
                         )}
-                        <div className="text-sm">
+                        <div className="text-xs">
                             {company ? (
                                 <>
-                                    <h2 className="font-bold text-lg">{company.company_name}</h2>
+                                    <h2 className="font-bold text-base">{company.company_name}</h2>
                                     {company.company_name_en && (
                                         <p className="text-slate-600 font-medium">{company.company_name_en}</p>
                                     )}
-                                    <p className="mt-2 text-slate-700">{company.address}</p>
+                                    <p className="mt-1 text-slate-700 leading-tight">{company.address}</p>
                                     <div className="flex gap-4 mt-1">
                                         <p><span className="font-semibold">Tax ID:</span> {company.tax_id}</p>
                                     </div>
@@ -67,43 +89,43 @@ export default async function DriverPaymentPrintPage(props: Props) {
 
                     {/* Right: Document Title */}
                     <div className="text-right">
-                        <h1 className="text-4xl font-bold text-slate-900 tracking-wide">ใบสำคัญจ่าย</h1>
-                        <p className="text-slate-500 text-lg font-medium tracking-widest uppercase mt-1">Payment Voucher</p>
-                        <div className="mt-4">
-                             <span className="px-3 py-1 bg-slate-100 rounded text-xs font-mono border border-slate-200">
+                        <h1 className="text-3xl font-bold text-slate-900 tracking-wide">ใบสำคัญจ่าย</h1>
+                        <p className="text-slate-500 text-base font-medium tracking-widest uppercase">Payment Voucher</p>
+                        <div className="mt-2">
+                             <span className="px-2 py-0.5 bg-slate-100 rounded text-[10px] font-mono border border-slate-200">
                                 ORIGINAL (ต้นฉบับ)
                              </span>
                         </div>
                     </div>
                 </div>
 
-                <hr className="border-slate-300 mb-6" />
+                <hr className="border-slate-300 mb-4" />
 
                 {/* Info Grid: Payer & Payee */}
-                <div className="grid grid-cols-2 gap-8 mb-8">
+                <div className="grid grid-cols-2 gap-4 mb-4">
                     {/* Payer Info (Company) */}
-                    <div className="border border-slate-200 rounded p-4 bg-slate-50/50">
-                         <h3 className="font-bold text-slate-800 border-b border-slate-200 pb-2 mb-2">ผู้ทำจ่าย (Payer)</h3>
+                    <div className="border border-slate-200 rounded p-3 bg-slate-50/50">
+                         <h3 className="font-bold text-xs text-slate-800 border-b border-slate-200 pb-1 mb-1">ผู้ทำจ่าย (Payer)</h3>
                          {company ? (
-                            <div className="text-sm text-slate-600 mt-2 space-y-1">
-                                <p className="font-semibold text-lg text-slate-900">{company.company_name}</p>
-                                <p>{company.address}</p>
-                                <p><span className="font-semibold">Tax ID:</span> {company.tax_id}</p>
+                            <div className="text-[11px] text-slate-600 space-y-0.5">
+                                <p className="font-semibold text-sm text-slate-900">{company.company_name}</p>
+                                <p className="leading-tight">{company.address}</p>
+                                <p><span className="font-semibold">Tax ID:</span> {company.tax_id} {company.phone && <span>โทร: {company.phone}</span>}</p>
                             </div>
                          ) : (
-                            <p className="text-sm text-slate-400">Loading...</p>
+                            <p className="text-xs text-slate-400">Loading...</p>
                          )}
                     </div>
 
                     {/* Payee Info (Driver) */}
-                    <div className="border border-slate-200 rounded p-4">
-                        <h3 className="font-bold text-slate-800 border-b border-slate-200 pb-2 mb-2">ผู้รับเงิน (Payee)</h3>
-                        <p className="font-semibold text-lg text-slate-900">{payment.Driver_Name}</p>
-                        <div className="text-sm text-slate-600 mt-2 space-y-1">
+                    <div className="border border-slate-200 rounded p-3">
+                        <h3 className="font-bold text-xs text-slate-800 border-b border-slate-200 pb-1 mb-1">ผู้รับเงิน (Payee)</h3>
+                        <p className="font-semibold text-sm text-slate-900">{payment.Driver_Name}</p>
+                        <div className="text-[11px] text-slate-600 space-y-0.5">
                             {bankInfo.Bank_Account_No ? (
                                 <>
                                     <p><span className="font-semibold">Bank:</span> {bankInfo.Bank_Name}</p>
-                                    <p><span className="font-semibold">Account No:</span> {bankInfo.Bank_Account_No} <span className="text-xs text-slate-400">({bankInfo.Bank_Account_Name})</span></p>
+                                    <p><span className="font-semibold">Account No:</span> {bankInfo.Bank_Account_No} <span className="text-[10px] text-slate-400">({bankInfo.Bank_Account_Name})</span></p>
                                 </>
                             ) : (
                                 <p className="text-amber-600 italic">* ไม่พบข้อมูลบัญชีธนาคาร</p>
@@ -113,10 +135,10 @@ export default async function DriverPaymentPrintPage(props: Props) {
                 </div>
 
                 {/* Document Details Row */}
-                <div className="flex justify-between items-center mb-6 text-sm bg-slate-50 p-3 rounded border border-slate-200">
+                <div className="flex justify-between items-center mb-4 text-[11px] bg-slate-50 p-2 rounded border border-slate-200">
                      <div>
                         <span className="text-slate-500 mr-2">เลขที่เอกสาร (No.):</span>
-                        <span className="font-mono font-bold">{payment.Driver_Payment_ID}</span>
+                        <span className="font-mono font-bold text-sm tracking-tight">{payment.Driver_Payment_ID}</span>
                      </div>
                      <div>
                         <span className="text-slate-500 mr-2">วันที่ (Date):</span>
@@ -129,60 +151,91 @@ export default async function DriverPaymentPrintPage(props: Props) {
                 </div>
 
                 {/* Table */}
-                <div className="mb-8">
-                    <table className="w-full text-sm border-collapse">
+                <div className="mb-4">
+                    <table className="w-full text-[12px] border-collapse">
                         <thead>
                             <tr className="bg-slate-100 text-slate-700 border-y-2 border-slate-300">
-                                <th className="py-3 px-4 text-center font-bold w-16">ลำดับ<br/><span className="text-xs font-normal">No.</span></th>
-                                <th className="py-3 px-4 text-left font-bold">รายละเอียด<br/><span className="text-xs font-normal">Description</span></th>
-                                <th className="py-3 px-4 text-left font-bold">วันที่<br/><span className="text-xs font-normal">Date</span></th>
-                                <th className="py-3 px-4 text-left font-bold">เส้นทาง<br/><span className="text-xs font-normal">Route</span></th>
-                                <th className="py-3 px-4 text-right font-bold w-32">จำนวนเงิน<br/><span className="text-xs font-normal">Amount</span></th>
+                                <th className="py-2 px-3 text-center font-bold w-12">No.</th>
+                                <th className="py-2 px-3 text-left font-bold">รายการ (Description)</th>
+                                <th className="py-2 px-3 text-center font-bold w-24">วันที่ (Date)</th>
+                                <th className="py-2 px-3 text-right font-bold w-32">จำนวนเงิน (Amount)</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {jobs.map((item, index) => (
-                                <tr key={item.Job_ID} className="border-b border-slate-200">
-                                    <td className="py-3 px-4 text-center text-slate-500">{index + 1}</td>
-                                    <td className="py-3 px-4 font-medium text-slate-800">
-                                        ค่าเที่ยววิ่ง (Job: {item.Job_ID})
-                                    </td>
-                                    <td className="py-3 px-4 text-slate-600">
-                                        {item.Plan_Date ? new Date(item.Plan_Date).toLocaleDateString('th-TH') : '-'}
-                                    </td>
-                                    <td className="py-3 px-4 text-slate-600 text-xs">
-                                        {item.Route_Name || '-'}
-                                    </td>
-                                    <td className="py-3 px-4 text-right font-medium text-slate-800">
-                                        {item.Cost_Driver_Total?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                    </td>
-                                </tr>
-                            ))}
-                            {Array.from({ length: Math.max(0, 5 - jobs.length) }).map((_, i) => (
-                                 <tr key={`empty-${i}`} className="border-b border-slate-100 h-10">
-                                    <td colSpan={5}></td>
+                            {jobs.map((item, index) => {
+                                let extraCosts: any[] = []
+                                try {
+                                    if (item.extra_costs_json) {
+                                        let parsed = item.extra_costs_json
+                                        if (typeof parsed === 'string') {
+                                            try { parsed = JSON.parse(parsed) } catch {}
+                                        }
+                                        if (typeof parsed === 'string') {
+                                            try { parsed = JSON.parse(parsed) } catch {}
+                                        }
+                                        if (Array.isArray(parsed)) {
+                                            extraCosts = parsed.filter(c => c.cost_driver > 0)
+                                        }
+                                    }
+                                } catch {}
+
+                                return (
+                                    <tbody key={item.Job_ID} className="border-b border-slate-200">
+                                        <tr>
+                                            <td className="py-2 px-3 text-center text-slate-500 align-top">{index + 1}</td>
+                                            <td className="py-2 px-3">
+                                                <div className="font-bold text-slate-800">ค่าเที่ยววิ่ง (Job: {item.Job_ID})</div>
+                                                <div className="text-[10px] text-slate-500">{item.Route_Name}</div>
+                                            </td>
+                                            <td className="py-2 px-3 text-center text-slate-600 align-top">
+                                                {item.Plan_Date ? new Date(item.Plan_Date).toLocaleDateString('th-TH') : '-'}
+                                            </td>
+                                            <td className="py-2 px-3 text-right font-bold text-slate-800 align-top">
+                                                {item.Cost_Driver_Total?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                            </td>
+                                        </tr>
+                                        {extraCosts.map((extra, i) => (
+                                            <tr key={`${item.Job_ID}-extra-${i}`} className="text-slate-600 bg-slate-50/30">
+                                                <td></td>
+                                                <td className="py-1 px-3">
+                                                    <div className="text-[11px] border-l-2 border-slate-300 pl-2">
+                                                        {extra.type}
+                                                    </div>
+                                                </td>
+                                                <td className="py-1 px-3 text-center">-</td>
+                                                <td className="py-1 px-3 text-right">
+                                                    {Number(extra.cost_driver).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                )
+                            })}
+                            {Array.from({ length: Math.max(0, 1 - jobs.length) }).map((_, i) => (
+                                 <tr key={`empty-${i}`} className="border-b border-slate-100 h-8">
+                                    <td colSpan={4}></td>
                                  </tr>
                             ))}
                         </tbody>
                         <tfoot>
                              <tr>
-                                <td colSpan={3} rowSpan={3} className="pt-4 pr-8 align-top">
-                                    <div className="border border-slate-300 bg-slate-50 p-3 rounded text-xs text-slate-500">
-                                        <p className="font-bold mb-1">หมายเหตุ (Remarks):</p>
+                                <td colSpan={2} rowSpan={3} className="pt-2 pr-4 align-top">
+                                    <div className="border border-slate-300 bg-slate-50 p-2 rounded text-[10px] text-slate-500">
+                                        <p className="font-bold mb-0.5">หมายเหตุ (Remarks):</p>
                                         <p>- ยอดเงินนี้รวมค่าแรงและค่าพาหนะแล้ว</p>
                                         <p>- Auto-generated Payment Voucher</p>
                                     </div>
                                 </td>
-                                <td className="py-2 px-4 text-right font-bold text-slate-600">รวมเป็นเงิน</td>
-                                <td className="py-2 px-4 text-right font-bold text-slate-800">{subtotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                                <td className="py-1 px-3 text-right font-bold text-slate-600">รวมเป็นเงิน</td>
+                                <td className="py-1 px-3 text-right font-bold text-slate-800">{subtotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
                             </tr>
                             <tr>
-                                <td className="py-2 px-4 text-right text-slate-600 text-sm">หัก ณ ที่จ่าย 1%</td>
-                                <td className="py-2 px-4 text-right text-red-500 font-medium">-{withholding.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                                <td className="py-1 px-3 text-right text-slate-600 text-[11px]">หัก ณ ที่จ่าย 1%</td>
+                                <td className="py-1 px-3 text-right text-red-500 font-medium">-{withholding.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
                             </tr>
                             <tr className="bg-slate-50 border-t-2 border-slate-300 border-b-2">
-                                <td className="py-3 px-4 text-right font-bold text-slate-900 text-lg">ยอดสุทธิ</td>
-                                <td className="py-3 px-4 text-right font-bold text-indigo-700 text-lg decoration-double underline">
+                                <td className="py-2 px-3 text-right font-bold text-slate-900 text-base">ยอดสุทธิ</td>
+                                <td className="py-2 px-3 text-right font-bold text-indigo-700 text-base decoration-double underline">
                                     {netTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                 </td>
                             </tr>
@@ -191,18 +244,18 @@ export default async function DriverPaymentPrintPage(props: Props) {
                 </div>
 
                  {/* Footer Signatures */}
-                <div className="flex justify-between mt-16 text-sm text-slate-600 pb-8 break-inside-avoid">
-                     <div className="text-center w-1/3">
-                        <div className="border-b border-slate-400 mb-2 h-8 w-3/4 mx-auto"></div>
+                <div className="flex justify-between mt-8 text-[11px] text-slate-600 pb-4 break-inside-avoid">
+                     <div className="text-center w-[45%]">
+                        <div className="border-b border-slate-400 mb-1 h-6 w-3/4 mx-auto"></div>
                         <p className="font-bold">ผู้รับเงิน</p>
-                        <p className="text-xs">(Payee)</p>
-                        <div className="mt-4 text-xs">วันที่ (Date): _____/_____/_______</div>
+                        <p className="text-[10px]">(Payee)</p>
+                        <div className="mt-2 text-[10px]">วันที่ (Date): _____/_____/_______</div>
                     </div>
-                    <div className="text-center w-1/3">
-                        <div className="border-b border-slate-400 mb-2 h-8 w-3/4 mx-auto"></div>
+                    <div className="text-center w-[45%]">
+                        <div className="border-b border-slate-400 mb-1 h-6 w-3/4 mx-auto"></div>
                         <p className="font-bold">ผู้จ่ายเงิน / ผู้มีอำนาจลงนาม</p>
-                        <p className="text-xs">(Payer / Authorized Signature)</p>
-                        <div className="mt-4 text-xs">วันที่ (Date): _____/_____/_______</div>
+                        <p className="text-[10px]">(Payer / Authorized Signature)</p>
+                        <div className="mt-2 text-[10px]">วันที่ (Date): _____/_____/_______</div>
                     </div>
                 </div>
             </div>
