@@ -14,12 +14,14 @@ import {
   Calendar,
   Undo2,
   CheckCircle2,
-  Mail
+  Mail,
+  CloudSync
 } from "lucide-react"
 import { getBillingNotes, BillingNote, updateBillingNoteStatus, recallBillingNote } from "@/lib/supabase/billing"
 import { toast } from "sonner"
 import { isSuperAdmin } from "@/lib/permissions"
 import { BillingActions } from "@/components/billing/billing-actions"
+import { manualSyncInvoice } from "@/app/admin/settings/accounting-actions"
 
 export default function CustomerBillingHistory() {
   const router = useRouter()
@@ -48,6 +50,22 @@ export default function CustomerBillingHistory() {
         toast.error("โหลดข้อมูลไม่สำเร็จ")
     } finally {
         setLoading(false)
+    }
+  }
+
+  const handleSyncToAccounting = async (id: string) => {
+    setProcessingId(id)
+    try {
+        const res = await manualSyncInvoice(id)
+        if (res.success) {
+            toast.success("ส่งข้อมูลไประบบบัญชีสำเร็จ")
+        } else {
+            toast.error(res.message || "เกิดข้อผิดพลาดในการเชื่อมต่อ")
+        }
+    } catch (e) {
+        toast.error("เกิดข้อผิดพลาด")
+    } finally {
+        setProcessingId(null)
     }
   }
 
@@ -215,6 +233,17 @@ export default function CustomerBillingHistory() {
                                         </Button>
                                     }
                                 />
+
+                                <Button 
+                                    size="sm" 
+                                    variant="ghost" 
+                                    className="text-indigo-400 hover:text-indigo-300"
+                                    onClick={() => handleSyncToAccounting(item.Billing_Note_ID)}
+                                    disabled={processingId === item.Billing_Note_ID}
+                                    title="ส่งไประบบบัญชี"
+                                >
+                                    <CloudSync className="w-4 h-4" />
+                                </Button>
 
                                 <Link href={`/billing/print/${item.Billing_Note_ID}`} target="_blank">
                                     <Button 

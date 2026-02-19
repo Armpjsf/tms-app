@@ -14,6 +14,10 @@ class AccountingServiceManager {
         this.provider = new AkauntingProvider(apiKey, companyId); 
     }
 
+    public async isConnected(): Promise<boolean> {
+        return this.provider.isConnected();
+    }
+
     public async syncBillingNoteToInvoice(note: any, jobs: any[]): Promise<{ success: boolean; message: string }> {
         try {
             // 1. Transform Billing Note + Jobs to Accounting Invoice

@@ -14,11 +14,13 @@ import {
   FileDown,
   CheckCircle2,
   Undo2,
-  Loader2
+  Loader2,
+  CloudSync
 } from "lucide-react"
 import { getDriverPayments, DriverPayment, updateDriverPaymentStatus, recallDriverPayment, getDriverPaymentByIdWithJobs } from "@/lib/supabase/billing"
 import { isSuperAdmin } from "@/lib/permissions"
 import { toast } from "sonner"
+import { manualSyncBill } from "@/app/admin/settings/accounting-actions"
 
 export default function DriverPaymentHistory() {
   const router = useRouter()
@@ -47,6 +49,22 @@ export default function DriverPaymentHistory() {
         toast.error("โหลดข้อมูลไม่สำเร็จ")
     } finally {
         setLoading(false)
+    }
+  }
+
+  const handleSyncToAccounting = async (id: string) => {
+    setProcessingId(id)
+    try {
+        const res = await manualSyncBill(id)
+        if (res.success) {
+            toast.success("ส่งข้อมูลไประบบบัญชีสำเร็จ")
+        } else {
+            toast.error(res.message || "เกิดข้อผิดพลาดในการเชื่อมต่อ")
+        }
+    } catch (e) {
+        toast.error("เกิดข้อผิดพลาด")
+    } finally {
+        setProcessingId(null)
     }
   }
 
@@ -243,6 +261,17 @@ export default function DriverPaymentHistory() {
                                     </Button>
                                 )}
 
+                                <Button 
+                                    size="sm" 
+                                    variant="ghost" 
+                                    className="text-indigo-400 hover:text-indigo-300"
+                                    onClick={() => handleSyncToAccounting(item.Driver_Payment_ID)}
+                                    disabled={processingId === item.Driver_Payment_ID}
+                                    title="ส่งไประบบบัญชี"
+                                >
+                                    <CloudSync className="w-4 h-4" />
+                                </Button>
+ 
                                 <Button 
                                     size="sm" 
                                     variant="ghost" 
