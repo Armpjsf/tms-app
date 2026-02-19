@@ -46,24 +46,24 @@ export class AkauntingProvider implements AccountingProvider {
         const email = this.userEmail.trim();
         if (!key) return { connected: false, message: "API Key is missing" };
         
-        const url = `${this.baseUrl}/contacts?company_id=${this.companyId}&limit=1`;
+        const baseEndpoint = `${this.baseUrl}/contacts`;
         
-        const combinations: { name: string; headers: Record<string, string> }[] = [
-            { name: 'Bearer/ID', headers: { "Authorization": `Bearer ${key}`, "X-Company-ID": this.companyId } },
-            { name: 'Bearer/Id', headers: { "Authorization": `Bearer ${key}`, "X-Company-Id": this.companyId } },
-            { name: 'Basic(Email:Token)/ID', headers: { "Authorization": `Basic ${Buffer.from(`${email}:${key}`).toString('base64')}`, "X-Company-ID": this.companyId } },
-            { name: 'Basic(Token:)/ID', headers: { "Authorization": `Basic ${Buffer.from(`${key}:`).toString('base64')}`, "X-Company-ID": this.companyId } },
-            { name: 'X-API-KEY/ID', headers: { "X-API-KEY": key, "X-Company-ID": this.companyId } },
-            { name: 'X-Auth/ID', headers: { "X-Authorization": `Bearer ${key}`, "X-Company-ID": this.companyId } }
+        const combinations: { name: string; url: string; headers: Record<string, string> }[] = [
+            { name: 'Bearer', url: `${baseEndpoint}?company_id=${this.companyId}`, headers: { "Authorization": `Bearer ${key}` } },
+            { name: 'QueryParam', url: `${baseEndpoint}?company_id=${this.companyId}&api_key=${key}`, headers: {} },
+            { name: 'Basic(Email:Token)', url: `${baseEndpoint}?company_id=${this.companyId}`, headers: { "Authorization": `Basic ${Buffer.from(`${email}:${key}`).toString('base64')}` } },
+            { name: 'Basic(Token:)', url: `${baseEndpoint}?company_id=${this.companyId}`, headers: { "Authorization": `Basic ${Buffer.from(`${key}:`).toString('base64')}` } },
+            { name: 'Basic(:Token)', url: `${baseEndpoint}?company_id=${this.companyId}`, headers: { "Authorization": `Basic ${Buffer.from(`:${key}`).toString('base64')}` } }
         ];
 
         const results: string[] = [];
         for (const auth of combinations) {
             try {
-                const res = await fetch(url, {
+                const res = await fetch(auth.url, {
                     headers: {
                         ...auth.headers,
-                        "Accept": "application/json"
+                        "Accept": "application/json",
+                        "X-Company-ID": this.companyId
                     }
                 });
 
@@ -78,7 +78,7 @@ export class AkauntingProvider implements AccountingProvider {
 
         return { 
             connected: false, 
-            message: `Connection Failed. Patterns: ${results.join(' | ')}. Please check if your key is a "Personal Access Token" from [Profile > API Tokens].`
+            message: `Connection Failed. Patterns: ${results.join(' | ')}. Tip: Check Apps menu for "Personal Access Tokens" app.`
         };
     }
 
