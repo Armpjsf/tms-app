@@ -60,7 +60,9 @@ export function VehicleDialog({
     current_mileage: vehicle?.current_mileage || 0,
     next_service_mileage: vehicle?.next_service_mileage || 0,
     Branch_ID: vehicle?.branch_id || '',
-    sub_id: vehicle?.sub_id || ''
+    sub_id: vehicle?.sub_id || '',
+    max_weight_kg: vehicle?.max_weight_kg || 0,
+    max_volume_cbm: vehicle?.max_volume_cbm || 0
   })
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -69,10 +71,9 @@ export function VehicleDialog({
 
     try {
       if (mode === 'create') {
-        // @ts-ignore
         await createVehicle(formData)
       } else {
-        // @ts-ignore
+        if (!vehicle?.vehicle_plate) throw new Error("Vehicle Plate not found")
         await updateVehicle(vehicle.vehicle_plate, formData)
       }
       setShow(false)
@@ -87,7 +88,9 @@ export function VehicleDialog({
             next_service_mileage: 0,
 
             Branch_ID: '',
-            sub_id: ''
+            sub_id: '',
+            max_weight_kg: 0,
+            max_volume_cbm: 0
         })
       }
       router.refresh()
@@ -121,6 +124,25 @@ export function VehicleDialog({
                     {branches.map((b) => (
                         <option key={b.Branch_ID} value={b.Branch_ID} className="bg-slate-900">
                         {b.Branch_Name} ({b.Branch_ID})
+                        </option>
+                    ))}
+                </select>
+            </div>
+          )}
+
+          {subcontractors && subcontractors.length > 0 && (
+            <div className="space-y-2">
+                <Label htmlFor="sub_id" className="text-blue-400">รถร่วมบริการ (Subcontractor)</Label>
+                <select
+                    id="sub_id"
+                    value={formData.sub_id || ''}
+                    onChange={(e) => setFormData({ ...formData, sub_id: e.target.value })}
+                    className="flex h-10 w-full rounded-md border border-blue-500/50 bg-blue-500/10 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                    <option value="" className="bg-slate-900">-- รถบริษัท (Company Fleet) --</option>
+                    {subcontractors.map((s) => (
+                        <option key={s.Sub_ID} value={s.Sub_ID} className="bg-slate-900">
+                        {s.Sub_Name}
                         </option>
                     ))}
                 </select>
@@ -182,6 +204,32 @@ export function VehicleDialog({
                 value={formData.next_service_mileage}
                 onChange={(e) => setFormData({ ...formData, next_service_mileage: Number(e.target.value) })}
                 className="bg-white/5 border-white/10"
+                />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4 border-t border-white/10 pt-4">
+             <div className="space-y-2">
+                <Label htmlFor="max_weight_kg" className="text-emerald-400">น้ำหนักบรรทุกสูงสุด (kg)</Label>
+                <Input
+                id="max_weight_kg"
+                type="number"
+                value={formData.max_weight_kg}
+                onChange={(e) => setFormData({ ...formData, max_weight_kg: Number(e.target.value) })}
+                placeholder="e.g. 1500"
+                className="bg-white/5 border-emerald-500/30 text-emerald-100"
+                />
+            </div>
+            <div className="space-y-2">
+                <Label htmlFor="max_volume_cbm" className="text-emerald-400">ปริมาตรบรรทุกสูงสุด (CBM)</Label>
+                <Input
+                id="max_volume_cbm"
+                type="number"
+                value={formData.max_volume_cbm}
+                onChange={(e) => setFormData({ ...formData, max_volume_cbm: Number(e.target.value) })}
+                placeholder="e.g. 2.5"
+                step="0.1"
+                className="bg-white/5 border-emerald-500/30 text-emerald-100"
                 />
             </div>
           </div>

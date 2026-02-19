@@ -29,6 +29,10 @@ export type Job = {
   Signature_Url: string | null
   Sub_ID: string | null
   Show_Price_To_Driver: boolean
+  Weight_Kg?: number | null
+  Volume_Cbm?: number | null
+  Zone?: string | null
+  Invoice_ID?: string | null
 }
 
 // ดึงงานทั้งหมดวันนี้
@@ -595,6 +599,7 @@ export async function getDriverDashboardStats(driverId: string) {
       console.error('Error fetching driver dashboard stats:', error)
       return { 
         stats: { total: 0, completed: 0 }, 
+        gamification: { points: 0, rank: 'Bronze', nextRankPoints: 300, monthlyCompleted: 0 },
         currentJob: null 
       }
     }
@@ -643,5 +648,31 @@ export async function getDriverDashboardStats(driverId: string) {
         gamification: { points: 0, rank: 'Bronze', nextRankPoints: 300, monthlyCompleted: 0 },
         currentJob: null 
       }
+  }
+}
+
+// Get billable jobs for a customer
+export async function getBillableJobs(customerId: string) {
+  try {
+    const supabase = await createClient()
+    
+    // Get jobs that are Complete/Delivered and NOT yet invoiced
+    const { data, error } = await supabase
+      .from('Jobs_Main')
+      .select('*')
+      .eq('Customer_ID', customerId)
+      .is('Invoice_ID', null) 
+      .in('Job_Status', ['Complete', 'Delivered'])
+      .order('Plan_Date', { ascending: true })
+
+    if (error) {
+      console.error('Error fetching billable jobs:', error)
+      return []
+    }
+    
+    return data || []
+  } catch (error) {
+    console.error('Error:', error)
+    return []
   }
 }

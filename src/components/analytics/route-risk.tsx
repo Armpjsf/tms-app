@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { RouteRisk } from "@/lib/supabase/predictive-analytics"
-import { AlertTriangle, TrendingUp, MapPin, Gauge } from "lucide-react"
+import { AlertTriangle, TrendingUp, MapPin } from "lucide-react"
 
 export function RouteRiskAnalysis({ risks }: { risks: RouteRisk[] }) {
   return (
@@ -63,7 +63,7 @@ export function RouteRiskAnalysis({ risks }: { risks: RouteRisk[] }) {
                              <div className="hidden md:flex flex-col gap-1 w-24">
                                 <div className="flex justify-between text-[10px] text-slate-500">
                                     <span>Reliability</span>
-                                    <span>{100 - (r.failure_count / r.total_jobs * 100).toFixed(0)}%</span>
+                                    <span>{100 - Math.round(r.failure_count / r.total_jobs * 100)}%</span>
                                 </div>
                                 <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
                                     <div 

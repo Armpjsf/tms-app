@@ -92,7 +92,7 @@ export function SafetySection({ data }: { data: SafetyAnalytics }) {
                     <div key={i} className="py-4 flex items-center justify-between">
                         <div className="flex items-center gap-3">
                              <div className="w-8 h-8 rounded bg-slate-800 flex items-center justify-center text-xs font-bold text-slate-300">
-                                {i.count}
+                                {item.count}
                             </div>
                             <div className="text-white font-medium text-sm">{item.reason}</div>
                         </div>

@@ -13,6 +13,7 @@ import { CustomerAutocomplete } from "@/components/customer-autocomplete"
 import { LocationAutocomplete } from "@/components/location-autocomplete"
 import { VehicleAutocomplete } from "@/components/vehicle-autocomplete"
 import { DriverAutocomplete } from "@/components/driver-autocomplete"
+import { ZONES } from "@/lib/constants"
 import { 
   Loader2, 
   Plus, 
@@ -115,7 +116,10 @@ export function JobDialog({
     Notes: job?.Notes || '',
     Price_Cust_Total: job?.Price_Cust_Total || 0,
     Cost_Driver_Total: job?.Cost_Driver_Total || 0,
-    Job_Status: job?.Job_Status || 'New'
+    Job_Status: job?.Job_Status || 'New',
+    Weight_Kg: job?.Weight_Kg || 0,
+    Volume_Cbm: job?.Volume_Cbm || 0,
+    Zone: job?.Zone || ''
   })
 
   // Multi-Assignment State
@@ -439,6 +443,23 @@ export function JobDialog({
                 </div>
                 
                 <div className="space-y-2">
+                   <Label>โซนพื้นที่ (Zone)</Label>
+                   <Select 
+                      value={formData.Zone} 
+                      onValueChange={(val) => setFormData({ ...formData, Zone: val })}
+                   >
+                    <SelectTrigger className="bg-slate-800 border-slate-700">
+                        <SelectValue placeholder="เลือกโซน (Optional)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {ZONES.map((z) => (
+                            <SelectItem key={z.id} value={z.id}>{z.name}</SelectItem>
+                        ))}
+                    </SelectContent>
+                   </Select>
+                </div>
+
+                <div className="space-y-2">
                    <Label>สถานะงาน</Label>
                    <Select 
                       value={formData.Job_Status} 
@@ -508,6 +529,30 @@ export function JobDialog({
                     className="bg-slate-800 border-slate-700"
                   />
                 </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                 <div className="space-y-2">
+                    <Label className="text-emerald-400">น้ำหนัก (kg)</Label>
+                    <Input
+                        type="number"
+                        value={formData.Weight_Kg}
+                        onChange={(e) => setFormData({ ...formData, Weight_Kg: Number(e.target.value) })}
+                        placeholder="0.0"
+                        className="bg-slate-800 border-emerald-500/30 text-emerald-400"
+                    />
+                 </div>
+                 <div className="space-y-2">
+                    <Label className="text-emerald-400">ปริมาตร (CBM)</Label>
+                    <Input
+                        type="number"
+                        value={formData.Volume_Cbm}
+                        onChange={(e) => setFormData({ ...formData, Volume_Cbm: Number(e.target.value) })}
+                        placeholder="0.0"
+                        step="0.01"
+                        className="bg-slate-800 border-emerald-500/30 text-emerald-400"
+                    />
+                 </div>
               </div>
             </div>
           )}
@@ -756,6 +801,99 @@ export function JobDialog({
                             <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
                         </label>
                     </div>
+
+                    {/* Capacity & Zone Check UI */}
+                    {(() => {
+                        const selectedVehicle = vehicles.find((v: any) => v.vehicle_plate === assignment.Vehicle_Plate)
+                        if (!selectedVehicle) return null
+
+                        const maxWeight = selectedVehicle.max_weight_kg || 0
+                        const maxVolume = selectedVehicle.max_volume_cbm || 0
+                        
+                        const jobWeight = formData.Weight_Kg || 0
+                        const jobVolume = formData.Volume_Cbm || 0
+                        
+                        const jobZone = formData.Zone
+                        const vehicleZone = selectedVehicle.preferred_zone
+
+                        const weightPercent = maxWeight > 0 ? (jobWeight / maxWeight) * 100 : 0
+                        const volumePercent = maxVolume > 0 ? (jobVolume / maxVolume) * 100 : 0
+                        
+                        const isOverweight = weightPercent > 100
+                        const isOverVolume = volumePercent > 100
+                        
+                        // Zone Mismatch Logic
+                        const isZoneMismatch = jobZone && vehicleZone && jobZone !== vehicleZone
+
+                        if (!maxWeight && !maxVolume && !isZoneMismatch) return null
+
+                        return (
+                            <div className="mt-3 p-3 bg-slate-900 rounded-lg border border-slate-800 space-y-3">
+                                {/* Zone Warning */}
+                                {isZoneMismatch && (
+                                    <div className="flex items-start gap-2 p-2 rounded bg-amber-500/10 border border-amber-500/20 mb-2">
+                                        <div className="min-w-[4px] h-full bg-amber-500 rounded-full" />
+                                        <div>
+                                            <p className="text-xs font-bold text-amber-400">Zone Mismatch</p>
+                                            <p className="text-[10px] text-slate-400">
+                                                งานโซน: <span className="text-white">{ZONES.find(z => z.id === jobZone)?.name || jobZone}</span> <br/>
+                                                รถประจำโซน: <span className="text-white">{ZONES.find(z => z.id === vehicleZone)?.name || vehicleZone}</span>
+                                            </p>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {(maxWeight > 0 || maxVolume > 0) && (
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <span className="text-xs font-semibold text-slate-400">ตรวจสอบการบรรทุก (Capacity)</span>
+                                        {(isOverweight || isOverVolume) && (
+                                            <span className="text-[10px] bg-red-500/20 text-red-400 px-1.5 py-0.5 rounded-full font-bold animate-pulse">
+                                                OVERLOAD
+                                            </span>
+                                        )}
+                                    </div>
+                                )}
+                                
+                                {maxWeight > 0 && (
+                                    <div className="space-y-1">
+                                        <div className="flex justify-between text-[10px]">
+                                            <span className={isOverweight ? "text-red-400" : "text-slate-400"}>
+                                                น้ำหนัก: {jobWeight.toLocaleString()} / {maxWeight.toLocaleString()} kg
+                                            </span>
+                                            <span className={isOverweight ? "text-red-400 font-bold" : "text-slate-500"}>
+                                                {weightPercent.toFixed(1)}%
+                                            </span>
+                                        </div>
+                                        <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
+                                            <div 
+                                                className={`h-full rounded-full transition-all ${isOverweight ? 'bg-red-500' : 'bg-emerald-500'}`} 
+                                                style={{ width: `${Math.min(weightPercent, 100)}%` }}
+                                            />
+                                        </div>
+                                    </div>
+                                )}
+
+                                {maxVolume > 0 && (
+                                    <div className="space-y-1">
+                                        <div className="flex justify-between text-[10px]">
+                                            <span className={isOverVolume ? "text-red-400" : "text-slate-400"}>
+                                                ปริมาตร: {jobVolume.toLocaleString()} / {maxVolume.toLocaleString()} m³
+                                            </span>
+                                            <span className={isOverVolume ? "text-red-400 font-bold" : "text-slate-500"}>
+                                                {volumePercent.toFixed(1)}%
+                                            </span>
+                                        </div>
+                                        <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
+                                            <div 
+                                                className={`h-full rounded-full transition-all ${isOverVolume ? 'bg-red-500' : 'bg-blue-500'}`} 
+                                                style={{ width: `${Math.min(volumePercent, 100)}%` }}
+                                            />
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )
+                    })()}
                 </div>
               ))}
 

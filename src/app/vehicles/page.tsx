@@ -129,7 +129,7 @@ export default async function VehiclesPage(props: Props) {
                     )}
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-col items-end gap-1">
                     <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
                     vehicle.active_status === 'Active' ? 'bg-emerald-500/20 text-emerald-400' :
                     vehicle.active_status === 'Maintenance' ? 'bg-amber-500/20 text-amber-400' :
@@ -137,6 +137,13 @@ export default async function VehiclesPage(props: Props) {
                     }`}>
                     {vehicle.active_status}
                     </span>
+                    {(vehicle.max_weight_kg || vehicle.max_volume_cbm) && (
+                        <div className="text-[10px] text-slate-500 text-right">
+                           {vehicle.max_weight_kg && <span>{vehicle.max_weight_kg}kg</span>}
+                           {vehicle.max_weight_kg && vehicle.max_volume_cbm && <span className="mx-1">|</span>}
+                           {vehicle.max_volume_cbm && <span>{vehicle.max_volume_cbm}m³</span>}
+                        </div>
+                    )}
                     <VehicleActions vehicle={vehicle} branches={branches} subcontractors={subcontractors} />
                 </div>
               </div>

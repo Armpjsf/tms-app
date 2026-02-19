@@ -88,6 +88,7 @@ const navigation: NavGroup[] = [
     title: "การเงิน",
     items: [
       { title: "สรุปวางบิลลูกค้า", href: "/billing/customer", icon: <Receipt size={20} /> },
+      { title: "ใบกำกับภาษี", href: "/billing/invoices", icon: <FileText size={20} /> },
       { title: "สรุปจ่ายรถ", href: "/billing/driver", icon: <Wallet size={20} /> },
     ],
   },

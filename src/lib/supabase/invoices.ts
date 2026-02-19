@@ -1,0 +1,156 @@
+
+import { createClient } from '@/utils/supabase/server'
+
+export type Invoice = {
+  Invoice_ID: string
+  Tax_Invoice_ID: string | null
+  Customer_ID: string
+  Issue_Date: string
+  Due_Date: string | null
+  Subtotal: number
+  VAT_Rate: number
+  VAT_Amount: number
+  Grand_Total: number
+  WHT_Rate: number
+  WHT_Amount: number
+  Net_Total: number
+  Status: 'Draft' | 'Sent' | 'Paid' | 'Void' | 'Overdue'
+  Notes: string | null
+  Items_JSON: any
+  Created_At: string
+  Updated_At: string
+  Created_By: string | null
+  
+  // Joins
+  Customer_Name?: string
+}
+
+export async function getInvoices(page = 1, limit = 20, query = '') {
+  try {
+    const supabase = await createClient()
+    let q = supabase
+      .from('invoices')
+      .select('*, customers(Customer_Name)', { count: 'exact' })
+      .order('Created_At', { ascending: false })
+
+    if (query) {
+       q = q.or(`Invoice_ID.ilike.%${query}%,Tax_Invoice_ID.ilike.%${query}%`)
+    }
+
+    const { data, error, count } = await q.range((page - 1) * limit, page * limit - 1)
+    
+    if (error) {
+        console.error('Error fetching invoices:', error)
+        return { data: [], count: 0 }
+    }
+
+    // Map customer name
+    const formattedData = data?.map((inv: any) => ({
+        ...inv,
+        Customer_Name: inv.customers?.Customer_Name || 'Unknown'
+    }))
+
+    return { data: formattedData, count: count || 0 }
+  } catch (error) {
+    console.error('Error in getInvoices:', error)
+    return { data: [], count: 0 }
+  }
+}
+
+export async function getInvoiceById(id: string) {
+  try {
+    const supabase = await createClient()
+    const { data, error } = await supabase
+      .from('invoices')
+      .select('*, customers(*)')
+      .eq('Invoice_ID', id)
+      .single()
+    
+    if (error) throw error
+    
+    // We might need to fetch items if Items_JSON is not enough or if we want latest data?
+    // Items_JSON is a snapshot. We should use it for the invoice.
+    
+    return { success: true, data }
+  } catch (error) {
+    console.error('Error fetching invoice:', error)
+    return { success: false, error }
+  }
+}
+
+export async function createInvoice(invoice: Partial<Invoice>) {
+  try {
+    const supabase = await createClient()
+    
+    // Generate ID if not present (simple logic for now)
+    if (!invoice.Invoice_ID) {
+        // In real app, use a sequence or generate unique ID
+        const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '')
+        const random = Math.floor(Math.random() * 1000)
+        invoice.Invoice_ID = `INV-${dateStr}-${random}`
+    }
+
+    const { data, error } = await supabase
+      .from('invoices')
+      .insert(invoice)
+      .select()
+      .single()
+
+    if (error) throw error
+
+    // Link Jobs to this Invoice
+    if (invoice.Items_JSON && Array.isArray(invoice.Items_JSON)) {
+        const jobIds = invoice.Items_JSON.map((j: any) => j.Job_ID)
+        if (jobIds.length > 0) {
+            const { error: updateError } = await supabase
+                .from('Jobs_Main')
+                .update({ Invoice_ID: data.Invoice_ID })
+                .in('Job_ID', jobIds)
+            
+            if (updateError) {
+                console.error('Error linking jobs to invoice:', updateError)
+                // Should we rollback? For now, just log.
+            }
+        }
+    }
+
+    return { success: true, data }
+  } catch (error) {
+    console.error('Error creating invoice:', error)
+    return { success: false, error }
+  }
+}
+
+export async function updateInvoice(id: string, updates: Partial<Invoice>) {
+  try {
+    const supabase = await createClient()
+    const { data, error } = await supabase
+      .from('invoices')
+      .update(updates)
+      .eq('Invoice_ID', id)
+      .select()
+      .single()
+
+    if (error) throw error
+    return { success: true, data }
+  } catch (error) {
+    console.error('Error updating invoice:', error)
+    return { success: false, error }
+  }
+}
+
+export async function deleteInvoice(id: string) {
+    try {
+      const supabase = await createClient()
+      const { error } = await supabase
+        .from('invoices')
+        .delete()
+        .eq('Invoice_ID', id)
+  
+      if (error) throw error
+      return { success: true }
+    } catch (error) {
+      console.error('Error deleting invoice:', error)
+      return { success: false, error }
+    }
+  }

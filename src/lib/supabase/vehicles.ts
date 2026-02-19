@@ -28,7 +28,8 @@ export type Vehicle = {
   branch_id: string | null
   active_status: string | null
   notes: string | null
-  sub_id?: string | null // Added for Subcontractor
+  sub_id?: string | null
+  preferred_zone?: string | null
 }
 
 export async function getAllVehiclesFromTable(): Promise<Vehicle[]> {
@@ -96,7 +97,8 @@ export async function createVehicle(vehicleData: Partial<Vehicle>) {
         model: vehicleData.model,
         driver_id: vehicleData.driver_id,
         active_status: vehicleData.active_status || 'Active',
-        sub_id: vehicleData.sub_id, // Added
+        sub_id: vehicleData.sub_id,
+        preferred_zone: vehicleData.preferred_zone,
         branch_id: await getUserBranchId()
       })
       .select()
@@ -124,7 +126,8 @@ export async function updateVehicle(plate: string, vehicleData: Partial<Vehicle>
         model: vehicleData.model,
         driver_id: vehicleData.driver_id,
         active_status: vehicleData.active_status,
-        sub_id: vehicleData.sub_id // Added
+        sub_id: vehicleData.sub_id,
+        preferred_zone: vehicleData.preferred_zone
       })
       .eq('vehicle_plate', plate)
       .select()
