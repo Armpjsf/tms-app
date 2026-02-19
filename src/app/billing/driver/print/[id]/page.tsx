@@ -161,8 +161,7 @@ export default async function DriverPaymentPrintPage(props: Props) {
                                 <th className="py-2 px-3 text-right font-bold w-32">จำนวนเงิน (Amount)</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            {jobs.map((item, index) => {
+                        {jobs.map((item, index) => {
                                 let extraCosts: any[] = []
                                 try {
                                     if (item.extra_costs_json) {
@@ -211,12 +210,13 @@ export default async function DriverPaymentPrintPage(props: Props) {
                                     </tbody>
                                 )
                             })}
-                            {Array.from({ length: Math.max(0, 1 - jobs.length) }).map((_, i) => (
-                                 <tr key={`empty-${i}`} className="border-b border-slate-100 h-8">
-                                    <td colSpan={4}></td>
-                                 </tr>
-                            ))}
-                        </tbody>
+                            <tbody className="border-t border-slate-300">
+                                {Array.from({ length: Math.max(0, 1 - jobs.length) }).map((_, i) => (
+                                    <tr key={`empty-${i}`} className="border-b border-slate-100 h-8">
+                                        <td colSpan={4}></td>
+                                    </tr>
+                                ))}
+                            </tbody>
                         <tfoot>
                              <tr>
                                 <td colSpan={2} rowSpan={3} className="pt-2 pr-4 align-top">
