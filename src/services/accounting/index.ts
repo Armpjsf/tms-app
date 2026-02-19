@@ -10,8 +10,9 @@ class AccountingServiceManager {
         // Fetch from DB every time for now to ensure we have latest, or implement caching
         const apiKey = String(await getServerSetting('akaunting_api_key', process.env.AKAUNTING_API_KEY || "")).trim();
         const companyId = String(await getServerSetting('akaunting_company_id', process.env.AKAUNTING_COMPANY_ID || "1")).trim();
+        const userEmail = String(await getServerSetting('akaunting_user_email', "")).trim();
         
-        return new AkauntingProvider(apiKey, companyId);
+        return new AkauntingProvider(apiKey, companyId, userEmail);
     }
 
     public async isConnected(): Promise<{ connected: boolean; message?: string }> {

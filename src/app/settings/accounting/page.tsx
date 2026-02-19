@@ -20,14 +20,17 @@ export default function AccountingSettingsPage() {
   
   const [apiKey, setApiKey] = useState("")
   const [companyId, setCompanyId] = useState("1")
+  const [userEmail, setUserEmail] = useState("")
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     async function loadSettings() {
       const savedKey = await getSetting('akaunting_api_key', "")
       const savedCompany = await getSetting('akaunting_company_id', "1")
+      const savedEmail = await getSetting('akaunting_user_email', "")
       setApiKey(savedKey)
       setCompanyId(savedCompany)
+      setUserEmail(savedEmail)
       setLoading(false)
     }
     loadSettings()
@@ -35,7 +38,7 @@ export default function AccountingSettingsPage() {
 
   const handleSaveSettings = async () => {
     setSaving(true)
-    const result = await saveAccountingSettings(apiKey, companyId)
+    const result = await saveAccountingSettings(apiKey, companyId, userEmail)
     setSaving(false)
     if (result.success) {
       alert("บันทึกการตั้งค่าเรียบร้อยแล้ว")
@@ -108,6 +111,19 @@ export default function AccountingSettingsPage() {
                         className="bg-muted border-border text-foreground"
                     />
                     <p className="text-[10px] text-muted-foreground">หาได้จากหน้า User Profile &gt; API Token ใน Akaunting</p>
+                </div>
+
+                <div className="space-y-2">
+                    <Label htmlFor="userEmail">Akaunting User Email</Label>
+                    <Input 
+                        id="userEmail"
+                        type="email"
+                        placeholder="admin@example.com"
+                        value={userEmail}
+                        onChange={(e) => setUserEmail(e.target.value)}
+                        className="bg-muted border-border text-foreground"
+                    />
+                    <p className="text-[10px] text-muted-foreground">ใช้อีเมลเดียวกับที่ใช้ล็อกอิน Akaunting (จำเป็นสำหรับบางแผนการใช้งาน)</p>
                 </div>
                 
                 <div className="space-y-2">

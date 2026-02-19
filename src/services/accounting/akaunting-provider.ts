@@ -5,18 +5,22 @@ export class AkauntingProvider implements AccountingProvider {
     private apiKey: string;
     private baseUrl: string;
     private companyId: string;
+    private userEmail: string;
 
-    constructor(apiKey: string, companyId: string = '1') {
+    constructor(apiKey: string, companyId: string = '1', userEmail: string = '') {
         this.apiKey = apiKey;
         this.baseUrl = "https://app.akaunting.com/api";
         this.companyId = companyId;
+        this.userEmail = userEmail;
     }
 
     private getHeaders(authType: 'Bearer' | 'Basic' = 'Bearer') {
         let authHeader = `Bearer ${this.apiKey}`;
         if (authType === 'Basic') {
-            // Try token as username, empty password
-            authHeader = `Basic ${Buffer.from(`${this.apiKey}:`).toString('base64')}`;
+            // Akaunting Cloud v3 often requires Email as username
+            const username = this.userEmail || this.apiKey;
+            const password = this.userEmail ? this.apiKey : "";
+            authHeader = `Basic ${Buffer.from(`${username}:${password}`).toString('base64')}`;
         }
 
         return {
@@ -40,53 +44,60 @@ export class AkauntingProvider implements AccountingProvider {
     async isConnected(): Promise<{ connected: boolean; message?: string }> {
         if (!this.apiKey) return { connected: false, message: "API Key is missing" };
         
-        // Define endpoints: try a neutral one first, then company-specific
-        const endpoints = [
-            `https://app.akaunting.com/api/user`, // Neutral (Verify token)
-            `https://app.akaunting.com/api/contacts?company_id=${this.companyId}&limit=1`,
-            `https://app.akaunting.com/${this.companyId}/api/contacts?limit=1`
+        // Strategy 1: URL Patterns for Cloud v3
+        const patterns = [
+            `https://app.akaunting.com/api`,
+            `https://app.akaunting.com/api/v3`,
+            `https://app.akaunting.com/${this.companyId}/api`,
+            `https://app.akaunting.com/${this.companyId}/api/v2`,
+            `https://app.akaunting.com/${this.companyId}/api/v3`
         ];
 
-        // Header strategies to try
-        const strategies: { name: string; headers: Record<string, string> }[] = [
-            { name: 'Bearer', headers: { "Authorization": `Bearer ${this.apiKey}` } },
-            { name: 'Basic (Token:)', headers: { "Authorization": `Basic ${Buffer.from(`${this.apiKey}:`).toString('base64')}` } },
-            { name: 'X-API-KEY', headers: { "X-API-KEY": this.apiKey } },
-            { name: 'X-Authorization', headers: { "X-Authorization": `Bearer ${this.apiKey}` } }
+        const authStrats = [
+            { name: 'Bearer', header: `Bearer ${this.apiKey}` },
+            { name: 'Basic (Email:Token)', header: `Basic ${Buffer.from(`${this.userEmail}:${this.apiKey}`).toString('base64')}` },
+            { name: 'Basic (Token:)', header: `Basic ${Buffer.from(`${this.apiKey}:`).toString('base64')}` }
         ];
-        
-        let report = "";
-        let bestCode = 0;
 
-        for (const url of endpoints) {
-            for (const strat of strategies) {
+        const results: { url: string; strat: string; status: number }[] = [];
+
+        for (const pattern of patterns) {
+            for (const auth of authStrats) {
+                // Try neutral endpoint first
+                const url = `${pattern}/user`;
                 try {
-                    const response = await fetch(url, {
+                    const res = await fetch(url, {
                         headers: {
-                            ...strat.headers,
-                            "Content-Type": "application/json",
+                            "Authorization": auth.header,
                             "Accept": "application/json",
+                            "X-Company-ID": this.companyId,
                             "X-Company-Id": this.companyId
                         },
                         redirect: 'manual'
                     });
 
-                    if (response.status === 200) {
+                    results.push({ url, strat: auth.name, status: res.status });
+
+                    if (res.status === 200) {
                         return { connected: true };
                     }
-
-                    // Log unique failures to find a pattern
-                    if (response.status !== 404 && bestCode !== 401) {
-                        bestCode = response.status;
-                        report = `[${strat.name}] on ${url.split('?')[0]} -> HTTP ${response.status}`;
-                    }
-                } catch { /* Suppress network errors in loop */ }
+                } catch {
+                    results.push({ url, strat: auth.name, status: 0 });
+                }
             }
         }
 
+        // If no 200, try /contacts on the most likely URLs
+        const bestLead = results.find(r => r.status === 401 || r.status === 403) || results[0];
+        
+        const summary = results
+            .filter(r => r.status > 0 && r.status !== 404)
+            .map(r => `${r.strat}@${r.url.replace('https://app.akaunting.com', '')}->${r.status}`)
+            .join(' | ');
+
         return { 
             connected: false, 
-            message: `Connection Failed. Best lead: ${report || "All paths gave 404"}. Please check: 1. Is your Token copied exactly? 2. Is Trial API access enabled?`
+            message: `FAILED. Lead: [${bestLead.strat}] on ${bestLead.url} -> ${bestLead.status}. Patterns: ${summary.substring(0, 100)}...`
         };
     }
 

@@ -51,10 +51,11 @@ export async function manualSyncBill(paymentId: string) {
 import { saveServerSetting } from "@/lib/supabase/system_settings_server";
 import { Job } from "@/types/database";
 
-export async function saveAccountingSettings(apiKey: string, companyId: string) {
+export async function saveAccountingSettings(apiKey: string, companyId: string, userEmail: string = '') {
     try {
         await saveServerSetting('akaunting_api_key', apiKey, 'Akaunting API Key');
         await saveServerSetting('akaunting_company_id', companyId, 'Akaunting Company ID');
+        await saveServerSetting('akaunting_user_email', userEmail, 'Akaunting User Email');
         return { success: true, message: "Settings saved successfully" };
     } catch (error: unknown) {
         const message = error instanceof Error ? error.message : String(error);
