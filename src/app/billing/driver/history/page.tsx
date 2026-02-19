@@ -13,9 +13,10 @@ import {
   Calendar,
   FileDown,
   CheckCircle2,
-  Undo2
+  Undo2,
+  Loader2
 } from "lucide-react"
-import { getDriverPayments, DriverPayment, updateDriverPaymentStatus, recallDriverPayment } from "@/lib/supabase/billing"
+import { getDriverPayments, DriverPayment, updateDriverPaymentStatus, recallDriverPayment, getDriverPaymentByIdWithJobs } from "@/lib/supabase/billing"
 import { isSuperAdmin } from "@/lib/permissions"
 import { toast } from "sonner"
 
@@ -80,6 +81,52 @@ export default function DriverPaymentHistory() {
         }
     } catch (e) {
         toast.error("เกิดข้อผิดพลาด")
+    } finally {
+        setProcessingId(null)
+    }
+  }
+
+  const handlePrint = (id: string) => {
+    window.open(`/billing/driver/print/${id}`, '_blank')
+  }
+
+  const handleExportSCB = async (id: string) => {
+    setProcessingId(id)
+    try {
+        const data = await getDriverPaymentByIdWithJobs(id)
+        if (!data) throw new Error("Could not fetch details")
+
+        const { payment, jobs, bankInfo } = data
+        const WITHHOLDING_TAX_RATE = 0.01
+
+        if (!bankInfo.Bank_Account_No) {
+            toast.error("ไม่สามารถ Export ได้เนื่องจากคนขับไม่มีเลขบัญชี")
+            return
+        }
+
+        const subtotal = jobs.reduce((sum, j) => sum + (j.Cost_Driver_Total || 0), 0)
+        const withholding = Math.round(subtotal * WITHHOLDING_TAX_RATE)
+        const netTotal = subtotal - withholding
+
+        // Format for SCB Mass Payout (Simple CSV)
+        const lines = [
+            "Bank Code,Account No,Amount,Beneficiary Name,Ref1,Ref2",
+            `${bankInfo.Bank_Name || 'SCB'},${bankInfo.Bank_Account_No},${netTotal.toFixed(2)},${bankInfo.Bank_Account_Name || payment.Driver_Name},Salary,${payment.Driver_Payment_ID}`
+        ]
+
+        const csvContent = "data:text/csv;charset=utf-8,\uFEFF" + lines.join("\n") // Add BOM for Excel Thai support
+        const encodedUri = encodeURI(csvContent)
+        const link = document.createElement("a")
+        link.setAttribute("href", encodedUri)
+        link.setAttribute("download", `SCB_Export_${payment.Driver_Payment_ID}.csv`)
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+
+        toast.success("เตรียมไฟล์ Export เรียบร้อย")
+    } catch (e) {
+        console.error(e)
+        toast.error("Export ไม่สำเร็จ")
     } finally {
         setProcessingId(null)
     }
@@ -196,10 +243,23 @@ export default function DriverPaymentHistory() {
                                     </Button>
                                 )}
 
-                                <Button size="sm" variant="ghost" className="text-slate-400 hover:text-white" title="Export SCB">
-                                    <FileDown className="w-4 h-4" />
+                                <Button 
+                                    size="sm" 
+                                    variant="ghost" 
+                                    className="text-slate-400 hover:text-white" 
+                                    title="Export SCB"
+                                    onClick={() => handleExportSCB(item.Driver_Payment_ID)}
+                                    disabled={processingId === item.Driver_Payment_ID}
+                                >
+                                    {processingId === item.Driver_Payment_ID ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileDown className="w-4 h-4" />}
                                 </Button>
-                                <Button size="sm" variant="ghost" className="text-slate-400 hover:text-white" title="พิมพ์">
+                                <Button 
+                                    size="sm" 
+                                    variant="ghost" 
+                                    className="text-slate-400 hover:text-white" 
+                                    title="พิมพ์"
+                                    onClick={() => handlePrint(item.Driver_Payment_ID)}
+                                >
                                     <Printer className="w-4 h-4" />
                                 </Button>
 

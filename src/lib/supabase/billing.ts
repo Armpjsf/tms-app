@@ -332,6 +332,83 @@ export async function getDriverPayments() {
     }
 }
 
+export async function getDriverPaymentByIdWithJobs(id: string) {
+    try {
+        const supabase = await createClient()
+        
+        // 1. Get Driver Payment
+        const { data: payment, error: paymentError } = await supabase
+            .from('Driver_Payments')
+            .select('*')
+            .eq('Driver_Payment_ID', id)
+            .single()
+        
+        if (paymentError) throw paymentError
+
+        // 2. Get Associated Jobs
+        const { data: jobs, error: jobsError } = await supabase
+            .from('Jobs_Main')
+            .select('*, extra_costs_json')
+            .eq('Driver_Payment_ID', id)
+        
+        if (jobsError) throw jobsError
+
+        // 3. Get Company Profile
+        const { data: profileData } = await supabase
+            .from('System_Settings')
+            .select('value')
+            .eq('key', 'company_profile')
+            .single()
+
+        let companyProfile = null
+        if (profileData?.value) {
+            try {
+                companyProfile = typeof profileData.value === 'string' ? JSON.parse(profileData.value) : profileData.value
+            } catch (e) {
+                console.error("Error parsing company profile:", e)
+            }
+        }
+
+        // 4. Get Payee Details (Bank Info)
+        // Check if Driver_Name is a Subcontractor or Driver
+        let bankInfo = {
+            Bank_Name: "",
+            Bank_Account_No: "",
+            Bank_Account_Name: ""
+        }
+
+        // Try as Individual Driver first
+        const { data: driver } = await supabase
+            .from('Master_Drivers')
+            .select('Bank_Name, Bank_Account_No, Bank_Account_Name')
+            .eq('Driver_Name', payment.Driver_Name)
+            .maybeSingle()
+        
+        if (driver?.Bank_Account_No) {
+            bankInfo = driver
+        } else {
+            // Try as Subcontractor
+            const { data: sub } = await supabase
+                .from('Subcontractors')
+                .select('Bank_Name, Bank_Account_No, Bank_Account_Name')
+                .eq('Sub_Name', payment.Driver_Name)
+                .maybeSingle()
+            if (sub) bankInfo = sub
+        }
+
+        return { 
+            payment: payment as DriverPayment, 
+            jobs: jobs || [], 
+            company: companyProfile,
+            bankInfo
+        }
+
+    } catch (e) {
+        console.error("Error fetching driver payment details:", e)
+        return null
+    }
+}
+
 export async function updateBillingNoteStatus(id: string, status: string) {
     try {
         const supabase = await createClient()
