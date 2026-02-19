@@ -42,40 +42,43 @@ export class AkauntingProvider implements AccountingProvider {
     }
 
     async isConnected(): Promise<{ connected: boolean; message?: string }> {
-        if (!this.apiKey) return { connected: false, message: "API Key is missing" };
+        const key = this.apiKey.trim();
+        const email = this.userEmail.trim();
+        if (!key) return { connected: false, message: "API Key is missing" };
         
-        // Final confirmed path for Cloud v3
         const url = `${this.baseUrl}/contacts?company_id=${this.companyId}&limit=1`;
         
-        const authStrats = [
-            { name: 'Bearer', headers: { "Authorization": `Bearer ${this.apiKey}` } },
-            { name: 'Basic (Email:Token)', headers: { "Authorization": `Basic ${Buffer.from(`${this.userEmail}:${this.apiKey}`).toString('base64')}` } }
+        const combinations: { name: string; headers: Record<string, string> }[] = [
+            { name: 'Bearer/ID', headers: { "Authorization": `Bearer ${key}`, "X-Company-ID": this.companyId } },
+            { name: 'Bearer/Id', headers: { "Authorization": `Bearer ${key}`, "X-Company-Id": this.companyId } },
+            { name: 'Basic(Email:Token)/ID', headers: { "Authorization": `Basic ${Buffer.from(`${email}:${key}`).toString('base64')}`, "X-Company-ID": this.companyId } },
+            { name: 'Basic(Token:)/ID', headers: { "Authorization": `Basic ${Buffer.from(`${key}:`).toString('base64')}`, "X-Company-ID": this.companyId } },
+            { name: 'X-API-KEY/ID', headers: { "X-API-KEY": key, "X-Company-ID": this.companyId } },
+            { name: 'X-Auth/ID', headers: { "X-Authorization": `Bearer ${key}`, "X-Company-ID": this.companyId } }
         ];
 
-        let lastError = "";
-        for (const auth of authStrats) {
+        const results: string[] = [];
+        for (const auth of combinations) {
             try {
-                const requestHeaders = new Headers();
-                Object.entries(auth.headers).forEach(([k, v]) => requestHeaders.set(k, v));
-                requestHeaders.set("Accept", "application/json");
-                requestHeaders.set("X-Company-ID", this.companyId);
-
                 const res = await fetch(url, {
-                    headers: requestHeaders
+                    headers: {
+                        ...auth.headers,
+                        "Accept": "application/json"
+                    }
                 });
 
                 if (res.status === 200) return { connected: true };
                 
                 const body = await res.json().catch(() => ({}));
-                lastError = `[${auth.name}] -> ${res.status} (${body.message || 'Invalid Credentials'})`;
+                results.push(`${auth.name}@${res.status}(${(body.message || 'Error').substring(0, 15)})`);
             } catch {
-                lastError = `Network Error or Timeout`;
+                results.push(`${auth.name}@NetworkError`);
             }
         }
 
         return { 
             connected: false, 
-            message: `Connection Failed: ${lastError}. Check: Settings > Users > Roles -> [Admin] -> 'API' checkbox.`
+            message: `Connection Failed. Patterns: ${results.join(' | ')}. Please check if your key is a "Personal Access Token" from [Profile > API Tokens].`
         };
     }
 
