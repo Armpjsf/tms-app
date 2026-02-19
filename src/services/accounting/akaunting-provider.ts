@@ -44,62 +44,59 @@ export class AkauntingProvider implements AccountingProvider {
     async isConnected(): Promise<{ connected: boolean; message?: string }> {
         if (!this.apiKey) return { connected: false, message: "API Key is missing" };
         
-        const patterns = [
-            `https://app.akaunting.com/api`,
-            `https://app.akaunting.com/api/v3`,
-            `https://app.akaunting.com/${this.companyId}/api`,
-            `https://app.akaunting.com/${this.companyId}/api/v3`
+        const baseUrl = "https://app.akaunting.com/api";
+        const endpoints = [
+            "/contacts",
+            "/invoices",
+            "/accounts",
+            "/auth/user",
+            "/me"
         ];
 
         const authStrats = [
-            { name: 'Bearer', header: `Bearer ${this.apiKey}` },
-            { name: 'Basic (Email:Token)', header: `Basic ${Buffer.from(`${this.userEmail}:${this.apiKey}`).toString('base64')}` },
-            { name: 'Basic (Token:)', header: `Basic ${Buffer.from(`${this.apiKey}:`).toString('base64')}` }
+            { name: 'Bearer', headers: { "Authorization": `Bearer ${this.apiKey}` } },
+            { name: 'Basic (Email:Token)', headers: { "Authorization": `Basic ${Buffer.from(`${this.userEmail}:${this.apiKey}`).toString('base64')}` } },
+            { name: 'X-API-KEY', headers: { "X-API-KEY": this.apiKey } }
         ];
 
-        const results: { url: string; strat: string; status: number; location?: string }[] = [];
+        const results: { path: string; strat: string; status: number; body?: string }[] = [];
 
-        for (const pattern of patterns) {
+        for (const path of endpoints) {
             for (const auth of authStrats) {
-                // Try neutral endpoint with company_id query
-                const url = `${pattern}/user?company_id=${this.companyId}`;
+                const url = `${baseUrl}${path}?company_id=${this.companyId}&limit=1`;
                 try {
                     const res = await fetch(url, {
                         headers: {
-                            "Authorization": auth.header,
+                            ...auth.headers,
                             "Accept": "application/json",
                             "X-Company-ID": this.companyId
                         },
                         redirect: 'manual'
                     });
 
-                    const location = res.headers.get("location") || undefined;
-                    results.push({ url, strat: auth.name, status: res.status, location });
+                    let body = "";
+                    if (res.status !== 200 && res.status !== 404) {
+                        body = await res.text().catch(() => "");
+                    }
+
+                    results.push({ path, strat: auth.name, status: res.status, body: body.substring(0, 50) });
 
                     if (res.status === 200) return { connected: true };
-                } catch {
-                    results.push({ url, strat: auth.name, status: 0 });
+                } catch (e) {
+                    results.push({ path, strat: auth.name, status: 0 });
                 }
             }
         }
 
-        // Analyze Results
-        const redirected = results.find(r => r.status === 302 || r.status === 301);
-        const unauthorized = results.find(r => r.status === 401 || r.status === 403);
-        const best = redirected || unauthorized || results[0];
-
-        let msg = `FAILED. Best Lead: [${best.strat}] on ${best.url.split('?')[0]} -> ${best.status}`;
-        if (best.location) msg += ` (Redirect -> ${best.location.split('/').pop()})`;
-        
-        const summary = results
-            .filter(r => r.status > 0 && r.status !== 404)
-            .map(r => `${r.strat}@${r.status}`)
-            .filter((v, i, a) => a.indexOf(v) === i) // Uniq
+        const best = results.find(r => r.status === 401 || r.status === 403) || results[0];
+        const statusSummary = results
+            .filter(r => r.status > 0)
+            .map(r => `${r.path}@${r.status}`)
             .join(' | ');
 
         return { 
             connected: false, 
-            message: `${msg}. Status patterns: ${summary}. Check Trial API settings!`
+            message: `FAILED. Lead: [${best.strat}] on ${best.path} -> ${best.status}. Msg: ${best.body || 'N/A'}. Patterns: ${statusSummary.substring(0, 100)}...`
         };
     }
 
