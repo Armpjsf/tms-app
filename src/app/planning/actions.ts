@@ -25,6 +25,7 @@ export type JobFormData = {
   original_destinations_json?: string
   extra_costs_json?: string
   Sub_ID?: string | null
+  Show_Price_To_Driver?: boolean
 }
 
 export async function createJob(data: JobFormData) {
@@ -37,12 +38,16 @@ export async function createJob(data: JobFormData) {
   if (data.Driver_ID) {
     const { data: driver } = await supabase
       .from('Master_Drivers')
-      .select('Driver_Name, Sub_ID')
+      .select('Driver_Name, Sub_ID, Show_Price_Default')
       .eq('Driver_ID', data.Driver_ID)
       .single()
     if (driver) {
       driverName = driver.Driver_Name
       if (!subId) subId = driver.Sub_ID || null
+      // Default to driver preference if not explicitly set in form
+      if (data.Show_Price_To_Driver === undefined) {
+         data.Show_Price_To_Driver = driver.Show_Price_Default ?? true
+      }
     }
   }
 
@@ -83,6 +88,7 @@ export async function createJob(data: JobFormData) {
       original_destinations_json: parseIfString(data.original_destinations_json),
       extra_costs_json: parseIfString(data.extra_costs_json),
       Sub_ID: subId,
+      Show_Price_To_Driver: data.Show_Price_To_Driver ?? true,
       Created_At: new Date().toISOString(),
     })
 
@@ -121,6 +127,7 @@ export async function createBulkJobs(jobs: Partial<JobFormData>[]) {
       original_destinations_json: parseIfString(j.original_destinations_json),
       extra_costs_json: parseIfString(j.extra_costs_json),
       Sub_ID: j.Sub_ID || null,
+      Show_Price_To_Driver: j.Show_Price_To_Driver ?? true,
       Created_At: new Date().toISOString(),
   })).filter(j => j.Customer_Name)
 

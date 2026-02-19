@@ -28,7 +28,9 @@ import {
   Trash2,
 
   Link as LinkIcon,
-  Check
+  Check,
+  Eye,
+  EyeOff
 } from "lucide-react"
 
 type LocationPoint = {
@@ -120,7 +122,7 @@ export function JobDialog({
   const [assignments, setAssignments] = useState(
     job?.assignments && job.assignments.length > 0
       ? job.assignments
-      : [{ Vehicle_Type: '4-Wheel', Vehicle_Plate: '', Driver_ID: '', Sub_ID: '' }]
+      : [{ Vehicle_Type: '4-Wheel', Vehicle_Plate: '', Driver_ID: '', Sub_ID: '', Show_Price_To_Driver: true }]
   )
 
   // Helper to safely parse JSON or return existing array
@@ -166,11 +168,12 @@ export function JobDialog({
             Vehicle_Type: job.Vehicle_Type || '4-Wheel',
             Vehicle_Plate: job.Vehicle_Plate || '',
             Driver_ID: job.Driver_ID || '',
-            Sub_ID: job.Sub_ID || ''
+            Sub_ID: job.Sub_ID || '',
+            Show_Price_To_Driver: job.Show_Price_To_Driver !== false
         }])
     } else if (show && mode === 'create') {
         // Reset to one empty assignment
-        setAssignments([{ Vehicle_Type: '4-Wheel', Vehicle_Plate: '', Driver_ID: '', Sub_ID: '' }])
+        setAssignments([{ Vehicle_Type: '4-Wheel', Vehicle_Plate: '', Driver_ID: '', Sub_ID: '', Show_Price_To_Driver: true }])
     }
   }, [show, mode, job])
 
@@ -206,7 +209,7 @@ export function JobDialog({
   }
 
   const addAssignment = () => {
-    setAssignments([...assignments, { Vehicle_Type: '4-Wheel', Vehicle_Plate: '', Driver_ID: '', Sub_ID: '' }])
+    setAssignments([...assignments, { Vehicle_Type: '4-Wheel', Vehicle_Plate: '', Driver_ID: '', Sub_ID: '', Show_Price_To_Driver: true }])
   }
 
   const removeAssignment = (index: number) => {
@@ -215,13 +218,13 @@ export function JobDialog({
     }
   }
 
-  const updateAssignment = (index: number, field: string, value: string) => {
+  const updateAssignment = (index: number, field: string, value: any) => {
     const newAssignments = [...assignments]
     newAssignments[index] = { ...newAssignments[index], [field]: value }
     setAssignments(newAssignments)
     
     // Sync first assignment to main form data for backward compatibility / validation
-    if (index === 0) {
+    if (index === 0 && typeof value === 'string') {
         setFormData(prev => ({ ...prev, [field]: value }))
     }
   }
@@ -334,6 +337,7 @@ export function JobDialog({
             Vehicle_Plate: assignment.Vehicle_Plate,
             Driver_ID: assignment.Driver_ID,
             Sub_ID: assignment.Sub_ID,
+            Show_Price_To_Driver: assignment.Show_Price_To_Driver,
             Driver_Name: drivers.find(d => d.Driver_ID === assignment.Driver_ID)?.Driver_Name || '',
         }))
 
@@ -354,6 +358,7 @@ export function JobDialog({
             Vehicle_Plate: assignment.Vehicle_Plate,
             Driver_ID: assignment.Driver_ID,
             Sub_ID: assignment.Sub_ID,
+            Show_Price_To_Driver: assignment.Show_Price_To_Driver,
             Driver_Name: drivers.find(d => d.Driver_ID === assignment.Driver_ID)?.Driver_Name || '',
         }
 
@@ -718,17 +723,38 @@ export function JobDialog({
                             onChange={(val) => updateAssignment(index, 'Driver_ID', val)}
                             drivers={drivers}
                             onSelect={(d) => {
-                                if (d.Sub_ID) {
-                                    const newAssignments = [...assignments]
-                                    newAssignments[index] = {
-                                        ...newAssignments[index],
-                                        Sub_ID: d.Sub_ID
-                                    }
-                                    setAssignments(newAssignments)
+                                const newAssignments = [...assignments]
+                                newAssignments[index] = {
+                                    ...newAssignments[index],
+                                    Driver_ID: d.Driver_ID,
+                                    Sub_ID: d.Sub_ID || newAssignments[index].Sub_ID,
+                                    // Use driver default if explicitly set, otherwise keep current
+                                    Show_Price_To_Driver: d.Show_Price_Default !== null ? d.Show_Price_Default : newAssignments[index].Show_Price_To_Driver
                                 }
+                                setAssignments(newAssignments)
                             }}
                             className="bg-slate-800 border-slate-700 text-sm"
                         />
+                    </div>
+
+                    <div className="flex items-center justify-between p-3 bg-slate-800/30 rounded-lg border border-slate-700/50">
+                        <div className="flex items-center gap-2">
+                            {assignment.Show_Price_To_Driver ? (
+                                <Eye className="w-4 h-4 text-emerald-400" />
+                            ) : (
+                                <EyeOff className="w-4 h-4 text-slate-400" />
+                            )}
+                            <span className="text-sm font-medium">โชว์ค่าเที่ยวให้คนขับเห็น</span>
+                        </div>
+                        <label className="relative inline-flex items-center cursor-pointer">
+                            <input 
+                                type="checkbox" 
+                                checked={assignment.Show_Price_To_Driver} 
+                                onChange={(e) => updateAssignment(index, 'Show_Price_To_Driver', e.target.checked)}
+                                className="sr-only peer" 
+                            />
+                            <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                        </label>
                     </div>
                 </div>
               ))}

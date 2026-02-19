@@ -28,6 +28,7 @@ export type Job = {
   Photo_Proof_Url: string | null
   Signature_Url: string | null
   Sub_ID: string | null
+  Show_Price_To_Driver: boolean
 }
 
 // ดึงงานทั้งหมดวันนี้
