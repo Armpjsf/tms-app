@@ -44,59 +44,38 @@ export class AkauntingProvider implements AccountingProvider {
     async isConnected(): Promise<{ connected: boolean; message?: string }> {
         if (!this.apiKey) return { connected: false, message: "API Key is missing" };
         
-        const baseUrl = "https://app.akaunting.com/api";
-        const endpoints = [
-            "/contacts",
-            "/invoices",
-            "/accounts",
-            "/auth/user",
-            "/me"
-        ];
-
+        // Final confirmed path for Cloud v3
+        const url = `${this.baseUrl}/contacts?company_id=${this.companyId}&limit=1`;
+        
         const authStrats = [
             { name: 'Bearer', headers: { "Authorization": `Bearer ${this.apiKey}` } },
-            { name: 'Basic (Email:Token)', headers: { "Authorization": `Basic ${Buffer.from(`${this.userEmail}:${this.apiKey}`).toString('base64')}` } },
-            { name: 'X-API-KEY', headers: { "X-API-KEY": this.apiKey } }
+            { name: 'Basic (Email:Token)', headers: { "Authorization": `Basic ${Buffer.from(`${this.userEmail}:${this.apiKey}`).toString('base64')}` } }
         ];
 
-        const results: { path: string; strat: string; status: number; body?: string }[] = [];
+        let lastError = "";
+        for (const auth of authStrats) {
+            try {
+                const requestHeaders = new Headers();
+                Object.entries(auth.headers).forEach(([k, v]) => requestHeaders.set(k, v));
+                requestHeaders.set("Accept", "application/json");
+                requestHeaders.set("X-Company-ID", this.companyId);
 
-        for (const path of endpoints) {
-            for (const auth of authStrats) {
-                const url = `${baseUrl}${path}?company_id=${this.companyId}&limit=1`;
-                try {
-                    const res = await fetch(url, {
-                        headers: {
-                            ...auth.headers,
-                            "Accept": "application/json",
-                            "X-Company-ID": this.companyId
-                        },
-                        redirect: 'manual'
-                    });
+                const res = await fetch(url, {
+                    headers: requestHeaders
+                });
 
-                    let body = "";
-                    if (res.status !== 200 && res.status !== 404) {
-                        body = await res.text().catch(() => "");
-                    }
-
-                    results.push({ path, strat: auth.name, status: res.status, body: body.substring(0, 50) });
-
-                    if (res.status === 200) return { connected: true };
-                } catch (e) {
-                    results.push({ path, strat: auth.name, status: 0 });
-                }
+                if (res.status === 200) return { connected: true };
+                
+                const body = await res.json().catch(() => ({}));
+                lastError = `[${auth.name}] -> ${res.status} (${body.message || 'Invalid Credentials'})`;
+            } catch {
+                lastError = `Network Error or Timeout`;
             }
         }
 
-        const best = results.find(r => r.status === 401 || r.status === 403) || results[0];
-        const statusSummary = results
-            .filter(r => r.status > 0)
-            .map(r => `${r.path}@${r.status}`)
-            .join(' | ');
-
         return { 
             connected: false, 
-            message: `FAILED. Lead: [${best.strat}] on ${best.path} -> ${best.status}. Msg: ${best.body || 'N/A'}. Patterns: ${statusSummary.substring(0, 100)}...`
+            message: `Connection Failed: ${lastError}. Check: Settings > Users > Roles -> [Admin] -> 'API' checkbox.`
         };
     }
 
@@ -145,7 +124,7 @@ export class AkauntingProvider implements AccountingProvider {
                 }))
             };
 
-            const url = `${this.baseUrl}/documents?company_id=${this.companyId}`;
+            const url = `${this.baseUrl}/documents?company_id=${this.companyId}&type=invoice`;
             const response = await fetch(url, {
                 method: "POST",
                 headers: this.getHeaders(),
@@ -195,7 +174,7 @@ export class AkauntingProvider implements AccountingProvider {
                 }))
             };
 
-            const url = `${this.baseUrl}/documents?company_id=${this.companyId}`;
+            const url = `${this.baseUrl}/documents?company_id=${this.companyId}&type=bill`;
             const response = await fetch(url, {
                 method: "POST",
                 headers: this.getHeaders(),
