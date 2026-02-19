@@ -5,11 +5,13 @@ import { ExternalLink, Image, Banknote } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { JobDialog } from "@/components/planning/job-dialog"
 import { PODDialog } from "@/components/jobs/pod-dialog"
-import { accountingService } from "@/services/accounting"
+import { syncJobToAccounting } from "@/app/admin/settings/accounting-actions"
 
+
+import { Job } from "@/types/database"
 
 type Props = {
-  job: any
+  job: Job
   drivers: any[]
   vehicles: any[]
   customers: any[]
@@ -26,13 +28,13 @@ export function JobHistoryActions({ job, drivers, vehicles, customers, routes }:
 
     setSyncing(true)
     try {
-        const result = await accountingService.syncJobToInvoice(job)
+        const result = await syncJobToAccounting(job)
         if (result.success) {
             alert(`สำเร็จ: ${result.message}`)
         } else {
             alert(`ผิดพลาด: ${result.message}`)
         }
-    } catch (e) {
+    } catch {
         alert("เกิดข้อผิดพลาดในการเชื่อมต่อ")
     } finally {
         setSyncing(false)
@@ -58,7 +60,7 @@ export function JobHistoryActions({ job, drivers, vehicles, customers, routes }:
             onClick={() => setViewPod(true)}
             title="ดูรูปใบงาน"
           >
-            <Image className="h-4 w-4" />
+            <Image className="h-4 w-4" aria-hidden="true" />
           </Button>
       )}
 

@@ -1,35 +1,34 @@
 import { AccountingProvider, AccountingInvoice, AccountingBill } from "@/types/accounting";
-import { MockAccountingProvider } from "./mock-provider";
 import { AkauntingProvider } from "./akaunting-provider";
+import { getServerSetting } from "@/lib/supabase/system_settings_server";
+import { Billing_Note, Job, Driver_Payment } from "@/types/database";
 
 class AccountingServiceManager {
-    private provider: AccountingProvider;
+    private provider: AccountingProvider | null = null;
 
-    constructor() {
-        // Using Akaunting Provider with user-provided key
-        // Key: process.env.AKAUNTING_API_KEY
-        // Company ID: process.env.AKAUNTING_COMPANY_ID
-        const apiKey = process.env.AKAUNTING_API_KEY || "";
-        const companyId = process.env.AKAUNTING_COMPANY_ID || "1";
-        this.provider = new AkauntingProvider(apiKey, companyId); 
+    private async getProvider(): Promise<AccountingProvider> {
+        // Fetch from DB every time for now to ensure we have latest, or implement caching
+        const apiKey = String(await getServerSetting('akaunting_api_key', process.env.AKAUNTING_API_KEY || "")).trim();
+        const companyId = String(await getServerSetting('akaunting_company_id', process.env.AKAUNTING_COMPANY_ID || "1")).trim();
+        
+        return new AkauntingProvider(apiKey, companyId);
     }
 
-    public async isConnected(): Promise<boolean> {
-        return this.provider.isConnected();
+    public async isConnected(): Promise<{ connected: boolean; message?: string }> {
+        const provider = await this.getProvider();
+        return provider.isConnected();
     }
 
-    public async syncBillingNoteToInvoice(note: any, jobs: any[]): Promise<{ success: boolean; message: string }> {
+    public async syncBillingNoteToInvoice(note: Billing_Note, jobs: Job[]): Promise<{ success: boolean; message: string }> {
         try {
-            // 1. Transform Billing Note + Jobs to Accounting Invoice
+            const provider = await this.getProvider();
             const invoice = this.transformBillingNoteToInvoice(note, jobs);
 
-            // 2. Validate
             if (!invoice.customer.name) {
                 return { success: false, message: "Customer name is missing" };
             }
 
-            // 3. Send to Provider
-            const result = await this.provider.createInvoice(invoice);
+            const result = await provider.createInvoice(invoice);
             
             return {
                 success: result.success,
@@ -42,18 +41,16 @@ class AccountingServiceManager {
         }
     }
 
-    public async syncJobToInvoice(job: any): Promise<{ success: boolean; message: string }> {
+    public async syncJobToInvoice(job: Job): Promise<{ success: boolean; message: string }> {
         try {
-            // 1. Transform Job Data to Accounting Invoice
+            const provider = await this.getProvider();
             const invoice = this.transformJobToInvoice(job);
 
-            // 2. Validate
             if (!invoice.customer.name) {
                 return { success: false, message: "Customer name is missing" };
             }
 
-            // 3. Send to Provider
-            const result = await this.provider.createInvoice(invoice);
+            const result = await provider.createInvoice(invoice);
             
             return {
                 success: result.success,
@@ -66,10 +63,11 @@ class AccountingServiceManager {
         }
     }
 
-    public async syncDriverPaymentToBill(payment: any, jobs: any[]): Promise<{ success: boolean; message: string }> {
+    public async syncDriverPaymentToBill(payment: Driver_Payment, jobs: Job[]): Promise<{ success: boolean; message: string }> {
         try {
+            const provider = await this.getProvider();
             const bill = this.transformDriverPaymentToBill(payment, jobs);
-            const result = await this.provider.createBill(bill);
+            const result = await provider.createBill(bill);
             return {
                 success: result.success,
                 message: result.message || (result.success ? "Payout synced successfully" : "Failed to sync payout")
@@ -80,11 +78,11 @@ class AccountingServiceManager {
         }
     }
 
-    private transformBillingNoteToInvoice(note: any, jobs: any[]): AccountingInvoice {
+    private transformBillingNoteToInvoice(note: Billing_Note, jobs: Job[]): AccountingInvoice {
         const totalAmount = Number(note.Total_Amount) || 0;
         
         const items = jobs.map(job => {
-            const price = parseFloat(job.Price_Cust_Total) || 0;
+            const price = parseFloat(job.Price_Cust_Total || "0") || 0;
             let extra = 0;
             if (job.extra_costs_json) {
                 try {
@@ -111,7 +109,7 @@ class AccountingServiceManager {
             customer: {
                 id: note.Customer_Name || "unknown",
                 name: note.Customer_Name || "Unknown Customer",
-                address: note.Customer_Address,
+                address: note.Customer_Address || "",
             },
             items: items,
             subtotal: totalAmount,
@@ -121,11 +119,11 @@ class AccountingServiceManager {
         };
     }
 
-    private transformDriverPaymentToBill(payment: any, jobs: any[]): AccountingBill {
+    private transformDriverPaymentToBill(payment: Driver_Payment, jobs: Job[]): AccountingBill {
         const totalAmount = Number(payment.Total_Amount) || 0;
         
         const items = jobs.map(job => {
-            const cost = parseFloat(job.Cost_Driver_Total) || 0;
+            const cost = parseFloat(job.Cost_Driver_Total || "0") || 0;
             return {
                 description: `Driver Cost: ${job.Job_ID} - ${job.Route_Name || 'Standard'}`,
                 quantity: 1,
@@ -145,8 +143,8 @@ class AccountingServiceManager {
         };
     }
 
-    private transformJobToInvoice(job: any): AccountingInvoice {
-        const price = parseFloat(job.Price_Cust_Total) || 0;
+    private transformJobToInvoice(job: Job): AccountingInvoice {
+        const price = parseFloat(job.Price_Cust_Total || "0") || 0;
 
         return {
             referenceId: job.Job_ID,

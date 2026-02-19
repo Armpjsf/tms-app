@@ -5,11 +5,16 @@ import { getBillingNoteByIdWithJobs, getDriverPaymentByIdWithJobs } from "@/lib/
 
 export async function checkAccountingConnection() {
     try {
-        const connected = await accountingService.isConnected();
-        return { success: true, connected };
-    } catch (error) {
+        const result = await accountingService.isConnected();
+        return { 
+            success: true, 
+            connected: result.connected, 
+            message: result.message 
+        };
+    } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : String(error);
         console.error("Accounting connection check failed:", error);
-        return { success: false, connected: false };
+        return { success: false, connected: false, message };
     }
 }
 
@@ -40,5 +45,30 @@ export async function manualSyncBill(paymentId: string) {
     } catch (error) {
         console.error("Manual bill sync failed:", error);
         return { success: false, message: "Internal error during manual sync" };
+    }
+}
+
+import { saveServerSetting } from "@/lib/supabase/system_settings_server";
+import { Job } from "@/types/database";
+
+export async function saveAccountingSettings(apiKey: string, companyId: string) {
+    try {
+        await saveServerSetting('akaunting_api_key', apiKey, 'Akaunting API Key');
+        await saveServerSetting('akaunting_company_id', companyId, 'Akaunting Company ID');
+        return { success: true, message: "Settings saved successfully" };
+    } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : String(error);
+        console.error("Failed to save accounting settings:", error);
+        return { success: false, message };
+    }
+}
+
+export async function syncJobToAccounting(job: Job) {
+    try {
+        const result = await accountingService.syncJobToInvoice(job);
+        return result;
+    } catch (error) {
+        console.error("Sync job to accounting failed:", error);
+        return { success: false, message: "Internal error during job sync" };
     }
 }

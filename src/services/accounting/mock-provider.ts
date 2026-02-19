@@ -3,8 +3,8 @@ import { AccountingProvider, AccountingInvoice, AccountingBill } from "@/types/a
 export class MockAccountingProvider implements AccountingProvider {
     name = "Mock Provider (Console Log)";
 
-    async isConnected(): Promise<boolean> {
-        return true;
+    async isConnected(): Promise<{ connected: boolean; message?: string }> {
+        return { connected: true, message: "Mock Connection Active" };
     }
 
     async findContact(name: string): Promise<{ id: string | number | null; type?: string }> {

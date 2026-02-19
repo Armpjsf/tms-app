@@ -49,6 +49,13 @@ const settingsSections = [
     ]
   },
   {
+    title: "ระบบบัญชีและการเงิน",
+    icon: Database,
+    items: [
+      { label: "การเชื่อมต่อ Akaunting", desc: "ตรวจสอบสถานะการเชื่อมต่อ และการส่งข้อมูล", path: "/settings/accounting" },
+    ]
+  },
+  {
     title: "ธีมและการแสดงผล",
     icon: Palette,
     items: [

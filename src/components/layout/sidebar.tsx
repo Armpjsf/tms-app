@@ -27,6 +27,7 @@ import {
   History,
   Coins,
   PieChart,
+  CloudSync,
 } from "lucide-react"
 
 import { SidebarProfile } from "./sidebar-profile"
@@ -93,6 +94,7 @@ const navigation: NavGroup[] = [
       { title: "จัดการลูกค้า", href: "/settings/customers", icon: <Users size={20} /> },
       { title: "จัดการเส้นทาง", href: "/routes", icon: <MapPin size={20} /> },
       { title: "ประเภทค่าใช้จ่าย", href: "/settings/expense-types", icon: <Coins size={20} /> },
+      { title: "ตั้งค่าระบบบัญชี", href: "/settings/accounting", icon: <CloudSync size={20} /> },
     ],
   },
 ]

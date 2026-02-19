@@ -40,7 +40,7 @@ export interface AccountingBill {
 
 export interface AccountingProvider {
     name: string;
-    isConnected(): Promise<boolean>;
+    isConnected(): Promise<{ connected: boolean; message?: string }>;
     findContact(name: string): Promise<{ id: string | number | null; type?: string }>;
     createInvoice(invoice: AccountingInvoice): Promise<{ success: boolean; externalId?: string; message?: string }>;
     createBill(bill: AccountingBill): Promise<{ success: boolean; externalId?: string; message?: string }>;
