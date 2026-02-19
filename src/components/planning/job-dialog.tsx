@@ -120,7 +120,7 @@ export function JobDialog({
   const [assignments, setAssignments] = useState(
     job?.assignments && job.assignments.length > 0
       ? job.assignments
-      : [{ Vehicle_Type: '4-Wheel', Vehicle_Plate: '', Driver_ID: '' }]
+      : [{ Vehicle_Type: '4-Wheel', Vehicle_Plate: '', Driver_ID: '', Sub_ID: '' }]
   )
 
   // Helper to safely parse JSON or return existing array
@@ -165,11 +165,12 @@ export function JobDialog({
         setAssignments([{
             Vehicle_Type: job.Vehicle_Type || '4-Wheel',
             Vehicle_Plate: job.Vehicle_Plate || '',
-            Driver_ID: job.Driver_ID || ''
+            Driver_ID: job.Driver_ID || '',
+            Sub_ID: job.Sub_ID || ''
         }])
     } else if (show && mode === 'create') {
         // Reset to one empty assignment
-        setAssignments([{ Vehicle_Type: '4-Wheel', Vehicle_Plate: '', Driver_ID: '' }])
+        setAssignments([{ Vehicle_Type: '4-Wheel', Vehicle_Plate: '', Driver_ID: '', Sub_ID: '' }])
     }
   }, [show, mode, job])
 
@@ -205,7 +206,7 @@ export function JobDialog({
   }
 
   const addAssignment = () => {
-    setAssignments([...assignments, { Vehicle_Type: '4-Wheel', Vehicle_Plate: '', Driver_ID: '' }])
+    setAssignments([...assignments, { Vehicle_Type: '4-Wheel', Vehicle_Plate: '', Driver_ID: '', Sub_ID: '' }])
   }
 
   const removeAssignment = (index: number) => {
@@ -332,6 +333,7 @@ export function JobDialog({
             Vehicle_Type: assignment.Vehicle_Type,
             Vehicle_Plate: assignment.Vehicle_Plate,
             Driver_ID: assignment.Driver_ID,
+            Sub_ID: assignment.Sub_ID,
             Driver_Name: drivers.find(d => d.Driver_ID === assignment.Driver_ID)?.Driver_Name || '',
         }))
 
@@ -351,6 +353,7 @@ export function JobDialog({
             Vehicle_Type: assignment.Vehicle_Type,
             Vehicle_Plate: assignment.Vehicle_Plate,
             Driver_ID: assignment.Driver_ID,
+            Sub_ID: assignment.Sub_ID,
             Driver_Name: drivers.find(d => d.Driver_ID === assignment.Driver_ID)?.Driver_Name || '',
         }
 
@@ -694,7 +697,8 @@ export function JobDialog({
                                     newAssignments[index] = {
                                         ...newAssignments[index],
                                         Vehicle_Plate: v.vehicle_plate,
-                                        Vehicle_Type: v.vehicle_type
+                                        Vehicle_Type: v.vehicle_type,
+                                        Sub_ID: v.sub_id || newAssignments[index].Sub_ID
                                     }
                                     setAssignments(newAssignments)
                                 }
@@ -713,6 +717,16 @@ export function JobDialog({
                             value={assignment.Driver_ID}
                             onChange={(val) => updateAssignment(index, 'Driver_ID', val)}
                             drivers={drivers}
+                            onSelect={(d) => {
+                                if (d.Sub_ID) {
+                                    const newAssignments = [...assignments]
+                                    newAssignments[index] = {
+                                        ...newAssignments[index],
+                                        Sub_ID: d.Sub_ID
+                                    }
+                                    setAssignments(newAssignments)
+                                }
+                            }}
                             className="bg-slate-800 border-slate-700 text-sm"
                         />
                     </div>

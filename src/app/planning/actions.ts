@@ -24,20 +24,36 @@ export type JobFormData = {
   original_origins_json?: string
   original_destinations_json?: string
   extra_costs_json?: string
+  Sub_ID?: string | null
 }
 
 export async function createJob(data: JobFormData) {
   const supabase = await createClient()
 
-  // Get Driver Name based on Driver_ID
+  // Get Driver Name and Sub_ID based on Driver_ID
   let driverName = ''
+  let subId = data.Sub_ID || null
+
   if (data.Driver_ID) {
     const { data: driver } = await supabase
       .from('Master_Drivers')
-      .select('Driver_Name')
+      .select('Driver_Name, Sub_ID')
       .eq('Driver_ID', data.Driver_ID)
       .single()
-    if (driver) driverName = driver.Driver_Name
+    if (driver) {
+      driverName = driver.Driver_Name
+      if (!subId) subId = driver.Sub_ID || null
+    }
+  }
+
+  // If subId still null, try looking up via Vehicle_Plate
+  if (!subId && data.Vehicle_Plate) {
+    const { data: vehicle } = await supabase
+      .from('master_vehicles')
+      .select('sub_id')
+      .eq('vehicle_plate', data.Vehicle_Plate)
+      .single()
+    if (vehicle) subId = vehicle.sub_id || null
   }
 
   // helper to parse if string
@@ -66,6 +82,7 @@ export async function createJob(data: JobFormData) {
       original_origins_json: parseIfString(data.original_origins_json),
       original_destinations_json: parseIfString(data.original_destinations_json),
       extra_costs_json: parseIfString(data.extra_costs_json),
+      Sub_ID: subId,
       Created_At: new Date().toISOString(),
     })
 
@@ -103,6 +120,7 @@ export async function createBulkJobs(jobs: Partial<JobFormData>[]) {
       original_origins_json: parseIfString(j.original_origins_json),
       original_destinations_json: parseIfString(j.original_destinations_json),
       extra_costs_json: parseIfString(j.extra_costs_json),
+      Sub_ID: j.Sub_ID || null,
       Created_At: new Date().toISOString(),
   })).filter(j => j.Customer_Name)
 
@@ -141,14 +159,27 @@ export async function updateJob(jobId: string, data: Partial<JobFormData>) {
   if (data.original_destinations_json) updateData.original_destinations_json = parseIfString(data.original_destinations_json)
 
   
-  // Update Driver Name if Driver_ID specifically changes
+  // Update Driver Name and Sub_ID if Driver_ID specifically changes
   if (data.Driver_ID) {
     const { data: driver } = await supabase
       .from('Master_Drivers')
-      .select('Driver_Name')
+      .select('Driver_Name, Sub_ID')
       .eq('Driver_ID', data.Driver_ID)
       .single()
-    if (driver) updateData.Driver_Name = driver.Driver_Name
+    if (driver) {
+       updateData.Driver_Name = driver.Driver_Name
+       if (!updateData.Sub_ID) updateData.Sub_ID = driver.Sub_ID || null
+    }
+  }
+
+  // Also check Vehicle_Plate for Sub_ID if still not present
+  if (!updateData.Sub_ID && data.Vehicle_Plate) {
+    const { data: vehicle } = await supabase
+      .from('master_vehicles')
+      .select('sub_id')
+      .eq('vehicle_plate', data.Vehicle_Plate)
+      .single()
+    if (vehicle) updateData.Sub_ID = vehicle.sub_id || null
   }
   
   console.log(`[DEBUG] updateJob SENT:`, JSON.stringify(updateData, null, 2))

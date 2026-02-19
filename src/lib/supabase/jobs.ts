@@ -27,6 +27,7 @@ export type Job = {
   Created_At: string | null
   Photo_Proof_Url: string | null
   Signature_Url: string | null
+  Sub_ID: string | null
 }
 
 // ดึงงานทั้งหมดวันนี้
