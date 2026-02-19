@@ -5,7 +5,7 @@ import { ExternalLink, Image, Banknote } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { JobDialog } from "@/components/planning/job-dialog"
 import { PODDialog } from "@/components/jobs/pod-dialog"
-import { syncJobToAccounting } from "@/app/admin/settings/accounting-actions"
+import { syncJobToAccounting } from "@/app/settings/accounting/actions"
 
 
 import { Job } from "@/types/database"

@@ -21,7 +21,7 @@ import { getBillingNotes, BillingNote, updateBillingNoteStatus, recallBillingNot
 import { toast } from "sonner"
 import { isSuperAdmin } from "@/lib/permissions"
 import { BillingActions } from "@/components/billing/billing-actions"
-import { manualSyncInvoice } from "@/app/admin/settings/accounting-actions"
+import { manualSyncInvoice } from "@/app/settings/accounting/actions"
 
 export default function CustomerBillingHistory() {
   const router = useRouter()

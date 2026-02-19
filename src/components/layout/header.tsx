@@ -4,14 +4,14 @@ import * as React from "react"
 import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { cn } from "@/lib/utils"
-import { Bell, Search, Moon, Sun, Building2 } from "lucide-react"
+import { Search, Moon, Sun, Building2 } from "lucide-react"
 import { useBranch } from "@/components/providers/branch-provider"
+import { NotificationDropdown } from "@/components/notifications/notification-dropdown"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
 } from "@/components/ui/select"
 
 interface HeaderProps {
@@ -114,15 +114,7 @@ export function Header({ sidebarCollapsed = false }: HeaderProps) {
         </motion.button>
 
         {/* Notifications */}
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={() => alert("ยังไม่มีการแจ้งเตือนใหม่")}
-          className="relative p-2 rounded-xl bg-muted/50 hover:bg-muted text-muted-foreground hover:text-foreground transition-all"
-        >
-          <Bell size={20} />
-          <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse" />
-        </motion.button>
+        <NotificationDropdown />
 
         {/* Profile */}
 

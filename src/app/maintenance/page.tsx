@@ -14,6 +14,8 @@ import { getAllDrivers } from "@/lib/supabase/drivers"
 import { getAllVehicles } from "@/lib/supabase/vehicles"
 import { MaintenanceDialog } from "@/components/maintenance/maintenance-dialog"
 import { MaintenanceActions } from "@/components/maintenance/maintenance-actions"
+import { getMaintenanceSchedule } from "@/lib/supabase/maintenance-schedule"
+import { MaintenanceScheduleDashboard } from "@/components/maintenance/maintenance-schedule-dashboard"
 
 import { SearchInput } from "@/components/ui/search-input"
 import { Pagination } from "@/components/ui/pagination"
@@ -33,11 +35,12 @@ export default async function MaintenancePage(props: Props) {
   const endDate = (searchParams.endDate as string) || ''
   const status = (searchParams.status as string) || ''
 
-  const [{ data: tickets, count }, stats, drivers, vehicles] = await Promise.all([
+  const [{ data: tickets, count }, stats, drivers, vehicles, schedule] = await Promise.all([
     getAllRepairTickets(page, limit, query, startDate, endDate, status),
     getRepairTicketStats(),
     getAllDrivers(),
     getAllVehicles(),
+    getMaintenanceSchedule(),
   ])
 
 
@@ -210,6 +213,15 @@ export default async function MaintenancePage(props: Props) {
       </div>
       
       <Pagination totalItems={count || 0} limit={limit} />
+
+      {/* Maintenance Schedule Dashboard */}
+      <div className="mt-8">
+        <h2 className="text-xl font-bold text-foreground mb-4 flex items-center gap-2">
+          <Clock className="text-cyan-400" size={20} />
+          กำหนดการซ่อมบำรุง
+        </h2>
+        <MaintenanceScheduleDashboard schedule={schedule} />
+      </div>
     </DashboardLayout>
   )
 }

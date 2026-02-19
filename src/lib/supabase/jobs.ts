@@ -608,14 +608,39 @@ export async function getDriverDashboardStats(driverId: string) {
       || jobs?.find(j => ['Assigned', 'New'].includes(j.Job_Status || '')) 
       || null
 
+    // 2. Gamification Stats (Monthly)
+    const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString()
+    const { count: monthlyCompletedCount } = await supabase
+        .from('Jobs_Main')
+        .select('*', { count: 'exact', head: true })
+        .eq('Driver_ID', driverId)
+        .gte('Plan_Date', startOfMonth)
+        .in('Job_Status', ['Completed', 'Delivered'])
+
+    const points = (monthlyCompletedCount || 0) * 10
+    
+    // Rank Logic
+    let rank = 'Bronze'
+    let nextRankPoints = 300
+    if (points >= 1200) { rank = 'Platinum'; nextRankPoints = 0 }
+    else if (points >= 700) { rank = 'Gold'; nextRankPoints = 1200 }
+    else if (points >= 300) { rank = 'Silver'; nextRankPoints = 700 }
+
     return {
       stats: { total, completed },
+      gamification: {
+          points,
+          rank,
+          nextRankPoints,
+          monthlyCompleted: monthlyCompletedCount || 0
+      },
       currentJob
     }
   } catch (e) {
     console.error('Exception fetching driver dashboard stats:', e)
      return { 
         stats: { total: 0, completed: 0 }, 
+        gamification: { points: 0, rank: 'Bronze', nextRankPoints: 300, monthlyCompleted: 0 },
         currentJob: null 
       }
   }

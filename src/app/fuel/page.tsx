@@ -12,6 +12,8 @@ import { getAllDrivers } from "@/lib/supabase/drivers"
 import { getAllVehicles } from "@/lib/supabase/vehicles"
 import { FuelDialog } from "@/components/fuel/fuel-dialog"
 import { FuelActions } from "@/components/fuel/fuel-actions"
+import { getFuelAnalytics } from "@/lib/supabase/fuel-analytics"
+import { FuelAnalyticsDashboard } from "@/components/fuel/fuel-analytics-dashboard"
 
 import { SearchInput } from "@/components/ui/search-input"
 import { Pagination } from "@/components/ui/pagination"
@@ -28,11 +30,12 @@ export default async function FuelPage(props: Props) {
   const endDate = (searchParams.endDate as string) || ''
   const limit = 20
 
-  const [{ data: logs, count }, stats, drivers, vehicles] = await Promise.all([
+  const [{ data: logs, count }, stats, drivers, vehicles, analytics] = await Promise.all([
     getAllFuelLogs(page, limit, query, startDate, endDate),
     getTodayFuelStats(),
     getAllDrivers(),
     getAllVehicles(),
+    getFuelAnalytics(startDate || undefined, endDate || undefined),
   ])
 
   return (
@@ -217,6 +220,15 @@ export default async function FuelPage(props: Props) {
           </div>
         </CardContent>
       </Card>
+
+      {/* Fuel Analytics Dashboard */}
+      <div className="mt-8">
+        <h2 className="text-xl font-bold text-foreground mb-4 flex items-center gap-2">
+          <TrendingUp className="text-cyan-400" size={20} />
+          วิเคราะห์การใช้น้ำมัน
+        </h2>
+        <FuelAnalyticsDashboard analytics={analytics} />
+      </div>
     </DashboardLayout>
   )
 }

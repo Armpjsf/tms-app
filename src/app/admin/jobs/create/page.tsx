@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -157,7 +156,7 @@ export default function CreateJobPage() {
   const prevStep = () => currentStep > 0 && setCurrentStep(prev => prev - 1)
 
   return (
-    <DashboardLayout>
+    <>
       {/* Header */}
       <div className="flex items-center gap-4 mb-6">
         <Link href="/planning">
@@ -462,6 +461,6 @@ export default function CreateJobPage() {
           </div>
         </CardContent>
       </Card>
-    </DashboardLayout>
+    </>
   )
 }

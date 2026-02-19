@@ -3,6 +3,10 @@
 import { createClient } from '@/utils/supabase/server'
 import { getUserBranchId, isSuperAdmin } from "@/lib/permissions"
 
+// Date helpers to avoid extra dependencies
+const subDays = (date: Date, days: number) => new Date(date.getTime() - days * 24 * 60 * 60 * 1000)
+const differenceInDays = (d1: Date, d2: Date) => Math.floor(Math.abs(d1.getTime() - d2.getTime()) / (24 * 60 * 60 * 1000))
+
 // Helper to get vehicle plates for a branch
 async function getBranchPlates(branchId: string) {
     const supabase = await createClient()
@@ -307,4 +311,269 @@ export async function getOperationalStats(branchId?: string) {
             fuelEfficiency
         }
     }
+}
+
+// 5. Job Status Distribution
+export async function getJobStatusDistribution(startDate?: string, endDate?: string, branchId?: string) {
+    const supabase = await createClient()
+    const userBranchId = await getUserBranchId()
+    const isAdmin = await isSuperAdmin()
+    const targetBranchId = isAdmin ? (branchId && branchId !== 'All' ? branchId : null) : userBranchId
+
+    let query = supabase.from('Jobs_Main').select('Job_Status')
+
+    if (startDate) query = query.gte('Plan_Date', startDate)
+    if (endDate) query = query.lte('Plan_Date', endDate)
+    if (targetBranchId) query = query.eq('Branch_ID', targetBranchId)
+
+    const { data } = await query
+
+    const distribution: Record<string, number> = {
+        'Draft': 0,
+        'Pending': 0,
+        'Confirmed': 0,
+        'In Progress': 0,
+        'Delivered': 0,
+        'Completed': 0,
+        'Cancelled': 0
+    }
+
+    data?.forEach(job => {
+        const status = job.Job_Status || 'Draft'
+        if (distribution.hasOwnProperty(status)) {
+            distribution[status]++
+        } else {
+            distribution[status] = (distribution[status] || 0) + 1
+        }
+    })
+
+    return Object.entries(distribution).map(([name, value]) => ({ name, value }))
+}
+
+// 6. Branch Performance Comparison (Super Admin Only)
+export async function getBranchPerformance(startDate?: string, endDate?: string) {
+    const isAdmin = await isSuperAdmin()
+    if (!isAdmin) return []
+
+    const supabase = await createClient()
+
+    // Get all branches
+    const { data: branches } = await supabase.from('master_branches').select('Branch_ID, Branch_Name')
+    if (!branches) return []
+
+    // Fetch jobs for the range
+    let query = supabase
+        .from('Jobs_Main')
+        .select('Branch_ID, Price_Cust_Total, Cost_Driver_Total, Job_Status')
+        .in('Job_Status', ['Completed', 'Delivered'])
+
+    if (startDate) query = query.gte('Plan_Date', startDate)
+    if (endDate) query = query.lte('Plan_Date', endDate)
+
+    const { data: jobs } = await query
+
+    const performance = branches.map(branch => {
+        const branchJobs = jobs?.filter(j => j.Branch_ID === branch.Branch_ID) || []
+        const revenue = branchJobs.reduce((sum, j) => sum + (j.Price_Cust_Total || 0), 0)
+        const driverCost = branchJobs.reduce((sum, j) => sum + (j.Cost_Driver_Total || 0), 0)
+        
+        return {
+            branchId: branch.Branch_ID,
+            branchName: branch.Branch_Name,
+            revenue,
+            jobsCount: branchJobs.length,
+            profit: revenue - driverCost // Simple profit (Revenue - Driver Cost)
+        }
+    })
+
+    return performance.sort((a, b) => b.revenue - a.revenue)
+}
+
+// 7. Subcontractor vs Internal Fleet Performance
+export async function getSubcontractorPerformance(startDate?: string, endDate?: string, branchId?: string) {
+    const supabase = await createClient()
+    const userBranchId = await getUserBranchId()
+    const isAdmin = await isSuperAdmin()
+    const targetBranchId = isAdmin ? (branchId && branchId !== 'All' ? branchId : null) : userBranchId
+
+    let query = supabase
+        .from('Jobs_Main')
+        .select('Price_Cust_Total, Cost_Driver_Total, Sub_ID')
+        .in('Job_Status', ['Completed', 'Delivered'])
+
+    if (startDate) query = query.gte('Plan_Date', startDate)
+    if (endDate) query = query.lte('Plan_Date', endDate)
+    if (targetBranchId) query = query.eq('Branch_ID', targetBranchId)
+
+    const { data: jobs } = await query
+
+    const stats = {
+        internal: { revenue: 0, cost: 0, count: 0 },
+        subcontractor: { revenue: 0, cost: 0, count: 0 }
+    }
+
+    jobs?.forEach(job => {
+        const isSub = !!job.Sub_ID
+        const target = isSub ? stats.subcontractor : stats.internal
+        target.revenue += (job.Price_Cust_Total || 0)
+        target.cost += (job.Cost_Driver_Total || 0)
+        target.count++
+    })
+
+    return [
+        { name: 'รถบริษัท (Internal)', ...stats.internal },
+        { name: 'รถซับ (Subcontractor)', ...stats.subcontractor }
+    ]
+}
+
+// 8. Growth & Multi-period Comparison
+export async function getExecutiveKPIs(startDate?: string, endDate?: string, branchId?: string) {
+    const currentStart = startDate ? new Date(startDate) : subDays(new Date(), 30)
+    const currentEnd = endDate ? new Date(endDate) : new Date()
+    
+    // Calculate duration to find the previous period
+    const duration = differenceInDays(currentEnd, currentStart)
+    const prevStart = subDays(currentStart, duration + 1)
+    const prevEnd = subDays(currentStart, 1)
+
+    const [currentStats, prevStats] = await Promise.all([
+        getFinancialStats(currentStart.toISOString(), currentEnd.toISOString(), branchId),
+        getFinancialStats(prevStart.toISOString(), prevEnd.toISOString(), branchId)
+    ])
+
+    const calculateGrowth = (curr: number, prev: number) => {
+        if (prev === 0) return curr > 0 ? 100 : 0
+        return ((curr - prev) / prev) * 100
+    }
+
+    // Define targets (In a real app, these would come from DB/Settings)
+    // Monthly Targets
+    const targets = {
+        revenue: 250000, 
+        profitMargin: 15,
+        onTimeDelivery: 95
+    }
+
+    return {
+        revenue: {
+            current: currentStats.revenue,
+            previous: prevStats.revenue,
+            growth: calculateGrowth(currentStats.revenue, prevStats.revenue),
+            target: targets.revenue,
+            attainment: (currentStats.revenue / targets.revenue) * 100
+        },
+        profit: {
+            current: currentStats.netProfit,
+            previous: prevStats.netProfit,
+            growth: calculateGrowth(currentStats.netProfit, prevStats.netProfit),
+        },
+        margin: {
+            current: currentStats.profitMargin,
+            previous: prevStats.profitMargin,
+            growth: currentStats.profitMargin - prevStats.profitMargin, // Percentage point difference
+            target: targets.profitMargin
+        }
+    }
+}
+// 9. Route Efficiency (Revenue vs Cost per Route)
+export async function getRouteEfficiency(startDate?: string, endDate?: string, branchId?: string) {
+    const supabase = await createClient()
+    const userBranchId = await getUserBranchId()
+    const isAdmin = await isSuperAdmin()
+    const targetBranchId = isAdmin ? (branchId && branchId !== 'All' ? branchId : null) : userBranchId
+
+    let query = supabase
+        .from('Jobs_Main')
+        .select('Route_Name, Price_Cust_Total, Cost_Driver_Total')
+        .in('Job_Status', ['Completed', 'Delivered'])
+
+    if (startDate) query = query.gte('Plan_Date', startDate)
+    if (endDate) query = query.lte('Plan_Date', endDate)
+    if (targetBranchId) query = query.eq('Branch_ID', targetBranchId)
+
+    const { data: jobs } = await query
+
+    const routeStats: Record<string, { route: string, revenue: number, cost: number, count: number }> = {}
+
+    jobs?.forEach(job => {
+        const route = job.Route_Name || 'Unknown Route'
+        if (!routeStats[route]) {
+            routeStats[route] = { route, revenue: 0, cost: 0, count: 0 }
+        }
+        routeStats[route].revenue += (job.Price_Cust_Total || 0)
+        routeStats[route].cost += (job.Cost_Driver_Total || 0)
+        routeStats[route].count++
+    })
+
+    return Object.values(routeStats)
+        .map(r => ({ ...r, margin: r.revenue > 0 ? ((r.revenue - r.cost) / r.revenue) * 100 : 0 }))
+        .sort((a, b) => b.revenue - a.revenue)
+}
+
+// 10. Driver Leaderboard (Efficiency & Volume)
+export async function getDriverLeaderboard(startDate?: string, endDate?: string, branchId?: string) {
+    const supabase = await createClient()
+    const userBranchId = await getUserBranchId()
+    const isAdmin = await isSuperAdmin()
+    const targetBranchId = isAdmin ? (branchId && branchId !== 'All' ? branchId : null) : userBranchId
+
+    let query = supabase
+        .from('Jobs_Main')
+        .select('Driver_Name, Price_Cust_Total, Cost_Driver_Total, Job_Status')
+        .not('Driver_Name', 'is', null)
+
+    if (startDate) query = query.gte('Plan_Date', startDate)
+    if (endDate) query = query.lte('Plan_Date', endDate)
+    if (targetBranchId) query = query.eq('Branch_ID', targetBranchId)
+
+    const { data: jobs } = await query
+
+    const driverStats: Record<string, { name: string, revenue: number, completedJobs: number, totalJobs: number }> = {}
+
+    jobs?.forEach(job => {
+        const name = job.Driver_Name!
+        if (!driverStats[name]) {
+            driverStats[name] = { name, revenue: 0, completedJobs: 0, totalJobs: 0 }
+        }
+        const isCompleted = ['Completed', 'Delivered'].includes(job.Job_Status || '')
+        if (isCompleted) {
+            driverStats[name].revenue += (job.Price_Cust_Total || 0)
+            driverStats[name].completedJobs++
+        }
+        driverStats[name].totalJobs++
+    })
+
+    return Object.values(driverStats)
+        .map(d => ({ 
+            ...d, 
+            successRate: d.totalJobs > 0 ? (d.completedJobs / d.totalJobs) * 100 : 0 
+        }))
+        .sort((a, b) => b.revenue - a.revenue)
+        .slice(0, 10)
+}
+
+// 11. Regional / Branch Deep-Dive (Comparison with detailed metrics)
+export async function getRegionalDeepDive(startDate?: string, endDate?: string) {
+    const performance = await getBranchPerformance(startDate, endDate)
+    const supabase = await createClient()
+
+    // Enrich with growth if possible (Comparing current period vs previous)
+    const currentStart = startDate ? new Date(startDate) : subDays(new Date(), 30)
+    const currentEnd = endDate ? new Date(endDate) : new Date()
+    const duration = differenceInDays(currentEnd, currentStart)
+    const prevStart = subDays(currentStart, duration + 1)
+    const prevEnd = subDays(currentStart, 1)
+
+    const prevPerformance = await getBranchPerformance(prevStart.toISOString(), prevEnd.toISOString())
+
+    return performance.map(curr => {
+        const prev = prevPerformance.find(p => p.branchId === curr.branchId)
+        const revenueGrowth = prev && prev.revenue > 0 ? ((curr.revenue - prev.revenue) / prev.revenue) * 100 : 0
+        
+        return {
+            ...curr,
+            revenueGrowth,
+            previousRevenue: prev?.revenue || 0
+        }
+    })
 }

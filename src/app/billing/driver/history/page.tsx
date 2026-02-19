@@ -20,7 +20,7 @@ import {
 import { getDriverPayments, DriverPayment, updateDriverPaymentStatus, recallDriverPayment, getDriverPaymentByIdWithJobs } from "@/lib/supabase/billing"
 import { isSuperAdmin } from "@/lib/permissions"
 import { toast } from "sonner"
-import { manualSyncBill } from "@/app/admin/settings/accounting-actions"
+import { manualSyncBill } from "@/app/settings/accounting/actions"
 
 export default function DriverPaymentHistory() {
   const router = useRouter()

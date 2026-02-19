@@ -1,16 +1,45 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { createClient } from '@/utils/supabase/client'
-import { CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Send, Phone, MoreVertical, MessageSquare } from "lucide-react"
+import { Send, Search, MessageSquare, Check, CheckCheck } from "lucide-react"
 import { ChatMessage } from '@/lib/supabase/chat'
 
 interface ChatWindowProps {
-  initialContacts: any[] // Should be typed properly, using any for quick iteration
+  initialContacts: any[]
   initialDrivers: any[]
+}
+
+function formatTime(dateStr: string) {
+  return new Date(dateStr).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })
+}
+
+function formatDate(dateStr: string) {
+  const d = new Date(dateStr)
+  const today = new Date()
+  const yesterday = new Date(today)
+  yesterday.setDate(yesterday.getDate() - 1)
+  
+  if (d.toDateString() === today.toDateString()) return 'วันนี้'
+  if (d.toDateString() === yesterday.toDateString()) return 'เมื่อวาน'
+  return d.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' })
+}
+
+function groupMessagesByDate(messages: ChatMessage[]) {
+  const groups: { date: string; messages: ChatMessage[] }[] = []
+  let currentDate = ''
+  for (const msg of messages) {
+    const date = new Date(msg.created_at).toDateString()
+    if (date !== currentDate) {
+      currentDate = date
+      groups.push({ date: msg.created_at, messages: [msg] })
+    } else {
+      groups[groups.length - 1].messages.push(msg)
+    }
+  }
+  return groups
 }
 
 export function ChatWindow({ initialContacts, initialDrivers }: ChatWindowProps) {
@@ -18,17 +47,45 @@ export function ChatWindow({ initialContacts, initialDrivers }: ChatWindowProps)
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [inputMessage, setInputMessage] = useState('')
   const [contacts, setContacts] = useState(initialContacts)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [isSending, setIsSending] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const chatContainerRef = useRef<HTMLDivElement>(null)
   
   const supabase = createClient()
 
-  // Find active driver details
+  // Auto-scroll to bottom
+  const scrollToBottom = useCallback((behavior: ScrollBehavior = 'smooth') => {
+    setTimeout(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior })
+    }, 50)
+  }, [])
+
+  // Filtered contacts with search
+  const filteredContacts = useMemo(() => {
+    const all = contacts.length > 0 ? contacts : initialDrivers.map(d => ({
+      driver_id: d.Driver_ID,
+      driver_name: d.Driver_Name || 'Unknown',
+      last_message: 'เริ่มแชทเลย',
+      unread: 0,
+      updated_at: new Date().toISOString()
+    }))
+    
+    if (!searchQuery.trim()) return all
+    const q = searchQuery.toLowerCase()
+    return all.filter((c: any) => 
+      (c.driver_name || c.Driver_Name || '').toLowerCase().includes(q) ||
+      (c.driver_id || c.Driver_ID || '').toLowerCase().includes(q)
+    )
+  }, [contacts, initialDrivers, searchQuery])
+
+  // Active driver info
   const activeDriver = selectedDriverId 
     ? (contacts.find(c => c.driver_id === selectedDriverId) || initialDrivers.find(d => d.Driver_ID === selectedDriverId))
     : null
 
-  // Helper functions defined before useEffect to avoid "use before declare"
-  const fetchMessages = async (driverId: string) => {
+  // Fetch messages
+  const fetchMessages = useCallback(async (driverId: string) => {
     const { data, error } = await supabase
       .from('chat_messages')
       .select('*')
@@ -37,205 +94,325 @@ export function ChatWindow({ initialContacts, initialDrivers }: ChatWindowProps)
     
     if (!error && data) {
       setMessages(data)
+      scrollToBottom('instant')
     }
-  }
+  }, [supabase, scrollToBottom])
 
-  const sendMessage = async () => {
-    if (!inputMessage.trim() || !selectedDriverId) return
+  // Send message  
+  const sendMessage = useCallback(async () => {
+    if (!inputMessage.trim() || !selectedDriverId || isSending) return
+    
+    const messageText = inputMessage.trim()
+    setInputMessage('')
+    setIsSending(true)
+
+    // Optimistic update
+    const optimisticMsg: ChatMessage = {
+      id: Date.now(),
+      driver_id: selectedDriverId,
+      driver_name: activeDriver?.driver_name || activeDriver?.Driver_Name || 'Unknown',
+      sender: 'admin',
+      message: messageText,
+      created_at: new Date().toISOString(),
+      read: false,
+    }
+    setMessages(prev => [...prev, optimisticMsg])
+    scrollToBottom()
 
     const { error } = await supabase
       .from('chat_messages')
       .insert({
         driver_id: selectedDriverId,
         sender: 'admin',
-        message: inputMessage,
+        message: messageText,
         read: false,
         created_at: new Date().toISOString(),
-        driver_name: activeDriver?.driver_name || activeDriver?.Driver_Name || 'Unknown' 
+        driver_name: activeDriver?.driver_name || activeDriver?.Driver_Name || 'Unknown'
       })
 
-    if (!error) {
-      setInputMessage('')
+    if (error) {
+      // Remove optimistic message on error
+      setMessages(prev => prev.filter(m => m.id !== optimisticMsg.id))
+      setInputMessage(messageText) // Restore input
     }
-  }
+    setIsSending(false)
+  }, [inputMessage, selectedDriverId, isSending, activeDriver, supabase, scrollToBottom])
 
-  const markMessageAsRead = async (msgId: number) => {
-    await supabase.from('chat_messages').update({ read: true }).eq('id', msgId)
-  }
+  // Mark messages as read
+  const markAllAsRead = useCallback(async (driverId: string) => {
+    await supabase.from('chat_messages').update({ read: true })
+      .eq('driver_id', driverId).eq('sender', 'driver').eq('read', false)
+    
+    // Update unread count in contacts
+    setContacts(prev => prev.map(c => 
+      c.driver_id === driverId ? { ...c, unread: 0 } : c
+    ))
+  }, [supabase])
 
-  const updateContactList = (newMsg: ChatMessage) => {
+  // Update contact list on new message
+  const updateContactList = useCallback((newMsg: ChatMessage) => {
     setContacts(prev => {
       const existing = prev.find(c => c.driver_id === newMsg.driver_id)
       if (existing) {
         return prev.map(c => c.driver_id === newMsg.driver_id ? {
           ...c,
-          last_message: newMsg.message,
+          last_message: newMsg.sender === 'admin' ? `คุณ: ${newMsg.message}` : newMsg.message,
           unread: (newMsg.sender === 'driver' && newMsg.driver_id !== selectedDriverId) ? c.unread + 1 : c.unread,
           updated_at: newMsg.created_at
-        } : c).sort((a,b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
+        } : c).sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
       } else {
-        // New contact from driver list (or unknown)
-         return [{
-           driver_id: newMsg.driver_id,
-           driver_name: newMsg.driver_name,
-           last_message: newMsg.message,
-           unread: 1,
-           updated_at: newMsg.created_at
-         }, ...prev]
+        return [{
+          driver_id: newMsg.driver_id,
+          driver_name: newMsg.driver_name,
+          last_message: newMsg.message,
+          unread: newMsg.sender === 'driver' ? 1 : 0,
+          updated_at: newMsg.created_at
+        }, ...prev]
       }
     })
-  }
+  }, [selectedDriverId])
 
-  // 1. Subscribe to new messages (Global or Per Driver)
+  // Real-time subscription
   useEffect(() => {
     const channel = supabase
-      .channel('chat_updates')
+      .channel('chat_realtime')
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'chat_messages' },
         (payload) => {
           const newMsg = payload.new as ChatMessage
           
-          // If viewing this driver, append message
           if (newMsg.driver_id === selectedDriverId) {
-            setMessages(prev => [...prev, newMsg])
-            // Mark as read immediately if it's from driver
+            // Only add if not optimistic (check by comparing message text and sender)
+            setMessages(prev => {
+              const isDuplicate = prev.some(m => 
+                m.sender === newMsg.sender && m.message === newMsg.message && 
+                Math.abs(new Date(m.created_at).getTime() - new Date(newMsg.created_at).getTime()) < 5000
+              )
+              return isDuplicate ? prev.map(m => 
+                (m.sender === newMsg.sender && m.message === newMsg.message && m.id !== newMsg.id) ? newMsg : m
+              ) : [...prev, newMsg]
+            })
+            scrollToBottom()
+            
             if (newMsg.sender === 'driver') {
-              markMessageAsRead(newMsg.id)
+              supabase.from('chat_messages').update({ read: true }).eq('id', newMsg.id)
             }
           }
           
-          // Update contact list (last message & unread)
           updateContactList(newMsg)
         }
       )
       .subscribe()
 
-    return () => {
-      supabase.removeChannel(channel)
-    }
+    return () => { supabase.removeChannel(channel) }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedDriverId]) 
+  }, [selectedDriverId])
 
-  // 2. Fetch messages when driver selected
+  // On driver select
   useEffect(() => {
     if (selectedDriverId) {
       fetchMessages(selectedDriverId)
+      markAllAsRead(selectedDriverId)
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedDriverId])
 
+  // Message groups
+  const messageGroups = useMemo(() => groupMessagesByDate(messages), [messages])
+
+  // Total unread
+  const totalUnread = useMemo(() => contacts.reduce((s, c) => s + (c.unread || 0), 0), [contacts])
+
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-250px)]">
-      {/* Contacts List */}
-      <div className="lg:col-span-1 border border-white/10 rounded-xl bg-slate-900/50 overflow-hidden flex flex-col">
-        {/* Search */}
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-0 h-[calc(100vh-220px)] border border-white/10 rounded-xl overflow-hidden">
+      {/* Contacts Sidebar */}
+      <div className="lg:col-span-1 bg-slate-900/70 border-r border-white/10 flex flex-col">
+        {/* Sidebar Header */}
         <div className="p-4 border-b border-white/10">
-            <Input placeholder="ค้นหาคนขับ..." className="bg-slate-800 border-none" />
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-white font-bold text-sm">รายชื่อ</h3>
+            {totalUnread > 0 && (
+              <span className="px-2 py-0.5 rounded-full bg-blue-500 text-[10px] text-white font-medium">
+                {totalUnread} ใหม่
+              </span>
+            )}
+          </div>
+          <div className="relative">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+            <Input 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="ค้นหาคนขับ..." 
+              className="bg-slate-800/50 border-slate-700 pl-9 h-9 text-sm" 
+            />
+          </div>
         </div>
 
-        {/* List */}
+        {/* Contact List */}
         <div className="flex-1 overflow-y-auto">
-            {contacts.length === 0 && initialDrivers.length > 0 ? (
-                 // Show all drivers if no history
-                 initialDrivers.map(d => (
-                    <div 
-                        key={d.Driver_ID}
-                        onClick={() => setSelectedDriverId(d.Driver_ID)}
-                        className={`flex items-center gap-3 p-4 cursor-pointer hover:bg-white/5 transition-colors border-b border-white/5 ${selectedDriverId === d.Driver_ID ? 'bg-blue-900/20' : ''}`}
-                    >
-                        <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center text-white">{d.Driver_Name?.charAt(0)}</div>
-                        <div>
-                            <p className="text-white font-medium">{d.Driver_Name}</p>
-                            <p className="text-xs text-slate-500">เริ่มแชทเลย</p>
-                        </div>
+          {filteredContacts.length === 0 ? (
+            <div className="text-center py-8 text-slate-600 text-sm">ไม่พบผลลัพธ์</div>
+          ) : (
+            filteredContacts.map((c: any) => {
+              const id = c.driver_id || c.Driver_ID
+              const name = c.driver_name || c.Driver_Name || 'Unknown'
+              const isSelected = selectedDriverId === id
+              return (
+                <div 
+                  key={id}
+                  onClick={() => setSelectedDriverId(id)}
+                  className={`flex items-center gap-3 p-3.5 px-4 cursor-pointer transition-all border-b border-white/5 ${
+                    isSelected 
+                      ? 'bg-blue-600/15 border-l-2 border-l-blue-500' 
+                      : 'hover:bg-white/5 border-l-2 border-l-transparent'
+                  }`}
+                >
+                  <div className="relative shrink-0">
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm ${
+                      isSelected ? 'bg-gradient-to-br from-blue-500 to-indigo-600' : 'bg-slate-700'
+                    }`}>
+                      {name.charAt(0)}
                     </div>
-                 ))
-            ) : (
-                contacts.map(c => (
-                    <div 
-                        key={c.driver_id}
-                        onClick={() => setSelectedDriverId(c.driver_id)}
-                        className={`flex items-center gap-3 p-4 cursor-pointer hover:bg-white/5 transition-colors border-b border-white/5 ${selectedDriverId === c.driver_id ? 'bg-blue-900/20' : ''}`}
-                    >
-                         <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold">
-                            {c.driver_name?.charAt(0)}
-                         </div>
-                         <div className="flex-1 min-w-0">
-                            <div className="flex justify-between items-center">
-                                <p className="text-white font-medium truncate">{c.driver_name}</p>
-                                {c.unread > 0 && <span className="flex h-5 w-5 items-center justify-center rounded-full bg-blue-500 text-[10px] text-white">{c.unread}</span>}
-                            </div>
-                            <p className="text-xs text-slate-500 truncate">{c.last_message}</p>
-                         </div>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex justify-between items-center">
+                      <p className={`font-medium text-sm truncate ${isSelected ? 'text-white' : 'text-slate-300'}`}>{name}</p>
+                      {c.updated_at && (
+                        <span className="text-[10px] text-slate-600 shrink-0 ml-2">
+                          {formatTime(c.updated_at)}
+                        </span>
+                      )}
                     </div>
-                ))
-            )}
+                    <div className="flex justify-between items-center mt-0.5">
+                      <p className="text-xs text-slate-500 truncate pr-2">{c.last_message || 'เริ่มแชทเลย'}</p>
+                      {(c.unread || 0) > 0 && (
+                        <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-blue-500 text-[10px] text-white font-medium px-1 shrink-0">
+                          {c.unread}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )
+            })
+          )}
         </div>
       </div>
 
       {/* Chat Area */}
-      <div className="lg:col-span-2 border border-white/10 rounded-xl bg-slate-900/50 overflow-hidden flex flex-col">
-         {selectedDriverId ? (
-             <>
-                {/* Header */}
-                <div className="p-4 border-b border-white/10 flex justify-between items-center bg-slate-800/30">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold">
-                            {activeDriver?.driver_name?.charAt(0) || activeDriver?.Driver_Name?.charAt(0)}
-                        </div>
-                        <div>
-                            <h3 className="text-white font-bold">{activeDriver?.driver_name || activeDriver?.Driver_Name}</h3>
-                            <p className="text-xs text-emerald-400 flex items-center gap-1">● ออนไลน์</p>
-                        </div>
-                    </div>
-                    <div className="flex gap-2">
-                        <Button size="icon" variant="ghost"><Phone size={18} /></Button>
-                        <Button size="icon" variant="ghost"><MoreVertical size={18} /></Button>
-                    </div>
+      <div className="lg:col-span-2 bg-slate-950/50 flex flex-col">
+        {selectedDriverId && activeDriver ? (
+          <>
+            {/* Chat Header */}
+            <div className="p-4 border-b border-white/10 bg-slate-900/50">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold">
+                  {(activeDriver.driver_name || activeDriver.Driver_Name || '?').charAt(0)}
                 </div>
+                <div>
+                  <h3 className="text-white font-bold text-sm">{activeDriver.driver_name || activeDriver.Driver_Name}</h3>
+                  <p className="text-[10px] text-slate-500">ID: {selectedDriverId}</p>
+                </div>
+              </div>
+            </div>
 
-                {/* Messages */}
-                <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                    {messages.map((msg) => (
-                        <div key={msg.id} className={`flex ${msg.sender === 'admin' ? 'justify-end' : 'justify-start'}`}>
-                            <div className={`max-w-[70%] rounded-2xl p-3 px-4 ${
-                                msg.sender === 'admin' 
-                                ? 'bg-blue-600 text-white rounded-br-none' 
-                                : 'bg-slate-700 text-white rounded-bl-none'
+            {/* Messages */}
+            <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-4 space-y-1">
+              {messages.length === 0 ? (
+                <div className="text-center py-12 text-slate-600">
+                  <MessageSquare size={32} className="mx-auto mb-2 opacity-30" />
+                  <p className="text-sm">เริ่มสนทนากับ {activeDriver.driver_name || activeDriver.Driver_Name}</p>
+                </div>
+              ) : (
+                messageGroups.map((group, gi) => (
+                  <div key={gi}>
+                    {/* Date Separator */}
+                    <div className="flex items-center justify-center my-4">
+                      <span className="px-3 py-1 rounded-full bg-slate-800/80 text-[10px] text-slate-500">
+                        {formatDate(group.date)}
+                      </span>
+                    </div>
+                    
+                    {/* Messages in this date */}
+                    <div className="space-y-1.5">
+                      {group.messages.map((msg, mi) => {
+                        const isAdmin = msg.sender === 'admin'
+                        const showAvatar = !isAdmin && (mi === 0 || group.messages[mi-1]?.sender === 'admin')
+                        
+                        return (
+                          <div key={msg.id} className={`flex ${isAdmin ? 'justify-end' : 'justify-start'} items-end gap-2`}>
+                            {!isAdmin && (
+                              <div className="w-6 h-6 shrink-0">
+                                {showAvatar && (
+                                  <div className="w-6 h-6 rounded-full bg-slate-700 flex items-center justify-center text-[10px] text-white">
+                                    {(msg.driver_name || '?').charAt(0)}
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                            <div className={`max-w-[65%] rounded-2xl py-2 px-3.5 ${
+                              isAdmin 
+                                ? 'bg-blue-600 text-white rounded-br-sm' 
+                                : 'bg-slate-800 text-slate-200 rounded-bl-sm'
                             }`}>
-                                <p>{msg.message}</p>
-                                <p className="text-[10px] opacity-70 mt-1 text-right">
-                                    {new Date(msg.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                                </p>
+                              <p className="text-sm leading-relaxed break-words">{msg.message}</p>
+                              <div className={`flex items-center gap-1 mt-0.5 ${isAdmin ? 'justify-end' : ''}`}>
+                                <span className="text-[10px] opacity-50">
+                                  {formatTime(msg.created_at)}
+                                </span>
+                                {isAdmin && (
+                                  msg.read 
+                                    ? <CheckCheck size={12} className="opacity-70 text-cyan-300" />
+                                    : <Check size={12} className="opacity-40" />
+                                )}
+                              </div>
                             </div>
-                        </div>
-                    ))}
-                    <div ref={messagesEndRef} />
-                </div>
-
-                {/* Input */}
-                <div className="p-4 border-t border-white/10 bg-slate-800/30">
-                    <div className="flex gap-2">
-                        <Input 
-                            value={inputMessage}
-                            onChange={(e) => setInputMessage(e.target.value)}
-                            onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
-                            placeholder="พิมพ์ข้อความ..." 
-                            className="bg-slate-900 border-slate-700" 
-                        />
-                        <Button onClick={sendMessage} className="bg-blue-600 hover:bg-blue-500">
-                            <Send size={18} />
-                        </Button>
+                          </div>
+                        )
+                      })}
                     </div>
-                </div>
-             </>
-         ) : (
-             <div className="flex-1 flex flex-col items-center justify-center text-slate-500">
-                 <MessageSquare size={48} className="mb-4 opacity-50" />
-                 <p>เลือกคนขับเพื่อเริ่มสนทนา</p>
-             </div>
-         )}
+                  </div>
+                ))
+              )}
+              <div ref={messagesEndRef} />
+            </div>
+
+            {/* Message Input */}
+            <div className="p-3 border-t border-white/10 bg-slate-900/30">
+              <div className="flex gap-2">
+                <Input 
+                  value={inputMessage}
+                  onChange={(e) => setInputMessage(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault()
+                      sendMessage()
+                    }
+                  }}
+                  placeholder="พิมพ์ข้อความ..." 
+                  className="bg-slate-800/50 border-slate-700/50 focus:border-blue-500/50 h-10" 
+                  disabled={isSending}
+                />
+                <Button 
+                  onClick={sendMessage} 
+                  disabled={!inputMessage.trim() || isSending}
+                  className="bg-blue-600 hover:bg-blue-500 disabled:opacity-30 h-10 w-10 p-0 shrink-0"
+                >
+                  <Send size={16} />
+                </Button>
+              </div>
+            </div>
+          </>
+        ) : (
+          <div className="flex-1 flex flex-col items-center justify-center text-slate-600">
+            <div className="w-16 h-16 rounded-full bg-slate-800/50 flex items-center justify-center mb-4">
+              <MessageSquare size={28} className="opacity-40" />
+            </div>
+            <p className="text-sm font-medium">เลือกคนขับเพื่อเริ่มสนทนา</p>
+            <p className="text-xs mt-1 opacity-50">{filteredContacts.length} คนขับ</p>
+          </div>
+        )}
       </div>
     </div>
   )

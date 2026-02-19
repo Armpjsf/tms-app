@@ -8,10 +8,11 @@ import { CameraInput } from "@/components/mobile/camera-input"
 import { SignaturePad } from "@/components/mobile/signature-pad"
 import { submitJobPOD } from "@/lib/actions/pod-actions"
 import { getJobDetails } from "@/app/mobile/jobs/actions"
-import { Loader2, CheckCircle } from "lucide-react"
+import { Loader2, CheckCircle, BrainCircuit, AlertTriangle, ScanLine } from "lucide-react"
 import { PodReport } from "@/components/mobile/pod-report"
 import { Job } from "@/lib/supabase/jobs"
 import html2canvas from "html2canvas"
+import { analyzePODImage, AIAnalysisResult } from "@/lib/utils/ai-verification"
 
 export default function JobCompletePage() {
   const router = useRouter()
@@ -21,6 +22,10 @@ export default function JobCompletePage() {
   const [loading, setLoading] = useState(false)
   const [completed, setCompleted] = useState(false)
   
+  // AI Verification State
+  const [verifying, setVerifying] = useState(false)
+  const [verificationResult, setVerificationResult] = useState<AIAnalysisResult | null>(null)
+
   // Job Data for Report
   const [job, setJob] = useState<Job | null>(null)
   const reportRef = useRef<HTMLDivElement>(null)
@@ -30,6 +35,27 @@ export default function JobCompletePage() {
           getJobDetails(params.id).then(setJob)
       }
   }, [params.id])
+
+  // Trigger AI Verification when photo is added
+  useEffect(() => {
+      if (photos.length > 0) {
+          verifyPhoto(photos[0]) // Analyze the first photo as primary
+      } else {
+          setVerificationResult(null)
+      }
+  }, [photos])
+
+  const verifyPhoto = async (file: File) => {
+      setVerifying(true)
+      try {
+          const result = await analyzePODImage(file)
+          setVerificationResult(result)
+      } catch (error) {
+          console.error("AI Verification Failed", error)
+      } finally {
+          setVerifying(false)
+      }
+  }
 
   const handleSubmit = async () => {
     if (photos.length === 0 || !signature) return
@@ -81,9 +107,10 @@ export default function JobCompletePage() {
         } else {
           alert(result.error)
         }
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error("Submit Error:", error)
-        alert(`Error: ${error?.message || "Internal Server Error"}`)
+        const errorMessage = error instanceof Error ? error.message : "Internal Server Error"
+        alert(`Error: ${errorMessage}`)
     } finally {
         setLoading(false)
     }
@@ -127,6 +154,42 @@ export default function JobCompletePage() {
         <section>
             <h2 className="text-white font-medium mb-2">1. ถ่ายรูปสินค้า</h2>
             <CameraInput onImagesChange={setPhotos} maxImages={5} />
+            
+            {/* AI Verification Feedback */}
+            {photos.length > 0 && (
+                <div className="mt-3 bg-slate-900 border border-slate-800 rounded-lg p-3">
+                    {verifying ? (
+                        <div className="flex items-center gap-3 text-purple-400 animate-pulse">
+                            <ScanLine className="animate-spin-slow" size={20} />
+                            <span className="text-sm">กำลังตรวจสอบคุณภาพรูปภาพ (AI)...</span>
+                        </div>
+                    ) : verificationResult ? (
+                        <div>
+                             <div className="flex items-center justify-between mb-2">
+                                <div className="flex items-center gap-2">
+                                    <BrainCircuit size={16} className={verificationResult.isValid ? "text-emerald-400" : "text-amber-400"} />
+                                    <span className={`text-sm font-bold ${verificationResult.isValid ? "text-emerald-400" : "text-amber-400"}`}>
+                                        AI Score: {verificationResult.score}/100
+                                    </span>
+                                </div>
+                                {verificationResult.isValid && <CheckCircle size={16} className="text-emerald-500" />}
+                             </div>
+                             
+                             {!verificationResult.isValid && (
+                                <div className="space-y-1">
+                                    {verificationResult.issues.map((issue, i) => (
+                                        <div key={i} className="flex items-center gap-2 text-xs text-red-400">
+                                            <AlertTriangle size={12} />
+                                            {issue}
+                                        </div>
+                                    ))}
+                                    <p className="text-xs text-slate-500 mt-1 pl-5">แนะนำให้ถ่ายใหม่อีกครั้งเพื่อความชัดเจน</p>
+                                </div>
+                             )}
+                        </div>
+                    ) : null}
+                </div>
+            )}
         </section>
 
         <section>

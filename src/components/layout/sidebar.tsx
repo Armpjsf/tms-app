@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import Link from "next/link"
+import Image from "next/image"
 import { usePathname } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import { cn } from "@/lib/utils"
@@ -16,8 +17,8 @@ import {
   Fuel,
   BarChart3,
   Settings,
-  LogOut,
   ChevronLeft,
+  Activity,
   Users,
   CalendarDays,
   Package,
@@ -31,6 +32,7 @@ import {
 } from "lucide-react"
 
 import { SidebarProfile } from "./sidebar-profile"
+import { getUserRole } from "@/lib/permissions"
 
 interface NavItem {
   title: string
@@ -67,16 +69,18 @@ const navigation: NavGroup[] = [
   {
     title: "กองยาน",
     items: [
-      { title: "แจ้งซ่อม", href: "/maintenance", icon: <Wrench size={20} /> },
-      { title: "เติมน้ำมัน", href: "/fuel", icon: <Fuel size={20} /> },
       { title: "คนขับ", href: "/drivers", icon: <Users size={20} /> },
       { title: "รถ", href: "/vehicles", icon: <Truck size={20} /> },
+      { title: "แจ้งซ่อม", href: "/maintenance", icon: <Wrench size={20} /> },
+      { title: "เติมน้ำมัน", href: "/fuel", icon: <Fuel size={20} /> },
     ],
   },
   {
-    title: "รายงาน",
+    title: "ผู้บริหาร & รายงาน",
     items: [
-      { title: "Dashboard ผู้บริหาร", href: "/admin/analytics", icon: <PieChart size={20} /> },
+      { title: "Executive Dashboard", href: "/admin/analytics", icon: <PieChart size={20} /> },
+      { title: "Fleet & Efficiency", href: "/admin/vehicles", icon: <Activity size={20} /> },
+      { title: "ติดตามรายสาขา", href: "/admin/analytics/regional", icon: <MapPin size={20} /> },
       { title: "รายงานทั่วไป", href: "/reports", icon: <BarChart3 size={20} /> },
     ],
   },
@@ -106,6 +110,21 @@ interface SidebarProps {
 
 export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
   const pathname = usePathname()
+  const [isAdminUser, setIsAdminUser] = React.useState(false)
+
+  React.useEffect(() => {
+    async function checkAdmin() {
+        const role = await getUserRole()
+        setIsAdminUser(role === 1 || role === 2)
+    }
+    checkAdmin()
+  }, [])
+
+  const filteredNavigation = navigation.filter(group => {
+    if (group.title === "ผู้บริหาร & รายงาน" && !isAdminUser) return false
+    if (group.title === "ตั้งค่าระบบ" && !isAdminUser) return false
+    return true
+  })
 
   return (
     <motion.aside
@@ -129,9 +148,11 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
             >
               <div className="relative">
                 <div className="absolute inset-0 bg-blue-500 blur-lg opacity-50 rounded-full"></div>
-                <img 
+                <Image 
                     src="/logo.png" 
                     alt="LOGIS-PRO 360" 
+                    width={40}
+                    height={40}
                     className="relative h-10 w-auto object-contain drop-shadow-lg"
                 />
               </div>
@@ -156,7 +177,7 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
 
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto py-6 px-3 custom-scrollbar">
-        {navigation.map((group) => (
+        {filteredNavigation.map((group) => (
           <div key={group.title} className="mb-6">
             <AnimatePresence>
               {!collapsed && (

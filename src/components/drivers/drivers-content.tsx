@@ -7,7 +7,8 @@ import {
   Phone,
   Truck,
 } from "lucide-react"
-import { getAllDrivers, getDriverStats, getDriverScore } from "@/lib/supabase/drivers"
+import { getAllDrivers, getDriverStats, getDriverScore, getDriverComplianceStats, getDriverEfficiencySummary } from "@/lib/supabase/drivers"
+import { getDriverLeaderboard } from "@/lib/supabase/analytics"
 import { getAllVehicles } from "@/lib/supabase/vehicles"
 import { getAllSubcontractors } from "@/lib/supabase/subcontractors"
 import { DriverDialog } from "@/components/drivers/driver-dialog"
@@ -17,6 +18,7 @@ import { Branch } from "@/lib/supabase/branches"
 import { Pagination } from "@/components/ui/pagination"
 import { createBulkDrivers } from "@/app/drivers/actions"
 import { ExcelImport } from "@/components/ui/excel-import"
+import { DriverPerformanceSummary } from "@/components/analytics/driver-performance-summary"
 import { FileSpreadsheet } from "lucide-react"
 
 type Props = {
@@ -30,11 +32,14 @@ export async function DriversContent({ searchParams, branches = [], isSuperAdmin
   const query = (searchParams.q as string) || ''
   const limit = 12
 
-  const [{ data: drivers, count }, stats, vehicles, subcontractors] = await Promise.all([
+  const [{ data: drivers, count }, stats, vehicles, subcontractors, leaderboard, compliance, efficiency] = await Promise.all([
     getAllDrivers(page, limit, query),
     getDriverStats(),
     getAllVehicles(),
     getAllSubcontractors(),
+    getDriverLeaderboard(undefined, undefined), 
+    getDriverComplianceStats(),
+    getDriverEfficiencySummary()
   ])
 
   // Fetch scores for all drivers
@@ -43,8 +48,14 @@ export async function DriversContent({ searchParams, branches = [], isSuperAdmin
       return { ...driver, score }
   }))
 
-  const now = new Date()
-  const thirtyDaysFromNow = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+  // Pure date calculations for reference
+  const getReferenceDates = () => {
+    const d = new Date()
+    const future = new Date()
+    future.setDate(d.getDate() + 30)
+    return { now: d, thirtyDaysFromNow: future }
+  }
+  const { now, thirtyDaysFromNow } = getReferenceDates()
 
   return (
     <>
@@ -53,12 +64,12 @@ export async function DriversContent({ searchParams, branches = [], isSuperAdmin
         <div>
           <h1 className="text-3xl font-bold text-white mb-2 flex items-center gap-3">
             <Users className="text-blue-400" />
-            จัดการคนขับ
+            จัดการคนขับ {isSuperAdmin ? "(Super Admin)" : ""}
           </h1>
           <p className="text-slate-400">รายชื่อและข้อมูลคนขับรถทั้งหมด</p>
         </div>
 
-        <div className="flex gap-2">
+      <div className="flex gap-2">
             <ExcelImport 
                 trigger={
                     <Button variant="outline" className="gap-2 border-slate-700 hover:bg-slate-800">
@@ -74,20 +85,30 @@ export async function DriversContent({ searchParams, branches = [], isSuperAdmin
                 ]}
                 templateFilename="template_drivers.xlsx"
             />
-            <DriverDialog 
-            mode="create" 
-            vehicles={vehicles.data}
-            branches={branches}
-            subcontractors={subcontractors}
-            trigger={
-                <Button size="lg" className="gap-2 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700">
-                    <Plus size={20} />
-                    เพิ่มคนขับ
-                </Button>
-            }
-        />
+            {isSuperAdmin && (
+                <DriverDialog 
+                    mode="create" 
+                    vehicles={vehicles.data}
+                    branches={branches}
+                    subcontractors={subcontractors}
+                    trigger={
+                        <Button size="lg" className="gap-2 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700">
+                            <Plus size={20} />
+                            เพิ่มคนขับ
+                        </Button>
+                    }
+                />
+            )}
         </div>
       </div>
+
+      {isSuperAdmin && (
+        <DriverPerformanceSummary 
+          leaderboard={leaderboard} 
+          compliance={compliance} 
+          efficiency={efficiency} 
+        />
+      )}
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">

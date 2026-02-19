@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { CloudSync, RefreshCcw, CheckCircle2, XCircle, ArrowLeft, Save, Loader2, Key, Building2 } from "lucide-react"
-import { checkAccountingConnection, saveAccountingSettings } from "@/app/admin/settings/accounting-actions"
+import { checkAccountingConnection, saveAccountingSettings } from "@/app/settings/accounting/actions"
 import { getSetting } from "@/lib/supabase/system_settings"
 
 export default function AccountingSettingsPage() {

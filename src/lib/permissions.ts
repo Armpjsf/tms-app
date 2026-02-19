@@ -27,6 +27,11 @@ export async function isSuperAdmin() {
     return roleId === 1
 }
 
+export async function isAdmin() {
+    const roleId = await getUserRole()
+    return roleId === 1 || roleId === 2
+}
+
 export async function isCustomer() {
     const customerId = await getCustomerId()
     return !!customerId
