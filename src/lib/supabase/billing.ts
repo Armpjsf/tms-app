@@ -179,6 +179,23 @@ export async function createDriverPayment(
              throw updateError
         }
 
+        // 5. Automatic Sync to Accounting
+        try {
+            const paymentData = {
+                Driver_Payment_ID: paymentId,
+                Driver_Name: driverName,
+                Payment_Date: date,
+                Total_Amount: totalAmount
+            };
+            
+            // Trigger sync in background
+            accountingService.syncDriverPaymentToBill(paymentData, jobs || []).then(res => {
+                if (!res.success) console.error("Auto-sync to accounting (payout) failed:", res.message);
+            });
+        } catch (e) {
+            console.error("Error triggering auto-sync (payout):", e);
+        }
+
         return { success: true, id: paymentId }
 
     } catch {

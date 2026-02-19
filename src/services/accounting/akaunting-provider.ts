@@ -1,4 +1,4 @@
-import { AccountingProvider, AccountingInvoice } from "@/types/accounting";
+import { AccountingProvider, AccountingInvoice, AccountingBill } from "@/types/accounting";
 
 export class AkauntingProvider implements AccountingProvider {
     name = "Akaunting";
@@ -13,15 +13,6 @@ export class AkauntingProvider implements AccountingProvider {
     }
 
     private getHeaders() {
-        // Akaunting often uses Basic Auth or Bearer. 
-        // Based on user input "api key", we'll try Basic Auth username: api_key, password: (empty) or formatted.
-        // Or Bearer. 
-        // For now, let's assume the user string IS the auth header value or token.
-        // User gave: "api c0c2..." 
-        // Let's try sending it as Bearer first, or X-API-Key.
-        // Documentation says "Basic Auth".
-        // Let's assume the input is the token.
-        
         return {
             "Authorization": `Bearer ${this.apiKey}`,
             "Content-Type": "application/json",
@@ -30,6 +21,7 @@ export class AkauntingProvider implements AccountingProvider {
     }
 
     async isConnected(): Promise<boolean> {
+        if (!this.apiKey) return false;
         try {
             const response = await fetch(`${this.baseUrl}/companies`, {
                 headers: this.getHeaders()
@@ -41,16 +33,32 @@ export class AkauntingProvider implements AccountingProvider {
         }
     }
 
+    async findContact(name: string): Promise<{ id: string | number | null; type?: string }> {
+        try {
+            const url = `${this.baseUrl}/contacts?search=name:${encodeURIComponent(name)}`;
+            const response = await fetch(url, { headers: this.getHeaders() });
+            const data = await response.json();
+
+            if (data.data && data.data.length > 0) {
+                return { id: data.data[0].id, type: data.data[0].type };
+            }
+            return { id: null };
+        } catch (error) {
+            console.error(`Akaunting findContact failed for ${name}:`, error);
+            return { id: null };
+        }
+    }
+
     async createInvoice(invoice: AccountingInvoice): Promise<{ success: boolean; externalId?: string; message?: string }> {
         try {
-            // 1. We need a customer ID. In a real scenario, we'd search for the customer first.
-            // For now, we'll try to find or create, or use a default if fail.
-            // This is a simplified implementation.
-            
-            // Payload for Akaunting
+            // 1. Try to find the contact first
+            const contact = await this.findContact(invoice.customer.name);
+            const contactId = contact.id || 1; // Fallback to 1 if not found
+
+            // 2. Payload for Akaunting
             const payload = {
                 company_id: this.companyId,
-                contact_id: 1, // Default contact for testing/MVP. Real logic needs lookup.
+                contact_id: contactId,
                 invoice_number: invoice.referenceId,
                 invoiced_at: invoice.issueDate,
                 due_at: invoice.dueDate || invoice.issueDate,
@@ -59,7 +67,7 @@ export class AkauntingProvider implements AccountingProvider {
                     name: item.description,
                     quantity: item.quantity,
                     price: item.unitPrice,
-                    tax_id: item.vatRate ? 1 : null // Simplification
+                    tax_id: item.vatRate ? 1 : null
                 }))
             };
 
@@ -85,10 +93,68 @@ export class AkauntingProvider implements AccountingProvider {
             }
 
         } catch (error) {
-            return {
-                success: false,
-                message: `Network/Internal Error: ${error}`
+            return { success: false, message: `Network/Internal Error: ${error}` };
+        }
+    }
+
+    async createBill(bill: AccountingBill): Promise<{ success: boolean; externalId?: string; message?: string }> {
+        try {
+            // 1. Try to find the vendor (contact)
+            const contact = await this.findContact(bill.contactName);
+            const contactId = contact.id || 1; // Default vendor
+
+            // 2. Payload for Akaunting Bill
+            const payload = {
+                company_id: this.companyId,
+                contact_id: contactId,
+                bill_number: bill.referenceId,
+                billed_at: bill.issueDate,
+                due_at: bill.dueDate || bill.issueDate,
+                currency_code: "THB",
+                items: bill.items.map(item => ({
+                    name: item.description,
+                    quantity: item.quantity,
+                    price: item.unitPrice,
+                    tax_id: null // Usually no VAT for driver cost as individuals
+                }))
             };
+
+            const response = await fetch(`${this.baseUrl}/bills`, {
+                method: "POST",
+                headers: this.getHeaders(),
+                body: JSON.stringify(payload)
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                return {
+                    success: true,
+                    externalId: data.data?.id,
+                    message: "Bill (Payout) created in Akaunting"
+                };
+            } else {
+                return {
+                    success: false,
+                    message: `Akaunting Error: ${data.message || response.statusText}`
+                };
+            }
+        } catch (error) {
+            return { success: false, message: `Network/Internal Error: ${error}` };
+        }
+    }
+
+    async getPaymentStatus(externalId: string, type: 'invoice' | 'bill'): Promise<{ status: string }> {
+        try {
+            const endpoint = type === 'invoice' ? 'invoices' : 'bills';
+            const response = await fetch(`${this.baseUrl}/${endpoint}/${externalId}`, {
+                headers: this.getHeaders()
+            });
+            const data = await response.json();
+            return { status: data.data?.status || 'unknown' };
+        } catch (error) {
+            console.error(`Akaunting getPaymentStatus failed for ${externalId}:`, error);
+            return { status: 'error' };
         }
     }
 }
