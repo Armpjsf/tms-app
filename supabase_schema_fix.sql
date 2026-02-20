@@ -17,3 +17,8 @@ ALTER TABLE "Jobs_Main"
 ADD COLUMN IF NOT EXISTS "original_destinations_json" JSONB;
 ALTER TABLE "Jobs_Main"
 ADD COLUMN IF NOT EXISTS "extra_costs_json" JSONB;
+-- Add Weight and Volume columns for cargo tracking
+ALTER TABLE "Jobs_Main"
+ADD COLUMN IF NOT EXISTS "Weight_Kg" NUMERIC DEFAULT 0;
+ALTER TABLE "Jobs_Main"
+ADD COLUMN IF NOT EXISTS "Volume_Cbm" NUMERIC DEFAULT 0;

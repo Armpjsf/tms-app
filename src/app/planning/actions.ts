@@ -26,6 +26,8 @@ export type JobFormData = {
   extra_costs_json?: string
   Sub_ID?: string | null
   Show_Price_To_Driver?: boolean
+  Weight_Kg?: number
+  Volume_Cbm?: number
 }
 
 export async function createJob(data: JobFormData) {
@@ -112,6 +114,8 @@ function buildInsertPayload(data: JobFormData, driverName: string, subId: string
       extra_costs_json: parseIfString(data.extra_costs_json),
       Sub_ID: subId,
       Show_Price_To_Driver: data.Show_Price_To_Driver ?? true,
+      Weight_Kg: data.Weight_Kg || 0,
+      Volume_Cbm: data.Volume_Cbm || 0,
       Created_At: new Date().toISOString(),
   }
 }
@@ -143,6 +147,8 @@ export async function createBulkJobs(jobs: Partial<JobFormData>[]) {
       extra_costs_json: parseIfString(j.extra_costs_json),
       Sub_ID: j.Sub_ID || null,
       Show_Price_To_Driver: j.Show_Price_To_Driver ?? true,
+      Weight_Kg: j.Weight_Kg || 0,
+      Volume_Cbm: j.Volume_Cbm || 0,
       Created_At: new Date().toISOString(),
   })).filter(j => j.Customer_Name)
 
