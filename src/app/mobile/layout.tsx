@@ -15,7 +15,7 @@ export default async function MobileLayout({
       <LocationTracker driverId={session?.driverId} />
       <PermissionRequester />
       <main className="flex-1">{children}</main>
-      <BottomNav />
+      {session && <BottomNav />}
     </div>
   )
 }

@@ -12,7 +12,7 @@ export const dynamic = 'force-dynamic'
 
 export default async function MobileDashboard() {
   const session = await getDriverSession()
-  if (!session) redirect("/login")
+  if (!session) redirect("/mobile/login")
 
   const { stats, currentJob, gamification } = await getDriverDashboardStats(session.driverId) || { 
       stats: { total: 0, completed: 0 }, 
