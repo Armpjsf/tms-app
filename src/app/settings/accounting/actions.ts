@@ -2,8 +2,14 @@
 
 import { accountingService } from "@/services/accounting"
 import { getBillingNoteByIdWithJobs, getDriverPaymentByIdWithJobs } from "@/lib/supabase/billing"
+import { hasPermission } from "@/lib/permissions"
+import { saveServerSetting } from "@/lib/supabase/system_settings_server";
+import { Job } from "@/types/database";
 
 export async function checkAccountingConnection() {
+    if (!await hasPermission('settings_company')) {
+        return { success: false, connected: false, message: "Permission denied (Required: settings_company)" };
+    }
     try {
         const result = await accountingService.isConnected();
         return { 
@@ -19,6 +25,9 @@ export async function checkAccountingConnection() {
 }
 
 export async function manualSyncInvoice(noteId: string) {
+    if (!await hasPermission('billing_create')) {
+        return { success: false, message: "Permission denied (Required: billing_create)" };
+    }
     try {
         // 1. Get full data for the billing note
         const data = await getBillingNoteByIdWithJobs(noteId);
@@ -34,6 +43,9 @@ export async function manualSyncInvoice(noteId: string) {
 }
 
 export async function manualSyncBill(paymentId: string) {
+    if (!await hasPermission('billing_create')) {
+        return { success: false, message: "Permission denied (Required: billing_create)" };
+    }
     try {
         // 1. Get full data for the driver payment
         const data = await getDriverPaymentByIdWithJobs(paymentId);
@@ -48,10 +60,10 @@ export async function manualSyncBill(paymentId: string) {
     }
 }
 
-import { saveServerSetting } from "@/lib/supabase/system_settings_server";
-import { Job } from "@/types/database";
-
 export async function saveAccountingSettings(apiKey: string, companyId: string, userEmail: string = '') {
+    if (!await hasPermission('settings_company')) {
+        return { success: false, message: "Permission denied (Required: settings_company)" };
+    }
     try {
         await saveServerSetting('akaunting_api_key', apiKey, 'Akaunting API Key');
         await saveServerSetting('akaunting_company_id', companyId, 'Akaunting Company ID');
@@ -65,6 +77,9 @@ export async function saveAccountingSettings(apiKey: string, companyId: string, 
 }
 
 export async function syncJobToAccounting(job: Job) {
+    if (!await hasPermission('billing_create')) {
+        return { success: false, message: "Permission denied (Required: billing_create)" };
+    }
     try {
         const result = await accountingService.syncJobToInvoice(job);
         return result;

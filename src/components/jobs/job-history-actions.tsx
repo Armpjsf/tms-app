@@ -16,9 +16,11 @@ type Props = {
   vehicles: any[]
   customers: any[]
   routes: any[]
+  canViewPrice?: boolean
+  canDelete?: boolean
 }
 
-export function JobHistoryActions({ job, drivers, vehicles, customers, routes }: Props) {
+export function JobHistoryActions({ job, drivers, vehicles, customers, routes, canViewPrice = true, canDelete = true }: Props) {
   const [open, setOpen] = useState(false)
   const [viewPod, setViewPod] = useState(false)
   const [syncing, setSyncing] = useState(false)
@@ -46,7 +48,7 @@ export function JobHistoryActions({ job, drivers, vehicles, customers, routes }:
       <Button 
         variant="ghost" 
         size="sm" 
-        className="h-8 w-8 p-0 text-slate-400 hover:text-white"
+        className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
         onClick={() => setOpen(true)}
       >
         <ExternalLink className="h-4 w-4" />
@@ -56,7 +58,7 @@ export function JobHistoryActions({ job, drivers, vehicles, customers, routes }:
           <Button 
             variant="ghost" 
             size="sm" 
-            className="h-8 w-8 p-0 text-blue-400 hover:text-blue-300 hover:bg-blue-500/10"
+            className="h-8 w-8 p-0 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-blue-500/10"
             onClick={() => setViewPod(true)}
             title="ดูรูปใบงาน"
           >
@@ -64,16 +66,18 @@ export function JobHistoryActions({ job, drivers, vehicles, customers, routes }:
           </Button>
       )}
 
+      {canViewPrice && (
       <Button
         variant="ghost" 
         size="sm" 
-        className="h-8 w-8 p-0 text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10"
+        className="h-8 w-8 p-0 text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 hover:bg-emerald-500/10"
         onClick={handleSyncToAccounting}
         disabled={syncing}
         title="ส่งเข้าบัญชี"
       >
         <Banknote className={`h-4 w-4 ${syncing ? 'animate-pulse' : ''}`} />
       </Button>
+      )}
 
       <JobDialog
         mode="edit"
@@ -84,6 +88,8 @@ export function JobHistoryActions({ job, drivers, vehicles, customers, routes }:
         vehicles={vehicles}
         customers={customers}
         routes={routes}
+        canViewPrice={canViewPrice}
+        canDelete={canDelete}
       />
 
       <PODDialog 

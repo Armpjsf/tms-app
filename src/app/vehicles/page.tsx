@@ -61,8 +61,8 @@ export default async function VehiclesPage(props: Props) {
                 title="นำเข้าข้อมูลรถ"
                 onImport={createBulkVehicles}
                 templateData={[
-                    { vehicle_plate: "1กข-1234", vehicle_type: "4-Wheel", brand: "Toyota", model: "Revo" },
-                    { vehicle_plate: "2กข-5678", vehicle_type: "6-Wheel", brand: "Isuzu", model: "Elf" }
+                    { vehicle_plate: "1กข-1234", vehicle_type: "4-Wheel", brand: "Toyota", model: "Revo", active_status: "Active", current_mileage: 50000, next_service_mileage: 60000 },
+                    { vehicle_plate: "2กข-5678", vehicle_type: "6-Wheel", brand: "Isuzu", model: "Elf", active_status: "Maintenance", current_mileage: 120000, next_service_mileage: 125000 }
                 ]}
                 templateFilename="template_vehicles.xlsx"
             />

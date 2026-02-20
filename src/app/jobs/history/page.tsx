@@ -23,7 +23,8 @@ import { getAllJobs } from "@/lib/supabase/jobs"
 import { getJobCreationData } from "@/app/planning/actions"
 import { ExcelExport } from "@/components/ui/excel-export"
 import { JobHistoryActions } from "@/components/jobs/job-history-actions"
-import { isCustomer } from "@/lib/permissions"
+
+import { isCustomer, hasPermission } from "@/lib/permissions"
 
 type Props = {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
@@ -40,9 +41,12 @@ export default async function JobHistoryPage(props: Props) {
   const limit = 25
 
   // Fetch jobs and creation data for dialog
-  const [jobsResult, creationData] = await Promise.all([
+  const [jobsResult, creationData, canViewPrice, canDelete, canExport] = await Promise.all([
     getAllJobs(page, limit, query, status),
-    getJobCreationData()
+    getJobCreationData(),
+    hasPermission('job_price_view'),
+    hasPermission('job_delete'),
+    hasPermission('job_export')
   ])
 
   const { data: jobs, count } = jobsResult
@@ -68,67 +72,69 @@ export default async function JobHistoryPage(props: Props) {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
         <div className="flex items-center gap-4">
           <Link href="/planning">
-            <Button variant="outline" size="icon" className="border-slate-700 bg-slate-900">
-              <ArrowLeft className="h-5 w-5 text-slate-400" />
+            <Button variant="outline" size="icon" className="border-border bg-card hover:bg-muted">
+              <ArrowLeft className="h-5 w-5 text-muted-foreground" />
             </Button>
           </Link>
           <div>
-            <h1 className="text-2xl font-bold text-white flex items-center gap-3">
-              <History className="text-purple-400" />
+            <h1 className="text-2xl font-bold text-foreground flex items-center gap-3">
+              <History className="text-primary" />
               ประวัติงาน
             </h1>
-            <p className="text-sm text-slate-400 mt-1">ประวัติงานทั้งหมดที่ผ่านมา</p>
+            <p className="text-sm text-muted-foreground mt-1">ประวัติงานทั้งหมดที่ผ่านมา</p>
           </div>
         </div>
         <div className="flex gap-2">
+           {canExport && (
            <ExcelExport 
               data={historyJobs} 
               filename={`job_history_${new Date().toISOString().split('T')[0]}`}
               title="ประวัติงาน"
               trigger={
-                <Button variant="outline" className="border-slate-700 bg-slate-900 hover:bg-slate-800 text-slate-300">
+                <Button variant="outline" className="border-border bg-card hover:bg-muted text-muted-foreground hover:text-foreground">
                     <Download className="w-4 h-4 mr-2" /> Export Excel
                 </Button>
               }
            />
+           )}
         </div>
       </div>
 
       {/* Filters */}
-      <Card className="bg-slate-900/50 border-slate-800 mb-6">
+      <Card className="bg-card border-border mb-6">
         <CardContent className="p-4">
           <form className="grid grid-cols-1 md:grid-cols-5 gap-4">
             <div className="md:col-span-2">
               <SearchInput placeholder="ค้นหา Job ID, ลูกค้า, เส้นทาง..." />
             </div>
             <div className="space-y-2">
-              <Label className="text-slate-400 text-sm flex items-center gap-1">
+              <Label className="text-muted-foreground text-sm flex items-center gap-1">
                 <CalendarDays className="w-3 h-3" /> วันที่เริ่มต้น
               </Label>
               <Input
                 type="date"
                 defaultValue={dateFrom}
                 name="from"
-                className="bg-slate-800 border-slate-700 text-white"
+                className="bg-background border-input text-foreground"
               />
             </div>
             <div className="space-y-2">
-              <Label className="text-slate-400 text-sm">วันที่สิ้นสุด</Label>
+              <Label className="text-muted-foreground text-sm">วันที่สิ้นสุด</Label>
               <Input
                 type="date"
                 defaultValue={dateTo}
                 name="to"
-                className="bg-slate-800 border-slate-700 text-white"
+                className="bg-background border-input text-foreground"
               />
             </div>
             <div className="space-y-2">
-              <Label className="text-slate-400 text-sm flex items-center gap-1">
+              <Label className="text-muted-foreground text-sm flex items-center gap-1">
                 <Filter className="w-3 h-3" /> สถานะ
               </Label>
               <select
                 name="status"
                 defaultValue={status}
-                className="w-full h-10 px-3 rounded-md bg-slate-800 border border-slate-700 text-white"
+                className="w-full h-10 px-3 rounded-md bg-background border border-input text-foreground"
               >
                 <option value="">ทั้งหมด</option>
                 <option value="New">ใหม่</option>
@@ -148,34 +154,34 @@ export default async function JobHistoryPage(props: Props) {
 
       {/* Summary Stats (Compact) */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-slate-900/50 border border-slate-800 rounded-lg p-3 flex items-center justify-between">
-            <span className="text-sm text-slate-400">ทั้งหมด</span>
-            <span className="text-lg font-bold text-white">{count || 0}</span>
+        <div className="bg-card border border-border rounded-lg p-3 flex items-center justify-between">
+            <span className="text-sm text-muted-foreground">ทั้งหมด</span>
+            <span className="text-lg font-bold text-foreground">{count || 0}</span>
         </div>
         <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-3 flex items-center justify-between">
-            <span className="text-sm text-emerald-400/80">สำเร็จ</span>
-            <span className="text-lg font-bold text-emerald-400">
+            <span className="text-sm text-emerald-600 dark:text-emerald-400/80">สำเร็จ</span>
+            <span className="text-lg font-bold text-emerald-700 dark:text-emerald-400">
                {jobs.filter(j => j.Job_Status === 'Complete' || j.Job_Status === 'Delivered').length}
             </span>
         </div>
         <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 flex items-center justify-between">
-            <span className="text-sm text-red-400/80">ล้มเหลว</span>
-            <span className="text-lg font-bold text-red-400">
+            <span className="text-sm text-red-600 dark:text-red-400/80">ล้มเหลว</span>
+            <span className="text-lg font-bold text-red-700 dark:text-red-400">
                {jobs.filter(j => j.Job_Status === 'Failed').length}
             </span>
         </div>
         <div className="bg-slate-500/10 border border-slate-500/20 rounded-lg p-3 flex items-center justify-between">
-            <span className="text-sm text-slate-400/80">ยกเลิก</span>
-            <span className="text-lg font-bold text-slate-400">
+            <span className="text-sm text-slate-600 dark:text-slate-400/80">ยกเลิก</span>
+            <span className="text-lg font-bold text-slate-700 dark:text-slate-400">
                {jobs.filter(j => j.Job_Status === 'Cancelled').length}
             </span>
         </div>
       </div>
 
       {/* Table */}
-      <Card className="bg-slate-900/50 border-slate-800">
+      <Card className="bg-card border-border">
         <CardHeader className="pb-0">
-          <CardTitle className="text-white text-sm font-medium">รายการงาน</CardTitle>
+          <CardTitle className="text-foreground text-sm font-medium">รายการงาน</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           {historyJobs.length === 0 ? (
@@ -186,50 +192,62 @@ export default async function JobHistoryPage(props: Props) {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-slate-800">
-                    <th className="text-left p-4 text-xs font-medium text-slate-400 uppercase">Job ID</th>
-                    <th className="text-left p-4 text-xs font-medium text-slate-400 uppercase">วันที่</th>
-                    <th className="text-left p-4 text-xs font-medium text-slate-400 uppercase">ลูกค้า</th>
-                    <th className="text-left p-4 text-xs font-medium text-slate-400 uppercase">เส้นทาง</th>
-                    <th className="text-left p-4 text-xs font-medium text-slate-400 uppercase">คนขับ</th>
-                    <th className="text-left p-4 text-xs font-medium text-slate-400 uppercase">ทะเบียน</th>
-                    <th className="text-left p-4 text-xs font-medium text-slate-400 uppercase">สถานะ</th>
-                    <th className="text-right p-4 text-xs font-medium text-slate-400 uppercase">Actions</th>
+                  <tr className="border-b border-border">
+                    <th className="text-left p-4 text-xs font-medium text-muted-foreground uppercase">Job ID</th>
+                    <th className="text-left p-4 text-xs font-medium text-muted-foreground uppercase">วันที่</th>
+                    <th className="text-left p-4 text-xs font-medium text-muted-foreground uppercase">ลูกค้า</th>
+                    <th className="text-left p-4 text-xs font-medium text-muted-foreground uppercase">เส้นทาง</th>
+                    <th className="text-left p-4 text-xs font-medium text-muted-foreground uppercase">คนขับ</th>
+                    <th className="text-left p-4 text-xs font-medium text-muted-foreground uppercase">ทะเบียน</th>
+                    {canViewPrice && <th className="text-right p-4 text-xs font-medium text-emerald-600 dark:text-emerald-400 uppercase">ราคาแอร์</th>}
+                    {canViewPrice && <th className="text-right p-4 text-xs font-medium text-red-600 dark:text-red-400 uppercase">ต้นทุนรถ</th>}
+                    <th className="text-left p-4 text-xs font-medium text-muted-foreground uppercase">สถานะ</th>
+                    <th className="text-right p-4 text-xs font-medium text-muted-foreground uppercase">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {historyJobs.map((job) => (
                     <tr 
                       key={job.Job_ID} 
-                      className="border-b border-slate-800/50 hover:bg-slate-800/30 transition-colors"
+                      className="border-b border-border hover:bg-muted/50 transition-colors"
                     >
                       <td className="p-4">
-                        <span className="text-purple-400 font-medium text-sm">{job.Job_ID}</span>
+                        <span className="text-primary font-medium text-sm">{job.Job_ID}</span>
                       </td>
                       <td className="p-4">
-                        <div className="flex items-center gap-2 text-sm text-slate-300">
-                          <Clock size={14} className="text-slate-500" />
+                        <div className="flex items-center gap-2 text-sm text-foreground">
+                          <Clock size={14} className="text-muted-foreground" />
                           {job.Plan_Date || "-"}
                         </div>
                       </td>
                       <td className="p-4">
-                        <p className="text-white font-medium text-sm">{job.Customer_Name || "-"}</p>
+                        <p className="text-foreground font-medium text-sm">{job.Customer_Name || "-"}</p>
                       </td>
                       <td className="p-4">
-                        <div className="flex items-center gap-1 text-sm text-slate-300">
-                          <MapPin size={14} className="text-slate-500" />
+                        <div className="flex items-center gap-1 text-sm text-foreground">
+                          <MapPin size={14} className="text-muted-foreground" />
                           {job.Route_Name || `${job.Origin_Location || "-"} → ${job.Dest_Location || "-"}`}
                         </div>
                       </td>
-                      <td className="p-4 text-slate-300 text-sm">
+                      <td className="p-4 text-foreground text-sm">
                         {job.Driver_Name || "-"}
                       </td>
-                      <td className="p-4 text-slate-400 text-sm">
+                      <td className="p-4 text-muted-foreground text-sm">
                         {job.Vehicle_Plate || "-"}
                       </td>
+                      {canViewPrice && (
+                        <td className="p-4 text-right overflow-hidden">
+                            <div className="font-medium text-emerald-600 dark:text-emerald-400 text-sm">{job.Price_Cust_Total?.toLocaleString() || '-'}</div>
+                        </td>
+                      )}
+                      {canViewPrice && (
+                        <td className="p-4 text-right overflow-hidden">
+                            <div className="text-muted-foreground text-sm">{job.Cost_Driver_Total?.toLocaleString() || '-'}</div>
+                        </td>
+                      )}
                       <td className="p-4">
                         <span className={`flex items-center gap-1 w-fit px-2 py-0.5 rounded-full text-xs font-medium ${
-                          statusConfig[job.Job_Status]?.color || 'text-slate-400 bg-slate-500/20'
+                          statusConfig[job.Job_Status]?.color || 'text-muted-foreground bg-muted'
                         }`}>
                           {statusConfig[job.Job_Status]?.icon}
                           {statusConfig[job.Job_Status]?.label || job.Job_Status}
@@ -243,6 +261,8 @@ export default async function JobHistoryPage(props: Props) {
                                   vehicles={vehicles}
                                   customers={customers}
                                   routes={routes}
+                                  canViewPrice={canViewPrice}
+                                  canDelete={canDelete}
                               />
                           )}
                       </td>
@@ -253,7 +273,7 @@ export default async function JobHistoryPage(props: Props) {
             </div>
           )}
           
-          <div className="p-4 border-t border-slate-800">
+          <div className="p-4 border-t border-border">
              <Pagination totalItems={count || 0} limit={limit} />
           </div>
         </CardContent>

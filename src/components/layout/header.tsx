@@ -20,23 +20,31 @@ interface HeaderProps {
 
 export function Header({ sidebarCollapsed = false }: HeaderProps) {
   const { selectedBranch, setSelectedBranch, branches, isAdmin } = useBranch()
-  const [isDark, setIsDark] = useState(() => {
-    if (typeof window !== 'undefined') {
-        const stored = localStorage.getItem('theme')
-        return stored === 'dark' || (!stored && window.matchMedia('(prefers-color-scheme: dark)').matches)
-    }
-    return true
-  })
-
+  const [mounted, setMounted] = useState(false)
+  const [isDark, setIsDark] = useState(false)
 
   useEffect(() => {
+    setMounted(true)
+    const stored = localStorage.getItem('theme')
+    const dark = stored === 'dark' || (!stored && window.matchMedia('(prefers-color-scheme: dark)').matches)
+    setIsDark(dark)
+    
+    if (dark) {
+        document.documentElement.classList.add('dark')
+    } else {
+        document.documentElement.classList.remove('dark')
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!mounted) return
     // Sync theme class
     if (isDark) {
         document.documentElement.classList.add('dark')
     } else {
         document.documentElement.classList.remove('dark')
     }
-  }, [isDark])
+  }, [isDark, mounted])
 
   const toggleTheme = () => {
     const newIsDark = !isDark
@@ -110,7 +118,7 @@ export function Header({ sidebarCollapsed = false }: HeaderProps) {
           onClick={toggleTheme}
           className="p-2 rounded-xl bg-muted/50 hover:bg-muted text-muted-foreground hover:text-foreground transition-all"
         >
-          {isDark ? <Sun size={20} /> : <Moon size={20} />}
+          {mounted ? (isDark ? <Sun size={20} /> : <Moon size={20} />) : <div className="w-5 h-5" />}
         </motion.button>
 
         {/* Notifications */}

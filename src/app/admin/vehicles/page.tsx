@@ -12,7 +12,7 @@ import { DriverLeaderboard } from "@/components/analytics/driver-leaderboard"
 import { SubcontractorPerformance } from "@/components/analytics/subcontractor-performance"
 import { Truck, Users, Fuel, TrendingUp, ArrowLeft, Activity } from "lucide-react"
 import { MonthFilter } from "@/components/analytics/month-filter"
-import { BranchFilter } from "@/components/dashboard/branch-filter"
+
 import { isSuperAdmin } from "@/lib/permissions"
 
 export default async function FleetDashboardPage(props: { searchParams: Promise<{ [key: string]: string | undefined }> }) {
@@ -45,7 +45,7 @@ export default async function FleetDashboardPage(props: { searchParams: Promise<
         </div>
 
         <div className="flex items-center gap-3 bg-slate-900 border border-slate-800 p-2 rounded-xl">
-            <BranchFilter isSuperAdmin={superAdmin} />
+            {/* Branch Filter removed (Global Header) */}
             <MonthFilter />
         </div>
       </div>

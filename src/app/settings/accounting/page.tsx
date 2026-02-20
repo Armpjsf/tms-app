@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label"
 import { CloudSync, RefreshCcw, CheckCircle2, XCircle, ArrowLeft, Save, Loader2, Key, Building2 } from "lucide-react"
 import { checkAccountingConnection, saveAccountingSettings } from "@/app/settings/accounting/actions"
 import { getSetting } from "@/lib/supabase/system_settings"
+import { hasPermission } from "@/lib/permissions"
 
 export default function AccountingSettingsPage() {
   const router = useRouter()
@@ -22,9 +23,23 @@ export default function AccountingSettingsPage() {
   const [companyId, setCompanyId] = useState("1")
   const [userEmail, setUserEmail] = useState("")
   const [loading, setLoading] = useState(true)
+  const [canManage, setCanManage] = useState(false)
 
   useEffect(() => {
     async function loadSettings() {
+      // Check permissions
+      const [viewAllowed, manageAllowed] = await Promise.all([
+        hasPermission('billing_view'),
+        hasPermission('settings_company')
+      ])
+
+      if (!viewAllowed && !manageAllowed) {
+        router.push('/')
+        return
+      }
+
+      setCanManage(manageAllowed)
+
       const savedKey = await getSetting('akaunting_api_key', "")
       const savedCompany = await getSetting('akaunting_company_id', "1")
       const savedEmail = await getSetting('akaunting_user_email', "")
@@ -37,6 +52,7 @@ export default function AccountingSettingsPage() {
   }, [])
 
   const handleSaveSettings = async () => {
+    if (!canManage) return
     setSaving(true)
     const result = await saveAccountingSettings(apiKey, companyId, userEmail)
     setSaving(false)
@@ -109,6 +125,7 @@ export default function AccountingSettingsPage() {
                         value={apiKey}
                         onChange={(e) => setApiKey(e.target.value)}
                         className="bg-muted border-border text-foreground"
+                        disabled={!canManage}
                     />
                     <p className="text-[10px] text-muted-foreground">หาได้จากหน้า User Profile &gt; API Token ใน Akaunting</p>
                 </div>
@@ -122,6 +139,7 @@ export default function AccountingSettingsPage() {
                         value={userEmail}
                         onChange={(e) => setUserEmail(e.target.value)}
                         className="bg-muted border-border text-foreground"
+                        disabled={!canManage}
                     />
                     <p className="text-[10px] text-muted-foreground">ใช้อีเมลเดียวกับที่ใช้ล็อกอิน Akaunting (จำเป็นสำหรับบางแผนการใช้งาน)</p>
                 </div>
@@ -136,10 +154,12 @@ export default function AccountingSettingsPage() {
                         value={companyId}
                         onChange={(e) => setCompanyId(e.target.value)}
                         className="bg-muted border-border text-foreground max-w-[150px]"
+                        disabled={!canManage}
                     />
                     <p className="text-[10px] text-muted-foreground">ปกติจะเป็น 1 หากคุณมีบริษัทเดียวในระบบ</p>
                 </div>
 
+                {canManage && (
                 <div className="pt-2">
                     <Button 
                         onClick={handleSaveSettings} 
@@ -150,6 +170,7 @@ export default function AccountingSettingsPage() {
                         บันทึกการตั้งค่า
                     </Button>
                 </div>
+                )}
             </CardContent>
         </Card>
 

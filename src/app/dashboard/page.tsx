@@ -1,4 +1,4 @@
-export const dynamic = 'force-dynamic'
+
 
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -15,18 +15,19 @@ import { getTodayJobStats, getWeeklyJobStats, getJobStatusDistribution, getToday
 import { createClient } from "@/utils/supabase/server"
 import { WeeklyShipmentChart } from "@/components/dashboard/charts/weekly-shipment-chart"
 import { JobStatusChart } from "@/components/dashboard/charts/job-status-chart"
-import { isSuperAdmin, isCustomer } from "@/lib/permissions"
-import { BranchFilter } from "@/components/dashboard/branch-filter"
+import { isCustomer } from "@/lib/permissions"
 import { getFinancialStats } from "@/lib/supabase/analytics"
+
+import { cookies } from "next/headers"
 
 export default async function DashboardPage(props: {
   searchParams: Promise<{ branch?: string }>
 }) {
   const searchParams = await props.searchParams
-  const branchId = searchParams?.branch
+  const cookieStore = await cookies()
+  const branchId = searchParams?.branch || cookieStore.get("selectedBranch")?.value || 'All'
   
   const customerMode = await isCustomer()
-  const superAdmin = await isSuperAdmin()
 
   // ดึงข้อมูลจาก Supabase (Pass branchId if SuperAdmin)
   const [jobStats, sosCount, weeklyStats, statusDist, financials, financialStats] = await Promise.all([
@@ -43,14 +44,14 @@ export default async function DashboardPage(props: {
       {/* Page Header */}
       <div className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
         <div>
-           <h1 className="text-3xl font-bold text-white mb-2">
+           <h1 className="text-3xl font-bold text-foreground mb-2">
             Operations Dashboard {branchId && branchId !== 'All' ? `(${branchId})` : ''}
            </h1>
-           <p className="text-slate-400">
+           <p className="text-muted-foreground">
              ยินดีต้อนรับ! นี่คือภาพรวมของระบบวันนี้
            </p>
         </div>
-        <BranchFilter isSuperAdmin={superAdmin} />
+        {/* Branch Filter removed (Available in Header) */}
       </div>
 
       {/* Metrics Grid (Consolidated 5 KPIs) */}
@@ -95,10 +96,10 @@ export default async function DashboardPage(props: {
 
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="bg-slate-900/50 border-slate-800 backdrop-blur-sm">
+        <Card className="bg-card border-border shadow-sm">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-white">
-              <Package size={20} className="text-blue-400" />
+            <CardTitle className="flex items-center gap-2 text-foreground">
+              <Package size={20} className="text-blue-500" />
               สถิติการจัดส่งรายสัปดาห์
             </CardTitle>
           </CardHeader>
@@ -107,10 +108,10 @@ export default async function DashboardPage(props: {
           </CardContent>
         </Card>
 
-        <Card className="bg-slate-900/50 border-slate-800 backdrop-blur-sm">
+        <Card className="bg-card border-border shadow-sm">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-white">
-              <CheckCircle2 size={20} className="text-emerald-400" />
+            <CardTitle className="flex items-center gap-2 text-foreground">
+              <CheckCircle2 size={20} className="text-emerald-500" />
               สัดส่วนสถานะงาน
             </CardTitle>
           </CardHeader>

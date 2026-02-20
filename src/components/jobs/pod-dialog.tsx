@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Image as ImageIcon, ExternalLink } from "lucide-react"
@@ -20,10 +20,10 @@ export function PODDialog({ open, onOpenChange, job }: PODDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-slate-900 border-slate-700 text-white">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-background border-border text-foreground">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <ImageIcon className="w-5 h-5 text-indigo-400" />
+            <ImageIcon className="w-5 h-5 text-primary" />
             หลักฐานการส่งสินค้า (POD) - {job.Job_ID}
           </DialogTitle>
         </DialogHeader>
@@ -31,13 +31,13 @@ export function PODDialog({ open, onOpenChange, job }: PODDialogProps) {
         <div className="space-y-6">
           {/* Photos Grid */}
           <div>
-            <h3 className="text-sm font-medium text-slate-400 mb-3">รูปภาพสินค้า / สถานที่ส่ง ({photos.length})</h3>
+            <h3 className="text-sm font-medium text-muted-foreground mb-3">รูปภาพสินค้า / สถานที่ส่ง ({photos.length})</h3>
             {photos.length > 0 ? (
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {photos.map((url: string, index: number) => (
                   <div 
                     key={index} 
-                    className="group relative aspect-square rounded-lg overflow-hidden border border-slate-700 bg-black/40 cursor-pointer hover:border-indigo-500 transition-all"
+                    className="group relative aspect-square rounded-lg overflow-hidden border border-border bg-muted cursor-pointer hover:border-primary transition-all"
                     onClick={() => window.open(url, '_blank')}
                   >
                     <Image 
@@ -53,7 +53,7 @@ export function PODDialog({ open, onOpenChange, job }: PODDialogProps) {
                 ))}
               </div>
             ) : (
-              <div className="text-center py-8 bg-slate-800/50 rounded-lg border border-dashed border-slate-700 text-slate-500">
+              <div className="text-center py-8 bg-muted/50 rounded-lg border border-dashed border-border text-muted-foreground">
                 ไม่มีรูปภาพ
               </div>
             )}
@@ -61,52 +61,52 @@ export function PODDialog({ open, onOpenChange, job }: PODDialogProps) {
 
           {/* Signature */}
           <div>
-             <h3 className="text-sm font-medium text-slate-400 mb-3">ลายเซ็นผู้รับ</h3>
+             <h3 className="text-sm font-medium text-muted-foreground mb-3">ลายเซ็นผู้รับ</h3>
              {signature ? (
-               <div className="relative h-40 w-full md:w-80 border border-slate-700 rounded-lg bg-white/5 mx-auto md:mx-0">
+               <div className="relative h-40 w-full md:w-80 border border-border rounded-lg bg-white/5 mx-auto md:mx-0">
                   <Image 
                       src={signature} 
                       alt="Signature" 
                       fill 
-                      className="object-contain p-4 invert" 
+                      className="object-contain p-4 invert dark:invert-0" 
                   />
                </div>
              ) : (
-                <div className="text-center py-8 bg-slate-800/50 rounded-lg border border-dashed border-slate-700 text-slate-500 w-full md:w-80">
+                <div className="text-center py-8 bg-muted/50 rounded-lg border border-dashed border-border text-muted-foreground w-full md:w-80">
                   ไม่มีลายเซ็น
                 </div>
              )}
           </div>
 
           {/* Metadata */}
-          <div className="grid grid-cols-2 gap-4 p-4 bg-slate-800/50 rounded-lg text-sm">
+          <div className="grid grid-cols-2 gap-4 p-4 bg-muted/50 rounded-lg text-sm">
              <div>
-                <p className="text-slate-500">ผู้ส่ง (Driver)</p>
-                <p className="text-white font-medium">{job.Driver_Name || '-'}</p>
+                <p className="text-muted-foreground">ผู้ส่ง (Driver)</p>
+                <p className="text-foreground font-medium">{job.Driver_Name || '-'}</p>
              </div>
              <div>
-                <p className="text-slate-500">ทะเบียนรถ</p>
-                <p className="text-white font-medium">{job.Vehicle_Plate || '-'}</p>
+                <p className="text-muted-foreground">ทะเบียนรถ</p>
+                <p className="text-foreground font-medium">{job.Vehicle_Plate || '-'}</p>
              </div>
              <div>
-                <p className="text-slate-500">เวลาส่ง (Delivery Date)</p>
-                <p className="text-white font-medium">
+                <p className="text-muted-foreground">เวลาส่ง (Delivery Date)</p>
+                <p className="text-foreground font-medium">
                     {job.Delivery_Date ? new Date(job.Delivery_Date).toLocaleString('th-TH') : '-'}
                 </p>
              </div>
              <div>
-                <p className="text-slate-500">สถานะ</p>
+                <p className="text-muted-foreground">สถานะ</p>
                 <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${
                     job.Job_Status === 'Completed' || job.Job_Status === 'Delivered' 
-                    ? 'bg-emerald-500/20 text-emerald-400' 
-                    : 'bg-slate-500/20 text-slate-400'
+                    ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400' 
+                    : 'bg-muted text-muted-foreground'
                 }`}>
                     {job.Job_Status}
                 </span>
              </div>
           </div>
           
-          <div className="flex justify-end pt-4 border-t border-slate-800">
+          <div className="flex justify-end pt-4 border-t border-border">
             <Button variant="secondary" onClick={() => onOpenChange(false)}>
                 ปิดหน้าต่าง
             </Button>

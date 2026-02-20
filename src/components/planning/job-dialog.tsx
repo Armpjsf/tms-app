@@ -56,6 +56,8 @@ type JobDialogProps = {
   trigger?: React.ReactNode
   open?: boolean
   onOpenChange?: (open: boolean) => void
+  canViewPrice?: boolean
+  canDelete?: boolean
 }
 
 // Common expense types
@@ -87,7 +89,9 @@ export function JobDialog({
   routes = [],
   trigger,
   open: controlledOpen,
-  onOpenChange: setControlledOpen
+  onOpenChange: setControlledOpen,
+  canViewPrice = true,
+  canDelete = true
 }: JobDialogProps) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
@@ -136,7 +140,7 @@ export function JobDialog({
     if (typeof val === 'string') {
       try {
         return JSON.parse(val)
-      } catch (e) {
+      } catch {
         return defaultVal
       }
     }
@@ -385,13 +389,13 @@ export function JobDialog({
     { id: 'info', label: 'ข้อมูลงาน', icon: <FileText className="w-4 h-4" /> },
     { id: 'location', label: 'สถานที่', icon: <MapPin className="w-4 h-4" /> },
     { id: 'assign', label: 'มอบหมาย', icon: <Truck className="w-4 h-4" /> },
-    { id: 'price', label: 'ราคา', icon: <Banknote className="w-4 h-4" /> },
+    ...(canViewPrice ? [{ id: 'price', label: 'ราคา', icon: <Banknote className="w-4 h-4" /> }] as const : []),
   ] as const
 
   return (
     <Dialog open={show} onOpenChange={setShow}>
       {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-slate-900/95 border-slate-700 text-white">
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-background border-border text-foreground">
         <DialogHeader>
           <DialogTitle className="text-xl">
             {mode === 'create' ? 'สร้างงานใหม่' : 'แก้ไขงาน'}
@@ -399,7 +403,7 @@ export function JobDialog({
         </DialogHeader>
 
         {/* Tabs */}
-        <div className="flex gap-1 p-1 bg-slate-800/50 rounded-lg mb-4">
+        <div className="flex gap-1 p-1 bg-muted/50 rounded-lg mb-4">
           {tabs.map(tab => (
             <button
               key={tab.id}
@@ -407,8 +411,8 @@ export function JobDialog({
               onClick={() => setActiveTab(tab.id)}
               className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                 activeTab === tab.id 
-                  ? 'bg-indigo-600 text-white' 
-                  : 'text-slate-400 hover:text-white hover:bg-slate-700'
+                  ? 'bg-primary text-primary-foreground' 
+                  : 'text-muted-foreground hover:text-foreground hover:bg-muted'
               }`}
             >
               {tab.icon}
@@ -427,15 +431,15 @@ export function JobDialog({
                   <Input
                     value={formData.Job_ID}
                     disabled
-                    className="bg-slate-800/50 border-slate-700 text-slate-400"
+                    className="bg-muted/50 border-input text-muted-foreground"
                   />
-                  <p className="text-xs text-slate-500">สร้างอัตโนมัติ</p>
+                  <p className="text-xs text-muted-foreground">สร้างอัตโนมัติ</p>
                   <Button
                     type="button"
                     variant="outline"
                     size="sm"
                     onClick={handleCopyTrackingLink}
-                    className="w-full mt-1 border-indigo-500/30 text-indigo-400 hover:bg-indigo-500/10"
+                    className="w-full mt-1 border-primary/30 text-primary hover:bg-primary/10"
                   >
                     {copied ? <Check className="w-3 h-3 mr-2" /> : <LinkIcon className="w-3 h-3 mr-2" />}
                     {copied ? 'คัดลอกแล้ว' : 'Copy Tracking Link'}
@@ -448,7 +452,7 @@ export function JobDialog({
                       value={formData.Zone} 
                       onValueChange={(val) => setFormData({ ...formData, Zone: val })}
                    >
-                    <SelectTrigger className="bg-slate-800 border-slate-700">
+                    <SelectTrigger className="bg-background border-input">
                         <SelectValue placeholder="เลือกโซน (Optional)" />
                     </SelectTrigger>
                     <SelectContent>
@@ -465,7 +469,7 @@ export function JobDialog({
                       value={formData.Job_Status} 
                       onValueChange={(val) => setFormData({ ...formData, Job_Status: val })}
                    >
-                    <SelectTrigger className="bg-slate-800 border-slate-700">
+                    <SelectTrigger className="bg-background border-input">
                         <SelectValue placeholder="เลือกสถานะ" />
                     </SelectTrigger>
                     <SelectContent>
@@ -488,7 +492,7 @@ export function JobDialog({
                     value={formData.Plan_Date}
                     onChange={(e) => setFormData({ ...formData, Plan_Date: e.target.value })}
                     required
-                    className="bg-slate-800 border-slate-700"
+                    className="bg-background border-input"
                   />
                 </div>
                 <div className="space-y-2">
@@ -500,7 +504,7 @@ export function JobDialog({
                     value={formData.Delivery_Date}
                     onChange={(e) => setFormData({ ...formData, Delivery_Date: e.target.value })}
                     required
-                    className="bg-slate-800 border-slate-700"
+                    className="bg-background border-input"
                   />
                 </div>
               </div>
@@ -533,24 +537,24 @@ export function JobDialog({
 
               <div className="grid grid-cols-2 gap-4">
                  <div className="space-y-2">
-                    <Label className="text-emerald-400">น้ำหนัก (kg)</Label>
+                    <Label className="text-emerald-600 dark:text-emerald-400">น้ำหนัก (kg)</Label>
                     <Input
                         type="number"
                         value={formData.Weight_Kg}
                         onChange={(e) => setFormData({ ...formData, Weight_Kg: Number(e.target.value) })}
                         placeholder="0.0"
-                        className="bg-slate-800 border-emerald-500/30 text-emerald-400"
+                        className="bg-background border-emerald-500/30 text-emerald-600 dark:text-emerald-400"
                     />
                  </div>
                  <div className="space-y-2">
-                    <Label className="text-emerald-400">ปริมาตร (CBM)</Label>
+                    <Label className="text-emerald-600 dark:text-emerald-400">ปริมาตร (CBM)</Label>
                     <Input
                         type="number"
                         value={formData.Volume_Cbm}
                         onChange={(e) => setFormData({ ...formData, Volume_Cbm: Number(e.target.value) })}
                         placeholder="0.0"
                         step="0.01"
-                        className="bg-slate-800 border-emerald-500/30 text-emerald-400"
+                        className="bg-background border-emerald-500/30 text-emerald-600 dark:text-emerald-400"
                     />
                  </div>
               </div>
@@ -578,16 +582,16 @@ export function JobDialog({
                     {/* Origins */}
                     <div className="space-y-3">
                         <div className="flex items-center justify-between">
-                        <Label className="text-emerald-400 flex items-center gap-2">
-                            <MapPin className="w-4 h-4" /> จุดต้นทาง <span className="text-slate-500 text-xs">({originLocations.length})</span>
+                        <Label className="text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
+                            <MapPin className="w-4 h-4" /> จุดต้นทาง <span className="text-muted-foreground text-xs">({originLocations.length})</span>
                         </Label>
-                        <Button type="button" size="sm" variant="outline" onClick={addOrigin} className="border-emerald-500/50 text-emerald-400 hover:bg-emerald-500/10 hover:text-emerald-300">
+                        <Button type="button" size="sm" variant="outline" onClick={addOrigin} className="border-emerald-500/50 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 hover:text-emerald-700 dark:hover:text-emerald-300">
                             <Plus className="w-4 h-4 mr-1" /> เพิ่มจุด
                         </Button>
                         </div>
                         {origins.map((origin, index) => (
-                        <div key={index} className="grid grid-cols-12 gap-2 p-3 bg-slate-800/50 rounded-lg">
-                            <div className="col-span-1 flex items-center justify-center text-slate-500">
+                        <div key={index} className="grid grid-cols-12 gap-2 p-3 bg-muted/30 rounded-lg">
+                            <div className="col-span-1 flex items-center justify-center text-muted-foreground">
                                 {index + 1}
                             </div>
                             <div className="col-span-11 grid grid-cols-1 gap-2">
@@ -596,20 +600,20 @@ export function JobDialog({
                                     value={origin.name}
                                     onChange={(val) => updateOrigin(index, 'name', val)}
                                     locations={originLocations}
-                                    className="bg-slate-900 border-slate-700"
+                                    className="bg-background border-input"
                                 />
                                 <div className="grid grid-cols-2 gap-2">
                                     <Input
                                         placeholder="Latitude"
                                         value={origin.lat}
                                         onChange={(e) => updateOrigin(index, 'lat', e.target.value)}
-                                        className="bg-slate-900 border-slate-700 text-xs"
+                                        className="bg-background border-input text-xs"
                                     />
                                     <Input
                                         placeholder="Longitude"
                                         value={origin.lng}
                                         onChange={(e) => updateOrigin(index, 'lng', e.target.value)}
-                                        className="bg-slate-900 border-slate-700 text-xs"
+                                        className="bg-background border-input text-xs"
                                     />
                                 </div>
                             </div>
@@ -620,7 +624,7 @@ export function JobDialog({
                                     variant="ghost"
                                     onClick={() => removeOrigin(index)}
                                     disabled={origins.length === 1}
-                                    className="text-red-400 hover:text-red-300 hover:bg-red-500/10 h-6 text-xs"
+                                    className="text-destructive hover:text-destructive hover:bg-destructive/10 h-6 text-xs"
                                 >
                                     ลบ
                                 </Button>
@@ -632,16 +636,16 @@ export function JobDialog({
                     {/* Destinations */}
                     <div className="space-y-3">
                         <div className="flex items-center justify-between">
-                        <Label className="text-indigo-400 flex items-center gap-2">
-                            <MapPin className="w-4 h-4" /> จุดปลายทาง <span className="text-slate-500 text-xs">({destinationLocations.length})</span>
+                        <Label className="text-indigo-600 dark:text-indigo-400 flex items-center gap-2">
+                            <MapPin className="w-4 h-4" /> จุดปลายทาง <span className="text-muted-foreground text-xs">({destinationLocations.length})</span>
                         </Label>
-                        <Button type="button" size="sm" variant="outline" onClick={addDestination} className="border-indigo-500/50 text-indigo-400 hover:bg-indigo-500/10 hover:text-indigo-300">
+                        <Button type="button" size="sm" variant="outline" onClick={addDestination} className="border-indigo-500/50 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/10 hover:text-indigo-700 dark:hover:text-indigo-300">
                             <Plus className="w-4 h-4 mr-1" /> เพิ่มจุด
                         </Button>
                         </div>
                         {destinations.map((dest, index) => (
-                        <div key={index} className="grid grid-cols-12 gap-2 p-3 bg-slate-800/50 rounded-lg">
-                            <div className="col-span-1 flex items-center justify-center text-slate-500">
+                        <div key={index} className="grid grid-cols-12 gap-2 p-3 bg-muted/30 rounded-lg">
+                            <div className="col-span-1 flex items-center justify-center text-muted-foreground">
                                 {index + 1}
                             </div>
                             <div className="col-span-11 grid grid-cols-1 gap-2">
@@ -650,20 +654,20 @@ export function JobDialog({
                                     value={dest.name}
                                     onChange={(val) => updateDestination(index, 'name', val)}
                                     locations={destinationLocations}
-                                    className="bg-slate-900 border-slate-700"
+                                    className="bg-background border-input"
                                 />
                                 <div className="grid grid-cols-2 gap-2">
                                     <Input
                                         placeholder="Latitude"
                                         value={dest.lat}
                                         onChange={(e) => updateDestination(index, 'lat', e.target.value)}
-                                        className="bg-slate-900 border-slate-700 text-xs"
+                                        className="bg-background border-input text-xs"
                                     />
                                     <Input
                                         placeholder="Longitude"
                                         value={dest.lng}
                                         onChange={(e) => updateDestination(index, 'lng', e.target.value)}
-                                        className="bg-slate-900 border-slate-700 text-xs"
+                                        className="bg-background border-input text-xs"
                                     />
                                 </div>
                             </div>
@@ -674,7 +678,7 @@ export function JobDialog({
                                     variant="ghost"
                                     onClick={() => removeDestination(index)}
                                     disabled={destinations.length === 1}
-                                    className="text-red-400 hover:text-red-300 hover:bg-red-500/10 h-6 text-xs"
+                                    className="text-destructive hover:text-destructive hover:bg-destructive/10 h-6 text-xs"
                                 >
                                     ลบ
                                 </Button>
@@ -714,13 +718,13 @@ export function JobDialog({
 
                     <div className="grid grid-cols-2 gap-4 mb-4">
                         <div className="space-y-2">
-                        <Label className="flex items-center gap-1 text-xs text-slate-400">
+                        <Label className="flex items-center gap-1 text-xs text-muted-foreground">
                             <Truck className="w-3 h-3" /> ประเภทรถ
                         </Label>
                         <select
                             value={assignment.Vehicle_Type}
                             onChange={(e) => updateAssignment(index, 'Vehicle_Type', e.target.value)}
-                            className="w-full h-10 px-3 rounded-md bg-slate-800 border border-slate-700 text-white text-sm"
+                            className="w-full h-10 px-3 rounded-md bg-background border border-input text-foreground text-sm"
                         >
                             <option value="">ทั้งหมด (ไม่ระบุ)</option>
                             {/* Unique Vehicle Types from Data */}
@@ -730,7 +734,7 @@ export function JobDialog({
                         </select>
                         </div>
                         <div className="space-y-2">
-                        <Label className="flex items-center gap-1 text-xs text-slate-400">
+                        <Label className="flex items-center gap-1 text-xs text-muted-foreground">
                             <Truck className="w-3 h-3" /> ทะเบียนรถ
                         </Label>
                         <VehicleAutocomplete
@@ -754,7 +758,7 @@ export function JobDialog({
                                 }
                             }}
                             placeholder="พิมพ์ทะเบียนรถ..."
-                            className="bg-slate-800 border-slate-700 text-sm"
+                            className="bg-background border-input text-sm"
                         />
                         </div>
                     </div>
@@ -782,12 +786,13 @@ export function JobDialog({
                         />
                     </div>
 
-                    <div className="flex items-center justify-between p-3 bg-slate-800/30 rounded-lg border border-slate-700/50">
+                    {canViewPrice && (
+                    <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg border border-border">
                         <div className="flex items-center gap-2">
                             {assignment.Show_Price_To_Driver ? (
-                                <Eye className="w-4 h-4 text-emerald-400" />
+                                <Eye className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                             ) : (
-                                <EyeOff className="w-4 h-4 text-slate-400" />
+                                <EyeOff className="w-4 h-4 text-muted-foreground" />
                             )}
                             <span className="text-sm font-medium">โชว์ค่าเที่ยวให้คนขับเห็น</span>
                         </div>
@@ -798,9 +803,10 @@ export function JobDialog({
                                 onChange={(e) => updateAssignment(index, 'Show_Price_To_Driver', e.target.checked)}
                                 className="sr-only peer" 
                             />
-                            <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                            <div className="w-11 h-6 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
                         </label>
                     </div>
+                    )}
 
                     {/* Capacity & Zone Check UI */}
                     {(() => {
@@ -828,16 +834,16 @@ export function JobDialog({
                         if (!maxWeight && !maxVolume && !isZoneMismatch) return null
 
                         return (
-                            <div className="mt-3 p-3 bg-slate-900 rounded-lg border border-slate-800 space-y-3">
+                            <div className="mt-3 p-3 bg-card rounded-lg border border-border space-y-3">
                                 {/* Zone Warning */}
                                 {isZoneMismatch && (
                                     <div className="flex items-start gap-2 p-2 rounded bg-amber-500/10 border border-amber-500/20 mb-2">
                                         <div className="min-w-[4px] h-full bg-amber-500 rounded-full" />
                                         <div>
-                                            <p className="text-xs font-bold text-amber-400">Zone Mismatch</p>
-                                            <p className="text-[10px] text-slate-400">
-                                                งานโซน: <span className="text-white">{ZONES.find(z => z.id === jobZone)?.name || jobZone}</span> <br/>
-                                                รถประจำโซน: <span className="text-white">{ZONES.find(z => z.id === vehicleZone)?.name || vehicleZone}</span>
+                                            <p className="text-xs font-bold text-amber-600 dark:text-amber-400">Zone Mismatch</p>
+                                            <p className="text-[10px] text-muted-foreground">
+                                                งานโซน: <span className="text-foreground">{ZONES.find(z => z.id === jobZone)?.name || jobZone}</span> <br/>
+                                                รถประจำโซน: <span className="text-foreground">{ZONES.find(z => z.id === vehicleZone)?.name || vehicleZone}</span>
                                             </p>
                                         </div>
                                     </div>
@@ -845,9 +851,9 @@ export function JobDialog({
 
                                 {(maxWeight > 0 || maxVolume > 0) && (
                                     <div className="flex items-center gap-2 mb-1">
-                                        <span className="text-xs font-semibold text-slate-400">ตรวจสอบการบรรทุก (Capacity)</span>
+                                        <span className="text-xs font-semibold text-muted-foreground">ตรวจสอบการบรรทุก (Capacity)</span>
                                         {(isOverweight || isOverVolume) && (
-                                            <span className="text-[10px] bg-red-500/20 text-red-400 px-1.5 py-0.5 rounded-full font-bold animate-pulse">
+                                            <span className="text-[10px] bg-red-500/20 text-red-600 dark:text-red-400 px-1.5 py-0.5 rounded-full font-bold animate-pulse">
                                                 OVERLOAD
                                             </span>
                                         )}
@@ -857,14 +863,14 @@ export function JobDialog({
                                 {maxWeight > 0 && (
                                     <div className="space-y-1">
                                         <div className="flex justify-between text-[10px]">
-                                            <span className={isOverweight ? "text-red-400" : "text-slate-400"}>
+                                            <span className={isOverweight ? "text-red-600 dark:text-red-400" : "text-muted-foreground"}>
                                                 น้ำหนัก: {jobWeight.toLocaleString()} / {maxWeight.toLocaleString()} kg
                                             </span>
-                                            <span className={isOverweight ? "text-red-400 font-bold" : "text-slate-500"}>
+                                            <span className={isOverweight ? "text-red-600 dark:text-red-400 font-bold" : "text-muted-foreground"}>
                                                 {weightPercent.toFixed(1)}%
                                             </span>
                                         </div>
-                                        <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
+                                        <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
                                             <div 
                                                 className={`h-full rounded-full transition-all ${isOverweight ? 'bg-red-500' : 'bg-emerald-500'}`} 
                                                 style={{ width: `${Math.min(weightPercent, 100)}%` }}
@@ -876,14 +882,14 @@ export function JobDialog({
                                 {maxVolume > 0 && (
                                     <div className="space-y-1">
                                         <div className="flex justify-between text-[10px]">
-                                            <span className={isOverVolume ? "text-red-400" : "text-slate-400"}>
+                                            <span className={isOverVolume ? "text-red-600 dark:text-red-400" : "text-muted-foreground"}>
                                                 ปริมาตร: {jobVolume.toLocaleString()} / {maxVolume.toLocaleString()} m³
                                             </span>
-                                            <span className={isOverVolume ? "text-red-400 font-bold" : "text-slate-500"}>
+                                            <span className={isOverVolume ? "text-red-600 dark:text-red-400 font-bold" : "text-muted-foreground"}>
                                                 {volumePercent.toFixed(1)}%
                                             </span>
                                         </div>
-                                        <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
+                                        <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
                                             <div 
                                                 className={`h-full rounded-full transition-all ${isOverVolume ? 'bg-red-500' : 'bg-blue-500'}`} 
                                                 style={{ width: `${Math.min(volumePercent, 100)}%` }}
@@ -932,7 +938,7 @@ export function JobDialog({
                     type="number"
                     value={formData.Price_Cust_Total}
                     onChange={(e) => setFormData({ ...formData, Price_Cust_Total: Number(e.target.value) })}
-                    className="bg-slate-800 border-slate-700"
+                    className="bg-background border-input"
                   />
                 </div>
                 <div className="space-y-2">
@@ -941,7 +947,7 @@ export function JobDialog({
                     type="number"
                     value={formData.Cost_Driver_Total}
                     onChange={(e) => setFormData({ ...formData, Cost_Driver_Total: Number(e.target.value) })}
-                    className="bg-slate-800 border-slate-700"
+                    className="bg-background border-input"
                   />
                 </div>
               </div>
@@ -951,38 +957,38 @@ export function JobDialog({
                   <Label className="flex items-center gap-2">
                     <Banknote className="w-4 h-4" /> ค่าใช้จ่ายเพิ่มเติม
                   </Label>
-                  <Button type="button" size="sm" variant="outline" onClick={addExtraCost} className="border-slate-700 hover:bg-slate-800">
+                  <Button type="button" size="sm" variant="outline" onClick={addExtraCost} className="border-border hover:bg-muted">
                     <Plus className="w-4 h-4 mr-1" /> เพิ่มรายการ
                   </Button>
                 </div>
                 {extraCosts.map((cost, index) => (
-                  <div key={index} className="grid grid-cols-12 gap-2 p-3 bg-slate-800/50 rounded-lg items-end">
+                  <div key={index} className="grid grid-cols-12 gap-2 p-3 bg-muted/30 rounded-lg items-end">
                     <div className="col-span-4 space-y-1">
-                        <Label className="text-xs text-slate-400">รายการ</Label>
+                        <Label className="text-xs text-muted-foreground">รายการ</Label>
                         <select
                             value={cost.type}
                             onChange={(e) => updateExtraCost(index, 'type', e.target.value)}
-                            className="w-full h-9 px-2 rounded-md bg-slate-900 border border-slate-700 text-white text-sm"
+                            className="w-full h-9 px-2 rounded-md bg-background border border-input text-foreground text-sm"
                         >
                             {EXPENSE_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
                         </select>
                     </div>
                     <div className="col-span-3 space-y-1">
-                        <Label className="text-xs text-slate-400">จ่ายรถ</Label>
+                        <Label className="text-xs text-muted-foreground">จ่ายรถ</Label>
                         <Input
                             type="number"
                             value={cost.cost_driver}
                             onChange={(e) => updateExtraCost(index, 'cost_driver', e.target.value)}
-                            className="bg-slate-900 border-slate-700 h-9"
+                            className="bg-background border-input h-9"
                         />
                     </div>
                      <div className="col-span-3 space-y-1">
-                        <Label className="text-xs text-slate-400">เก็บลูกค้า</Label>
+                        <Label className="text-xs text-muted-foreground">เก็บลูกค้า</Label>
                         <Input
                             type="number"
                             value={cost.charge_cust}
                             onChange={(e) => updateExtraCost(index, 'charge_cust', e.target.value)}
-                            className="bg-slate-900 border-slate-700 h-9"
+                            className="bg-background border-input h-9"
                         />
                     </div>
                     <div className="col-span-2 flex justify-end">
@@ -991,7 +997,7 @@ export function JobDialog({
                             size="icon" 
                             variant="ghost"
                             onClick={() => removeExtraCost(index)}
-                            className="text-red-400 hover:text-red-300 hover:bg-red-500/10 h-9 w-9"
+                            className="text-destructive hover:text-destructive hover:bg-destructive/10 h-9 w-9"
                         >
                             <X size={16} />
                         </Button>
@@ -999,9 +1005,9 @@ export function JobDialog({
                   </div>
                 ))}
 
-                <div className="p-3 bg-slate-800 rounded-lg flex justify-between items-center text-sm">
-                    <span className="text-slate-400">รวมกำไรเบื้องต้น</span>
-                    <span className="font-bold text-emerald-400">
+                <div className="p-3 bg-muted rounded-lg flex justify-between items-center text-sm">
+                    <span className="text-muted-foreground">รวมกำไรเบื้องต้น</span>
+                    <span className="font-bold text-emerald-600 dark:text-emerald-400">
                         {(
                             (formData.Price_Cust_Total + extraCosts.reduce((sum, c) => sum + c.charge_cust, 0)) - 
                             (formData.Cost_Driver_Total + extraCosts.reduce((sum, c) => sum + c.cost_driver, 0))
@@ -1012,22 +1018,22 @@ export function JobDialog({
             </div>
           )}
 
-          <div className="flex justify-between pt-4 border-t border-slate-700/50">
-            {mode === 'edit' && (
+          <div className="flex justify-between pt-4 border-t border-border">
+            {mode === 'edit' && canDelete && (
                 <Button 
                     type="button" 
                     variant="ghost" 
                     onClick={handleDelete}
-                    className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
                 >
                     <Trash2 className="w-4 h-4 mr-2" /> ลบงาน
                 </Button>
             )}
             <div className={`flex gap-3 ${mode === 'create' ? 'w-full justify-end' : ''}`}>
-                <Button type="button" variant="outline" onClick={() => setShow(false)} className="border-slate-700 hover:bg-slate-800 text-slate-300">
+                <Button type="button" variant="outline" onClick={() => setShow(false)} className="border-border hover:bg-muted text-muted-foreground hover:text-foreground">
                 ยกเลิก
                 </Button>
-                <Button type="submit" disabled={loading} className="bg-indigo-600 hover:bg-indigo-700">
+                <Button type="submit" disabled={loading} className="bg-primary hover:bg-primary/90 text-primary-foreground">
                     {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                     {mode === 'create' ? 'สร้างงาน' : 'บันทึกการแก้ไข'}
                 </Button>

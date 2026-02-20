@@ -64,11 +64,13 @@ export function MetricCard({
     >
       <div className={cn(
         "relative rounded-2xl p-6 overflow-hidden",
-        "bg-gradient-to-br from-slate-800/80 to-slate-900/80",
-        "border border-white/10 backdrop-blur-xl",
+        "bg-card text-card-foreground",
+        "border border-border/50 shadow-sm",
         "transition-all duration-300",
-        "hover:border-white/20 hover:shadow-2xl",
-        glows[gradient]
+        "hover:shadow-lg hover:border-border",
+        "dark:bg-gradient-to-br dark:from-slate-800/80 dark:to-slate-900/80",
+        "dark:border-white/10 dark:hover:border-white/20 dark:hover:shadow-2xl",
+        glows[gradient] // Keep glow for premium feel, it usually works ok or adds tint
       )}>
         {/* Gradient Top Border */}
         <div className={cn(
@@ -76,9 +78,9 @@ export function MetricCard({
           gradients[gradient]
         )} />
 
-        {/* Shimmer Effect on Hover */}
-        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+        {/* Shimmer Effect on Hover (Dark mode only usually looks best, or specific light mode shimmer) */}
+        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none">
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-foreground/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
         </div>
 
         <div className="relative z-10">
@@ -89,7 +91,8 @@ export function MetricCard({
               "bg-gradient-to-br",
               gradients[gradient],
               "shadow-lg",
-              glows[gradient]
+              glows[gradient],
+              "text-white" // Icons usually look best white on bright gradients
             )}>
               {icon}
             </div>
@@ -97,9 +100,9 @@ export function MetricCard({
             {trend && (
               <div className={cn(
                 "flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold",
-                trend.value > 0 && "bg-emerald-500/20 text-emerald-400",
-                trend.value < 0 && "bg-red-500/20 text-red-400",
-                trend.value === 0 && "bg-slate-500/20 text-slate-400"
+                trend.value > 0 && "bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400",
+                trend.value < 0 && "bg-red-500/10 text-red-600 dark:bg-red-500/20 dark:text-red-400",
+                trend.value === 0 && "bg-muted text-muted-foreground"
               )}>
                 {trend.value > 0 && <TrendingUp size={14} />}
                 {trend.value < 0 && <TrendingDown size={14} />}
@@ -110,27 +113,27 @@ export function MetricCard({
           </div>
 
           {/* Title */}
-          <p className="text-sm font-medium text-slate-400 uppercase tracking-wider mb-2">
+          <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-2">
             {title}
           </p>
 
           {/* Value */}
           <div className="flex items-baseline gap-2">
-            <motion.span className="text-4xl font-bold text-white">
+            <motion.span className="text-4xl font-bold text-foreground">
               {display}
             </motion.span>
           </div>
 
           {/* Subtitle */}
           {subtitle && (
-            <p className="text-xs text-slate-500 mt-2">
+            <p className="text-xs text-muted-foreground mt-2">
               {subtitle}
             </p>
           )}
 
           {/* Trend Label */}
           {trend?.label && (
-            <p className="text-xs text-slate-400 mt-2">
+            <p className="text-xs text-muted-foreground mt-2">
               {trend.label}
             </p>
           )}
@@ -138,7 +141,7 @@ export function MetricCard({
 
         {/* Background Decoration */}
         <div className={cn(
-          "absolute -bottom-8 -right-8 w-32 h-32 rounded-full blur-2xl opacity-20 bg-gradient-to-br",
+          "absolute -bottom-8 -right-8 w-32 h-32 rounded-full blur-2xl opacity-10 bg-gradient-to-br",
           gradients[gradient]
         )} />
       </div>

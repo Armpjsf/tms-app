@@ -101,10 +101,17 @@
   border-color: hsl(var(--border));
 }
 
+html {
+  overflow-y: scroll !important; /* Force scrollbar to stay visible to prevent layout shift */
+  margin-right: 0 !important;
+}
+
 body {
   color: hsl(var(--foreground));
   font-family: var(--font-sans);
   min-height: 100vh;
+  padding-right: 0 !important; /* Prevent Radix UI from adding padding */
+  overflow: auto !important; /* Prevent Radix UI from hiding overflow */
 }
 
 /* Scrollbar Styling */
