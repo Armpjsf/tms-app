@@ -338,8 +338,10 @@ export function JobDialog({
 
       if (mode === 'create') {
         // Prepare array for bulk creation
-        const jobsToCreate = assignments.map((assignment: any) => ({
+        const jobsToCreate = assignments.map((assignment: any, index: number) => ({
             ...baseData,
+            // If multiple assignments, append suffix to ensure unique Job_ID (e.g. JOB-001-1, JOB-001-2)
+            Job_ID: assignments.length > 1 ? `${baseData.Job_ID}-${index + 1}` : baseData.Job_ID,
             // Per-job assignment details
             Vehicle_Type: assignment.Vehicle_Type,
             Vehicle_Plate: assignment.Vehicle_Plate,
