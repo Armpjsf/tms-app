@@ -778,7 +778,7 @@ export function JobDialog({
                                     Driver_ID: d.Driver_ID,
                                     Sub_ID: d.Sub_ID || newAssignments[index].Sub_ID,
                                     // Use driver default if explicitly set, otherwise keep current
-                                    Show_Price_To_Driver: d.Show_Price_Default !== null ? d.Show_Price_Default : newAssignments[index].Show_Price_To_Driver
+                                    Show_Price_To_Driver: d.Show_Price_Default ?? newAssignments[index].Show_Price_To_Driver
                                 }
                                 setAssignments(newAssignments)
                             }}
