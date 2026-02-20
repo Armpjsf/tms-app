@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { createJob, updateJob, createBulkJobs, deleteJob } from "@/app/planning/actions"
+import { updateJob, createBulkJobs, deleteJob } from "@/app/planning/actions"
 import { CustomerAutocomplete } from "@/components/customer-autocomplete"
 import { LocationAutocomplete } from "@/components/location-autocomplete"
 import { VehicleAutocomplete } from "@/components/vehicle-autocomplete"
@@ -76,7 +76,7 @@ function generateJobId() {
   const year = now.getFullYear()
   const month = String(now.getMonth() + 1).padStart(2, '0')
   const day = String(now.getDate()).padStart(2, '0')
-  const random = String(Math.floor(Math.random() * 10000)).padStart(4, '0')
+  const random = String(Math.floor(Math.random() * 1000000)).padStart(6, '0')
   return `JOB-${year}${month}${day}-${random}`
 }
 

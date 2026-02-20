@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache'
 
 import { getAllDriversFromTable } from '@/lib/supabase/drivers'
 import { getAllVehiclesFromTable } from '@/lib/supabase/vehicles'
-import { getAllCustomers } from '@/lib/supabase/customers'
+
 
 export type JobFormData = {
   Job_ID: string
@@ -61,15 +61,38 @@ export async function createJob(data: JobFormData) {
     if (vehicle) subId = vehicle.sub_id || null
   }
 
-  // helper to parse if string
+
+
+  // Attempt 1
+  const { error: error1 } = await supabase.from('Jobs_Main').insert(buildInsertPayload(data, driverName, subId))
+  
+  if (!error1) {
+      revalidatePath('/planning')
+      return { success: true, message: 'Job created successfully' }
+  }
+
+  // If duplicate key (23505), try regenerating ID once
+  if (error1.code === '23505') {
+      console.log('Duplicate Job ID detected, retrying with suffix...')
+      const newId = `${data.Job_ID}-${Math.floor(Math.random() * 1000)}`
+      const { error: error2 } = await supabase.from('Jobs_Main').insert(buildInsertPayload({ ...data, Job_ID: newId }, driverName, subId))
+      
+      if (!error2) {
+          revalidatePath('/planning')
+          return { success: true, message: `Job created with new ID: ${newId}` }
+      }
+      return { success: false, message: `Failed to create job (Duplicate ID): ${error2.message}` }
+  }
+
+  return { success: false, message: `Failed to create job: ${error1.message}` }
+}
+
+function buildInsertPayload(data: JobFormData, driverName: string, subId: string | null) {
   const parseIfString = (val: string | undefined) => {
       if (!val) return null
       try { return JSON.parse(val) } catch { return val }
   }
-
-  const { error } = await supabase
-    .from('Jobs_Main')
-    .insert({
+  return {
       Job_ID: data.Job_ID,
       Plan_Date: data.Plan_Date,
       Delivery_Date: data.Delivery_Date,
@@ -90,15 +113,7 @@ export async function createJob(data: JobFormData) {
       Sub_ID: subId,
       Show_Price_To_Driver: data.Show_Price_To_Driver ?? true,
       Created_At: new Date().toISOString(),
-    })
-
-  if (error) {
-    console.error('Error creating job:', error)
-    return { success: false, message: `Failed to create job: ${error.message}` }
   }
-
-  revalidatePath('/planning')
-  return { success: true, message: 'Job created successfully' }
 }
 
 export async function createBulkJobs(jobs: Partial<JobFormData>[]) {
@@ -137,7 +152,7 @@ export async function createBulkJobs(jobs: Partial<JobFormData>[]) {
 
   const { error } = await supabase
     .from('Jobs_Main')
-    .insert(cleanData)
+    .upsert(cleanData, { onConflict: 'Job_ID' })
 
   if (error) {
     console.error('Error bulk creating jobs:', error)
