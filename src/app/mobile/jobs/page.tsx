@@ -15,7 +15,7 @@ type Props = {
 export default async function DriverJobsPage(props: Props) {
   const searchParams = await props.searchParams
   const session = await getDriverSession()
-  if (!session) redirect("/login")
+  if (!session) redirect("/mobile/login")
 
   const date = (searchParams.date as string) || undefined
   const status = (searchParams.status as string) || undefined

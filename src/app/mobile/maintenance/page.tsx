@@ -6,7 +6,7 @@ import { MobileMaintenanceForm } from "@/components/mobile/maintenance-form"
 
 export default async function MobileMaintenancePage() {
   const session = await getDriverSession()
-  if (!session) redirect('/login')
+  if (!session) redirect('/mobile/login')
 
   const driver = await getDriverById(session.driverId)
 

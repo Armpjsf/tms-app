@@ -9,6 +9,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { CameraInput } from "@/components/mobile/camera-input"
 import { Loader2, Fuel, User } from "lucide-react"
 import { createFuelLog } from "@/app/fuel/actions"
+import { uploadImageToDrive } from "@/lib/actions/upload-actions"
 
 interface MobileFuelFormProps {
   driverId: string
@@ -31,26 +32,31 @@ export function MobileFuelForm({ driverId, driverName, defaultVehiclePlate }: Mo
     setLoading(true)
 
     try {
-        const formData = {
+        // Upload photo first if provided
+        let photoUrl: string | undefined = undefined
+        if (photo) {
+            const uploadData = new FormData()
+            uploadData.append('file', photo)
+            uploadData.append('folder', 'Fuel_Receipts')
+            const uploadResult = await uploadImageToDrive(uploadData)
+            if (uploadResult.success && uploadResult.directLink) {
+                photoUrl = uploadResult.directLink
+            }
+        }
+
+        const fuelData = {
             Date_Time: new Date().toISOString(),
             Driver_ID: driverId,
             Vehicle_Plate: plate,
             Liter: parseFloat(liters),
-            Price: 0, // Calculated or input? Schema has Price/Liter. We have Total Amount & Liters.
+            Price: parseFloat(amount) / parseFloat(liters),
             Total_Amount: parseFloat(amount),
             Mileage: parseFloat(mileage),
             Station_Name: station,
-            Photo_Url: photo ? "pending_upload" : undefined // We need to handle upload if real
+            Photo_Url: photoUrl
         }
 
-        // Note: Real file upload needs Supabase Storage handling. 
-        // For this demo, we might skip the actual file upload or assume it's handled elsewhere
-        // But createFuelLog expects Photo_Url string.
-        
-        const result = await createFuelLog({
-            ...formData,
-            Price: formData.Total_Amount / formData.Liter
-        })
+        const result = await createFuelLog(fuelData)
 
         if (result.success) {
             alert("บันทึกข้อมูลเรียบร้อยแล้ว")

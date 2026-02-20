@@ -6,7 +6,7 @@ import { MobileFuelForm } from "@/components/mobile/fuel-form"
 
 export default async function MobileFuelPage() {
   const session = await getDriverSession()
-  if (!session) redirect('/login')
+  if (!session) redirect('/mobile/login')
 
   const driver = await getDriverById(session.driverId)
 

@@ -9,7 +9,7 @@ export const dynamic = 'force-dynamic'
 
 export default async function ProfilePage() {
   const session = await getDriverSession()
-  if (!session) redirect("/login")
+  if (!session) redirect("/mobile/login")
 
   const score = await getDriverScore(session.driverId)
 

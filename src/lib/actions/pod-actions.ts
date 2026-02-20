@@ -38,9 +38,7 @@ export async function submitJobPOD(jobId: string, formData: FormData) {
   try {
     const timestamp = Date.now()
     
-    // 1. Upload Photo
-    const photoName = `${jobId}_${timestamp}_photo.jpg`
-    // Create new File object with correct name if needed, or just pass name to upload function
+    // 1. Upload Photos
     // For simplicity, we pass buffer to uploadFileToDrive, so name is just metadata there
     // But here we need to modify our helper to accept name override if we want specific names
     // Let's just pass the file and let it use original name or rename it?
@@ -132,63 +130,134 @@ export async function submitJobPOD(jobId: string, formData: FormData) {
     revalidatePath("/mobile/jobs")
     return { success: true }
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("POD Submit Error:", error)
-    // Return specific error message to help debugging
-    return { error: `Error: ${error?.message || "Internal Server Error"}` }
+    const errMsg = error instanceof Error ? error.message : "Internal Server Error"
+    return { error: `Error: ${errMsg}` }
   }
 }
 
 export async function submitJobPickup(jobId: string, formData: FormData) {
-  const supabase = await createClient()
+  console.log("=== submitJobPickup START ===", { jobId })
+  
+  let supabase;
+  try {
+    supabase = await createClient()
+  } catch (e) {
+    console.error("Supabase client creation failed:", e)
+    return { error: "ไม่สามารถเชื่อมต่อฐานข้อมูล" }
+  }
 
   try {
     const timestamp = Date.now()
     
-    const uploadWithRename = async (file: File, name: string, folder: string) => {
-        const buffer = Buffer.from(await file.arrayBuffer())
-        const res = await uploadFileToDrive(buffer, name, file.type, folder)
-        return res.directLink
+    // Step 1: Try to upload photos & signature (non-blocking)
+    const photoUrls: string[] = []
+    let signatureUrl: string | null = null
+    let uploadWarning = ""
+    
+    try {
+      const uploadWithRename = async (file: File, name: string, folder: string) => {
+          const buffer = Buffer.from(await file.arrayBuffer())
+          const res = await uploadFileToDrive(buffer, name, file.type, folder)
+          return res.directLink
+      }
+
+      // 0. Pickup Report (Smart Document)
+      const pickupReportFile = formData.get("pickup_report") as File
+      let pickupReportUrl = null
+      
+      if (pickupReportFile && pickupReportFile.size > 0) {
+          try {
+              const reportName = `${jobId}_${timestamp}_PICKUP_REPORT.jpg`
+              pickupReportUrl = await uploadWithRename(pickupReportFile, reportName, 'Pickup_Documents')
+          } catch (e) {
+              console.error("Failed to upload Pickup Report", e)
+          }
+      }
+
+      const photoCount = parseInt(formData.get("photo_count") as string || "0")
+      console.log("Photo count:", photoCount)
+      
+      for (let i = 0; i < photoCount; i++) {
+          const file = formData.get(`photo_${i}`) as File
+          if (file) {
+              console.log(`Uploading photo ${i}: ${file.name} (${file.size} bytes)`)
+              const name = `${jobId}_${timestamp}_pickup_${i}.jpg`
+              const url = await uploadWithRename(file, name, 'Pickup_Photos')
+              if (url) photoUrls.push(url)
+          }
+      }
+
+      // Prepend Report URL to photos if available
+      if (pickupReportUrl) {
+          photoUrls.unshift(pickupReportUrl)
+      }
+
+      // Handle Signature
+      const signatureFile = formData.get("signature") as File
+      if (signatureFile && signatureFile.size > 0) {
+          console.log("Uploading signature...")
+          const sigName = `${jobId}_${timestamp}_pickup_sig.png`
+          signatureUrl = await uploadWithRename(signatureFile, sigName, 'Pickup_Signatures')
+      }
+
+      console.log("Upload results:", { photos: photoUrls.length, hasSignature: !!signatureUrl })
+    } catch (e) {
+      const errMsg = e instanceof Error ? e.message : String(e)
+      console.error("Google Drive upload failed:", errMsg)
+      uploadWarning = `อัปโหลดหลักฐานไม่สำเร็จ: ${errMsg}`
     }
 
-    // Upload Photos (Multi)
-    const photoUrls = []
-    const photoCount = parseInt(formData.get("photo_count") as string || "0")
-    
-    for (let i = 0; i < photoCount; i++) {
-        const file = formData.get(`photo_${i}`) as File
-        if (file) {
-            const name = `${jobId}_${timestamp}_pickup_${i}.jpg`
-            const url = await uploadWithRename(file, name, 'Pickup_Photos')
-            photoUrls.push(url)
-        }
+    // Step 2: Always update Job Status
+    console.log("Updating job status to In Transit...")
+    const updatePayload: Record<string, unknown> = {
+      Job_Status: 'In Transit',
     }
     
-    const photoUrlString = photoUrls.join(',')
+    if (photoUrls.length > 0) {
+      updatePayload.Pickup_Photo_Url = photoUrls.join(',')
+    }
 
-    // Update Job
-    // Note: Assuming we might not have a dedicated column for Pickup Photo in legacy schema
-    // We will try to update 'Pickup_Photo_Url' if exists, or just update status
-    // If we can't save URL, at least it is in Drive.
-    // For now, let's try to update Job_Status and maybe use a generic field if available
-    // OR we just DON'T save the URL to DB if column missing, but change status to 'In Transit'
-    
+    if (signatureUrl) {
+      updatePayload.Pickup_Signature_Url = signatureUrl
+    }
+
     const { error } = await supabase
       .from("Jobs_Main")
-      .update({
-        Job_Status: 'In Transit',
-        // Pickup_Photo_Url: photoUrlString // Commented out to avoid error if column missing
-        // If user complains about missing pickup photos in admin, we'll need to add column.
-      })
+      .update(updatePayload)
       .eq("Job_ID", jobId)
 
-    if (error) throw error
+    if (error) {
+      // If Pickup_Photo_Url column doesn't exist, retry without it
+      if (error.message?.includes('Pickup_Photo_Url') || error.code === '42703') {
+        console.warn("Pickup_Photo_Url column missing, retrying status only")
+        const { error: error2 } = await supabase
+          .from("Jobs_Main")
+          .update({ Job_Status: 'In Transit' })
+          .eq("Job_ID", jobId)
+        if (error2) {
+          console.error("DB update retry failed:", error2)
+          throw error2
+        }
+      } else {
+        console.error("DB update failed:", error)
+        throw error
+      }
+    }
 
+    console.log("=== submitJobPickup SUCCESS ===")
     revalidatePath("/mobile/jobs")
+    
+    if (uploadWarning) {
+      return { success: true, warning: uploadWarning }
+    }
     return { success: true }
     
   } catch (error) {
-    console.error("Pickup Submit Error:", error)
-    return { error: "เกิดข้อผิดพลาดในการบันทึกข้อมูล" }
+    const errMsg = error instanceof Error ? error.message : String(error)
+    console.error("=== submitJobPickup FAILED ===", errMsg)
+    return { error: `บันทึกไม่สำเร็จ: ${errMsg}` }
   }
 }
+

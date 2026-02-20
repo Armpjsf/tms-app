@@ -10,6 +10,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { CameraInput } from "@/components/mobile/camera-input"
 import { Loader2, Wrench, User, Gauge } from "lucide-react"
 import { createRepairTicket } from "@/app/maintenance/actions"
+import { uploadImageToDrive } from "@/lib/actions/upload-actions"
 
 interface MobileMaintenanceFormProps {
   driverId: string
@@ -31,15 +32,27 @@ export function MobileMaintenanceForm({ driverId, driverName, defaultVehiclePlat
     setLoading(true)
     
     try {
+        // Upload photo first if provided
+        let photoUrl: string | undefined = undefined
+        if (photo) {
+            const uploadData = new FormData()
+            uploadData.append('file', photo)
+            uploadData.append('folder', 'Repair_Photos')
+            const uploadResult = await uploadImageToDrive(uploadData)
+            if (uploadResult.success && uploadResult.directLink) {
+                photoUrl = uploadResult.directLink
+            }
+        }
+
         const result = await createRepairTicket({
             Date_Report: new Date().toISOString(),
             Driver_ID: driverId,
             Vehicle_Plate: plate,
-            Issue_Type: title, // Using Title as Issue Type for simplicity or map it
+            Issue_Type: title,
             Issue_Desc: description,
-            Priority: "Medium", // Default
-            Odometer: odometer ? parseInt(odometer) : undefined, // Add Odometer to action payload
-            Photo_Url: photo ? "pending_upload" : undefined
+            Priority: "Medium",
+            Odometer: odometer ? parseInt(odometer) : undefined,
+            Photo_Url: photoUrl
         })
 
         if (result.success) {

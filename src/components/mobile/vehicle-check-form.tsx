@@ -1,6 +1,4 @@
-"use client"
-
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -8,8 +6,11 @@ import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import { Loader2, ClipboardCheck, User, Truck } from "lucide-react"
-
+import { CameraInput } from "@/components/mobile/camera-input"
+import { SignaturePad } from "@/components/mobile/signature-pad"
 import { submitVehicleCheck } from "@/app/mobile/actions"
+import html2canvas from "html2canvas"
+
 
 interface MobileVehicleCheckFormProps {
     driverId: string
@@ -17,10 +18,15 @@ interface MobileVehicleCheckFormProps {
     defaultVehiclePlate?: string
 }
 
+import { VehicleCheckReport } from "@/components/mobile/vehicle-check-report"
+
 export function MobileVehicleCheckForm({ driverId, driverName, defaultVehiclePlate }: MobileVehicleCheckFormProps) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [plate, setPlate] = useState(defaultVehiclePlate || "")
+  const [photos, setPhotos] = useState<File[]>([])
+  const [signature, setSignature] = useState<Blob | null>(null)
+  const reportRef = useRef<HTMLDivElement>(null)
   
   const checklist = [
     "น้ำมันเครื่อง", "น้ำในหม้อน้ำ", "ลมยาง", "ไฟเบรค/ไฟเลี้ยว", 
@@ -34,27 +40,78 @@ export function MobileVehicleCheckForm({ driverId, driverName, defaultVehiclePla
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!signature) {
+        alert("กรุณาลงลายเซ็นก่อนบันทึก")
+        return
+    }
+
     setLoading(true)
     
     try {
-        const result = await submitVehicleCheck({ 
-            driverId,
-            driverName,
-            vehiclePlate: plate,
-            items: checkedItems 
+        const formData = new FormData()
+        
+        // 1. Capture Report
+        if (reportRef.current) {
+            try {
+                const canvas = await html2canvas(reportRef.current, {
+                    scale: 2,
+                    useCORS: true,
+                    logging: false,
+                    windowWidth: 1200
+                })
+                const reportBlob = await new Promise<Blob | null>(resolve => 
+                    canvas.toBlob(resolve, 'image/jpeg', 0.8)
+                )
+                if (reportBlob) {
+                    formData.append("check_report", reportBlob, `VehicleCheck_${plate}.jpg`)
+                }
+            } catch (err) {
+                console.error("Report capture failed:", err)
+            }
+        }
+
+        formData.append("driverId", driverId)
+        formData.append("driverName", driverName)
+        formData.append("vehiclePlate", plate)
+        formData.append("items", JSON.stringify(checkedItems))
+        
+        photos.forEach((file, i) => {
+            formData.append(`photo_${i}`, file)
         })
+        formData.append("photo_count", photos.length.toString())
+
+        if (signature) {
+            formData.append("signature", signature, "signature.png")
+        }
+
+        const result = await submitVehicleCheck(formData)
         if (result.success) {
-             // alert("บันทึกการตรวจสอบเรียบร้อยแล้ว")
              router.push('/mobile/profile')
         }
-    } catch {} finally {
+    } catch (err) {
+        console.error("Vehicle Check Error:", err)
+        alert("เกิดข้อผิดพลาดในการบันทึก")
+    } finally {
         setLoading(false)
     }
   }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Hidden Report Container */}
+        <div className="fixed left-[-9999px] top-0">
+             <VehicleCheckReport 
+                ref={reportRef}
+                driverName={driverName}
+                vehiclePlate={plate}
+                items={checkedItems}
+                photos={photos.map(p => URL.createObjectURL(p))}
+                signature={signature ? URL.createObjectURL(signature) : null}
+             />
+        </div>
+
         <Card className="bg-slate-900 border-slate-800">
+
             <CardContent className="p-4 space-y-4">
                 
                 {/* Driver Info - Read Only */}
@@ -105,16 +162,33 @@ export function MobileVehicleCheckForm({ driverId, driverName, defaultVehiclePla
                         </Label>
                     </div>
                 ))}
+
+                <div className="space-y-4 pt-4 border-t border-slate-800">
+                    <div className="space-y-2">
+                        <Label className="text-white">ถ่ายรูปบริเวณจุดที่ตรวจสอบ (ถ้ามี)</Label>
+                        <CameraInput onImagesChange={setPhotos} maxImages={5} />
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label className="text-white font-medium">ลายเซ็นผู้ตรวจสอบ</Label>
+                        <SignaturePad onSave={setSignature} />
+                    </div>
+                </div>
             </CardContent>
         </Card>
 
         <Button 
             type="submit" 
-            className="w-full h-12 bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
-            disabled={loading}
+            className={`w-full h-14 font-bold text-lg shadow-lg transition-all ${
+                signature && !loading
+                    ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-500/20" 
+                    : "bg-slate-800 text-slate-400 cursor-not-allowed"
+            }`}
+            disabled={loading || !signature}
         >
             {loading ? <Loader2 className="animate-spin" /> : "บันทึกการตรวจสอบ"}
         </Button>
       </form>
+
   )
 }
