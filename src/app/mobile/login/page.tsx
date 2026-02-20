@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { Lock, Phone, Truck } from "lucide-react"
+import { Lock, User, Truck } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -40,14 +40,14 @@ export default function DriverLoginPage() {
 
         <form action={handleSubmit} className="space-y-6">
           <div className="space-y-2">
-            <Label htmlFor="phone" className="text-slate-200">เบอร์โทรศัพท์</Label>
+            <Label htmlFor="identifier" className="text-slate-200">เบอร์โทร หรือ Username</Label>
             <div className="relative">
-              <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 w-4 h-4" />
+              <User className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 w-4 h-4" />
               <Input 
-                id="phone" 
-                name="phone" 
-                type="tel" 
-                placeholder="08x-xxx-xxxx" 
+                id="identifier" 
+                name="identifier" 
+                type="text" 
+                placeholder="เบอร์โทร หรือ Username" 
                 className="pl-10 bg-slate-900/50 border-white/10 text-white placeholder:text-slate-600 h-12"
                 required
               />

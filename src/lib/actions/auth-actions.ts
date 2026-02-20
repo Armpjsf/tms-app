@@ -5,25 +5,54 @@ import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 
 export async function loginDriver(formData: FormData) {
-  const phone = formData.get("phone") as string
+  const identifier = formData.get("identifier") as string
   const password = formData.get("password") as string
 
-  if (!phone || !password) {
+  if (!identifier || !password) {
     return { error: "กรุณากรอกข้อมูลให้ครบถ้วน" }
   }
 
   const supabase = await createClient()
 
-  // 1. Check if driver exists in Master_Drivers (using Mobile_No as identifier for now)
-  // In a real app, you might use Supabase Auth users, but if simple table auth:
-  const { data: driver, error } = await supabase
-    .from("Master_Drivers")
-    .select("*")
-    .eq("Mobile_No", phone)
-    .single()
+  // Try to find driver by Mobile_No first, then by Driver_ID
+  let driver = null
 
-  if (error || !driver) {
-    return { error: "ไม่พบเบอร์โทรศัพท์นี้ในระบบ" }
+  // Check if input looks like a phone number (starts with 0 and has 9-10 digits)
+  const isPhone = /^0\d{8,9}$/.test(identifier.replace(/[-\s]/g, ''))
+
+  if (isPhone) {
+    // Clean phone number (remove dashes/spaces)
+    const cleanPhone = identifier.replace(/[-\s]/g, '')
+    const { data } = await supabase
+      .from("Master_Drivers")
+      .select("*")
+      .eq("Mobile_No", cleanPhone)
+      .single()
+    driver = data
+  }
+
+  // If not found by phone (or input is not a phone), try Driver_ID 
+  if (!driver) {
+    const { data } = await supabase
+      .from("Master_Drivers")
+      .select("*")
+      .eq("Driver_ID", identifier)
+      .single()
+    driver = data
+  }
+
+  // Still not found? Try Mobile_No as-is (in case format differs)
+  if (!driver) {
+    const { data } = await supabase
+      .from("Master_Drivers")
+      .select("*")
+      .eq("Mobile_No", identifier)
+      .single()
+    driver = data
+  }
+
+  if (!driver) {
+    return { error: "ไม่พบข้อมูลในระบบ กรุณาตรวจสอบเบอร์โทรหรือ Username" }
   }
 
   // 2. Password Check
@@ -33,12 +62,23 @@ export async function loginDriver(formData: FormData) {
       return { error: "รหัสผ่านไม่ถูกต้อง" }
   }
 
-  // 3. Fetch permissions from Master_Users (linked by phone/username)
-  const { data: userData } = await supabase
+  // 3. Fetch permissions from Master_Users (try by identifier or driver's Mobile_No)
+  let userData = null
+  const { data: userData1 } = await supabase
     .from("Master_Users")
     .select("Permissions")
-    .eq("Username", phone)
+    .eq("Username", identifier)
     .single()
+  userData = userData1
+
+  if (!userData && driver.Mobile_No) {
+    const { data: userData2 } = await supabase
+      .from("Master_Users")
+      .select("Permissions")
+      .eq("Username", driver.Mobile_No)
+      .single()
+    userData = userData2
+  }
 
   // 4. Create Session (Cookie)
   const sessionData = {
