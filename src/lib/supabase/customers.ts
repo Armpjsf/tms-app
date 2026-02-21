@@ -12,6 +12,9 @@ export type Customer = {
   Tax_ID: string | null
   Branch_ID: string | null
   Is_Active: boolean | null
+  Origin_Location?: string | null
+  Dest_Location?: string | null
+  Default_Origin?: string | null
 }
 
 // Get all customers
