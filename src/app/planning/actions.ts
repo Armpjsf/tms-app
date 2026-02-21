@@ -9,25 +9,25 @@ import { getAllVehiclesFromTable } from '@/lib/supabase/vehicles'
 
 export type JobFormData = {
   Job_ID: string
-  Plan_Date: string
-  Delivery_Date?: string
-  Customer_Name: string
-  Route_Name: string
-  Driver_ID: string
-  Vehicle_Plate: string
+  Plan_Date?: string | null
+  Delivery_Date?: string | null
+  Customer_Name?: string | null
+  Route_Name?: string | null
+  Driver_ID?: string | null
+  Vehicle_Plate?: string | null
   Vehicle_Type?: string
-  Job_Status: string
+  Job_Status?: string | null
   Cargo_Type?: string
   Notes?: string
-  Price_Cust_Total?: number
-  Cost_Driver_Total?: number
+  Price_Cust_Total?: number | string | null
+  Cost_Driver_Total?: number | string | null
   original_origins_json?: string
   original_destinations_json?: string
   extra_costs_json?: string
   Sub_ID?: string | null
   Show_Price_To_Driver?: boolean
-  Weight_Kg?: number
-  Volume_Cbm?: number
+  Weight_Kg?: number | null
+  Volume_Cbm?: number | null
   Branch_ID?: string
 }
 
