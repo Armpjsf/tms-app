@@ -1077,8 +1077,8 @@ export function JobDialog({
                     <span className="text-muted-foreground">รวมกำไรเบื้องต้น</span>
                     <span className="font-bold text-emerald-600 dark:text-emerald-400">
                         {(
-                            (formData.Price_Cust_Total + extraCosts.reduce((sum, c) => sum + c.charge_cust, 0)) - 
-                            (formData.Cost_Driver_Total + extraCosts.reduce((sum, c) => sum + c.cost_driver, 0))
+                            (Number(formData.Price_Cust_Total || 0) + extraCosts.reduce((sum, c) => sum + Number(c.charge_cust || 0), 0)) - 
+                            (Number(formData.Cost_Driver_Total || 0) + extraCosts.reduce((sum, c) => sum + Number(c.cost_driver || 0), 0))
                         ).toLocaleString()} บาท
                     </span>
                 </div>
