@@ -163,7 +163,7 @@ export async function getFleetGPSStatus() {
     const branchId = await getUserBranchId()
     const isAdmin = await isSuperAdmin()
 
-    const driversQuery = supabase
+    let driversQuery = supabase
       .from('Master_Drivers')
       .select('Driver_ID, Driver_Name, Vehicle_Plate')
     
