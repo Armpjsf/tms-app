@@ -1,4 +1,5 @@
 import { createClient } from '@/utils/supabase/server'
+import { getUserBranchId, isSuperAdmin } from "@/lib/permissions"
 
 export type ChatMessage = {
   id: number
@@ -23,21 +24,40 @@ export async function getChatContacts(): Promise<ChatContact[]> {
   try {
     const supabase = await createClient()
 
-    // 1. Get all messages ordered by time
-    const { data: messages, error } = await supabase
-      .from('chat_messages')
-      .select('*')
-      .order('created_at', { ascending: false })
+    // 0. Filter by Branch
+    const branchId = await getUserBranchId()
+    const isAdmin = await isSuperAdmin()
+
+    const query = supabase.from('chat_messages').select('*')
+
+    // Since chat_messages doesn't have Branch_ID, we fetch messages then filter by driver's branch
+    // Or we can join. Let's try to join if possible or fetch and filter in app logic if set size is small.
+    // Given TMS usually has < 100 drivers per branch, app logic filtering is safe.
+
+    const { data: messages, error } = await query.order('created_at', { ascending: false })
 
     if (error) {
       console.error('Error fetching chat messages:', error)
       return []
     }
 
+    // 1. Get Drivers in my branch to filter messages
+    let allowedDriverIds: Set<string> | null = null
+    if (branchId && branchId !== 'All') {
+        const { data: drivers } = await supabase
+            .from('Master_Drivers')
+            .select('Driver_ID')
+            .eq('Branch_ID', branchId)
+        allowedDriverIds = new Set(drivers?.map(d => d.Driver_ID) || [])
+    } else if (!isAdmin && !branchId) {
+        return []
+    }
+
     // 2. Group by driver and find last message
     const contactMap = new Map<string, ChatContact>()
 
     messages?.forEach((msg) => {
+      if (allowedDriverIds && !allowedDriverIds.has(msg.driver_id)) return
       if (!contactMap.has(msg.driver_id)) {
         contactMap.set(msg.driver_id, {
           driver_id: msg.driver_id,

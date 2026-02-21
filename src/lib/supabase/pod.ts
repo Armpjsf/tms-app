@@ -1,4 +1,5 @@
 import { createClient } from '@/utils/supabase/server'
+import { getUserBranchId, isSuperAdmin } from "@/lib/permissions"
 
 export type PODRecord = {
   Job_ID: string
@@ -21,11 +22,22 @@ export async function getTodayPODs(): Promise<PODRecord[]> {
     const supabase = await createClient()
     const today = new Date().toISOString().split('T')[0]
     
-    const { data, error } = await supabase
+    const branchId = await getUserBranchId()
+    const isAdmin = await isSuperAdmin()
+
+    let dbQuery = supabase
       .from('Jobs_Main')
       .select('Job_ID, Job_Status, Plan_Date, Customer_Name, Driver_Name, Vehicle_Plate, Route_Name, Photo_Proof_Url, Signature_Url, Actual_Delivery_Time, Delivery_Lat, Delivery_Lon')
       .eq('Plan_Date', today)
       .in('Job_Status', ['Delivered', 'Complete', 'In Transit', 'Picked Up'])
+
+    if (branchId && branchId !== 'All') {
+        dbQuery = dbQuery.eq('Branch_ID', branchId)
+    } else if (!isAdmin && !branchId) {
+        return []
+    }
+
+    const { data, error } = await dbQuery
       .order('Actual_Delivery_Time', { ascending: false })
     
     if (error) {
@@ -46,10 +58,21 @@ export async function getAllPODs(page = 1, limit = 50): Promise<{ data: PODRecor
     const supabase = await createClient()
     const offset = (page - 1) * limit
     
-    const { data, error, count } = await supabase
+    const branchId = await getUserBranchId()
+    const isAdmin = await isSuperAdmin()
+
+    let dbQuery = supabase
       .from('Jobs_Main')
       .select('Job_ID, Job_Status, Plan_Date, Customer_Name, Driver_Name, Vehicle_Plate, Route_Name, Photo_Proof_Url, Signature_Url, Actual_Delivery_Time, Delivery_Lat, Delivery_Lon', { count: 'exact' })
       .in('Job_Status', ['Delivered', 'Complete', 'In Transit', 'Picked Up', 'Failed'])
+    
+    if (branchId && branchId !== 'All') {
+        dbQuery = dbQuery.eq('Branch_ID', branchId)
+    } else if (!isAdmin && !branchId) {
+        return { data: [], count: 0 }
+    }
+
+    const { data, error, count } = await dbQuery
       .order('Plan_Date', { ascending: false })
       .range(offset, offset + limit - 1)
     
@@ -71,10 +94,21 @@ export async function getPODStats() {
     const supabase = await createClient()
     const today = new Date().toISOString().split('T')[0]
     
-    const { data, error } = await supabase
+    const branchId = await getUserBranchId()
+    const isAdmin = await isSuperAdmin()
+
+    let dbQuery = supabase
       .from('Jobs_Main')
       .select('Job_Status, Photo_Proof_Url, Signature_Url')
       .eq('Plan_Date', today)
+    
+    if (branchId && branchId !== 'All') {
+        dbQuery = dbQuery.eq('Branch_ID', branchId)
+    } else if (!isAdmin && !branchId) {
+        return { total: 0, withPhoto: 0, withSignature: 0, complete: 0 }
+    }
+
+    const { data, error } = await dbQuery
     
     if (error) {
       console.error('Error fetching POD stats:', JSON.stringify(error))

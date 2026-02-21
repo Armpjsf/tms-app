@@ -1,7 +1,7 @@
 "use server"
 
 import { createClient } from '@/utils/supabase/server'
-import { getUserBranchId, getUserRole } from "@/lib/permissions"
+import { getUserBranchId, isSuperAdmin, getUserRole } from "@/lib/permissions"
 
 export type Route = {
   Route_Name: string
@@ -47,8 +47,15 @@ export async function getAllRoutes(page?: number, limit?: number, query?: string
       queryBuilder = queryBuilder.or(`Route_Name.ilike.%${query}%,Origin.ilike.%${query}%,Destination.ilike.%${query}%`)
     }
 
-    if (branchId && branchId !== 'All') {
-        queryBuilder = queryBuilder.eq('Branch_ID', branchId)
+    // Unified Branch Filtering
+    const userBranchId = await getUserBranchId()
+    const isAdmin = await isSuperAdmin()
+    const effectiveBranchId = branchId || userBranchId
+
+    if (effectiveBranchId && effectiveBranchId !== 'All') {
+        queryBuilder = queryBuilder.eq('Branch_ID', effectiveBranchId)
+    } else if (!isAdmin && !effectiveBranchId) {
+        return { data: [], count: 0 }
     }
     
     const { data, error, count } = await queryBuilder.order('Route_Name', { ascending: true })

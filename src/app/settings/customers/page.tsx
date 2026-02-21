@@ -30,17 +30,26 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { 
-  getAllCustomers, 
-  createCustomer, 
-  updateCustomer, 
-  deleteCustomer, 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import {
+  getAllCustomers,
+  createCustomer,
+  updateCustomer,
+  deleteCustomer,
   Customer,
   createBulkCustomers
 } from "@/lib/supabase/customers"
 import { ExcelImport } from "@/components/ui/excel-import"
+import { useBranch } from "@/components/providers/branch-provider"
 
 export default function CustomersSettingsPage() {
+  const { branches, isAdmin } = useBranch()
   const [customers, setCustomers] = useState<Customer[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [isDialogOpen, setIsDialogOpen] = useState(false)
@@ -55,7 +64,8 @@ export default function CustomersSettingsPage() {
     Phone: "",
     Email: "",
     Address: "",
-    Tax_ID: ""
+    Tax_ID: "",
+    Branch_ID: ""
   })
 
   const fetchCustomers = useCallback(async () => {
@@ -89,7 +99,8 @@ export default function CustomersSettingsPage() {
       Phone: "",
       Email: "",
       Address: "",
-      Tax_ID: ""
+      Tax_ID: "",
+      Branch_ID: ""
     })
     setEditingCustomer(null)
   }
@@ -187,6 +198,27 @@ export default function CustomersSettingsPage() {
             </DialogHeader>
             
             <div className="space-y-4 mt-4">
+              {isAdmin && branches.length > 0 && (
+                <div className="space-y-2">
+                    <Label className="text-yellow-500 font-bold">สาขา (Super Admin Only)</Label>
+                    <Select 
+                      value={formData.Branch_ID || ""} 
+                      onValueChange={(val) => updateForm("Branch_ID", val)}
+                    >
+                      <SelectTrigger className="bg-slate-800 border-yellow-500/50 text-white">
+                        <SelectValue placeholder="-- เลือกสาขา --" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-slate-900 border-slate-800">
+                        {branches.map(b => (
+                          <SelectItem key={b.Branch_ID} value={b.Branch_ID} className="text-white">
+                            {b.Branch_Name} ({b.Branch_ID})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                </div>
+              )}
+
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label className="text-slate-400">รหัสลูกค้า (Auto if empty)</Label>
@@ -325,6 +357,10 @@ export default function CustomersSettingsPage() {
                   <div className="flex items-center gap-2 text-slate-400">
                     <CreditCard className="w-4 h-4 text-slate-500" />
                     <span>Tax ID: {customer.Tax_ID || "-"}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-slate-400">
+                    <Building2 className="w-4 h-4 text-slate-500" />
+                    <span>Branch: {customer.Branch_ID || "HQ"}</span>
                   </div>
                   <div className="flex items-center gap-2 text-slate-400">
                     <Phone className="w-4 h-4 text-slate-500" />

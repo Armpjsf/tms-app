@@ -140,7 +140,7 @@ export async function createDriverPayment(
         // 1. Calculate Total Amount
         const { data: jobs, error: jobsError } = await supabase
             .from('Jobs_Main')
-            .select('Cost_Driver_Total')
+            .select('Cost_Driver_Total, Branch_ID')
             .in('Job_ID', jobIds)
 
         if (jobsError) throw new Error("Failed to fetch jobs for calculation")
@@ -154,6 +154,10 @@ export async function createDriverPayment(
         const paymentId = `DP-${ym}-${randomSuffix}`
 
         // 3. Insert Driver Payment
+        const userBranchId = await getUserBranchId()
+        // Use Branch_ID from the first job if available, otherwise fallback to user's branch
+        const branchId = jobs?.[0]?.Branch_ID || userBranchId || 'HQ'
+
         const { error: insertError } = await supabase
             .from('Driver_Payments')
             .insert({
@@ -163,7 +167,8 @@ export async function createDriverPayment(
                 Total_Amount: totalAmount,
                 Status: 'Pending',
                 Created_At: new Date().toISOString(),
-                Updated_At: new Date().toISOString()
+                Updated_At: new Date().toISOString(),
+                Branch_ID: branchId
             })
 
         if (insertError) throw insertError
@@ -334,9 +339,20 @@ export interface DriverPayment {
 export async function getDriverPayments() {
     try {
         const supabase = await createClient()
-        const { data, error } = await supabase
-            .from('Driver_Payments')
-            .select('*')
+
+        // Filter by Branch
+        const branchId = await getUserBranchId()
+        const isAdmin = await isSuperAdmin()
+
+        let query = supabase.from('Driver_Payments').select('*')
+
+        if (branchId && !isAdmin) {
+            query = query.or(`Branch_ID.eq.${branchId},Branch_ID.is.null`)
+        } else if (!isAdmin && !branchId) {
+            return []
+        }
+
+        const { data, error } = await query
             .order('Created_At', { ascending: false })
         
         if (error) {

@@ -26,9 +26,10 @@ export async function getAllCustomers(page?: number, limit?: number, query?: str
     const branchId = await getUserBranchId()
     const isAdmin = await isSuperAdmin()
     
-    if (branchId && !isAdmin) {
-        // @ts-ignore
+    if (branchId && branchId !== 'All') {
         queryBuilder = queryBuilder.eq('Branch_ID', branchId)
+    } else if (!isAdmin && !branchId) {
+        return { data: [], count: 0 }
     }
     
     if (query) {
@@ -80,7 +81,7 @@ export async function createCustomer(customerData: Partial<Customer>) {
         // Email: customerData.Email,
         Address: customerData.Address,
         Tax_ID: customerData.Tax_ID,
-        Branch_ID: branchId || 'HQ', // Default to HQ if not found
+        Branch_ID: customerData.Branch_ID || branchId || 'HQ', // Default to HQ if not found
         // Is_Active: true
       })
       .select()

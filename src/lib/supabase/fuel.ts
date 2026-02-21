@@ -1,5 +1,8 @@
+"use server"
+
 import { createClient } from '@/utils/supabase/server'
 import { SupabaseClient } from '@supabase/supabase-js'
+import { getUserBranchId, isSuperAdmin } from "@/lib/permissions"
 
 export type FuelLog = {
   Log_ID: string
@@ -22,21 +25,37 @@ export type FuelLog = {
 
 // ดึงบันทึกเติมน้ำมันวันนี้
 export async function getTodayFuelLogs(): Promise<FuelLog[]> {
-  const supabase = await createClient()
-  const today = new Date().toISOString().split('T')[0]
-  
-  const { data, error } = await supabase
-    .from('Fuel_Logs')
-    .select('*')
-    .gte('Date_Time', today)
-    .order('Date_Time', { ascending: false })
-  
-  if (error) {
-    console.error('Error fetching fuel logs:', error)
+  try {
+    const supabase = await createClient()
+    const today = new Date().toISOString().split('T')[0]
+    
+    const branchId = await getUserBranchId()
+    const isAdmin = await isSuperAdmin()
+
+    let query = supabase
+      .from('Fuel_Logs')
+      .select('*')
+      .gte('Date_Time', today)
+    
+    if (branchId && branchId !== 'All') {
+        query = query.eq('Branch_ID', branchId)
+    } else if (!isAdmin && !branchId) {
+        return []
+    }
+
+    const { data, error } = await query
+      .order('Date_Time', { ascending: false })
+    
+    if (error) {
+      console.error('Error fetching fuel logs:', error)
+      return []
+    }
+    
+    return data || []
+  } catch (e) {
+    console.error('Exception fetching fuel logs:', e)
     return []
   }
-  
-  return data || []
 }
 
 // Helper to get previous log for efficiency calculation
@@ -64,10 +83,20 @@ export async function getAllFuelLogs(
     const supabase = await createClient()
     const offset = (page - 1) * limit
     
+    const branchId = await getUserBranchId()
+    const isAdmin = await isSuperAdmin()
+
     let dbQuery = supabase
       .from('Fuel_Logs')
       .select('*', { count: 'exact' })
-      .order('Date_Time', { ascending: false })
+    
+    if (branchId && branchId !== 'All') {
+        dbQuery = dbQuery.eq('Branch_ID', branchId)
+    } else if (!isAdmin && !branchId) {
+        return { data: [], count: 0 }
+    }
+
+    dbQuery = dbQuery.order('Date_Time', { ascending: false })
 
     if (query) {
       dbQuery = dbQuery.or(`Vehicle_Plate.ilike.%${query}%`)
@@ -122,9 +151,6 @@ export async function getAllFuelLogs(
                 kmPerLiter = distance / log.Liters
                 
                 // Efficiency Alerts
-                // Truck (4-wheel) avg 8-12 km/l. 
-                // Large truck 2-5 km/l.
-                // For now, use simple threshold < 5 is Critical, < 8 is Warning
                 if (kmPerLiter < 5) efficiencyStatus = 'Critical'
                 else if (kmPerLiter < 8) efficiencyStatus = 'Warning'
             }
@@ -150,23 +176,39 @@ export async function getAllFuelLogs(
 
 // นับสถิติน้ำมันวันนี้
 export async function getTodayFuelStats() {
-  const supabase = await createClient()
-  const today = new Date().toISOString().split('T')[0]
-  
-  const { data, error } = await supabase
-    .from('Fuel_Logs')
-    .select('Liters, Price_Total')
-    .gte('Date_Time', today)
-  
-  if (error) {
-    console.error('Error fetching fuel stats:', error)
+  try {
+    const supabase = await createClient()
+    const today = new Date().toISOString().split('T')[0]
+    
+    const branchId = await getUserBranchId()
+    const isAdmin = await isSuperAdmin()
+
+    let query = supabase
+      .from('Fuel_Logs')
+      .select('Liters, Price_Total')
+      .gte('Date_Time', today)
+    
+    if (branchId && branchId !== 'All') {
+        query = query.eq('Branch_ID', branchId)
+    } else if (!isAdmin && !branchId) {
+        return { totalLiters: 0, totalAmount: 0, count: 0 }
+    }
+
+    const { data, error } = await query
+    
+    if (error) {
+      console.error('Error fetching fuel stats:', error)
+      return { totalLiters: 0, totalAmount: 0, count: 0 }
+    }
+    
+    const logs = data || []
+    return {
+      totalLiters: logs.reduce((sum, l) => sum + (l.Liters || 0), 0),
+      totalAmount: logs.reduce((sum, l) => sum + (l.Price_Total || 0), 0),
+      count: logs.length,
+    }
+  } catch (e) {
+    console.error('Exception fetching fuel stats:', e)
     return { totalLiters: 0, totalAmount: 0, count: 0 }
-  }
-  
-  const logs = data || []
-  return {
-    totalLiters: logs.reduce((sum, l) => sum + (l.Liters || 0), 0),
-    totalAmount: logs.reduce((sum, l) => sum + (l.Price_Total || 0), 0),
-    count: logs.length,
   }
 }

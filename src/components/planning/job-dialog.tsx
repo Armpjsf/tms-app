@@ -14,6 +14,48 @@ import { LocationAutocomplete } from "@/components/location-autocomplete"
 import { VehicleAutocomplete } from "@/components/vehicle-autocomplete"
 import { DriverAutocomplete } from "@/components/driver-autocomplete"
 import { ZONES } from "@/lib/constants"
+import { useBranch } from "@/components/providers/branch-provider"
+import { Driver } from "@/lib/supabase/drivers"
+import { Vehicle } from "@/lib/supabase/vehicles"
+import { Customer } from "@/lib/supabase/customers"
+
+export type JobAssignment = {
+  Vehicle_Type: string
+  Vehicle_Plate: string
+  Driver_ID: string
+  Sub_ID?: string
+  Show_Price_To_Driver?: boolean
+}
+
+export type Job = {
+  Job_ID: string
+  Plan_Date?: string
+  Pickup_Date?: string
+  Delivery_Date?: string
+  Customer_Name: string
+  Route_Name?: string
+  Driver_ID?: string
+  Vehicle_Plate?: string
+  Vehicle_Type?: string
+  Cargo_Type?: string
+  Notes?: string
+  Price_Cust_Total?: number
+  Cost_Driver_Total?: number
+  Job_Status?: string
+  Weight_Kg?: number
+  Volume_Cbm?: number
+  Zone?: string
+  Branch_ID?: string
+  origins?: LocationPoint[] | string
+  destinations?: LocationPoint[] | string
+  extra_costs?: ExtraCost[] | string
+  original_origins_json?: string
+  original_destinations_json?: string
+  extra_costs_json?: string
+  assignments?: JobAssignment[]
+  Sub_ID?: string
+  Show_Price_To_Driver?: boolean
+}
 import { 
   Loader2, 
   Plus, 
@@ -48,10 +90,10 @@ type ExtraCost = {
 
 type JobDialogProps = {
   mode?: 'create' | 'edit'
-  job?: any
-  drivers: any[]
-  vehicles: any[]
-  customers?: any[]
+  job?: Job
+  drivers?: Driver[]
+  vehicles?: Vehicle[]
+  customers?: Customer[]
   routes?: any[]
   trigger?: React.ReactNode
   open?: boolean
@@ -93,6 +135,7 @@ export function JobDialog({
   canViewPrice = true,
   canDelete = true
 }: JobDialogProps) {
+  const { branches, isAdmin } = useBranch()
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [open, setOpen] = useState(false)
@@ -123,7 +166,8 @@ export function JobDialog({
     Job_Status: job?.Job_Status || 'New',
     Weight_Kg: job?.Weight_Kg || 0,
     Volume_Cbm: job?.Volume_Cbm || 0,
-    Zone: job?.Zone || ''
+    Zone: job?.Zone || '',
+    Branch_ID: job?.Branch_ID || ''
   })
 
   // Multi-Assignment State
@@ -208,7 +252,7 @@ export function JobDialog({
 
   const addDestination = () => setDestinations([...destinations, { name: '', lat: '', lng: '' }])
   const removeDestination = (index: number) => {
-    if (destinations.length > 1) setDestinations(destinations.filter((_: any, i: number) => i !== index))
+    if (destinations.length > 1) setDestinations(destinations.filter((_, i) => i !== index))
   }
   const updateDestination = (index: number, field: keyof LocationPoint, value: string) => {
     const updated = [...destinations]
@@ -222,13 +266,13 @@ export function JobDialog({
 
   const removeAssignment = (index: number) => {
     if (assignments.length > 1) {
-        setAssignments(assignments.filter((_: any, i: number) => i !== index))
+        setAssignments(assignments.filter((_, i) => i !== index))
     }
   }
 
-  const updateAssignment = (index: number, field: string, value: any) => {
+  const updateAssignment = (index: number, field: string, value: string | boolean) => {
     const newAssignments = [...assignments]
-    newAssignments[index] = { ...newAssignments[index], [field]: value }
+    newAssignments[index] = { ...newAssignments[index], [field]: value } as JobAssignment
     setAssignments(newAssignments)
     
     // Sync first assignment to main form data for backward compatibility / validation
@@ -238,7 +282,7 @@ export function JobDialog({
   }
 
   const addExtraCost = () => setExtraCosts([...extraCosts, { type: EXPENSE_TYPES[0], cost_driver: 0, charge_cust: 0 }])
-  const removeExtraCost = (index: number) => setExtraCosts(extraCosts.filter((_: any, i: number) => i !== index))
+  const removeExtraCost = (index: number) => setExtraCosts(extraCosts.filter((_, i) => i !== index))
   const updateExtraCost = (index: number, field: keyof ExtraCost, value: string | number) => {
     const updated = [...extraCosts]
     if (field === 'cost_driver' || field === 'charge_cust') {
@@ -259,14 +303,7 @@ export function JobDialog({
     
     // Check assignments
     if (mode === 'create') {
-        const invalidAssignment = assignments.find((a: any) => !a.Vehicle_Plate && !a.Driver_ID)
-        // Strictly, user might want to assign LATER? 
-        // User request: "Force to fill info completely"
-        // So we should require at least Vehicle OR Driver? Or both?
-        // Let's require at least Vehicle Plate OR Driver ID for each row.
-        // Or maybe just ensure at least ONE assignment exists and is valid.
-        
-        assignments.forEach((a: any, i: number) => {
+        assignments.forEach((a, i) => {
             if (!a.Vehicle_Plate && !a.Driver_ID) {
                 errors.push(`กรุณาระบุข้อมูลรถหรือคนขับ สำหรับรถคันที่ ${i + 1}`)
             }
@@ -285,7 +322,8 @@ export function JobDialog({
         if (!result.success) throw new Error(result.message)
         setShow(false)
         router.refresh()
-    } catch (error: any) {
+    } catch (e) {
+        const error = e as Error
         console.error(error)
         alert(error.message || 'ลบงานไม่สำเร็จ')
     } finally {
@@ -293,7 +331,7 @@ export function JobDialog({
     }
   }
 
-  const handleCustomerSelect = (customer: any) => {
+  const handleCustomerSelect = (customer: Customer) => {
     setFormData(prev => ({
       ...prev,
       Customer_Name: customer.Customer_Name
@@ -338,7 +376,7 @@ export function JobDialog({
 
       if (mode === 'create') {
         // Prepare array for bulk creation
-        const jobsToCreate = assignments.map((assignment: any, index: number) => ({
+        const jobsToCreate = assignments.map((assignment, index: number) => ({
             ...baseData,
             // If multiple assignments, append suffix to ensure unique Job_ID (e.g. JOB-001-1, JOB-001-2)
             Job_ID: assignments.length > 1 ? `${baseData.Job_ID}-${index + 1}` : baseData.Job_ID,
@@ -378,7 +416,8 @@ export function JobDialog({
       
       setShow(false)
       router.refresh()
-    } catch (error: any) {
+    } catch (e) {
+      const error = e as Error
       console.error(error)
       alert(error.message || 'เกิดข้อผิดพลาด กรุณาลองใหม่')
     } finally {
@@ -511,6 +550,31 @@ export function JobDialog({
                 </div>
               </div>
 
+              {isAdmin && branches.length > 0 && (
+                <div className="p-4 bg-yellow-500/5 border border-yellow-500/20 rounded-lg">
+                    <Label className="text-yellow-500 font-bold mb-2 block font-medium">สาขาสำหรับงานนี้ (Super Admin Only)</Label>
+                    <Select 
+                      value={formData.Branch_ID || ""} 
+                      onValueChange={(val) => setFormData({ ...formData, Branch_ID: val })}
+                    >
+                      <SelectTrigger className="bg-background border-yellow-500/30">
+                        <SelectValue placeholder="-- ใช้สาขาปัจจุบัน --" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="">-- ใช้สาขาปัจจุบัน --</SelectItem>
+                        {branches.map(b => (
+                          <SelectItem key={b.Branch_ID} value={b.Branch_ID}>
+                            {b.Branch_Name} ({b.Branch_ID})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-[10px] text-muted-foreground mt-1">
+                      หากไม่เลือก จะใช้สาขาที่ท่านกำลังเลือกอยู่ที่แถบด้านบน (Header)
+                    </p>
+                </div>
+              )}
+
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label className="flex items-center gap-1">
@@ -572,11 +636,11 @@ export function JobDialog({
               {(() => {
                  // Separate lists for Origin and Destination as requested
                  const originLocations = Array.from(new Set(
-                    routes.map((r: any) => r.Origin).filter(Boolean)
+                    routes.map((r) => r.Origin).filter(Boolean)
                  )) as string[]
 
                  const destinationLocations = Array.from(new Set(
-                    routes.map((r: any) => r.Destination).filter(Boolean)
+                    routes.map((r) => r.Destination).filter(Boolean)
                  )) as string[]
                  
                  return (
@@ -698,7 +762,7 @@ export function JobDialog({
           {activeTab === 'assign' && (
             <div className="space-y-4">
               {/* Assignment List */}
-              {assignments.map((assignment: any, index: number) => (
+              {assignments.map((assignment, index: number) => (
                 <div key={index} className="p-4 bg-slate-800/50 rounded-lg border border-slate-700 relative group">
                     {/* Header with Remove Button */}
                     <div className="flex justify-between items-center mb-3">
@@ -730,7 +794,7 @@ export function JobDialog({
                         >
                             <option value="">ทั้งหมด (ไม่ระบุ)</option>
                             {/* Unique Vehicle Types from Data */}
-                            {Array.from(new Set(vehicles.map((v: any) => v.vehicle_type).filter(Boolean))).map((type: any) => (
+                            {Array.from(new Set(vehicles.map((v) => v.vehicle_type).filter(Boolean))).map((type) => (
                             <option key={type} value={type}>{type}</option>
                             ))}
                         </select>
@@ -743,7 +807,7 @@ export function JobDialog({
                             value={assignment.Vehicle_Plate}
                             onChange={(val) => updateAssignment(index, 'Vehicle_Plate', val)}
                             vehicles={assignment.Vehicle_Type 
-                                ? vehicles.filter((v: any) => v.vehicle_type === assignment.Vehicle_Type) 
+                                ? vehicles.filter((v) => v.vehicle_type === assignment.Vehicle_Type) 
                                 : vehicles
                             }
                             onSelect={(v) => {
@@ -812,7 +876,7 @@ export function JobDialog({
 
                     {/* Capacity & Zone Check UI */}
                     {(() => {
-                        const selectedVehicle = vehicles.find((v: any) => v.vehicle_plate === assignment.Vehicle_Plate)
+                        const selectedVehicle = vehicles.find((v) => v.vehicle_plate === assignment.Vehicle_Plate)
                         if (!selectedVehicle) return null
 
                         const maxWeight = selectedVehicle.max_weight_kg || 0

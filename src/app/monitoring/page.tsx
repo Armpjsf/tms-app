@@ -12,10 +12,13 @@ import {
   Navigation,
   AlertCircle
 } from "lucide-react"
-import { getJobsByStatus, Job } from "@/lib/supabase/jobs"
-import { getActiveDrivers, Driver } from "@/lib/supabase/drivers"
+import { getJobsByStatus } from '@/lib/supabase/jobs'
+import { getActiveDrivers } from '@/lib/supabase/drivers'
+import { getUserBranchId } from '@/lib/permissions'
 
 export default async function MonitoringPage() {
+  const branchId = await getUserBranchId()
+
   const [inProgressJobs, inTransitJobs, activeDrivers] = await Promise.all([
     getJobsByStatus('In Progress'),
     getJobsByStatus('In Transit'),
@@ -36,6 +39,11 @@ export default async function MonitoringPage() {
             Live Operations
             </h1>
             <p className="text-slate-400">ติดตามสถานะงานและรถที่กำลังวิ่งอยู่ (Real-time)</p>
+            {branchId && branchId !== 'All' && (
+                <Badge variant="outline" className="text-blue-400 border-blue-500/20 bg-blue-500/10 mt-1">
+                    สาขา: {branchId}
+                </Badge>
+            )}
         </div>
         <div className="flex items-center gap-2 px-4 py-2 bg-slate-900 rounded-full border border-slate-800">
             <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />

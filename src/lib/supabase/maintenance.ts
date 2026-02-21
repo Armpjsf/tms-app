@@ -1,6 +1,7 @@
 "use server"
 
 import { createClient } from '@/utils/supabase/server'
+import { getUserBranchId, isSuperAdmin } from "@/lib/permissions"
 
 export type RepairTicket = {
   Ticket_ID: string
@@ -19,8 +20,6 @@ export type RepairTicket = {
 }
 
 // ดึง Repair Tickets ทั้งหมด (pagination + search + filters)
-import { getUserBranchId, isSuperAdmin } from "@/lib/permissions"
-
 export async function getAllRepairTickets(
   page = 1, 
   limit = 20, 
@@ -33,17 +32,18 @@ export async function getAllRepairTickets(
     const supabase = await createClient()
     const offset = (page - 1) * limit
     
-    let dbQuery = supabase
-      .from('Repair_Tickets')
-      .select('*', { count: 'exact' })
-    
     // Filter by Branch
     const branchId = await getUserBranchId()
     const isAdmin = await isSuperAdmin()
     
-    if (branchId && !isAdmin) {
-        // @ts-ignore
+    let dbQuery = supabase
+      .from('Repair_Tickets')
+      .select('*', { count: 'exact' })
+    
+    if (branchId && branchId !== 'All') {
         dbQuery = dbQuery.eq('Branch_ID', branchId)
+    } else if (!isAdmin && !branchId) {
+        return { data: [], count: 0 }
     }
 
     dbQuery = dbQuery.order('Date_Report', { ascending: false })
@@ -80,59 +80,73 @@ export async function getAllRepairTickets(
 
 // ดึง Tickets ที่รอดำเนินการ
 export async function getPendingRepairTickets(): Promise<RepairTicket[]> {
-  const supabase = await createClient()
-  
-  // Filter by Branch
-  const branchId = await getUserBranchId()
-  const isAdmin = await isSuperAdmin()
-  
-  let query = supabase
-    .from('Repair_Tickets')
-    .select('*')
-    .in('Status', ['Pending', 'In Progress', 'รอดำเนินการ', 'กำลังซ่อม'])
+  try {
+    const supabase = await createClient()
+    
+    // Filter by Branch
+    const branchId = await getUserBranchId()
+    const isAdmin = await isSuperAdmin()
+    
+    let query = supabase
+      .from('Repair_Tickets')
+      .select('*')
+      .in('Status', ['Pending', 'In Progress', 'รอดำเนินการ', 'กำลังซ่อม'])
 
-  if (branchId && !isAdmin) {
-      // @ts-ignore
-      query = query.eq('Branch_ID', branchId)
-  }
+    if (branchId && branchId !== 'All') {
+        // @ts-expect-error - Column name case might vary
+        query = query.eq('Branch_ID', branchId)
+    } else if (!isAdmin && !branchId) {
+        return []
+    }
 
-  const { data, error } = await query
-    .order('Date_Report', { ascending: false })
-  
-  if (error) {
-    console.error('Error fetching pending tickets:', error)
+    const { data, error } = await query
+      .order('Date_Report', { ascending: false })
+    
+    if (error) {
+      console.error('Error fetching pending tickets:', error)
+      return []
+    }
+    
+    return data || []
+  } catch (e) {
+    console.error('Exception fetching pending tickets:', e)
     return []
   }
-  
-  return data || []
 }
 
 // นับสถิติ Repair Tickets
 export async function getRepairTicketStats() {
-  const supabase = await createClient()
-  
-  const branchId = await getUserBranchId()
-  const isAdmin = await isSuperAdmin()
-  
-  let query = supabase.from('Repair_Tickets').select('Status')
+  try {
+    const supabase = await createClient()
+    
+    const branchId = await getUserBranchId()
+    const isAdmin = await isSuperAdmin()
+    
+    let query = supabase.from('Repair_Tickets').select('Status')
 
-  if (branchId && !isAdmin) {
-      // @ts-ignore
-      query = query.eq('Branch_ID', branchId)
-  }
+    if (branchId && branchId !== 'All') {
+        // @ts-expect-error - Column name case might vary
+        query = query.eq('Branch_ID', branchId)
+    } else if (!isAdmin && !branchId) {
+        return { total: 0, pending: 0, inProgress: 0, completed: 0 }
+    }
 
-  const { data, error } = await query
-  
-  if (error) {
-    console.error('Error fetching repair stats:', error)
+    const { data, error } = await query
+    
+    if (error) {
+      console.error('Error fetching repair stats:', error)
+      return { total: 0, pending: 0, inProgress: 0, completed: 0 }
+    }
+    
+    const tickets = data || []
+    return {
+      total: tickets.length,
+      pending: tickets.filter(t => t.Status === 'Pending' || t.Status === 'รอดำเนินการ').length,
+      inProgress: tickets.filter(t => t.Status === 'In Progress' || t.Status === 'กำลังซ่อม').length,
+      completed: tickets.filter(t => t.Status === 'Completed' || t.Status === 'เสร็จสิ้น').length,
+    }
+  } catch (e) {
+    console.error('Exception fetching repair stats:', e)
     return { total: 0, pending: 0, inProgress: 0, completed: 0 }
-  }
-  
-  const tickets = data || []
-  return {
-    total: tickets.length,
-    pending: tickets.filter(t => t.Status === 'Pending' || t.Status === 'รอดำเนินการ').length,
-    inProgress: tickets.filter(t => t.Status === 'In Progress' || t.Status === 'กำลังซ่อม').length,
-    completed: tickets.filter(t => t.Status === 'Completed' || t.Status === 'เสร็จสิ้น').length,
   }
 }

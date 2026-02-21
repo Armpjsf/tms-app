@@ -2,7 +2,6 @@
 
 import { createClient } from '@/utils/supabase/server'
 import { getUserBranchId, isSuperAdmin } from "@/lib/permissions"
-import { cookies } from 'next/headers'
 
 // Type matching actual Supabase schema (lowercase columns!)
 export type Vehicle = {
@@ -43,13 +42,7 @@ export async function getAllVehiclesFromTable(): Promise<Vehicle[]> {
     const branchId = await getUserBranchId()
     const isAdmin = await isSuperAdmin()
     
-    // Check for Admin Override Cookie
-    const cookieStore = await cookies()
-    const selectedBranch = cookieStore.get('selectedBranch')?.value
-
-    if (isAdmin && selectedBranch && selectedBranch !== 'All') {
-        query = query.eq('branch_id', selectedBranch)
-    } else if (branchId && !isAdmin) {
+    if (branchId && branchId !== 'All') {
         query = query.eq('branch_id', branchId)
     } else if (!isAdmin && !branchId) {
         return []
@@ -99,7 +92,7 @@ export async function createVehicle(vehicleData: Partial<Vehicle>) {
         active_status: vehicleData.active_status || 'Active',
         sub_id: vehicleData.sub_id,
         preferred_zone: vehicleData.preferred_zone,
-        branch_id: await getUserBranchId()
+        branch_id: vehicleData.branch_id || await getUserBranchId()
       })
       .select()
       .single()
@@ -173,13 +166,7 @@ export async function getAllVehicles(page?: number, limit?: number, query?: stri
     const branchId = await getUserBranchId()
     const isAdmin = await isSuperAdmin()
     
-    // Check for Admin Override Cookie
-    const cookieStore = await cookies()
-    const selectedBranch = cookieStore.get('selectedBranch')?.value
-
-    if (isAdmin && selectedBranch && selectedBranch !== 'All') {
-        queryBuilder = queryBuilder.eq('branch_id', selectedBranch)
-    } else if (branchId && !isAdmin) {
+    if (branchId && branchId !== 'All') {
         queryBuilder = queryBuilder.eq('branch_id', branchId)
     } else if (!isAdmin && !branchId) {
         return { data: [], count: 0 }
@@ -222,13 +209,7 @@ export async function getVehicleStats() {
     const branchId = await getUserBranchId()
     const isAdmin = await isSuperAdmin()
     
-    // Check for Admin Override Cookie
-    const cookieStore = await cookies()
-    const selectedBranch = cookieStore.get('selectedBranch')?.value
-
-    if (isAdmin && selectedBranch && selectedBranch !== 'All') {
-        query = query.eq('branch_id', selectedBranch)
-    } else if (branchId && !isAdmin) {
+    if (branchId && branchId !== 'All') {
         query = query.eq('branch_id', branchId)
     } else if (!isAdmin && !branchId) {
         return { total: 0, active: 0, maintenance: 0, dueSoon: 0 }

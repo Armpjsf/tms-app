@@ -10,32 +10,34 @@
 | Job_ID | text | PK |
 | Job_Status | text | |
 | Plan_Date | date | |
+| Delivery_Date | date | |
 | Customer_ID | text | |
 | Customer_Name | text | |
 | Route_Name | text | |
+| Zone | text | |
 | Vehicle_Type | text | |
-| Cargo_Qty | text | |
+| Cargo_Type | text | |
+| Notes | text | |
+| Total_Drop | bigint | |
+| Weight_Kg | numeric | |
+| Volume_Cbm | numeric | |
+| Price_Cust_* | numeric | Multiple price columns |
+| Cost_Driver_* | numeric | Multiple cost columns |
+| Show_Price_To_Driver | boolean | |
+| Sub_ID | text | |
+| Branch_ID | text | |
+| Invoice_ID | text | |
 | Origin_Location | text | |
 | Dest_Location | text | |
-| Est_Distance_KM | double | |
-| GoogleMap_Link | text | |
-| Driver_ID | text | |
-| Driver_Name | text | |
-| Vehicle_Plate | text | |
-| Actual_Pickup_Time | time | |
-| Actual_Delivery_Time | time | |
-| Arrive_Dest_Time | time | |
+| original_origins_json | jsonb | |
+| original_destinations_json | jsonb | |
+| extra_costs_json | jsonb | |
 | Photo_Proof_Url | text | |
 | Signature_Url | text | |
 | Delivery_Lat | text | |
 | Delivery_Lon | text | |
-| Price_Cust_* | numeric | Multiple price columns |
-| Cost_Driver_* | numeric | Multiple cost columns |
-| lat, lon | double | |
 | Created_At | text | |
 | Failed_Reason | text | |
-| Total_Drop | bigint | |
-| Branch_ID | text | |
 
 ---
 

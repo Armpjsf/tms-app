@@ -1,5 +1,6 @@
 
 import { createClient } from '@/utils/supabase/server'
+import { getUserBranchId, isSuperAdmin } from "@/lib/permissions"
 
 export type Invoice = {
   Invoice_ID: string
@@ -20,6 +21,7 @@ export type Invoice = {
   Created_At: string
   Updated_At: string
   Created_By: string | null
+  Branch_ID: string | null
   
   // Joins
   Customer_Name?: string
@@ -28,10 +30,22 @@ export type Invoice = {
 export async function getInvoices(page = 1, limit = 20, query = '') {
   try {
     const supabase = await createClient()
-    let q = supabase
+
+    // Filter by Branch
+    const branchId = await getUserBranchId()
+    const isAdmin = await isSuperAdmin()
+
+    let queryBuilder = supabase
       .from('invoices')
       .select('*, customers(Customer_Name)', { count: 'exact' })
-      .order('Created_At', { ascending: false })
+    
+    if (branchId && !isAdmin) {
+        queryBuilder = queryBuilder.or(`Branch_ID.eq.${branchId},Branch_ID.is.null`)
+    } else if (!isAdmin && !branchId) {
+        return { data: [], count: 0 }
+    }
+
+    let q = queryBuilder.order('Created_At', { ascending: false })
 
     if (query) {
        q = q.or(`Invoice_ID.ilike.%${query}%,Tax_Invoice_ID.ilike.%${query}%`)
@@ -82,6 +96,11 @@ export async function createInvoice(invoice: Partial<Invoice>) {
   try {
     const supabase = await createClient()
     
+    // Auto-assign Branch_ID if missing
+    if (!invoice.Branch_ID) {
+        invoice.Branch_ID = await getUserBranchId()
+    }
+
     // Generate ID if not present (simple logic for now)
     if (!invoice.Invoice_ID) {
         // In real app, use a sequence or generate unique ID

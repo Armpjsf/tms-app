@@ -1,7 +1,6 @@
 "use server"
 
 import { createClient } from '@/utils/supabase/server'
-import { cookies } from 'next/headers'
 import { getUserBranchId, isSuperAdmin } from "@/lib/permissions"
 
 // Type matching actual Supabase schema
@@ -40,13 +39,7 @@ export async function getAllDriversFromTable(): Promise<Driver[]> {
     const branchId = await getUserBranchId()
     const isAdmin = await isSuperAdmin()
 
-    // Check for Admin Override Cookie
-    const cookieStore = await cookies()
-    const selectedBranch = cookieStore.get('selectedBranch')?.value
-    
-    if (isAdmin && selectedBranch && selectedBranch !== 'All') {
-        dbQuery = dbQuery.eq('Branch_ID', selectedBranch)
-    } else if (branchId && !isAdmin) {
+    if (branchId && branchId !== 'All') {
         dbQuery = dbQuery.eq('Branch_ID', branchId)
     } else if (!isAdmin && !branchId) {
         return []
@@ -93,7 +86,7 @@ export async function createDriver(driverData: Partial<Driver>) {
         Password: driverData.Password,
         Active_Status: driverData.Active_Status || 'Active',
         License_Expiry: driverData.License_Expiry,
-        Branch_ID: await getUserBranchId()
+        Branch_ID: driverData.Branch_ID || await getUserBranchId()
       })
       .select()
       .single()
@@ -152,11 +145,21 @@ export async function deleteDriver(id: string) {
 export async function getActiveDrivers() {
   try {
     const supabase = await createClient()
-    const { data, error } = await supabase
+    const branchId = await getUserBranchId()
+    const isAdmin = await isSuperAdmin()
+
+    let queryBuilder = supabase
       .from('Master_Drivers')
       .select('*')
       .eq('Active_Status', 'Active')
-      .limit(10)
+    
+    if (branchId && branchId !== 'All') {
+        queryBuilder = queryBuilder.eq('Branch_ID', branchId)
+    } else if (!isAdmin && !branchId) {
+        return []
+    }
+
+    const { data, error } = await queryBuilder.limit(10)
     
     if (error) return []
     return data || []
@@ -173,12 +176,7 @@ export async function getAllDrivers(page?: number, limit?: number, query?: strin
     
     const branchId = await getUserBranchId()
     const isAdmin = await isSuperAdmin()
-    const cookieStore = await cookies()
-    const selectedBranch = cookieStore.get('selectedBranch')?.value
-
-    if (isAdmin && selectedBranch && selectedBranch !== 'All') {
-        queryBuilder = queryBuilder.eq('Branch_ID', selectedBranch)
-    } else if (branchId && !isAdmin) {
+    if (branchId && branchId !== 'All') {
         queryBuilder = queryBuilder.eq('Branch_ID', branchId)
     } else if (!isAdmin && !branchId) {
         return { data: [], count: 0 }
@@ -210,12 +208,7 @@ export async function getDriverStats() {
 
     const branchId = await getUserBranchId()
     const isAdmin = await isSuperAdmin()
-    const cookieStore = await cookies()
-    const selectedBranch = cookieStore.get('selectedBranch')?.value
-
-    if (isAdmin && selectedBranch && selectedBranch !== 'All') {
-        query = query.eq('Branch_ID', selectedBranch)
-    } else if (branchId && !isAdmin) {
+    if (branchId && branchId !== 'All') {
         query = query.eq('Branch_ID', branchId)
     } else if (!isAdmin && !branchId) {
         return { total: 0, active: 0, onJob: 0 }

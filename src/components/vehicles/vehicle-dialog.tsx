@@ -59,7 +59,7 @@ export function VehicleDialog({
     active_status: vehicle?.active_status || 'Active',
     current_mileage: vehicle?.current_mileage || 0,
     next_service_mileage: vehicle?.next_service_mileage || 0,
-    Branch_ID: vehicle?.branch_id || '',
+    branch_id: vehicle?.branch_id || '',
     sub_id: vehicle?.sub_id || '',
     max_weight_kg: vehicle?.max_weight_kg || 0,
     max_volume_cbm: vehicle?.max_volume_cbm || 0
@@ -87,7 +87,7 @@ export function VehicleDialog({
             current_mileage: 0,
             next_service_mileage: 0,
 
-            Branch_ID: '',
+            branch_id: '',
             sub_id: '',
             max_weight_kg: 0,
             max_volume_cbm: 0
@@ -115,8 +115,8 @@ export function VehicleDialog({
                 <Label htmlFor="Branch_ID" className="text-yellow-400">เลือกสาขา (Super Admin)</Label>
                 <select
                     id="Branch_ID"
-                    value={formData.Branch_ID}
-                    onChange={(e) => setFormData({ ...formData, Branch_ID: e.target.value })}
+                    value={formData.branch_id}
+                    onChange={(e) => setFormData({ ...formData, branch_id: e.target.value })}
                     className="flex h-10 w-full rounded-md border border-yellow-500/50 bg-yellow-500/10 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-yellow-500"
                     required={mode === 'create'}
                 >

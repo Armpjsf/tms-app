@@ -13,9 +13,11 @@ import { getUsers, createUser, updateUser, deleteUser, UserData, getCurrentUserR
 import { getAllCustomers, Customer } from "@/lib/supabase/customers"
 import { ExcelImport } from "@/components/ui/excel-import"
 import { FileSpreadsheet } from "lucide-react"
+import { useBranch } from "@/components/providers/branch-provider"
 
 export default function UserSettingsPage() {
-    const [userList, setUserList] = useState<any[]>([])
+    const { branches, isAdmin } = useBranch()
+    const [userList, setUserList] = useState<(UserData & { Master_Customers?: { Customer_Name: string } | null })[]>([])
     const [customers, setCustomers] = useState<Customer[]>([])
     const [currentRoleId, setCurrentRoleId] = useState<number | null>(null)
     
@@ -58,7 +60,7 @@ export default function UserSettingsPage() {
         setLoading(false)
     }
 
-    const handleOpenDialog = (user?: any) => {
+    const handleOpenDialog = (user?: UserData) => {
         if (user) {
             setEditingUser(user.Username)
             setFormData({
@@ -113,9 +115,10 @@ export default function UserSettingsPage() {
             }
             setIsDialogOpen(false)
             loadData()
-        } catch (e: any) {
-            console.error(e)
-            alert("เกิดข้อผิดพลาด: " + (e.message || "Unknown"))
+        } catch (e) {
+            const error = e as Error
+            console.error(error)
+            alert("เกิดข้อผิดพลาด: " + (error.message || "Unknown"))
         } finally {
             setSaving(false)
         }
@@ -290,12 +293,30 @@ export default function UserSettingsPage() {
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label>สาขา (Branch) *</Label>
-                                <Input 
-                                    value={formData.Branch_ID || ""} 
-                                    onChange={e => setFormData({...formData, Branch_ID: e.target.value})}
-                                    placeholder="เช่น สำนักงานใหญ่, สาขา 1"
-                                    className="bg-slate-800 border-slate-700" 
-                                />
+                                {isAdmin ? (
+                                    <Select 
+                                        value={formData.Branch_ID || ""} 
+                                        onValueChange={v => setFormData({...formData, Branch_ID: v})}
+                                    >
+                                        <SelectTrigger className="bg-slate-800 border-yellow-500/50 text-white">
+                                            <SelectValue placeholder="เลือกสาขา" />
+                                        </SelectTrigger>
+                                        <SelectContent className="bg-slate-900 border-slate-800 text-white">
+                                            {branches.map(b => (
+                                                <SelectItem key={b.Branch_ID} value={b.Branch_ID}>
+                                                    {b.Branch_Name} ({b.Branch_ID})
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                ) : (
+                                    <Input 
+                                        value={formData.Branch_ID || ""} 
+                                        onChange={e => setFormData({...formData, Branch_ID: e.target.value})}
+                                        placeholder="เช่น สำนักงานใหญ่, สาขา 1"
+                                        className="bg-slate-800 border-slate-700 text-white" 
+                                    />
+                                )}
                             </div>
                             <div className="space-y-2">
                                 <Label>บทบาท (Role) *</Label>

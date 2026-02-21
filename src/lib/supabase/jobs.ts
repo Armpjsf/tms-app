@@ -53,7 +53,7 @@ export async function getTodayJobs(): Promise<Job[]> {
     const isAdmin = await isSuperAdmin()
     const customerId = await getCustomerId()
     
-    if (branchId && !isAdmin) {
+    if (branchId && branchId !== 'All') {
         dbQuery = dbQuery.eq('Branch_ID', branchId)
     } else if (!isAdmin && !customerId && !branchId) {
         return []
@@ -83,10 +83,24 @@ export async function getJobsByStatus(status: string): Promise<Job[]> {
   try {
     const supabase = await createClient()
     
-    const { data, error } = await supabase
+    const branchId = await getUserBranchId()
+    const isAdmin = await isSuperAdmin()
+    const customerId = await getCustomerId()
+
+    let dbQuery = supabase
       .from('Jobs_Main')
       .select('*')
       .eq('Job_Status', status)
+    
+    if (customerId) {
+        dbQuery = dbQuery.eq('Customer_ID', customerId)
+    } else if (branchId && branchId !== 'All') {
+        dbQuery = dbQuery.eq('Branch_ID', branchId)
+    } else if (!isAdmin && !branchId) {
+        return []
+    }
+
+    const { data, error } = await dbQuery
       .order('Created_At', { ascending: false })
       .limit(100)
     
@@ -122,7 +136,7 @@ export async function getAllJobs(
     const isAdmin = await isSuperAdmin()
     const customerId = await getCustomerId()
     
-    if (branchId && !isAdmin) {
+    if (branchId && branchId !== 'All') {
         dbQuery = dbQuery.eq('Branch_ID', branchId)
     } else if (!isAdmin && !customerId && !branchId) {
         return { data: [], count: 0 }
@@ -174,14 +188,13 @@ export async function getTodayJobStats(branchId?: string) {
 
     if (customerId) {
         dbQuery = dbQuery.eq('Customer_ID', customerId)
-    } else if (isAdmin) {
-        if (branchId && branchId !== 'All') {
-            dbQuery = dbQuery.eq('Branch_ID', branchId)
-        }
-    } else if (userBranchId) {
-        dbQuery = dbQuery.eq('Branch_ID', userBranchId)
     } else {
-        return { total: 0, delivered: 0, inProgress: 0, pending: 0 }
+        const effectiveBranchId = branchId || userBranchId
+        if (effectiveBranchId && effectiveBranchId !== 'All') {
+            dbQuery = dbQuery.eq('Branch_ID', effectiveBranchId)
+        } else if (!isAdmin && !userBranchId) {
+            return { total: 0, delivered: 0, inProgress: 0, pending: 0 }
+        }
     }
     
     const { data, error } = await dbQuery
@@ -220,14 +233,13 @@ export async function getTodayFinancials(branchId?: string) {
 
     if (customerId) {
         dbQuery = dbQuery.eq('Customer_ID', customerId)
-    } else if (isAdmin) {
-        if (branchId && branchId !== 'All') {
-            dbQuery = dbQuery.eq('Branch_ID', branchId)
-        }
-    } else if (userBranchId) {
-        dbQuery = dbQuery.eq('Branch_ID', userBranchId)
     } else {
-        return { revenue: 0 }
+        const effectiveBranchId = branchId || userBranchId
+        if (effectiveBranchId && effectiveBranchId !== 'All') {
+            dbQuery = dbQuery.eq('Branch_ID', effectiveBranchId)
+        } else if (!isAdmin && !userBranchId) {
+            return { revenue: 0 }
+        }
     }
 
     const { data, error } = await dbQuery
@@ -260,7 +272,7 @@ export async function getDriverJobs(
       .select('*')
       .eq('Driver_ID', driverId)
 
-    if (branchId && !isAdmin) {
+    if (branchId && branchId !== 'All') {
         query = query.eq('Branch_ID', branchId)
     } else if (!isAdmin && !branchId) {
         return []
@@ -307,7 +319,7 @@ export async function getJobById(jobId: string): Promise<Job | null> {
             .select('*')
             .eq('Job_ID', jobId)
         
-        if (branchId && !isAdmin) {
+        if (branchId && branchId !== 'All') {
             query = query.eq('Branch_ID', branchId)
         } else if (!isAdmin && !branchId) {
             return null
@@ -344,14 +356,13 @@ export async function getWeeklyJobStats(branchId?: string) {
 
     if (customerId) {
         dbQuery = dbQuery.eq('Customer_ID', customerId)
-    } else if (isAdmin) {
-        if (branchId && branchId !== 'All') {
-            dbQuery = dbQuery.eq('Branch_ID', branchId)
-        }
-    } else if (userBranchId) {
-        dbQuery = dbQuery.eq('Branch_ID', userBranchId)
     } else {
-        return []
+        const effectiveBranchId = branchId || userBranchId
+        if (effectiveBranchId && effectiveBranchId !== 'All') {
+            dbQuery = dbQuery.eq('Branch_ID', effectiveBranchId)
+        } else if (!isAdmin && !userBranchId) {
+            return []
+        }
     }
 
     const { data, error } = await dbQuery
@@ -405,14 +416,13 @@ export async function getJobStatusDistribution(branchId?: string) {
 
         if (customerId) {
             dbQuery = dbQuery.eq('Customer_ID', customerId)
-        } else if (isAdmin) {
-            if (branchId && branchId !== 'All') {
-                dbQuery = dbQuery.eq('Branch_ID', branchId)
-            }
-        } else if (userBranchId) {
-            dbQuery = dbQuery.eq('Branch_ID', userBranchId)
         } else {
-            return []
+            const effectiveBranchId = branchId || userBranchId
+            if (effectiveBranchId && effectiveBranchId !== 'All') {
+                dbQuery = dbQuery.eq('Branch_ID', effectiveBranchId)
+            } else if (!isAdmin && !userBranchId) {
+                return []
+            }
         }
 
         const { data, error } = await dbQuery
@@ -491,10 +501,21 @@ export async function createJob(jobData: Partial<Job>) {
 export async function getAllDrivers() {
     try {
         const supabase = await createClient()
-        const { data, error } = await supabase
+        const branchId = await getUserBranchId()
+        const isAdmin = await isSuperAdmin()
+
+        let query = supabase
             .from('Jobs_Main')
             .select('Driver_ID, Driver_Name, Vehicle_Plate')
             .not('Driver_ID', 'is', null)
+        
+        if (branchId && branchId !== 'All') {
+            query = query.eq('Branch_ID', branchId)
+        } else if (!isAdmin && !branchId) {
+            return []
+        }
+
+        const { data, error } = await query
         
         if (error) return []
 
@@ -516,10 +537,21 @@ export async function getAllDrivers() {
 export async function getAllVehicles() {
     try {
         const supabase = await createClient()
-        const { data, error } = await supabase
+        const branchId = await getUserBranchId()
+        const isAdmin = await isSuperAdmin()
+
+        let query = supabase
             .from('Jobs_Main')
             .select('Vehicle_Plate, Driver_Name')
             .not('Vehicle_Plate', 'is', null)
+
+        if (branchId && branchId !== 'All') {
+            query = query.eq('Branch_ID', branchId)
+        } else if (!isAdmin && !branchId) {
+            return []
+        }
+
+        const { data, error } = await query
 
         if (error) return []
 
@@ -552,7 +584,7 @@ export async function getJobsForBilling(startDate?: string, endDate?: string): P
         
         if (customerId) {
             dbQuery = dbQuery.eq('Customer_ID', customerId)
-        } else if (branchId && !isAdmin) {
+        } else if (branchId && branchId !== 'All') {
             dbQuery = dbQuery.eq('Branch_ID', branchId)
         } else if (!isAdmin && !branchId) {
             return []

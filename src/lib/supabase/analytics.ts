@@ -28,8 +28,8 @@ export async function getFinancialStats(startDate?: string, endDate?: string, br
 
   // Determine effective branch
   const userBranchId = await getUserBranchId()
-  const isAdmin = await isSuperAdmin()
-  const targetBranchId = isAdmin ? (branchId && branchId !== 'All' ? branchId : null) : userBranchId
+  const targetBranchId = (branchId && branchId !== 'All') ? branchId : userBranchId
+  const effectiveBranchId = targetBranchId === 'All' ? null : targetBranchId
 
   // 1.1 Revenue & Driver Cost from Jobs
   let jobsQuery = supabase
@@ -39,8 +39,8 @@ export async function getFinancialStats(startDate?: string, endDate?: string, br
     .lte('Plan_Date', lastDay)
     .in('Job_Status', ['Completed', 'Delivered'])
 
-  if (targetBranchId) {
-      jobsQuery = jobsQuery.eq('Branch_ID', targetBranchId)
+  if (effectiveBranchId) {
+      jobsQuery = jobsQuery.eq('Branch_ID', effectiveBranchId)
   }
 
   const { data: jobs } = await jobsQuery
@@ -50,8 +50,8 @@ export async function getFinancialStats(startDate?: string, endDate?: string, br
 
   // For Fuel and Maintenance, we need vehicle plates if branch filtering is active
   let activePlates: string[] = []
-  if (targetBranchId) {
-      activePlates = await getBranchPlates(targetBranchId)
+  if (effectiveBranchId) {
+      activePlates = await getBranchPlates(effectiveBranchId)
   }
 
   // 1.2 Fuel Cost
@@ -61,7 +61,7 @@ export async function getFinancialStats(startDate?: string, endDate?: string, br
     .gte('Date_Time', `${firstDay}T00:00:00`)
     .lte('Date_Time', `${lastDay}T23:59:59`)
 
-  if (targetBranchId) {
+  if (effectiveBranchId) {
       if (activePlates.length > 0) {
         fuelQuery = fuelQuery.in('Vehicle_Plate', activePlates)
       } else {
@@ -82,7 +82,7 @@ export async function getFinancialStats(startDate?: string, endDate?: string, br
     .lte('Date_Report', `${lastDay}T23:59:59`)
     .neq('Status', 'Cancelled')
 
-  if (targetBranchId) {
+  if (effectiveBranchId) {
        if (activePlates.length > 0) {
         maintenanceQuery = maintenanceQuery.in('Vehicle_Plate', activePlates)
       } else {
@@ -128,8 +128,8 @@ export async function getRevenueTrend(startDate?: string, endDate?: string, bran
 
   // Determine effective branch
   const userBranchId = await getUserBranchId()
-  const isAdmin = await isSuperAdmin()
-  const targetBranchId = isAdmin ? (branchId && branchId !== 'All' ? branchId : null) : userBranchId
+  const targetBranchId = (branchId && branchId !== 'All') ? branchId : userBranchId
+  const effectiveBranchId = targetBranchId === 'All' ? null : targetBranchId
 
   let query = supabase
     .from('Jobs_Main')
@@ -137,8 +137,8 @@ export async function getRevenueTrend(startDate?: string, endDate?: string, bran
     .in('Job_Status', ['Completed', 'Delivered'])
     .order('Plan_Date', { ascending: true })
 
-  if (targetBranchId) {
-      query = query.eq('Branch_ID', targetBranchId)
+  if (effectiveBranchId) {
+      query = query.eq('Branch_ID', effectiveBranchId)
   }
 
   if (start) query = query.gte('Plan_Date', start)
@@ -167,16 +167,16 @@ export async function getTopCustomers(startDate?: string, endDate?: string, bran
     
     // Determine effective branch
     const userBranchId = await getUserBranchId()
-    const isAdmin = await isSuperAdmin()
-    const targetBranchId = isAdmin ? (branchId && branchId !== 'All' ? branchId : null) : userBranchId
+    const targetBranchId = (branchId && branchId !== 'All') ? branchId : userBranchId
+    const effectiveBranchId = targetBranchId === 'All' ? null : targetBranchId
 
     let query = supabase
         .from('Jobs_Main')
         .select('Customer_Name, Price_Cust_Total')
         .in('Job_Status', ['Completed', 'Delivered'])
 
-    if (targetBranchId) {
-        query = query.eq('Branch_ID', targetBranchId)
+    if (effectiveBranchId) {
+        query = query.eq('Branch_ID', effectiveBranchId)
     }
 
     if (startDate) query = query.gte('Plan_Date', startDate)
@@ -201,22 +201,21 @@ export async function getTopCustomers(startDate?: string, endDate?: string, bran
 }
 
 // 4. Operational Stats
-// 4. Operational Stats
 export async function getOperationalStats(branchId?: string) {
     const supabase = await createClient()
 
     // Determine effective branch
     const userBranchId = await getUserBranchId()
-    const isAdmin = await isSuperAdmin()
-    const targetBranchId = isAdmin ? (branchId && branchId !== 'All' ? branchId : null) : userBranchId
+    const targetBranchId = (branchId && branchId !== 'All') ? branchId : userBranchId
+    const effectiveBranchId = targetBranchId === 'All' ? null : targetBranchId
 
     // 4.1 Fleet Utilization (Active vs Total Vehicles)
     let vehicleQuery = supabase
         .from('master_vehicles') 
         .select('*', { count: 'exact', head: true })
     
-    if (targetBranchId) {
-        vehicleQuery = vehicleQuery.eq('branch_id', targetBranchId)
+    if (effectiveBranchId) {
+        vehicleQuery = vehicleQuery.eq('branch_id', effectiveBranchId)
     }
 
     const { count: totalVehicles } = await vehicleQuery
@@ -229,8 +228,8 @@ export async function getOperationalStats(branchId?: string) {
         .eq('Plan_Date', today)
         .not('Vehicle_Plate', 'is', null)
 
-    if (targetBranchId) {
-        activeJobsQuery = activeJobsQuery.eq('Branch_ID', targetBranchId)
+    if (effectiveBranchId) {
+        activeJobsQuery = activeJobsQuery.eq('Branch_ID', effectiveBranchId)
     }
 
     const { data: activeJobs } = await activeJobsQuery
@@ -242,8 +241,8 @@ export async function getOperationalStats(branchId?: string) {
         .from('Jobs_Main')
         .select('Job_Status')
     
-    if (targetBranchId) {
-        jobStatsQuery = jobStatsQuery.eq('Branch_ID', targetBranchId)
+    if (effectiveBranchId) {
+        jobStatsQuery = jobStatsQuery.eq('Branch_ID', effectiveBranchId)
     }
         
     const { data: jobStats } = await jobStatsQuery
@@ -254,8 +253,8 @@ export async function getOperationalStats(branchId?: string) {
 
     // 4.3 Fuel Efficiency (km/L)
     let activePlates: string[] = []
-    if (targetBranchId) {
-        activePlates = await getBranchPlates(targetBranchId)
+    if (effectiveBranchId) {
+        activePlates = await getBranchPlates(effectiveBranchId)
     }
 
     let fuelLogsQuery = supabase
@@ -263,7 +262,7 @@ export async function getOperationalStats(branchId?: string) {
         .select('Liters, Odometer, Vehicle_Plate')
         .order('Date_Time', { ascending: true })
 
-    if (targetBranchId) {
+    if (effectiveBranchId) {
         if (activePlates.length > 0) {
             fuelLogsQuery = fuelLogsQuery.in('Vehicle_Plate', activePlates)
         } else {
@@ -317,14 +316,14 @@ export async function getOperationalStats(branchId?: string) {
 export async function getJobStatusDistribution(startDate?: string, endDate?: string, branchId?: string) {
     const supabase = await createClient()
     const userBranchId = await getUserBranchId()
-    const isAdmin = await isSuperAdmin()
-    const targetBranchId = isAdmin ? (branchId && branchId !== 'All' ? branchId : null) : userBranchId
+    const targetBranchId = (branchId && branchId !== 'All') ? branchId : userBranchId
+    const effectiveBranchId = targetBranchId === 'All' ? null : targetBranchId
 
     let query = supabase.from('Jobs_Main').select('Job_Status')
 
     if (startDate) query = query.gte('Plan_Date', startDate)
     if (endDate) query = query.lte('Plan_Date', endDate)
-    if (targetBranchId) query = query.eq('Branch_ID', targetBranchId)
+    if (effectiveBranchId) query = query.eq('Branch_ID', effectiveBranchId)
 
     const { data } = await query
 
@@ -393,8 +392,8 @@ export async function getBranchPerformance(startDate?: string, endDate?: string)
 export async function getSubcontractorPerformance(startDate?: string, endDate?: string, branchId?: string) {
     const supabase = await createClient()
     const userBranchId = await getUserBranchId()
-    const isAdmin = await isSuperAdmin()
-    const targetBranchId = isAdmin ? (branchId && branchId !== 'All' ? branchId : null) : userBranchId
+    const targetBranchId = (branchId && branchId !== 'All') ? branchId : userBranchId
+    const effectiveBranchId = targetBranchId === 'All' ? null : targetBranchId
 
     let query = supabase
         .from('Jobs_Main')
@@ -403,7 +402,7 @@ export async function getSubcontractorPerformance(startDate?: string, endDate?: 
 
     if (startDate) query = query.gte('Plan_Date', startDate)
     if (endDate) query = query.lte('Plan_Date', endDate)
-    if (targetBranchId) query = query.eq('Branch_ID', targetBranchId)
+    if (effectiveBranchId) query = query.eq('Branch_ID', effectiveBranchId)
 
     const { data: jobs } = await query
 
@@ -479,8 +478,8 @@ export async function getExecutiveKPIs(startDate?: string, endDate?: string, bra
 export async function getRouteEfficiency(startDate?: string, endDate?: string, branchId?: string) {
     const supabase = await createClient()
     const userBranchId = await getUserBranchId()
-    const isAdmin = await isSuperAdmin()
-    const targetBranchId = isAdmin ? (branchId && branchId !== 'All' ? branchId : null) : userBranchId
+    const targetBranchId = (branchId && branchId !== 'All') ? branchId : userBranchId
+    const effectiveBranchId = targetBranchId === 'All' ? null : targetBranchId
 
     let query = supabase
         .from('Jobs_Main')
@@ -489,7 +488,7 @@ export async function getRouteEfficiency(startDate?: string, endDate?: string, b
 
     if (startDate) query = query.gte('Plan_Date', startDate)
     if (endDate) query = query.lte('Plan_Date', endDate)
-    if (targetBranchId) query = query.eq('Branch_ID', targetBranchId)
+    if (effectiveBranchId) query = query.eq('Branch_ID', effectiveBranchId)
 
     const { data: jobs } = await query
 
@@ -514,8 +513,8 @@ export async function getRouteEfficiency(startDate?: string, endDate?: string, b
 export async function getDriverLeaderboard(startDate?: string, endDate?: string, branchId?: string) {
     const supabase = await createClient()
     const userBranchId = await getUserBranchId()
-    const isAdmin = await isSuperAdmin()
-    const targetBranchId = isAdmin ? (branchId && branchId !== 'All' ? branchId : null) : userBranchId
+    const targetBranchId = (branchId && branchId !== 'All') ? branchId : userBranchId
+    const effectiveBranchId = targetBranchId === 'All' ? null : targetBranchId
 
     let query = supabase
         .from('Jobs_Main')
@@ -524,7 +523,7 @@ export async function getDriverLeaderboard(startDate?: string, endDate?: string,
 
     if (startDate) query = query.gte('Plan_Date', startDate)
     if (endDate) query = query.lte('Plan_Date', endDate)
-    if (targetBranchId) query = query.eq('Branch_ID', targetBranchId)
+    if (effectiveBranchId) query = query.eq('Branch_ID', effectiveBranchId)
 
     const { data: jobs } = await query
 
@@ -555,8 +554,7 @@ export async function getDriverLeaderboard(startDate?: string, endDate?: string,
 // 11. Regional / Branch Deep-Dive (Comparison with detailed metrics)
 export async function getRegionalDeepDive(startDate?: string, endDate?: string) {
     const performance = await getBranchPerformance(startDate, endDate)
-    const supabase = await createClient()
-
+    
     // Enrich with growth if possible (Comparing current period vs previous)
     const currentStart = startDate ? new Date(startDate) : subDays(new Date(), 30)
     const currentEnd = endDate ? new Date(endDate) : new Date()

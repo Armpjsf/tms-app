@@ -1,6 +1,7 @@
 "use server"
 
 import { createClient } from '@/utils/supabase/server'
+import { getUserBranchId, isSuperAdmin } from "@/lib/permissions"
 
 // Type matching actual Supabase schema (ProperCase columns!)
 export type GPSLog = {
@@ -62,24 +63,33 @@ export async function getLatestDriverLocations() {
     // ดึงข้อมูล GPS ย้อนหลัง 1 ชั่วโมง
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString()
 
-    const { data, error } = await supabase
+    const branchId = await getUserBranchId()
+
+    const query = supabase
       .from('gps_logs')
       .select(`
         *,
-        Master_Drivers ( Driver_Name )
+        Master_Drivers ( Driver_Name, Branch_ID )
       `)
       .gte('timestamp', oneHourAgo)
-      .order('timestamp', { ascending: false })
+    
+    if (branchId && branchId !== 'All') {
+        // Since we need to filter by a nested field in Master_Drivers, we can't easily do .eq() on the main query for normalized data
+        // but for GPS logs, usually the driver_id is what matters. 
+        // We'll filter the resulting array instead for now to keep it simple, or we'd need a more complex join query.
+    }
+
+    const { data, error } = await query.order('timestamp', { ascending: false })
 
     if (error) {
        console.error('Error fetching GPS logs:', JSON.stringify(error))
        return []
     }
 
-    // Filter ให้เหลือเฉพาะ records ล่าสุดของแต่ละ Driver
-    const latestLocations = new Map<string, any>()
+    // Filter to latest record per driver
+    const latestLocations = new Map<string, GPSLog & { Driver_Name: string, Master_Drivers?: any }>()
     
-    data?.forEach((log) => {
+    data?.forEach((log: any) => {
         const driverId = log.driver_id || log.Driver_ID
         if (!latestLocations.has(driverId)) {
             latestLocations.set(driverId, {
@@ -93,7 +103,13 @@ export async function getLatestDriverLocations() {
         }
     })
 
-    return Array.from(latestLocations.values())
+    // Filter by branch manually if needed
+    const logs = Array.from(latestLocations.values())
+    if (branchId && branchId !== 'All') {
+        return logs.filter(l => l.Master_Drivers?.Branch_ID === branchId)
+    }
+
+    return logs
 
   } catch (e) {
     console.error('Exception fetching driver locations:', e)
@@ -144,12 +160,25 @@ export async function getFleetGPSStatus() {
     const supabase = await createClient()
 
     // 1. Get all drivers
-    const { data: drivers, error: driverError } = await supabase
+    const branchId = await getUserBranchId()
+    const isAdmin = await isSuperAdmin()
+
+    const driversQuery = supabase
       .from('Master_Drivers')
       .select('Driver_ID, Driver_Name, Vehicle_Plate')
-      // .eq('Active_Status', 'Active') 
+    
+    if (branchId && branchId !== 'All') {
+        driversQuery = driversQuery.eq('Branch_ID', branchId)
+    } else if (!isAdmin && !branchId) {
+        return []
+    }
 
-    if (driverError) throw driverError
+    const { data: drivers, error: driverError } = await driversQuery
+
+    if (driverError || !drivers) {
+        console.error('Error fetching drivers for GPS:', driverError)
+        return []
+    }
 
     // 2. Fetch latest log for EACH driver efficiently (Parallel)
     // This avoids fetching 1000s of logs and prevents "Failed to fetch" due to payload size

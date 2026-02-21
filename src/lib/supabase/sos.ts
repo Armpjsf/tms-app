@@ -1,4 +1,5 @@
 import { createClient } from '@/utils/supabase/server'
+import { getUserBranchId, isSuperAdmin } from "@/lib/permissions"
 
 export type SOSAlert = {
   Job_ID: string
@@ -19,10 +20,21 @@ export async function getActiveSOSAlerts(): Promise<SOSAlert[]> {
   try {
     const supabase = await createClient()
     
-    const { data, error } = await supabase
+    const branchId = await getUserBranchId()
+    const isAdmin = await isSuperAdmin()
+
+    let dbQuery = supabase
       .from('Jobs_Main')
       .select('Job_ID, Job_Status, Plan_Date, Driver_ID, Driver_Name, Vehicle_Plate, Route_Name, Failed_Reason, Failed_Time, Delivery_Lat, Delivery_Lon')
       .eq('Job_Status', 'SOS')
+    
+    if (branchId && branchId !== 'All') {
+        dbQuery = dbQuery.eq('Branch_ID', branchId)
+    } else if (!isAdmin && !branchId) {
+        return []
+    }
+
+    const { data, error } = await dbQuery
       .order('Failed_Time', { ascending: false })
     
     if (error) {
@@ -42,10 +54,21 @@ export async function getAllSOSAlerts(): Promise<SOSAlert[]> {
   try {
     const supabase = await createClient()
     
-    const { data, error } = await supabase
+    const branchId = await getUserBranchId()
+    const isAdmin = await isSuperAdmin()
+
+    let dbQuery = supabase
       .from('Jobs_Main')
       .select('Job_ID, Job_Status, Plan_Date, Driver_ID, Driver_Name, Vehicle_Plate, Route_Name, Failed_Reason, Failed_Time, Delivery_Lat, Delivery_Lon')
       .in('Job_Status', ['SOS', 'Failed'])
+    
+    if (branchId && branchId !== 'All') {
+        dbQuery = dbQuery.eq('Branch_ID', branchId)
+    } else if (!isAdmin && !branchId) {
+        return []
+    }
+
+    const { data, error } = await dbQuery
       .order('Failed_Time', { ascending: false })
       .limit(50)
     
@@ -66,10 +89,21 @@ export async function getSOSCount(): Promise<number> {
   try {
     const supabase = await createClient()
     
-    const { count, error } = await supabase
+    const branchId = await getUserBranchId()
+    const isAdmin = await isSuperAdmin()
+
+    let dbQuery = supabase
       .from('Jobs_Main')
       .select('*', { count: 'exact', head: true })
       .eq('Job_Status', 'SOS')
+    
+    if (branchId && branchId !== 'All') {
+        dbQuery = dbQuery.eq('Branch_ID', branchId)
+    } else if (!isAdmin && !branchId) {
+        return 0
+    }
+
+    const { count, error } = await dbQuery
     
     if (error) {
       console.error('Error counting SOS:', JSON.stringify(error))
