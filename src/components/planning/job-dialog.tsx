@@ -411,6 +411,7 @@ export function JobDialog({
             Driver_Name: drivers.find(d => d.Driver_ID === assignment.Driver_ID)?.Driver_Name || '',
         }
 
+        if (!job?.Job_ID) throw new Error('ไม่พบรหัสงานสำหรับการแก้ไข')
         const result = await updateJob(job.Job_ID, updateData)
         if (!result.success) throw new Error(result.message)
       }
