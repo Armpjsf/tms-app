@@ -6,10 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
 
-interface Customer {
-  Customer_Name: string
-  [key: string]: any
-}
+import { Customer } from "@/lib/supabase/customers"
 
 interface CustomerAutocompleteProps {
   value: string
