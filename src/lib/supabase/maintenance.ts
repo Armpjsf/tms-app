@@ -93,7 +93,6 @@ export async function getPendingRepairTickets(): Promise<RepairTicket[]> {
       .in('Status', ['Pending', 'In Progress', 'รอดำเนินการ', 'กำลังซ่อม'])
 
     if (branchId && branchId !== 'All') {
-        // @ts-expect-error - Column name case might vary
         query = query.eq('Branch_ID', branchId)
     } else if (!isAdmin && !branchId) {
         return []
@@ -125,7 +124,6 @@ export async function getRepairTicketStats() {
     let query = supabase.from('Repair_Tickets').select('Status')
 
     if (branchId && branchId !== 'All') {
-        // @ts-expect-error - Column name case might vary
         query = query.eq('Branch_ID', branchId)
     } else if (!isAdmin && !branchId) {
         return { total: 0, pending: 0, inProgress: 0, completed: 0 }
