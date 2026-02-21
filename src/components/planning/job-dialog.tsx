@@ -796,7 +796,7 @@ export function JobDialog({
                         >
                             <option value="">ทั้งหมด (ไม่ระบุ)</option>
                             {/* Unique Vehicle Types from Data */}
-                            {Array.from(new Set(vehicles.map((v) => v.vehicle_type).filter(Boolean))).map((type) => (
+                            {Array.from(new Set(vehicles.map((v) => v.vehicle_type).filter((t): t is string => !!t))).map((type) => (
                             <option key={type} value={type}>{type}</option>
                             ))}
                         </select>
