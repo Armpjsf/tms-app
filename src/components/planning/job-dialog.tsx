@@ -314,6 +314,7 @@ export function JobDialog({
   }
 
   const handleDelete = async () => {
+    if (!job?.Job_ID) return
     if (!confirm('คุณแน่ใจหรือไม่ว่าต้องการลบงานนี้?')) return
     
     setLoading(true)
