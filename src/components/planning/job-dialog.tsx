@@ -32,7 +32,7 @@ export type Job = {
   Plan_Date?: string | null
   Pickup_Date?: string | null
   Delivery_Date?: string | null
-  Customer_Name: string
+  Customer_Name: string | null
   Route_Name?: string | null
   Driver_ID?: string | null
   Vehicle_Plate?: string | null
