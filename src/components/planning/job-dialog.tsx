@@ -29,32 +29,32 @@ export type JobAssignment = {
 
 export type Job = {
   Job_ID: string
-  Plan_Date?: string
-  Pickup_Date?: string
-  Delivery_Date?: string
+  Plan_Date?: string | null
+  Pickup_Date?: string | null
+  Delivery_Date?: string | null
   Customer_Name: string
-  Route_Name?: string
-  Driver_ID?: string
-  Vehicle_Plate?: string
-  Vehicle_Type?: string
-  Cargo_Type?: string
-  Notes?: string
-  Price_Cust_Total?: number
-  Cost_Driver_Total?: number
-  Job_Status?: string
-  Weight_Kg?: number
-  Volume_Cbm?: number
-  Zone?: string
-  Branch_ID?: string
-  origins?: LocationPoint[] | string
-  destinations?: LocationPoint[] | string
-  extra_costs?: ExtraCost[] | string
-  original_origins_json?: string
-  original_destinations_json?: string
-  extra_costs_json?: string
-  assignments?: JobAssignment[]
-  Sub_ID?: string
-  Show_Price_To_Driver?: boolean
+  Route_Name?: string | null
+  Driver_ID?: string | null
+  Vehicle_Plate?: string | null
+  Vehicle_Type?: string | null
+  Cargo_Type?: string | null
+  Notes?: string | null
+  Price_Cust_Total?: number | string | null
+  Cost_Driver_Total?: number | string | null
+  Job_Status?: string | null
+  Weight_Kg?: number | null
+  Volume_Cbm?: number | null
+  Zone?: string | null
+  Branch_ID?: string | null
+  origins?: LocationPoint[] | string | null
+  destinations?: LocationPoint[] | string | null
+  extra_costs?: ExtraCost[] | string | null
+  original_origins_json?: string | null
+  original_destinations_json?: string | null
+  extra_costs_json?: string | null
+  assignments?: JobAssignment[] | null
+  Sub_ID?: string | null
+  Show_Price_To_Driver?: boolean | null
 }
 import { 
   Loader2, 
