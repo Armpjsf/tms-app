@@ -589,14 +589,14 @@ export function JobDialog({
                 <div className="p-4 bg-yellow-500/5 border border-yellow-500/20 rounded-lg">
                     <Label className="text-yellow-500 font-bold mb-2 block font-medium">สาขาสำหรับงานนี้ (Super Admin Only)</Label>
                     <Select 
-                      value={formData.Branch_ID || ""} 
-                      onValueChange={(val) => setFormData({ ...formData, Branch_ID: val })}
+                      value={formData.Branch_ID || "none"} 
+                      onValueChange={(val) => setFormData({ ...formData, Branch_ID: val === "none" ? "" : val })}
                     >
                       <SelectTrigger className="bg-background border-yellow-500/30">
                         <SelectValue placeholder="-- ใช้สาขาปัจจุบัน --" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">-- ใช้สาขาปัจจุบัน --</SelectItem>
+                        <SelectItem value="none">-- ใช้สาขาปัจจุบัน --</SelectItem>
                         {branches.map(b => (
                           <SelectItem key={b.Branch_ID} value={b.Branch_ID}>
                             {b.Branch_Name} ({b.Branch_ID})
