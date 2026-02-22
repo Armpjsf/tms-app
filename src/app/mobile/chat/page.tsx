@@ -15,6 +15,7 @@ export default function MobileChatPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [inputText, setInputText] = useState("")
   const [driverId, setDriverId] = useState<string | null>(null)
+  const [driverName, setDriverName] = useState<string>("")
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -29,6 +30,7 @@ export default function MobileChatPage() {
             return
         }
         setDriverId(session.driverId)
+        setDriverName(session.driverName || "")
         
         const history = await getChatHistory(session.driverId)
         setMessages(history)
@@ -48,23 +50,16 @@ export default function MobileChatPage() {
             {
                 event: 'INSERT',
                 schema: 'public',
-                table: 'Chat_Messages',
-                filter: `sender_id=eq.admin` // Listen for messages FROM admin
-                // Or listen to all related to this driver? 
-                // Simple: Listen to all INSERTs and filter in callback if needed, 
-                // but filter params are better. 
-                // We want: My messages (echo) AND Admin messages to me.
+                table: 'chat_messages',
+                filter: `driver_id=eq.${driverId}`
             },
             (payload) => {
                 const newMsg = payload.new as ChatMessage
-                // Only add if it belongs to this conversation (sender uses driverId or receiver uses driverId)
-                if (newMsg.sender_id === driverId || newMsg.receiver_id === driverId) {
-                     setMessages(prev => {
-                        // Avoid duplicates
-                        if (prev.find(m => m.id === newMsg.id)) return prev
-                        return [...prev, newMsg]
-                     })
-                }
+                setMessages(prev => {
+                    // Avoid duplicates
+                    if (prev.find(m => m.id === newMsg.id)) return prev
+                    return [...prev, newMsg]
+                })
             }
         )
         .subscribe()
@@ -94,25 +89,7 @@ export default function MobileChatPage() {
     // OR add optimistic msg.
     
     // Server Action
-    await sendChatMessage(driverId, text)
-    
-    // Re-fetch is one way, but Realtime should push it back if we listen to our own inserts?
-    // Supabase Realtime triggers on INSERT. If we listen to everything, we get it back.
-    // If we filtered `sender_id=eq.admin`, we WON'T get our own back.
-    // So usually better to fetch updated list or append locally.
-    // Let's append locally for speed.
-    // Note: The ID will be temp/missing until refresh, but UI doesn't need it strictly for display.
-    
-    /* 
-    setMessages(prev => [...prev, {
-        id: Date.now(),
-        sender_id: driverId,
-        receiver_id: 'admin',
-        message: text,
-        created_at: new Date().toISOString(),
-        is_read: false
-    }])
-    */
+    await sendChatMessage(driverId, text, driverName)
 
     // Since we didn't subscribe to our own inserts above (maybe?), let's refresh.
     // Actually, let's just refresh history to be safe and simple.
@@ -138,7 +115,7 @@ export default function MobileChatPage() {
             </div>
         ) : (
             messages.map((msg) => {
-                const isMe = msg.sender_id === driverId
+                const isMe = msg.sender === 'driver'
                 return (
                     <div 
                         key={msg.id} 

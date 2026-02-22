@@ -32,14 +32,15 @@ export async function DriversContent({ searchParams, branches = [], isSuperAdmin
   const query = (searchParams.q as string) || ''
   const limit = 12
 
+  const branchId = searchParams.branch as string
   const [{ data: drivers, count }, stats, vehicles, subcontractors, leaderboard, compliance, efficiency] = await Promise.all([
-    getAllDrivers(page, limit, query),
-    getDriverStats(),
-    getAllVehicles(),
+    getAllDrivers(page, limit, query, branchId),
+    getDriverStats(branchId),
+    getAllVehicles(undefined, undefined, undefined, branchId),
     getAllSubcontractors(),
     getDriverLeaderboard(undefined, undefined), 
-    getDriverComplianceStats(),
-    getDriverEfficiencySummary()
+    getDriverComplianceStats(branchId),
+    getDriverEfficiencySummary(branchId)
   ])
 
   // Fetch scores for all drivers

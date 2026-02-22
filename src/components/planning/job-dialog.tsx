@@ -25,6 +25,8 @@ export type JobAssignment = {
   Driver_ID: string
   Sub_ID?: string
   Show_Price_To_Driver?: boolean
+  Cost_Driver_Total?: number
+  Price_Cust_Total?: number
 }
 
 export type Job = {
@@ -171,10 +173,18 @@ export function JobDialog({
   })
 
   // Multi-Assignment State
-  const [assignments, setAssignments] = useState(
+  const [assignments, setAssignments] = useState<JobAssignment[]>(
     job?.assignments && job.assignments.length > 0
       ? job.assignments
-      : [{ Vehicle_Type: '4-Wheel', Vehicle_Plate: '', Driver_ID: '', Sub_ID: '', Show_Price_To_Driver: true }]
+      : [{ 
+          Vehicle_Type: '4-Wheel', 
+          Vehicle_Plate: '', 
+          Driver_ID: '', 
+          Sub_ID: '', 
+          Show_Price_To_Driver: true,
+          Cost_Driver_Total: job?.Cost_Driver_Total ? Number(job.Cost_Driver_Total) : 0,
+          Price_Cust_Total: job?.Price_Cust_Total ? Number(job.Price_Cust_Total) : 0
+        }]
   )
 
   // Helper to safely parse JSON or return existing array
@@ -221,13 +231,23 @@ export function JobDialog({
             Vehicle_Plate: job.Vehicle_Plate || '',
             Driver_ID: job.Driver_ID || '',
             Sub_ID: job.Sub_ID || '',
-            Show_Price_To_Driver: job.Show_Price_To_Driver !== false
+            Show_Price_To_Driver: job.Show_Price_To_Driver !== false,
+            Cost_Driver_Total: job.Cost_Driver_Total ? Number(job.Cost_Driver_Total) : 0,
+            Price_Cust_Total: job.Price_Cust_Total ? Number(job.Price_Cust_Total) : 0
         }])
     } else if (show && mode === 'create') {
         // Reset to one empty assignment
-        setAssignments([{ Vehicle_Type: '4-Wheel', Vehicle_Plate: '', Driver_ID: '', Sub_ID: '', Show_Price_To_Driver: true }])
+        setAssignments([{ 
+            Vehicle_Type: '4-Wheel', 
+            Vehicle_Plate: '', 
+            Driver_ID: '', 
+            Sub_ID: '', 
+            Show_Price_To_Driver: true,
+            Cost_Driver_Total: formData.Cost_Driver_Total ? Number(formData.Cost_Driver_Total) : 0,
+            Price_Cust_Total: formData.Price_Cust_Total ? Number(formData.Price_Cust_Total) : 0
+        }])
     }
-  }, [show, mode, job])
+  }, [show, mode, job, formData.Cost_Driver_Total, formData.Price_Cust_Total])
 
   const handleCopyTrackingLink = () => {
     const origin = window.location.origin
@@ -261,7 +281,15 @@ export function JobDialog({
   }
 
   const addAssignment = () => {
-    setAssignments([...assignments, { Vehicle_Type: '4-Wheel', Vehicle_Plate: '', Driver_ID: '', Sub_ID: '', Show_Price_To_Driver: true }])
+    setAssignments([...assignments, { 
+        Vehicle_Type: '4-Wheel', 
+        Vehicle_Plate: '', 
+        Driver_ID: '', 
+        Sub_ID: '', 
+        Show_Price_To_Driver: true,
+        Cost_Driver_Total: formData.Cost_Driver_Total || 0,
+        Price_Cust_Total: formData.Price_Cust_Total || 0
+    }])
   }
 
   const removeAssignment = (index: number) => {
@@ -270,13 +298,13 @@ export function JobDialog({
     }
   }
 
-  const updateAssignment = (index: number, field: string, value: string | boolean) => {
+  const updateAssignment = (index: number, field: keyof JobAssignment, value: string | boolean | number) => {
     const newAssignments = [...assignments]
     newAssignments[index] = { ...newAssignments[index], [field]: value } as JobAssignment
     setAssignments(newAssignments)
     
     // Sync first assignment to main form data for backward compatibility / validation
-    if (index === 0 && typeof value === 'string') {
+    if (index === 0 && (typeof value === 'string' || typeof value === 'number')) {
         setFormData(prev => ({ ...prev, [field]: value }))
     }
   }
@@ -387,6 +415,9 @@ export function JobDialog({
             Driver_ID: assignment.Driver_ID,
             Sub_ID: assignment.Sub_ID,
             Show_Price_To_Driver: assignment.Show_Price_To_Driver,
+            // Use individual costs if they differ from shared baseData
+            Price_Cust_Total: assignment.Price_Cust_Total ?? baseData.Price_Cust_Total,
+            Cost_Driver_Total: assignment.Cost_Driver_Total ?? baseData.Cost_Driver_Total,
             Driver_Name: drivers.find(d => d.Driver_ID === assignment.Driver_ID)?.Driver_Name || '',
         }))
 
@@ -408,6 +439,8 @@ export function JobDialog({
             Driver_ID: assignment.Driver_ID,
             Sub_ID: assignment.Sub_ID,
             Show_Price_To_Driver: assignment.Show_Price_To_Driver,
+            Price_Cust_Total: assignment.Price_Cust_Total ?? baseData.Price_Cust_Total,
+            Cost_Driver_Total: assignment.Cost_Driver_Total ?? baseData.Cost_Driver_Total,
             Driver_Name: drivers.find(d => d.Driver_ID === assignment.Driver_ID)?.Driver_Name || '',
         }
 
@@ -813,17 +846,21 @@ export function JobDialog({
                                 : vehicles
                             }
                             onSelect={(v) => {
-                                // Auto-set Type if not set or different
-                                if (v.vehicle_type) {
-                                    const newAssignments = [...assignments]
-                                    newAssignments[index] = {
-                                        ...newAssignments[index],
-                                        Vehicle_Plate: v.vehicle_plate,
-                                        Vehicle_Type: v.vehicle_type,
-                                        Sub_ID: v.sub_id || newAssignments[index].Sub_ID
-                                    }
-                                    setAssignments(newAssignments)
+                                // Auto-fill driver and other vehicle details
+                                const newAssignments = [...assignments]
+                                const current = newAssignments[index]
+                                
+                                // Find assigned driver if any
+                                const assignedDriver = v.driver_id ? drivers.find(d => d.Driver_ID === v.driver_id) : null
+                                
+                                newAssignments[index] = {
+                                    ...current,
+                                    Vehicle_Plate: v.vehicle_plate,
+                                    Vehicle_Type: v.vehicle_type || current.Vehicle_Type,
+                                    Sub_ID: v.sub_id || current.Sub_ID,
+                                    Driver_ID: assignedDriver ? assignedDriver.Driver_ID : current.Driver_ID
                                 }
+                                setAssignments(newAssignments)
                             }}
                             placeholder="พิมพ์ทะเบียนรถ..."
                             className="bg-background border-input text-sm"
@@ -840,18 +877,51 @@ export function JobDialog({
                             onChange={(val) => updateAssignment(index, 'Driver_ID', val)}
                             drivers={drivers}
                             onSelect={(d) => {
+                                // Auto-fill vehicle and other driver details
                                 const newAssignments = [...assignments]
+                                const current = newAssignments[index]
+                                
+                                // Find assigned vehicle if any
+                                const assignedVehicle = d.Vehicle_Plate ? vehicles.find(v => v.vehicle_plate === d.Vehicle_Plate) : null
+                                
                                 newAssignments[index] = {
-                                    ...newAssignments[index],
+                                    ...current,
                                     Driver_ID: d.Driver_ID,
-                                    Sub_ID: d.Sub_ID || newAssignments[index].Sub_ID,
+                                    Sub_ID: d.Sub_ID || current.Sub_ID,
+                                    Vehicle_Plate: assignedVehicle ? assignedVehicle.vehicle_plate : (d.Vehicle_Plate || current.Vehicle_Plate),
+                                    Vehicle_Type: assignedVehicle ? assignedVehicle.vehicle_type : (d.Vehicle_Type || current.Vehicle_Type),
                                     // Use driver default if explicitly set, otherwise keep current
-                                    Show_Price_To_Driver: d.Show_Price_Default ?? newAssignments[index].Show_Price_To_Driver
+                                    Show_Price_To_Driver: d.Show_Price_Default ?? current.Show_Price_To_Driver
                                 }
                                 setAssignments(newAssignments)
                             }}
                             className="bg-slate-800 border-slate-700 text-sm"
                         />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                            <Label className="text-[10px] text-muted-foreground flex items-center gap-1">
+                                <Banknote className="w-3 h-3" /> ค่าจ้างรถ (บาท)
+                            </Label>
+                            <Input
+                                type="number"
+                                value={assignment.Cost_Driver_Total}
+                                onChange={(e) => updateAssignment(index, 'Cost_Driver_Total', Number(e.target.value))}
+                                className="h-8 text-xs bg-slate-900 border-slate-700"
+                            />
+                        </div>
+                        <div className="space-y-1">
+                            <Label className="text-[10px] text-muted-foreground flex items-center gap-1">
+                                <Banknote className="w-3 h-3" /> ราคาลูกค้า (บาท)
+                            </Label>
+                            <Input
+                                type="number"
+                                value={assignment.Price_Cust_Total}
+                                onChange={(e) => updateAssignment(index, 'Price_Cust_Total', Number(e.target.value))}
+                                className="h-8 text-xs bg-slate-900 border-slate-700"
+                            />
+                        </div>
                     </div>
 
                     {canViewPrice && (

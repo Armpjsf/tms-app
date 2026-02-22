@@ -66,23 +66,23 @@ export default async function MobileDashboard() {
                           {getRankIcon(gamification.rank)}
                       </div>
                       <div>
-                          <div className="text-xs text-slate-400 uppercase tracking-wider font-semibold">Current Rank</div>
+                          <div className="text-xs text-slate-400 uppercase tracking-wider font-semibold">ระดับปัจจุบัน</div>
                           <div className="text-lg font-bold text-white">{gamification.rank} Driver</div>
                       </div>
                   </div>
                   <div className="text-right">
                       <div className="text-2xl font-black text-white">{gamification.points}</div>
-                      <div className="text-[10px] text-slate-400">POINTS</div>
+                      <div className="text-[10px] text-slate-400">คะแนน</div>
                   </div>
               </div>
               
               <div className="space-y-1.5">
                   <div className="flex justify-between text-xs text-slate-300">
-                      <span>Monthly Progress</span>
+                      <span>ความคืบหน้าประจำเดือน</span>
                       {gamification.nextRankPoints > 0 ? (
-                          <span>Next Level: {gamification.nextRankPoints} pts</span>
+                          <span>เลเวลถัดไป: {gamification.nextRankPoints} pts</span>
                       ) : (
-                          <span className="text-purple-400 font-bold">Max Level Reached!</span>
+                          <span className="text-purple-400 font-bold">เลเวลสูงสุดแล้ว!</span>
                       )}
                   </div>
                   <Progress value={progressPercent} className="h-2 bg-slate-900/50" indicatorClassName={ // Custom color based on rank?
@@ -90,7 +90,7 @@ export default async function MobileDashboard() {
                        gamification.rank === 'Platinum' ? 'bg-purple-500' : 'bg-emerald-500'
                   } />
                   <p className="text-[10px] text-slate-500 text-right">
-                       Completed {gamification.monthlyCompleted} jobs this month
+                       เสร็จสิ้น {gamification.monthlyCompleted} งานในเดือนนี้
                   </p>
               </div>
           </CardContent>

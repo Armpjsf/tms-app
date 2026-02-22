@@ -7,12 +7,30 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
-import { Building2, Plus, Edit, Trash2, Search, Loader2, Banknote } from "lucide-react"
+import { 
+    Building2, 
+    Plus, 
+    Edit, 
+    Trash2, 
+    Search, 
+    Loader2, 
+    Banknote 
+} from "lucide-react"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { getAllSubcontractors } from "@/lib/supabase/subcontractors"
 import { createSubcontractor, updateSubcontractor, deleteSubcontractor } from "@/lib/actions/subcontractor-actions"
 import { Subcontractor } from "@/types/subcontractor"
+import { useBranch } from "@/components/providers/branch-provider"
+import { useCallback } from "react"
 
 export default function SubcontractorsPage() {
+    const { selectedBranch, branches } = useBranch()
     const [list, setList] = useState<Subcontractor[]>([])
     const [loading, setLoading] = useState(true)
     const [isDialogOpen, setIsDialogOpen] = useState(false)
@@ -28,19 +46,20 @@ export default function SubcontractorsPage() {
         Bank_Name: "",
         Bank_Account_No: "",
         Bank_Account_Name: "",
+        Branch_ID: "",
         Active_Status: "Active"
     })
 
-    useEffect(() => {
-        loadData()
-    }, [])
-
-    const loadData = async () => {
+    const loadData = useCallback(async () => {
         setLoading(true)
-        const data = await getAllSubcontractors()
+        const data = await getAllSubcontractors(selectedBranch)
         setList(data)
         setLoading(false)
-    }
+    }, [selectedBranch])
+
+    useEffect(() => {
+        loadData()
+    }, [loadData])
 
     const handleOpenDialog = (item?: Subcontractor) => {
         if (item) {
@@ -55,6 +74,7 @@ export default function SubcontractorsPage() {
                 Bank_Name: "",
                 Bank_Account_No: "",
                 Bank_Account_Name: "",
+                Branch_ID: selectedBranch === 'All' ? "" : selectedBranch,
                 Active_Status: "Active"
             })
         }
@@ -81,8 +101,8 @@ export default function SubcontractorsPage() {
             } else {
                 alert("Error: " + res.error)
             }
-        } catch (e: any) {
-            alert("เกิดข้อผิดพลาด")
+        } catch (error: unknown) {
+            alert("เกิดข้อผิดพลาด: " + (error as Error).message)
         } finally {
             setSaving(false)
         }
@@ -209,14 +229,33 @@ export default function SubcontractorsPage() {
                             </div>
                         </div>
 
-                        <div className="space-y-2">
-                            <Label>ชื่อบริษัทรถร่วม *</Label>
-                            <Input 
-                                value={formData.Sub_Name} 
-                                onChange={e => setFormData({...formData, Sub_Name: e.target.value})} 
-                                className="bg-slate-800 border-slate-700" 
-                            />
-                        </div>
+                            <div className="space-y-2">
+                                <Label>ชื่อบริษัทรถร่วม *</Label>
+                                <Input 
+                                    value={formData.Sub_Name} 
+                                    onChange={e => setFormData({...formData, Sub_Name: e.target.value})} 
+                                    className="bg-slate-800 border-slate-700" 
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label>สาขา (Branch) *</Label>
+                                <Select 
+                                    value={formData.Branch_ID || ""} 
+                                    onValueChange={(v: string) => setFormData({...formData, Branch_ID: v})}
+                                >
+                                    <SelectTrigger className="bg-slate-800 border-slate-700">
+                                        <SelectValue placeholder="เลือกสาขา" />
+                                    </SelectTrigger>
+                                    <SelectContent className="bg-slate-900 border-slate-800 text-white">
+                                        {branches.map(b => (
+                                            <SelectItem key={b.Branch_ID} value={b.Branch_ID}>
+                                                {b.Branch_Name} ({b.Branch_ID})
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
 
                         <div className="p-4 rounded-lg bg-slate-950/50 border border-slate-800 space-y-4">
                             <Label className="text-blue-400 text-xs font-bold uppercase">ข้อมูลบัญชีธนาคารส่วนกลาง (Payment)</Label>

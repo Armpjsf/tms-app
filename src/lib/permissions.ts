@@ -30,9 +30,12 @@ export async function hasPermission(permission: string) {
     const session = await getSession()
     if (!session) return false
     
-    // Super Admin (Role 1) and Admin (Role 2) have all permissions
-    if (session.roleId === 1 || session.roleId === 2) return true
+    // Super Admin (Role 1) always has all permissions
+    if (session.roleId === 1) return true
     
+    // For other roles, check the specific permission flag
+    // Support both boolean true and presence in an array if we ever change formats, 
+    // but sticking to Record<string, boolean> as per current standard.
     return !!session?.permissions?.[permission]
 }
 

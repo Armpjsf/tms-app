@@ -6,5 +6,6 @@ export interface Subcontractor {
     Bank_Account_No?: string;
     Bank_Account_Name?: string;
     Active_Status: string;
+    Branch_ID?: string;
     Created_At?: string;
 }

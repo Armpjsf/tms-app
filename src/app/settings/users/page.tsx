@@ -9,14 +9,20 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Users, Plus, Edit, Trash2, Search, Loader2 } from "lucide-react"
-import { getUsers, createUser, updateUser, deleteUser, UserData, getCurrentUserRole, createBulkUsers } from "@/lib/actions/user-actions"
-import { getAllCustomers, Customer } from "@/lib/supabase/customers"
+import { createUser, updateUser, deleteUser, UserData, getCurrentUserRole, createBulkUsers } from "@/lib/actions/user-actions"
+import { Customer } from "@/lib/supabase/customers"
 import { ExcelImport } from "@/components/ui/excel-import"
-import { FileSpreadsheet } from "lucide-react"
+import { FileSpreadsheet, Shield } from "lucide-react"
 import { useBranch } from "@/components/providers/branch-provider"
+import { createClient } from "@/utils/supabase/client"
+import { STANDARD_ROLES, SYSTEM_PERMISSIONS, StandardRole } from "@/types/role"
+import { getRolePermissions } from "@/lib/actions/permission-actions"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Separator } from "@/components/ui/separator"
+import { useCallback } from "react"
 
 export default function UserSettingsPage() {
-    const { branches, isAdmin } = useBranch()
+    const { branches, isAdmin, selectedBranch } = useBranch()
     const [userList, setUserList] = useState<(UserData & { Master_Customers?: { Customer_Name: string } | null })[]>([])
     const [customers, setCustomers] = useState<Customer[]>([])
     const [currentRoleId, setCurrentRoleId] = useState<number | null>(null)
@@ -26,6 +32,8 @@ export default function UserSettingsPage() {
     const [saving, setSaving] = useState(false)
     const [searchTerm, setSearchTerm] = useState("")
 
+    const [allRolePermissions, setAllRolePermissions] = useState<Record<string, Record<string, boolean>>>({})
+    
     // Form State
     const [editingUser, setEditingUser] = useState<string | null>(null) // Username
     const [formData, setFormData] = useState<Partial<UserData>>({
@@ -33,32 +41,54 @@ export default function UserSettingsPage() {
         Password: "",
         Name: "",
         Branch_ID: "",
-        Role_ID: 0,
+        Role: "Staff", 
         Active_Status: "Active",
         Customer_ID: null,
-        Permissions: {
-            view_history: true,
-            track_jobs: true,
-            show_income: true
-        }
+        Permissions: {}
     })
+
+    const loadData = useCallback(async () => {
+        setLoading(true)
+        try {
+            const supabase = createClient()
+
+            // Query users directly from browser client
+            let usersQuery = supabase
+                .from('Master_Users')
+                .select('*, Master_Customers ( Customer_Name )')
+            if (selectedBranch && selectedBranch !== 'All') {
+                usersQuery = usersQuery.eq('Branch_ID', selectedBranch)
+            }
+
+            // Query customers directly from browser client
+            const customersQuery = supabase.from('Master_Customers').select('*').order('Customer_Name').limit(1000)
+
+            const [usersResult, customersResult, userInfo, rolesResult] = await Promise.all([
+                usersQuery.order('Username'),
+                customersQuery,
+                getCurrentUserRole(),
+                getRolePermissions()
+            ])
+
+            setUserList(usersResult.data || [])
+            setCustomers(customersResult.data || [])
+            setCurrentRoleId(userInfo?.roleId || 3)
+
+            if (rolesResult.success && rolesResult.data) {
+                const perms: Record<string, Record<string, boolean>> = {}
+                rolesResult.data.forEach(r => {
+                    perms[r.Role] = r.Permissions
+                })
+                setAllRolePermissions(perms)
+            }
+        } finally {
+            setLoading(false)
+        }
+    }, [selectedBranch])
 
     useEffect(() => {
         loadData()
-    }, [])
-
-    const loadData = async () => {
-        setLoading(true)
-        const [usersData, customersData, userInfo] = await Promise.all([
-            getUsers(),
-            getAllCustomers(),
-            getCurrentUserRole()
-        ])
-        setUserList(usersData || [])
-        setCustomers(customersData?.data || [])
-        setCurrentRoleId(userInfo?.roleId || 3)
-        setLoading(false)
-    }
+    }, [loadData])
 
     const handleOpenDialog = (user?: UserData) => {
         if (user) {
@@ -68,27 +98,45 @@ export default function UserSettingsPage() {
                 Password: "", // Don't show password
                 Name: user.Name,
                 Branch_ID: user.Branch_ID || "",
-                Role: user.Role || "",
+                Role: (user.Role as StandardRole) || "Staff",
                 Active_Status: user.Active_Status,
                 Customer_ID: user.Customer_ID,
-                Permissions: user.Permissions || { view_history: true, track_jobs: true, show_income: true }
+                Permissions: user.Permissions || {}
             })
-
-            // Legacy role map logic removed as we use string Role now
         } else {
             setEditingUser(null)
+            const defaultRole = "Staff"
             setFormData({
                 Username: "",
                 Password: "",
                 Name: "",
-                Branch_ID: "",
-                Role: "", // Now using string Role
+                Branch_ID: selectedBranch && selectedBranch !== 'All' ? selectedBranch : "",
+                Role: defaultRole, 
                 Active_Status: "Active",
                 Customer_ID: null,
-                Permissions: { view_history: true, track_jobs: true, show_income: true }
+                Permissions: allRolePermissions[defaultRole] || {}
             })
         }
         setIsDialogOpen(true)
+    }
+
+    const handleRoleChange = (role: string) => {
+        const standardRole = role as StandardRole
+        setFormData(prev => ({
+            ...prev,
+            Role: standardRole,
+            Permissions: allRolePermissions[role] || prev.Permissions || {}
+        }))
+    }
+
+    const toggleGranularPermission = (permId: string, checked: boolean) => {
+        setFormData(prev => ({
+            ...prev,
+            Permissions: {
+                ...(prev.Permissions || {}),
+                [permId]: checked
+            }
+        }))
     }
 
     const handleSave = async () => {
@@ -252,17 +300,18 @@ export default function UserSettingsPage() {
             </Card>
 
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                <DialogContent className="bg-slate-900 border-slate-800 text-white max-w-lg">
-                    <DialogHeader>
-                        <DialogTitle>
+                <DialogContent className="bg-slate-900 border-slate-800 text-white max-w-2xl max-h-[90vh] overflow-hidden flex flex-col p-0">
+                    <DialogHeader className="p-6 border-b border-slate-800">
+                        <DialogTitle className="flex items-center gap-2">
+                            <Shield className="w-5 h-5 text-blue-400" />
                             {editingUser ? "แก้ไขผู้ใช้งาน" : "สร้างผู้ใช้งานใหม่"}
                         </DialogTitle>
                     </DialogHeader>
                     
-                    <div className="space-y-4 py-4">
+                    <div className="flex-1 overflow-y-auto p-6 space-y-6">
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <Label>Username *</Label>
+                                <Label className="text-slate-400">Username *</Label>
                                 <Input 
                                     value={formData.Username} 
                                     onChange={e => setFormData({...formData, Username: e.target.value})} 
@@ -271,7 +320,7 @@ export default function UserSettingsPage() {
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label>Password {editingUser && "(เว้นว่างถ้าไม่เปลี่ยน)"}</Label>
+                                <Label className="text-slate-400">Password {editingUser && "(เว้นว่างถ้าไม่เปลี่ยน)"}</Label>
                                 <Input 
                                     type="password"
                                     value={formData.Password || ""} 
@@ -282,7 +331,7 @@ export default function UserSettingsPage() {
                         </div>
 
                         <div className="space-y-2">
-                            <Label>ชื่อ - นามสกุล *</Label>
+                            <Label className="text-slate-400">ชื่อ - นามสกุล *</Label>
                             <Input 
                                 value={formData.Name} 
                                 onChange={e => setFormData({...formData, Name: e.target.value})} 
@@ -292,13 +341,13 @@ export default function UserSettingsPage() {
 
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <Label>สาขา (Branch) *</Label>
+                                <Label className="text-slate-400">สาขา (Branch) *</Label>
                                 {isAdmin ? (
                                     <Select 
                                         value={formData.Branch_ID || ""} 
                                         onValueChange={v => setFormData({...formData, Branch_ID: v})}
                                     >
-                                        <SelectTrigger className="bg-slate-800 border-yellow-500/50 text-white">
+                                        <SelectTrigger className="bg-slate-800 border-slate-700 text-white">
                                             <SelectValue placeholder="เลือกสาขา" />
                                         </SelectTrigger>
                                         <SelectContent className="bg-slate-900 border-slate-800 text-white">
@@ -319,48 +368,56 @@ export default function UserSettingsPage() {
                                 )}
                             </div>
                             <div className="space-y-2">
-                                <Label>บทบาท (Role) *</Label>
-                                <Input 
+                                <Label className="text-slate-400">บทบาท (Role) *</Label>
+                                <Select 
                                     value={formData.Role || ""} 
-                                    onChange={e => setFormData({...formData, Role: e.target.value})}
-                                    placeholder="เช่น Admin, Staff, Driver"
-                                    className="bg-slate-800 border-slate-700" 
-                                />
+                                    onValueChange={handleRoleChange}
+                                >
+                                    <SelectTrigger className="bg-slate-800 border-slate-700 text-white">
+                                        <SelectValue placeholder="เลือกบทบาท" />
+                                    </SelectTrigger>
+                                    <SelectContent className="bg-slate-900 border-slate-800 text-white">
+                                        {STANDARD_ROLES.map(role => (
+                                            <SelectItem key={role} value={role}>
+                                                {role}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
                             </div>
                         </div>
 
-                        {/* Permissions Section (For Customer Portal) */}
-                        <div className="space-y-4 p-4 rounded-lg bg-slate-950/50 border border-slate-800">
-                            <Label className="text-blue-400 text-xs font-bold uppercase">
-                                Portal Permissions (สำหรับลูกค้า)
-                            </Label>
+                        <Separator className="bg-slate-800" />
+
+                        <div className="space-y-4">
+                            <div className="flex justify-between items-center">
+                                <Label className="text-blue-400 font-bold uppercase text-xs">สิทธิ์การใช้งาน (Granular Permissions)</Label>
+                                <span className="text-[10px] text-slate-500 italic">* อ้างอิงตามบทบาท และสามารถปรับเปลี่ยนเฉพาะบุคคลได้</span>
+                            </div>
                             
-                            <div className="space-y-2 pt-1">
-                                {[
-                                    { id: 'view_history', label: 'ดูประวัติงาน (View History)' },
-                                    { id: 'track_jobs', label: 'ติดตามงาน (Track Jobs)' },
-                                    { id: 'show_income', label: 'แสดงรายได้ (Show Income)' },
-                                ].map((p) => (
-                                    <div key={p.id} className="flex items-center justify-between p-2 rounded bg-slate-800/30">
-                                        <span className="text-sm text-slate-300">{p.label}</span>
-                                        <input 
-                                            type="checkbox" 
-                                            className="h-4 w-4 rounded border-slate-700 bg-slate-900 cursor-pointer"
-                                            checked={formData.Permissions?.[p.id]}
-                                            onChange={e => setFormData({
-                                                ...formData, 
-                                                Permissions: { ...formData.Permissions, [p.id]: e.target.checked }
-                                            })}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                {SYSTEM_PERMISSIONS.map((perm) => (
+                                    <div key={perm.id} className="flex items-start space-x-3 p-3 rounded-lg bg-slate-800/30 border border-slate-800/50 hover:bg-slate-800/50 transition-colors">
+                                        <Checkbox 
+                                            id={`perm-${perm.id}`}
+                                            checked={formData.Permissions?.[perm.id] || false}
+                                            onCheckedChange={(checked) => toggleGranularPermission(perm.id, !!checked)}
+                                            className="mt-1"
                                         />
+                                        <div className="grid gap-1.5 leading-none cursor-pointer" onClick={() => toggleGranularPermission(perm.id, !formData.Permissions?.[perm.id])}>
+                                            <label
+                                                htmlFor={`perm-${perm.id}`}
+                                                className="text-sm font-medium leading-none text-slate-200 peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                            >
+                                                {perm.label}
+                                            </label>
+                                            <p className="text-[10px] text-slate-500">
+                                                {perm.desc}
+                                            </p>
+                                        </div>
                                     </div>
                                 ))}
                             </div>
-
-                            {!formData.Customer_ID && (
-                                <div className="mt-2 p-2 bg-slate-800/50 border border-slate-700/50 rounded text-[10px] text-slate-400">
-                                    * สำหรับพนักงานทั่วไป สิทธิ์หลักจะถูกกำหนดผ่านหน้า &quot;บทบาทและสิทธิ์&quot;
-                                </div>
-                            )}
                         </div>
 
                         {/* Customer Link (Optional) */}
@@ -384,8 +441,8 @@ export default function UserSettingsPage() {
                             </Select>
                         </div>
 
-                        <div className="space-y-2">
-                             <Label>สถานะ</Label>
+                        <div className="space-y-2 pb-4">
+                             <Label className="text-slate-400">สถานะการใช้งาน</Label>
                              <Select 
                                 value={formData.Active_Status} 
                                 onValueChange={v => setFormData({...formData, Active_Status: v})}
@@ -401,11 +458,11 @@ export default function UserSettingsPage() {
                         </div>
                     </div>
 
-                    <DialogFooter>
+                    <DialogFooter className="p-6 border-t border-slate-800 bg-slate-900/50">
                         <Button variant="outline" onClick={() => setIsDialogOpen(false)} className="border-slate-700">ยกเลิก</Button>
-                        <Button onClick={handleSave} disabled={saving} className="bg-blue-600 hover:bg-blue-700">
+                        <Button onClick={handleSave} disabled={saving} className="bg-blue-600 hover:bg-blue-700 min-w-[100px]">
                             {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                            บันทึก
+                            บันทึกข้อมูล
                         </Button>
                     </DialogFooter>
                 </DialogContent>

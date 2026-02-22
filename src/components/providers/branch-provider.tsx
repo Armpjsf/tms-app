@@ -4,7 +4,7 @@ import React, { createContext, useContext, useState, useEffect } from "react"
 import { getAllBranches, Branch } from "@/lib/supabase/branches"
 import { getCurrentUserRole } from "@/lib/supabase/routes"
 import Cookies from "js-cookie"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 
 interface BranchContextType {
   selectedBranch: string
@@ -28,6 +28,7 @@ export function BranchProvider({ children }: { children: React.ReactNode }) {
   const [isAdmin, setIsAdmin] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const router = useRouter()
+  const searchParams = useSearchParams()
 
   useEffect(() => {
     async function init() {
@@ -37,17 +38,25 @@ export function BranchProvider({ children }: { children: React.ReactNode }) {
                 getCurrentUserRole()
             ])
             
-            console.log("Fetched Branches:", fetchedBranches)
             setBranches(fetchedBranches || [])
-            setIsAdmin(roleId === 1) // Assuming 1 is Super Admin
+            setIsAdmin(roleId === 1)
 
-            // Restore from cookie or default to 'All'
+            // 1. Priority: URL Search Parameter
+            const urlBranch = searchParams.get('branch')
+            // 2. Secondary: Cookie
             const savedBranch = Cookies.get("selectedBranch")
-            if (savedBranch) {
-                // Verify if saved branch still exists or is 'All'
-                if (savedBranch === 'All' || (fetchedBranches && fetchedBranches.some((b: Branch) => b.Branch_ID === savedBranch))) {
-                    setSelectedBranchState(savedBranch)
-                }
+            
+            let finalBranch = 'All'
+            
+            if (urlBranch && (urlBranch === 'All' || fetchedBranches.some((b: Branch) => b.Branch_ID === urlBranch))) {
+                finalBranch = urlBranch
+            } else if (savedBranch && (savedBranch === 'All' || fetchedBranches.some((b: Branch) => b.Branch_ID === savedBranch))) {
+                finalBranch = savedBranch
+            }
+
+            setSelectedBranchState(finalBranch)
+            if (finalBranch !== savedBranch) {
+                Cookies.set("selectedBranch", finalBranch, { expires: 365 })
             }
         } catch (e) {
             console.error("Failed to init branch context", e)
@@ -56,12 +65,18 @@ export function BranchProvider({ children }: { children: React.ReactNode }) {
         }
     }
     init()
-  }, [])
+  }, [searchParams])
 
   const setSelectedBranch = (branchId: string) => {
     setSelectedBranchState(branchId)
     Cookies.set("selectedBranch", branchId, { expires: 365 })
-    router.refresh() // Force server components to re-render with new cookie
+    
+    // Explicitly update URL to trigger server component re-render
+    const url = new URL(window.location.href)
+    url.searchParams.set('branch', branchId)
+    router.push(url.pathname + url.search)
+    
+    router.refresh()
   }
 
   return (

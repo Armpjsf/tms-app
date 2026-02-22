@@ -5,28 +5,43 @@ import { revalidatePath } from "next/cache"
 import { getSession } from "@/lib/session"
 import argon2 from "argon2"
 
+import { STANDARD_ROLES, StandardRole } from "@/types/role"
+
 export interface UserData {
     Username: string;
     Password?: string;
     Name: string;
     Branch_ID: string;
-    Role_ID: number;
-    Role?: string; // Legacy/Display
+    Role_ID?: number;
+    Role: StandardRole; 
     Active_Status: string;
     Customer_ID?: string | null;
     Permissions?: Record<string, boolean>;
 }
 
-export async function getUsers() {
+import { getUserBranchId, isSuperAdmin } from "@/lib/permissions"
+
+export async function getUsers(providedBranchId?: string) {
     const supabase = await createClient()
     
-    const { data, error } = await supabase
+    let query = supabase
         .from("Master_Users")
         .select(`
             *,
             Master_Customers ( Customer_Name )
         `)
-        .order("Username")
+    
+    // Filter by Branch
+    const isAdmin = await isSuperAdmin()
+    const branchId = providedBranchId || await getUserBranchId()
+    
+    if (branchId && branchId !== 'All') {
+        query = query.eq('Branch_ID', branchId)
+    } else if (!isAdmin && !branchId) {
+        return []
+    }
+
+    const { data, error } = await query.order("Username")
 
     if (error) {
         console.error("Error fetching users:", error)
@@ -34,6 +49,16 @@ export async function getUsers() {
     }
 
     return data
+}
+
+const ROLE_MAP: Record<string, number> = {
+    'Super Admin': 1,
+    'Admin': 2,
+    'Dispatcher': 3,
+    'Accountant': 4,
+    'Staff': 5,
+    'Driver': 6,
+    'Customer': 7
 }
 
 export async function createUser(user: UserData) {
@@ -59,6 +84,8 @@ export async function createUser(user: UserData) {
 
     const hashedPassword = await argon2.hash(user.Password || "123456")
 
+    const roleId = ROLE_MAP[user.Role] || 5 // Default to Staff
+
     const { error } = await supabase
         .from("Master_Users")
         .insert([{
@@ -66,7 +93,8 @@ export async function createUser(user: UserData) {
             Password: hashedPassword,
             Name: user.Name,
             Branch_ID: user.Branch_ID,
-            Role: user.Role || 'Staff',
+            Role: user.Role,
+            Role_ID: roleId,
             Customer_ID: user.Customer_ID || null,
             Permissions: user.Permissions || {},
             Active_Status: 'Active'
@@ -97,20 +125,21 @@ export async function updateUser(username: string, updates: Partial<UserData>) {
         return { success: false, error: "คุณไม่มีสิทธิ์แก้ไขข้อมูลของ Super Admin" }
     }
 
-    // New Rule: Admin usage restricted
-    // Assuming Role ID 2 is Admin. If session.roleId is NOT 1 (Super Admin), they cannot edit another Admin.
-    // We strictly check if target is Admin and current user is NOT Super Admin.
     if (targetUser?.Role === "Admin" && session.roleId !== 1) {
         return { success: false, error: "คุณไม่มีสิทธิ์แก้ไขข้อมูลของ Admin" }
     }
 
-    const updatePayload: Partial<UserData> = {
+    const updatePayload: any = {
         Name: updates.Name,
         Branch_ID: updates.Branch_ID,
         Active_Status: updates.Active_Status,
         Customer_ID: updates.Customer_ID,
         Permissions: updates.Permissions,
         Role: updates.Role
+    }
+
+    if (updates.Role) {
+        updatePayload.Role_ID = ROLE_MAP[updates.Role] || 5
     }
 
     if (updates.Password) {
@@ -173,7 +202,7 @@ export async function deleteUser(username: string) {
     return { success: true }
 }
 
-export async function createBulkUsers(users: any[]) {
+export async function createBulkUsers(users: Record<string, unknown>[]) {
     const supabase = await createClient()
     const session = await getSession()
     
@@ -201,8 +230,8 @@ export async function createBulkUsers(users: any[]) {
     // The previous check was (session.roleId > 2), we remove it to allow Role 3.
 
     // Normalize keys
-    const normalizeData = (row: any) => {
-        const normalized: any = {}
+    const normalizeData = (row: Record<string, unknown>) => {
+        const normalized: Record<string, unknown> = {}
         const getValue = (keys: string[]) => {
             const rowKeys = Object.keys(row)
             for (const key of keys) {

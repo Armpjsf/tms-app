@@ -1,24 +1,24 @@
 "use server"
 
 import { createClient } from "@/utils/supabase/server"
-import { revalidatePath } from "next/cache"
 
 export interface ChatMessage {
     id: number
-    sender_id: string
-    receiver_id: string
+    driver_id: string
+    driver_name: string
+    sender: 'admin' | 'driver'
     message: string
     created_at: string
-    is_read: boolean
+    read: boolean
 }
 
 export async function getChatHistory(driverId: string) {
     const supabase = await createClient()
     
     const { data, error } = await supabase
-        .from('Chat_Messages')
+        .from('chat_messages')
         .select('*')
-        .or(`sender_id.eq.${driverId},receiver_id.eq.${driverId}`)
+        .eq('driver_id', driverId)
         .order('created_at', { ascending: true })
 
     if (error) {
@@ -29,22 +29,22 @@ export async function getChatHistory(driverId: string) {
     return data as ChatMessage[]
 }
 
-export async function sendChatMessage(senderId: string, message: string) {
+export async function sendChatMessage(senderId: string, message: string, driverName?: string) {
     const supabase = await createClient()
 
-    // If sender is driver, receiver is admin. If sender is admin, receiver is driver.
-    // For mobile app, sender is always driverId.
-    const receiverId = 'admin' 
-
     const { error } = await supabase
-        .from('Chat_Messages')
+        .from('chat_messages')
         .insert({
-            sender_id: senderId,
-            receiver_id: receiverId,
-            message: message
+            driver_id: senderId,
+            driver_name: driverName || 'Driver',
+            sender: 'driver',
+            message: message,
+            read: false,
+            created_at: new Date().toISOString()
         })
 
     if (error) {
+        console.error("Error sending message:", error)
         return { success: false, error: error.message }
     }
     

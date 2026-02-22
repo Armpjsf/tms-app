@@ -2,6 +2,7 @@
 
 import { createClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { getUserBranchId } from '@/lib/permissions'
 
 export type TicketFormData = {
   Date_Report: string
@@ -16,6 +17,7 @@ export type TicketFormData = {
 
 export async function createRepairTicket(data: TicketFormData) {
   const supabase = await createClient()
+  const branchId = await getUserBranchId()
 
   // Note: If Odometer column missing in Repair_Tickets, we might need to append to desc
   // But let's try to insert to Odometer column usually standard
@@ -37,7 +39,8 @@ export async function createRepairTicket(data: TicketFormData) {
       Priority: data.Priority,
       Odometer: data.Odometer || 0, // Insert Odometer
       Photo_Url: data.Photo_Url || null,
-      Status: 'Pending'
+      Status: 'Pending',
+      Branch_ID: branchId === 'All' ? null : branchId
     })
 
   if (error) {

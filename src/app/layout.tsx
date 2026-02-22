@@ -29,18 +29,35 @@ export const viewport = {
   themeColor: '#0f172a',
 }
 
+import { BranchProvider } from "@/components/providers/branch-provider";
+import { ThemeProvider } from "@/components/providers/theme-provider";
+import { Suspense } from "react";
+import { PWAInstallHint } from "@/components/mobile/pwa-install-hint";
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="th" suppressHydrationWarning>
       <body
         className={`${sarabun.variable} antialiased`}
       >
-        {children}
-        <Toaster />
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="dark"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <Suspense fallback={null}>
+            <BranchProvider>
+              {children}
+              <PWAInstallHint />
+              <Toaster />
+            </BranchProvider>
+          </Suspense>
+        </ThemeProvider>
       </body>
     </html>
   );

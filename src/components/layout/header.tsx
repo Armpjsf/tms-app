@@ -1,12 +1,11 @@
 "use client"
 
 import * as React from "react"
-import { useState, useEffect } from "react"
-import { motion } from "framer-motion"
 import { cn } from "@/lib/utils"
-import { Search, Moon, Sun, Building2 } from "lucide-react"
+import { Search, Building2 } from "lucide-react"
 import { useBranch } from "@/components/providers/branch-provider"
 import { NotificationDropdown } from "@/components/notifications/notification-dropdown"
+import { ThemeToggle } from "@/components/ui/theme-toggle"
 import {
   Select,
   SelectContent,
@@ -20,44 +19,6 @@ interface HeaderProps {
 
 export function Header({ sidebarCollapsed = false }: HeaderProps) {
   const { selectedBranch, setSelectedBranch, branches, isAdmin } = useBranch()
-  const [mounted, setMounted] = useState(false)
-  const [isDark, setIsDark] = useState(false)
-
-  useEffect(() => {
-    setMounted(true)
-    const stored = localStorage.getItem('theme')
-    const dark = stored === 'dark' || (!stored && window.matchMedia('(prefers-color-scheme: dark)').matches)
-    setIsDark(dark)
-    
-    if (dark) {
-        document.documentElement.classList.add('dark')
-    } else {
-        document.documentElement.classList.remove('dark')
-    }
-  }, [])
-
-  useEffect(() => {
-    if (!mounted) return
-    // Sync theme class
-    if (isDark) {
-        document.documentElement.classList.add('dark')
-    } else {
-        document.documentElement.classList.remove('dark')
-    }
-  }, [isDark, mounted])
-
-  const toggleTheme = () => {
-    const newIsDark = !isDark
-    setIsDark(newIsDark)
-    const newTheme = newIsDark ? 'dark' : 'light'
-    localStorage.setItem('theme', newTheme)
-    
-    if (newIsDark) {
-        document.documentElement.classList.add('dark')
-    } else {
-        document.documentElement.classList.remove('dark')
-    }
-  }
 
   return (
     <header
@@ -112,14 +73,7 @@ export function Header({ sidebarCollapsed = false }: HeaderProps) {
       {/* Right Section */}
       <div className="flex items-center gap-3">
         {/* Theme Toggle */}
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={toggleTheme}
-          className="p-2 rounded-xl bg-muted/50 hover:bg-muted text-muted-foreground hover:text-foreground transition-all"
-        >
-          {mounted ? (isDark ? <Sun size={20} /> : <Moon size={20} />) : <div className="w-5 h-5" />}
-        </motion.button>
+        <ThemeToggle />
 
         {/* Notifications */}
         <NotificationDropdown />

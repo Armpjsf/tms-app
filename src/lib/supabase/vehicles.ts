@@ -157,14 +157,14 @@ export async function deleteVehicle(plate: string) {
 
 // Alias for planning page compatibility - returns { data: vehicles }
 // Also supports pagination for /vehicles page
-export async function getAllVehicles(page?: number, limit?: number, query?: string) {
+export async function getAllVehicles(page?: number, limit?: number, query?: string, providedBranchId?: string) {
   try {
     const supabase = await createClient()
     let queryBuilder = supabase.from('master_vehicles').select('*', { count: 'exact' })
     
     // Filter by Branch
-    const branchId = await getUserBranchId()
     const isAdmin = await isSuperAdmin()
+    const branchId = providedBranchId || await getUserBranchId()
     
     if (branchId && branchId !== 'All') {
         queryBuilder = queryBuilder.eq('branch_id', branchId)
@@ -198,7 +198,7 @@ export async function getAllVehicles(page?: number, limit?: number, query?: stri
 }
 
 // Get vehicle stats for dashboard
-export async function getVehicleStats() {
+export async function getVehicleStats(providedBranchId?: string) {
   try {
     const supabase = await createClient()
     let query = supabase
@@ -206,8 +206,8 @@ export async function getVehicleStats() {
       .select('vehicle_plate, active_status, current_mileage, next_service_mileage')
     
     // Filter by Branch
-    const branchId = await getUserBranchId()
     const isAdmin = await isSuperAdmin()
+    const branchId = providedBranchId || await getUserBranchId()
     
     if (branchId && branchId !== 'All') {
         query = query.eq('branch_id', branchId)

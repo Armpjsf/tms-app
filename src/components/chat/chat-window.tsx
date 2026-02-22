@@ -54,6 +54,11 @@ export function ChatWindow({ initialContacts, initialDrivers }: ChatWindowProps)
   
   const supabase = createClient()
 
+  // Sync contacts with props when branch changes (server refresh)
+  useEffect(() => {
+    setContacts(initialContacts)
+  }, [initialContacts])
+
   // Auto-scroll to bottom
   const scrollToBottom = useCallback((behavior: ScrollBehavior = 'smooth') => {
     setTimeout(() => {

@@ -32,7 +32,7 @@ export default async function DashboardPage(props: {
   // ดึงข้อมูลจาก Supabase (Pass branchId if SuperAdmin)
   const [jobStats, sosCount, weeklyStats, statusDist, financials, financialStats] = await Promise.all([
     getTodayJobStats(branchId),
-    getSosCount(),
+    getSosCount(branchId),
     getWeeklyJobStats(branchId),
     getJobStatusDistribution(branchId),
     getTodayFinancials(branchId),
@@ -125,9 +125,9 @@ export default async function DashboardPage(props: {
 }
 
 // ฟังก์ชันเสริมสำหรับนับ SOS
-import { getCustomerId as getAuthCustomerId } from "@/lib/permissions"
+import { getUserBranchId } from "@/lib/permissions"
 
-async function getSosCount(): Promise<number> {
+async function getSosCount(providedBranchId?: string): Promise<number> {
   try {
     const supabase = await createClient()
     const customerId = await getAuthCustomerId()
@@ -139,6 +139,15 @@ async function getSosCount(): Promise<number> {
     
     if (customerId) {
         dbQuery = dbQuery.eq('Customer_ID', customerId)
+    }
+
+    const branchId = providedBranchId || await getUserBranchId()
+    const isAdmin = await isSuperAdmin()
+    
+    if (branchId && branchId !== 'All') {
+        dbQuery = dbQuery.eq('Branch_ID', branchId)
+    } else if (!isAdmin && !branchId) {
+        return 0
     }
 
     const { count, error } = await dbQuery

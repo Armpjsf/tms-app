@@ -169,13 +169,14 @@ export async function getActiveDrivers() {
 }
 
 // Alias for planning page compatibility
-export async function getAllDrivers(page?: number, limit?: number, query?: string) {
+export async function getAllDrivers(page?: number, limit?: number, query?: string, providedBranchId?: string) {
   try {
     const supabase = await createClient()
     let queryBuilder = supabase.from('Master_Drivers').select('*', { count: 'exact' })
     
-    const branchId = await getUserBranchId()
     const isAdmin = await isSuperAdmin()
+    const branchId = providedBranchId || await getUserBranchId()
+    
     if (branchId && branchId !== 'All') {
         queryBuilder = queryBuilder.eq('Branch_ID', branchId)
     } else if (!isAdmin && !branchId) {
@@ -201,13 +202,14 @@ export async function getAllDrivers(page?: number, limit?: number, query?: strin
 }
 
 // Get driver stats for dashboard
-export async function getDriverStats() {
+export async function getDriverStats(providedBranchId?: string) {
   try {
     const supabase = await createClient()
     let query = supabase.from('Master_Drivers').select('Driver_ID, Role')
 
-    const branchId = await getUserBranchId()
     const isAdmin = await isSuperAdmin()
+    const branchId = providedBranchId || await getUserBranchId()
+    
     if (branchId && branchId !== 'All') {
         query = query.eq('Branch_ID', branchId)
     } else if (!isAdmin && !branchId) {

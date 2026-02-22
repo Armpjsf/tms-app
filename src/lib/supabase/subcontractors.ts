@@ -3,13 +3,16 @@
 import { createClient } from '@/utils/supabase/server'
 import { Subcontractor } from '@/types/subcontractor'
 
-export async function getAllSubcontractors(): Promise<Subcontractor[]> {
+export async function getAllSubcontractors(branchId?: string): Promise<Subcontractor[]> {
     try {
         const supabase = await createClient()
-        const { data, error } = await supabase
-            .from('Master_Subcontractors')
-            .select('*')
-            .order('Sub_Name')
+        let query = supabase.from('Master_Subcontractors').select('*')
+        
+        if (branchId && branchId !== 'All') {
+            query = query.eq('Branch_ID', branchId)
+        }
+
+        const { data, error } = await query.order('Sub_Name')
         
         if (error) {
             console.error('Error fetching subcontractors:', error)

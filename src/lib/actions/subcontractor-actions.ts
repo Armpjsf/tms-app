@@ -20,6 +20,7 @@ export async function createSubcontractor(data: Partial<Subcontractor>) {
                 Bank_Name: data.Bank_Name,
                 Bank_Account_No: data.Bank_Account_No,
                 Bank_Account_Name: data.Bank_Account_Name,
+                Branch_ID: data.Branch_ID,
                 Active_Status: data.Active_Status || 'Active'
             }])
 

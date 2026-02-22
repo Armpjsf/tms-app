@@ -688,13 +688,24 @@ export async function getBillableJobs(customerId: string) {
   try {
     const supabase = await createClient()
     
+    const branchId = await getUserBranchId()
+    const isAdmin = await isSuperAdmin()
+
     // Get jobs that are Complete/Delivered and NOT yet invoiced
-    const { data, error } = await supabase
+    let dbQuery = supabase
       .from('Jobs_Main')
       .select('*')
       .eq('Customer_ID', customerId)
       .is('Invoice_ID', null) 
       .in('Job_Status', ['Complete', 'Delivered'])
+
+    if (branchId && branchId !== 'All') {
+        dbQuery = dbQuery.eq('Branch_ID', branchId)
+    } else if (!isAdmin && !branchId) {
+        return []
+    }
+
+    const { data, error } = await dbQuery
       .order('Plan_Date', { ascending: true })
 
     if (error) {

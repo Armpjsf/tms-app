@@ -45,11 +45,12 @@ import {
   Customer,
   createBulkCustomers
 } from "@/lib/supabase/customers"
+ import { createClient } from "@/utils/supabase/client"
 import { ExcelImport } from "@/components/ui/excel-import"
 import { useBranch } from "@/components/providers/branch-provider"
 
 export default function CustomersSettingsPage() {
-  const { branches, isAdmin } = useBranch()
+  const { branches, isAdmin, selectedBranch } = useBranch()
   const [customers, setCustomers] = useState<Customer[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [isDialogOpen, setIsDialogOpen] = useState(false)
@@ -70,10 +71,26 @@ export default function CustomersSettingsPage() {
 
   const fetchCustomers = useCallback(async () => {
     setLoading(true)
-    const { data } = await getAllCustomers(1, 100, searchQuery)
-    setCustomers(data)
-    setLoading(false)
-  }, [searchQuery])
+    try {
+      const supabase = createClient()
+      let query = supabase.from('Master_Customers').select('*')
+
+      if (selectedBranch && selectedBranch !== 'All') {
+        query = query.eq('Branch_ID', selectedBranch)
+      }
+
+      if (searchQuery) {
+        query = query.or(`Customer_Name.ilike.%${searchQuery}%,Customer_ID.ilike.%${searchQuery}%`)
+      }
+
+      const { data, error } = await query.order('Customer_ID', { ascending: false }).limit(100)
+      if (data) {
+        setCustomers(data)
+      }
+    } finally {
+      setLoading(false)
+    }
+  }, [searchQuery, selectedBranch])
 
   useEffect(() => {
     fetchCustomers()

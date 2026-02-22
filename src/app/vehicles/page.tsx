@@ -30,9 +30,10 @@ export default async function VehiclesPage(props: Props) {
   const query = (searchParams.q as string) || ''
   const limit = 12
 
+  const branchId = searchParams.branch as string
   const [{ data: vehicles, count }, stats, subcontractors] = await Promise.all([
-    getAllVehicles(page, limit, query),
-    getVehicleStats(),
+    getAllVehicles(page, limit, query, branchId),
+    getVehicleStats(branchId),
     getAllSubcontractors()
   ])
 

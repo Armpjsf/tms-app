@@ -20,14 +20,14 @@ export type Customer = {
 // Get all customers
 import { getUserBranchId, isSuperAdmin } from "@/lib/permissions"
 
-export async function getAllCustomers(page?: number, limit?: number, query?: string) {
+export async function getAllCustomers(page?: number, limit?: number, query?: string, providedBranchId?: string) {
   try {
     const supabase = await createClient()
     let queryBuilder = supabase.from('Master_Customers').select('*', { count: 'exact' })
     
     // Filter by Branch
-    const branchId = await getUserBranchId()
     const isAdmin = await isSuperAdmin()
+    const branchId = providedBranchId || await getUserBranchId()
     
     if (branchId && branchId !== 'All') {
         queryBuilder = queryBuilder.eq('Branch_ID', branchId)
@@ -141,14 +141,14 @@ export async function deleteCustomer(id: string) {
 }
 
 // Bulk create customers
-export async function createBulkCustomers(customers: any[]) {
+export async function createBulkCustomers(customers: Record<string, unknown>[]) {
     try {
         const supabase = await createClient()
         const branchId = await getUserBranchId()
         
         // Normalize keys
-        const normalizeData = (row: any) => {
-            const normalized: any = {}
+        const normalizeData = (row: Record<string, unknown>) => {
+            const normalized: Record<string, unknown> = {}
             const getValue = (keys: string[]) => {
                 const rowKeys = Object.keys(row)
                 for (const key of keys) {
@@ -226,7 +226,7 @@ export async function createBulkCustomers(customers: any[]) {
             message: `นำเข้าสำเร็จ ${validInserts.length} รายการ` + (skippedCount > 0 ? ` (ข้ามซ้ำ ${skippedCount} รายการ)` : '')
         }
 
-    } catch (e: any) {
-        return { success: false, message: e.message }
+    } catch (e: unknown) {
+        return { success: false, message: (e as Error).message }
     }
 }

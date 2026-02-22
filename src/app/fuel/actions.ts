@@ -2,6 +2,7 @@
 
 import { createClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { getUserBranchId } from '@/lib/permissions'
 
 export type FuelFormData = {
   Date_Time: string
@@ -17,6 +18,7 @@ export type FuelFormData = {
 
 export async function createFuelLog(data: FuelFormData) {
   const supabase = await createClient()
+  const branchId = await getUserBranchId()
 
   const { error } = await supabase
     .from('Fuel_Logs')
@@ -29,7 +31,8 @@ export async function createFuelLog(data: FuelFormData) {
       Price_Total: data.Total_Amount,
       Odometer: data.Mileage,
       Station_Name: data.Station_Name,
-      Photo_Url: data.Photo_Url || null
+      Photo_Url: data.Photo_Url || null,
+      Branch_ID: branchId === 'All' ? null : branchId
     })
 
   if (error) {
