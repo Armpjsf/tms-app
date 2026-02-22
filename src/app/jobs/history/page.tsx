@@ -161,19 +161,19 @@ export default async function JobHistoryPage(props: Props) {
         <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-3 flex items-center justify-between">
             <span className="text-sm text-emerald-600 dark:text-emerald-400/80">สำเร็จ</span>
             <span className="text-lg font-bold text-emerald-700 dark:text-emerald-400">
-               {jobs.filter(j => j.Job_Status === 'Complete' || j.Job_Status === 'Delivered').length}
+               {jobs?.filter(j => j?.Job_Status === 'Complete' || j?.Job_Status === 'Delivered').length || 0}
             </span>
         </div>
         <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 flex items-center justify-between">
             <span className="text-sm text-red-600 dark:text-red-400/80">ล้มเหลว</span>
             <span className="text-lg font-bold text-red-700 dark:text-red-400">
-               {jobs.filter(j => j.Job_Status === 'Failed').length}
+               {jobs?.filter(j => j?.Job_Status === 'Failed').length || 0}
             </span>
         </div>
         <div className="bg-slate-500/10 border border-slate-500/20 rounded-lg p-3 flex items-center justify-between">
             <span className="text-sm text-slate-600 dark:text-slate-400/80">ยกเลิก</span>
             <span className="text-lg font-bold text-slate-700 dark:text-slate-400">
-               {jobs.filter(j => j.Job_Status === 'Cancelled').length}
+               {jobs?.filter(j => j?.Job_Status === 'Cancelled').length || 0}
             </span>
         </div>
       </div>
@@ -237,12 +237,20 @@ export default async function JobHistoryPage(props: Props) {
                       </td>
                       {canViewPrice && (
                         <td className="p-4 text-right overflow-hidden">
-                            <div className="font-medium text-emerald-600 dark:text-emerald-400 text-sm">{job.Price_Cust_Total?.toLocaleString() || '-'}</div>
+                            <div className="font-medium text-emerald-600 dark:text-emerald-400 text-sm">
+                                {typeof job.Price_Cust_Total === 'number' 
+                                    ? job.Price_Cust_Total.toLocaleString() 
+                                    : (Number(job.Price_Cust_Total) || 0).toLocaleString()}
+                            </div>
                         </td>
                       )}
                       {canViewPrice && (
                         <td className="p-4 text-right overflow-hidden">
-                            <div className="text-muted-foreground text-sm">{job.Cost_Driver_Total?.toLocaleString() || '-'}</div>
+                            <div className="text-muted-foreground text-sm">
+                                {typeof job.Cost_Driver_Total === 'number' 
+                                    ? job.Cost_Driver_Total.toLocaleString() 
+                                    : (Number(job.Cost_Driver_Total) || 0).toLocaleString()}
+                            </div>
                         </td>
                       )}
                       <td className="p-4">

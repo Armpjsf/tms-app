@@ -41,7 +41,7 @@ export function SidebarProfile({ collapsed }: { collapsed: boolean }) {
         {avatarUrl ? (
           <img src={avatarUrl} alt={displayName} className="w-full h-full object-cover" />
         ) : (
-          <span className="font-bold text-lg">{displayName.charAt(0).toUpperCase()}</span>
+          <span className="font-bold text-lg">{(displayName || "U").charAt(0).toUpperCase()}</span>
         )}
       </div>
       
