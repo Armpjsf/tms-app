@@ -1,8 +1,9 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { LogOut, User, Loader2 } from "lucide-react"
+import { LogOut, Loader2 } from "lucide-react"
 import { getUserProfile, UserProfile } from "@/lib/supabase/users"
+import Image from "next/image"
 
 export function SidebarProfile({ collapsed }: { collapsed: boolean }) {
   const [profile, setProfile] = useState<UserProfile | null>(null)
@@ -39,7 +40,7 @@ export function SidebarProfile({ collapsed }: { collapsed: boolean }) {
     <div className={`flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/10 ${collapsed ? 'justify-center' : ''}`}>
       <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-white shadow-lg overflow-hidden shrink-0">
         {avatarUrl ? (
-          <img src={avatarUrl} alt={displayName} className="w-full h-full object-cover" />
+          <Image src={avatarUrl} alt={displayName} fill className="object-cover" />
         ) : (
           <span className="font-bold text-lg">{(displayName || "U").charAt(0).toUpperCase()}</span>
         )}
