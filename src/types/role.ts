@@ -48,3 +48,11 @@ export const STANDARD_ROLES = [
 ] as const;
 
 export type StandardRole = typeof STANDARD_ROLES[number];
+
+export interface Role {
+    Role_ID: number;
+    Role_Name: string;
+    Description?: string | null;
+}
+
+export type RolePermissions = Record<string, boolean>;
