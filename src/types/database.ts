@@ -15,7 +15,9 @@ export interface Job {
     Driver_Payment_ID?: string | null;
     Branch_ID?: string | null;
     Photo_Proof_Url?: string | null;
+    Signature_Url?: string | null;
     Pickup_Photo_Url?: string | null;
+    Pickup_Signature_Url?: string | null;
 }
 
 export interface Billing_Note {

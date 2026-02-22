@@ -59,8 +59,9 @@ export default async function JobHistoryPage(props: Props) {
     New: { label: "ใหม่", color: "text-blue-400 bg-blue-500/20", icon: <Package size={14} /> },
     Assigned: { label: "มอบหมายแล้ว", color: "text-indigo-400 bg-indigo-500/20", icon: <Truck size={14} /> },
     "Picked Up": { label: "รับแล้ว", color: "text-cyan-400 bg-cyan-500/20", icon: <Package size={14} /> },
-    "In Transit": { label: "กำลังส่ง", color: "text-amber-400 bg-amber-500/20", icon: <Truck size={14} /> },
+    "In Transit": { label: "กำลังเดินทาง", color: "text-amber-400 bg-amber-500/20", icon: <Truck size={14} /> },
     Delivered: { label: "ส่งแล้ว", color: "text-emerald-400 bg-emerald-500/20", icon: <CheckCircle2 size={14} /> },
+    Completed: { label: "เสร็จสิ้น", color: "text-emerald-400 bg-emerald-500/20", icon: <CheckCircle2 size={14} /> },
     Complete: { label: "เสร็จสิ้น", color: "text-emerald-400 bg-emerald-500/20", icon: <CheckCircle2 size={14} /> },
     Failed: { label: "ล้มเหลว", color: "text-red-400 bg-red-500/20", icon: <AlertCircle size={14} /> },
     Cancelled: { label: "ยกเลิก", color: "text-slate-400 bg-slate-500/20", icon: <AlertCircle size={14} /> },
@@ -161,7 +162,7 @@ export default async function JobHistoryPage(props: Props) {
         <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-3 flex items-center justify-between">
             <span className="text-sm text-emerald-600 dark:text-emerald-400/80">สำเร็จ</span>
             <span className="text-lg font-bold text-emerald-700 dark:text-emerald-400">
-               {jobs?.filter(j => j?.Job_Status === 'Complete' || j?.Job_Status === 'Delivered').length || 0}
+               {jobs?.filter(j => ['Delivered', 'Complete', 'Completed'].includes(j?.Job_Status || '')).length || 0}
             </span>
         </div>
         <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 flex items-center justify-between">

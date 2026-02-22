@@ -15,8 +15,8 @@ type PODDialogProps = {
 export function PODDialog({ open, onOpenChange, job }: PODDialogProps) {
 
 
-  const photos = job.Photo_Proof_Url ? job.Photo_Proof_Url.split(',').filter(Boolean) : []
-  const signature = job.Signature_Url
+  const photos = (job.Photo_Proof_Url || (job as any).photo_proof_url || "").split(',').filter(Boolean)
+  const signature = job.Signature_Url || (job as any).signature_url
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

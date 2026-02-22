@@ -27,6 +27,8 @@ export type Job = {
   Created_At: string | null
   Photo_Proof_Url: string | null
   Signature_Url: string | null
+  Pickup_Photo_Url: string | null
+  Pickup_Signature_Url: string | null
   Sub_ID: string | null
   Show_Price_To_Driver: boolean
   Weight_Kg?: number | null
