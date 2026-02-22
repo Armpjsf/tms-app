@@ -13,17 +13,11 @@ import {
   ExternalLink
 } from "lucide-react"
 import Image from "next/image"
-import dynamicImport from 'next/dynamic'
 import Link from 'next/link'
 import { ShareTrackingButton } from "@/components/tracking/share-tracking-button"
+import { TrackingMap } from "@/components/tracking/tracking-map"
 
 export const dynamic = 'force-dynamic'
-
-// Dynamically import LeafletMap to avoid SSR issues with 'window'
-const LeafletMap = dynamicImport(() => import('@/components/maps/leaflet-map'), { 
-  ssr: false,
-  loading: () => <div className="h-[300px] w-full bg-slate-800 animate-pulse rounded-xl flex items-center justify-center text-slate-500">กำลังโหลดแผนที่...</div>
-})
 
 export default async function TrackingPage(props: { params: Promise<{ jobId: string }> }) {
   const params = await props.params
@@ -140,18 +134,10 @@ export default async function TrackingPage(props: { params: Promise<{ jobId: str
                 </div>
             </div>
             <div className="h-[300px] w-full">
-                <LeafletMap 
-                    center={[job.lastLocation.lat, job.lastLocation.lng]}
-                    zoom={15}
-                    focusPosition={[job.lastLocation.lat, job.lastLocation.lng]}
-                    drivers={[{
-                        id: job.driverName,
-                        name: job.driverName,
-                        lat: job.lastLocation.lat,
-                        lng: job.lastLocation.lng,
-                        status: job.status,
-                        lastUpdate: new Date(job.lastLocation.timestamp).toLocaleTimeString('th-TH')
-                    }]}
+                <TrackingMap 
+                    lastLocation={job.lastLocation}
+                    driverName={job.driverName}
+                    status={job.status}
                 />
             </div>
         </Card>
