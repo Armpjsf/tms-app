@@ -115,17 +115,30 @@ export async function submitJobPOD(jobId: string, formData: FormData) {
     if (!signatureUrl) throw new Error("Signature upload failed")
 
     // 3. Update Job
-    const { error } = await supabase
+    const nowIso = new Date().toISOString()
+    const { error: updateError } = await supabase
       .from("Jobs_Main")
       .update({
         Job_Status: "Completed", 
-        Photo_Proof_Url: photoUrlString, // Now includes Report URL
+        Photo_Proof_Url: photoUrlString,
         Signature_Url: signatureUrl,
-        // Delivered_Date: new Date().toISOString() // Column missing in DB
+        Actual_Delivery_Time: nowIso,
+        Delivery_Date: nowIso.split('T')[0] // Ensure Delivery_Date is also updated
       })
       .eq("Job_ID", jobId)
 
-    if (error) throw error
+    if (updateError) throw updateError
+
+    // 4. Automated Report Generation (Phase 2)
+    // Trigger PDF generation in the background
+    try {
+        const { generateJobPDF } = await import("@/lib/actions/report-actions")
+        generateJobPDF(jobId).then(res => {
+            if (res.success) console.log("Automated Report Generated:", res.url)
+        })
+    } catch (reportErr) {
+        console.error("Automated Report Trigger Failed:", reportErr)
+    }
 
     revalidatePath("/mobile/jobs")
     return { success: true }

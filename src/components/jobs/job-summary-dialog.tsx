@@ -3,7 +3,7 @@
 import { 
   Dialog, 
   DialogContent, 
-  DialogTitle,
+  DialogTitle, 
   DialogDescription,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
@@ -20,6 +20,14 @@ import {
 } from "lucide-react"
 import Image from "next/image"
 import { Job } from "@/lib/supabase/jobs"
+import { useEffect, useState } from "react"
+import dynamic from "next/dynamic"
+import { getJobGPSData } from "@/lib/actions/gps-actions"
+
+const LeafletMap = dynamic(() => import('@/components/maps/leaflet-map'), { 
+    ssr: false,
+    loading: () => <div className="h-[200px] w-full bg-slate-900 animate-pulse rounded-xl" />
+})
 
 type JobSummaryDialogProps = {
   open: boolean
@@ -28,6 +36,22 @@ type JobSummaryDialogProps = {
 }
 
 export function JobSummaryDialog({ open, onOpenChange, job }: JobSummaryDialogProps) {
+  const [gpsData, setGpsData] = useState<{ route: [number, number][], latest: any } | null>(null)
+  const [loadingGps, setLoadingGps] = useState(false)
+
+  const jobId = job?.Job_ID
+  const driverName = job?.Driver_Name
+  const planDate = job?.Plan_Date
+
+  useEffect(() => {
+    if (open && jobId) {
+      setLoadingGps(true)
+      getJobGPSData(jobId, driverName, planDate)
+        .then(data => setGpsData(data as any))
+        .finally(() => setLoadingGps(false))
+    }
+  }, [open, jobId, driverName, planDate])
+
   if (!job) return null
 
   const pickupPhotos = job.Pickup_Photo_Url ? job.Pickup_Photo_Url.split(',').filter(Boolean) : []
@@ -171,6 +195,46 @@ export function JobSummaryDialog({ open, onOpenChange, job }: JobSummaryDialogPr
                     </div>
                 </section>
             </div>
+
+            {/* Map Section */}
+            <section className="space-y-4">
+                <div className="flex items-center justify-between text-white font-bold border-l-4 border-amber-500 pl-3">
+                    <div className="flex items-center gap-2">
+                        <MapPin size={18} className="text-amber-400" />
+                        <span>แผนที่ติดตามงาน (Live Tracking Map)</span>
+                    </div>
+                    {gpsData?.latest && (
+                        <span className="text-[10px] text-slate-500">Update: {new Date(gpsData.latest.timestamp).toLocaleTimeString('th-TH')}</span>
+                    )}
+                </div>
+                <div className="h-[300px] rounded-2xl overflow-hidden border border-slate-800 shadow-inner bg-slate-900 flex items-center justify-center">
+                    {loadingGps ? (
+                        <div className="flex flex-col items-center gap-3">
+                            <Truck className="h-8 w-8 text-slate-700 animate-bounce" />
+                            <span className="text-[10px] text-slate-600 uppercase tracking-widest">กำลังดึงพิกัด...</span>
+                        </div>
+                    ) : (gpsData?.latest || (gpsData?.route && gpsData.route.length > 0)) ? (
+                        <LeafletMap 
+                            height="300px"
+                            center={gpsData?.latest ? [gpsData.latest.lat, gpsData.latest.lng] : (gpsData?.route?.[0] as [number, number])}
+                            zoom={14}
+                            routeHistory={gpsData?.route as [number, number][]}
+                            drivers={gpsData?.latest ? [{
+                                id: job.Driver_Name,
+                                name: job.Driver_Name,
+                                lat: gpsData.latest.lat,
+                                lng: gpsData.latest.lng,
+                                status: job.Job_Status as string
+                            }] : []}
+                        />
+                    ) : (
+                        <div className="flex flex-col items-center gap-2 text-slate-600">
+                             <MapPin size={32} />
+                             <p className="text-xs">ไม่พบข้อมูลพิกัดสำหรับงานนี้</p>
+                        </div>
+                    )}
+                </div>
+            </section>
 
             {/* Grid 2: Media Section (Photos) */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">

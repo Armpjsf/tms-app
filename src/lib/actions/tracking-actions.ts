@@ -6,37 +6,33 @@ export interface PublicJobDetails {
     jobId: string
     trackingCode: string
     status: string
-    customerName: string // Masked or partial? Maybe full name is okay for the user tracking it.
+    customerName: string
     origin: string
     destination: string
     driverName: string
     driverPhone: string
     vehiclePlate: string
-    pickupDate: string
-    deliveryDate: string | null
     planDate: string
-    photos: string[]
+    pickupDate: string | null
+    deliveryDate: string | null
+    pickupPhotos: string[]
+    podPhotos: string[]
     signature: string | null
+    pickupSignature: string | null
+    lastLocation?: {
+        lat: number
+        lng: number
+        timestamp: string
+    } | null
 }
 
 export async function getPublicJobDetails(jobId: string): Promise<PublicJobDetails | null> {
     const supabase = await createClient()
 
-    // Query Jobs_Main
+    // Query Jobs_Main with all relevant columns
     const { data: job, error } = await supabase
         .from('Jobs_Main')
-        .select(`
-            Job_ID,
-            Job_Status,
-            Customer_Name,
-            Location_Origin_Name,
-            Location_Destination_Name,
-            Driver_Name,
-            Vehicle_Plate,
-            Plan_Date,
-            Actual_Pickup_Time,
-            Actual_Delivery_Time
-        `)
+        .select('*')
         .eq('Job_ID', jobId)
         .single()
     
@@ -45,48 +41,48 @@ export async function getPublicJobDetails(jobId: string): Promise<PublicJobDetai
         return null
     }
 
-    // Prepare photos list (This depends on where photos are stored. 
-    // Usually in Jobs_Main columns like 'Image_Url_1', or a related table?)
-    // Let's assume standard columns or a related bucket fetch if needed.
-    // For now, let's look for columns in Jobs_Main or just return empty if not sure.
-    // *Wait*, previous tasks mentioned 'IMAGE' formula in G33 for GSheets. 
-    // In Supabase, we likely have 'Image_Url_...' columns.
-    
-    // Let's inspect Jobs_Main columns via a quick query if needed, or assume standard names.
-    // Based on `jobs.ts`, we might have `image_url_1`, `image_url_2`, etc.
-    // Let's fetch them if they exist. For now, I'll fetch * and map manually to be safe.
-    
-    const { data: fullJob } = await supabase
-        .from('Jobs_Main')
-        .select('*')
-        .eq('Job_ID', jobId)
-        .single()
+    // Process Photos
+    const pickupPhotos = job.Pickup_Photo_Url ? job.Pickup_Photo_Url.split(',').filter(Boolean) : []
+    const podPhotos = job.Photo_Proof_Url ? job.Photo_Proof_Url.split(',').filter(Boolean) : []
 
-    const photos: string[] = []
-    if (fullJob) {
-        // Collect all non-null image columns
-        // Assuming columns like 'Image_1', 'Image_2' or 'Proof_Of_Delivery'
-        // Let's iterate keys or checking specific known columns
-        if (fullJob.Image_1_Url) photos.push(fullJob.Image_1_Url)
-        if (fullJob.Image_2_Url) photos.push(fullJob.Image_2_Url)
-        if (fullJob.Image_3_Url) photos.push(fullJob.Image_3_Url)
-        if (fullJob.Signature_Url) photos.push(fullJob.Signature_Url)
+    // Fetch latest location for the vehicle/driver associated with this job
+    let lastLocation = null
+    if (['In Transit', 'Picked Up'].includes(job.Job_Status)) {
+        const { data: gpsData } = await supabase
+            .from('gps_logs')
+            .select('*')
+            .eq('driver_id', job.Driver_Name) // Assuming Driver_Name is the foreign key or ID in some cases, but usually we need Driver_ID. 
+            // Let's check if Driver_ID is available in job.
+            .order('timestamp', { ascending: false })
+            .limit(1)
+        
+        const log = gpsData?.[0]
+        if (log) {
+            lastLocation = {
+                lat: log.latitude || log.Latitude,
+                lng: log.longitude || log.Longitude,
+                timestamp: log.timestamp || log.Timestamp
+            }
+        }
     }
 
     return {
         jobId: job.Job_ID,
-        trackingCode: job.Job_ID, // Use Job ID as tracking code for now
+        trackingCode: job.Job_ID,
         status: job.Job_Status || 'Pending',
         customerName: job.Customer_Name || 'Unknown',
-        origin: job.Location_Origin_Name || '-',
-        destination: job.Location_Destination_Name || '-',
+        origin: job.Location_Origin_Name || job.Origin_Location || '-',
+        destination: job.Location_Destination_Name || job.Dest_Location || '-',
         driverName: job.Driver_Name || '-',
-        driverPhone: '-', // We might need to join Master_Drivers to get phone
+        driverPhone: '-', 
         vehiclePlate: job.Vehicle_Plate || '-',
-        pickupDate: job.Actual_Pickup_Time,
-        deliveryDate: job.Actual_Delivery_Time,
-        planDate: job.Plan_Date,
-        photos: photos,
-        signature: fullJob?.Signature_Url || null
+        planDate: job.Plan_Date || '-',
+        pickupDate: job.Actual_Pickup_Time || null,
+        deliveryDate: job.Actual_Delivery_Time || null,
+        pickupPhotos,
+        podPhotos,
+        signature: job.Signature_Url || (job as any).signature_url || null,
+        pickupSignature: job.Pickup_Signature_Url || (job as any).pickup_signature_url || null,
+        lastLocation
     }
 }

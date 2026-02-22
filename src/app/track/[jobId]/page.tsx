@@ -1,11 +1,29 @@
 import { getPublicJobDetails } from "@/lib/actions/tracking-actions"
 import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Separator } from "@/components/ui/separator"
-import { Package, Truck, MapPin, Calendar, Camera, User } from "lucide-react"
+import { Card } from "@/components/ui/card"
+import { 
+  Package, 
+  Truck, 
+  MapPin, 
+  Calendar, 
+  Camera, 
+  User, 
+  CheckCircle2, 
+  ClipboardList,
+  ExternalLink
+} from "lucide-react"
 import Image from "next/image"
+import dynamicImport from 'next/dynamic'
+import Link from 'next/link'
+import { ShareTrackingButton } from "@/components/tracking/share-tracking-button"
 
 export const dynamic = 'force-dynamic'
+
+// Dynamically import LeafletMap to avoid SSR issues with 'window'
+const LeafletMap = dynamicImport(() => import('@/components/maps/leaflet-map'), { 
+  ssr: false,
+  loading: () => <div className="h-[300px] w-full bg-slate-800 animate-pulse rounded-xl flex items-center justify-center text-slate-500">กำลังโหลดแผนที่...</div>
+})
 
 export default async function TrackingPage(props: { params: Promise<{ jobId: string }> }) {
   const params = await props.params
@@ -14,138 +32,248 @@ export default async function TrackingPage(props: { params: Promise<{ jobId: str
 
   if (!job) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[50vh] text-center space-y-4">
-        <Package className="h-16 w-16 text-slate-600" />
-        <h1 className="text-2xl font-bold text-white">ไม่พบข้อมูลงานขนส่ง</h1>
-        <p className="text-slate-400">กรุณาตรวจสอบหมายเลขงาน (Job ID) หรือลิงก์ที่ได้รับอีกครั้ง</p>
+      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-6 px-4">
+        <div className="bg-slate-900 p-8 rounded-full border border-slate-800 shadow-2xl">
+            <Package className="h-20 w-20 text-slate-700" />
+        </div>
+        <div>
+            <h1 className="text-2xl font-bold text-white mb-2">ไม่พบข้อมูลงานขนส่ง</h1>
+            <p className="text-slate-400 max-w-xs">กรุณาตรวจสอบหมายเลขงาน (Job ID) หรือลิงก์ที่ได้รับจากผู้ให้บริการอีกครั้ง</p>
+        </div>
+        <Link href="/" className="text-indigo-400 hover:text-indigo-300 text-sm font-bold">กลับหน้าแรก</Link>
       </div>
     )
   }
 
-  const getStatusColor = (status: string) => {
-      switch (status) {
-          case 'Completed':
-          case 'Delivered': return 'bg-emerald-500/20 text-emerald-400 border-emerald-500/50'
-          case 'In Progress': return 'bg-blue-500/20 text-blue-400 border-blue-500/50'
-          case 'Pending': return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/50'
-          case 'Cancelled': return 'bg-red-500/20 text-red-400 border-red-500/50'
-          default: return 'bg-slate-500/20 text-slate-400 border-slate-500/50'
-      }
+  // Stepper Logic (Same as internal Job Summary for consistency)
+  const steps = [
+    { key: 'New', label: 'สร้างงาน', icon: <Calendar size={18} /> },
+    { key: 'Assigned', label: 'จัดรถแล้ว', icon: <User size={18} /> },
+    { key: 'Picked Up', label: 'รับของแล้ว', icon: <Package size={18} /> },
+    { key: 'In Transit', label: 'กำลังส่ง', icon: <Truck size={18} /> },
+    { key: 'Completed', label: 'เสร็จสิ้น', icon: <CheckCircle2 size={18} /> },
+  ]
+
+  const getCurrentStepIndex = () => {
+    const status = job.status
+    if (['Delivered', 'Completed', 'Complete'].includes(status)) return 4
+    if (status === 'In Transit') return 3
+    if (status === 'Picked Up') return 2
+    if (status === 'Assigned') return 1
+    return 0
   }
 
+  const currentStepIndex = getCurrentStepIndex()
+
   return (
-    <div className="space-y-6">
-      <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold text-white mb-2 tracking-tight">TMS Tracking</h1>
-        <p className="text-slate-400 text-sm">ติดตามสถานะการจัดส่งของคุณ</p>
+    <div className="max-w-2xl mx-auto space-y-8 pb-20 px-4 pt-4">
+      {/* Premium Header Card */}
+      <div className="relative rounded-3xl overflow-hidden bg-slate-900 border border-slate-800 shadow-2xl">
+        <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-indigo-500 via-purple-500 to-emerald-500"></div>
+        
+        <div className="p-6 md:p-8 space-y-8">
+            <div className="flex justify-between items-start">
+                <div className="space-y-1">
+                    <div className="flex items-center gap-2 text-indigo-400 font-bold text-[10px] uppercase tracking-widest">
+                        <ClipboardList size={14} />
+                        <span>Live Tracking Portfolio</span>
+                    </div>
+                    <h1 className="text-3xl font-black text-white tracking-tight">{job.jobId}</h1>
+                </div>
+                <div className="flex flex-col items-end gap-2">
+                    <Badge className={`px-4 py-1.5 rounded-full text-xs font-bold border-0 shadow-lg ${
+                        currentStepIndex === 4 
+                        ? 'bg-emerald-500 text-white' 
+                        : 'bg-indigo-600 text-white'
+                    }`}>
+                        {job.status}
+                    </Badge>
+                </div>
+            </div>
+
+            {/* Premium Stepper (Horizontal) */}
+            <div className="relative px-2 py-4">
+                <div className="absolute top-1/2 left-8 right-8 h-0.5 bg-slate-800 -translate-y-1/2 z-0" />
+                <div 
+                    className="absolute top-1/2 left-8 h-0.5 bg-indigo-500 -translate-y-1/2 z-0 transition-all duration-700 ease-out" 
+                    style={{ width: `${(currentStepIndex / 4) * (100 - 16)}%` }}
+                />
+                
+                <div className="flex justify-between relative z-10">
+                    {steps.map((step, idx) => {
+                        const isCompleted = idx <= currentStepIndex
+                        const isCurrent = idx === currentStepIndex
+                        return (
+                            <div key={step.key} className="flex flex-col items-center">
+                                <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-500 border-2 ${
+                                    isCurrent 
+                                    ? 'bg-indigo-500 border-indigo-400 text-white scale-110 shadow-[0_0_20px_rgba(99,102,241,0.6)]' 
+                                    : isCompleted 
+                                    ? 'bg-slate-900 border-indigo-500 text-indigo-400' 
+                                    : 'bg-slate-950 border-slate-800 text-slate-700'
+                                }`}>
+                                    {step.icon}
+                                </div>
+                                <span className={`text-[10px] mt-2 font-bold transition-colors hidden sm:block ${
+                                    isCompleted ? 'text-indigo-400' : 'text-slate-700'
+                                }`}>
+                                    {step.label}
+                                </span>
+                            </div>
+                        )
+                    })}
+                </div>
+            </div>
+        </div>
       </div>
 
-      <Card className="bg-slate-900 border-slate-800 shadow-xl overflow-hidden">
-        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-purple-500"></div>
-        <CardHeader className="pb-4">
-          <div className="flex justify-between items-start">
-            <div>
-                <p className="text-xs text-slate-500 uppercase font-semibold">Tracking Number</p>
-                <h2 className="text-2xl font-mono text-white tracking-widest">{job.trackingCode}</h2>
-            </div>
-            <Badge variant="outline" className={`${getStatusColor(job.status)} px-3 py-1 capitalize`}>
-                {job.status}
-            </Badge>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-6">
-            
-            {/* Route Info */}
-            <div className="relative pl-6 space-y-8 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-800">
-                <div className="relative">
-                    <div className="absolute -left-[29px] top-1 h-4 w-4 rounded-full border-2 border-slate-600 bg-slate-900"></div>
-                    <p className="text-xs text-slate-500 mb-1">ต้นทาง (Origin)</p>
-                    <p className="text-white font-medium">{job.origin}</p>
-                    <p className="text-xs text-slate-400 flex items-center gap-1 mt-1">
-                        <Calendar size={12} /> {new Date(job.pickupDate || job.planDate).toLocaleDateString('th-TH')}
-                    </p>
+      {/* Map Section */}
+      {job.lastLocation && (
+        <Card className="bg-slate-900 border-slate-800 overflow-hidden shadow-xl rounded-3xl">
+            <div className="bg-slate-900/50 p-4 border-b border-slate-800 flex justify-between items-center">
+                <div className="flex items-center gap-2 text-white font-bold text-sm">
+                    <MapPin size={16} className="text-emerald-400" />
+                    <span>ตำแหน่งพิกัดล่าสุด</span>
                 </div>
-                <div className="relative">
-                    <div className={`absolute -left-[29px] top-1 h-4 w-4 rounded-full border-2 ${job.status === 'Delivered' ? 'border-emerald-500 bg-emerald-500' : 'border-slate-600 bg-slate-900'}`}></div>
-                    <p className="text-xs text-slate-500 mb-1">ปลายทาง (Destination)</p>
-                    <p className="text-white font-medium">{job.destination}</p>
-                    {job.deliveryDate && (
-                        <p className="text-xs text-emerald-400 flex items-center gap-1 mt-1">
-                            <Calendar size={12} /> ส่งถึงเมื่อ: {new Date(job.deliveryDate).toLocaleString('th-TH')}
-                        </p>
-                    )}
+                <div className="text-[10px] text-slate-500">
+                    อัพเดทเมื่อ: {new Date(job.lastLocation.timestamp).toLocaleTimeString('th-TH')}
                 </div>
             </div>
-
-            <Separator className="bg-slate-800" />
-
-            {/* Driver Info */}
-            <div className="grid grid-cols-2 gap-4">
-                <div className="flex items-center gap-3">
-                    <div className="bg-slate-800 p-2 rounded-full">
-                        <User size={20} className="text-blue-400" />
-                    </div>
-                    <div>
-                        <p className="text-xs text-slate-500">พนักงานขับรถ</p>
-                        <p className="text-sm font-medium text-white">{job.driverName}</p>
-                    </div>
-                </div>
-                <div className="flex items-center gap-3">
-                    <div className="bg-slate-800 p-2 rounded-full">
-                        <Truck size={20} className="text-purple-400" />
-                    </div>
-                    <div>
-                        <p className="text-xs text-slate-500">ทะเบียนรถ</p>
-                        <p className="text-sm font-medium text-white">{job.vehiclePlate}</p>
-                    </div>
-                </div>
+            <div className="h-[300px] w-full">
+                <LeafletMap 
+                    center={[job.lastLocation.lat, job.lastLocation.lng]}
+                    zoom={15}
+                    focusPosition={[job.lastLocation.lat, job.lastLocation.lng]}
+                    drivers={[{
+                        id: job.driverName,
+                        name: job.driverName,
+                        lat: job.lastLocation.lat,
+                        lng: job.lastLocation.lng,
+                        status: job.status,
+                        lastUpdate: new Date(job.lastLocation.timestamp).toLocaleTimeString('th-TH')
+                    }]}
+                />
             </div>
+        </Card>
+      )}
 
-            <Separator className="bg-slate-800" />
+      {/* Detailed Info Section */}
+      <div className="grid grid-cols-1 gap-6">
+          <section className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-6">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-white font-bold border-l-4 border-indigo-500 pl-3">
+                        <Truck size={18} className="text-indigo-400" />
+                        <span>ข้อมูลการจัดส่ง</span>
+                    </div>
+                </div>
 
-            {/* Photos & Proof */}
-            {job.photos.length > 0 && (
-                <div>
-                     <h3 className="text-sm font-semibold text-slate-300 mb-3 flex items-center gap-2">
-                        <Camera size={16} /> รูปภาพสินค้า / หลักฐานการส่ง
-                     </h3>
-                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                        {job.photos.map((url, idx) => (
-                            <div key={idx} className="relative aspect-square rounded-lg overflow-hidden border border-slate-700">
-                                <Image 
-                                    src={url} 
-                                    alt={`Proof ${idx + 1}`} 
-                                    fill 
-                                    className="object-cover hover:scale-105 transition-transform" 
-                                />
+                <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-slate-950/50 p-3 rounded-2xl border border-white/5">
+                        <p className="text-[10px] uppercase text-slate-500 mb-1">ทะเบียนรถ</p>
+                        <p className="text-sm font-bold text-white">{job.vehiclePlate}</p>
+                    </div>
+                    <div className="bg-slate-950/50 p-3 rounded-2xl border border-white/5">
+                        <p className="text-[10px] uppercase text-slate-500 mb-1">พนักงานขับรถ</p>
+                        <p className="text-sm font-bold text-white">{job.driverName || '-'}</p>
+                    </div>
+                </div>
+
+                <div className="space-y-4">
+                    <div className="flex gap-4 p-4 bg-indigo-500/5 rounded-2xl border border-indigo-500/10">
+                        <div className="mt-1"><div className="w-3 h-3 rounded-full bg-indigo-500 ring-4 ring-indigo-500/20" /></div>
+                        <div>
+                            <p className="text-[10px] uppercase text-slate-500 mb-1">ต้นทาง (Origin)</p>
+                            <p className="text-sm text-slate-200">{job.origin}</p>
+                        </div>
+                    </div>
+                    <div className="flex gap-4 p-4 bg-emerald-500/5 rounded-2xl border border-emerald-500/10">
+                        <div className="mt-1"><MapPin size={16} className="text-emerald-500" /></div>
+                        <div>
+                            <p className="text-[10px] uppercase text-slate-500 mb-1">ปลายทาง (Destination)</p>
+                            <p className="text-sm text-white font-bold">{job.destination}</p>
+                        </div>
+                    </div>
+                </div>
+          </section>
+
+          {/* Media Section (Photos) */}
+          {(job.pickupPhotos.length > 0 || job.podPhotos.length > 0) && (
+              <section className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-6">
+                    <div className="flex items-center gap-2 text-white font-bold border-l-4 border-purple-500 pl-3">
+                        <Camera size={18} className="text-purple-400" />
+                        <span>หลักฐานการดำเนินงาน</span>
+                    </div>
+
+                    <div className="space-y-8">
+                        {/* Pickup Photos */}
+                        {job.pickupPhotos.length > 0 && (
+                            <div className="space-y-3">
+                                <p className="text-xs font-bold text-slate-400 px-1">รูปถ่ายรับสินค้า (Pickup)</p>
+                                <div className="grid grid-cols-2 gap-2">
+                                    {job.pickupPhotos.map((url, i) => (
+                                        <div key={i} className="aspect-video relative rounded-2xl overflow-hidden border border-slate-800 bg-slate-950 shadow-inner group cursor-pointer">
+                                            <Image src={url} alt="Pickup" fill className="object-cover transition-transform group-hover:scale-110" />
+                                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                                <ExternalLink size={24} className="text-white" />
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
-                        ))}
-                     </div>
-                </div>
-            )}
-            
-            {job.signature && (
-                 <div className="mt-4">
-                    <h3 className="text-sm font-semibold text-slate-300 mb-2">ลายเซ็นผู้รับ</h3>
-                    <div className="relative h-24 w-48 border border-slate-700 rounded-lg bg-white/5">
-                        <Image 
-                            src={job.signature} 
-                            alt="Signature" 
-                            fill 
-                            className="object-contain p-2 inverted-colors" 
-                        />
-                    </div>
-                 </div>
-            )}
+                        )}
 
-        </CardContent>
-      </Card>
-      
+                        {/* POD Photos */}
+                        {job.podPhotos.length > 0 && (
+                            <div className="space-y-3">
+                                <p className="text-xs font-bold text-slate-400 px-1">รูปถ่ายส่งสินค้า (POD)</p>
+                                <div className="grid grid-cols-2 gap-2">
+                                    {job.podPhotos.map((url, i) => (
+                                        <div key={i} className="aspect-video relative rounded-2xl overflow-hidden border border-slate-800 bg-slate-950 shadow-inner group cursor-pointer">
+                                            <Image src={url} alt="POD" fill className="object-cover transition-transform group-hover:scale-110" />
+                                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                                <ExternalLink size={24} className="text-white" />
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                        
+                        {/* Signatures */}
+                        {(job.signature || job.pickupSignature) && (
+                            <div className="grid grid-cols-2 gap-4 pt-2">
+                                {job.pickupSignature && (
+                                    <div className="space-y-2">
+                                        <p className="text-[10px] uppercase text-slate-500 text-center">ลายเซ็นจุดรับ</p>
+                                        <div className="h-20 bg-white rounded-xl overflow-hidden relative border border-slate-800">
+                                            <Image src={job.pickupSignature} alt="Pickup Sig" fill className="object-contain p-2" />
+                                        </div>
+                                    </div>
+                                )}
+                                {job.signature && (
+                                    <div className="space-y-2">
+                                        <p className="text-[10px] uppercase text-slate-500 text-center">ลายเซ็นผู้รับสินค้า</p>
+                                        <div className="h-20 bg-white rounded-xl overflow-hidden relative border border-slate-800">
+                                            <Image src={job.signature} alt="POD Sig" fill className="object-contain p-2" />
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+              </section>
+          )}
+      </div>
+
+      {/* Share Section */}
       <div className="text-center pt-8">
-        <p className="text-xs text-slate-600">
-             © 2024 LOGIS-PRO 360. All rights reserved.
+        <p className="text-xs text-slate-600 mb-4 font-medium uppercase tracking-widest">
+             © 2024 LOGIS-PRO 360. Logistics Evolved.
         </p>
       </div>
+
+      {/* Sticky Mobile Share Button */}
+      <ShareTrackingButton jobId={job.jobId} />
     </div>
   )
 }

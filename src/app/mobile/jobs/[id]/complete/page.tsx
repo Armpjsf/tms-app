@@ -13,6 +13,7 @@ import { PodReport } from "@/components/mobile/pod-report"
 import { Job } from "@/lib/supabase/jobs"
 import html2canvas from "html2canvas"
 import { analyzePODImage, AIAnalysisResult } from "@/lib/utils/ai-verification"
+import { saveJobOffline } from "@/lib/utils/offline-storage"
 
 export default function JobCompletePage() {
   const router = useRouter()
@@ -90,10 +91,11 @@ export default function JobCompletePage() {
             }
         }
 
-        // Append all photos
+        // Photos are already compressed by CameraInput component
         photos.forEach((photo, index) => {
             formData.append(`photo_${index}`, photo)
         })
+
         // Also send count so server knows how many to look for
         formData.append("photo_count", photos.length.toString())
         
@@ -105,15 +107,46 @@ export default function JobCompletePage() {
         if (result.success) {
           setCompleted(true)
         } else {
+          // If server returns error, might be validation error, so we show it
           alert(result.error)
         }
     } catch (error: unknown) {
         console.error("Submit Error:", error)
-        const errorMessage = error instanceof Error ? error.message : "Internal Server Error"
-        alert(`Error: ${errorMessage}`)
+        
+        // Check if it's a network error
+        const isNetworkError = !navigator.onLine || error instanceof TypeError || (error as any).message?.includes('fetch')
+        
+        if (isNetworkError) {
+            // SAVE OFFLINE
+            const photoBase64 = await Promise.all(photos.map(fileToB64))
+            const sigBase64 = signature ? await fileToB64(signature as File) : null
+            
+            const offlineData = {
+                photos: photoBase64,
+                signature: sigBase64,
+                photo_count: photos.length
+            }
+            
+            saveJobOffline(params.id, offlineData, 'POD')
+            setCompleted(true) // Show success even if offline, it's queued!
+            alert("บันทึกข้อมูลไว้ในเครื่องแล้ว (โหมดออฟไลน์) ระบบจะส่งข้อมูลให้อัตโนมัติเมื่อมีสัญญาณ")
+        } else {
+            const errorMessage = error instanceof Error ? error.message : "Internal Server Error"
+            alert(`Error: ${errorMessage}`)
+        }
     } finally {
         setLoading(false)
     }
+  }
+
+  // Helper to convert File to base64 for offline storage
+  const fileToB64 = (file: File | Blob): Promise<string> => {
+      return new Promise((resolve, reject) => {
+          const reader = new FileReader()
+          reader.readAsDataURL(file)
+          reader.onload = () => resolve(reader.result as string)
+          reader.onerror = error => reject(error)
+      })
   }
 
   if (completed) {

@@ -8,7 +8,8 @@ import {
   getBranchPerformance,
   getSubcontractorPerformance,
   getExecutiveKPIs,
-  getRouteEfficiency
+  getRouteEfficiency,
+  getDriverLeaderboard
 } from "@/lib/supabase/analytics"
 import { getBillingAnalytics } from "@/lib/supabase/billing-analytics"
 import { getFuelAnalytics } from "@/lib/supabase/fuel-analytics"
@@ -18,6 +19,8 @@ import { getWorkforceAnalytics } from "@/lib/supabase/workforce-analytics"
 
 import { FinancialSummaryCards } from "@/components/analytics/summary-cards"
 import { RevenueTrendChart } from "@/components/analytics/revenue-chart"
+import { PerformanceCharts } from "@/components/analytics/performance-charts"
+import { EfficiencyCharts } from "@/components/analytics/efficiency-charts"
 import { ExecutiveSectorHealth } from "@/components/analytics/health-scorecards"
 import { BillingSection } from "@/components/analytics/billing-section"
 import { FuelSection } from "@/components/analytics/fuel-section"
@@ -28,7 +31,7 @@ import { CustomerRouteSection } from "@/components/analytics/customer-route-sect
 import { ExportAllButton } from "@/components/analytics/export-all-button"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { BarChart3, TrendingUp, Truck, ShieldAlert, Layers } from "lucide-react"
+import { BarChart3, TrendingUp, Truck, ShieldAlert, Layers, Trophy, Star } from "lucide-react"
 
 export async function DashboardContent({ 
   startDate, 
@@ -55,7 +58,8 @@ export async function DashboardContent({
     maintenance,
     safety,
     workforce,
-    routes
+    routes,
+    driverLeaderboard
   ] = await Promise.all([
     getFinancialStats(startDate, endDate, branchId),
     getRevenueTrend(startDate, endDate, branchId),
@@ -70,7 +74,8 @@ export async function DashboardContent({
     getMaintenanceSchedule(),
     getSafetyAnalytics(startDate, endDate, branchId),
     getWorkforceAnalytics(startDate, endDate, branchId),
-    getRouteEfficiency(startDate, endDate, branchId)
+    getRouteEfficiency(startDate, endDate, branchId),
+    getDriverLeaderboard(startDate, endDate, branchId)
   ])
 
   return (
@@ -138,9 +143,48 @@ export async function DashboardContent({
                   <CardContent className="pt-6 min-h-[400px]"><RevenueTrendChart data={revenueTrend} /></CardContent>
               </Card>
               
-             <div className="space-y-6">
-             </div>
+              <div className="space-y-6">
+                 {/* Driver Leaderboard Mini-Widget */}
+                 <Card className="bg-slate-900/50 backdrop-blur-sm border-slate-800 shadow-xl h-full">
+                    <CardHeader className="border-b border-white/5">
+                        <CardTitle className="text-sm font-bold text-white flex items-center gap-2">
+                            <Trophy className="text-amber-400" size={16} />
+                            ทำเนียบคนขับยอดเยี่ยม (Top Drivers)
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="pt-4">
+                        <div className="space-y-4">
+                            {driverLeaderboard.slice(0, 5).map((driver, idx) => (
+                                <div key={driver.name} className="flex items-center justify-between group">
+                                    <div className="flex items-center gap-3">
+                                        <div className="relative">
+                                            <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-[10px] font-bold text-slate-400 border border-slate-700">
+                                                {driver.name.slice(0, 2)}
+                                            </div>
+                                            {idx < 3 && (
+                                                <div className="absolute -top-1 -right-1">
+                                                    <Star size={10} className="fill-amber-500 text-amber-500" />
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div>
+                                            <div className="text-xs font-semibold text-slate-200">{driver.name}</div>
+                                            <div className="text-[10px] text-slate-500">{driver.completedJobs} jobs | {driver.onTimeRate.toFixed(1)}% On-time</div>
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <div className="text-xs font-bold text-emerald-400">฿{Math.round(driver.revenue / 1000)}k</div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </CardContent>
+                 </Card>
+              </div>
           </div>
+          
+          {/* Detailed Performance Charts (Phase 4) */}
+          <PerformanceCharts data={revenueTrend} />
           
           <BillingSection data={billing} />
           <CustomerRouteSection customers={topCustomers} routes={routes} />
@@ -158,6 +202,7 @@ export async function DashboardContent({
            </div>
            
            <FuelSection data={fuel} />
+           <EfficiencyCharts data={revenueTrend} />
            <MaintenanceSection data={maintenance} />
         </section>
 

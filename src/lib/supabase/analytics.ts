@@ -133,7 +133,7 @@ export async function getRevenueTrend(startDate?: string, endDate?: string, bran
 
   let query = supabase
     .from('Jobs_Main')
-    .select('Plan_Date, Price_Cust_Total, Cost_Driver_Total')
+    .select('Plan_Date, Price_Cust_Total, Cost_Driver_Total, Actual_Delivery_Time')
     .in('Job_Status', ['Completed', 'Delivered'])
     .order('Plan_Date', { ascending: true })
 
@@ -147,15 +147,27 @@ export async function getRevenueTrend(startDate?: string, endDate?: string, bran
   const { data: jobs } = await query
 
   // Aggregate by date
-  const dailyStats: Record<string, { date: string, revenue: number, cost: number }> = {}
+  const dailyStats: Record<string, { date: string, revenue: number, cost: number, jobCount: number, onTimeCount: number }> = {}
 
   jobs?.forEach(job => {
     const date = job.Plan_Date as string
     if (!dailyStats[date]) {
-        dailyStats[date] = { date, revenue: 0, cost: 0 }
+        dailyStats[date] = { date, revenue: 0, cost: 0, jobCount: 0, onTimeCount: 0 }
     }
     dailyStats[date].revenue += (job.Price_Cust_Total || 0)
     dailyStats[date].cost += (job.Cost_Driver_Total || 0)
+    dailyStats[date].jobCount += 1
+    
+    // On-time check: Is actual completion on the same day as Plan_Date?
+    if (job.Actual_Delivery_Time) {
+        const actualDate = job.Actual_Delivery_Time.split('T')[0]
+        if (actualDate === date) {
+            dailyStats[date].onTimeCount += 1
+        }
+    } else {
+        // Fallback for older records: assume on-time if completed
+        dailyStats[date].onTimeCount += 1
+    }
   })
   
   return Object.values(dailyStats)
@@ -518,7 +530,7 @@ export async function getDriverLeaderboard(startDate?: string, endDate?: string,
 
     let query = supabase
         .from('Jobs_Main')
-        .select('Driver_Name, Price_Cust_Total, Cost_Driver_Total, Job_Status')
+        .select('Driver_Name, Price_Cust_Total, Cost_Driver_Total, Job_Status, Plan_Date, Actual_Delivery_Time')
         .not('Driver_Name', 'is', null)
 
     if (startDate) query = query.gte('Plan_Date', startDate)
@@ -527,17 +539,38 @@ export async function getDriverLeaderboard(startDate?: string, endDate?: string,
 
     const { data: jobs } = await query
 
-    const driverStats: Record<string, { name: string, revenue: number, completedJobs: number, totalJobs: number }> = {}
+    const driverStats: Record<string, { 
+        name: string, 
+        revenue: number, 
+        completedJobs: number, 
+        totalJobs: number,
+        onTimeJobs: number,
+        lateJobs: number
+    }> = {}
 
     jobs?.forEach(job => {
         const name = job.Driver_Name!
         if (!driverStats[name]) {
-            driverStats[name] = { name, revenue: 0, completedJobs: 0, totalJobs: 0 }
+            driverStats[name] = { name, revenue: 0, completedJobs: 0, totalJobs: 0, onTimeJobs: 0, lateJobs: 0 }
         }
+        
         const isCompleted = ['Completed', 'Delivered'].includes(job.Job_Status || '')
         if (isCompleted) {
             driverStats[name].revenue += (job.Price_Cust_Total || 0)
             driverStats[name].completedJobs++
+            
+            // On-time check
+            if (job.Actual_Delivery_Time && job.Plan_Date) {
+                const actualDate = job.Actual_Delivery_Time.split('T')[0]
+                if (actualDate === job.Plan_Date) {
+                    driverStats[name].onTimeJobs++
+                } else {
+                    driverStats[name].lateJobs++
+                }
+            } else {
+                // Fallback: Default to on-time for historical
+                driverStats[name].onTimeJobs++
+            }
         }
         driverStats[name].totalJobs++
     })
@@ -545,7 +578,8 @@ export async function getDriverLeaderboard(startDate?: string, endDate?: string,
     return Object.values(driverStats)
         .map(d => ({ 
             ...d, 
-            successRate: d.totalJobs > 0 ? (d.completedJobs / d.totalJobs) * 100 : 0 
+            successRate: d.totalJobs > 0 ? (d.completedJobs / d.totalJobs) * 100 : 0,
+            onTimeRate: d.completedJobs > 0 ? (d.onTimeJobs / d.completedJobs) * 100 : 0
         }))
         .sort((a, b) => b.revenue - a.revenue)
         .slice(0, 10)

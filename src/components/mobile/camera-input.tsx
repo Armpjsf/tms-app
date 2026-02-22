@@ -2,6 +2,7 @@
 
 import { useState, useRef } from "react"
 import { Camera, X, Plus } from "lucide-react"
+import { compressImage } from "@/lib/utils/image-compression"
 
 type Props = {
   onImagesChange: (files: File[]) => void
@@ -21,53 +22,24 @@ export function CameraInput({ onImagesChange, maxImages = 5 }: Props) {
     const allowedCount = maxImages - files.length
     const toProcess = rawFiles.slice(0, allowedCount)
 
-    // Helper to compress image
-    const compressImage = (file: File): Promise<File> => {
-        return new Promise((resolve) => {
-            const reader = new FileReader()
-            reader.readAsDataURL(file)
-            reader.onload = (event) => {
-                const img = new Image()
-                img.src = event.target?.result as string
-                img.onload = () => {
-                    const canvas = document.createElement('canvas')
-                    const MAX_WIDTH = 1000 // Resize to reasonable max width
-                    const scale = MAX_WIDTH / img.width
-                    
-                    if (scale < 1) {
-                        canvas.width = MAX_WIDTH
-                        canvas.height = img.height * scale
-                    } else {
-                        canvas.width = img.width
-                        canvas.height = img.height
-                    }
-
-                    const ctx = canvas.getContext('2d')
-                    ctx?.drawImage(img, 0, 0, canvas.width, canvas.height)
-                    
-                    canvas.toBlob((blob) => {
-                        if (blob) {
-                            const newFile = new File([blob], file.name, {
-                                type: 'image/jpeg',
-                                lastModified: Date.now(),
-                            })
-                            resolve(newFile)
-                        } else {
-                            resolve(file) // Fallback
-                        }
-                    }, 'image/jpeg', 0.7) // 70% quality JPEG
-                }
-            }
-        })
-    }
-
-    // Process all files
-    const compressedFiles = await Promise.all(toProcess.map(compressImage))
+    // Process all files using centralized compression utility
+    const compressedFiles = await Promise.all(toProcess.map(async (file) => {
+        try {
+            const blob = await compressImage(file, 1280, 1280, 0.7)
+            return new File([blob], file.name, {
+                type: 'image/jpeg',
+                lastModified: Date.now(),
+            })
+        } catch (err) {
+            console.error("Compression failed for file:", file.name, err)
+            return file // Fallback to original
+        }
+    }))
 
     const updatedFiles = [...files, ...compressedFiles]
     setFiles(updatedFiles)
     
-    // Create previews from compressed files
+    // Create previews from new files
     const newPreviews = compressedFiles.map(file => URL.createObjectURL(file))
     setPreviews(prev => [...prev, ...newPreviews])
     
@@ -108,6 +80,7 @@ export function CameraInput({ onImagesChange, maxImages = 5 }: Props) {
         <div className="grid grid-cols-2 gap-2">
             {previews.map((src, index) => (
                 <div key={index} className="relative rounded-xl overflow-hidden border border-slate-700 aspect-video bg-slate-900 group">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={src} alt={`Captured ${index + 1}`} className="w-full h-full object-cover" />
                     <button
                         type="button"
