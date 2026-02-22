@@ -287,8 +287,8 @@ export function JobDialog({
         Driver_ID: '', 
         Sub_ID: '', 
         Show_Price_To_Driver: true,
-        Cost_Driver_Total: formData.Cost_Driver_Total || 0,
-        Price_Cust_Total: formData.Price_Cust_Total || 0
+        Cost_Driver_Total: formData.Cost_Driver_Total ? Number(formData.Cost_Driver_Total) : 0,
+        Price_Cust_Total: formData.Price_Cust_Total ? Number(formData.Price_Cust_Total) : 0
     }])
   }
 
