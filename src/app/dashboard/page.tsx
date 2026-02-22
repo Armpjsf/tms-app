@@ -15,7 +15,7 @@ import { getTodayJobStats, getWeeklyJobStats, getJobStatusDistribution, getToday
 import { createClient } from "@/utils/supabase/server"
 import { WeeklyShipmentChart } from "@/components/dashboard/charts/weekly-shipment-chart"
 import { JobStatusChart } from "@/components/dashboard/charts/job-status-chart"
-import { isCustomer } from "@/lib/permissions"
+import { isCustomer, isSuperAdmin, getCustomerId } from "@/lib/permissions"
 import { getFinancialStats } from "@/lib/supabase/analytics"
 
 import { cookies } from "next/headers"
@@ -130,7 +130,7 @@ import { getUserBranchId } from "@/lib/permissions"
 async function getSosCount(providedBranchId?: string): Promise<number> {
   try {
     const supabase = await createClient()
-    const customerId = await getAuthCustomerId()
+    const customerId = await getCustomerId()
 
     let dbQuery = supabase
       .from('Jobs_Main')
