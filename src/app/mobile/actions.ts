@@ -84,12 +84,12 @@ export async function submitVehicleCheck(formData: FormData) {
     const { error } = await supabase
       .from('Vehicle_Checks')
       .insert({
-        log_id: logId,
-        driver_id: driverId,
-        driver_name: driverName,
-        vehicle_plate: vehiclePlate,
-        checked_at: new Date().toISOString(),
-        check_items: items,
+        Log_ID: logId,
+        Driver_ID: driverId,
+        Driver_Name: driverName,
+        Vehicle_Plate: vehiclePlate,
+        Checked_At: new Date().toISOString(),
+        Check_Items: items,
         Photo_Urls: photoUrls.join(','),
         Signature_Url: signatureUrl
       })
