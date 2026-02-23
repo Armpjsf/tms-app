@@ -31,6 +31,7 @@ export async function createRepairTicket(data: TicketFormData) {
       const { error } = await supabase
         .from('Repair_Tickets')
         .insert({
+          Ticket_ID: `TCK-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
           Date_Report: data.Date_Report,
           Driver_ID: data.Driver_ID,
           Vehicle_Plate: data.Vehicle_Plate,
@@ -42,8 +43,13 @@ export async function createRepairTicket(data: TicketFormData) {
         })
 
   if (error) {
-    console.error('Error creating ticket:', error)
-    return { success: false, message: 'Failed to create ticket' }
+    console.error('Error creating ticket:', error, {
+        driver_id: data.Driver_ID,
+        vehicle_plate: data.Vehicle_Plate,
+        issue_type: data.Issue_Type,
+        priority: data.Priority
+    })
+    return { success: false, message: `Failed to create ticket: ${error.message}` }
   }
 
   // Update vehicle status to Maintenance if priority is High
@@ -81,7 +87,7 @@ export async function updateRepairTicket(ticketId: string, data: any) {
 
   if (error) {
     console.error('Error updating ticket:', error)
-    return { success: false, message: 'Failed to update ticket' }
+    return { success: false, message: `Failed to update ticket: ${error.message}` }
   }
 
   // If status is Completed, check if we need to release vehicle? 

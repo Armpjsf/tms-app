@@ -89,6 +89,8 @@ export function MobileVehicleCheckForm({ driverId, driverName, defaultVehiclePla
         const result = await submitVehicleCheck(formData)
         if (result.success) {
              router.push('/mobile/profile')
+        } else {
+             alert(result.message)
         }
     } catch (err) {
         console.error("Vehicle Check Error:", err)

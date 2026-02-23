@@ -36,8 +36,12 @@ export async function createFuelLog(data: FuelFormData) {
         })
 
   if (error) {
-    console.error('Error creating fuel log:', error)
-    return { success: false, message: 'Failed to create log' }
+    console.error('Error creating fuel log:', error, {
+        driver_id: data.Driver_ID,
+        vehicle_plate: data.Vehicle_Plate,
+        amount: data.Total_Amount
+    })
+    return { success: false, message: `Failed to create log: ${error.message}` }
   }
 
   revalidatePath('/fuel')

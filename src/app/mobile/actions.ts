@@ -1,6 +1,6 @@
 'use server'
 
-import { createClient, createAdminClient } from '@/utils/supabase/server'
+import { createAdminClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
 
 import { uploadFileToDrive } from '@/lib/google-drive'
@@ -8,6 +8,7 @@ import { uploadFileToDrive } from '@/lib/google-drive'
 export async function submitVehicleCheck(formData: FormData) {
   const supabase = createAdminClient()
   const timestamp = Date.now()
+  const logId = crypto.randomUUID()
 
   const driverId = formData.get("driverId") as string
   const driverName = formData.get("driverName") as string
@@ -33,7 +34,8 @@ export async function submitVehicleCheck(formData: FormData) {
       const name = `${driverId}_check_REPORT_${timestamp}.jpg`
       checkReportUrl = await uploadWithRename(checkReportFile, name, 'Vehicle_Check_Documents')
     } catch (e) {
-      console.error("Failed to upload Check Report", e)
+      console.error(`[${logId}] Failed to upload Check Report:`, e)
+      return { success: false, message: `บันทึกไม่สำเร็จ: ไม่สามารถอัปโหลดเอกสารตรวจสอบได้` }
     }
   }
 
@@ -42,9 +44,16 @@ export async function submitVehicleCheck(formData: FormData) {
   for (let i = 0; i < photoCount; i++) {
     const file = formData.get(`photo_${i}`) as File
     if (file) {
-      const name = `${driverId}_check_${timestamp}_${i}.jpg`
-      const url = await uploadWithRename(file, name, 'Vehicle_Checks')
-      if (url) photoUrls.push(url)
+      try {
+        const name = `${driverId}_check_${timestamp}_${i}.jpg`
+        const url = await uploadWithRename(file, name, 'Vehicle_Checks')
+        if (url) photoUrls.push(url)
+      } catch (e) {
+        console.error(`[${logId}] Failed to upload photo ${i}:`, e)
+        // Decide if you want to fail the whole submission or just skip this photo
+        // For now, we'll fail the submission if any photo fails to upload
+        return { success: false, message: `บันทึกไม่สำเร็จ: ไม่สามารถอัปโหลดรูปภาพได้` }
+      }
     }
   }
 
@@ -56,8 +65,13 @@ export async function submitVehicleCheck(formData: FormData) {
   const signatureFile = formData.get("signature") as File
   let signatureUrl = null
   if (signatureFile && signatureFile.size > 0) {
-    const name = `${driverId}_check_sig_${timestamp}.png`
-    signatureUrl = await uploadWithRename(signatureFile, name, 'Vehicle_Check_Signatures')
+    try {
+      const name = `${driverId}_check_sig_${timestamp}.png`
+      signatureUrl = await uploadWithRename(signatureFile, name, 'Vehicle_Check_Signatures')
+    } catch (e) {
+      console.error(`[${logId}] Failed to upload signature:`, e)
+      return { success: false, message: `บันทึกไม่สำเร็จ: ไม่สามารถอัปโหลดลายเซ็นได้` }
+    }
   }
 
   // 2. Checklist summary included in JSON check_items
@@ -65,6 +79,7 @@ export async function submitVehicleCheck(formData: FormData) {
       const { error } = await supabase
         .from('Vehicle_Checks')
         .insert({
+          log_id: logId, // Add the generated Log_ID
           driver_id: driverId,
           driver_name: driverName,
           vehicle_plate: vehiclePlate,
@@ -75,7 +90,11 @@ export async function submitVehicleCheck(formData: FormData) {
         })
 
   if (error) {
-    console.error('Error saving vehicle check:', error)
+    console.error('Error saving vehicle check:', error, {
+        driver_id: driverId,
+        vehicle_plate: vehiclePlate,
+        photo_count: photoUrls.length
+    })
     return { success: false, message: `บันทึกไม่สำเร็จ: ${error.message}` }
   }
 

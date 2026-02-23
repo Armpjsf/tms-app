@@ -21,7 +21,7 @@ export async function getUserBranchId() {
         try {
             const driverSession = JSON.parse(driverSessionStr)
             return driverSession.branchId || null
-        } catch (e) {
+        } catch {
             return null
         }
     }
