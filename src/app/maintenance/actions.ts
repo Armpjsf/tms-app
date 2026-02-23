@@ -63,10 +63,10 @@ export async function createRepairTicket(data: TicketFormData) {
 }
 
 export type TicketUpdateData = TicketFormData & {
-  Status?: string
-  Cost_Total?: number
-  Remark?: string
-  Date_Finish?: string
+  Status?: string | null
+  Cost_Total?: number | null
+  Remark?: string | null
+  Date_Finish?: string | null
 }
 
 export async function updateRepairTicket(ticketId: string, data: TicketUpdateData) {
