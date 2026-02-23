@@ -1,12 +1,12 @@
 'use server'
 
-import { createClient } from '@/utils/supabase/server'
+import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
 
 import { uploadFileToDrive } from '@/lib/google-drive'
 
 export async function submitVehicleCheck(formData: FormData) {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
   const timestamp = Date.now()
 
   const driverId = formData.get("driverId") as string

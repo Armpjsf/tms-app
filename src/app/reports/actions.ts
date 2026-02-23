@@ -29,7 +29,7 @@ export async function getFilteredReportData(filters: ReportFilters): Promise<{ d
       case 'jobs': {
         let query = supabase
           .from('Jobs_Main')
-          .select('Job_ID, Plan_Date, Customer_Name, Route_Name, Driver_Name, Vehicle_Plate, Job_Status, Total_Cost, Extra_Costs, Branch_ID')
+          .select('Job_ID, Plan_Date, Customer_Name, Route_Name, Driver_Name, Vehicle_Plate, Job_Status, Price_Cust_Total, extra_costs_json, Branch_ID')
           .order('Plan_Date', { ascending: false })
           .limit(2000)
 
@@ -41,77 +41,98 @@ export async function getFilteredReportData(filters: ReportFilters): Promise<{ d
         const { data } = await query
         return { 
           data: data || [], 
-          columns: ['Job_ID', 'Plan_Date', 'Customer_Name', 'Route_Name', 'Driver_Name', 'Vehicle_Plate', 'Job_Status', 'Total_Cost']
+          columns: ['Job_ID', 'Plan_Date', 'Customer_Name', 'Route_Name', 'Driver_Name', 'Vehicle_Plate', 'Job_Status', 'Price_Cust_Total']
         }
       }
 
       case 'drivers': {
         let query = supabase
-          .from('Drivers')
-          .select('Driver_ID, Driver_Name, Mobile_No, License_No, License_Expiry, Status, Branch_ID, Vehicle_Plate')
+          .from('Master_Drivers')
+          .select('Driver_ID, Driver_Name, Mobile_No, Active_Status, Branch_ID, Vehicle_Plate')
           .order('Driver_Name')
           .limit(500)
 
-        if (filters.status && filters.status !== 'all') query = query.eq('Status', filters.status)
+        if (filters.status && filters.status !== 'all') query = query.eq('Active_Status', filters.status)
         if (effectiveBranch && effectiveBranch !== 'All') query = query.eq('Branch_ID', effectiveBranch)
 
         const { data } = await query
         return { 
           data: data || [], 
-          columns: ['Driver_ID', 'Driver_Name', 'Mobile_No', 'License_No', 'License_Expiry', 'Status', 'Vehicle_Plate']
+          columns: ['Driver_ID', 'Driver_Name', 'Mobile_No', 'Active_Status', 'Vehicle_Plate']
         }
       }
 
       case 'vehicles': {
         let query = supabase
-          .from('vehicles')
-          .select('vehicle_plate, vehicle_type, status, fuel_type, insurance_expiry, registration_expiry, Branch_ID')
-          .order('vehicle_plate')
+          .from('Master_Vehicles')
+          .select('Vehicle_Plate, Vehicle_Type, Active_Status, Insurance_Expiry, Tax_Expiry, Branch_ID')
+          .order('Vehicle_Plate')
           .limit(500)
 
-        if (filters.status && filters.status !== 'all') query = query.eq('status', filters.status)
+        if (filters.status && filters.status !== 'all') query = query.eq('Active_Status', filters.status)
         if (effectiveBranch && effectiveBranch !== 'All') query = query.eq('Branch_ID', effectiveBranch)
 
         const { data } = await query
         return { 
-          data: data || [], 
-          columns: ['vehicle_plate', 'vehicle_type', 'status', 'fuel_type', 'insurance_expiry', 'registration_expiry']
+          data: (data as any[] || []).map(v => ({
+            ...v,
+            vehicle_plate: v.Vehicle_Plate,
+            vehicle_type: v.Vehicle_Type,
+            status: v.Active_Status,
+            insurance_expiry: v.Insurance_Expiry,
+            registration_expiry: v.Tax_Expiry
+          })), 
+          columns: ['vehicle_plate', 'vehicle_type', 'status', 'insurance_expiry', 'registration_expiry']
         }
       }
 
       case 'fuel': {
         let query = supabase
-          .from('fuel_logs')
-          .select('id, vehicle_plate, driver_name, fuel_date, fuel_type, liters, amount, station, Branch_ID')
-          .order('fuel_date', { ascending: false })
+          .from('Fuel_Logs')
+          .select('Log_ID, Vehicle_Plate, Driver_ID, Date_Time, Liters, Price_Total, Station_Name, Branch_ID')
+          .order('Date_Time', { ascending: false })
           .limit(2000)
 
-        if (filters.dateFrom) query = query.gte('fuel_date', filters.dateFrom)
-        if (filters.dateTo) query = query.lte('fuel_date', filters.dateTo)
+        if (filters.dateFrom) query = query.gte('Date_Time', filters.dateFrom)
+        if (filters.dateTo) query = query.lte('Date_Time', filters.dateTo)
         if (effectiveBranch && effectiveBranch !== 'All') query = query.eq('Branch_ID', effectiveBranch)
 
         const { data } = await query
         return { 
-          data: data || [], 
-          columns: ['fuel_date', 'vehicle_plate', 'driver_name', 'fuel_type', 'liters', 'amount', 'station']
+          data: (data as any[] || []).map(f => ({
+            ...f,
+            fuel_date: f.Date_Time,
+            vehicle_plate: f.Vehicle_Plate,
+            amount: f.Price_Total,
+            station: f.Station_Name
+          })), 
+          columns: ['fuel_date', 'vehicle_plate', 'amount', 'station', 'Liters']
         }
       }
 
       case 'maintenance': {
         let query = supabase
-          .from('vehicle_maintenance')
-          .select('id, vehicle_plate, maintenance_type, description, status, priority, cost, created_at, resolved_at')
-          .order('created_at', { ascending: false })
+          .from('Repair_Tickets')
+          .select('Ticket_ID, Vehicle_Plate, Issue_Type, Description, Status, Cost_Total, Date_Report, Date_Finish')
+          .order('Date_Report', { ascending: false })
           .limit(1000)
 
-        if (filters.dateFrom) query = query.gte('created_at', filters.dateFrom)
-        if (filters.dateTo) query = query.lte('created_at', filters.dateTo)
-        if (filters.status && filters.status !== 'all') query = query.eq('status', filters.status)
+        if (filters.dateFrom) query = query.gte('Date_Report', filters.dateFrom)
+        if (filters.dateTo) query = query.lte('Date_Report', filters.dateTo)
+        if (filters.status && filters.status !== 'all') query = query.eq('Status', filters.status)
 
         const { data } = await query
         return { 
-          data: data || [], 
-          columns: ['created_at', 'vehicle_plate', 'maintenance_type', 'status', 'priority', 'cost', 'description']
+          data: (data as any[] || []).map(m => ({
+            ...m,
+            created_at: m.Date_Report,
+            vehicle_plate: m.Vehicle_Plate,
+            maintenance_type: m.Issue_Type,
+            cost: m.Cost_Total,
+            description: m.Description,
+            status: m.Status
+          })), 
+          columns: ['created_at', 'vehicle_plate', 'maintenance_type', 'status', 'cost', 'description']
         }
       }
 

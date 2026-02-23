@@ -142,8 +142,10 @@ export default async function InvoicesPage({
                               <DropdownMenuItem className="focus:bg-slate-800 cursor-pointer">
                                 <FileCheck className="mr-2 h-4 w-4" /> ดูรายละเอียด
                               </DropdownMenuItem>
-                              <DropdownMenuItem className="focus:bg-slate-800 cursor-pointer">
-                                <Download className="mr-2 h-4 w-4" /> ดาวน์โหลด PDF
+                              <DropdownMenuItem className="focus:bg-slate-800 cursor-pointer" asChild>
+                                <Link href={`/billing/print/${inv.Invoice_ID}`} target="_blank">
+                                  <Download className="mr-2 h-4 w-4" /> ดาวน์โหลด PDF
+                                </Link>
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>

@@ -40,6 +40,29 @@ import { CompanyProfile } from "@/lib/supabase/settings"
 import { Subcontractor } from "@/types/subcontractor"
 
 const WITHHOLDING_TAX_RATE = 0.01 // 1%
+import { exportToCSV } from "@/lib/utils/export"
+
+const getJobTotal = (job: Job) => {
+    const basePrice = job.Cost_Driver_Total || 0
+    let extra = 0
+    if (job.extra_costs_json) {
+        try {
+            let costs: any = job.extra_costs_json
+            if (typeof costs === 'string') {
+                try { costs = JSON.parse(costs) } catch {}
+            }
+            if (typeof costs === 'string') {
+                try { costs = JSON.parse(costs) } catch {}
+            }
+            if (Array.isArray(costs)) {
+                extra = costs.reduce((sum: number, c: any) => sum + (Number(c.cost_driver) || 0), 0)
+            }
+        } catch (e) {
+            console.error("Error parsing extra costs", e)
+        }
+    }
+    return basePrice + extra
+}
 
 interface DriverPaymentClientProps {
   initialJobs: Job[]
@@ -78,11 +101,11 @@ export default function DriverPaymentClient({ initialJobs, drivers, companyProfi
 
   // Calculate totals
   const pendingItems = filteredData
-  const pendingTotal = pendingItems.reduce((sum, i) => sum + (i.Cost_Driver_Total || 0), 0)
+  const pendingTotal = pendingItems.reduce((sum, i) => sum + getJobTotal(i), 0)
   
   // Selected items calculations
   const selectedData = filteredData.filter(i => selectedItems.includes(i.Job_ID))
-  const selectedSubtotal = selectedData.reduce((sum, i) => sum + (i.Cost_Driver_Total || 0), 0)
+  const selectedSubtotal = selectedData.reduce((sum, i) => sum + getJobTotal(i), 0)
   const selectedWithholding = Math.round(selectedSubtotal * WITHHOLDING_TAX_RATE)
   const selectedNetTotal = selectedSubtotal - selectedWithholding
 
@@ -161,7 +184,7 @@ export default function DriverPaymentClient({ initialJobs, drivers, companyProfi
                 missingBankEntities.push(driverName)
                 return
             }
-            const subtotal = p_jobs.reduce((sum, j) => sum + (j.Cost_Driver_Total || 0), 0)
+            const subtotal = p_jobs.reduce((sum, j) => sum + getJobTotal(j), 0)
             const withholding = Math.round(subtotal * WITHHOLDING_TAX_RATE)
             const netTotal = subtotal - withholding
             lines.push(`${driverInfo.Bank_Name || 'SCB'},${driverInfo.Bank_Account_No},${netTotal.toFixed(2)},${driverInfo.Bank_Account_Name || driverName},Salary,${new Date().toISOString().split('T')[0]}`)
@@ -182,7 +205,7 @@ export default function DriverPaymentClient({ initialJobs, drivers, companyProfi
                 missingBankEntities.push(subInfo?.Sub_Name || subId)
                 return
             }
-            const subtotal = p_jobs.reduce((sum, j) => sum + (j.Cost_Driver_Total || 0), 0)
+            const subtotal = p_jobs.reduce((sum, j) => sum + getJobTotal(j), 0)
             const withholding = Math.round(subtotal * WITHHOLDING_TAX_RATE)
             const netTotal = subtotal - withholding
             lines.push(`${subInfo.Bank_Name || 'SCB'},${subInfo.Bank_Account_No},${netTotal.toFixed(2)},${subInfo.Bank_Account_Name || subInfo.Sub_Name},Salary,${new Date().toISOString().split('T')[0]}`)
@@ -202,6 +225,26 @@ export default function DriverPaymentClient({ initialJobs, drivers, companyProfi
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
+  }
+
+  const handleExportCSV = () => {
+    if (selectedItems.length === 0) return
+    const jobsToExport = initialJobs.filter(j => selectedItems.includes(j.Job_ID))
+    
+    const dataToExport = jobsToExport.map(job => ({
+        'Job ID': job.Job_ID,
+        'วันที่': job.Plan_Date ? new Date(job.Plan_Date).toLocaleDateString('th-TH') : '-',
+        'คนขับ': job.Driver_Name || '-',
+        'ทะเบียนรถ': job.Vehicle_Plate || '-',
+        'เส้นทาง': job.Route_Name || '-',
+        'ลูกค้า': job.Customer_Name || '-',
+        'ต้นทุนคนขับ (Base)': job.Cost_Driver_Total || 0,
+        'ค่าใช้จ่ายเพิ่มเติม': getJobTotal(job) - (job.Cost_Driver_Total || 0),
+        'รวมทั้งหมด': getJobTotal(job),
+        'สถานะ': job.Job_Status
+    }))
+
+    exportToCSV(dataToExport, `Driver_Payment_Selection`)
   }
 
   const handlePrint = () => {
@@ -337,23 +380,58 @@ export default function DriverPaymentClient({ initialJobs, drivers, companyProfi
                     </tr>
                 </thead>
                 <tbody>
-                    {selectedData.map((item, index) => (
-                        <tr key={item.Job_ID} className="border-b border-slate-200">
-                            <td className="py-3 px-4 text-center text-slate-500">{index + 1}</td>
-                            <td className="py-3 px-4 font-medium text-slate-800">
-                                ค่าเที่ยววิ่ง (Job: {item.Job_ID})
-                            </td>
-                            <td className="py-3 px-4 text-slate-600">
-                                {item.Plan_Date ? new Date(item.Plan_Date).toLocaleDateString('th-TH') : '-'}
-                            </td>
-                            <td className="py-3 px-4 text-slate-600 text-xs">
-                                {item.Route_Name || '-'}
-                            </td>
-                            <td className="py-3 px-4 text-right font-medium text-slate-800">
-                                {item.Cost_Driver_Total?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                            </td>
-                        </tr>
-                    ))}
+                    {selectedData.map((item, index) => {
+                        let extraCosts: any[] = []
+                        try {
+                            if (item.extra_costs_json) {
+                                let parsed: any = item.extra_costs_json
+                                if (typeof parsed === 'string') {
+                                    try { parsed = JSON.parse(parsed) } catch {}
+                                }
+                                if (typeof parsed === 'string') {
+                                    try { parsed = JSON.parse(parsed) } catch {}
+                                }
+                                if (Array.isArray(parsed)) {
+                                    extraCosts = parsed.filter(c => (Number(c.cost_driver) || 0) > 0)
+                                }
+                            }
+                        } catch {}
+
+                        return (
+                            <tbody key={item.Job_ID} className="border-b border-slate-200">
+                                <tr className="hover:bg-slate-50">
+                                    <td className="py-3 px-4 text-center text-slate-500 align-top">{index + 1}</td>
+                                    <td className="py-3 px-4 font-medium text-slate-800">
+                                        ค่าเที่ยววิ่ง (Job: {item.Job_ID})
+                                    </td>
+                                    <td className="py-3 px-4 text-slate-600 align-top">
+                                        {item.Plan_Date ? new Date(item.Plan_Date).toLocaleDateString('th-TH') : '-'}
+                                    </td>
+                                    <td className="py-3 px-4 text-slate-600 text-xs align-top">
+                                        {item.Route_Name || '-'}
+                                    </td>
+                                    <td className="py-3 px-4 text-right font-medium text-slate-800 align-top">
+                                        {(item.Cost_Driver_Total || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                    </td>
+                                </tr>
+                                {extraCosts.map((extra, i) => (
+                                    <tr key={`${item.Job_ID}-extra-${i}`} className="text-slate-600 bg-slate-50/30">
+                                        <td className="py-1 px-4"></td>
+                                        <td className="py-1 px-4">
+                                            <div className="text-sm border-l-2 border-slate-300 pl-2">
+                                                {extra.type}
+                                            </div>
+                                        </td>
+                                        <td className="py-1 px-4 text-center">-</td>
+                                        <td className="py-1 px-4 text-slate-500 text-xs">-</td>
+                                        <td className="py-1 px-4 text-right">
+                                            {Number(extra.cost_driver).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        )
+                    })}
                     {Array.from({ length: Math.max(0, 5 - selectedData.length) }).map((_, i) => (
                          <tr key={`empty-${i}`} className="border-b border-slate-100 h-10">
                             <td colSpan={5}></td>
@@ -625,7 +703,13 @@ export default function DriverPaymentClient({ initialJobs, drivers, companyProfi
             >
               <Printer className="w-4 h-4 mr-2" /> พิมพ์
             </Button>
-            <Button size="sm" variant="outline" className="border-slate-700 text-slate-300" disabled={selectedItems.length === 0}>
+            <Button 
+                size="sm" 
+                variant="outline" 
+                className="border-slate-700 text-slate-300" 
+                disabled={selectedItems.length === 0}
+                onClick={handleExportCSV}
+            >
               <Download className="w-4 h-4 mr-2" /> Export
             </Button>
           </div>
@@ -683,7 +767,7 @@ export default function DriverPaymentClient({ initialJobs, drivers, companyProfi
                       ฿{(item.Cost_Driver_Total || 0).toLocaleString()}
                     </td>
                     <td className="py-3 px-4 text-right text-white font-medium">
-                      ฿{(item.Cost_Driver_Total || 0).toLocaleString()}
+                      ฿{getJobTotal(item).toLocaleString()}
                     </td>
                     <td className="py-3 px-4 text-center">
                       <span className="px-2 py-1 rounded-full text-xs font-medium bg-amber-500/10 text-amber-400">

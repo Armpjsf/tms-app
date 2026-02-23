@@ -35,6 +35,7 @@ import { createBillingNote } from "@/lib/supabase/billing"
 
 import { CompanyProfile } from "@/lib/supabase/settings"
 import { Customer } from "@/lib/supabase/customers"
+import { exportToCSV } from "@/lib/utils/export"
 
 const WITHHOLDING_TAX_RATE = 0.01 // 1%
 
@@ -149,6 +150,23 @@ export default function CustomerBillingClient({ initialJobs, companyProfile, cus
     } finally {
         setLoading(false)
     }
+  }
+
+  const handleExportCSV = () => {
+    if (selectedItems.length === 0) return
+    const jobsToExport = initialJobs.filter(j => selectedItems.includes(j.Job_ID))
+    
+    const dataToExport = jobsToExport.map(job => ({
+        'Job ID': job.Job_ID,
+        'วันที่': job.Plan_Date ? new Date(job.Plan_Date).toLocaleDateString('th-TH') : '-',
+        'ลูกค้า': job.Customer_Name || '-',
+        'เส้นทาง': job.Route_Name || '-',
+        'ค่าขนส่ง': job.Price_Cust_Total || 0,
+        'รวมทั้งหมด': getJobTotal(job),
+        'สถานะ': job.Job_Status
+    }))
+
+    exportToCSV(dataToExport, `Customer_Billing_Selection`)
   }
 
   const [showPreview, setShowPreview] = useState(false)
@@ -562,7 +580,13 @@ export default function CustomerBillingClient({ initialJobs, companyProfile, cus
             >
               <Printer className="w-4 h-4 mr-2" /> พิมพ์
             </Button>
-            <Button size="sm" variant="outline" className="border-slate-700 text-slate-300" disabled={selectedItems.length === 0}>
+            <Button 
+                size="sm" 
+                variant="outline" 
+                className="border-slate-700 text-slate-300" 
+                disabled={selectedItems.length === 0}
+                onClick={handleExportCSV}
+            >
               <Download className="w-4 h-4 mr-2" /> Export
             </Button>
           </div>

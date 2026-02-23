@@ -84,6 +84,7 @@ export async function loginDriver(formData: FormData) {
   const sessionData = {
     driverId: driver.Driver_ID,
     driverName: driver.Driver_Name,
+    branchId: driver.Branch_ID,
     role: "driver",
     permissions: userData?.Permissions || { show_income: true } // Default to true if not found for backward compatibility
   }

@@ -7,18 +7,18 @@ import { Input } from "@/components/ui/input"
 import { 
   FileText, 
   Search,
-  Download,
-  Image,
+  Image as ImageIcon,
   PenTool,
   CheckCircle2,
   Clock,
   AlertCircle,
 } from "lucide-react"
 import { getAllPODs, getPODStats } from "@/lib/supabase/pod"
+import { PODExport } from "@/components/pod/pod-export"
 
 export default async function PODPage() {
   const [{ data: pods }, stats] = await Promise.all([
-    getAllPODs(1, 50),
+    getAllPODs(1, 100), // Fetch more for export if needed
     getPODStats(),
   ])
 
@@ -41,10 +41,7 @@ export default async function PODPage() {
           </h1>
           <p className="text-slate-400">Proof of Delivery - หลักฐานการจัดส่ง</p>
         </div>
-        <Button size="lg" className="gap-2">
-          <Download size={20} />
-          ดาวน์โหลดรายงาน
-        </Button>
+        <PODExport data={pods} />
       </div>
 
       {/* Stats */}
@@ -59,7 +56,7 @@ export default async function PODPage() {
         </div>
         <div className="rounded-xl p-4 bg-blue-500/10 border border-blue-500/20">
           <div className="flex items-center gap-2">
-            <Image size={16} className="text-blue-400" />
+            <ImageIcon size={16} className="text-blue-400" />
             <p className="text-2xl font-bold text-blue-400">{stats.withPhoto}</p>
           </div>
           <p className="text-xs text-slate-400">มีรูปถ่าย</p>
@@ -117,7 +114,7 @@ export default async function PODPage() {
                       <td className="p-4 text-sm text-slate-300">{pod.Driver_Name || "-"}</td>
                       <td className="p-4 text-center">
                         {pod.Photo_Proof_Url ? (
-                          <Image size={18} className="mx-auto text-emerald-400" />
+                          <ImageIcon size={18} className="mx-auto text-emerald-400" />
                         ) : (
                           <span className="text-slate-500">-</span>
                         )}

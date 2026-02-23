@@ -1,6 +1,6 @@
 'use server'
 
-import { createClient } from '@/utils/supabase/server'
+import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { getUserBranchId } from '@/lib/permissions'
 
@@ -16,7 +16,7 @@ export type TicketFormData = {
 }
 
 export async function createRepairTicket(data: TicketFormData) {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
   const branchId = await getUserBranchId()
 
   // Note: If Odometer column missing in Repair_Tickets, we might need to append to desc
