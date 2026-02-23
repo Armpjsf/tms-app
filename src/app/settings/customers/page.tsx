@@ -38,7 +38,6 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import {
-  getAllCustomers,
   createCustomer,
   updateCustomer,
   deleteCustomer,
@@ -83,7 +82,7 @@ export default function CustomersSettingsPage() {
         query = query.or(`Customer_Name.ilike.%${searchQuery}%,Customer_ID.ilike.%${searchQuery}%`)
       }
 
-      const { data, error } = await query.order('Customer_ID', { ascending: false }).limit(100)
+      const { data } = await query.order('Customer_ID', { ascending: false }).limit(100)
       if (data) {
         setCustomers(data)
       }
@@ -173,16 +172,16 @@ export default function CustomersSettingsPage() {
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-white flex items-center gap-3">
-            <Users className="text-emerald-400" />
+          <h1 className="text-2xl font-bold text-foreground flex items-center gap-3">
+            <Users className="text-emerald-500" />
             จัดการลูกค้า
           </h1>
-          <p className="text-sm text-slate-400 mt-1">ฐานข้อมูลลูกค้า (Master Data)</p>
+          <p className="text-sm text-muted-foreground mt-1">ฐานข้อมูลลูกค้า (Master Data)</p>
         </div>
         <div className="flex gap-2">
             <ExcelImport 
                 trigger={
-                    <Button variant="outline" className="gap-2 border-slate-700 hover:bg-slate-800">
+                    <Button variant="outline" className="gap-2 border-border hover:bg-muted">
                         <FileSpreadsheet size={16} /> 
                         นำเข้า Excel
                     </Button>
@@ -207,9 +206,9 @@ export default function CustomersSettingsPage() {
               <Plus className="w-4 h-4 mr-2" /> เพิ่มลูกค้า
             </Button>
           </DialogTrigger>
-          <DialogContent className="bg-slate-900 border-slate-800 max-w-2xl">
-            <DialogHeader>
-              <DialogTitle className="text-white">
+          <DialogContent className="bg-background border-border text-foreground max-w-2xl shadow-2xl">
+            <DialogHeader className="border-b border-border pb-4">
+              <DialogTitle className="text-foreground">
                 {editingCustomer ? "แก้ไขข้อมูลลูกค้า" : "เพิ่มลูกค้าใหม่"}
               </DialogTitle>
             </DialogHeader>
@@ -222,12 +221,12 @@ export default function CustomersSettingsPage() {
                       value={formData.Branch_ID || ""} 
                       onValueChange={(val) => updateForm("Branch_ID", val)}
                     >
-                      <SelectTrigger className="bg-slate-800 border-yellow-500/50 text-white">
+                      <SelectTrigger className="bg-card border-amber-500/50 text-foreground">
                         <SelectValue placeholder="-- เลือกสาขา --" />
                       </SelectTrigger>
-                      <SelectContent className="bg-slate-900 border-slate-800">
+                      <SelectContent className="bg-card border-border">
                         {branches.map(b => (
-                          <SelectItem key={b.Branch_ID} value={b.Branch_ID} className="text-white">
+                          <SelectItem key={b.Branch_ID} value={b.Branch_ID} className="text-foreground">
                             {b.Branch_Name} ({b.Branch_ID})
                           </SelectItem>
                         ))}
@@ -238,65 +237,65 @@ export default function CustomersSettingsPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label className="text-slate-400">รหัสลูกค้า (Auto if empty)</Label>
+                  <Label className="text-muted-foreground">รหัสลูกค้า (Auto if empty)</Label>
                   <Input
                     value={formData.Customer_ID || ""}
                     onChange={(e) => updateForm("Customer_ID", e.target.value)}
                     placeholder="Auto Generate"
-                    className="bg-slate-800 border-slate-700 text-white"
+                    className="bg-card border-border text-foreground"
                     disabled={!!editingCustomer}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-slate-400 flex items-center gap-1">
+                  <Label className="text-muted-foreground flex items-center gap-1">
                     <CreditCard className="w-3 h-3" /> เลขประจำตัวผู้เสียภาษี
                   </Label>
                   <Input
                     value={formData.Tax_ID || ""}
                     onChange={(e) => updateForm("Tax_ID", e.target.value)}
                     placeholder="0123456789012"
-                    className="bg-slate-800 border-slate-700 text-white"
+                    className="bg-card border-border text-foreground"
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label className="text-slate-400 flex items-center gap-1">
+                <Label className="text-muted-foreground flex items-center gap-1">
                   <Building2 className="w-3 h-3" /> ชื่อบริษัท/ลูกค้า *
                 </Label>
                 <Input
                   value={formData.Customer_Name || ""}
                   onChange={(e) => updateForm("Customer_Name", e.target.value)}
                   placeholder="บริษัท ตัวอย่าง จำกัด"
-                  className="bg-slate-800 border-slate-700 text-white"
+                  className="bg-card border-border text-foreground"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label className="text-slate-400">ผู้ติดต่อ</Label>
+                  <Label className="text-muted-foreground">ผู้ติดต่อ</Label>
                   <Input
                     value={formData.Contact_Person || ""}
                     onChange={(e) => updateForm("Contact_Person", e.target.value)}
                     placeholder="คุณสมชาย"
-                    className="bg-slate-800 border-slate-700 text-white"
+                    className="bg-card border-border text-foreground"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-slate-400 flex items-center gap-1">
+                  <Label className="text-muted-foreground flex items-center gap-1">
                     <Phone className="w-3 h-3" /> เบอร์โทร
                   </Label>
                   <Input
                     value={formData.Phone || ""}
                     onChange={(e) => updateForm("Phone", e.target.value)}
                     placeholder="02-XXX-XXXX"
-                    className="bg-slate-800 border-slate-700 text-white"
+                    className="bg-card border-border text-foreground"
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label className="text-slate-400 flex items-center gap-1">
+                <Label className="text-muted-foreground flex items-center gap-1">
                   <Mail className="w-3 h-3" /> อีเมล
                 </Label>
                 <Input
@@ -304,28 +303,28 @@ export default function CustomersSettingsPage() {
                   value={formData.Email || ""}
                   onChange={(e) => updateForm("Email", e.target.value)}
                   placeholder="contact@company.com"
-                  className="bg-slate-800 border-slate-700 text-white"
+                  className="bg-card border-border text-foreground"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label className="text-slate-400 flex items-center gap-1">
+                <Label className="text-muted-foreground flex items-center gap-1">
                   <MapPin className="w-3 h-3" /> ที่อยู่
                 </Label>
                 <Textarea
                   value={formData.Address || ""}
                   onChange={(e) => updateForm("Address", e.target.value)}
                   placeholder="ที่อยู่สำหรับออกใบแจ้งหนี้/ใบเสร็จ"
-                  className="bg-slate-800 border-slate-700 text-white min-h-[80px]"
+                  className="bg-card border-border text-foreground min-h-[80px]"
                 />
               </div>
 
-              <div className="flex gap-3 pt-4">
+              <div className="flex gap-3 pt-6 border-t border-border mt-4">
                 <Button onClick={handleSave} disabled={saving} className="flex-1 bg-emerald-600 hover:bg-emerald-700">
                   {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
                   บันทึก
                 </Button>
-                <Button variant="outline" onClick={() => setIsDialogOpen(false)} className="flex-1 border-slate-700">
+                <Button variant="outline" onClick={() => setIsDialogOpen(false)} className="flex-1 border-border">
                   <X className="w-4 h-4 mr-2" /> ยกเลิก
                 </Button>
               </div>
@@ -335,65 +334,63 @@ export default function CustomersSettingsPage() {
         </div>
       </div>
 
-      {/* Search */}
-      <div className="mb-6">
+      <div className="mb-6 bg-card/50 p-2 rounded-xl border border-border">
         <div className="relative max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="ค้นหาชื่อหรือรหัสลูกค้า..."
-            className="pl-10 bg-slate-900 border-slate-800 text-white"
+            className="pl-10 bg-transparent border-none focus-visible:ring-0 text-foreground placeholder:text-muted-foreground"
           />
         </div>
       </div>
 
-      {/* Customer Cards */}
       {loading ? (
-        <div className="text-slate-400 text-center py-12 flex items-center justify-center gap-2">
+        <div className="text-muted-foreground text-center py-12 flex items-center justify-center gap-2">
             <Loader2 className="animate-spin" /> กำลังโหลดข้อมูลลูกค้า...
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {customers.map((customer) => (
-            <Card key={customer.Customer_ID} className="bg-slate-900/50 border-slate-800 hover:border-slate-700 transition-colors">
+            <Card key={customer.Customer_ID} className="bg-card border-border hover:border-primary/50 transition-all shadow-sm hover:shadow-md">
               <CardContent className="p-5">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center">
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center shadow-lg">
                       <Building2 className="w-6 h-6 text-white" />
                     </div>
                     <div>
-                      <h3 className="font-bold text-white">{customer.Customer_Name}</h3>
-                      <p className="text-xs text-slate-500">{customer.Customer_ID}</p>
+                      <h3 className="font-bold text-foreground">{customer.Customer_Name}</h3>
+                      <p className="text-xs text-muted-foreground">{customer.Customer_ID}</p>
                     </div>
                   </div>
                 </div>
 
                 <div className="space-y-2 text-sm mb-4">
-                  <div className="flex items-center gap-2 text-slate-400">
-                    <CreditCard className="w-4 h-4 text-slate-500" />
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <CreditCard className="w-4 h-4 text-emerald-500/70" />
                     <span>Tax ID: {customer.Tax_ID || "-"}</span>
                   </div>
-                  <div className="flex items-center gap-2 text-slate-400">
-                    <Building2 className="w-4 h-4 text-slate-500" />
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Building2 className="w-4 h-4 text-emerald-500/70" />
                     <span>Branch: {customer.Branch_ID || "HQ"}</span>
                   </div>
-                  <div className="flex items-center gap-2 text-slate-400">
-                    <Phone className="w-4 h-4 text-slate-500" />
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Phone className="w-4 h-4 text-emerald-500/70" />
                     <span>{customer.Phone || "-"}</span>
                   </div>
-                  <div className="flex items-center gap-2 text-slate-400">
-                    <MapPin className="w-4 h-4 text-slate-500" />
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <MapPin className="w-4 h-4 text-emerald-500/70" />
                     <span className="truncate">{customer.Address || "-"}</span>
                   </div>
                 </div>
 
-                <div className="flex gap-2 pt-3 border-t border-slate-800">
+                <div className="flex gap-2 pt-3 border-t border-border">
                   <Button 
                     variant="outline" 
                     size="sm" 
-                    className="flex-1 border-slate-700"
+                    className="flex-1 border-border text-foreground hover:bg-muted"
                     onClick={() => handleOpenDialog(customer)}
                   >
                     <Edit className="w-4 h-4 mr-1" /> แก้ไข
@@ -401,7 +398,7 @@ export default function CustomersSettingsPage() {
                   <Button 
                     variant="outline" 
                     size="sm" 
-                    className="border-slate-700 text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                    className="border-border text-red-500 hover:text-red-600 hover:bg-red-500/10"
                     onClick={() => handleDelete(customer.Customer_ID)}
                   >
                     <Trash2 className="w-4 h-4" />
@@ -414,8 +411,8 @@ export default function CustomersSettingsPage() {
           {/* Empty State */}
           {customers.length === 0 && (
             <div className="col-span-full text-center py-12">
-              <Building2 className="w-12 h-12 text-slate-600 mx-auto mb-4" />
-              <p className="text-slate-500">ไม่พบข้อมูลลูกค้า</p>
+              <Building2 className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
+              <p className="text-muted-foreground">ไม่พบข้อมูลลูกค้า</p>
             </div>
           )}
         </div>

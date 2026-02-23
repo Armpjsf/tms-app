@@ -1,5 +1,20 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { updateSession } from '@/utils/supabase/middleware'
+import { jwtVerify } from 'jose'
+
+const secretKey = process.env.SESSION_SECRET || 'default_secret_key_change_me_in_production'
+const encodedKey = new TextEncoder().encode(secretKey)
+
+async function decrypt(session: string | undefined = '') {
+  try {
+    const { payload } = await jwtVerify(session, encodedKey, {
+      algorithms: ['HS256'],
+    })
+    return payload
+  } catch {
+    return null
+  }
+}
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
@@ -15,7 +30,50 @@ export async function middleware(request: NextRequest) {
   }
 
   // For all other routes, update the Supabase session
-  return await updateSession(request)
+  const response = await updateSession(request)
+
+  // Protect Admin/Dashboard routes (all routes except /mobile, /login, /track, and public assets)
+  // Check if there is a valid Supabase user for admin routes
+  const isLoginPage = pathname.startsWith('/login')
+  const isPublicTrack = pathname.startsWith('/track')
+  const isMobile = pathname.startsWith('/mobile')
+  
+  if (!isMobile && !isLoginPage && !isPublicTrack) {
+    const sessionCookie = request.cookies.get('session')
+
+    if (!sessionCookie) {
+      const loginUrl = new URL('/login', request.url)
+      return NextResponse.redirect(loginUrl)
+    }
+
+    // Role-based Access Control (RBAC)
+    const payload = await decrypt(sessionCookie.value)
+    
+    if (payload) {
+      const roleId = Number(payload.roleId)
+      
+      // Define restricted paths and allowed roles
+      // 1: Super Admin, 2: Admin, 3: Dispatcher, 4: Accountant, 5: Staff
+      
+      const restrictions = [
+        { path: '/settings', allowed: [1, 2] },
+        { path: '/admin', allowed: [1, 2] }, // Executive Dashboards
+        { path: '/billing', allowed: [1, 2, 4] },
+        { path: '/reports', allowed: [1, 2, 4] },
+      ]
+
+      for (const rule of restrictions) {
+        if (pathname.startsWith(rule.path)) {
+          if (!rule.allowed.includes(roleId)) {
+            // Redirect to dashboard if not allowed
+            return NextResponse.redirect(new URL('/dashboard', request.url))
+          }
+        }
+      }
+    }
+  }
+
+  return response
 }
 
 export const config = {

@@ -10,15 +10,15 @@ export function BottomNav() {
   if (!pathname.startsWith("/mobile")) return null
 
   const navItems = [
-    { href: "/mobile/dashboard", icon: Home, label: "Home" },
-    { href: "/mobile/jobs", icon: ListChecks, label: "Jobs" },
-    { href: "/mobile/scan", icon: Camera, label: "Scan", isCenter: true },
-    { href: "/mobile/map", icon: MapPin, label: "Map" },
-    { href: "/mobile/profile", icon: User, label: "Profile" },
+    { href: "/mobile/dashboard", icon: Home, label: "หน้าแรก" },
+    { href: "/mobile/jobs", icon: ListChecks, label: "งานของฉัน" },
+    { href: "/mobile/scan", icon: Camera, label: "สแกน", isCenter: true },
+    { href: "/mobile/map", icon: MapPin, label: "แผนที่งาน" },
+    { href: "/mobile/profile", icon: User, label: "ข้อมูลพื้นฐาน" },
   ]
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-slate-900 border-t border-white/10 pb-safe z-50">
+    <div className="fixed bottom-0 left-0 right-0 bg-background/80 backdrop-blur-xl border-t border-border pb-safe z-50 transition-colors duration-300">
       <div className="flex justify-around items-center h-16 px-2">
         {navItems.map((item) => {
           const isActive = pathname === item.href
@@ -38,7 +38,7 @@ export function BottomNav() {
               key={item.href} 
               href={item.href}
               className={`flex flex-col items-center justify-center w-14 space-y-1 transition-colors ${
-                isActive ? "text-blue-400" : "text-slate-500 hover:text-slate-300"
+                isActive ? "text-primary font-bold" : "text-muted-foreground hover:text-foreground"
               }`}
             >
               <item.icon size={20} />

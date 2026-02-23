@@ -14,8 +14,9 @@ import {
   Truck,
   RefreshCw,
 } from "lucide-react"
-import type { DriverLocation } from '@/components/maps/leaflet-map'
 import { getFleetGPSStatus } from '@/lib/supabase/gps'
+import { createClient } from '@/utils/supabase/client'
+import type { DriverLocation } from '@/components/maps/leaflet-map'
 
 const LeafletMap = dynamic(() => import('@/components/maps/leaflet-map'), {
   ssr: false,
@@ -41,6 +42,8 @@ export default function GPSPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [selectedDriver, setSelectedDriver] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
+  
+  const supabase = createClient()
 
   const loadData = async () => {
     setIsLoading(true)
@@ -65,10 +68,47 @@ export default function GPSPage() {
 
   useEffect(() => {
     loadData()
-    // Periodic refresh every 30 seconds
-    const interval = setInterval(loadData, 30000)
-    return () => clearInterval(interval)
-  }, [])
+    
+    // Subscribe to REALTIME GPS logs
+    const channel = supabase
+      .channel('gps-realtime')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'gps_logs' },
+        (payload) => {
+          const newLog = payload.new as { driver_id: string; latitude: number; longitude: number; timestamp?: string }
+          setGpsData(prev => {
+            const updated = prev.map(d => {
+                if (d.Driver_ID === newLog.driver_id) {
+                    return {
+                        ...d,
+                        Latitude: newLog.latitude,
+                        Longitude: newLog.longitude,
+                        Last_Update: newLog.timestamp || new Date().toISOString()
+                    }
+                }
+                return d
+            })
+            
+            // Re-calculate stats on update
+            const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).getTime()
+            const online = updated.filter(d => d.Last_Update && new Date(d.Last_Update).getTime() > fiveMinutesAgo).length
+            setStats({
+                total: updated.length,
+                online,
+                offline: updated.length - online
+            })
+
+            return updated
+          })
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [supabase])
 
   // Convert GPS data to map markers
   const driverLocations: DriverLocation[] = gpsData

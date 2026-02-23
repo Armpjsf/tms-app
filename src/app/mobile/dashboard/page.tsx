@@ -3,7 +3,7 @@ import { redirect } from "next/navigation"
 import { MobileHeader } from "@/components/mobile/mobile-header"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Truck, CheckCircle, Clock, Trophy, Medal, Crown } from "lucide-react"
+import { Truck, CheckCircle, Clock, Trophy, Medal, Crown, MapPin, FileText } from "lucide-react"
 import { getDriverDashboardStats } from "@/lib/supabase/jobs"
 import Link from "next/link"
 import { Progress } from "@/components/ui/progress"
@@ -43,17 +43,17 @@ export default async function MobileDashboard() {
       : 100
 
   return (
-    <div className="min-h-screen bg-slate-950 pb-24 pt-16 px-4">
-      <MobileHeader title="Dashboard" />
+    <div className="min-h-screen bg-background pb-24 pt-16 px-4 transition-colors duration-300">
+      <MobileHeader title="หน้าแรก" />
       
       <div className="mb-6 flex items-center justify-between">
         <div>
-            <h2 className="text-xl font-bold text-white">สวัสดี, {session.driverName}</h2>
-            <p className="text-slate-400 text-sm">พร้อมสำหรับการทำงานวันนี้ไหม?</p>
+            <h2 className="text-xl font-bold text-foreground">สวัสดี, {session.driverName}</h2>
+            <p className="text-muted-foreground text-sm">พร้อมสำหรับการทำงานวันนี้ไหม?</p>
         </div>
         <div className="text-right">
-             <div className="text-2xl font-bold text-emerald-400">฿?</div>
-             <div className="text-xs text-slate-500">รายได้วันนี้</div>
+             <div className="text-2xl font-bold text-emerald-500">฿?</div>
+             <div className="text-xs text-muted-foreground">รายได้วันนี้</div>
         </div>
       </div>
 
@@ -66,13 +66,13 @@ export default async function MobileDashboard() {
                           {getRankIcon(gamification.rank)}
                       </div>
                       <div>
-                          <div className="text-xs text-slate-400 uppercase tracking-wider font-semibold">ระดับปัจจุบัน</div>
-                          <div className="text-lg font-bold text-white">{gamification.rank} Driver</div>
+                          <div className="text-xs text-muted-foreground/60 uppercase tracking-wider font-semibold">ระดับปัจจุบัน</div>
+                          <div className="text-lg font-bold text-foreground">{gamification.rank} Driver</div>
                       </div>
                   </div>
                   <div className="text-right">
-                      <div className="text-2xl font-black text-white">{gamification.points}</div>
-                      <div className="text-[10px] text-slate-400">คะแนน</div>
+                      <div className="text-2xl font-black text-foreground">{gamification.points}</div>
+                      <div className="text-[10px] text-muted-foreground">คะแนน</div>
                   </div>
               </div>
               
@@ -89,7 +89,7 @@ export default async function MobileDashboard() {
                        gamification.rank === 'Gold' ? 'bg-yellow-500' : 
                        gamification.rank === 'Platinum' ? 'bg-purple-500' : 'bg-emerald-500'
                   } />
-                  <p className="text-[10px] text-slate-500 text-right">
+                  <p className="text-[10px] text-muted-foreground text-right">
                        เสร็จสิ้น {gamification.monthlyCompleted} งานในเดือนนี้
                   </p>
               </div>
@@ -98,26 +98,25 @@ export default async function MobileDashboard() {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 gap-3 mb-6">
-        <Card className="bg-blue-500/10 border-blue-500/20">
+        <Card className="bg-primary/5 border-primary/10">
           <CardContent className="p-4 flex flex-col items-center justify-center text-center">
-            <Clock className="w-8 h-8 text-blue-400 mb-2" />
-            <span className="text-2xl font-bold text-white">{stats.total}</span>
-            <span className="text-xs text-slate-400">งานที่ต้องทำวันนี้</span>
+            <Clock className="w-8 h-8 text-primary mb-2" />
+            <span className="text-2xl font-bold text-foreground">{stats.total}</span>
+            <span className="text-xs text-muted-foreground">งานที่ต้องทำวันนี้</span>
           </CardContent>
         </Card>
-        <Card className="bg-emerald-500/10 border-emerald-500/20">
+        <Card className="bg-success/5 border-success/10">
           <CardContent className="p-4 flex flex-col items-center justify-center text-center">
-            <CheckCircle className="w-8 h-8 text-emerald-400 mb-2" />
-            <span className="text-2xl font-bold text-white">{stats.completed}</span>
-            <span className="text-xs text-slate-400">งานเสร็จแล้ว</span>
+            <CheckCircle className="w-8 h-8 text-success mb-2" />
+            <span className="text-2xl font-bold text-foreground">{stats.completed}</span>
+            <span className="text-xs text-muted-foreground">งานเสร็จแล้ว</span>
           </CardContent>
         </Card>
       </div>
 
-      {/* Current/Next Job Preview */}
       <div className="mb-4">
         <div className="flex items-center justify-between mb-2">
-            <h3 className="text-white font-semibold">งานปัจจุบัน / ถัดไป</h3>
+            <h3 className="text-foreground font-semibold">งานปัจจุบัน / ถัดไป</h3>
             {currentJob && (
                 <span className={`text-xs px-2 py-1 rounded-full ${
                     ['In Progress', 'In Transit'].includes(currentJob.Job_Status) 
@@ -131,15 +130,15 @@ export default async function MobileDashboard() {
         
         {currentJob ? (
             <Link href={`/mobile/jobs/${currentJob.Job_ID}`}>
-                <Card className="bg-slate-900 border-white/10 active:scale-95 transition-transform">
+                <Card className="bg-card border-border active:scale-95 transition-transform shadow-sm">
                   <CardContent className="p-4 space-y-3">
                      <div className="flex items-start gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-orange-500/20 flex items-center justify-center flex-shrink-0">
-                            <Truck className="text-orange-400" size={20} />
+                        <div className="w-10 h-10 rounded-lg bg-orange-500/10 flex items-center justify-center flex-shrink-0">
+                            <Truck className="text-orange-500" size={20} />
                         </div>
                         <div>
-                            <h4 className="text-white font-medium">{currentJob.Job_ID}</h4>
-                            <p className="text-slate-400 text-sm">{currentJob.Customer_Name}</p>
+                            <h4 className="text-foreground font-medium">{currentJob.Job_ID}</h4>
+                            <p className="text-muted-foreground text-sm">{currentJob.Customer_Name}</p>
                         </div>
                      </div>
                      
@@ -164,23 +163,31 @@ export default async function MobileDashboard() {
                 </Card>
             </Link>
         ) : (
-            <Card className="bg-slate-900/50 border-white/5 border-dashed">
+            <Card className="bg-muted/10 border-border border-dashed">
                 <CardContent className="p-8 text-center">
-                    <p className="text-slate-500">ไม่มีงานค้างอยู่ในขณะนี้</p>
+                    <p className="text-muted-foreground">ไม่มีงานค้างอยู่ในขณะนี้</p>
                 </CardContent>
             </Card>
         )}
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-3 mb-6">
         <Link href="/mobile/jobs">
-            <Button variant="outline" className="w-full border-slate-700 bg-slate-900 text-slate-300 hover:text-white">
-                ดูงานทั้งหมด
+            <Button variant="outline" className="w-full border-border bg-card text-foreground hover:bg-muted py-8 flex-col gap-2">
+                <FileText className="w-6 h-6 text-primary" />
+                <span>งานของฉัน</span>
             </Button>
         </Link>
-        <Link href="/mobile/profile">
-             <Button variant="outline" className="w-full border-slate-700 bg-slate-900 text-slate-300 hover:text-white">
-                โปรไฟล์
+        <Link href="/mobile/map">
+             <Button variant="outline" className="w-full border-border bg-card text-foreground hover:bg-muted py-8 flex-col gap-2">
+                <MapPin className="w-6 h-6 text-primary" />
+                <span>แผนที่งาน</span>
+            </Button>
+        </Link>
+        <Link href="/mobile/vehicle-check" className="col-span-2">
+             <Button className="w-full bg-primary text-primary-foreground hover:opacity-90 py-10 flex-col gap-2 rounded-2xl shadow-lg shadow-primary/20">
+                <Truck className="w-8 h-8" />
+                <div className="text-lg font-bold">เช็คสภาพรถประจำวัน</div>
             </Button>
         </Link>
       </div>

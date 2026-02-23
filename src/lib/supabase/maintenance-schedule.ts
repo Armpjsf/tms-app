@@ -40,7 +40,7 @@ export async function getMaintenanceSchedule(): Promise<MaintenanceScheduleData>
   // Get all vehicles
   let vehicleQuery = supabase
     .from('master_vehicles')
-    .select('vehicle_plate, vehicle_type, status, insurance_expiry, registration_expiry, last_service_date, last_service_odometer')
+    .select('vehicle_plate, vehicle_type, status, insurance_expiry, registration_expiry, last_service_date, last_service_odometer, next_service_mileage, current_mileage')
 
   if (branchId && !isAdmin) {
     vehicleQuery = vehicleQuery.eq('Branch_ID', branchId)
@@ -119,21 +119,30 @@ export async function getMaintenanceSchedule(): Promise<MaintenanceScheduleData>
       }
     }
 
-    // Periodic service check (every 6 months from last service)
+    // Periodic service check (every 6 months or based on mileage)
     if (v.last_service_date) {
       const lastService = new Date(v.last_service_date)
       const nextService = new Date(lastService.getTime() + 180 * dayMs) // ~6 months
       const daysUntil = Math.ceil((nextService.getTime() - now.getTime()) / dayMs)
-      if (daysUntil <= 30) {
+      
+      // Mileage check: If current_mileage > next_service_mileage OR within 1000km
+      const isMileageOverdue = v.next_service_mileage && v.current_mileage && v.current_mileage >= v.next_service_mileage
+      const isMileageSoon = v.next_service_mileage && v.current_mileage && (v.next_service_mileage - v.current_mileage) <= 1000
+
+      if (daysUntil <= 30 || isMileageSoon || isMileageOverdue) {
+        let status: 'overdue' | 'due_soon' | 'upcoming' = 'upcoming'
+        if (daysUntil <= 0 || isMileageOverdue) status = 'overdue'
+        else if (daysUntil <= 7 || isMileageSoon) status = 'due_soon'
+
         services.push({
           vehicle_plate: v.vehicle_plate,
           vehicle_type: v.vehicle_type || 'Unknown',
-          service_type: 'เซอร์วิสตามระยะ',
+          service_type: isMileageOverdue ? 'เซอร์วิส (ไมล์เกินกำหนด)' : isMileageSoon ? 'เซอร์วิส (ใกล้ถึงระยะ)' : 'เซอร์วิสตามระยะ',
           due_date: nextService.toISOString().split('T')[0],
           days_until: daysUntil,
-          status: daysUntil <= 0 ? 'overdue' : daysUntil <= 7 ? 'due_soon' : 'upcoming',
+          status,
           last_service: v.last_service_date,
-          odometer: v.last_service_odometer,
+          odometer: v.current_mileage,
         })
       }
     }

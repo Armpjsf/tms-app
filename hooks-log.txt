@@ -1,0 +1,167 @@
+C:\Users\Armdd\TMS_ePOD\src\app\mobile\chat\page.tsx:40 react-hooks/exhaustive-deps React Hook useEffect has a missing dependency: 'router'. Either include it or remove the dependency array.
+C:\Users\Armdd\TMS_ePOD\src\app\mobile\chat\page.tsx:70 react-hooks/exhaustive-deps React Hook useEffect has a missing dependency: 'supabase'. Either include it or remove the dependency array.
+C:\Users\Armdd\TMS_ePOD\src\app\mobile\map\page.tsx:25 react-hooks/set-state-in-effect Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\Armdd\TMS_ePOD\src\app\mobile\map\page.tsx:25:7
+  23 |   useEffect(() => {
+  24 |     if (!navigator.geolocation) {
+> 25 |       setLocationError('Geolocation is not supported')
+     |       ^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  26 |       setIsLoading(false)
+  27 |       return
+  28 |     }
+C:\Users\Armdd\TMS_ePOD\src\app\mobile\sos\page.tsx:54 react-hooks/set-state-in-effect Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\Armdd\TMS_ePOD\src\app\mobile\sos\page.tsx:54:9
+  52 |         )
+  53 |     } else {
+> 54 |         setAddress("อุปกรณ์ไม่รองรับ GPS")
+     |         ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  55 |         setLoading(false)
+  56 |     }
+  57 |   }, [])
+C:\Users\Armdd\TMS_ePOD\src\app\settings\accounting\page.tsx:52 react-hooks/exhaustive-deps React Hook useEffect has a missing dependency: 'router'. Either include it or remove the dependency array.
+C:\Users\Armdd\TMS_ePOD\src\app\settings\expense-types\page.tsx:32 react-hooks/set-state-in-effect Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\Armdd\TMS_ePOD\src\app\settings\expense-types\page.tsx:32:5
+  30 |
+  31 |   useEffect(() => {
+> 32 |     loadData()
+     |     ^^^^^^^^ Avoid calling setState() directly within an effect
+  33 |   }, [loadData])
+  34 |
+  35 |   const handleAdd = async () => {
+C:\Users\Armdd\TMS_ePOD\src\app\settings\theme\page.tsx:18 react-hooks/set-state-in-effect Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\Armdd\TMS_ePOD\src\app\settings\theme\page.tsx:18:9
+  16 |     const stored = localStorage.getItem('theme') as Theme
+  17 |     if (stored) {
+> 18 |         setTheme(stored)
+     |         ^^^^^^^^ Avoid calling setState() directly within an effect
+  19 |     } else {
+  20 |         setTheme('system')
+  21 |     }
+C:\Users\Armdd\TMS_ePOD\src\components\billing\attachment-list.tsx:23 react-hooks/exhaustive-deps React Hook useEffect has a missing dependency: 'loadAttachments'. Either include it or remove the dependency array.
+C:\Users\Armdd\TMS_ePOD\src\components\customer-autocomplete.tsx:60 react-hooks/exhaustive-deps React Hook useEffect has a missing dependency: 'query'. Either include it or remove the dependency array.
+C:\Users\Armdd\TMS_ePOD\src\components\driver-autocomplete.tsx:61 react-hooks/set-state-in-effect Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\Armdd\TMS_ePOD\src\components\driver-autocomplete.tsx:61:11
+  59 |   useEffect(() => {
+  60 |       if (selectedDriver && !open) {
+> 61 |           setQuery(selectedDriver.Driver_Name || "")
+     |           ^^^^^^^^ Avoid calling setState() directly within an effect
+  62 |       } else if (!value && !open) {
+  63 |           setQuery("")
+  64 |       }
+C:\Users\Armdd\TMS_ePOD\src\components\jobs\job-summary-dialog.tsx:48 react-hooks/set-state-in-effect Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\Armdd\TMS_ePOD\src\components\jobs\job-summary-dialog.tsx:48:7
+  46 |   useEffect(() => {
+  47 |     if (open && jobId) {
+> 48 |       setLoadingGps(true)
+     |       ^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  49 |       getJobGPSData(jobId, driverName, planDate)
+  50 |         .then(data => setGpsData(data as any))
+  51 |         .finally(() => setLoadingGps(false))
+C:\Users\Armdd\TMS_ePOD\src\components\location-autocomplete.tsx:55 react-hooks/set-state-in-effect Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\Armdd\TMS_ePOD\src\components\location-autocomplete.tsx:55:10
+  53 |   useEffect(() => {
+  54 |      if (value && !query) {
+> 55 |          setQuery(value)
+     |          ^^^^^^^^ Avoid calling setState() directly within an effect
+  56 |      }
+  57 |   }, [value])
+  58 |
+C:\Users\Armdd\TMS_ePOD\src\components\location-autocomplete.tsx:57 react-hooks/exhaustive-deps React Hook useEffect has a missing dependency: 'query'. Either include it or remove the dependency array.
+C:\Users\Armdd\TMS_ePOD\src\components\mobile\location-tracker.tsx:19 react-hooks/set-state-in-effect Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\Armdd\TMS_ePOD\src\components\mobile\location-tracker.tsx:19:7
+  17 |     // Check if geolocation is supported
+  18 |     if (!("geolocation" in navigator)) {
+> 19 |       setStatus("error")
+     |       ^^^^^^^^^ Avoid calling setState() directly within an effect
+  20 |       return
+  21 |     }
+  22 |
+C:\Users\Armdd\TMS_ePOD\src\components\mobile\permission-requester.tsx:15 react-hooks/set-state-in-effect Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\Armdd\TMS_ePOD\src\components\mobile\permission-requester.tsx:15:7
+  13 |     // Check Notification Permission
+  14 |     if ("Notification" in window && Notification.permission === "default") {
+> 15 |       setPermissionType("notifications")
+     |       ^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  16 |       setShowPrompt(true)
+  17 |     } 
+  18 |     // Check Geolocation Permission (Optional, usually handled by browser on usage)
+C:\Users\Armdd\TMS_ePOD\src\components\vehicle-autocomplete.tsx:59 react-hooks/set-state-in-effect Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\Armdd\TMS_ePOD\src\components\vehicle-autocomplete.tsx:59:10
+  57 |      // If value exists but query is empty, set query to value to show it
+  58 |      if (value && !query) {
+> 59 |          setQuery(value)
+     |          ^^^^^^^^ Avoid calling setState() directly within an effect
+  60 |      }
+  61 |      // If value is cleared, clear query
+  62 |      if (!value && query) {
+C:\Users\Armdd\TMS_ePOD\src\components\vehicle-autocomplete.tsx:65 react-hooks/exhaustive-deps React Hook useEffect has a missing dependency: 'query'. Either include it or remove the dependency array.

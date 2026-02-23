@@ -22,13 +22,13 @@ const BranchContext = createContext<BranchContextType>({
   isLoading: true
 })
 
-export function BranchProvider({ children }: { children: React.ReactNode }) {
+export function BranchProviderInner({ children, initialBranchParam }: { children: React.ReactNode, initialBranchParam: string | null }) {
   const [selectedBranch, setSelectedBranchState] = useState<string>("All")
   const [branches, setBranches] = useState<Branch[]>([])
   const [isAdmin, setIsAdmin] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const router = useRouter()
-  const searchParams = useSearchParams()
+  // useSearchParams is now handled by the wrapper
 
   useEffect(() => {
     async function init() {
@@ -41,31 +41,31 @@ export function BranchProvider({ children }: { children: React.ReactNode }) {
             setBranches(fetchedBranches || [])
             setIsAdmin(roleId === 1)
 
-            // 1. Priority: URL Search Parameter
-            const urlBranch = searchParams.get('branch')
-            // 2. Secondary: Cookie
-            const savedBranch = Cookies.get("selectedBranch")
-            
-            let finalBranch = 'All'
-            
-            if (urlBranch && (urlBranch === 'All' || fetchedBranches.some((b: Branch) => b.Branch_ID === urlBranch))) {
-                finalBranch = urlBranch
-            } else if (savedBranch && (savedBranch === 'All' || fetchedBranches.some((b: Branch) => b.Branch_ID === savedBranch))) {
-                finalBranch = savedBranch
-            }
+          // 1. Priority: URL Search Parameter (passed as prop)
+          const urlBranch = initialBranchParam
+          // 2. Secondary: Cookie
+          const savedBranch = Cookies.get("selectedBranch")
+          
+          let finalBranch = 'All'
+          
+          if (urlBranch && (urlBranch === 'All' || fetchedBranches.some((b: Branch) => b.Branch_ID === urlBranch))) {
+              finalBranch = urlBranch
+          } else if (savedBranch && (savedBranch === 'All' || fetchedBranches.some((b: Branch) => b.Branch_ID === savedBranch))) {
+              finalBranch = savedBranch
+          }
 
-            setSelectedBranchState(finalBranch)
-            if (finalBranch !== savedBranch) {
-                Cookies.set("selectedBranch", finalBranch, { expires: 365 })
-            }
-        } catch (e) {
-            console.error("Failed to init branch context", e)
-        } finally {
-            setIsLoading(false)
-        }
-    }
-    init()
-  }, [searchParams])
+          setSelectedBranchState(finalBranch)
+          if (finalBranch !== savedBranch) {
+              Cookies.set("selectedBranch", finalBranch, { expires: 365 })
+          }
+      } catch (e) {
+          console.error("Failed to init branch context", e)
+      } finally {
+          setIsLoading(false)
+      }
+  }
+  init()
+}, [initialBranchParam])
 
   const setSelectedBranch = (branchId: string) => {
     setSelectedBranchState(branchId)
@@ -87,3 +87,18 @@ export function BranchProvider({ children }: { children: React.ReactNode }) {
 }
 
 export const useBranch = () => useContext(BranchContext)
+
+function BranchProviderWrapper({ children }: { children: React.ReactNode }) {
+  const searchParams = useSearchParams()
+  const branchParam = searchParams.get('branch')
+  return <BranchProviderInner initialBranchParam={branchParam}>{children}</BranchProviderInner>
+}
+
+export function BranchProvider({ children }: { children: React.ReactNode }) {
+  return (
+    <React.Suspense fallback={null}>
+      <BranchProviderWrapper>{children}</BranchProviderWrapper>
+    </React.Suspense>
+  )
+}
+

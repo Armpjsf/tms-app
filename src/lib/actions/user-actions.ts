@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache"
 import { getSession } from "@/lib/session"
 import argon2 from "argon2"
 
-import { STANDARD_ROLES, StandardRole } from "@/types/role"
+import { StandardRole } from "@/types/role"
 
 export interface UserData {
     Username: string;
@@ -55,6 +55,7 @@ const ROLE_MAP: Record<string, number> = {
     'Super Admin': 1,
     'Admin': 2,
     'Dispatcher': 3,
+    'Dispatcher (Dispatch)': 3,
     'Accountant': 4,
     'Staff': 5,
     'Driver': 6,
@@ -62,7 +63,8 @@ const ROLE_MAP: Record<string, number> = {
 }
 
 export async function createUser(user: UserData) {
-    const supabase = await createClient()
+    const { createAdminClient } = await import("@/utils/supabase/server")
+    const supabase = createAdminClient()
     
     // Check if username exists
     const { data: existing } = await supabase
@@ -109,7 +111,8 @@ export async function createUser(user: UserData) {
 }
 
 export async function updateUser(username: string, updates: Partial<UserData>) {
-    const supabase = await createClient()
+    const { createAdminClient } = await import("@/utils/supabase/server")
+    const supabase = createAdminClient()
     
     const session = await getSession()
     if (!session) return { success: false, error: "Not authenticated" }
@@ -152,9 +155,11 @@ export async function updateUser(username: string, updates: Partial<UserData>) {
         .eq("Username", username)
 
     if (error) {
+        console.error("Update user error:", error)
         return { success: false, error: error.message }
     }
 
+    console.log(`User ${username} updated successfully. Permissions:`, !!updatePayload.Permissions)
     revalidatePath("/settings/users")
     return { success: true }
 }
@@ -169,7 +174,8 @@ export async function getCurrentUserRole() {
 }
 
 export async function deleteUser(username: string) {
-    const supabase = await createClient()
+    const { createAdminClient } = await import("@/utils/supabase/server")
+    const supabase = createAdminClient()
     
     const session = await getSession()
     if (!session) return { success: false, error: "Not authenticated" }

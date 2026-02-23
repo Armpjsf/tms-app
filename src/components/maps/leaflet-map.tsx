@@ -3,7 +3,7 @@
 import { MapContainer, TileLayer, Marker, Popup, useMap, Polyline } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 
 // Fix for default marker icons in Next.js
 const defaultIcon = L.icon({
@@ -110,11 +110,7 @@ export default function LeafletMap({
       />
 
       {drivers.map((driver) => (
-        <Marker key={driver.id} position={[driver.lat, driver.lng]} icon={driverIcon}>
-          <Popup>
-             <DriverPopup driver={driver} />
-          </Popup>
-        </Marker>
+        <MovingMarker key={driver.id} driver={driver} />
       ))}
 
       {showCurrentPosition && currentPosition && (
@@ -146,6 +142,51 @@ export default function LeafletMap({
         </>
       )}
     </MapContainer>
+  )
+}
+
+function MovingMarker({ driver }: { driver: DriverLocation }) {
+  const [currentPos, setCurrentPos] = useState<[number, number]>([driver.lat, driver.lng])
+  
+  const lastPosRef = useRef<[number, number]>([driver.lat, driver.lng])
+  
+  useEffect(() => {
+    let animationFrame: number
+    const startPos = lastPosRef.current
+    const targetPos: [number, number] = [driver.lat, driver.lng]
+    const duration = 1500 // 1.5 second animation
+    const startTime = performance.now()
+
+    const animate = (currentTime: number) => {
+      const elapsed = currentTime - startTime
+      const progress = Math.min(elapsed / duration, 1)
+      
+      const lat = startPos[0] + (targetPos[0] - startPos[0]) * progress
+      const lng = startPos[1] + (targetPos[1] - startPos[1]) * progress
+      
+      setCurrentPos([lat, lng])
+
+      if (progress < 1) {
+        animationFrame = requestAnimationFrame(animate)
+      } else {
+        lastPosRef.current = targetPos
+      }
+    }
+
+    animationFrame = requestAnimationFrame(animate)
+    return () => {
+      cancelAnimationFrame(animationFrame)
+      // If unmounting or changing, ensure the ref is at least at the last target
+      lastPosRef.current = targetPos
+    }
+  }, [driver.lat, driver.lng])
+
+  return (
+    <Marker position={currentPos} icon={driverIcon}>
+      <Popup>
+         <DriverPopup driver={{ ...driver, lat: currentPos[0], lng: currentPos[1] }} />
+      </Popup>
+    </Marker>
   )
 }
 

@@ -111,19 +111,35 @@ interface SidebarProps {
 
 export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
   const pathname = usePathname()
-  const [isAdminUser, setIsAdminUser] = React.useState(false)
+  const [userRole, setUserRole] = React.useState<number | null>(null)
 
   React.useEffect(() => {
-    async function checkAdmin() {
+    async function checkRole() {
         const role = await getUserRole()
-        setIsAdminUser(role === 1 || role === 2)
+        setUserRole(role || null)
     }
-    checkAdmin()
+    checkRole()
   }, [])
 
   const filteredNavigation = navigation.filter(group => {
-    if (group.title === "ผู้บริหาร & รายงาน" && !isAdminUser) return false
-    if (group.title === "ตั้งค่าระบบ" && !isAdminUser) return false
+    if (!userRole) return false // Wait for role or hide all if not authenticated
+
+    // 1: Super Admin, 2: Admin, 3: Dispatcher, 4: Accountant, 5: Staff
+    if (group.title === "ผู้บริหาร & รายงาน") {
+      return [1, 2].includes(userRole)
+    }
+    if (group.title === "การเงิน") {
+      return [1, 2, 4].includes(userRole)
+    }
+    if (group.title === "ตั้งค่าระบบ") {
+      return [1, 2].includes(userRole)
+    }
+    
+    // Accountant (4) shouldn't see daily operations like planning/fleet unless specified
+    if (group.title === "ปฏิบัติการ" || group.title === "กองยาน") {
+        if (userRole === 4) return false
+    }
+
     return true
   })
 
@@ -134,11 +150,11 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
       transition={{ duration: 0.3, ease: "easeInOut" }}
       className={cn(
         "fixed top-0 left-0 h-screen z-50 flex flex-col",
-        "bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 border-r border-white/10 text-white shadow-2xl"
+        "bg-sidebar border-r border-sidebar-border text-sidebar-foreground shadow-2xl transition-colors duration-300"
       )}
     >
       {/* Logo */}
-      <div className="flex items-center justify-between h-20 px-4 border-b border-white/5 bg-white/5 backdrop-blur-sm">
+      <div className="flex items-center justify-between h-20 px-4 border-b border-sidebar-border bg-sidebar-primary/5 backdrop-blur-sm">
         <AnimatePresence>
           {!collapsed && (
             <motion.div
@@ -158,8 +174,8 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
                 />
               </div>
               <div>
-                <h1 className="text-white font-bold text-lg leading-tight tracking-tight">LOGIS-PRO</h1>
-                <p className="text-[10px] text-indigo-400 font-medium tracking-widest">360 ENTERPRISE</p>
+                <h1 className="text-sidebar-foreground font-bold text-lg leading-tight tracking-tight">LOGIS-PRO</h1>
+                <p className="text-[10px] text-primary/60 font-medium tracking-widest">360 ENTERPRISE</p>
               </div>
             </motion.div>
           )}
@@ -167,7 +183,7 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
         
         <button
           onClick={onToggle}
-          className="p-2 rounded-xl hover:bg-white/10 transition-colors text-slate-400 hover:text-white"
+          className="p-2 rounded-xl hover:bg-muted/10 transition-colors text-muted-foreground hover:text-foreground"
         >
           <ChevronLeft
             size={20}
@@ -186,7 +202,7 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  className="px-4 mb-3 text-[10px] font-bold uppercase tracking-widest text-slate-500"
+                  className="px-4 mb-3 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60"
                 >
                   {group.title}
                 </motion.h2>
@@ -213,8 +229,8 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
                         className={cn(
                             "relative flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-200",
                             isActive
-                            ? "bg-gradient-to-r from-indigo-500/20 to-purple-500/10 text-white border border-indigo-500/30 shadow-lg shadow-indigo-500/10"
-                            : "text-slate-400 hover:text-white hover:bg-white/5 border border-transparent"
+                            ? "bg-primary/10 text-primary border border-primary/20 shadow-lg shadow-primary/5"
+                            : "text-muted-foreground hover:text-foreground hover:bg-muted/50 border border-transparent"
                         )}
                         >
                         {/* Active Indicator Strip */}
@@ -227,7 +243,7 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
                         
                         <span className={cn(
                             "flex-shrink-0 transition-colors duration-300",
-                            isActive ? "text-indigo-400 drop-shadow-[0_0_8px_rgba(129,140,248,0.5)]" : "group-hover:text-indigo-400"
+                            isActive ? "text-primary drop-shadow-[0_0_8px_rgba(0,0,0,0.1)]" : "group-hover:text-primary"
                         )}>
                             {item.icon}
                         </span>
@@ -275,9 +291,9 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
             <Link href="/settings">
                 <motion.div
                     whileHover={{ x: 4 }}
-                    className="flex items-center gap-3 px-3 py-3 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-all group"
+                    className="flex items-center gap-3 px-3 py-3 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-all group"
                 >
-                    <Settings size={20} className="group-hover:text-indigo-400 transition-colors" />
+                    <Settings size={20} className="group-hover:text-primary transition-colors" />
                     {!collapsed && <span className="text-sm font-medium">ตั้งค่า</span>}
                 </motion.div>
             </Link>
@@ -285,7 +301,7 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
       </nav>
 
       {/* Bottom Profile Section */}
-      <div className="p-4 border-t border-white/5 bg-black/20 backdrop-blur-md">
+      <div className="p-4 border-t border-sidebar-border bg-muted/30 backdrop-blur-md">
         <SidebarProfile collapsed={collapsed} />
       </div>
     </motion.aside>

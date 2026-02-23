@@ -12,8 +12,8 @@ type Props = {
 
 export function MobileHeader({ title, rightElement }: Props) {
   return (
-    <header className="fixed top-0 left-0 right-0 h-14 bg-slate-900/80 backdrop-blur-md border-b border-white/10 flex items-center justify-between px-4 z-40">
-      <h1 className="font-bold text-white text-lg">{title}</h1>
+    <header className="fixed top-0 left-0 right-0 h-14 bg-background/80 backdrop-blur-md border-b border-border flex items-center justify-between px-4 z-40 transition-colors duration-300">
+      <h1 className="font-bold text-foreground text-lg">{title}</h1>
       
       <div className="flex items-center gap-2">
         <ThemeToggle />

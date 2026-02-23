@@ -80,11 +80,45 @@ export default function JobPickupPage() {
           alert(result.error)
           setLoading(false)
         }
-    } catch (error) {
+    } catch (error: unknown) {
         console.error("Pickup Submit Error:", error)
-        alert("เกิดข้อผิดพลาดในการส่งข้อมูล")
-        setLoading(false)
+        
+        // Check if it's a network error
+        const isNetworkError = !navigator.onLine || error instanceof TypeError || (error as any).message?.includes('fetch')
+        
+        if (isNetworkError) {
+             const { saveJobOffline } = await import("@/lib/utils/offline-storage")
+             
+             // Convert to base64 for storage
+             const photoBase64 = await Promise.all(photos.map(fileToB64))
+             const sigBase64 = signature ? await fileToB64(signature as File) : null
+             
+             // Capture report if possible (already handled in formData step above, but we need raw blobs)
+             // For simplicity, we just save the photos and signature
+             const offlineData = {
+                 photos: photoBase64,
+                 signature: sigBase64,
+                 photo_count: photos.length
+             }
+             
+             saveJobOffline(params.id, offlineData, 'PICKUP')
+             alert("โหมดออฟไลน์: บันทึกรับสินค้าลงเครื่องแล้ว ระบบจะส่งข้อมูลเมื่อมีสัญญาณ")
+             router.push("/mobile/dashboard")
+        } else {
+            alert("เกิดข้อผิดพลาดในการส่งข้อมูล")
+            setLoading(false)
+        }
     }
+  }
+
+  // Helper to convert File to base64 for offline storage
+  const fileToB64 = (file: File | Blob): Promise<string> => {
+      return new Promise((resolve, reject) => {
+          const reader = new FileReader()
+          reader.readAsDataURL(file)
+          reader.onload = () => resolve(reader.result as string)
+          reader.onerror = error => reject(error)
+      })
   }
 
   return (

@@ -1,18 +1,24 @@
 "use client"
 
-import { submitJobPOD } from "@/lib/actions/pod-actions"
+import { submitJobPOD, submitJobPickup } from "@/lib/actions/pod-actions"
 
 interface OfflineJob {
     id: string
     jobId: string
-    data: any // Serialized FormData or object
+    data: Record<string, unknown>
     timestamp: number
     type: 'POD' | 'PICKUP'
 }
 
 const STORAGE_KEY = 'tms_offline_jobs'
 
-export const saveJobOffline = (jobId: string, data: any, type: 'POD' | 'PICKUP' = 'POD') => {
+const notifyQueueChange = () => {
+    if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('tms_offline_queue_change'))
+    }
+}
+
+export const saveJobOffline = (jobId: string, data: Record<string, unknown>, type: 'POD' | 'PICKUP' = 'POD') => {
     if (typeof window === 'undefined') return
     
     const offlineJobs: OfflineJob[] = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]')
@@ -24,6 +30,7 @@ export const saveJobOffline = (jobId: string, data: any, type: 'POD' | 'PICKUP' 
         type
     })
     localStorage.setItem(STORAGE_KEY, JSON.stringify(offlineJobs))
+    notifyQueueChange()
 }
 
 export const getOfflineJobs = (): OfflineJob[] => {
@@ -36,6 +43,7 @@ export const removeOfflineJob = (id: string) => {
     const offlineJobs: OfflineJob[] = getOfflineJobs()
     const filtered = offlineJobs.filter(j => j.id !== id)
     localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered))
+    notifyQueueChange()
 }
 
 /**
@@ -62,14 +70,21 @@ export const syncOfflineJobs = async () => {
                     formData.append('photo_count', value.length.toString())
                 } else if (key === 'signature' && typeof value === 'string') {
                     formData.append('signature', b64ToBlob(value), 'signature.png')
+                } else if (key === 'pod_report' && typeof value === 'string') {
+                    formData.append('pod_report', b64ToBlob(value), 'report.jpg')
+                } else if (key === 'pickup_report' && typeof value === 'string') {
+                    formData.append('pickup_report', b64ToBlob(value), 'report.jpg')
                 } else {
                     formData.append(key, value as string)
                 }
             })
 
-            const result = await submitJobPOD(job.jobId, formData)
+            const result = job.type === 'PICKUP' 
+                ? await submitJobPickup(job.jobId, formData)
+                : await submitJobPOD(job.jobId, formData)
+
             if (result.success) {
-                console.log(`Successfully synced offline job: ${job.jobId}`)
+                console.log(`Successfully synced offline job: ${job.jobId} (${job.type})`)
                 removeOfflineJob(job.id)
             }
         } catch (err) {

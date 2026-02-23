@@ -43,11 +43,11 @@ export default async function FuelPage(props: Props) {
       {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-white mb-2 flex items-center gap-3">
-            <Fuel className="text-emerald-400" />
+          <h1 className="text-3xl font-bold text-foreground mb-2 flex items-center gap-3">
+            <Fuel className="text-emerald-500" />
             บันทึกการเติมน้ำมัน
           </h1>
-          <p className="text-slate-400">จัดการข้อมูลการใช้น้ำมันเชื้อเพลิง</p>
+          <p className="text-muted-foreground">จัดการข้อมูลการใช้น้ำมันเชื้อเพลิง</p>
         </div>
         <FuelDialog 
             drivers={drivers.data}
@@ -61,26 +61,25 @@ export default async function FuelPage(props: Props) {
         />
       </div>
 
-      {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        <div className="rounded-xl p-4 bg-emerald-500/10 border border-emerald-500/20">
-          <p className="text-2xl font-bold text-emerald-400">฿{stats.totalAmount.toLocaleString()}</p>
-          <p className="text-xs text-slate-400">ค่าใช้จ่ายวันนี้</p>
+        <div className="rounded-xl p-4 bg-emerald-500/10 border border-emerald-500/20 shadow-sm">
+          <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">฿{stats.totalAmount.toLocaleString()}</p>
+          <p className="text-xs text-muted-foreground">ค่าใช้จ่ายวันนี้</p>
         </div>
-        <div className="rounded-xl p-4 bg-blue-500/10 border border-blue-500/20">
-          <p className="text-2xl font-bold text-blue-400">{stats.totalLiters.toLocaleString()} L</p>
-          <p className="text-xs text-slate-400">ปริมาณน้ำมัน</p>
+        <div className="rounded-xl p-4 bg-blue-500/10 border border-blue-500/20 shadow-sm">
+          <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{stats.totalLiters.toLocaleString()} L</p>
+          <p className="text-xs text-muted-foreground">ปริมาณน้ำมัน</p>
         </div>
-        <div className="rounded-xl p-4 bg-amber-500/10 border border-amber-500/20">
+        <div className="rounded-xl p-4 bg-amber-500/10 border border-amber-500/20 shadow-sm">
           <div className="flex items-center gap-2">
-            <TrendingUp size={16} className="text-amber-400" />
-            <p className="text-2xl font-bold text-amber-400">-</p>
+            <TrendingUp size={16} className="text-amber-600 dark:text-amber-400" />
+            <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">-</p>
           </div>
-          <p className="text-xs text-slate-400">Km/L เฉลี่ย</p>
+          <p className="text-xs text-muted-foreground">Km/L เฉลี่ย</p>
         </div>
-        <div className="rounded-xl p-4 bg-purple-500/10 border border-purple-500/20">
-          <p className="text-2xl font-bold text-purple-400">{logs.length}</p>
-          <p className="text-xs text-slate-400">รายการวันนี้</p>
+        <div className="rounded-xl p-4 bg-purple-500/10 border border-purple-500/20 shadow-sm">
+          <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">{logs.length}</p>
+          <p className="text-xs text-muted-foreground">รายการวันนี้</p>
         </div>
       </div>
 
@@ -95,42 +94,41 @@ export default async function FuelPage(props: Props) {
                     type="date" 
                     name="startDate"
                     defaultValue={startDate}
-                    className="bg-slate-900 border-slate-700 text-white w-auto"
+                    className="bg-card border-border text-foreground w-auto shadow-sm"
                 />
-                <span className="text-slate-500">-</span>
+                <span className="text-muted-foreground">-</span>
                 <Input 
                     type="date" 
                     name="endDate"
                     defaultValue={endDate}
-                    className="bg-slate-900 border-slate-700 text-white w-auto"
+                    className="bg-card border-border text-foreground w-auto shadow-sm"
                 />
                 <Button type="submit" variant="secondary">กรอง</Button>
             </form>
         </div>
       </div>
 
-      {/* Fuel Logs Table */}
-      <Card variant="glass">
+      <Card className="bg-card border-border shadow-md overflow-hidden">
         <CardContent className="p-0">
           {logs.length === 0 ? (
-            <div className="text-center py-12 text-slate-500">
+            <div className="text-center py-12 text-muted-foreground">
               ไม่พบข้อมูลการเติมน้ำมัน
             </div>
           ) : (
             <div className="overflow-x-auto">
               {/* ... (keep table structure) ... */}
               <table className="w-full">
-                <thead>
-                  <tr className="border-b border-white/10">
-                    <th className="text-left p-4 text-xs font-medium text-slate-400 uppercase">วันที่/เวลา</th>
-                    <th className="text-left p-4 text-xs font-medium text-slate-400 uppercase">คนขับ</th>
-                    <th className="text-left p-4 text-xs font-medium text-slate-400 uppercase">ทะเบียนรถ</th>
-                    <th className="text-left p-4 text-xs font-medium text-slate-400 uppercase">สถานี/ปั๊ม</th>
-                    <th className="text-right p-4 text-xs font-medium text-slate-400 uppercase">จำนวน (L)</th>
-                    <th className="text-right p-4 text-xs font-medium text-slate-400 uppercase">ราคา/L</th>
-                    <th className="text-right p-4 text-xs font-medium text-slate-400 uppercase">รวมเงิน</th>
-                    <th className="text-right p-4 text-xs font-medium text-slate-400 uppercase">เลขไมล์</th>
-                    <th className="text-right p-4 text-xs font-medium text-slate-400 uppercase">ความประหยัด</th>
+                <thead className="text-xs uppercase bg-muted/50 text-muted-foreground border-b border-border font-bold">
+                  <tr>
+                    <th className="text-left p-4">วันที่/เวลา</th>
+                    <th className="text-left p-4">คนขับ</th>
+                    <th className="text-left p-4">ทะเบียนรถ</th>
+                    <th className="text-left p-4">สถานี/ปั๊ม</th>
+                    <th className="text-right p-4">จำนวน (L)</th>
+                    <th className="text-right p-4">ราคา/L</th>
+                    <th className="text-right p-4">รวมเงิน</th>
+                    <th className="text-right p-4">เลขไมล์</th>
+                    <th className="text-right p-4">ความประหยัด</th>
                     <th className="p-4 w-[50px]"></th>
                   </tr>
                 </thead>
@@ -138,22 +136,22 @@ export default async function FuelPage(props: Props) {
                   {logs.map((log) => (
                     <tr 
                       key={log.Log_ID} 
-                      className="border-b border-white/5 hover:bg-white/5 transition-colors"
+                      className="border-b border-border hover:bg-muted/50 transition-colors"
                     >
                       <td className="p-4">
-                        <span className="text-slate-300 text-sm">
+                        <span className="text-foreground text-sm">
                           {log.Date_Time ? new Date(log.Date_Time).toLocaleString('th-TH') : "-"}
                         </span>
                       </td>
-                      <td className="p-4 text-white font-medium text-sm">{log.Driver_Name || "-"}</td>
-                      <td className="p-4 text-slate-300 text-sm">{log.Vehicle_Plate || "-"}</td>
-                      <td className="p-4 text-slate-300 text-sm">
+                      <td className="p-4 text-foreground font-medium text-sm">{log.Driver_Name || "-"}</td>
+                      <td className="p-4 text-muted-foreground text-sm">{log.Vehicle_Plate || "-"}</td>
+                      <td className="p-4 text-muted-foreground text-sm">
                         <div className="flex flex-col">
-                            <span>{log.Station_Name || "-"}</span>
+                            <span className="text-foreground">{log.Station_Name || "-"}</span>
                             <span className={`text-[10px] px-1.5 py-0.5 rounded-full w-fit ${
-                                log.Status === 'Approved' ? 'bg-emerald-500/20 text-emerald-400' :
-                                log.Status === 'Rejected' ? 'bg-red-500/20 text-red-400' :
-                                'bg-slate-500/20 text-slate-400'
+                                log.Status === 'Approved' ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400' :
+                                log.Status === 'Rejected' ? 'bg-red-500/20 text-red-600 dark:text-red-400' :
+                                'bg-muted text-muted-foreground'
                             }`}>
                                 {log.Status === 'Approved' ? 'อนุมัติแล้ว' : 
                                  log.Status === 'Rejected' ? 'ไม่อนุมัติ' : 'รอตรวจสอบ'}
@@ -163,7 +161,7 @@ export default async function FuelPage(props: Props) {
                       <td className="p-4 text-right">
                          {/* Capacity Alert */}
                          <div className="flex flex-col items-end">
-                            <span className={`text-sm ${log.Capacity_Status === 'Overflow' ? 'text-red-400 font-bold' : 'text-slate-300'}`}>
+                            <span className={`text-sm ${log.Capacity_Status === 'Overflow' ? 'text-red-600 dark:text-red-400 font-bold' : 'text-foreground'}`}>
                                 {log.Liters?.toFixed(2)}
                             </span>
                             {log.Capacity_Status === 'Overflow' && (
@@ -174,20 +172,20 @@ export default async function FuelPage(props: Props) {
                          </div>
                       </td>
                       <td className="p-4 text-right">
-                        <span className="text-emerald-400 font-bold text-sm">
+                        <span className="text-emerald-600 dark:text-emerald-400 font-bold text-sm">
                           ฿{log.Price_Total?.toLocaleString()}
                         </span>
                       </td>
-                      <td className="p-4 text-right text-slate-400 text-sm">{log.Odometer?.toLocaleString()}</td>
+                      <td className="p-4 text-right text-muted-foreground font-mono text-sm">{log.Odometer?.toLocaleString()}</td>
                       <td className="p-4 text-right">
                          {log.Km_Per_Liter && log.Km_Per_Liter > 0 ? (
                             <div className="flex flex-col items-end">
                                 <div className={`flex items-center justify-end gap-1 ${
-                                    log.Efficiency_Status === 'Normal' ? 'text-emerald-400' : 
-                                    log.Efficiency_Status === 'Warning' ? 'text-amber-400' : 'text-red-400'
+                                    log.Efficiency_Status === 'Normal' ? 'text-emerald-600 dark:text-emerald-400' : 
+                                    log.Efficiency_Status === 'Warning' ? 'text-amber-600 dark:text-amber-400' : 'text-red-600 dark:text-red-400'
                                 }`}>
                                     <span className="font-bold text-sm">{log.Km_Per_Liter.toFixed(1)}</span>
-                                    <span className="text-xs text-slate-500">km/L</span>
+                                    <span className="text-xs text-muted-foreground">km/L</span>
                                 </div>
                                 {log.Efficiency_Status !== 'Normal' && (
                                     <span className={`text-[10px] px-1 rounded ${
@@ -198,7 +196,7 @@ export default async function FuelPage(props: Props) {
                                 )}
                             </div>
                          ) : (
-                            <span className="text-slate-600 text-xs">-</span>
+                            <span className="text-muted-foreground/50 text-xs">-</span>
                          )}
                       </td>
                       <td className="p-4">
@@ -215,7 +213,7 @@ export default async function FuelPage(props: Props) {
             </div>
           )}
 
-          <div className="p-4 border-t border-white/10">
+          <div className="p-4 border-t border-border">
              <Pagination totalItems={count || 0} limit={limit} />
           </div>
         </CardContent>
@@ -224,7 +222,7 @@ export default async function FuelPage(props: Props) {
       {/* Fuel Analytics Dashboard */}
       <div className="mt-8">
         <h2 className="text-xl font-bold text-foreground mb-4 flex items-center gap-2">
-          <TrendingUp className="text-cyan-400" size={20} />
+          <TrendingUp className="text-cyan-600 dark:text-cyan-400" size={20} />
           วิเคราะห์การใช้น้ำมัน
         </h2>
         <FuelAnalyticsDashboard analytics={analytics} />

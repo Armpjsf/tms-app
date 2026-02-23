@@ -9,7 +9,8 @@ import {
   getSubcontractorPerformance,
   getExecutiveKPIs,
   getRouteEfficiency,
-  getDriverLeaderboard
+  getDriverLeaderboard,
+  getVehicleProfitability 
 } from "@/lib/supabase/analytics"
 import { getBillingAnalytics } from "@/lib/supabase/billing-analytics"
 import { getFuelAnalytics } from "@/lib/supabase/fuel-analytics"
@@ -29,9 +30,17 @@ import { SafetySection } from "@/components/analytics/safety-section"
 import { WorkforceSection } from "@/components/analytics/workforce-section"
 import { CustomerRouteSection } from "@/components/analytics/customer-route-section"
 import { ExportAllButton } from "@/components/analytics/export-all-button"
+import { ProfitabilitySection } from "@/components/analytics/profitability-section"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { BarChart3, TrendingUp, Truck, ShieldAlert, Layers, Trophy, Star } from "lucide-react"
+
+interface DriverStats {
+  name: string
+  completedJobs: number
+  onTimeRate: number
+  revenue: number
+}
 
 export async function DashboardContent({ 
   startDate, 
@@ -59,7 +68,8 @@ export async function DashboardContent({
     safety,
     workforce,
     routes,
-    driverLeaderboard
+    driverLeaderboard,
+    vehicleProfitability
   ] = await Promise.all([
     getFinancialStats(startDate, endDate, branchId),
     getRevenueTrend(startDate, endDate, branchId),
@@ -75,7 +85,8 @@ export async function DashboardContent({
     getSafetyAnalytics(startDate, endDate, branchId),
     getWorkforceAnalytics(startDate, endDate, branchId),
     getRouteEfficiency(startDate, endDate, branchId),
-    getDriverLeaderboard(startDate, endDate, branchId)
+    getDriverLeaderboard(startDate, endDate, branchId),
+    getVehicleProfitability(startDate, endDate, branchId)
   ])
 
   return (
@@ -154,7 +165,7 @@ export async function DashboardContent({
                     </CardHeader>
                     <CardContent className="pt-4">
                         <div className="space-y-4">
-                            {driverLeaderboard.slice(0, 5).map((driver, idx) => (
+                            {driverLeaderboard.slice(0, 5).map((driver: DriverStats, idx: number) => (
                                 <div key={driver.name} className="flex items-center justify-between group">
                                     <div className="flex items-center gap-3">
                                         <div className="relative">
@@ -202,6 +213,7 @@ export async function DashboardContent({
            </div>
            
            <FuelSection data={fuel} />
+           <ProfitabilitySection data={vehicleProfitability} financials={financials} />
            <EfficiencyCharts data={revenueTrend} />
            <MaintenanceSection data={maintenance} />
         </section>
@@ -242,7 +254,7 @@ export async function DashboardContent({
                       href: "/admin/jobs",
                       metrics: [
                           { label: "On-Time Success", value: `${opStats.fleet.onTimeDelivery.toFixed(1)}%`, status: opStats.fleet.onTimeDelivery > 90 ? 'good' : 'warning' },
-                          { label: "Active Pipeline", value: statusDist.reduce((a, b) => a + b.value, 0), status: 'good' }
+                          { label: "Active Pipeline", value: statusDist.reduce((a: number, b: { value: number }) => a + b.value, 0), status: 'good' }
                       ]
                   },
                   {

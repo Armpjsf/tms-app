@@ -187,16 +187,16 @@ export default function UserSettingsPage() {
         <DashboardLayout>
             <div className="flex justify-between items-center mb-6">
                 <div>
-                    <h1 className="text-2xl font-bold text-white flex items-center gap-3">
-                        <Users className="text-blue-400" />
+                    <h1 className="text-2xl font-bold text-foreground flex items-center gap-3">
+                        <Users className="text-blue-500" />
                         จัดการผู้ใช้งาน (User Management)
                     </h1>
-                    <p className="text-sm text-slate-400 mt-1">เพิ่ม ลบ แก้ไข ข้อมูลพนักงานและผู้ใช้งานระบบ</p>
+                    <p className="text-sm text-muted-foreground mt-1">เพิ่ม ลบ แก้ไข ข้อมูลพนักงานและผู้ใช้งานระบบ</p>
                 </div>
                 <div className="flex gap-2">
                      <ExcelImport 
                         trigger={
-                            <Button variant="outline" className="gap-2 border-slate-700 hover:bg-slate-800">
+                            <Button variant="outline" className="gap-2 border-border hover:bg-muted">
                                 <FileSpreadsheet size={16} /> 
                                 นำเข้า Excel
                             </Button>
@@ -216,21 +216,24 @@ export default function UserSettingsPage() {
                 </div>
             </div>
 
-            <div className="flex items-center space-x-2 mb-6 bg-slate-900/50 p-2 rounded-xl border border-slate-800">
-                <Search className="text-slate-500 ml-2" />
+            <div className="flex items-center space-x-2 mb-6 bg-card/50 p-2 rounded-xl border border-border">
+                <Search className="text-muted-foreground ml-2" />
                 <Input 
+                    id="search-users-input"
+                    name="search-users-input"
+                    autoComplete="off"
                     placeholder="ค้นหาชื่อ หรือ Username..." 
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="border-none bg-transparent focus-visible:ring-0 text-white placeholder:text-slate-500"
+                    className="border-none bg-transparent focus-visible:ring-0 text-foreground placeholder:text-muted-foreground"
                 />
             </div>
 
-            <Card className="bg-slate-900/50 border-slate-800">
+            <Card className="bg-card border-border shadow-sm">
                 <CardContent className="p-0">
                     <div className="relative w-full overflow-auto">
                         <table className="w-full text-sm text-left">
-                            <thead className="text-xs uppercase bg-slate-900 text-slate-400 border-b border-slate-800">
+                            <thead className="text-xs uppercase bg-muted/50 text-muted-foreground border-b border-border font-bold">
                                 <tr>
                                     <th className="px-6 py-4">ชื่อผู้ใช้ (Username)</th>
                                     <th className="px-6 py-4">ชื่อ - นามสกุล</th>
@@ -240,24 +243,24 @@ export default function UserSettingsPage() {
                                     <th className="px-6 py-4 text-right">จัดการ</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-slate-800">
+                            <tbody className="divide-y divide-border">
                                 {loading ? (
                                     <tr><td colSpan={6} className="text-center py-8 text-slate-500">Loading...</td></tr>
                                 ) : filteredUsers.length === 0 ? (
                                     <tr><td colSpan={6} className="text-center py-8 text-slate-500">ไม่พบข้อมูล</td></tr>
                                 ) : (
                                     filteredUsers.map((user) => (
-                                        <tr key={user.Username} className="hover:bg-slate-800/50 transition-colors">
-                                            <td className="px-6 py-4 font-medium text-white">
+                                        <tr key={user.Username} className="hover:bg-muted/30 transition-colors">
+                                            <td className="px-6 py-4 font-medium text-foreground">
                                                 {user.Username}
                                                 {user.Customer_ID && (
-                                                    <div className="text-[10px] text-blue-400 font-normal">
+                                                    <div className="text-[10px] text-blue-500 font-normal">
                                                         Client: {user.Master_Customers?.Customer_Name || user.Customer_ID}
                                                     </div>
                                                 )}
                                             </td>
-                                            <td className="px-6 py-4 text-slate-300">{user.Name}</td>
-                                            <td className="px-6 py-4 text-slate-300">
+                                            <td className="px-6 py-4 text-foreground/80">{user.Name}</td>
+                                            <td className="px-6 py-4 text-muted-foreground">
                                                 {user.Branch_ID || "-"}
                                             </td>
                                             <td className="px-6 py-4 text-slate-300">
@@ -275,7 +278,7 @@ export default function UserSettingsPage() {
                                                     variant="ghost" 
                                                     size="icon" 
                                                     onClick={() => handleOpenDialog(user)} 
-                                                    className="text-slate-400 hover:text-white hover:bg-slate-700 disabled:opacity-30"
+                                                    className="text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-30"
                                                     disabled={(user.Role === "Super Admin" || user.Role === "Admin") && currentRoleId !== 1}
                                                  >
                                                      <Edit className="w-4 h-4" />
@@ -284,7 +287,7 @@ export default function UserSettingsPage() {
                                                     variant="ghost" 
                                                     size="icon" 
                                                     onClick={() => handleDelete(user.Username)} 
-                                                    className="text-red-400 hover:text-red-300 hover:bg-red-900/20 disabled:opacity-30"
+                                                    className="text-red-500 hover:text-red-600 hover:bg-red-500/10 disabled:opacity-30"
                                                     disabled={(user.Role === "Super Admin" || user.Role === "Admin") && currentRoleId !== 1}
                                                  >
                                                      <Trash2 className="w-4 h-4" />
@@ -300,10 +303,10 @@ export default function UserSettingsPage() {
             </Card>
 
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                <DialogContent className="bg-slate-900 border-slate-800 text-white max-w-2xl max-h-[90vh] overflow-hidden flex flex-col p-0">
-                    <DialogHeader className="p-6 border-b border-slate-800">
+                <DialogContent className="bg-background border-border text-foreground max-w-2xl max-h-[90vh] overflow-hidden flex flex-col p-0 shadow-2xl">
+                    <DialogHeader className="p-6 border-b border-border bg-card">
                         <DialogTitle className="flex items-center gap-2">
-                            <Shield className="w-5 h-5 text-blue-400" />
+                            <Shield className="w-5 h-5 text-blue-500" />
                             {editingUser ? "แก้ไขผู้ใช้งาน" : "สร้างผู้ใช้งานใหม่"}
                         </DialogTitle>
                     </DialogHeader>
@@ -347,10 +350,10 @@ export default function UserSettingsPage() {
                                         value={formData.Branch_ID || ""} 
                                         onValueChange={v => setFormData({...formData, Branch_ID: v})}
                                     >
-                                        <SelectTrigger className="bg-slate-800 border-slate-700 text-white">
+                                        <SelectTrigger className="bg-card border-border text-foreground">
                                             <SelectValue placeholder="เลือกสาขา" />
                                         </SelectTrigger>
-                                        <SelectContent className="bg-slate-900 border-slate-800 text-white">
+                                        <SelectContent className="bg-card border-border text-foreground">
                                             {branches.map(b => (
                                                 <SelectItem key={b.Branch_ID} value={b.Branch_ID}>
                                                     {b.Branch_Name} ({b.Branch_ID})
@@ -373,10 +376,10 @@ export default function UserSettingsPage() {
                                     value={formData.Role || ""} 
                                     onValueChange={handleRoleChange}
                                 >
-                                    <SelectTrigger className="bg-slate-800 border-slate-700 text-white">
+                                    <SelectTrigger className="bg-card border-border text-foreground">
                                         <SelectValue placeholder="เลือกบทบาท" />
                                     </SelectTrigger>
-                                    <SelectContent className="bg-slate-900 border-slate-800 text-white">
+                                    <SelectContent className="bg-card border-border text-foreground">
                                         {STANDARD_ROLES.map(role => (
                                             <SelectItem key={role} value={role}>
                                                 {role}
@@ -391,13 +394,13 @@ export default function UserSettingsPage() {
 
                         <div className="space-y-4">
                             <div className="flex justify-between items-center">
-                                <Label className="text-blue-400 font-bold uppercase text-xs">สิทธิ์การใช้งาน (Granular Permissions)</Label>
-                                <span className="text-[10px] text-slate-500 italic">* อ้างอิงตามบทบาท และสามารถปรับเปลี่ยนเฉพาะบุคคลได้</span>
+                                <Label className="text-blue-500 font-bold uppercase text-xs">สิทธิ์การใช้งาน (Granular Permissions)</Label>
+                                <span className="text-[10px] text-muted-foreground italic">* อ้างอิงตามบทบาท และสามารถปรับเปลี่ยนเฉพาะบุคคลได้</span>
                             </div>
                             
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                 {SYSTEM_PERMISSIONS.map((perm) => (
-                                    <div key={perm.id} className="flex items-start space-x-3 p-3 rounded-lg bg-slate-800/30 border border-slate-800/50 hover:bg-slate-800/50 transition-colors">
+                                    <div key={perm.id} className="flex items-start space-x-3 p-3 rounded-lg bg-muted/30 border border-border/50 hover:bg-muted/50 transition-colors">
                                         <Checkbox 
                                             id={`perm-${perm.id}`}
                                             checked={formData.Permissions?.[perm.id] || false}
@@ -421,16 +424,16 @@ export default function UserSettingsPage() {
                         </div>
 
                         {/* Customer Link (Optional) */}
-                        <div className="space-y-2 p-4 rounded-lg bg-slate-950/50 border border-slate-800">
-                            <Label className="text-slate-400 text-xs font-bold uppercase">เชื่อมโยงลูกค้า (Customer Link)</Label>
+                        <div className="space-y-2 p-4 rounded-lg bg-muted/20 border border-border">
+                            <Label className="text-muted-foreground text-xs font-bold uppercase">เชื่อมโยงลูกค้า (Customer Link)</Label>
                             <Select 
                                 value={formData.Customer_ID || "none"} 
                                 onValueChange={v => setFormData({...formData, Customer_ID: v === "none" ? null : v})}
                             >
-                                <SelectTrigger className="bg-slate-800 border-slate-700">
+                                <SelectTrigger className="bg-card border-border">
                                     <SelectValue placeholder="เชื่อมโยงกับลูกค้า (Optional)" />
                                 </SelectTrigger>
-                                <SelectContent className="bg-slate-800 border-slate-700 text-white">
+                                <SelectContent className="bg-card border-border">
                                     <SelectItem value="none">-- ไม่ระบุ (พนักงานทั่วไป) --</SelectItem>
                                     {customers.map(c => (
                                         <SelectItem key={c.Customer_ID} value={c.Customer_ID}>
@@ -442,24 +445,24 @@ export default function UserSettingsPage() {
                         </div>
 
                         <div className="space-y-2 pb-4">
-                             <Label className="text-slate-400">สถานะการใช้งาน</Label>
+                             <Label className="text-muted-foreground">สถานะการใช้งาน</Label>
                              <Select 
                                 value={formData.Active_Status} 
                                 onValueChange={v => setFormData({...formData, Active_Status: v})}
                             >
-                                <SelectTrigger className="bg-slate-800 border-slate-700">
+                                <SelectTrigger className="bg-card border-border">
                                     <SelectValue />
                                 </SelectTrigger>
-                                <SelectContent className="bg-slate-800 border-slate-700 text-white">
+                                <SelectContent className="bg-card border-border">
                                     <SelectItem value="Active">ใช้งาน (Active)</SelectItem>
                                     <SelectItem value="Inactive">ระงับ (Inactive)</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
                     </div>
-
-                    <DialogFooter className="p-6 border-t border-slate-800 bg-slate-900/50">
-                        <Button variant="outline" onClick={() => setIsDialogOpen(false)} className="border-slate-700">ยกเลิก</Button>
+ 
+                    <DialogFooter className="p-6 border-t border-border bg-muted/20">
+                        <Button variant="outline" onClick={() => setIsDialogOpen(false)} className="border-border">ยกเลิก</Button>
                         <Button onClick={handleSave} disabled={saving} className="bg-blue-600 hover:bg-blue-700 min-w-[100px]">
                             {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                             บันทึกข้อมูล

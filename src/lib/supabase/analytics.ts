@@ -609,3 +609,88 @@ export async function getRegionalDeepDive(startDate?: string, endDate?: string) 
         }
     })
 }
+// 12. Vehicle Profitability Breakdown
+export async function getVehicleProfitability(startDate?: string, endDate?: string, branchId?: string) {
+    const supabase = await createClient()
+    
+    // Default to current month
+    const now = new Date()
+    const firstDay = startDate || new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0]
+    const lastDay = endDate || new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0]
+
+    // Determine effective branch
+    const userBranchId = await getUserBranchId()
+    const targetBranchId = (branchId && branchId !== 'All') ? branchId : userBranchId
+    const effectiveBranchId = targetBranchId === 'All' ? null : targetBranchId
+
+    // 1. Get Revenue & Driver Cost per Vehicle
+    let jobsQuery = supabase
+        .from('Jobs_Main')
+        .select('Vehicle_Plate, Price_Cust_Total, Cost_Driver_Total')
+        .gte('Plan_Date', firstDay)
+        .lte('Plan_Date', lastDay)
+        .in('Job_Status', ['Completed', 'Delivered'])
+        .not('Vehicle_Plate', 'is', null)
+
+    if (effectiveBranchId) {
+        jobsQuery = jobsQuery.eq('Branch_ID', effectiveBranchId)
+    }
+
+    const { data: jobs } = await jobsQuery
+
+    // 2. Get Fuel Cost per Vehicle
+    let fuelQuery = supabase
+        .from('Fuel_Logs')
+        .select('Vehicle_Plate, Price_Total')
+        .gte('Date_Time', `${firstDay}T00:00:00`)
+        .lte('Date_Time', `${lastDay}T23:59:59`)
+        .eq('Status', 'Approved')
+
+    const { data: fuel } = await fuelQuery
+
+    // 3. Get Maintenance Cost per Vehicle
+    let maintenanceQuery = supabase
+        .from('Repair_Tickets')
+        .select('Vehicle_Plate, Cost_Total')
+        .gte('Date_Report', `${firstDay}T00:00:00`)
+        .lte('Date_Report', `${lastDay}T23:59:59`)
+        .eq('Status', 'Completed')
+
+    const { data: maintenance } = await maintenanceQuery
+
+    const stats: Record<string, { plate: string, revenue: number, driverCost: number, fuelCost: number, maintenanceCost: number, totalCost: number, netProfit: number }> = {}
+
+    jobs?.forEach(job => {
+        const plate = job.Vehicle_Plate!
+        if (!stats[plate]) {
+            stats[plate] = { plate, revenue: 0, driverCost: 0, fuelCost: 0, maintenanceCost: 0, totalCost: 0, netProfit: 0 }
+        }
+        stats[plate].revenue += (job.Price_Cust_Total || 0)
+        stats[plate].driverCost += (job.Cost_Driver_Total || 0)
+    })
+
+    fuel?.forEach(f => {
+        const plate = f.Vehicle_Plate!
+        if (!stats[plate]) {
+            stats[plate] = { plate, revenue: 0, driverCost: 0, fuelCost: 0, maintenanceCost: 0, totalCost: 0, netProfit: 0 }
+        }
+        stats[plate].fuelCost += (f.Price_Total || 0)
+    })
+
+    maintenance?.forEach(m => {
+        const plate = m.Vehicle_Plate!
+        if (!stats[plate]) {
+            stats[plate] = { plate, revenue: 0, driverCost: 0, fuelCost: 0, maintenanceCost: 0, totalCost: 0, netProfit: 0 }
+        }
+        stats[plate].maintenanceCost += (m.Cost_Total || 0)
+    })
+
+    return Object.values(stats).map(s => {
+        const totalCost = s.driverCost + s.fuelCost + s.maintenanceCost
+        return {
+            ...s,
+            totalCost,
+            netProfit: s.revenue - totalCost
+        }
+    }).sort((a, b) => b.netProfit - a.netProfit)
+}

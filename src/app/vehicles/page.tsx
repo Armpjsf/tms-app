@@ -45,16 +45,16 @@ export default async function VehiclesPage(props: Props) {
       {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-white mb-2 flex items-center gap-3">
-            <Truck className="text-purple-400" />
+          <h1 className="text-3xl font-bold text-foreground mb-2 flex items-center gap-3">
+            <Truck className="text-purple-500" />
             จัดการรถขนส่ง
           </h1>
-          <p className="text-slate-400">ข้อมูลรถและสถานะการซ่อมบำรุง</p>
+          <p className="text-muted-foreground">ข้อมูลรถและสถานะการซ่อมบำรุง</p>
         </div>
         <div className="flex gap-2">
             <ExcelImport 
                 trigger={
-                    <Button variant="outline" className="gap-2 border-slate-700 hover:bg-slate-800">
+                    <Button variant="outline" className="gap-2 border-border hover:bg-muted">
                         <FileSpreadsheet size={16} /> 
                         นำเข้า Excel
                     </Button>
@@ -81,23 +81,22 @@ export default async function VehiclesPage(props: Props) {
         </div>
       </div>
 
-      {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        <div className="rounded-xl p-4 bg-purple-500/10 border border-purple-500/20">
-          <p className="text-2xl font-bold text-purple-400">{stats.total}</p>
-          <p className="text-xs text-slate-400">รถทั้งหมด</p>
+        <div className="rounded-xl p-4 bg-purple-500/10 border border-purple-500/20 shadow-sm">
+          <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">{stats.total}</p>
+          <p className="text-xs text-muted-foreground">รถทั้งหมด</p>
         </div>
-        <div className="rounded-xl p-4 bg-emerald-500/10 border border-emerald-500/20">
-          <p className="text-2xl font-bold text-emerald-400">{stats.active}</p>
-          <p className="text-xs text-slate-400">พร้อมใช้งาน</p>
+        <div className="rounded-xl p-4 bg-emerald-500/10 border border-emerald-500/20 shadow-sm">
+          <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{stats.active}</p>
+          <p className="text-xs text-muted-foreground">พร้อมใช้งาน</p>
         </div>
-        <div className="rounded-xl p-4 bg-amber-500/10 border border-amber-500/20">
-          <p className="text-2xl font-bold text-amber-400">{stats.maintenance}</p>
-          <p className="text-xs text-slate-400">ซ่อมบำรุง</p>
+        <div className="rounded-xl p-4 bg-amber-500/10 border border-amber-500/20 shadow-sm">
+          <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">{stats.maintenance}</p>
+          <p className="text-xs text-muted-foreground">ซ่อมบำรุง</p>
         </div>
-        <div className="rounded-xl p-4 bg-slate-500/10 border border-slate-500/20">
-          <p className="text-2xl font-bold text-slate-400">{stats.total - stats.active - stats.maintenance}</p>
-          <p className="text-xs text-slate-400">ไม่พร้อม/อื่นๆ</p>
+        <div className="rounded-xl p-4 bg-slate-500/10 border border-slate-500/20 shadow-sm">
+          <p className="text-2xl font-bold text-slate-600 dark:text-slate-400">{stats.total - stats.active - stats.maintenance}</p>
+          <p className="text-xs text-muted-foreground">ไม่พร้อม/อื่นๆ</p>
         </div>
       </div>
 
@@ -106,14 +105,13 @@ export default async function VehiclesPage(props: Props) {
         <SearchInput placeholder="ค้นหาทะเบียน, ยี่ห้อ..." />
       </div>
 
-      {/* Vehicles Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {vehicles.length === 0 ? (
-          <div className="col-span-full text-center py-12 text-slate-500">
+          <div className="col-span-full text-center py-12 text-muted-foreground">
             ไม่พบข้อมูลรถ
           </div>
         ) : vehicles.map((vehicle) => (
-          <Card key={vehicle.vehicle_plate} variant="glass" hover={true}>
+          <Card key={vehicle.vehicle_plate} className="bg-card border-border hover:border-primary/50 transition-all shadow-sm hover:shadow-md">
             <CardContent className="p-5">
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3">
@@ -121,10 +119,10 @@ export default async function VehiclesPage(props: Props) {
                     <Truck size={24} />
                   </div>
                   <div>
-                    <h3 className="font-bold text-white">{vehicle.vehicle_plate}</h3>
-                    <p className="text-xs text-slate-400">{vehicle.brand} {vehicle.model}</p>
+                    <h3 className="font-bold text-foreground">{vehicle.vehicle_plate}</h3>
+                    <p className="text-xs text-muted-foreground">{vehicle.brand} {vehicle.model}</p>
                     {vehicle.sub_id && (
-                        <p className="text-[10px] text-blue-400">
+                        <p className="text-[10px] text-blue-500 font-medium">
                             {subcontractors.find(s => s.Sub_ID === vehicle.sub_id)?.Sub_Name || vehicle.sub_id}
                         </p>
                     )}
@@ -139,7 +137,7 @@ export default async function VehiclesPage(props: Props) {
                     {vehicle.active_status}
                     </span>
                     {(vehicle.max_weight_kg || vehicle.max_volume_cbm) && (
-                        <div className="text-[10px] text-slate-500 text-right">
+                        <div className="text-[10px] text-muted-foreground text-right">
                            {vehicle.max_weight_kg && <span>{vehicle.max_weight_kg}kg</span>}
                            {vehicle.max_weight_kg && vehicle.max_volume_cbm && <span className="mx-1">|</span>}
                            {vehicle.max_volume_cbm && <span>{vehicle.max_volume_cbm}m³</span>}
@@ -150,16 +148,16 @@ export default async function VehiclesPage(props: Props) {
               </div>
 
               <div className="space-y-2 text-sm mb-4">
-                <div className="flex items-center gap-2 text-slate-300">
-                  <Gauge size={14} className="text-slate-500" />
+                <div className="flex items-center gap-2 text-foreground/80">
+                  <Gauge size={14} className="text-muted-foreground" />
                   <span>Mileage: {vehicle.current_mileage ? vehicle.current_mileage.toLocaleString() : "-"} km</span>
                 </div>
-                <div className="flex items-center gap-2 text-slate-300">
-                  <Wrench size={14} className="text-slate-500" />
+                <div className="flex items-center gap-2 text-foreground/80">
+                  <Wrench size={14} className="text-muted-foreground" />
                   <span>Last Service: {vehicle.last_service_date ? new Date(vehicle.last_service_date).toLocaleDateString('th-TH') : "-"}</span>
                 </div>
-                <div className="flex items-center gap-2 text-slate-300">
-                  <Calendar size={14} className="text-slate-500" />
+                <div className="flex items-center gap-2 text-foreground/80">
+                  <Calendar size={14} className="text-muted-foreground" />
                   <span>Next Service: {vehicle.next_service_mileage ? `${vehicle.next_service_mileage.toLocaleString()} km` : "-"}</span>
                 </div>
               </div>
