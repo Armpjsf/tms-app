@@ -7,15 +7,15 @@ import { revalidatePath } from 'next/cache'
 import { getUserBranchId } from '@/lib/permissions'
 
 export type FuelFormData = {
-  Date_Time: string
-  Driver_ID: string
-  Vehicle_Plate: string
+  Date_Time: string | null
+  Driver_ID: string | null
+  Vehicle_Plate: string | null
   Liter: number
   Price: number
   Total_Amount: number
-  Mileage: number
-  Station_Name: string
-  Photo_Url?: string
+  Mileage: number | null
+  Station_Name: string | null
+  Photo_Url?: string | null
 }
 
 export async function createFuelLog(data: FuelFormData) {

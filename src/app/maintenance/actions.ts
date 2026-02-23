@@ -5,14 +5,14 @@ import { revalidatePath } from 'next/cache'
 import { getUserBranchId } from '@/lib/permissions'
 
 export type TicketFormData = {
-  Date_Report: string
-  Driver_ID: string
-  Vehicle_Plate: string
-  Issue_Type: string
-  Issue_Desc: string
-  Priority: string
-  Odometer?: number // Add Odometer
-  Photo_Url?: string
+  Date_Report: string | null
+  Driver_ID: string | null
+  Vehicle_Plate: string | null
+  Issue_Type: string | null
+  Issue_Desc: string | null
+  Priority: string | null
+  Odometer?: number | null
+  Photo_Url?: string | null
 }
 
 export async function createRepairTicket(data: TicketFormData) {
