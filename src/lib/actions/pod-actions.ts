@@ -1,11 +1,11 @@
 "use server"
 
-import { createClient } from "@/utils/supabase/server"
+import { createAdminClient } from "@/utils/supabase/server"
 import { revalidatePath } from "next/cache"
 import { uploadFileToDrive } from "@/lib/google-drive"
 
 export async function submitJobPOD(jobId: string, formData: FormData) {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
 
   const photoFile = formData.get("photo") as File
   const signatureFile = formData.get("signature") as File // Might be blob sent as file
@@ -144,7 +144,7 @@ export async function submitJobPOD(jobId: string, formData: FormData) {
     return { success: true }
 
   } catch (error: unknown) {
-    console.error("POD Submit Error:", error)
+    console.error(`[submitJobPOD] Error for jobId ${jobId}:`, error)
     const errMsg = error instanceof Error ? error.message : "Internal Server Error"
     return { error: `Error: ${errMsg}` }
   }
@@ -153,13 +153,7 @@ export async function submitJobPOD(jobId: string, formData: FormData) {
 export async function submitJobPickup(jobId: string, formData: FormData) {
   console.log("=== submitJobPickup START ===", { jobId })
   
-  let supabase;
-  try {
-    supabase = await createClient()
-  } catch (e) {
-    console.error("Supabase client creation failed:", e)
-    return { error: "ไม่สามารถเชื่อมต่อฐานข้อมูล" }
-  }
+  const supabase = createAdminClient()
 
   try {
     const timestamp = Date.now()
@@ -269,7 +263,7 @@ export async function submitJobPickup(jobId: string, formData: FormData) {
     
   } catch (error) {
     const errMsg = error instanceof Error ? error.message : String(error)
-    console.error("=== submitJobPickup FAILED ===", errMsg)
+    console.error(`[submitJobPickup] Error for jobId ${jobId}:`, errMsg)
     return { error: `บันทึกไม่สำเร็จ: ${errMsg}` }
   }
 }

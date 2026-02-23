@@ -1,10 +1,10 @@
 'use server'
 
-import { createClient } from '@/utils/supabase/server'
+import { createAdminClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
 
-export async function updateJobStatus(jobId: string, status: string, location?: string) {
-  const supabase = await createClient()
+export async function updateJobStatus(jobId: string, status: string) {
+  const supabase = createAdminClient()
 
   // 1. Update Job Status
   const { error } = await supabase
@@ -17,8 +17,8 @@ export async function updateJobStatus(jobId: string, status: string, location?: 
     .eq('Job_ID', jobId)
 
   if (error) {
-    console.error('Error updating job status:', error)
-    return { success: false, message: 'Failed to update status' }
+    console.error(`[JobStatusUpdate] Error for jobId ${jobId}:`, error)
+    return { success: false, message: `Failed to update status: ${error.message}` }
   }
 
   // 2. Log History/Tracking (Optional but recommended)
