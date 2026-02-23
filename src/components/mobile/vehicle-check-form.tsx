@@ -94,7 +94,8 @@ export function MobileVehicleCheckForm({ driverId, driverName, defaultVehiclePla
         }
     } catch (err) {
         console.error("Vehicle Check Error:", err)
-        alert("เกิดข้อผิดพลาดในการบันทึก")
+        const errMsg = err instanceof Error ? err.message : String(err)
+        alert(`เกิดข้อผิดพลาดในการบันทึก: ${errMsg}`)
     } finally {
         setLoading(false)
     }

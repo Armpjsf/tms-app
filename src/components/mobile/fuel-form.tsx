@@ -65,8 +65,9 @@ export function MobileFuelForm({ driverId, driverName, defaultVehiclePlate }: Mo
             alert(`เกิดข้อผิดพลาด: ${result.message}`)
         }
     } catch (error) {
-        console.error(error)
-        alert("เกิดข้อผิดพลาดในการเชื่อมต่อ")
+        console.error("Fuel form error:", error)
+        const errMsg = error instanceof Error ? error.message : String(error)
+        alert(`เกิดข้อผิดพลาดในการเชื่อมต่อ: ${errMsg}`)
     } finally {
         setLoading(false)
     }

@@ -16,7 +16,12 @@ const nextConfig: NextConfig = {
             hostname: 'jhksvhujsrbkeyzpvpog.supabase.co',
         }
     ]
-  }
+  },
+  experimental: {
+    serverActions: {
+      bodySizeLimit: '10mb',
+    },
+  },
 };
 
 export default withPWA(nextConfig);

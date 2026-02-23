@@ -1,5 +1,7 @@
 'use server'
 
+import crypto from 'crypto'
+
 import { createAdminClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
 
