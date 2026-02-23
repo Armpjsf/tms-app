@@ -60,32 +60,19 @@ export async function submitVehicleCheck(formData: FormData) {
     signatureUrl = await uploadWithRename(signatureFile, name, 'Vehicle_Check_Signatures')
   }
 
-  // 2. Checklist summary
-  const passedItems = Object.entries(items)
-    .filter(([, checked]) => checked)
-    .map(([item]) => item)
-  
-  const failedItems = Object.entries(items)
-    .filter(([, checked]) => !checked)
-    .map(([item]) => item)
+  // 2. Checklist summary included in JSON check_items
 
-  const status = failedItems.length === 0 ? 'Pass' : 'Fail'
-
-  const { error } = await supabase
-    .from('Vehicle_Checks')
-    .insert({
-      Driver_ID: driverId,
-      Driver_Name: driverName,
-      Vehicle_Plate: vehiclePlate,
-      Check_Date: new Date().toISOString(),
-      Status: status,
-      Passed_Items: passedItems,
-      Failed_Items: failedItems,
-      Total_Items: Object.keys(items).length,
-      Passed_Count: passedItems.length,
-      Photo_Urls: photoUrls.join(','),
-      Signature_Url: signatureUrl
-    })
+      const { error } = await supabase
+        .from('Vehicle_Checks')
+        .insert({
+          driver_id: driverId,
+          driver_name: driverName,
+          vehicle_plate: vehiclePlate,
+          checked_at: new Date().toISOString(),
+          check_items: items,
+          Photo_Urls: photoUrls.join(','),
+          Signature_Url: signatureUrl
+        })
 
   if (error) {
     console.error('Error saving vehicle check:', error)

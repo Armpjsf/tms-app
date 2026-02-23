@@ -63,14 +63,37 @@ export default function CustomerBillingClient({ initialJobs, companyProfile, cus
     return true
   })
 
+  // Helper to calculate total including extra costs
+  const getJobTotal = (job: Job) => {
+      const basePrice = job.Price_Cust_Total || 0
+      let extra = 0
+      if (job.extra_costs_json) {
+          try {
+              let costs: any = job.extra_costs_json
+              if (typeof costs === 'string') {
+                  try { costs = JSON.parse(costs) } catch {}
+              }
+              if (typeof costs === 'string') {
+                  try { costs = JSON.parse(costs) } catch {}
+              }
+              if (Array.isArray(costs)) {
+                  extra = costs.reduce((sum: number, c: any) => sum + (Number(c.charge_cust) || 0), 0)
+              }
+          } catch (e) {
+              console.error("Error parsing extra costs", e)
+          }
+      }
+      return basePrice + extra
+  }
+
   // Calculate totals
   // Status "Completed" or "Delivered" are considered "Pending Billing" effectively until we have a real Billing Status
   const pendingItems = filteredData
-  const pendingTotal = pendingItems.reduce((sum, i) => sum + (i.Price_Cust_Total || 0), 0)
+  const pendingTotal = pendingItems.reduce((sum, i) => sum + getJobTotal(i), 0)
   
   // Selected items calculations
   const selectedData = filteredData.filter(i => selectedItems.includes(i.Job_ID))
-  const selectedSubtotal = selectedData.reduce((sum, i) => sum + (i.Price_Cust_Total || 0), 0)
+  const selectedSubtotal = selectedData.reduce((sum, i) => sum + getJobTotal(i), 0)
   const selectedWithholding = Math.round(selectedSubtotal * WITHHOLDING_TAX_RATE)
   const selectedNetTotal = selectedSubtotal - selectedWithholding
 
@@ -242,40 +265,68 @@ export default function CustomerBillingClient({ initialJobs, companyProfile, cus
                 <thead>
                     <tr className="bg-slate-100 text-slate-700 border-y-2 border-slate-300">
                         <th className="py-3 px-4 text-center font-bold w-16">ลำดับ<br/><span className="text-xs font-normal">No.</span></th>
-                        <th className="py-3 px-4 text-left font-bold">รายละเอียด<br/><span className="text-xs font-normal">Description</span></th>
-                        <th className="py-3 px-4 text-left font-bold">วันที่<br/><span className="text-xs font-normal">Date</span></th>
-                        <th className="py-3 px-4 text-left font-bold">เส้นทาง<br/><span className="text-xs font-normal">Route</span></th>
+                        <th className="py-3 px-4 text-center font-bold w-32">วันที่ขนส่ง<br/><span className="text-xs font-normal">Date</span></th>
+                        <th className="py-3 px-4 text-left font-bold">รายละเอียด (Job ID / Route)<br/><span className="text-xs font-normal">Description</span></th>
                         <th className="py-3 px-4 text-right font-bold w-32">จำนวนเงิน<br/><span className="text-xs font-normal">Amount</span></th>
                     </tr>
                 </thead>
-                <tbody>
-                    {selectedData.map((item, index) => (
-                        <tr key={item.Job_ID} className="border-b border-slate-200">
-                            <td className="py-3 px-4 text-center text-slate-500">{index + 1}</td>
-                            <td className="py-3 px-4 font-medium text-slate-800">
-                                ค่าขนส่ง (Job: {item.Job_ID})
-                            </td>
-                            <td className="py-3 px-4 text-slate-600">
-                                {item.Plan_Date ? new Date(item.Plan_Date).toLocaleDateString('th-TH') : '-'}
-                            </td>
-                            <td className="py-3 px-4 text-slate-600 text-xs">
-                                {item.Route_Name || '-'}
-                            </td>
-                            <td className="py-3 px-4 text-right font-medium text-slate-800">
-                                {item.Price_Cust_Total?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                            </td>
-                        </tr>
-                    ))}
-                    {/* Fill empty rows to maintain height if needed, or just standard spacing */}
-                    {Array.from({ length: Math.max(0, 5 - selectedData.length) }).map((_, i) => (
-                         <tr key={`empty-${i}`} className="border-b border-slate-100 h-10">
-                            <td colSpan={5}></td>
-                         </tr>
-                    ))}
-                </tbody>
+                {selectedData.map((job, index) => {
+                    let extraCosts: any[] = []
+                    try {
+                        if (job.extra_costs_json) {
+                            let parsed: any = job.extra_costs_json
+                            if (typeof parsed === 'string') {
+                                try { parsed = JSON.parse(parsed) } catch {}
+                            }
+                            if (typeof parsed === 'string') {
+                                try { parsed = JSON.parse(parsed) } catch {}
+                            }
+                            if (Array.isArray(parsed)) {
+                                extraCosts = parsed
+                            }
+                        }
+                    } catch {}
+
+                    const chargeableExtras = extraCosts.filter(c => c.charge_cust > 0)
+
+                    return (
+                        <tbody key={job.Job_ID} className="text-sm text-slate-700 border-b border-slate-200">
+                            {/* Main Job Row */}
+                            <tr>
+                                <td className="py-3 px-4 text-center text-slate-500 align-top">{index + 1}</td>
+                                <td className="py-3 px-4 text-center text-slate-600 align-top">
+                                    {job.Plan_Date ? new Date(job.Plan_Date).toLocaleDateString('th-TH') : '-'}
+                                </td>
+                                <td className="py-3 px-4 align-top">
+                                    <div className="font-bold text-slate-800">ค่าขนส่ง (Job: {job.Job_ID})</div>
+                                    <div className="text-slate-500 text-xs mt-1">{job.Route_Name || '-'}</div>
+                                </td>
+                                <td className="py-3 px-4 text-right font-medium text-slate-800 align-top">
+                                    {job.Price_Cust_Total?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                </td>
+                            </tr>
+
+                            {/* Extra Costs Rows */}
+                            {chargeableExtras.map((extra, i) => (
+                                <tr key={`${job.Job_ID}-extra-${i}`} className="text-slate-600">
+                                    <td className="py-1 px-4"></td>
+                                    <td className="py-1 px-4 text-center"></td>
+                                    <td className="py-1 px-4">
+                                        <div className="text-sm border-l-2 border-slate-300 pl-2">
+                                            {extra.type}
+                                        </div>
+                                    </td>
+                                    <td className="py-1 px-4 text-right">
+                                        {Number(extra.charge_cust).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    )
+                })}
                 <tfoot>
                     <tr>
-                        <td colSpan={3} rowSpan={3} className="pt-4 pr-8 align-top">
+                        <td colSpan={2} rowSpan={3} className="pt-4 pr-8 align-top">
                             <div className="border border-slate-300 bg-slate-50 p-3 rounded text-xs text-slate-500">
                                 <p className="font-bold mb-1">หมายเหตุ (Remarks):</p>
                                 <p>- กรุณาตรวจสอบความถูกต้องของเอกสาร</p>
@@ -561,7 +612,7 @@ export default function CustomerBillingClient({ initialJobs, companyProfile, cus
                       ฿{(item.Price_Cust_Total || 0).toLocaleString()}
                     </td>
                     <td className="py-3 px-4 text-right text-white font-medium">
-                      ฿{(item.Price_Cust_Total || 0).toLocaleString()}
+                      ฿{getJobTotal(item).toLocaleString()}
                     </td>
                     <td className="py-3 px-4 text-center">
                       <span className="px-2 py-1 rounded-full text-xs font-medium bg-amber-500/10 text-amber-400">

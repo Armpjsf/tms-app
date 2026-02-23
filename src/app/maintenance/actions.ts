@@ -28,20 +28,18 @@ export async function createRepairTicket(data: TicketFormData) {
   // No, that's messy. Let's try to insert. If user reports error, I'll fix.
   // Actually, I can use `Odometer` in insert.
   
-  const { error } = await supabase
-    .from('Repair_Tickets')
-    .insert({
-      Date_Report: data.Date_Report,
-      Driver_ID: data.Driver_ID,
-      Vehicle_Plate: data.Vehicle_Plate,
-      Issue_Type: data.Issue_Type,
-      Issue_Desc: data.Issue_Desc,
-      Priority: data.Priority,
-      Odometer: data.Odometer || 0, // Insert Odometer
-      Photo_Url: data.Photo_Url || null,
-      Status: 'Pending',
-      Branch_ID: branchId === 'All' ? null : branchId
-    })
+      const { error } = await supabase
+        .from('Repair_Tickets')
+        .insert({
+          Date_Report: data.Date_Report,
+          Driver_ID: data.Driver_ID,
+          Vehicle_Plate: data.Vehicle_Plate,
+          Issue_Type: data.Issue_Type,
+          Description: `[Priority: ${data.Priority}] ${data.Odometer ? '[Odo: ' + data.Odometer + '] ' : ''}${data.Issue_Desc}`,
+          Photo_Url: data.Photo_Url || null,
+          Status: 'Pending',
+          Branch_ID: branchId === 'All' ? null : branchId
+        })
 
   if (error) {
     console.error('Error creating ticket:', error)

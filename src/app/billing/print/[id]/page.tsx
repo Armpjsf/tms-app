@@ -118,8 +118,8 @@ export default async function BillingPrintPage(props: Props) {
                     <thead>
                         <tr className="bg-slate-100 text-slate-600 text-sm">
                             <th className="py-2 px-4 text-left">ลำดับ</th>
+                            <th className="py-2 px-4 text-center w-32">วันที่ขนส่ง</th>
                             <th className="py-2 px-4 text-left">รายละเอียด (Job ID / Route)</th>
-                            <th className="py-2 px-4 text-center">วันที่ขนส่ง</th>
                             <th className="py-2 px-4 text-right">จำนวนเงิน</th>
                         </tr>
                     </thead>
@@ -147,12 +147,12 @@ export default async function BillingPrintPage(props: Props) {
                                     {/* Main Job Row */}
                                     <tr>
                                         <td className="py-2 px-4 align-top">{index + 1}</td>
+                                        <td className="py-2 px-4 text-center align-top">
+                                            {new Date(job.Plan_Date).toLocaleDateString('th-TH')}
+                                        </td>
                                         <td className="py-2 px-4">
                                             <div className="font-bold">ค่าขนส่ง (Job: {job.Job_ID})</div>
                                             <div className="text-slate-500 text-xs">{job.Route_Name}</div>
-                                        </td>
-                                        <td className="py-2 px-4 text-center align-top">
-                                            {new Date(job.Plan_Date).toLocaleDateString('th-TH')}
                                         </td>
                                         <td className="py-2 px-4 text-right align-top">{job.Price_Cust_Total?.toLocaleString()}</td>
                                     </tr>
@@ -161,13 +161,13 @@ export default async function BillingPrintPage(props: Props) {
                                     {chargeableExtras.map((extra, i) => (
                                         <tr key={`${job.Job_ID}-extra-${i}`} className="text-slate-600">
                                             <td className="py-1 px-4"></td>
+                                            <td className="py-1 px-4 text-center">
+                                                {/* Same Date or empty */}
+                                            </td>
                                             <td className="py-1 px-4">
                                                 <div className="text-sm border-l-2 border-slate-300 pl-2">
                                                     {extra.type}
                                                 </div>
-                                            </td>
-                                            <td className="py-1 px-4 text-center">
-                                                {/* Same Date or empty */}
                                             </td>
                                             <td className="py-1 px-4 text-right">{Number(extra.charge_cust).toLocaleString()}</td>
                                         </tr>

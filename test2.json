@@ -1,0 +1,22 @@
+{
+  "error": null,
+  "data": [
+    {
+      "Customer_ID": "2",
+      "Customer_Name": "บมจ.ยูนิคอร์ด",
+      "Default_Origin": "นิคมอุตสาหกรรม ",
+      "Contact_Person": "คุณจัดซื้อ",
+      "Phone": "02-999-9999",
+      "Address": null,
+      "Tax_ID": null,
+      "Branch_ID": "PTE",
+      "lat": null,
+      "lon": null,
+      "GoogleMap_Link": null,
+      "Expire_Date": null
+    }
+  ],
+  "count": null,
+  "status": 200,
+  "statusText": "OK"
+}

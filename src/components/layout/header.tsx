@@ -47,7 +47,7 @@ export function Header({ sidebarCollapsed = false }: HeaderProps) {
                             </span>
                             </div>
                     </SelectTrigger>
-                    <SelectContent className="z-[70]">
+                    <SelectContent className="z-[70] bg-background border border-input shadow-md dark:bg-slate-900">
                         <SelectItem value="All">ทุกสาขา</SelectItem>
                         {branches.map(b => (
                             <SelectItem key={b.Branch_ID} value={b.Branch_ID}>

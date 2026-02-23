@@ -1,0 +1,12 @@
+{
+  "error": {
+    "code": "PGRST205",
+    "details": null,
+    "hint": "Perhaps you meant the table 'public.master_vehicles'",
+    "message": "Could not find the table 'public.invoices' in the schema cache"
+  },
+  "data": null,
+  "count": null,
+  "status": 404,
+  "statusText": "Not Found"
+}

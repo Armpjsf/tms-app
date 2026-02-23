@@ -37,7 +37,7 @@ export async function getInvoices(page = 1, limit = 20, query = '') {
 
     let queryBuilder = supabase
       .from('invoices')
-      .select('*, customers(Customer_Name)', { count: 'exact' })
+      .select('*, Master_Customers(Customer_Name)', { count: 'exact' })
     
     if (branchId && !isAdmin) {
         queryBuilder = queryBuilder.or(`Branch_ID.eq.${branchId},Branch_ID.is.null`)
@@ -61,7 +61,8 @@ export async function getInvoices(page = 1, limit = 20, query = '') {
     // Map customer name
     const formattedData = data?.map((inv: any) => ({
         ...inv,
-        Customer_Name: inv.customers?.Customer_Name || 'Unknown'
+        Customer_Name: inv.Master_Customers?.Customer_Name || 'Unknown',
+        customers: inv.Master_Customers
     }))
 
     return { data: formattedData, count: count || 0 }
@@ -76,7 +77,7 @@ export async function getInvoiceById(id: string) {
     const supabase = await createClient()
     const { data, error } = await supabase
       .from('invoices')
-      .select('*, customers(*)')
+      .select('*, Master_Customers(*)')
       .eq('Invoice_ID', id)
       .single()
     
@@ -84,6 +85,9 @@ export async function getInvoiceById(id: string) {
     
     // We might need to fetch items if Items_JSON is not enough or if we want latest data?
     // Items_JSON is a snapshot. We should use it for the invoice.
+    if (data && data.Master_Customers) {
+        data.customers = data.Master_Customers;
+    }
     
     return { success: true, data }
   } catch (error) {

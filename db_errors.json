@@ -1,0 +1,20 @@
+{
+  "r1": {
+    "code": "PGRST204",
+    "details": null,
+    "hint": null,
+    "message": "Could not find the 'Issue_Desc' column of 'Repair_Tickets' in the schema cache"
+  },
+  "r2": {
+    "code": "23502",
+    "details": "Failing row contains (null, 2026-02-23T07:59:14.880Z, dummy, dummy, 0, 10, 100, dummy, null, null).",
+    "hint": null,
+    "message": "null value in column \"Log_ID\" of relation \"Fuel_Logs\" violates not-null constraint"
+  },
+  "r3": {
+    "code": "PGRST204",
+    "details": null,
+    "hint": null,
+    "message": "Could not find the 'Check_Date' column of 'Vehicle_Checks' in the schema cache"
+  }
+}

@@ -20,20 +20,20 @@ export async function createFuelLog(data: FuelFormData) {
   const supabase = await createClient()
   const branchId = await getUserBranchId()
 
-  const { error } = await supabase
-    .from('Fuel_Logs')
-    .insert({
-      Date_Time: data.Date_Time,
-      Driver_ID: data.Driver_ID,
-      Vehicle_Plate: data.Vehicle_Plate,
-      // Fuel_Type removed as it's not in schema
-      Liters: data.Liter,
-      Price_Total: data.Total_Amount,
-      Odometer: data.Mileage,
-      Station_Name: data.Station_Name,
-      Photo_Url: data.Photo_Url || null,
-      Branch_ID: branchId === 'All' ? null : branchId
-    })
+      const { error } = await supabase
+        .from('Fuel_Logs')
+        .insert({
+          Log_ID: crypto.randomUUID(),
+          Date_Time: data.Date_Time,
+          Driver_ID: data.Driver_ID,
+          Vehicle_Plate: data.Vehicle_Plate,
+          Liters: data.Liter,
+          Price_Total: data.Total_Amount,
+          Odometer: data.Mileage,
+          Station_Name: data.Station_Name,
+          Photo_Url: data.Photo_Url || null,
+          Branch_ID: branchId === 'All' ? null : branchId
+        })
 
   if (error) {
     console.error('Error creating fuel log:', error)
