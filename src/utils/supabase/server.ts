@@ -16,15 +16,13 @@ export async function createClient() {
         set(name: string, value: string, options: CookieOptions) {
           try {
             cookieStore.set({ name, value, ...options })
-          } catch (error) {
-            // The `set` method was called from a Server Component.
+          } catch {
           }
         },
         remove(name: string, options: CookieOptions) {
           try {
             cookieStore.set({ name, value: '', ...options })
-          } catch (error) {
-            // The `delete` method was called from a Server Component.
+          } catch {
           }
         },
       },
@@ -33,8 +31,13 @@ export async function createClient() {
 }
 
 export function createAdminClient() {
-  return createJsClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  )
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY
+  
+  if (!url || !key) {
+    console.error("CRITICAL: Supabase Admin ENVs are missing!", { url: !!url, key: !!key })
+    throw new Error("Missing Supabase configuration")
+  }
+
+  return createJsClient(url, key)
 }

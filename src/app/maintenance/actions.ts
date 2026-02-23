@@ -16,56 +16,60 @@ export type TicketFormData = {
 }
 
 export async function createRepairTicket(data: TicketFormData) {
-  const supabase = createAdminClient()
-  const branchId = await getUserBranchId()
+  try {
+    const supabase = createAdminClient()
+    const branchId = await getUserBranchId()
 
-  // Note: If Odometer column missing in Repair_Tickets, we might need to append to desc
-  // But let's try to insert to Odometer column usually standard
-  // If fails, we might need to migration. Assuming column exists or we append to desc.
-  // Let's check if we can simply append to desc to be safe if column likely missing?
-  // User asked for "Add mileage field". 
-  // I will assume column might be missing so I will ALSO append it to Issue_Desc for safety?
-  // No, that's messy. Let's try to insert. If user reports error, I'll fix.
-  // Actually, I can use `Odometer` in insert.
-  
-      const { error } = await supabase
-        .from('Repair_Tickets')
-        .insert({
-          Ticket_ID: `TCK-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-          Date_Report: data.Date_Report,
-          Driver_ID: data.Driver_ID,
-          Vehicle_Plate: data.Vehicle_Plate,
-          Issue_Type: data.Issue_Type,
-          Description: `[Priority: ${data.Priority}] ${data.Odometer ? '[Odo: ' + data.Odometer + '] ' : ''}${data.Issue_Desc}`,
-          Photo_Url: data.Photo_Url || null,
-          Status: 'Pending',
-          Branch_ID: branchId === 'All' ? null : branchId
-        })
+    const { error } = await supabase
+      .from('Repair_Tickets')
+      .insert({
+        Ticket_ID: `TCK-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+        Date_Report: data.Date_Report,
+        Driver_ID: data.Driver_ID,
+        Vehicle_Plate: data.Vehicle_Plate,
+        Issue_Type: data.Issue_Type,
+        Description: `[Priority: ${data.Priority}] ${data.Odometer ? '[Odo: ' + data.Odometer + '] ' : ''}${data.Issue_Desc}`,
+        Photo_Url: data.Photo_Url || null,
+        Status: 'Pending',
+        Branch_ID: branchId === 'All' ? null : branchId
+      })
 
-  if (error) {
-    console.error('Error creating ticket:', error, {
-        driver_id: data.Driver_ID,
-        vehicle_plate: data.Vehicle_Plate,
-        issue_type: data.Issue_Type,
-        priority: data.Priority
-    })
-    return { success: false, message: `Failed to create ticket: ${error.message}` }
+    if (error) {
+      console.error('Error creating ticket:', error, {
+          driver_id: data.Driver_ID,
+          vehicle_plate: data.Vehicle_Plate,
+          issue_type: data.Issue_Type,
+          priority: data.Priority
+      })
+      return { success: false, message: `Failed to create ticket: ${error.message}` }
+    }
+
+    // Update vehicle status to Maintenance if priority is High
+    if (data.Priority === 'High') {
+        await supabase
+          .from('master_vehicles')
+          .update({ active_status: 'Maintenance' })
+          .eq('vehicle_plate', data.Vehicle_Plate)
+    }
+
+    revalidatePath('/maintenance')
+    revalidatePath('/vehicles')
+    return { success: true, message: 'Ticket created successfully' }
+  } catch (err: unknown) {
+    console.error("createRepairTicket Exception:", err)
+    const errMsg = err instanceof Error ? err.message : "Internal Server Error"
+    return { success: false, message: errMsg }
   }
-
-  // Update vehicle status to Maintenance if priority is High
-  if (data.Priority === 'High') {
-      await supabase
-        .from('master_vehicles')
-        .update({ active_status: 'Maintenance' })
-        .eq('vehicle_plate', data.Vehicle_Plate)
-  }
-
-  revalidatePath('/maintenance')
-  revalidatePath('/vehicles')
-  return { success: true, message: 'Ticket created successfully' }
 }
 
-export async function updateRepairTicket(ticketId: string, data: any) {
+export type TicketUpdateData = TicketFormData & {
+  Status?: string
+  Cost_Total?: number
+  Remark?: string
+  Date_Finish?: string
+}
+
+export async function updateRepairTicket(ticketId: string, data: TicketUpdateData) {
   const supabase = await createClient()
 
   const { error } = await supabase

@@ -19,35 +19,41 @@ export type FuelFormData = {
 }
 
 export async function createFuelLog(data: FuelFormData) {
-  const supabase = createAdminClient()
-  const branchId = await getUserBranchId()
+  try {
+    const supabase = createAdminClient()
+    const branchId = await getUserBranchId()
 
-      const { error } = await supabase
-        .from('Fuel_Logs')
-        .insert({
-          Log_ID: crypto.randomUUID(),
-          Date_Time: data.Date_Time,
-          Driver_ID: data.Driver_ID,
-          Vehicle_Plate: data.Vehicle_Plate,
-          Liters: data.Liter,
-          Price_Total: data.Total_Amount,
-          Odometer: data.Mileage,
-          Station_Name: data.Station_Name,
-          Photo_Url: data.Photo_Url || null,
-          Branch_ID: branchId === 'All' ? null : branchId
-        })
+    const { error } = await supabase
+      .from('Fuel_Logs')
+      .insert({
+        Log_ID: crypto.randomUUID(),
+        Date_Time: data.Date_Time,
+        Driver_ID: data.Driver_ID,
+        Vehicle_Plate: data.Vehicle_Plate,
+        Liters: data.Liter,
+        Price_Total: data.Total_Amount,
+        Odometer: data.Mileage,
+        Station_Name: data.Station_Name,
+        Photo_Url: data.Photo_Url || null,
+        Branch_ID: branchId === 'All' ? null : branchId
+      })
 
-  if (error) {
-    console.error('Error creating fuel log:', error, {
-        driver_id: data.Driver_ID,
-        vehicle_plate: data.Vehicle_Plate,
-        amount: data.Total_Amount
-    })
-    return { success: false, message: `Failed to create log: ${error.message}` }
+    if (error) {
+      console.error('Error creating fuel log:', error, {
+          driver_id: data.Driver_ID,
+          vehicle_plate: data.Vehicle_Plate,
+          amount: data.Total_Amount
+      })
+      return { success: false, message: `Failed to create log: ${error.message}` }
+    }
+
+    revalidatePath('/fuel')
+    return { success: true, message: 'Fuel Log created successfully' }
+  } catch (err: unknown) {
+    console.error("createFuelLog Exception:", err)
+    const errMsg = err instanceof Error ? err.message : "Internal Server Error"
+    return { success: false, message: errMsg }
   }
-
-  revalidatePath('/fuel')
-  return { success: true, message: 'Fuel Log created successfully' }
 }
 
 export async function updateFuelLog(logId: string, data: FuelFormData) {
