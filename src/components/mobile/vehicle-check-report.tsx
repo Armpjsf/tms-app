@@ -21,16 +21,16 @@ export const VehicleCheckReport = forwardRef<HTMLDivElement, Props>(({ driverNam
   const status = passedCount === totalCount ? "Pass (ปกติ)" : "Fail (พบจุดผิดปกติ)"
 
   return (
-    <div ref={ref} className="bg-white text-black p-8 font-sans w-[800px] mx-auto absolute top-[-9999px] left-[-9999px]">
+    <div ref={ref} id="report-capture-area-inner" style={{ backgroundColor: '#ffffff', color: '#000000', padding: '32px', fontFamily: 'sans-serif', width: '800px', margin: '0 auto' }}>
       {/* Header */}
-      <div className="flex justify-between items-start border-b-2 border-slate-800 pb-4 mb-6">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '2px solid #1e293b', paddingBottom: '16px', marginBottom: '24px' }}>
         <div>
-           <h1 className="text-2xl font-bold uppercase tracking-wide">รายงานการตรวจสอบสภาพรถ / Vehicle Inspection Report</h1>
-           <p className="text-sm text-slate-500 mt-1">ใบแจ้งการตรวจสอบรายวัน (Daily Check)</p>
+           <h1 style={{ fontSize: '24px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.025em' }}>รายงานการตรวจสอบสภาพรถ / Vehicle Inspection Report</h1>
+           <p style={{ fontSize: '14px', color: '#64748b', marginTop: '4px' }}>ใบแจ้งการตรวจสอบรายวัน (Daily Check)</p>
         </div>
-        <div className="text-right">
-            <h2 className="text-xl font-bold">{vehiclePlate}</h2>
-            <p className="text-sm">{new Date().toLocaleDateString('th-TH', { 
+        <div style={{ textAlign: 'right' }}>
+            <h2 style={{ fontSize: '20px', fontWeight: 'bold' }}>{vehiclePlate}</h2>
+            <p style={{ fontSize: '14px' }}>{new Date().toLocaleDateString('th-TH', { 
                 year: 'numeric', month: 'long', day: 'numeric', 
                 hour: '2-digit', minute: '2-digit' 
             })}</p>
@@ -38,18 +38,18 @@ export const VehicleCheckReport = forwardRef<HTMLDivElement, Props>(({ driverNam
       </div>
 
       {/* Info Grid */}
-      <div className="grid grid-cols-2 gap-8 mb-8">
-        <div className="space-y-2">
-            <h3 className="font-bold border-b border-slate-300 pb-1 mb-2">ข้อมูลผู้ตรวจสอบ</h3>
-            <div className="grid grid-cols-[100px_1fr] text-sm gap-y-1">
-                <span className="text-slate-500">ผู้ตรวจสอบ:</span>
-                <span className="font-medium">{driverName}</span>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px', marginBottom: '32px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <h3 style={{ fontWeight: 'bold', borderBottom: '1px solid #cbd5e1', paddingBottom: '4px', marginBottom: '8px' }}>ข้อมูลผู้ตรวจสอบ</h3>
+            <div style={{ display: 'grid', gridTemplateColumns: '100px 1fr', fontSize: '14px', rowGap: '4px' }}>
+                <span style={{ color: '#64748b' }}>ผู้ตรวจสอบ:</span>
+                <span style={{ fontWeight: 500 }}>{driverName}</span>
                 
-                <span className="text-slate-500">ทะเบียนรถ:</span>
+                <span style={{ color: '#64748b' }}>ทะเบียนรถ:</span>
                 <span>{vehiclePlate}</span>
                 
-                <span className="text-slate-500">สถานะรวม:</span>
-                <span className={passedCount === totalCount ? "text-emerald-600 font-bold" : "text-red-600 font-bold"}>
+                <span style={{ color: '#64748b' }}>สถานะรวม:</span>
+                <span style={{ color: passedCount === totalCount ? '#10b981' : '#ef4444', fontWeight: 'bold' }}>
                     {status}
                 </span>
             </div>
@@ -57,26 +57,26 @@ export const VehicleCheckReport = forwardRef<HTMLDivElement, Props>(({ driverNam
       </div>
 
       {/* Checklist Table */}
-      <div className="mb-8">
-        <h3 className="font-bold border-b border-slate-300 pb-1 mb-2">รายการที่ตรวจสอบ (Checklist Items)</h3>
-        <table className="w-full text-sm text-left border-collapse">
-            <thead className="bg-slate-100 text-slate-600">
+      <div style={{ marginBottom: '32px' }}>
+        <h3 style={{ fontWeight: 'bold', borderBottom: '1px solid #cbd5e1', paddingBottom: '4px', marginBottom: '8px' }}>รายการที่ตรวจสอบ (Checklist Items)</h3>
+        <table style={{ width: '100%', fontSize: '14px', textAlign: 'left', borderCollapse: 'collapse' }}>
+            <thead style={{ backgroundColor: '#f1f5f9', color: '#475569' }}>
                 <tr>
-                    <th className="p-2 border border-slate-300 w-12 text-center">#</th>
-                    <th className="p-2 border border-slate-300">รายการตรวจสอบ</th>
-                    <th className="p-2 border border-slate-300 text-center w-24">ผลการตรวจ</th>
+                    <th style={{ padding: '8px', border: '1px solid #cbd5e1', width: '48px', textAlign: 'center' }}>#</th>
+                    <th style={{ padding: '8px', border: '1px solid #cbd5e1' }}>รายการตรวจสอบ</th>
+                    <th style={{ padding: '8px', border: '1px solid #cbd5e1', textAlign: 'center', width: '96px' }}>ผลการตรวจ</th>
                 </tr>
             </thead>
             <tbody>
                 {checklist.map((item, i) => (
                     <tr key={item}>
-                        <td className="p-2 border border-slate-300 text-center">{i + 1}</td>
-                        <td className="p-2 border border-slate-300">{item}</td>
-                        <td className="p-2 border border-slate-300 text-center">
+                        <td style={{ padding: '8px', border: '1px solid #cbd5e1', textAlign: 'center' }}>{i + 1}</td>
+                        <td style={{ padding: '8px', border: '1px solid #cbd5e1' }}>{item}</td>
+                        <td style={{ padding: '8px', border: '1px solid #cbd5e1', textAlign: 'center' }}>
                             {items[item] ? (
-                                <span className="text-emerald-600 font-bold">✓ ผ่าน</span>
+                                <span style={{ color: '#10b981', fontWeight: 'bold' }}>✓ ผ่าน</span>
                             ) : (
-                                <span className="text-red-500 font-bold">✗ ไม่ผ่าน</span>
+                                <span style={{ color: '#ef4444', fontWeight: 'bold' }}>✗ ไม่ผ่าน</span>
                             )}
                         </td>
                     </tr>
@@ -87,13 +87,13 @@ export const VehicleCheckReport = forwardRef<HTMLDivElement, Props>(({ driverNam
 
       {/* Photos */}
       {photos.length > 0 && (
-          <div className="mb-8 break-inside-avoid">
-            <h3 className="font-bold border-b border-slate-300 pb-1 mb-4">รูปถ่ายประกอบการตรวจสอบ (Inspection Photos)</h3>
-            <div className="grid grid-cols-3 gap-4">
+          <div style={{ marginBottom: '32px', pageBreakInside: 'avoid' }}>
+            <h3 style={{ fontWeight: 'bold', borderBottom: '1px solid #cbd5e1', paddingBottom: '4px', marginBottom: '16px' }}>รูปถ่ายประกอบการตรวจสอบ (Inspection Photos)</h3>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
                 {photos.map((src, i) => (
-                    <div key={i} className="aspect-video bg-slate-100 rounded border border-slate-200 overflow-hidden">
+                    <div key={i} style={{ aspectRatio: '16/9', backgroundColor: '#f1f5f9', borderRadius: '4px', border: '1px solid #e2e8f0', overflow: 'hidden' }}>
                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={src} alt="Check" className="w-full h-full object-cover" />
+                        <img src={src} alt="Check" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     </div>
                 ))}
             </div>
@@ -101,27 +101,27 @@ export const VehicleCheckReport = forwardRef<HTMLDivElement, Props>(({ driverNam
       )}
 
       {/* Signatures */}
-      <div className="flex justify-end break-inside-avoid">
-        <div className="w-64 border border-slate-300 rounded p-4 text-center">
-             <p className="text-xs text-slate-500 mb-2">ลายเซ็นผู้ขับขี่ (Driver Signature)</p>
-             <div className="h-24 flex items-center justify-center mb-2">
+      <div style={{ display: 'flex', justifyContent: 'flex-end', pageBreakInside: 'avoid' }}>
+        <div style={{ width: '256px', border: '1px solid #cbd5e1', borderRadius: '4px', padding: '16px', textAlign: 'center' }}>
+             <p style={{ fontSize: '12px', color: '#64748b', marginBottom: '8px' }}>ลายเซ็นผู้ขับขี่ (Driver Signature)</p>
+             <div style={{ height: '96px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '8px' }}>
                 {signature ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={signature} alt="Signature" className="max-h-full max-w-full" />
+                    <img src={signature} alt="Signature" style={{ maxHeight: '100%', maxWidth: '100%' }} />
                 ) : (
-                    <span className="text-slate-200 italic">No Signature</span>
+                    <span style={{ color: '#e2e8f0', fontStyle: 'italic' }}>No Signature</span>
                 )}
              </div>
-             <div className="border-t border-slate-300 pt-2">
-                <p className="font-medium text-sm">{driverName}</p>
-                <p className="text-xs text-slate-400">{new Date().toLocaleString('th-TH')}</p>
+             <div style={{ borderTop: '1px solid #cbd5e1', paddingTop: '8px' }}>
+                <p style={{ fontWeight: 500, fontSize: '14px' }}>{driverName}</p>
+                <p style={{ fontSize: '12px', color: '#94a3b8' }}>{new Date().toLocaleString('th-TH')}</p>
              </div>
         </div>
       </div>
       
       {/* Footer */}
-      <div className="mt-8 pt-4 border-t border-slate-200 text-center text-xs text-slate-400">
-        Generated by TMS ePOD System
+      <div style={{ marginTop: '32px', paddingTop: '16px', borderTop: '1px solid #e2e8f0', textAlign: 'center', fontSize: '12px', color: '#94a3b8' }}>
+        Generated by LOGIS-PRO 360 ePOD System
       </div>
     </div>
   )
