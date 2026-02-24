@@ -30,9 +30,15 @@ export async function submitVehicleCheck(formData: FormData) {
 
     // Helper for Upload
     const uploadWithRename = async (file: File, name: string, folder: string) => {
-      const buffer = Buffer.from(await file.arrayBuffer())
-      const res = await uploadFileToDrive(buffer, name, file.type, folder)
-      return res.directLink
+      try {
+        const buffer = Buffer.from(await file.arrayBuffer())
+        const res = await uploadFileToDrive(buffer, name, file.type, folder)
+        return res.directLink
+      } catch (err: any) {
+        const msg = err.message || String(err)
+        console.error(`[UploadHelper] Failed: ${name}`, msg)
+        throw err 
+      }
     }
 
     // 1. Process media
@@ -48,9 +54,9 @@ export async function submitVehicleCheck(formData: FormData) {
         console.log(`[${logId}] Uploading Check Report: ${name}`)
         checkReportUrl = await uploadWithRename(checkReportFile, name, 'Vehicle_Check_Documents')
         console.log(`[${logId}] Check Report Uploaded: ${checkReportUrl}`)
-      } catch (e) {
+      } catch (e: any) {
         console.error(`[${logId}] Failed to upload Check Report:`, e)
-        failures.push("รายงานตรวจเช็ครถ (Report)")
+        failures.push(`รายงาน (${e.message || 'Error'})`)
       }
     }
 
@@ -67,9 +73,9 @@ export async function submitVehicleCheck(formData: FormData) {
             photoUrls.push(url)
             console.log(`[${logId}] Photo ${i} Uploaded: ${url}`)
           }
-        } catch (e) {
+        } catch (e: any) {
           console.error(`[${logId}] Failed to upload photo ${i}:`, e)
-          failures.push(`รูปถ่ายที่ ${i + 1}`)
+          failures.push(`รูปถ่าย ${i + 1} (${e.message || 'Error'})`)
         }
       }
     }
@@ -87,9 +93,9 @@ export async function submitVehicleCheck(formData: FormData) {
         console.log(`[${logId}] Uploading signature: ${name}`)
         signatureUrl = await uploadWithRename(signatureFile, name, 'Vehicle_Check_Signatures')
         console.log(`[${logId}] Signature Uploaded: ${signatureUrl}`)
-      } catch (e) {
+      } catch (e: any) {
         console.error(`[${logId}] Failed to upload signature:`, e)
-        failures.push("ลายเซ็น (Signature)")
+        failures.push(`ลายเซ็น (${e.message || 'Error'})`)
       }
     }
 

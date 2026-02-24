@@ -10,10 +10,14 @@ import { Readable } from 'stream'
 const SCOPES = ['https://www.googleapis.com/auth/drive']
 
 export function getOAuth2Client() {
-  const CLIENT_ID = process.env.GOOGLE_CLIENT_ID!
-  const CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET!
-  const REDIRECT_URI = process.env.GOOGLE_REDIRECT_URI!
-  const REFRESH_TOKEN = process.env.GOOGLE_REFRESH_TOKEN!
+  const CLIENT_ID = process.env.GOOGLE_CLIENT_ID
+  const CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET
+  const REDIRECT_URI = process.env.GOOGLE_REDIRECT_URI
+  const REFRESH_TOKEN = process.env.GOOGLE_REFRESH_TOKEN
+
+  if (!CLIENT_ID || !CLIENT_SECRET) {
+    console.error("[GoogleDrive] CRITICAL: GOOGLE_CLIENT_ID or SECRET missing")
+  }
 
   const oAuth2Client = new google.auth.OAuth2(
     CLIENT_ID,
@@ -22,10 +26,10 @@ export function getOAuth2Client() {
   )
   
   if (REFRESH_TOKEN) {
-      console.log("[GoogleDrive] Configured OAuth2 with Refresh Token")
+      console.log("[GoogleDrive] Auth: Using Refresh Token from Environment")
       oAuth2Client.setCredentials({ refresh_token: REFRESH_TOKEN })
   } else {
-      console.warn("[GoogleDrive] No Refresh Token found in environment!")
+      console.warn("[GoogleDrive] Warning: GOOGLE_REFRESH_TOKEN is empty")
   }
   
   return oAuth2Client
@@ -61,41 +65,49 @@ export async function getOrCreateFolder(folderName: string, parentId?: string): 
     
     if (folderIdCache[cacheKey]) return folderIdCache[cacheKey]
 
-    // Check if folder exists
-    let query = `mimeType='application/vnd.google-apps.folder' and name='${folderName}' and trashed=false`
-    if (parentId) {
-        query += ` and '${parentId}' in parents`
-    }
+    try {
+        // Check if folder exists
+        let query = `mimeType='application/vnd.google-apps.folder' and name='${folderName}' and trashed=false`
+        if (parentId) {
+            query += ` and '${parentId}' in parents`
+        }
 
-    const res = await drive.files.list({
-        q: query,
-        fields: 'files(id, name)',
-        spaces: 'drive',
-    })
+        const res = await drive.files.list({
+            q: query,
+            fields: 'files(id, name)',
+            spaces: 'drive',
+        })
 
-    if (res.data.files && res.data.files.length > 0) {
-        const id = res.data.files[0].id!
+        if (res.data.files && res.data.files.length > 0) {
+            const id = res.data.files[0].id!
+            folderIdCache[cacheKey] = id
+            console.log(`[GoogleDrive] Found existing folder: ${folderName} (${id})`)
+            return id
+        }
+
+        // Create folder if not exists
+        console.log(`[GoogleDrive] Creating new folder: ${folderName}`)
+        const fileMetadata: { name: string; mimeType: string; parents?: string[] } = {
+            name: folderName,
+            mimeType: 'application/vnd.google-apps.folder',
+        }
+        if (parentId) {
+            fileMetadata.parents = [parentId]
+        }
+
+        const file = await drive.files.create({
+            requestBody: fileMetadata,
+            fields: 'id',
+        })
+
+        const id = file.data.id!
         folderIdCache[cacheKey] = id
+        console.log(`[GoogleDrive] Folder created successfully: ${id}`)
         return id
+    } catch (err: any) {
+        console.error(`[GoogleDrive] Error in getOrCreateFolder (${folderName}):`, err.message || err)
+        throw new Error(`Google Drive Folder Error: ${err.message || 'Unknown'}`)
     }
-
-    // Create folder if not exists
-    const fileMetadata: { name: string; mimeType: string; parents?: string[] } = {
-        name: folderName,
-        mimeType: 'application/vnd.google-apps.folder',
-    }
-    if (parentId) {
-        fileMetadata.parents = [parentId]
-    }
-
-    const file = await drive.files.create({
-        requestBody: fileMetadata,
-        fields: 'id',
-    })
-
-    const id = file.data.id!
-    folderIdCache[cacheKey] = id
-    return id
 }
 
 // Exported helper to upload directly to a known folder ID (Avoids repeated lookups)
