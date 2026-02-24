@@ -6,6 +6,7 @@ import { createAdminClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
 
 import { uploadFileToDrive } from '@/lib/google-drive'
+import { createNotification } from '@/lib/actions/notification-actions'
 
 export async function submitVehicleCheck(formData: FormData) {
   try {
@@ -99,6 +100,15 @@ export async function submitVehicleCheck(formData: FormData) {
     }
 
     revalidatePath('/mobile/vehicle-check')
+
+    // Create Admin Notification
+    await createNotification({
+      Driver_ID: 'admin', // Targeting admin
+      Title: 'มีการแจ้งตรวจเช็ครถใหม่',
+      Message: `คนขับ ${driverName} ได้ทำการตรวจเช็ครถทะเบียน ${vehiclePlate}`,
+      Type: 'info'
+    })
+
     return { success: true, message: 'บันทึกการตรวจสอบเรียบร้อยแล้ว' }
 
   } catch (err: unknown) {

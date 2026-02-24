@@ -3,6 +3,7 @@
 import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { getUserBranchId } from '@/lib/permissions'
+import { createNotification } from '@/lib/actions/notification-actions'
 
 export type TicketFormData = {
   Date_Report: string | null
@@ -54,6 +55,15 @@ export async function createRepairTicket(data: TicketFormData) {
 
     revalidatePath('/maintenance')
     revalidatePath('/vehicles')
+
+    // Notify Admin
+    await createNotification({
+      Driver_ID: 'admin',
+      Title: 'มีการแจ้งซ่อมใหม่',
+      Message: `แจ้งซ่อมรถทะเบียน ${data.Vehicle_Plate} โดยคนขับ [ID: ${data.Driver_ID}]`,
+      Type: 'warning'
+    })
+
     return { success: true, message: 'Ticket created successfully' }
   } catch (err: unknown) {
     console.error("createRepairTicket Exception:", err)

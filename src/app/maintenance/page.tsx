@@ -186,7 +186,7 @@ export default async function MaintenancePage(props: Props) {
                  )}
                 <div>
                     <p className="text-sm text-foreground font-bold mb-1">{ticket.Issue_Type}</p>
-                    <p className="text-xs text-muted-foreground line-clamp-2 italic">{ticket.Issue_Desc}</p>
+                    <p className="text-xs text-muted-foreground line-clamp-2 italic">{ticket.Description}</p>
                 </div>
               </div>
 

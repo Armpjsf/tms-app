@@ -41,7 +41,7 @@ export function MaintenanceDialog({
     Driver_ID: '',
     Vehicle_Plate: '',
     Issue_Type: 'Engine',
-    Issue_Desc: '',
+    Description: '',
     Priority: 'Medium',
     Photo_Url: '',
     Status: 'Pending',
@@ -66,7 +66,7 @@ export function MaintenanceDialog({
         Driver_ID: initialData.Driver_ID || '',
         Vehicle_Plate: initialData.Vehicle_Plate || '',
         Issue_Type: initialData.Issue_Type || 'Engine',
-        Issue_Desc: initialData.Issue_Desc || '',
+        Description: initialData.Description || '',
         Priority: initialData.Priority || 'Medium',
         Photo_Url: photoUrl,
         Status: initialData.Status || 'Pending',
@@ -99,7 +99,7 @@ export function MaintenanceDialog({
             Driver_ID: '',
             Vehicle_Plate: '',
             Issue_Type: 'Engine',
-            Issue_Desc: '',
+            Description: '',
             Priority: 'Medium',
             Photo_Url: '',
             Status: 'Pending',
@@ -213,11 +213,11 @@ export function MaintenanceDialog({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="Issue_Desc">รายละเอียดปัญหา</Label>
+            <Label htmlFor="Description">รายละเอียดปัญหา</Label>
             <Textarea
-              id="Issue_Desc"
-              value={formData.Issue_Desc}
-              onChange={(e) => setFormData({ ...formData, Issue_Desc: e.target.value })}
+              id="Description"
+              value={formData.Description}
+              onChange={(e) => setFormData({ ...formData, Description: e.target.value })}
               placeholder="รายละเอียด..."
               required
               className="bg-white/5 border-white/10"

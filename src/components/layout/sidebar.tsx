@@ -29,6 +29,7 @@ import {
   Coins,
   PieChart,
   CloudSync,
+  CheckCircle2,
 } from "lucide-react"
 
 import { SidebarProfile } from "./sidebar-profile"
@@ -71,6 +72,7 @@ const navigation: NavGroup[] = [
     items: [
       { title: "คนขับ", href: "/drivers", icon: <Users size={20} /> },
       { title: "รถ", href: "/vehicles", icon: <Truck size={20} /> },
+      { title: "แจ้งตรวจสภาพ", href: "/admin/vehicle-checks", icon: <CheckCircle2 size={20} /> },
       { title: "แจ้งซ่อม", href: "/maintenance", icon: <Wrench size={20} /> },
       { title: "เติมน้ำมัน", href: "/fuel", icon: <Fuel size={20} /> },
     ],
