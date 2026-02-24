@@ -28,6 +28,7 @@ export function MobileVehicleCheckForm({ driverId, driverName, defaultVehiclePla
   const [plate, setPlate] = useState(defaultVehiclePlate || "")
   const [photos, setPhotos] = useState<File[]>([])
   const [signature, setSignature] = useState<Blob | null>(null)
+  const [submitStatus, setSubmitStatus] = useState<string>("")
   const reportRef = useRef<HTMLDivElement>(null)
   
   const checklist = [
@@ -48,18 +49,21 @@ export function MobileVehicleCheckForm({ driverId, driverName, defaultVehiclePla
     }
 
     setLoading(true)
+    setSubmitStatus("กำลังเตรียมข้อมูล...")
     
     try {
         const formData = new FormData()
         
         // 1. Capture Report
         if (reportRef.current) {
+            setSubmitStatus("กำลังสร้างรายงาน PDF...")
             try {
                 const canvas = await html2canvas(reportRef.current, {
-                    scale: 2,
+                    scale: 1.5, // Slightly lower scale for speed/reliability on mobile
                     useCORS: true,
                     logging: false,
-                    windowWidth: 1200
+                    windowWidth: 1000,
+                    backgroundColor: "#ffffff"
                 })
                 const reportBlob = await new Promise<Blob | null>(resolve => 
                     canvas.toBlob(resolve, 'image/jpeg', 0.8)
@@ -69,9 +73,11 @@ export function MobileVehicleCheckForm({ driverId, driverName, defaultVehiclePla
                 }
             } catch (err) {
                 console.error("Report capture failed:", err)
+                // Don't block the whole submission if report capture fails
             }
         }
 
+        setSubmitStatus("กำลังอัปโหลดรูปภาพ...")
         formData.append("driverId", driverId)
         formData.append("driverName", driverName)
         formData.append("vehiclePlate", plate)
@@ -86,14 +92,19 @@ export function MobileVehicleCheckForm({ driverId, driverName, defaultVehiclePla
             formData.append("signature", signature, "signature.png")
         }
 
+        setSubmitStatus("กำลังบันทึกข้อมูลและส่งการแจ้งเตือน...")
         const result = await submitVehicleCheck(formData)
+        
         if (result.success) {
+             setSubmitStatus("บันทึกสำเร็จ!")
              router.push('/mobile/profile')
         } else {
+             setSubmitStatus("")
              alert(result.message)
         }
     } catch (err) {
         console.error("Vehicle Check Error:", err)
+        setSubmitStatus("")
         const errMsg = err instanceof Error ? err.message : String(err)
         alert(`เกิดข้อผิดพลาดในการบันทึก: ${errMsg}`)
     } finally {
@@ -191,7 +202,12 @@ export function MobileVehicleCheckForm({ driverId, driverName, defaultVehiclePla
             }`}
             disabled={loading || !signature}
         >
-            {loading ? <Loader2 className="animate-spin" /> : "บันทึกการตรวจสอบ"}
+            {loading ? (
+                <div className="flex flex-col items-center">
+                    <Loader2 className="animate-spin mb-1" />
+                    <span className="text-[10px] font-normal opacity-80">{submitStatus}</span>
+                </div>
+            ) : "บันทึกการตรวจสอบ"}
         </Button>
       </form>
 

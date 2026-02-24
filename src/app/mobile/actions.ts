@@ -131,12 +131,16 @@ export async function submitVehicleCheck(formData: FormData) {
     revalidatePath('/admin/vehicle-checks')
 
     // Create Admin Notification
-    await createNotification({
-      Driver_ID: 'admin', // Targeting admin
-      Title: 'มีการแจ้งตรวจเช็ครถใหม่',
-      Message: `คนขับ ${driverName} ได้ทำการตรวจเช็ครถทะเบียน ${vehiclePlate}`,
-      Type: 'info'
-    })
+    try {
+        await createNotification({
+          Driver_ID: 'admin', // Targeting admin
+          Title: 'มีการแจ้งตรวจเช็ครถใหม่',
+          Message: `คนขับ ${driverName} ได้ทำการตรวจเช็ครถทะเบียน ${vehiclePlate}`,
+          Type: 'info'
+        })
+    } catch (notiError) {
+        console.error(`[${logId}] Silent failure creating notification:`, notiError)
+    }
 
     return { success: true, message: finalMsg }
 
