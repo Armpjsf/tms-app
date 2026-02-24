@@ -1,3 +1,6 @@
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 import { SearchInput } from "@/components/ui/search-input"
 import { Pagination } from "@/components/ui/pagination"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"

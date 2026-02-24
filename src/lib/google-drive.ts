@@ -2,20 +2,19 @@ import { google } from 'googleapis'
 import { join } from 'path'
 import { Readable } from 'stream'
 
-// OAuth 2.0 Credentials (Provided by User)
-const CLIENT_ID = process.env.GOOGLE_CLIENT_ID!
-const CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET!
-const REDIRECT_URI = process.env.GOOGLE_REDIRECT_URI!
-
 // Refresh Token (To be filled after auth flow)
 // Once obtained, we will paste it here to make it permanent
-const REFRESH_TOKEN = process.env.GOOGLE_REFRESH_TOKEN! 
 
 // Scopes for Drive API
 // 'https://www.googleapis.com/auth/drive' : Full access needed to see folders created by User manually
 const SCOPES = ['https://www.googleapis.com/auth/drive']
 
 export function getOAuth2Client() {
+  const CLIENT_ID = process.env.GOOGLE_CLIENT_ID!
+  const CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET!
+  const REDIRECT_URI = process.env.GOOGLE_REDIRECT_URI!
+  const REFRESH_TOKEN = process.env.GOOGLE_REFRESH_TOKEN!
+
   const oAuth2Client = new google.auth.OAuth2(
     CLIENT_ID,
     CLIENT_SECRET,
@@ -23,21 +22,27 @@ export function getOAuth2Client() {
   )
   
   if (REFRESH_TOKEN) {
+      console.log("[GoogleDrive] Configured OAuth2 with Refresh Token")
       oAuth2Client.setCredentials({ refresh_token: REFRESH_TOKEN })
+  } else {
+      console.warn("[GoogleDrive] No Refresh Token found in environment!")
   }
   
   return oAuth2Client
 }
 
 export async function getDriveClient() {
+  const REFRESH_TOKEN = process.env.GOOGLE_REFRESH_TOKEN!
+
   // If we have a refresh token, use OAuth (User Storage)
   if (REFRESH_TOKEN) {
+      console.log("[GoogleDrive] Using OAuth2 Client (User Storage)")
       const auth = getOAuth2Client()
       return google.drive({ version: 'v3', auth })
   }
 
   // Fallback to Service Account (System Storage - 0GB)
-  // This is what we are migrating AWAY from.
+  console.warn("[GoogleDrive] Falling back to Service Account (Quota limited)")
   const KEY_FILE_PATH = join(process.cwd(), 'service_account.json')
   const auth = new google.auth.GoogleAuth({
     keyFile: KEY_FILE_PATH,
@@ -141,15 +146,20 @@ export async function uploadFileToDrive(
     mimeType: string,
     folderName: string = 'TMS_Uploads'
 ) {
+    console.log(`[GoogleDrive] Starting upload: ${fileName} to folder: ${folderName}`)
     try {
         // 1. Use the shared root folder directly
         const rootFolderId = ROOT_FOLDER_ID
+        console.log(`[GoogleDrive] Using ROOT_FOLDER_ID: ${rootFolderId}`)
         
         // 2. Get or Create specific subfolder inside the shared folder
         const targetFolderId = await getOrCreateFolder(folderName, rootFolderId)
+        console.log(`[GoogleDrive] Target folder ID: ${targetFolderId}`)
 
         // 3. Upload using the ID
-        return await uploadFileByFolderId(fileBuffer, fileName, mimeType, targetFolderId)
+        const result = await uploadFileByFolderId(fileBuffer, fileName, mimeType, targetFolderId)
+        console.log(`[GoogleDrive] Upload success: ${result.fileId}`)
+        return result
 
     } catch (error) {
         console.error('Google Drive Upload Error:', error)

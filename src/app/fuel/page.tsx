@@ -1,3 +1,6 @@
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -142,7 +145,7 @@ export default async function FuelPage(props: Props) {
                     >
                       <td className="p-4">
                         <span className="text-foreground text-sm">
-                          {log.Date_Time ? new Date(log.Date_Time).toLocaleString('th-TH') : "-"}
+                          {log.Date_Time ? new Date(log.Date_Time).toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' }) : "-"}
                         </span>
                       </td>
                       <td className="p-4 text-foreground font-medium text-sm">{log.Driver_Name || "-"}</td>

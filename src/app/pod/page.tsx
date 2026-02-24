@@ -110,7 +110,9 @@ export default async function PODPage() {
                       <td className="p-4">
                         <span className="text-indigo-400 font-medium text-sm">{pod.Job_ID}</span>
                       </td>
-                      <td className="p-4 text-sm text-slate-300">{pod.Plan_Date || "-"}</td>
+                      <td className="p-4 text-sm text-slate-300">
+                        {pod.Plan_Date ? new Date(pod.Plan_Date).toLocaleDateString('th-TH', { timeZone: 'Asia/Bangkok' }) : "-"}
+                      </td>
                       <td className="p-4 text-sm text-white">{pod.Customer_Name || "-"}</td>
                       <td className="p-4 text-sm text-slate-300">{pod.Driver_Name || "-"}</td>
                       <td className="p-4 text-center">
