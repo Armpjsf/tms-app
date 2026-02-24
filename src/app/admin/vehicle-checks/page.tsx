@@ -1,10 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { createAdminClient } from "@/utils/supabase/server"
-import { Truck, User, CheckCircle2, XCircle } from "lucide-react"
-import Image from "next/image"
-
-export const dynamic = 'force-dynamic'
+import { Truck, User, CheckCircle2, XCircle, FileText, Image as ImageIcon, PenTool } from "lucide-react"
 export const revalidate = 0
 
 const STANDARD_CHECKLIST = [
@@ -94,25 +91,50 @@ export default async function AdminVehicleChecksPage() {
                                                 </div>
                                             </TableCell>
                                             <TableCell>
-                                                <div className="flex items-center gap-3">
+                                                <div className="flex flex-wrap items-center gap-2">
                                                     {check.Photo_Urls && (
-                                                        <div className="flex gap-1">
-                                                            {check.Photo_Urls.split(',').slice(0, 2).map((url: string, idx: number) => (
-                                                                <div key={idx} className="relative w-8 h-8 rounded border border-border overflow-hidden bg-muted group">
-                                                                    <Image src={url} alt="Check Photo" fill className="object-cover group-hover:scale-110 transition-transform" />
-                                                                </div>
-                                                            ))}
-                                                            {check.Photo_Urls.split(',').length > 2 && (
-                                                                <div className="w-8 h-8 rounded bg-muted flex items-center justify-center text-[10px] text-muted-foreground border border-border">
-                                                                    +{check.Photo_Urls.split(',').length - 2}
+                                                        <>
+                                                            {/* First photo is the Smart Report */}
+                                                            <a 
+                                                                href={check.Photo_Urls.split(',')[0]} 
+                                                                target="_blank" 
+                                                                rel="noopener noreferrer"
+                                                                className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-indigo-700 rounded-lg text-xs font-semibold hover:bg-indigo-100 transition-colors border border-indigo-200"
+                                                            >
+                                                                <FileText size={14} />
+                                                                เปิดรายงาน
+                                                            </a>
+
+                                                            {/* Other photos */}
+                                                            {check.Photo_Urls.split(',').length > 1 && (
+                                                                <div className="flex gap-1">
+                                                                    {check.Photo_Urls.split(',').slice(1).map((url: string, idx: number) => (
+                                                                        <a 
+                                                                            key={idx}
+                                                                            href={url}
+                                                                            target="_blank"
+                                                                            rel="noopener noreferrer"
+                                                                            className="w-8 h-8 rounded bg-muted flex items-center justify-center text-muted-foreground border border-border hover:bg-slate-200 transition-colors"
+                                                                            title={`รูปถ่าย ${idx + 1}`}
+                                                                        >
+                                                                            <ImageIcon size={14} />
+                                                                        </a>
+                                                                    ))}
                                                                 </div>
                                                             )}
-                                                        </div>
+                                                        </>
                                                     )}
                                                     {check.Signature_Url && (
-                                                        <div className="relative w-12 h-8 rounded border border-border overflow-hidden bg-white p-0.5">
-                                                            <Image src={check.Signature_Url} alt="Signature" fill className="object-contain" />
-                                                        </div>
+                                                        <a 
+                                                            href={check.Signature_Url} 
+                                                            target="_blank" 
+                                                            rel="noopener noreferrer"
+                                                            className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-700 rounded-lg text-xs font-semibold hover:bg-emerald-100 transition-colors border border-emerald-200"
+                                                            title="ดูรายละเอียดลายเซ็น"
+                                                        >
+                                                            <PenTool size={14} />
+                                                            ลายเซ็น
+                                                        </a>
                                                     )}
                                                 </div>
                                             </TableCell>
