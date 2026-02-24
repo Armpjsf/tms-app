@@ -28,7 +28,7 @@ export async function createRepairTicket(data: TicketFormData) {
         Driver_ID: data.Driver_ID,
         Vehicle_Plate: data.Vehicle_Plate,
         Issue_Type: data.Issue_Type,
-        Description: `[Priority: ${data.Priority}] ${data.Odometer ? '[Odo: ' + data.Odometer + '] ' : ''}${data.Issue_Desc}`,
+        Issue_Desc: `[Priority: ${data.Priority}] ${data.Odometer ? '[Odo: ' + data.Odometer + '] ' : ''}${data.Issue_Desc}`,
         Photo_Url: data.Photo_Url || null,
         Status: 'Pending',
         Branch_ID: branchId === 'All' ? null : branchId
@@ -48,8 +48,8 @@ export async function createRepairTicket(data: TicketFormData) {
     if (data.Priority === 'High') {
         await supabase
           .from('master_vehicles')
-          .update({ active_status: 'Maintenance' })
-          .eq('vehicle_plate', data.Vehicle_Plate)
+          .update({ Active_Status: 'Maintenance' })
+          .eq('Vehicle_Plate', data.Vehicle_Plate)
     }
 
     revalidatePath('/maintenance')
@@ -100,8 +100,8 @@ export async function updateRepairTicket(ticketId: string, data: TicketUpdateDat
   if (data.Status === 'Completed' && data.Vehicle_Plate) {
      await supabase
         .from('master_vehicles')
-        .update({ active_status: 'Active' })
-        .eq('vehicle_plate', data.Vehicle_Plate)
+        .update({ Active_Status: 'Active' })
+        .eq('Vehicle_Plate', data.Vehicle_Plate)
   }
 
   revalidatePath('/maintenance')

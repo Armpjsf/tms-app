@@ -22,9 +22,10 @@ ALTER TABLE "Jobs_Main"
 ADD COLUMN IF NOT EXISTS "Weight_Kg" NUMERIC DEFAULT 0;
 ALTER TABLE "Jobs_Main"
 ADD COLUMN IF NOT EXISTS "Volume_Cbm" NUMERIC DEFAULT 0;
--- Add Pickup Signature column
+-- Add Pickup Signature and Photo columns
 ALTER TABLE "Jobs_Main"
-ADD COLUMN IF NOT EXISTS "Pickup_Signature_Url" TEXT;
+ADD COLUMN IF NOT EXISTS "Pickup_Signature_Url" TEXT,
+    ADD COLUMN IF NOT EXISTS "Pickup_Photo_Url" TEXT;
 -- =============================================
 -- NEW TABLES FOR MOBILE FEATURES
 -- =============================================
