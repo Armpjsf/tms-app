@@ -19,6 +19,14 @@ export async function submitVehicleCheck(formData: FormData) {
     const vehiclePlate = formData.get("vehiclePlate") as string
     const itemsRaw = formData.get("items") as string
     
+    // DEBUG LOGS
+    console.log(`[${logId}] [FormData] Keys:`, Array.from(formData.keys()))
+    const reportVal = formData.get("check_report")
+    const sigVal = formData.get("signature")
+    console.log(`[${logId}] [FormData] check_report type:`, reportVal instanceof File ? `File (size: ${reportVal.size})` : typeof reportVal)
+    console.log(`[${logId}] [FormData] signature type:`, sigVal instanceof File ? `File (size: ${sigVal.size})` : typeof sigVal)
+    console.log(`[${logId}] [FormData] photo_count:`, formData.get("photo_count"))
+    
     let items = {}
     if (itemsRaw) {
         try {

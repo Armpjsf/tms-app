@@ -89,7 +89,9 @@ export function MobileVehicleCheckForm({ driverId, driverName, defaultVehiclePla
                 
                 if (reportBlob) {
                     formData.append("check_report", reportBlob, `Report_${plate}.jpg`)
-                    alert("Step 3: แปลงไฟล์รายงานสำเร็จ") // Checkpoint 4
+                    alert(`Step 3: แปลงไฟล์รายงานสำเร็จ (ขนาด: ${Math.round(reportBlob.size / 1024)} KB)`) // Checkpoint 4
+                } else {
+                    alert("Step 3 Error: ได้รับ Blob ว่างเปล่าสำหรับตัวรายงาน")
                 }
             } catch (err) {
                 console.error("Report capture failed:", err)
