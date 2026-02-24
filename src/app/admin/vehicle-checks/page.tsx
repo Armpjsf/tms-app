@@ -95,20 +95,29 @@ export default async function AdminVehicleChecksPage() {
                                                     {check.Photo_Urls && (
                                                         <>
                                                             {/* First photo is the Smart Report */}
-                                                            <a 
-                                                                href={check.Photo_Urls.split(',')[0]} 
-                                                                target="_blank" 
-                                                                rel="noopener noreferrer"
-                                                                className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-indigo-700 rounded-lg text-xs font-semibold hover:bg-indigo-100 transition-colors border border-indigo-200"
-                                                            >
-                                                                <FileText size={14} />
-                                                                เปิดรายงาน
-                                                            </a>
+                                                            {(() => {
+                                                                const urls = check.Photo_Urls.split(',').filter(Boolean);
+                                                                if (urls.length === 0) return null;
+                                                                return (
+                                                                    <a 
+                                                                        href={urls[0]} 
+                                                                        target="_blank" 
+                                                                        rel="noopener noreferrer"
+                                                                        className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-indigo-700 rounded-lg text-xs font-semibold hover:bg-indigo-100 transition-colors border border-indigo-200"
+                                                                    >
+                                                                        <FileText size={14} />
+                                                                        เปิดรายงาน
+                                                                    </a>
+                                                                );
+                                                            })()}
 
                                                             {/* Other photos */}
-                                                            {check.Photo_Urls.split(',').length > 1 && (
-                                                                <div className="flex gap-1">
-                                                                    {check.Photo_Urls.split(',').slice(1).map((url: string, idx: number) => (
+                                                            {(() => {
+                                                                const urls = check.Photo_Urls.split(',').filter(Boolean);
+                                                                if (urls.length <= 1) return null;
+                                                                return (
+                                                                    <div className="flex gap-1">
+                                                                        {urls.slice(1).map((url: string, idx: number) => (
                                                                         <a 
                                                                             key={idx}
                                                                             href={url}
@@ -120,8 +129,9 @@ export default async function AdminVehicleChecksPage() {
                                                                             <ImageIcon size={14} />
                                                                         </a>
                                                                     ))}
-                                                                </div>
-                                                            )}
+                                                                    </div>
+                                                                );
+                                                            })()}
                                                         </>
                                                     )}
                                                     {check.Signature_Url && (
