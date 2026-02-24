@@ -88,11 +88,7 @@ export async function submitVehicleCheck(formData: FormData) {
         Driver_Name: driverName,
         Vehicle_Plate: vehiclePlate,
         Check_Date: new Date().toISOString(),
-        Status: 'Pass', // We will derive this better later, or leave default for now
-        Passed_Items: items, // Assuming the front-end sends a simple JSON object
-        Failed_Items: {},
-        Total_Items: Object.keys(items || {}).length,
-        Passed_Count: Object.keys(items || {}).length,
+        Passed_Items: items,
         Photo_Urls: photoUrls.join(','),
         Signature_Url: signatureUrl
       })

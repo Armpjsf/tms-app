@@ -9,7 +9,7 @@ export type TicketFormData = {
   Driver_ID: string | null
   Vehicle_Plate: string | null
   Issue_Type: string | null
-  Issue_Desc: string | null
+  Description: string | null
   Priority: string | null
   Odometer?: number | null
   Photo_Url?: string | null
@@ -28,7 +28,7 @@ export async function createRepairTicket(data: TicketFormData) {
         Driver_ID: data.Driver_ID,
         Vehicle_Plate: data.Vehicle_Plate,
         Issue_Type: data.Issue_Type,
-        Issue_Desc: `[Priority: ${data.Priority}] ${data.Odometer ? '[Odo: ' + data.Odometer + '] ' : ''}${data.Issue_Desc}`,
+        Description: `[Priority: ${data.Priority}] ${data.Odometer ? '[Odo: ' + data.Odometer + '] ' : ''}${data.Description}`,
         Photo_Url: data.Photo_Url || null,
         Status: 'Pending',
         Branch_ID: branchId === 'All' ? null : branchId
@@ -47,7 +47,7 @@ export async function createRepairTicket(data: TicketFormData) {
     // Update vehicle status to Maintenance if priority is High
     if (data.Priority === 'High') {
         await supabase
-          .from('master_vehicles')
+          .from('Master_Vehicles')
           .update({ Active_Status: 'Maintenance' })
           .eq('Vehicle_Plate', data.Vehicle_Plate)
     }
@@ -81,7 +81,7 @@ export async function updateRepairTicket(ticketId: string, data: TicketUpdateDat
       Date_Finish: data.Date_Finish || null,
       // Allow updating basic info too if needed
       Issue_Type: data.Issue_Type,
-      Issue_Desc: data.Issue_Desc,
+      Description: data.Description,
       Priority: data.Priority,
       Driver_ID: data.Driver_ID,
       Vehicle_Plate: data.Vehicle_Plate,
@@ -99,7 +99,7 @@ export async function updateRepairTicket(ticketId: string, data: TicketUpdateDat
   // Ideally, if finished, Vehicle Status might need to go back to 'Active'.
   if (data.Status === 'Completed' && data.Vehicle_Plate) {
      await supabase
-        .from('master_vehicles')
+        .from('Master_Vehicles')
         .update({ Active_Status: 'Active' })
         .eq('Vehicle_Plate', data.Vehicle_Plate)
   }

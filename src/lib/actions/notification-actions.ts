@@ -4,13 +4,13 @@ import { createClient } from '@/utils/supabase/server'
 
 export interface DriverNotification {
   id: number
-  driver_id: string
-  title: string
-  message: string
-  type: 'info' | 'success' | 'warning' | 'error'
-  is_read: boolean
-  created_at: string
-  link?: string
+  Driver_ID: string
+  Title: string
+  Message: string
+  Type: 'info' | 'success' | 'warning' | 'error'
+  Is_Read: boolean
+  Created_At: string
+  Link?: string
 }
 
 export async function getDriverNotifications(driverId: string): Promise<DriverNotification[]> {
@@ -19,8 +19,8 @@ export async function getDriverNotifications(driverId: string): Promise<DriverNo
   const { data, error } = await supabase
     .from('Notifications')
     .select('*')
-    .eq('driver_id', driverId)
-    .order('created_at', { ascending: false })
+    .eq('Driver_ID', driverId)
+    .order('Created_At', { ascending: false })
     .limit(50)
 
   if (error) {
@@ -36,7 +36,7 @@ export async function markNotificationRead(notificationId: number) {
 
   const { error } = await supabase
     .from('Notifications')
-    .update({ is_read: true })
+    .update({ Is_Read: true })
     .eq('id', notificationId)
 
   if (error) {
@@ -52,9 +52,9 @@ export async function markAllNotificationsRead(driverId: string) {
 
   const { error } = await supabase
     .from('Notifications')
-    .update({ is_read: true })
-    .eq('driver_id', driverId)
-    .eq('is_read', false)
+    .update({ Is_Read: true })
+    .eq('Driver_ID', driverId)
+    .eq('Is_Read', false)
 
   if (error) {
     console.error('Error marking all notifications read:', error)
@@ -66,17 +66,24 @@ export async function markAllNotificationsRead(driverId: string) {
 
 // Helper to create notification (used by admin or system)
 export async function createNotification(data: {
-  driver_id: string
-  title: string
-  message: string
-  type: 'info' | 'success' | 'warning' | 'error'
-  link?: string
+  Driver_ID: string
+  Title: string
+  Message: string
+  Type: 'info' | 'success' | 'warning' | 'error'
+  Link?: string
 }) {
   const supabase = await createClient()
 
   const { error } = await supabase
     .from('Notifications')
-    .insert(data)
+    .insert({
+      Driver_ID: data.Driver_ID,
+      Title: data.Title,
+      Message: data.Message,
+      Type: data.Type,
+      Link: data.Link,
+      Created_At: new Date().toISOString()
+    })
 
   if (error) {
     console.error('Error creating notification:', error)

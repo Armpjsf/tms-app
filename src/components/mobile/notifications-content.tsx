@@ -27,15 +27,15 @@ export function NotificationsContent({ notifications: initialNotifications, driv
 
   const handleMarkRead = async (id: number) => {
     await markNotificationRead(id)
-    setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n))
+    setNotifications(prev => prev.map(n => n.id === id ? { ...n, Is_Read: true } : n))
   }
 
   const handleMarkAllRead = async () => {
     await markAllNotificationsRead(driverId)
-    setNotifications(prev => prev.map(n => ({ ...n, is_read: true })))
+    setNotifications(prev => prev.map(n => ({ ...n, Is_Read: true })))
   }
 
-  const unreadCount = notifications.filter(n => !n.is_read).length
+  const unreadCount = notifications.filter(n => !n.Is_Read).length
 
   const formatTime = (dateStr: string) => {
     const date = new Date(dateStr)
@@ -81,29 +81,29 @@ export function NotificationsContent({ notifications: initialNotifications, driv
             key={notif.id} 
             className="cursor-pointer active:scale-[0.98] transition-all"
             onClick={() => {
-              if (!notif.is_read) handleMarkRead(notif.id)
-              if (notif.link) router.push(notif.link)
+              if (!notif.Is_Read) handleMarkRead(notif.id)
+              if (notif.Link) router.push(notif.Link)
             }}
           >
             <Card 
               className={`border-slate-800 ${
-                notif.is_read 
+                notif.Is_Read 
                   ? 'bg-slate-900/50' 
                   : 'bg-slate-900 border-l-4 border-l-blue-500'
               }`}
             >
               <CardContent className="p-4 flex gap-3">
                 <div className="mt-1 bg-slate-800 p-2 rounded-full h-fit">
-                  {getIcon(notif.type)}
+                  {getIcon(notif.Type)}
                 </div>
                 <div className="flex-1">
-                  <h4 className={`font-medium ${notif.is_read ? 'text-slate-300' : 'text-white'}`}>
-                    {notif.title}
+                  <h4 className={`font-medium ${notif.Is_Read ? 'text-slate-300' : 'text-white'}`}>
+                    {notif.Title}
                   </h4>
-                  <p className="text-sm text-slate-400 mt-1">{notif.message}</p>
-                  <p className="text-xs text-slate-500 mt-2">{formatTime(notif.created_at)}</p>
+                  <p className="text-sm text-slate-400 mt-1">{notif.Message}</p>
+                  <p className="text-xs text-slate-500 mt-2">{formatTime(notif.Created_At)}</p>
                 </div>
-                {!notif.is_read && (
+                {!notif.Is_Read && (
                   <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0" />
                 )}
               </CardContent>

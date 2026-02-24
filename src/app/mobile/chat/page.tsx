@@ -15,7 +15,6 @@ export default function MobileChatPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [inputText, setInputText] = useState("")
   const [driverId, setDriverId] = useState<string | null>(null)
-  const [driverName, setDriverName] = useState<string>("")
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -30,14 +29,13 @@ export default function MobileChatPage() {
             return
         }
         setDriverId(session.driverId)
-        setDriverName(session.driverName || "")
         
         const history = await getChatHistory(session.driverId)
         setMessages(history)
         setLoading(false)
     }
     init()
-  }, [])
+  }, [router])
 
   // 2. Realtime Subscription
   useEffect(() => {
@@ -51,7 +49,7 @@ export default function MobileChatPage() {
                 event: 'INSERT',
                 schema: 'public',
                 table: 'Chat_Messages',
-                filter: `receiver_id=eq.${driverId}`
+                filter: `Receiver_ID=eq.${driverId}`
             },
             (payload) => {
                 const newMsg = payload.new as ChatMessage
@@ -67,7 +65,7 @@ export default function MobileChatPage() {
     return () => {
         supabase.removeChannel(channel)
     }
-  }, [driverId])
+  }, [driverId, supabase])
 
   // 3. Auto Scroll
   useEffect(() => {
@@ -89,7 +87,7 @@ export default function MobileChatPage() {
     // OR add optimistic msg.
     
     // Server Action
-    await sendChatMessage(driverId, text, driverName)
+    await sendChatMessage(driverId, text)
 
     // Since we didn't subscribe to our own inserts above (maybe?), let's refresh.
     // Actually, let's just refresh history to be safe and simple.
@@ -114,8 +112,8 @@ export default function MobileChatPage() {
                 <p className="text-xs">พิมพ์ข้อความเพื่อเริ่มการสนทนา</p>
             </div>
         ) : (
-            messages.map((msg) => {
-                const isMe = msg.sender === 'driver'
+                    messages.map((msg) => {
+                const isMe = msg.Sender_ID === driverId
                 return (
                     <div 
                         key={msg.id} 
@@ -130,9 +128,9 @@ export default function MobileChatPage() {
                                 ? "bg-indigo-600 text-white rounded-tr-none" 
                                 : "bg-slate-800 text-slate-200 rounded-tl-none border border-slate-700"
                         }`}>
-                            <p>{msg.message}</p>
+                            <p>{msg.Message}</p>
                             <p className={`text-[10px] mt-1 text-right ${isMe ? "text-indigo-200" : "text-slate-500"}`}>
-                                {new Date(msg.created_at).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })}
+                                {new Date(msg.Created_At).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })}
                             </p>
                         </div>
                     </div>

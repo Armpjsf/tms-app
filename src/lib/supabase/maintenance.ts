@@ -9,7 +9,7 @@ export type RepairTicket = {
   Driver_ID: string | null
   Vehicle_Plate: string | null
   Issue_Type: string | null
-  Issue_Desc: string | null
+  Description: string | null
   Priority: string | null
   Photo_Url: string | null
   Status: string | null
