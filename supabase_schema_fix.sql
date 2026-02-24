@@ -41,6 +41,8 @@ CREATE TABLE IF NOT EXISTS "Vehicle_Checks" (
     "Failed_Items" JSONB DEFAULT '[]',
     "Total_Items" INTEGER DEFAULT 0,
     "Passed_Count" INTEGER DEFAULT 0,
+    "Photo_Urls" TEXT,
+    "Signature_Url" TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 -- Notifications table

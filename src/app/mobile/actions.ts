@@ -84,12 +84,15 @@ export async function submitVehicleCheck(formData: FormData) {
     const { error } = await supabase
       .from('Vehicle_Checks')
       .insert({
-        Log_ID: logId,
         Driver_ID: driverId,
         Driver_Name: driverName,
         Vehicle_Plate: vehiclePlate,
-        Checked_At: new Date().toISOString(),
-        Check_Items: items,
+        Check_Date: new Date().toISOString(),
+        Status: 'Pass', // We will derive this better later, or leave default for now
+        Passed_Items: items, // Assuming the front-end sends a simple JSON object
+        Failed_Items: {},
+        Total_Items: Object.keys(items || {}).length,
+        Passed_Count: Object.keys(items || {}).length,
         Photo_Urls: photoUrls.join(','),
         Signature_Url: signatureUrl
       })
