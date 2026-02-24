@@ -44,6 +44,7 @@ export function MobileVehicleCheckForm({ driverId, driverName, defaultVehiclePla
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     console.log("Submit start", { signature: !!signature, plate })
+    alert("เริ่มบันทึกข้อมูล...") // Checkpoint 1
     
     if (!signature) {
         alert("กรุณาลงลายเซ็นก่อนบันทึก")
@@ -58,36 +59,45 @@ export function MobileVehicleCheckForm({ driverId, driverName, defaultVehiclePla
         
         // 1. Capture Report
         if (reportRef.current) {
-            setSubmitStatus("กำลังสร้างรายงานรูปภาพ...")
+            setSubmitStatus("ก. กำลังสร้างรูปรายงาน...")
+            alert("Step 1: กำลังสร้างรูปจากหน้าจอ...") // Checkpoint 2
             try {
-                // Short delay to ensure browser has rendered the hidden component
-                await new Promise(r => setTimeout(r, 300))
+                await new Promise(r => setTimeout(r, 500))
                 
                 const canvas = await html2canvas(reportRef.current, {
-                    scale: 1, // Minimum scale for speed
+                    scale: 1,
                     useCORS: true,
-                    logging: true, // Enable logging for remote debugging
+                    logging: true,
                     windowWidth: 1000,
                     backgroundColor: "#ffffff",
                     onclone: (doc) => {
-                        // Ensure it's visible during capture in the cloned doc
                         const el = doc.getElementById("report-capture-area")
                         if (el) el.style.position = "static"
                     }
                 })
-                const reportBlob = await new Promise<Blob | null>(resolve => 
-                    canvas.toBlob(resolve, 'image/jpeg', 0.6)
-                )
+                alert("Step 2: สร้าง Canvas สำเร็จ กำลังแปลงเป็นไฟล์...") // Checkpoint 3
+                const reportBlob = await new Promise<Blob | null>(resolve => {
+                    const timeout = setTimeout(() => {
+                        console.error("toBlob timeout")
+                        resolve(null)
+                    }, 5000)
+                    canvas.toBlob((blob) => {
+                        clearTimeout(timeout)
+                        resolve(blob)
+                    }, 'image/jpeg', 0.6)
+                })
+                
                 if (reportBlob) {
                     formData.append("check_report", reportBlob, `Report_${plate}.jpg`)
+                    alert("Step 3: แปลงไฟล์รายงานสำเร็จ") // Checkpoint 4
                 }
-                console.log("Report capture success")
             } catch (err) {
                 console.error("Report capture failed:", err)
+                alert(`เตือน: สร้างรายงานรูปภาพไม่สำเร็จ แต่อาจจะบันทึกส่วนอื่นได้: ${err}`)
             }
         }
 
-        setSubmitStatus("กำลังอัปโหลดรูปภาพ...")
+        setSubmitStatus("ข. เตรียมรูปถ่าย...")
         formData.append("driverId", driverId)
         formData.append("driverName", driverName)
         formData.append("vehiclePlate", plate)
@@ -102,21 +112,24 @@ export function MobileVehicleCheckForm({ driverId, driverName, defaultVehiclePla
             formData.append("signature", signature, "signature.png")
         }
 
-        setSubmitStatus("กำลังส่งข้อมูลไปยังเซิร์ฟเวอร์...")
+        setSubmitStatus("ค. ส่งข้อมูลเข้าเซิร์ฟเวอร์...")
+        alert("Step 4: กำลังส่งข้อมูลไปยัง Google Drive & Database (โปรดรอสักครู่)...") // Checkpoint 5
+        
         const result = await submitVehicleCheck(formData)
+        alert(`Step 5: ผลการส่ง -> ${result.success ? "สำเร็จ" : "ล้มเหลว"}`) // Checkpoint 6
         
         if (result.success) {
-             alert("บันทึกสำเร็จ!")
+             alert("✅ บันทึกข้อมูลเรียบร้อยแล้ว!")
              router.push('/mobile/profile')
         } else {
              setSubmitStatus("")
-             alert(`บันทึกไม่สำเร็จ: ${result.message}`)
+             alert(`❌ บันทึกไม่สำเร็จ: ${result.message}`)
         }
     } catch (err) {
         console.error("Vehicle Check Error:", err)
         setSubmitStatus("")
         const errMsg = err instanceof Error ? err.message : String(err)
-        alert(`Submit Error: ${errMsg}`)
+        alert(`Submit Catch Error: ${errMsg}`)
     } finally {
         setLoading(false)
     }
@@ -126,24 +139,32 @@ export function MobileVehicleCheckForm({ driverId, driverName, defaultVehiclePla
   const [reportPhotos, setReportPhotos] = useState<string[]>([])
   const [reportSig, setReportSig] = useState<string | null>(null)
 
-  useState(() => {
-    // Initial cleanup if needed
-    return () => {
-        reportPhotos.forEach(URL.revokeObjectURL)
-        if (reportSig) URL.revokeObjectURL(reportSig)
-    }
-  })
-
   const updateCaptureData = () => {
-      reportPhotos.forEach(URL.revokeObjectURL)
-      if (reportSig) URL.revokeObjectURL(reportSig)
+      try {
+          // Cleanup old
+          reportPhotos.forEach(url => { if(url) URL.revokeObjectURL(url) })
+          if (reportSig) URL.revokeObjectURL(reportSig)
 
-      setReportPhotos(photos.map(p => URL.createObjectURL(p)))
-      setReportSig(signature ? URL.createObjectURL(signature) : null)
+          // Create new
+          const newPhotos = photos.map(p => URL.createObjectURL(p))
+          const newSig = signature ? URL.createObjectURL(signature) : null
+          
+          setReportPhotos(newPhotos)
+          setReportSig(newSig)
+          console.log("Capture data updated", { photos: newPhotos.length, sig: !!newSig })
+      } catch (e) {
+          console.error("updateCaptureData Error:", e)
+          alert("เกิดข้อผิดพลาดในการโหลดรูปเพื่อสร้างรายงาน: " + e)
+      }
   }
 
   return (
-    <form onSubmit={(e) => { e.preventDefault(); updateCaptureData(); setTimeout(() => handleSubmit(e), 500); }} className="space-y-6">
+    <form onSubmit={(e) => { 
+        e.preventDefault(); 
+        console.log("Form submit triggered");
+        updateCaptureData(); 
+        setTimeout(() => handleSubmit(e), 800); 
+    }} className="space-y-6">
         {/* Hidden Report Container - More stable positioning */}
         <div 
             id="report-capture-area" 
