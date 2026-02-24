@@ -23,6 +23,7 @@ import { getAllJobs } from "@/lib/supabase/jobs"
 import { getJobCreationData } from "@/app/planning/actions"
 import { ExcelExport } from "@/components/ui/excel-export"
 import { JobHistoryActions } from "@/components/jobs/job-history-actions"
+import NextImage from "next/image"
 
 import { isCustomer, hasPermission } from "@/lib/permissions"
 
@@ -200,6 +201,7 @@ export default async function JobHistoryPage(props: Props) {
                     <th className="text-left p-4 text-xs font-medium text-muted-foreground uppercase">เส้นทาง</th>
                     <th className="text-left p-4 text-xs font-medium text-muted-foreground uppercase">คนขับ</th>
                     <th className="text-left p-4 text-xs font-medium text-muted-foreground uppercase">ทะเบียน</th>
+                    <th className="text-center p-4 text-xs font-medium text-muted-foreground uppercase">รูปถ่าย/ลายเซ็น</th>
                     {canViewPrice && <th className="text-right p-4 text-xs font-medium text-emerald-600 dark:text-emerald-400 uppercase">ราคาแอร์</th>}
                     {canViewPrice && <th className="text-right p-4 text-xs font-medium text-red-600 dark:text-red-400 uppercase">ต้นทุนรถ</th>}
                     <th className="text-left p-4 text-xs font-medium text-muted-foreground uppercase">สถานะ</th>
@@ -235,6 +237,35 @@ export default async function JobHistoryPage(props: Props) {
                       </td>
                       <td className="p-4 text-muted-foreground text-sm">
                         {job.Vehicle_Plate || "-"}
+                      </td>
+                      <td className="p-4">
+                        <div className="flex items-center justify-center gap-2">
+                             {job.Photo_Proof_Url && (
+                                <div className="relative w-10 h-10 rounded border border-border overflow-hidden bg-muted group">
+                                    <NextImage 
+                                        src={job.Photo_Proof_Url.split(',')[0]} 
+                                        alt="POD Photo" 
+                                        fill 
+                                        className="object-cover group-hover:scale-110 transition-transform" 
+                                    />
+                                    <a href={job.Photo_Proof_Url.split(',')[0]} target="_blank" rel="noreferrer" className="absolute inset-0 z-10" />
+                                </div>
+                             )}
+                             {job.Signature_Url && (
+                                <div className="relative w-14 h-10 rounded border border-border overflow-hidden bg-white group">
+                                    <NextImage 
+                                        src={job.Signature_Url} 
+                                        alt="Signature" 
+                                        fill 
+                                        className="object-contain p-1 group-hover:scale-110 transition-transform" 
+                                    />
+                                    <a href={job.Signature_Url} target="_blank" rel="noreferrer" className="absolute inset-0 z-10" />
+                                </div>
+                             )}
+                             {!job.Photo_Proof_Url && !job.Signature_Url && (
+                                <span className="text-muted-foreground/30 text-xs">-</span>
+                             )}
+                        </div>
                       </td>
                       {canViewPrice && (
                         <td className="p-4 text-right overflow-hidden">

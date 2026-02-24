@@ -17,6 +17,7 @@ import { FuelAnalyticsDashboard } from "@/components/fuel/fuel-analytics-dashboa
 
 import { SearchInput } from "@/components/ui/search-input"
 import { Pagination } from "@/components/ui/pagination"
+import NextImage from "next/image"
 
 type Props = {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
@@ -124,6 +125,7 @@ export default async function FuelPage(props: Props) {
                     <th className="text-left p-4">คนขับ</th>
                     <th className="text-left p-4">ทะเบียนรถ</th>
                     <th className="text-left p-4">สถานี/ปั๊ม</th>
+                    <th className="text-center p-4">รูปถ่าย</th>
                     <th className="text-right p-4">จำนวน (L)</th>
                     <th className="text-right p-4">ราคา/L</th>
                     <th className="text-right p-4">รวมเงิน</th>
@@ -157,6 +159,27 @@ export default async function FuelPage(props: Props) {
                                  log.Status === 'Rejected' ? 'ไม่อนุมัติ' : 'รอตรวจสอบ'}
                             </span>
                         </div>
+                      </td>
+                      <td className="p-4 text-center">
+                        {log.Photo_Url ? (
+                            <div className="relative w-10 h-10 mx-auto rounded overflow-hidden border border-border bg-muted group cursor-pointer">
+                                <NextImage 
+                                    src={log.Photo_Url} 
+                                    alt="Receipt" 
+                                    fill 
+                                    className="object-cover group-hover:scale-110 transition-transform" 
+                                />
+                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                    <a href={log.Photo_Url} target="_blank" rel="noreferrer">
+                                        <div className="w-5 h-5 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
+                                            <span className="text-[10px]">🔍</span>
+                                        </div>
+                                    </a>
+                                </div>
+                            </div>
+                        ) : (
+                            <span className="text-muted-foreground/30 text-xs">-</span>
+                        )}
                       </td>
                       <td className="p-4 text-right">
                          {/* Capacity Alert */}

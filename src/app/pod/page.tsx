@@ -15,6 +15,7 @@ import {
 } from "lucide-react"
 import { getAllPODs, getPODStats } from "@/lib/supabase/pod"
 import { PODExport } from "@/components/pod/pod-export"
+import NextImage from "next/image"
 
 export default async function PODPage() {
   const [{ data: pods }, stats] = await Promise.all([
@@ -114,14 +115,30 @@ export default async function PODPage() {
                       <td className="p-4 text-sm text-slate-300">{pod.Driver_Name || "-"}</td>
                       <td className="p-4 text-center">
                         {pod.Photo_Proof_Url ? (
-                          <ImageIcon size={18} className="mx-auto text-emerald-400" />
+                          <div className="relative w-10 h-10 mx-auto rounded border border-border overflow-hidden bg-muted group">
+                            <NextImage 
+                                src={pod.Photo_Proof_Url.split(',')[0]} 
+                                alt="POD" 
+                                fill 
+                                className="object-cover group-hover:scale-110 transition-transform" 
+                            />
+                            <a href={pod.Photo_Proof_Url.split(',')[0]} target="_blank" rel="noreferrer" className="absolute inset-0 z-10" />
+                          </div>
                         ) : (
                           <span className="text-slate-500">-</span>
                         )}
                       </td>
                       <td className="p-4 text-center">
                         {pod.Signature_Url ? (
-                          <PenTool size={18} className="mx-auto text-purple-400" />
+                           <div className="relative w-14 h-10 mx-auto rounded border border-border overflow-hidden bg-white group">
+                           <NextImage 
+                               src={pod.Signature_Url} 
+                               alt="Signature" 
+                               fill 
+                               className="object-contain p-1 group-hover:scale-110 transition-transform" 
+                           />
+                           <a href={pod.Signature_Url} target="_blank" rel="noreferrer" className="absolute inset-0 z-10" />
+                         </div>
                         ) : (
                           <span className="text-slate-500">-</span>
                         )}

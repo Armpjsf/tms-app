@@ -1,4 +1,3 @@
-import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { Card, CardContent } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { createAdminClient } from "@/utils/supabase/server"
@@ -19,7 +18,7 @@ export default async function AdminVehicleChecksPage() {
     }
 
     return (
-        <DashboardLayout>
+        <div className="space-y-8">
             <div className="mb-8">
                 <h1 className="text-3xl font-bold flex items-center gap-3">
                     <Truck className="text-indigo-500" />
@@ -124,6 +123,6 @@ export default async function AdminVehicleChecksPage() {
                     </CardContent>
                 </Card>
             </div>
-        </DashboardLayout>
+        </div>
     )
 }
