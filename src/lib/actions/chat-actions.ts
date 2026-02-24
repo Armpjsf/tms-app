@@ -4,21 +4,21 @@ import { createClient } from "@/utils/supabase/server"
 
 export interface ChatMessage {
     id: number
-    driver_id: string
-    driver_name: string
+    sender_id: string
+    receiver_id: string
     sender: 'admin' | 'driver'
     message: string
     created_at: string
-    read: boolean
+    is_read: boolean
 }
 
 export async function getChatHistory(driverId: string) {
     const supabase = await createClient()
     
     const { data, error } = await supabase
-        .from('chat_messages')
+        .from('Chat_Messages')
         .select('*')
-        .eq('driver_id', driverId)
+        .or(`sender_id.eq.${driverId},receiver_id.eq.${driverId}`)
         .order('created_at', { ascending: true })
 
     if (error) {
@@ -33,13 +33,13 @@ export async function sendChatMessage(senderId: string, message: string, driverN
     const supabase = await createClient()
 
     const { error } = await supabase
-        .from('chat_messages')
+        .from('Chat_Messages')
         .insert({
-            driver_id: senderId,
-            driver_name: driverName || 'Driver',
+            sender_id: senderId,
+            receiver_id: 'admin', // Defaulting to admin
             sender: 'driver',
             message: message,
-            read: false,
+            is_read: false,
             created_at: new Date().toISOString()
         })
 

@@ -50,8 +50,8 @@ export default function MobileChatPage() {
             {
                 event: 'INSERT',
                 schema: 'public',
-                table: 'chat_messages',
-                filter: `driver_id=eq.${driverId}`
+                table: 'Chat_Messages',
+                filter: `receiver_id=eq.${driverId}`
             },
             (payload) => {
                 const newMsg = payload.new as ChatMessage
