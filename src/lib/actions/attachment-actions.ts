@@ -2,6 +2,7 @@
 
 import { createClient, createAdminClient } from "@/utils/supabase/server"
 import { revalidatePath } from "next/cache"
+import { uploadFileToDrive } from "@/lib/google-drive"
 
 export interface Attachment {
     Attachment_ID: string;
@@ -36,45 +37,39 @@ export async function uploadAttachment(formData: FormData) {
         return { success: false, error: "ข้อมูลไม่ครบถ้วน" }
     }
 
-    // Use Admin Client to bypass RLS for Storage and DB
     const supabase = createAdminClient()
-    const fileExt = file.name.split('.').pop()
-    const fileName = `${billingNoteId}/${Date.now()}.${fileExt}`
-    const filePath = fileName
 
     try {
-        // 1. Upload to Storage
-        // Convert File to Buffer for reliable server-side upload if needed, 
-        // but Supabase JS client handles File objects nicely in Node environments usually.
-        // However, standard File object in Next.js server actions might be web-standard File.
+        // 1. Upload to Google Drive
         const arrayBuffer = await file.arrayBuffer()
         const buffer = Buffer.from(arrayBuffer)
+        
+        const timestamp = Date.now()
+        const fileName = `${billingNoteId}_${timestamp}_${file.name}`
+        
+        const uploadResult = await uploadFileToDrive(
+            buffer,
+            fileName,
+            file.type,
+            'Billing_Attachments'
+        )
 
-        const { error: uploadError } = await supabase.storage
-            .from('billing-documents')
-            .upload(filePath, buffer, {
-                contentType: file.type,
-                upsert: true
-            })
-
-        if (uploadError) {
-             console.error("Storage Error:", uploadError)
-             return { success: false, error: "อัปโหลดไฟล์ไม่สำเร็จ: " + uploadError.message }
+        if (!uploadResult.directLink) {
+            throw new Error("Failed to get direct link from Google Drive")
         }
 
-        // 2. Save to DB
+        // 2. Save to DB (Store direct link in File_Path)
         const { error: dbError } = await supabase
             .from('Billing_Attachments')
             .insert([{
                 Billing_Note_ID: billingNoteId,
                 File_Name: file.name,
-                File_Path: filePath,
+                File_Path: uploadResult.directLink,
                 File_Type: file.type || 'application/octet-stream',
             }])
 
         if (dbError) {
             console.error("DB Error:", dbError)
-            // Cleanup storage if DB fails? Maybe.
             return { success: false, error: "บันทึกข้อมูลไม่สำเร็จ: " + dbError.message }
         }
 
@@ -88,7 +83,6 @@ export async function uploadAttachment(formData: FormData) {
 
 export async function saveAttachment(attachment: Omit<Attachment, 'Attachment_ID' | 'Uploaded_At'>) {
     const supabase = await createClient()
-// ... (rest of old function)
     const { error } = await supabase
         .from('Billing_Attachments')
         .insert([attachment])
@@ -104,18 +98,10 @@ export async function saveAttachment(attachment: Omit<Attachment, 'Attachment_ID
 export async function deleteAttachment(id: string, filePath: string) {
     const supabase = await createClient()
     
-    // 1. Delete from Storage
-    const { error: storageError } = await supabase
-        .storage
-        .from('billing-documents')
-        .remove([filePath])
+    // Skip Storage deletion for Google Drive for now as we don't handle its delete yet
+    // and the original logic was specific to Supabase buckets.
 
-    if (storageError) {
-        console.error("Error removing file from storage:", storageError)
-        // Continue to delete DB record anyway? Maybe warn user.
-    }
-
-    // 2. Delete from DB
+    // Delete from DB
     const { error: dbError } = await supabase
         .from('Billing_Attachments')
         .delete()

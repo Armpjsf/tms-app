@@ -217,29 +217,21 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
                 
                 return (
                   <Link key={item.href} href={item.href} prefetch={false}>
-                    <div className="relative group">
-                        {isActive && (
-                            <motion.div
-                                layoutId="activeGlow"
-                                className="absolute inset-0 bg-indigo-500/20 rounded-xl blur-md"
-                                transition={{ duration: 0.2 }}
-                            />
-                        )}
+                    <div className="relative">
                         <motion.div
                         whileHover={{ x: 4 }}
                         whileTap={{ scale: 0.98 }}
                         className={cn(
                             "relative flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-200",
                             isActive
-                            ? "bg-primary/10 text-primary border border-primary/20 shadow-lg shadow-primary/5"
+                            ? "bg-primary/20 text-primary border border-primary/30 shadow-md ring-1 ring-primary/20"
                             : "text-muted-foreground hover:text-foreground hover:bg-muted/50 border border-transparent"
                         )}
                         >
                         {/* Active Indicator Strip */}
                         {isActive && (
-                            <motion.div
-                            layoutId="activeStrip"
-                            className="absolute left-0 top-1/2 -translate-y-1/2 h-8 w-1 bg-indigo-500 rounded-r-full shadow-[0_0_10px_2px_rgba(99,102,241,0.5)]"
+                            <div
+                            className="absolute left-0 top-1/2 -translate-y-1/2 h-8 w-1 bg-primary rounded-r-full shadow-[0_0_10px_rgba(59,130,246,0.5)]"
                             />
                         )}
                         
