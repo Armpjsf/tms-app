@@ -7,6 +7,11 @@ import Image from "next/image"
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
+const STANDARD_CHECKLIST = [
+    "น้ำมันเครื่อง", "น้ำในหม้อน้ำ", "ลมยาง", "ไฟเบรค/ไฟเลี้ยว", 
+    "สภาพยางรถยนต์", "อุปกรณ์ฉุกเฉิน", "เอกสารประจำรถ"
+]
+
 export default async function AdminVehicleChecksPage() {
     const supabase = createAdminClient()
     
@@ -45,8 +50,8 @@ export default async function AdminVehicleChecksPage() {
                             </TableHeader>
                             <TableBody>
                                 {checks?.map((check) => {
-                                    const items = check.Passed_Items || {}
-                                    const failedItems = Object.entries(items).filter(([_, v]) => v === false).map(([k]) => k)
+                                    const items = (check.Passed_Items || {}) as Record<string, boolean>
+                                    const failedItems = STANDARD_CHECKLIST.filter(item => !items[item])
                                     const isPass = failedItems.length === 0
 
                                     return (

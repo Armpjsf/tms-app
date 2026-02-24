@@ -37,6 +37,7 @@ export async function submitVehicleCheck(formData: FormData) {
 
     // 1. Process media
     const photoUrls: string[] = []
+    const failures: string[] = []
     
     // 0. Check Report (Smart Document)
     const checkReportFile = formData.get("check_report") as File
@@ -49,6 +50,7 @@ export async function submitVehicleCheck(formData: FormData) {
         console.log(`[${logId}] Check Report Uploaded: ${checkReportUrl}`)
       } catch (e) {
         console.error(`[${logId}] Failed to upload Check Report:`, e)
+        failures.push("รายงานตรวจเช็ครถ (Report)")
       }
     }
 
@@ -67,6 +69,7 @@ export async function submitVehicleCheck(formData: FormData) {
           }
         } catch (e) {
           console.error(`[${logId}] Failed to upload photo ${i}:`, e)
+          failures.push(`รูปถ่ายที่ ${i + 1}`)
         }
       }
     }
@@ -86,6 +89,7 @@ export async function submitVehicleCheck(formData: FormData) {
         console.log(`[${logId}] Signature Uploaded: ${signatureUrl}`)
       } catch (e) {
         console.error(`[${logId}] Failed to upload signature:`, e)
+        failures.push("ลายเซ็น (Signature)")
       }
     }
 
@@ -110,8 +114,11 @@ export async function submitVehicleCheck(formData: FormData) {
 
     if (error) {
       console.error('Error saving vehicle check:', error)
-      return { success: false, message: `บันทึกไม่สำเร็จ: ${error.message}` }
+      return { success: false, message: `บันทึกไม่สำเร็จ (DB Error): ${error.message}` }
     }
+
+    const failureMsg = failures.length > 0 ? `\n(แต่บางไฟล์อัปโหลดไม่สำเร็จ: ${failures.join(", ")})` : ""
+    const finalMsg = `บันทึกการตรวจสอบเรียบร้อยแล้ว${failureMsg}`
 
     console.log(`[${logId}] Successfully saved.`)
     revalidatePath('/mobile/vehicle-check')
@@ -125,7 +132,7 @@ export async function submitVehicleCheck(formData: FormData) {
       Type: 'info'
     })
 
-    return { success: true, message: 'บันทึกการตรวจสอบเรียบร้อยแล้ว' }
+    return { success: true, message: finalMsg }
 
   } catch (err: unknown) {
     console.error("submitVehicleCheck Exception:", err)
