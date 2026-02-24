@@ -43,6 +43,8 @@ export function MobileVehicleCheckForm({ driverId, driverName, defaultVehiclePla
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    console.log("Submit start", { signature: !!signature, plate })
+    
     if (!signature) {
         alert("กรุณาลงลายเซ็นก่อนบันทึก")
         return
@@ -56,24 +58,32 @@ export function MobileVehicleCheckForm({ driverId, driverName, defaultVehiclePla
         
         // 1. Capture Report
         if (reportRef.current) {
-            setSubmitStatus("กำลังสร้างรายงาน PDF...")
+            setSubmitStatus("กำลังสร้างรายงานรูปภาพ...")
             try {
+                // Short delay to ensure browser has rendered the hidden component
+                await new Promise(r => setTimeout(r, 300))
+                
                 const canvas = await html2canvas(reportRef.current, {
-                    scale: 1.5, // Slightly lower scale for speed/reliability on mobile
+                    scale: 1, // Minimum scale for speed
                     useCORS: true,
-                    logging: false,
+                    logging: true, // Enable logging for remote debugging
                     windowWidth: 1000,
-                    backgroundColor: "#ffffff"
+                    backgroundColor: "#ffffff",
+                    onclone: (doc) => {
+                        // Ensure it's visible during capture in the cloned doc
+                        const el = doc.getElementById("report-capture-area")
+                        if (el) el.style.position = "static"
+                    }
                 })
                 const reportBlob = await new Promise<Blob | null>(resolve => 
-                    canvas.toBlob(resolve, 'image/jpeg', 0.8)
+                    canvas.toBlob(resolve, 'image/jpeg', 0.6)
                 )
                 if (reportBlob) {
-                    formData.append("check_report", reportBlob, `VehicleCheck_${plate}.jpg`)
+                    formData.append("check_report", reportBlob, `Report_${plate}.jpg`)
                 }
+                console.log("Report capture success")
             } catch (err) {
                 console.error("Report capture failed:", err)
-                // Don't block the whole submission if report capture fails
             }
         }
 
@@ -92,37 +102,61 @@ export function MobileVehicleCheckForm({ driverId, driverName, defaultVehiclePla
             formData.append("signature", signature, "signature.png")
         }
 
-        setSubmitStatus("กำลังบันทึกข้อมูลและส่งการแจ้งเตือน...")
+        setSubmitStatus("กำลังส่งข้อมูลไปยังเซิร์ฟเวอร์...")
         const result = await submitVehicleCheck(formData)
         
         if (result.success) {
-             setSubmitStatus("บันทึกสำเร็จ!")
+             alert("บันทึกสำเร็จ!")
              router.push('/mobile/profile')
         } else {
              setSubmitStatus("")
-             alert(result.message)
+             alert(`บันทึกไม่สำเร็จ: ${result.message}`)
         }
     } catch (err) {
         console.error("Vehicle Check Error:", err)
         setSubmitStatus("")
         const errMsg = err instanceof Error ? err.message : String(err)
-        alert(`เกิดข้อผิดพลาดในการบันทึก: ${errMsg}`)
+        alert(`Submit Error: ${errMsg}`)
     } finally {
         setLoading(false)
     }
   }
 
+  // Manage object URLs for capture
+  const [reportPhotos, setReportPhotos] = useState<string[]>([])
+  const [reportSig, setReportSig] = useState<string | null>(null)
+
+  useState(() => {
+    // Initial cleanup if needed
+    return () => {
+        reportPhotos.forEach(URL.revokeObjectURL)
+        if (reportSig) URL.revokeObjectURL(reportSig)
+    }
+  })
+
+  const updateCaptureData = () => {
+      reportPhotos.forEach(URL.revokeObjectURL)
+      if (reportSig) URL.revokeObjectURL(reportSig)
+
+      setReportPhotos(photos.map(p => URL.createObjectURL(p)))
+      setReportSig(signature ? URL.createObjectURL(signature) : null)
+  }
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Hidden Report Container */}
-        <div className="fixed left-[-9999px] top-0">
+    <form onSubmit={(e) => { e.preventDefault(); updateCaptureData(); setTimeout(() => handleSubmit(e), 500); }} className="space-y-6">
+        {/* Hidden Report Container - More stable positioning */}
+        <div 
+            id="report-capture-area" 
+            className="fixed top-0 left-[-5000px] pointer-events-none overflow-hidden"
+            style={{ zIndex: -1 }}
+        >
              <VehicleCheckReport 
                 ref={reportRef}
                 driverName={driverName}
                 vehiclePlate={plate}
                 items={checkedItems}
-                photos={photos.map(p => URL.createObjectURL(p))}
-                signature={signature ? URL.createObjectURL(signature) : null}
+                photos={reportPhotos}
+                signature={reportSig}
              />
         </div>
 
