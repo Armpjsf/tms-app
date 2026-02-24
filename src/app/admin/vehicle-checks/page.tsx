@@ -4,6 +4,9 @@ import { createAdminClient } from "@/utils/supabase/server"
 import { Truck, User, CheckCircle2, XCircle } from "lucide-react"
 import Image from "next/image"
 
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 export default async function AdminVehicleChecksPage() {
     const supabase = createAdminClient()
     
@@ -43,15 +46,15 @@ export default async function AdminVehicleChecksPage() {
                             <TableBody>
                                 {checks?.map((check) => {
                                     const items = check.Passed_Items || {}
-                                    const failedItems = Object.entries(items).filter(([key, v]) => v === false).map(([k]) => k)
+                                    const failedItems = Object.entries(items).filter(([_, v]) => v === false).map(([k]) => k)
                                     const isPass = failedItems.length === 0
 
                                     return (
                                         <TableRow key={check.id} className="border-border hover:bg-muted/30 transition-colors">
                                             <TableCell className="font-medium">
                                                 <div className="flex flex-col">
-                                                    <span>{new Date(check.Check_Date).toLocaleDateString('th-TH')}</span>
-                                                    <span className="text-xs text-muted-foreground">{new Date(check.Check_Date).toLocaleTimeString('th-TH')}</span>
+                                                    <span>{new Date(check.Check_Date).toLocaleDateString('th-TH', { timeZone: 'Asia/Bangkok' })}</span>
+                                                    <span className="text-xs text-muted-foreground">{new Date(check.Check_Date).toLocaleTimeString('th-TH', { timeZone: 'Asia/Bangkok' })}</span>
                                                 </div>
                                             </TableCell>
                                             <TableCell>

@@ -44,7 +44,9 @@ export async function submitVehicleCheck(formData: FormData) {
     if (checkReportFile && checkReportFile.size > 0) {
       try {
         const name = `${driverId}_check_REPORT_${timestamp}.jpg`
+        console.log(`[${logId}] Uploading Check Report: ${name}`)
         checkReportUrl = await uploadWithRename(checkReportFile, name, 'Vehicle_Check_Documents')
+        console.log(`[${logId}] Check Report Uploaded: ${checkReportUrl}`)
       } catch (e) {
         console.error(`[${logId}] Failed to upload Check Report:`, e)
       }
@@ -57,8 +59,12 @@ export async function submitVehicleCheck(formData: FormData) {
       if (file && file.size > 0) {
         try {
           const name = `${driverId}_check_${timestamp}_${i}.jpg`
+          console.log(`[${logId}] Uploading photo ${i}: ${name}`)
           const url = await uploadWithRename(file, name, 'Vehicle_Checks')
-          if (url) photoUrls.push(url)
+          if (url) {
+            photoUrls.push(url)
+            console.log(`[${logId}] Photo ${i} Uploaded: ${url}`)
+          }
         } catch (e) {
           console.error(`[${logId}] Failed to upload photo ${i}:`, e)
         }
@@ -75,13 +81,21 @@ export async function submitVehicleCheck(formData: FormData) {
     if (signatureFile && signatureFile.size > 0) {
       try {
         const name = `${driverId}_check_sig_${timestamp}.png`
+        console.log(`[${logId}] Uploading signature: ${name}`)
         signatureUrl = await uploadWithRename(signatureFile, name, 'Vehicle_Check_Signatures')
+        console.log(`[${logId}] Signature Uploaded: ${signatureUrl}`)
       } catch (e) {
         console.error(`[${logId}] Failed to upload signature:`, e)
       }
     }
 
+    // Diagnostics: Warn if no photos/signatures but expected
+    if (photoCount > 0 && photoUrls.length === 0) {
+        console.warn(`[${logId}] WARNING: Expected ${photoCount} photos but 0 were uploaded.`)
+    }
+
     // 2. Insert to DB
+    console.log(`[${logId}] Saving to Database...`)
     const { error } = await supabase
       .from('Vehicle_Checks')
       .insert({
@@ -99,7 +113,9 @@ export async function submitVehicleCheck(formData: FormData) {
       return { success: false, message: `บันทึกไม่สำเร็จ: ${error.message}` }
     }
 
+    console.log(`[${logId}] Successfully saved.`)
     revalidatePath('/mobile/vehicle-check')
+    revalidatePath('/admin/vehicle-checks')
 
     // Create Admin Notification
     await createNotification({
