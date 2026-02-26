@@ -15,6 +15,7 @@ export type JobFormData = {
   Customer_Name?: string | null
   Route_Name?: string | null
   Driver_ID?: string | null
+  Driver_Name?: string | null
   Vehicle_Plate?: string | null
   Vehicle_Type?: string
   Job_Status?: string | null
@@ -36,9 +37,9 @@ export async function createJob(data: JobFormData) {
   const supabase = await createClient()
 
   // Get Driver Name and Sub_ID based on Driver_ID
-  let driverName = ''
+  let driverName = data.Driver_Name || ''
   let subId = data.Sub_ID || null
-
+  
   if (data.Driver_ID) {
     const { data: driver } = await supabase
       .from('Master_Drivers')
@@ -46,7 +47,7 @@ export async function createJob(data: JobFormData) {
       .eq('Driver_ID', data.Driver_ID)
       .single()
     if (driver) {
-      driverName = driver.Driver_Name
+      if (!driverName) driverName = driver.Driver_Name
       if (!subId) subId = driver.Sub_ID || null
       // Default to driver preference if not explicitly set in form
       if (data.Show_Price_To_Driver === undefined) {

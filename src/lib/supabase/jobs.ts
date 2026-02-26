@@ -140,7 +140,10 @@ export async function getAllJobs(
     const isAdmin = await isSuperAdmin()
     const customerId = await getCustomerId()
     
-    if (branchId && branchId !== 'All') {
+    // Super Admins see everything if branchId is 'All' or empty
+    if (isAdmin && (!branchId || branchId === 'All')) {
+        // No filter
+    } else if (branchId && branchId !== 'All') {
         dbQuery = dbQuery.eq('Branch_ID', branchId)
     } else if (!isAdmin && !customerId && !branchId) {
         return { data: [], count: 0 }
@@ -328,19 +331,31 @@ export async function getJobById(jobId: string): Promise<Job | null> {
             .select('*')
             .eq('Job_ID', jobId)
         
-        // If it's a driver session, they should see any job assigned to them
-        if (driverSession) {
+        // Super Admins should see the job regardless of current branch selection
+        // Drivers should see jobs assigned to them
+        // Regular Admins should see jobs in their branch
+        if (isAdmin) {
+            // No filter for Super Admin in detail view to avoid 404
+        } else if (driverSession) {
             query = query.eq('Driver_ID', driverSession.driverId)
         } else if (branchId && branchId !== 'All') {
             query = query.eq('Branch_ID', branchId)
-        } else if (!isAdmin && !branchId) {
+        } else if (!branchId) {
             return null
         }
 
         const { data, error } = await query
             .single()
         
-        if (error) return null
+        if (error) {
+            // Second chance: If not found and is admin, try finding without branch filter
+            // (in case it was created in another branch)
+            if (isAdmin) {
+                const { data: adminData } = await supabase.from('Jobs_Main').select('*').eq('Job_ID', jobId).single()
+                return adminData
+            }
+            return null
+        }
         return data
     } catch (e) {
         console.error(e)

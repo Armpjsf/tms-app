@@ -66,7 +66,9 @@ export async function getAllPODs(page = 1, limit = 50): Promise<{ data: PODRecor
       .select('Job_ID, Job_Status, Plan_Date, Customer_Name, Driver_Name, Vehicle_Plate, Route_Name, Photo_Proof_Url, Signature_Url, Actual_Delivery_Time, Delivery_Lat, Delivery_Lon', { count: 'exact' })
       .in('Job_Status', ['Delivered', 'Complete', 'Completed', 'In Transit', 'Picked Up', 'Assigned', 'New', 'Failed'])
     
-    if (branchId && branchId !== 'All') {
+    if (isAdmin && (!branchId || branchId === 'All')) {
+        // No filter
+    } else if (branchId && branchId !== 'All') {
         dbQuery = dbQuery.eq('Branch_ID', branchId)
     } else if (!isAdmin && !branchId) {
         return { data: [], count: 0 }

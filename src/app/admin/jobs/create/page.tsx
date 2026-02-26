@@ -135,6 +135,7 @@ export default function CreateJobPage() {
         Customer_Name: formData.Customer_Name,
         Route_Name: `${formData.Origin_Location} - ${formData.Dest_Location}`, // Auto-generate route name
         Driver_ID: formData.Driver_ID,
+        Driver_Name: formData.Driver_Name,
         Vehicle_Plate: formData.Vehicle_Plate,
         Job_Status: 'New'
       })
