@@ -66,6 +66,8 @@ const columnLabels: Record<string, string> = {
   maintenance_cost: 'ค่าซ่อมบำรุง',
   extra_cost: 'ค่าใช้จ่ายอื่นๆ',
   total_cost: 'รวมค่าใช้จ่าย',
+  price_per_liter: 'ราคา/ลิตร',
+  odometer: 'เลขไมล์',
 }
 
 const reportTypes = [
@@ -151,7 +153,6 @@ function exportToExcel(data: any[], columns: string[], fileName: string) {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function exportToPDF(data: any[], columns: string[], fileName: string) {
-  // @ts-expect-error - jsPDF types sometimes mismatch with the environment
   const doc = new jsPDF()
   const headers = columns.map(c => columnLabels[c] || c)
   const rows = data.map(row => columns.map(col => {

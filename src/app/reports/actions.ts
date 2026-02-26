@@ -89,7 +89,7 @@ export async function getFilteredReportData(filters: ReportFilters): Promise<{ d
       case 'fuel': {
         let query = supabase
           .from('Fuel_Logs')
-          .select('Log_ID, Vehicle_Plate, Driver_ID, Date_Time, Liters, Price_Total, Station_Name, Branch_ID')
+          .select('Log_ID, Vehicle_Plate, Driver_ID, Date_Time, Liters, Price_Total, Station_Name, Odometer, Branch_ID')
           .order('Date_Time', { ascending: false })
           .limit(2000)
 
@@ -104,9 +104,11 @@ export async function getFilteredReportData(filters: ReportFilters): Promise<{ d
             fuel_date: f.Date_Time,
             vehicle_plate: f.Vehicle_Plate,
             amount: f.Price_Total,
-            station: f.Station_Name
+            station: f.Station_Name,
+            odometer: f.Odometer,
+            price_per_liter: f.Liters > 0 ? (f.Price_Total / f.Liters) : 0
           })), 
-          columns: ['fuel_date', 'vehicle_plate', 'amount', 'station', 'Liters']
+          columns: ['fuel_date', 'vehicle_plate', 'station', 'Liters', 'price_per_liter', 'amount', 'odometer']
         }
       }
 

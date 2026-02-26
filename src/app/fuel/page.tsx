@@ -198,11 +198,16 @@ export default async function FuelPage(props: Props) {
                          </div>
                       </td>
                       <td className="p-4 text-right">
+                        <span className="text-muted-foreground text-sm">
+                          ฿{(log.Price_Total && log.Liters) ? (log.Price_Total / log.Liters).toFixed(2) : "-"}
+                        </span>
+                      </td>
+                      <td className="p-4 text-right">
                         <span className="text-emerald-600 dark:text-emerald-400 font-bold text-sm">
                           ฿{log.Price_Total?.toLocaleString()}
                         </span>
                       </td>
-                      <td className="p-4 text-right text-muted-foreground font-mono text-sm">{log.Odometer?.toLocaleString()}</td>
+                      <td className="p-4 text-right text-muted-foreground font-mono text-sm">{log.Odometer?.toLocaleString() || "-"}</td>
                       <td className="p-4 text-right">
                          {log.Km_Per_Liter && log.Km_Per_Liter > 0 ? (
                             <div className="flex flex-col items-end">
