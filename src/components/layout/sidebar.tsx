@@ -102,6 +102,7 @@ const navigation: NavGroup[] = [
       { title: "จัดการเส้นทาง", href: "/routes", icon: <MapPin size={20} /> },
       { title: "ประเภทค่าใช้จ่าย", href: "/settings/expense-types", icon: <Coins size={20} /> },
       { title: "ตั้งค่าระบบบัญชี", href: "/settings/accounting", icon: <CloudSync size={20} /> },
+      { title: "System Logs", href: "/admin/logs", icon: <Activity size={20} /> },
     ],
   },
 ]
