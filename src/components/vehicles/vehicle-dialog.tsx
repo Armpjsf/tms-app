@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { createVehicle, updateVehicle } from "@/app/vehicles/actions"
 import { Loader2 } from "lucide-react"
 import { Vehicle } from "@/lib/supabase/vehicles"
@@ -113,39 +114,35 @@ export function VehicleDialog({
           {branches.length > 0 && (
             <div className="space-y-2">
                 <Label htmlFor="Branch_ID" className="text-yellow-400">เลือกสาขา (Super Admin)</Label>
-                <select
-                    id="Branch_ID"
-                    value={formData.branch_id}
-                    onChange={(e) => setFormData({ ...formData, branch_id: e.target.value })}
-                    className="flex h-10 w-full rounded-md border border-yellow-500/50 bg-yellow-500/10 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-yellow-500"
-                    required={mode === 'create'}
-                >
-                    <option value="" className="bg-slate-900">-- เลือกสาขา --</option>
-                    {branches.map((b) => (
-                        <option key={b.Branch_ID} value={b.Branch_ID} className="bg-slate-900">
-                        {b.Branch_Name} ({b.Branch_ID})
-                        </option>
-                    ))}
-                </select>
+                <Select value={formData.branch_id || undefined} onValueChange={(val) => setFormData({ ...formData, branch_id: val })}>
+                    <SelectTrigger className="w-full h-10 border-yellow-500/50 bg-yellow-500/10 text-white">
+                        <SelectValue placeholder="-- เลือกสาขา --" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {branches.map((b) => (
+                            <SelectItem key={b.Branch_ID} value={b.Branch_ID}>
+                                {b.Branch_Name} ({b.Branch_ID})
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
             </div>
           )}
 
           {subcontractors && subcontractors.length > 0 && (
             <div className="space-y-2">
                 <Label htmlFor="sub_id" className="text-blue-400">รถร่วมบริการ (Subcontractor)</Label>
-                <select
-                    id="sub_id"
-                    value={formData.sub_id || ''}
-                    onChange={(e) => setFormData({ ...formData, sub_id: e.target.value })}
-                    className="flex h-10 w-full rounded-md border border-blue-500/50 bg-blue-500/10 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                    <option value="" className="bg-slate-900">-- รถบริษัท (Company Fleet) --</option>
-                    {subcontractors.map((s) => (
-                        <option key={s.Sub_ID} value={s.Sub_ID} className="bg-slate-900">
-                        {s.Sub_Name}
-                        </option>
-                    ))}
-                </select>
+                <Select value={formData.sub_id || "__company__"} onValueChange={(val) => setFormData({ ...formData, sub_id: val === "__company__" ? "" : val })}>
+                    <SelectTrigger className="w-full h-10 border-blue-500/50 bg-blue-500/10 text-white">
+                        <SelectValue placeholder="-- รถบริษัท (Company Fleet) --" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="__company__">-- รถบริษัท (Company Fleet) --</SelectItem>
+                        {subcontractors.map((s) => (
+                            <SelectItem key={s.Sub_ID} value={s.Sub_ID}>{s.Sub_Name}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
             </div>
           )}
 
@@ -240,41 +237,41 @@ export function VehicleDialog({
 
           <div className="space-y-2">
             <Label htmlFor="vehicle_type">ประเภทรถ</Label>
-            <select
-                id="vehicle_type"
-                value={formData.vehicle_type}
-                onChange={(e) => setFormData({ ...formData, vehicle_type: e.target.value })}
-                className="flex h-10 w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
-            >
-                {vehicleTypes.length > 0 ? (
-                    vehicleTypes.map((type) => (
-                        <option key={type.type_id} value={type.type_name} className="bg-slate-900">
-                            {type.type_name} {type.description ? `(${type.description})` : ''}
-                        </option>
-                    ))
-                ) : (
-                    <>
-                        <option value="4-Wheel" className="bg-slate-900">4 ล้อ (4-Wheel)</option>
-                        <option value="6-Wheel" className="bg-slate-900">6 ล้อ (6-Wheel)</option>
-                        <option value="10-Wheel" className="bg-slate-900">10 ล้อ (10-Wheel)</option>
-                    </>
-                )}
-            </select>
+            <Select value={formData.vehicle_type} onValueChange={(val) => setFormData({ ...formData, vehicle_type: val })}>
+                <SelectTrigger className="w-full h-10 border-white/10 bg-white/5 text-white">
+                    <SelectValue placeholder="เลือกประเภทรถ" />
+                </SelectTrigger>
+                <SelectContent>
+                    {vehicleTypes.length > 0 ? (
+                        vehicleTypes.map((type) => (
+                            <SelectItem key={type.type_id} value={type.type_name}>
+                                {type.type_name} {type.description ? `(${type.description})` : ''}
+                            </SelectItem>
+                        ))
+                    ) : (
+                        <>
+                            <SelectItem value="4-Wheel">4 ล้อ (4-Wheel)</SelectItem>
+                            <SelectItem value="6-Wheel">6 ล้อ (6-Wheel)</SelectItem>
+                            <SelectItem value="10-Wheel">10 ล้อ (10-Wheel)</SelectItem>
+                        </>
+                    )}
+                </SelectContent>
+            </Select>
           </div>
 
           {mode === 'edit' && (
              <div className="space-y-2">
               <Label htmlFor="active_status">สถานะ</Label>
-              <select
-                id="active_status"
-                value={formData.active_status}
-                onChange={(e) => setFormData({ ...formData, active_status: e.target.value })}
-                className="flex h-10 w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
-              >
-                 <option value="Active" className="text-black">Active (พร้อมใช้)</option>
-                 <option value="Maintenance" className="text-black">Maintenance (ซ่อมบำรุง)</option>
-                 <option value="Inactive" className="text-black">Inactive (เลิกใช้)</option>
-              </select>
+              <Select value={formData.active_status} onValueChange={(val) => setFormData({ ...formData, active_status: val })}>
+                <SelectTrigger className="w-full h-10 border-white/10 bg-white/5 text-white">
+                    <SelectValue placeholder="เลือกสถานะ" />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="Active">Active (พร้อมใช้)</SelectItem>
+                    <SelectItem value="Maintenance">Maintenance (ซ่อมบำรุง)</SelectItem>
+                    <SelectItem value="Inactive">Inactive (เลิกใช้)</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           )}
 

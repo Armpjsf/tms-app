@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { createRepairTicket, updateRepairTicket } from "@/app/maintenance/actions"
 import { Loader2 } from "lucide-react"
 import { ImageUpload } from "@/components/ui/image-upload"
@@ -147,68 +148,60 @@ export function MaintenanceDialog({
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
                 <Label htmlFor="Driver_ID">ผู้แจ้ง</Label>
-                <select
-                    id="Driver_ID"
-                    value={formData.Driver_ID}
-                    onChange={(e) => setFormData({ ...formData, Driver_ID: e.target.value })}
-                    className="flex h-10 w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    required
-                >
-                    <option value="" className="bg-slate-900">เลือกคนขับ</option>
-                    {drivers.map((d) => (
-                        <option key={d.Driver_ID} value={d.Driver_ID} className="bg-slate-900">
-                        {d.Driver_Name}
-                        </option>
-                    ))}
-                </select>
+                <Select value={formData.Driver_ID || undefined} onValueChange={(val) => setFormData({ ...formData, Driver_ID: val })}>
+                    <SelectTrigger className="w-full h-10 border-white/10 bg-white/5 text-white">
+                        <SelectValue placeholder="เลือกคนขับ" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {drivers.map((d: any) => (
+                            <SelectItem key={d.Driver_ID} value={d.Driver_ID}>{d.Driver_Name}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
             </div>
             <div className="space-y-2">
                 <Label htmlFor="Vehicle_Plate">ทะเบียนรถ</Label>
-                <select
-                    id="Vehicle_Plate"
-                    value={formData.Vehicle_Plate}
-                    onChange={(e) => setFormData({ ...formData, Vehicle_Plate: e.target.value })}
-                    className="flex h-10 w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    required
-                >
-                    <option value="" className="bg-slate-900">เลือกทะเบียน</option>
-                    {vehicles.map((v) => (
-                        <option key={v.Vehicle_Plate} value={v.Vehicle_Plate} className="bg-slate-900">
-                        {v.Vehicle_Plate}
-                        </option>
-                    ))}
-                </select>
+                <Select value={formData.Vehicle_Plate || undefined} onValueChange={(val) => setFormData({ ...formData, Vehicle_Plate: val })}>
+                    <SelectTrigger className="w-full h-10 border-white/10 bg-white/5 text-white">
+                        <SelectValue placeholder="เลือกทะเบียน" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {vehicles.map((v: any) => (
+                            <SelectItem key={v.Vehicle_Plate} value={v.Vehicle_Plate}>{v.Vehicle_Plate}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
                 <Label htmlFor="Issue_Type">ประเภทปัญหา</Label>
-                <select
-                    id="Issue_Type"
-                    value={formData.Issue_Type}
-                    onChange={(e) => setFormData({ ...formData, Issue_Type: e.target.value })}
-                    className="flex h-10 w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                >
-                    <option value="Engine" className="bg-slate-900">เครื่องยนต์</option>
-                    <option value="Tire" className="bg-slate-900">ยาง</option>
-                    <option value="Battery" className="bg-slate-900">แบตเตอรี่</option>
-                    <option value="Body" className="bg-slate-900">ตัวถัง</option>
-                    <option value="Other" className="bg-slate-900">อื่นๆ</option>
-                </select>
+                <Select value={formData.Issue_Type} onValueChange={(val) => setFormData({ ...formData, Issue_Type: val })}>
+                    <SelectTrigger className="w-full h-10 border-white/10 bg-white/5 text-white">
+                        <SelectValue placeholder="เลือกประเภท" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="Engine">เครื่องยนต์</SelectItem>
+                        <SelectItem value="Tire">ยาง</SelectItem>
+                        <SelectItem value="Battery">แบตเตอรี่</SelectItem>
+                        <SelectItem value="Body">ตัวถัง</SelectItem>
+                        <SelectItem value="Other">อื่นๆ</SelectItem>
+                    </SelectContent>
+                </Select>
             </div>
              <div className="space-y-2">
                 <Label htmlFor="Priority">ความสำคัญ</Label>
-                <select
-                    id="Priority"
-                    value={formData.Priority}
-                    onChange={(e) => setFormData({ ...formData, Priority: e.target.value })}
-                    className="flex h-10 w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                >
-                    <option value="Low" className="bg-slate-900">Low</option>
-                    <option value="Medium" className="bg-slate-900">Medium</option>
-                    <option value="High" className="bg-slate-900">High</option>
-                </select>
+                <Select value={formData.Priority} onValueChange={(val) => setFormData({ ...formData, Priority: val })}>
+                    <SelectTrigger className="w-full h-10 border-white/10 bg-white/5 text-white">
+                        <SelectValue placeholder="เลือกระดับ" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="Low">Low</SelectItem>
+                        <SelectItem value="Medium">Medium</SelectItem>
+                        <SelectItem value="High">High</SelectItem>
+                    </SelectContent>
+                </Select>
             </div>
           </div>
 
@@ -229,17 +222,17 @@ export function MaintenanceDialog({
                 <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                         <Label htmlFor="Status">สถานะ</Label>
-                        <select
-                            id="Status"
-                            value={formData.Status}
-                            onChange={(e) => setFormData({ ...formData, Status: e.target.value })}
-                            className="flex h-10 w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                        >
-                            <option value="Pending" className="bg-slate-900">รอดำเนินการ</option>
-                            <option value="In Progress" className="bg-slate-900">กำลังซ่อม</option>
-                            <option value="Completed" className="bg-slate-900">เสร็จสิ้น</option>
-                            <option value="Cancelled" className="bg-slate-900">ยกเลิก</option>
-                        </select>
+                        <Select value={formData.Status} onValueChange={(val) => setFormData({ ...formData, Status: val })}>
+                            <SelectTrigger className="w-full h-10 border-white/10 bg-white/5 text-white">
+                                <SelectValue placeholder="เลือกสถานะ" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="Pending">รอดำเนินการ</SelectItem>
+                                <SelectItem value="In Progress">กำลังซ่อม</SelectItem>
+                                <SelectItem value="Completed">เสร็จสิ้น</SelectItem>
+                                <SelectItem value="Cancelled">ยกเลิก</SelectItem>
+                            </SelectContent>
+                        </Select>
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="Cost_Total">ค่าใช้จ่าย</Label>

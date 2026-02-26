@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { updateFuelLog, createFuelLog } from "@/app/fuel/actions"
 import { Loader2 } from "lucide-react"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ImageUpload } from "@/components/ui/image-upload"
 
 interface Driver {
@@ -202,37 +203,29 @@ export function FuelDialog({
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
                 <Label htmlFor="Driver_ID">คนขับ</Label>
-                <select
-                    id="Driver_ID"
-                    value={formData.Driver_ID}
-                    onChange={(e) => setFormData({ ...formData, Driver_ID: e.target.value })}
-                    className="flex h-10 w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    required
-                >
-                    <option value="" className="bg-slate-900">เลือกคนขับ</option>
-                    {drivers.map((d) => (
-                        <option key={d.Driver_ID} value={d.Driver_ID} className="bg-slate-900">
-                        {d.Driver_Name}
-                        </option>
-                    ))}
-                </select>
+                <Select value={formData.Driver_ID || undefined} onValueChange={(val) => setFormData({ ...formData, Driver_ID: val })}>
+                    <SelectTrigger className="w-full h-10 border-white/10 bg-white/5 text-white">
+                        <SelectValue placeholder="เลือกคนขับ" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {drivers.map((d) => (
+                            <SelectItem key={d.Driver_ID} value={d.Driver_ID}>{d.Driver_Name}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
             </div>
             <div className="space-y-2">
                 <Label htmlFor="Vehicle_Plate">ทะเบียนรถ</Label>
-                <select
-                    id="Vehicle_Plate"
-                    value={formData.Vehicle_Plate}
-                    onChange={(e) => setFormData({ ...formData, Vehicle_Plate: e.target.value })}
-                    className="flex h-10 w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    required
-                >
-                    <option value="" className="bg-slate-900">เลือกทะเบียน</option>
-                    {vehicles.map((v) => (
-                        <option key={v.Vehicle_Plate} value={v.Vehicle_Plate} className="bg-slate-900">
-                        {v.Vehicle_Plate}
-                        </option>
-                    ))}
-                </select>
+                <Select value={formData.Vehicle_Plate || undefined} onValueChange={(val) => setFormData({ ...formData, Vehicle_Plate: val })}>
+                    <SelectTrigger className="w-full h-10 border-white/10 bg-white/5 text-white">
+                        <SelectValue placeholder="เลือกทะเบียน" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {vehicles.map((v) => (
+                            <SelectItem key={v.Vehicle_Plate} value={v.Vehicle_Plate}>{v.Vehicle_Plate}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
             </div>
           </div>
 

@@ -2,7 +2,7 @@
 
 import { createClient, createAdminClient } from "@/utils/supabase/server"
 import { revalidatePath } from "next/cache"
-import { uploadFileToDrive } from "@/lib/google-drive"
+import { uploadFileToSupabase } from "@/lib/actions/supabase-upload"
 
 export interface Attachment {
     Attachment_ID: string;
@@ -40,14 +40,14 @@ export async function uploadAttachment(formData: FormData) {
     const supabase = createAdminClient()
 
     try {
-        // 1. Upload to Google Drive
+        // 1. Upload to Supabase Storage
         const arrayBuffer = await file.arrayBuffer()
         const buffer = Buffer.from(arrayBuffer)
         
         const timestamp = Date.now()
         const fileName = `${billingNoteId}_${timestamp}_${file.name}`
         
-        const uploadResult = await uploadFileToDrive(
+        const uploadResult = await uploadFileToSupabase(
             buffer,
             fileName,
             file.type,
@@ -55,7 +55,7 @@ export async function uploadAttachment(formData: FormData) {
         )
 
         if (!uploadResult.directLink) {
-            throw new Error("Failed to get direct link from Google Drive")
+            throw new Error("Failed to get direct link from Supabase Storage")
         }
 
         // 2. Save to DB (Store direct link in File_Path)

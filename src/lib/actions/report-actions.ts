@@ -3,7 +3,7 @@
 import { jsPDF } from "jspdf"
 import "jspdf-autotable"
 import { createClient } from "@/utils/supabase/server"
-import { uploadFileToDrive } from "@/lib/google-drive"
+import { uploadFileToSupabase } from "@/lib/actions/supabase-upload"
 
 export async function generateJobPDF(jobId: string) {
     console.log(`Generating PDF for Job: ${jobId}...`)
@@ -94,9 +94,9 @@ export async function generateJobPDF(jobId: string) {
         const pdfArrayBuffer = doc.output('arraybuffer')
         const pdfBuffer = Buffer.from(pdfArrayBuffer)
 
-        // 4. Upload to Google Drive
+        // 4. Upload to Supabase Storage
         const fileName = `Report_${jobId}_${Date.now()}.pdf`
-        const uploadResult = await uploadFileToDrive(pdfBuffer, fileName, 'application/pdf', 'POD_Reports')
+        const uploadResult = await uploadFileToSupabase(pdfBuffer, fileName, 'application/pdf', 'POD_Reports')
 
         console.log(`PDF Generated & Uploaded: ${uploadResult.directLink}`)
 
