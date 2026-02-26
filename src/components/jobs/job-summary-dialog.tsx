@@ -182,36 +182,36 @@ export function JobSummaryDialog({ open, onOpenChange, job }: JobSummaryDialogPr
                             <p className="text-[10px] uppercase text-slate-500 mb-1">ทะเบียนรถ (Vehicle)</p>
                             <p className="text-sm font-medium">{job.Vehicle_Plate || '-'}</p>
                         </div>
-                        <div>
-                            <p className="text-[10px] uppercase text-slate-500 mb-1">คนขับ (Driver)</p>
-                            <p className="text-sm font-medium">{job.Driver_Name || '-'}</p>
-                        </div>
-                    </div>
-                </section>
-
-                <section className="space-y-4">
-                    <div className="flex items-center gap-2 text-white font-bold border-l-4 border-indigo-500 pl-3">
-                        <MapPin size={18} className="text-emerald-400" />
-                        <span>สถานที่และเวลา</span>
-                    </div>
-                    <div className="bg-slate-900/50 rounded-xl p-4 border border-slate-800 space-y-4">
-                        <div className="flex gap-3">
-                            <div className="mt-1"><div className="w-2 h-2 rounded-full bg-indigo-500 ring-4 ring-indigo-500/20" /></div>
-                            <div>
-                                <p className="text-[10px] uppercase text-slate-500">ต้นทาง (Origin)</p>
-                                <p className="text-xs text-slate-300">{job.Origin_Location || '-'}</p>
-                            </div>
-                        </div>
-                        <div className="flex gap-3">
-                            <div className="mt-1"><MapPin size={14} className="text-emerald-500" /></div>
-                            <div>
-                                <p className="text-[10px] uppercase text-slate-500">ปลายทาง (Destination)</p>
-                                <p className="text-xs text-white font-medium">{job.Dest_Location || '-'}</p>
-                            </div>
-                        </div>
-                    </div>
-                </section>
+                <div>
+                    <p className="text-[10px] uppercase text-slate-500 mb-1">คนขับ (Driver)</p>
+                    <p className="text-sm font-medium">{job.Driver_Name || job.Driver_ID || '-'}</p>
+                </div>
             </div>
+        </section>
+
+        <section className="space-y-4">
+            <div className="flex items-center gap-2 text-white font-bold border-l-4 border-indigo-500 pl-3">
+                <MapPin size={18} className="text-emerald-400" />
+                <span>สถานที่และเวลา</span>
+            </div>
+            <div className="bg-slate-900/50 rounded-xl p-4 border border-slate-800 space-y-4">
+                <div className="flex gap-3">
+                    <div className="mt-1"><div className="w-2 h-2 rounded-full bg-indigo-500 ring-4 ring-indigo-500/20" /></div>
+                    <div>
+                        <p className="text-[10px] uppercase text-slate-500">ต้นทาง (Origin)</p>
+                        <p className="text-xs text-slate-300">{job.Origin_Location || job.Location_Origin_Name || '-'}</p>
+                    </div>
+                </div>
+                <div className="flex gap-3">
+                    <div className="mt-1"><MapPin size={14} className="text-emerald-500" /></div>
+                    <div>
+                        <p className="text-[10px] uppercase text-slate-500">ปลายทาง (Destination)</p>
+                        <p className="text-xs white font-medium">{job.Dest_Location || job.Location_Destination_Name || '-'}</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
 
             {/* Map Section */}
             <section className="space-y-4">
@@ -359,7 +359,13 @@ export function JobSummaryDialog({ open, onOpenChange, job }: JobSummaryDialogPr
                     พิมพ์รายงาน
                 </Button>
                 {podPhotos.length > 0 && (
-                    <Button className="gap-2 bg-indigo-600 hover:bg-indigo-500 text-white" onClick={() => window.open(podPhotos[0], '_blank')}>
+                    <Button 
+                        className="gap-2 bg-indigo-600 hover:bg-indigo-500 text-white" 
+                        onClick={() => {
+                            const pdfLink = podPhotos.find(url => url.toLowerCase().includes('.pdf'))
+                            window.open(pdfLink || podPhotos[0], '_blank')
+                        }}
+                    >
                         <ExternalLink size={16} />
                         ดูใบงานตัวจริง
                     </Button>
