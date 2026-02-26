@@ -7,6 +7,7 @@ import { getAllDriversFromTable } from '@/lib/supabase/drivers'
 import { getAllVehiclesFromTable } from '@/lib/supabase/vehicles'
 import { logActivity } from '@/lib/supabase/logs'
 import { getUserBranchId } from '@/lib/permissions'
+import { notifyDriverNewJob } from '@/lib/actions/push-actions'
 
 export type JobFormData = {
   Job_ID: string
@@ -80,6 +81,10 @@ export async function createJob(data: JobFormData) {
   const { error: error1 } = await supabase.from('Jobs_Main').insert(buildInsertPayload(data, driverName, subId))
   
   if (!error1) {
+      // Send push notification to the assigned driver
+      if (data.Driver_ID) {
+          notifyDriverNewJob(data.Driver_ID, data.Job_ID, data.Customer_Name || 'ไม่ระบุ').catch(err => console.error('[Push] Error in createJob:', err))
+      }
       revalidatePath('/planning')
       return { success: true, message: 'Job created successfully' }
   }
