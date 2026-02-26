@@ -11,9 +11,30 @@ type Props = {
 }
 
 export function MobileHeader({ title, rightElement }: Props) {
+  const clearCache = () => {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then((registrations) => {
+        for (const registration of registrations) {
+          registration.unregister();
+        }
+        window.location.reload();
+      });
+    } else {
+      window.location.reload();
+    }
+  }
+
   return (
     <header className="fixed top-0 left-0 right-0 h-14 bg-background/80 backdrop-blur-md border-b border-border flex items-center justify-between px-4 z-40 transition-colors duration-300">
-      <h1 className="font-bold text-foreground text-lg">{title}</h1>
+      <div className="flex items-baseline gap-2">
+        <h1 className="font-bold text-foreground text-lg">{title}</h1>
+        <span 
+          onClick={clearCache}
+          className="text-[8px] text-slate-500 font-mono cursor-pointer hover:text-white"
+        >
+          v1.2.0
+        </span>
+      </div>
       
       <div className="flex items-center gap-2">
         <ThemeToggle />

@@ -31,7 +31,13 @@ export default function RolesPage() {
         
         let fetchedData: RolePermission[] = []
         if (result.success && result.data) {
-             fetchedData = result.data
+             // Safety: Ensure Permissions is always an object
+             fetchedData = result.data.map(item => ({
+                 ...item,
+                 Permissions: typeof item.Permissions === 'string' 
+                     ? JSON.parse(item.Permissions) 
+                     : (item.Permissions || {})
+             }))
         } else if (result.error) {
              console.error(result.error)
              setError(result.error)
@@ -54,16 +60,26 @@ export default function RolesPage() {
         // Super Admin always has all true and is locked
         if (roles[roleIndex].Role === 'Super Admin') return 
 
-        setRoles(prev => prev.map((role, idx) => {
-            if (idx !== roleIndex) return role
-            return {
-                ...role,
-                Permissions: {
-                    ...(role.Permissions || {}),
-                    [permId]: !(role.Permissions?.[permId] || false)
+        setRoles(prev => {
+            const next = prev.map((role, idx) => {
+                if (idx !== roleIndex) return role
+                
+                const currentPerms = typeof role.Permissions === 'string' 
+                    ? JSON.parse(role.Permissions) 
+                    : { ...(role.Permissions || {}) }
+
+                const updatedRole = {
+                    ...role,
+                    Permissions: {
+                        ...currentPerms,
+                        [permId]: !currentPerms[permId]
+                    }
                 }
-            }
-        }))
+                console.log(`Toggled ${permId} for ${role.Role}:`, updatedRole.Permissions[permId])
+                return updatedRole
+            })
+            return next
+        })
     }
 
     const handleSave = async (role: RolePermission) => {
