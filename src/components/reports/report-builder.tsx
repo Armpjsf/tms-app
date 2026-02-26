@@ -23,8 +23,12 @@ import {
   ChevronUp,
   ArrowUpDown,
   X,
+  TrendingUp,
 } from "lucide-react"
 import { getFilteredReportData, type ReportFilters } from "@/app/reports/actions"
+import * as XLSX from 'xlsx'
+import { jsPDF } from 'jspdf'
+import 'jspdf-autotable'
 
 // Helper: column display names (Thai)
 const columnLabels: Record<string, string> = {
@@ -57,6 +61,11 @@ const columnLabels: Record<string, string> = {
   priority: 'ความเร่งด่วน',
   cost: 'ค่าใช้จ่าย',
   created_at: 'วันที่แจ้ง',
+  owner: 'ประเภทรถ/เจ้าของ',
+  fuel_cost: 'ค่าน้ำมัน',
+  maintenance_cost: 'ค่าซ่อมบำรุง',
+  extra_cost: 'ค่าใช้จ่ายอื่นๆ',
+  total_cost: 'รวมค่าใช้จ่าย',
 }
 
 const reportTypes = [
@@ -65,6 +74,7 @@ const reportTypes = [
   { key: 'vehicles', label: 'รถ', icon: Truck, color: 'purple', hasDate: false, hasStatus: true },
   { key: 'fuel', label: 'น้ำมัน', icon: Fuel, color: 'emerald', hasDate: true, hasStatus: false },
   { key: 'maintenance', label: 'ซ่อมบำรุง', icon: Wrench, color: 'amber', hasDate: true, hasStatus: true },
+  { key: 'vehicle_expenses', label: 'ค่าใช้จ่ายรถ', icon: TrendingUp, color: 'rose', hasDate: true, hasStatus: true },
 ]
 
 const statusOptions: Record<string, { value: string; label: string }[]> = {
@@ -96,6 +106,11 @@ const statusOptions: Record<string, { value: string; label: string }[]> = {
     { value: 'in_progress', label: 'กำลังซ่อม' },
     { value: 'completed', label: 'เสร็จสิ้น' },
   ],
+  vehicle_expenses: [
+    { value: 'all', label: 'ทั้งหมด' },
+    { value: 'Company', label: 'รถบริษัท' },
+    { value: 'Subcontractor', label: 'รถร่วม' },
+  ],
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -122,6 +137,39 @@ function exportToCSV(data: any[], columns: string[], fileName: string) {
   document.body.appendChild(link)
   link.click()
   document.body.removeChild(link)
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function exportToExcel(data: any[], columns: string[], fileName: string) {
+  const headers = columns.map(c => columnLabels[c] || c)
+  const rows = data.map(row => columns.map(col => row[col]))
+  const ws = XLSX.utils.aoa_to_sheet([headers, ...rows])
+  const wb = XLSX.utils.book_new()
+  XLSX.utils.book_append_sheet(wb, ws, "Report")
+  XLSX.writeFile(wb, `${fileName}_${new Date().toISOString().slice(0, 10)}.xlsx`)
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function exportToPDF(data: any[], columns: string[], fileName: string) {
+  // @ts-expect-error - jsPDF types sometimes mismatch with the environment
+  const doc = new jsPDF()
+  const headers = columns.map(c => columnLabels[c] || c)
+  const rows = data.map(row => columns.map(col => {
+    const val = row[col]
+    if (typeof val === 'number') return val.toLocaleString()
+    return val ?? ''
+  }))
+
+  doc.text(fileName, 14, 15)
+  // @ts-expect-error - autoTable is a plugin that might not be in the base doc type
+  doc.autoTable({
+    head: [headers],
+    body: rows,
+    startY: 20,
+    styles: { font: 'helvetica', fontSize: 8 }, // Note: Thai font might need specific setup in jspdf
+    headStyles: { fillStyle: 'f', fillColor: [79, 70, 229] }
+  })
+  doc.save(`${fileName}_${new Date().toISOString().slice(0, 10)}.pdf`)
 }
 
 // Status badge component
@@ -382,16 +430,36 @@ export function ReportBuilder() {
                         </button>
                       )}
                     </div>
-                    {/* Export */}
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => exportToCSV(filteredData, columns, activeReport.label)}
-                      className="gap-1.5"
-                    >
-                      <Download size={14} />
-                      CSV
-                    </Button>
+                    {/* Export Group */}
+                    <div className="flex items-center gap-1.5 bg-muted/30 p-1 rounded-lg border border-border/50">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => exportToExcel(filteredData, columns, activeReport.label)}
+                        className="h-8 px-2 text-xs gap-1.5 hover:bg-emerald-500/10 hover:text-emerald-400"
+                      >
+                        <FileSpreadsheet size={14} />
+                        Excel
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => exportToCSV(filteredData, columns, activeReport.label)}
+                        className="h-8 px-2 text-xs gap-1.5 hover:bg-blue-500/10 hover:text-blue-400"
+                      >
+                        <Download size={14} />
+                        CSV
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => exportToPDF(filteredData, columns, activeReport.label)}
+                        className="h-8 px-2 text-xs gap-1.5 hover:bg-rose-500/10 hover:text-rose-400"
+                      >
+                        <Download size={14} />
+                        PDF
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </CardHeader>

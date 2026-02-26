@@ -136,6 +136,109 @@ export async function getFilteredReportData(filters: ReportFilters): Promise<{ d
         }
       }
 
+      case 'vehicle_expenses': {
+        // 1. Get all vehicles in the branch
+        let vQuery = supabase
+          .from('master_vehicles')
+          .select('vehicle_plate, vehicle_type, sub_id, branch_id')
+        
+        if (effectiveBranch && effectiveBranch !== 'All') {
+          vQuery = vQuery.eq('branch_id', effectiveBranch)
+        }
+        const { data: vehicles } = await vQuery
+
+        if (!vehicles || vehicles.length === 0) return { data: [], columns: [] }
+
+        const plates = vehicles.map(v => v.vehicle_plate)
+
+        // 2. Aggregate Fuel Costs
+        let fuelQuery = supabase
+          .from('Fuel_Logs')
+          .select('Vehicle_Plate, Price_Total')
+          .in('Vehicle_Plate', plates)
+        if (filters.dateFrom) fuelQuery = fuelQuery.gte('Date_Time', filters.dateFrom)
+        if (filters.dateTo) fuelQuery = fuelQuery.lte('Date_Time', filters.dateTo)
+        const { data: fuelLogs } = await fuelQuery
+
+        // 3. Aggregate Maintenance Costs
+        let maintQuery = supabase
+          .from('Repair_Tickets')
+          .select('Vehicle_Plate, Cost_Total')
+          .in('Vehicle_Plate', plates)
+          .eq('Status', 'completed')
+        if (filters.dateFrom) maintQuery = maintQuery.gte('Date_Report', filters.dateFrom)
+        if (filters.dateTo) maintQuery = maintQuery.lte('Date_Report', filters.dateTo)
+        const { data: maintLogs } = await maintQuery
+
+        // 4. Get Extra Costs from Jobs (Subcontractor job costs if applicable)
+        let jobQuery = supabase
+          .from('Jobs_Main')
+          .select('Vehicle_Plate, extra_costs_json')
+          .in('Vehicle_Plate', plates)
+        if (filters.dateFrom) jobQuery = jobQuery.gte('Plan_Date', filters.dateFrom)
+        if (filters.dateTo) jobQuery = jobQuery.lte('Plan_Date', filters.dateTo)
+        const { data: rawJobs } = await jobQuery
+
+        // 5. Get Subcontractor details for labeling
+        const subIds = [...new Set(vehicles.map(v => v.sub_id).filter(Boolean))]
+        const { data: subs } = await supabase
+          .from('Master_Subcontractors')
+          .select('Sub_ID, Sub_Name')
+          .in('Sub_ID', subIds as string[])
+
+        const subMap = (subs || []).reduce((acc: any, s) => {
+          acc[s.Sub_ID] = s.Sub_Name
+          return acc
+        }, {})
+
+        // Aggregate by Plate
+        const reportData = vehicles.map(v => {
+          const vPlate = v.vehicle_plate
+          const fuelTotal = (fuelLogs || [])
+            .filter(f => f.Vehicle_Plate === vPlate)
+            .reduce((sum, f) => sum + (Number(f.Price_Total) || 0), 0)
+          
+          const maintTotal = (maintLogs || [])
+            .filter(m => m.Vehicle_Plate === vPlate)
+            .reduce((sum, m) => sum + (Number(m.Cost_Total) || 0), 0)
+
+          const extraCosts = (rawJobs || [])
+            .filter(j => j.Vehicle_Plate === vPlate)
+            .reduce((sum, j) => {
+              let extra = 0
+              if (j.extra_costs_json) {
+                try {
+                  const costs = typeof j.extra_costs_json === 'string' ? JSON.parse(j.extra_costs_json) : j.extra_costs_json
+                  if (Array.isArray(costs)) {
+                    extra = costs.reduce((s, c) => s + (Number(c.charge_base) || Number(c.amount) || 0), 0)
+                  }
+                } catch {}
+              }
+              return sum + extra
+            }, 0)
+
+          return {
+            vehicle_plate: vPlate,
+            vehicle_type: v.vehicle_type,
+            owner: v.sub_id ? (subMap[v.sub_id] || 'รถร่วม') : 'รถบริษัท',
+            fuel_cost: fuelTotal,
+            maintenance_cost: maintTotal,
+            extra_cost: extraCosts,
+            total_cost: fuelTotal + maintTotal + extraCosts
+          }
+        })
+
+        // Filter by Owner Type if status filter is used (re-using status as owner type filter for this report)
+        let finalData = reportData
+        if (filters.status === 'Company') finalData = reportData.filter(d => d.owner === 'รถบริษัท')
+        if (filters.status === 'Subcontractor') finalData = reportData.filter(d => d.owner !== 'รถบริษัท')
+
+        return {
+          data: finalData,
+          columns: ['vehicle_plate', 'owner', 'vehicle_type', 'fuel_cost', 'maintenance_cost', 'extra_cost', 'total_cost']
+        }
+      }
+
       default:
         return { data: [], columns: [] }
     }
@@ -156,6 +259,8 @@ export async function getReportStatusOptions(reportType: string): Promise<string
       return ['Active', 'Maintenance', 'Inactive']
     case 'maintenance':
       return ['pending', 'in_progress', 'completed', 'cancelled']
+    case 'vehicle_expenses':
+      return ['All', 'Company', 'Subcontractor']
     default:
       return []
   }
