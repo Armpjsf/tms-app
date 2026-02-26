@@ -5,6 +5,7 @@ import crypto from 'crypto'
 import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { getUserBranchId } from '@/lib/permissions'
+import { logActivity } from '@/lib/supabase/logs'
 
 export type FuelFormData = {
   Date_Time: string | null
@@ -23,10 +24,12 @@ export async function createFuelLog(data: FuelFormData) {
     const supabase = createAdminClient()
     const branchId = await getUserBranchId()
 
+    const logId = crypto.randomUUID()
+
     const { error } = await supabase
       .from('Fuel_Logs')
       .insert({
-        Log_ID: crypto.randomUUID(),
+        Log_ID: logId,
         Date_Time: data.Date_Time,
         Driver_ID: data.Driver_ID,
         Vehicle_Plate: data.Vehicle_Plate,
@@ -46,6 +49,18 @@ export async function createFuelLog(data: FuelFormData) {
       })
       return { success: false, message: `Failed to create log: ${error.message}` }
     }
+
+    // Log the activity
+    await logActivity({
+      module: 'Fuel',
+      action_type: 'CREATE',
+      target_id: logId,
+      details: {
+        driver: data.Driver_ID,
+        vehicle: data.Vehicle_Plate,
+        amount: data.Total_Amount
+      }
+    })
 
     revalidatePath('/fuel')
     return { success: true, message: 'Fuel Log created successfully' }
@@ -78,6 +93,17 @@ export async function updateFuelLog(logId: string, data: FuelFormData) {
     return { success: false, message: 'Failed to update log' }
   }
 
+  // Log the activity
+  await logActivity({
+    module: 'Fuel',
+    action_type: 'UPDATE',
+    target_id: logId,
+    details: {
+      updated_fields: Object.keys(data),
+      amount: data.Total_Amount
+    }
+  })
+
   revalidatePath('/fuel')
   return { success: true, message: 'Fuel Log updated successfully' }
 }
@@ -94,6 +120,16 @@ export async function updateFuelLogStatus(logId: string, status: string) {
     console.error('Error updating fuel log status:', error)
     return { success: false, message: 'Failed to update status' }
   }
+
+  // Log the activity
+  await logActivity({
+    module: 'Fuel',
+    action_type: 'APPROVE', // Using APPROVE for status changes as requested
+    target_id: logId,
+    details: {
+      new_status: status
+    }
+  })
 
   revalidatePath('/fuel')
   return { success: true, message: 'Status updated successfully' }

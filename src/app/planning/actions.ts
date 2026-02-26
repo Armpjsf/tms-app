@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache'
 
 import { getAllDriversFromTable } from '@/lib/supabase/drivers'
 import { getAllVehiclesFromTable } from '@/lib/supabase/vehicles'
+import { logActivity } from '@/lib/supabase/logs'
 
 
 export type JobFormData = {
@@ -226,6 +227,18 @@ export async function updateJob(jobId: string, data: Partial<JobFormData>) {
   }
 
   revalidatePath('/planning')
+
+  // Log the update
+  await logActivity({
+    module: 'Jobs',
+    action_type: 'UPDATE',
+    target_id: jobId,
+    details: {
+      updated_fields: Object.keys(updateData),
+      customer: updateData.Customer_Name
+    }
+  })
+
   return { success: true, message: 'Job updated successfully' }
 }
 
@@ -243,6 +256,17 @@ export async function deleteJob(jobId: string) {
   }
 
   revalidatePath('/planning')
+
+  // Log the deletion
+  await logActivity({
+    module: 'Jobs',
+    action_type: 'DELETE',
+    target_id: jobId,
+    details: {
+      description: `Deleted job ${jobId}`
+    }
+  })
+
   return { success: true, message: 'Job deleted successfully' }
 }
 

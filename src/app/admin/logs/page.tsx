@@ -16,7 +16,7 @@ export default async function LogsPage({
   searchParams: { [key: string]: string | string[] | undefined }
 }) {
   const branchId = typeof searchParams.branchId === 'string' ? searchParams.branchId : undefined
-  const module = typeof searchParams.module === 'string' ? searchParams.module : undefined
+  const moduleFilter = typeof searchParams.module === 'string' ? searchParams.module : undefined
   
   let logs: any[] = []
   let branches: any[] = []
@@ -24,7 +24,7 @@ export default async function LogsPage({
   try {
     logs = await getSystemLogs({
       branchId,
-      module,
+      module: moduleFilter,
       limit: 100
     })
     branches = await getAllBranches()
@@ -33,14 +33,37 @@ export default async function LogsPage({
   }
 
   const getActionBadge = (action: string) => {
-    switch (action) {
-      case 'CREATE': return <Badge variant="default" className="bg-green-500">สร้าง</Badge>
-      case 'UPDATE': return <Badge variant="secondary" className="bg-blue-500 text-white">แก้ไข</Badge>
-      case 'DELETE': return <Badge variant="destructive">ลบ</Badge>
-      case 'LOGIN': return <Badge className="bg-purple-500">เข้าสู่ระบบ</Badge>
-      case 'LOGOUT': return <Badge className="bg-gray-500">ออกจากระบบ</Badge>
-      case 'APPROVE': return <Badge className="bg-emerald-500">อนุมัติ</Badge>
-      default: return <Badge variant="outline">{action}</Badge>
+    switch (action.toUpperCase()) {
+      case 'CREATE':
+        return <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-emerald-200">สร้าง</Badge>
+      case 'UPDATE':
+        return <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 border-blue-200">แก้ไข</Badge>
+      case 'DELETE':
+        return <Badge className="bg-rose-100 text-rose-700 hover:bg-rose-100 border-rose-200">ลบ</Badge>
+      case 'APPROVE':
+        return <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-100 border-amber-200">อนุมัติ</Badge>
+      case 'EXPORT':
+        return <Badge className="bg-indigo-100 text-indigo-700 hover:bg-indigo-100 border-indigo-200">ดึงรายงาน</Badge>
+      case 'LOGIN':
+        return <Badge className="bg-slate-100 text-slate-700 hover:bg-slate-100 border-slate-200">เข้าสู่ระบบ</Badge>
+      case 'LOGOUT':
+        return <Badge className="bg-slate-50 text-slate-500 hover:bg-slate-50 border-slate-100">ออกจากระบบ</Badge>
+      default:
+        return <Badge variant="outline">{action}</Badge>
+    }
+  }
+
+  const getModuleLabel = (module: string) => {
+    switch (module) {
+      case 'Jobs': return 'จัดการงาน'
+      case 'Auth': return 'เข้าระบบ'
+      case 'Billing': return 'การเงิน/วางบิล'
+      case 'Reports': return 'รายงาน'
+      case 'Fuel': return 'น้ำมัน'
+      case 'Maintenance': return 'ซ่อมบำรุง'
+      case 'Settings': return 'ตั้งค่า'
+      case 'Users': return 'ผู้ใช้งาน'
+      default: return module
     }
   }
 
@@ -104,7 +127,7 @@ export default async function LogsPage({
                           {log.branch_id || 'N/A'}
                         </Badge>
                       </TableCell>
-                      <TableCell className="font-medium text-blue-600">{log.module}</TableCell>
+                      <TableCell className="font-medium text-blue-600">{getModuleLabel(log.module)}</TableCell>
                       <TableCell>{getActionBadge(log.action_type)}</TableCell>
                       <TableCell className="max-w-[300px] truncate text-xs text-muted-foreground" title={JSON.stringify(log.details, null, 2)}>
                         {log.target_id && <span className="text-foreground font-semibold mr-1">[{log.target_id}]</span>}

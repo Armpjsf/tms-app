@@ -1,6 +1,7 @@
 
 import { createClient } from '@/utils/supabase/server'
 import { getUserBranchId, isSuperAdmin } from "@/lib/permissions"
+import { logActivity } from './logs'
 
 export type Invoice = {
   Invoice_ID: string
@@ -121,6 +122,18 @@ export async function createInvoice(invoice: Partial<Invoice>) {
 
     if (error) throw error
 
+    // Log invoice creation
+    await logActivity({
+      module: 'Billing',
+      action_type: 'CREATE',
+      target_id: data.Invoice_ID,
+      details: {
+        customer: data.Customer_Name,
+        total: data.Grand_Total,
+        tax_id: data.Tax_Invoice_ID
+      }
+    })
+
     // Link Jobs to this Invoice
     if (invoice.Items_JSON && Array.isArray(invoice.Items_JSON)) {
         const jobIds = invoice.Items_JSON.map((j: any) => j.Job_ID)
@@ -155,6 +168,18 @@ export async function updateInvoice(id: string, updates: Partial<Invoice>) {
       .single()
 
     if (error) throw error
+
+    // Log update
+    await logActivity({
+      module: 'Billing',
+      action_type: 'UPDATE',
+      target_id: id,
+      details: {
+        updated_status: updates.Status,
+        grand_total: updates.Grand_Total
+      }
+    })
+
     return { success: true, data }
   } catch (error) {
     console.error('Error updating invoice:', error)
@@ -171,6 +196,17 @@ export async function deleteInvoice(id: string) {
         .eq('Invoice_ID', id)
   
       if (error) throw error
+
+      // Log deletion
+      await logActivity({
+        module: 'Billing',
+        action_type: 'DELETE',
+        target_id: id,
+        details: {
+          description: `Deleted invoice ${id}`
+        }
+      })
+
       return { success: true }
     } catch (error) {
       console.error('Error deleting invoice:', error)

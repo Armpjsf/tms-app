@@ -7,7 +7,10 @@ export type LogModule =
   | "Billing"
   | "Users"
   | "Settings"
-  | "Auth";
+  | "Auth"
+  | "Reports"
+  | "Fuel"
+  | "Maintenance";
 export type LogAction =
   | "CREATE"
   | "UPDATE"
@@ -19,11 +22,11 @@ export type LogAction =
 
 interface LogOptions {
   module: LogModule;
-  action: LogAction;
-  targetId?: string;
+  action_type: LogAction;
+  target_id?: string;
   details?: any;
-  branchId?: string;
-  userId?: string;
+  branch_id?: string;
+  user_id?: string;
   username?: string;
   role?: string;
 }
@@ -37,23 +40,23 @@ export async function logActivity(options: LogOptions) {
     const supabase = createAdminClient();
 
     let {
-      userId,
+      user_id,
       username,
       role,
-      branchId,
+      branch_id,
       module,
-      action,
-      targetId,
+      action_type,
+      target_id,
       details,
     } = options;
 
     // Try to get session info if missing
-    if (!userId || !username) {
+    if (!user_id || !username) {
       const session = await getSession();
       if (session) {
-        userId = userId || session.userId;
+        user_id = user_id || session.userId;
         username = username || session.username;
-        branchId = branchId || session.branchId || undefined;
+        branch_id = branch_id || session.branchId || undefined;
         // Map roleId to a string if possible, or just use the ID
         role =
           role ||
@@ -66,13 +69,13 @@ export async function logActivity(options: LogOptions) {
     }
 
     const { error } = await supabase.from("System_Logs").insert({
-      user_id: userId,
+      user_id,
       username,
       role,
-      branch_id: branchId,
+      branch_id,
       module,
-      action_type: action,
-      target_id: targetId,
+      action_type,
+      target_id,
       details,
       // IP address logging could be added here if available from request headers
     });

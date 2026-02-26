@@ -4,6 +4,7 @@ import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { getUserBranchId } from '@/lib/permissions'
 import { createNotification } from '@/lib/actions/notification-actions'
+import { logActivity } from '@/lib/supabase/logs'
 
 export type TicketFormData = {
   Date_Report: string | null
@@ -21,10 +22,12 @@ export async function createRepairTicket(data: TicketFormData) {
     const supabase = createAdminClient()
     const branchId = await getUserBranchId()
 
+    const ticketId = `TCK-${Date.now()}-${Math.floor(Math.random() * 1000)}`
+
     const { error } = await supabase
       .from('Repair_Tickets')
       .insert({
-        Ticket_ID: `TCK-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+        Ticket_ID: ticketId,
         Date_Report: data.Date_Report,
         Driver_ID: data.Driver_ID,
         Vehicle_Plate: data.Vehicle_Plate,
@@ -62,6 +65,18 @@ export async function createRepairTicket(data: TicketFormData) {
       Title: 'มีการแจ้งซ่อมใหม่',
       Message: `แจ้งซ่อมรถทะเบียน ${data.Vehicle_Plate} โดยคนขับ [ID: ${data.Driver_ID}]`,
       Type: 'warning'
+    })
+
+    // Log the activity
+    await logActivity({
+      module: 'Maintenance',
+      action_type: 'CREATE',
+      target_id: ticketId,
+      details: {
+        driver: data.Driver_ID,
+        vehicle: data.Vehicle_Plate,
+        priority: data.Priority
+      }
     })
 
     return { success: true, message: 'Ticket created successfully' }
@@ -115,6 +130,18 @@ export async function updateRepairTicket(ticketId: string, data: TicketUpdateDat
   }
 
   revalidatePath('/maintenance')
+
+  // Log the activity
+  await logActivity({
+    module: 'Maintenance',
+    action_type: 'APPROVE', // Using APPROVE for status changes
+    target_id: ticketId,
+    details: {
+      new_status: data.Status,
+      cost: data.Cost_Total
+    }
+  })
+
   return { success: true, message: 'Ticket updated successfully' }
 }
 
@@ -132,5 +159,16 @@ export async function deleteRepairTicket(ticketId: string) {
   }
 
   revalidatePath('/maintenance')
+
+  // Log the activity
+  await logActivity({
+    module: 'Maintenance',
+    action_type: 'DELETE',
+    target_id: ticketId,
+    details: {
+      description: `Deleted repair ticket ${ticketId}`
+    }
+  })
+
   return { success: true, message: 'Ticket deleted successfully' }
 }

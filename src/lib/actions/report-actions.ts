@@ -106,6 +106,19 @@ export async function generateJobPDF(jobId: string) {
             .update({ Photo_Proof_Url: job.Photo_Proof_Url ? `${job.Photo_Proof_Url},${uploadResult.directLink}` : uploadResult.directLink })
             .eq('Job_ID', jobId)
 
+        // 6. Log the export
+        const { logActivity } = await import('@/lib/supabase/logs')
+        await logActivity({
+            module: 'Reports',
+            action_type: 'EXPORT',
+            target_id: jobId,
+            details: {
+                report_type: 'Delivery Summary',
+                file_name: fileName,
+                url: uploadResult.directLink
+            }
+        })
+
         return { success: true, url: uploadResult.directLink }
 
     } catch (e) {

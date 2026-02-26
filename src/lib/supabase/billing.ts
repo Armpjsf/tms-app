@@ -1,9 +1,8 @@
-"use server"
-
 import { createClient } from "@/utils/supabase/server"
 import { getUserBranchId, isSuperAdmin } from "@/lib/permissions"
 import { accountingService } from "@/services/accounting"
 import { Job, Billing_Note, Driver_Payment } from "@/types/database"
+import { logActivity } from "./logs"
 
 export interface BillingNote {
   Billing_Note_ID: string
@@ -102,6 +101,18 @@ export async function createBillingNote(
              throw updateError
         }
 
+        // Log Billing Note creation
+        await logActivity({
+            module: 'Billing',
+            action_type: 'CREATE',
+            target_id: billingNoteId,
+            details: {
+                customer: customerName,
+                total: totalAmount,
+                job_count: jobIds.length
+            }
+        })
+
         // 5. Automatic Sync to Accounting
         try {
             const noteData = {
@@ -183,6 +194,18 @@ export async function createDriverPayment(
              console.error("Failed to link jobs to driver payment")
              throw updateError
         }
+
+        // Log Driver Payment creation
+        await logActivity({
+            module: 'Billing',
+            action_type: 'CREATE',
+            target_id: paymentId,
+            details: {
+                driver: driverName,
+                total: totalAmount,
+                job_count: jobIds.length
+            }
+        })
 
         // 5. Automatic Sync to Accounting
         try {
@@ -454,6 +477,18 @@ export async function updateBillingNoteStatus(id: string, status: string) {
             .eq('Billing_Note_ID', id)
 
         if (error) throw error
+
+        // Log status update
+        await logActivity({
+            module: 'Billing',
+            action_type: 'UPDATE',
+            target_id: id,
+            details: {
+                new_status: status,
+                entity: 'Billing Note'
+            }
+        })
+
         return { success: true }
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : String(e)
@@ -474,6 +509,18 @@ export async function updateDriverPaymentStatus(id: string, status: string) {
             .eq('Driver_Payment_ID', id)
 
         if (error) throw error
+
+        // Log status update
+        await logActivity({
+            module: 'Billing',
+            action_type: 'UPDATE',
+            target_id: id,
+            details: {
+                new_status: status,
+                entity: 'Driver Payment'
+            }
+        })
+
         return { success: true }
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : String(e)
@@ -505,6 +552,16 @@ export async function recallBillingNote(id: string) {
 
         if (deleteError) throw deleteError
 
+        // Log recall
+        await logActivity({
+            module: 'Billing',
+            action_type: 'DELETE',
+            target_id: id,
+            details: {
+                description: `Recalled/Deleted billing note ${id}`
+            }
+        })
+
         return { success: true }
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : String(e)
@@ -535,6 +592,16 @@ export async function recallDriverPayment(id: string) {
             .eq('Driver_Payment_ID', id)
 
         if (deleteError) throw deleteError
+
+        // Log recall
+        await logActivity({
+            module: 'Billing',
+            action_type: 'DELETE',
+            target_id: id,
+            details: {
+                description: `Recalled/Deleted driver payment ${id}`
+            }
+        })
 
         return { success: true }
     } catch (e: unknown) {
