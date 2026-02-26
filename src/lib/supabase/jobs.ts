@@ -2,6 +2,7 @@
 
 import { createClient } from '@/utils/supabase/server'
 import { logActivity } from '@/lib/supabase/logs'
+import { getDriverSession } from '@/lib/actions/auth-actions'
 
 export type Job = {
   Job_ID: string
@@ -275,9 +276,11 @@ export async function getDriverJobs(
       .select('*')
       .eq('Driver_ID', driverId)
 
-    if (branchId && branchId !== 'All') {
+    // Only apply branch filter if it's NOT a driver (Admin/Staff must see their branch)
+    // Driver should see jobs assigned to them regardless of their profile branch_id
+    if (branchId && branchId !== 'All' && !driverId) {
         query = query.eq('Branch_ID', branchId)
-    } else if (!isAdmin && !branchId) {
+    } else if (!isAdmin && !branchId && !driverId) {
         return []
     }
 
@@ -316,13 +319,19 @@ export async function getJobById(jobId: string): Promise<Job | null> {
         const supabase = await createClient()
         const branchId = await getUserBranchId()
         const isAdmin = await isSuperAdmin()
+        
+        // For driver-specific checks, we look at the session first
+        const driverSession = await getDriverSession()
 
         let query = supabase
             .from('Jobs_Main')
             .select('*')
             .eq('Job_ID', jobId)
         
-        if (branchId && branchId !== 'All') {
+        // If it's a driver session, they should see any job assigned to them
+        if (driverSession) {
+            query = query.eq('Driver_ID', driverSession.driverId)
+        } else if (branchId && branchId !== 'All') {
             query = query.eq('Branch_ID', branchId)
         } else if (!isAdmin && !branchId) {
             return null

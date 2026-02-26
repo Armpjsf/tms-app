@@ -14,7 +14,7 @@ type Props = {
 export default async function JobDetailPage(props: Props) {
   const params = await props.params;
   const session = await getDriverSession()
-  if (!session) redirect("/login")
+  if (!session) redirect("/mobile/login")
 
   const job = await getJobById(params.id)
 
