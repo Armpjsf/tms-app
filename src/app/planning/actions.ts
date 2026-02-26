@@ -6,10 +6,11 @@ import { revalidatePath } from 'next/cache'
 import { getAllDriversFromTable } from '@/lib/supabase/drivers'
 import { getAllVehiclesFromTable } from '@/lib/supabase/vehicles'
 import { logActivity } from '@/lib/supabase/logs'
-
+import { getUserBranchId } from '@/lib/permissions'
 
 export type JobFormData = {
   Job_ID: string
+  Branch_ID?: string | null
   Plan_Date?: string | null
   Delivery_Date?: string | null
   Customer_Name?: string | null
@@ -30,11 +31,18 @@ export type JobFormData = {
   Show_Price_To_Driver?: boolean
   Weight_Kg?: number | null
   Volume_Cbm?: number | null
-  Branch_ID?: string
 }
 
 export async function createJob(data: JobFormData) {
   const supabase = await createClient()
+
+  // Auto-assign Branch_ID if missing
+  if (!data.Branch_ID) {
+    const userBranchId = await getUserBranchId()
+    if (userBranchId && userBranchId !== 'All') {
+      data.Branch_ID = userBranchId
+    }
+  }
 
   // Get Driver Name and Sub_ID based on Driver_ID
   let driverName = data.Driver_Name || ''
