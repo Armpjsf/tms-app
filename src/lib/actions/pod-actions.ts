@@ -135,10 +135,16 @@ export async function submitJobPOD(jobId: string, formData: FormData) {
     revalidatePath("/mobile/jobs")
     return { success: true }
 
-  } catch (error: unknown) {
-    console.error(`[submitJobPOD] Error for jobId ${jobId}:`, error)
-    const errMsg = error instanceof Error ? error.message : "Internal Server Error"
-    return { error: `Error: ${errMsg}` }
+  } catch (error: any) {
+    console.error(`[submitJobPOD] Catch Error for jobId ${jobId}:`, error)
+    
+    // Ensure we return a string, not an object
+    let errorMessage = "เกิดข้อผิดพลาดในการบันทึกข้อมูล"
+    if (typeof error === 'string') errorMessage = error
+    else if (error && error.message) errorMessage = error.message
+    else if (error && typeof error === 'object') errorMessage = JSON.stringify(error)
+
+    return { error: `บันทึกไม่สำเร็จ (POD): ${errorMessage}` }
   }
 }
 
@@ -253,10 +259,16 @@ export async function submitJobPickup(jobId: string, formData: FormData) {
     }
     return { success: true }
     
-  } catch (error) {
-    const errMsg = error instanceof Error ? error.message : String(error)
-    console.error(`[submitJobPickup] Error for jobId ${jobId}:`, errMsg)
-    return { error: `บันทึกไม่สำเร็จ: ${errMsg}` }
+  } catch (error: any) {
+    console.error(`[submitJobPickup] Catch Error for jobId ${jobId}:`, error)
+    
+    // Ensure we return a string
+    let errorMessage = "เกิดข้อผิดพลาดในการบันทึกข้อมูล"
+    if (typeof error === 'string') errorMessage = error
+    else if (error && error.message) errorMessage = error.message
+    else if (error && typeof error === 'object') errorMessage = JSON.stringify(error)
+
+    return { error: `บันทึกไม่สำเร็จ (Pickup): ${errorMessage}` }
   }
 }
 

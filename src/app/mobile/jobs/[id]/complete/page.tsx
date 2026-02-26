@@ -105,33 +105,26 @@ export default function JobCompletePage() {
         const result = await submitJobPOD(params.id, formData)
         
         if (result.success) {
-          setCompleted(true)
+          if (result.warning) {
+            alert(String(result.warning)) // Ensure string
+          }
+          router.push("/mobile/dashboard")
         } else {
-          // If server returns error, might be validation error, so we show it
-          alert(result.error)
+          alert(typeof result.error === 'string' ? result.error : JSON.stringify(result.error))
+          setLoading(false)
         }
-    } catch (error: unknown) {
-        console.error("Submit Error:", error)
+    } catch (error: any) {
+        console.error("Pickup Submit Error:", error)
         
         // Check if it's a network error
-        const isNetworkError = !navigator.onLine || error instanceof TypeError || (error as any).message?.includes('fetch')
+        const isNetworkError = !navigator.onLine || error instanceof TypeError || (error?.message?.includes('fetch'))
         
         if (isNetworkError) {
-            // SAVE OFFLINE
-            const photoBase64 = await Promise.all(photos.map(fileToB64))
-            const sigBase64 = signature ? await fileToB64(signature as File) : null
-            
-            const offlineData = {
-                photos: photoBase64,
-                signature: sigBase64,
-                photo_count: photos.length
-            }
-            
             saveJobOffline(params.id, offlineData, 'POD')
             setCompleted(true) // Show success even if offline, it's queued!
             alert("บันทึกข้อมูลไว้ในเครื่องแล้ว (โหมดออฟไลน์) ระบบจะส่งข้อมูลให้อัตโนมัติเมื่อมีสัญญาณ")
         } else {
-            const errorMessage = error instanceof Error ? error.message : "Internal Server Error"
+            const errorMessage = error?.message || (typeof error === 'object' ? JSON.stringify(error) : String(error))
             alert(`Error: ${errorMessage}`)
         }
     } finally {

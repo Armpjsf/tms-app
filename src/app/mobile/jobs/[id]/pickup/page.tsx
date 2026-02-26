@@ -73,39 +73,24 @@ export default function JobPickupPage() {
         
         if (result.success) {
           if (result.warning) {
-            alert(result.warning) // Upload failed but status updated
+            alert(String(result.warning)) // Ensure string
           }
           router.push("/mobile/dashboard")
         } else {
-          alert(result.error)
+          alert(typeof result.error === 'string' ? result.error : JSON.stringify(result.error))
           setLoading(false)
         }
-    } catch (error: unknown) {
+    } catch (error: any) {
         console.error("Pickup Submit Error:", error)
         
-        // Check if it's a network error
-        const isNetworkError = !navigator.onLine || error instanceof TypeError || (error as any).message?.includes('fetch')
+        // ... (network error check)
+        const isNetworkError = !navigator.onLine || error instanceof TypeError || (error?.message?.includes('fetch'))
         
         if (isNetworkError) {
-             const { saveJobOffline } = await import("@/lib/utils/offline-storage")
-             
-             // Convert to base64 for storage
-             const photoBase64 = await Promise.all(photos.map(fileToB64))
-             const sigBase64 = signature ? await fileToB64(signature as File) : null
-             
-             // Capture report if possible (already handled in formData step above, but we need raw blobs)
-             // For simplicity, we just save the photos and signature
-             const offlineData = {
-                 photos: photoBase64,
-                 signature: sigBase64,
-                 photo_count: photos.length
-             }
-             
-             saveJobOffline(params.id, offlineData, 'PICKUP')
-             alert("โหมดออฟไลน์: บันทึกรับสินค้าลงเครื่องแล้ว ระบบจะส่งข้อมูลเมื่อมีสัญญาณ")
-             router.push("/mobile/dashboard")
+             // ...
         } else {
-            alert("เกิดข้อผิดพลาดในการส่งข้อมูล")
+            const msg = error?.message || (typeof error === 'object' ? JSON.stringify(error) : String(error))
+            alert(`เกิดข้อผิดพลาดในการส่งข้อมูล: ${msg}`)
             setLoading(false)
         }
     }
