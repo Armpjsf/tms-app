@@ -1,6 +1,7 @@
 "use server"
 
 import { createClient } from '@/utils/supabase/server'
+import { logActivity } from '@/lib/supabase/logs'
 
 export type Job = {
   Job_ID: string
@@ -491,6 +492,18 @@ export async function createJob(jobData: Partial<Job>) {
             console.error('Error creating job:', JSON.stringify(error))
             return { success: false, error }
         }
+
+        // Log job creation
+        await logActivity({
+            module: 'Jobs',
+            action: 'CREATE',
+            targetId: newJobId,
+            details: { 
+                customer_name: jobData.Customer_Name,
+                plan_date: jobData.Plan_Date,
+                route: jobData.Route_Name
+            }
+        })
 
         return { success: true, data }
     } catch (e) {

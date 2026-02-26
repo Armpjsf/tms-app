@@ -3,7 +3,8 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/utils/supabase/server'
 import argon2 from 'argon2'
-import { createSession, deleteSession } from '@/lib/session'
+import { createSession, deleteSession, getSession } from '@/lib/session'
+import { logActivity } from '@/lib/supabase/logs'
 // import { cookies } from 'next/headers' // Used in createClient
 
 export async function login(formData: FormData) {
@@ -91,11 +92,32 @@ export async function login(formData: FormData) {
     customerId, 
     permissions
   )
+
+  // Log successful login
+  await logActivity({
+    module: 'Auth',
+    action: 'LOGIN',
+    userId: users.Username,
+    username: users.Username,
+    role: users.Role || (roleId === 1 ? 'Super Admin' : roleId === 2 ? 'Admin' : 'Staff'),
+    branchId: branchId || undefined,
+    details: { method: 'credentials', login_time: new Date().toISOString() }
+  })
   
   redirect('/dashboard')
 }
 
 export async function logout() {
+  const session = await getSession()
+  if (session) {
+    await logActivity({
+      module: 'Auth',
+      action: 'LOGOUT',
+      userId: session.userId,
+      username: session.username,
+      details: { logout_time: new Date().toISOString() }
+    })
+  }
   await deleteSession()
   redirect('/login')
 }
