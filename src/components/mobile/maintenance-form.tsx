@@ -49,7 +49,7 @@ export function MobileMaintenanceForm({ driverId, driverName, defaultVehiclePlat
             Driver_ID: driverId,
             Vehicle_Plate: plate,
             Issue_Type: title,
-            Issue_Desc: description,
+            Description: description,
             Priority: "Medium",
             Odometer: odometer ? parseInt(odometer) : undefined,
             Photo_Url: photoUrl
@@ -57,7 +57,7 @@ export function MobileMaintenanceForm({ driverId, driverName, defaultVehiclePlat
 
         if (result.success) {
             alert("ส่งแจ้งซ่อมเรียบร้อยแล้ว")
-            router.push('/mobile/profile')
+            router.push('/mobile/dashboard')
         } else {
             alert(`เกิดข้อผิดพลาด: ${result.message}`)
         }

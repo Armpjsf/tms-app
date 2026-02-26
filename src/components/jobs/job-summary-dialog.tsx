@@ -29,6 +29,17 @@ const LeafletMap = dynamic(() => import('@/components/maps/leaflet-map'), {
     loading: () => <div className="h-[200px] w-full bg-slate-900 animate-pulse rounded-xl" />
 })
 
+interface GPSPoint {
+  lat: number
+  lng: number
+  timestamp: string
+}
+
+interface JobGPSData {
+  route: [number, number][]
+  latest: GPSPoint | null
+}
+
 type JobSummaryDialogProps = {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -36,7 +47,7 @@ type JobSummaryDialogProps = {
 }
 
 export function JobSummaryDialog({ open, onOpenChange, job }: JobSummaryDialogProps) {
-  const [gpsData, setGpsData] = useState<{ route: [number, number][], latest: any } | null>(null)
+  const [gpsData, setGpsData] = useState<JobGPSData | null>(null)
   const [loadingGps, setLoadingGps] = useState(false)
 
   const jobId = job?.Job_ID
@@ -44,20 +55,26 @@ export function JobSummaryDialog({ open, onOpenChange, job }: JobSummaryDialogPr
   const planDate = job?.Plan_Date
 
   useEffect(() => {
-    if (open && jobId) {
-      setLoadingGps(true)
-      getJobGPSData(jobId, driverName, planDate)
-        .then(data => setGpsData(data as any))
-        .finally(() => setLoadingGps(false))
+    async function fetchGps() {
+      if (open && jobId) {
+        setLoadingGps(true)
+        try {
+          const data = await getJobGPSData(jobId, driverName, planDate)
+          setGpsData(data as JobGPSData) // Cast to the defined JobGPSData type
+        } finally {
+          setLoadingGps(false)
+        }
+      }
     }
+    fetchGps()
   }, [open, jobId, driverName, planDate])
 
   if (!job) return null
 
   const pickupPhotos = job.Pickup_Photo_Url ? job.Pickup_Photo_Url.split(',').filter(Boolean) : []
   const podPhotos = job.Photo_Proof_Url ? job.Photo_Proof_Url.split(',').filter(Boolean) : []
-  const signature = job.Signature_Url || (job as any).signature_url
-  const pickupSignature = job.Pickup_Signature_Url || (job as any).pickup_signature_url
+  const signature = job.Signature_Url
+  const pickupSignature = job.Pickup_Signature_Url
 
   // Timeline Logic
   const steps = [

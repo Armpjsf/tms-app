@@ -60,7 +60,7 @@ export function MobileFuelForm({ driverId, driverName, defaultVehiclePlate }: Mo
 
         if (result.success) {
             alert("บันทึกข้อมูลเรียบร้อยแล้ว")
-            router.push('/mobile/profile')
+            router.push('/mobile/dashboard')
         } else {
             alert(`เกิดข้อผิดพลาด: ${result.message}`)
         }

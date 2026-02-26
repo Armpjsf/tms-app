@@ -8,13 +8,10 @@ export async function submitJobPOD(jobId: string, formData: FormData) {
   const supabase = createAdminClient()
 
   const photoFile = formData.get("photo") as File
-  const signatureFile = formData.get("signature") as File // Might be blob sent as file
+  const signatureFile = formData.get("signature") as File
   
-  // DEBUG LOGS
   console.log("--- submitJobPOD Debug ---")
   console.log("Job ID:", jobId)
-  const keys = Array.from(formData.keys())
-  console.log("FormData Keys:", keys)
   
   const hasLegacyPhoto = !!photoFile && photoFile.size > 0
   const hasNewPhoto = !!formData.get("photo_0")
@@ -22,23 +19,16 @@ export async function submitJobPOD(jobId: string, formData: FormData) {
   
   const hasSignature = !!signatureFile && signatureFile.size > 0
 
-  console.log("Check:", { hasLegacyPhoto, hasNewPhoto, hasPhotos, hasSignature })
-
   if (!hasPhotos) {
-      console.log("Error: Missing Photos")
       return { error: "ไม่พบรูปถ่ายสินค้า (กรุณาลองถ่ายใหม่)" }
   }
   if (!hasSignature) {
-      console.log("Error: Missing Signature")
       return { error: "ไม่พบลายเซ็น (กรุณาเซ็นใหม่)" }
   }
-
-
 
   try {
     const timestamp = Date.now()
     
-    // Helper to upload with rename
     const uploadWithRename = async (file: File, name: string, folder: string) => {
         try {
             const buffer = Buffer.from(await file.arrayBuffer())
@@ -50,10 +40,8 @@ export async function submitJobPOD(jobId: string, formData: FormData) {
         }
     }
 
-    // Prepare Upload Promises
     const uploadPromises: Promise<string | null>[] = []
     
-    // 0. POD Report (Smart Document)
     const podReportFile = formData.get("pod_report") as File
     let podReportUrl = null
     
@@ -61,15 +49,13 @@ export async function submitJobPOD(jobId: string, formData: FormData) {
         try {
             const reportName = `${jobId}_${timestamp}_REPORT.jpg`
             podReportUrl = await uploadWithRename(podReportFile, reportName, 'POD_Documents')
-        } catch (e) {
-            console.error("Failed to upload POD Report", e)
+        } catch (err) {
+            console.error("Failed to upload POD Report", err)
         }
     }
 
-    // 1. Photos
     const photoCount = parseInt(formData.get("photo_count") as string || "0")
     
-    // Legacy check
     if (photoCount === 0 && formData.get("photo")) {
         const legacyPhoto = formData.get("photo") as File
         const name = `${jobId}_${timestamp}_photo.jpg`
@@ -84,20 +70,16 @@ export async function submitJobPOD(jobId: string, formData: FormData) {
         }
     }
 
-    // 2. Signature
     const sigName = `${jobId}_${timestamp}_sig.png`
     const sigPromise = uploadWithRename(signatureFile, sigName, 'POD_Signatures')
 
-    // EXECUTE ALL UPLOADS IN PARALLEL
     const [signatureUrl, ...photoResults] = await Promise.all([
         sigPromise,
         ...uploadPromises
     ])
 
-    // Filter successful photo uploads
     let photoUrls = photoResults.filter(url => url !== null) as string[]
     
-    // Prepend Report URL to photos if available, so it appears first in viewer
     if (podReportUrl) {
         photoUrls = [podReportUrl, ...photoUrls]
     }
@@ -106,23 +88,23 @@ export async function submitJobPOD(jobId: string, formData: FormData) {
 
     if (!signatureUrl) throw new Error("Signature upload failed")
 
-    // 3. Update Job
-    const nowIso = new Date().toISOString()
+    const now = new Date()
+    const nowIso = now.toISOString()
+    const timeString = now.toTimeString().split(' ')[0] 
+    
     const { error: updateError } = await supabase
       .from("Jobs_Main")
       .update({
         Job_Status: "Completed", 
         Photo_Proof_Url: photoUrlString,
         Signature_Url: signatureUrl,
-        Actual_Delivery_Time: nowIso,
-        Delivery_Date: nowIso.split('T')[0] // Ensure Delivery_Date is also updated
+        Actual_Delivery_Time: timeString,
+        Delivery_Date: nowIso.split('T')[0]
       })
       .eq("Job_ID", jobId)
 
     if (updateError) throw updateError
 
-    // 4. Automated Report Generation (Phase 2)
-    // Trigger PDF generation in the background
     try {
         const { generateJobPDF } = await import("@/lib/actions/report-actions")
         generateJobPDF(jobId).then(res => {
@@ -138,25 +120,27 @@ export async function submitJobPOD(jobId: string, formData: FormData) {
   } catch (error: any) {
     console.error(`[submitJobPOD] Catch Error for jobId ${jobId}:`, error)
     
-    // Ensure we return a string, not an object
     let errorMessage = "เกิดข้อผิดพลาดในการบันทึกข้อมูล"
     if (typeof error === 'string') errorMessage = error
-    else if (error && error.message) errorMessage = error.message
-    else if (error && typeof error === 'object') errorMessage = JSON.stringify(error)
+    else if (error instanceof Error) errorMessage = error.message
+    else if (error && typeof error === 'object') {
+        try {
+            errorMessage = error.message || JSON.stringify(error)
+        } catch (err) {
+            console.error("Error stringifying error:", err)
+            errorMessage = String(error)
+        }
+    }
 
     return { error: `บันทึกไม่สำเร็จ (POD): ${errorMessage}` }
   }
 }
 
 export async function submitJobPickup(jobId: string, formData: FormData) {
-  console.log("=== submitJobPickup START ===", { jobId })
-  
   const supabase = createAdminClient()
 
   try {
     const timestamp = Date.now()
-    
-    // Step 1: Try to upload photos & signature (non-blocking)
     const photoUrls: string[] = []
     let signatureUrl: string | null = null
     let uploadWarning = ""
@@ -168,7 +152,6 @@ export async function submitJobPickup(jobId: string, formData: FormData) {
           return res.directLink
       }
 
-      // 0. Pickup Report (Smart Document)
       const pickupReportFile = formData.get("pickup_report") as File
       let pickupReportUrl = null
       
@@ -176,56 +159,44 @@ export async function submitJobPickup(jobId: string, formData: FormData) {
           try {
               const reportName = `${jobId}_${timestamp}_PICKUP_REPORT.jpg`
               pickupReportUrl = await uploadWithRename(pickupReportFile, reportName, 'Pickup_Documents')
-          } catch (e) {
-              console.error("Failed to upload Pickup Report", e)
+          } catch (err) {
+              console.error("Failed to upload Pickup Report", err)
           }
       }
 
       const photoCount = parseInt(formData.get("photo_count") as string || "0")
-      console.log("Photo count:", photoCount)
-      
       for (let i = 0; i < photoCount; i++) {
           const file = formData.get(`photo_${i}`) as File
           if (file) {
-              console.log(`Uploading photo ${i}: ${file.name} (${file.size} bytes)`)
               const name = `${jobId}_${timestamp}_pickup_${i}.jpg`
               const url = await uploadWithRename(file, name, 'Pickup_Photos')
               if (url) photoUrls.push(url)
           }
       }
 
-      // Prepend Report URL to photos if available
       if (pickupReportUrl) {
           photoUrls.unshift(pickupReportUrl)
       }
 
-      // Handle Signature
       const signatureFile = formData.get("signature") as File
       if (signatureFile && signatureFile.size > 0) {
-          console.log("Uploading signature...")
           const sigName = `${jobId}_${timestamp}_pickup_sig.png`
           signatureUrl = await uploadWithRename(signatureFile, sigName, 'Pickup_Signatures')
       }
-
-      console.log("Upload results:", { photos: photoUrls.length, hasSignature: !!signatureUrl })
-    } catch (e) {
+    } catch (e: any) {
       const errMsg = e instanceof Error ? e.message : String(e)
       console.error("Supabase Storage upload failed:", errMsg)
       uploadWarning = `อัปโหลดหลักฐานไม่สำเร็จ: ${errMsg}`
     }
 
-    // Step 2: Always update Job Status
-    console.log("Updating job status to In Transit...")
-    const updatePayload: Record<string, unknown> = {
-      Job_Status: 'In Transit',
-    }
+    const now = new Date()
+    const timeString = now.toTimeString().split(' ')[0] 
     
-    if (photoUrls.length > 0) {
-      updatePayload.Pickup_Photo_Url = photoUrls.join(',')
-    }
-
-    if (signatureUrl) {
-      updatePayload.Pickup_Signature_Url = signatureUrl
+    const updatePayload: any = {
+      Job_Status: 'In Transit',
+      Pickup_Photo_Url: photoUrls.join(','),
+      Pickup_Signature_Url: signatureUrl,
+      Actual_Pickup_Time: timeString
     }
 
     const { error } = await supabase
@@ -234,41 +205,28 @@ export async function submitJobPickup(jobId: string, formData: FormData) {
       .eq("Job_ID", jobId)
 
     if (error) {
-      // If Pickup_Photo_Url column doesn't exist, retry without it
-      if (error.message?.includes('Pickup_Photo_Url') || error.code === '42703') {
-        console.warn("Pickup_Photo_Url column missing, retrying status only")
-        const { error: error2 } = await supabase
-          .from("Jobs_Main")
-          .update({ Job_Status: 'In Transit' })
-          .eq("Job_ID", jobId)
-        if (error2) {
-          console.error("DB update retry failed:", error2)
-          throw error2
-        }
-      } else {
-        console.error("DB update failed:", error)
-        throw error
-      }
+      console.error("Critical: Pickup update failed:", error)
+      throw error
     }
 
-    console.log("=== submitJobPickup SUCCESS ===")
     revalidatePath("/mobile/jobs")
-    
-    if (uploadWarning) {
-      return { success: true, warning: uploadWarning }
-    }
-    return { success: true }
+    return uploadWarning ? { success: true, warning: uploadWarning } : { success: true }
     
   } catch (error: any) {
     console.error(`[submitJobPickup] Catch Error for jobId ${jobId}:`, error)
     
-    // Ensure we return a string
     let errorMessage = "เกิดข้อผิดพลาดในการบันทึกข้อมูล"
     if (typeof error === 'string') errorMessage = error
-    else if (error && error.message) errorMessage = error.message
-    else if (error && typeof error === 'object') errorMessage = JSON.stringify(error)
+    else if (error instanceof Error) errorMessage = error.message
+    else if (error && typeof error === 'object') {
+        try {
+            errorMessage = error.message || JSON.stringify(error)
+        } catch (err) {
+            console.error("Error stringifying error:", err)
+            errorMessage = String(error)
+        }
+    }
 
     return { error: `บันทึกไม่สำเร็จ (Pickup): ${errorMessage}` }
   }
 }
-

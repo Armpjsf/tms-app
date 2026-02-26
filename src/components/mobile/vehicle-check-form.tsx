@@ -44,7 +44,6 @@ export function MobileVehicleCheckForm({ driverId, driverName, defaultVehiclePla
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     console.log("Submit start", { signature: !!signature, plate })
-    alert("เริ่มบันทึกข้อมูล...") // Checkpoint 1
     
     if (!signature) {
         alert("กรุณาลงลายเซ็นก่อนบันทึก")
@@ -60,7 +59,6 @@ export function MobileVehicleCheckForm({ driverId, driverName, defaultVehiclePla
         // 1. Capture Report
         if (reportRef.current) {
             setSubmitStatus("ก. กำลังสร้างรูปรายงาน...")
-            alert("Step 1: กำลังสร้างรูปจากหน้าจอ...") // Checkpoint 2
             try {
                 await new Promise(r => setTimeout(r, 500))
                 
@@ -75,7 +73,6 @@ export function MobileVehicleCheckForm({ driverId, driverName, defaultVehiclePla
                         if (el) el.style.position = "static"
                     }
                 })
-                alert("Step 2: สร้าง Canvas สำเร็จ กำลังแปลงเป็นไฟล์...") // Checkpoint 3
                 const reportBlob = await new Promise<Blob | null>(resolve => {
                     const timeout = setTimeout(() => {
                         console.error("toBlob timeout")
@@ -89,9 +86,8 @@ export function MobileVehicleCheckForm({ driverId, driverName, defaultVehiclePla
                 
                 if (reportBlob) {
                     formData.append("check_report", reportBlob, `Report_${plate}.jpg`)
-                    alert(`Step 3: แปลงไฟล์รายงานสำเร็จ (ขนาด: ${Math.round(reportBlob.size / 1024)} KB)`) // Checkpoint 4
                 } else {
-                    alert("Step 3 Error: ได้รับ Blob ว่างเปล่าสำหรับตัวรายงาน")
+                    console.warn("Step 3 Error: ได้รับ Blob ว่างเปล่าสำหรับตัวรายงาน")
                 }
             } catch (err) {
                 console.error("Report capture failed:", err)
@@ -115,14 +111,12 @@ export function MobileVehicleCheckForm({ driverId, driverName, defaultVehiclePla
         }
 
         setSubmitStatus("ค. ส่งข้อมูลเข้าเซิร์ฟเวอร์...")
-        alert("Step 4: กำลังส่งข้อมูลไปยัง Google Drive & Database (โปรดรอสักครู่)...") // Checkpoint 5
         
         const result = await submitVehicleCheck(formData)
-        alert(`Step 5: ผลการส่ง -> ${result.success ? "สำเร็จ" : "ล้มเหลว"}`) // Checkpoint 6
         
         if (result.success) {
              alert("✅ บันทึกข้อมูลเรียบร้อยแล้ว!")
-             router.push('/mobile/profile')
+             router.push('/mobile/dashboard')
         } else {
              setSubmitStatus("")
              alert(`❌ บันทึกไม่สำเร็จ: ${result.message}`)
