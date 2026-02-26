@@ -205,7 +205,7 @@ export default async function JobHistoryPage(props: Props) {
                     <th className="text-left p-4 text-xs font-medium text-muted-foreground uppercase">คนขับ</th>
                     <th className="text-left p-4 text-xs font-medium text-muted-foreground uppercase">ทะเบียน</th>
                     <th className="text-center p-4 text-xs font-medium text-muted-foreground uppercase">รูปถ่าย/ลายเซ็น</th>
-                    {canViewPrice && <th className="text-right p-4 text-xs font-medium text-emerald-600 dark:text-emerald-400 uppercase">ราคาแอร์</th>}
+                    {canViewPrice && <th className="text-right p-4 text-xs font-medium text-emerald-600 dark:text-emerald-400 uppercase">ราคาค่าขนส่ง</th>}
                     {canViewPrice && <th className="text-right p-4 text-xs font-medium text-red-600 dark:text-red-400 uppercase">ต้นทุนรถ</th>}
                     <th className="text-left p-4 text-xs font-medium text-muted-foreground uppercase">สถานะ</th>
                     <th className="text-right p-4 text-xs font-medium text-muted-foreground uppercase">Actions</th>

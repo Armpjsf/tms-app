@@ -439,8 +439,8 @@ export function JobDialog({
             Driver_ID: assignment.Driver_ID,
             Sub_ID: assignment.Sub_ID,
             Show_Price_To_Driver: assignment.Show_Price_To_Driver,
-            Price_Cust_Total: assignment.Price_Cust_Total ?? baseData.Price_Cust_Total,
-            Cost_Driver_Total: assignment.Cost_Driver_Total ?? baseData.Cost_Driver_Total,
+            Price_Cust_Total: assignment.Price_Cust_Total !== undefined ? assignment.Price_Cust_Total : baseData.Price_Cust_Total,
+            Cost_Driver_Total: assignment.Cost_Driver_Total !== undefined ? assignment.Cost_Driver_Total : baseData.Cost_Driver_Total,
             Driver_Name: drivers.find(d => d.Driver_ID === assignment.Driver_ID)?.Driver_Name || '',
         }
 
@@ -1075,7 +1075,7 @@ export function JobDialog({
                   <Input
                     type="number"
                     value={formData.Price_Cust_Total}
-                    onChange={(e) => setFormData({ ...formData, Price_Cust_Total: Number(e.target.value) })}
+                    onChange={(e) => updateAssignment(0, 'Price_Cust_Total', Number(e.target.value))}
                     className="bg-background border-input"
                   />
                 </div>
@@ -1084,7 +1084,7 @@ export function JobDialog({
                    <Input
                     type="number"
                     value={formData.Cost_Driver_Total}
-                    onChange={(e) => setFormData({ ...formData, Cost_Driver_Total: Number(e.target.value) })}
+                    onChange={(e) => updateAssignment(0, 'Cost_Driver_Total', Number(e.target.value))}
                     className="bg-background border-input"
                   />
                 </div>
