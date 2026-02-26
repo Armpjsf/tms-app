@@ -30,6 +30,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Job } from "@/lib/supabase/jobs"
 import { createBillingNote } from "@/lib/supabase/billing"
 
@@ -415,16 +422,20 @@ export default function CustomerBillingClient({ initialJobs, companyProfile, cus
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="space-y-2">
               <Label className="text-slate-400 text-sm">ลูกค้า</Label>
-              <select
+              <Select
                 value={selectedCustomer}
-                onChange={(e) => setSelectedCustomer(e.target.value)}
-                className="w-full h-10 px-3 rounded-md bg-slate-800 border border-slate-700 text-white"
+                onValueChange={(value) => setSelectedCustomer(value === "all" ? "" : value)}
               >
-                <option value="">เลือกลูกค้า...</option>
-                {uniqueCustomerNames.map(c => (
-                  <option key={c} value={c}>{c}</option>
-                ))}
-              </select>
+                <SelectTrigger className="w-full h-10 bg-slate-800 border-slate-700 text-white">
+                  <SelectValue placeholder="เลือกลูกค้า..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">ทั้งหมด (All Customers)</SelectItem>
+                  {uniqueCustomerNames.map(c => (
+                    <SelectItem key={c} value={c}>{c}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
               <Label className="text-slate-400 text-sm flex items-center gap-1">

@@ -19,13 +19,13 @@ import {
   CheckCircle2,
   AlertCircle,
   Download,
-  Filter,
   ArrowLeft,
 } from "lucide-react"
 import { getAllJobs } from "@/lib/supabase/jobs"
 import { getJobCreationData } from "@/app/planning/actions"
 import { ExcelExport } from "@/components/ui/excel-export"
 import { JobHistoryActions } from "@/components/jobs/job-history-actions"
+import { HistoryStatusFilter } from "@/components/jobs/history-status-filter"
 import NextImage from "next/image"
 
 import { isCustomer, hasPermission } from "@/lib/permissions"
@@ -133,23 +133,7 @@ export default async function JobHistoryPage(props: Props) {
               />
             </div>
             <div className="space-y-2">
-              <Label className="text-muted-foreground text-sm flex items-center gap-1">
-                <Filter className="w-3 h-3" /> สถานะ
-              </Label>
-              <select
-                name="status"
-                defaultValue={status}
-                className="w-full h-10 px-3 rounded-md bg-background border border-input text-foreground"
-              >
-                <option value="">ทั้งหมด</option>
-                <option value="New">ใหม่</option>
-                <option value="Assigned">มอบหมายแล้ว</option>
-                <option value="In Progress">กำลังดำเนินงาน</option>
-                <option value="Complete">เสร็จสิ้น</option>
-                <option value="Delivered">ส่งแล้ว</option>
-                <option value="Failed">ล้มเหลว</option>
-                <option value="Cancelled">ยกเลิก</option>
-              </select>
+              <HistoryStatusFilter initialValue={status} />
             </div>
             {/* Added implicit submit button for non-search inputs if needed, or rely on Enter/Form submission logic */}
             <button type="submit" className="hidden" /> 

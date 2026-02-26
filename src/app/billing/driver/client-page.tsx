@@ -32,6 +32,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Job } from "@/lib/supabase/jobs"
 import { Driver } from "@/lib/supabase/drivers"
 import { createDriverPayment } from "@/lib/supabase/billing"
@@ -510,36 +517,44 @@ export default function DriverPaymentClient({ initialJobs, drivers, companyProfi
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
             <div className="space-y-2">
               <Label className="text-slate-400 text-sm">รูปแบบการจ่าย</Label>
-              <select
+              <Select
                 value={paymentModel}
-                onChange={(e) => {
-                    setPaymentModel(e.target.value as 'individual' | 'subcontractor')
+                onValueChange={(value) => {
+                    setPaymentModel(value as 'individual' | 'subcontractor')
                     setSelectedEntityId("")
                 }}
-                className="w-full h-10 px-3 rounded-md bg-slate-800 border border-slate-700 text-white"
               >
-                <option value="individual">คนขับรายบุคคล (Individual)</option>
-                <option value="subcontractor">บริษัทรถร่วม (Subcontractor)</option>
-              </select>
+                <SelectTrigger className="w-full h-10 bg-slate-800 border-slate-700 text-white">
+                  <SelectValue placeholder="เลือกรูปแบบ" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="individual">คนขับรายบุคคล (Individual)</SelectItem>
+                  <SelectItem value="subcontractor">บริษัทรถร่วม (Subcontractor)</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
               <Label className="text-slate-400 text-sm">{paymentModel === 'individual' ? 'เลือกคนขับ' : 'เลือกบริษัทรถร่วม'}</Label>
-              <select
-                value={selectedEntityId || ""}
-                onChange={(e) => setSelectedEntityId(e.target.value)}
-                className="w-full h-10 px-3 rounded-md bg-slate-800 border border-slate-700 text-white"
+              <Select
+                value={selectedEntityId || "all"}
+                onValueChange={(value) => setSelectedEntityId(value === "all" ? "" : value)}
               >
-                <option value="">ทั้งหมด</option>
-                {paymentModel === 'individual' ? (
-                    drivers.map(d => (
-                        <option key={d.Driver_Name || ""} value={d.Driver_Name || ""}>{d.Driver_Name}</option>
-                    ))
-                ) : (
-                    subcontractors.map(s => (
-                        <option key={s.Sub_ID} value={s.Sub_ID}>{s.Sub_Name}</option>
-                    ))
-                )}
-              </select>
+                <SelectTrigger className="w-full h-10 bg-slate-800 border-slate-700 text-white">
+                  <SelectValue placeholder="ทั้งหมด" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">ทั้งหมด</SelectItem>
+                  {paymentModel === 'individual' ? (
+                      drivers.map(d => (
+                          <SelectItem key={d.Driver_Name || ""} value={d.Driver_Name || ""}>{d.Driver_Name}</SelectItem>
+                      ))
+                  ) : (
+                      subcontractors.map(s => (
+                          <SelectItem key={s.Sub_ID} value={s.Sub_ID}>{s.Sub_Name}</SelectItem>
+                      ))
+                  )}
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
               <Label className="text-slate-400 text-sm flex items-center gap-1">
