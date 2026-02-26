@@ -46,11 +46,11 @@ export function SignaturePad({ onSave }: Props) {
 
   return (
     <div className="space-y-3">
-      <div className="border-2 border-dashed border-slate-700 rounded-xl bg-slate-900 overflow-hidden touch-none relative">
+      <div className="border-2 border-slate-300 rounded-xl bg-white overflow-hidden touch-none relative">
         <SignatureCanvas
           ref={sigCanvas}
-          penColor="white"
-          backgroundColor="transparent"
+          penColor="black"
+          backgroundColor="white"
           canvasProps={{
             className: "w-full h-48 cursor-crosshair block",
           }}
@@ -58,8 +58,8 @@ export function SignaturePad({ onSave }: Props) {
           onEnd={handleEnd}
         />
         {isEmpty && (
-           <div className="absolute inset-0 flex items-center justify-center pointer-events-none text-slate-600">
-              เซ็นชื่อที่นี่
+           <div className="absolute inset-0 flex items-center justify-center pointer-events-none text-slate-400">
+              เซ็นชื่อที่นี่ (หมึกสีดำ)
            </div>
         )}
       </div>

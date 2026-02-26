@@ -15,6 +15,7 @@ import {
 } from "lucide-react"
 import { getAllPODs, getPODStats } from "@/lib/supabase/pod"
 import { PODExport } from "@/components/pod/pod-export"
+import Link from "next/link"
 import NextImage from "next/image"
 
 export default async function PODPage() {
@@ -108,7 +109,9 @@ export default async function PODPage() {
                       className="border-b border-white/5 hover:bg-white/5 transition-colors"
                     >
                       <td className="p-4">
-                        <span className="text-indigo-400 font-medium text-sm">{pod.Job_ID}</span>
+                        <Link href={`/admin/jobs/${pod.Job_ID}`}>
+                          <span className="text-indigo-400 font-medium text-sm hover:underline cursor-pointer">{pod.Job_ID}</span>
+                        </Link>
                       </td>
                       <td className="p-4 text-sm text-slate-300">
                         {pod.Plan_Date ? new Date(pod.Plan_Date).toLocaleDateString('th-TH', { timeZone: 'Asia/Bangkok' }) : "-"}
@@ -154,7 +157,9 @@ export default async function PODPage() {
                         </span>
                       </td>
                       <td className="p-4 text-right">
-                        <Button variant="ghost" size="sm">ดูรายละเอียด</Button>
+                        <Link href={`/admin/jobs/${pod.Job_ID}`}>
+                          <Button variant="ghost" size="sm" className="hover:bg-indigo-500/10">ดูรายละเอียด</Button>
+                        </Link>
                       </td>
                     </tr>
                   ))}

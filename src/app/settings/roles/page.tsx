@@ -161,7 +161,7 @@ export default function RolesPage() {
                                         {SYSTEM_PERMISSIONS.map((perm) => (
                                             <div key={perm.id} className="flex items-center justify-between p-3 rounded-lg hover:bg-slate-800/50 transition-colors border border-transparent hover:border-slate-800">
                                                 <div className="space-y-0.5">
-                                                    <Label className="text-base text-slate-200 cursor-pointer" htmlFor={`${role.Role}-${perm.id}`}>
+                                                    <Label className="text-base text-slate-200 cursor-pointer">
                                                         {perm.label}
                                                     </Label>
                                                     <p className="text-xs text-slate-500">
