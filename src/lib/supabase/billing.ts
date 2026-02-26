@@ -1,3 +1,5 @@
+'use server'
+
 import { createClient } from "@/utils/supabase/server"
 import { getUserBranchId, isSuperAdmin } from "@/lib/permissions"
 import { accountingService } from "@/services/accounting"

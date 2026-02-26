@@ -33,15 +33,15 @@ export async function middleware(request: NextRequest) {
   const response = await updateSession(request)
 
   // Protect Admin/Dashboard routes (all routes except /mobile, /login, /track, and public assets)
-  // Check if there is a valid Supabase user for admin routes
   const isLoginPage = pathname.startsWith('/login')
   const isPublicTrack = pathname.startsWith('/track')
   const isMobile = pathname.startsWith('/mobile')
   
-  if (!isMobile && !isLoginPage && !isPublicTrack) {
+  if (!isMobile && !isLoginPage && !isPublicTrack && pathname !== '/favicon.ico') {
     const sessionCookie = request.cookies.get('session')
 
     if (!sessionCookie) {
+      console.log(`Middleware: No session cookie for ${pathname}, redirecting to /login`)
       const loginUrl = new URL('/login', request.url)
       return NextResponse.redirect(loginUrl)
     }
@@ -49,25 +49,27 @@ export async function middleware(request: NextRequest) {
     // Role-based Access Control (RBAC)
     const payload = await decrypt(sessionCookie.value)
     
-    if (payload) {
-      const roleId = Number(payload.roleId)
-      
-      // Define restricted paths and allowed roles
-      // 1: Super Admin, 2: Admin, 3: Dispatcher, 4: Accountant, 5: Staff
-      
-      const restrictions = [
-        { path: '/settings', allowed: [1, 2] },
-        { path: '/admin', allowed: [1, 2] }, // Executive Dashboards
-        { path: '/billing', allowed: [1, 2, 4] },
-        { path: '/reports', allowed: [1, 2, 4] },
-      ]
+    if (!payload) {
+      console.log(`Middleware: Invalid session for ${pathname}, redirecting to /login`)
+      const loginUrl = new URL('/login', request.url)
+      const response = NextResponse.redirect(loginUrl)
+      response.cookies.delete('session')
+      return response
+    }
 
-      for (const rule of restrictions) {
-        if (pathname.startsWith(rule.path)) {
-          if (!rule.allowed.includes(roleId)) {
-            // Redirect to dashboard if not allowed
-            return NextResponse.redirect(new URL('/dashboard', request.url))
-          }
+    // RBAC logic...
+    const roleId = Number(payload.roleId)
+    const restrictions = [
+      { path: '/settings', allowed: [1, 2] },
+      { path: '/admin', allowed: [1, 2] },
+      { path: '/billing', allowed: [1, 2, 4] },
+      { path: '/reports', allowed: [1, 2, 4] },
+    ]
+
+    for (const rule of restrictions) {
+      if (pathname.startsWith(rule.path)) {
+        if (!rule.allowed.includes(roleId)) {
+          return NextResponse.redirect(new URL('/dashboard', request.url))
         }
       }
     }
