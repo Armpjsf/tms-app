@@ -5,7 +5,7 @@ import crypto from 'crypto'
 import { createAdminClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
 
-import { uploadFileToDrive } from '@/lib/google-drive'
+import { uploadFileToSupabase } from '@/lib/actions/supabase-upload'
 import { createNotification } from '@/lib/actions/notification-actions'
 
 export async function submitVehicleCheck(formData: FormData) {
@@ -40,7 +40,7 @@ export async function submitVehicleCheck(formData: FormData) {
     const uploadWithRename = async (file: File, name: string, folder: string) => {
       try {
         const buffer = Buffer.from(await file.arrayBuffer())
-        const res = await uploadFileToDrive(buffer, name, file.type, folder)
+        const res = await uploadFileToSupabase(buffer, name, file.type, folder)
         return res.directLink
       } catch (err: any) {
         const msg = err.message || String(err)
@@ -59,15 +59,12 @@ export async function submitVehicleCheck(formData: FormData) {
     if (checkReportFile && checkReportFile.size > 0) {
       try {
         const name = `${driverId}_check_REPORT_${timestamp}.jpg`
-        console.log(`[${logId}] [Drive] Uploading Check Report: ${name}`)
+        console.log(`[${logId}] [Storage] Uploading Check Report: ${name}`)
         
-        const buffer = Buffer.from(await checkReportFile.arrayBuffer())
-        const res = await uploadFileToDrive(buffer, name, checkReportFile.type, 'Vehicle_Check_Documents')
-        
-        checkReportUrl = res.directLink
-        console.log(`[${logId}] [Drive] Report Uploaded. ID: ${res.fileId}`)
+        checkReportUrl = await uploadWithRename(checkReportFile, name, 'Vehicle_Check_Documents')
+        console.log(`[${logId}] [Storage] Report Uploaded.`)
       } catch (e: any) {
-        console.error(`[${logId}] [Drive] Failed to upload Check Report:`, e)
+        console.error(`[${logId}] [Storage] Failed to upload Check Report:`, e)
         failures.push(`รายงาน (${e.message || 'Error'})`)
       }
     }
@@ -79,17 +76,16 @@ export async function submitVehicleCheck(formData: FormData) {
       if (file && file.size > 0) {
         try {
           const name = `${driverId}_check_${timestamp}_${i}.jpg`
-          console.log(`[${logId}] [Drive] Uploading photo ${i}: ${name}`)
+          console.log(`[${logId}] [Storage] Uploading photo ${i}: ${name}`)
           
-          const buffer = Buffer.from(await file.arrayBuffer())
-          const res = await uploadFileToDrive(buffer, name, file.type, 'Vehicle_Checks')
+          const url = await uploadWithRename(file, name, 'Vehicle_Checks')
           
-          if (res.directLink) {
-            photoUrls.push(res.directLink)
-            console.log(`[${logId}] [Drive] Photo ${i} Uploaded. ID: ${res.fileId}`)
+          if (url) {
+            photoUrls.push(url)
+            console.log(`[${logId}] [Storage] Photo ${i} Uploaded.`)
           }
         } catch (e: any) {
-          console.error(`[${logId}] [Drive] Failed to upload photo ${i}:`, e)
+          console.error(`[${logId}] [Storage] Failed to upload photo ${i}:`, e)
           failures.push(`รูปถ่าย ${i + 1} (${e.message || 'Error'})`)
         }
       }
@@ -105,22 +101,19 @@ export async function submitVehicleCheck(formData: FormData) {
     if (signatureFile && signatureFile.size > 0) {
       try {
         const name = `${driverId}_check_sig_${timestamp}.png`
-        console.log(`[${logId}] [Drive] Uploading signature: ${name}`)
+        console.log(`[${logId}] [Storage] Uploading signature: ${name}`)
         
-        const buffer = Buffer.from(await signatureFile.arrayBuffer())
-        const res = await uploadFileToDrive(buffer, name, signatureFile.type, 'Vehicle_Check_Signatures')
-        
-        signatureUrl = res.directLink
-        console.log(`[${logId}] [Drive] Signature Uploaded. ID: ${res.fileId}`)
+        signatureUrl = await uploadWithRename(signatureFile, name, 'Vehicle_Check_Signatures')
+        console.log(`[${logId}] [Storage] Signature Uploaded.`)
       } catch (e: any) {
-        console.error(`[${logId}] [Drive] Failed to upload signature:`, e)
+        console.error(`[${logId}] [Storage] Failed to upload signature:`, e)
         failures.push(`ลายเซ็น (${e.message || 'Error'})`)
       }
     }
 
     // Diagnostics: Warn if no photos/signatures but expected
     if (photoCount > 0 && photoUrls.length === 0) {
-        console.warn(`[${logId}] [Drive] WARNING: Expected ${photoCount} photos but 0 were uploaded.`)
+        console.warn(`[${logId}] [Storage] WARNING: Expected ${photoCount} photos but 0 were uploaded.`)
     }
 
     // 2. Insert to DB

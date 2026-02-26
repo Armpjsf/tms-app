@@ -2,7 +2,7 @@
 
 import { createAdminClient } from "@/utils/supabase/server"
 import { revalidatePath } from "next/cache"
-import { uploadFileToDrive } from "@/lib/google-drive"
+import { uploadFileToSupabase } from "@/lib/actions/supabase-upload"
 
 export async function submitJobPOD(jobId: string, formData: FormData) {
   const supabase = createAdminClient()
@@ -38,22 +38,14 @@ export async function submitJobPOD(jobId: string, formData: FormData) {
   try {
     const timestamp = Date.now()
     
-    // 1. Upload Photos
-    // For simplicity, we pass buffer to uploadFileToDrive, so name is just metadata there
-    // But here we need to modify our helper to accept name override if we want specific names
-    // Let's just pass the file and let it use original name or rename it?
-    // Better to rename for consistency.
-    
     // Helper to upload with rename
     const uploadWithRename = async (file: File, name: string, folder: string) => {
         try {
             const buffer = Buffer.from(await file.arrayBuffer())
-            const res = await uploadFileToDrive(buffer, name, file.type, folder)
+            const res = await uploadFileToSupabase(buffer, name, file.type, folder)
             return res.directLink
         } catch (e) {
             console.error(`Failed to upload ${name}:`, e)
-            return null // Return null on failure to allow others to proceed? Or throw?
-            // Throwing is safer for data integrity.
             throw e
         }
     }
@@ -166,7 +158,7 @@ export async function submitJobPickup(jobId: string, formData: FormData) {
     try {
       const uploadWithRename = async (file: File, name: string, folder: string) => {
           const buffer = Buffer.from(await file.arrayBuffer())
-          const res = await uploadFileToDrive(buffer, name, file.type, folder)
+          const res = await uploadFileToSupabase(buffer, name, file.type, folder)
           return res.directLink
       }
 
@@ -212,7 +204,7 @@ export async function submitJobPickup(jobId: string, formData: FormData) {
       console.log("Upload results:", { photos: photoUrls.length, hasSignature: !!signatureUrl })
     } catch (e) {
       const errMsg = e instanceof Error ? e.message : String(e)
-      console.error("Google Drive upload failed:", errMsg)
+      console.error("Supabase Storage upload failed:", errMsg)
       uploadWarning = `อัปโหลดหลักฐานไม่สำเร็จ: ${errMsg}`
     }
 
