@@ -2,7 +2,7 @@ import { getSystemLogs } from '@/lib/supabase/logs'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
-import { getBranches } from '@/lib/supabase/branches'
+import { getAllBranches } from '@/lib/supabase/branches'
 import { Input } from '@/components/ui/input'
 import { Search } from 'lucide-react'
 import { format } from 'date-fns'
@@ -18,13 +18,19 @@ export default async function LogsPage({
   const branchId = typeof searchParams.branchId === 'string' ? searchParams.branchId : undefined
   const module = typeof searchParams.module === 'string' ? searchParams.module : undefined
   
-  const logs = await getSystemLogs({
-    branchId,
-    module,
-    limit: 100
-  })
+  let logs: any[] = []
+  let branches: any[] = []
 
-  const branches = await getBranches()
+  try {
+    logs = await getSystemLogs({
+      branchId,
+      module,
+      limit: 100
+    })
+    branches = await getAllBranches()
+  } catch (error) {
+    console.error('Error fetching logs data:', error)
+  }
 
   const getActionBadge = (action: string) => {
     switch (action) {
