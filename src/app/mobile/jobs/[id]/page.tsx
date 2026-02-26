@@ -7,6 +7,8 @@ import { Card, CardContent } from "@/components/ui/card"
 import { MapPin, Phone, User, Package, Navigation, Camera, CheckSquare } from "lucide-react"
 import { JobActionButton } from "@/components/mobile/job-action-button"
 
+import { JobWorkflow } from "@/components/mobile/job-workflow"
+
 type Props = {
   params: Promise<{ id: string }>
 }
@@ -29,6 +31,10 @@ export default async function JobDetailPage(props: Props) {
   return (
     <div className="min-h-screen bg-slate-950 pb-24 pt-16">
       <MobileHeader title={`งาน #${job.Job_ID.slice(-4)}`} showBack />
+      
+      <div className="px-4 py-2">
+        <JobWorkflow currentStatus={job.Job_Status || 'New'} />
+      </div>
 
       <div className="px-4 space-y-4">
         {/* Status Banner */}

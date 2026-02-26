@@ -8,33 +8,12 @@ import { Label } from "@/components/ui/label"
 import { Shield, Save, CheckCircle2, Loader2 } from "lucide-react"
 import { getRolePermissions, updateRolePermissions, RolePermission } from "@/lib/actions/permission-actions"
 import { toast } from "sonner"
+import { 
+    SYSTEM_PERMISSIONS, 
+    STANDARD_ROLES
+} from "@/types/role"
+import { toast } from "sonner"
 import { Switch } from "@/components/ui/switch"
-
-const DEFINED_PERMISSIONS = [
-    // 🚚 Operation (งานขนส่ง)
-    { id: 'job_view', label: 'ดูงานขนส่ง (View Jobs)', desc: 'ดูรายการและรายละเอียดงานขนส่ง' },
-    { id: 'job_create', label: 'สร้าง/แก้ไขงาน (Create/Edit)', desc: 'สร้างงานใหม่หรือแก้ไขข้อมูลงานเดิม' },
-    { id: 'job_delete', label: '🔴 ลบงาน (Delete Jobs)', desc: 'ลบข้อมูลงานออกจากระบบ (อันตราย)' },
-    { id: 'job_export', label: 'ส่งออก Excel (Export Jobs)', desc: 'ดาวน์โหลดข้อมูลงานเป็นไฟล์ Excel' },
-    { id: 'job_price_view', label: '💰 ดูราคา/ต้นทุน (View Financials)', desc: 'มองเห็นคอลัมน์ราคาและต้นทุนค่าขนส่ง' },
-    { id: 'job_price_edit', label: '💰 แก้ไขราคา (Edit Price)', desc: 'แก้ไขตัวเลขราคาและต้นทุนได้' },
-
-    // 🛠️ Fleet & Assets (กองยานพาหนะ)
-    { id: 'fleet_view', label: 'ดูข้อมูลรถ/คนขับ (View Fleet)', desc: 'ดูรายชื่อรถและคนขับ' },
-    { id: 'fleet_edit', label: 'จัดการข้อมูล (Manage Fleet)', desc: 'เพิ่ม/แก้ไข ข้อมูลรถและคนขับ' },
-    { id: 'fleet_service', label: 'แจ้งซ่อม/บำรุงรักษา (Maintenance)', desc: 'เข้าถึงเมนูแจ้งซ่อมและประวัติการซ่อม' },
-    { id: 'fleet_fuel', label: 'บันทึกน้ำมัน (Fuel)', desc: 'บันทึกและดูประวัติการเติมน้ำมัน' },
-
-    // 💵 Financial & Billing (การเงินและวางบิล)
-    { id: 'billing_view', label: 'ดูเอกสารวางบิล (View Billing)', desc: 'เข้าถึงหน้าสรุปวางบิลและใบแจ้งหนี้' },
-    { id: 'billing_create', label: 'สร้างใบวางบิล (Create Billing)', desc: 'สร้างเอกสารวางบิลและใบเสร็จ' },
-    { id: 'billing_approve', label: '✅ อนุมัติการจ่าย (Approve Payment)', desc: 'กดอนุมัติการจ่ายเงิน/ปิดยอด' },
-
-    // ⚙️ System & Settings (ตั้งค่าระบบ)
-    { id: 'settings_user', label: 'จัดการผู้ใช้งาน (User Management)', desc: 'เพิ่ม/ลบ/แก้ไข ผู้ใช้งานระบบ' },
-    { id: 'settings_company', label: 'ตั้งค่าบริษัท (Company Info)', desc: 'แก้ไขข้อมูลบริษัทและโลโก้' },
-    { id: 'settings_audit', label: 'ดู Log การทำงาน (Audit Logs)', desc: 'ตรวจสอบประวัติการใช้งานระบบ' },
-]
 
 export default function RolesPage() {
     const [roles, setRoles] = useState<RolePermission[]>([])
@@ -56,14 +35,13 @@ export default function RolesPage() {
              fetchedData = result.data
         } else if (result.error) {
              console.error(result.error)
-             setError(result.error) // Show error to user
+             setError(result.error)
         }
 
-        // Always populate standard roles so the page isn't empty
-        const standardRoles = ['Super Admin', 'Admin', 'Staff', 'Driver', 'Customer']
+        // Always populate standard roles
         const mergedData = [...fetchedData]
         
-        standardRoles.forEach(role => {
+        STANDARD_ROLES.forEach(role => {
             if (!mergedData.find(r => r.Role === role)) {
                 mergedData.push({ Role: role, Permissions: {} })
             }
@@ -74,17 +52,19 @@ export default function RolesPage() {
     }
 
     const togglePermission = (roleIndex: number, permId: string) => {
-        const newRoles = [...roles]
-        const currentPerms = newRoles[roleIndex].Permissions || {}
-        
-        // Super Admin always has all true
-        if (newRoles[roleIndex].Role === 'Super Admin') return 
+        // Super Admin always has all true and is locked
+        if (roles[roleIndex].Role === 'Super Admin') return 
 
-        newRoles[roleIndex].Permissions = {
-            ...currentPerms,
-            [permId]: !currentPerms[permId]
-        }
-        setRoles(newRoles)
+        setRoles(prev => prev.map((role, idx) => {
+            if (idx !== roleIndex) return role
+            return {
+                ...role,
+                Permissions: {
+                    ...(role.Permissions || {}),
+                    [permId]: !(role.Permissions?.[permId] || false)
+                }
+            }
+        }))
     }
 
     const handleSave = async (role: RolePermission) => {
@@ -163,7 +143,7 @@ export default function RolesPage() {
                                     </div>
                                 ) : (
                                     <div className="space-y-4">
-                                        {DEFINED_PERMISSIONS.map((perm) => (
+                                        {SYSTEM_PERMISSIONS.map((perm) => (
                                             <div key={perm.id} className="flex items-center justify-between p-3 rounded-lg hover:bg-slate-800/50 transition-colors border border-transparent hover:border-slate-800">
                                                 <div className="space-y-0.5">
                                                     <Label className="text-base text-slate-200 cursor-pointer" htmlFor={`${role.Role}-${perm.id}`}>
