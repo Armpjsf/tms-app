@@ -12,7 +12,6 @@ import {
     SYSTEM_PERMISSIONS, 
     STANDARD_ROLES
 } from "@/types/role"
-import { toast } from "sonner"
 import { Switch } from "@/components/ui/switch"
 
 export default function RolesPage() {
