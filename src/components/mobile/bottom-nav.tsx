@@ -18,7 +18,7 @@ export function BottomNav() {
   ]
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-background/80 backdrop-blur-xl border-t border-border pb-safe z-50 transition-colors duration-300">
+    <div className="fixed bottom-0 left-0 right-0 bg-slate-950/70 backdrop-blur-xl border-t border-white/5 pb-safe z-50 transition-colors duration-300 shadow-[0_-4px_20px_rgba(0,0,0,0.3)]">
       <div className="flex justify-around items-center h-16 px-2">
         {navItems.map((item) => {
           const isActive = pathname === item.href
@@ -26,7 +26,7 @@ export function BottomNav() {
           if (item.isCenter) {
             return (
               <Link key={item.href} href={item.href} className="relative -top-5">
-                <div className="w-14 h-14 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/20 border-4 border-slate-900">
+                <div className="w-14 h-14 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 flex items-center justify-center shadow-xl shadow-blue-500/30 border-4 border-slate-950 ring-2 ring-blue-500/20">
                   <item.icon className="text-white" size={24} />
                 </div>
               </Link>

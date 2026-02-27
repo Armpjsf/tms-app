@@ -25,9 +25,9 @@ export function MobileHeader({ title, rightElement }: Props) {
   }
 
   return (
-    <header className="fixed top-0 left-0 right-0 h-14 bg-background/80 backdrop-blur-md border-b border-border flex items-center justify-between px-4 z-40 transition-colors duration-300">
+    <header className="fixed top-0 left-0 right-0 h-14 bg-slate-950/70 backdrop-blur-xl border-b border-white/5 flex items-center justify-between px-4 z-40 transition-colors duration-300 shadow-lg">
       <div className="flex items-baseline gap-2">
-        <h1 className="font-bold text-foreground text-lg">{title}</h1>
+        <h1 className="font-black text-foreground text-lg tracking-tight">{title}</h1>
         <span 
           onClick={clearCache}
           className="text-[8px] text-slate-500 font-mono cursor-pointer hover:text-white"

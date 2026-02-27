@@ -34,7 +34,7 @@ export default async function DriverJobsPage(props: Props) {
            </div>
         ) : jobs.map((job) => (
           <Link href={`/mobile/jobs/${job.Job_ID}`} key={job.Job_ID}>
-            <Card className="bg-slate-900 border-white/10 active:scale-[0.98] transition-transform">
+            <Card className="bg-slate-900/40 border-white/5 backdrop-blur-sm active:scale-[0.98] transition-all shadow-xl rounded-2xl hover:border-blue-500/20">
               <CardContent className="p-4">
                 <div className="flex justify-between items-start mb-3">
                   <div className="flex items-center gap-3">
