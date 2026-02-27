@@ -31,6 +31,8 @@ export async function getChatHistory(driverId: string) {
 export async function sendChatMessage(senderId: string, message: string) {
     const supabase = await createClient()
 
+    console.log(`[Chat] Sending message from ${senderId}: ${message}`)
+
     const { error } = await supabase
         .from('Chat_Messages')
         .insert({
@@ -42,7 +44,7 @@ export async function sendChatMessage(senderId: string, message: string) {
         })
 
     if (error) {
-        console.error("Error sending message:", error)
+        console.error("[Chat] Error sending message:", error)
         return { success: false, error: error.message }
     }
     

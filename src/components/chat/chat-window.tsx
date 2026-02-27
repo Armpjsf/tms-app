@@ -234,7 +234,7 @@ export function ChatWindow({ initialContacts, initialDrivers }: ChatWindowProps)
   const totalUnread = useMemo(() => contacts.reduce((s, c) => s + (c.unread || 0), 0), [contacts])
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-0 h-[calc(100vh-220px)] border border-white/10 rounded-xl overflow-hidden">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-0 h-[calc(100vh-280px)] min-h-[450px] border border-white/10 rounded-xl overflow-hidden bg-slate-900/40 shadow-2xl">
       {/* Contacts Sidebar */}
       <div className="lg:col-span-1 bg-slate-900/70 border-r border-white/10 flex flex-col">
         {/* Sidebar Header */}

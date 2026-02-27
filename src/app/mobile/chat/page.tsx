@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { MobileHeader } from "@/components/mobile/mobile-header"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Send, User, Bot, Loader2 } from "lucide-react"
+import { Send, User, Bot, Loader2, MessageSquare } from "lucide-react"
 import { createClient } from "@/utils/supabase/client" // Client side supabase for realtime
 import { getChatHistory, sendChatMessage, ChatMessage } from "@/lib/actions/chat-actions"
 import { getDriverSession } from "@/lib/actions/auth-actions"
@@ -93,71 +93,81 @@ export default function MobileChatPage() {
     setMessages(prev => [...prev, optimisticMsg])
     
     // Server Action
-    await sendChatMessage(driverId, text)
+    const result = await sendChatMessage(driverId, text)
 
-    // Optional: refresh to get official data/ids
-    const history = await getChatHistory(driverId)
-    setMessages(history)
+    if (!result.success) {
+        // Remove optimistic message on error
+        setMessages(prev => prev.filter(m => m.id !== optimisticMsg.id))
+        setInputText(text) // Restore input
+    }
     
     setSending(false)
   }
 
   return (
-    <div className="flex flex-col h-[100dvh] bg-slate-950">
+    <div className="flex flex-col h-[calc(100dvh-64px)] bg-slate-950 overflow-hidden">
       <MobileHeader title="แชทกับเจ้าหน้าที่" showBack />
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 pt-16 pb-20" ref={scrollRef}>
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 pt-16" ref={scrollRef}>
         {loading ? (
             <div className="flex justify-center pt-10">
                 <Loader2 className="animate-spin text-slate-500" />
             </div>
         ) : messages.length === 0 ? (
-            <div className="text-center text-slate-500 mt-10">
+            <div className="flex-1 flex flex-col items-center justify-center text-slate-500 opacity-50 mt-10">
+                <MessageSquare size={48} className="mb-2" />
                 <p>ยังไม่มีข้อความ</p>
                 <p className="text-xs">พิมพ์ข้อความเพื่อเริ่มการสนทนา</p>
             </div>
         ) : (
-                    messages.map((msg) => {
-                const isMe = msg.sender_id === driverId
-                return (
-                    <div 
-                        key={msg.id} 
-                        className={`flex gap-3 ${isMe ? "flex-row-reverse" : "flex-row"}`}
-                    >
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${isMe ? "bg-indigo-600" : "bg-slate-700"}`}>
-                            {isMe ? <User size={16} className="text-white" /> : <Bot size={16} className="text-blue-400" />}
+            <div className="space-y-4 pb-4">
+                {messages.map((msg) => {
+                    const isMe = msg.sender_id === driverId
+                    return (
+                        <div 
+                            key={msg.id} 
+                            className={`flex gap-3 ${isMe ? "flex-row-reverse" : "flex-row"}`}
+                        >
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${isMe ? "bg-indigo-600" : "bg-slate-700"}`}>
+                                {isMe ? <User size={16} className="text-white" /> : <Bot size={16} className="text-blue-400" />}
+                            </div>
+                            
+                            <div className={`max-w-[75%] p-3 rounded-2xl text-sm ${
+                                isMe 
+                                    ? "bg-indigo-600 text-white rounded-tr-none" 
+                                    : "bg-slate-800 text-slate-200 rounded-tl-none border border-slate-700"
+                            }`}>
+                                <p className="break-words">{msg.message}</p>
+                                <p className={`text-[10px] mt-1 text-right ${isMe ? "text-indigo-200" : "text-slate-500"}`}>
+                                    {new Date(msg.created_at).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })}
+                                </p>
+                            </div>
                         </div>
-                        
-                        <div className={`max-w-[70%] p-3 rounded-2xl text-sm ${
-                            isMe 
-                                ? "bg-indigo-600 text-white rounded-tr-none" 
-                                : "bg-slate-800 text-slate-200 rounded-tl-none border border-slate-700"
-                        }`}>
-                            <p>{msg.message}</p>
-                            <p className={`text-[10px] mt-1 text-right ${isMe ? "text-indigo-200" : "text-slate-500"}`}>
-                                {new Date(msg.created_at).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })}
-                            </p>
-                        </div>
-                    </div>
-                )
-            })
+                    )
+                })}
+            </div>
         )}
       </div>
 
-      <div className="p-4 bg-slate-900 border-t border-slate-800 shrink-0">
+      <div className="p-3 bg-slate-900/90 backdrop-blur-md border-t border-white/5 pb-safe">
         <div className="flex gap-2">
             <Input 
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleSend()}
+                onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault()
+                        handleSend()
+                    }
+                }}
                 placeholder="พิมพ์ข้อความ..."
-                className="bg-slate-950 border-slate-700 text-white focus-visible:ring-indigo-500"
+                className="bg-slate-950/50 border-white/10 text-white focus-visible:ring-indigo-500 h-11"
                 disabled={sending}
             />
             <Button 
                 onClick={handleSend}
                 size="icon" 
-                className="bg-indigo-600 hover:bg-indigo-700 shrink-0"
+                className="bg-indigo-600 hover:bg-indigo-700 shrink-0 h-11 w-11"
                 disabled={sending || !inputText.trim()}
             >
                 {sending ? <Loader2 className="animate-spin" size={18} /> : <Send size={18} />}
