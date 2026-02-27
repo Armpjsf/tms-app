@@ -26,9 +26,9 @@ import {
   TrendingUp,
 } from "lucide-react"
 import { getFilteredReportData, type ReportFilters } from "@/app/reports/actions"
-import * as XLSX from 'xlsx'
 import { jsPDF } from 'jspdf'
-import autoTable from 'jspdf-autotable'
+import html2canvas from 'html2canvas'
+import * as XLSX from 'xlsx'
 
 // Helper: column display names (Thai)
 const columnLabels: Record<string, string> = {
@@ -152,24 +152,24 @@ function exportToExcel(data: any[], columns: string[], fileName: string) {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function exportToPDF(data: any[], columns: string[], fileName: string) {
-  const doc = new jsPDF()
-  const headers = columns.map(c => columnLabels[c] || c)
-  const rows = data.map(row => columns.map(col => {
-    const val = row[col]
-    if (typeof val === 'number') return val.toLocaleString()
-    return val ?? ''
-  }))
+async function exportToPDF(elementId: string, fileName: string) {
+  const element = document.getElementById(elementId)
+  if (!element) return
 
-  doc.text(fileName, 14, 15)
-  autoTable(doc, {
-    head: [headers],
-    body: rows,
-    startY: 20,
-    styles: { font: 'helvetica', fontSize: 8 }, // Note: Thai font might need specific setup in jspdf
-    headStyles: { fillStyle: 'f', fillColor: [79, 70, 229] }
+  const canvas = await html2canvas(element, {
+    scale: 2,
+    useCORS: true,
+    backgroundColor: '#ffffff'
   })
-  doc.save(`${fileName}_${new Date().toISOString().slice(0, 10)}.pdf`)
+  
+  const imgData = canvas.toDataURL('image/png')
+  const pdf = new jsPDF('p', 'mm', 'a4')
+  const imgProps = pdf.getImageProperties(imgData)
+  const pdfWidth = pdf.internal.pageSize.getWidth()
+  const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width
+  
+  pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight)
+  pdf.save(`${fileName}_${new Date().toISOString().slice(0, 10)}.pdf`)
 }
 
 // Status badge component
@@ -402,124 +402,127 @@ export function ReportBuilder() {
       <AnimatePresence mode="wait">
         {generated && (
           <motion.div
+            key="report-results"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
           >
-            <Card className="bg-card/50 border-border backdrop-blur-sm">
-              <CardHeader>
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                  <CardTitle className="text-base flex items-center gap-2 text-foreground">
-                    <FileSpreadsheet size={16} className="text-primary" />
-                    ผลลัพธ์ ({filteredData.length.toLocaleString()} รายการ)
-                  </CardTitle>
-                  <div className="flex items-center gap-2">
-                    {/* Search within results */}
-                    <div className="relative">
-                      <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                      <Input
-                        type="text"
-                        placeholder="ค้นหาในผลลัพธ์..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-8 h-9 w-48 bg-background text-sm"
-                      />
-                      {searchTerm && (
-                        <button onClick={() => setSearchTerm('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
-                          <X size={12} />
-                        </button>
-                      )}
-                    </div>
-                    {/* Export Group */}
-                    <div className="flex items-center gap-1.5 bg-muted/30 p-1 rounded-lg border border-border/50">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => exportToExcel(filteredData, columns, activeReport.label)}
-                        className="h-8 px-2 text-xs gap-1.5 hover:bg-emerald-500/10 hover:text-emerald-400"
-                      >
-                        <FileSpreadsheet size={14} />
-                        Excel
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => exportToCSV(filteredData, columns, activeReport.label)}
-                        className="h-8 px-2 text-xs gap-1.5 hover:bg-blue-500/10 hover:text-blue-400"
-                      >
-                        <Download size={14} />
-                        CSV
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => exportToPDF(filteredData, columns, activeReport.label)}
-                        className="h-8 px-2 text-xs gap-1.5 hover:bg-rose-500/10 hover:text-rose-400"
-                      >
-                        <Download size={14} />
-                        PDF
-                      </Button>
+            <div id="report-to-pdf">
+              <Card className="bg-card/50 border-border backdrop-blur-sm">
+                <CardHeader>
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <CardTitle className="text-base flex items-center gap-2 text-foreground">
+                      <FileSpreadsheet size={16} className="text-primary" />
+                      ผลลัพธ์ ({filteredData.length.toLocaleString()} รายการ)
+                    </CardTitle>
+                    <div className="flex items-center gap-2">
+                      {/* Search within results */}
+                      <div className="relative">
+                        <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                        <Input
+                          type="text"
+                          placeholder="ค้นหาในผลลัพธ์..."
+                          value={searchTerm}
+                          onChange={(e) => setSearchTerm(e.target.value)}
+                          className="pl-8 h-9 w-48 bg-background text-sm"
+                        />
+                        {searchTerm && (
+                          <button onClick={() => setSearchTerm('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                            <X size={12} />
+                          </button>
+                        )}
+                      </div>
+                      {/* Export Group */}
+                      <div className="flex items-center gap-1.5 bg-muted/30 p-1 rounded-lg border border-border/50">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => exportToExcel(filteredData, columns, activeReport.label)}
+                          className="h-8 px-2 text-xs gap-1.5 hover:bg-emerald-500/10 hover:text-emerald-400"
+                        >
+                          <FileSpreadsheet size={14} />
+                          Excel
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => exportToCSV(filteredData, columns, activeReport.label)}
+                          className="h-8 px-2 text-xs gap-1.5 hover:bg-blue-500/10 hover:text-blue-400"
+                        >
+                          <Download size={14} />
+                          CSV
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => exportToPDF('report-to-pdf', activeReport.label)}
+                          className="h-8 px-2 text-xs gap-1.5 hover:bg-rose-500/10 hover:text-rose-400"
+                        >
+                          <Download size={14} />
+                          PDF
+                        </Button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </CardHeader>
-              <CardContent className="p-0">
-                {filteredData.length === 0 ? (
-                  <div className="py-16 text-center text-muted-foreground">
-                    <BarChart3 size={40} className="mx-auto mb-3 opacity-30" />
-                    <p>ไม่พบข้อมูล</p>
-                    <p className="text-xs mt-1">ลองปรับเงื่อนไขการค้นหา</p>
-                  </div>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="border-b border-border bg-muted/30">
-                          <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground w-10">#</th>
-                          {columns.map(col => (
-                            <th
-                              key={col}
-                              onClick={() => handleSort(col)}
-                              className="px-4 py-3 text-left text-xs font-medium text-muted-foreground cursor-pointer hover:text-foreground transition-colors group"
-                            >
-                              <span className="flex items-center gap-1">
-                                {columnLabels[col] || col}
-                                <ArrowUpDown size={12} className={`opacity-0 group-hover:opacity-100 transition-opacity ${sortCol === col ? 'opacity-100 text-primary' : ''}`} />
-                              </span>
-                            </th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-border/50">
-                        {filteredData.slice(0, 100).map((row, i) => (
-                          <tr key={i} className="hover:bg-muted/20 transition-colors">
-                            <td className="px-4 py-2.5 text-xs text-muted-foreground">{i + 1}</td>
+                </CardHeader>
+                <CardContent className="p-0">
+                  {filteredData.length === 0 ? (
+                    <div className="py-16 text-center text-muted-foreground">
+                      <BarChart3 size={40} className="mx-auto mb-3 opacity-30" />
+                      <p>ไม่พบข้อมูล</p>
+                      <p className="text-xs mt-1">ลองปรับเงื่อนไขการค้นหา</p>
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b border-border bg-muted/30">
+                            <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground w-10">#</th>
                             {columns.map(col => (
-                              <td key={col} className="px-4 py-2.5 text-foreground">
-                                {(col === 'Status' || col === 'status' || col === 'Job_Status' || col === 'priority') && row[col] ? (
-                                  <StatusBadge status={row[col]} />
-                                ) : col.includes('Cost') || col === 'amount' || col === 'cost' ? (
-                                  <span>฿{Number(row[col] || 0).toLocaleString()}</span>
-                                ) : (
-                                  <span className="line-clamp-1">{row[col] ?? '—'}</span>
-                                )}
-                              </td>
+                              <th
+                                key={col}
+                                onClick={() => handleSort(col)}
+                                className="px-4 py-3 text-left text-xs font-medium text-muted-foreground cursor-pointer hover:text-foreground transition-colors group"
+                              >
+                                <span className="flex items-center gap-1">
+                                  {columnLabels[col] || col}
+                                  <ArrowUpDown size={12} className={`opacity-0 group-hover:opacity-100 transition-opacity ${sortCol === col ? 'opacity-100 text-primary' : ''}`} />
+                                </span>
+                              </th>
                             ))}
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                    {filteredData.length > 100 && (
-                      <div className="px-4 py-3 border-t border-border bg-muted/20 text-center">
-                        <p className="text-xs text-muted-foreground">
-                          แสดง 100 จาก {filteredData.length.toLocaleString()} รายการ — ดาวน์โหลด CSV เพื่อดูทั้งหมด
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                        </thead>
+                        <tbody className="divide-y divide-border/50">
+                          {filteredData.slice(0, 100).map((row, i) => (
+                            <tr key={i} className="hover:bg-muted/20 transition-colors">
+                              <td className="px-4 py-2.5 text-xs text-muted-foreground">{i + 1}</td>
+                              {columns.map(col => (
+                                <td key={col} className="px-4 py-2.5 text-foreground">
+                                  {(col === 'Status' || col === 'status' || col === 'Job_Status' || col === 'priority') && row[col] ? (
+                                    <StatusBadge status={row[col]} />
+                                  ) : col.includes('Cost') || col === 'amount' || col === 'cost' ? (
+                                    <span>฿{Number(row[col] || 0).toLocaleString()}</span>
+                                  ) : (
+                                    <span className="line-clamp-1">{row[col] ?? '—'}</span>
+                                  )}
+                                </td>
+                              ))}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                      {filteredData.length > 100 && (
+                        <div className="px-4 py-3 border-t border-border bg-muted/20 text-center">
+                          <p className="text-xs text-muted-foreground">
+                            แสดง 100 จาก {filteredData.length.toLocaleString()} รายการ — ดาวน์โหลด CSV เพื่อดูทั้งหมด
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

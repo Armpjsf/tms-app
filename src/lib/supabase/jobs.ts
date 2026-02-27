@@ -520,8 +520,8 @@ export async function createJob(jobData: Partial<Job>) {
         // Log job creation
         await logActivity({
             module: 'Jobs',
-            action: 'CREATE',
-            targetId: newJobId,
+            action_type: 'CREATE',
+            target_id: newJobId,
             details: { 
                 customer_name: jobData.Customer_Name,
                 plan_date: jobData.Plan_Date,
@@ -676,12 +676,12 @@ export async function getDriverDashboardStats(driverId: string) {
       }
     }
 
-    const total = jobs?.length || 0
     const completed = jobs?.filter(j => ['Completed', 'Delivered'].includes(j.Job_Status || '')).length || 0
+    // User requested "Remaining Jobs" as the main count
+    const total = (jobs?.length || 0) - completed
     
-    // Find current active job (In Progress/Transit) OR the first Pending/New job
-    // Priority: In Progress > In Transit > Assigned > New
-    const currentJob = jobs?.find(j => ['In Progress', 'In Transit'].includes(j.Job_Status || '')) 
+    // Find current active job (In Progress/Transit, Arrived Pickup/Dropoff) OR the first Assigned/New job
+    const currentJob = jobs?.find(j => ['In Progress', 'In Transit', 'Arrived Pickup', 'Arrived Dropoff', 'Accepted'].includes(j.Job_Status || '')) 
       || jobs?.find(j => ['Assigned', 'New'].includes(j.Job_Status || '')) 
       || null
 

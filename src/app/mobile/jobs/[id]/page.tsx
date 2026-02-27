@@ -2,12 +2,11 @@ import { getDriverSession } from "@/lib/actions/auth-actions"
 import { redirect } from "next/navigation"
 import { getJobById } from "@/lib/supabase/jobs"
 import { MobileHeader } from "@/components/mobile/mobile-header"
-import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { MapPin, Phone, User, Package, Navigation, Camera, CheckSquare } from "lucide-react"
+import { MapPin, Phone, User, Package } from "lucide-react"
 import { JobActionButton } from "@/components/mobile/job-action-button"
-
 import { JobWorkflow } from "@/components/mobile/job-workflow"
+import { NavigationButton } from "@/components/mobile/navigation-button"
 
 type Props = {
   params: Promise<{ id: string }>
@@ -52,28 +51,7 @@ export default async function JobDetailPage(props: Props) {
                 }`}>{job.Job_Status}</p>
             </div>
             {job.Job_Status !== 'Completed' && (
-                <Button 
-                    size="sm" 
-                    className="bg-blue-600 hover:bg-blue-700 gap-2"
-                    onClick={() => {
-                        const destinations = typeof job.original_destinations_json === 'string' 
-                            ? JSON.parse(job.original_destinations_json) 
-                            : job.original_destinations_json;
-                        
-                        const target = Array.isArray(destinations) ? destinations[0] : null;
-                        
-                        let url = "";
-                        if (target?.lat && target?.lng) {
-                            url = `https://www.google.com/maps/search/?api=1&query=${target.lat},${target.lng}`;
-                        } else {
-                            const address = job.Dest_Location || job.Route_Name || "";
-                            url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
-                        }
-                        window.open(url, '_blank');
-                    }}
-                >
-                    <Navigation size={16} /> นำทาง
-                </Button>
+                <NavigationButton job={job} />
             )}
         </div>
 
