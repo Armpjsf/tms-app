@@ -35,6 +35,8 @@ const columnLabels: Record<string, string> = {
   Job_ID: 'รหัสงาน',
   Plan_Date: 'วันที่',
   Customer_Name: 'ลูกค้า',
+  Origin_Location: 'ต้นทาง',
+  Dest_Location: 'ปลายทาง',
   Route_Name: 'เส้นทาง',
   Driver_Name: 'คนขับ',
   Driver_ID: 'รหัสคนขับ',
@@ -68,6 +70,7 @@ const columnLabels: Record<string, string> = {
   total_cost: 'รวมค่าใช้จ่าย',
   price_per_liter: 'ราคา/ลิตร',
   odometer: 'เลขไมล์',
+  Price_Cust_Total: 'ค่าเที่ยว',
 }
 
 const reportTypes = [
@@ -485,7 +488,7 @@ export function ReportBuilder() {
                                 className="px-4 py-3 text-left text-xs font-medium text-muted-foreground cursor-pointer hover:text-foreground transition-colors group"
                               >
                                 <span className="flex items-center gap-1">
-                                  {columnLabels[col] || col}
+                                  {columnLabels[col] || (col.startsWith('Extra_') ? col.replace('Extra_', '') : col)}
                                   <ArrowUpDown size={12} className={`opacity-0 group-hover:opacity-100 transition-opacity ${sortCol === col ? 'opacity-100 text-primary' : ''}`} />
                                 </span>
                               </th>
@@ -493,14 +496,14 @@ export function ReportBuilder() {
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-border/50">
-                          {filteredData.slice(0, 100).map((row, i) => (
+                          {filteredData.slice(0, 500).map((row, i) => (
                             <tr key={i} className="hover:bg-muted/20 transition-colors">
                               <td className="px-4 py-2.5 text-xs text-muted-foreground">{i + 1}</td>
                               {columns.map(col => (
                                 <td key={col} className="px-4 py-2.5 text-foreground">
                                   {(col === 'Status' || col === 'status' || col === 'Job_Status' || col === 'priority') && row[col] ? (
                                     <StatusBadge status={row[col]} />
-                                  ) : col.includes('Cost') || col === 'amount' || col === 'cost' ? (
+                                  ) : (col.includes('Cost') || col === 'amount' || col === 'cost' || col === 'Price_Cust_Total' || col.startsWith('Extra_')) ? (
                                     <span>฿{Number(row[col] || 0).toLocaleString()}</span>
                                   ) : (
                                     <span className="line-clamp-1">{row[col] ?? '—'}</span>
@@ -510,11 +513,27 @@ export function ReportBuilder() {
                             </tr>
                           ))}
                         </tbody>
+                        <tfoot className="border-t-2 border-border bg-muted/40 font-bold">
+                            <tr>
+                                <td className="px-4 py-3 text-xs text-muted-foreground">รวม</td>
+                                {columns.map(col => {
+                                    const isNumeric = col.includes('Cost') || col === 'amount' || col === 'cost' || col === 'Price_Cust_Total' || col.startsWith('Extra_') || col === 'Liters';
+                                    if (!isNumeric) return <td key={col} className="px-4 py-3"></td>;
+                                    
+                                    const total = filteredData.reduce((sum, row) => sum + (Number(row[col]) || 0), 0);
+                                    return (
+                                        <td key={col} className="px-4 py-3 text-primary">
+                                            {col === 'Liters' ? `${total.toLocaleString()} ลิตร` : `฿${total.toLocaleString()}`}
+                                        </td>
+                                    );
+                                })}
+                            </tr>
+                        </tfoot>
                       </table>
-                      {filteredData.length > 100 && (
+                      {filteredData.length > 500 && (
                         <div className="px-4 py-3 border-t border-border bg-muted/20 text-center">
                           <p className="text-xs text-muted-foreground">
-                            แสดง 100 จาก {filteredData.length.toLocaleString()} รายการ — ดาวน์โหลด CSV เพื่อดูทั้งหมด
+                            แสดง 500 จาก {filteredData.length.toLocaleString()} รายการ — ดาวน์โหลด CSV เพื่อดูทั้งหมด
                           </p>
                         </div>
                       )}

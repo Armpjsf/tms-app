@@ -29,7 +29,7 @@ export async function getFilteredReportData(filters: ReportFilters): Promise<{ d
       case 'jobs': {
         let query = supabase
           .from('Jobs_Main')
-          .select('Job_ID, Plan_Date, Customer_Name, Route_Name, Driver_Name, Vehicle_Plate, Job_Status, Price_Cust_Total, extra_costs_json, Branch_ID')
+          .select('Job_ID, Plan_Date, Customer_Name, Origin_Location, Dest_Location, Driver_Name, Vehicle_Plate, Job_Status, Price_Cust_Total, extra_costs_json, Branch_ID')
           .order('Plan_Date', { ascending: false })
           .limit(2000)
 
@@ -39,9 +39,58 @@ export async function getFilteredReportData(filters: ReportFilters): Promise<{ d
         if (effectiveBranch && effectiveBranch !== 'All') query = query.eq('Branch_ID', effectiveBranch)
 
         const { data } = await query
+        const rawData = data || []
+
+        // Extract all unique extra cost types to create columns
+        const extraCostTypes = new Set<string>()
+        rawData.forEach(job => {
+          if (job.extra_costs_json) {
+            try {
+              const costs = typeof job.extra_costs_json === 'string' ? JSON.parse(job.extra_costs_json) : job.extra_costs_json
+              if (Array.isArray(costs)) {
+                costs.forEach(c => {
+                  if (c.type) extraCostTypes.add(`Extra_${c.type}`)
+                })
+              }
+            } catch {}
+          }
+        })
+
+        const sortedExtraTypes = Array.from(extraCostTypes).sort()
+
+        const processedData = rawData.map(job => {
+          const row: any = { ...job }
+          // Initialize all extra columns with 0
+          sortedExtraTypes.forEach(type => {
+            row[type] = 0
+          })
+
+          // Fill in extra costs
+          if (job.extra_costs_json) {
+            try {
+              const costs = typeof job.extra_costs_json === 'string' ? JSON.parse(job.extra_costs_json) : job.extra_costs_json
+              if (Array.isArray(costs)) {
+                costs.forEach(c => {
+                  if (c.type) {
+                    const colName = `Extra_${c.type}`
+                    row[colName] = (row[colName] || 0) + (Number(c.charge_base) || Number(c.amount) || 0)
+                  }
+                })
+              }
+            } catch {}
+          }
+          return row
+        })
+
         return { 
-          data: data || [], 
-          columns: ['Job_ID', 'Plan_Date', 'Customer_Name', 'Route_Name', 'Driver_Name', 'Vehicle_Plate', 'Job_Status', 'Price_Cust_Total']
+          data: processedData, 
+          columns: [
+            'Job_ID', 'Plan_Date', 'Customer_Name', 
+            'Origin_Location', 'Dest_Location', 
+            'Driver_Name', 'Vehicle_Plate', 'Job_Status', 
+            'Price_Cust_Total',
+            ...sortedExtraTypes
+          ]
         }
       }
 
