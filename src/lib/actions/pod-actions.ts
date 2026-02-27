@@ -118,7 +118,7 @@ export async function submitJobPOD(jobId: string, formData: FormData) {
     }
 
     revalidatePath("/mobile/jobs")
-    return { success: true }
+    return { success: true, warning: undefined as string | undefined }
 
   } catch (error: any) {
     console.error(`[submitJobPOD] Catch Error for jobId ${jobId}:`, error)

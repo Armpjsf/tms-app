@@ -13,7 +13,6 @@ import { PodReport } from "@/components/mobile/pod-report"
 import { Job } from "@/lib/supabase/jobs"
 import html2canvas from "html2canvas"
 import { analyzePODImage, AIAnalysisResult } from "@/lib/utils/ai-verification"
-import { saveJobOffline } from "@/lib/utils/offline-storage"
 
 export default function JobCompletePage() {
   const router = useRouter()
@@ -128,7 +127,7 @@ export default function JobCompletePage() {
           if (result.warning) {
             alert(String(result.warning)) 
           }
-          router.push("/mobile/dashboard")
+          router.push(`/mobile/jobs/${params.id}?success=pod`)
         } else {
           alert(typeof result.error === 'string' ? result.error : JSON.stringify(result.error))
           setLoading(false)
@@ -153,15 +152,6 @@ export default function JobCompletePage() {
     }
   }
 
-  // Helper to convert File to base64 for offline storage
-  const fileToB64 = (file: File | Blob): Promise<string> => {
-      return new Promise((resolve, reject) => {
-          const reader = new FileReader()
-          reader.readAsDataURL(file)
-          reader.onload = () => resolve(reader.result as string)
-          reader.onerror = error => reject(error)
-      })
-  }
 
   if (completed) {
       return (
@@ -172,10 +162,10 @@ export default function JobCompletePage() {
               <h1 className="text-2xl font-bold text-white">ส่งงานสำเร็จ!</h1>
               <p className="text-slate-400">ขอบคุณสำหรับการทำงาน</p>
               <Button 
-                onClick={() => router.push("/mobile/dashboard")}
+                onClick={() => router.push(`/mobile/jobs/${params.id}`)}
                 className="w-full bg-emerald-600 hover:bg-emerald-700"
               >
-                  กลับหน้าหลัก
+                  กลับหน้ารายละเอียดงาน
               </Button>
           </div>
       )

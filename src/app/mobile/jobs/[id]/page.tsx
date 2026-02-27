@@ -3,17 +3,21 @@ import { redirect } from "next/navigation"
 import { getJobById } from "@/lib/supabase/jobs"
 import { MobileHeader } from "@/components/mobile/mobile-header"
 import { Card, CardContent } from "@/components/ui/card"
-import { MapPin, Phone, User, Package } from "lucide-react"
+import { MapPin, Phone, User, Package, CheckCircle } from "lucide-react"
 import { JobActionButton } from "@/components/mobile/job-action-button"
 import { JobWorkflow } from "@/components/mobile/job-workflow"
 import { NavigationButton } from "@/components/mobile/navigation-button"
 
 type Props = {
   params: Promise<{ id: string }>
+  searchParams: Promise<{ success?: string }>
 }
 
 export default async function JobDetailPage(props: Props) {
   const params = await props.params;
+  const searchParams = await props.searchParams;
+  const success = searchParams.success;
+  
   const session = await getDriverSession()
   if (!session) redirect("/mobile/login")
 
@@ -31,6 +35,21 @@ export default async function JobDetailPage(props: Props) {
     <div className="min-h-screen bg-slate-950 pb-24 pt-16">
       <MobileHeader title={`งาน #${job.Job_ID.slice(-4)}`} showBack />
       
+      {/* Success Notification */}
+      {success && (
+        <div className="px-4 py-2">
+            <div className="bg-emerald-500/20 border border-emerald-500/40 rounded-xl p-4 flex items-center gap-3 text-emerald-400">
+                <CheckCircle className="animate-in zoom-in duration-300" />
+                <div className="text-sm">
+                    <p className="font-bold">
+                        {success === 'pickup' ? 'รับสินค้าเรียบร้อย!' : 'ส่งงานเรียบร้อย!'}
+                    </p>
+                    <p className="opacity-80">บันทึกข้อมูลเข้าระบบแล้ว</p>
+                </div>
+            </div>
+        </div>
+      )}
+
       <div className="px-4 py-2">
         <JobWorkflow currentStatus={job.Job_Status || 'New'} />
       </div>

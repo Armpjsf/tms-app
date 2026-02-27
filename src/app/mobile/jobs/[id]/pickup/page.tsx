@@ -73,9 +73,9 @@ export default function JobPickupPage() {
         
         if (result.success) {
           if (result.warning) {
-            alert(String(result.warning)) // Ensure string
+            alert(String(result.warning)) 
           }
-          router.push("/mobile/dashboard")
+          router.push(`/mobile/jobs/${params.id}?success=pickup`)
         } else {
           alert(typeof result.error === 'string' ? result.error : JSON.stringify(result.error))
           setLoading(false)
