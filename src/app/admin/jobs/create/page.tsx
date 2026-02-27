@@ -131,12 +131,17 @@ export default function CreateJobPage() {
     try {
       const result = await createJob({
         Job_ID: formData.Job_ID,
-        Plan_Date: formData.Plan_Date, // You might want to combine with Time
+        Plan_Date: formData.Plan_Date,
         Customer_Name: formData.Customer_Name,
-        Route_Name: `${formData.Origin_Location} - ${formData.Dest_Location}`, // Auto-generate route name
+        Origin_Location: formData.Origin_Location,
+        Dest_Location: formData.Dest_Location,
+        Route_Name: `${formData.Origin_Location} - ${formData.Dest_Location}`, 
         Driver_ID: formData.Driver_ID,
         Driver_Name: formData.Driver_Name,
         Vehicle_Plate: formData.Vehicle_Plate,
+        Cargo_Type: formData.Cargo_Type,
+        Notes: formData.Notes,
+        Weight_Kg: formData.Weight ? parseFloat(formData.Weight) : 0,
         Job_Status: 'New'
       })
 

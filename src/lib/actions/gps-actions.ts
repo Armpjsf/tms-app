@@ -2,19 +2,18 @@
 
 import { createClient } from "@/utils/supabase/server"
 
-export async function getJobGPSData(jobId: string, driverName: string, date: string) {
+export async function getJobGPSData(jobId: string, driverId: string, date: string) {
     const supabase = await createClient()
     
     try {
         // 1. Fetch Job Route History (Breadcrumbs)
-        // We use the driver Name/ID and the specific date of the job
         const startDate = `${date}T00:00:00`
         const endDate = `${date}T23:59:59`
 
         const { data: routeData } = await supabase
             .from('gps_logs')
             .select('latitude, longitude, timestamp')
-            .eq('job_id', jobId) // Try specific job first
+            .eq('job_id', jobId) 
             .order('timestamp', { ascending: true })
         
         // If no job-specific logs, fallback to driver logs for that day
@@ -23,7 +22,7 @@ export async function getJobGPSData(jobId: string, driverName: string, date: str
             const { data: driverData } = await supabase
                 .from('gps_logs')
                 .select('latitude, longitude, timestamp')
-                .eq('driver_id', driverName)
+                .eq('driver_id', driverId)
                 .gte('timestamp', startDate)
                 .lte('timestamp', endDate)
                 .order('timestamp', { ascending: true })
@@ -34,7 +33,7 @@ export async function getJobGPSData(jobId: string, driverName: string, date: str
         const { data: latestData } = await supabase
             .from('gps_logs')
             .select('*')
-            .eq('driver_id', driverName)
+            .eq('driver_id', driverId)
             .order('timestamp', { ascending: false })
             .limit(1)
 

@@ -28,6 +28,8 @@ import { useEffect, useState } from "react"
 import dynamic from "next/dynamic"
 import { getJobGPSData } from "@/lib/actions/gps-actions"
 import { cn } from "@/lib/utils"
+// @ts-expect-error - Leaflet may not have types in some environments
+import { DriverLocation } from "@/components/maps/leaflet-map"
 
 const LeafletMap = dynamic(() => import('@/components/maps/leaflet-map'), { 
     ssr: false,
@@ -53,7 +55,6 @@ type JobSummaryDialogProps = {
 
 export function JobSummaryDialog({ open, onOpenChange, job }: JobSummaryDialogProps) {
   const [gpsData, setGpsData] = useState<JobGPSData | null>(null)
-  const [loadingGps, setLoadingGps] = useState(false)
 
   const jobId = job?.Job_ID
   const driverName = job?.Driver_Name
@@ -64,15 +65,13 @@ export function JobSummaryDialog({ open, onOpenChange, job }: JobSummaryDialogPr
       if (open && jobId) {
         setLoadingGps(true)
         try {
-          const data = await getJobGPSData(jobId, driverName, planDate)
+          const data = await getJobGPSData(jobId, job.Driver_ID, planDate)
           setGpsData(data as JobGPSData)
-        } finally {
-          setLoadingGps(false)
-        }
+        } finally {}
       }
     }
     fetchGps()
-  }, [open, jobId, driverName, planDate])
+  }, [open, jobId, job?.Driver_ID, planDate])
 
   if (!job) return null
 
@@ -98,7 +97,16 @@ export function JobSummaryDialog({ open, onOpenChange, job }: JobSummaryDialogPr
   }
 
   const currentStepIndex = getCurrentStepIndex()
-  const gpsPoints = gpsData?.route?.map(point => ({ lat: point[0], lng: point[1] })) || []
+  const gpsPoints = gpsData?.route || []
+  const latestLocation = gpsData?.latest
+  const mapDrivers: DriverLocation[] = latestLocation ? [{
+    id: jobId || 'current',
+    name: driverName || 'Driver',
+    lat: latestLocation.lat,
+    lng: latestLocation.lng,
+    status: 'Latest Location',
+    lastUpdate: latestLocation.timestamp
+  }] : []
   const reportUrl = podPhotos.find(url => url.toUpperCase().includes('REPORT'))
 
   return (
@@ -249,11 +257,11 @@ export function JobSummaryDialog({ open, onOpenChange, job }: JobSummaryDialogPr
                 ตำแหน่งล่าสุด
               </h3>
               <div className="h-[250px] rounded-2xl overflow-hidden border border-slate-800 bg-slate-900 shadow-inner relative">
-                {(job.Tracking_LAT && job.Tracking_LNG) || gpsPoints.length > 0 ? (
+                {(job.Tracking_LAT && job.Tracking_LNG) || gpsPoints.length > 0 || latestLocation ? (
                   <LeafletMap 
-                    lat={Number(job.Tracking_LAT) || gpsPoints[0]?.lat} 
-                    lng={Number(job.Tracking_LNG) || gpsPoints[0]?.lng} 
-                    points={gpsPoints}
+                    routeHistory={gpsPoints as [number, number][]}
+                    drivers={mapDrivers}
+                    center={latestLocation ? [latestLocation.lat, latestLocation.lng] : undefined}
                   />
                 ) : (
                   <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-500 bg-slate-900/50 backdrop-blur-sm">

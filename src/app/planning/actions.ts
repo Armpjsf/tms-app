@@ -32,6 +32,8 @@ export type JobFormData = {
   Show_Price_To_Driver?: boolean
   Weight_Kg?: number | null
   Volume_Cbm?: number | null
+  Origin_Location?: string | null
+  Dest_Location?: string | null
 }
 
 export async function createJob(data: JobFormData) {
@@ -132,6 +134,8 @@ function buildInsertPayload(data: JobFormData, driverName: string, subId: string
       Show_Price_To_Driver: data.Show_Price_To_Driver ?? true,
       Weight_Kg: data.Weight_Kg || 0,
       Volume_Cbm: data.Volume_Cbm || 0,
+      Origin_Location: data.Origin_Location || null,
+      Dest_Location: data.Dest_Location || null,
       Branch_ID: data.Branch_ID || null,
       Created_At: new Date().toISOString(),
   }
