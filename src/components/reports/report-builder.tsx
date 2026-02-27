@@ -28,7 +28,7 @@ import {
 import { getFilteredReportData, type ReportFilters } from "@/app/reports/actions"
 import * as XLSX from 'xlsx'
 import { jsPDF } from 'jspdf'
-import 'jspdf-autotable'
+import autoTable from 'jspdf-autotable'
 
 // Helper: column display names (Thai)
 const columnLabels: Record<string, string> = {
@@ -162,8 +162,7 @@ function exportToPDF(data: any[], columns: string[], fileName: string) {
   }))
 
   doc.text(fileName, 14, 15)
-  // @ts-expect-error - autoTable is a plugin that might not be in the base doc type
-  doc.autoTable({
+  autoTable(doc, {
     head: [headers],
     body: rows,
     startY: 20,
