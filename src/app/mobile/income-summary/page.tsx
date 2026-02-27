@@ -2,11 +2,18 @@ import { getDriverSession } from "@/lib/actions/auth-actions"
 import { redirect } from "next/navigation"
 import { MobileHeader } from "@/components/mobile/mobile-header"
 import { Card, CardContent } from "@/components/ui/card"
-import { Banknote, ChevronLeft, Calendar, CheckCircle2 } from "lucide-react"
-import Link from "next/link"
-import { createClient } from "@/lib/supabase/server"
+import { Banknote, Calendar, CheckCircle2 } from "lucide-react"
+import { createClient } from "@/utils/supabase/server"
 
 export const dynamic = 'force-dynamic'
+
+interface SummaryJob {
+  Job_ID: string
+  Plan_Date: string | null
+  Cost_Driver_Total: number | null
+  Job_Status: string | null
+  Customer_Name: string | null
+}
 
 export default async function IncomeSummaryPage() {
   const session = await getDriverSession()
@@ -15,25 +22,20 @@ export default async function IncomeSummaryPage() {
   const supabase = await createClient()
   
   // Fetch all completed/delivered jobs for this driver
-  const { data: jobs, error } = await supabase
+  const { data: jobs } = await supabase
     .from('Jobs_Main')
     .select('Job_ID, Plan_Date, Cost_Driver_Total, Job_Status, Customer_Name')
     .eq('Driver_ID', session.driverId)
     .in('Job_Status', ['Completed', 'Delivered'])
     .order('Plan_Date', { ascending: false })
 
-  const totalEarnings = jobs?.reduce((sum, j) => sum + (j.Cost_Driver_Total || 0), 0) || 0
+  const totalEarnings = jobs?.reduce((sum: number, j: SummaryJob) => sum + (j.Cost_Driver_Total || 0), 0) || 0
   const totalJobs = jobs?.length || 0
 
   return (
     <div className="min-h-screen bg-slate-950 pb-24 pt-16 px-4">
       <MobileHeader 
         title="สรุปรายได้" 
-        leftElement={
-          <Link href="/mobile/profile">
-            <ChevronLeft className="text-white" />
-          </Link>
-        } 
       />
 
       <div className="space-y-6">
@@ -68,7 +70,7 @@ export default async function IncomeSummaryPage() {
             </div>
           ) : (
             <div className="space-y-2">
-              {jobs?.map((job) => (
+              {jobs?.map((job: SummaryJob) => (
                 <Card key={job.Job_ID} className="bg-slate-900 border-slate-800">
                   <CardContent className="p-4 flex justify-between items-center">
                     <div>
