@@ -49,9 +49,12 @@ export async function submitJobPOD(jobId: string, formData: FormData) {
         try {
             const reportName = `${jobId}_${timestamp}_REPORT.jpg`
             podReportUrl = await uploadWithRename(podReportFile, reportName, 'POD_Documents')
+            console.log(`[submitJobPOD] Report uploaded successfully: ${podReportUrl}`)
         } catch (err) {
-            console.error("Failed to upload POD Report", err)
+            console.error("[submitJobPOD] Failed to upload POD Report", err)
         }
+    } else {
+        console.log("[submitJobPOD] No POD report file found in formData")
     }
 
     const photoCount = parseInt(formData.get("photo_count") as string || "0")

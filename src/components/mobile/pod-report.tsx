@@ -11,7 +11,7 @@ type Props = {
 
 export const PodReport = forwardRef<HTMLDivElement, Props>(({ job, photos, signature }, ref) => {
   return (
-    <div ref={ref} className="bg-white text-black p-8 font-sans w-[800px] mx-auto absolute top-[-9999px] left-[-9999px]">
+    <div ref={ref} className="bg-white text-black p-8 font-sans w-[800px] mx-auto">
       {/* Header */}
       <div className="flex justify-between items-start border-b-2 border-slate-800 pb-4 mb-6">
         <div>

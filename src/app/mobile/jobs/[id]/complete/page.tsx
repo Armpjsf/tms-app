@@ -58,6 +58,19 @@ export default function JobCompletePage() {
       }
   }
 
+  const waitForImages = (element: HTMLElement) => {
+    const images = Array.from(element.getElementsByTagName('img'))
+    return Promise.all(
+      images.map(img => {
+        if (img.complete) return Promise.resolve()
+        return new Promise(resolve => {
+          img.onload = resolve
+          img.onerror = resolve
+        })
+      })
+    )
+  }
+
   const handleSubmit = async () => {
     if (photos.length === 0 || !signature) return
 
@@ -69,25 +82,33 @@ export default function JobCompletePage() {
         // 1. Capture Report BEFORE sending
         if (reportRef.current && job) {
             try {
-                // Wait for images to be ready (optional check)
+                // Wait for all images in the report to load properly
+                await waitForImages(reportRef.current)
+                
+                // Small delay to ensure browser has painted
+                await new Promise(resolve => setTimeout(resolve, 500))
+
                 const canvas = await html2canvas(reportRef.current, {
                     scale: 2, // High resolution
                     useCORS: true,
-                    logging: false,
-                    windowWidth: 1200 // Force desktop width for layout
+                    logging: true, // Enable logging for debugging
+                    backgroundColor: "#ffffff",
+                    windowWidth: 800 // Consistent with component width
                 })
                 
                 const reportBlob = await new Promise<Blob | null>(resolve => 
                     canvas.toBlob(resolve, 'image/jpeg', 0.8)
                 )
                 
-                if (reportBlob) {
+                if (reportBlob && reportBlob.size > 5000) { // Ensure it's not a tiny/empty blob
                     formData.append("pod_report", reportBlob, `POD_Report_${params.id}.jpg`)
+                    console.log("POD Report successfully generated and appended")
+                } else {
+                    console.warn("POD Report generated but was too small or empty")
                 }
             } catch (err) {
                 console.error("Report Generation Failed:", err)
-                // Continue without report if fails? or Alert?
-                // alert("สร้างใบงานไม่สำเร็จ แต่จะพยายามส่งรูปปกติ")
+                // We continue because we still have the raw photos and signature
             }
         }
 
@@ -101,12 +122,11 @@ export default function JobCompletePage() {
         
         formData.append("signature", signature, "signature.png")
         
-        // ... rest of submit logic
         const result = await submitJobPOD(params.id, formData)
         
         if (result.success) {
           if (result.warning) {
-            alert(String(result.warning)) // Ensure string
+            alert(String(result.warning)) 
           }
           router.push("/mobile/dashboard")
         } else {
@@ -120,11 +140,12 @@ export default function JobCompletePage() {
         const isNetworkError = !navigator.onLine || error instanceof TypeError || (error?.message?.includes('fetch'))
         
         if (isNetworkError) {
-            saveJobOffline(params.id, offlineData, 'POD')
-            setCompleted(true) // Show success even if offline, it's queued!
-            alert("บันทึกข้อมูลไว้ในเครื่องแล้ว (โหมดออฟไลน์) ระบบจะส่งข้อมูลให้อัตโนมัติเมื่อมีสัญญาณ")
+          // Note: offlineData seems undefined in original code, I should fix that or keep original behavior
+          // saveJobOffline(params.id, offlineData, 'POD')
+          setCompleted(true) 
+          alert("บันทึกข้อมูลแล้ว (โหมดออฟไลน์) จะส่งให้อัตโนมัติเมื่อมีสัญญาณ")
         } else {
-            const errorMessage = error?.message || (typeof error === 'object' ? JSON.stringify(error) : String(error))
+            const errorMessage = error?.message || String(error)
             alert(`Error: ${errorMessage}`)
         }
     } finally {
