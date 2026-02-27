@@ -127,10 +127,28 @@ export default async function JobDetailPage(props: Props) {
                 </div>
              </CardContent>
         </Card>
-      
-      
         {/* Action Button */}
         <JobActionButton job={job} />
+
+        {/* Pricing Info - Conditional */}
+        {job.Show_Price_To_Driver && (
+            <Card className="bg-slate-900 border-white/10 mb-6">
+                <CardContent className="p-4">
+                    <h4 className="text-white font-medium mb-3 flex items-center gap-2">
+                        <CheckCircle size={18} className="text-emerald-400" /> 
+                        ข้อมูลค่าเที่ยว (Payment)
+                    </h4>
+                    <div className="bg-emerald-500/10 rounded-lg p-4 border border-emerald-500/20">
+                        <div className="flex justify-between items-center">
+                            <span className="text-slate-300">ค่าจ้างที่คุณจะได้รับ</span>
+                            <span className="text-2xl font-black text-emerald-400">
+                                ฿{(job.Cost_Driver_Total || 0).toLocaleString()}
+                            </span>
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
+        )}
 
       </div>
     </div>

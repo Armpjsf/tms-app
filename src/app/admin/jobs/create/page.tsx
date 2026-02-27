@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Switch } from "@/components/ui/switch"
 import { createJob, getJobCreationData } from "@/app/planning/actions"
 import { 
   ArrowLeft, 
@@ -23,7 +24,8 @@ import {
   FileText,
   Loader2,
   CheckCircle2,
-  ChevronRight
+  ChevronRight,
+  Eye
 } from "lucide-react"
 import { CustomerAutocomplete } from "@/components/customer-autocomplete"
 
@@ -94,7 +96,10 @@ export default function CreateJobPage() {
     Vehicle_Plate: '',
     Notes: '',
     Cargo_Type: '',
-    Weight: ''
+    Weight: '',
+    Price_Cust_Total: '0',
+    Cost_Driver_Total: '0',
+    Show_Price_To_Driver: true
   })
 
   // Autofill customer data when selected
@@ -122,7 +127,7 @@ export default function CreateJobPage() {
     }
   }
 
-  const updateForm = (field: string, value: string) => {
+  const updateForm = (field: string, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }))
   }
 
@@ -142,6 +147,9 @@ export default function CreateJobPage() {
         Cargo_Type: formData.Cargo_Type,
         Notes: formData.Notes,
         Weight_Kg: formData.Weight ? parseFloat(formData.Weight) : 0,
+        Price_Cust_Total: parseFloat(formData.Price_Cust_Total) || 0,
+        Cost_Driver_Total: parseFloat(formData.Cost_Driver_Total) || 0,
+        Show_Price_To_Driver: formData.Show_Price_To_Driver,
         Job_Status: 'New'
       })
 
@@ -383,6 +391,49 @@ export default function CreateJobPage() {
                     </SelectContent>
                   </Select>
                 </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label className="text-slate-300 flex items-center gap-2">
+                     <FileText className="w-4 h-4" /> ค่าจ้างรถ (บาท)
+                  </Label>
+                  <Input 
+                    type="number"
+                    value={formData.Cost_Driver_Total}
+                    onChange={(e) => updateForm('Cost_Driver_Total', e.target.value)}
+                    className="bg-slate-800 border-slate-700 text-white"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-slate-300 flex items-center gap-2">
+                     <FileText className="w-4 h-4" /> ราคาลูกค้า (บาท)
+                  </Label>
+                  <Input 
+                    type="number"
+                    value={formData.Price_Cust_Total}
+                    onChange={(e) => updateForm('Price_Cust_Total', e.target.value)}
+                    className="bg-slate-800 border-slate-700 text-white"
+                  />
+                </div>
+              </div>
+
+              <div className="p-4 rounded-xl bg-slate-800/50 border border-slate-700 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center">
+                    <Eye className="w-4 h-4 text-emerald-400" />
+                  </div>
+                  <div>
+                    <Label className="text-white font-medium cursor-pointer" htmlFor="show-price">
+                      โชว์ค่าเที่ยวให้คนขับเห็น
+                    </Label>
+                  </div>
+                </div>
+                <Switch 
+                  id="show-price"
+                  checked={formData.Show_Price_To_Driver}
+                  onCheckedChange={(val) => updateForm('Show_Price_To_Driver', val)}
+                />
               </div>
 
               <div className="space-y-2">
