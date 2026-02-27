@@ -4,11 +4,11 @@ import { createClient } from "@/utils/supabase/server"
 
 export interface ChatMessage {
     id: number
-    Sender_ID: string
-    Receiver_ID: string
-    Message: string
-    Created_At: string
-    Is_Read: boolean
+    sender_id: string
+    receiver_id: string
+    message: string
+    created_at: string
+    is_read: boolean
 }
 
 export async function getChatHistory(driverId: string) {
@@ -17,8 +17,8 @@ export async function getChatHistory(driverId: string) {
     const { data, error } = await supabase
         .from('Chat_Messages')
         .select('*')
-        .or(`Sender_ID.eq.${driverId},Receiver_ID.eq.${driverId}`)
-        .order('Created_At', { ascending: true })
+        .or(`sender_id.eq.${driverId},receiver_id.eq.${driverId}`)
+        .order('created_at', { ascending: true })
 
     if (error) {
         console.error("Error fetching chat:", error)
@@ -34,11 +34,11 @@ export async function sendChatMessage(senderId: string, message: string) {
     const { error } = await supabase
         .from('Chat_Messages')
         .insert({
-            Sender_ID: senderId,
-            Receiver_ID: 'admin', // Defaulting to admin
-            Message: message,
-            Is_Read: false,
-            Created_At: new Date().toISOString()
+            sender_id: senderId,
+            receiver_id: 'admin', // Defaulting to admin
+            message: message,
+            is_read: false,
+            created_at: new Date().toISOString()
         })
 
     if (error) {

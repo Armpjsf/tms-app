@@ -1,14 +1,16 @@
 import { createClient } from '@/utils/supabase/server'
 import { getUserBranchId, isSuperAdmin } from "@/lib/permissions"
+import { sendPushToDriver } from '@/lib/actions/push-actions'
 
 export type ChatMessage = {
   id: number
-  driver_id: string
-  driver_name: string
-  sender: 'admin' | 'driver'
+  sender_id: string
+  receiver_id: string
   message: string
   created_at: string
-  read: boolean
+  is_read: boolean
+  // Extended for UI helpers
+  driver_name?: string 
 }
 
 export type ChatContact = {
@@ -28,11 +30,7 @@ export async function getChatContacts(): Promise<ChatContact[]> {
     const branchId = await getUserBranchId()
     const isAdmin = await isSuperAdmin()
 
-    const query = supabase.from('chat_messages').select('*')
-
-    // Since chat_messages doesn't have Branch_ID, we fetch messages then filter by driver's branch
-    // Or we can join. Let's try to join if possible or fetch and filter in app logic if set size is small.
-    // Given TMS usually has < 100 drivers per branch, app logic filtering is safe.
+    const query = supabase.from('Chat_Messages').select('*')
 
     const { data: messages, error } = await query.order('created_at', { ascending: false })
 
@@ -43,34 +41,38 @@ export async function getChatContacts(): Promise<ChatContact[]> {
 
     // 1. Get Drivers in my branch to filter messages
     let allowedDriverIds: Set<string> | null = null
+    const { data: allDrivers } = await supabase.from('Master_Drivers').select('Driver_ID, Driver_Name, Branch_ID')
+    
     if (branchId && branchId !== 'All') {
-        const { data: drivers } = await supabase
-            .from('Master_Drivers')
-            .select('Driver_ID')
-            .eq('Branch_ID', branchId)
-        allowedDriverIds = new Set(drivers?.map(d => d.Driver_ID) || [])
+        allowedDriverIds = new Set(allDrivers?.filter(d => d.Branch_ID === branchId).map(d => d.Driver_ID) || [])
     } else if (!isAdmin && !branchId) {
         return []
     }
+
+    // Map to lookup driver names easily
+    const driverNameMap = new Map(allDrivers?.map(d => [d.Driver_ID, d.Driver_Name]) || [])
 
     // 2. Group by driver and find last message
     const contactMap = new Map<string, ChatContact>()
 
     messages?.forEach((msg) => {
-      if (allowedDriverIds && !allowedDriverIds.has(msg.driver_id)) return
-      if (!contactMap.has(msg.driver_id)) {
-        contactMap.set(msg.driver_id, {
-          driver_id: msg.driver_id,
-          driver_name: msg.driver_name || 'Unknown Driver',
-          last_message: msg.sender === 'admin' ? `You: ${msg.message}` : msg.message,
+      const driverId = msg.sender_id === 'admin' ? msg.receiver_id : msg.sender_id
+      
+      if (allowedDriverIds && !allowedDriverIds.has(driverId)) return
+      
+      if (!contactMap.has(driverId)) {
+        contactMap.set(driverId, {
+          driver_id: driverId,
+          driver_name: driverNameMap.get(driverId) || 'Unknown Driver',
+          last_message: msg.sender_id === 'admin' ? `You: ${msg.message}` : msg.message,
           unread: 0,
           updated_at: msg.created_at
         })
       }
 
       // Count unread messages from driver
-      if (msg.sender === 'driver' && !msg.read) {
-        const contact = contactMap.get(msg.driver_id)
+      if (msg.sender_id !== 'admin' && !msg.is_read) {
+        const contact = contactMap.get(driverId)
         if (contact) {
           contact.unread += 1
         }
@@ -89,9 +91,9 @@ export async function getMessages(driverId: string): Promise<ChatMessage[]> {
   try {
     const supabase = await createClient()
     const { data, error } = await supabase
-      .from('chat_messages')
+      .from('Chat_Messages')
       .select('*')
-      .eq('driver_id', driverId)
+      .or(`sender_id.eq.${driverId},receiver_id.eq.${driverId}`)
       .order('created_at', { ascending: true })
 
     if (error) throw error
@@ -107,19 +109,26 @@ export async function sendMessage(driverId: string, driverName: string, message:
   try {
     const supabase = await createClient()
     const { data, error } = await supabase
-      .from('chat_messages')
+      .from('Chat_Messages')
       .insert({
-        driver_id: driverId,
-        driver_name: driverName,
-        sender: 'admin',
+        sender_id: 'admin',
+        receiver_id: driverId,
         message: message,
-        read: false,
+        is_read: false,
         created_at: new Date().toISOString()
       })
       .select()
       .single()
 
     if (error) throw error
+
+    // Notify Driver via Push
+    await sendPushToDriver(driverId, {
+        title: '💬 ข้อความใหม่จากเจ้าหน้าที่',
+        body: message,
+        url: '/mobile/chat'
+    }).catch(err => console.error('[Chat] Push error:', err))
+
     return { success: true, data }
   } catch (error) {
     console.error('Error sending message:', error)
@@ -132,16 +141,33 @@ export async function markAsRead(driverId: string) {
   try {
     const supabase = await createClient()
     const { error } = await supabase
-      .from('chat_messages')
-      .update({ read: true })
-      .eq('driver_id', driverId)
-      .eq('sender', 'driver')
-      .eq('read', false)
+      .from('Chat_Messages')
+      .update({ is_read: true })
+      .eq('receiver_id', 'admin')
+      .eq('sender_id', driverId)
+      .eq('is_read', false)
 
     if (error) throw error
     return { success: true }
   } catch (error) {
     console.error('Error marking messages as read:', error)
     return { success: false, error }
+  }
+}
+
+// Get unread count for a driver
+export async function getUnreadChatCountForDriver(driverId: string): Promise<number> {
+  try {
+    const supabase = await createClient()
+    const { count, error } = await supabase
+      .from('Chat_Messages')
+      .select('*', { count: 'exact', head: true })
+      .eq('receiver_id', driverId)
+      .eq('is_read', false)
+    
+    if (error) return 0
+    return count || 0
+  } catch {
+    return 0
   }
 }

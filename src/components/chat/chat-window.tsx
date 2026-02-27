@@ -92,9 +92,9 @@ export function ChatWindow({ initialContacts, initialDrivers }: ChatWindowProps)
   // Fetch messages
   const fetchMessages = useCallback(async (driverId: string) => {
     const { data, error } = await supabase
-      .from('chat_messages')
+      .from('Chat_Messages')
       .select('*')
-      .eq('driver_id', driverId)
+      .or(`sender_id.eq.${driverId},receiver_id.eq.${driverId}`)
       .order('created_at', { ascending: true })
     
     if (!error && data) {
@@ -114,25 +114,23 @@ export function ChatWindow({ initialContacts, initialDrivers }: ChatWindowProps)
     // Optimistic update
     const optimisticMsg: ChatMessage = {
       id: Date.now(),
-      driver_id: selectedDriverId,
-      driver_name: activeDriver?.driver_name || activeDriver?.Driver_Name || 'Unknown',
-      sender: 'admin',
+      sender_id: 'admin',
+      receiver_id: selectedDriverId,
       message: messageText,
       created_at: new Date().toISOString(),
-      read: false,
+      is_read: false,
     }
     setMessages(prev => [...prev, optimisticMsg])
     scrollToBottom()
 
     const { error } = await supabase
-      .from('chat_messages')
+      .from('Chat_Messages')
       .insert({
-        driver_id: selectedDriverId,
-        sender: 'admin',
+        sender_id: 'admin',
+        receiver_id: selectedDriverId,
         message: messageText,
-        read: false,
-        created_at: new Date().toISOString(),
-        driver_name: activeDriver?.driver_name || activeDriver?.Driver_Name || 'Unknown'
+        is_read: false,
+        created_at: new Date().toISOString()
       })
 
     if (error) {
@@ -141,12 +139,15 @@ export function ChatWindow({ initialContacts, initialDrivers }: ChatWindowProps)
       setInputMessage(messageText) // Restore input
     }
     setIsSending(false)
-  }, [inputMessage, selectedDriverId, isSending, activeDriver, supabase, scrollToBottom])
+  }, [inputMessage, selectedDriverId, isSending, supabase, scrollToBottom])
 
   // Mark messages as read
   const markAllAsRead = useCallback(async (driverId: string) => {
-    await supabase.from('chat_messages').update({ read: true })
-      .eq('driver_id', driverId).eq('sender', 'driver').eq('read', false)
+    await supabase.from('Chat_Messages')
+      .update({ is_read: true })
+      .eq('receiver_id', 'admin')
+      .eq('sender_id', driverId)
+      .eq('is_read', false)
     
     // Update unread count in contacts
     setContacts(prev => prev.map(c => 
@@ -157,20 +158,22 @@ export function ChatWindow({ initialContacts, initialDrivers }: ChatWindowProps)
   // Update contact list on new message
   const updateContactList = useCallback((newMsg: ChatMessage) => {
     setContacts(prev => {
-      const existing = prev.find(c => c.driver_id === newMsg.driver_id)
+      const driverId = newMsg.sender_id === 'admin' ? newMsg.receiver_id : newMsg.sender_id
+      const existing = prev.find(c => c.driver_id === driverId)
+      
       if (existing) {
-        return prev.map(c => c.driver_id === newMsg.driver_id ? {
+        return prev.map(c => c.driver_id === driverId ? {
           ...c,
-          last_message: newMsg.sender === 'admin' ? `คุณ: ${newMsg.message}` : newMsg.message,
-          unread: (newMsg.sender === 'driver' && newMsg.driver_id !== selectedDriverId) ? c.unread + 1 : c.unread,
+          last_message: newMsg.sender_id === 'admin' ? `คุณ: ${newMsg.message}` : newMsg.message,
+          unread: (newMsg.sender_id !== 'admin' && driverId !== selectedDriverId) ? c.unread + 1 : c.unread,
           updated_at: newMsg.created_at
         } : c).sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
       } else {
         return [{
-          driver_id: newMsg.driver_id,
-          driver_name: newMsg.driver_name,
+          driver_id: driverId,
+          driver_name: newMsg.driver_name || 'Driver',
           last_message: newMsg.message,
-          unread: newMsg.sender === 'driver' ? 1 : 0,
+          unread: newMsg.sender_id !== 'admin' ? 1 : 0,
           updated_at: newMsg.created_at
         }, ...prev]
       }
@@ -183,25 +186,26 @@ export function ChatWindow({ initialContacts, initialDrivers }: ChatWindowProps)
       .channel('chat_realtime')
       .on(
         'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'chat_messages' },
+        { event: 'INSERT', schema: 'public', table: 'Chat_Messages' },
         (payload) => {
           const newMsg = payload.new as ChatMessage
+          const relevantDriverId = newMsg.sender_id === 'admin' ? newMsg.receiver_id : newMsg.sender_id
           
-          if (newMsg.driver_id === selectedDriverId) {
+          if (relevantDriverId === selectedDriverId) {
             // Only add if not optimistic (check by comparing message text and sender)
             setMessages(prev => {
               const isDuplicate = prev.some(m => 
-                m.sender === newMsg.sender && m.message === newMsg.message && 
+                m.sender_id === newMsg.sender_id && m.message === newMsg.message && 
                 Math.abs(new Date(m.created_at).getTime() - new Date(newMsg.created_at).getTime()) < 5000
               )
               return isDuplicate ? prev.map(m => 
-                (m.sender === newMsg.sender && m.message === newMsg.message && m.id !== newMsg.id) ? newMsg : m
+                (m.sender_id === newMsg.sender_id && m.message === newMsg.message && m.id !== newMsg.id) ? newMsg : m
               ) : [...prev, newMsg]
             })
             scrollToBottom()
             
-            if (newMsg.sender === 'driver') {
-              supabase.from('chat_messages').update({ read: true }).eq('id', newMsg.id)
+            if (newMsg.sender_id !== 'admin') {
+              supabase.from('Chat_Messages').update({ is_read: true }).eq('id', newMsg.id)
             }
           }
           
@@ -342,8 +346,8 @@ export function ChatWindow({ initialContacts, initialDrivers }: ChatWindowProps)
                     {/* Messages in this date */}
                     <div className="space-y-1.5">
                       {group.messages.map((msg, mi) => {
-                        const isAdmin = msg.sender === 'admin'
-                        const showAvatar = !isAdmin && (mi === 0 || group.messages[mi-1]?.sender === 'admin')
+                        const isAdmin = msg.sender_id === 'admin'
+                        const showAvatar = !isAdmin && (mi === 0 || group.messages[mi-1]?.sender_id === 'admin')
                         
                         return (
                           <div key={msg.id} className={`flex ${isAdmin ? 'justify-end' : 'justify-start'} items-end gap-2`}>
@@ -351,7 +355,7 @@ export function ChatWindow({ initialContacts, initialDrivers }: ChatWindowProps)
                               <div className="w-6 h-6 shrink-0">
                                 {showAvatar && (
                                   <div className="w-6 h-6 rounded-full bg-slate-700 flex items-center justify-center text-[10px] text-white">
-                                    {(msg.driver_name || '?').charAt(0)}
+                                    {(activeDriver.driver_name || activeDriver.Driver_Name || '?').charAt(0)}
                                   </div>
                                 )}
                               </div>
@@ -367,7 +371,7 @@ export function ChatWindow({ initialContacts, initialDrivers }: ChatWindowProps)
                                   {formatTime(msg.created_at)}
                                 </span>
                                 {isAdmin && (
-                                  msg.read 
+                                  msg.is_read 
                                     ? <CheckCheck size={12} className="opacity-70 text-cyan-300" />
                                     : <Check size={12} className="opacity-40" />
                                 )}

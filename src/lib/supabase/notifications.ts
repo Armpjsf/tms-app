@@ -137,6 +137,53 @@ export async function getNotifications(): Promise<AppNotification[]> {
     // Maintenance table may not have next_maintenance_date
   }
 
+  try {
+    // 4. Unread Chat Messages from Drivers
+    const chatQuery = supabase
+      .from('Chat_Messages')
+      .select('id, sender_id, message, created_at')
+      .eq('receiver_id', 'admin')
+      .eq('is_read', false)
+      .order('created_at', { ascending: false })
+      .limit(10)
+
+    const { data: unreadMsgs } = await chatQuery
+
+    if (unreadMsgs && unreadMsgs.length > 0) {
+      // Get driver names for better display
+      const { data: drivers } = await supabase
+        .from('Master_Drivers')
+        .select('Driver_ID, Driver_Name, Branch_ID')
+        .in('Driver_ID', unreadMsgs.map(m => m.sender_id))
+
+      const driverMap = new Map(drivers?.map(d => [d.Driver_ID, d]) || [])
+
+      unreadMsgs.forEach(msg => {
+        const driver = driverMap.get(msg.sender_id)
+        
+        // Filter by branch if needed
+        if (isAdmin && selectedBranch && selectedBranch !== 'All') {
+            if (driver?.Branch_ID !== selectedBranch) return
+        } else if (branchId && !isAdmin) {
+            if (driver?.Branch_ID !== branchId) return
+        }
+
+        notifications.push({
+          id: `chat-${msg.id}`,
+          type: 'system', // or use a new 'message' type if UI supports it
+          title: `💬 ข้อความใหม่จาก ${driver?.Driver_Name || msg.sender_id}`,
+          message: msg.message,
+          timestamp: msg.created_at,
+          read: false,
+          href: '/chat',
+          severity: 'info'
+        })
+      })
+    }
+  } catch (err) {
+    console.error('Chat notification error:', err)
+  }
+
   // Sort: critical first, then by timestamp
   return notifications.sort((a, b) => {
     const severityOrder = { critical: 0, warning: 1, info: 2 }

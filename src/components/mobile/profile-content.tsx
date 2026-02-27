@@ -18,15 +18,16 @@ interface ProfileContentProps {
     safetyScore: number
     acceptanceScore: number
   }
+  unreadChatCount?: number
 }
 
-export function ProfileContent({ session, score }: ProfileContentProps) {
+export function ProfileContent({ session, score, unreadChatCount = 0 }: ProfileContentProps) {
   const menuItems = [
     { icon: Fuel, label: "แจ้งเติมน้ำมัน", href: "/mobile/fuel" },
     { icon: Wrench, label: "แจ้งซ่อมบำรุง", href: "/mobile/maintenance" },
     { icon: ClipboardCheck, label: "เช็คสภาพรถ", href: "/mobile/vehicle-check" },
     { icon: Bell, label: "การแจ้งเตือน", href: "/mobile/notifications" },
-    { icon: User, label: "ติดต่อแอดมิน", href: "/mobile/chat" },
+    { icon: User, label: "ติดต่อแอดมิน", href: "/mobile/chat", badge: unreadChatCount },
     { icon: AlertTriangle, label: "แจ้งเหตุฉุกเฉิน (SOS)", href: "/mobile/sos" },
     { icon: Settings, label: "ตั้งค่า", href: "/mobile/settings" },
   ]
@@ -114,7 +115,14 @@ export function ProfileContent({ session, score }: ProfileContentProps) {
                 <item.icon className="w-5 h-5 text-slate-500" />
                 <span>{item.label}</span>
               </div>
-              <ChevronRight className="w-4 h-4 text-slate-600" />
+              <div className="flex items-center gap-2">
+                {item.badge && item.badge > 0 && (
+                  <span className="bg-blue-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
+                    {item.badge}
+                  </span>
+                )}
+                <ChevronRight className="w-4 h-4 text-slate-600" />
+              </div>
             </Link>
           ))}
         </CardContent>

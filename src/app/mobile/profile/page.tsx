@@ -4,6 +4,7 @@ import { MobileHeader } from "@/components/mobile/mobile-header"
 import { ProfileContent } from "@/components/mobile/profile-content"
 
 import { getDriverScore } from "@/lib/supabase/drivers"
+import { getUnreadChatCountForDriver } from "@/lib/supabase/chat"
 
 export const dynamic = 'force-dynamic'
 
@@ -11,12 +12,15 @@ export default async function ProfilePage() {
   const session = await getDriverSession()
   if (!session) redirect("/mobile/login")
 
-  const score = await getDriverScore(session.driverId)
+  const [score, unreadChatCount] = await Promise.all([
+    getDriverScore(session.driverId),
+    getUnreadChatCountForDriver(session.driverId)
+  ])
 
   return (
     <div className="min-h-screen bg-slate-950 pb-24 pt-16 px-4">
       <MobileHeader title="โปรไฟล์" />
-      <ProfileContent session={session} score={score} />
+      <ProfileContent session={session} score={score} unreadChatCount={unreadChatCount} />
     </div>
   )
 }

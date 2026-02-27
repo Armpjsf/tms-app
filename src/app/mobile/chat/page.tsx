@@ -49,7 +49,7 @@ export default function MobileChatPage() {
                 event: 'INSERT',
                 schema: 'public',
                 table: 'Chat_Messages',
-                filter: `Receiver_ID=eq.${driverId}`
+                filter: `receiver_id=eq.${driverId}`
             },
             (payload) => {
                 const newMsg = payload.new as ChatMessage
@@ -81,16 +81,21 @@ export default function MobileChatPage() {
     setInputText("") // Optimistic clear
     setSending(true)
 
-    // Optimistic UI Update (optional, but good for UX)
-    // We wait for server response or realtime echo? 
-    // Let's rely on server revalidation or realtime for consistency, 
-    // OR add optimistic msg.
+    // Optimistic UI Update
+    const optimisticMsg: ChatMessage = {
+        id: Date.now(),
+        sender_id: driverId,
+        receiver_id: 'admin',
+        message: text,
+        created_at: new Date().toISOString(),
+        is_read: false
+    }
+    setMessages(prev => [...prev, optimisticMsg])
     
     // Server Action
     await sendChatMessage(driverId, text)
 
-    // Since we didn't subscribe to our own inserts above (maybe?), let's refresh.
-    // Actually, let's just refresh history to be safe and simple.
+    // Optional: refresh to get official data/ids
     const history = await getChatHistory(driverId)
     setMessages(history)
     
@@ -113,7 +118,7 @@ export default function MobileChatPage() {
             </div>
         ) : (
                     messages.map((msg) => {
-                const isMe = msg.Sender_ID === driverId
+                const isMe = msg.sender_id === driverId
                 return (
                     <div 
                         key={msg.id} 
@@ -128,9 +133,9 @@ export default function MobileChatPage() {
                                 ? "bg-indigo-600 text-white rounded-tr-none" 
                                 : "bg-slate-800 text-slate-200 rounded-tl-none border border-slate-700"
                         }`}>
-                            <p>{msg.Message}</p>
+                            <p>{msg.message}</p>
                             <p className={`text-[10px] mt-1 text-right ${isMe ? "text-indigo-200" : "text-slate-500"}`}>
-                                {new Date(msg.Created_At).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })}
+                                {new Date(msg.created_at).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })}
                             </p>
                         </div>
                     </div>
