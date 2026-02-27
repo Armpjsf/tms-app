@@ -1,6 +1,6 @@
 "use client"
 
-import { Fuel, Wrench, ClipboardCheck, Bell, Settings, ChevronRight, LogOut, AlertTriangle, User } from "lucide-react"
+import { Fuel, Wrench, ClipboardCheck, Bell, Settings, ChevronRight, LogOut, AlertTriangle, User, Banknote } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
@@ -23,6 +23,7 @@ interface ProfileContentProps {
 
 export function ProfileContent({ session, score, unreadChatCount = 0 }: ProfileContentProps) {
   const menuItems = [
+    { icon: Banknote, label: "สรุปรายได้", href: "/mobile/income-summary" },
     { icon: Fuel, label: "แจ้งเติมน้ำมัน", href: "/mobile/fuel" },
     { icon: Wrench, label: "แจ้งซ่อมบำรุง", href: "/mobile/maintenance" },
     { icon: ClipboardCheck, label: "เช็คสภาพรถ", href: "/mobile/vehicle-check" },

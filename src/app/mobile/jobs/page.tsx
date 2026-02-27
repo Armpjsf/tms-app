@@ -52,11 +52,6 @@ export default async function DriverJobsPage(props: Props) {
                        </span>
                      </div>
                   </div>
-                  {session.permissions?.show_income !== false && (
-                    <div className="text-right">
-                      <p className="text-white font-bold text-sm">฿{job.Price_Cust_Total?.toLocaleString()}</p>
-                    </div>
-                  )}
                 </div>
 
                 <div className="space-y-2 text-xs text-slate-400 border-t border-slate-800 pt-3">

@@ -678,10 +678,10 @@ export async function getDriverDashboardStats(driverId: string) {
 
     const completed = jobs?.filter(j => ['Completed', 'Delivered'].includes(j.Job_Status || '')).length || 0
     
-    // Calculate today's income
+    // Calculate today's income (Includes all non-cancelled jobs for today as requested)
     const todayIncome = jobs?.filter(j => 
         j.Plan_Date === today && 
-        ['Completed', 'Delivered'].includes(j.Job_Status || '')
+        j.Job_Status !== 'Cancelled'
     ).reduce((sum, j) => sum + (j.Cost_Driver_Total || 0), 0) || 0
 
     // User requested "Remaining Jobs" as the main count
