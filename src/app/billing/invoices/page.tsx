@@ -1,6 +1,7 @@
 
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { PageHeader } from "@/components/ui/page-header"
+import { DataSection } from "@/components/ui/data-section"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { 
@@ -45,42 +46,35 @@ export default async function InvoicesPage({
 
   return (
     <DashboardLayout>
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-white mb-2 flex items-center gap-3">
-            <FileText className="text-purple-400" />
-            ใบกำกับภาษี (Tax Invoices)
-          </h1>
-          <p className="text-slate-400">จัดการและออกใบกำกับภาษีเต็มรูป</p>
-        </div>
-        <div className="flex gap-3">
+      <PageHeader
+        icon={<FileText size={28} />}
+        title="ใบกำกับภาษี (Tax Invoices)"
+        subtitle="จัดการและออกใบกำกับภาษีเต็มรูป"
+        actions={
           <Link href="/billing/invoices/create">
-            <Button className="gap-2 bg-purple-600 hover:bg-purple-700">
+            <Button className="h-11 px-6 rounded-xl gap-2 bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 shadow-lg shadow-purple-500/20">
               <Plus size={18} />
               ออกใบกำกับภาษี
             </Button>
           </Link>
-        </div>
-      </div>
+        }
+      />
 
-      <Card className="bg-slate-900 border-slate-800">
-        <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-lg font-medium text-slate-200">รายการใบกำกับภาษี</CardTitle>
-            <div className="flex items-center gap-2">
-                <div className="relative">
-                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-500" />
-                    <Input
-                        placeholder="Search Invoice ID..."
-                        className="pl-9 w-[250px] bg-slate-800 border-slate-700"
-                        defaultValue={query}
-                    />
-                </div>
+      <DataSection title="รายการใบกำกับภาษี" icon={<FileText size={18} />}
+        headerAction={
+            <div className="relative">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-500" />
+                <Input
+                    placeholder="Search Invoice ID..."
+                    className="pl-9 w-[250px] bg-slate-900/60 border-slate-800 rounded-xl"
+                    defaultValue={query}
+                />
             </div>
-        </CardHeader>
-        <CardContent>
-          <div className="rounded-md border border-slate-800">
+        }
+      >
+          <div className="rounded-md border border-slate-800/50">
             <Table>
-              <TableHeader className="bg-slate-800/50">
+              <TableHeader className="bg-slate-800/30">
                 <TableRow className="border-slate-800 hover:bg-slate-800/50">
                   <TableHead className="text-slate-400">เลขที่เอกสาร</TableHead>
                   <TableHead className="text-slate-400">ลูกค้า</TableHead>
@@ -100,7 +94,7 @@ export default async function InvoicesPage({
                     </TableRow>
                 ) : (
                     invoices.map((inv: any) => (
-                      <TableRow key={inv.Invoice_ID} className="border-slate-800 hover:bg-slate-800/30">
+                      <TableRow key={inv.Invoice_ID} className="border-slate-800 hover:bg-white/[0.02]">
                         <TableCell className="font-medium text-slate-200">
                             <div className="flex flex-col">
                                 <span>{inv.Invoice_ID}</span>
@@ -115,8 +109,6 @@ export default async function InvoicesPage({
                             {inv.Due_Date ? new Date(inv.Due_Date).toLocaleDateString('th-TH') : '-'}
                         </TableCell>
                         <TableCell className="text-right font-medium text-slate-200">
-                            Running...
-                            {/* {inv.Grand_Total.toLocaleString(undefined, { minimumFractionDigits: 2 })} */}
                             {Number(inv.Grand_Total || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                         </TableCell>
                         <TableCell className="text-center">
@@ -156,8 +148,7 @@ export default async function InvoicesPage({
               </TableBody>
             </Table>
           </div>
-        </CardContent>
-      </Card>
+      </DataSection>
     </DashboardLayout>
   )
 }

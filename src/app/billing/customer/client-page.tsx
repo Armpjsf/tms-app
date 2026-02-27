@@ -398,27 +398,34 @@ export default function CustomerBillingClient({ initialJobs, companyProfile, cus
     <div className="print:hidden">
     <DashboardLayout>
       {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-white flex items-center gap-3">
-            <Receipt className="text-emerald-400" />
-            สรุปวางบิลลูกค้า
-          </h1>
-          <p className="text-sm text-slate-400 mt-1">สร้างเอกสารสรุปสำหรับวางบิลลูกค้า (หัก ณ ที่จ่าย 1%)</p>
-        </div>
-        <Button 
-            variant="outline" 
-            className="border-slate-700 text-slate-300 gap-2"
-            onClick={() => router.push('/billing/customer/history')}
-        >
-            <History className="w-4 h-4" /> ประวัติการวางบิล
-        </Button>
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 bg-slate-900/40 p-6 lg:p-8 rounded-[2rem] border border-white/5 backdrop-blur-md shadow-2xl relative overflow-hidden mb-6">
+            <div className="absolute top-0 right-0 p-6 opacity-[0.04] pointer-events-none scale-150">
+              <Receipt size={120} />
+            </div>
+            <div className="relative z-10">
+              <div className="flex items-center gap-4 mb-2">
+                <div className="p-2.5 bg-emerald-500/20 rounded-2xl shadow-lg shadow-emerald-500/20">
+                  <Receipt className="text-emerald-400 w-7 h-7" />
+                </div>
+                <div>
+                  <h1 className="text-3xl lg:text-4xl font-black text-foreground tracking-tight">
+                    สรุปวางบิลลูกค้า
+                  </h1>
+                  <p className="text-muted-foreground font-medium mt-1">สร้างเอกสารสรุปสำหรับวางบิลลูกค้า (หัก ณ ที่จ่าย 1%)</p>
+                </div>
+              </div>
+            </div>
+            <Button 
+                variant="outline" 
+                className="h-11 px-5 rounded-xl border-slate-800 bg-slate-950/50 hover:bg-slate-900 text-slate-300 hover:text-white gap-2 relative z-10"
+                onClick={() => router.push('/billing/customer/history')}
+            >
+                <History className="w-4 h-4" /> ประวัติการวางบิล
+            </Button>
       </div>
 
       {/* Filters */}
-      <Card className="bg-slate-900/50 border-slate-800 mb-6">
-        {/* ... (Existing Filters Content) ... */}
-        <CardContent className="p-4">
+      <div className="bg-slate-900/40 backdrop-blur-md border border-white/5 rounded-2xl p-6 shadow-2xl mb-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="space-y-2">
               <Label className="text-slate-400 text-sm">ลูกค้า</Label>
@@ -463,14 +470,12 @@ export default function CustomerBillingClient({ initialJobs, companyProfile, cus
               </Button>
             </div>
           </div>
-        </CardContent>
-      </Card>
+      </div>
 
       {/* Summary Stats */}
       {/* ... (Existing Summary Stats Content) ... */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <Card className="bg-amber-500/10 border-amber-500/20">
-          <CardContent className="p-4 flex items-center gap-4">
+        <div className="bg-slate-900/40 backdrop-blur-sm border border-amber-500/20 rounded-2xl p-4 flex items-center gap-4 shadow-xl">
             <div className="w-12 h-12 rounded-xl bg-amber-500/20 flex items-center justify-center">
               <Clock className="w-6 h-6 text-amber-400" />
             </div>
@@ -478,10 +483,8 @@ export default function CustomerBillingClient({ initialJobs, companyProfile, cus
               <p className="text-2xl font-bold text-amber-400">{pendingItems.length}</p>
               <p className="text-xs text-slate-400">รอวางบิล</p>
             </div>
-          </CardContent>
-        </Card>
-        <Card className="bg-blue-500/10 border-blue-500/20">
-          <CardContent className="p-4 flex items-center gap-4">
+        </div>
+        <div className="bg-slate-900/40 backdrop-blur-sm border border-blue-500/20 rounded-2xl p-4 flex items-center gap-4 shadow-xl">
             <div className="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center">
               <Banknote className="w-6 h-6 text-blue-400" />
             </div>
@@ -489,10 +492,8 @@ export default function CustomerBillingClient({ initialJobs, companyProfile, cus
               <p className="text-2xl font-bold text-blue-400">฿{pendingTotal.toLocaleString()}</p>
               <p className="text-xs text-slate-400">ยอดรอวางบิล</p>
             </div>
-          </CardContent>
-        </Card>
-        <Card className="bg-emerald-500/10 border-emerald-500/20">
-          <CardContent className="p-4 flex items-center gap-4">
+        </div>
+        <div className="bg-slate-900/40 backdrop-blur-sm border border-emerald-500/20 rounded-2xl p-4 flex items-center gap-4 shadow-xl">
             <div className="w-12 h-12 rounded-xl bg-emerald-500/20 flex items-center justify-center">
               <CheckCircle2 className="w-6 h-6 text-emerald-400" />
             </div>
@@ -500,10 +501,8 @@ export default function CustomerBillingClient({ initialJobs, companyProfile, cus
               <p className="text-2xl font-bold text-emerald-400">฿{selectedSubtotal.toLocaleString()}</p>
               <p className="text-xs text-slate-400">ยอดที่เลือก ({selectedItems.length} รายการ)</p>
             </div>
-          </CardContent>
-        </Card>
-        <Card className="bg-purple-500/10 border-purple-500/20">
-          <CardContent className="p-4 flex items-center gap-4">
+        </div>
+        <div className="bg-slate-900/40 backdrop-blur-sm border border-purple-500/20 rounded-2xl p-4 flex items-center gap-4 shadow-xl">
             <div className="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center">
               <Percent className="w-6 h-6 text-purple-400" />
             </div>
@@ -511,8 +510,7 @@ export default function CustomerBillingClient({ initialJobs, companyProfile, cus
               <p className="text-2xl font-bold text-purple-400">฿{selectedWithholding.toLocaleString()}</p>
               <p className="text-xs text-slate-400">หัก ณ ที่จ่าย 1%</p>
             </div>
-          </CardContent>
-        </Card>
+        </div>
       </div>
 
       {/* Selected Summary Box */}
@@ -545,9 +543,9 @@ export default function CustomerBillingClient({ initialJobs, companyProfile, cus
       )}
 
       {/* Table */}
-      <Card className="bg-slate-900/50 border-slate-800">
-        <CardHeader className="flex flex-row items-center justify-between pb-4">
-          <CardTitle className="text-white">รายการงาน</CardTitle>
+      <div className="bg-slate-900/40 backdrop-blur-sm border border-white/5 rounded-2xl shadow-2xl">
+        <div className="flex flex-row items-center justify-between p-5 pb-4">
+          <h3 className="text-white font-bold text-lg">รายการงาน</h3>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" onClick={selectAll} className="border-slate-700 text-slate-300">
               เลือกทั้งหมด
@@ -601,8 +599,8 @@ export default function CustomerBillingClient({ initialJobs, companyProfile, cus
               <Download className="w-4 h-4 mr-2" /> Export
             </Button>
           </div>
-        </CardHeader>
-        <CardContent>
+        </div>
+        <div className="px-5 pb-5">
           {/* ... (Existing Table Content) ... */}
            <div className="overflow-x-auto">
             <table className="w-full">
@@ -669,8 +667,8 @@ export default function CustomerBillingClient({ initialJobs, companyProfile, cus
               </tbody>
             </table>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </DashboardLayout>
     </div>
 

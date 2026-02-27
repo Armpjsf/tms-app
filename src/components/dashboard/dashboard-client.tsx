@@ -132,7 +132,7 @@ export function DashboardClient({
                     value={jobStats.total}
                     icon={<Package size={24} />}
                     gradient="primary"
-                    trend={jobStats.total > 0 ? { value: jobStats.inProgress, label: "正在运输" } : undefined}
+                    trend={jobStats.total > 0 ? { value: jobStats.inProgress, label: "กำลังขนส่ง" } : undefined}
                 />
 
                 <MetricCard
