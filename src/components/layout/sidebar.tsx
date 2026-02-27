@@ -223,16 +223,16 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
                         whileHover={{ x: 4 }}
                         whileTap={{ scale: 0.98 }}
                         className={cn(
-                            "relative flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-200",
+                            "relative flex items-center gap-3 px-3 py-3 rounded-2xl transition-all duration-300",
                             isActive
-                            ? "bg-primary/20 text-primary border border-primary/30 shadow-md ring-1 ring-primary/20"
-                            : "text-muted-foreground hover:text-foreground hover:bg-muted/50 border border-transparent"
+                            ? "bg-primary/15 text-primary border border-primary/20 shadow-lg shadow-primary/10 ring-1 ring-primary/10"
+                            : "text-muted-foreground hover:text-foreground hover:bg-white/[0.03] border border-transparent hover:border-white/5"
                         )}
                         >
                         {/* Active Indicator Strip */}
                         {isActive && (
                             <div
-                            className="absolute left-0 top-1/2 -translate-y-1/2 h-8 w-1 bg-primary rounded-r-full shadow-[0_0_10px_rgba(59,130,246,0.5)]"
+                            className="absolute left-0 top-1/2 -translate-y-1/2 h-7 w-1 bg-primary rounded-r-full shadow-[0_0_12px_rgba(59,130,246,0.6)]"
                             />
                         )}
                         

@@ -15,6 +15,7 @@ import {
 } from "lucide-react"
 import { WeeklyShipmentChart } from "@/components/dashboard/charts/weekly-shipment-chart"
 import { JobStatusChart } from "@/components/dashboard/charts/job-status-chart"
+import { ActivityFeed } from "@/components/dashboard/activity-feed"
 
 interface DashboardClientProps {
     branchId: string
@@ -213,6 +214,12 @@ export function DashboardClient({
                         <JobStatusChart data={statusDist} />
                     </CardContent>
                 </Card>
+            </motion.div>
+
+            {/* Activity Feed — Dribbble-inspired */}
+            <motion.div variants={item} className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-2" />
+                <ActivityFeed jobStats={jobStats} sosCount={sosCount} />
             </motion.div>
         </motion.div>
     )

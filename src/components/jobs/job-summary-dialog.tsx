@@ -28,6 +28,7 @@ import { useEffect, useState } from "react"
 import dynamic from "next/dynamic"
 import { getJobGPSData } from "@/lib/actions/gps-actions"
 import { cn } from "@/lib/utils"
+import { OrderTimeline } from "@/components/ui/order-timeline"
 // @ts-expect-error - Leaflet may not have types in some environments
 import { DriverLocation } from "@/components/maps/leaflet-map"
 
@@ -160,47 +161,24 @@ export function JobSummaryDialog({ open, onOpenChange, job }: JobSummaryDialogPr
 
           {/* Content Wrapper */}
           <div className="p-6 space-y-8">
-            {/* Stepper (Hidden in print if needed, but usually good) */}
-            <div className="mt-4 relative px-4 no-print">
-              <div className="absolute top-1/2 left-8 right-8 h-0.5 bg-slate-800 -translate-y-1/2 z-0" />
-              <div 
-                className="absolute top-1/2 left-8 h-0.5 bg-indigo-500 -translate-y-1/2 z-0 transition-all duration-500" 
-                style={{ width: `${(currentStepIndex / 4) * (100 - 16)}%` }}
-              />
-              <div className="relative z-10 flex justify-between">
-                {steps.map((step, index) => {
-                  const isCompleted = index <= currentStepIndex;
-                  const isActive = index === currentStepIndex;
-                  const Icon = step.icon;
-                  return (
-                    <div key={step.id} className="flex flex-col items-center gap-2">
-                      <div className={cn(
-                        "w-10 h-10 rounded-full flex items-center justify-center transition-all duration-500 border-2",
-                        isCompleted 
-                          ? "bg-indigo-500 border-indigo-400 text-white shadow-[0_0_15px_rgba(99,102,241,0.5)]" 
-                          : "bg-slate-900 border-slate-800 text-slate-500"
-                      )}>
-                        <Icon size={18} />
-                        {isCompleted && !isActive && (
-                            <div className="absolute -top-1 -right-1 bg-emerald-500 rounded-full p-0.5 border border-slate-900">
-                                <Check size={10} className="text-white" />
-                            </div>
-                        )}
-                      </div>
-                      <span className={cn(
-                        "text-[10px] font-bold uppercase tracking-tighter",
-                        isCompleted ? "text-indigo-400" : "text-slate-600"
-                      )}>
-                        {step.label}
-                      </span>
-                    </div>
-                  );
-                })}
+            {/* Timeline + Info Grid — side by side */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Left: Vertical Order Timeline (Dribbble-inspired) */}
+              <div className="lg:col-span-1 bg-slate-900/40 rounded-2xl border border-slate-800/50 p-5 no-print">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="w-1.5 h-6 bg-indigo-500 rounded-full" />
+                  <h3 className="text-white font-bold text-sm">Order Timeline</h3>
+                </div>
+                <OrderTimeline 
+                  currentStatus={job.Job_Status} 
+                  planDate={job.Plan_Date}
+                  createdAt={job.created_at}
+                />
               </div>
-            </div>
 
-            {/* Grid 1: Basic Info */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Right: Basic Info Grid */}
+              <div className="lg:col-span-2">
+
                 <section className="space-y-4">
                     <div className="flex items-center gap-2 text-white font-bold border-l-4 border-indigo-500 pl-3">
                         <User size={18} className="text-indigo-400" />
@@ -248,7 +226,8 @@ export function JobSummaryDialog({ open, onOpenChange, job }: JobSummaryDialogPr
                         </div>
                     </div>
                 </section>
-            </div>
+              </div>
+            </div>{/* end Grid */}
 
             {/* GPS Map Section */}
             <section className="space-y-4 no-print">

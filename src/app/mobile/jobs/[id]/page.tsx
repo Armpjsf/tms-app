@@ -7,6 +7,7 @@ import { MapPin, Phone, User, Package, CheckCircle } from "lucide-react"
 import { JobActionButton } from "@/components/mobile/job-action-button"
 import { JobWorkflow } from "@/components/mobile/job-workflow"
 import { NavigationButton } from "@/components/mobile/navigation-button"
+import { RouteStrip } from "@/components/mobile/route-strip"
 
 type Props = {
   params: Promise<{ id: string }>
@@ -52,6 +53,15 @@ export default async function JobDetailPage(props: Props) {
 
       <div className="px-4 py-2">
         <JobWorkflow currentStatus={job.Job_Status || 'New'} />
+      </div>
+
+      {/* Route Strip — Dribbble-inspired Origin → Destination */}
+      <div className="px-4 py-2">
+        <RouteStrip 
+          origin={job.Origin_Location}
+          destination={job.Dest_Location || job.Route_Name}
+          status={job.Job_Status}
+        />
       </div>
 
       <div className="px-4 space-y-4">
