@@ -52,7 +52,26 @@ export default async function JobDetailPage(props: Props) {
                 }`}>{job.Job_Status}</p>
             </div>
             {job.Job_Status !== 'Completed' && (
-                <Button size="sm" className="bg-blue-600 hover:bg-blue-700 gap-2">
+                <Button 
+                    size="sm" 
+                    className="bg-blue-600 hover:bg-blue-700 gap-2"
+                    onClick={() => {
+                        const destinations = typeof job.original_destinations_json === 'string' 
+                            ? JSON.parse(job.original_destinations_json) 
+                            : job.original_destinations_json;
+                        
+                        const target = Array.isArray(destinations) ? destinations[0] : null;
+                        
+                        let url = "";
+                        if (target?.lat && target?.lng) {
+                            url = `https://www.google.com/maps/search/?api=1&query=${target.lat},${target.lng}`;
+                        } else {
+                            const address = job.Dest_Location || job.Route_Name || "";
+                            url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
+                        }
+                        window.open(url, '_blank');
+                    }}
+                >
                     <Navigation size={16} /> นำทาง
                 </Button>
             )}

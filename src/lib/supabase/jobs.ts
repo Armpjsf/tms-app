@@ -658,13 +658,14 @@ export async function getDriverDashboardStats(driverId: string) {
     const supabase = await createClient()
     const today = new Date().toISOString().split('T')[0]
     
-    // 1. Get today's jobs for this driver
+    // 1. Get ALL jobs for this driver (not just today) that are not cancelled
     const { data: jobs, error } = await supabase
       .from('Jobs_Main')
       .select('*')
       .eq('Driver_ID', driverId)
-      .eq('Plan_Date', today)
-      .order('Created_At', { ascending: true }) // Order by time to find next job
+      .neq('Job_Status', 'Cancelled')
+      .order('Plan_Date', { ascending: true }) // Show oldest/overdue jobs first
+      .order('Created_At', { ascending: true }) 
 
     if (error) {
       console.error('Error fetching driver dashboard stats:', error)
