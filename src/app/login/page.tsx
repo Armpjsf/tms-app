@@ -31,16 +31,24 @@ export default function StaffLoginPage() {
 
   return (
     <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 relative overflow-hidden">
-      {/* Background Decor */}
-      <div className="absolute top-0 left-1/4 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl -translate-y-1/2" />
-      <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl translate-y-1/2" />
+      {/* Premium Background Decor */}
+      <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-indigo-500/10 rounded-full blur-[120px] -translate-y-1/2 animate-pulse" />
+      <div className="absolute bottom-0 right-1/4 w-[600px] h-[600px] bg-purple-500/10 rounded-full blur-[120px] translate-y-1/2 animate-pulse" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-cyan-500/5 rounded-full blur-[150px]" />
+      
+      {/* Glass Grid */}
+      <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(to_right,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:60px_60px] pointer-events-none" />
 
       <div className="w-full max-w-sm space-y-8 relative">
+        {/* Glass Login Card */}
+        <div className="bg-slate-900/40 backdrop-blur-xl border border-white/10 rounded-[2rem] p-8 shadow-2xl relative overflow-hidden">
+          {/* Shimmer Effect */}
+          <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 via-transparent to-purple-500/5 pointer-events-none" />
         <div className="text-center space-y-2">
-          <div className="w-20 h-20 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl mx-auto flex items-center justify-center shadow-lg shadow-indigo-500/20 mb-4">
+          <div className="w-20 h-20 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl mx-auto flex items-center justify-center shadow-xl shadow-indigo-500/30 mb-4 ring-4 ring-indigo-500/10">
              <Shield className="text-white w-10 h-10" />
           </div>
-          <h1 className="text-3xl font-bold text-white tracking-tight">LOGIS-PRO 360</h1>
+          <h1 className="text-3xl font-black text-white tracking-tight">LOGIS-PRO 360</h1>
           <p className="text-slate-400">เข้าสู่ระบบสำหรับเจ้าหน้าที่และผู้บริหาร</p>
         </div>
 
@@ -54,7 +62,7 @@ export default function StaffLoginPage() {
                 name="email" 
                 type="text" 
                 placeholder="ระบุชื่อผู้ใช้งาน" 
-                className="pl-10 bg-slate-900/50 border-white/10 text-white placeholder:text-slate-600 h-12"
+                className="pl-10 bg-slate-950/60 border-white/10 text-white placeholder:text-slate-600 h-12 rounded-xl focus:ring-indigo-500/50 focus:border-indigo-500/50"
                 required
               />
             </div>
@@ -69,7 +77,7 @@ export default function StaffLoginPage() {
                 name="password" 
                 type="password" 
                 placeholder="••••••" 
-                className="pl-10 bg-slate-900/50 border-white/10 text-white placeholder:text-slate-600 h-12"
+                className="pl-10 bg-slate-950/60 border-white/10 text-white placeholder:text-slate-600 h-12 rounded-xl focus:ring-indigo-500/50 focus:border-indigo-500/50"
                 required
               />
             </div>
@@ -83,12 +91,13 @@ export default function StaffLoginPage() {
 
           <Button 
             type="submit" 
-            className="w-full h-12 text-base font-semibold bg-indigo-600 hover:bg-indigo-700 shadow-xl shadow-indigo-500/20"
+            className="w-full h-12 text-base font-semibold bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-xl shadow-indigo-500/20 rounded-xl"
             disabled={loading}
           >
             {loading ? "กำลังตรวจสอบ..." : "เข้าสู่ระบบ"}
           </Button>
         </form>
+        </div> {/* end glass card */}
 
         <div className="pt-4 border-t border-white/5 text-center">
            <p className="text-xs text-slate-500 mb-2">เข้าสู่ระบบสำหรับพนักงานขับรถ?</p>

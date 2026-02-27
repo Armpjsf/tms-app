@@ -2,12 +2,17 @@ import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { PageHeader } from "@/components/ui/page-header"
+import { StatsGrid } from "@/components/ui/stats-grid"
+import { DataSection } from "@/components/ui/data-section"
 import { 
   Wrench, 
   Plus,
   AlertTriangle,
   Clock,
-  Filter
+  Filter,
+  CheckCircle2,
+  Loader2
 } from "lucide-react"
 import { getAllRepairTickets, getRepairTicketStats } from "@/lib/supabase/maintenance"
 import { getAllDrivers } from "@/lib/supabase/drivers"
@@ -47,45 +52,30 @@ export default async function MaintenancePage(props: Props) {
 
   return (
     <DashboardLayout>
-      {/* Page Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground mb-2 flex items-center gap-3">
-            <Wrench className="text-amber-500" />
-            แจ้งซ่อมบำรุง
-          </h1>
-          <p className="text-muted-foreground">รายการแจ้งซ่อมและประวัติการบำรุงรักษา</p>
-        </div>
-        <MaintenanceDialog 
-            drivers={drivers.data}
-            vehicles={vehicles.data}
-            trigger={
-                <Button size="lg" className="gap-2 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700">
-                    <Plus size={20} />
-                    แจ้งซ่อม
-                </Button>
-            }
-        />
-      </div>
+      <PageHeader
+        icon={<Wrench size={28} />}
+        title="แจ้งซ่อมบำรุง"
+        subtitle="รายการแจ้งซ่อมและประวัติการบำรุงรักษา"
+        actions={
+          <MaintenanceDialog 
+              drivers={drivers.data}
+              vehicles={vehicles.data}
+              trigger={
+                  <Button size="lg" className="h-11 px-6 rounded-xl gap-2 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 shadow-lg shadow-amber-500/20">
+                      <Plus size={20} />
+                      แจ้งซ่อม
+                  </Button>
+              }
+          />
+        }
+      />
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        <div className="rounded-xl p-4 bg-amber-500/10 border border-amber-500/20 shadow-sm">
-          <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">{stats.total}</p>
-          <p className="text-xs text-muted-foreground">รายการทั้งหมด</p>
-        </div>
-        <div className="rounded-xl p-4 bg-red-500/10 border border-red-500/20 shadow-sm">
-          <p className="text-2xl font-bold text-red-600 dark:text-red-400">{stats.pending}</p>
-          <p className="text-xs text-muted-foreground">รอดำเนินการ</p>
-        </div>
-        <div className="rounded-xl p-4 bg-blue-500/10 border border-blue-500/20 shadow-sm">
-          <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{stats.inProgress}</p>
-          <p className="text-xs text-muted-foreground">กำลังซ่อม</p>
-        </div>
-        <div className="rounded-xl p-4 bg-emerald-500/10 border border-emerald-500/20 shadow-sm">
-          <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{stats.completed}</p>
-          <p className="text-xs text-muted-foreground">เสร็จสิ้น</p>
-        </div>
-      </div>
+      <StatsGrid columns={4} stats={[
+        { label: "รายการทั้งหมด", value: stats.total, icon: <Wrench size={20} />, color: "amber" },
+        { label: "รอดำเนินการ", value: stats.pending, icon: <AlertTriangle size={20} />, color: "red" },
+        { label: "กำลังซ่อม", value: stats.inProgress, icon: <Loader2 size={20} />, color: "blue" },
+        { label: "เสร็จสิ้น", value: stats.completed, icon: <CheckCircle2 size={20} />, color: "emerald" },
+      ]} />
 
       {/* Search and Filter */}
       <div className="flex flex-col md:flex-row gap-4 mb-6">
@@ -98,26 +88,26 @@ export default async function MaintenancePage(props: Props) {
                     type="date" 
                     name="startDate"
                     defaultValue={startDate}
-                    className="bg-card border-border text-foreground w-auto"
+                    className="bg-slate-900/60 border-slate-800 text-foreground w-auto rounded-xl"
                 />
                 <span className="text-muted-foreground">-</span>
                 <Input 
                     type="date" 
                     name="endDate"
                     defaultValue={endDate}
-                    className="bg-card border-border text-foreground w-auto"
+                    className="bg-slate-900/60 border-slate-800 text-foreground w-auto rounded-xl"
                 />
                 <select 
                     name="status" 
                     defaultValue={status}
-                    className="h-10 rounded-md border border-border bg-card px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    className="h-10 rounded-xl border border-slate-800 bg-slate-900/60 px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-amber-500"
                 >
                     <option value="">ทุกสถานะ</option>
                     <option value="Pending">รอดำเนินการ</option>
                     <option value="In Progress">กำลังซ่อม</option>
                     <option value="Completed">เสร็จสิ้น</option>
                 </select>
-                <Button type="submit" variant="secondary" className="gap-2">
+                <Button type="submit" variant="secondary" className="gap-2 rounded-xl">
                     <Filter size={16} />
                     กรอง
                 </Button>
@@ -131,7 +121,7 @@ export default async function MaintenancePage(props: Props) {
             ไม่พบรายการแจ้งซ่อม
           </div>
         ) : tickets.map((ticket) => (
-          <Card key={ticket.Ticket_ID} className="bg-card border-border hover:border-primary/50 transition-all shadow-sm hover:shadow-md relative group">
+          <Card key={ticket.Ticket_ID} className="bg-slate-900/40 border-slate-800/80 backdrop-blur-sm hover:border-primary/50 transition-all shadow-xl hover:shadow-2xl hover:scale-[1.01] rounded-2xl relative group">
             <div className="absolute top-2 right-2 opacity-100 z-10 bg-background/50 rounded-full backdrop-blur-sm border border-border shadow-sm">
                  <MaintenanceActions 
                     ticket={ticket} 
@@ -214,11 +204,9 @@ export default async function MaintenancePage(props: Props) {
 
       {/* Maintenance Schedule Dashboard */}
       <div className="mt-8">
-        <h2 className="text-xl font-bold text-foreground mb-4 flex items-center gap-2">
-          <Clock className="text-cyan-600 dark:text-cyan-400" size={20} />
-          กำหนดการซ่อมบำรุง
-        </h2>
-        <MaintenanceScheduleDashboard schedule={schedule} />
+        <DataSection title="กำหนดการซ่อมบำรุง" icon={<Clock size={18} />}>
+          <MaintenanceScheduleDashboard schedule={schedule} />
+        </DataSection>
       </div>
     </DashboardLayout>
   )

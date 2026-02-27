@@ -3,6 +3,8 @@ export const dynamic = 'force-dynamic'
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { PageHeader } from "@/components/ui/page-header"
+import { StatsGrid } from "@/components/ui/stats-grid"
 import { 
   AlertTriangle, 
   Phone,
@@ -22,38 +24,23 @@ export default async function SOSPage() {
 
   return (
     <DashboardLayout>
-      {/* Page Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-white mb-2 flex items-center gap-3">
-            <AlertTriangle className="text-red-400" />
-            แจ้งเหตุฉุกเฉิน (SOS)
-          </h1>
-          <p className="text-slate-400">ติดตามและจัดการเหตุฉุกเฉินทั้งหมด</p>
-        </div>
-        {activeCount > 0 && (
+      <PageHeader
+        icon={<AlertTriangle size={28} />}
+        title="แจ้งเหตุฉุกเฉิน (SOS)"
+        subtitle="ติดตามและจัดการเหตุฉุกเฉินทั้งหมด"
+        badge={activeCount > 0 ? (
           <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-red-500/20 border border-red-500/30">
             <span className="w-3 h-3 rounded-full bg-red-500 animate-pulse" />
-            <span className="text-red-400 font-medium">{activeCount} เหตุการณ์ที่ยังไม่แก้ไข</span>
+            <span className="text-red-400 font-medium text-sm">{activeCount} เหตุการณ์ที่ยังไม่แก้ไข</span>
           </div>
-        )}
-      </div>
+        ) : undefined}
+      />
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
-        <div className="rounded-xl p-4 bg-red-500/10 border border-red-500/20">
-          <p className="text-2xl font-bold text-red-400">{activeCount}</p>
-          <p className="text-xs text-slate-400">SOS Active</p>
-        </div>
-        <div className="rounded-xl p-4 bg-amber-500/10 border border-amber-500/20">
-          <p className="text-2xl font-bold text-amber-400">{alerts.filter(a => a.Job_Status === 'Failed').length}</p>
-          <p className="text-xs text-slate-400">งานล้มเหลว</p>
-        </div>
-        <div className="rounded-xl p-4 bg-emerald-500/10 border border-emerald-500/20">
-          <p className="text-2xl font-bold text-emerald-400">{alerts.length}</p>
-          <p className="text-xs text-slate-400">เคสทั้งหมด</p>
-        </div>
-      </div>
+      <StatsGrid columns={3} stats={[
+        { label: "SOS Active", value: activeCount, icon: <AlertTriangle size={20} />, color: "red" },
+        { label: "งานล้มเหลว", value: alerts.filter(a => a.Job_Status === 'Failed').length, icon: <AlertTriangle size={20} />, color: "amber" },
+        { label: "เคสทั้งหมด", value: alerts.length, icon: <CheckCircle2 size={20} />, color: "emerald" },
+      ]} />
 
       {/* SOS Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -68,7 +55,7 @@ export default async function SOSPage() {
             key={alert.Job_ID} 
             variant="glass" 
             hover={true}
-            className={alert.Job_Status === 'SOS' ? 'border-red-500/50' : ''}
+            className={`rounded-2xl ${alert.Job_Status === 'SOS' ? 'border-red-500/50' : ''}`}
           >
             <CardContent className="p-5">
               {/* Header */}
@@ -127,11 +114,11 @@ export default async function SOSPage() {
 
               {/* Actions */}
               <div className="flex gap-2">
-                <Button variant="outline" size="sm" className="flex-1 gap-1">
+                <Button variant="outline" size="sm" className="flex-1 gap-1 rounded-xl border-slate-800">
                   <Phone size={14} />
                   โทร
                 </Button>
-                <Button size="sm" className="flex-1 gap-1">
+                <Button size="sm" className="flex-1 gap-1 rounded-xl">
                   <MapPin size={14} />
                   ดูตำแหน่ง
                 </Button>

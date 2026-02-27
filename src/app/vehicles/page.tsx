@@ -1,6 +1,8 @@
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { PageHeader } from "@/components/ui/page-header"
+import { StatsGrid } from "@/components/ui/stats-grid"
 import { 
   Truck, 
   Plus,
@@ -42,20 +44,16 @@ export default async function VehiclesPage(props: Props) {
 
   return (
     <DashboardLayout>
-      {/* Page Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground mb-2 flex items-center gap-3">
-            <Truck className="text-purple-500" />
-            จัดการรถขนส่ง
-          </h1>
-          <p className="text-muted-foreground">ข้อมูลรถและสถานะการซ่อมบำรุง</p>
-        </div>
-        <div className="flex gap-2">
+      <PageHeader
+        icon={<Truck size={28} />}
+        title="จัดการรถขนส่ง"
+        subtitle="ข้อมูลรถและสถานะการซ่อมบำรุง"
+        actions={
+          <>
             <ExcelImport 
                 trigger={
-                    <Button variant="outline" className="gap-2 border-border hover:bg-muted">
-                        <FileSpreadsheet size={16} /> 
+                    <Button variant="outline" className="h-11 px-5 rounded-xl border-slate-800 bg-slate-950/50 hover:bg-slate-900 text-slate-300 hover:text-white transition-all">
+                        <FileSpreadsheet size={16} className="mr-2" /> 
                         นำเข้า Excel
                     </Button>
                 }
@@ -72,33 +70,22 @@ export default async function VehiclesPage(props: Props) {
                 branches={branches}
                 subcontractors={subcontractors}
                 trigger={
-                    <Button size="lg" className="gap-2 bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700">
+                    <Button size="lg" className="h-11 px-6 rounded-xl gap-2 bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 shadow-lg shadow-purple-500/20">
                         <Plus size={20} />
                         เพิ่มรถใหม่
                     </Button>
                 }
             />
-        </div>
-      </div>
+          </>
+        }
+      />
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        <div className="rounded-xl p-4 bg-purple-500/10 border border-purple-500/20 shadow-sm">
-          <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">{stats.total}</p>
-          <p className="text-xs text-muted-foreground">รถทั้งหมด</p>
-        </div>
-        <div className="rounded-xl p-4 bg-emerald-500/10 border border-emerald-500/20 shadow-sm">
-          <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{stats.active}</p>
-          <p className="text-xs text-muted-foreground">พร้อมใช้งาน</p>
-        </div>
-        <div className="rounded-xl p-4 bg-amber-500/10 border border-amber-500/20 shadow-sm">
-          <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">{stats.maintenance}</p>
-          <p className="text-xs text-muted-foreground">ซ่อมบำรุง</p>
-        </div>
-        <div className="rounded-xl p-4 bg-slate-500/10 border border-slate-500/20 shadow-sm">
-          <p className="text-2xl font-bold text-slate-600 dark:text-slate-400">{stats.total - stats.active - stats.maintenance}</p>
-          <p className="text-xs text-muted-foreground">ไม่พร้อม/อื่นๆ</p>
-        </div>
-      </div>
+      <StatsGrid columns={4} stats={[
+        { label: "รถทั้งหมด", value: stats.total, icon: <Truck size={20} />, color: "purple" },
+        { label: "พร้อมใช้งาน", value: stats.active, icon: <Truck size={20} />, color: "emerald" },
+        { label: "ซ่อมบำรุง", value: stats.maintenance, icon: <Wrench size={20} />, color: "amber" },
+        { label: "ไม่พร้อม/อื่นๆ", value: stats.total - stats.active - stats.maintenance, icon: <Truck size={20} />, color: "red" },
+      ]} />
 
       {/* Search */}
       <div className="mb-6">
@@ -111,11 +98,11 @@ export default async function VehiclesPage(props: Props) {
             ไม่พบข้อมูลรถ
           </div>
         ) : vehicles.map((vehicle) => (
-          <Card key={vehicle.vehicle_plate} className="bg-card border-border hover:border-primary/50 transition-all shadow-sm hover:shadow-md">
+          <Card key={vehicle.vehicle_plate} className="bg-slate-900/40 border-slate-800/80 backdrop-blur-sm hover:border-primary/50 transition-all shadow-xl hover:shadow-2xl hover:scale-[1.01] rounded-2xl">
             <CardContent className="p-5">
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center text-white font-bold shadow-lg">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center text-white font-bold shadow-lg shadow-purple-500/20">
                     <Truck size={24} />
                   </div>
                   <div>

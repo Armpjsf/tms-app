@@ -163,19 +163,28 @@ export default function RoutesPage() {
     <DashboardLayout>
       {/* Header */}
       <div className="flex flex-col gap-4 mb-6">
-        <div className="flex justify-between items-center">
-            <div>
-            <h1 className="text-2xl font-bold text-white flex items-center gap-3">
-                <Navigation className="text-blue-400" />
-                จัดการเส้นทาง (Routes)
-            </h1>
-            <p className="text-sm text-slate-400 mt-1">กำหนดจุดรับ-ส่งสินค้า GPS และระยะทาง</p>
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 bg-slate-900/40 p-6 lg:p-8 rounded-[2rem] border border-white/5 backdrop-blur-md shadow-2xl relative overflow-hidden">
+            <div className="absolute top-0 right-0 p-6 opacity-[0.04] pointer-events-none scale-150">
+              <Navigation size={120} />
             </div>
-            <div className="flex gap-2">
+            <div className="relative z-10">
+              <div className="flex items-center gap-4 mb-2">
+                <div className="p-2.5 bg-blue-500/20 rounded-2xl shadow-lg shadow-blue-500/20">
+                  <Navigation className="text-blue-400 w-7 h-7" />
+                </div>
+                <div>
+                  <h1 className="text-3xl lg:text-4xl font-black text-foreground tracking-tight">
+                    จัดการเส้นทาง (Routes)
+                  </h1>
+                  <p className="text-muted-foreground font-medium mt-1">กำหนดจุดรับ-ส่งสินค้า GPS และระยะทาง</p>
+                </div>
+              </div>
+            </div>
+            <div className="flex gap-2 relative z-10">
                 <ExcelImport 
                     trigger={
-                        <Button variant="outline" className="gap-2 border-slate-700 hover:bg-slate-800">
-                            <FileSpreadsheet size={16} /> 
+                        <Button variant="outline" className="h-11 px-5 rounded-xl border-slate-800 bg-slate-950/50 hover:bg-slate-900 text-slate-300 hover:text-white transition-all">
+                            <FileSpreadsheet size={16} className="mr-2" /> 
                             นำเข้า Excel
                         </Button>
                     }
@@ -188,7 +197,7 @@ export default function RoutesPage() {
                 />
                 <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-                <Button onClick={() => handleOpenDialog()} className="bg-blue-600 hover:bg-blue-700">
+                <Button onClick={() => handleOpenDialog()} className="h-11 px-6 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 shadow-lg shadow-blue-500/20">
                 <Plus className="w-4 h-4 mr-2" /> เพิ่มเส้นทาง
                 </Button>
             </DialogTrigger>
@@ -313,7 +322,7 @@ export default function RoutesPage() {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="ค้นหาชื่อเส้นทาง..."
-                    className="pl-10 bg-slate-900 border-slate-800 text-white h-10"
+                    className="pl-10 bg-slate-900/60 border-slate-800 text-white h-11 rounded-xl"
                 />
             </div>
         </div>
@@ -327,7 +336,7 @@ export default function RoutesPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {routes.map((route) => (
-            <Card key={route.Route_Name} className="bg-slate-900/50 border-slate-800 hover:border-slate-700 transition-colors">
+            <Card key={route.Route_Name} className="bg-slate-900/40 border-slate-800/80 backdrop-blur-sm hover:border-blue-500/30 transition-all shadow-xl hover:shadow-2xl hover:scale-[1.01] rounded-2xl">
               <CardContent className="p-5">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center gap-3">

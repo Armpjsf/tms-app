@@ -4,10 +4,12 @@ export const revalidate = 0
 import { SearchInput } from "@/components/ui/search-input"
 import { Pagination } from "@/components/ui/pagination"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { PageHeader } from "@/components/ui/page-header"
+import { StatsGrid } from "@/components/ui/stats-grid"
+import { DataSection } from "@/components/ui/data-section"
 import Link from "next/link"
 import { 
   History, 
@@ -20,6 +22,8 @@ import {
   AlertCircle,
   Download,
   ArrowLeft,
+  XCircle,
+  ListFilter
 } from "lucide-react"
 import { getAllJobs } from "@/lib/supabase/jobs"
 import { getJobCreationData } from "@/app/planning/actions"
@@ -73,41 +77,36 @@ export default async function JobHistoryPage(props: Props) {
 
   return (
     <DashboardLayout>
-      {/* Page Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-        <div className="flex items-center gap-4">
-          <Link href="/planning">
-            <Button variant="outline" size="icon" className="border-border bg-card hover:bg-muted">
-              <ArrowLeft className="h-5 w-5 text-muted-foreground" />
-            </Button>
-          </Link>
-          <div>
-            <h1 className="text-2xl font-bold text-foreground flex items-center gap-3">
-              <History className="text-primary" />
-              ประวัติงาน
-            </h1>
-            <p className="text-sm text-muted-foreground mt-1">ประวัติงานทั้งหมดที่ผ่านมา</p>
+      <PageHeader
+        icon={<History size={28} />}
+        title="ประวัติงาน"
+        subtitle="ประวัติงานทั้งหมดที่ผ่านมา"
+        actions={
+          <div className="flex gap-2">
+            <Link href="/planning">
+              <Button variant="outline" className="h-11 rounded-xl border-slate-800 bg-slate-950/50 hover:bg-slate-900 text-slate-300 hover:text-white">
+                <ArrowLeft className="h-5 w-5 mr-2" />
+                กลับ
+              </Button>
+            </Link>
+            {canExport && (
+            <ExcelExport 
+               data={historyJobs} 
+               filename={`job_history_${new Date().toISOString().split('T')[0]}`}
+               title="ประวัติงาน"
+               trigger={
+                 <Button variant="outline" className="h-11 rounded-xl border-slate-800 bg-slate-950/50 hover:bg-slate-900 text-slate-300 hover:text-white">
+                     <Download className="w-4 h-4 mr-2" /> Export Excel
+                 </Button>
+               }
+            />
+            )}
           </div>
-        </div>
-        <div className="flex gap-2">
-           {canExport && (
-           <ExcelExport 
-              data={historyJobs} 
-              filename={`job_history_${new Date().toISOString().split('T')[0]}`}
-              title="ประวัติงาน"
-              trigger={
-                <Button variant="outline" className="border-border bg-card hover:bg-muted text-muted-foreground hover:text-foreground">
-                    <Download className="w-4 h-4 mr-2" /> Export Excel
-                </Button>
-              }
-           />
-           )}
-        </div>
-      </div>
+        }
+      />
 
       {/* Filters */}
-      <Card className="bg-card border-border mb-6">
-        <CardContent className="p-4">
+      <DataSection title="ตัวกรอง" icon={<ListFilter size={18} />}>
           <form className="grid grid-cols-1 md:grid-cols-5 gap-4">
             <div className="md:col-span-2">
               <SearchInput placeholder="ค้นหา Job ID, ลูกค้า, เส้นทาง..." />
@@ -120,7 +119,7 @@ export default async function JobHistoryPage(props: Props) {
                 type="date"
                 defaultValue={dateFrom}
                 name="from"
-                className="bg-background border-input text-foreground"
+                className="bg-slate-900/60 border-slate-800 text-foreground rounded-xl"
               />
             </div>
             <div className="space-y-2">
@@ -129,50 +128,26 @@ export default async function JobHistoryPage(props: Props) {
                 type="date"
                 defaultValue={dateTo}
                 name="to"
-                className="bg-background border-input text-foreground"
+                className="bg-slate-900/60 border-slate-800 text-foreground rounded-xl"
               />
             </div>
             <div className="space-y-2">
               <HistoryStatusFilter initialValue={status} />
             </div>
-            {/* Added implicit submit button for non-search inputs if needed, or rely on Enter/Form submission logic */}
             <button type="submit" className="hidden" /> 
           </form>
-        </CardContent>
-      </Card>
+      </DataSection>
 
-      {/* Summary Stats (Compact) */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-card border border-border rounded-lg p-3 flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">ทั้งหมด</span>
-            <span className="text-lg font-bold text-foreground">{count || 0}</span>
-        </div>
-        <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-3 flex items-center justify-between">
-            <span className="text-sm text-emerald-600 dark:text-emerald-400/80">สำเร็จ</span>
-            <span className="text-lg font-bold text-emerald-700 dark:text-emerald-400">
-               {jobs?.filter(j => ['Delivered', 'Complete', 'Completed'].includes(j?.Job_Status || '')).length || 0}
-            </span>
-        </div>
-        <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 flex items-center justify-between">
-            <span className="text-sm text-red-600 dark:text-red-400/80">ล้มเหลว</span>
-            <span className="text-lg font-bold text-red-700 dark:text-red-400">
-               {jobs?.filter(j => j?.Job_Status === 'Failed').length || 0}
-            </span>
-        </div>
-        <div className="bg-slate-500/10 border border-slate-500/20 rounded-lg p-3 flex items-center justify-between">
-            <span className="text-sm text-slate-600 dark:text-slate-400/80">ยกเลิก</span>
-            <span className="text-lg font-bold text-slate-700 dark:text-slate-400">
-               {jobs?.filter(j => j?.Job_Status === 'Cancelled').length || 0}
-            </span>
-        </div>
+      <div className="mt-6">
+      <StatsGrid columns={4} stats={[
+        { label: "ทั้งหมด", value: count || 0, icon: <Package size={20} />, color: "indigo" },
+        { label: "สำเร็จ", value: jobs?.filter(j => ['Delivered', 'Complete', 'Completed'].includes(j?.Job_Status || '')).length || 0, icon: <CheckCircle2 size={20} />, color: "emerald" },
+        { label: "ล้มเหลว", value: jobs?.filter(j => j?.Job_Status === 'Failed').length || 0, icon: <AlertCircle size={20} />, color: "red" },
+        { label: "ยกเลิก", value: jobs?.filter(j => j?.Job_Status === 'Cancelled').length || 0, icon: <XCircle size={20} />, color: "purple" },
+      ]} />
       </div>
 
-      {/* Table */}
-      <Card className="bg-card border-border">
-        <CardHeader className="pb-0">
-          <CardTitle className="text-foreground text-sm font-medium">รายการงาน</CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
+      <DataSection title="รายการงาน" icon={<History size={18} />} noPadding>
           {historyJobs.length === 0 ? (
             <div className="text-center py-12 text-slate-500">
               ไม่พบประวัติงาน
@@ -181,25 +156,25 @@ export default async function JobHistoryPage(props: Props) {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-border">
-                    <th className="text-left p-4 text-xs font-medium text-muted-foreground uppercase">Job ID</th>
-                    <th className="text-left p-4 text-xs font-medium text-muted-foreground uppercase">วันที่</th>
-                    <th className="text-left p-4 text-xs font-medium text-muted-foreground uppercase">ลูกค้า</th>
-                    <th className="text-left p-4 text-xs font-medium text-muted-foreground uppercase">เส้นทาง</th>
-                    <th className="text-left p-4 text-xs font-medium text-muted-foreground uppercase">คนขับ</th>
-                    <th className="text-left p-4 text-xs font-medium text-muted-foreground uppercase">ทะเบียน</th>
-                    <th className="text-center p-4 text-xs font-medium text-muted-foreground uppercase">รูปถ่าย/ลายเซ็น</th>
-                    {canViewPrice && <th className="text-right p-4 text-xs font-medium text-emerald-600 dark:text-emerald-400 uppercase">ราคาค่าขนส่ง</th>}
-                    {canViewPrice && <th className="text-right p-4 text-xs font-medium text-red-600 dark:text-red-400 uppercase">ต้นทุนรถ</th>}
-                    <th className="text-left p-4 text-xs font-medium text-muted-foreground uppercase">สถานะ</th>
-                    <th className="text-right p-4 text-xs font-medium text-muted-foreground uppercase">Actions</th>
+                  <tr className="border-b border-slate-800">
+                    <th className="text-left p-4 text-xs font-bold text-slate-500 uppercase">Job ID</th>
+                    <th className="text-left p-4 text-xs font-bold text-slate-500 uppercase">วันที่</th>
+                    <th className="text-left p-4 text-xs font-bold text-slate-500 uppercase">ลูกค้า</th>
+                    <th className="text-left p-4 text-xs font-bold text-slate-500 uppercase">เส้นทาง</th>
+                    <th className="text-left p-4 text-xs font-bold text-slate-500 uppercase">คนขับ</th>
+                    <th className="text-left p-4 text-xs font-bold text-slate-500 uppercase">ทะเบียน</th>
+                    <th className="text-center p-4 text-xs font-bold text-slate-500 uppercase">รูปถ่าย/ลายเซ็น</th>
+                    {canViewPrice && <th className="text-right p-4 text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase">ราคาค่าขนส่ง</th>}
+                    {canViewPrice && <th className="text-right p-4 text-xs font-bold text-red-600 dark:text-red-400 uppercase">ต้นทุนรถ</th>}
+                    <th className="text-left p-4 text-xs font-bold text-slate-500 uppercase">สถานะ</th>
+                    <th className="text-right p-4 text-xs font-bold text-slate-500 uppercase">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {historyJobs.map((job) => (
                     <tr 
                       key={job.Job_ID} 
-                      className="border-b border-border hover:bg-muted/50 transition-colors"
+                      className="border-b border-slate-800/50 hover:bg-white/[0.02] transition-colors"
                     >
                       <td className="p-4">
                         <span className="text-primary font-medium text-sm">{job.Job_ID}</span>
@@ -228,7 +203,7 @@ export default async function JobHistoryPage(props: Props) {
                       <td className="p-4">
                         <div className="flex items-center justify-center gap-2">
                              {job.Photo_Proof_Url && (
-                                <div className="relative w-10 h-10 rounded border border-border overflow-hidden bg-muted group">
+                                <div className="relative w-10 h-10 rounded-lg border border-slate-800 overflow-hidden bg-muted group">
                                     <NextImage 
                                         src={job.Photo_Proof_Url.split(',')[0]} 
                                         alt="POD Photo" 
@@ -239,7 +214,7 @@ export default async function JobHistoryPage(props: Props) {
                                 </div>
                              )}
                              {job.Signature_Url && (
-                                <div className="relative w-14 h-10 rounded border border-border overflow-hidden bg-white group">
+                                <div className="relative w-14 h-10 rounded-lg border border-slate-800 overflow-hidden bg-white group">
                                     <NextImage 
                                         src={job.Signature_Url} 
                                         alt="Signature" 
@@ -300,11 +275,10 @@ export default async function JobHistoryPage(props: Props) {
             </div>
           )}
           
-          <div className="p-4 border-t border-border">
+          <div className="p-4 border-t border-slate-800">
              <Pagination totalItems={count || 0} limit={limit} />
           </div>
-        </CardContent>
-      </Card>
+      </DataSection>
     </DashboardLayout>
   )
 }
