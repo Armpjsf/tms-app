@@ -14,8 +14,9 @@ export default async function MobileDashboard() {
   const session = await getDriverSession()
   if (!session) redirect("/mobile/login")
 
-  const { stats, currentJob, gamification } = await getDriverDashboardStats(session.driverId) || { 
+  const { stats, currentJob, gamification, todayIncome } = await getDriverDashboardStats(session.driverId) || { 
       stats: { total: 0, completed: 0 }, 
+      todayIncome: 0,
       gamification: { points: 0, rank: 'Bronze', nextRankPoints: 300, monthlyCompleted: 0 },
       currentJob: null 
   }
@@ -52,7 +53,9 @@ export default async function MobileDashboard() {
             <p className="text-muted-foreground text-sm">พร้อมสำหรับการทำงานวันนี้ไหม?</p>
         </div>
         <div className="text-right">
-             <div className="text-2xl font-bold text-emerald-500">฿?</div>
+             <div className="text-2xl font-bold text-emerald-500">
+                ฿{(todayIncome || 0).toLocaleString()}
+             </div>
              <div className="text-xs text-muted-foreground">รายได้วันนี้</div>
         </div>
       </div>

@@ -677,6 +677,13 @@ export async function getDriverDashboardStats(driverId: string) {
     }
 
     const completed = jobs?.filter(j => ['Completed', 'Delivered'].includes(j.Job_Status || '')).length || 0
+    
+    // Calculate today's income
+    const todayIncome = jobs?.filter(j => 
+        j.Plan_Date === today && 
+        ['Completed', 'Delivered'].includes(j.Job_Status || '')
+    ).reduce((sum, j) => sum + (j.Cost_Driver_Total || 0), 0) || 0
+
     // User requested "Remaining Jobs" as the main count
     const total = (jobs?.length || 0) - completed
     
@@ -705,6 +712,7 @@ export async function getDriverDashboardStats(driverId: string) {
 
     return {
       stats: { total, completed },
+      todayIncome,
       gamification: {
           points,
           rank,
