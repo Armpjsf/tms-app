@@ -42,13 +42,17 @@ export function RecentJobItem({ job, drivers, vehicles, customers, routes, canVi
                     ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'
                     : job.Job_Status === 'In Transit' || job.Job_Status === 'Picked Up'
                     ? 'bg-blue-500/10 text-blue-600 border-blue-500/20'
+                    : job.Job_Status === 'Requested'
+                    ? 'bg-orange-500/10 text-orange-600 border-orange-500/20'
                     : 'bg-amber-500/10 text-amber-600 border-amber-500/20'
             )}>
               {job.Job_Status}
             </span>
             <div className="flex items-center gap-2">
                 <div className="w-1.5 h-1.5 rounded-full bg-gray-300" />
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{new Date(job.Plan_Date).toLocaleDateString('th-TH')}</p>
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                    {job.Plan_Date ? new Date(job.Plan_Date).toLocaleDateString('th-TH') : "ไม่ได้ระบุวันที่"}
+                </p>
             </div>
           </div>
         </div>
