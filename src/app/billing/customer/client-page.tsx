@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -62,7 +62,7 @@ export default function CustomerBillingClient({ initialJobs, companyProfile, cus
   const [loading, setLoading] = useState(false)
 
   // Initialize customer mode and selection
-  useState(() => {
+  useEffect(() => {
     async function init() {
         const { isCustomer, getCustomerId } = await import("@/lib/permissions")
         const customerFlag = await isCustomer()
@@ -77,7 +77,7 @@ export default function CustomerBillingClient({ initialJobs, companyProfile, cus
         }
     }
     init()
-  })
+  }, [customers])
 
   // Get unique customers
   const uniqueCustomerNames = [...new Set(initialJobs.filter(j=>j.Customer_Name).map(item => item.Customer_Name!))]
