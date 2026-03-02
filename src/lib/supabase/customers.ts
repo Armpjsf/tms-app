@@ -18,7 +18,7 @@ export type Customer = {
 }
 
 // Get all customers
-import { getUserBranchId, isSuperAdmin } from "@/lib/permissions"
+import { getUserBranchId, isSuperAdmin, getCustomerId } from "@/lib/permissions"
 
 export async function getAllCustomers(page?: number, limit?: number, query?: string, providedBranchId?: string) {
   try {
@@ -28,8 +28,11 @@ export async function getAllCustomers(page?: number, limit?: number, query?: str
     // Filter by Branch
     const isAdmin = await isSuperAdmin()
     const branchId = providedBranchId || await getUserBranchId()
+    const customerId = await getCustomerId()
     
-    if (branchId && branchId !== 'All') {
+    if (customerId) {
+        queryBuilder = queryBuilder.eq('Customer_ID', customerId)
+    } else if (branchId && branchId !== 'All') {
         queryBuilder = queryBuilder.eq('Branch_ID', branchId)
     } else if (!isAdmin && !branchId) {
         return { data: [], count: 0 }

@@ -57,8 +57,27 @@ export default function CustomerBillingClient({ initialJobs, companyProfile, cus
   const [dateFrom, setDateFrom] = useState("")
   const [dateTo, setDateTo] = useState("")
   const [selectedCustomer, setSelectedCustomer] = useState("")
+  const [isCustomerMode, setIsCustomerMode] = useState(false)
   const [selectedItems, setSelectedItems] = useState<string[]>([])
   const [loading, setLoading] = useState(false)
+
+  // Initialize customer mode and selection
+  useState(() => {
+    async function init() {
+        const { isCustomer, getCustomerId } = await import("@/lib/permissions")
+        const customerFlag = await isCustomer()
+        setIsCustomerMode(customerFlag)
+        
+        if (customerFlag) {
+            const custId = await getCustomerId()
+            const myCust = customers.find(c => c.Customer_ID === custId)
+            if (myCust) {
+                setSelectedCustomer(myCust.Customer_Name)
+            }
+        }
+    }
+    init()
+  })
 
   // Get unique customers
   const uniqueCustomerNames = [...new Set(initialJobs.filter(j=>j.Customer_Name).map(item => item.Customer_Name!))]
@@ -427,6 +446,7 @@ export default function CustomerBillingClient({ initialJobs, companyProfile, cus
       {/* Filters */}
       <div className="bg-white/80 backdrop-blur-md border border-gray-200 rounded-2xl p-6 shadow-2xl mb-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            {!isCustomerMode && (
             <div className="space-y-2">
               <Label className="text-gray-500 text-sm">ลูกค้า</Label>
               <Select
@@ -444,6 +464,7 @@ export default function CustomerBillingClient({ initialJobs, companyProfile, cus
                 </SelectContent>
               </Select>
             </div>
+            )}
             <div className="space-y-2">
               <Label className="text-gray-500 text-sm flex items-center gap-1">
                 <Calendar className="w-3 h-3" /> วันที่เริ่มต้น
@@ -464,11 +485,13 @@ export default function CustomerBillingClient({ initialJobs, companyProfile, cus
                 className="bg-white border-gray-200 text-gray-900"
               />
             </div>
+            {!isCustomerMode && (
             <div className="flex items-end">
               <Button variant="outline" className="border-gray-200 w-full text-gray-700">
                 <Search className="w-4 h-4 mr-2" /> ค้นหา
               </Button>
             </div>
+            )}
           </div>
       </div>
 

@@ -36,6 +36,7 @@ interface PlanningClientProps {
         delivered: number
     }
     todayJobs: Job[]
+    requestedJobs: Job[]
     jobCreationData: {
         drivers: any[]
         vehicles: any[]
@@ -66,6 +67,7 @@ const item = {
 export function PlanningClient({ 
     stats, 
     todayJobs, 
+    requestedJobs,
     jobCreationData, 
     canViewPrice, 
     canDelete, 
@@ -77,12 +79,12 @@ export function PlanningClient({
 
     const filteredJobs = useMemo(() => {
         if (view === 'requests') {
-            return todayJobs.filter(j => (j as any).Job_Status === 'Requested')
+            return requestedJobs
         }
         return todayJobs.filter(j => (j as any).Job_Status !== 'Requested').slice(0, 10)
-    }, [todayJobs, view])
+    }, [todayJobs, requestedJobs, view])
 
-    const requestCount = todayJobs.filter(j => (j as any).Job_Status === 'Requested').length
+    const requestCount = requestedJobs.length
 
     return (
         <motion.div 

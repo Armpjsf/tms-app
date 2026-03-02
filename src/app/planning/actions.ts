@@ -376,10 +376,10 @@ export async function requestShipment(data: {
     return { success: false, message: 'Unauthorized: Customer ID not found' }
   }
 
-  // Get Customer Name for easier display
+  // Get Customer Name and Branch for easier display and filtering
   const { data: customer } = await supabase
     .from('Master_Customers')
-    .select('Customer_Name')
+    .select('Customer_Name, Branch_ID')
     .eq('Customer_ID', customerId)
     .single()
 
@@ -389,6 +389,7 @@ export async function requestShipment(data: {
     Job_ID: jobId,
     Customer_ID: customerId,
     Customer_Name: customer?.Customer_Name || 'Unknown Customer',
+    Branch_ID: customer?.Branch_ID || 'HQ',
     Plan_Date: data.Plan_Date,
     Origin_Location: data.Origin_Location,
     Dest_Location: data.Dest_Location,

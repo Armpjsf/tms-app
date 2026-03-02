@@ -820,3 +820,38 @@ export async function getMarketplaceJobs(providedBranchId?: string): Promise<Job
     return []
   }
 }
+
+// ดึงการขอรถที่รอดำเนินการ (Requested) ทั้งหมด โดยไม่จำกัดวันที่
+export async function getRequestedJobs(): Promise<Job[]> {
+    try {
+        const supabase = await createClient()
+        const branchId = await getUserBranchId()
+        const isAdmin = await isSuperAdmin()
+        const customerId = await getCustomerId()
+
+        let dbQuery = supabase
+            .from('Jobs_Main')
+            .select('*')
+            .eq('Job_Status', 'Requested')
+        
+        if (customerId) {
+            dbQuery = dbQuery.eq('Customer_ID', customerId)
+        } else if (branchId && branchId !== 'All') {
+            dbQuery = dbQuery.eq('Branch_ID', branchId)
+        } else if (!isAdmin && !branchId) {
+            return []
+        }
+
+        const { data, error } = await dbQuery.order('Created_At', { ascending: false })
+
+        if (error) {
+            console.error('Error fetching requested jobs:', JSON.stringify(error))
+            return []
+        }
+
+        return data || []
+    } catch (e) {
+        console.error('Exception fetching requested jobs:', e)
+        return []
+    }
+}

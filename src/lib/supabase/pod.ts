@@ -1,5 +1,5 @@
 import { createClient } from '@/utils/supabase/server'
-import { getUserBranchId, isSuperAdmin } from "@/lib/permissions"
+import { getUserBranchId, isSuperAdmin, getCustomerId } from "@/lib/permissions"
 
 export type PODRecord = {
   Job_ID: string
@@ -23,6 +23,7 @@ export async function getTodayPODs(): Promise<PODRecord[]> {
     const today = new Date().toISOString().split('T')[0]
     
     const branchId = await getUserBranchId()
+    const customerId = await getCustomerId()
     const isAdmin = await isSuperAdmin()
 
     let dbQuery = supabase
@@ -31,7 +32,9 @@ export async function getTodayPODs(): Promise<PODRecord[]> {
       .eq('Plan_Date', today)
       .in('Job_Status', ['Delivered', 'Complete', 'In Transit', 'Picked Up'])
 
-    if (branchId && branchId !== 'All') {
+    if (customerId) {
+        dbQuery = dbQuery.eq('Customer_ID', customerId)
+    } else if (branchId && branchId !== 'All') {
         dbQuery = dbQuery.eq('Branch_ID', branchId)
     } else if (!isAdmin && !branchId) {
         return []
@@ -59,6 +62,7 @@ export async function getAllPODs(page = 1, limit = 50): Promise<{ data: PODRecor
     const offset = (page - 1) * limit
     
     const branchId = await getUserBranchId()
+    const customerId = await getCustomerId()
     const isAdmin = await isSuperAdmin()
 
     let dbQuery = supabase
@@ -66,7 +70,9 @@ export async function getAllPODs(page = 1, limit = 50): Promise<{ data: PODRecor
       .select('Job_ID, Job_Status, Plan_Date, Customer_Name, Driver_Name, Vehicle_Plate, Route_Name, Photo_Proof_Url, Signature_Url, Actual_Delivery_Time, Delivery_Lat, Delivery_Lon', { count: 'exact' })
       .in('Job_Status', ['Delivered', 'Complete', 'Completed', 'In Transit', 'Picked Up', 'Assigned', 'New', 'Failed'])
     
-    if (isAdmin && (!branchId || branchId === 'All')) {
+    if (customerId) {
+        dbQuery = dbQuery.eq('Customer_ID', customerId)
+    } else if (isAdmin && (!branchId || branchId === 'All')) {
         // No filter
     } else if (branchId && branchId !== 'All') {
         dbQuery = dbQuery.eq('Branch_ID', branchId)
@@ -97,6 +103,7 @@ export async function getPODStats() {
     const today = new Date().toISOString().split('T')[0]
     
     const branchId = await getUserBranchId()
+    const customerId = await getCustomerId()
     const isAdmin = await isSuperAdmin()
 
     let dbQuery = supabase
@@ -104,7 +111,9 @@ export async function getPODStats() {
       .select('Job_Status, Photo_Proof_Url, Signature_Url')
       .eq('Plan_Date', today)
     
-    if (branchId && branchId !== 'All') {
+    if (customerId) {
+        dbQuery = dbQuery.eq('Customer_ID', customerId)
+    } else if (branchId && branchId !== 'All') {
         dbQuery = dbQuery.eq('Branch_ID', branchId)
     } else if (!isAdmin && !branchId) {
         return { total: 0, withPhoto: 0, withSignature: 0, complete: 0 }

@@ -38,8 +38,10 @@ export type Job = {
   Pickup_Date?: string | null
   Delivery_Date?: string | null
   Customer_Name?: string | null
+  Customer_ID?: string | null
   Route_Name?: string | null
   Driver_ID?: string | null
+  Driver_Name?: string | null
   Vehicle_Plate?: string | null
   Vehicle_Type?: string | null
   Cargo_Type?: string | null
