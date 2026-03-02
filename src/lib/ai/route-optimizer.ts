@@ -58,9 +58,9 @@ export async function optimizeRoute(
     
     // We ignore the first waypoint (origin) and get the order of destinations
     const optimizedWays = data.waypoints
-        .sort((a: any, b: any) => a.trips_index - b.trips_index) // Not needed, order in array is usually correct
-        .filter((w: any) => w.waypoint_index > 0) // Skip origin (index 0)
-        .map((w: any) => w.waypoint_index - 1); // Normalize index to destinations array
+        .sort((a: Record<string, number>, b: Record<string, number>) => a.trips_index - b.trips_index) // Not needed, order in array is usually correct
+        .filter((w: Record<string, number>) => w.waypoint_index > 0) // Skip origin (index 0)
+        .map((w: Record<string, number>) => w.waypoint_index - 1); // Normalize index to destinations array
 
     const trip = data.trips?.[0];
 

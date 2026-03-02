@@ -69,7 +69,7 @@ export async function getChatSchema(supabase: SupabaseClient) {
 // Get list of drivers with their last message
 export async function getChatContacts(): Promise<ChatContact[]> {
   try {
-    let supabase = await createClient()
+    const supabase = await createClient()
 
     // 0. Filter by Branch
     const branchId = await getUserBranchId()
@@ -79,7 +79,7 @@ export async function getChatContacts(): Promise<ChatContact[]> {
     let { tableName, columns } = await getChatSchema(supabase)
 
     // Try normal client first
-    let result = await supabase
+    const result = await supabase
       .from(tableName)
       .select('*')
       .order(columns.created_at, { ascending: false })
@@ -168,12 +168,12 @@ export async function getChatContacts(): Promise<ChatContact[]> {
 // Get messages for a specific driver
 export async function getMessages(driverId: string): Promise<ChatMessage[]> {
   try {
-    let supabase = await createClient()
+    const supabase = await createClient()
     
     // 0. Detect correct schema
     let { tableName, columns } = await getChatSchema(supabase)
 
-    let result = await supabase
+    const result = await supabase
       .from(tableName)
       .select('*')
       .or(`${columns.sender_id}.eq.${driverId},${columns.receiver_id}.eq.${driverId}`)
@@ -226,7 +226,7 @@ export async function sendMessage(driverId: string, driverName: string, message:
     // 0. Detect correct schema
     const { tableName, columns } = await getChatSchema(supabase)
 
-    const payload: any = {
+    const payload: Record<string, unknown> = {
       [columns.sender_id]: 'admin',
       [columns.receiver_id]: driverId,
       [columns.message]: message,

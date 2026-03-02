@@ -80,30 +80,20 @@ export default function JobPickupPage() {
           alert(typeof result.error === 'string' ? result.error : JSON.stringify(result.error))
           setLoading(false)
         }
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error("Pickup Submit Error:", error)
         
         // ... (network error check)
-        const isNetworkError = !navigator.onLine || error instanceof TypeError || (error?.message?.includes('fetch'))
+        const isNetworkError = !navigator.onLine || error instanceof TypeError || (error instanceof Error && error.message.includes('fetch'))
         
         if (isNetworkError) {
              // ...
         } else {
-            const msg = error?.message || (typeof error === 'object' ? JSON.stringify(error) : String(error))
+            const msg = error instanceof Error ? error.message : (typeof error === 'object' ? JSON.stringify(error) : String(error))
             alert(`เกิดข้อผิดพลาดในการส่งข้อมูล: ${msg}`)
             setLoading(false)
         }
     }
-  }
-
-  // Helper to convert File to base64 for offline storage
-  const fileToB64 = (file: File | Blob): Promise<string> => {
-      return new Promise((resolve, reject) => {
-          const reader = new FileReader()
-          reader.readAsDataURL(file)
-          reader.onload = () => resolve(reader.result as string)
-          reader.onerror = error => reject(error)
-      })
   }
 
   return (
@@ -138,7 +128,7 @@ export default function JobPickupPage() {
         </section>
 
         <section>
-            <h2 className="text-gray-800 font-medium mb-2">2. ลายเซ็นผู้ส่งของ</h2>
+            <h2 className="text-slate-200 font-bold mb-2">2. ลายเซ็นผู้ส่งของ</h2>
             <SignaturePad onSave={setSignature} />
         </section>
 

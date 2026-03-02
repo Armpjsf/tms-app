@@ -75,9 +75,10 @@ export async function uploadAttachment(formData: FormData) {
 
         revalidatePath(`/billing/customer/history`)
         return { success: true }
-    } catch (e: any) {
+    } catch (e: unknown) {
         console.error("Upload Exception:", e)
-        return { success: false, error: e.message }
+        const errMsg = e instanceof Error ? e.message : String(e)
+        return { success: false, error: errMsg }
     }
 }
 

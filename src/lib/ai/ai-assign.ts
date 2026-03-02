@@ -3,7 +3,6 @@
 import { createClient } from '@/utils/supabase/server'
 import { getLatestDriverLocations } from '@/lib/supabase/gps'
 import { getAllDriversFromTable } from '@/lib/supabase/drivers'
-import { getUserBranchId } from '@/lib/permissions'
 
 // ============================================================
 // AI Auto-Assign Engine — TMS 2026
@@ -44,9 +43,8 @@ export async function getSuggestedDrivers(jobData: {
   Vehicle_Type?: string | null
   Plan_Date?: string | null
 }, topN = 5): Promise<DriverSuggestion[]> {
-  try {
-    const supabase = await createClient()
-    const branchId = await getUserBranchId()
+    try {
+      const supabase = await createClient()
 
     // 1. Get all active drivers
     const allDrivers = await getAllDriversFromTable()
@@ -57,7 +55,7 @@ export async function getSuggestedDrivers(jobData: {
     // 2. Get latest GPS locations
     const gpsLocations = await getLatestDriverLocations()
     const gpsMap = new Map<string, { lat: number, lon: number, timestamp: string }>()
-    gpsLocations.forEach((loc: any) => {
+    gpsLocations.forEach((loc: { Driver_ID: string; Latitude: number; Longitude: number; Timestamp: string }) => {
       gpsMap.set(loc.Driver_ID, {
         lat: loc.Latitude,
         lon: loc.Longitude,

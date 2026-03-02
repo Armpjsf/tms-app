@@ -13,6 +13,7 @@ interface SummaryJob {
   Cost_Driver_Total: number | null
   Job_Status: string | null
   Customer_Name: string | null
+  Show_Price_To_Driver?: boolean | null
 }
 
 export default async function IncomeSummaryPage() {
@@ -29,8 +30,8 @@ export default async function IncomeSummaryPage() {
     .in('Job_Status', ['Completed', 'Delivered'])
     .order('Plan_Date', { ascending: false })
 
-  const totalEarnings = jobs?.filter((j: any) => j.Show_Price_To_Driver !== false)
-    .reduce((sum: number, j: any) => sum + (j.Cost_Driver_Total || 0), 0) || 0
+  const totalEarnings = jobs?.filter((j: SummaryJob) => j.Show_Price_To_Driver !== false)
+    .reduce((sum: number, j: SummaryJob) => sum + (j.Cost_Driver_Total || 0), 0) || 0
   const totalJobs = jobs?.length || 0
 
   return (

@@ -143,11 +143,11 @@ export default function JobCompletePage() {
           alert(typeof result.error === 'string' ? result.error : JSON.stringify(result.error))
           setLoading(false)
         }
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error("Pickup Submit Error:", error)
         
         // Check if it's a network error
-        const isNetworkError = !navigator.onLine || error instanceof TypeError || (error?.message?.includes('fetch'))
+        const isNetworkError = !navigator.onLine || error instanceof TypeError || (error instanceof Error && error.message.includes('fetch'))
         
         if (isNetworkError) {
           // Note: offlineData seems undefined in original code, I should fix that or keep original behavior
@@ -155,7 +155,7 @@ export default function JobCompletePage() {
           setCompleted(true) 
           alert("บันทึกข้อมูลแล้ว (โหมดออฟไลน์) จะส่งให้อัตโนมัติเมื่อมีสัญญาณ")
         } else {
-            const errorMessage = error?.message || String(error)
+            const errorMessage = error instanceof Error ? error.message : String(error)
             alert(`Error: ${errorMessage}`)
         }
     } finally {
@@ -200,7 +200,7 @@ export default function JobCompletePage() {
 
       <div className="space-y-6">
         <section>
-            <h2 className="text-gray-800 font-medium mb-2">1. ถ่ายรูปสินค้า</h2>
+            <h2 className="text-slate-200 font-bold mb-2">1. ถ่ายรูปสินค้า</h2>
             <CameraInput onImagesChange={setPhotos} maxImages={5} />
             
             {/* AI Verification Feedback */}
@@ -241,7 +241,7 @@ export default function JobCompletePage() {
         </section>
 
         <section>
-            <h2 className="text-gray-800 font-medium mb-2">2. ลายเซ็นผู้รับ</h2>
+            <h2 className="text-slate-200 font-bold mb-2">2. ลายเซ็นผู้รับ</h2>
             <SignaturePad onSave={setSignature} />
         </section>
 

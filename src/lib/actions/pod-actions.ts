@@ -132,7 +132,7 @@ export async function submitJobPOD(jobId: string, formData: FormData) {
     revalidatePath("/dashboard")
     return warning ? { success: true, warning } : { success: true }
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error(`[submitJobPOD] Catch Error for jobId ${jobId}:`, error)
     
     let errorMessage = "เกิดข้อผิดพลาดในการบันทึกข้อมูล"
@@ -198,7 +198,7 @@ export async function submitJobPickup(jobId: string, formData: FormData) {
           const sigName = `${jobId}_${timestamp}_pickup_sig.png`
           signatureUrl = await uploadWithRename(signatureFile, sigName, 'Pickup_Signatures')
       }
-    } catch (e: any) {
+    } catch (e: unknown) {
       const errMsg = e instanceof Error ? e.message : String(e)
       console.error("Supabase Storage upload failed:", errMsg)
       uploadWarning = `อัปโหลดหลักฐานไม่สำเร็จ: ${errMsg}`
@@ -207,7 +207,7 @@ export async function submitJobPickup(jobId: string, formData: FormData) {
     const now = new Date()
     const timeString = now.toTimeString().split(' ')[0] 
     
-    const updatePayload: any = {
+    const updatePayload: Record<string, unknown> = {
       Job_Status: 'In Transit',
       Pickup_Photo_Url: photoUrls.join(','),
       Pickup_Signature_Url: signatureUrl,
@@ -227,7 +227,7 @@ export async function submitJobPickup(jobId: string, formData: FormData) {
     revalidatePath("/mobile/jobs")
     return uploadWarning ? { success: true, warning: uploadWarning } : { success: true }
     
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error(`[submitJobPickup] Catch Error for jobId ${jobId}:`, error)
     
     let errorMessage = "เกิดข้อผิดพลาดในการบันทึกข้อมูล"

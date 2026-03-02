@@ -104,9 +104,10 @@ export async function getOrCreateFolder(folderName: string, parentId?: string): 
         folderIdCache[cacheKey] = id
         console.log(`[GoogleDrive] Folder created successfully: ${id}`)
         return id
-    } catch (err: any) {
-        console.error(`[GoogleDrive] Error in getOrCreateFolder (${folderName}):`, err.message || err)
-        throw new Error(`Google Drive Folder Error: ${err.message || 'Unknown'}`)
+    } catch (err: unknown) {
+        const errMsg = err instanceof Error ? err.message : String(err)
+        console.error(`[GoogleDrive] Error in getOrCreateFolder (${folderName}):`, errMsg)
+        throw new Error(`Google Drive Folder Error: ${errMsg}`)
     }
 }
 

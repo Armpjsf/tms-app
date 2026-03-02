@@ -62,8 +62,22 @@ export function CommandPalette() {
   const inputRef = useRef<HTMLInputElement>(null)
   const router = useRouter()
 
+  const [userRole, setUserRole] = useState<number | null>(null)
+  const [isCustomerUser, setIsCustomerUser] = useState(false)
+
   // Keyboard shortcut: Ctrl+K / Cmd+K
   useEffect(() => {
+    async function checkRole() {
+        const { getUserRole } = await import("@/lib/permissions")
+        const role = await getUserRole()
+        setUserRole(role || null)
+        
+        const { isCustomer } = await import("@/lib/permissions")
+        const customerFlag = await isCustomer()
+        setIsCustomerUser(customerFlag)
+    }
+    checkRole()
+
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
         e.preventDefault()
@@ -116,10 +130,22 @@ export function CommandPalette() {
     }
   }, [])
 
+  const filteredQuickActions = QUICK_ACTIONS.filter(action => {
+    if (isCustomerUser) {
+        return ['dashboard', 'monitoring', 'history', 'pod'].includes(action.id)
+    }
+    
+    if (userRole === 4) { // Accounting
+        return ['dashboard', 'billing', 'driver-pay', 'settings'].includes(action.id)
+    }
+    
+    return true
+  })
+
   // Get display items
   const displayItems = query.length >= 2
     ? results
-    : QUICK_ACTIONS.map(a => ({
+    : filteredQuickActions.map(a => ({
         id: a.id,
         title: a.title,
         subtitle: '',

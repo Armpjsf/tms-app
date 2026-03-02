@@ -129,9 +129,9 @@ export async function getPublicJobDetails(
     deliveryDate: job.Actual_Delivery_Time || null,
     pickupPhotos,
     podPhotos,
-    signature: job.Signature_Proof_Url || job.Signature_Url || (job as any).signature_url || null,
+    signature: job.Signature_Proof_Url || job.Signature_Url || (job as Record<string, unknown>).signature_url || null,
     pickupSignature:
-      job.Signature_Pickup_Url || job.Pickup_Signature_Url || (job as any).pickup_signature_url || null,
+      job.Signature_Pickup_Url || job.Pickup_Signature_Url || (job as Record<string, unknown>).pickup_signature_url || null,
     lastLocation,
     notes: job.Notes || null,
     customerPhone: job.Phone || job.Customer_Phone || null,

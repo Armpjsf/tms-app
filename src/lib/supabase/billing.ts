@@ -3,7 +3,7 @@
 import { createClient } from "@/utils/supabase/server"
 import { getUserBranchId, isSuperAdmin } from "@/lib/permissions"
 import { accountingService } from "@/services/accounting"
-import { Job, Billing_Note, Driver_Payment } from "@/types/database"
+import { Job, Driver_Payment } from "@/types/database"
 import { logActivity } from "./logs"
 
 export interface BillingNote {
@@ -53,7 +53,7 @@ export async function createBillingNote(
                      }
                      
                      if (Array.isArray(costs)) {
-                         extra = costs.reduce((cHigh: number, c: any) => cHigh + (Number(c.charge_cust) || 0), 0)
+                         extra = costs.reduce((cHigh: number, c: Record<string, unknown>) => cHigh + (Number(c.charge_cust) || 0), 0)
                      }
                  } catch (e) {
                      console.error("Error parsing extra costs for job", job, e)
@@ -245,8 +245,6 @@ export async function getBillingNotes() {
         let query = supabase.from('Billing_Notes').select('*')
         
         if (branchId && !isAdmin) {
-            // @ts-ignore
-            // Allow seeing notes for their branch OR legacy notes with no branch assigned
             query = query.or(`Branch_ID.eq.${branchId},Branch_ID.is.null`)
         } else if (!isAdmin && !branchId) {
             console.warn("getBillingNotes: No branch ID and not admin. Returning empty.")
@@ -263,7 +261,7 @@ export async function getBillingNotes() {
             return []
         }
         return data as BillingNote[]
-    } catch (e) {
+    } catch {
         return []
     }
 }
@@ -310,7 +308,7 @@ export async function getBillingNoteByIdWithJobs(id: string) {
         }
 
         // 4. Get Customer Details
-        let customerEmail = ""
+        const customerEmail = ""
         let customerAddress = ""
         let customerTaxId = ""
 

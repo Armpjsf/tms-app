@@ -25,9 +25,9 @@ export type Job = {
   Cost_Driver_Extra?: number | null
   Cargo_Type: string | null
   Notes: string | null
-  original_origins_json: any
-  original_destinations_json: any
-  extra_costs_json: any
+  original_origins_json: unknown
+  original_destinations_json: unknown
+  extra_costs_json: unknown
   Created_At: string | null
   Photo_Proof_Url: string | null
   Signature_Url: string | null

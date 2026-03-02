@@ -19,7 +19,7 @@ export type Invoice = {
   Net_Total: number
   Status: 'Draft' | 'Sent' | 'Paid' | 'Void' | 'Overdue'
   Notes: string | null
-  Items_JSON: any
+  Items_JSON: unknown
   Created_At: string
   Updated_At: string
   Created_By: string | null
@@ -61,7 +61,7 @@ export async function getInvoices(page = 1, limit = 20, query = '') {
     }
 
     // Map customer name
-    const formattedData = data?.map((inv: any) => ({
+    const formattedData = data?.map((inv: Invoice & { Master_Customers?: { Customer_Name?: string } }) => ({
         ...inv,
         Customer_Name: inv.Master_Customers?.Customer_Name || 'Unknown',
         customers: inv.Master_Customers
@@ -137,7 +137,7 @@ export async function createInvoice(invoice: Partial<Invoice>) {
 
     // Link Jobs to this Invoice
     if (invoice.Items_JSON && Array.isArray(invoice.Items_JSON)) {
-        const jobIds = invoice.Items_JSON.map((j: any) => j.Job_ID)
+        const jobIds = invoice.Items_JSON.map((j: { Job_ID: string }) => j.Job_ID)
         if (jobIds.length > 0) {
             const { error: updateError } = await supabase
                 .from('Jobs_Main')

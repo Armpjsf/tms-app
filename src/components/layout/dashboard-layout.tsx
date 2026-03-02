@@ -11,6 +11,22 @@ interface DashboardLayoutProps {
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = React.useState(false)
+  const [isMounted, setIsMounted] = React.useState(false)
+
+  // Load state on mount
+  React.useEffect(() => {
+    const saved = localStorage.getItem("sidebar_collapsed")
+    if (saved !== null) {
+      setSidebarCollapsed(saved === "true")
+    }
+    setIsMounted(true)
+  }, [])
+
+  const handleToggle = () => {
+    const newState = !sidebarCollapsed
+    setSidebarCollapsed(newState)
+    localStorage.setItem("sidebar_collapsed", String(newState))
+  }
 
   return (
     <div className="min-h-screen bg-background text-foreground transition-colors duration-300">
@@ -35,7 +51,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       {/* Sidebar */}
       <Sidebar 
           collapsed={sidebarCollapsed} 
-          onToggle={() => setSidebarCollapsed(!sidebarCollapsed)} 
+          onToggle={handleToggle} 
       />
 
       {/* Header */}
@@ -44,8 +60,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       {/* Main Content */}
       <motion.main
           initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.2 }}
+          animate={isMounted ? { opacity: 1 } : { opacity: 0 }}
+          transition={{ duration: 0.2 }}
           className={cn(
           "relative pt-16 min-h-screen transition-all duration-300",
           sidebarCollapsed ? "pl-20" : "pl-[280px]"

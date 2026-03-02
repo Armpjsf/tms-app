@@ -2,8 +2,10 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
+import Image from "next/image"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
+import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -96,15 +98,15 @@ export default function CustomerBillingClient({ initialJobs, companyProfile, cus
       let extra = 0
       if (job.extra_costs_json) {
           try {
-              let costs: any = job.extra_costs_json
+              let costs: unknown = job.extra_costs_json
               if (typeof costs === 'string') {
                   try { costs = JSON.parse(costs) } catch {}
               }
               if (typeof costs === 'string') {
-                  try { costs = JSON.parse(costs) } catch {}
+                  try { costs = JSON.parse(costs as string) } catch {}
               }
               if (Array.isArray(costs)) {
-                  extra = costs.reduce((sum: number, c: any) => sum + (Number(c.charge_cust) || 0), 0)
+                  extra = costs.reduce((sum: number, c: { charge_cust?: string | number }) => sum + (Number(c.charge_cust) || 0), 0)
               }
           } catch (e) {
               console.error("Error parsing extra costs", e)
@@ -205,6 +207,12 @@ export default function CustomerBillingClient({ initialJobs, companyProfile, cus
 
   // Preview Component (Reused for Print and Dialog)
   const InvoicePreview = () => {
+    // If customer mode and nothing selected, show all filtered items
+    const displayData = (isCustomerMode && selectedItems.length === 0) ? filteredData : selectedData
+    const subtotal = displayData.reduce((sum, i) => sum + getJobTotal(i), 0)
+    const withholding = Math.round(subtotal * WITHHOLDING_TAX_RATE)
+    const netTotal = subtotal - withholding
+
     // Find customer details (Case-insensitive match)
     const customerInfo = customers.find(c => 
         c.Customer_Name?.trim().toLowerCase() === selectedCustomer?.trim().toLowerCase()
@@ -220,11 +228,13 @@ export default function CustomerBillingClient({ initialJobs, companyProfile, cus
             {/* Left: Logo & Company Info */}
             <div className="flex flex-col gap-4 max-w-[60%]">
                 {companyProfile?.logo_url && (
-                    <div>
-                        <img 
+                    <div className="relative h-24 w-48">
+                        <Image 
                             src={companyProfile.logo_url} 
                             alt="Company Logo" 
-                            className="h-24 w-auto object-contain" 
+                            fill
+                            className="object-contain object-left"
+                            unoptimized
                         />
                     </div>
                 )}
@@ -314,16 +324,16 @@ export default function CustomerBillingClient({ initialJobs, companyProfile, cus
                         <th className="py-3 px-4 text-right font-bold w-32">จำนวนเงิน<br/><span className="text-xs font-normal">Amount</span></th>
                     </tr>
                 </thead>
-                {selectedData.map((job, index) => {
-                    let extraCosts: any[] = []
+                {displayData.map((job, index) => {
+                    let extraCosts: { extra_cost_name?: string; charge_cust?: string | number }[] = []
                     try {
                         if (job.extra_costs_json) {
-                            let parsed: any = job.extra_costs_json
+                            let parsed: unknown = job.extra_costs_json
                             if (typeof parsed === 'string') {
                                 try { parsed = JSON.parse(parsed) } catch {}
                             }
                             if (typeof parsed === 'string') {
-                                try { parsed = JSON.parse(parsed) } catch {}
+                                try { parsed = JSON.parse(parsed as string) } catch {}
                             }
                             if (Array.isArray(parsed)) {
                                 extraCosts = parsed
@@ -378,16 +388,16 @@ export default function CustomerBillingClient({ initialJobs, companyProfile, cus
                             </div>
                         </td>
                         <td className="py-2 px-4 text-right font-bold text-gray-500">รวมเป็นเงิน</td>
-                        <td className="py-2 px-4 text-right font-bold text-slate-800">{selectedSubtotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                        <td className="py-2 px-4 text-right font-bold text-slate-800">{subtotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
                     </tr>
                     <tr>
                         <td className="py-2 px-4 text-right text-gray-500 text-sm">หัก ณ ที่จ่าย 1%</td>
-                        <td className="py-2 px-4 text-right text-red-500 font-medium">-{selectedWithholding.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                        <td className="py-2 px-4 text-right text-red-500 font-medium">-{withholding.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
                     </tr>
                     <tr className="bg-slate-50 border-t-2 border-slate-300 border-b-2">
                         <td className="py-3 px-4 text-right font-bold text-slate-900 text-lg">ยอดสุทธิ</td>
                         <td className="py-3 px-4 text-right font-bold text-emerald-700 text-lg decoration-double underline">
-                            {selectedNetTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                            {netTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                         </td>
                     </tr>
                 </tfoot>
@@ -428,9 +438,13 @@ export default function CustomerBillingClient({ initialJobs, companyProfile, cus
                 </div>
                 <div>
                   <h1 className="text-3xl lg:text-4xl font-black text-foreground tracking-tight">
-                    สรุปวางบิลลูกค้า
+                    {isCustomerMode ? "สรุปรายการค่าขนส่ง" : "สรุปวางบิลลูกค้า"}
                   </h1>
-                  <p className="text-muted-foreground font-medium mt-1">สร้างเอกสารสรุปสำหรับวางบิลลูกค้า (หัก ณ ที่จ่าย 1%)</p>
+                  <p className="text-muted-foreground font-medium mt-1">
+                    {isCustomerMode 
+                      ? "ตรวจสอบสรุปค่าขนส่งและสถานะการวางบิลของคุณ" 
+                      : "สร้างเอกสารสรุปสำหรับวางบิลลูกค้า (หัก ณ ที่จ่าย 1%)"}
+                  </p>
                 </div>
               </div>
             </div>
@@ -439,7 +453,7 @@ export default function CustomerBillingClient({ initialJobs, companyProfile, cus
                 className="h-11 px-5 rounded-xl border-gray-200 bg-white/80 hover:bg-white text-gray-700 hover:text-white gap-2 relative z-10"
                 onClick={() => router.push('/billing/customer/history')}
             >
-                <History className="w-4 h-4" /> ประวัติการวางบิล
+                <History className="w-4 h-4" /> {isCustomerMode ? "ประวัติค่าขนส่ง" : "ประวัติการวางบิล"}
             </Button>
       </div>
 
@@ -497,6 +511,7 @@ export default function CustomerBillingClient({ initialJobs, companyProfile, cus
 
       {/* Summary Stats */}
       {/* ... (Existing Summary Stats Content) ... */}
+      {/* Summary Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <div className="bg-white/80 backdrop-blur-sm border border-amber-500/20 rounded-2xl p-4 flex items-center gap-4 shadow-xl">
             <div className="w-12 h-12 rounded-xl bg-amber-500/20 flex items-center justify-center">
@@ -504,7 +519,7 @@ export default function CustomerBillingClient({ initialJobs, companyProfile, cus
             </div>
             <div>
               <p className="text-2xl font-bold text-amber-400">{pendingItems.length}</p>
-              <p className="text-xs text-gray-500">รอวางบิล</p>
+              <p className="text-xs text-gray-500">{isCustomerMode ? "งานที่ยังไม่วางบิล" : "รอวางบิล"}</p>
             </div>
         </div>
         <div className="bg-white/80 backdrop-blur-sm border border-emerald-500/15 rounded-2xl p-4 flex items-center gap-4 shadow-xl">
@@ -513,7 +528,7 @@ export default function CustomerBillingClient({ initialJobs, companyProfile, cus
             </div>
             <div>
               <p className="text-2xl font-bold text-emerald-500">฿{pendingTotal.toLocaleString()}</p>
-              <p className="text-xs text-gray-500">ยอดรอวางบิล</p>
+              <p className="text-xs text-gray-500">{isCustomerMode ? "ยอดรอเรียกเก็บ" : "ยอดรอวางบิล"}</p>
             </div>
         </div>
         <div className="bg-white/80 backdrop-blur-sm border border-emerald-500/20 rounded-2xl p-4 flex items-center gap-4 shadow-xl">
@@ -522,7 +537,7 @@ export default function CustomerBillingClient({ initialJobs, companyProfile, cus
             </div>
             <div>
               <p className="text-2xl font-bold text-emerald-400">฿{selectedSubtotal.toLocaleString()}</p>
-              <p className="text-xs text-gray-500">ยอดที่เลือก ({selectedItems.length} รายการ)</p>
+              <p className="text-xs text-gray-500">{isCustomerMode ? "ยอดที่ตรวจสอบ" : `ยอดที่เลือก (${selectedItems.length} รายการ)`}</p>
             </div>
         </div>
         <div className="bg-white/80 backdrop-blur-sm border border-purple-500/20 rounded-2xl p-4 flex items-center gap-4 shadow-xl">
@@ -536,8 +551,8 @@ export default function CustomerBillingClient({ initialJobs, companyProfile, cus
         </div>
       </div>
 
-      {/* Selected Summary Box */}
-      {selectedItems.length > 0 && (
+      {/* Selected Summary Box - Hide for customers */}
+      {!isCustomerMode && selectedItems.length > 0 && (
         <Card className="bg-gradient-to-r from-emerald-500/10 to-blue-500/10 border-emerald-500/30 mb-6">
           <CardContent className="p-4">
             <div className="flex flex-wrap items-center justify-between gap-4">
@@ -570,18 +585,21 @@ export default function CustomerBillingClient({ initialJobs, companyProfile, cus
         <div className="flex flex-row items-center justify-between p-5 pb-4">
           <h3 className="text-gray-900 font-bold text-lg">รายการงาน</h3>
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={selectAll} className="border-gray-200 text-gray-700">
-              เลือกทั้งหมด
-            </Button>
+            {!isCustomerMode && (
+              <Button variant="outline" size="sm" onClick={selectAll} className="border-gray-200 text-gray-700">
+                เลือกทั้งหมด
+              </Button>
+            )}
+            
             <Dialog open={showPreview} onOpenChange={setShowPreview}>
                 <DialogTrigger asChild>
                     <Button 
                         size="sm" 
                         variant="outline" 
                         className="border-gray-200 text-gray-700"
-                        disabled={selectedItems.length === 0}
+                        disabled={!isCustomerMode && selectedItems.length === 0}
                     >
-                        <Eye className="w-4 h-4 mr-2" /> ดูตัวอย่าง
+                        <Eye className="w-4 h-4 mr-2" /> {isCustomerMode ? "ดูตัวอย่างสรุป" : "ดูตัวอย่าง"}
                     </Button>
                 </DialogTrigger>
                 <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-white p-0">
@@ -594,49 +612,57 @@ export default function CustomerBillingClient({ initialJobs, companyProfile, cus
                 </DialogContent>
             </Dialog>
 
-            <Button 
-                size="sm" 
-                className="bg-emerald-600 hover:bg-emerald-700" 
-                disabled={selectedItems.length === 0 || loading}
-                onClick={handleCreateBilling}
-            >
-              {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FileText className="w-4 h-4 mr-2" />}
-              สร้างใบวางบิล
-            </Button>
+            {!isCustomerMode && (
+              <Button 
+                  size="sm" 
+                  className="bg-emerald-600 hover:bg-emerald-700" 
+                  disabled={selectedItems.length === 0 || loading}
+                  onClick={handleCreateBilling}
+              >
+                {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FileText className="w-4 h-4 mr-2" />}
+                สร้างใบวางบิล
+              </Button>
+            )}
+
             <Button 
                 size="sm" 
                 variant="outline" 
                 className="border-gray-200 text-gray-700" 
-                disabled={selectedItems.length === 0}
+                disabled={!isCustomerMode && selectedItems.length === 0}
                 onClick={handlePrint}
             >
               <Printer className="w-4 h-4 mr-2" /> พิมพ์
             </Button>
-            <Button 
-                size="sm" 
-                variant="outline" 
-                className="border-gray-200 text-gray-700" 
-                disabled={selectedItems.length === 0}
-                onClick={handleExportCSV}
-            >
-              <Download className="w-4 h-4 mr-2" /> Export
-            </Button>
+            
+            {!isCustomerMode && (
+              <Button 
+                  size="sm" 
+                  variant="outline" 
+                  className="border-gray-200 text-gray-700" 
+                  disabled={selectedItems.length === 0}
+                  onClick={handleExportCSV}
+              >
+                <Download className="w-4 h-4 mr-2" /> Export
+              </Button>
+            )}
           </div>
         </div>
         <div className="px-5 pb-5">
           {/* ... (Existing Table Content) ... */}
            <div className="overflow-x-auto">
             <table className="w-full">
-              <thead>
+               <thead>
                 <tr className="border-b border-gray-200">
-                  <th className="text-left py-3 px-4 text-gray-500 font-medium text-sm">
-                    <input 
-                      type="checkbox" 
-                      className="rounded bg-gray-100 border-gray-200"
-                      checked={selectedItems.length === pendingItems.length && pendingItems.length > 0}
-                      onChange={selectAll}
-                    />
-                  </th>
+                  {!isCustomerMode && (
+                    <th className="text-left py-3 px-4 text-gray-500 font-medium text-sm">
+                      <input 
+                        type="checkbox" 
+                        className="rounded bg-gray-100 border-gray-200"
+                        checked={selectedItems.length === pendingItems.length && pendingItems.length > 0}
+                        onChange={selectAll}
+                      />
+                    </th>
+                  )}
                   <th className="text-left py-3 px-4 text-gray-500 font-medium text-sm">Job ID</th>
                   <th className="text-left py-3 px-4 text-gray-500 font-medium text-sm">ลูกค้า</th>
                   <th className="text-left py-3 px-4 text-gray-500 font-medium text-sm">วันที่</th>
@@ -644,37 +670,63 @@ export default function CustomerBillingClient({ initialJobs, companyProfile, cus
                   <th className="text-right py-3 px-4 text-gray-500 font-medium text-sm">ค่าขนส่ง</th>
                   <th className="text-right py-3 px-4 text-gray-500 font-medium text-sm">รวม</th>
                   <th className="text-center py-3 px-4 text-gray-500 font-medium text-sm">สถานะ</th>
+                  {isCustomerMode && (
+                    <th className="text-right py-3 px-4 text-gray-500 font-medium text-sm"></th>
+                  )}
                 </tr>
               </thead>
               <tbody>
-                {filteredData.map((item) => (
-                  <tr key={item.Job_ID} className="border-b border-gray-200 hover:bg-gray-50">
-                    <td className="py-3 px-4">
-                      <input
-                        type="checkbox"
-                        className="rounded bg-gray-100 border-gray-200"
-                        checked={selectedItems.includes(item.Job_ID)}
-                        onChange={() => toggleItem(item.Job_ID)}
-                      />
-                    </td>
+                 {filteredData.map((item) => (
+                  <tr key={item.Job_ID} className="border-b border-gray-200 hover:bg-gray-50 transition-colors group">
+                    {!isCustomerMode && (
+                      <td className="py-3 px-4">
+                        <input
+                          type="checkbox"
+                          className="rounded bg-gray-100 border-gray-200"
+                          checked={selectedItems.includes(item.Job_ID)}
+                          onChange={() => toggleItem(item.Job_ID)}
+                        />
+                      </td>
+                    )}
                     <td className="py-3 px-4 text-gray-800 font-medium">{item.Job_ID}</td>
-                    <td className="py-3 px-4 text-gray-700 flex items-center gap-2">
-                       <Building2 className="w-4 h-4 text-gray-400" />
-                      {item.Customer_Name || '-'}
+                    <td className="py-3 px-4 text-gray-700">
+                       <div className="flex items-center gap-2">
+                        <Building2 className="w-4 h-4 text-gray-400 group-hover:text-emerald-500 transition-colors" />
+                        {item.Customer_Name || '-'}
+                       </div>
                     </td>
-                    <td className="py-3 px-4 text-gray-500">{item.Plan_Date ? new Date(item.Plan_Date).toLocaleDateString('th-TH') : '-'}</td>
-                    <td className="py-3 px-4 text-gray-700">{item.Route_Name || '-'}</td>
-                    <td className="py-3 px-4 text-right text-emerald-400">
+                    <td className="py-3 px-4 text-gray-500 whitespace-nowrap">
+                        {item.Plan_Date ? new Date(item.Plan_Date).toLocaleDateString('th-TH') : '-'}
+                    </td>
+                    <td className="py-3 px-4 text-gray-700 truncate max-w-[200px]">{item.Route_Name || '-'}</td>
+                    <td className="py-3 px-4 text-right text-emerald-600 font-semibold">
                       ฿{(item.Price_Cust_Total || 0).toLocaleString()}
                     </td>
-                    <td className="py-3 px-4 text-right text-gray-800 font-medium">
+                    <td className="py-3 px-4 text-right text-gray-900 font-bold">
                       ฿{getJobTotal(item).toLocaleString()}
                     </td>
                     <td className="py-3 px-4 text-center">
-                      <span className="px-2 py-1 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-600">
-                        รายการรอดำเนินการ
+                      <span className={cn(
+                        "px-2.5 py-1 rounded-full text-xs font-bold",
+                        isCustomerMode 
+                          ? "bg-emerald-500/10 text-emerald-600" 
+                          : "bg-amber-500/10 text-amber-600"
+                      )}>
+                        {isCustomerMode ? "รอชำระเงิน" : "รายการรอดำเนินการ"}
                       </span>
                     </td>
+                    {isCustomerMode && (
+                      <td className="py-3 px-4 text-right">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-8 rounded-lg hover:bg-emerald-500/10 text-emerald-600 font-medium"
+                          onClick={() => router.push(`/admin/jobs/${item.Job_ID}`)}
+                        >
+                          <Eye className="w-4 h-4 mr-1.5" /> รายละเอียด
+                        </Button>
+                      </td>
+                    )}
                   </tr>
                 ))}
                 {filteredData.length === 0 && (

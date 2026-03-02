@@ -87,18 +87,18 @@ export async function getLatestDriverLocations() {
     }
 
     // Filter to latest record per driver
-    const latestLocations = new Map<string, GPSLog & { Driver_Name: string, Master_Drivers?: any }>()
+    const latestLocations = new Map<string, GPSLog & { Driver_Name: string, Master_Drivers?: Record<string, unknown> }>()
     
-    data?.forEach((log: any) => {
-        const driverId = log.driver_id || log.Driver_ID
+    data?.forEach((log: Record<string, unknown>) => {
+        const driverId = (log.driver_id || log.Driver_ID) as string
         if (!latestLocations.has(driverId)) {
             latestLocations.set(driverId, {
-              ...log,
+              ...(log as unknown as GPSLog),
               Driver_ID: driverId,
-              Driver_Name: log.Master_Drivers?.Driver_Name || 'Unknown Driver',
-              Latitude: log.latitude || log.Latitude,
-              Longitude: log.longitude || log.Longitude,
-              Timestamp: log.timestamp || log.Timestamp
+              Driver_Name: (log.Master_Drivers as Record<string, unknown>)?.Driver_Name as string || 'Unknown Driver',
+              Latitude: (log.latitude || log.Latitude) as number,
+              Longitude: (log.longitude || log.Longitude) as number,
+              Timestamp: (log.timestamp || log.Timestamp) as string
             })
         }
     })

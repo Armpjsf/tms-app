@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils"
 interface Driver {
   Driver_ID: string
   Driver_Name: string | null
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [key: string]: any
 }
 
@@ -57,11 +58,12 @@ export function DriverAutocomplete({
 
   // Sync query with value
   useEffect(() => {
-      if (selectedDriver && !open) {
+      if (selectedDriver && selectedDriver.Driver_Name !== query && !open) {
           setQuery(selectedDriver.Driver_Name || "")
-      } else if (!value && !open) {
+      } else if (!value && query && !open) {
           setQuery("")
       }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value, selectedDriver, open])
 
   const handleSelect = (driver: Driver) => {

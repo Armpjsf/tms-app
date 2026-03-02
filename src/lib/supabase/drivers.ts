@@ -324,7 +324,7 @@ export async function getDriverComplianceStats(branchId?: string) {
 export async function getDriverEfficiencySummary(branchId?: string) {
     try {
         const { data: drivers } = await getAllDrivers(1, 1000, '')
-        const targetDrivers = branchId ? drivers.filter((d: any) => d.Branch_ID === branchId) : drivers
+        const targetDrivers = branchId ? drivers.filter((d: Driver) => d.Branch_ID === branchId) : drivers
         
         if (!targetDrivers || targetDrivers.length === 0) return { avgSuccess: 0, avgOnTime: 0, totalDrivers: 0 }
         const scores = await Promise.all(targetDrivers.map((d: Driver) => getDriverScore(d.Driver_ID)))

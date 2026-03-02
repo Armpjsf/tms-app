@@ -72,6 +72,7 @@ export default function MobileChatPage() {
                     filter: `${receiverCol}=eq.${driverId}`
                 },
                 (payload) => {
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     const rawMsg = payload.new as any
                     const newMsg: ChatMessage = {
                         id: rawMsg[idCol] || rawMsg.id || rawMsg.Id || rawMsg.ID,

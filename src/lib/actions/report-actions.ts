@@ -5,6 +5,11 @@ import "jspdf-autotable"
 import { createAdminClient } from "@/utils/supabase/server"
 import { uploadFileToSupabase } from "@/lib/actions/supabase-upload"
 
+interface jsPDFWithPlugin extends jsPDF {
+    autoTable: (options: Record<string, unknown>) => void;
+    lastAutoTable: { finalY: number };
+}
+
 export async function generateJobPDF(jobId: string) {
     console.log(`[generateJobPDF] Starting PDF generation for Job: ${jobId}...`)
     
@@ -53,7 +58,7 @@ export async function generateJobPDF(jobId: string) {
             ["Delivery Time", job.Actual_Delivery_Time || "-"],
         ]
 
-        ;(doc as any).autoTable({
+        ;(doc as unknown as jsPDFWithPlugin).autoTable({
             startY: 50,
             head: [['Field', 'Value']],
             body: detailsData,
@@ -66,7 +71,7 @@ export async function generateJobPDF(jobId: string) {
         // Since fetching and converting all images might be heavy, for now we will 
         // provide links in metadata but let's try to embed at least the signature.
         
-        let finalY = (doc as any).lastAutoTable.finalY + 20
+        let finalY = (doc as unknown as jsPDFWithPlugin).lastAutoTable.finalY + 20
 
         // Signatures
         if (job.Signature_Url || job.Pickup_Signature_Url) {

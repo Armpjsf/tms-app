@@ -133,7 +133,7 @@ export async function updateUser(username: string, updates: Partial<UserData>) {
         return { success: false, error: "คุณไม่มีสิทธิ์แก้ไขข้อมูลของ Admin" }
     }
 
-    const updatePayload: any = {
+    const updatePayload: Record<string, unknown> = {
         Name: updates.Name,
         Branch_ID: updates.Branch_ID,
         Active_Status: updates.Active_Status,

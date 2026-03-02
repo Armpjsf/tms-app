@@ -120,7 +120,6 @@ const customerNavigation: NavGroup[] = [
         title: "เอกสารและบัญชี",
         items: [
             { title: "จัดการ POD", href: "/pod", icon: <FileText size={20} /> },
-            { title: "ยอดค้างชำระ", href: "/billing/customer", icon: <Receipt size={20} /> },
         ]
     }
 ]

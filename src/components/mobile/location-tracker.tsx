@@ -16,11 +16,15 @@ export function LocationTracker({ driverId }: { driverId?: string }) {
 
     // Check if geolocation is supported
     if (!("geolocation" in navigator)) {
-      setStatus("error")
+      if (status !== "error") {
+          setTimeout(() => setStatus("error"), 0)
+      }
       return
     }
 
-    setStatus("tracking")
+    if (status !== "tracking") {
+        setTimeout(() => setStatus("tracking"), 0)
+    }
 
     const watchId = navigator.geolocation.watchPosition(
         async (position) => {
@@ -54,7 +58,9 @@ export function LocationTracker({ driverId }: { driverId?: string }) {
         },
         (error) => {
             console.error("GPS Error:", error)
-            setStatus("error")
+            if (status !== "error") {
+                setTimeout(() => setStatus("error"), 0)
+            }
         },
         {
             enableHighAccuracy: true,
@@ -66,7 +72,7 @@ export function LocationTracker({ driverId }: { driverId?: string }) {
     return () => {
         if (watchId) navigator.geolocation.clearWatch(watchId)
     }
-  }, [driverId])
+  }, [driverId, status])
 
   if (status === "error") return null // Don't show anything on error
 

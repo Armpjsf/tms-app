@@ -40,7 +40,7 @@ export async function getJobGPSData(jobId: string, driverId: string, date: strin
         const latest = latestData?.[0]
 
         return {
-            route: finalRoute?.map(r => [r.latitude || (r as any).Latitude, r.longitude || (r as any).Longitude]) || [],
+            route: finalRoute?.map(r => [r.latitude || (r as Record<string, unknown>).Latitude, r.longitude || (r as Record<string, unknown>).Longitude]) || [],
             latest: latest ? {
                 lat: latest.latitude || latest.Latitude,
                 lng: latest.longitude || latest.Longitude,

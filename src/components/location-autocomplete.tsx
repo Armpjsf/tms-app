@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import { Search, MapPin, Check } from "lucide-react"
+import { MapPin } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
 
@@ -51,9 +51,10 @@ export function LocationAutocomplete({
 
   // Update query when value changes from outside
   useEffect(() => {
-     if (value && !query) {
+     if (value && value !== query) {
          setQuery(value)
      }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value])
 
   const handleSelect = (location: string) => {

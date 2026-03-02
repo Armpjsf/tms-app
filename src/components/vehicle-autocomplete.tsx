@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils"
 interface Vehicle {
   vehicle_plate: string
   vehicle_type: string | null
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [key: string]: any
 }
 
@@ -55,13 +56,14 @@ export function VehicleAutocomplete({
   // Update query when value changes from outside (e.g. initial load)
   useEffect(() => {
      // If value exists but query is empty, set query to value to show it
-     if (value && !query) {
+     if (value && value !== query) {
          setQuery(value)
      }
      // If value is cleared, clear query
      if (!value && query) {
          setQuery("")
      }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value])
 
   const handleSelect = (vehicle: Vehicle) => {
