@@ -3,26 +3,45 @@
 import { useState } from "react"
 import { Package } from "lucide-react"
 import { JobDialog } from "./job-dialog"
+import { RequestPreviewDialog } from "./request-preview-dialog"
 import { cn } from "@/lib/utils"
 import { Job } from "@/types/database"
 
+import { Driver } from "@/lib/supabase/drivers"
+import { Vehicle } from "@/lib/supabase/vehicles"
+import { Customer } from "@/lib/supabase/customers"
+
 type Props = {
   job: Job
-  drivers: any[]
-  vehicles: any[]
-  customers: any[]
-  routes: any[]
+  drivers: Driver[]
+  vehicles: Vehicle[]
+  customers: Customer[]
+  routes: { Origin?: string; Destination?: string }[]
   canViewPrice?: boolean
   canDelete?: boolean
 }
 
 export function RecentJobItem({ job, drivers, vehicles, customers, routes, canViewPrice = true, canDelete = true }: Props) {
   const [open, setOpen] = useState(false)
+  const [previewOpen, setPreviewOpen] = useState(false)
+
+  const handleOpen = () => {
+    if (job.Job_Status === 'Requested') {
+        setPreviewOpen(true)
+    } else {
+        setOpen(true)
+    }
+  }
+
+  const handleTransitionToPlan = () => {
+    setPreviewOpen(false)
+    setTimeout(() => setOpen(true), 100) // Small delay to allow clean dialog transition
+  }
 
   return (
     <>
       <div 
-        onClick={() => setOpen(true)}
+        onClick={handleOpen}
         className="p-6 hover:bg-emerald-500/5 transition-all cursor-pointer group relative overflow-hidden"
       >
         <div className="flex items-center justify-between relative z-10">
@@ -57,6 +76,13 @@ export function RecentJobItem({ job, drivers, vehicles, customers, routes, canVi
           </div>
         </div>
       </div>
+
+      <RequestPreviewDialog 
+        job={job}
+        open={previewOpen}
+        onOpenChange={setPreviewOpen}
+        onPlan={handleTransitionToPlan}
+      />
 
       <JobDialog
         mode="edit"

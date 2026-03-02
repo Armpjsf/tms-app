@@ -18,6 +18,10 @@ export interface Job {
     Signature_Url?: string | null;
     Pickup_Photo_Url?: string | null;
     Pickup_Signature_Url?: string | null;
+    Cargo_Type?: string | null;
+    Notes?: string | null;
+    Weight_Kg?: number | null;
+    Volume_Cbm?: number | null;
 }
 
 export interface Billing_Note {
