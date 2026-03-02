@@ -28,10 +28,10 @@ export default function ScanPage() {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[80vh] px-4">
-      <Card className="w-full max-w-md bg-slate-900 border-slate-800">
+      <Card className="w-full max-w-md bg-white border-gray-200">
         <CardContent className="pt-8 pb-6 text-center space-y-6">
           <div className="mx-auto w-20 h-20 rounded-full bg-blue-500/10 flex items-center justify-center relative">
-            <QrCode className={`w-10 h-10 text-blue-400 ${scanning ? 'animate-pulse' : ''}`} />
+            <QrCode className={`w-10 h-10 text-emerald-500 ${scanning ? 'animate-pulse' : ''}`} />
             {scanning && (
                 <div className="absolute inset-0 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
             )}
@@ -39,7 +39,7 @@ export default function ScanPage() {
           
           <div>
             <h1 className="text-xl font-bold text-white mb-2">Barcode / QR Scanner</h1>
-            <p className="text-slate-400 text-sm">
+            <p className="text-gray-500 text-sm">
               สแกน Barcode หรือ QR Code เพื่อค้นหางานหรือยืนยันการส่งสินค้า
             </p>
           </div>
@@ -54,7 +54,7 @@ export default function ScanPage() {
           />
 
           <Button 
-            className="w-full bg-blue-600 hover:bg-blue-700 h-12 text-lg" 
+            className="w-full bg-emerald-600 hover:bg-blue-700 h-12 text-lg" 
             onClick={openCamera}
             disabled={scanning}
           >
@@ -64,7 +64,7 @@ export default function ScanPage() {
 
           {/* Fallback for manual search */}
           <Link href="/mobile/jobs" className="block">
-            <Button variant="ghost" className="w-full text-slate-400 hover:text-white hover:bg-slate-800">
+            <Button variant="ghost" className="w-full text-gray-500 hover:text-white hover:bg-gray-100">
                 ค้นหางานด้วยตัวเอง
             </Button>
           </Link>

@@ -41,13 +41,13 @@ export default function DebugDBPage() {
   }, [])
 
   return (
-    <div className="p-8 bg-slate-900 text-white min-h-screen font-mono">
+    <div className="p-8 bg-white text-white min-h-screen font-mono">
       <h1 className="text-2xl font-bold mb-6 text-emerald-400">Database Debugger</h1>
       
       <div className="grid grid-cols-2 gap-8">
         {/* Client Side Results */}
-        <div className="border border-slate-700 p-4 rounded-lg bg-slate-800">
-          <h2 className="text-xl font-bold mb-4 text-blue-400">Client-Side Fetch</h2>
+        <div className="border border-gray-200 p-4 rounded-lg bg-gray-100">
+          <h2 className="text-xl font-bold mb-4 text-emerald-500">Client-Side Fetch</h2>
           {clientError ? (
              <div className="bg-red-900/50 p-4 rounded border border-red-500 text-red-200">
                 <h3 className="font-bold">Error:</h3>
@@ -57,7 +57,7 @@ export default function DebugDBPage() {
              <div className="space-y-2">
                 <p><strong>Total Count:</strong> {clientData.count}</p>
                 <p><strong>First 5 rows:</strong></p>
-                <pre className="text-xs bg-slate-900 p-2 rounded overflow-auto max-h-[400px]">
+                <pre className="text-xs bg-white p-2 rounded overflow-auto max-h-[400px]">
                     {JSON.stringify(clientData.data, null, 2)}
                 </pre>
              </div>
@@ -67,14 +67,14 @@ export default function DebugDBPage() {
         </div>
 
         {/* Server Action Results */}
-        <div className="border border-slate-700 p-4 rounded-lg bg-slate-800">
+        <div className="border border-gray-200 p-4 rounded-lg bg-gray-100">
           <h2 className="text-xl font-bold mb-4 text-purple-400">Server Action (getJobCreationData)</h2>
            {serverData ? (
              <div className="space-y-2">
                 <p><strong>Customers Count:</strong> {serverData.customers?.length}</p>
                 <p><strong>Drivers Count:</strong> {serverData.drivers?.length}</p>
                  <p><strong>First Customer:</strong></p>
-                <pre className="text-xs bg-slate-900 p-2 rounded overflow-auto max-h-[200px]">
+                <pre className="text-xs bg-white p-2 rounded overflow-auto max-h-[200px]">
                     {JSON.stringify(serverData.customers?.[0], null, 2)}
                 </pre>
                 {serverData.customers?.length === 0 && (

@@ -51,7 +51,7 @@ export default async function DriverPaymentPrintPage(props: Props) {
     const netTotal = subtotal - withholding
 
     return (
-        <div className="bg-white min-h-screen p-4 text-black print:p-0">
+        <div className="bg-white min-h-screen p-4 text-black print:p-0 print-container">
             <AutoPrint />
             
             <div id="printable-content" className="max-w-[210mm] mx-auto bg-white p-6 print:w-full print:max-w-none print:px-10 print:py-4 relative">

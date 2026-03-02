@@ -33,7 +33,7 @@ export function JobWorkflow({ currentStatus, className }: JobWorkflowProps) {
     <div className={cn("py-4", className)}>
       <div className="relative flex justify-between">
         {/* Background Line */}
-        <div className="absolute top-5 left-0 w-full h-0.5 bg-slate-800" />
+        <div className="absolute top-5 left-0 w-full h-0.5 bg-gray-100" />
         
         {/* Progress Line */}
         <div 
@@ -52,15 +52,15 @@ export function JobWorkflow({ currentStatus, className }: JobWorkflowProps) {
                 className={cn(
                   "w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300",
                   isCompleted ? "bg-emerald-500 text-white" : 
-                  isActive ? "bg-blue-600 text-white ring-4 ring-blue-600/20 animate-pulse" : 
-                  "bg-slate-900 border-2 border-slate-700 text-slate-500"
+                  isActive ? "bg-emerald-600 text-white ring-4 ring-emerald-600/20 animate-pulse" : 
+                  "bg-white border-2 border-gray-200 text-gray-400"
                 )}
               >
                 <StepIcon size={18} />
               </div>
               <p className={cn(
                 "mt-2 text-[10px] font-bold text-center",
-                isCompleted || isActive ? "text-slate-200" : "text-slate-500"
+                isCompleted || isActive ? "text-gray-800" : "text-gray-400"
               )}>
                 {step.label}
               </p>
@@ -71,11 +71,11 @@ export function JobWorkflow({ currentStatus, className }: JobWorkflowProps) {
       
       {/* Dynamic Instruction */}
       {currentIndex < STEPS.length - 1 && normalizedStatus !== 'Completed' && (
-        <div className="mt-6 p-3 bg-blue-600/10 border border-blue-600/20 rounded-lg flex items-start gap-3">
-          <Clock className="text-blue-400 shrink-0 mt-0.5" size={16} />
+        <div className="mt-6 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-lg flex items-start gap-3">
+          <Clock className="text-emerald-500 shrink-0 mt-0.5" size={16} />
           <div>
-            <p className="text-xs font-bold text-blue-400">คำแนะนำขั้นตอนปัจจุบัน:</p>
-            <p className="text-[11px] text-slate-300">
+            <p className="text-xs font-bold text-emerald-500">คำแนะนำขั้นตอนปัจจุบัน:</p>
+            <p className="text-[11px] text-gray-700">
                {currentIndex === -1 ? 'คุณได้รับมอบหมายงานใหม่ กรุณากดปุ่ม "รับงาน" ด้านล่างเพื่อเริ่มดำเนินการ' : 
                 currentIndex === 0 ? 'ขณะนี้คุณกำลังเดินทางไปรับสินค้า เมื่อถึงที่หมายแล้วให้กด "ถึงจุดรับสินค้า"' :
                 currentIndex === 1 ? 'กรุณาถ่ายรูปสินค้าและเซ็นชื่อรับของ เพื่อยืนยันการรับสินค้าเข้าระบบ' :

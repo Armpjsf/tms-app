@@ -63,60 +63,60 @@ export default async function InvoicesPage({
       <DataSection title="รายการใบกำกับภาษี" icon={<FileText size={18} />}
         headerAction={
             <div className="relative">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-500" />
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-400" />
                 <Input
                     placeholder="Search Invoice ID..."
-                    className="pl-9 w-[250px] bg-slate-900/60 border-slate-800 rounded-xl"
+                    className="pl-9 w-[250px] bg-white/80 border-gray-200 rounded-xl"
                     defaultValue={query}
                 />
             </div>
         }
       >
-          <div className="rounded-md border border-slate-800/50">
+          <div className="rounded-md border border-gray-200">
             <Table>
-              <TableHeader className="bg-slate-800/30">
-                <TableRow className="border-slate-800 hover:bg-slate-800/50">
-                  <TableHead className="text-slate-400">เลขที่เอกสาร</TableHead>
-                  <TableHead className="text-slate-400">ลูกค้า</TableHead>
-                  <TableHead className="text-slate-400">วันที่</TableHead>
-                  <TableHead className="text-slate-400">วันครบกำหนด</TableHead>
-                  <TableHead className="text-right text-slate-400">ยอดสุทธิ</TableHead>
-                  <TableHead className="text-center text-slate-400">สถานะ</TableHead>
+              <TableHeader className="bg-gray-50">
+                <TableRow className="border-gray-200 hover:bg-gray-50">
+                  <TableHead className="text-gray-500">เลขที่เอกสาร</TableHead>
+                  <TableHead className="text-gray-500">ลูกค้า</TableHead>
+                  <TableHead className="text-gray-500">วันที่</TableHead>
+                  <TableHead className="text-gray-500">วันครบกำหนด</TableHead>
+                  <TableHead className="text-right text-gray-500">ยอดสุทธิ</TableHead>
+                  <TableHead className="text-center text-gray-500">สถานะ</TableHead>
                   <TableHead className="w-[50px]"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {invoices.length === 0 ? (
                     <TableRow>
-                        <TableCell colSpan={7} className="h-24 text-center text-slate-500">
+                        <TableCell colSpan={7} className="h-24 text-center text-gray-400">
                             ไม่พบรายการใบกำกับภาษี
                         </TableCell>
                     </TableRow>
                 ) : (
                     invoices.map((inv: any) => (
-                      <TableRow key={inv.Invoice_ID} className="border-slate-800 hover:bg-white/[0.02]">
-                        <TableCell className="font-medium text-slate-200">
+                      <TableRow key={inv.Invoice_ID} className="border-gray-200 hover:bg-white/[0.02]">
+                        <TableCell className="font-medium text-gray-800">
                             <div className="flex flex-col">
                                 <span>{inv.Invoice_ID}</span>
                                 {inv.Tax_Invoice_ID && (
-                                    <span className="text-xs text-slate-500">{inv.Tax_Invoice_ID}</span>
+                                    <span className="text-xs text-gray-400">{inv.Tax_Invoice_ID}</span>
                                 )}
                             </div>
                         </TableCell>
-                        <TableCell className="text-slate-300">{inv.Customer_Name}</TableCell>
-                        <TableCell className="text-slate-400">{new Date(inv.Issue_Date).toLocaleDateString('th-TH')}</TableCell>
-                        <TableCell className="text-slate-400">
+                        <TableCell className="text-gray-700">{inv.Customer_Name}</TableCell>
+                        <TableCell className="text-gray-500">{new Date(inv.Issue_Date).toLocaleDateString('th-TH')}</TableCell>
+                        <TableCell className="text-gray-500">
                             {inv.Due_Date ? new Date(inv.Due_Date).toLocaleDateString('th-TH') : '-'}
                         </TableCell>
-                        <TableCell className="text-right font-medium text-slate-200">
+                        <TableCell className="text-right font-medium text-gray-800">
                             {Number(inv.Grand_Total || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                         </TableCell>
                         <TableCell className="text-center">
                             <Badge variant="outline" className={`
                                 ${inv.Status === 'Paid' ? 'border-emerald-500 text-emerald-500 bg-emerald-500/10' : 
-                                  inv.Status === 'Sent' ? 'border-blue-500 text-blue-500 bg-blue-500/10' :
+                                  inv.Status === 'Sent' ? 'border-blue-500 text-emerald-600 bg-blue-500/10' :
                                   inv.Status === 'Overdue' ? 'border-red-500 text-red-500 bg-red-500/10' :
-                                  'border-slate-500 text-slate-500 bg-slate-500/10'}
+                                  'border-slate-500 text-gray-400 bg-slate-500/10'}
                             `}>
                                 {inv.Status}
                             </Badge>
@@ -129,12 +129,12 @@ export default async function InvoicesPage({
                                 <MoreHorizontal className="h-4 w-4" />
                               </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="bg-slate-900 border-slate-800">
+                            <DropdownMenuContent align="end" className="bg-white border-gray-200">
                               <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                              <DropdownMenuItem className="focus:bg-slate-800 cursor-pointer">
+                              <DropdownMenuItem className="focus:bg-gray-100 cursor-pointer">
                                 <FileCheck className="mr-2 h-4 w-4" /> ดูรายละเอียด
                               </DropdownMenuItem>
-                              <DropdownMenuItem className="focus:bg-slate-800 cursor-pointer" asChild>
+                              <DropdownMenuItem className="focus:bg-gray-100 cursor-pointer" asChild>
                                 <Link href={`/billing/print/${inv.Invoice_ID}`} target="_blank">
                                   <Download className="mr-2 h-4 w-4" /> ดาวน์โหลด PDF
                                 </Link>

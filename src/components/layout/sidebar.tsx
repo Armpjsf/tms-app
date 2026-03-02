@@ -21,7 +21,6 @@ import {
   Activity,
   Users,
   CalendarDays,
-  Package,
   Receipt,
   Wallet,
   Building,
@@ -49,6 +48,7 @@ interface NavGroup {
 }
 
 const navigation: NavGroup[] = [
+  // ... (existing navigation stays for Admin/Staff)
   {
     title: "หลัก",
     items: [
@@ -60,8 +60,7 @@ const navigation: NavGroup[] = [
     items: [
       { title: "วางแผนงาน", href: "/planning", icon: <CalendarDays size={20} /> },
       { title: "ประวัติงาน", href: "/jobs/history", icon: <History size={20} /> },
-      { title: "ติดตาม", href: "/monitoring", icon: <Package size={20} /> },
-      { title: "GPS ติดตามรถ", href: "/gps", icon: <MapPin size={20} /> },
+      { title: "Control Centre", href: "/monitoring", icon: <Activity size={20} />, badge: "Live", badgeColor: "green" },
       { title: "จัดการ POD", href: "/pod", icon: <FileText size={20} /> },
       { title: "SOS Alerts", href: "/sos", icon: <AlertTriangle size={20} />, badgeColor: "red" },
       { title: "แชท", href: "/chat", icon: <MessageSquare size={20} />, badgeColor: "blue" },
@@ -82,6 +81,7 @@ const navigation: NavGroup[] = [
     items: [
       { title: "Executive Dashboard", href: "/admin/analytics", icon: <PieChart size={20} /> },
       { title: "Fleet & Efficiency", href: "/admin/vehicles", icon: <Activity size={20} /> },
+      { title: "Customer Feedback", href: "/admin/analytics/feedback", icon: <MessageSquare size={20} /> },
       { title: "ติดตามรายสาขา", href: "/admin/analytics/regional", icon: <MapPin size={20} /> },
       { title: "รายงานทั่วไป", href: "/reports", icon: <BarChart3 size={20} /> },
     ],
@@ -107,27 +107,72 @@ const navigation: NavGroup[] = [
   },
 ]
 
+const customerNavigation: NavGroup[] = [
+    {
+      title: "ระบบสำหรับลูกค้า",
+      items: [
+        { title: "ภาพรวมขนส่ง", href: "/dashboard", icon: <LayoutDashboard size={20} /> },
+        { title: "ติดตามงาน", href: "/monitoring", icon: <Activity size={20} />, badge: "Live", badgeColor: "green" },
+        { title: "ประวัติรายการ", href: "/jobs/history", icon: <History size={20} /> },
+      ],
+    },
+    {
+        title: "เอกสารและบัญชี",
+        items: [
+            { title: "จัดการ POD", href: "/pod", icon: <FileText size={20} /> },
+            { title: "ยอดค้างชำระ", href: "/billing/customer", icon: <Receipt size={20} /> },
+        ]
+    }
+]
+
 interface SidebarProps {
   collapsed?: boolean
   onToggle?: () => void
 }
 
+const navContainer = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.03,
+      delayChildren: 0.1
+    }
+  }
+}
+
+const navItemVar = {
+  hidden: { opacity: 0, x: -10 },
+  show: { opacity: 1, x: 0 }
+}
+
 export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
   const pathname = usePathname()
   const [userRole, setUserRole] = React.useState<number | null>(null)
+  const [isCustomerUser, setIsCustomerUser] = React.useState(false)
 
   React.useEffect(() => {
     async function checkRole() {
         const role = await getUserRole()
         setUserRole(role || null)
+        
+        // Also check if customer
+        const { isCustomer } = await import("@/lib/permissions")
+        const customerFlag = await isCustomer()
+        setIsCustomerUser(customerFlag)
     }
     checkRole()
   }, [])
 
-  const filteredNavigation = navigation.filter(group => {
-    if (!userRole) return false // Wait for role or hide all if not authenticated
+  // If customer, show customer-only menu
+  const activeNavigation = isCustomerUser ? customerNavigation : navigation
 
-    // 1: Super Admin, 2: Admin, 3: Dispatcher, 4: Accountant, 5: Staff
+  const filteredNavigation = activeNavigation.filter(group => {
+    if (userRole === null) return true 
+    
+    // Customers skip internal logic
+    if (isCustomerUser) return true
+
     if (group.title === "ผู้บริหาร & รายงาน") {
       return [1, 2].includes(userRole)
     }
@@ -138,7 +183,6 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
       return [1, 2].includes(userRole)
     }
     
-    // Accountant (4) shouldn't see daily operations like planning/fleet unless specified
     if (group.title === "ปฏิบัติการ" || group.title === "กองยาน") {
         if (userRole === 4) return false
     }
@@ -152,22 +196,23 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
       animate={{ x: 0, width: collapsed ? 80 : 280 }}
       transition={{ duration: 0.3, ease: "easeInOut" }}
       className={cn(
-        "fixed top-0 left-0 h-screen z-50 flex flex-col",
-        "bg-sidebar border-r border-sidebar-border text-sidebar-foreground shadow-2xl transition-colors duration-300"
+        "fixed top-0 left-0 h-screen z-[1000] flex flex-col",
+        "bg-white border-r border-gray-100 text-gray-700 shadow-xl transition-all duration-300"
       )}
     >
       {/* Logo */}
-      <div className="flex items-center justify-between h-20 px-4 border-b border-sidebar-border bg-sidebar-primary/5 backdrop-blur-sm">
-        <AnimatePresence>
+      <div className="flex items-center justify-between h-20 px-4 border-b border-gray-100 bg-emerald-50/10 backdrop-blur-sm">
+        <AnimatePresence mode="wait">
           {!collapsed && (
             <motion.div
+              key="logo"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               className="flex items-center gap-3"
             >
               <div className="relative">
-                <div className="absolute inset-0 bg-blue-500 blur-lg opacity-50 rounded-full"></div>
+                <div className="absolute inset-0 bg-emerald-500 blur-lg opacity-30 rounded-full"></div>
                 <Image 
                     src="/logo.png" 
                     alt="LOGIS-PRO 360" 
@@ -177,8 +222,8 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
                 />
               </div>
               <div>
-                <h1 className="text-sidebar-foreground font-bold text-lg leading-tight tracking-tight">LOGIS-PRO</h1>
-                <p className="text-[10px] text-primary/60 font-medium tracking-widest">360 ENTERPRISE</p>
+                <h1 className="text-gray-900 font-black text-lg leading-tight tracking-tight">LOGIS-PRO</h1>
+                <p className="text-[10px] text-emerald-600/80 font-black tracking-widest">360 ENTERPRISE</p>
               </div>
             </motion.div>
           )}
@@ -186,7 +231,7 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
         
         <button
           onClick={onToggle}
-          className="p-2 rounded-xl hover:bg-muted/10 transition-colors text-muted-foreground hover:text-foreground"
+          className="p-2 rounded-xl hover:bg-gray-100 transition-colors text-gray-500 hover:text-emerald-700"
         >
           <ChevronLeft
             size={20}
@@ -197,106 +242,91 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
 
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto py-6 px-3 custom-scrollbar">
+        <motion.div variants={navContainer} initial="hidden" animate="show">
         {filteredNavigation.map((group) => (
           <div key={group.title} className="mb-6">
-            <AnimatePresence>
-              {!collapsed && (
-                <motion.h2
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="px-4 mb-3 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60"
-                >
-                  {group.title}
-                </motion.h2>
-              )}
-            </AnimatePresence>
+            {!collapsed && (
+              <h2 className="px-4 mb-3 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                {group.title}
+              </h2>
+            )}
             
             <div className="space-y-1">
               {group.items.map((item) => {
                 const isActive = pathname === item.href
-                
                 return (
-                  <Link key={item.href} href={item.href} prefetch={false}>
-                    <div className="relative">
-                        <motion.div
-                        whileHover={{ x: 4 }}
-                        whileTap={{ scale: 0.98 }}
-                        className={cn(
-                            "relative flex items-center gap-3 px-3 py-3 rounded-2xl transition-all duration-300",
-                            isActive
-                            ? "bg-primary/15 text-primary border border-primary/20 shadow-lg shadow-primary/10 ring-1 ring-primary/10"
-                            : "text-muted-foreground hover:text-foreground hover:bg-white/[0.03] border border-transparent hover:border-white/5"
-                        )}
+                  <div key={item.href}>
+                    <Link href={item.href} prefetch={false} className="block">
+                        <div
+                          className={cn(
+                               "relative flex items-center gap-3 px-3 py-3 rounded-2xl transition-all duration-200 group",
+                                isActive
+                                ? "bg-emerald-50 text-emerald-700 border border-emerald-100 shadow-sm"
+                                : "text-slate-600 hover:text-emerald-700 hover:bg-emerald-50/50 border border-transparent"
+                          )}
                         >
-                        {/* Active Indicator Strip */}
-                        {isActive && (
-                            <div
-                            className="absolute left-0 top-1/2 -translate-y-1/2 h-7 w-1 bg-primary rounded-r-full shadow-[0_0_12px_rgba(59,130,246,0.6)]"
-                            />
-                        )}
-                        
-                        <span className={cn(
-                            "flex-shrink-0 transition-colors duration-300",
-                            isActive ? "text-primary drop-shadow-[0_0_8px_rgba(0,0,0,0.1)]" : "group-hover:text-primary"
-                        )}>
-                            {item.icon}
-                        </span>
-                        
-                        <AnimatePresence>
-                            {!collapsed && (
-                            <motion.span
-                                initial={{ opacity: 0, width: 0 }}
-                                animate={{ opacity: 1, width: "auto" }}
-                                exit={{ opacity: 0, width: 0 }}
-                                className="text-sm font-medium whitespace-nowrap"
-                            >
+                          {/* Active Indicator Strip */}
+                          {isActive && (
+                              <div
+                                className="absolute left-0 top-1/2 -translate-y-1/2 h-7 w-1 bg-emerald-500 rounded-r-full"
+                              />
+                          )}
+                          
+                          <span className={cn(
+                              "flex-shrink-0 transition-colors duration-200",
+                               isActive ? "text-emerald-600" : "group-hover:text-emerald-600"
+                          )}>
+                              {item.icon}
+                          </span>
+                          
+                          {!collapsed && (
+                            <span className="text-sm font-bold whitespace-nowrap">
                                 {item.title}
-                            </motion.span>
-                            )}
-                        </AnimatePresence>
-                        
-                        {/* Badge */}
-                        {item.badge && !collapsed && (
-                            <motion.span
-                            initial={{ scale: 0 }}
-                            animate={{ scale: 1 }}
-                            className={cn(
-                                "ml-auto px-2 py-0.5 text-[10px] font-bold rounded-full shadow-sm",
-                                item.badgeColor === "red" && "bg-red-500/20 text-red-400 border border-red-500/30",
-                                item.badgeColor === "blue" && "bg-blue-500/20 text-blue-400 border border-blue-500/30",
-                                item.badgeColor === "green" && "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30",
-                                item.badgeColor === "yellow" && "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30"
-                            )}
-                            >
-                            {item.badge}
-                            </motion.span>
-                        )}
-                        </motion.div>
-                    </div>
-                  </Link>
+                            </span>
+                          )}
+                          
+                          {/* Badge */}
+                          {item.badge && !collapsed && (
+                              <span
+                                className={cn(
+                                    "ml-auto px-2 py-0.5 text-[10px] font-black rounded-full",
+                                    item.badgeColor === "red" && "bg-red-50 text-red-700 border border-red-100",
+                                    item.badgeColor === "blue" && "bg-blue-50 text-blue-700 border border-blue-100",
+                                    item.badgeColor === "green" && "bg-emerald-50 text-emerald-700 border border-emerald-100",
+                                    item.badgeColor === "yellow" && "bg-yellow-50 text-yellow-700 border border-yellow-100"
+                                )}
+                              >
+                                {item.badge}
+                              </span>
+                          )}
+                        </div>
+                    </Link>
+                  </div>
                 )
               })}
             </div>
           </div>
         ))}
+        </motion.div>
 
-        {/* Extra Settings Link */}
-        <div className="pb-2">
-            <Link href="/settings">
-                <motion.div
-                    whileHover={{ x: 4 }}
-                    className="flex items-center gap-3 px-3 py-3 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-all group"
-                >
-                    <Settings size={20} className="group-hover:text-primary transition-colors" />
-                    {!collapsed && <span className="text-sm font-medium">ตั้งค่า</span>}
-                </motion.div>
-            </Link>
-        </div>
+        {/* Extra Settings Link - Hidden for customers */}
+        {!isCustomerUser && (
+            <div className="pb-2">
+                <Link href="/settings">
+                    <motion.div
+                        whileHover={{ x: 4 }}
+                        className="flex items-center gap-3 px-3 py-3 rounded-xl text-gray-600 hover:text-emerald-700 hover:bg-emerald-50 transition-all group"
+                    >
+                        <Settings size={20} className="group-hover:text-emerald-600 transition-colors" />
+                        {!collapsed && <span className="text-sm font-bold">ตั้งค่า</span>}
+                    </motion.div>
+                </Link>
+            </div>
+        )}
       </nav>
 
       {/* Bottom Profile Section */}
-      <div className="p-4 border-t border-sidebar-border bg-muted/30 backdrop-blur-md">
+      <div className="p-4 border-t border-gray-100 bg-gray-50/50">
         <SidebarProfile collapsed={collapsed} />
       </div>
     </motion.aside>

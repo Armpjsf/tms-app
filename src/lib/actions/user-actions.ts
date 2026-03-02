@@ -103,6 +103,7 @@ export async function createUser(user: UserData) {
         }])
 
     if (error) {
+        console.error("Database error during user creation:", error)
         return { success: false, error: error.message }
     }
 

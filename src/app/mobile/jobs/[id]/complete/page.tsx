@@ -80,34 +80,45 @@ export default function JobCompletePage() {
         
         // 1. Capture Report BEFORE sending
         if (reportRef.current && job) {
-            try {
-                // Wait for all images in the report to load properly
-                await waitForImages(reportRef.current)
-                
-                // Small delay to ensure browser has painted
-                await new Promise(resolve => setTimeout(resolve, 500))
+            const captureReport = async (retryCount = 0): Promise<Blob | null> => {
+                try {
+                    // Wait for all images in the report to load properly
+                    await waitForImages(reportRef.current!)
+                    
+                    // Progressive delay based on retries
+                    const delay = 500 + (retryCount * 500)
+                    await new Promise(resolve => setTimeout(resolve, delay))
 
-                const canvas = await html2canvas(reportRef.current, {
-                    scale: 2, // High resolution
-                    useCORS: true,
-                    logging: true, // Enable logging for debugging
-                    backgroundColor: "#ffffff",
-                    windowWidth: 800 // Consistent with component width
-                })
+                    const canvas = await html2canvas(reportRef.current!, {
+                        scale: 2, // High resolution
+                        useCORS: true,
+                        logging: false, // Disabled to save memory
+                        backgroundColor: "#ffffff",
+                        windowWidth: 800, // Consistent with component width
+                        allowTaint: true
+                    })
+                    
+                    return new Promise<Blob | null>(resolve => 
+                        canvas.toBlob(resolve, 'image/jpeg', 0.8)
+                    )
+                } catch (err) {
+                    console.error(`Capture attempt ${retryCount + 1} failed:`, err)
+                    if (retryCount < 1) return captureReport(retryCount + 1)
+                    return null
+                }
+            }
+
+            try {
+                const reportBlob = await captureReport()
                 
-                const reportBlob = await new Promise<Blob | null>(resolve => 
-                    canvas.toBlob(resolve, 'image/jpeg', 0.8)
-                )
-                
-                if (reportBlob && reportBlob.size > 5000) { // Ensure it's not a tiny/empty blob
+                if (reportBlob && reportBlob.size > 5000) { 
                     formData.append("pod_report", reportBlob, `POD_Report_${params.id}.jpg`)
                     console.log("POD Report successfully generated and appended")
                 } else {
                     console.warn("POD Report generated but was too small or empty")
                 }
             } catch (err) {
-                console.error("Report Generation Failed:", err)
-                // We continue because we still have the raw photos and signature
+                console.error("Report Generation Critical Failure:", err)
             }
         }
 
@@ -189,7 +200,7 @@ export default function JobCompletePage() {
 
       <div className="space-y-6">
         <section>
-            <h2 className="text-white font-medium mb-2">1. ถ่ายรูปสินค้า</h2>
+            <h2 className="text-gray-800 font-medium mb-2">1. ถ่ายรูปสินค้า</h2>
             <CameraInput onImagesChange={setPhotos} maxImages={5} />
             
             {/* AI Verification Feedback */}
@@ -230,7 +241,7 @@ export default function JobCompletePage() {
         </section>
 
         <section>
-            <h2 className="text-white font-medium mb-2">2. ลายเซ็นผู้รับ</h2>
+            <h2 className="text-gray-800 font-medium mb-2">2. ลายเซ็นผู้รับ</h2>
             <SignaturePad onSave={setSignature} />
         </section>
 

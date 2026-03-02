@@ -120,7 +120,7 @@ export function MaintenanceDialog({
   return (
     <Dialog open={show} onOpenChange={setShow}>
       {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
-      <DialogContent className="sm:max-w-[425px] bg-slate-900/95 border-white/10 text-white max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[425px] bg-white/95 border-gray-200 text-white max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{initialData ? 'แก้ไขข้อมูลการซ่อม' : 'แจ้งซ่อมบำรุง'}</DialogTitle>
         </DialogHeader>
@@ -141,7 +141,7 @@ export function MaintenanceDialog({
               value={formData.Date_Report}
               onChange={(e) => setFormData({ ...formData, Date_Report: e.target.value })}
               required
-              className="bg-white/5 border-white/10"
+              className="bg-white/5 border-gray-200"
             />
           </div>
 
@@ -149,7 +149,7 @@ export function MaintenanceDialog({
             <div className="space-y-2">
                 <Label htmlFor="Driver_ID">ผู้แจ้ง</Label>
                 <Select value={formData.Driver_ID || undefined} onValueChange={(val) => setFormData({ ...formData, Driver_ID: val })}>
-                    <SelectTrigger className="w-full h-10 border-white/10 bg-white/5 text-white">
+                    <SelectTrigger className="w-full h-10 border-gray-200 bg-white/5 text-white">
                         <SelectValue placeholder="เลือกคนขับ" />
                     </SelectTrigger>
                     <SelectContent>
@@ -162,7 +162,7 @@ export function MaintenanceDialog({
             <div className="space-y-2">
                 <Label htmlFor="Vehicle_Plate">ทะเบียนรถ</Label>
                 <Select value={formData.Vehicle_Plate || undefined} onValueChange={(val) => setFormData({ ...formData, Vehicle_Plate: val })}>
-                    <SelectTrigger className="w-full h-10 border-white/10 bg-white/5 text-white">
+                    <SelectTrigger className="w-full h-10 border-gray-200 bg-white/5 text-white">
                         <SelectValue placeholder="เลือกทะเบียน" />
                     </SelectTrigger>
                     <SelectContent>
@@ -178,7 +178,7 @@ export function MaintenanceDialog({
             <div className="space-y-2">
                 <Label htmlFor="Issue_Type">ประเภทปัญหา</Label>
                 <Select value={formData.Issue_Type} onValueChange={(val) => setFormData({ ...formData, Issue_Type: val })}>
-                    <SelectTrigger className="w-full h-10 border-white/10 bg-white/5 text-white">
+                    <SelectTrigger className="w-full h-10 border-gray-200 bg-white/5 text-white">
                         <SelectValue placeholder="เลือกประเภท" />
                     </SelectTrigger>
                     <SelectContent>
@@ -193,7 +193,7 @@ export function MaintenanceDialog({
              <div className="space-y-2">
                 <Label htmlFor="Priority">ความสำคัญ</Label>
                 <Select value={formData.Priority} onValueChange={(val) => setFormData({ ...formData, Priority: val })}>
-                    <SelectTrigger className="w-full h-10 border-white/10 bg-white/5 text-white">
+                    <SelectTrigger className="w-full h-10 border-gray-200 bg-white/5 text-white">
                         <SelectValue placeholder="เลือกระดับ" />
                     </SelectTrigger>
                     <SelectContent>
@@ -213,17 +213,17 @@ export function MaintenanceDialog({
               onChange={(e) => setFormData({ ...formData, Description: e.target.value })}
               placeholder="รายละเอียด..."
               required
-              className="bg-white/5 border-white/10"
+              className="bg-white/5 border-gray-200"
             />
           </div>
 
           {initialData && (
-             <div className="pt-4 border-t border-white/10 space-y-4">
+             <div className="pt-4 border-t border-gray-200 space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                         <Label htmlFor="Status">สถานะ</Label>
                         <Select value={formData.Status} onValueChange={(val) => setFormData({ ...formData, Status: val })}>
-                            <SelectTrigger className="w-full h-10 border-white/10 bg-white/5 text-white">
+                            <SelectTrigger className="w-full h-10 border-gray-200 bg-white/5 text-white">
                                 <SelectValue placeholder="เลือกสถานะ" />
                             </SelectTrigger>
                             <SelectContent>
@@ -241,7 +241,7 @@ export function MaintenanceDialog({
                             type="number"
                             value={formData.Cost_Total}
                             onChange={(e) => setFormData({ ...formData, Cost_Total: parseFloat(e.target.value) || 0 })}
-                            className="bg-white/5 border-white/10"
+                            className="bg-white/5 border-gray-200"
                          />
                     </div>
                 </div>
@@ -252,7 +252,7 @@ export function MaintenanceDialog({
                         value={formData.Remark}
                         onChange={(e) => setFormData({ ...formData, Remark: e.target.value })}
                         placeholder="บันทึกการซ่อม..."
-                        className="bg-white/5 border-white/10"
+                        className="bg-white/5 border-gray-200"
                     />
                 </div>
              </div>

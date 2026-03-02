@@ -58,7 +58,7 @@ export function SignaturePad({ onSave }: Props) {
           onEnd={handleEnd}
         />
         {isEmpty && (
-           <div className="absolute inset-0 flex items-center justify-center pointer-events-none text-slate-400">
+           <div className="absolute inset-0 flex items-center justify-center pointer-events-none text-gray-500">
               เซ็นชื่อที่นี่ (หมึกสีดำ)
            </div>
         )}
@@ -68,7 +68,7 @@ export function SignaturePad({ onSave }: Props) {
         <Button 
             type="button" 
             variant="outline" 
-            className="flex-1 border-slate-700 text-slate-300 hover:bg-slate-800"
+            className="flex-1 border-gray-200 text-gray-700 hover:bg-gray-100"
             onClick={clear}
         >
           <Eraser size={16} className="mr-2" /> ล้าง

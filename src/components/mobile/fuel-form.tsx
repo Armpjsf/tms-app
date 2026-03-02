@@ -75,26 +75,26 @@ export function MobileFuelForm({ driverId, driverName, defaultVehiclePlate }: Mo
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-    <Card className="bg-slate-900 border-slate-800">
+    <Card className="bg-white border-gray-200">
         <CardContent className="p-4 space-y-4">
             
             <div className="space-y-2">
-                <Label className="text-white">ชื่อผู้เบิก</Label>
+                <Label className="text-foreground">ชื่อผู้เบิก</Label>
                 <div className="relative">
-                    <User className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                     <Input 
                         value={driverName} 
                         disabled 
-                        className="bg-slate-800 border-slate-700 pl-10 text-slate-300" 
+                        className="bg-gray-100 border-gray-200 pl-10 text-gray-700" 
                     />
                 </div>
             </div>
 
             <div className="space-y-2">
-                <Label className="text-white">ทะเบียนรถ</Label>
+                <Label className="text-foreground">ทะเบียนรถ</Label>
                 <Input 
                     placeholder="เลขทะเบียนรถ" 
-                    className="bg-slate-950 border-slate-700 text-white"
+                    className="bg-background border-gray-200 text-white"
                     value={plate}
                     onChange={(e) => setPlate(e.target.value)}
                     required
@@ -102,13 +102,13 @@ export function MobileFuelForm({ driverId, driverName, defaultVehiclePlate }: Mo
             </div>
 
             <div className="space-y-2">
-                <Label className="text-white">ยอดเงิน (บาท)</Label>
+                <Label className="text-foreground">ยอดเงิน (บาท)</Label>
                 <div className="relative">
-                    <Fuel className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+                    <Fuel className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                     <Input 
                         type="number" 
                         placeholder="0.00" 
-                        className="bg-slate-950 border-slate-700 pl-10 text-white"
+                        className="bg-background border-gray-200 pl-10 text-white"
                         value={amount}
                         onChange={(e) => setAmount(e.target.value)}
                         required
@@ -117,11 +117,11 @@ export function MobileFuelForm({ driverId, driverName, defaultVehiclePlate }: Mo
             </div>
 
             <div className="space-y-2">
-                <Label className="text-white">จำนวนลิตร</Label>
+                <Label className="text-foreground">จำนวนลิตร</Label>
                 <Input 
                     type="number" 
                     placeholder="0.00" 
-                    className="bg-slate-950 border-slate-700 text-white"
+                    className="bg-background border-gray-200 text-white"
                     value={liters}
                     onChange={(e) => setLiters(e.target.value)}
                     required
@@ -129,11 +129,11 @@ export function MobileFuelForm({ driverId, driverName, defaultVehiclePlate }: Mo
             </div>
 
             <div className="space-y-2">
-                <Label className="text-white">เลขไมล์</Label>
+                <Label className="text-foreground">เลขไมล์</Label>
                 <Input 
                     type="number" 
                     placeholder="เลขไมล์ปัจจุบัน" 
-                    className="bg-slate-950 border-slate-700 text-white"
+                    className="bg-background border-gray-200 text-white"
                     value={mileage}
                     onChange={(e) => setMileage(e.target.value)}
                     required
@@ -141,10 +141,10 @@ export function MobileFuelForm({ driverId, driverName, defaultVehiclePlate }: Mo
             </div>
 
             <div className="space-y-2">
-                <Label className="text-white">ชื่อปั๊มน้ำมัน</Label>
+                <Label className="text-foreground">ชื่อปั๊มน้ำมัน</Label>
                 <Input 
                     placeholder="เช่น ปตท. สาขา..." 
-                    className="bg-slate-950 border-slate-700 text-white"
+                    className="bg-background border-gray-200 text-white"
                     value={station}
                     onChange={(e) => setStation(e.target.value)}
                     required
@@ -152,7 +152,7 @@ export function MobileFuelForm({ driverId, driverName, defaultVehiclePlate }: Mo
             </div>
 
             <div className="space-y-2">
-                <Label className="text-white">รูปใบเสร็จ / หน้าตู้</Label>
+                <Label className="text-foreground">รูปใบเสร็จ / หน้าตู้</Label>
                 <CameraInput onImagesChange={(files) => setPhoto(files[0] || null)} maxImages={1} />
             </div>
         </CardContent>
@@ -160,7 +160,7 @@ export function MobileFuelForm({ driverId, driverName, defaultVehiclePlate }: Mo
 
     <Button 
         type="submit" 
-        className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-bold"
+        className="w-full h-12 bg-emerald-600 hover:bg-blue-700 text-white font-bold"
         disabled={loading}
     >
         {loading ? <Loader2 className="animate-spin" /> : "บันทึกข้อมูล"}

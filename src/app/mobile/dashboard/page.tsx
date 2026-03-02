@@ -19,12 +19,12 @@ export default async function MobileDashboard() {
 
 
   return (
-    <div className="relative min-h-screen bg-slate-950 pb-24 pt-16 px-4 overflow-hidden">
+    <div className="relative min-h-screen bg-slate-50 pb-24 pt-16 px-4 overflow-hidden">
       {/* Animated Background Mesh */}
       <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/20 rounded-full blur-[120px] animate-pulse" />
-        <div className="absolute bottom-[10%] right-[-10%] w-[50%] h-[50%] bg-indigo-500/10 rounded-full blur-[120px] animate-pulse delay-1000" />
-        <div className="absolute top-[30%] right-[10%] w-[30%] h-[30%] bg-purple-500/10 rounded-full blur-[100px] animate-pulse delay-500" />
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-emerald-500/10 rounded-full blur-[120px] animate-pulse" />
+        <div className="absolute bottom-[10%] right-[-10%] w-[50%] h-[50%] bg-emerald-500/5 rounded-full blur-[120px] animate-pulse delay-1000" />
+        <div className="absolute top-[30%] right-[10%] w-[30%] h-[30%] bg-teal-500/10 rounded-full blur-[100px] animate-pulse delay-500" />
       </div>
 
       <MobileHeader title="TMS Elite" />

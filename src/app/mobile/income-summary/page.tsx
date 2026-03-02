@@ -24,16 +24,17 @@ export default async function IncomeSummaryPage() {
   // Fetch all completed/delivered jobs for this driver
   const { data: jobs } = await supabase
     .from('Jobs_Main')
-    .select('Job_ID, Plan_Date, Cost_Driver_Total, Job_Status, Customer_Name')
+    .select('Job_ID, Plan_Date, Cost_Driver_Total, Job_Status, Customer_Name, Show_Price_To_Driver')
     .eq('Driver_ID', session.driverId)
     .in('Job_Status', ['Completed', 'Delivered'])
     .order('Plan_Date', { ascending: false })
 
-  const totalEarnings = jobs?.reduce((sum: number, j: SummaryJob) => sum + (j.Cost_Driver_Total || 0), 0) || 0
+  const totalEarnings = jobs?.filter((j: any) => j.Show_Price_To_Driver !== false)
+    .reduce((sum: number, j: any) => sum + (j.Cost_Driver_Total || 0), 0) || 0
   const totalJobs = jobs?.length || 0
 
   return (
-    <div className="min-h-screen bg-slate-950 pb-24 pt-16 px-4">
+    <div className="min-h-screen bg-background pb-24 pt-16 px-4">
       <MobileHeader 
         title="สรุปรายได้" 
       />
@@ -60,28 +61,32 @@ export default async function IncomeSummaryPage() {
 
         {/* History List */}
         <div className="space-y-3">
-          <h3 className="text-slate-400 font-medium text-sm flex items-center gap-2">
+          <h3 className="text-gray-500 font-medium text-sm flex items-center gap-2">
             <Calendar size={14} /> ประวัติงานที่สำเร็จ
           </h3>
           
           {totalJobs === 0 ? (
-            <div className="text-center py-10 text-slate-600">
+            <div className="text-center py-10 text-gray-500">
               <p>ไม่พบประวัติงานที่สำเร็จ</p>
             </div>
           ) : (
             <div className="space-y-2">
               {jobs?.map((job: SummaryJob) => (
-                <Card key={job.Job_ID} className="bg-slate-900 border-slate-800">
+                <Card key={job.Job_ID} className="bg-white border-gray-200">
                   <CardContent className="p-4 flex justify-between items-center">
                     <div>
-                      <p className="text-white font-medium text-sm">{job.Customer_Name || job.Job_ID}</p>
-                      <p className="text-slate-500 text-[10px]">
+                      <p className="text-gray-800 font-medium text-sm">{job.Customer_Name || job.Job_ID}</p>
+                      <p className="text-gray-400 text-[10px]">
                         {job.Plan_Date ? new Date(job.Plan_Date).toLocaleDateString('th-TH') : '-'}
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="text-emerald-400 font-bold">+฿{job.Cost_Driver_Total?.toLocaleString()}</p>
-                      <div className="flex items-center justify-end gap-1 text-[10px] text-slate-500">
+                      {job.Show_Price_To_Driver !== false ? (
+                        <p className="text-emerald-400 font-bold">+฿{job.Cost_Driver_Total?.toLocaleString()}</p>
+                      ) : (
+                        <p className="text-gray-400 font-bold">***</p>
+                      )}
+                      <div className="flex items-center justify-end gap-1 text-[10px] text-gray-400">
                         <CheckCircle2 size={10} className="text-emerald-500" />
                         สำเร็จ
                       </div>

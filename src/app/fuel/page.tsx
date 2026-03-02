@@ -15,7 +15,7 @@ import {
   DollarSign,
   Hash,
 } from "lucide-react"
-import { getAllFuelLogs, getTodayFuelStats } from "@/lib/supabase/fuel"
+import { getAllFuelLogs } from "@/lib/supabase/fuel"
 import { getAllDrivers } from "@/lib/supabase/drivers"
 import { getAllVehicles } from "@/lib/supabase/vehicles"
 import { FuelDialog } from "@/components/fuel/fuel-dialog"
@@ -39,9 +39,8 @@ export default async function FuelPage(props: Props) {
   const endDate = (searchParams.endDate as string) || ''
   const limit = 20
 
-  const [{ data: logs, count }, stats, drivers, vehicles, analytics] = await Promise.all([
+  const [{ data: logs, count }, drivers, vehicles, analytics] = await Promise.all([
     getAllFuelLogs(page, limit, query, startDate, endDate),
-    getTodayFuelStats(),
     getAllDrivers(),
     getAllVehicles(),
     getFuelAnalytics(startDate || undefined, endDate || undefined),
@@ -68,10 +67,10 @@ export default async function FuelPage(props: Props) {
       />
 
       <StatsGrid columns={4} stats={[
-        { label: "ค่าใช้จ่ายวันนี้", value: `฿${stats.totalAmount.toLocaleString()}`, icon: <DollarSign size={20} />, color: "emerald" },
-        { label: "ปริมาณน้ำมัน", value: `${stats.totalLiters.toLocaleString()} L`, icon: <Droplets size={20} />, color: "blue" },
-        { label: "Km/L เฉลี่ย", value: "-", icon: <TrendingUp size={20} />, color: "amber" },
-        { label: "รายการวันนี้", value: logs.length, icon: <Hash size={20} />, color: "purple" },
+        { label: startDate || endDate ? "ค่าใช้จ่ายในห้วงเวลา" : "ยอดรวมการเติมน้้ามัน", value: `฿${analytics.totalCost.toLocaleString()}`, icon: <DollarSign size={20} />, color: "emerald" },
+        { label: "ปริมาณน้ำมันรวม", value: `${analytics.totalLiters.toLocaleString()} L`, icon: <Droplets size={20} />, color: "blue" },
+        { label: "Km/L เฉลี่ย", value: analytics.avgKmPerLiter > 0 ? `${analytics.avgKmPerLiter} Km/L` : "-", icon: <TrendingUp size={20} />, color: "amber" },
+        { label: "รายการทั้งหมด", value: `${analytics.totalLogs} รายการ`, icon: <Hash size={20} />, color: "purple" },
       ]} />
 
       {/* Search and Filter */}
@@ -85,14 +84,14 @@ export default async function FuelPage(props: Props) {
                     type="date" 
                     name="startDate"
                     defaultValue={startDate}
-                    className="bg-slate-900/60 border-slate-800 text-foreground w-auto rounded-xl"
+                    className="bg-white/80 border-gray-200 text-foreground w-auto rounded-xl"
                 />
                 <span className="text-muted-foreground">-</span>
                 <Input 
                     type="date" 
                     name="endDate"
                     defaultValue={endDate}
-                    className="bg-slate-900/60 border-slate-800 text-foreground w-auto rounded-xl"
+                    className="bg-white/80 border-gray-200 text-foreground w-auto rounded-xl"
                 />
                 <Button type="submit" variant="secondary" className="rounded-xl">กรอง</Button>
             </form>
@@ -107,7 +106,7 @@ export default async function FuelPage(props: Props) {
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="text-xs uppercase bg-slate-950/50 text-slate-500 border-b border-slate-800 font-bold">
+              <thead className="text-xs uppercase bg-white/80 text-gray-400 border-b border-gray-200 font-bold">
                 <tr>
                   <th className="text-left p-4">วันที่/เวลา</th>
                   <th className="text-left p-4">คนขับ</th>
@@ -126,7 +125,7 @@ export default async function FuelPage(props: Props) {
                 {logs.map((log) => (
                   <tr 
                     key={log.Log_ID} 
-                    className="border-b border-slate-800/50 hover:bg-white/[0.02] transition-colors"
+                    className="border-b border-gray-200 hover:bg-white/[0.02] transition-colors"
                   >
                     <td className="p-4">
                       <span className="text-foreground text-sm">
@@ -150,7 +149,7 @@ export default async function FuelPage(props: Props) {
                     </td>
                     <td className="p-4 text-center">
                       {log.Photo_Url ? (
-                          <div className="relative w-10 h-10 mx-auto rounded-lg overflow-hidden border border-slate-800 bg-muted group cursor-pointer">
+                          <div className="relative w-10 h-10 mx-auto rounded-lg overflow-hidden border border-gray-200 bg-muted group cursor-pointer">
                               <NextImage 
                                   src={log.Photo_Url} 
                                   alt="Receipt" 
@@ -228,7 +227,7 @@ export default async function FuelPage(props: Props) {
           </div>
         )}
 
-        <div className="p-4 border-t border-slate-800">
+        <div className="p-4 border-t border-gray-200">
            <Pagination totalItems={count || 0} limit={limit} />
         </div>
       </DataSection>

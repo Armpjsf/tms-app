@@ -50,22 +50,22 @@ export default function SecuritySettingsPage() {
           <Shield className="text-emerald-400" />
           ความปลอดภัย
         </h1>
-        <p className="text-slate-400">จัดการรหัสผ่านและความปลอดภัยของบัญชี</p>
+        <p className="text-gray-500">จัดการรหัสผ่านและความปลอดภัยของบัญชี</p>
       </div>
 
       <div className="space-y-6 max-w-2xl">
         {/* Change Password */}
-        <Card className="bg-slate-900/50 border-slate-800">
+        <Card className="bg-white/80 border-gray-200">
           <CardContent className="p-6">
             <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-              <Key size={20} className="text-indigo-400" />
+              <Key size={20} className="text-emerald-600" />
               เปลี่ยนรหัสผ่าน
             </h3>
             <div className="space-y-4">
               <div className="space-y-2">
-                <label className="text-sm text-slate-400">รหัสผ่านใหม่</label>
+                <label className="text-sm text-gray-500">รหัสผ่านใหม่</label>
                 <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                     <Input 
                         type="password" 
                         className="pl-10" 
@@ -75,9 +75,9 @@ export default function SecuritySettingsPage() {
                 </div>
               </div>
               <div className="space-y-2">
-                <label className="text-sm text-slate-400">ยืนยันรหัสผ่านใหม่</label>
+                <label className="text-sm text-gray-500">ยืนยันรหัสผ่านใหม่</label>
                 <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                     <Input 
                         type="password" 
                         className="pl-10" 
@@ -94,15 +94,15 @@ export default function SecuritySettingsPage() {
         </Card>
 
         {/* 2FA (Placeholder) */}
-        <Card className="bg-slate-900/50 border-slate-800">
+        <Card className="bg-white/80 border-gray-200">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
                 <div>
                     <h3 className="text-lg font-bold text-white mb-1 flex items-center gap-2">
-                        <Smartphone size={20} className="text-indigo-400" />
+                        <Smartphone size={20} className="text-emerald-600" />
                         การยืนยันตัวตน 2 ขั้นตอน (2FA)
                     </h3>
-                    <p className="text-sm text-slate-500">เพิ่มความปลอดภัยด้วยการยืนยันผ่าน Authenticatior App</p>
+                    <p className="text-sm text-gray-400">เพิ่มความปลอดภัยด้วยการยืนยันผ่าน Authenticatior App</p>
                 </div>
                 <Button variant="outline" disabled>เร็วๆ นี้</Button>
             </div>

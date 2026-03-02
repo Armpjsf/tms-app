@@ -37,9 +37,9 @@ export function CustomerRouteSection({
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Top Customers */}
-        <Card className="bg-slate-900/50 border-slate-800 backdrop-blur-sm">
-           <CardHeader className="border-b border-white/5 pb-4">
-             <CardTitle className="text-sm font-medium text-slate-200 flex items-center gap-2">
+        <Card className="bg-white/80 border-gray-200 backdrop-blur-sm">
+           <CardHeader className="border-b border-gray-200 pb-4">
+             <CardTitle className="text-sm font-medium text-gray-800 flex items-center gap-2">
                <Building2 size={16} className="text-purple-400" />
                Top Customers (Revenue)
              </CardTitle>
@@ -49,31 +49,31 @@ export function CustomerRouteSection({
                 {customers.map((c, i) => (
                     <div key={i} className="py-4 flex items-center justify-between group">
                         <div className="flex items-center gap-3">
-                             <div className={`w-8 h-8 rounded flex items-center justify-center text-sm font-bold text-white ${i < 3 ? 'bg-purple-500/20 text-purple-400' : 'bg-slate-800 text-slate-400'}`}>
+                             <div className={`w-8 h-8 rounded flex items-center justify-center text-sm font-bold text-white ${i < 3 ? 'bg-purple-500/20 text-purple-400' : 'bg-gray-100 text-gray-500'}`}>
                                 {i + 1}
                             </div>
                             <div>
-                                <div className="text-white font-medium text-sm group-hover:text-purple-400 transition-colors">{c.name}</div>
-                                <div className="text-xs text-slate-500 mt-0.5">{c.jobCount} Jobs</div>
+                                <div className="text-gray-800 font-medium text-sm group-hover:text-purple-400 transition-colors">{c.name}</div>
+                                <div className="text-xs text-gray-700 font-black mt-0.5">{c.jobCount} Jobs</div>
                             </div>
                         </div>
                         <div className="text-right">
-                             <div className="text-white font-bold text-sm">฿{c.revenue.toLocaleString()}</div>
-                             {/* <div className="text-[10px] text-slate-500 mt-0.5">Revenue</div> */}
+                             <div className="text-gray-950 font-black text-sm">฿{c.revenue.toLocaleString()}</div>
+                             {/* <div className="text-[10px] text-gray-400 mt-0.5">Revenue</div> */}
                         </div>
                     </div>
                 ))}
                 {customers.length === 0 && (
-                     <div className="py-8 text-center text-slate-500 text-sm">ไม่มีข้อมูลลูกค้า</div>
+                     <div className="py-8 text-center text-gray-400 text-sm">ไม่มีข้อมูลลูกค้า</div>
                 )}
              </div>
            </CardContent>
         </Card>
 
         {/* Route Profitability */}
-        <Card className="bg-slate-900/50 border-slate-800 backdrop-blur-sm">
-           <CardHeader className="border-b border-white/5 pb-4">
-             <CardTitle className="text-sm font-medium text-slate-200 flex items-center gap-2">
+        <Card className="bg-white/80 border-gray-200 backdrop-blur-sm">
+           <CardHeader className="border-b border-gray-200 pb-4">
+             <CardTitle className="text-sm font-medium text-gray-800 flex items-center gap-2">
                <TrendingUp size={16} className="text-emerald-400" />
                Route Profitability (Top 5)
              </CardTitle>
@@ -83,20 +83,20 @@ export function CustomerRouteSection({
                 {routes.slice(0, 5).map((r, i) => (
                     <div key={i} className="py-4 flex items-center justify-between">
                         <div>
-                            <div className="text-white font-medium text-sm">{r.route}</div>
+                            <div className="text-gray-800 font-medium text-sm">{r.route}</div>
                             <div className="flex items-center gap-2 mt-1">
-                                <span className="text-[10px] bg-slate-800 px-1.5 rounded text-slate-400">{r.count} trips</span>
-                                <span className="text-[10px] text-slate-500">Cost: ฿{r.cost.toLocaleString()}</span>
+                                <span className="text-[10px] bg-gray-100 px-1.5 rounded text-gray-500">{r.count} trips</span>
+                                <span className="text-[10px] text-gray-400">Cost: ฿{r.cost.toLocaleString()}</span>
                             </div>
                         </div>
                         <div className="text-right">
-                             <div className="text-emerald-400 font-bold text-sm">{r.margin.toFixed(1)}% Margin</div>
-                             <div className="text-[10px] text-slate-500 mt-0.5">Rev: ฿{r.revenue.toLocaleString()}</div>
+                             <div className="text-emerald-700 font-black text-sm">{r.margin.toFixed(1)}% Margin</div>
+                             <div className="text-[10px] text-gray-700 font-black mt-0.5">Rev: ฿{r.revenue.toLocaleString()}</div>
                         </div>
                     </div>
                 ))}
                 {routes.length === 0 && (
-                     <div className="py-8 text-center text-slate-500 text-sm">ไม่มีข้อมูลเส้นทาง</div>
+                     <div className="py-8 text-center text-gray-400 text-sm">ไม่มีข้อมูลเส้นทาง</div>
                 )}
              </div>
            </CardContent>

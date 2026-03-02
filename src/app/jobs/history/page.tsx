@@ -4,16 +4,13 @@ export const revalidate = 0
 import { SearchInput } from "@/components/ui/search-input"
 import { Pagination } from "@/components/ui/pagination"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
-import { Button } from "@/components/ui/button"
+import { PremiumButton } from "@/components/ui/premium-button"
+import { PremiumCard } from "@/components/ui/premium-card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { PageHeader } from "@/components/ui/page-header"
-import { StatsGrid } from "@/components/ui/stats-grid"
-import { DataSection } from "@/components/ui/data-section"
 import Link from "next/link"
 import { 
   History, 
-  CalendarDays,
   Truck,
   MapPin,
   Package,
@@ -23,7 +20,9 @@ import {
   Download,
   ArrowLeft,
   XCircle,
-  ListFilter
+  ListFilter,
+  TrendingUp,
+  Image as ImageIcon
 } from "lucide-react"
 import { getAllJobs } from "@/lib/supabase/jobs"
 import { getJobCreationData } from "@/app/planning/actions"
@@ -31,6 +30,7 @@ import { ExcelExport } from "@/components/ui/excel-export"
 import { JobHistoryActions } from "@/components/jobs/job-history-actions"
 import { HistoryStatusFilter } from "@/components/jobs/history-status-filter"
 import NextImage from "next/image"
+import { cn } from "@/lib/utils"
 
 import { isCustomer, hasPermission } from "@/lib/permissions"
 
@@ -64,208 +64,287 @@ export default async function JobHistoryPage(props: Props) {
   const historyJobs = jobs
 
   const statusConfig: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
-    New: { label: "ใหม่", color: "text-blue-400 bg-blue-500/20", icon: <Package size={14} /> },
-    Assigned: { label: "มอบหมายแล้ว", color: "text-indigo-400 bg-indigo-500/20", icon: <Truck size={14} /> },
+    New: { label: "ใหม่", color: "text-emerald-500 bg-emerald-500/15", icon: <Package size={14} /> },
+    Assigned: { label: "มอบหมายแล้ว", color: "text-emerald-600 bg-emerald-500/20", icon: <Truck size={14} /> },
     "Picked Up": { label: "รับแล้ว", color: "text-cyan-400 bg-cyan-500/20", icon: <Package size={14} /> },
     "In Transit": { label: "กำลังเดินทาง", color: "text-amber-400 bg-amber-500/20", icon: <Truck size={14} /> },
     Delivered: { label: "ส่งแล้ว", color: "text-emerald-400 bg-emerald-500/20", icon: <CheckCircle2 size={14} /> },
     Completed: { label: "เสร็จสิ้น", color: "text-emerald-400 bg-emerald-500/20", icon: <CheckCircle2 size={14} /> },
     Complete: { label: "เสร็จสิ้น", color: "text-emerald-400 bg-emerald-500/20", icon: <CheckCircle2 size={14} /> },
     Failed: { label: "ล้มเหลว", color: "text-red-400 bg-red-500/20", icon: <AlertCircle size={14} /> },
-    Cancelled: { label: "ยกเลิก", color: "text-slate-400 bg-slate-500/20", icon: <AlertCircle size={14} /> },
+    Cancelled: { label: "ยกเลิก", color: "text-gray-500 bg-slate-500/20", icon: <AlertCircle size={14} /> },
   }
 
   return (
     <DashboardLayout>
-      <PageHeader
-        icon={<History size={28} />}
-        title="ประวัติงาน"
-        subtitle="ประวัติงานทั้งหมดที่ผ่านมา"
-        actions={
-          <div className="flex gap-2">
-            <Link href="/planning">
-              <Button variant="outline" className="h-11 rounded-xl border-slate-800 bg-slate-950/50 hover:bg-slate-900 text-slate-300 hover:text-white">
-                <ArrowLeft className="h-5 w-5 mr-2" />
-                กลับ
-              </Button>
-            </Link>
-            {canExport && (
+      {/* Premium Header */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-8 mb-12 bg-white/40 p-10 rounded-[2.5rem] border border-white/40 backdrop-blur-xl shadow-2xl relative overflow-hidden group">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 blur-3xl rounded-full -mr-20 -mt-20 pointer-events-none" />
+        
+        <div className="relative z-10">
+          <h1 className="text-5xl font-black text-gray-900 mb-2 tracking-tighter flex items-center gap-4">
+            <div className="p-3 bg-primary rounded-3xl shadow-2xl shadow-primary/20 text-white transform group-hover:scale-110 transition-transform duration-500">
+              <History size={32} />
+            </div>
+            {customerMode ? "My Shipment History" : "Job History"}
+          </h1>
+          <p className="text-gray-500 font-bold ml-[4.5rem] uppercase tracking-[0.2em] text-[10px]">
+            {customerMode ? "รายการขนส่งและสถานะพัสดุ" : "Operations Archive & Analytics"}
+          </p>
+        </div>
+
+        <div className="flex flex-wrap gap-4 relative z-10">
+          <Link href="/planning">
+            <PremiumButton variant="outline" className="h-14 px-8 rounded-2xl">
+              <ArrowLeft size={20} className="mr-2" />
+              กลับ
+            </PremiumButton>
+          </Link>
+          {canExport && (
             <ExcelExport 
                data={historyJobs} 
                filename={`job_history_${new Date().toISOString().split('T')[0]}`}
                title="ประวัติงาน"
                trigger={
-                 <Button variant="outline" className="h-11 rounded-xl border-slate-800 bg-slate-950/50 hover:bg-slate-900 text-slate-300 hover:text-white">
-                     <Download className="w-4 h-4 mr-2" /> Export Excel
-                 </Button>
+                 <PremiumButton variant="secondary" className="h-14 px-8 rounded-2xl">
+                     <Download className="w-5 h-5 mr-2" /> Export Excel
+                 </PremiumButton>
                }
             />
-            )}
-          </div>
-        }
-      />
-
-      {/* Filters */}
-      <DataSection title="ตัวกรอง" icon={<ListFilter size={18} />}>
-          <form className="grid grid-cols-1 md:grid-cols-5 gap-4">
-            <div className="md:col-span-2">
-              <SearchInput placeholder="ค้นหา Job ID, ลูกค้า, เส้นทาง..." />
-            </div>
-            <div className="space-y-2">
-              <Label className="text-muted-foreground text-sm flex items-center gap-1">
-                <CalendarDays className="w-3 h-3" /> วันที่เริ่มต้น
-              </Label>
-              <Input
-                type="date"
-                defaultValue={dateFrom}
-                name="from"
-                className="bg-slate-900/60 border-slate-800 text-foreground rounded-xl"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label className="text-muted-foreground text-sm">วันที่สิ้นสุด</Label>
-              <Input
-                type="date"
-                defaultValue={dateTo}
-                name="to"
-                className="bg-slate-900/60 border-slate-800 text-foreground rounded-xl"
-              />
-            </div>
-            <div className="space-y-2">
-              <HistoryStatusFilter initialValue={status} />
-            </div>
-            <button type="submit" className="hidden" /> 
-          </form>
-      </DataSection>
-
-      <div className="mt-6">
-      <StatsGrid columns={4} stats={[
-        { label: "ทั้งหมด", value: count || 0, icon: <Package size={20} />, color: "indigo" },
-        { label: "สำเร็จ", value: jobs?.filter(j => ['Delivered', 'Complete', 'Completed'].includes(j?.Job_Status || '')).length || 0, icon: <CheckCircle2 size={20} />, color: "emerald" },
-        { label: "ล้มเหลว", value: jobs?.filter(j => j?.Job_Status === 'Failed').length || 0, icon: <AlertCircle size={20} />, color: "red" },
-        { label: "ยกเลิก", value: jobs?.filter(j => j?.Job_Status === 'Cancelled').length || 0, icon: <XCircle size={20} />, color: "purple" },
-      ]} />
+          )}
+        </div>
       </div>
 
-      <DataSection title="รายการงาน" icon={<History size={18} />} noPadding>
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        {[
+          { label: "งานทั้งหมด", value: count || 0, icon: Package, color: "blue" },
+          { label: "งานที่สำเร็จ", value: jobs?.filter(j => ['Delivered', 'Complete', 'Completed'].includes(j?.Job_Status || '')).length || 0, icon: CheckCircle2, color: "emerald" },
+          { label: "งานที่ล้มเหลว", value: jobs?.filter(j => j?.Job_Status === 'Failed').length || 0, icon: AlertCircle, color: "red" },
+          { label: "งานที่ยกเลิก", value: jobs?.filter(j => j?.Job_Status === 'Cancelled').length || 0, icon: XCircle, color: "slate" },
+        ].map((stat, idx) => (
+          <PremiumCard key={idx} className="p-8 group">
+            <div className="flex items-center justify-between mb-8">
+                <div className={cn(
+                    "p-4 rounded-2xl shadow-xl transition-all duration-500 group-hover:scale-110 group-hover:rotate-3 text-white",
+                    stat.color === 'emerald' ? "bg-emerald-500 shadow-emerald-500/20" :
+                    stat.color === 'red' ? "bg-red-500 shadow-red-500/20" :
+                    stat.color === 'blue' ? "bg-blue-500 shadow-blue-500/20" : "bg-slate-500 shadow-slate-500/20"
+                )}>
+                    <stat.icon size={24} />
+                </div>
+                <div className="flex items-center gap-1.5 px-3 py-1 bg-gray-50 rounded-full border border-gray-100">
+                    <TrendingUp size={12} className="text-gray-400" />
+                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest italic">HISTORICAL</span>
+                </div>
+            </div>
+            <div>
+                <p className="text-gray-500 font-bold text-[10px] uppercase tracking-[0.2em] mb-1">{stat.label}</p>
+                <p className="text-4xl font-black text-gray-900 tracking-tighter">{stat.value}</p>
+            </div>
+            <div className="absolute -right-6 -bottom-6 opacity-5 group-hover:opacity-10 transition-opacity duration-700 pointer-events-none rotate-12">
+                <stat.icon size={120} />
+            </div>
+          </PremiumCard>
+        ))}
+      </div>
+
+      {/* Filters & Results Container */}
+      <PremiumCard className="overflow-hidden border-none shadow-2xl p-0">
+          {/* Filter Header */}
+          <div className="p-10 border-b border-gray-50 bg-gray-50/20">
+            <div className="flex items-center gap-3 mb-8">
+                <div className="p-2 bg-emerald-500 rounded-xl text-white shadow-lg shadow-emerald-500/20">
+                    <ListFilter size={20} />
+                </div>
+                <div>
+                    <h2 className="text-2xl font-black text-gray-900 tracking-tight">Advanced Filtering</h2>
+                    <p className="text-gray-400 text-[10px] font-bold uppercase tracking-[0.2em] mt-0.5">Refine operations data</p>
+                </div>
+            </div>
+
+            <form className="grid grid-cols-1 md:grid-cols-12 gap-6">
+                <div className="md:col-span-5">
+                    <SearchInput placeholder="ค้นหา Job ID, ลูกค้า, เส้นทาง..." />
+                </div>
+                <div className="md:col-span-2 space-y-2">
+                    <Label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">Start Date</Label>
+                    <Input
+                        type="date"
+                        defaultValue={dateFrom}
+                        name="from"
+                        className="h-14 bg-white border-gray-100 text-gray-900 font-bold rounded-2xl shadow-sm focus:ring-primary/20 transition-all px-6"
+                    />
+                </div>
+                <div className="md:col-span-2 space-y-2">
+                    <Label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">End Date</Label>
+                    <Input
+                        type="date"
+                        defaultValue={dateTo}
+                        name="to"
+                        className="h-14 bg-white border-gray-100 text-gray-900 font-bold rounded-2xl shadow-sm focus:ring-primary/20 transition-all px-6"
+                    />
+                </div>
+                <div className="md:col-span-3 space-y-2">
+                    <Label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">Process Status</Label>
+                    <HistoryStatusFilter initialValue={status} />
+                </div>
+                <button type="submit" className="hidden" /> 
+            </form>
+          </div>
+          {/* Jobs List Header */}
+          <div className="p-10 border-b border-gray-50 flex items-center justify-between bg-white/[0.02]">
+            <div className="flex items-center gap-3">
+                <div className="w-2 h-10 bg-primary rounded-full" />
+                <div>
+                    <h3 className="text-2xl font-black text-gray-900 tracking-tight">Operations Log</h3>
+                    <p className="text-gray-400 text-[10px] font-bold uppercase tracking-[0.2em] mt-0.5">Tracking {historyJobs.length} records</p>
+                </div>
+            </div>
+          </div>
+
           {historyJobs.length === 0 ? (
-            <div className="text-center py-12 text-slate-500">
-              ไม่พบประวัติงาน
+            <div className="text-center py-24">
+              <div className="w-24 h-24 bg-gray-50 rounded-[2rem] flex items-center justify-center mx-auto mb-6 border border-gray-100 shadow-inner">
+                <Package className="w-12 h-12 text-gray-300" />
+              </div>
+              <p className="text-gray-500 font-black uppercase tracking-widest text-xs">ไม่พบประวัติงานในระบบ</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-slate-800">
-                    <th className="text-left p-4 text-xs font-bold text-slate-500 uppercase">Job ID</th>
-                    <th className="text-left p-4 text-xs font-bold text-slate-500 uppercase">วันที่</th>
-                    <th className="text-left p-4 text-xs font-bold text-slate-500 uppercase">ลูกค้า</th>
-                    <th className="text-left p-4 text-xs font-bold text-slate-500 uppercase">เส้นทาง</th>
-                    <th className="text-left p-4 text-xs font-bold text-slate-500 uppercase">คนขับ</th>
-                    <th className="text-left p-4 text-xs font-bold text-slate-500 uppercase">ทะเบียน</th>
-                    <th className="text-center p-4 text-xs font-bold text-slate-500 uppercase">รูปถ่าย/ลายเซ็น</th>
-                    {canViewPrice && <th className="text-right p-4 text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase">ราคาค่าขนส่ง</th>}
-                    {canViewPrice && <th className="text-right p-4 text-xs font-bold text-red-600 dark:text-red-400 uppercase">ต้นทุนรถ</th>}
-                    <th className="text-left p-4 text-xs font-bold text-slate-500 uppercase">สถานะ</th>
-                    <th className="text-right p-4 text-xs font-bold text-slate-500 uppercase">Actions</th>
+                  <tr className="border-b border-gray-50 bg-gray-50/30">
+                    <th className="text-left py-6 px-10 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Job Details</th>
+                    <th className="text-left py-6 px-4 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Route & Location</th>
+                    <th className="text-left py-6 px-4 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Resource</th>
+                    <th className="text-center py-6 px-4 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Proof</th>
+                    {canViewPrice && <th className="text-right py-6 px-4 text-[10px] font-black text-emerald-600 uppercase tracking-[0.2em]">Finance</th>}
+                    <th className="text-left py-6 px-4 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Status</th>
+                    <th className="text-right py-6 px-10 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Control</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-gray-50">
                   {historyJobs.map((job) => (
                     <tr 
                       key={job.Job_ID} 
-                      className="border-b border-slate-800/50 hover:bg-white/[0.02] transition-colors"
+                      className="group transition-all duration-300 hover:bg-emerald-500/[0.02]"
                     >
-                      <td className="p-4">
-                        <span className="text-primary font-medium text-sm">{job.Job_ID}</span>
-                      </td>
-                      <td className="p-4">
-                        <div className="flex items-center gap-2 text-sm text-foreground">
-                          <Clock size={14} className="text-muted-foreground" />
-                          {job.Plan_Date || "-"}
+                      <td className="py-8 px-10">
+                        <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-2xl bg-gray-50 flex items-center justify-center group-hover:bg-emerald-500 group-hover:text-white transition-all duration-500 shadow-inner">
+                                <Package size={20} />
+                            </div>
+                            <div>
+                                <p className="text-gray-900 font-black text-lg tracking-tighter group-hover:text-emerald-600 transition-colors">{job.Job_ID}</p>
+                                <div className="flex items-center gap-2 mt-1">
+                                    <Clock size={12} className="text-gray-300" />
+                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{job.Plan_Date || "-"}</p>
+                                </div>
+                            </div>
                         </div>
                       </td>
-                      <td className="p-4">
-                        <p className="text-foreground font-medium text-sm">{job.Customer_Name || "-"}</p>
+                      <td className="py-8 px-4">
+                         <div className="flex flex-col gap-1.5">
+                            <p className="text-gray-900 font-black text-sm tracking-tight">{job.Customer_Name || "-"}</p>
+                            <div className="flex items-center gap-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                                <MapPin size={12} className="text-emerald-500" />
+                                <span className="line-clamp-1">{job.Route_Name || `${job.Origin_Location || "-"} → ${job.Dest_Location || "-"}`}</span>
+                            </div>
+                         </div>
                       </td>
-                      <td className="p-4">
-                        <div className="flex items-center gap-1 text-sm text-foreground">
-                          <MapPin size={14} className="text-muted-foreground" />
-                          {job.Route_Name || `${job.Origin_Location || "-"} → ${job.Dest_Location || "-"}`}
+                      <td className="py-8 px-4">
+                        <div className="flex flex-col gap-1.5">
+                            <div className="flex items-center gap-2">
+                                <div className="w-6 h-6 rounded-lg bg-gray-100 flex items-center justify-center text-gray-500">
+                                    <Truck size={14} />
+                                </div>
+                                <p className="text-gray-700 font-bold text-sm tracking-tight">{job.Vehicle_Plate || "-"}</p>
+                            </div>
+                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.25em] pl-1">{job.Driver_Name || "-"}</p>
                         </div>
                       </td>
-                      <td className="p-4 text-foreground text-sm">
-                        {job.Driver_Name || "-"}
-                      </td>
-                      <td className="p-4 text-muted-foreground text-sm">
-                        {job.Vehicle_Plate || "-"}
-                      </td>
-                      <td className="p-4">
-                        <div className="flex items-center justify-center gap-2">
-                             {job.Photo_Proof_Url && (
-                                <div className="relative w-10 h-10 rounded-lg border border-slate-800 overflow-hidden bg-muted group">
+                      <td className="py-8 px-4">
+                        <div className="flex items-center justify-center gap-3">
+                             {job.Photo_Proof_Url ? (
+                                <div className="relative w-12 h-12 rounded-2xl border-2 border-white shadow-xl overflow-hidden bg-gray-100 group/img ring-4 ring-emerald-500/0 hover:ring-emerald-500/20 transition-all">
                                     <NextImage 
                                         src={job.Photo_Proof_Url.split(',')[0]} 
                                         alt="POD Photo" 
                                         fill 
-                                        className="object-cover group-hover:scale-110 transition-transform" 
+                                        className="object-cover group-hover/img:scale-125 transition-transform duration-700" 
                                     />
-                                    <a href={job.Photo_Proof_Url.split(',')[0]} target="_blank" rel="noreferrer" className="absolute inset-0 z-10" />
+                                    <a href={job.Photo_Proof_Url.split(',')[0]} target="_blank" rel="noreferrer" className="absolute inset-0 z-10 flex items-center justify-center bg-black/40 opacity-0 group-hover/img:opacity-100 transition-opacity">
+                                        <ImageIcon size={16} className="text-white" />
+                                    </a>
+                                </div>
+                             ) : (
+                                <div className="w-12 h-12 rounded-2xl border-2 border-dashed border-gray-100 flex items-center justify-center text-gray-200">
+                                    <ImageIcon size={16} />
                                 </div>
                              )}
-                             {job.Signature_Url && (
-                                <div className="relative w-14 h-10 rounded-lg border border-slate-800 overflow-hidden bg-white group">
+                             {job.Signature_Url ? (
+                                <div className="relative w-16 h-12 rounded-2xl border-2 border-white shadow-xl overflow-hidden bg-white p-2 group/sig ring-4 ring-blue-500/0 hover:ring-blue-500/20 transition-all">
                                     <NextImage 
                                         src={job.Signature_Url} 
                                         alt="Signature" 
                                         fill 
-                                        className="object-contain p-1 group-hover:scale-110 transition-transform" 
+                                        className="object-contain p-2 group-hover/sig:scale-110 transition-transform duration-500" 
                                     />
-                                    <a href={job.Signature_Url} target="_blank" rel="noreferrer" className="absolute inset-0 z-10" />
+                                    <a href={job.Signature_Url} target="_blank" rel="noreferrer" className="absolute inset-0 z-10 flex items-center justify-center bg-black/40 opacity-0 group-hover/sig:opacity-100 transition-opacity" />
                                 </div>
-                             )}
-                             {!job.Photo_Proof_Url && !job.Signature_Url && (
-                                <span className="text-muted-foreground/30 text-xs">-</span>
+                             ) : (
+                                <div className="w-16 h-12 rounded-2xl border-2 border-dashed border-gray-100" />
                              )}
                         </div>
                       </td>
                       {canViewPrice && (
-                        <td className="p-4 text-right overflow-hidden">
-                            <div className="font-medium text-emerald-600 dark:text-emerald-400 text-sm">
-                                {typeof job.Price_Cust_Total === 'number' 
-                                    ? job.Price_Cust_Total.toLocaleString() 
-                                    : (Number(job.Price_Cust_Total) || 0).toLocaleString()}
+                        <td className="py-8 px-4 text-right">
+                            <div className="flex flex-col items-end gap-1.5">
+                                <div className="flex items-center gap-1.5 px-3 py-1 bg-emerald-500/10 rounded-xl">
+                                    <span className="text-[10px] font-black text-emerald-600 tracking-[0.2em] uppercase">CREDIT</span>
+                                    <span className="text-emerald-700 font-black text-sm tracking-tight transition-all">
+                                        {typeof job.Price_Cust_Total === 'number' 
+                                            ? job.Price_Cust_Total.toLocaleString() 
+                                            : (Number(job.Price_Cust_Total) || 0).toLocaleString()}
+                                    </span>
+                                </div>
+                                <div className="pr-3">
+                                    <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest italic pr-1">DEBIT</span>
+                                    <span className="text-[11px] font-black text-gray-400 tracking-tight">
+                                        {typeof job.Cost_Driver_Total === 'number' 
+                                            ? job.Cost_Driver_Total.toLocaleString() 
+                                            : (Number(job.Cost_Driver_Total) || 0).toLocaleString()}
+                                    </span>
+                                </div>
                             </div>
                         </td>
                       )}
-                      {canViewPrice && (
-                        <td className="p-4 text-right overflow-hidden">
-                            <div className="text-muted-foreground text-sm">
-                                {typeof job.Cost_Driver_Total === 'number' 
-                                    ? job.Cost_Driver_Total.toLocaleString() 
-                                    : (Number(job.Cost_Driver_Total) || 0).toLocaleString()}
-                            </div>
-                        </td>
-                      )}
-                      <td className="p-4">
-                        <span className={`flex items-center gap-1 w-fit px-2 py-0.5 rounded-full text-xs font-medium ${
-                          statusConfig[job.Job_Status]?.color || 'text-muted-foreground bg-muted'
-                        }`}>
-                          {statusConfig[job.Job_Status]?.icon}
+                      <td className="py-8 px-4">
+                        <span className={cn(
+                            "inline-flex items-center gap-2 px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest border shadow-sm transition-all duration-500",
+                            statusConfig[job.Job_Status]?.color.includes('emerald') ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20 shadow-emerald-500/5' :
+                            statusConfig[job.Job_Status]?.color.includes('amber') ? 'bg-amber-500/10 text-amber-600 border-amber-500/20 shadow-amber-500/5' :
+                            statusConfig[job.Job_Status]?.color.includes('red') ? 'bg-red-500/10 text-red-600 border-red-500/20 shadow-red-500/5' :
+                            'bg-gray-100 text-gray-500 border-gray-200'
+                        )}>
+                          <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
                           {statusConfig[job.Job_Status]?.label || job.Job_Status}
                         </span>
                       </td>
-                      <td className="p-4 text-right">
+                      <td className="py-8 px-10 text-right">
                           {!customerMode && (
-                              <JobHistoryActions 
-                                  job={job}
-                                  drivers={drivers}
-                                  vehicles={vehicles}
-                                  customers={customers}
-                                  routes={routes}
-                                  canViewPrice={canViewPrice}
-                                  canDelete={canDelete}
-                              />
+                              <div className="flex justify-end opacity-0 group-hover:opacity-100 transition-all duration-500 translate-x-4 group-hover:translate-x-0">
+                                <JobHistoryActions 
+                                    job={job}
+                                    drivers={drivers}
+                                    vehicles={vehicles}
+                                    customers={customers}
+                                    routes={routes}
+                                    canViewPrice={canViewPrice}
+                                    canDelete={canDelete}
+                                />
+                              </div>
                           )}
                       </td>
                     </tr>
@@ -275,10 +354,10 @@ export default async function JobHistoryPage(props: Props) {
             </div>
           )}
           
-          <div className="p-4 border-t border-slate-800">
+          <div className="p-10 border-t border-gray-50 bg-gray-50/10">
              <Pagination totalItems={count || 0} limit={limit} />
           </div>
-      </DataSection>
+      </PremiumCard>
     </DashboardLayout>
   )
 }

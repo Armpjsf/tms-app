@@ -6,8 +6,8 @@ import dynamic from 'next/dynamic'
 const LeafletMap = dynamic(() => import('@/components/maps/leaflet-map'), {
   ssr: false,
   loading: () => (
-    <div className="h-[400px] bg-slate-800 rounded-lg flex items-center justify-center">
-      <div className="text-slate-400 animate-pulse">Loading Route History...</div>
+    <div className="h-[400px] bg-gray-100 rounded-lg flex items-center justify-center">
+      <div className="text-gray-500 animate-pulse">Loading Route History...</div>
     </div>
   )
 })

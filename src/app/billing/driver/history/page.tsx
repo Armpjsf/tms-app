@@ -162,7 +162,7 @@ export default function DriverPaymentHistory() {
         case 'Pending':
             return <span className="px-2 py-1 rounded-full text-xs font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20">รอดำเนินการ</span>
         default:
-            return <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-500/10 text-blue-400 border border-blue-500/20">{status}</span>
+            return <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-500/10 text-emerald-500 border border-emerald-500/15">{status}</span>
     }
   }
 
@@ -171,15 +171,15 @@ export default function DriverPaymentHistory() {
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-white flex items-center gap-3">
-            <Wallet className="text-indigo-400" />
+          <h1 className="text-2xl font-bold text-gray-950 flex items-center gap-3">
+            <Wallet className="text-emerald-600" />
             ประวัติการจ่ายเงินคนขับ
           </h1>
-          <p className="text-sm text-slate-400 mt-1">รายการใบสรุปจ่ายที่สร้างแล้วทั้งหมด</p>
+          <p className="text-sm text-gray-500 mt-1">รายการใบสรุปจ่ายที่สร้างแล้วทั้งหมด</p>
         </div>
         <Button 
             variant="outline" 
-            className="border-slate-700 text-slate-300"
+            className="border-gray-200 text-gray-700"
             onClick={() => router.back()}
         >
             <ArrowLeft className="w-4 h-4 mr-2" /> ย้อนกลับ
@@ -187,15 +187,15 @@ export default function DriverPaymentHistory() {
       </div>
 
       {/* Filters */}
-      <Card className="bg-slate-900/50 border-slate-800 mb-6">
+      <Card className="bg-white/80 border-gray-200 mb-6">
         <CardContent className="p-4">
             <div className="flex gap-4">
                 <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                     <input 
                         type="text" 
                         placeholder="ค้นหาเลขที่เอกสาร หรือ ชื่อคนขับ..." 
-                        className="w-full h-10 pl-10 pr-4 rounded-md bg-slate-800 border border-slate-700 text-white focus:outline-none focus:border-indigo-500"
+                        className="w-full h-10 pl-10 pr-4 rounded-md bg-gray-100 border border-gray-200 text-gray-950 focus:outline-none focus:border-indigo-500"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
@@ -205,42 +205,42 @@ export default function DriverPaymentHistory() {
       </Card>
 
       {/* Table */}
-      <Card className="bg-slate-900/50 border-slate-800">
+      <Card className="bg-white/80 border-gray-200">
         <CardHeader>
-            <CardTitle className="text-white text-lg">รายการใบสรุปจ่าย ({filteredPayments.length})</CardTitle>
+            <CardTitle className="text-gray-900 text-lg">รายการใบสรุปจ่าย ({filteredPayments.length})</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-slate-800">
-                  <th className="text-left py-3 px-4 text-slate-400 font-medium text-sm">เลขที่เอกสาร</th>
-                  <th className="text-left py-3 px-4 text-slate-400 font-medium text-sm">วันที่ทำรายการ</th>
-                  <th className="text-left py-3 px-4 text-slate-400 font-medium text-sm">คนขับ</th>
-                  <th className="text-right py-3 px-4 text-slate-400 font-medium text-sm">ยอดเงิน</th>
-                  <th className="text-center py-3 px-4 text-slate-400 font-medium text-sm">สถานะ</th>
-                  <th className="text-right py-3 px-4 text-slate-400 font-medium text-sm">จัดการ</th>
+                <tr className="border-b border-gray-200">
+                  <th className="text-left py-3 px-4 text-gray-500 font-medium text-sm">เลขที่เอกสาร</th>
+                  <th className="text-left py-3 px-4 text-gray-500 font-medium text-sm">วันที่ทำรายการ</th>
+                  <th className="text-left py-3 px-4 text-gray-500 font-medium text-sm">คนขับ</th>
+                  <th className="text-right py-3 px-4 text-gray-500 font-medium text-sm">ยอดเงิน</th>
+                  <th className="text-center py-3 px-4 text-gray-500 font-medium text-sm">สถานะ</th>
+                  <th className="text-right py-3 px-4 text-gray-500 font-medium text-sm">จัดการ</th>
                 </tr>
               </thead>
               <tbody>
                 {loading ? (
                     <tr>
-                        <td colSpan={6} className="text-center py-8 text-slate-500">กำลังโหลด...</td>
+                        <td colSpan={6} className="text-center py-8 text-gray-400">กำลังโหลด...</td>
                     </tr>
                 ) : filteredPayments.length === 0 ? (
                     <tr>
-                        <td colSpan={6} className="text-center py-8 text-slate-500">ไม่พบข้อมูล</td>
+                        <td colSpan={6} className="text-center py-8 text-gray-400">ไม่พบข้อมูล</td>
                     </tr>
                 ) : (
                     filteredPayments.map((item) => (
-                    <tr key={item.Driver_Payment_ID} className="border-b border-slate-800/50 hover:bg-slate-800/30">
-                        <td className="py-3 px-4 text-indigo-400 font-mono">{item.Driver_Payment_ID}</td>
-                        <td className="py-3 px-4 text-slate-400 flex items-center gap-2">
+                    <tr key={item.Driver_Payment_ID} className="border-b border-gray-200 hover:bg-gray-50">
+                        <td className="py-3 px-4 text-emerald-600 font-mono">{item.Driver_Payment_ID}</td>
+                        <td className="py-3 px-4 text-gray-500 flex items-center gap-2">
                              <Calendar className="w-3 h-3" />
                              {new Date(item.Created_At).toLocaleDateString('th-TH')}
                         </td>
-                        <td className="py-3 px-4 text-white font-medium">{item.Driver_Name}</td>
-                        <td className="py-3 px-4 text-right text-white">
+                        <td className="py-3 px-4 text-gray-800 font-medium">{item.Driver_Name}</td>
+                        <td className="py-3 px-4 text-right text-gray-900 font-bold">
                             ฿{item.Total_Amount.toLocaleString()}
                         </td>
                         <td className="py-3 px-4 text-center">
@@ -264,7 +264,7 @@ export default function DriverPaymentHistory() {
                                 <Button 
                                     size="sm" 
                                     variant="ghost" 
-                                    className="text-indigo-400 hover:text-indigo-300"
+                                    className="text-emerald-600 hover:text-emerald-500"
                                     onClick={() => handleSyncToAccounting(item.Driver_Payment_ID)}
                                     disabled={processingId === item.Driver_Payment_ID}
                                     title="ส่งไประบบบัญชี"
@@ -275,7 +275,7 @@ export default function DriverPaymentHistory() {
                                 <Button 
                                     size="sm" 
                                     variant="ghost" 
-                                    className="text-slate-400 hover:text-white" 
+                                    className="text-gray-500 hover:text-white" 
                                     title="Export SCB"
                                     onClick={() => handleExportSCB(item.Driver_Payment_ID)}
                                     disabled={processingId === item.Driver_Payment_ID}
@@ -285,7 +285,7 @@ export default function DriverPaymentHistory() {
                                 <Button 
                                     size="sm" 
                                     variant="ghost" 
-                                    className="text-slate-400 hover:text-white" 
+                                    className="text-gray-500 hover:text-white" 
                                     title="พิมพ์"
                                     onClick={() => handlePrint(item.Driver_Payment_ID)}
                                 >

@@ -65,15 +65,15 @@ export function MaintenanceActions({ ticket, drivers, vehicles }: MaintenanceAct
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="h-8 w-8 p-0 text-slate-400 hover:text-white">
+          <Button variant="ghost" className="h-8 w-8 p-0 text-gray-500 hover:text-white">
             <span className="sr-only">Open menu</span>
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <MoreVertical className="h-4 w-4" />}
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="bg-slate-900 border-slate-800 text-slate-200">
+        <DropdownMenuContent align="end" className="bg-white border-gray-200 text-gray-800">
           <DropdownMenuLabel>การจัดการ</DropdownMenuLabel>
           <DropdownMenuItem 
-            className="cursor-pointer hover:bg-slate-800 hover:text-white focus:bg-slate-800 focus:text-white"
+            className="cursor-pointer hover:bg-gray-100 hover:text-white focus:bg-gray-100 focus:text-white"
             onClick={() => setShowEditDialog(true)}
           >
             <Pencil className="mr-2 h-4 w-4" />
@@ -81,27 +81,27 @@ export function MaintenanceActions({ ticket, drivers, vehicles }: MaintenanceAct
           </DropdownMenuItem>
           
           <DropdownMenuSub>
-            <DropdownMenuSubTrigger className="hover:bg-slate-800 hover:text-white focus:bg-slate-800 focus:text-white cursor-pointer">
+            <DropdownMenuSubTrigger className="hover:bg-gray-100 hover:text-white focus:bg-gray-100 focus:text-white cursor-pointer">
               <CheckCircle2 className="mr-2 h-4 w-4" />
               อัปเดตสถานะ
             </DropdownMenuSubTrigger>
-            <DropdownMenuSubContent className="bg-slate-900 border-slate-800 text-slate-200">
-              <DropdownMenuItem onClick={() => handleStatusUpdate('Pending')} className="cursor-pointer hover:bg-slate-800">
+            <DropdownMenuSubContent className="bg-white border-gray-200 text-gray-800">
+              <DropdownMenuItem onClick={() => handleStatusUpdate('Pending')} className="cursor-pointer hover:bg-gray-100">
                 รอดำเนินการ
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleStatusUpdate('In Progress')} className="cursor-pointer hover:bg-slate-800 text-blue-400">
+              <DropdownMenuItem onClick={() => handleStatusUpdate('In Progress')} className="cursor-pointer hover:bg-gray-100 text-emerald-500">
                 อนุมัติ / กำลังซ่อม
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleStatusUpdate('Rejected')} className="cursor-pointer hover:bg-slate-800 text-red-400">
+              <DropdownMenuItem onClick={() => handleStatusUpdate('Rejected')} className="cursor-pointer hover:bg-gray-100 text-red-400">
                 ไม่อนุมัติ / ปฏิเสธ
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleStatusUpdate('Completed')} className="cursor-pointer hover:bg-slate-800 text-emerald-400">
+              <DropdownMenuItem onClick={() => handleStatusUpdate('Completed')} className="cursor-pointer hover:bg-gray-100 text-emerald-400">
                 เสร็จสิ้น
               </DropdownMenuItem>
             </DropdownMenuSubContent>
           </DropdownMenuSub>
 
-          <DropdownMenuSeparator className="bg-slate-800" />
+          <DropdownMenuSeparator className="bg-gray-100" />
           
           <DropdownMenuItem 
             onClick={handleDelete}

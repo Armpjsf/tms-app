@@ -108,17 +108,29 @@ export async function submitJobPOD(jobId: string, formData: FormData) {
 
     if (updateError) throw updateError
 
+    if (updateError) throw updateError
+
+    let warning = ""
+    // Important: Await the report generation to prevent race conditions
+    // This ensures the worker doesn't terminate before the PDF is uploaded
     try {
+        console.log(`[submitJobPOD] Triggering Automated Report for ${jobId}...`)
         const { generateJobPDF } = await import("@/lib/actions/report-actions")
-        generateJobPDF(jobId).then(res => {
-            if (res.success) console.log("Automated Report Generated:", res.url)
-        })
+        const reportResult = await generateJobPDF(jobId)
+        if (reportResult.success) {
+            console.log(`[submitJobPOD] Automated Report Success: ${reportResult.url}`)
+        } else {
+            console.error(`[submitJobPOD] Automated Report Failed: ${reportResult.error}`)
+            warning = `ใบงาน PDF ไม่ถูกสร้าง: ${reportResult.error}`
+        }
     } catch (reportErr) {
-        console.error("Automated Report Trigger Failed:", reportErr)
+        console.error("[submitJobPOD] Automated Report Critical Error:", reportErr)
+        warning = "เกิดข้อผิดพลาดในการสร้างใบงาน PDF"
     }
 
     revalidatePath("/mobile/jobs")
-    return { success: true, warning: undefined as string | undefined }
+    revalidatePath("/dashboard")
+    return warning ? { success: true, warning } : { success: true }
 
   } catch (error: any) {
     console.error(`[submitJobPOD] Catch Error for jobId ${jobId}:`, error)

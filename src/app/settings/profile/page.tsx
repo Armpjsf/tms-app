@@ -77,7 +77,7 @@ export default function AdminProfilePage() {
       return (
           <DashboardLayout>
               <div className="flex items-center justify-center h-[50vh]">
-                  <Loader2 className="w-8 h-8 animate-spin text-slate-400" />
+                  <Loader2 className="w-8 h-8 animate-spin text-gray-500" />
               </div>
           </DashboardLayout>
       )
@@ -86,25 +86,25 @@ export default function AdminProfilePage() {
   return (
     <DashboardLayout>
       <div className="mb-6">
-        <Link href="/settings" className="flex items-center text-slate-400 hover:text-white mb-4 transition-colors">
+        <Link href="/settings" className="flex items-center text-gray-500 hover:text-white mb-4 transition-colors">
             <ArrowLeft className="w-4 h-4 mr-2" />
             กลับไปหน้าตั้งค่า
         </Link>
         <h1 className="text-2xl font-bold text-white flex items-center gap-3">
-          <User className="text-indigo-400" />
+          <User className="text-emerald-600" />
           ข้อมูลโปรไฟล์
         </h1>
-        <p className="text-sm text-slate-400 mt-1">จัดการข้อมูลส่วนตัวของผู้ดูแลระบบ</p>
+        <p className="text-sm text-gray-500 mt-1">จัดการข้อมูลส่วนตัวของผู้ดูแลระบบ</p>
       </div>
 
-      <Card className="bg-slate-900/50 border-slate-800 max-w-2xl">
+      <Card className="bg-white/80 border-gray-200 max-w-2xl">
         <CardContent className="space-y-6 pt-6">
             <div className="flex items-center gap-4 mb-6">
                 <div className="w-20 h-20 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-3xl font-bold shadow-lg">
                     {(formData.First_Name || "A").charAt(0)}
                 </div>
                 <div>
-                   <Button variant="outline" className="border-slate-700 text-slate-300">
+                   <Button variant="outline" className="border-gray-200 text-gray-700">
                       เปลี่ยนรูปโปรไฟล์
                    </Button>
                 </div>
@@ -112,50 +112,50 @@ export default function AdminProfilePage() {
 
             <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                    <Label className="text-slate-400">ชื่อจริง</Label>
+                    <Label className="text-gray-500">ชื่อจริง</Label>
                     <Input 
                         value={formData.First_Name || ""}
                         onChange={(e) => setFormData({...formData, First_Name: e.target.value})}
-                        className="bg-slate-800 border-slate-700 text-white"
+                        className="bg-gray-100 border-gray-200 text-white"
                         placeholder="ชื่อจริง"
                     />
                 </div>
                 <div className="space-y-2">
-                    <Label className="text-slate-400">นามสกุล</Label>
+                    <Label className="text-gray-500">นามสกุล</Label>
                     <Input 
                         value={formData.Last_Name || ""}
                         onChange={(e) => setFormData({...formData, Last_Name: e.target.value})}
-                        className="bg-slate-800 border-slate-700 text-white"
+                        className="bg-gray-100 border-gray-200 text-white"
                         placeholder="นามสกุล"
                     />
                 </div>
             </div>
 
             <div className="space-y-2">
-                <Label className="text-slate-400">อีเมล (ติดต่อ)</Label>
+                <Label className="text-gray-500">อีเมล (ติดต่อ)</Label>
                 <Input 
                     value={formData.Email || ""}
                     onChange={(e) => setFormData({...formData, Email: e.target.value})}
-                    className="bg-slate-800 border-slate-700 text-white"
+                    className="bg-gray-100 border-gray-200 text-white"
                     placeholder="example@company.com"
                 />
             </div>
 
             <div className="space-y-2">
-                <Label className="text-slate-400">Username (สำหรับเข้าสู่ระบบ)</Label>
+                <Label className="text-gray-500">Username (สำหรับเข้าสู่ระบบ)</Label>
                 <Input 
                     value={formData.Username || ""}
                     disabled
-                    className="bg-slate-800/50 border-slate-800 text-slate-500 cursor-not-allowed"
+                    className="bg-gray-50 border-gray-200 text-gray-400 cursor-not-allowed"
                 />
             </div>
 
             <div className="space-y-2">
-                <Label className="text-slate-400">บทบาท</Label>
+                <Label className="text-gray-500">บทบาท</Label>
                 <Input 
                     value={formData.Role || "User"}
                     disabled
-                    className="bg-slate-800/50 border-slate-800 text-slate-500 cursor-not-allowed"
+                    className="bg-gray-50 border-gray-200 text-gray-400 cursor-not-allowed"
                 />
             </div>
 

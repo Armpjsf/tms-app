@@ -1,6 +1,7 @@
 "use server"
 
 import { createClient } from "@/utils/supabase/server"
+import { getChatSchema } from "@/lib/supabase/chat"
 
 export interface ChatMessage {
     id: number
@@ -9,23 +10,35 @@ export interface ChatMessage {
     message: string
     created_at: string
     is_read: boolean
+    driver_name?: string
 }
 
 export async function getChatHistory(driverId: string) {
     const supabase = await createClient()
     
+    // 0. Detect correct schema
+    const { tableName, columns } = await getChatSchema(supabase)
+
     const { data, error } = await supabase
-        .from('Chat_Messages')
+        .from(tableName)
         .select('*')
-        .or(`sender_id.eq.${driverId},receiver_id.eq.${driverId}`)
-        .order('created_at', { ascending: true })
+        .or(`${columns.sender_id}.eq.${driverId},${columns.receiver_id}.eq.${driverId}`)
+        .order(columns.created_at, { ascending: true })
 
     if (error) {
         console.error("Error fetching chat:", error)
         return []
     }
 
-    return data as ChatMessage[]
+    // Normalize
+    return (data as any[]).map(msg => ({
+        id: msg[columns.id],
+        sender_id: msg[columns.sender_id],
+        receiver_id: msg[columns.receiver_id],
+        message: msg[columns.message],
+        is_read: msg[columns.is_read],
+        created_at: msg[columns.created_at]
+    })) as ChatMessage[]
 }
 
 export async function sendChatMessage(senderId: string, message: string) {
@@ -33,14 +46,17 @@ export async function sendChatMessage(senderId: string, message: string) {
 
     console.log(`[Chat] Sending message from ${senderId}: ${message}`)
 
+    // 0. Detect correct schema
+    const { tableName, columns } = await getChatSchema(supabase)
+
     const { error } = await supabase
-        .from('Chat_Messages')
+        .from(tableName)
         .insert({
-            sender_id: senderId,
-            receiver_id: 'admin', // Defaulting to admin
-            message: message,
-            is_read: false,
-            created_at: new Date().toISOString()
+            [columns.sender_id]: senderId,
+            [columns.receiver_id]: 'admin', // Defaulting to admin
+            [columns.message]: message,
+            [columns.is_read]: false,
+            [columns.created_at]: new Date().toISOString()
         })
 
     if (error) {
@@ -49,4 +65,8 @@ export async function sendChatMessage(senderId: string, message: string) {
     }
     
     return { success: true }
+}
+export async function markAsReadAction(driverId: string) {
+    const { markAsRead } = await import("@/lib/supabase/chat")
+    return markAsRead(driverId)
 }

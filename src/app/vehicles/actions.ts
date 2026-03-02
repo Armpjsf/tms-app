@@ -12,7 +12,13 @@ export type VehicleFormData = {
   active_status: string
   current_mileage?: number
   next_service_mileage?: number
+  tax_expiry?: string
+  insurance_expiry?: string
+  act_expiry?: string
   Branch_ID?: string
+  sub_id?: string
+  max_weight_kg?: number
+  max_volume_cbm?: number
 }
 
 export async function createVehicle(data: VehicleFormData) {
@@ -39,6 +45,12 @@ export async function createVehicle(data: VehicleFormData) {
       active_status: 'Active',
       current_mileage: data.current_mileage || 0,
       next_service_mileage: data.next_service_mileage || 0,
+      tax_expiry: data.tax_expiry,
+      insurance_expiry: data.insurance_expiry,
+      act_expiry: data.act_expiry,
+      sub_id: data.sub_id,
+      max_weight_kg: data.max_weight_kg,
+      max_volume_cbm: data.max_volume_cbm,
       branch_id: finalBranchId
     })
 
@@ -81,6 +93,15 @@ export async function createBulkVehicles(vehicles: any[]) {
     normalized.current_mileage = getValue(['current_mileage', 'mileage', 'เลขไมล์', 'currentmileage']) || 0
     normalized.next_service_mileage = getValue(['next_service_mileage', 'next_service', 'เช็คระยะถัดไป', 'nextservicemileage', 'nextservice']) || 0
     
+    // Compliance Dates
+    normalized.tax_expiry = getValue(['tax_expiry', 'tax_date', 'ภาษี', 'วันหมดอายุภาษี'])
+    normalized.insurance_expiry = getValue(['insurance_expiry', 'insurance_date', 'ประกันภัย', 'วันหมดอายุประกัน'])
+    normalized.act_expiry = getValue(['act_expiry', 'act_date', 'พรบ', 'วันหมดอายุพรบ'])
+    
+    // Specs
+    normalized.max_weight_kg = getValue(['max_weight_kg', 'max_weight', 'น้ำหนักบรรทุก', 'capacity_kg'])
+    normalized.max_volume_cbm = getValue(['max_volume_cbm', 'max_volume', 'ปริมาตรบรรทุก', 'capacity_cbm'])
+    
     // Keep internal fields
     if (row.Branch_ID) normalized.Branch_ID = row.Branch_ID
 
@@ -98,6 +119,11 @@ export async function createBulkVehicles(vehicles: any[]) {
       active_status: data.active_status,
       current_mileage: Number(data.current_mileage) || 0,
       next_service_mileage: Number(data.next_service_mileage) || 0,
+      tax_expiry: data.tax_expiry,
+      insurance_expiry: data.insurance_expiry,
+      act_expiry: data.act_expiry,
+      max_weight_kg: Number(data.max_weight_kg) || null,
+      max_volume_cbm: Number(data.max_volume_cbm) || null,
       branch_id: branchId
     }
   }).filter(v => v.vehicle_plate) // Filter out rows without active_status or vehicle_plate
@@ -140,7 +166,13 @@ export async function updateVehicle(plate: string, data: Partial<VehicleFormData
         model: data.model,
         active_status: data.active_status,
         current_mileage: data.current_mileage,
-        next_service_mileage: data.next_service_mileage
+        next_service_mileage: data.next_service_mileage,
+        tax_expiry: data.tax_expiry,
+        insurance_expiry: data.insurance_expiry,
+        act_expiry: data.act_expiry,
+        sub_id: data.sub_id,
+        max_weight_kg: data.max_weight_kg,
+        max_volume_cbm: data.max_volume_cbm
     }
 
     if (isAdmin && data.Branch_ID) {

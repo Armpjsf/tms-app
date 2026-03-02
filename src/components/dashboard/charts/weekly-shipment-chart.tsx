@@ -11,7 +11,7 @@ type WeeklyStats = {
 export function WeeklyShipmentChart({ data }: { data: WeeklyStats[] }) {
   if (!data || data.length === 0) {
     return (
-        <div className="h-[300px] flex items-center justify-center text-slate-500">
+        <div className="h-[300px] flex items-center justify-center text-gray-600 font-bold">
             No data available
         </div>
     )
@@ -22,13 +22,13 @@ export function WeeklyShipmentChart({ data }: { data: WeeklyStats[] }) {
       <BarChart data={data}>
         <XAxis 
           dataKey="date" 
-          stroke="#888888" 
+          stroke="#4b5563" 
           fontSize={12} 
           tickLine={false} 
           axisLine={false} 
         />
         <YAxis 
-          stroke="#888888" 
+          stroke="#4b5563" 
           fontSize={12} 
           tickLine={false} 
           axisLine={false} 

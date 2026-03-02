@@ -74,7 +74,7 @@ export async function DashboardContent({
     getFinancialStats(startDate, endDate, branchId),
     getRevenueTrend(startDate, endDate, branchId),
     getTopCustomers(startDate, endDate, branchId),
-    getOperationalStats(branchId),
+    getOperationalStats(branchId, startDate, endDate),
     getJobStatusDistribution(startDate, endDate, branchId),
     getBranchPerformance(startDate, endDate),
     getSubcontractorPerformance(startDate, endDate, branchId),
@@ -134,7 +134,7 @@ export async function DashboardContent({
               />
            </div>
 
-          <div className="flex items-center gap-3 text-emerald-400">
+          <div className="flex items-center gap-3 text-emerald-700 font-black">
               <div className="p-2 bg-emerald-500/10 rounded-lg">
                   <TrendingUp size={20} />
               </div>
@@ -144,11 +144,11 @@ export async function DashboardContent({
           <FinancialSummaryCards data={exeKPIs} />
           
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <Card className="lg:col-span-2 bg-slate-900/50 backdrop-blur-sm border-slate-800 shadow-2xl hover:border-slate-700 transition-colors group">
-                  <CardHeader className="border-b border-slate-800/50 bg-slate-900/50">
-                      <CardTitle className="text-white flex items-center gap-3">
+              <Card className="lg:col-span-2 bg-white/80 backdrop-blur-sm border-gray-200 shadow-2xl hover:border-gray-200 transition-colors group">
+                  <CardHeader className="border-b border-gray-200 bg-white/80">
+                      <CardTitle className="text-gray-900 font-black flex items-center gap-3">
                           <BarChart3 className="text-emerald-400" size={18} /> 
-                          <span>ผลประกอบการ <span className="text-slate-500 font-normal text-sm ml-2">(Revenue vs Cost)</span></span>
+                          <span>ผลประกอบการ <span className="text-gray-700 font-bold font-normal text-sm ml-2">(Revenue vs Cost)</span></span>
                       </CardTitle>
                   </CardHeader>
                   <CardContent className="pt-6 min-h-[400px]"><RevenueTrendChart data={revenueTrend} /></CardContent>
@@ -156,9 +156,9 @@ export async function DashboardContent({
               
               <div className="space-y-6">
                  {/* Driver Leaderboard Mini-Widget */}
-                 <Card className="bg-slate-900/50 backdrop-blur-sm border-slate-800 shadow-xl h-full">
-                    <CardHeader className="border-b border-white/5">
-                        <CardTitle className="text-sm font-bold text-white flex items-center gap-2">
+                 <Card className="bg-white/80 backdrop-blur-sm border-gray-200 shadow-xl h-full">
+                    <CardHeader className="border-b border-gray-200">
+                        <CardTitle className="text-sm font-bold text-gray-900 font-black flex items-center gap-2">
                             <Trophy className="text-amber-400" size={16} />
                             ทำเนียบคนขับยอดเยี่ยม (Top Drivers)
                         </CardTitle>
@@ -169,7 +169,7 @@ export async function DashboardContent({
                                 <div key={driver.name} className="flex items-center justify-between group">
                                     <div className="flex items-center gap-3">
                                         <div className="relative">
-                                            <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-[10px] font-bold text-slate-400 border border-slate-700">
+                                            <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-[10px] font-bold text-gray-500 border border-gray-200">
                                                 {driver.name.slice(0, 2)}
                                             </div>
                                             {idx < 3 && (
@@ -179,8 +179,8 @@ export async function DashboardContent({
                                             )}
                                         </div>
                                         <div>
-                                            <div className="text-xs font-semibold text-slate-200">{driver.name}</div>
-                                            <div className="text-[10px] text-slate-500">{driver.completedJobs} jobs | {driver.onTimeRate.toFixed(1)}% On-time</div>
+                                            <div className="text-xs font-semibold text-gray-800">{driver.name}</div>
+                                            <div className="text-[10px] text-gray-700 font-bold">{driver.completedJobs} jobs | {driver.onTimeRate.toFixed(1)}% On-time</div>
                                         </div>
                                     </div>
                                     <div className="text-right">
@@ -201,11 +201,11 @@ export async function DashboardContent({
           <CustomerRouteSection customers={topCustomers} routes={routes} />
         </section>
         
-        <hr className="border-slate-800" />
+        <hr className="border-gray-200" />
 
         {/* Section 2: Fleet & Operations */}
         <section className="space-y-8">
-           <div className="flex items-center gap-3 text-blue-400">
+           <div className="flex items-center gap-3 text-emerald-500">
               <div className="p-2 bg-blue-500/10 rounded-lg">
                   <Truck size={20} />
               </div>
@@ -218,7 +218,7 @@ export async function DashboardContent({
            <MaintenanceSection data={maintenance} />
         </section>
 
-        <hr className="border-slate-800" />
+        <hr className="border-gray-200" />
 
         {/* Section 3: Workforce & Safety */}
         <section className="space-y-8">
@@ -235,12 +235,12 @@ export async function DashboardContent({
            </div>
         </section>
 
-        <hr className="border-slate-800" />
+        <hr className="border-gray-200" />
 
         {/* Section 4: Departmental Health (Scorecards) */}
         <section className="space-y-8">
-          <div className="flex items-center gap-3 text-slate-400">
-              <div className="p-2 bg-slate-800 rounded-lg">
+          <div className="flex items-center gap-3 text-gray-500">
+              <div className="p-2 bg-gray-100 rounded-lg">
                   <Layers size={20} />
               </div>
               <h2 className="text-lg font-bold uppercase tracking-[0.2em]">Departmental Health Check</h2>

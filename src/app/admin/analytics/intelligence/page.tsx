@@ -23,7 +23,7 @@ export default async function IntelligencePage(props: { searchParams: Promise<{ 
      return (
         <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 text-center">
             <h1 className="text-3xl font-bold text-red-500">Access Denied</h1>
-            <p className="text-slate-400">
+            <p className="text-gray-500">
                 คุณไม่มีสิทธิ์เข้าถึงหน้านี้ (สำหรับ Super Admin เท่านั้น)
             </p>
             <Link href="/dashboard">

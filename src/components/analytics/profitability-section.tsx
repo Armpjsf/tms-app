@@ -50,9 +50,9 @@ export function ProfitabilitySection({ data, financials }: Props) {
 
     return (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <Card className="lg:col-span-2 bg-slate-900/50 backdrop-blur-sm border-slate-800 shadow-xl">
-                <CardHeader className="border-b border-white/5">
-                    <CardTitle className="text-white flex items-center gap-2">
+            <Card className="lg:col-span-2 bg-white/80 backdrop-blur-sm border-gray-200 shadow-xl">
+                <CardHeader className="border-b border-gray-200">
+                    <CardTitle className="text-gray-900 font-black flex items-center gap-2">
                         <TrendingUp className="text-emerald-400" size={18} />
                         กำไรรายคัน (Profit per Vehicle)
                     </CardTitle>
@@ -64,7 +64,7 @@ export function ProfitabilitySection({ data, financials }: Props) {
                             <XAxis type="number" stroke="#94a3b8" />
                             <YAxis dataKey="plate" type="category" stroke="#94a3b8" width={100} />
                             <Tooltip 
-                                contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #334155' }}
+                                contentStyle={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', color: '#0f172a' }}
                                 formatter={(value: any) => [`฿${Number(value).toLocaleString()}`, 'Net Profit']}
                             />
                             <Bar dataKey="netProfit" radius={[0, 4, 4, 0]}>
@@ -77,10 +77,10 @@ export function ProfitabilitySection({ data, financials }: Props) {
                 </CardContent>
             </Card>
 
-            <Card className="bg-slate-900/50 backdrop-blur-sm border-slate-800 shadow-xl">
-                <CardHeader className="border-b border-white/5">
-                    <CardTitle className="text-white flex items-center gap-2">
-                        <Coins className="text-blue-400" size={18} />
+            <Card className="bg-white/80 backdrop-blur-sm border-gray-200 shadow-xl">
+                <CardHeader className="border-b border-gray-200">
+                    <CardTitle className="text-gray-900 font-black flex items-center gap-2">
+                        <Coins className="text-emerald-500" size={18} />
                         สัดส่วนต้นทุน (Cost Structure)
                     </CardTitle>
                 </CardHeader>
@@ -102,7 +102,7 @@ export function ProfitabilitySection({ data, financials }: Props) {
                                     ))}
                                 </Pie>
                                 <Tooltip 
-                                    contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #334155' }}
+                                    contentStyle={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', color: '#0f172a' }}
                                     formatter={(value: any) => [`฿${Number(value).toLocaleString()}`, 'Cost']}
                                 />
                             </PieChart>
@@ -114,9 +114,9 @@ export function ProfitabilitySection({ data, financials }: Props) {
                             <div key={item.name} className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
                                     <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
-                                    <span className="text-xs text-slate-400">{item.name}</span>
+                                    <span className="text-xs text-gray-500">{item.name}</span>
                                 </div>
-                                <span className="text-xs font-bold text-slate-200">
+                                <span className="text-xs font-bold text-gray-800">
                                     {financials.cost.total > 0 ? ((item.value / financials.cost.total) * 100).toFixed(1) : 0}%
                                 </span>
                             </div>
@@ -125,43 +125,43 @@ export function ProfitabilitySection({ data, financials }: Props) {
                 </CardContent>
             </Card>
 
-            <Card className="lg:col-span-3 bg-slate-900/50 backdrop-blur-sm border-slate-800 shadow-xl overflow-hidden">
-                <CardHeader className="border-b border-white/5 bg-slate-900/80">
-                    <CardTitle className="text-white text-sm font-bold flex items-center gap-2">
-                        <Truck className="text-slate-400" size={16} />
+            <Card className="lg:col-span-3 bg-white/80 backdrop-blur-sm border-gray-200 shadow-xl overflow-hidden">
+                <CardHeader className="border-b border-gray-200 bg-white/90">
+                    <CardTitle className="text-gray-900 text-sm font-black flex items-center gap-2">
+                        <Truck className="text-gray-500" size={16} />
                         ตารางสรุปรายรับ-รายจ่าย รายคัน (Vehicle Performance Ledger)
                     </CardTitle>
                 </CardHeader>
                 <CardContent className="p-0">
                     <div className="overflow-x-auto">
                         <table className="w-full text-left text-xs">
-                            <thead className="bg-slate-800/50 text-slate-400 uppercase font-bold border-b border-slate-700">
+                            <thead className="bg-gray-50 text-gray-500 uppercase font-bold border-b border-gray-200">
                                 <tr>
                                     <th className="p-4">ทะเบียนรถ</th>
                                     <th className="p-4 text-right">รายรับ (Revenue)</th>
                                     <th className="p-4 text-right">คนขับ (Driver)</th>
                                     <th className="p-4 text-right">น้ำมัน (Fuel)</th>
                                     <th className="p-4 text-right">ซ่อมบำรุง (Maint.)</th>
-                                    <th className="p-4 text-right font-bold text-white">กำไรสุทธิ (Net Profit)</th>
+                                    <th className="p-4 text-right font-black text-gray-950">กำไรสุทธิ (Net Profit)</th>
                                     <th className="p-4 text-center">Margin</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {data.slice(0, 10).map((item) => (
-                                    <tr key={item.plate} className="border-b border-slate-800 hover:bg-white/5 transition-colors">
-                                        <td className="p-4 font-bold text-slate-200">{item.plate}</td>
+                                    <tr key={item.plate} className="border-b border-gray-200 hover:bg-white/5 transition-colors">
+                                        <td className="p-4 font-bold text-gray-800">{item.plate}</td>
                                         <td className="p-4 text-right">฿{item.revenue.toLocaleString()}</td>
-                                        <td className="p-4 text-right text-slate-400">฿{item.driverCost.toLocaleString()}</td>
-                                        <td className="p-4 text-right text-slate-400">฿{item.fuelCost.toLocaleString()}</td>
-                                        <td className="p-4 text-right text-slate-400">฿{item.maintenanceCost.toLocaleString()}</td>
-                                        <td className={`p-4 text-right font-bold ${item.netProfit > 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                                        <td className="p-4 text-right text-gray-500">฿{item.driverCost.toLocaleString()}</td>
+                                        <td className="p-4 text-right text-gray-500">฿{item.fuelCost.toLocaleString()}</td>
+                                        <td className="p-4 text-right text-gray-500">฿{item.maintenanceCost.toLocaleString()}</td>
+                                        <td className={`p-4 text-right font-black ${item.netProfit > 0 ? 'text-emerald-700' : 'text-red-700'}`}>
                                             ฿{item.netProfit.toLocaleString()}
                                         </td>
                                         <td className="p-4 text-center">
                                             <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                                                item.revenue > 0 && (item.netProfit / item.revenue) > 0.2 ? 'bg-emerald-500/20 text-emerald-400' :
-                                                item.revenue > 0 && (item.netProfit / item.revenue) > 0.1 ? 'bg-blue-500/10 text-blue-400' :
-                                                'bg-red-500/10 text-red-400'
+                                                item.revenue > 0 && (item.netProfit / item.revenue) > 0.2 ? 'bg-emerald-500/20 text-emerald-700 font-black' :
+                                                item.revenue > 0 && (item.netProfit / item.revenue) > 0.1 ? 'bg-blue-500/10 text-emerald-500' :
+                                                'bg-red-500/10 text-red-700 font-black'
                                             }`}>
                                                 {item.revenue > 0 ? ((item.netProfit / item.revenue) * 100).toFixed(1) : 0}%
                                             </span>

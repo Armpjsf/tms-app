@@ -7,9 +7,9 @@ import { useEffect, useState, useRef } from 'react'
 
 // Fix for default marker icons in Next.js
 const defaultIcon = L.icon({
-  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+  iconUrl: 'https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/images/marker-icon.png',
+  iconRetinaUrl: 'https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+  shadowUrl: 'https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/images/marker-shadow.png',
   iconSize: [25, 41],
   iconAnchor: [12, 41],
   popupAnchor: [1, -34],
@@ -17,31 +17,28 @@ const defaultIcon = L.icon({
 })
 
 const driverIcon = L.icon({
-  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
-  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41]
+  iconUrl: '/images/map/truck-marker.png',
+  shadowUrl: undefined,
+  iconSize: [35, 35],
+  iconAnchor: [17, 17],
+  popupAnchor: [0, -15]
 })
 
 const startIcon = L.icon({
-    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
-    shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-    popupAnchor: [1, -34],
-    shadowSize: [41, 41]
-  })
+    iconUrl: '/images/map/start-marker.png',
+    shadowUrl: undefined,
+    iconSize: [32, 32],
+    iconAnchor: [16, 32],
+    popupAnchor: [0, -32]
+})
   
-  const endIcon = L.icon({
-    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
-    shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-    popupAnchor: [1, -34],
-    shadowSize: [41, 41]
-  })
+const endIcon = L.icon({
+    iconUrl: '/images/map/end-marker.png',
+    shadowUrl: undefined,
+    iconSize: [32, 32],
+    iconAnchor: [16, 32],
+    popupAnchor: [0, -32]
+})
 
 L.Marker.prototype.options.icon = defaultIcon
 
@@ -53,6 +50,7 @@ export type DriverLocation = {
   status?: string
   lastUpdate?: string
   speed?: number
+  heading?: number
 }
 
 type LeafletMapProps = {
@@ -64,6 +62,7 @@ type LeafletMapProps = {
   showCurrentPosition?: boolean
   routeHistory?: [number, number][]
   focusPosition?: [number, number]
+  plannedRoute?: { lat: number; lng: number; name: string; type: 'start' | 'stop' | 'end' }[]
 }
 
 function RecenterMap({ position, zoom }: { position: [number, number], zoom?: number }) {
@@ -93,9 +92,10 @@ export default function LeafletMap({
   height = "400px",
   showCurrentPosition = false,
   routeHistory = [],
-  focusPosition
+  focusPosition,
+  plannedRoute = []
 }: LeafletMapProps) {
-  const mapCenter = currentPosition || (routeHistory.length > 0 ? routeHistory[0] : center)
+  const mapCenter = currentPosition || (routeHistory.length > 0 ? routeHistory[0] : (plannedRoute.length > 0 ? [plannedRoute[0].lat, plannedRoute[0].lng] : center)) as [number, number]
 
   return (
     <MapContainer
@@ -109,7 +109,7 @@ export default function LeafletMap({
         url="https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}"
       />
 
-      {drivers.map((driver) => (
+      {drivers.filter(d => isFinite(d.lat) && isFinite(d.lng)).map((driver) => (
         <MovingMarker key={driver.id} driver={driver} />
       ))}
 
@@ -141,21 +141,57 @@ export default function LeafletMap({
             <FitBounds route={routeHistory} />
         </>
       )}
+
+      {plannedRoute.length > 0 && (
+        <>
+            <Polyline 
+                positions={plannedRoute.map(p => [p.lat, p.lng] as [number, number])} 
+                color="#10b981" 
+                weight={6} 
+                opacity={0.4} 
+                dashArray="10, 10"
+            />
+            {plannedRoute.map((p, i) => (
+                <Marker 
+                    key={`${p.lat}-${p.lng}-${i}`} 
+                    position={[p.lat, p.lng]} 
+                    icon={p.type === 'start' ? startIcon : p.type === 'end' ? endIcon : defaultIcon}
+                >
+                    <Popup>
+                        <div className="font-bold">{p.type.toUpperCase()}: {p.name}</div>
+                    </Popup>
+                </Marker>
+            ))}
+            <FitBounds route={plannedRoute.map(p => [p.lat, p.lng])} />
+        </>
+      )}
     </MapContainer>
   )
 }
 
 function MovingMarker({ driver }: { driver: DriverLocation }) {
   const [currentPos, setCurrentPos] = useState<[number, number]>([driver.lat, driver.lng])
-  
   const lastPosRef = useRef<[number, number]>([driver.lat, driver.lng])
-  
+  const [heading, setHeading] = useState<number>(driver.heading || 0)
+
   useEffect(() => {
     let animationFrame: number
     const startPos = lastPosRef.current
     const targetPos: [number, number] = [driver.lat, driver.lng]
     const duration = 1500 // 1.5 second animation
     const startTime = performance.now()
+
+    // Calculate heading if not provided
+    if (driver.heading === undefined && (startPos[0] !== targetPos[0] || startPos[1] !== targetPos[1])) {
+        const y = Math.sin((targetPos[1] - startPos[1]) * (Math.PI / 180)) * Math.cos(targetPos[0] * (Math.PI / 180))
+        const x = Math.cos(startPos[0] * (Math.PI / 180)) * Math.sin(targetPos[0] * (Math.PI / 180)) -
+                  Math.sin(startPos[0] * (Math.PI / 180)) * Math.cos(targetPos[0] * (Math.PI / 180)) * Math.cos((targetPos[1] - startPos[1]) * (Math.PI / 180))
+        let bearing = Math.atan2(y, x) * (180 / Math.PI)
+        bearing = (bearing + 360) % 360
+        setHeading(bearing)
+    } else if (driver.heading !== undefined) {
+        setHeading(driver.heading)
+    }
 
     const animate = (currentTime: number) => {
       const elapsed = currentTime - startTime
@@ -176,15 +212,28 @@ function MovingMarker({ driver }: { driver: DriverLocation }) {
     animationFrame = requestAnimationFrame(animate)
     return () => {
       cancelAnimationFrame(animationFrame)
-      // If unmounting or changing, ensure the ref is at least at the last target
       lastPosRef.current = targetPos
     }
-  }, [driver.lat, driver.lng])
+  }, [driver.lat, driver.lng, driver.heading])
 
   return (
-    <Marker position={currentPos} icon={driverIcon}>
+    <Marker 
+        position={currentPos} 
+        icon={L.divIcon({
+            className: 'custom-div-icon',
+            html: `
+                <div class="${driver.status === 'SOS' ? 'sos-marker-container' : ''}" style="transform: rotate(${heading}deg); transition: transform 0.5s ease-in-out; position: relative;">
+                    ${driver.status === 'SOS' ? '<div class="sos-pulse-ring"></div>' : ''}
+                    <img src="/images/map/truck-marker.png" style="width: 35px; height: 35px; position: relative; z-index: 2;" />
+                </div>
+            `,
+            iconSize: [35, 35],
+            iconAnchor: [17, 17],
+            popupAnchor: [0, -15]
+        })}
+    >
       <Popup>
-         <DriverPopup driver={{ ...driver, lat: currentPos[0], lng: currentPos[1] }} />
+         <DriverPopup driver={{ ...driver, lat: currentPos[0], lng: currentPos[1], heading }} />
       </Popup>
     </Marker>
   )

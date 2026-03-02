@@ -69,7 +69,7 @@ export function RouteAutocomplete({
   return (
     <div ref={wrapperRef} className={cn("relative", className)}>
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
         <Input
           ref={inputRef}
           value={open ? query : (value || "")}
@@ -89,14 +89,14 @@ export function RouteAutocomplete({
           }}
           onClick={() => setOpen(true)}
           placeholder={placeholder}
-          className="pl-9 bg-slate-800 border-slate-700 text-white w-full"
+          className="pl-9 bg-gray-100 border-gray-200 text-white w-full"
         />
       </div>
 
       {open && (
-        <div className="absolute z-50 w-full mt-1 bg-slate-800 border border-slate-700 rounded-md shadow-lg max-h-60 overflow-auto">
+        <div className="absolute z-50 w-full mt-1 bg-gray-100 border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto">
           {filteredRoutes.length === 0 ? (
-            <div className="p-2 text-sm text-slate-400 text-center">
+            <div className="p-2 text-sm text-gray-500 text-center">
               ไม่พบข้อมูลเส้นทาง
             </div>
           ) : (
@@ -108,7 +108,7 @@ export function RouteAutocomplete({
                   className="w-full text-left px-3 py-2 text-sm hover:bg-slate-700 flex flex-col gap-1 transition-colors"
                 >
                   <span className="font-medium text-white">{route.Route_Name}</span>
-                  <div className="flex items-center gap-1 text-xs text-slate-400">
+                  <div className="flex items-center gap-1 text-xs text-gray-500">
                     <MapPin size={10} />
                     <span>{route.Origin || "?"}</span>
                     <span>→</span>

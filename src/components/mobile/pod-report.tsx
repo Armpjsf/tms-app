@@ -13,10 +13,10 @@ export const PodReport = forwardRef<HTMLDivElement, Props>(({ job, photos, signa
   return (
     <div ref={ref} className="bg-white text-black p-8 font-sans w-[800px] mx-auto">
       {/* Header */}
-      <div className="flex justify-between items-start border-b-2 border-slate-800 pb-4 mb-6">
+      <div className="flex justify-between items-start border-b-2 border-gray-200 pb-4 mb-6">
         <div>
            <h1 className="text-2xl font-bold uppercase tracking-wide">ใบส่งสินค้า / Delivery Note</h1>
-           <p className="text-sm text-slate-500 mt-1">Proof of Delivery (POD)</p>
+           <p className="text-sm text-gray-400 mt-1">Proof of Delivery (POD)</p>
         </div>
         <div className="text-right">
             <h2 className="text-xl font-bold">{job.Job_ID}</h2>
@@ -32,16 +32,16 @@ export const PodReport = forwardRef<HTMLDivElement, Props>(({ job, photos, signa
         <div className="space-y-2">
             <h3 className="font-bold border-b border-slate-300 pb-1 mb-2">ข้อมูลงาน (Job Info)</h3>
             <div className="grid grid-cols-[100px_1fr] text-sm gap-y-1">
-                <span className="text-slate-500">ลูกค้า:</span>
+                <span className="text-gray-400">ลูกค้า:</span>
                 <span className="font-medium">{job.Customer_Name}</span>
                 
-                <span className="text-slate-500">เส้นทาง:</span>
+                <span className="text-gray-400">เส้นทาง:</span>
                 <span>{job.Route_Name || "-"}</span>
                 
-                <span className="text-slate-500">ทะเบียนรถ:</span>
+                <span className="text-gray-400">ทะเบียนรถ:</span>
                 <span>{job.Vehicle_Plate || "-"}</span>
                 
-                <span className="text-slate-500">คนขับ:</span>
+                <span className="text-gray-400">คนขับ:</span>
                 <span>{job.Driver_Name || "-"}</span>
             </div>
         </div>
@@ -50,11 +50,11 @@ export const PodReport = forwardRef<HTMLDivElement, Props>(({ job, photos, signa
             <h3 className="font-bold border-b border-slate-300 pb-1 mb-2">สถานที่ (Location)</h3>
             <div className="space-y-3 text-sm">
                 <div>
-                    <span className="text-slate-500 text-xs block">ต้นทาง (Origin)</span>
+                    <span className="text-gray-400 text-xs block">ต้นทาง (Origin)</span>
                     <p>{job.Origin_Location || "-"}</p>
                 </div>
                 <div>
-                    <span className="text-slate-500 text-xs block">ปลายทาง (Destination)</span>
+                    <span className="text-gray-400 text-xs block">ปลายทาง (Destination)</span>
                     <p className="font-medium">{job.Dest_Location || "-"}</p>
                 </div>
             </div>
@@ -65,7 +65,7 @@ export const PodReport = forwardRef<HTMLDivElement, Props>(({ job, photos, signa
       <div className="mb-8">
         <h3 className="font-bold border-b border-slate-300 pb-1 mb-2">รายการสินค้า (Items)</h3>
         <table className="w-full text-sm text-left">
-            <thead className="bg-slate-100 text-slate-600">
+            <thead className="bg-slate-100 text-gray-500">
                 <tr>
                     <th className="p-2 w-12 text-center">#</th>
                     <th className="p-2">รายการ (Description)</th>
@@ -100,24 +100,24 @@ export const PodReport = forwardRef<HTMLDivElement, Props>(({ job, photos, signa
       {/* Signatures */}
       <div className="flex justify-end break-inside-avoid">
         <div className="w-64 border border-slate-300 rounded p-4 text-center">
-             <p className="text-xs text-slate-500 mb-2">ลายเซ็นผู้รับสินค้า (Receiver Signature)</p>
+             <p className="text-xs text-gray-400 mb-2">ลายเซ็นผู้รับสินค้า (Receiver Signature)</p>
              <div className="h-24 flex items-center justify-center mb-2">
                 {signature ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={signature} alt="Signature" className="max-h-full max-w-full" />
                 ) : (
-                    <span className="text-slate-200 italic">No Signature</span>
+                    <span className="text-gray-800 italic">No Signature</span>
                 )}
              </div>
              <div className="border-t border-slate-300 pt-2">
                 <p className="font-medium text-sm">{job.Customer_Name}</p>
-                <p className="text-xs text-slate-400">{new Date().toLocaleString('th-TH')}</p>
+                <p className="text-xs text-gray-500">{new Date().toLocaleString('th-TH')}</p>
              </div>
         </div>
       </div>
       
       {/* Footer */}
-      <div className="mt-8 pt-4 border-t border-slate-200 text-center text-xs text-slate-400">
+      <div className="mt-8 pt-4 border-t border-slate-200 text-center text-xs text-gray-500">
         Generated by TMS ePOD System
       </div>
     </div>

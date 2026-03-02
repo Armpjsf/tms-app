@@ -6,8 +6,12 @@ import { getUserBranchId, isSuperAdmin, getUserRole } from "@/lib/permissions"
 export type Route = {
   Route_Name: string
   Origin: string | null
+  Origin_Lat: number | null
+  Origin_Lon: number | null
   Map_Link_Origin: string | null
   Destination: string | null
+  Dest_Lat: number | null
+  Dest_Lon: number | null
   Map_Link_Destination: string | null
   Distance_KM: number | null
   Branch_ID: string | null
@@ -104,8 +108,12 @@ export async function createRoute(routeData: Partial<Route>) {
       .insert({
         Route_Name: routeData.Route_Name,
         Origin: routeData.Origin,
+        Origin_Lat: routeData.Origin_Lat,
+        Origin_Lon: routeData.Origin_Lon,
         Map_Link_Origin: routeData.Map_Link_Origin,
         Destination: routeData.Destination,
+        Dest_Lat: routeData.Dest_Lat,
+        Dest_Lon: routeData.Dest_Lon,
         Map_Link_Destination: routeData.Map_Link_Destination,
         Distance_KM: routeData.Distance_KM,
         Branch_ID: routeData.Branch_ID
@@ -132,8 +140,12 @@ export async function updateRoute(originalRouteName: string, routeData: Partial<
       .update({
         Route_Name: routeData.Route_Name,
         Origin: routeData.Origin,
+        Origin_Lat: routeData.Origin_Lat,
+        Origin_Lon: routeData.Origin_Lon,
         Map_Link_Origin: routeData.Map_Link_Origin,
         Destination: routeData.Destination,
+        Dest_Lat: routeData.Dest_Lat,
+        Dest_Lon: routeData.Dest_Lon,
         Map_Link_Destination: routeData.Map_Link_Destination,
         Distance_KM: routeData.Distance_KM,
         Branch_ID: routeData.Branch_ID
@@ -201,7 +213,11 @@ export async function createBulkRoutes(routes: any[]) {
     
             normalized.Route_Name = getValue(['route_name', 'name', 'route', 'ชื่อเส้นทาง', 'เส้นทาง'])
             normalized.Origin = getValue(['origin', 'source', 'start', 'ต้นทาง', 'จุดเริ่มต้น'])
+            normalized.Origin_Lat = getValue(['origin_lat', 'start_lat', 'lat_start', 'ละติจูดต้นทาง'])
+            normalized.Origin_Lon = getValue(['origin_lon', 'start_lon', 'lon_start', 'ลองติจูดต้นทาง'])
             normalized.Destination = getValue(['destination', 'dest', 'end', 'ปลายทาง', 'จุดสิ้นสุด'])
+            normalized.Dest_Lat = getValue(['dest_lat', 'end_lat', 'lat_end', 'ละติจูดปลายทาง'])
+            normalized.Dest_Lon = getValue(['dest_lon', 'end_lon', 'lon_end', 'ลองติจูดปลายทาง'])
             // Map Links & Distance
             normalized.Map_Link_Origin = getValue(['map_link_origin', 'origin_link', 'link_start', 'ลิ้งค์ต้นทาง'])
             normalized.Map_Link_Destination = getValue(['map_link_destination', 'destination_link', 'link_end', 'ลิ้งค์ปลายทาง'])
@@ -240,8 +256,12 @@ export async function createBulkRoutes(routes: any[]) {
              return {
                 Route_Name: r.Route_Name,
                 Origin: r.Origin,
+                Origin_Lat: r.Origin_Lat ? parseFloat(r.Origin_Lat) : null,
+                Origin_Lon: r.Origin_Lon ? parseFloat(r.Origin_Lon) : null,
                 Map_Link_Origin: r.Map_Link_Origin,
                 Destination: r.Destination,
+                Dest_Lat: r.Dest_Lat ? parseFloat(r.Dest_Lat) : null,
+                Dest_Lon: r.Dest_Lon ? parseFloat(r.Dest_Lon) : null,
                 Map_Link_Destination: r.Map_Link_Destination,
                 Distance_KM: r.Distance_KM ? parseFloat(r.Distance_KM) : null,
                 Branch_ID: branchId
@@ -284,8 +304,12 @@ export async function createBulkRoutes(routes: any[]) {
                 await supabase.from('Master_Routes')
                     .update({
                         Origin: r.Origin,
+                        Origin_Lat: r.Origin_Lat,
+                        Origin_Lon: r.Origin_Lon,
                         Map_Link_Origin: r.Map_Link_Origin,
                         Destination: r.Destination,
+                        Dest_Lat: r.Dest_Lat,
+                        Dest_Lon: r.Dest_Lon,
                         Map_Link_Destination: r.Map_Link_Destination,
                         Distance_KM: r.Distance_KM,
                         Branch_ID: r.Branch_ID

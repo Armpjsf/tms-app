@@ -51,25 +51,25 @@ export function MobileJobFilter() {
         <Button 
             variant="outline" 
             size="sm" 
-            className={`gap-2 border-slate-700 bg-slate-900 text-slate-300 hover:text-white ${
-                activeFilterCount > 0 ? 'border-blue-500 text-blue-400' : ''
+            className={`gap-2 border-gray-200 bg-white text-gray-700 hover:text-white ${
+                activeFilterCount > 0 ? 'border-blue-500 text-emerald-500' : ''
             }`}
         >
           <Filter size={14} />
           ตัวกรอง
           {activeFilterCount > 0 && (
-              <span className="flex items-center justify-center w-5 h-5 ml-1 text-[10px] font-bold text-white bg-blue-600 rounded-full">
+              <span className="flex items-center justify-center w-5 h-5 ml-1 text-[10px] font-bold text-white bg-emerald-600 rounded-full">
                   {activeFilterCount}
               </span>
           )}
         </Button>
       </SheetTrigger>
-      <SheetContent side="bottom" className="h-auto rounded-t-xl border-t border-slate-700 bg-slate-900 text-white px-4 py-6">
+      <SheetContent side="bottom" className="h-auto rounded-t-xl border-t border-gray-200 bg-white text-white px-4 py-6">
         <SheetHeader className="mb-6 text-left">
           <SheetTitle className="text-white flex justify-between items-center">
             <span>ตัวกรองงาน</span>
             {activeFilterCount > 0 && (
-                <Button variant="ghost" size="sm" onClick={handleClear} className="h-8 text-xs text-slate-400 hover:text-white">
+                <Button variant="ghost" size="sm" onClick={handleClear} className="h-8 text-xs text-gray-500 hover:text-white">
                     ล้างค่า
                 </Button>
             )}
@@ -79,22 +79,22 @@ export function MobileJobFilter() {
         <div className="space-y-6 pb-6">
             {/* Date Filter */}
             <div className="space-y-2">
-                <Label htmlFor="date" className="text-slate-300">วันที่</Label>
+                <Label htmlFor="date" className="text-gray-700">วันที่</Label>
                 <div className="relative">
                     <Input 
                         id="date" 
                         type="date" 
                         value={date}
                         onChange={(e) => setDate(e.target.value)}
-                        className="bg-slate-800 border-slate-700 text-white pl-10 h-12"
+                        className="bg-gray-100 border-gray-200 text-white pl-10 h-12"
                     />
-                    <Calendar className="absolute left-3 top-3.5 text-slate-400" size={18} />
+                    <Calendar className="absolute left-3 top-3.5 text-gray-500" size={18} />
                 </div>
             </div>
 
             {/* Status Filter */}
             <div className="space-y-2">
-                <Label className="text-slate-300">สถานะงาน</Label>
+                <Label className="text-gray-700">สถานะงาน</Label>
                 <div className="flex flex-wrap gap-2">
                     {['All', 'Assigned', 'In Transit', 'Completed', 'Cancelled'].map((s) => (
                         <button
@@ -102,8 +102,8 @@ export function MobileJobFilter() {
                             onClick={() => setStatus(s)}
                             className={`px-4 py-2 rounded-full text-sm border transition-colors ${
                                 status === s 
-                                    ? 'bg-blue-600 border-blue-600 text-white' 
-                                    : 'bg-transparent border-slate-700 text-slate-400 hover:border-slate-500'
+                                    ? 'bg-emerald-600 border-blue-600 text-white' 
+                                    : 'bg-transparent border-gray-200 text-gray-500 hover:border-slate-500'
                             }`}
                         >
                             {s === 'All' ? 'ทั้งหมด' : s}
@@ -114,7 +114,7 @@ export function MobileJobFilter() {
         </div>
 
         <SheetFooter>
-             <Button onClick={handleApply} className="w-full h-12 text-base bg-blue-600 hover:bg-blue-700 mb-2">
+             <Button onClick={handleApply} className="w-full h-12 text-base bg-emerald-600 hover:bg-blue-700 mb-2">
                 ดูผลลัพธ์
              </Button>
         </SheetFooter>

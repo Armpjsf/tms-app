@@ -1,20 +1,22 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
-import { Button } from "@/components/ui/button"
+import { PremiumCard } from "@/components/ui/premium-card"
+import { PremiumButton } from "@/components/ui/premium-button"
 import { Input } from "@/components/ui/input"
-import { Card, CardContent } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { 
-    Building2, 
     Plus, 
     Edit, 
     Trash2, 
     Search, 
     Loader2, 
-    Banknote 
+    Banknote,
+    Briefcase,
+    ShieldCheck,
+    TrendingUp
 } from "lucide-react"
 import {
   Select,
@@ -25,9 +27,10 @@ import {
 } from "@/components/ui/select"
 import { getAllSubcontractors } from "@/lib/supabase/subcontractors"
 import { createSubcontractor, updateSubcontractor, deleteSubcontractor } from "@/lib/actions/subcontractor-actions"
+import { getSubcontractorPerformance, getOperationalStats } from "@/lib/supabase/analytics"
 import { Subcontractor } from "@/types/subcontractor"
 import { useBranch } from "@/components/providers/branch-provider"
-import { useCallback } from "react"
+import { cn } from "@/lib/utils"
 
 export default function SubcontractorsPage() {
     const { selectedBranch, branches } = useBranch()
@@ -36,6 +39,7 @@ export default function SubcontractorsPage() {
     const [isDialogOpen, setIsDialogOpen] = useState(false)
     const [saving, setSaving] = useState(false)
     const [searchTerm, setSearchTerm] = useState("")
+    const [stats, setStats] = useState<any>(null)
 
     // Form State
     const [editingId, setEditingId] = useState<string | null>(null)
@@ -52,8 +56,13 @@ export default function SubcontractorsPage() {
 
     const loadData = useCallback(async () => {
         setLoading(true)
-        const data = await getAllSubcontractors(selectedBranch)
+        const [data, performance, ops] = await Promise.all([
+            getAllSubcontractors(selectedBranch),
+            getSubcontractorPerformance(undefined, undefined, selectedBranch),
+            getOperationalStats(selectedBranch)
+        ])
         setList(data)
+        setStats({ performance, ops })
         setLoading(false)
     }, [selectedBranch])
 
@@ -122,88 +131,172 @@ export default function SubcontractorsPage() {
 
     return (
         <DashboardLayout>
-            <div className="flex justify-between items-center mb-6">
-                <div>
-                    <h1 className="text-2xl font-bold text-white flex items-center gap-3">
-                        <Building2 className="text-blue-400" />
-                        จัดการบริษัทรถร่วม (Subcontractors)
+            {/* Premium Header Container */}
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-8 mb-12 bg-white/40 p-10 rounded-[2.5rem] border border-white/40 backdrop-blur-xl shadow-2xl relative overflow-hidden group">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/5 blur-3xl rounded-full -mr-20 -mt-20 pointer-events-none" />
+                
+                <div className="relative z-10">
+                    <h1 className="text-5xl font-black text-gray-900 mb-2 tracking-tighter flex items-center gap-4">
+                        <div className="p-3 bg-gradient-to-br from-amber-500 to-orange-600 rounded-3xl shadow-2xl shadow-amber-500/20 text-white transform group-hover:scale-110 transition-transform duration-500">
+                            <Briefcase size={32} />
+                        </div>
+                        Sub-Contractors
                     </h1>
-                    <p className="text-sm text-slate-400 mt-1">จัดการรายชื่อบริษัทนิติบุคคลและข้อมูลการชำระเงินส่วนกลาง</p>
+                    <p className="text-gray-500 font-bold ml-[4.5rem] uppercase tracking-[0.2em] text-[10px]">Logistics Network • Partner Management</p>
                 </div>
-                <Button onClick={() => handleOpenDialog()} className="bg-blue-600 hover:bg-blue-700">
-                    <Plus className="w-4 h-4 mr-2" />
-                    เพิ่มบริษัทรถร่วม
-                </Button>
+
+                <div className="flex flex-wrap gap-4 relative z-10">
+                    <PremiumButton onClick={() => handleOpenDialog()} className="h-14 px-8 rounded-2xl shadow-amber-500/20">
+                        <Plus size={24} className="mr-2" />
+                        เพิ่มบริษัทรถร่วม
+                    </PremiumButton>
+                </div>
             </div>
 
-            <div className="flex items-center space-x-2 mb-6 bg-slate-900/50 p-2 rounded-xl border border-slate-800">
-                <Search className="text-slate-500 ml-2" />
-                <Input 
-                    placeholder="ค้นหาชื่อหรือรหัสบริษัท..." 
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="border-none bg-transparent focus-visible:ring-0 text-white placeholder:text-slate-500"
-                />
+            {/* Subcontractor Analytics Grid */}
+            {!loading && stats && (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+                    <PremiumCard className="p-8 group backdrop-blur-2xl border-amber-500/10">
+                        <div className="flex items-center justify-between mb-6">
+                            <div className="p-3 rounded-2xl bg-amber-500 shadow-xl shadow-amber-500/20 text-white transform group-hover:scale-110 transition-all duration-500">
+                                <Briefcase size={20} />
+                            </div>
+                            <div className="px-3 py-1 bg-amber-50 rounded-full border border-amber-100 italic font-black text-[9px] text-amber-600 uppercase tracking-widest">Network</div>
+                        </div>
+                        <p className="text-gray-400 font-bold text-[10px] uppercase tracking-[0.2em] mb-1">Total Partners</p>
+                        <p className="text-3xl font-black text-gray-900 tracking-tighter">{list.length}</p>
+                    </PremiumCard>
+
+                    <PremiumCard className="p-8 group backdrop-blur-2xl border-blue-500/10">
+                        <div className="flex items-center justify-between mb-6">
+                            <div className="p-3 rounded-2xl bg-blue-500 shadow-xl shadow-blue-500/20 text-white transform group-hover:scale-110 transition-all duration-500">
+                                <TrendingUp size={20} />
+                            </div>
+                            <div className="px-3 py-1 bg-blue-50 rounded-full border border-blue-100 italic font-black text-[9px] text-blue-600 uppercase tracking-widest">Share</div>
+                        </div>
+                        <p className="text-gray-400 font-bold text-[10px] uppercase tracking-[0.2em] mb-1">Subcontractor Share</p>
+                        <p className="text-3xl font-black text-gray-900 tracking-tighter">
+                            {stats.performance.find((p: any) => p.name.includes('Sub'))?.count || 0} <span className="text-sm text-gray-400 font-bold tracking-normal ml-1">Jobs</span>
+                        </p>
+                    </PremiumCard>
+
+                    <PremiumCard className="p-8 group backdrop-blur-2xl border-emerald-500/10">
+                        <div className="flex items-center justify-between mb-6">
+                            <div className="p-3 rounded-2xl bg-emerald-500 shadow-xl shadow-emerald-500/20 text-white transform group-hover:scale-110 transition-all duration-500">
+                                <ShieldCheck size={20} />
+                            </div>
+                            <div className="px-3 py-1 bg-emerald-50 rounded-full border border-emerald-100 italic font-black text-[9px] text-emerald-600 uppercase tracking-widest">Quality</div>
+                        </div>
+                        <p className="text-gray-400 font-bold text-[10px] uppercase tracking-[0.2em] mb-1">On-Time Reliability</p>
+                        <p className="text-3xl font-black text-gray-900 tracking-tighter">{stats.ops.fleet.onTimeDelivery.toFixed(1)}%</p>
+                    </PremiumCard>
+                </div>
+            )}
+
+            {/* Search Bar */}
+            <div className="mb-12 relative group max-w-2xl">
+                <div className="absolute inset-0 bg-amber-500/10 blur-2xl rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                <div className="relative bg-white/60 backdrop-blur-xl border border-white/40 p-4 rounded-3xl shadow-xl">
+                    <div className="flex items-center gap-4 px-4">
+                        <Search className="text-amber-500 animate-pulse" size={24} />
+                        <Input
+                            placeholder="ค้นหาชื่อหรือรหัสบริษัท..." 
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="bg-transparent border-none focus-visible:ring-0 text-xl font-black text-gray-900 placeholder:text-gray-300 tracking-tighter"
+                        />
+                    </div>
+                </div>
             </div>
 
-            <Card className="bg-slate-900/50 border-slate-800">
-                <CardContent className="p-0">
-                    <div className="relative w-full overflow-auto">
-                        <table className="w-full text-sm text-left">
-                            <thead className="text-xs uppercase bg-slate-900 text-slate-400 border-b border-slate-800">
+            <PremiumCard className="overflow-hidden p-0 border-white/40 bg-white/20 backdrop-blur-md">
+                <div className="relative w-full overflow-auto">
+                    <table className="w-full text-sm text-left border-collapse">
+                        <thead>
+                            <tr className="bg-gray-50/50 border-b border-gray-100">
+                                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-gray-400">Identity</th>
+                                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-gray-400">Partner Details</th>
+                                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-gray-400">Payment Channel</th>
+                                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-gray-400">Status</th>
+                                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-gray-400 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-50">
+                            {loading ? (
                                 <tr>
-                                    <th className="px-6 py-4">รหัส</th>
-                                    <th className="px-6 py-4">ชื่อบริษัท</th>
-                                    <th className="px-6 py-4">เลขบัญชีธนาคาร</th>
-                                    <th className="px-6 py-4">สถานะ</th>
-                                    <th className="px-6 py-4 text-right">จัดการ</th>
+                                    <td colSpan={5} className="text-center py-20">
+                                        <Loader2 className="w-10 h-10 text-amber-500 animate-spin mx-auto mb-4" />
+                                        <p className="text-gray-400 font-black uppercase tracking-widest text-[10px]">Synchronizing Partners...</p>
+                                    </td>
                                 </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-800">
-                                {loading ? (
-                                    <tr><td colSpan={5} className="text-center py-8 text-slate-500">Loading...</td></tr>
-                                ) : filtered.length === 0 ? (
-                                    <tr><td colSpan={5} className="text-center py-8 text-slate-500">ไม่พบข้อมูล</td></tr>
-                                ) : (
-                                    filtered.map((item) => (
-                                        <tr key={item.Sub_ID} className="hover:bg-slate-800/50 transition-colors">
-                                            <td className="px-6 py-4 font-medium text-white">{item.Sub_ID}</td>
-                                            <td className="px-6 py-4 text-slate-300">
-                                                <div>{item.Sub_Name}</div>
-                                                <div className="text-[10px] text-slate-500">Tax ID: {item.Tax_ID || "-"}</div>
-                                            </td>
-                                            <td className="px-6 py-4 text-slate-300">
-                                                {item.Bank_Account_No ? (
+                            ) : filtered.length === 0 ? (
+                                <tr>
+                                    <td colSpan={5} className="text-center py-20 text-gray-400 font-bold uppercase tracking-widest text-xs">
+                                        No partners found in the network
+                                    </td>
+                                </tr>
+                            ) : (
+                                filtered.map((item) => (
+                                    <tr key={item.Sub_ID} className="group hover:bg-white/40 transition-all duration-300">
+                                        <td className="px-8 py-6">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-600 font-black text-xs shadow-sm group-hover:scale-110 transition-transform">
+                                                    ID
+                                                </div>
+                                                <span className="font-black text-gray-900 tracking-tighter">{item.Sub_ID}</span>
+                                            </div>
+                                        </td>
+                                        <td className="px-8 py-6">
+                                            <div>
+                                                <div className="font-black text-gray-900 tracking-tighter group-hover:text-amber-600 transition-colors">{item.Sub_Name}</div>
+                                                <div className="flex items-center gap-1.5 mt-1 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                                                    <ShieldCheck size={10} className="text-emerald-500" />
+                                                    Tax: {item.Tax_ID || "PENDING"}
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td className="px-8 py-6">
+                                            {item.Bank_Account_No ? (
+                                                <div className="flex flex-col gap-1">
                                                     <div className="flex items-center gap-2">
                                                         <Banknote size={14} className="text-emerald-500" />
-                                                        <span>{item.Bank_Name} {item.Bank_Account_No}</span>
+                                                        <span className="text-xs font-black text-gray-700">{item.Bank_Name}</span>
                                                     </div>
-                                                ) : "-"}
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <span className={`px-2 py-1 rounded-full text-xs ${item.Active_Status === 'Active' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'}`}>
-                                                    {item.Active_Status}
-                                                </span>
-                                            </td>
-                                            <td className="px-6 py-4 text-right space-x-2">
-                                                <Button variant="ghost" size="icon" onClick={() => handleOpenDialog(item)} className="text-slate-400 hover:text-white">
+                                                    <span className="text-[10px] font-bold text-gray-400 tracking-wider ml-6">{item.Bank_Account_No}</span>
+                                                </div>
+                                            ) : (
+                                                <span className="text-[10px] font-bold text-gray-300 uppercase italic">Not Specified</span>
+                                            )}
+                                        </td>
+                                        <td className="px-8 py-6">
+                                            <div className={cn(
+                                                "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border transition-all",
+                                                item.Active_Status === 'Active' ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' : 'bg-red-500/10 text-red-600 border-red-500/20'
+                                            )}>
+                                                <span className={cn("w-1 h-1 rounded-full", item.Active_Status === 'Active' ? "bg-emerald-500 animate-pulse" : "bg-red-500")} />
+                                                {item.Active_Status}
+                                            </div>
+                                        </td>
+                                        <td className="px-8 py-6 text-right">
+                                            <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <PremiumButton variant="outline" size="sm" onClick={() => handleOpenDialog(item)} className="h-9 w-9 p-0 rounded-xl">
                                                     <Edit className="w-4 h-4" />
-                                                </Button>
-                                                <Button variant="ghost" size="icon" onClick={() => handleDelete(item.Sub_ID)} className="text-red-400 hover:text-red-300">
+                                                </PremiumButton>
+                                                <PremiumButton variant="outline" size="sm" onClick={() => handleDelete(item.Sub_ID)} className="h-9 w-9 p-0 rounded-xl text-red-500 border-red-50 hover:bg-red-50">
                                                     <Trash2 className="w-4 h-4" />
-                                                </Button>
-                                            </td>
-                                        </tr>
-                                    ))
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
-                </CardContent>
-            </Card>
+                                                </PremiumButton>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+            </PremiumCard>
 
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                <DialogContent className="bg-slate-900 border-slate-800 text-white max-w-lg">
+                <DialogContent className="bg-white border-gray-200 text-white max-w-lg">
                     <DialogHeader>
                         <DialogTitle>{editingId ? "แก้ไขบริษัทรถร่วม" : "เพิ่มบริษัทรถร่วม"}</DialogTitle>
                     </DialogHeader>
@@ -216,7 +309,7 @@ export default function SubcontractorsPage() {
                                     value={formData.Sub_ID} 
                                     onChange={e => setFormData({...formData, Sub_ID: e.target.value})} 
                                     disabled={!!editingId}
-                                    className="bg-slate-800 border-slate-700" 
+                                    className="bg-gray-100 border-gray-200" 
                                 />
                             </div>
                             <div className="space-y-2">
@@ -224,7 +317,7 @@ export default function SubcontractorsPage() {
                                 <Input 
                                     value={formData.Tax_ID || ""} 
                                     onChange={e => setFormData({...formData, Tax_ID: e.target.value})} 
-                                    className="bg-slate-800 border-slate-700" 
+                                    className="bg-gray-100 border-gray-200" 
                                 />
                             </div>
                         </div>
@@ -234,7 +327,7 @@ export default function SubcontractorsPage() {
                                 <Input 
                                     value={formData.Sub_Name} 
                                     onChange={e => setFormData({...formData, Sub_Name: e.target.value})} 
-                                    className="bg-slate-800 border-slate-700" 
+                                    className="bg-gray-100 border-gray-200" 
                                 />
                             </div>
 
@@ -244,10 +337,10 @@ export default function SubcontractorsPage() {
                                     value={formData.Branch_ID || ""} 
                                     onValueChange={(v: string) => setFormData({...formData, Branch_ID: v})}
                                 >
-                                    <SelectTrigger className="bg-slate-800 border-slate-700">
+                                    <SelectTrigger className="bg-gray-100 border-gray-200">
                                         <SelectValue placeholder="เลือกสาขา" />
                                     </SelectTrigger>
-                                    <SelectContent className="bg-slate-900 border-slate-800 text-white">
+                                    <SelectContent className="bg-white border-gray-200 text-white">
                                         {branches.map(b => (
                                             <SelectItem key={b.Branch_ID} value={b.Branch_ID}>
                                                 {b.Branch_Name} ({b.Branch_ID})
@@ -257,8 +350,8 @@ export default function SubcontractorsPage() {
                                 </Select>
                             </div>
 
-                        <div className="p-4 rounded-lg bg-slate-950/50 border border-slate-800 space-y-4">
-                            <Label className="text-blue-400 text-xs font-bold uppercase">ข้อมูลบัญชีธนาคารส่วนกลาง (Payment)</Label>
+                        <div className="p-4 rounded-lg bg-white/80 border border-gray-200 space-y-4">
+                            <Label className="text-emerald-500 text-xs font-bold uppercase">ข้อมูลบัญชีธนาคารส่วนกลาง (Payment)</Label>
                             
                             <div className="space-y-2">
                                 <Label>ธนาคาร</Label>
@@ -266,7 +359,7 @@ export default function SubcontractorsPage() {
                                     value={formData.Bank_Name || ""} 
                                     onChange={e => setFormData({...formData, Bank_Name: e.target.value})} 
                                     placeholder="เช่น กสิกรไทย, ไทยพาณิชย์"
-                                    className="bg-slate-800 border-slate-700" 
+                                    className="bg-gray-100 border-gray-200" 
                                 />
                             </div>
 
@@ -276,7 +369,7 @@ export default function SubcontractorsPage() {
                                     <Input 
                                         value={formData.Bank_Account_No || ""} 
                                         onChange={e => setFormData({...formData, Bank_Account_No: e.target.value})} 
-                                        className="bg-slate-800 border-slate-700" 
+                                        className="bg-gray-100 border-gray-200" 
                                     />
                                 </div>
                                 <div className="space-y-2">
@@ -284,7 +377,7 @@ export default function SubcontractorsPage() {
                                     <Input 
                                         value={formData.Bank_Account_Name || ""} 
                                         onChange={e => setFormData({...formData, Bank_Account_Name: e.target.value})} 
-                                        className="bg-slate-800 border-slate-700" 
+                                        className="bg-gray-100 border-gray-200" 
                                     />
                                 </div>
                             </div>
@@ -292,11 +385,11 @@ export default function SubcontractorsPage() {
                     </div>
 
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setIsDialogOpen(false)} className="border-slate-700">ยกเลิก</Button>
-                        <Button onClick={handleSave} disabled={saving} className="bg-blue-600 hover:bg-blue-700">
+                        <PremiumButton variant="outline" onClick={() => setIsDialogOpen(false)} className="border-gray-200">ยกเลิก</PremiumButton>
+                        <PremiumButton onClick={handleSave} disabled={saving} className="bg-amber-600 hover:bg-orange-700 shadow-amber-500/20">
                             {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                             บันทึก
-                        </Button>
+                        </PremiumButton>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>

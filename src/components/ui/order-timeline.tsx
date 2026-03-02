@@ -25,10 +25,10 @@ const STEPS = [
     labelEn: 'Order Created',
     icon: Calendar, 
     description: 'สร้างคำสั่งงานเข้าระบบ',
-    color: 'text-slate-400',
+    color: 'text-gray-500',
     bgColor: 'bg-slate-500/20',
-    activeColor: 'text-indigo-400',
-    activeBg: 'bg-indigo-500/20',
+    activeColor: 'text-emerald-600',
+    activeBg: 'bg-emerald-500/20',
     completedColor: 'text-emerald-400',
     completedBg: 'bg-emerald-500/20',
   },
@@ -38,10 +38,10 @@ const STEPS = [
     labelEn: 'Truck Assigned',
     icon: User, 
     description: 'มอบหมายงานให้คนขับ',
-    color: 'text-slate-400',
+    color: 'text-gray-500',
     bgColor: 'bg-slate-500/20',
-    activeColor: 'text-blue-400',
-    activeBg: 'bg-blue-500/20',
+    activeColor: 'text-emerald-500',
+    activeBg: 'bg-emerald-500/15',
     completedColor: 'text-emerald-400',
     completedBg: 'bg-emerald-500/20',
   },
@@ -51,7 +51,7 @@ const STEPS = [
     labelEn: 'Picked Up',
     icon: Package, 
     description: 'รับสินค้าจากต้นทาง',
-    color: 'text-slate-400',
+    color: 'text-gray-500',
     bgColor: 'bg-slate-500/20',
     activeColor: 'text-amber-400',
     activeBg: 'bg-amber-500/20',
@@ -64,7 +64,7 @@ const STEPS = [
     labelEn: 'On Route',
     icon: Truck, 
     description: 'กำลังเดินทางไปปลายทาง',
-    color: 'text-slate-400',
+    color: 'text-gray-500',
     bgColor: 'bg-slate-500/20',
     activeColor: 'text-orange-400',
     activeBg: 'bg-orange-500/20',
@@ -78,7 +78,7 @@ const STEPS = [
     labelEn: 'Delivered',
     icon: CheckCircle2, 
     description: 'ยืนยันการส่งมอบสินค้า',
-    color: 'text-slate-400',
+    color: 'text-gray-500',
     bgColor: 'bg-slate-500/20',
     activeColor: 'text-emerald-400',
     activeBg: 'bg-emerald-500/20',
@@ -115,7 +115,7 @@ export function OrderTimeline({ currentStatus, planDate, createdAt, className }:
                 <div className="absolute left-[19px] top-10 w-0.5 h-[calc(100%-16px)]">
                   <div className={cn(
                     "w-full h-full rounded-full transition-colors duration-500",
-                    isCompleted && index < currentIndex ? "bg-emerald-500/50" : "bg-slate-800"
+                    isCompleted && index < currentIndex ? "bg-emerald-500/50" : "bg-gray-100"
                   )} />
                 </div>
               )}
@@ -128,7 +128,7 @@ export function OrderTimeline({ currentStatus, planDate, createdAt, className }:
                     ? `${step.completedBg} border-emerald-500/30 ${step.completedColor}`
                     : isActive
                     ? `${step.activeBg} border-current ${step.activeColor} shadow-lg ring-4 ring-current/10`
-                    : `${step.bgColor} border-slate-800 ${step.color}`
+                    : `${step.bgColor} border-gray-200 ${step.color}`
                 )}>
                   <Icon size={18} />
                 </div>
@@ -140,13 +140,13 @@ export function OrderTimeline({ currentStatus, planDate, createdAt, className }:
                   <div>
                     <p className={cn(
                       "text-sm font-bold transition-colors",
-                      isCompleted ? "text-white" : "text-slate-500"
+                      isCompleted ? "text-foreground" : "text-gray-400"
                     )}>
                       {step.label}
                     </p>
                     <p className={cn(
                       "text-[10px] font-medium uppercase tracking-wider",
-                      isCompleted ? "text-slate-400" : "text-slate-600"
+                      isCompleted ? "text-gray-500" : "text-gray-500"
                     )}>
                       {step.labelEn}
                     </p>
@@ -160,10 +160,10 @@ export function OrderTimeline({ currentStatus, planDate, createdAt, className }:
                 
                 {/* Timestamp Row */}
                 <div className="flex items-center gap-2 mt-1">
-                  <Clock size={10} className={isCompleted ? "text-slate-500" : "text-slate-700"} />
+                  <Clock size={10} className={isCompleted ? "text-gray-400" : "text-gray-400"} />
                   <span className={cn(
                     "text-[10px]",
-                    isCompleted ? "text-slate-500" : "text-slate-700"
+                    isCompleted ? "text-gray-400" : "text-gray-400"
                   )}>
                     {index === 0 && createdAt 
                       ? new Date(createdAt).toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'short' })
@@ -179,7 +179,7 @@ export function OrderTimeline({ currentStatus, planDate, createdAt, className }:
                 {/* Description */}
                 <p className={cn(
                   "text-[11px] mt-1",
-                  isCompleted ? "text-slate-500" : "text-slate-700"
+                  isCompleted ? "text-gray-400" : "text-gray-400"
                 )}>
                   {step.description}
                 </p>

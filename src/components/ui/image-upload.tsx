@@ -62,7 +62,7 @@ export function ImageUpload({
       />
       
       {value ? (
-        <div className="relative w-24 h-24 rounded-lg overflow-hidden border border-slate-700">
+        <div className="relative w-24 h-24 rounded-lg overflow-hidden border border-gray-200">
            <Image
             src={value}
             alt="Upload"
@@ -82,7 +82,7 @@ export function ImageUpload({
         <Button
           type="button"
           variant="outline"
-          className="w-24 h-24 border-dashed border-2 flex flex-col items-center justify-center gap-2 text-slate-400 hover:text-white hover:border-slate-400 bg-transparent"
+          className="w-24 h-24 border-dashed border-2 flex flex-col items-center justify-center gap-2 text-gray-500 hover:text-white hover:border-slate-400 bg-transparent"
           onClick={() => fileInputRef.current?.click()}
           disabled={disabled || loading}
         >

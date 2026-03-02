@@ -118,10 +118,10 @@ export function ExcelImport({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent className="sm:max-w-xl bg-slate-900 border-slate-800 text-white">
+      <DialogContent className="sm:max-w-xl bg-white border-gray-200 text-white">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
-          <DialogDescription className="text-slate-400">{description}</DialogDescription>
+          <DialogDescription className="text-gray-500">{description}</DialogDescription>
         </DialogHeader>
 
         <div className="grid gap-4 py-4">
@@ -131,7 +131,7 @@ export function ExcelImport({
                 variant="outline"
                 size="sm"
                 onClick={downloadTemplate}
-                className="gap-2 border-slate-700 hover:bg-slate-800 text-slate-300"
+                className="gap-2 border-gray-200 hover:bg-gray-100 text-gray-700"
               >
                 <Download size={14} /> โหลดแบบฟอร์ม (Template)
               </Button>
@@ -140,7 +140,7 @@ export function ExcelImport({
 
           <div
             className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
-              file ? "border-blue-500/50 bg-blue-500/5" : "border-slate-700 hover:border-slate-500 hover:bg-slate-800/50"
+              file ? "border-blue-500/50 bg-blue-500/5" : "border-gray-200 hover:border-slate-500 hover:bg-gray-50"
             }`}
             onClick={() => fileInputRef.current?.click()}
           >
@@ -154,17 +154,17 @@ export function ExcelImport({
             <div className="flex flex-col items-center gap-2">
               {file ? (
                 <>
-                  <FileSpreadsheet className="w-10 h-10 text-blue-400" />
-                  <p className="font-medium text-blue-400">{file.name}</p>
-                  <p className="text-xs text-slate-500">
+                  <FileSpreadsheet className="w-10 h-10 text-emerald-500" />
+                  <p className="font-medium text-emerald-500">{file.name}</p>
+                  <p className="text-xs text-gray-400">
                     {previewData.length > 0 ? `พบข้อมูล ${previewData.length} รายการ` : "กำลังอ่านไฟล์..."}
                   </p>
                 </>
               ) : (
                 <>
-                  <Upload className="w-10 h-10 text-slate-500" />
-                  <p className="text-slate-300">คลิกเพื่อเลือกไฟล์ หรือลากไฟล์มาวางที่นี่</p>
-                  <p className="text-xs text-slate-500">รองรับไฟล์ .xlsx, .xls</p>
+                  <Upload className="w-10 h-10 text-gray-400" />
+                  <p className="text-gray-700">คลิกเพื่อเลือกไฟล์ หรือลากไฟล์มาวางที่นี่</p>
+                  <p className="text-xs text-gray-400">รองรับไฟล์ .xlsx, .xls</p>
                 </>
               )}
             </div>
@@ -181,9 +181,9 @@ export function ExcelImport({
           )}
 
           {previewData.length > 0 && !error && (
-             <div className="max-h-[200px] overflow-auto rounded-md border border-slate-800">
+             <div className="max-h-[200px] overflow-auto rounded-md border border-gray-200">
                 <table className="w-full text-xs text-left">
-                    <thead className="bg-slate-800 text-slate-300 sticky top-0">
+                    <thead className="bg-gray-100 text-gray-700 sticky top-0">
                         <tr>
                             {Object.keys(previewData[0]).slice(0, 5).map(key => (
                                 <th key={key} className="p-2">{key}</th>
@@ -193,17 +193,17 @@ export function ExcelImport({
                     </thead>
                     <tbody className="divide-y divide-slate-800">
                         {previewData.slice(0, 5).map((row, i) => (
-                            <tr key={i} className="hover:bg-slate-800/50">
+                            <tr key={i} className="hover:bg-gray-50">
                                 {Object.values(row).slice(0, 5).map((val: any, j) => (
-                                    <td key={j} className="p-2 text-slate-400">{String(val)}</td>
+                                    <td key={j} className="p-2 text-gray-500">{String(val)}</td>
                                 ))}
-                                {Object.values(row).length > 5 && <td className="p-2 text-slate-500">...</td>}
+                                {Object.values(row).length > 5 && <td className="p-2 text-gray-400">...</td>}
                             </tr>
                         ))}
                     </tbody>
                 </table>
                 {previewData.length > 5 && (
-                    <p className="text-xs text-center p-2 text-slate-500 bg-slate-900 border-t border-slate-800">
+                    <p className="text-xs text-center p-2 text-gray-400 bg-white border-t border-gray-200">
                         ...และอีก {previewData.length - 5} รายการ
                     </p>
                 )}
@@ -218,7 +218,7 @@ export function ExcelImport({
           <Button
             onClick={handleImport}
             disabled={!file || loading || previewData.length === 0}
-            className="bg-blue-600 hover:bg-blue-700"
+            className="bg-emerald-600 hover:bg-blue-700"
           >
             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             นำเข้าข้อมูล

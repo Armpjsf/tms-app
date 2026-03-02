@@ -48,15 +48,15 @@ export function SidebarProfile({ collapsed }: { collapsed: boolean }) {
       
       {!collapsed && (
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-bold text-foreground truncate">{displayName}</p>
-          <p className="text-xs text-muted-foreground truncate">{role}</p>
+          <p className="text-sm font-black text-gray-900 truncate">{displayName}</p>
+          <p className="text-xs text-gray-700 font-black truncate">{role}</p>
         </div>
       )}
 
       {!collapsed && (
         <button 
           onClick={() => window.location.href = '/api/auth/logout'}
-          className="p-2 text-muted-foreground hover:text-destructive hover:bg-muted/50 rounded-lg transition-colors"
+          className="p-2 text-gray-700 font-black hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
           title="ออกจากระบบ"
         >
           <LogOut size={18} />

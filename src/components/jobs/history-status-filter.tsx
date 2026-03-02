@@ -38,13 +38,13 @@ export function HistoryStatusFilter({ initialValue }: { initialValue: string }) 
           <SelectItem value="all">ทั้งหมด</SelectItem>
           <SelectItem value="New">
             <div className="flex items-center gap-2">
-              <Package size={14} className="text-blue-400" />
+              <Package size={14} className="text-emerald-500" />
               <span>ใหม่</span>
             </div>
           </SelectItem>
           <SelectItem value="Assigned">
             <div className="flex items-center gap-2">
-              <Truck size={14} className="text-indigo-400" />
+              <Truck size={14} className="text-emerald-600" />
               <span>มอบหมายแล้ว</span>
             </div>
           </SelectItem>
@@ -71,7 +71,7 @@ export function HistoryStatusFilter({ initialValue }: { initialValue: string }) 
           </SelectItem>
           <SelectItem value="Cancelled">
             <div className="flex items-center gap-2">
-              <AlertCircle size={14} className="text-slate-400" />
+              <AlertCircle size={14} className="text-gray-500" />
               <span>ยกเลิก</span>
             </div>
           </SelectItem>

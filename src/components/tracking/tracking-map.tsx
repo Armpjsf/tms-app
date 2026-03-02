@@ -6,7 +6,7 @@ import { MapPin } from "lucide-react"
 // Dynamically import LeafletMap to avoid SSR issues with 'window'
 const LeafletMap = dynamicImport(() => import('@/components/maps/leaflet-map'), { 
   ssr: false,
-  loading: () => <div className="h-[300px] w-full bg-slate-800 animate-pulse rounded-xl flex items-center justify-center text-slate-500">กำลังโหลดแผนที่...</div>
+  loading: () => <div className="h-[300px] w-full bg-gray-100 animate-pulse rounded-xl flex items-center justify-center text-gray-400">กำลังโหลดแผนที่...</div>
 })
 
 interface TrackingMapProps {

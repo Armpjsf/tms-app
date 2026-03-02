@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils"
 import { Search, Building2 } from "lucide-react"
 import { useBranch } from "@/components/providers/branch-provider"
 import { NotificationDropdown } from "@/components/notifications/notification-dropdown"
-import { ThemeToggle } from "@/components/ui/theme-toggle"
+
 import {
   Select,
   SelectContent,
@@ -41,13 +41,13 @@ export function Header({ sidebarCollapsed = false }: HeaderProps) {
                 >
                     <SelectTrigger className="bg-muted/50 border-input text-foreground h-10 w-full focus:ring-0">
                             <div className="flex items-center gap-2 truncate">
-                            <Building2 className="w-4 h-4 text-muted-foreground shrink-0" />
+                            <Building2 className="w-4 h-4 text-gray-600 shrink-0" />
                             <span className="truncate">
                                 {selectedBranch === 'All' ? 'ทุกสาขา' : branches.find(b => b.Branch_ID === selectedBranch)?.Branch_Name || selectedBranch}
                             </span>
                             </div>
                     </SelectTrigger>
-                    <SelectContent className="z-[70] bg-background border border-input shadow-md dark:bg-slate-900">
+                    <SelectContent className="z-[70] bg-white border border-gray-200 shadow-xl rounded-2xl">
                         <SelectItem value="All">ทุกสาขา</SelectItem>
                         {branches.map(b => (
                             <SelectItem key={b.Branch_ID} value={b.Branch_ID}>
@@ -60,21 +60,19 @@ export function Header({ sidebarCollapsed = false }: HeaderProps) {
           )}
 
         {/* Search */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
-          <input
-            type="text"
-            placeholder="ค้นหา..."
-            className="w-64 h-10 pl-10 pr-4 rounded-xl bg-muted/50 border border-input text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all"
-          />
+        <div 
+          className="relative cursor-pointer"
+          onClick={() => window.dispatchEvent(new CustomEvent('toggle-command-palette'))}
+        >
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-emerald-500" size={18} />
+          <div className="w-72 h-11 pl-12 pr-4 rounded-2xl bg-muted/30 border border-input text-foreground flex items-center text-sm font-bold text-gray-500 hover:bg-muted/50 hover:border-emerald-500/30 transition-all shadow-sm">
+             ค้นหางาน, ลูกค้า, คนขับ... <span className="ml-auto text-[10px] bg-muted px-2 py-1 rounded-lg border border-border">Ctrl + K</span>
+          </div>
         </div>
       </div>
 
       {/* Right Section */}
       <div className="flex items-center gap-3">
-        {/* Theme Toggle */}
-        <ThemeToggle />
-
         {/* Notifications */}
         <NotificationDropdown />
 

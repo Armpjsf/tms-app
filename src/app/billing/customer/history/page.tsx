@@ -4,17 +4,24 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Badge } from "@/components/ui/badge"
+import { PremiumCard, PremiumCardHeader, PremiumCardTitle } from "@/components/ui/premium-card"
+import { PremiumButton } from "@/components/ui/premium-button"
+import { motion } from "framer-motion"
+import { Input } from "@/components/ui/input" // Assuming Input is from ui/input
 import {
-  Receipt,
-  ArrowLeft,
-  Printer,
+  FileText,
   Search,
-  Calendar,
-  Undo2,
+  Filter,
+  ArrowRight,
   CheckCircle2,
+  Clock,
+  AlertCircle,
+  FileDown,
   Mail,
+  Receipt,
+  Undo2,
   CloudSync
 } from "lucide-react"
 import { getBillingNotes, BillingNote, updateBillingNoteStatus, recallBillingNote } from "@/lib/supabase/billing"
@@ -22,12 +29,14 @@ import { toast } from "sonner"
 import { isSuperAdmin } from "@/lib/permissions"
 import { BillingActions } from "@/components/billing/billing-actions"
 import { manualSyncInvoice } from "@/app/settings/accounting/actions"
+import { format } from "date-fns"
+import { th } from "date-fns/locale"
 
 export default function CustomerBillingHistory() {
   const router = useRouter()
   const [notes, setNotes] = useState<BillingNote[]>([])
   const [loading, setLoading] = useState(true)
-  const [searchTerm, setSearchTerm] = useState("")
+  const [searchQuery, setSearchQuery] = useState("")
   const [isAdmin, setIsAdmin] = useState(false)
   const [processingId, setProcessingId] = useState<string | null>(null)
 
@@ -43,7 +52,7 @@ export default function CustomerBillingHistory() {
 
   const loadData = async () => {
     try {
-        const data = await getBillingNotes()
+        const data = await getBillingNotes() // Or getBillingNotesByFilter if filtering is done server-side
         setNotes(data)
     } catch (error) {
         console.error("Failed to load billing history", error)
@@ -105,179 +114,183 @@ export default function CustomerBillingHistory() {
     }
   }
 
-  const filteredNotes = notes.filter(n => 
-    n.Billing_Note_ID.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    n.Customer_Name.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredNotes = notes.filter(n =>
+    n.Billing_Note_ID.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    n.Customer_Name.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
   const getStatusBadge = (status: string) => {
     switch(status) {
         case 'Paid':
-            return <span className="px-2 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">ชำระแล้ว</span>
+            return <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20 px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest">ชำระแล้ว</Badge>
         case 'Pending':
-            return <span className="px-2 py-1 rounded-full text-xs font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20">รอดำเนินการ</span>
+            return <Badge className="bg-amber-500/10 text-amber-600 border-amber-500/20 px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest">รอดำเนินการ</Badge>
         default:
-            return <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-500/10 text-blue-400 border border-blue-500/20">{status}</span>
+            return <Badge className="bg-blue-500/10 text-blue-600 border-blue-500/20 px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest">{status}</Badge>
     }
   }
 
   return (
     <DashboardLayout>
       {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-white flex items-center gap-3">
-            <Receipt className="text-emerald-400" />
-            ประวัติการวางบิลลูกค้า
-          </h1>
-          <p className="text-sm text-slate-400 mt-1">รายการใบวางบิลที่สร้างแล้วทั้งหมด</p>
-        </div>
-        <Button 
-            variant="outline" 
-            className="border-slate-700 text-slate-300"
-            onClick={() => router.back()}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+        <motion.div
+           initial={{ opacity: 0, x: -20 }}
+           animate={{ opacity: 1, x: 0 }}
         >
-            <ArrowLeft className="w-4 h-4 mr-2" /> ย้อนกลับ
-        </Button>
+          <h1 className="text-4xl font-black text-gray-900 tracking-tighter flex items-center gap-4">
+            <div className="p-3 bg-emerald-500 rounded-3xl shadow-xl shadow-emerald-500/20 text-white">
+                <Receipt size={32} />
+            </div>
+            ประวัติการวางบิล
+          </h1>
+          <p className="text-gray-500 font-bold mt-2 ml-16 uppercase tracking-widest text-xs">Customer Billing Intelligence</p>
+        </motion.div>
+
+        <div className="flex items-center gap-3">
+            <PremiumButton variant="outline" className="rounded-2xl">
+                <FileDown size={18} className="mr-2" /> Export
+            </PremiumButton>
+        </div>
       </div>
 
-      {/* Filters */}
-      <Card className="bg-slate-900/50 border-slate-800 mb-6">
-        <CardContent className="p-4">
-            <div className="flex gap-4">
-                <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                    <input 
-                        type="text" 
-                        placeholder="ค้นหาเลขที่เอกสาร หรือ ชื่อลูกค้า..." 
-                        className="w-full h-10 pl-10 pr-4 rounded-md bg-slate-800 border border-slate-700 text-white focus:outline-none focus:border-emerald-500"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                    />
-                </div>
+      <div className="grid grid-cols-1 gap-6">
+        {/* Search & Filters */}
+        <PremiumCard className="bg-white/40 border-white/40">
+          <div className="flex flex-col md:flex-row gap-4 items-center">
+            <div className="relative flex-1 w-full">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+              <Input
+                placeholder="ค้นหาตามเลขที่เอกสาร หรือ ชื่อลูกค้า..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-12 h-14 bg-white/50 border-gray-100 rounded-2xl focus:ring-emerald-500/20 focus:border-emerald-500/50 transition-all font-bold text-gray-900"
+              />
             </div>
-        </CardContent>
-      </Card>
-
-      {/* Table */}
-      <Card className="bg-slate-900/50 border-slate-800">
-        <CardHeader>
-            <CardTitle className="text-white text-lg">รายการใบวางบิล ({filteredNotes.length})</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-slate-800">
-                  <th className="text-left py-3 px-4 text-slate-400 font-medium text-sm">เลขที่เอกสาร</th>
-                  <th className="text-left py-3 px-4 text-slate-400 font-medium text-sm">วันที่ทำรายการ</th>
-                  <th className="text-left py-3 px-4 text-slate-400 font-medium text-sm">ลูกค้า</th>
-                  <th className="text-right py-3 px-4 text-slate-400 font-medium text-sm">ยอดเงิน</th>
-                  <th className="text-center py-3 px-4 text-slate-400 font-medium text-sm">สถานะ</th>
-                  <th className="text-right py-3 px-4 text-slate-400 font-medium text-sm">จัดการ</th>
-                </tr>
-              </thead>
-              <tbody>
-                {loading ? (
-                    <tr>
-                        <td colSpan={6} className="text-center py-8 text-slate-500">กำลังโหลด...</td>
-                    </tr>
-                ) : filteredNotes.length === 0 ? (
-                    <tr>
-                        <td colSpan={6} className="text-center py-8 text-slate-500">ไม่พบข้อมูล</td>
-                    </tr>
-                ) : (
-                    filteredNotes.map((item) => (
-                    <tr key={item.Billing_Note_ID} className="border-b border-slate-800/50 hover:bg-slate-800/30">
-                        <td className="py-3 px-4 text-emerald-400 font-mono">{item.Billing_Note_ID}</td>
-                        <td className="py-3 px-4 text-slate-400 flex items-center gap-2">
-                             <Calendar className="w-3 h-3" />
-                             {new Date(item.Created_At).toLocaleDateString('th-TH')}
-                        </td>
-                        <td className="py-3 px-4 text-white font-medium">{item.Customer_Name}</td>
-                        <td className="py-3 px-4 text-right text-white">
-                            ฿{item.Total_Amount.toLocaleString()}
-                        </td>
-                        <td className="py-3 px-4 text-center">
-                            {getStatusBadge(item.Status)}
-                        </td>
-                        <td className="py-3 px-4 text-right">
-                            <div className="flex justify-end gap-1">
-                                {item.Status !== 'Paid' && (
-                                    <Button 
-                                        size="sm" 
-                                        variant="ghost" 
-                                        className="text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10"
-                                        onClick={() => handleMarkAsPaid(item.Billing_Note_ID)}
-                                        disabled={processingId === item.Billing_Note_ID}
-                                        title="ทำจ่ายแล้ว"
-                                    >
-                                        <CheckCircle2 className="w-4 h-4" />
-                                    </Button>
-                                )}
-                                
-                                <BillingActions 
-                                    billingNoteId={item.Billing_Note_ID}
-                                    customerName={item.Customer_Name}
-                                    customerEmail={item.Customer_Email}
-                                    hidePrint={true}
-                                    // Custom trigger since we use it in a table
-                                    trigger={
-                                        <Button 
-                                            size="sm" 
-                                            variant="ghost" 
-                                            className="text-blue-400 hover:text-blue-300"
-                                            title="ส่งอีเมล"
-                                        >
-                                            <Mail className="w-4 h-4" />
-                                        </Button>
-                                    }
-                                />
-
-                                <Button 
-                                    size="sm" 
-                                    variant="ghost" 
-                                    className="text-indigo-400 hover:text-indigo-300"
-                                    onClick={() => handleSyncToAccounting(item.Billing_Note_ID)}
-                                    disabled={processingId === item.Billing_Note_ID}
-                                    title="ส่งไประบบบัญชี"
-                                >
-                                    <CloudSync className="w-4 h-4" />
-                                </Button>
-
-                                <Link href={`/billing/print/${item.Billing_Note_ID}`} target="_blank">
-                                    <Button 
-                                        size="sm" 
-                                        variant="ghost" 
-                                        className="text-slate-400 hover:text-white"
-                                        title="พิมพ์"
-                                    >
-                                        <Printer className="w-4 h-4" />
-                                    </Button>
-                                </Link>
-
-                                {isAdmin && (
-                                    <Button 
-                                        size="sm" 
-                                        variant="ghost" 
-                                        className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
-                                        onClick={() => handleRecall(item.Billing_Note_ID)}
-                                        disabled={processingId === item.Billing_Note_ID}
-                                        title="ดึงรายการกลับ (Recall)"
-                                    >
-                                        <Undo2 className="w-4 h-4" />
-                                    </Button>
-                                )}
-                            </div>
-                        </td>
-                    </tr>
-                    ))
-                )}
-              </tbody>
-            </table>
+            <PremiumButton className="h-14 px-8">
+                <Filter size={18} className="mr-2" /> ตัวกรอง
+            </PremiumButton>
           </div>
-        </CardContent>
-      </Card>
+        </PremiumCard>
+
+        {/* Billing Notes List */}
+        <PremiumCard className="p-0 overflow-hidden border-none shadow-2xl">
+            <PremiumCardHeader className="p-8 border-b border-gray-50 bg-gray-50/30">
+                <PremiumCardTitle icon={<FileText className="text-emerald-500" />}>
+                   รายการใบวางบิลล่าสุด
+                </PremiumCardTitle>
+            </PremiumCardHeader>
+            <div className="p-0">
+            <Table>
+              <TableHeader className="bg-gray-50/50">
+                <TableRow className="border-gray-100 hover:bg-transparent">
+                  <TableHead className="font-black text-gray-500 uppercase tracking-widest text-xs py-6 pl-8">เลขที่เอกสาร</TableHead>
+                  <TableHead className="font-black text-gray-500 uppercase tracking-widest text-xs py-6">วันที่เอกสาร</TableHead>
+                  <TableHead className="font-black text-gray-500 uppercase tracking-widest text-xs py-6">ลูกค้า</TableHead>
+                  <TableHead className="font-black text-gray-500 uppercase tracking-widest text-xs py-6 text-right">จำนวนเงินรวม</TableHead>
+                  <TableHead className="font-black text-gray-500 uppercase tracking-widest text-xs py-6 text-center">สถานะ</TableHead>
+                  <TableHead className="font-black text-gray-500 uppercase tracking-widest text-xs py-6 text-right pr-8">จัดการ</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {loading ? (
+                    <TableRow>
+                        <TableCell colSpan={6} className="text-center py-8 text-gray-400">กำลังโหลด...</TableCell>
+                    </TableRow>
+                 ) : filteredNotes.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="h-64 text-center">
+                      <div className="flex flex-col items-center justify-center text-gray-400 gap-4">
+                        <div className="p-4 bg-gray-50 rounded-full">
+                           <FileText size={48} className="opacity-20" />
+                        </div>
+                        <p className="font-bold">ไม่พบรายการใบวางบิล</p>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filteredNotes.map((note) => (
+                    <TableRow key={note.Billing_Note_ID} className="border-gray-50 hover:bg-emerald-50/30 transition-colors group">
+                      <TableCell className="font-black text-gray-900 py-6 pl-8">
+                        {note.Billing_Note_ID}
+                      </TableCell>
+                      <TableCell className="text-gray-600 font-bold">
+                        {format(new Date(note.Billing_Date), "dd MMM yyyy", { locale: th })}
+                      </TableCell>
+                      <TableCell>
+                        <div className="font-black text-gray-900">{note.Customer_Name}</div>
+                      </TableCell>
+                      <TableCell className="text-right font-black text-gray-900 text-lg">
+                        ฿{note.Total_Amount.toLocaleString()}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {getStatusBadge(note.Status)}
+                      </TableCell>
+                      <TableCell className="text-right pr-8">
+                        <div className="flex justify-end gap-2 transition-opacity">
+                            {note.Status !== 'Paid' && (
+                                <PremiumButton 
+                                    size="sm" 
+                                    variant="outline" 
+                                    className="h-9 w-9 p-0 rounded-xl border-emerald-100 text-emerald-600 hover:bg-emerald-50"
+                                    onClick={() => handleMarkAsPaid(note.Billing_Note_ID)}
+                                    disabled={processingId === note.Billing_Note_ID}
+                                    title="ทำจ่ายแล้ว"
+                                >
+                                    <CheckCircle2 className="w-4 h-4" />
+                                </PremiumButton>
+                            )}
+
+                            <BillingActions 
+                                billingNoteId={note.Billing_Note_ID}
+                                customerEmail={note.Customer_Email}
+                                customerName={note.Customer_Name}
+                                trigger={
+                                    <PremiumButton size="sm" variant="outline" className="h-9 w-9 p-0 rounded-xl border-emerald-100 text-emerald-600 hover:bg-emerald-50">
+                                        <Mail className="w-4 h-4" />
+                                    </PremiumButton>
+                                }
+                            />
+
+                            <PremiumButton 
+                                size="sm" 
+                                variant="outline" 
+                                className="h-9 w-9 p-0 rounded-xl border-blue-100 text-blue-600 hover:bg-blue-50"
+                                onClick={() => handleSyncToAccounting(note.Billing_Note_ID)}
+                                disabled={processingId === note.Billing_Note_ID}
+                                title="ส่งไประบบบัญชี"
+                            >
+                                <CloudSync className="w-4 h-4" />
+                            </PremiumButton>
+
+                            <Link href={`/billing/print/${note.Billing_Note_ID}`} target="_blank">
+                                <PremiumButton size="sm" variant="secondary" className="h-9 px-4 rounded-xl">
+                                    <ArrowRight className="w-4 h-4 mr-2" /> รายละเอียด
+                                </PremiumButton>
+                            </Link>
+
+                            {isAdmin && (
+                                <PremiumButton 
+                                    size="sm" 
+                                    variant="danger" 
+                                    className="h-9 w-9 p-0 rounded-xl"
+                                    onClick={() => handleRecall(note.Billing_Note_ID)}
+                                    disabled={processingId === note.Billing_Note_ID}
+                                    title="ดึงรายการกลับ (Recall)"
+                                >
+                                    <Undo2 className="w-4 h-4" />
+                                </PremiumButton>
+                            )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+            </div>
+        </PremiumCard>
+      </div>
     </DashboardLayout>
   )
 }

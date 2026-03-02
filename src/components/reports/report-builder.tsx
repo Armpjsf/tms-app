@@ -71,6 +71,9 @@ const columnLabels: Record<string, string> = {
   price_per_liter: 'ราคา/ลิตร',
   odometer: 'เลขไมล์',
   Price_Cust_Total: 'ค่าเที่ยว',
+  Extra_Cost_Amount: 'ค่าใช้จ่ายพิเศษ',
+  Toll_Amount: 'ค่าทางด่วน',
+  Distance_Km: 'ระยะทาง (KM)',
 }
 
 const reportTypes = [
@@ -178,24 +181,24 @@ async function exportToPDF(elementId: string, fileName: string) {
 // Status badge component
 function StatusBadge({ status }: { status: string }) {
   const styles: Record<string, string> = {
-    'Completed': 'bg-emerald-500/20 text-emerald-400',
-    'Delivered': 'bg-emerald-500/20 text-emerald-400',
-    'completed': 'bg-emerald-500/20 text-emerald-400',
-    'Active': 'bg-blue-500/20 text-blue-400',
-    'In Transit': 'bg-cyan-500/20 text-cyan-400',
-    'New': 'bg-indigo-500/20 text-indigo-400',
-    'Assigned': 'bg-violet-500/20 text-violet-400',
-    'OnJob': 'bg-cyan-500/20 text-cyan-400',
-    'Failed': 'bg-red-500/20 text-red-400',
-    'Cancelled': 'bg-red-500/20 text-red-400',
-    'cancelled': 'bg-red-500/20 text-red-400',
-    'Inactive': 'bg-slate-500/20 text-slate-400',
-    'Maintenance': 'bg-amber-500/20 text-amber-400',
-    'pending': 'bg-amber-500/20 text-amber-400',
-    'in_progress': 'bg-blue-500/20 text-blue-400',
+    'Completed': 'bg-emerald-500/20 text-emerald-700 font-bold',
+    'Delivered': 'bg-emerald-500/20 text-emerald-700 font-bold',
+    'completed': 'bg-emerald-500/20 text-emerald-700 font-bold',
+    'Active': 'bg-emerald-500/15 text-emerald-700 font-bold',
+    'In Transit': 'bg-cyan-500/20 text-cyan-700 font-bold',
+    'New': 'bg-emerald-500/20 text-emerald-700 font-bold',
+    'Assigned': 'bg-violet-500/20 text-violet-700 font-bold',
+    'OnJob': 'bg-cyan-500/20 text-cyan-700 font-bold',
+    'Failed': 'bg-red-500/20 text-red-700 font-bold',
+    'Cancelled': 'bg-red-500/20 text-red-700 font-bold',
+    'cancelled': 'bg-red-500/20 text-red-700 font-bold',
+    'Inactive': 'bg-slate-500/20 text-gray-700 font-bold',
+    'Maintenance': 'bg-amber-500/20 text-amber-700 font-bold',
+    'pending': 'bg-amber-500/20 text-amber-700 font-bold',
+    'in_progress': 'bg-emerald-500/15 text-emerald-700 font-bold',
   }
   return (
-    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${styles[status] || 'bg-slate-500/20 text-slate-400'}`}>
+    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${styles[status] || 'bg-slate-500/20 text-gray-500'}`}>
       {status}
     </span>
   )
@@ -284,8 +287,8 @@ export function ReportBuilder() {
                   : 'bg-card/50 border-border hover:border-border/80 hover:bg-card/80'
               }`}
             >
-              <Icon size={20} className={isActive ? 'text-primary' : 'text-muted-foreground'} />
-              <p className={`mt-2 text-sm font-medium ${isActive ? 'text-foreground' : 'text-muted-foreground'}`}>
+              <Icon size={20} className={isActive ? 'text-primary' : 'text-gray-700'} />
+              <p className={`mt-2 text-sm font-black ${isActive ? 'text-foreground' : 'text-gray-700'}`}>
                 {rt.label}
               </p>
               {isActive && (
@@ -322,7 +325,7 @@ export function ReportBuilder() {
                   {activeReport.hasDate && (
                     <>
                       <div className="space-y-1.5">
-                        <Label className="text-xs text-muted-foreground">จากวันที่</Label>
+                        <Label className="text-xs text-gray-700 font-black">จากวันที่</Label>
                         <Input
                           type="date"
                           value={dateFrom}
@@ -331,7 +334,7 @@ export function ReportBuilder() {
                         />
                       </div>
                       <div className="space-y-1.5">
-                        <Label className="text-xs text-muted-foreground">ถึงวันที่</Label>
+                        <Label className="text-xs text-gray-700 font-black">ถึงวันที่</Label>
                         <Input
                           type="date"
                           value={dateTo}
@@ -345,7 +348,7 @@ export function ReportBuilder() {
                   {/* Status */}
                   {activeReport.hasStatus && statusOptions[selectedType] && (
                     <div className="space-y-1.5">
-                      <Label className="text-xs text-muted-foreground">สถานะ</Label>
+                      <Label className="text-xs text-gray-700 font-black">สถานะ</Label>
                       <Select value={status} onValueChange={setStatus}>
                         <SelectTrigger className="bg-background border-input">
                           <SelectValue />
@@ -388,7 +391,7 @@ export function ReportBuilder() {
                       <button
                         key={preset.label}
                         onClick={() => { setDateFrom(preset.from); setDateTo(preset.to) }}
-                        className="px-3 py-1 text-xs rounded-full bg-muted/50 hover:bg-muted text-muted-foreground hover:text-foreground transition-colors border border-border"
+                        className="px-3 py-1 text-xs rounded-full bg-muted/50 hover:bg-muted text-gray-700 font-bold hover:text-foreground transition-colors border border-border"
                       >
                         {preset.label}
                       </button>
@@ -421,7 +424,7 @@ export function ReportBuilder() {
                     <div className="flex items-center gap-2">
                       {/* Search within results */}
                       <div className="relative">
-                        <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                        <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-700 font-bold" />
                         <Input
                           type="text"
                           placeholder="ค้นหาในผลลัพธ์..."
@@ -430,7 +433,7 @@ export function ReportBuilder() {
                           className="pl-8 h-9 w-48 bg-background text-sm"
                         />
                         {searchTerm && (
-                          <button onClick={() => setSearchTerm('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                          <button onClick={() => setSearchTerm('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-700 font-bold hover:text-foreground">
                             <X size={12} />
                           </button>
                         )}
@@ -450,7 +453,7 @@ export function ReportBuilder() {
                           variant="ghost"
                           size="sm"
                           onClick={() => exportToCSV(filteredData, columns, activeReport.label)}
-                          className="h-8 px-2 text-xs gap-1.5 hover:bg-blue-500/10 hover:text-blue-400"
+                          className="h-8 px-2 text-xs gap-1.5 hover:bg-blue-500/10 hover:text-emerald-500"
                         >
                           <Download size={14} />
                           CSV
@@ -470,7 +473,7 @@ export function ReportBuilder() {
                 </CardHeader>
                 <CardContent className="p-0">
                   {filteredData.length === 0 ? (
-                    <div className="py-16 text-center text-muted-foreground">
+                    <div className="py-16 text-center text-gray-700 font-bold">
                       <BarChart3 size={40} className="mx-auto mb-3 opacity-30" />
                       <p>ไม่พบข้อมูล</p>
                       <p className="text-xs mt-1">ลองปรับเงื่อนไขการค้นหา</p>
@@ -480,12 +483,12 @@ export function ReportBuilder() {
                       <table className="w-full text-sm">
                         <thead>
                           <tr className="border-b border-border bg-muted/30">
-                            <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground w-10">#</th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-900 font-bold w-10">#</th>
                             {columns.map(col => (
                               <th
                                 key={col}
                                 onClick={() => handleSort(col)}
-                                className="px-4 py-3 text-left text-xs font-medium text-muted-foreground cursor-pointer hover:text-foreground transition-colors group"
+                                className="px-4 py-3 text-left text-xs font-medium text-gray-900 font-bold cursor-pointer hover:text-foreground transition-colors group"
                               >
                                 <span className="flex items-center gap-1">
                                   {columnLabels[col] || (col.startsWith('Extra_') ? col.replace('Extra_', '') : col)}
@@ -498,12 +501,12 @@ export function ReportBuilder() {
                         <tbody className="divide-y divide-border/50">
                           {filteredData.slice(0, 500).map((row, i) => (
                             <tr key={i} className="hover:bg-muted/20 transition-colors">
-                              <td className="px-4 py-2.5 text-xs text-muted-foreground">{i + 1}</td>
+                              <td className="px-4 py-2.5 text-xs text-gray-700 font-bold">{i + 1}</td>
                               {columns.map(col => (
                                 <td key={col} className="px-4 py-2.5 text-foreground">
                                   {(col === 'Status' || col === 'status' || col === 'Job_Status' || col === 'priority') && row[col] ? (
                                     <StatusBadge status={row[col]} />
-                                  ) : (col.includes('Cost') || col === 'amount' || col === 'cost' || col === 'Price_Cust_Total' || col.startsWith('Extra_')) ? (
+                                  ) : (col.toLowerCase().includes('cost') || col === 'amount' || col === 'Price_Cust_Total' || col.startsWith('Extra_')) ? (
                                     <span>฿{Number(row[col] || 0).toLocaleString()}</span>
                                   ) : (
                                     <span className="line-clamp-1">{row[col] ?? '—'}</span>
@@ -515,9 +518,9 @@ export function ReportBuilder() {
                         </tbody>
                         <tfoot className="border-t-2 border-border bg-muted/40 font-bold">
                             <tr>
-                                <td className="px-4 py-3 text-xs text-muted-foreground">รวม</td>
+                                <td className="px-4 py-3 text-xs text-gray-700 font-black">รวม</td>
                                 {columns.map(col => {
-                                    const isNumeric = col.includes('Cost') || col === 'amount' || col === 'cost' || col === 'Price_Cust_Total' || col.startsWith('Extra_') || col === 'Liters';
+                                    const isNumeric = col.toLowerCase().includes('cost') || col === 'amount' || col === 'Price_Cust_Total' || col.startsWith('Extra_') || col === 'Liters';
                                     if (!isNumeric) return <td key={col} className="px-4 py-3"></td>;
                                     
                                     const total = filteredData.reduce((sum, row) => sum + (Number(row[col]) || 0), 0);
@@ -532,7 +535,7 @@ export function ReportBuilder() {
                       </table>
                       {filteredData.length > 500 && (
                         <div className="px-4 py-3 border-t border-border bg-muted/20 text-center">
-                          <p className="text-xs text-muted-foreground">
+                          <p className="text-xs text-gray-700 font-bold">
                             แสดง 500 จาก {filteredData.length.toLocaleString()} รายการ — ดาวน์โหลด CSV เพื่อดูทั้งหมด
                           </p>
                         </div>

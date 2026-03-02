@@ -138,7 +138,7 @@ export default function JobPickupPage() {
         </section>
 
         <section>
-            <h2 className="text-white font-medium mb-2">2. ลายเซ็นผู้ส่งของ</h2>
+            <h2 className="text-gray-800 font-medium mb-2">2. ลายเซ็นผู้ส่งของ</h2>
             <SignaturePad onSave={setSignature} />
         </section>
 

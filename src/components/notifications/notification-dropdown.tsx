@@ -34,9 +34,9 @@ function timeAgo(dateStr: string): string {
 
 const typeIcons = {
   sos: <AlertTriangle size={16} className="text-red-400" />,
-  job_status: <Truck size={16} className="text-blue-400" />,
+  job_status: <Truck size={16} className="text-emerald-500" />,
   maintenance: <Wrench size={16} className="text-amber-400" />,
-  system: <Bell size={16} className="text-slate-400" />,
+  system: <Bell size={16} className="text-gray-600" />,
 }
 
 const severityStyles = {
@@ -156,7 +156,7 @@ export function NotificationDropdown() {
               {visibleNotifications.length > 0 && (
                 <button
                   onClick={handleDismissAll}
-                  className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                  className="text-xs text-gray-700 font-black hover:text-red-600 transition-colors"
                 >
                   ล้างทั้งหมด
                 </button>
@@ -215,7 +215,7 @@ export function NotificationDropdown() {
               <Link
                 href="/settings/notifications"
                 onClick={() => setOpen(false)}
-                className="flex items-center justify-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors py-1"
+                className="flex items-center justify-center gap-1 text-xs text-gray-700 font-black hover:text-emerald-600 transition-colors py-1"
               >
                 ตั้งค่าการแจ้งเตือน <ExternalLink size={10} />
               </Link>
@@ -237,10 +237,10 @@ function NotificationItem({ notification }: { notification: Notification }) {
         <p className="text-sm font-medium text-foreground leading-tight">
           {notification.title}
         </p>
-        <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
+        <p className="text-xs text-gray-800 font-bold mt-0.5 line-clamp-2">
           {notification.message}
         </p>
-        <p className="text-[10px] text-muted-foreground/60 mt-1">
+        <p className="text-[10px] text-gray-600 font-black mt-1">
           {timeAgo(notification.timestamp)}
         </p>
       </div>

@@ -18,7 +18,7 @@ export default async function ProfilePage() {
   ])
 
   return (
-    <div className="min-h-screen bg-slate-950 pb-24 pt-16 px-4">
+    <div className="min-h-screen bg-background pb-24 pt-16 px-4">
       <MobileHeader title="โปรไฟล์" />
       <ProfileContent session={session} score={score} unreadChatCount={unreadChatCount} />
     </div>

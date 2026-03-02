@@ -38,7 +38,8 @@ export async function getSafetyAnalytics(
   const selectedBranch = cookieStore.get('selectedBranch')?.value
 
   // Determine effective branch ID
-  let effectiveBranchId = branchId
+  let effectiveBranchId = (branchId && branchId !== 'All') ? branchId : undefined
+  
   if (!effectiveBranchId) {
     if (isAdmin && selectedBranch && selectedBranch !== 'All') {
       effectiveBranchId = selectedBranch
@@ -56,7 +57,7 @@ export async function getSafetyAnalytics(
   let sosQuery = supabase
     .from('Jobs_Main')
     .select('Job_ID, Job_Status, Failed_Reason, Failed_Time, Vehicle_Plate, Driver_Name')
-    .in('Job_Status', ['SOS', 'Failed']) // Filter for safety incidents
+    .in('Job_Status', ['SOS', 'Failed', 'Issue', 'Problem']) // Filter for safety/problem incidents
     
   if (startDate) sosQuery = sosQuery.gte('Plan_Date', startDate)
   if (endDate) sosQuery = sosQuery.lte('Plan_Date', endDate)
@@ -102,12 +103,15 @@ export async function getSafetyAnalytics(
   // Check Photo_Proof_Url and Signature_Url presence
   // Filter by Actual_Delivery_Time or Plan_Date
   
+  // Revenue-generating statuses for POD compliance check
+  const revenueStatuses = ['Completed', 'Delivered', 'Finished', 'Closed']
+
   let podQuery = supabase
     .from('Jobs_Main')
     .select('Job_ID, Job_Status, Photo_Proof_Url, Signature_Url')
-    .in('Job_Status', ['Delivered', 'Complete'])
+    .in('Job_Status', revenueStatuses)
     
-  if (startDate) podQuery = podQuery.gte('Plan_Date', startDate) // Using Plan_Date as proxy if Delivery Time null? Prefer Delivery Time but Plan_Date is index friendly usually.
+  if (startDate) podQuery = podQuery.gte('Plan_Date', startDate)
   if (endDate) podQuery = podQuery.lte('Plan_Date', endDate)
   if (effectiveBranchId) podQuery = podQuery.eq('Branch_ID', effectiveBranchId)
   

@@ -11,7 +11,7 @@ type StatusData = {
 export function JobStatusChart({ data }: { data: StatusData[] }) {
   if (!data || data.length === 0) {
     return (
-        <div className="h-[300px] flex items-center justify-center text-slate-500">
+        <div className="h-[300px] flex items-center justify-center text-gray-600 font-bold">
             No data available
         </div>
     )

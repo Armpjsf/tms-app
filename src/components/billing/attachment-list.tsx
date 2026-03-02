@@ -79,10 +79,10 @@ export function AttachmentList({ billingNoteId, readonly = false }: AttachmentLi
     }
 
     return (
-        <Card className="mt-6 bg-slate-900/50 border-slate-800">
+        <Card className="mt-6 bg-white/80 border-gray-200">
             <CardHeader className="flex flex-row items-center justify-between py-4">
                 <CardTitle className="text-lg font-medium text-white flex items-center gap-2">
-                    <Paperclip className="w-5 h-5 text-indigo-400" />
+                    <Paperclip className="w-5 h-5 text-emerald-600" />
                     เอกสารแนบ (Attachments)
                 </CardTitle>
                 {!readonly && (
@@ -93,7 +93,7 @@ export function AttachmentList({ billingNoteId, readonly = false }: AttachmentLi
                             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                             disabled={uploading}
                         />
-                        <Button disabled={uploading} variant="outline" className="border-slate-700 hover:bg-slate-800">
+                        <Button disabled={uploading} variant="outline" className="border-gray-200 hover:bg-gray-100">
                             {uploading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Upload className="w-4 h-4 mr-2" />}
                             {uploading ? "กำลังอัปโหลด..." : "เพิ่มไฟล์แนบ"}
                         </Button>
@@ -102,30 +102,30 @@ export function AttachmentList({ billingNoteId, readonly = false }: AttachmentLi
             </CardHeader>
             <CardContent>
                 {loading ? (
-                    <div className="text-center py-4 text-slate-500">Loading...</div>
+                    <div className="text-center py-4 text-gray-400">Loading...</div>
                 ) : attachments.length === 0 ? (
-                    <div className="text-center py-8 text-slate-500 border border-dashed border-slate-800 rounded-lg">
+                    <div className="text-center py-8 text-gray-400 border border-dashed border-gray-200 rounded-lg">
                         ไม่มีเอกสารแนบ
                     </div>
                 ) : (
                     <div className="space-y-2">
                         {attachments.map((file) => (
-                            <div key={file.Attachment_ID} className="flex items-center justify-between p-3 bg-slate-800 rounded-lg group hover:bg-slate-800/80 transition-colors">
+                            <div key={file.Attachment_ID} className="flex items-center justify-between p-3 bg-gray-100 rounded-lg group hover:bg-gray-100 transition-colors">
                                 <div className="flex items-center gap-3 overflow-hidden">
-                                    <div className="p-2 bg-slate-700 rounded text-slate-300">
+                                    <div className="p-2 bg-slate-700 rounded text-gray-700">
                                         <FileText className="w-5 h-5" />
                                     </div>
                                     <div className="truncate">
                                         <p className="text-sm font-medium text-white truncate max-w-[200px] md:max-w-md">{file.File_Name}</p>
-                                        <p className="text-xs text-slate-400">{new Date(file.Uploaded_At).toLocaleString('th-TH')}</p>
+                                        <p className="text-xs text-gray-500">{new Date(file.Uploaded_At).toLocaleString('th-TH')}</p>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    <Button size="icon" variant="ghost" onClick={() => handleDownload(file.File_Path)} className="text-slate-400 hover:text-white">
+                                    <Button size="icon" variant="ghost" onClick={() => handleDownload(file.File_Path)} className="text-gray-500 hover:text-white">
                                         <Download className="w-4 h-4" />
                                     </Button>
                                     {!readonly && (
-                                        <Button size="icon" variant="ghost" onClick={() => handleDelete(file)} className="text-slate-400 hover:text-red-400">
+                                        <Button size="icon" variant="ghost" onClick={() => handleDelete(file)} className="text-gray-500 hover:text-red-400">
                                             <Trash2 className="w-4 h-4" />
                                         </Button>
                                     )}

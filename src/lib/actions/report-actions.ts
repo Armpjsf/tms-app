@@ -2,23 +2,26 @@
 
 import { jsPDF } from "jspdf"
 import "jspdf-autotable"
-import { createClient } from "@/utils/supabase/server"
+import { createAdminClient } from "@/utils/supabase/server"
 import { uploadFileToSupabase } from "@/lib/actions/supabase-upload"
 
 export async function generateJobPDF(jobId: string) {
-    console.log(`Generating PDF for Job: ${jobId}...`)
+    console.log(`[generateJobPDF] Starting PDF generation for Job: ${jobId}...`)
     
     try {
-        const supabase = await createClient()
+        const supabase = createAdminClient()
         
-        // 1. Fetch comprehensive job data
+        // 1. Fetch comprehensive job data using admin client
         const { data: job, error } = await supabase
             .from('Jobs_Main')
             .select('*')
             .eq('Job_ID', jobId)
             .single()
             
-        if (error || !job) throw new Error("Job not found")
+        if (error || !job) {
+            console.error(`[generateJobPDF] Job not found or error:`, error)
+            throw new Error("Job not found")
+        }
 
         // 2. Initialize PDF
         const doc = new jsPDF()
@@ -100,10 +103,19 @@ export async function generateJobPDF(jobId: string) {
 
         console.log(`PDF Generated & Uploaded: ${uploadResult.directLink}`)
 
-        // 5. Update Job with PDF Link
+        // 5. Update Job with PDF Link - FETCH LATEST AGAIN to avoid overwriting recent POD data
+        const { data: latestJob } = await supabase
+            .from('Jobs_Main')
+            .select('Photo_Proof_Url')
+            .eq('Job_ID', jobId)
+            .single()
+
+        const currentPhotos = latestJob?.Photo_Proof_Url || ""
+        const updatedPhotos = currentPhotos ? `${currentPhotos},${uploadResult.directLink}` : uploadResult.directLink
+
         await supabase
             .from('Jobs_Main')
-            .update({ Photo_Proof_Url: job.Photo_Proof_Url ? `${job.Photo_Proof_Url},${uploadResult.directLink}` : uploadResult.directLink })
+            .update({ Photo_Proof_Url: updatedPhotos })
             .eq('Job_ID', jobId)
 
         // 6. Log the export
@@ -122,7 +134,13 @@ export async function generateJobPDF(jobId: string) {
         return { success: true, url: uploadResult.directLink }
 
     } catch (e) {
-        console.error("PDF Generation Failed:", e)
-        return { success: false, error: String(e) }
+        console.error("[generateJobPDF] Fatal Exception:", e);
+        
+        let errorMsg = String(e);
+        if (e instanceof Error) {
+            errorMsg = `${e.name}: ${e.message}\n${e.stack}`;
+        }
+        
+        return { success: false, error: errorMsg };
     }
 }

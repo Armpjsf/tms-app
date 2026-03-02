@@ -35,18 +35,18 @@ export default function MobileSettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 pb-24 pt-16 px-4">
+    <div className="min-h-screen bg-background pb-24 pt-16 px-4">
       <MobileHeader title="ตั้งค่า" showBack />
       
       <div className="space-y-6">
         <div className="space-y-4">
-            <h3 className="text-slate-400 text-sm font-medium uppercase tracking-wider ml-1">ทั่วไป</h3>
-            <Card className="bg-slate-900 border-slate-800">
+            <h3 className="text-gray-500 text-sm font-medium uppercase tracking-wider ml-1">ทั่วไป</h3>
+            <Card className="bg-white border-gray-200">
                 <CardContent className="p-0 divide-y divide-slate-800">
                     <div className="flex items-center justify-between p-4">
                         <div className="flex items-center gap-3">
-                            <Bell className="text-slate-400" size={20} />
-                            <span className="text-slate-200">การแจ้งเตือน</span>
+                            <Bell className="text-gray-500" size={20} />
+                            <span className="text-gray-800">การแจ้งเตือน</span>
                         </div>
                         <Switch 
                             checked={notificationsEnabled}
@@ -54,35 +54,35 @@ export default function MobileSettingsPage() {
                         />
                     </div>
                     <div 
-                        className="flex items-center justify-between p-4 active:bg-slate-800/50 cursor-pointer"
+                        className="flex items-center justify-between p-4 active:bg-gray-50 cursor-pointer"
                         onClick={toggleLanguage}
                     >
                         <div className="flex items-center gap-3">
-                            <Globe className="text-slate-400" size={20} />
-                            <span className="text-slate-200">เปลี่ยนภาษา</span>
+                            <Globe className="text-gray-500" size={20} />
+                            <span className="text-gray-800">เปลี่ยนภาษา</span>
                         </div>
-                        <span className="text-slate-500 text-sm font-medium uppercase">{language === "th" ? "ไทย" : "English"}</span>
+                        <span className="text-gray-400 text-sm font-medium uppercase">{language === "th" ? "ไทย" : "English"}</span>
                     </div>
                 </CardContent>
             </Card>
         </div>
 
         <div className="space-y-4">
-            <h3 className="text-slate-400 text-sm font-medium uppercase tracking-wider ml-1">ข้อมูล & ความปลอดภัย</h3>
-            <Card className="bg-slate-900 border-slate-800">
+            <h3 className="text-gray-500 text-sm font-medium uppercase tracking-wider ml-1">ข้อมูล & ความปลอดภัย</h3>
+            <Card className="bg-white border-gray-200">
                 <CardContent className="p-0 divide-y divide-slate-800">
                     <div className="flex items-center justify-between p-4">
                         <div className="flex items-center gap-3">
-                            <Shield className="text-slate-400" size={20} />
-                            <span className="text-slate-200">นโยบายความเป็นส่วนตัว</span>
+                            <Shield className="text-gray-500" size={20} />
+                            <span className="text-gray-800">นโยบายความเป็นส่วนตัว</span>
                         </div>
                     </div>
                     <div className="flex items-center justify-between p-4">
                         <div className="flex items-center gap-3">
-                            <Smartphone className="text-slate-400" size={20} />
-                            <span className="text-slate-200">เวอร์ชันแอปพลิเคชัน</span>
+                            <Smartphone className="text-gray-500" size={20} />
+                            <span className="text-gray-800">เวอร์ชันแอปพลิเคชัน</span>
                         </div>
-                        <span className="text-slate-500 text-sm">v1.0.26</span>
+                        <span className="text-gray-400 text-sm">v1.0.26</span>
                     </div>
                 </CardContent>
             </Card>

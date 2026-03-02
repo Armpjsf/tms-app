@@ -49,12 +49,12 @@ export default function ThemeSettingsPage() {
           <Palette className="text-purple-400" />
           ธีมและการแสดงผล
         </h1>
-        <p className="text-slate-400">ปรับแต่งหน้าตาการใช้งานตามความชอบ</p>
+        <p className="text-gray-500">ปรับแต่งหน้าตาการใช้งานตามความชอบ</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl">
          <div 
-            className={`cursor-pointer transition-all border-2 rounded-xl overflow-hidden ${theme === 'light' ? 'border-indigo-500 bg-white/10' : 'border-slate-800 bg-slate-900/50 hover:border-slate-600'}`}
+            className={`cursor-pointer transition-all border-2 rounded-xl overflow-hidden ${theme === 'light' ? 'border-indigo-500 bg-white/10' : 'border-gray-200 bg-white/80 hover:border-slate-600'}`}
             onClick={() => handleThemeChange('light')}
          >
             <div className="p-6 flex flex-col items-center text-center">
@@ -62,33 +62,33 @@ export default function ThemeSettingsPage() {
                     <Sun size={32} />
                 </div>
                 <h3 className="text-white font-bold mb-1">โหมดสว่าง</h3>
-                <p className="text-sm text-slate-400">เหมาะสำหรับการใช้งานกลางแจ้ง</p>
+                <p className="text-sm text-gray-500">เหมาะสำหรับการใช้งานกลางแจ้ง</p>
             </div>
          </div>
 
          <div 
-            className={`cursor-pointer transition-all border-2 rounded-xl overflow-hidden ${theme === 'dark' ? 'border-indigo-500 bg-white/10' : 'border-slate-800 bg-slate-900/50 hover:border-slate-600'}`}
+            className={`cursor-pointer transition-all border-2 rounded-xl overflow-hidden ${theme === 'dark' ? 'border-indigo-500 bg-white/10' : 'border-gray-200 bg-white/80 hover:border-slate-600'}`}
             onClick={() => handleThemeChange('dark')}
          >
             <div className="p-6 flex flex-col items-center text-center">
-                <div className="w-16 h-16 rounded-full bg-slate-800 flex items-center justify-center mb-4 text-white">
+                <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4 text-white">
                     <Moon size={32} />
                 </div>
                 <h3 className="text-white font-bold mb-1">โหมดมืด</h3>
-                <p className="text-sm text-slate-400">สบายตา และประหยัดพลังงาน</p>
+                <p className="text-sm text-gray-500">สบายตา และประหยัดพลังงาน</p>
             </div>
          </div>
 
          <div 
-            className={`cursor-pointer transition-all border-2 rounded-xl overflow-hidden ${theme === 'system' ? 'border-indigo-500 bg-white/10' : 'border-slate-800 bg-slate-900/50 hover:border-slate-600'}`}
+            className={`cursor-pointer transition-all border-2 rounded-xl overflow-hidden ${theme === 'system' ? 'border-indigo-500 bg-white/10' : 'border-gray-200 bg-white/80 hover:border-slate-600'}`}
             onClick={() => handleThemeChange('system')}
          >
             <div className="p-6 flex flex-col items-center text-center">
-                <div className="w-16 h-16 rounded-full bg-slate-700 flex items-center justify-center mb-4 text-slate-300">
+                <div className="w-16 h-16 rounded-full bg-slate-700 flex items-center justify-center mb-4 text-gray-700">
                     <Monitor size={32} />
                 </div>
                 <h3 className="text-white font-bold mb-1">ตามระบบ</h3>
-                <p className="text-sm text-slate-400">ปรับตามการตั้งค่าของอุปกรณ์</p>
+                <p className="text-sm text-gray-500">ปรับตามการตั้งค่าของอุปกรณ์</p>
             </div>
          </div>
       </div>

@@ -26,7 +26,7 @@ export function Pagination({ totalItems, limit = 50 }: PaginationProps) {
   if (totalPages <= 1) return null
 
   return (
-    <div className="flex items-center justify-between mt-4 text-sm text-slate-400">
+    <div className="flex items-center justify-between mt-4 text-sm text-gray-500">
       <div>
         แสดง {Math.min((currentPage - 1) * limit + 1, totalItems)} ถึง {Math.min(currentPage * limit, totalItems)} จาก {totalItems} รายการ
       </div>
@@ -34,7 +34,7 @@ export function Pagination({ totalItems, limit = 50 }: PaginationProps) {
         <Button
           variant="outline"
           size="sm"
-          className="h-8 w-8 p-0 bg-transparent border-white/10 hover:bg-white/5"
+          className="h-8 w-8 p-0 bg-transparent border-gray-200 hover:bg-white/5"
           disabled={currentPage <= 1}
           asChild
         >
@@ -43,14 +43,14 @@ export function Pagination({ totalItems, limit = 50 }: PaginationProps) {
           </Link>
         </Button>
         
-        <span className="text-white font-medium px-2">
+        <span className="text-gray-800 font-medium px-2">
           {currentPage} / {totalPages}
         </span>
         
         <Button
           variant="outline"
           size="sm"
-          className="h-8 w-8 p-0 bg-transparent border-white/10 hover:bg-white/5"
+          className="h-8 w-8 p-0 bg-transparent border-gray-200 hover:bg-white/5"
           disabled={currentPage >= totalPages}
           asChild
         >

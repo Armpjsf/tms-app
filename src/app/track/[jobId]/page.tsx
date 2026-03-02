@@ -16,6 +16,8 @@ import Image from "next/image"
 import Link from 'next/link'
 import { ShareTrackingButton } from "@/components/tracking/share-tracking-button"
 import { TrackingMap } from "@/components/tracking/tracking-map"
+import { FeedbackForm } from "@/components/tracking/feedback-form"
+import { PODDownloadButton } from "@/components/tracking/pod-download"
 
 export const dynamic = 'force-dynamic'
 
@@ -34,7 +36,7 @@ export default async function TrackingPage(props: { params: Promise<{ jobId: str
             <h1 className="text-2xl font-bold text-white mb-2">ไม่พบข้อมูลงานขนส่ง</h1>
             <p className="text-slate-400 max-w-xs">กรุณาตรวจสอบหมายเลขงาน (Job ID) หรือลิงก์ที่ได้รับจากผู้ให้บริการอีกครั้ง</p>
         </div>
-        <Link href="/" className="text-indigo-400 hover:text-indigo-300 text-sm font-bold">กลับหน้าแรก</Link>
+        <Link href="/" className="text-emerald-600 hover:text-emerald-500 text-sm font-bold">กลับหน้าแรก</Link>
       </div>
     )
   }
@@ -68,7 +70,7 @@ export default async function TrackingPage(props: { params: Promise<{ jobId: str
         <div className="p-6 md:p-8 space-y-8">
             <div className="flex justify-between items-start">
                 <div className="space-y-1">
-                    <div className="flex items-center gap-2 text-indigo-400 font-bold text-[10px] uppercase tracking-widest">
+                    <div className="flex items-center gap-2 text-emerald-600 font-bold text-[10px] uppercase tracking-widest">
                         <ClipboardList size={14} />
                         <span>Live Tracking Portfolio</span>
                     </div>
@@ -103,13 +105,13 @@ export default async function TrackingPage(props: { params: Promise<{ jobId: str
                                     isCurrent 
                                     ? 'bg-indigo-500 border-indigo-400 text-white scale-110 shadow-[0_0_20px_rgba(99,102,241,0.6)]' 
                                     : isCompleted 
-                                    ? 'bg-slate-900 border-indigo-500 text-indigo-400' 
+                                    ? 'bg-slate-900 border-indigo-500 text-emerald-600' 
                                     : 'bg-slate-950 border-slate-800 text-slate-700'
                                 }`}>
                                     {step.icon}
                                 </div>
                                 <span className={`text-[10px] mt-2 font-bold transition-colors hidden sm:block ${
-                                    isCompleted ? 'text-indigo-400' : 'text-slate-700'
+                                    isCompleted ? 'text-emerald-600' : 'text-slate-700'
                                 }`}>
                                     {step.label}
                                 </span>
@@ -148,7 +150,7 @@ export default async function TrackingPage(props: { params: Promise<{ jobId: str
           <section className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-6">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2 text-white font-bold border-l-4 border-indigo-500 pl-3">
-                        <Truck size={18} className="text-indigo-400" />
+                        <Truck size={18} className="text-emerald-600" />
                         <span>ข้อมูลการจัดส่ง</span>
                     </div>
                 </div>
@@ -200,7 +202,7 @@ export default async function TrackingPage(props: { params: Promise<{ jobId: str
                                         <div key={i} className="aspect-video relative rounded-2xl overflow-hidden border border-slate-800 bg-slate-950 shadow-inner group cursor-pointer">
                                             <Image src={url} alt="Pickup" fill className="object-cover transition-transform group-hover:scale-110" />
                                             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                                <ExternalLink size={24} className="text-white" />
+                                                <ExternalLink size={24} className="text-foreground" />
                                             </div>
                                         </div>
                                     ))}
@@ -217,7 +219,7 @@ export default async function TrackingPage(props: { params: Promise<{ jobId: str
                                         <div key={i} className="aspect-video relative rounded-2xl overflow-hidden border border-slate-800 bg-slate-950 shadow-inner group cursor-pointer">
                                             <Image src={url} alt="POD" fill className="object-cover transition-transform group-hover:scale-110" />
                                             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                                <ExternalLink size={24} className="text-white" />
+                                                <ExternalLink size={24} className="text-foreground" />
                                             </div>
                                         </div>
                                     ))}
@@ -248,6 +250,14 @@ export default async function TrackingPage(props: { params: Promise<{ jobId: str
                         )}
                     </div>
               </section>
+          )}
+
+          {/* New Phase 5 Features: POD Download & Feedback */}
+          {currentStepIndex === 4 && (
+              <div className="space-y-6 pt-4">
+                  <PODDownloadButton job={job} />
+                  <FeedbackForm jobId={job.jobId} />
+              </div>
           )}
       </div>
 

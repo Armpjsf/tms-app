@@ -63,13 +63,13 @@ export function SyncManager() {
     return (
         <div className="fixed top-2 left-1/2 -translate-x-1/2 z-[60] w-[90%] max-w-sm">
             <div className={`p-3 rounded-2xl shadow-2xl border backdrop-blur-md flex items-center justify-between gap-4 transition-all duration-500 ${
-                showSuccess ? 'bg-emerald-500/90 border-emerald-400/50 text-white' : 'bg-slate-900/90 border-slate-700 text-white'
+                showSuccess ? 'bg-emerald-500/90 border-emerald-400/50 text-white' : 'bg-white/90 border-gray-200 text-white'
             }`}>
                 <div className="flex items-center gap-3">
                     {showSuccess ? (
                         <CheckCircle2 className="text-white animate-in zoom-in" size={20} />
                     ) : isSyncing ? (
-                        <RefreshCw className="text-blue-400 animate-spin" size={20} />
+                        <RefreshCw className="text-emerald-500 animate-spin" size={20} />
                     ) : (
                         <CloudOff className="text-amber-500" size={20} />
                     )}
@@ -89,14 +89,14 @@ export function SyncManager() {
                 {!showSuccess && !isSyncing && navigator.onLine && (
                     <button 
                         onClick={handleSync}
-                        className="bg-blue-600 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-blue-700 transition-colors"
+                        className="bg-emerald-600 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-blue-700 transition-colors"
                     >
                         ส่งตอนนี้
                     </button>
                 )}
 
                 {!showSuccess && !navigator.onLine && (
-                    <div className="flex items-center gap-1 text-[10px] text-slate-500">
+                    <div className="flex items-center gap-1 text-[10px] text-gray-400">
                         <AlertCircle size={10} />
                         รอสัญญาณ
                     </div>

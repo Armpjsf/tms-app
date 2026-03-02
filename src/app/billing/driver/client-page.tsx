@@ -294,15 +294,15 @@ export default function DriverPaymentClient({ initialJobs, drivers, companyProfi
                         <>
                             <h2 className="font-bold text-lg">{companyProfile.company_name}</h2>
                             {companyProfile.company_name_en && (
-                                <p className="text-slate-600 font-medium">{companyProfile.company_name_en}</p>
+                                <p className="text-gray-500 font-medium">{companyProfile.company_name_en}</p>
                             )}
-                            <p className="mt-2 text-slate-700">{companyProfile.address}</p>
+                            <p className="mt-2 text-gray-400">{companyProfile.address}</p>
                             <div className="flex gap-4 mt-1">
                                 <p><span className="font-semibold">Tax ID:</span> {companyProfile.tax_id}</p>
                             </div>
                         </>
                     ) : (
-                        <p className="text-slate-400">Loading company info...</p>
+                        <p className="text-gray-500">Loading company info...</p>
                     )}
                 </div>
             </div>
@@ -310,7 +310,7 @@ export default function DriverPaymentClient({ initialJobs, drivers, companyProfi
             {/* Right: Document Title */}
             <div className="text-right">
                 <h1 className="text-4xl font-bold text-slate-900 tracking-wide">ใบสำคัญจ่าย</h1>
-                <p className="text-slate-500 text-lg font-medium tracking-widest uppercase mt-1">Payment Voucher</p>
+                <p className="text-gray-400 text-lg font-medium tracking-widest uppercase mt-1">Payment Voucher</p>
                 <div className="mt-4">
                      <span className="px-3 py-1 bg-slate-100 rounded text-xs font-mono border border-slate-200">
                         ORIGINAL (ต้นฉบับ)
@@ -327,13 +327,13 @@ export default function DriverPaymentClient({ initialJobs, drivers, companyProfi
             <div className="border border-slate-200 rounded p-4 bg-slate-50/50">
                  <h3 className="font-bold text-slate-800 border-b border-slate-200 pb-2 mb-2">ผู้ทำจ่าย (Payer)</h3>
                  {companyProfile ? (
-                    <div className="text-sm text-slate-600 mt-2 space-y-1">
+                    <div className="text-sm text-gray-500 mt-2 space-y-1">
                         <p className="font-semibold text-lg text-slate-900">{companyProfile.company_name}</p>
                         <p>{companyProfile.address}</p>
                         <p><span className="font-semibold">Tax ID:</span> {companyProfile.tax_id}</p>
                     </div>
                  ) : (
-                    <p className="text-sm text-slate-400">Loading...</p>
+                    <p className="text-sm text-gray-500">Loading...</p>
                  )}
             </div>
 
@@ -342,11 +342,11 @@ export default function DriverPaymentClient({ initialJobs, drivers, companyProfi
                 <h3 className="font-bold text-slate-800 border-b border-slate-200 pb-2 mb-2">ผู้รับเงิน (Payee)</h3>
                 <p className="font-semibold text-lg text-slate-900">{entityName}</p>
                 {entityInfo ? (
-                     <div className="text-sm text-slate-600 mt-2 space-y-1">
+                     <div className="text-sm text-gray-500 mt-2 space-y-1">
                         {entityInfo.Bank_Name && entityInfo.Bank_Account_No ? (
                             <>
                                 <p><span className="font-semibold">Bank:</span> {entityInfo.Bank_Name}</p>
-                                <p><span className="font-semibold">Account No:</span> {entityInfo.Bank_Account_No} <span className="text-xs text-slate-400">({entityInfo.Bank_Account_Name})</span></p>
+                                <p><span className="font-semibold">Account No:</span> {entityInfo.Bank_Account_No} <span className="text-xs text-gray-500">({entityInfo.Bank_Account_Name})</span></p>
                             </>
                         ) : (
                             <p className="text-amber-600 italic">* ไม่พบข้อมูลบัญชีธนาคาร</p>
@@ -361,15 +361,15 @@ export default function DriverPaymentClient({ initialJobs, drivers, companyProfi
         {/* Document Details Row */}
         <div className="flex justify-between items-center mb-6 text-sm bg-slate-50 p-3 rounded border border-slate-200">
              <div>
-                <span className="text-slate-500 mr-2">เลขที่เอกสาร (No.):</span>
+                <span className="text-gray-400 mr-2">เลขที่เอกสาร (No.):</span>
                 <span className="font-mono font-bold">- (Draft)</span>
              </div>
              <div>
-                <span className="text-slate-500 mr-2">วันที่ (Date):</span>
+                <span className="text-gray-400 mr-2">วันที่ (Date):</span>
                 <span className="font-medium">{today}</span>
              </div>
              <div>
-                <span className="text-slate-500 mr-2">วิธีการชำระ (Payment Method):</span>
+                <span className="text-gray-400 mr-2">วิธีการชำระ (Payment Method):</span>
                 <span className="font-medium">Bank Transfer</span>
              </div>
         </div>
@@ -378,7 +378,7 @@ export default function DriverPaymentClient({ initialJobs, drivers, companyProfi
         <div className="mb-8">
             <table className="w-full text-sm border-collapse">
                 <thead>
-                    <tr className="bg-slate-100 text-slate-700 border-y-2 border-slate-300">
+                    <tr className="bg-slate-100 text-gray-400 border-y-2 border-slate-300">
                         <th className="py-3 px-4 text-center font-bold w-16">ลำดับ<br/><span className="text-xs font-normal">No.</span></th>
                         <th className="py-3 px-4 text-left font-bold">รายละเอียด<br/><span className="text-xs font-normal">Description</span></th>
                         <th className="py-3 px-4 text-left font-bold">วันที่<br/><span className="text-xs font-normal">Date</span></th>
@@ -407,14 +407,14 @@ export default function DriverPaymentClient({ initialJobs, drivers, companyProfi
                         return (
                             <tbody key={item.Job_ID} className="border-b border-slate-200">
                                 <tr className="hover:bg-slate-50">
-                                    <td className="py-3 px-4 text-center text-slate-500 align-top">{index + 1}</td>
+                                    <td className="py-3 px-4 text-center text-gray-400 align-top">{index + 1}</td>
                                     <td className="py-3 px-4 font-medium text-slate-800">
                                         ค่าเที่ยววิ่ง (Job: {item.Job_ID})
                                     </td>
-                                    <td className="py-3 px-4 text-slate-600 align-top">
+                                    <td className="py-3 px-4 text-gray-500 align-top">
                                         {item.Plan_Date ? new Date(item.Plan_Date).toLocaleDateString('th-TH') : '-'}
                                     </td>
-                                    <td className="py-3 px-4 text-slate-600 text-xs align-top">
+                                    <td className="py-3 px-4 text-gray-500 text-xs align-top">
                                         {item.Route_Name || '-'}
                                     </td>
                                     <td className="py-3 px-4 text-right font-medium text-slate-800 align-top">
@@ -422,7 +422,7 @@ export default function DriverPaymentClient({ initialJobs, drivers, companyProfi
                                     </td>
                                 </tr>
                                 {extraCosts.map((extra, i) => (
-                                    <tr key={`${item.Job_ID}-extra-${i}`} className="text-slate-600 bg-slate-50/30">
+                                    <tr key={`${item.Job_ID}-extra-${i}`} className="text-gray-500 bg-slate-50/30">
                                         <td className="py-1 px-4"></td>
                                         <td className="py-1 px-4">
                                             <div className="text-sm border-l-2 border-slate-300 pl-2">
@@ -430,7 +430,7 @@ export default function DriverPaymentClient({ initialJobs, drivers, companyProfi
                                             </div>
                                         </td>
                                         <td className="py-1 px-4 text-center">-</td>
-                                        <td className="py-1 px-4 text-slate-500 text-xs">-</td>
+                                        <td className="py-1 px-4 text-gray-400 text-xs">-</td>
                                         <td className="py-1 px-4 text-right">
                                             {Number(extra.cost_driver).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                         </td>
@@ -448,16 +448,16 @@ export default function DriverPaymentClient({ initialJobs, drivers, companyProfi
                 <tfoot>
                      <tr>
                         <td colSpan={3} rowSpan={3} className="pt-4 pr-8 align-top">
-                            <div className="border border-slate-300 bg-slate-50 p-3 rounded text-xs text-slate-500">
+                            <div className="border border-slate-300 bg-slate-50 p-3 rounded text-xs text-gray-400">
                                 <p className="font-bold mb-1">หมายเหตุ (Remarks):</p>
                                 <p>- ยอดเงินนี้รวมค่าแรงและค่าพาหนะแล้ว</p>
                             </div>
                         </td>
-                        <td className="py-2 px-4 text-right font-bold text-slate-600">รวมเป็นเงิน</td>
+                        <td className="py-2 px-4 text-right font-bold text-gray-500">รวมเป็นเงิน</td>
                         <td className="py-2 px-4 text-right font-bold text-slate-800">{selectedSubtotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
                     </tr>
                     <tr>
-                        <td className="py-2 px-4 text-right text-slate-600 text-sm">หัก ณ ที่จ่าย 1%</td>
+                        <td className="py-2 px-4 text-right text-gray-500 text-sm">หัก ณ ที่จ่าย 1%</td>
                         <td className="py-2 px-4 text-right text-red-500 font-medium">-{selectedWithholding.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
                     </tr>
                     <tr className="bg-slate-50 border-t-2 border-slate-300 border-b-2">
@@ -471,7 +471,7 @@ export default function DriverPaymentClient({ initialJobs, drivers, companyProfi
         </div>
 
          {/* Footer Signatures */}
-        <div className="flex justify-between mt-16 text-sm text-slate-600 pb-8">
+        <div className="flex justify-between mt-16 text-sm text-gray-500 pb-8">
              <div className="text-center w-1/3">
                 <div className="border-b border-slate-400 mb-2 h-8 w-3/4 mx-auto"></div>
                 <p className="font-bold">ผู้รับเงิน</p>
@@ -494,14 +494,14 @@ export default function DriverPaymentClient({ initialJobs, drivers, companyProfi
     <div className="print:hidden">
     <DashboardLayout>
       {/* Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 bg-slate-900/40 p-6 lg:p-8 rounded-[2rem] border border-white/5 backdrop-blur-md shadow-2xl relative overflow-hidden mb-6">
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 bg-white/80 p-6 lg:p-8 rounded-[2rem] border border-gray-200 backdrop-blur-md shadow-2xl relative overflow-hidden mb-6">
             <div className="absolute top-0 right-0 p-6 opacity-[0.04] pointer-events-none scale-150">
               <Wallet size={120} />
             </div>
             <div className="relative z-10">
               <div className="flex items-center gap-4 mb-2">
-                <div className="p-2.5 bg-indigo-500/20 rounded-2xl shadow-lg shadow-indigo-500/20">
-                  <Wallet className="text-indigo-400 w-7 h-7" />
+                <div className="p-2.5 bg-emerald-500/20 rounded-2xl shadow-lg shadow-indigo-500/20">
+                  <Wallet className="text-emerald-600 w-7 h-7" />
                 </div>
                 <div>
                   <h1 className="text-3xl lg:text-4xl font-black text-foreground tracking-tight">
@@ -513,7 +513,7 @@ export default function DriverPaymentClient({ initialJobs, drivers, companyProfi
             </div>
             <Button 
                 variant="outline" 
-                className="h-11 px-5 rounded-xl border-slate-800 bg-slate-950/50 hover:bg-slate-900 text-slate-300 hover:text-white gap-2 relative z-10"
+                className="h-11 px-5 rounded-xl border-gray-200 bg-white/80 hover:bg-white text-gray-700 hover:text-white gap-2 relative z-10"
                 onClick={() => router.push('/billing/driver/history')}
             >
                 <History className="w-4 h-4" /> ประวัติการจ่าย
@@ -521,10 +521,10 @@ export default function DriverPaymentClient({ initialJobs, drivers, companyProfi
       </div>
 
       {/* Filters */}
-      <div className="bg-slate-900/40 backdrop-blur-md border border-white/5 rounded-2xl p-6 shadow-2xl mb-6">
+      <div className="bg-white/80 backdrop-blur-md border border-gray-200 rounded-2xl p-6 shadow-2xl mb-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
             <div className="space-y-2">
-              <Label className="text-slate-400 text-sm">รูปแบบการจ่าย</Label>
+              <Label className="text-gray-500 text-sm">รูปแบบการจ่าย</Label>
               <Select
                 value={paymentModel}
                 onValueChange={(value) => {
@@ -532,7 +532,7 @@ export default function DriverPaymentClient({ initialJobs, drivers, companyProfi
                     setSelectedEntityId("")
                 }}
               >
-                <SelectTrigger className="w-full h-10 bg-slate-800 border-slate-700 text-white">
+                <SelectTrigger className="w-full h-10 bg-gray-100 border-gray-200 text-gray-950 font-medium">
                   <SelectValue placeholder="เลือกรูปแบบ" />
                 </SelectTrigger>
                 <SelectContent>
@@ -542,12 +542,12 @@ export default function DriverPaymentClient({ initialJobs, drivers, companyProfi
               </Select>
             </div>
             <div className="space-y-2">
-              <Label className="text-slate-400 text-sm">{paymentModel === 'individual' ? 'เลือกคนขับ' : 'เลือกบริษัทรถร่วม'}</Label>
+              <Label className="text-gray-500 text-sm">{paymentModel === 'individual' ? 'เลือกคนขับ' : 'เลือกบริษัทรถร่วม'}</Label>
               <Select
                 value={selectedEntityId || "all"}
                 onValueChange={(value) => setSelectedEntityId(value === "all" ? "" : value)}
               >
-                <SelectTrigger className="w-full h-10 bg-slate-800 border-slate-700 text-white">
+                <SelectTrigger className="w-full h-10 bg-gray-100 border-gray-200 text-gray-950 font-medium">
                   <SelectValue placeholder="ทั้งหมด" />
                 </SelectTrigger>
                 <SelectContent>
@@ -565,27 +565,27 @@ export default function DriverPaymentClient({ initialJobs, drivers, companyProfi
               </Select>
             </div>
             <div className="space-y-2">
-              <Label className="text-slate-400 text-sm flex items-center gap-1">
+              <Label className="text-gray-500 text-sm flex items-center gap-1">
                 <Calendar className="w-3 h-3" /> วันที่เริ่มต้น
               </Label>
               <Input
                 type="date"
                 value={dateFrom}
                 onChange={(e) => setDateFrom(e.target.value)}
-                className="bg-slate-800 border-slate-700 text-white"
+                className="bg-gray-100 border-gray-200 text-gray-950 font-medium"
               />
             </div>
             <div className="space-y-2">
-              <Label className="text-slate-400 text-sm">วันที่สิ้นสุด</Label>
+              <Label className="text-gray-500 text-sm">วันที่สิ้นสุด</Label>
               <Input
                 type="date"
                 value={dateTo}
                 onChange={(e) => setDateTo(e.target.value)}
-                className="bg-slate-800 border-slate-700 text-white"
+                className="bg-gray-100 border-gray-200 text-gray-950 font-medium"
               />
             </div>
             <div className="flex items-end">
-              <Button variant="outline" className="border-slate-700 w-full text-slate-300">
+              <Button variant="outline" className="border-gray-200 w-full text-gray-700">
                 <Search className="w-4 h-4 mr-2" /> ค้นหา
               </Button>
             </div>
@@ -594,40 +594,40 @@ export default function DriverPaymentClient({ initialJobs, drivers, companyProfi
 
       {/* Summary Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-slate-900/40 backdrop-blur-sm border border-amber-500/20 rounded-2xl p-4 flex items-center gap-4 shadow-xl">
+        <div className="bg-white/80 backdrop-blur-sm border border-amber-500/20 rounded-2xl p-4 flex items-center gap-4 shadow-xl">
             <div className="w-12 h-12 rounded-xl bg-amber-500/20 flex items-center justify-center">
               <Clock className="w-6 h-6 text-amber-400" />
             </div>
             <div>
               <p className="text-2xl font-bold text-amber-400">{pendingItems.length}</p>
-              <p className="text-xs text-slate-400">รอจ่าย</p>
+              <p className="text-xs text-gray-500">รอจ่าย</p>
             </div>
         </div>
-        <div className="bg-slate-900/40 backdrop-blur-sm border border-indigo-500/20 rounded-2xl p-4 flex items-center gap-4 shadow-xl">
-            <div className="w-12 h-12 rounded-xl bg-indigo-500/20 flex items-center justify-center">
-              <Banknote className="w-6 h-6 text-indigo-400" />
+        <div className="bg-white/80 backdrop-blur-sm border border-emerald-500/20 rounded-2xl p-4 flex items-center gap-4 shadow-xl">
+            <div className="w-12 h-12 rounded-xl bg-emerald-500/20 flex items-center justify-center">
+              <Banknote className="w-6 h-6 text-emerald-600" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-indigo-400">฿{pendingTotal.toLocaleString()}</p>
-              <p className="text-xs text-slate-400">ยอดรอจ่าย</p>
+              <p className="text-2xl font-bold text-emerald-600">฿{pendingTotal.toLocaleString()}</p>
+              <p className="text-xs text-gray-500">ยอดรอจ่าย</p>
             </div>
         </div>
-        <div className="bg-slate-900/40 backdrop-blur-sm border border-emerald-500/20 rounded-2xl p-4 flex items-center gap-4 shadow-xl">
+        <div className="bg-white/80 backdrop-blur-sm border border-emerald-500/20 rounded-2xl p-4 flex items-center gap-4 shadow-xl">
             <div className="w-12 h-12 rounded-xl bg-emerald-500/20 flex items-center justify-center">
               <CheckCircle2 className="w-6 h-6 text-emerald-400" />
             </div>
             <div>
               <p className="text-2xl font-bold text-emerald-400">฿{selectedSubtotal.toLocaleString()}</p>
-              <p className="text-xs text-slate-400">ยอดที่เลือก ({selectedItems.length} รายการ)</p>
+              <p className="text-xs text-gray-500">ยอดที่เลือก ({selectedItems.length} รายการ)</p>
             </div>
         </div>
-        <div className="bg-slate-900/40 backdrop-blur-sm border border-purple-500/20 rounded-2xl p-4 flex items-center gap-4 shadow-xl">
+        <div className="bg-white/80 backdrop-blur-sm border border-purple-500/20 rounded-2xl p-4 flex items-center gap-4 shadow-xl">
             <div className="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center">
               <Percent className="w-6 h-6 text-purple-400" />
             </div>
             <div>
               <p className="text-2xl font-bold text-purple-400">฿{selectedWithholding.toLocaleString()}</p>
-              <p className="text-xs text-slate-400">หัก ณ ที่จ่าย 1%</p>
+              <p className="text-xs text-gray-500">หัก ณ ที่จ่าย 1%</p>
             </div>
         </div>
       </div>
@@ -639,21 +639,21 @@ export default function DriverPaymentClient({ initialJobs, drivers, companyProfi
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div className="flex items-center gap-6">
                 <div>
-                  <p className="text-slate-400 text-xs">ยอดรวม</p>
-                  <p className="text-white font-bold text-lg">฿{selectedSubtotal.toLocaleString()}</p>
+                  <p className="text-gray-500 text-xs">ยอดรวม</p>
+                  <p className="text-gray-900 font-bold text-lg">฿{selectedSubtotal.toLocaleString()}</p>
                 </div>
-                <div className="text-slate-500">-</div>
+                <div className="text-gray-400">-</div>
                 <div>
-                  <p className="text-slate-400 text-xs">หัก ณ ที่จ่าย 1%</p>
+                  <p className="text-gray-500 text-xs">หัก ณ ที่จ่าย 1%</p>
                   <p className="text-red-400 font-bold text-lg">฿{selectedWithholding.toLocaleString()}</p>
                 </div>
-                <div className="text-slate-500">=</div>
+                <div className="text-gray-400">=</div>
                 <div>
-                  <p className="text-slate-400 text-xs">ยอดจ่ายสุทธิ</p>
-                  <p className="text-indigo-400 font-bold text-xl">฿{selectedNetTotal.toLocaleString()}</p>
+                  <p className="text-gray-500 text-xs">ยอดจ่ายสุทธิ</p>
+                  <p className="text-emerald-600 font-bold text-xl">฿{selectedNetTotal.toLocaleString()}</p>
                 </div>
               </div>
-              <Button onClick={clearSelection} variant="ghost" className="text-slate-400 hover:text-white">
+              <Button onClick={clearSelection} variant="ghost" className="text-gray-500 hover:text-white">
                 ล้างการเลือก
               </Button>
             </div>
@@ -662,11 +662,11 @@ export default function DriverPaymentClient({ initialJobs, drivers, companyProfi
       )}
 
       {/* Table */}
-      <div className="bg-slate-900/40 backdrop-blur-sm border border-white/5 rounded-2xl shadow-2xl">
+      <div className="bg-white/80 backdrop-blur-sm border border-gray-200 rounded-2xl shadow-2xl">
         <div className="flex flex-row items-center justify-between p-5 pb-4">
-          <h3 className="text-white font-bold text-lg">รายการงาน</h3>
+          <h3 className="text-gray-900 font-bold text-lg">รายการงาน</h3>
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={selectAll} className="border-slate-700 text-slate-300">
+            <Button variant="outline" size="sm" onClick={selectAll} className="border-gray-200 text-gray-700">
               เลือกทั้งหมด
             </Button>
             <Dialog open={showPreview} onOpenChange={setShowPreview}>
@@ -674,7 +674,7 @@ export default function DriverPaymentClient({ initialJobs, drivers, companyProfi
                     <Button 
                         size="sm" 
                         variant="outline" 
-                        className="border-slate-700 text-slate-300"
+                        className="border-gray-200 text-gray-700"
                         disabled={selectedItems.length === 0}
                     >
                         <Eye className="w-4 h-4 mr-2" /> ดูตัวอย่าง
@@ -702,7 +702,7 @@ export default function DriverPaymentClient({ initialJobs, drivers, companyProfi
             <Button 
                 size="sm" 
                 variant="outline" 
-                className="border-slate-700 text-slate-300" 
+                className="border-gray-200 text-gray-700" 
                 disabled={selectedItems.length === 0 || loading}
                 onClick={handleExportSCB}
             >
@@ -711,7 +711,7 @@ export default function DriverPaymentClient({ initialJobs, drivers, companyProfi
             <Button 
                 size="sm" 
                 variant="outline" 
-                className="border-slate-700 text-slate-300" 
+                className="border-gray-200 text-gray-700" 
                 disabled={selectedItems.length === 0}
                 onClick={handlePrint}
             >
@@ -720,7 +720,7 @@ export default function DriverPaymentClient({ initialJobs, drivers, companyProfi
             <Button 
                 size="sm" 
                 variant="outline" 
-                className="border-slate-700 text-slate-300" 
+                className="border-gray-200 text-gray-700" 
                 disabled={selectedItems.length === 0}
                 onClick={handleExportCSV}
             >
@@ -732,55 +732,55 @@ export default function DriverPaymentClient({ initialJobs, drivers, companyProfi
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-slate-800">
-                  <th className="text-left py-3 px-4 text-slate-400 font-medium text-sm">
+                <tr className="border-b border-gray-200">
+                  <th className="text-left py-3 px-4 text-gray-500 font-medium text-sm">
                     <input 
                       type="checkbox" 
-                      className="rounded bg-slate-800 border-slate-700"
+                      className="rounded bg-gray-100 border-gray-200"
                       checked={selectedItems.length === pendingItems.length && pendingItems.length > 0}
                       onChange={selectAll}
                     />
                   </th>
-                  <th className="text-left py-3 px-4 text-slate-400 font-medium text-sm">Job ID</th>
-                  <th className="text-left py-3 px-4 text-slate-400 font-medium text-sm">คนขับ</th>
-                  <th className="text-left py-3 px-4 text-slate-400 font-medium text-sm">ทะเบียนรถ</th>
-                  <th className="text-left py-3 px-4 text-slate-400 font-medium text-sm">วันที่</th>
-                  <th className="text-left py-3 px-4 text-slate-400 font-medium text-sm">เส้นทาง</th>
-                  <th className="text-right py-3 px-4 text-slate-400 font-medium text-sm">ค่าขนส่ง</th>
-                  <th className="text-right py-3 px-4 text-slate-400 font-medium text-sm">รวม</th>
-                  <th className="text-center py-3 px-4 text-slate-400 font-medium text-sm">สถานะ</th>
+                  <th className="text-left py-3 px-4 text-gray-500 font-medium text-sm">Job ID</th>
+                  <th className="text-left py-3 px-4 text-gray-500 font-medium text-sm">คนขับ</th>
+                  <th className="text-left py-3 px-4 text-gray-500 font-medium text-sm">ทะเบียนรถ</th>
+                  <th className="text-left py-3 px-4 text-gray-500 font-medium text-sm">วันที่</th>
+                  <th className="text-left py-3 px-4 text-gray-500 font-medium text-sm">เส้นทาง</th>
+                  <th className="text-right py-3 px-4 text-gray-500 font-medium text-sm">ค่าขนส่ง</th>
+                  <th className="text-right py-3 px-4 text-gray-500 font-medium text-sm">รวม</th>
+                  <th className="text-center py-3 px-4 text-gray-500 font-medium text-sm">สถานะ</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredData.map((item) => (
-                  <tr key={item.Job_ID} className="border-b border-slate-800/50 hover:bg-slate-800/30">
+                  <tr key={item.Job_ID} className="border-b border-gray-200 hover:bg-gray-50">
                     <td className="py-3 px-4">
                       <input
                         type="checkbox"
-                        className="rounded bg-slate-800 border-slate-700"
+                        className="rounded bg-gray-100 border-gray-200"
                         checked={selectedItems.includes(item.Job_ID)}
                         onChange={() => toggleItem(item.Job_ID)}
                       />
                     </td>
-                    <td className="py-3 px-4 text-white font-medium">{item.Job_ID}</td>
-                    <td className="py-3 px-4 text-slate-300">
+                    <td className="py-3 px-4 text-gray-800 font-medium">{item.Job_ID}</td>
+                    <td className="py-3 px-4 text-gray-700">
                       <div className="flex items-center gap-2">
-                        <User className="w-4 h-4 text-slate-500" />
+                        <User className="w-4 h-4 text-gray-400" />
                         {item.Driver_Name || '-'}
                       </div>
                     </td>
-                    <td className="py-3 px-4 text-slate-300">
+                    <td className="py-3 px-4 text-gray-700">
                       <div className="flex items-center gap-2">
-                        <Truck className="w-4 h-4 text-slate-500" />
+                        <Truck className="w-4 h-4 text-gray-400" />
                         {item.Vehicle_Plate || '-'}
                       </div>
                     </td>
-                    <td className="py-3 px-4 text-slate-400">{item.Plan_Date ? new Date(item.Plan_Date).toLocaleDateString('th-TH') : '-'}</td>
-                    <td className="py-3 px-4 text-slate-300">{item.Route_Name || '-'}</td>
-                    <td className="py-3 px-4 text-right text-indigo-400">
+                    <td className="py-3 px-4 text-gray-500">{item.Plan_Date ? new Date(item.Plan_Date).toLocaleDateString('th-TH') : '-'}</td>
+                    <td className="py-3 px-4 text-gray-700">{item.Route_Name || '-'}</td>
+                    <td className="py-3 px-4 text-right text-emerald-600">
                       ฿{(item.Cost_Driver_Total || 0).toLocaleString()}
                     </td>
-                    <td className="py-3 px-4 text-right text-white font-medium">
+                    <td className="py-3 px-4 text-right text-gray-800 font-medium">
                       ฿{getJobTotal(item).toLocaleString()}
                     </td>
                     <td className="py-3 px-4 text-center">
@@ -799,7 +799,7 @@ export default function DriverPaymentClient({ initialJobs, drivers, companyProfi
     </div>
 
     {/* Hidden Print Area */}
-    <div className="hidden print:block fixed inset-0 bg-white z-[9999] p-8">
+    <div className="hidden print:block printable-content fixed inset-0 bg-white z-[9999] p-8">
         <PaymentPreview />
     </div>
     </>

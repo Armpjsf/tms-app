@@ -28,51 +28,51 @@ export default function DriverLoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 relative overflow-hidden">
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6 relative overflow-hidden">
       {/* Premium Background Decor */}
       <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-blue-500/10 rounded-full blur-[120px] -translate-y-1/2 animate-pulse" />
-      <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-indigo-500/10 rounded-full blur-[120px] translate-y-1/2 animate-pulse" />
+      <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-emerald-500/10 rounded-full blur-[120px] translate-y-1/2 animate-pulse" />
       <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(to_right,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:60px_60px] pointer-events-none" />
 
       <div className="w-full max-w-sm space-y-8 relative">
         {/* Glass Card */}
-        <div className="bg-slate-900/40 backdrop-blur-xl border border-white/10 rounded-[2rem] p-8 shadow-2xl relative overflow-hidden">
+        <div className="bg-white/80 backdrop-blur-xl border border-gray-200 rounded-[2rem] p-8 shadow-2xl relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-indigo-500/5 pointer-events-none" />
         <div className="text-center space-y-2 relative">
           <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl mx-auto flex items-center justify-center shadow-xl shadow-blue-500/30 mb-4 ring-4 ring-blue-500/10">
              <Truck className="text-white w-10 h-10" />
           </div>
           <h1 className="text-3xl font-black text-white tracking-tight">LOGIS Driver</h1>
-          <p className="text-slate-400 font-medium">เข้าสู่ระบบพนักงานขับรถ</p>
+          <p className="text-gray-500 font-medium">เข้าสู่ระบบพนักงานขับรถ</p>
         </div>
 
         <form action={handleSubmit} className="space-y-6">
           <div className="space-y-3">
-            <Label htmlFor="identifier" className="text-slate-200 text-sm">เบอร์โทรศัพท์ หรือ ชื่อผู้ใช้งาน</Label>
+            <Label htmlFor="identifier" className="text-gray-800 text-sm">เบอร์โทรศัพท์ หรือ ชื่อผู้ใช้งาน</Label>
             <div className="relative">
-              <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 w-5 h-5" />
+              <User className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
               <Input 
                 id="identifier" 
                 name="identifier" 
                 type="text" 
                 inputMode="text"
                 placeholder="0XXXXXXXXX" 
-                className="pl-12 bg-slate-950/60 border-white/10 text-white placeholder:text-slate-600 h-14 text-lg rounded-xl focus:ring-2 focus:ring-blue-500/50"
+                className="pl-12 bg-background/60 border-gray-200 text-white placeholder:text-gray-500 h-14 text-lg rounded-xl focus:ring-2 focus:ring-blue-500/50"
                 required
               />
             </div>
           </div>
 
           <div className="space-y-3">
-            <Label htmlFor="password" className="text-slate-200 text-sm">รหัสผ่าน</Label>
+            <Label htmlFor="password" className="text-gray-800 text-sm">รหัสผ่าน</Label>
             <div className="relative">
-              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 w-5 h-5" />
+              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
               <Input 
                 id="password" 
                 name="password" 
                 type="password" 
                 placeholder="••••••" 
-                className="pl-12 bg-slate-950/60 border-white/10 text-white placeholder:text-slate-600 h-14 text-lg rounded-xl focus:ring-2 focus:ring-blue-500/50"
+                className="pl-12 bg-background/60 border-gray-200 text-white placeholder:text-gray-500 h-14 text-lg rounded-xl focus:ring-2 focus:ring-blue-500/50"
                 required
               />
             </div>
@@ -95,12 +95,12 @@ export default function DriverLoginPage() {
         </div> {/* end glass card */}
 
         <div className="pt-4 text-center">
-           <Button variant="link" className="text-slate-500 text-xs" onClick={() => router.push('/login')}>
+           <Button variant="link" className="text-gray-400 text-xs" onClick={() => router.push('/login')}>
              เข้าสู่ระบบสำหรับเจ้าหน้าที่?
            </Button>
         </div>
 
-        <p className="text-center text-[10px] text-slate-600">
+        <p className="text-center text-[10px] text-gray-500">
           © 2024 LOGIS-PRO TMS. สงวนลิขสิทธิ์
         </p>
       </div>

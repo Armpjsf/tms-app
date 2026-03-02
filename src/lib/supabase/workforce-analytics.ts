@@ -38,7 +38,8 @@ export async function getWorkforceAnalytics(
   const selectedBranch = cookieStore.get('selectedBranch')?.value
 
   // Determine effective branch ID
-  let effectiveBranchId = branchId
+  let effectiveBranchId = (branchId && branchId !== 'All') ? branchId : undefined
+  
   if (!effectiveBranchId) {
     if (isAdmin && selectedBranch && selectedBranch !== 'All') {
       effectiveBranchId = selectedBranch
@@ -50,43 +51,39 @@ export async function getWorkforceAnalytics(
   // 1. Fetch Drivers List for Status & Compliance
   let driverQuery = supabase
     .from('Master_Drivers')
-    .select('Driver_ID, Driver_Name, Active_Status, License_Expiry')
+    .select('Driver_ID, Driver_Name, Active_Status, Expire_Date, Insurance_Expiry, Tax_Expiry, Act_Expiry')
   
   if (effectiveBranchId) driverQuery = driverQuery.eq('Branch_ID', effectiveBranchId)
   
   const { data: drivers } = await driverQuery
   const allDrivers = drivers || []
   
-  // KPI: Total Drivers
-  const totalBox = allDrivers.length // Assuming box means headcount
+  // KPI: Total Drivers (Filter by Active_Status if provided, otherwise all in branch)
+  const totalBox = allDrivers.length // Total headcount in system
   
-  // KPI: Active Today (Drivers with non-cancelled jobs today)
+  // KPI: Active Today (Drivers with non-cancelled jobs today for the specific branch)
   const today = new Date().toISOString().split('T')[0]
-  let activeQuery = supabase
-    .from('Jobs_Main')
-    .select('Driver_ID', { count: 'exact', head: true })
-    .eq('Plan_Date', today)
-    .neq('Job_Status', 'Cancelled')
-    .not('Driver_ID', 'is', null) // Only assigned jobs
-    
-  // if (effectiveBranchId) activeQuery = activeQuery.eq('Branch_ID', effectiveBranchId) // Unused because we query again below
   
-  // We need distinct driver IDs. supabase count with head true implies row count. 
-  // To get distinct active drivers, we need standard select and process.
   let activeDriversCount = 0
-  const { data: activeJobs } = await supabase
+  let activeJobsQueryBuilder = supabase
      .from('Jobs_Main')
      .select('Driver_ID')
      .eq('Plan_Date', today)
      .neq('Job_Status', 'Cancelled')
      .not('Driver_ID', 'is', null)
   
+  if (effectiveBranchId) {
+    activeJobsQueryBuilder = activeJobsQueryBuilder.eq('Branch_ID', effectiveBranchId)
+  }
+
+  const { data: activeJobs } = await activeJobsQueryBuilder
+  
   if (activeJobs) {
       const uniqueDrivers = new Set(activeJobs.map(j => j.Driver_ID))
       activeDriversCount = uniqueDrivers.size
   }
   
-  // KPIs: License Compliance
+  // KPIs: Compliance (Check multiple expiry dates)
   const now = new Date()
   
   let licenseExpiring = 0
@@ -94,26 +91,38 @@ export async function getWorkforceAnalytics(
   const driversWithIssues: WorkforceAnalytics['driversWithIssues'] = []
   
   for (const d of allDrivers) {
-      if (!d.License_Expiry) continue
-      const expiry = new Date(d.License_Expiry)
-      const daysUntil = Math.ceil((expiry.getTime() - now.getTime()) / 86400000)
-      
-      if (daysUntil < 0) {
-          licenseExpired++
-          driversWithIssues.push({
-              id: d.Driver_ID,
-              name: d.Driver_Name || 'Unknown',
-              issue: 'ใบขับขี่หมดอายุ',
-              daysAuth: Math.abs(daysUntil)
-          })
-      } else if (daysUntil <= 30) {
-          licenseExpiring++
-          driversWithIssues.push({
-              id: d.Driver_ID,
-              name: d.Driver_Name || 'Unknown',
-              issue: 'ใบขับขี่ใกล้หมดอายุ',
-              daysAuth: daysUntil
-          })
+      // Check all possible expiry fields
+      const dateFields = [
+          { date: d.Expire_Date, label: 'เอกสารประจำตัว' },
+          { date: d.Insurance_Expiry, label: 'ประกันภัย' },
+          { date: d.Tax_Expiry, label: 'ภาษี' },
+          { date: d.Act_Expiry, label: 'พ.ร.บ.' }
+      ]
+
+      for (const field of dateFields) {
+          if (!field.date) continue
+          const expiry = new Date(field.date)
+          const daysUntil = Math.ceil((expiry.getTime() - now.getTime()) / 86400000)
+          
+          if (daysUntil < 0) {
+              licenseExpired++
+              driversWithIssues.push({
+                  id: d.Driver_ID,
+                  name: d.Driver_Name || 'Unknown',
+                  issue: `${field.label}หมดอายุ`,
+                  daysAuth: Math.abs(daysUntil)
+              })
+              break // Only count one issue per driver for the KPI total
+          } else if (daysUntil <= 30) {
+              licenseExpiring++
+              driversWithIssues.push({
+                  id: d.Driver_ID,
+                  name: d.Driver_Name || 'Unknown',
+                  issue: `${field.label}ใกล้หมดอายุ`,
+                  daysAuth: daysUntil
+              })
+              break // Only count one issue per driver for the KPI total
+          }
       }
   }
   

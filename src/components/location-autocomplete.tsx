@@ -77,14 +77,14 @@ export function LocationAutocomplete({
           onFocus={() => setOpen(true)}
           onClick={() => setOpen(true)}
           placeholder={placeholder}
-          className={cn("bg-slate-900 border-slate-700 text-white", className)}
+          className={cn("bg-white border-gray-200 text-gray-900 font-black placeholder:text-gray-700 placeholder:font-bold", className)}
         />
       </div>
 
       {open && (
-        <div className="absolute z-[9999] w-full mt-1 bg-slate-800 border border-slate-700 rounded-md shadow-lg max-h-60 overflow-y-auto">
+        <div className="absolute z-[9999] w-full mt-1 bg-gray-100 border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
           {filteredLocations.length === 0 ? (
-            <div className="px-3 py-2 text-sm text-slate-500 text-center">
+            <div className="px-3 py-2 text-sm text-gray-700 font-bold text-center">
                 ไม่พบข้อมูล
             </div>
           ) : (
@@ -95,12 +95,12 @@ export function LocationAutocomplete({
                     onClick={() => handleSelect(loc)}
                     className={cn(
                         "w-full text-left px-3 py-2 text-sm hover:bg-slate-700 flex items-center justify-between transition-colors",
-                         value === loc ? "text-white bg-slate-700" : "text-slate-200"
+                         value === loc ? "text-white bg-slate-700" : "text-gray-800"
                     )}
                     type="button"
                 >
                     <div className="flex items-center gap-2 overflow-hidden">
-                        <MapPin size={14} className="text-slate-400 flex-shrink-0" />
+                        <MapPin size={14} className="text-gray-700 flex-shrink-0" />
                         <span className="truncate">{loc}</span>
                     </div>
                 </button>

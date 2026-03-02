@@ -44,7 +44,7 @@ export function SearchInput({ placeholder = "Search...", className, ...props }: 
 
   return (
     <div className={cn("relative", className)}>
-      <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+      <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
       <Input
         value={value}
         onChange={(e) => setValue(e.target.value)}
@@ -61,7 +61,7 @@ export function SearchInput({ placeholder = "Search...", className, ...props }: 
           }
         }}
         placeholder={placeholder}
-        className="pl-10 h-11 bg-white/5 border-white/10 text-white placeholder:text-slate-500"
+        className="pl-10 h-11 bg-white/5 border-gray-200 text-white placeholder:text-gray-400"
         {...props}
       />
     </div>

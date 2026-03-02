@@ -150,23 +150,28 @@ export default function UserSettingsPage() {
         
         setSaving(true)
         try {
+            let result;
             if (editingUser) {
                 // Remove password if empty to prevent overwrite
                 const updateData = { ...formData }
                 if (!updateData.Password) delete updateData.Password
 
-                await updateUser(editingUser, updateData)
-                alert("แก้ไขข้อมูลเรียบร้อย")
+                result = await updateUser(editingUser, updateData)
             } else {
-                await createUser(formData as UserData)
-                alert("สร้างผู้ใช้งานเรียบร้อย")
+                result = await createUser(formData as UserData)
             }
-            setIsDialogOpen(false)
-            loadData()
+
+            if (result.success) {
+                alert(editingUser ? "แก้ไขข้อมูลเรียบร้อย" : "สร้างผู้ใช้งานเรียบร้อย")
+                setIsDialogOpen(false)
+                loadData()
+            } else {
+                alert("เกิดข้อผิดพลาด: " + (result.error || "ไม่สามารถบันทึกข้อมูลได้"))
+            }
         } catch (e) {
             const error = e as Error
             console.error(error)
-            alert("เกิดข้อผิดพลาด: " + (error.message || "Unknown"))
+            alert("เกิดข้อผิดพลาดทางเทคนิค: " + (error.message || "Unknown error"))
         } finally {
             setSaving(false)
         }
@@ -188,7 +193,7 @@ export default function UserSettingsPage() {
             <div className="flex justify-between items-center mb-6">
                 <div>
                     <h1 className="text-2xl font-bold text-foreground flex items-center gap-3">
-                        <Users className="text-blue-500" />
+                        <Users className="text-emerald-600" />
                         จัดการผู้ใช้งาน (User Management)
                     </h1>
                     <p className="text-sm text-muted-foreground mt-1">เพิ่ม ลบ แก้ไข ข้อมูลพนักงานและผู้ใช้งานระบบ</p>
@@ -209,7 +214,7 @@ export default function UserSettingsPage() {
                         ]}
                         templateFilename="template_users.xlsx"
                     />
-                    <Button onClick={() => handleOpenDialog()} className="bg-blue-600 hover:bg-blue-700">
+                    <Button onClick={() => handleOpenDialog()} className="bg-emerald-600 hover:bg-blue-700">
                         <Plus className="w-4 h-4 mr-2" />
                         เพิ่มผู้ใช้งาน
                     </Button>
@@ -245,16 +250,16 @@ export default function UserSettingsPage() {
                             </thead>
                             <tbody className="divide-y divide-border">
                                 {loading ? (
-                                    <tr><td colSpan={6} className="text-center py-8 text-slate-500">Loading...</td></tr>
+                                    <tr><td colSpan={6} className="text-center py-8 text-gray-400">Loading...</td></tr>
                                 ) : filteredUsers.length === 0 ? (
-                                    <tr><td colSpan={6} className="text-center py-8 text-slate-500">ไม่พบข้อมูล</td></tr>
+                                    <tr><td colSpan={6} className="text-center py-8 text-gray-400">ไม่พบข้อมูล</td></tr>
                                 ) : (
                                     filteredUsers.map((user) => (
                                         <tr key={user.Username} className="hover:bg-muted/30 transition-colors">
                                             <td className="px-6 py-4 font-medium text-foreground">
                                                 {user.Username}
                                                 {user.Customer_ID && (
-                                                    <div className="text-[10px] text-blue-500 font-normal">
+                                                    <div className="text-[10px] text-emerald-600 font-normal">
                                                         Client: {user.Master_Customers?.Customer_Name || user.Customer_ID}
                                                     </div>
                                                 )}
@@ -263,8 +268,8 @@ export default function UserSettingsPage() {
                                             <td className="px-6 py-4 text-muted-foreground">
                                                 {user.Branch_ID || "-"}
                                             </td>
-                                            <td className="px-6 py-4 text-slate-300">
-                                                <span className="px-2 py-1 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 text-xs text-center inline-block min-w-[80px]">
+                                            <td className="px-6 py-4 text-gray-700">
+                                                <span className="px-2 py-1 rounded-full bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 text-xs text-center inline-block min-w-[80px]">
                                                     {user.Role || "No Role"}
                                                 </span>
                                             </td>
@@ -305,8 +310,8 @@ export default function UserSettingsPage() {
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                 <DialogContent className="bg-background border-border text-foreground max-w-2xl max-h-[90vh] overflow-hidden flex flex-col p-0 shadow-2xl">
                     <DialogHeader className="p-6 border-b border-border bg-card">
-                        <DialogTitle className="flex items-center gap-2">
-                            <Shield className="w-5 h-5 text-blue-500" />
+                        <DialogTitle className="flex items-center gap-2 text-slate-900 font-bold">
+                            <Shield className="w-5 h-5 text-emerald-600" />
                             {editingUser ? "แก้ไขผู้ใช้งาน" : "สร้างผู้ใช้งานใหม่"}
                         </DialogTitle>
                     </DialogHeader>
@@ -314,37 +319,37 @@ export default function UserSettingsPage() {
                     <div className="flex-1 overflow-y-auto p-6 space-y-6">
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <Label className="text-slate-400">Username *</Label>
+                                <Label className="text-gray-500">Username *</Label>
                                 <Input 
                                     value={formData.Username} 
                                     onChange={e => setFormData({...formData, Username: e.target.value})} 
                                     disabled={!!editingUser}
-                                    className="bg-slate-800 border-slate-700 disabled:opacity-50" 
+                                    className="bg-gray-100 border-gray-200 disabled:opacity-50" 
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label className="text-slate-400">Password {editingUser && "(เว้นว่างถ้าไม่เปลี่ยน)"}</Label>
+                                <Label className="text-gray-500">Password {editingUser && "(เว้นว่างถ้าไม่เปลี่ยน)"}</Label>
                                 <Input 
                                     type="password"
                                     value={formData.Password || ""} 
                                     onChange={e => setFormData({...formData, Password: e.target.value})} 
-                                    className="bg-slate-800 border-slate-700" 
+                                    className="bg-gray-100 border-gray-200" 
                                 />
                             </div>
                         </div>
 
                         <div className="space-y-2">
-                            <Label className="text-slate-400">ชื่อ - นามสกุล *</Label>
+                            <Label className="text-gray-500">ชื่อ - นามสกุล *</Label>
                             <Input 
                                 value={formData.Name} 
                                 onChange={e => setFormData({...formData, Name: e.target.value})} 
-                                className="bg-slate-800 border-slate-700" 
+                                className="bg-gray-100 border-gray-200" 
                             />
                         </div>
 
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <Label className="text-slate-400">สาขา (Branch) *</Label>
+                                <Label className="text-gray-500">สาขา (Branch) *</Label>
                                 {isAdmin ? (
                                     <Select 
                                         value={formData.Branch_ID || ""} 
@@ -366,12 +371,12 @@ export default function UserSettingsPage() {
                                         value={formData.Branch_ID || ""} 
                                         onChange={e => setFormData({...formData, Branch_ID: e.target.value})}
                                         placeholder="เช่น สำนักงานใหญ่, สาขา 1"
-                                        className="bg-slate-800 border-slate-700 text-white" 
+                                        className="bg-gray-100 border-gray-200 text-foreground" 
                                     />
                                 )}
                             </div>
                             <div className="space-y-2">
-                                <Label className="text-slate-400">บทบาท (Role) *</Label>
+                                <Label className="text-gray-500">บทบาท (Role) *</Label>
                                 <Select 
                                     value={formData.Role || ""} 
                                     onValueChange={handleRoleChange}
@@ -390,11 +395,11 @@ export default function UserSettingsPage() {
                             </div>
                         </div>
 
-                        <Separator className="bg-slate-800" />
+                        <Separator className="bg-gray-100" />
 
                         <div className="space-y-4">
                             <div className="flex justify-between items-center">
-                                <Label className="text-blue-500 font-bold uppercase text-xs">สิทธิ์การใช้งาน (Granular Permissions)</Label>
+                                <Label className="text-emerald-600 font-bold uppercase text-xs">สิทธิ์การใช้งาน (Granular Permissions)</Label>
                                 <span className="text-[10px] text-muted-foreground italic">* อ้างอิงตามบทบาท และสามารถปรับเปลี่ยนเฉพาะบุคคลได้</span>
                             </div>
                             
@@ -410,11 +415,11 @@ export default function UserSettingsPage() {
                                         <div className="grid gap-1.5 leading-none cursor-pointer" onClick={() => toggleGranularPermission(perm.id, !formData.Permissions?.[perm.id])}>
                                             <label
                                                 htmlFor={`perm-${perm.id}`}
-                                                className="text-sm font-medium leading-none text-slate-200 peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                                className="text-sm font-medium leading-none text-gray-800 peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                                             >
                                                 {perm.label}
                                             </label>
-                                            <p className="text-[10px] text-slate-500">
+                                            <p className="text-[10px] text-gray-400">
                                                 {perm.desc}
                                             </p>
                                         </div>
@@ -463,7 +468,7 @@ export default function UserSettingsPage() {
  
                     <DialogFooter className="p-6 border-t border-border bg-muted/20">
                         <Button variant="outline" onClick={() => setIsDialogOpen(false)} className="border-border">ยกเลิก</Button>
-                        <Button onClick={handleSave} disabled={saving} className="bg-blue-600 hover:bg-blue-700 min-w-[100px]">
+                        <Button onClick={handleSave} disabled={saving} className="bg-emerald-600 hover:bg-blue-700 min-w-[100px]">
                             {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                             บันทึกข้อมูล
                         </Button>

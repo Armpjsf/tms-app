@@ -3,9 +3,11 @@
 import { useState } from "react"
 import { Package } from "lucide-react"
 import { JobDialog } from "./job-dialog"
+import { cn } from "@/lib/utils"
+import { Job } from "@/types/database"
 
 type Props = {
-  job: any
+  job: Job
   drivers: any[]
   vehicles: any[]
   customers: any[]
@@ -21,29 +23,33 @@ export function RecentJobItem({ job, drivers, vehicles, customers, routes, canVi
     <>
       <div 
         onClick={() => setOpen(true)}
-        className="p-4 hover:bg-muted/50 transition-colors cursor-pointer group"
+        className="p-6 hover:bg-emerald-500/5 transition-all cursor-pointer group relative overflow-hidden"
       >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="w-10 h-10 rounded-lg bg-indigo-500/20 flex items-center justify-center group-hover:bg-indigo-500/30 transition-colors">
-              <Package className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+        <div className="flex items-center justify-between relative z-10">
+          <div className="flex items-center gap-6">
+            <div className="w-14 h-14 rounded-2xl bg-gray-50 flex items-center justify-center group-hover:bg-emerald-500 group-hover:text-white transition-all duration-500 shadow-inner group-hover:shadow-xl group-hover:shadow-emerald-500/20 group-hover:-rotate-3">
+              <Package size={24} />
             </div>
             <div>
-              <p className="text-foreground font-medium group-hover:text-primary transition-colors">{job.Job_ID}</p>
-              <p className="text-sm text-muted-foreground">{job.Customer_Name || "-"}</p>
+              <p className="text-gray-900 font-black text-xl tracking-tighter group-hover:text-emerald-600 transition-colors uppercase">{job.Job_ID}</p>
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">{job.Customer_Name || "No Customer Assigned"}</p>
             </div>
           </div>
-          <div className="text-right">
-            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-              job.Job_Status === 'Complete' || job.Job_Status === 'Delivered' 
-                ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400'
-                : job.Job_Status === 'In Transit' || job.Job_Status === 'Picked Up'
-                ? 'bg-blue-500/20 text-blue-600 dark:text-blue-400'
-                : 'bg-amber-500/20 text-amber-600 dark:text-amber-400'
-            }`}>
+          <div className="text-right flex flex-col items-end gap-2">
+            <span className={cn(
+                "px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border",
+                job.Job_Status === 'Complete' || job.Job_Status === 'Delivered' 
+                    ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'
+                    : job.Job_Status === 'In Transit' || job.Job_Status === 'Picked Up'
+                    ? 'bg-blue-500/10 text-blue-600 border-blue-500/20'
+                    : 'bg-amber-500/10 text-amber-600 border-amber-500/20'
+            )}>
               {job.Job_Status}
             </span>
-            <p className="text-xs text-muted-foreground mt-1">{new Date(job.Plan_Date).toLocaleDateString('th-TH')}</p>
+            <div className="flex items-center gap-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-gray-300" />
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{new Date(job.Plan_Date).toLocaleDateString('th-TH')}</p>
+            </div>
           </div>
         </div>
       </div>

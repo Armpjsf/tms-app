@@ -61,13 +61,13 @@ export default async function AdminVehicleChecksPage() {
                                             </TableCell>
                                             <TableCell>
                                                 <div className="flex items-center gap-2">
-                                                    <Truck size={16} className="text-slate-400" />
+                                                    <Truck size={16} className="text-gray-500" />
                                                     <span className="font-bold uppercase">{check.Vehicle_Plate}</span>
                                                 </div>
                                             </TableCell>
                                             <TableCell>
                                                 <div className="flex items-center gap-2">
-                                                    <User size={16} className="text-slate-400" />
+                                                    <User size={16} className="text-gray-500" />
                                                     <span>{check.Driver_Name || check.Driver_ID}</span>
                                                 </div>
                                             </TableCell>

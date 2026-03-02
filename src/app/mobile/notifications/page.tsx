@@ -13,7 +13,7 @@ export default async function MobileNotificationsPage() {
   const notifications = await getDriverNotifications(session.driverId)
 
   return (
-    <div className="min-h-screen bg-slate-950 pb-24 pt-16 px-4">
+    <div className="min-h-screen bg-background pb-24 pt-16 px-4">
       <MobileHeader title="การแจ้งเตือน" showBack />
       <NotificationsContent 
         notifications={notifications} 

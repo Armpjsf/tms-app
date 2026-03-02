@@ -101,11 +101,11 @@ export default function RolesPage() {
     return (
         <DashboardLayout>
             <div className="mb-8">
-                <h1 className="text-3xl font-bold text-white mb-2 flex items-center gap-3">
+                <h1 className="text-3xl font-bold text-gray-900 mb-2 flex items-center gap-3">
                     <Shield className="text-purple-400" />
                     บทบาทและสิทธิ์การใช้งาน (Roles & Permissions)
                 </h1>
-                <p className="text-slate-400">กำหนดสิทธิ์การเข้าถึงเมนูและการจัดการข้อมูลสำหรับแต่ละตำแหน่ง</p>
+                <p className="text-gray-500">กำหนดสิทธิ์การเข้าถึงเมนูและการจัดการข้อมูลสำหรับแต่ละตำแหน่ง</p>
             </div>
 
             {error && (
@@ -123,15 +123,15 @@ export default function RolesPage() {
 
             {loading ? (
                 <div className="flex justify-center py-12">
-                    <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
+                    <Loader2 className="w-8 h-8 text-emerald-600 animate-spin" />
                 </div>
             ) : (
                 <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
                     {roles.map((role, index) => (
-                        <Card key={role.Role} className={`border-slate-800 bg-slate-900/50 ${role.Role === 'Super Admin' ? 'border-purple-500/30 bg-purple-500/5' : ''}`}>
+                        <Card key={role.Role} className={`border-gray-200 bg-white/80 ${role.Role === 'Super Admin' ? 'border-purple-500/30 bg-purple-500/5' : ''}`}>
                             <CardHeader className="flex flex-row items-center justify-between pb-2">
                                 <div>
-                                    <CardTitle className={`text-xl ${role.Role === 'Super Admin' ? 'text-purple-400' : 'text-white'}`}>
+                                    <CardTitle className={`text-xl ${role.Role === 'Super Admin' ? 'text-purple-400' : 'text-gray-900'}`}>
                                         {role.Role}
                                     </CardTitle>
                                     <CardDescription>
@@ -143,7 +143,7 @@ export default function RolesPage() {
                                         size="sm" 
                                         onClick={() => handleSave(role)}
                                         disabled={saving}
-                                        className="bg-blue-600 hover:bg-blue-700"
+                                        className="bg-emerald-600 hover:bg-blue-700"
                                     >
                                         <Save className="w-4 h-4 mr-2" />
                                         Save
@@ -159,12 +159,12 @@ export default function RolesPage() {
                                 ) : (
                                     <div className="space-y-4">
                                         {SYSTEM_PERMISSIONS.map((perm) => (
-                                            <div key={perm.id} className="flex items-center justify-between p-3 rounded-lg hover:bg-slate-800/50 transition-colors border border-transparent hover:border-slate-800">
+                                            <div key={perm.id} className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors border border-transparent hover:border-gray-200">
                                                 <div className="space-y-0.5">
-                                                    <Label className="text-base text-slate-200 cursor-pointer">
+                                                    <Label className="text-base text-gray-800 cursor-pointer">
                                                         {perm.label}
                                                     </Label>
-                                                    <p className="text-xs text-slate-500">
+                                                    <p className="text-xs text-gray-400">
                                                         {perm.desc}
                                                     </p>
                                                 </div>

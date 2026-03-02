@@ -46,7 +46,7 @@ export function DriverActions({ driver, vehicles, subcontractors, branches = [] 
       <Button 
         variant="ghost" 
         size="icon" 
-        className="h-8 w-8 hover:bg-blue-500/20 text-blue-400"
+        className="h-8 w-8 hover:bg-emerald-500/15 text-emerald-500"
         onClick={() => setShowEdit(true)}
       >
         <Pencil size={16} />

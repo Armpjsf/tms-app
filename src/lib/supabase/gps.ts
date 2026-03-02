@@ -155,7 +155,7 @@ export async function getDriverRouteForDate(driverId: string, date: string) {
 
 // ... (previous code)
 
-export async function getFleetGPSStatus() {
+export async function getFleetGPSStatus(customerId?: string | null) {
   try {
     const supabase = await createClient()
 
@@ -165,9 +165,23 @@ export async function getFleetGPSStatus() {
 
     let driversQuery = supabase
       .from('Master_Drivers')
-      .select('Driver_ID, Driver_Name, Vehicle_Plate')
+      .select('Driver_ID, Driver_Name, Vehicle_Plate, Mobile_No')
     
-    if (branchId && branchId !== 'All') {
+    // If customer, we only want drivers assigned to THEIR active jobs
+    if (customerId) {
+        // Find Driver_IDs from Jobs_Main for this customer
+        const { data: activeJobs } = await supabase
+            .from('Jobs_Main')
+            .select('Driver_ID')
+            .eq('Customer_ID', customerId)
+            .not('Driver_ID', 'is', null)
+            .not('Job_Status', 'in', '("Delivered","Completed","Cancelled")')
+        
+        const activeDriverIds = Array.from(new Set(activeJobs?.map(j => j.Driver_ID) || []))
+        if (activeDriverIds.length === 0) return []
+        
+        driversQuery = driversQuery.in('Driver_ID', activeDriverIds)
+    } else if (branchId && branchId !== 'All') {
         driversQuery = driversQuery.eq('Branch_ID', branchId)
     } else if (!isAdmin && !branchId) {
         return []
@@ -196,6 +210,7 @@ export async function getFleetGPSStatus() {
             Driver_ID: driver.Driver_ID,
             Driver_Name: driver.Driver_Name || 'Unknown',
             Vehicle_Plate: driver.Vehicle_Plate || '-',
+            Mobile_No: driver.Mobile_No || '',
             Last_Update: log?.timestamp || log?.Timestamp || null, 
             Latitude: log?.latitude || log?.Latitude || null,
             Longitude: log?.longitude || log?.Longitude || null

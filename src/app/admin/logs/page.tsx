@@ -45,9 +45,9 @@ export default async function LogsPage({
       case 'EXPORT':
         return <Badge className="bg-indigo-100 text-indigo-700 hover:bg-indigo-100 border-indigo-200">ดึงรายงาน</Badge>
       case 'LOGIN':
-        return <Badge className="bg-slate-100 text-slate-700 hover:bg-slate-100 border-slate-200">เข้าสู่ระบบ</Badge>
+        return <Badge className="bg-slate-100 text-gray-400 hover:bg-slate-100 border-slate-200">เข้าสู่ระบบ</Badge>
       case 'LOGOUT':
-        return <Badge className="bg-slate-50 text-slate-500 hover:bg-slate-50 border-slate-100">ออกจากระบบ</Badge>
+        return <Badge className="bg-slate-50 text-gray-400 hover:bg-slate-50 border-slate-100">ออกจากระบบ</Badge>
       default:
         return <Badge variant="outline">{action}</Badge>
     }
@@ -127,7 +127,7 @@ export default async function LogsPage({
                           {log.branch_id || 'N/A'}
                         </Badge>
                       </TableCell>
-                      <TableCell className="font-medium text-blue-600">{getModuleLabel(log.module)}</TableCell>
+                      <TableCell className="font-medium text-emerald-600">{getModuleLabel(log.module)}</TableCell>
                       <TableCell>{getActionBadge(log.action_type)}</TableCell>
                       <TableCell className="max-w-[300px] truncate text-xs text-muted-foreground" title={JSON.stringify(log.details, null, 2)}>
                         {log.target_id && <span className="text-foreground font-semibold mr-1">[{log.target_id}]</span>}

@@ -12,9 +12,20 @@ import {
 import { updateJobStatus } from "@/app/mobile/jobs/actions"
 import { useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
+import { optimizeRoute } from "@/lib/ai/route-optimizer"
+import { updateJob } from "@/app/planning/actions"
+import { Sparkles } from "lucide-react"
+
+interface Job {
+    Job_ID: string
+    Job_Status: string
+    original_destinations_json: unknown[]
+    Notes: string | null
+    [key: string]: unknown
+}
 
 interface JobActionButtonProps {
-  job: any
+  job: Job
 }
 
 export function JobActionButton({ job }: JobActionButtonProps) {
@@ -28,7 +39,8 @@ export function JobActionButton({ job }: JobActionButtonProps) {
         if (!result.success) {
             alert(result.message)
         }
-    } catch (e) {
+    } catch (error) {
+        console.error(error)
         alert("เกิดข้อผิดพลาด")
     } finally {
         setLoading(false)
@@ -37,10 +49,67 @@ export function JobActionButton({ job }: JobActionButtonProps) {
 
   // POD Flow
   const handlePOD = () => {
-    // Navigate to camera/POD page (to be implemented or simple alert for now)
-    // Assuming we have a camera page or we just complete it directly for this demo
-    // The user mentioned "บันทึกส่งงาน (POD)" existing, so we simulate that
     router.push(`/mobile/jobs/${job.Job_ID}/complete`)
+  }
+
+  const handleOptimizeRoute = async () => {
+    setLoading(true)
+    try {
+        // 1. Get current position
+        const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject);
+        });
+
+        const origin = {
+            name: "Current Location",
+            lat: pos.coords.latitude,
+            lng: pos.coords.longitude
+        };
+
+        // 2. Prepare destinations
+        const dests = job.original_destinations_json || [];
+        if (!Array.isArray(dests) || dests.length < 2) {
+            alert("งานนี้มีจุดหมายเดียว ไม่จำเป็นต้องจัดลำดับใหม่ครับ");
+            return;
+        }
+
+        // Validate if all dests have lat/lng
+        const validDests = dests.map(d => ({
+            name: d.name,
+            lat: parseFloat(d.lat),
+            lng: parseFloat(d.lng)
+        })).filter(d => !isNaN(d.lat) && !isNaN(d.lng));
+
+        if (validDests.length < dests.length) {
+            alert("บางจุดหมายไม่มีพิกัด (Lat/Lon) กรุณาแจ้งผู้ควบคุมงานเพื่ออัปเดตข้อมูลพิกัดก่อนครับ");
+            return;
+        }
+
+        // 3. Call AI Optimizer
+        const result = await optimizeRoute(origin, validDests);
+
+        if (result.success) {
+            const reordered = result.optimizedOrder.map(idx => dests[idx]);
+            
+            // 4. Update Job in DB
+            const updateRes = await updateJob(job.Job_ID, {
+                original_destinations_json: JSON.stringify(reordered),
+                Notes: (job.Notes || "") + `\n[AI Optimized Route: ${new Date().toLocaleTimeString()}]`
+            });
+
+            if (updateRes.success) {
+                alert(`AI จัดเส้นทางให้ใหม่เรียบร้อย! ประหยัดเวลาไปได้ประมาณ ${result.estimatedDurationMinutes} นาที`);
+                router.refresh();
+            } else {
+                alert("ไม่สามารถบันทึกลำดับเส้นทางใหม่ได้");
+            }
+        }
+    } catch (e) {
+        console.error(e);
+        alert("ไม่สามารถเข้าถึงตำแหน่งปัจจุบันของคุณได้ กรุณาเปิด GPS");
+    } finally {
+        setLoading(false)
+    }
   }
 
   if (job.Job_Status === 'Completed') {
@@ -57,7 +126,7 @@ export function JobActionButton({ job }: JobActionButtonProps) {
         {(() => {
             let label = ""
             let icon = <CheckSquare />
-            let colorClass = "bg-blue-600 hover:bg-blue-700 shadow-blue-500/20"
+            let colorClass = "bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/20"
             let nextAction = ""
             let onClick = () => {}
 
@@ -80,7 +149,7 @@ export function JobActionButton({ job }: JobActionButtonProps) {
                 case 'Arrived Pickup':
                     label = "ถ่ายรูปรับสินค้า / ออกเดินทาง"
                     icon = <Camera />
-                    colorClass = "bg-indigo-600 hover:bg-indigo-700 shadow-indigo-500/20"
+                    colorClass = "bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/20"
                     nextAction = "กรุณาถ่ายรูปสินค้าและเซ็นชื่อ เพื่อยืนยันการรับของ"
                     onClick = () => router.push(`/mobile/jobs/${job.Job_ID}/pickup`)
                     break
@@ -88,7 +157,7 @@ export function JobActionButton({ job }: JobActionButtonProps) {
                 case 'In Transit':
                     label = "ถึงจุดส่งสินค้า"
                     icon = <MapPin />
-                    colorClass = "bg-purple-600 hover:bg-purple-700 shadow-purple-500/20"
+                    colorClass = "bg-teal-600 hover:bg-teal-700 shadow-teal-500/20"
                     nextAction = "เมื่อเดินทางถึงสถานที่ส่งสินค้าแล้ว ให้กดปุ่มเพื่อแจ้งระบบ"
                     onClick = () => handleStatusUpdate('Arrived Dropoff')
                     break
@@ -103,7 +172,7 @@ export function JobActionButton({ job }: JobActionButtonProps) {
 
                 default:
                     return (
-                        <Button disabled={true} className="w-full h-14 text-lg bg-slate-700 text-slate-400">
+                        <Button disabled={true} className="w-full h-14 text-lg bg-slate-700 text-gray-500">
                              ไม่ทราบสถานะ ({job.Job_Status})
                         </Button>
                     )
@@ -111,7 +180,20 @@ export function JobActionButton({ job }: JobActionButtonProps) {
 
             return (
                 <div className="space-y-3">
-                    <p className="text-[11px] text-slate-400 italic text-center px-4">
+                    {/* Route Optimization Option */}
+                    {(job.Job_Status === 'Accepted' || job.Job_Status === 'In Transit' || job.Job_Status === 'Arrived Pickup') && (
+                        <Button
+                            variant="outline"
+                            onClick={handleOptimizeRoute}
+                            disabled={loading}
+                            className="w-full h-14 rounded-2xl border-emerald-500/30 bg-emerald-50/50 text-emerald-700 font-black gap-2 hover:bg-emerald-100 transition-all border-dashed"
+                        >
+                            <Sparkles className="text-emerald-500 animate-pulse" size={18} />
+                            วิเคราะห์เส้นทางที่ดีที่สุดด้วย AI
+                        </Button>
+                    )}
+
+                    <p className="text-[11px] text-gray-500 italic text-center px-4">
                         {nextAction}
                     </p>
                     <Button 

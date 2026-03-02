@@ -17,7 +17,7 @@ function ServiceCard({ service }: { service: ScheduledService }) {
   const statusConfig = {
     overdue: { bg: 'bg-red-500/10', border: 'border-red-500/20', text: 'text-red-400', label: 'เกินกำหนด' },
     due_soon: { bg: 'bg-amber-500/10', border: 'border-amber-500/20', text: 'text-amber-400', label: 'ใกล้ถึงกำหนด' },
-    upcoming: { bg: 'bg-blue-500/10', border: 'border-blue-500/20', text: 'text-blue-400', label: 'กำลังจะถึง' },
+    upcoming: { bg: 'bg-blue-500/10', border: 'border-emerald-500/15', text: 'text-emerald-500', label: 'กำลังจะถึง' },
   }
   const config = statusConfig[service.status]
 
@@ -63,7 +63,7 @@ export function MaintenanceScheduleDashboard({ schedule }: { schedule: Maintenan
         <Card className="bg-card/50 border-border">
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-2">
-              <Wrench size={16} className="text-blue-400" />
+              <Wrench size={16} className="text-emerald-500" />
               <span className="text-xs text-muted-foreground">ซ่อมอยู่</span>
             </div>
             <p className="text-2xl font-bold text-foreground">{schedule.activeRepairs}</p>
@@ -142,8 +142,8 @@ export function MaintenanceScheduleDashboard({ schedule }: { schedule: Maintenan
             {schedule.upcoming.length > 0 && (
               <div>
                 <div className="flex items-center gap-2 mb-2">
-                  <Calendar size={12} className="text-blue-400" />
-                  <span className="text-xs font-medium text-blue-400">ภายใน 30 วัน ({schedule.upcoming.length})</span>
+                  <Calendar size={12} className="text-emerald-500" />
+                  <span className="text-xs font-medium text-emerald-500">ภายใน 30 วัน ({schedule.upcoming.length})</span>
                 </div>
                 <div className="space-y-2">
                   {schedule.upcoming.map((s, i) => <ServiceCard key={`u-${i}`} service={s} />)}

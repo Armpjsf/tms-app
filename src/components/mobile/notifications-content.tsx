@@ -21,7 +21,7 @@ export function NotificationsContent({ notifications: initialNotifications, driv
       case 'success': return <CheckCircle2 size={16} className="text-emerald-400" />
       case 'warning': return <AlertTriangle size={16} className="text-amber-400" />
       case 'error': return <XCircle size={16} className="text-red-400" />
-      default: return <Info size={16} className="text-blue-400" />
+      default: return <Info size={16} className="text-emerald-500" />
     }
   }
 
@@ -57,11 +57,11 @@ export function NotificationsContent({ notifications: initialNotifications, driv
       {/* Header with mark all read */}
       {unreadCount > 0 && (
         <div className="flex justify-between items-center">
-          <span className="text-sm text-slate-400">ยังไม่อ่าน {unreadCount} รายการ</span>
+          <span className="text-sm text-gray-500">ยังไม่อ่าน {unreadCount} รายการ</span>
           <Button 
             variant="ghost" 
             size="sm" 
-            className="text-blue-400 hover:text-blue-300 h-7 text-xs"
+            className="text-emerald-500 hover:text-blue-300 h-7 text-xs"
             onClick={handleMarkAllRead}
           >
             <CheckCheck size={14} className="mr-1" />
@@ -72,8 +72,8 @@ export function NotificationsContent({ notifications: initialNotifications, driv
 
       {notifications.length === 0 ? (
         <div className="text-center py-20">
-          <Bell className="mx-auto text-slate-700 mb-3" size={48} />
-          <p className="text-slate-500">ยังไม่มีการแจ้งเตือน</p>
+          <Bell className="mx-auto text-gray-400 mb-3" size={48} />
+          <p className="text-gray-400">ยังไม่มีการแจ้งเตือน</p>
         </div>
       ) : (
         notifications.map((notif) => (
@@ -86,22 +86,22 @@ export function NotificationsContent({ notifications: initialNotifications, driv
             }}
           >
             <Card 
-              className={`border-slate-800 ${
+              className={`border-gray-200 ${
                 notif.Is_Read 
-                  ? 'bg-slate-900/50' 
-                  : 'bg-slate-900 border-l-4 border-l-blue-500'
+                  ? 'bg-white/80' 
+                  : 'bg-white border-l-4 border-l-blue-500'
               }`}
             >
               <CardContent className="p-4 flex gap-3">
-                <div className="mt-1 bg-slate-800 p-2 rounded-full h-fit">
+                <div className="mt-1 bg-gray-100 p-2 rounded-full h-fit">
                   {getIcon(notif.Type)}
                 </div>
                 <div className="flex-1">
-                  <h4 className={`font-medium ${notif.Is_Read ? 'text-slate-300' : 'text-white'}`}>
+                  <h4 className={`font-medium ${notif.Is_Read ? 'text-gray-700' : 'text-white'}`}>
                     {notif.Title}
                   </h4>
-                  <p className="text-sm text-slate-400 mt-1">{notif.Message}</p>
-                  <p className="text-xs text-slate-500 mt-2">{formatTime(notif.Created_At)}</p>
+                  <p className="text-sm text-gray-500 mt-1">{notif.Message}</p>
+                  <p className="text-xs text-gray-400 mt-2">{formatTime(notif.Created_At)}</p>
                 </div>
                 {!notif.Is_Read && (
                   <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0" />

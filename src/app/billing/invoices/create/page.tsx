@@ -10,7 +10,7 @@ export default async function CreateInvoicePage() {
     <DashboardLayout>
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-white mb-2">ออกใบกำกับภาษี (Create Tax Invoice)</h1>
-        <p className="text-slate-400">เลือกลูกค้าและรายการงานเพื่อสร้างใบกำกับภาษี</p>
+        <p className="text-gray-500">เลือกลูกค้าและรายการงานเพื่อสร้างใบกำกับภาษี</p>
       </div>
       
       <InvoiceForm customers={customers} />

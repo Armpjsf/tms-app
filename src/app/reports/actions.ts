@@ -29,7 +29,7 @@ export async function getFilteredReportData(filters: ReportFilters): Promise<{ d
       case 'jobs': {
         let query = supabase
           .from('Jobs_Main')
-          .select('Job_ID, Plan_Date, Customer_Name, Origin_Location, Dest_Location, Driver_Name, Vehicle_Plate, Job_Status, Price_Cust_Total, extra_costs_json, Branch_ID')
+          .select('Job_ID, Plan_Date, Customer_Name, Origin_Location, Dest_Location, Driver_Name, Vehicle_Plate, Job_Status, Price_Cust_Total, Extra_Cost_Amount, Toll_Amount, Distance_Km, extra_costs_json, Branch_ID')
           .order('Plan_Date', { ascending: false })
           .limit(2000)
 
@@ -88,7 +88,7 @@ export async function getFilteredReportData(filters: ReportFilters): Promise<{ d
             'Job_ID', 'Plan_Date', 'Customer_Name', 
             'Origin_Location', 'Dest_Location', 
             'Driver_Name', 'Vehicle_Plate', 'Job_Status', 
-            'Price_Cust_Total',
+            'Price_Cust_Total', 'Extra_Cost_Amount', 'Toll_Amount', 'Distance_Km',
             ...sortedExtraTypes
           ]
         }
@@ -190,17 +190,17 @@ export async function getFilteredReportData(filters: ReportFilters): Promise<{ d
       case 'vehicle_expenses': {
         // 1. Get all vehicles in the branch
         let vQuery = supabase
-          .from('master_vehicles')
-          .select('vehicle_plate, vehicle_type, sub_id, branch_id')
+          .from('Master_Vehicles')
+          .select('Vehicle_Plate, Vehicle_Type, Sub_ID, Branch_ID')
         
         if (effectiveBranch && effectiveBranch !== 'All') {
-          vQuery = vQuery.eq('branch_id', effectiveBranch)
+          vQuery = vQuery.eq('Branch_ID', effectiveBranch)
         }
         const { data: vehicles } = await vQuery
 
         if (!vehicles || vehicles.length === 0) return { data: [], columns: [] }
 
-        const plates = vehicles.map(v => v.vehicle_plate)
+        const plates = vehicles.map(v => v.Vehicle_Plate)
 
         // 2. Aggregate Fuel Costs
         let fuelQuery = supabase
@@ -231,7 +231,7 @@ export async function getFilteredReportData(filters: ReportFilters): Promise<{ d
         const { data: rawJobs } = await jobQuery
 
         // 5. Get Subcontractor details for labeling
-        const subIds = [...new Set(vehicles.map(v => v.sub_id).filter(Boolean))]
+        const subIds = [...new Set(vehicles.map(v => v.Sub_ID).filter(Boolean))]
         const { data: subs } = await supabase
           .from('Master_Subcontractors')
           .select('Sub_ID, Sub_Name')
@@ -244,7 +244,7 @@ export async function getFilteredReportData(filters: ReportFilters): Promise<{ d
 
         // Aggregate by Plate
         const reportData = vehicles.map(v => {
-          const vPlate = v.vehicle_plate
+          const vPlate = v.Vehicle_Plate
           const fuelTotal = (fuelLogs || [])
             .filter(f => f.Vehicle_Plate === vPlate)
             .reduce((sum, f) => sum + (Number(f.Price_Total) || 0), 0)
@@ -270,8 +270,8 @@ export async function getFilteredReportData(filters: ReportFilters): Promise<{ d
 
           return {
             vehicle_plate: vPlate,
-            vehicle_type: v.vehicle_type,
-            owner: v.sub_id ? (subMap[v.sub_id] || 'รถร่วม') : 'รถบริษัท',
+            vehicle_type: v.Vehicle_Type,
+            owner: v.Sub_ID ? (subMap[v.Sub_ID] || 'รถร่วม') : 'รถบริษัท',
             fuel_cost: fuelTotal,
             maintenance_cost: maintTotal,
             extra_cost: extraCosts,

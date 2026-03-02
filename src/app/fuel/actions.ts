@@ -24,11 +24,16 @@ export async function createFuelLog(data: FuelFormData) {
     const supabase = createAdminClient()
     const branchId = await getUserBranchId()
 
-    const logId = crypto.randomUUID()
+    // Support for both crypto.randomUUID and a simple fallback if needed
+    let logId: string;
+    try {
+        logId = crypto.randomUUID();
+    } catch {
+        logId = `${Date.now()}-${Math.floor(Math.random() * 1000000)}`;
+        console.warn("[FuelActions] crypto.randomUUID failed, using fallback ID:", logId);
+    }
 
-    const { error } = await supabase
-      .from('Fuel_Logs')
-      .insert({
+    const insertData = {
         Log_ID: logId,
         Date_Time: data.Date_Time,
         Driver_ID: data.Driver_ID,
@@ -39,7 +44,13 @@ export async function createFuelLog(data: FuelFormData) {
         Station_Name: data.Station_Name,
         Photo_Url: data.Photo_Url || null,
         Branch_ID: branchId === 'All' ? null : branchId
-      })
+    };
+
+    console.log("[FuelActions] Attempting to insert fuel log:", JSON.stringify(insertData));
+
+    const { error } = await supabase
+      .from('Fuel_Logs')
+      .insert(insertData)
 
     if (error) {
       console.error('Error creating fuel log:', error, {

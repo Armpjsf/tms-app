@@ -141,7 +141,7 @@ export function FuelDialog({
   return (
     <Dialog open={show} onOpenChange={setShow}>
       {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
-      <DialogContent className="sm:max-w-[425px] bg-slate-900/95 border-white/10 text-white">
+      <DialogContent className="sm:max-w-[425px] bg-white/95 border-gray-200 text-white">
         <DialogHeader>
           <DialogTitle>{initialData ? 'แก้ไขข้อมูลการเติมน้ำมัน' : 'บันทึกการเติมน้ำมัน'}</DialogTitle>
         </DialogHeader>
@@ -196,7 +196,7 @@ export function FuelDialog({
               value={formData.Date_Time}
               onChange={(e) => setFormData({ ...formData, Date_Time: e.target.value })}
               required
-              className="bg-white/5 border-white/10"
+              className="bg-white/5 border-gray-200"
             />
           </div>
 
@@ -204,7 +204,7 @@ export function FuelDialog({
             <div className="space-y-2">
                 <Label htmlFor="Driver_ID">คนขับ</Label>
                 <Select value={formData.Driver_ID || undefined} onValueChange={(val) => setFormData({ ...formData, Driver_ID: val })}>
-                    <SelectTrigger className="w-full h-10 border-white/10 bg-white/5 text-white">
+                    <SelectTrigger className="w-full h-10 border-gray-200 bg-white/5 text-white">
                         <SelectValue placeholder="เลือกคนขับ" />
                     </SelectTrigger>
                     <SelectContent>
@@ -217,7 +217,7 @@ export function FuelDialog({
             <div className="space-y-2">
                 <Label htmlFor="Vehicle_Plate">ทะเบียนรถ</Label>
                 <Select value={formData.Vehicle_Plate || undefined} onValueChange={(val) => setFormData({ ...formData, Vehicle_Plate: val })}>
-                    <SelectTrigger className="w-full h-10 border-white/10 bg-white/5 text-white">
+                    <SelectTrigger className="w-full h-10 border-gray-200 bg-white/5 text-white">
                         <SelectValue placeholder="เลือกทะเบียน" />
                     </SelectTrigger>
                     <SelectContent>
@@ -237,7 +237,7 @@ export function FuelDialog({
                     value={formData.Station_Name}
                     onChange={(e) => setFormData({ ...formData, Station_Name: e.target.value })}
                     placeholder="เช่น ปตท. สาขา..."
-                    className="bg-white/5 border-white/10"
+                    className="bg-white/5 border-gray-200"
                 />
             </div>
             <div className="space-y-2">
@@ -249,7 +249,7 @@ export function FuelDialog({
                     onChange={(e) => setFormData({ ...formData, Mileage: e.target.value })}
                     placeholder="km"
                     required
-                    className="bg-white/5 border-white/10"
+                    className="bg-white/5 border-gray-200"
                  />
             </div>
           </div>
@@ -264,7 +264,7 @@ export function FuelDialog({
                 value={formData.Liter}
                 onChange={(e) => setFormData({ ...formData, Liter: e.target.value })}
                 required
-                className="bg-white/5 border-white/10"
+                className="bg-white/5 border-gray-200"
                 />
             </div>
             <div className="space-y-2">
@@ -276,7 +276,7 @@ export function FuelDialog({
                 value={formData.Price}
                 onChange={(e) => setFormData({ ...formData, Price: e.target.value })}
                 required
-                className="bg-white/5 border-white/10"
+                className="bg-white/5 border-gray-200"
                 />
             </div>
             <div className="space-y-2">
@@ -285,7 +285,7 @@ export function FuelDialog({
                 id="Total_Amount"
                 value={formData.Total_Amount.toFixed(2)}
                 readOnly
-                className="bg-white/5 border-white/10 text-emerald-400 font-bold"
+                className="bg-white/5 border-gray-200 text-emerald-400 font-bold"
                 />
             </div>
           </div>

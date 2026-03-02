@@ -67,7 +67,7 @@ export default function MobileSOSPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 pb-24 pt-16 px-4">
+    <div className="min-h-screen bg-background pb-24 pt-16 px-4">
       <MobileHeader title="ขอความช่วยเหลือ (SOS)" showBack />
 
       <div className="space-y-6 text-center">
@@ -80,7 +80,7 @@ export default function MobileSOSPage() {
 
         <div className="space-y-2">
             <h1 className="text-2xl font-bold text-white">ฉุกเฉิน / อุบัติเหตุ</h1>
-            <p className="text-slate-400">
+            <p className="text-gray-500">
                 กดปุ่มด้านล่างเพื่อโทรออกทันที
             </p>
         </div>
@@ -124,37 +124,37 @@ export default function MobileSOSPage() {
              <Button 
                 onClick={() => handleCall("1554")}
                 variant="outline"
-                className="h-16 text-slate-300 border-slate-700 hover:bg-slate-800"
+                className="h-16 text-gray-700 border-gray-200 hover:bg-gray-100"
             >
                 หน่วยกู้ภัย (1554)
             </Button>
         </div>
 
-        <Card className="bg-slate-900 border-slate-800 mt-8 text-left">
+        <Card className="bg-white border-gray-200 mt-8 text-left">
             <CardContent className="p-4">
                 <div className="flex justify-between items-start mb-2">
-                    <h3 className="text-slate-200 font-medium flex items-center gap-2">
+                    <h3 className="text-gray-800 font-medium flex items-center gap-2">
                         <div className={`w-2 h-2 rounded-full ${loading ? "bg-yellow-500" : "bg-emerald-500"} animate-pulse`} />
                         พิกัดปัจจุบันของคุณ
                     </h3>
                     {location && (
-                        <Button variant="ghost" size="sm" onClick={openMap} className="h-6 text-indigo-400 p-0 hover:text-indigo-300">
+                        <Button variant="ghost" size="sm" onClick={openMap} className="h-6 text-emerald-600 p-0 hover:text-emerald-500">
                             <ExternalLink size={14} className="mr-1" /> เปิดแผนที่
                         </Button>
                     )}
                 </div>
                 
-                <p className="text-slate-400 text-sm break-words">
+                <p className="text-gray-500 text-sm break-words">
                     {loading ? "กำลังระบุตำแหน่ง..." : address}
                 </p>
                 
                 {location && (
-                     <p className="text-xs text-slate-500 mt-1 font-mono">
+                     <p className="text-xs text-gray-400 mt-1 font-mono">
                         {location.lat.toFixed(6)}, {location.lng.toFixed(6)}
                     </p>
                 )}
 
-                <p className="text-[10px] text-slate-600 mt-2">
+                <p className="text-[10px] text-gray-500 mt-2">
                     *พิกัดจะถูกส่งให้แอดมินอัตโนมัติเมื่อกดโทรออก
                 </p>
             </CardContent>

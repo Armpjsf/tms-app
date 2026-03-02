@@ -37,6 +37,7 @@ const settingsSections = [
         { label: "ข้อมูลบริษัท", desc: "โลโก้, ที่อยู่, เลขผู้เสียภาษี", path: "/settings/company" },
         { label: "บทบาทและสิทธิ์", desc: "กำหนดสิทธิ์การใช้งาน", path: "/settings/roles" },
         { label: "จัดการผู้ใช้งาน", desc: "เพิ่ม/ลบ พนักงาน", path: "/settings/users" },
+        { label: "จัดการสาขาและอีเมล", desc: "ตั้งค่าอีเมลผู้ส่งแยกตามสาขา", path: "/settings/branches" },
         { label: "จัดการบริษัทรถร่วม", desc: "จัดการนิติบุคคลและบัญชีธนาคารส่วนกลาง", path: "/settings/subcontractors" },
         { label: "จัดการประเภทรถ", desc: "กำหนดประเภทรถ (4 ล้อ, 6 ล้อ, ฯลฯ)", path: "/settings/vehicle-types" },
     ]

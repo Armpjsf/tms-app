@@ -9,8 +9,8 @@ import { Button } from "@/components/ui/button"
 const LeafletMap = dynamic(() => import('@/components/maps/leaflet-map'), {
   ssr: false,
   loading: () => (
-    <div className="h-64 bg-slate-800 rounded-lg flex items-center justify-center">
-      <div className="text-slate-400 animate-pulse">Loading Map...</div>
+    <div className="h-64 bg-gray-100 rounded-lg flex items-center justify-center">
+      <div className="text-gray-500 animate-pulse">Loading Map...</div>
     </div>
   )
 })
@@ -63,13 +63,13 @@ export default function MobileMapPage() {
       <h1 className="text-xl font-bold text-white">Navigation</h1>
       
       {/* Map */}
-      <Card className="bg-slate-900 border-slate-800 overflow-hidden">
+      <Card className="bg-white border-gray-200 overflow-hidden">
         {isLoading ? (
-          <div className="h-64 flex items-center justify-center bg-slate-800">
-            <p className="text-slate-400 animate-pulse">Getting your location...</p>
+          <div className="h-64 flex items-center justify-center bg-gray-100">
+            <p className="text-gray-500 animate-pulse">Getting your location...</p>
           </div>
         ) : locationError ? (
-          <div className="h-64 flex items-center justify-center bg-slate-800">
+          <div className="h-64 flex items-center justify-center bg-gray-100">
             <p className="text-red-400">Error: {locationError}</p>
           </div>
         ) : currentPosition ? (
@@ -83,23 +83,23 @@ export default function MobileMapPage() {
       </Card>
 
       {/* Current Location Card */}
-      <Card className="bg-slate-900 border-slate-800">
+      <Card className="bg-white border-gray-200">
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm text-slate-400 flex items-center gap-2">
-            <MapPin className="w-4 h-4 text-blue-400" />
+          <CardTitle className="text-sm text-gray-500 flex items-center gap-2">
+            <MapPin className="w-4 h-4 text-emerald-500" />
             Current Location
           </CardTitle>
         </CardHeader>
         <CardContent>
           {currentPosition ? (
             <>
-              <p className="text-white font-medium">ตำแหน่งปัจจุบัน</p>
-              <p className="text-xs text-slate-500 mt-1">
+              <p className="text-gray-800 font-medium">ตำแหน่งปัจจุบัน</p>
+              <p className="text-xs text-gray-400 mt-1">
                 Lat: {currentPosition[0].toFixed(6)}, Lng: {currentPosition[1].toFixed(6)}
               </p>
             </>
           ) : (
-            <p className="text-slate-500">กำลังระบุตำแหน่ง...</p>
+            <p className="text-gray-400">กำลังระบุตำแหน่ง...</p>
           )}
         </CardContent>
       </Card>
@@ -107,7 +107,7 @@ export default function MobileMapPage() {
       {/* Actions */}
       <div className="space-y-2">
         <Button 
-          className="w-full bg-blue-600 hover:bg-blue-700"
+          className="w-full bg-emerald-600 hover:bg-blue-700"
           onClick={openGoogleMaps}
           disabled={!currentPosition}
         >
@@ -117,16 +117,16 @@ export default function MobileMapPage() {
       </div>
 
       {/* Next Destination */}
-      <Card className="bg-slate-900 border-slate-800">
+      <Card className="bg-white border-gray-200">
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm text-slate-400 flex items-center gap-2">
+          <CardTitle className="text-sm text-gray-500 flex items-center gap-2">
             <Navigation className="w-4 h-4 text-emerald-400" />
             Next Destination
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-white font-medium">ไม่มีงานวันนี้</p>
-          <p className="text-xs text-slate-500 mt-1">รอรับงานจากระบบ</p>
+          <p className="text-gray-800 font-medium">ไม่มีงานวันนี้</p>
+          <p className="text-xs text-gray-400 mt-1">รอรับงานจากระบบ</p>
         </CardContent>
       </Card>
     </div>

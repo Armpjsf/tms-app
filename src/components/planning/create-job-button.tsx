@@ -1,6 +1,6 @@
 "use client"
 
-import { Button } from "@/components/ui/button"
+import { PremiumButton } from "@/components/ui/premium-button"
 import { JobDialog } from "@/components/planning/job-dialog"
 import { Plus } from "lucide-react"
 import { useState } from "react"
@@ -17,14 +17,13 @@ export function CreateJobButton({ drivers, vehicles, customers, routes }: Props)
 
   return (
     <>
-      <Button 
-        size="lg" 
-        className="gap-2 bg-indigo-600 hover:bg-indigo-700 text-white"
+      <PremiumButton 
+        className="h-14 px-8 rounded-2xl"
         onClick={() => setOpen(true)}
       >
-        <Plus size={20} />
+        <Plus size={24} className="mr-2" />
         สร้างงานใหม่
-      </Button>
+      </PremiumButton>
 
       <JobDialog
         mode="create"

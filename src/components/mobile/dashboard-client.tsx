@@ -55,19 +55,19 @@ export function DashboardClient({ session, stats, currentJob, gamification, toda
     const getRankIcon = (rank: string) => {
         const iconClass = "w-8 h-8 filter drop-shadow-lg"
         switch(rank) {
-            case 'Platinum': return <Crown className={`${iconClass} text-purple-400`} />
+            case 'Platinum': return <Crown className={`${iconClass} text-emerald-300`} />
             case 'Gold': return <Trophy className={`${iconClass} text-yellow-500`} />
-            case 'Silver': return <Medal className={`${iconClass} text-slate-300`} />
-            default: return <Medal className={`${iconClass} text-orange-700`} />
+            case 'Silver': return <Medal className={`${iconClass} text-gray-700`} />
+            default: return <Medal className={`${iconClass} text-emerald-800`} />
         }
     }
 
     const getRankColor = (rank: string) => {
         switch(rank) {
-            case 'Platinum': return 'from-purple-600/40 via-indigo-600/20 to-transparent border-purple-500/40 shadow-purple-500/10'
+            case 'Platinum': return 'from-emerald-600/40 via-teal-600/20 to-transparent border-emerald-500/40 shadow-emerald-500/10'
             case 'Gold': return 'from-yellow-600/40 via-orange-600/20 to-transparent border-yellow-500/40 shadow-yellow-500/10'
             case 'Silver': return 'from-slate-500/40 via-slate-700/20 to-transparent border-slate-400/40 shadow-slate-400/10'
-            default: return 'from-orange-700/40 via-orange-900/20 to-transparent border-orange-700/40 shadow-orange-700/10'
+            default: return 'from-emerald-700/40 via-emerald-900/20 to-transparent border-emerald-700/40 shadow-emerald-700/10'
         }
     }
 
@@ -124,7 +124,7 @@ export function DashboardClient({ session, stats, currentJob, gamification, toda
                                 <motion.div 
                                     animate={{ rotate: [0, 10, -10, 0] }}
                                     transition={{ repeat: Infinity, duration: 4 }}
-                                    className="p-3 bg-white/10 rounded-2xl shadow-inner border border-white/10"
+                                    className="p-3 bg-white/10 rounded-2xl shadow-inner border border-gray-200"
                                 >
                                     {getRankIcon(gamification.rank)}
                                 </motion.div>
@@ -136,7 +136,7 @@ export function DashboardClient({ session, stats, currentJob, gamification, toda
                                     <div className="text-xl font-black text-white">{gamification.rank} Elite</div>
                                 </div>
                             </div>
-                            <div className="text-right bg-black/20 px-3 py-2 rounded-xl border border-white/5">
+                            <div className="text-right bg-black/20 px-3 py-2 rounded-xl border border-gray-200">
                                 <div className="text-xl font-black text-white">{gamification.points}</div>
                                 <div className="text-[8px] text-white/40 font-bold uppercase tracking-widest">Points</div>
                             </div>
@@ -148,17 +148,17 @@ export function DashboardClient({ session, stats, currentJob, gamification, toda
                                 {gamification.nextRankPoints > 0 ? (
                                     <span>เป้าหมาย {gamification.nextRankPoints} คะแนน</span>
                                 ) : (
-                                    <span className="text-purple-300">Level Max!</span>
+                                    <span className="text-emerald-300">Level Max!</span>
                                 )}
                             </div>
-                            <div className="relative h-2.5 w-full bg-black/20 rounded-full overflow-hidden border border-white/5">
+                            <div className="relative h-2.5 w-full bg-black/20 rounded-full overflow-hidden border border-gray-200">
                                 <motion.div 
                                     initial={{ width: 0 }}
                                     animate={{ width: `${progressPercent}%` }}
                                     transition={{ duration: 1.5, ease: "easeOut" }}
                                     className={`h-full rounded-full shadow-[0_0_15px_rgba(255,255,255,0.3)] ${
                                         gamification.rank === 'Gold' ? 'bg-gradient-to-r from-yellow-400 to-orange-500' : 
-                                        gamification.rank === 'Platinum' ? 'bg-gradient-to-r from-purple-400 to-indigo-500' : 
+                                        gamification.rank === 'Platinum' ? 'bg-gradient-to-r from-emerald-400 to-teal-500' : 
                                         'bg-gradient-to-r from-emerald-400 to-blue-500'
                                     }`}
                                 />
@@ -178,7 +178,7 @@ export function DashboardClient({ session, stats, currentJob, gamification, toda
 
             {/* Quick Action Bento Grid */}
             <motion.div variants={item} className="grid grid-cols-2 gap-4">
-                <Card className="bg-slate-900 border-slate-800 overflow-hidden relative group active:scale-95 transition-all">
+                <Card className="bg-white border-gray-200 overflow-hidden relative group active:scale-95 transition-all">
                     <div className="absolute inset-0 bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity" />
                     <CardContent className="p-5 flex flex-col gap-1">
                         <div className="p-2.5 bg-primary/20 rounded-xl w-fit mb-2">
@@ -189,7 +189,7 @@ export function DashboardClient({ session, stats, currentJob, gamification, toda
                     </CardContent>
                 </Card>
                 
-                <Card className="bg-slate-900 border-slate-800 overflow-hidden relative group active:scale-95 transition-all">
+                <Card className="bg-white border-gray-200 overflow-hidden relative group active:scale-95 transition-all">
                     <div className="absolute inset-0 bg-emerald-500/10 opacity-0 group-hover:opacity-100 transition-opacity" />
                     <CardContent className="p-5 flex flex-col gap-1">
                         <div className="p-2.5 bg-emerald-500/20 rounded-xl w-fit mb-2">
@@ -211,7 +211,7 @@ export function DashboardClient({ session, stats, currentJob, gamification, toda
                     {currentJob && (
                         <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-md border ${
                             ['In Progress', 'In Transit'].includes(currentJob.Job_Status) 
-                                ? 'text-blue-400 bg-blue-500/10 border-blue-500/20' 
+                                ? 'text-emerald-500 bg-blue-500/10 border-emerald-500/15' 
                                 : 'text-amber-400 bg-amber-500/10 border-amber-500/20'
                         }`}>
                             {currentJob.Job_Status}
@@ -221,7 +221,7 @@ export function DashboardClient({ session, stats, currentJob, gamification, toda
                 
                 {currentJob ? (
                     <Link href={`/mobile/jobs/${currentJob.Job_ID}`}>
-                        <Card className="bg-slate-900 border-slate-800 active:scale-95 transition-all overflow-hidden relative shadow-2xl">
+                        <Card className="bg-white border-gray-200 active:scale-95 transition-all overflow-hidden relative shadow-2xl">
                             <div className="absolute top-0 right-0 p-3 opacity-5 pointer-events-none">
                                 <Truck size={80} />
                             </div>
@@ -229,30 +229,30 @@ export function DashboardClient({ session, stats, currentJob, gamification, toda
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-3">
                                         <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center flex-shrink-0 shadow-lg shadow-orange-500/20">
-                                            <Truck className="text-white" size={20} />
+                                            <Truck className="text-foreground" size={20} />
                                         </div>
                                         <div>
                                             <h4 className="text-foreground font-black text-sm">{currentJob.Job_ID}</h4>
                                             <p className="text-muted-foreground text-xs font-bold uppercase tracking-tight">{currentJob.Customer_Name}</p>
                                         </div>
                                     </div>
-                                    <ChevronRight className="text-slate-600" size={18} />
+                                    <ChevronRight className="text-gray-500" size={18} />
                                 </div>
                                 
                                 <div className="space-y-4 pt-2">
                                     <div className="flex items-center gap-3">
                                         <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
                                         <div className="flex-1 min-w-0">
-                                            <p className="text-slate-500 text-[9px] font-black uppercase mb-0.5">Pickup Origin</p>
-                                            <p className="text-slate-200 text-xs font-medium truncate">{currentJob.Origin_Location || 'ไม่ระบุ'}</p>
+                                            <p className="text-gray-400 text-[9px] font-black uppercase mb-0.5">Pickup Origin</p>
+                                            <p className="text-gray-800 text-xs font-medium truncate">{currentJob.Origin_Location || 'ไม่ระบุ'}</p>
                                         </div>
                                     </div>
                                     
                                     <div className="flex items-center gap-3">
                                         <div className="w-2.5 h-2.5 rounded-full border-2 border-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.5)]" />
                                         <div className="flex-1 min-w-0">
-                                            <p className="text-slate-500 text-[9px] font-black uppercase mb-0.5">Delivery Point</p>
-                                            <p className="text-slate-200 text-xs font-medium truncate">{currentJob.Dest_Location || currentJob.Route_Name || 'ไม่ระบุ'}</p>
+                                            <p className="text-gray-400 text-[9px] font-black uppercase mb-0.5">Delivery Point</p>
+                                            <p className="text-gray-800 text-xs font-medium truncate">{currentJob.Dest_Location || currentJob.Route_Name || 'ไม่ระบุ'}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -268,12 +268,12 @@ export function DashboardClient({ session, stats, currentJob, gamification, toda
                         </Card>
                     </Link>
                 ) : (
-                    <Card className="bg-slate-900/30 border-slate-800 border-dashed py-10">
+                    <Card className="bg-white/60 border-gray-200 border-dashed py-10">
                         <CardContent className="text-center">
-                            <div className="bg-slate-800/50 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3">
-                               <Clock className="text-slate-600" size={20} />
+                            <div className="bg-gray-50 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3">
+                               <Clock className="text-gray-500" size={20} />
                             </div>
-                            <p className="text-slate-500 text-sm font-medium">ไม่มีงานที่ดำเนินอยู่ในขณะนี้</p>
+                            <p className="text-gray-400 text-sm font-medium">ไม่มีงานที่ดำเนินอยู่ในขณะนี้</p>
                             <Link href="/mobile/jobs" className="text-primary text-xs font-black mt-2 inline-block uppercase tracking-widest">
                                 ค้นหางานใหม่
                             </Link>
@@ -285,7 +285,7 @@ export function DashboardClient({ session, stats, currentJob, gamification, toda
             {/* Bottom Actions Cards */}
             <motion.div variants={item} className="grid grid-cols-2 gap-4">
                 <Link href="/mobile/jobs">
-                    <Card className="bg-slate-900 border-slate-800 active:scale-95 transition-all overflow-hidden group">
+                    <Card className="bg-white border-gray-200 active:scale-95 transition-all overflow-hidden group">
                         <CardContent className="p-4 flex flex-col items-center text-center gap-2">
                              <div className="transition-transform group-hover:scale-110 duration-300">
                                 <FileText className="w-6 h-6 text-primary" />
@@ -295,10 +295,10 @@ export function DashboardClient({ session, stats, currentJob, gamification, toda
                     </Card>
                 </Link>
                 <Link href="/mobile/map">
-                    <Card className="bg-slate-900 border-slate-800 active:scale-95 transition-all overflow-hidden group">
+                    <Card className="bg-white border-gray-200 active:scale-95 transition-all overflow-hidden group">
                         <CardContent className="p-4 flex flex-col items-center text-center gap-2">
                              <div className="transition-transform group-hover:scale-110 duration-300">
-                                <MapPin className="w-6 h-6 text-indigo-500" />
+                                <MapPin className="w-6 h-6 text-emerald-500" />
                              </div>
                              <span className="text-xs font-bold text-foreground">แผนที่งาน</span>
                         </CardContent>
@@ -310,8 +310,8 @@ export function DashboardClient({ session, stats, currentJob, gamification, toda
                         whileTap={{ scale: 0.98 }}
                         className="relative group"
                     >
-                        <div className="absolute -inset-0.5 bg-gradient-to-r from-primary to-indigo-600 rounded-2xl blur opacity-30 group-hover:opacity-50 transition duration-1000 group-hover:duration-200" />
-                        <Button className="relative w-full h-20 bg-slate-950 border border-slate-800 hover:bg-slate-900 text-white rounded-2xl flex items-center justify-between px-6 shadow-2xl">
+                        <div className="absolute -inset-0.5 bg-gradient-to-r from-emerald-500 to-teal-600 rounded-2xl blur opacity-30 group-hover:opacity-50 transition duration-1000 group-hover:duration-200" />
+                        <Button className="relative w-full h-20 bg-background border border-gray-200 hover:bg-white text-white rounded-2xl flex items-center justify-between px-6 shadow-2xl">
                             <div className="flex items-center gap-4">
                                 <div className="p-3 bg-primary/20 rounded-xl">
                                     <Truck className="text-primary" size={24} />
@@ -321,7 +321,7 @@ export function DashboardClient({ session, stats, currentJob, gamification, toda
                                     <div className="text-[10px] text-muted-foreground font-bold">ตรวจสอบสภาพรถประจำวัน</div>
                                 </div>
                             </div>
-                            <ChevronRight className="text-slate-700" size={20} />
+                            <ChevronRight className="text-gray-400" size={20} />
                         </Button>
                     </motion.div>
                 </Link>

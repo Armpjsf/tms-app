@@ -41,29 +41,63 @@ export default function MobileChatPage() {
   useEffect(() => {
     if (!driverId) return
 
-    const channel = supabase
-        .channel('chat_room')
-        .on(
-            'postgres_changes',
-            {
-                event: 'INSERT',
-                schema: 'public',
-                table: 'Chat_Messages',
-                filter: `receiver_id=eq.${driverId}`
-            },
-            (payload) => {
-                const newMsg = payload.new as ChatMessage
-                setMessages(prev => {
-                    // Avoid duplicates
-                    if (prev.find(m => m.id === newMsg.id)) return prev
-                    return [...prev, newMsg]
-                })
+    const setupSync = async () => {
+        // Detect correct table name & columns
+        let tableName = 'Chat_Messages'
+        let receiverCol = 'receiver_id'
+        let idCol = 'id'
+        
+        const { data: probeData, error: checkError } = await supabase.from('Chat_Messages').select('*').limit(1)
+        if (checkError && (checkError.code === '42P01' || checkError.message?.includes('not found'))) {
+            tableName = 'chat_messages'
+            const { data: lowerProbe } = await supabase.from('chat_messages').select('*').limit(1)
+            if (lowerProbe && lowerProbe.length > 0 && 'Receiver_ID' in lowerProbe[0]) {
+                receiverCol = 'Receiver_ID'
+                idCol = 'Id' // Or ID? Usually Id or ID. Let's stick to what we find.
             }
-        )
-        .subscribe()
+        } else if (probeData && probeData.length > 0) {
+            if ('Receiver_ID' in probeData[0]) receiverCol = 'Receiver_ID'
+            if ('Id' in probeData[0]) idCol = 'Id'
+            else if ('ID' in probeData[0]) idCol = 'ID'
+        }
+
+        const channel = supabase
+            .channel('chat_room')
+            .on(
+                'postgres_changes',
+                {
+                    event: 'INSERT',
+                    schema: 'public',
+                    table: tableName,
+                    filter: `${receiverCol}=eq.${driverId}`
+                },
+                (payload) => {
+                    const rawMsg = payload.new as any
+                    const newMsg: ChatMessage = {
+                        id: rawMsg[idCol] || rawMsg.id || rawMsg.Id || rawMsg.ID,
+                        sender_id: rawMsg.sender_id || rawMsg.Sender_ID,
+                        receiver_id: rawMsg.receiver_id || rawMsg.Receiver_ID,
+                        message: rawMsg.message || rawMsg.Message,
+                        created_at: rawMsg.created_at || rawMsg.Created_At,
+                        is_read: rawMsg.is_read || rawMsg.Is_Read || false
+                    }
+                    setMessages(prev => {
+                        if (prev.find(m => m.id === newMsg.id)) return prev
+                        return [...prev, newMsg]
+                    })
+                }
+            )
+            .subscribe()
+        
+        return channel
+    }
+
+    const channelPromise = setupSync()
 
     return () => {
-        supabase.removeChannel(channel)
+        channelPromise.then(channel => {
+            if (channel) supabase.removeChannel(channel)
+        })
     }
   }, [driverId, supabase])
 
@@ -105,16 +139,16 @@ export default function MobileChatPage() {
   }
 
   return (
-    <div className="flex flex-col h-[calc(100dvh-64px)] bg-slate-950 overflow-hidden">
+    <div className="flex flex-col h-[calc(100dvh-64px)] bg-background overflow-hidden">
       <MobileHeader title="แชทกับเจ้าหน้าที่" showBack />
 
       <div className="flex-1 overflow-y-auto p-4 space-y-4 pt-16" ref={scrollRef}>
         {loading ? (
             <div className="flex justify-center pt-10">
-                <Loader2 className="animate-spin text-slate-500" />
+                <Loader2 className="animate-spin text-gray-400" />
             </div>
         ) : messages.length === 0 ? (
-            <div className="flex-1 flex flex-col items-center justify-center text-slate-500 opacity-50 mt-10">
+            <div className="flex-1 flex flex-col items-center justify-center text-gray-400 opacity-50 mt-10">
                 <MessageSquare size={48} className="mb-2" />
                 <p>ยังไม่มีข้อความ</p>
                 <p className="text-xs">พิมพ์ข้อความเพื่อเริ่มการสนทนา</p>
@@ -129,16 +163,16 @@ export default function MobileChatPage() {
                             className={`flex gap-3 ${isMe ? "flex-row-reverse" : "flex-row"}`}
                         >
                             <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${isMe ? "bg-indigo-600" : "bg-slate-700"}`}>
-                                {isMe ? <User size={16} className="text-white" /> : <Bot size={16} className="text-blue-400" />}
+                                {isMe ? <User size={16} className="text-foreground" /> : <Bot size={16} className="text-emerald-500" />}
                             </div>
                             
                             <div className={`max-w-[75%] p-3 rounded-2xl text-sm ${
                                 isMe 
                                     ? "bg-indigo-600 text-white rounded-tr-none" 
-                                    : "bg-slate-800 text-slate-200 rounded-tl-none border border-slate-700"
+                                    : "bg-gray-100 text-gray-800 rounded-tl-none border border-gray-200"
                             }`}>
                                 <p className="break-words">{msg.message}</p>
-                                <p className={`text-[10px] mt-1 text-right ${isMe ? "text-indigo-200" : "text-slate-500"}`}>
+                                <p className={`text-[10px] mt-1 text-right ${isMe ? "text-indigo-200" : "text-gray-400"}`}>
                                     {new Date(msg.created_at).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })}
                                 </p>
                             </div>
@@ -149,7 +183,7 @@ export default function MobileChatPage() {
         )}
       </div>
 
-      <div className="p-3 bg-slate-900/90 backdrop-blur-md border-t border-white/5 pb-safe">
+      <div className="p-3 bg-white/90 backdrop-blur-md border-t border-gray-200 pb-safe">
         <div className="flex gap-2">
             <Input 
                 value={inputText}
@@ -161,7 +195,7 @@ export default function MobileChatPage() {
                     }
                 }}
                 placeholder="พิมพ์ข้อความ..."
-                className="bg-slate-950/50 border-white/10 text-white focus-visible:ring-indigo-500 h-11"
+                className="bg-white/80 border-gray-200 text-foreground focus-visible:ring-indigo-500 h-11"
                 disabled={sending}
             />
             <Button 

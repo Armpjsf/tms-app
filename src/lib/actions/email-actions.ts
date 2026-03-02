@@ -12,21 +12,50 @@ interface EmailAttachment {
 }
 
 interface SendBillingEmailProps {
+    from?: string;
     to: string;
     subject: string;
     html: string;
     attachments?: EmailAttachment[];
 }
 
-export async function sendBillingEmail({ to, subject, html, attachments }: SendBillingEmailProps) {
+export async function sendBillingEmail({ from, to, subject, html, attachments }: SendBillingEmailProps) {
     if (!process.env.RESEND_API_KEY) {
         console.error("RESEND_API_KEY is missing in environment variables");
         return { success: false, error: "RESEND_API_KEY is not configured" };
     }
 
     try {
+        let senderEmail = from || 'Billing <billing@resend.dev>';
+
+        // If 'from' is not provided, try to fetch from branch settings
+        if (!from) {
+            try {
+                const { createClient } = await import('@/utils/supabase/server');
+                const { getUserBranchId } = await import('@/lib/permissions');
+                const supabase = await createClient();
+                const branchId = await getUserBranchId();
+
+                if (branchId) {
+                    const { data: branch } = await supabase
+                        .from('Master_Branches')
+                        .select('Email, Sender_Name')
+                        .eq('Branch_ID', branchId)
+                        .single();
+
+                    if (branch?.Email) {
+                        senderEmail = branch.Sender_Name 
+                            ? `${branch.Sender_Name} <${branch.Email}>`
+                            : branch.Email;
+                    }
+                }
+            } catch (err) {
+                console.error("Failed to fetch branch email settings:", err);
+            }
+        }
+
         const { data, error } = await resend.emails.send({
-            from: 'Billing <billing@resend.dev>', // Change this to your verify domain if available
+            from: senderEmail, 
             to: [to],
             // cc: 'billing@mycompany.com', // Optional: Auto CC yourself
             subject: subject,

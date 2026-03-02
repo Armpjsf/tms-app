@@ -24,7 +24,7 @@ export function FuelAnalyticsDashboard({ analytics }: { analytics: FuelAnalytics
         <Card className="bg-card/50 border-border">
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-2">
-              <Droplets size={16} className="text-blue-400" />
+              <Droplets size={16} className="text-emerald-500" />
               <span className="text-xs text-muted-foreground">ลิตรรวม</span>
             </div>
             <p className="text-2xl font-bold text-foreground">{analytics.totalLiters.toLocaleString()}</p>

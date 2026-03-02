@@ -111,12 +111,12 @@ export default function CompanySettingsPage() {
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-2xl font-bold text-foreground flex items-center gap-3">
-            <Building className="text-blue-500" />
+            <Building className="text-emerald-600" />
             ข้อมูลบริษัท
           </h1>
           <p className="text-sm text-muted-foreground mt-1">ตั้งค่าข้อมูลบริษัทสำหรับใช้ในเอกสาร</p>
         </div>
-        <Button onClick={handleSave} disabled={loading} className="bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-md">
+        <Button onClick={handleSave} disabled={loading} className="bg-emerald-600 hover:bg-blue-700 text-white font-bold shadow-md">
           {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
           บันทึก
         </Button>
@@ -138,7 +138,7 @@ export default function CompanySettingsPage() {
             >
               {uploading && (
                 <div className="absolute inset-0 bg-background/50 flex items-center justify-center z-10 backdrop-blur-sm">
-                  <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
+                  <Loader2 className="w-8 h-8 text-emerald-600 animate-spin" />
                 </div>
               )}
               {logoPreview ? (
@@ -179,7 +179,7 @@ export default function CompanySettingsPage() {
         <Card className="bg-card border-border shadow-sm lg:col-span-2">
           <CardHeader className="border-b border-border">
             <CardTitle className="text-foreground flex items-center gap-2">
-              <FileText className="w-5 h-5 text-blue-500" />
+              <FileText className="w-5 h-5 text-emerald-600" />
               ข้อมูลทั่วไป
             </CardTitle>
           </CardHeader>

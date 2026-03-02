@@ -56,15 +56,15 @@ export default function NotificationSettingsPage() {
           <Bell className="text-yellow-400" />
           การแจ้งเตือน
         </h1>
-        <p className="text-slate-400">จัดการการรับข่าวสารและการเตือนภัย</p>
+        <p className="text-gray-500">จัดการการรับข่าวสารและการเตือนภัย</p>
       </div>
 
-      <Card className="bg-slate-900/50 border-slate-800 max-w-2xl">
+      <Card className="bg-white/80 border-gray-200 max-w-2xl">
         <CardContent className="p-6 space-y-6">
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
-              <h3 className="text-white font-medium">Push Notifications</h3>
-              <p className="text-sm text-slate-500">รับการแจ้งเตือนบนเบราว์เซอร์และมือถือ</p>
+              <h3 className="text-gray-800 font-medium">Push Notifications</h3>
+              <p className="text-sm text-gray-400">รับการแจ้งเตือนบนเบราว์เซอร์และมือถือ</p>
             </div>
             <Switch 
               checked={settings.push_enabled}
@@ -74,8 +74,8 @@ export default function NotificationSettingsPage() {
           
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
-              <h3 className="text-white font-medium">Email Notifications</h3>
-              <p className="text-sm text-slate-500">รับข่าวสารทั่วไปทางอีเมล</p>
+              <h3 className="text-gray-800 font-medium">Email Notifications</h3>
+              <p className="text-sm text-gray-400">รับข่าวสารทั่วไปทางอีเมล</p>
             </div>
             <Switch 
               checked={settings.email_enabled}
@@ -85,8 +85,8 @@ export default function NotificationSettingsPage() {
 
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
-              <h3 className="text-white font-medium">SOS Alert</h3>
-              <p className="text-sm text-slate-500">แจ้งเตือนทันทีเมื่อคนขับกดปุ่ม SOS (สำคัญ)</p>
+              <h3 className="text-gray-800 font-medium">SOS Alert</h3>
+              <p className="text-sm text-gray-400">แจ้งเตือนทันทีเมื่อคนขับกดปุ่ม SOS (สำคัญ)</p>
             </div>
             <Switch 
               checked={settings.sos_alert_enabled}
@@ -94,10 +94,10 @@ export default function NotificationSettingsPage() {
             />
           </div>
 
-          <div className="flex items-center justify-between pt-4 border-t border-slate-800">
+          <div className="flex items-center justify-between pt-4 border-t border-gray-200">
             <div className="space-y-0.5">
-              <h3 className="text-white font-medium">Daily Report Email</h3>
-              <p className="text-sm text-slate-500">รับสรุปรายงานประจำวันทางอีเมลทุกเช้า (08:00 น.)</p>
+              <h3 className="text-gray-800 font-medium">Daily Report Email</h3>
+              <p className="text-sm text-gray-400">รับสรุปรายงานประจำวันทางอีเมลทุกเช้า (08:00 น.)</p>
             </div>
             <Switch 
               checked={settings.daily_report_email}

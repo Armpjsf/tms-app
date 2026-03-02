@@ -48,7 +48,7 @@ export default async function SOSPage() {
           <div className="col-span-full text-center py-12">
             <CheckCircle2 size={64} className="mx-auto mb-4 text-emerald-500 opacity-50" />
             <p className="text-emerald-400 text-lg">ไม่มีเหตุฉุกเฉินในขณะนี้</p>
-            <p className="text-slate-500 text-sm">ระบบทำงานปกติ</p>
+            <p className="text-gray-400 text-sm">ระบบทำงานปกติ</p>
           </div>
         ) : alerts.map((alert) => (
           <Card 
@@ -69,8 +69,8 @@ export default async function SOSPage() {
                     <AlertTriangle className={alert.Job_Status === 'SOS' ? 'text-red-400' : 'text-amber-400'} size={24} />
                   </div>
                   <div>
-                    <p className="text-xs text-slate-500">#{alert.Job_ID}</p>
-                    <h3 className="font-bold text-white">
+                    <p className="text-xs text-gray-400">#{alert.Job_ID}</p>
+                    <h3 className="font-bold text-slate-900">
                       {alert.Job_Status === 'SOS' ? 'SOS Active' : 'งานล้มเหลว'}
                     </h3>
                   </div>
@@ -86,15 +86,15 @@ export default async function SOSPage() {
 
               {/* Details */}
               <div className="space-y-2 text-sm mb-4">
-                <div className="flex items-center gap-2 text-slate-400">
+                <div className="flex items-center gap-2 text-gray-500">
                   <User size={14} />
                   <span>{alert.Driver_Name || "-"}</span>
                 </div>
-                <div className="flex items-center gap-2 text-slate-400">
+                <div className="flex items-center gap-2 text-gray-500">
                   <Truck size={14} />
                   <span>{alert.Vehicle_Plate || "-"}</span>
                 </div>
-                <div className="flex items-center gap-2 text-slate-400">
+                <div className="flex items-center gap-2 text-gray-500">
                   <MapPin size={14} />
                   <span>{alert.Route_Name || "-"}</span>
                 </div>
@@ -105,7 +105,7 @@ export default async function SOSPage() {
                   </div>
                 )}
                 {alert.Failed_Time && (
-                  <div className="flex items-center gap-2 text-slate-500">
+                  <div className="flex items-center gap-2 text-gray-400">
                     <Clock size={14} />
                     <span className="text-xs">{new Date(alert.Failed_Time).toLocaleString('th-TH')}</span>
                   </div>
@@ -114,7 +114,7 @@ export default async function SOSPage() {
 
               {/* Actions */}
               <div className="flex gap-2">
-                <Button variant="outline" size="sm" className="flex-1 gap-1 rounded-xl border-slate-800">
+                <Button variant="outline" size="sm" className="flex-1 gap-1 rounded-xl border-gray-200">
                   <Phone size={14} />
                   โทร
                 </Button>

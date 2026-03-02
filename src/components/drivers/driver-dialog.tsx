@@ -98,16 +98,16 @@ export function DriverDialog({
   return (
     <Dialog open={show} onOpenChange={setShow}>
       {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
-      <DialogContent className="sm:max-w-[425px] bg-slate-900/95 border-white/10 text-white">
+      <DialogContent className="sm:max-w-[425px] bg-white border-gray-200 text-gray-900">
         <DialogHeader>
           <DialogTitle>{mode === 'create' ? 'เพิ่มคนขับ' : 'แก้ไขข้อมูลคนขับ'}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 mt-4">
           {branches.length > 0 && (
             <div className="space-y-2">
-                <Label htmlFor="Branch_ID" className="text-yellow-400">เลือกสาขา (Super Admin)</Label>
+                <Label htmlFor="Branch_ID" className="text-amber-600 font-bold">เลือกสาขา (Super Admin)</Label>
                 <Select value={formData.Branch_ID || undefined} onValueChange={(val) => setFormData({ ...formData, Branch_ID: val })}>
-                    <SelectTrigger className="w-full h-10 border-yellow-500/50 bg-yellow-500/10 text-white">
+                    <SelectTrigger className="w-full h-10 border-amber-200 bg-amber-50 text-gray-900">
                         <SelectValue placeholder="-- เลือกสาขา --" />
                     </SelectTrigger>
                     <SelectContent>
@@ -130,7 +130,7 @@ export function DriverDialog({
               placeholder="DRV-001"
               required
               disabled={mode === 'edit'}
-              className="bg-white/5 border-white/10"
+              className="bg-gray-50 border-gray-200 text-gray-900"
             />
           </div>
           
@@ -142,7 +142,7 @@ export function DriverDialog({
               onChange={(e) => setFormData({ ...formData, Driver_Name: e.target.value })}
               placeholder="นาย ขับรถ ดี"
               required
-              className="bg-white/5 border-white/10"
+              className="bg-gray-50 border-gray-200 text-gray-900"
             />
           </div>
 
@@ -154,7 +154,7 @@ export function DriverDialog({
               onChange={(e) => setFormData({ ...formData, Mobile_No: e.target.value })}
               placeholder="081-234-5678"
               required
-              className="bg-white/5 border-white/10"
+              className="bg-gray-50 border-gray-200 text-gray-900"
             />
           </div>
 
@@ -165,7 +165,7 @@ export function DriverDialog({
                 type="date"
                 value={formData.License_Expiry}
                 onChange={(e) => setFormData({ ...formData, License_Expiry: e.target.value })}
-                className="bg-white/5 border-white/10"
+                className="bg-gray-50 border-gray-200 text-gray-900"
              />
           </div>
 
@@ -178,14 +178,14 @@ export function DriverDialog({
               onChange={(e) => setFormData({ ...formData, Password: e.target.value })}
               placeholder="ตั้งรหัสผ่าน"
               required={mode === 'create'}
-              className="bg-white/5 border-white/10"
+              className="bg-gray-50 border-gray-200 text-gray-900"
             />
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="Sub_ID">สังกัดบริษัทรถร่วม (Subcontractor)</Label>
             <Select value={formData.Sub_ID || "__independent__"} onValueChange={(val) => setFormData({ ...formData, Sub_ID: val === "__independent__" ? "" : val })}>
-                <SelectTrigger className="w-full h-10 border-white/10 bg-white/5 text-white">
+                <SelectTrigger className="w-full h-10 border-gray-200 bg-gray-50 text-gray-900">
                     <SelectValue placeholder="อิสระ / รถบริษัท" />
                 </SelectTrigger>
                 <SelectContent>
@@ -200,7 +200,7 @@ export function DriverDialog({
         <div className="space-y-2">
             <Label htmlFor="Vehicle_Plate">รถประจำ</Label>
             <Select value={formData.Vehicle_Plate || "__none__"} onValueChange={(val) => setFormData({ ...formData, Vehicle_Plate: val === "__none__" ? "" : val })}>
-                <SelectTrigger className="w-full h-10 border-white/10 bg-white/5 text-white">
+                <SelectTrigger className="w-full h-10 border-gray-200 bg-gray-50 text-gray-900">
                     <SelectValue placeholder="ไม่ระบุ / ไม่มีรถประจำ" />
                 </SelectTrigger>
                 <SelectContent>
@@ -218,7 +218,7 @@ export function DriverDialog({
              <div className="space-y-2">
               <Label htmlFor="Active_Status">สถานะ</Label>
               <Select value={formData.Active_Status} onValueChange={(val) => setFormData({ ...formData, Active_Status: val })}>
-                <SelectTrigger className="w-full h-10 border-white/10 bg-white/5 text-white">
+                <SelectTrigger className="w-full h-10 border-gray-200 bg-gray-50 text-gray-900">
                     <SelectValue placeholder="เลือกสถานะ" />
                 </SelectTrigger>
                 <SelectContent>

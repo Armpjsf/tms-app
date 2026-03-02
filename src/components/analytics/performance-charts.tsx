@@ -34,11 +34,11 @@ export function PerformanceCharts({ data }: { data: PerformanceData[] }) {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       {/* Job Volume Trend */}
-      <Card className="bg-slate-900/50 backdrop-blur-sm border-slate-800 shadow-xl">
-        <CardHeader className="border-b border-slate-800/50 bg-slate-900/40">
-            <CardTitle className="text-white flex items-center gap-3 text-sm font-bold">
-                <Package className="text-indigo-400" size={18} /> 
-                <span>ปริมาณงานสะสม <span className="text-slate-500 font-normal text-xs ml-1">(Job Volume Trend)</span></span>
+      <Card className="bg-white/80 backdrop-blur-sm border-gray-200 shadow-xl">
+        <CardHeader className="border-b border-gray-200 bg-white/80">
+            <CardTitle className="text-gray-950 font-black flex items-center gap-3 text-sm flex items-center gap-3 text-sm font-bold">
+                <Package className="text-emerald-600" size={18} /> 
+                <span>ปริมาณงานสะสม <span className="text-gray-400 font-normal text-xs ml-1">(Job Volume Trend)</span></span>
             </CardTitle>
         </CardHeader>
         <CardContent className="pt-6 h-[300px]">
@@ -59,7 +59,7 @@ export function PerformanceCharts({ data }: { data: PerformanceData[] }) {
                 axisLine={false}
               />
               <Tooltip 
-                contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '8px' }}
+                contentStyle={{ backgroundColor: '#ffffff', borderColor: '#e2e8f0', color: '#0f172a', borderRadius: '8px' }}
                 itemStyle={{ fontSize: '12px' }}
               />
               <Legend iconType="circle" wrapperStyle={{ paddingTop: '10px', fontSize: '10px' }} verticalAlign="top" height={36}/>
@@ -71,11 +71,11 @@ export function PerformanceCharts({ data }: { data: PerformanceData[] }) {
       </Card>
 
       {/* On-Time Efficiency */}
-      <Card className="bg-slate-900/50 backdrop-blur-sm border-slate-800 shadow-xl">
-        <CardHeader className="border-b border-slate-800/50 bg-slate-900/40">
-            <CardTitle className="text-white flex items-center gap-3 text-sm font-bold">
+      <Card className="bg-white/80 backdrop-blur-sm border-gray-200 shadow-xl">
+        <CardHeader className="border-b border-gray-200 bg-white/80">
+            <CardTitle className="text-gray-950 font-black flex items-center gap-3 text-sm flex items-center gap-3 text-sm font-bold">
                 <CheckCircle2 className="text-emerald-400" size={18} /> 
-                <span>เปอร์เซ็นต์ความตรงเวลา <span className="text-slate-500 font-normal text-xs ml-1">(On-Time Reliability)</span></span>
+                <span>เปอร์เซ็นต์ความตรงเวลา <span className="text-gray-400 font-normal text-xs ml-1">(On-Time Reliability)</span></span>
             </CardTitle>
         </CardHeader>
         <CardContent className="pt-6 h-[300px]">
@@ -98,7 +98,7 @@ export function PerformanceCharts({ data }: { data: PerformanceData[] }) {
                 tickFormatter={(val) => `${val}%`}
               />
               <Tooltip 
-                contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '8px' }}
+                contentStyle={{ backgroundColor: '#ffffff', borderColor: '#e2e8f0', color: '#0f172a', borderRadius: '8px' }}
                 itemStyle={{ fontSize: '12px' }}
                 formatter={(val) => [`${Number(val).toFixed(1)}%`, 'ตรงเวลา']}
               />

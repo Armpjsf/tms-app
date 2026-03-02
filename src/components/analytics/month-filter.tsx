@@ -83,11 +83,11 @@ export function MonthFilter() {
   const currentMonthLabel = months.find(m => m.value === month)?.label || "Select Month"
 
   return (
-    <div className={`flex items-center bg-slate-900 border border-slate-700 rounded-lg p-1 gap-1 transition-opacity duration-300 ${isPending ? 'opacity-50 pointer-events-none' : ''}`}>
+    <div className={`flex items-center bg-white border border-gray-200 rounded-lg p-1 gap-1 transition-opacity duration-300 ${isPending ? 'opacity-50 pointer-events-none' : ''}`}>
       <Button 
         variant="ghost" 
         size="icon" 
-        className="h-8 w-8 hover:bg-slate-800 text-slate-400 hover:text-white"
+        className="h-8 w-8 hover:bg-gray-100 text-gray-500 hover:text-gray-900"
         onClick={handlePrevMonth}
         disabled={isPending}
       >
@@ -98,14 +98,14 @@ export function MonthFilter() {
         <PopoverTrigger asChild>
           <Button 
             variant="ghost" 
-            className="h-8 px-3 font-medium text-slate-200 hover:bg-slate-800 hover:text-white min-w-[140px]"
+            className="h-8 px-3 font-medium text-gray-800 hover:bg-gray-100 hover:text-gray-950 min-w-[140px]"
             disabled={isPending}
           >
             <CalendarIcon className="mr-2 h-4 w-4 opacity-50" />
             {currentMonthLabel} {year}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-[280px] p-3 bg-slate-900 border-slate-800" align="center">
+        <PopoverContent className="w-[280px] p-3 bg-white border-gray-200" align="center">
            <div className="space-y-4">
               <div className="grid grid-cols-3 gap-2">
                   {years.map(y => (
@@ -114,7 +114,7 @@ export function MonthFilter() {
                       variant={year === y ? "default" : "outline"}
                       size="sm"
                       onClick={() => updateFilter(month, y)}
-                      className={cn("w-full transition-all", year === y ? "bg-emerald-600 hover:bg-emerald-700" : "bg-transparent border-slate-700 hover:bg-slate-800 text-slate-300")}
+                      className={cn("w-full transition-all", year === y ? "bg-emerald-600 hover:bg-emerald-700" : "bg-transparent border-gray-200 hover:bg-gray-100 text-gray-700")}
                     >
                       {y}
                     </Button>
@@ -127,7 +127,7 @@ export function MonthFilter() {
                       variant={month === m.value ? "secondary" : "ghost"}
                       size="sm"
                       onClick={() => updateFilter(m.value, year)}
-                      className={cn("w-full text-xs", month === m.value ? "bg-slate-700 text-white" : "text-slate-400 hover:text-white hover:bg-slate-800")}
+                      className={cn("w-full text-xs", month === m.value ? "bg-slate-700 text-white" : "text-gray-500 hover:text-gray-900 hover:bg-gray-100")}
                     >
                       {m.label}
                     </Button>
@@ -140,7 +140,7 @@ export function MonthFilter() {
       <Button 
         variant="ghost" 
         size="icon" 
-        className="h-8 w-8 hover:bg-slate-800 text-slate-400 hover:text-white"
+        className="h-8 w-8 hover:bg-gray-100 text-gray-500 hover:text-white"
         onClick={handleNextMonth}
         disabled={isPending}
       >

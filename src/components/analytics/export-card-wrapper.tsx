@@ -22,7 +22,7 @@ export function ExportCardWrapper({ data, filename, children }: ExportCardWrappe
                 <Button 
                     variant="ghost" 
                     size="sm" 
-                    className="h-8 px-2 text-slate-400 hover:text-white hover:bg-slate-800"
+                    className="h-8 px-2 text-gray-700 font-black hover:text-white hover:bg-slate-900 border border-gray-100"
                     onClick={handleExport}
                 >
                     <Download className="h-4 w-4 mr-2" />

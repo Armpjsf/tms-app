@@ -21,6 +21,8 @@ export type Job = {
   Total_Drop: number | null
   Price_Cust_Total: number
   Cost_Driver_Total: number
+  Price_Cust_Extra?: number | null
+  Cost_Driver_Extra?: number | null
   Cargo_Type: string | null
   Notes: string | null
   original_origins_json: any
@@ -37,6 +39,12 @@ export type Job = {
   Volume_Cbm?: number | null
   Zone?: string | null
   Invoice_ID?: string | null
+  Billing_Note_ID?: string | null
+  Driver_Payment_ID?: string | null
+  Pickup_Lat?: number | null
+  Pickup_Lon?: number | null
+  Delivery_Lat?: number | null
+  Delivery_Lon?: number | null
 }
 
 // ดึงงานทั้งหมดวันนี้
@@ -333,9 +341,15 @@ export async function getJobById(jobId: string): Promise<Job | null> {
         
         // Super Admins should see the job regardless of current branch selection
         // Drivers should see jobs assigned to them
+        // Regular Customers should see jobs belonging to them
         // Regular Admins should see jobs in their branch
-        if (isAdmin) {
+        const isAdminUser = await isSuperAdmin()
+        const customerId = await getCustomerId()
+
+        if (isAdminUser) {
             // No filter for Super Admin in detail view to avoid 404
+        } else if (customerId) {
+            query = query.eq('Customer_ID', customerId)
         } else if (driverSession) {
             query = query.eq('Driver_ID', driverSession.driverId)
         } else if (branchId && branchId !== 'All') {
@@ -620,6 +634,7 @@ export async function getJobsForBilling(startDate?: string, endDate?: string): P
             .from('Jobs_Main')
             .select('*')
             .in('Job_Status', ['Completed', 'Delivered'])
+            .is('Billing_Note_ID', null)
         
         if (customerId) {
             dbQuery = dbQuery.eq('Customer_ID', customerId)
@@ -678,10 +693,11 @@ export async function getDriverDashboardStats(driverId: string) {
 
     const completed = jobs?.filter(j => ['Completed', 'Delivered'].includes(j.Job_Status || '')).length || 0
     
-    // Calculate today's income (Includes all non-cancelled jobs for today as requested)
+    // Calculate today's income (Only sum jobs where Show_Price_To_Driver is true)
     const todayIncome = jobs?.filter(j => 
         j.Plan_Date === today && 
-        j.Job_Status !== 'Cancelled'
+        j.Job_Status !== 'Cancelled' &&
+        j.Show_Price_To_Driver !== false // Enforce visibility rule
     ).reduce((sum, j) => sum + (j.Cost_Driver_Total || 0), 0) || 0
 
     // User requested "Remaining Jobs" as the main count
@@ -764,6 +780,43 @@ export async function getBillableJobs(customerId: string) {
     return data || []
   } catch (error) {
     console.error('Error:', error)
+    return []
+  }
+}
+// Get unassigned jobs for the marketplace
+export async function getMarketplaceJobs(providedBranchId?: string): Promise<Job[]> {
+  try {
+    const supabase = await createClient()
+    const branchId = providedBranchId || await getUserBranchId()
+    const isAdmin = await isSuperAdmin()
+    const customerId = await getCustomerId()
+
+    let dbQuery = supabase
+      .from('Jobs_Main')
+      .select('*')
+      .eq('Job_Status', 'New')
+      .is('Driver_ID', null)
+    
+    if (customerId) {
+        dbQuery = dbQuery.eq('Customer_ID', customerId)
+    } else if (branchId && branchId !== 'All') {
+        dbQuery = dbQuery.eq('Branch_ID', branchId)
+    } else if (!isAdmin && !branchId) {
+        return []
+    }
+
+    const { data, error } = await dbQuery
+      .order('Created_At', { ascending: false })
+      .limit(10)
+    
+    if (error) {
+      console.error('Error fetching marketplace jobs:', JSON.stringify(error))
+      return []
+    }
+    
+    return data || []
+  } catch (e) {
+    console.error('Exception fetching marketplace jobs:', e)
     return []
   }
 }

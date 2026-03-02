@@ -12,7 +12,7 @@ export default async function MobileLayout({
   const session = await getDriverSession()
   
   return (
-    <div className="flex flex-col min-h-screen bg-slate-950 text-slate-100 pb-16">
+    <div className="flex flex-col min-h-screen bg-slate-50/50 text-foreground pb-16">
       <SyncManager />
       <LocationTracker driverId={session?.driverId} />
       <PermissionRequester />

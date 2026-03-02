@@ -43,7 +43,7 @@ export default async function AdminJobDetailPage({
         </Link>
         <div>
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold text-white">Job # {job.Job_ID}</h1>
+            <h1 className="text-2xl font-bold text-slate-900">Job # {job.Job_ID}</h1>
             <StatusBadge status={job.Job_Status} />
           </div>
           <p className="text-slate-400 text-sm mt-1">
@@ -62,7 +62,7 @@ export default async function AdminJobDetailPage({
           <Card className="bg-slate-900 border-slate-800">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-white">
-                <User className="h-5 w-5 text-blue-400" />
+                <User className="h-5 w-5 text-emerald-500" />
                 ข้อมูลลูกค้าและการจัดส่ง
               </CardTitle>
             </CardHeader>
@@ -109,7 +109,7 @@ export default async function AdminJobDetailPage({
             <Card className="bg-slate-900 border-slate-800 overflow-hidden">
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-white">
-                        <Navigation className="h-5 w-5 text-indigo-400" />
+                        <Navigation className="h-5 w-5 text-emerald-600" />
                         เส้นทางการวิ่งรถ (GPS History)
                     </CardTitle>
                 </CardHeader>
@@ -139,7 +139,7 @@ export default async function AdminJobDetailPage({
                                 {/* Report Viewer */}
                                 <div>
                                     <h3 className="text-sm font-medium text-slate-300 mb-3 flex items-center gap-2">
-                                        <FileText className="h-4 w-4 text-blue-400" /> ใบเสร็จ/ใบส่งสินค้า (Digital Report)
+                                        <FileText className="h-4 w-4 text-emerald-500" /> ใบเสร็จ/ใบส่งสินค้า (Digital Report)
                                     </h3>
                                     {reportUrl ? (
                                         <div className="relative w-full aspect-[1/1.4] md:aspect-[1.4/1] bg-slate-950 rounded-lg overflow-hidden border border-slate-700">
@@ -231,7 +231,7 @@ export default async function AdminJobDetailPage({
             <Card className="bg-slate-900 border-slate-800">
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-white text-base">
-                        <Truck className="h-4 w-4 text-indigo-400" />
+                        <Truck className="h-4 w-4 text-emerald-600" />
                         ข้อมูลคนขับ
                     </CardTitle>
                 </CardHeader>
@@ -257,7 +257,7 @@ export default async function AdminJobDetailPage({
                         </div>
                     </div>
 
-                    <Button variant="outline" className="w-full border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white">
+                    <Button className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold shadow-lg shadow-emerald-900/30">
                         <Phone className="h-4 w-4 mr-2" /> โทรหาคนขับ
                     </Button>
                 </CardContent>
@@ -289,10 +289,10 @@ function StatusBadge({ status }: { status: string }) {
     let colorClass = "bg-slate-500/10 text-slate-500" // Default
   
     switch (status) {
-      case "New": colorClass = "bg-blue-500/10 text-blue-400 border-blue-500/20"; break
+      case "New": colorClass = "bg-blue-500/10 text-emerald-500 border-emerald-500/15"; break
       case "Assigned": colorClass = "bg-purple-500/10 text-purple-400 border-purple-500/20"; break
       case "In Progress":
-      case "In Transit": colorClass = "bg-indigo-500/10 text-indigo-400 border-indigo-500/20"; break
+      case "In Transit": colorClass = "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"; break
       case "Delivered":
       case "Completed": colorClass = "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"; break
       case "Cancelled": colorClass = "bg-slate-500/10 text-slate-400 border-slate-500/20"; break

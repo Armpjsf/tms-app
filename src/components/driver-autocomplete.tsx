@@ -96,17 +96,17 @@ export function DriverAutocomplete({
           onFocus={() => !disabled && setOpen(true)}
           disabled={disabled}
           placeholder={placeholder}
-          className={cn("pr-10 bg-slate-800 border-slate-700 text-white placeholder:text-slate-500", className)}
+          className={cn("pr-10 bg-gray-100 border-gray-200 text-gray-900 font-black placeholder:text-gray-700 placeholder:font-bold", className)}
         />
-        <div className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+        <div className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-700 pointer-events-none">
              <ChevronsUpDown className="w-4 h-4 opacity-50" />
         </div>
       </div>
 
       {open && (
-        <div className="absolute z-50 w-full mt-1 bg-slate-800 border border-slate-700 rounded-md shadow-lg max-h-60 overflow-y-auto">
+        <div className="absolute z-50 w-full mt-1 bg-gray-100 border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
           {filteredDrivers.length === 0 ? (
-            <div className="p-2 text-sm text-slate-400 text-center">
+            <div className="p-2 text-sm text-gray-700 font-bold text-center">
                ไม่พบข้อมูล
             </div>
           ) : (
@@ -117,12 +117,12 @@ export function DriverAutocomplete({
                   onClick={() => handleSelect(driver)}
                   type="button"
                   className={cn(
-                    "w-full text-left px-3 py-2 text-sm cursor-pointer hover:bg-slate-700 flex items-center justify-between text-slate-200",
+                    "w-full text-left px-3 py-2 text-sm cursor-pointer hover:bg-slate-700 flex items-center justify-between text-gray-800",
                     value === driver.Driver_ID && "bg-slate-700 font-medium text-white"
                   )}
                 >
                   <div className="flex items-center gap-2">
-                    <User size={14} className="text-indigo-400" />
+                    <User size={14} className="text-emerald-600" />
                     <span>{driver.Driver_Name}</span>
                   </div>
                   {value === driver.Driver_ID && (

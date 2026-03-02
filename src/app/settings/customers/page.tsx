@@ -2,189 +2,147 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
-import { Card, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
+import { PremiumCard } from "@/components/ui/premium-card"
+import { PremiumButton } from "@/components/ui/premium-button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import {
-  Users,
-  Plus,
-  Search,
-  Building2,
-  Phone,
-  Mail,
-  MapPin,
-  Edit,
-  Trash2,
-  Save,
-  X,
-  CreditCard,
-  Loader2,
-  FileSpreadsheet
+import { 
+    Plus, 
+    Edit, 
+    Trash2, 
+    Search, 
+    Loader2, 
+    Building2,
+    FileSpreadsheet,
+    Phone,
+    Mail,
+    MapPin,
+    Save,
+    X,
+    CreditCard,
+    TrendingUp
 } from "lucide-react"
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-import {
-  createCustomer,
-  updateCustomer,
-  deleteCustomer,
-  Customer,
-  createBulkCustomers
-} from "@/lib/supabase/customers"
- import { createClient } from "@/utils/supabase/client"
 import { ExcelImport } from "@/components/ui/excel-import"
-import { useBranch } from "@/components/providers/branch-provider"
+import { createBulkCustomers, getAllCustomers, createCustomer, updateCustomer, deleteCustomer } from "@/lib/supabase/customers"
+import { getExecutiveKPIs } from "@/lib/supabase/analytics"
+import { cn } from "@/lib/utils"
 
 export default function CustomersSettingsPage() {
-  const { branches, isAdmin, selectedBranch } = useBranch()
-  const [customers, setCustomers] = useState<Customer[]>([])
+  const [customers, setCustomers] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
   const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
-  
-  const [formData, setFormData] = useState<Partial<Customer>>({
+  const [editingCustomer, setEditingCustomer] = useState<any | null>(null)
+  const [kpis, setKpis] = useState<any>(null)
+  const [formData, setFormData] = useState<any>({
     Customer_ID: "",
     Customer_Name: "",
-    Contact_Person: "",
-    Phone: "",
-    Email: "",
-    Address: "",
     Tax_ID: "",
-    Branch_ID: ""
+    Branch_ID: "",
+    Phone: "",
+    Address: "",
+    Email: "",
   })
+  const [saving, setSaving] = useState(false)
 
-  const fetchCustomers = useCallback(async () => {
+  const loadCustomers = useCallback(async () => {
     setLoading(true)
-    try {
-      const supabase = createClient()
-      let query = supabase.from('Master_Customers').select('*')
-
-      if (selectedBranch && selectedBranch !== 'All') {
-        query = query.eq('Branch_ID', selectedBranch)
-      }
-
-      if (searchQuery) {
-        query = query.or(`Customer_Name.ilike.%${searchQuery}%,Customer_ID.ilike.%${searchQuery}%`)
-      }
-
-      const { data } = await query.order('Customer_ID', { ascending: false }).limit(100)
-      if (data) {
-        setCustomers(data)
-      }
-    } finally {
-      setLoading(false)
-    }
-  }, [searchQuery, selectedBranch])
+    const [result, kpiData] = await Promise.all([
+        getAllCustomers(1, 100, searchQuery),
+        getExecutiveKPIs()
+    ])
+    setCustomers(result.data)
+    setKpis(kpiData)
+    setLoading(false)
+  }, [searchQuery])
 
   useEffect(() => {
-    fetchCustomers()
-  }, [fetchCustomers])
+    loadCustomers()
+  }, [loadCustomers])
 
-  // Debounce search
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      fetchCustomers()
-    }, 500)
-    return () => clearTimeout(timer)
-  }, [searchQuery, fetchCustomers])
-
-  const updateForm = (field: keyof Customer, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }))
-  }
-
-  const resetForm = () => {
-    setFormData({
-      Customer_ID: "",
-      Customer_Name: "",
-      Contact_Person: "",
-      Phone: "",
-      Email: "",
-      Address: "",
-      Tax_ID: "",
-      Branch_ID: ""
-    })
-    setEditingCustomer(null)
-  }
-
-  const handleOpenDialog = (customer?: Customer) => {
+  const handleOpenDialog = (customer?: any) => {
     if (customer) {
       setEditingCustomer(customer)
       setFormData(customer)
     } else {
-      resetForm()
+      setEditingCustomer(null)
+      setFormData({
+        Customer_ID: "",
+        Customer_Name: "",
+        Tax_ID: "",
+        Branch_ID: "",
+        Phone: "",
+        Address: "",
+        Email: "",
+      })
     }
     setIsDialogOpen(true)
   }
 
   const handleSave = async () => {
-    if (!formData.Customer_Name) {
-      alert("กรุณาระบุชื่อลูกค้า")
-      return
-    }
-
+    if (!formData.Customer_Name) return alert("กรุณากรอกชื่อลูกค้า")
     setSaving(true)
     try {
-      if (editingCustomer && editingCustomer.Customer_ID) {
-        // Update
-        const result = await updateCustomer(editingCustomer.Customer_ID, formData)
-        if (!result.success) throw result.error
+      if (editingCustomer) {
+        await updateCustomer(formData.Customer_ID, formData)
       } else {
-        // Create
-        const result = await createCustomer(formData)
-        if (!result.success) throw result.error
+        await createCustomer(formData)
       }
-      
       setIsDialogOpen(false)
-      resetForm()
-      fetchCustomers()
-    } catch (e) {
-      console.error(e)
+      loadCustomers()
+    } catch (error) {
+      console.error(error)
       alert("เกิดข้อผิดพลาดในการบันทึก")
     } finally {
       setSaving(false)
     }
   }
 
-  const handleDelete = async (customerId: string) => {
-    if (confirm("ยืนยันลบข้อมูลลูกค้านี้?")) {
-      await deleteCustomer(customerId)
-      fetchCustomers()
+  const handleDelete = async (id: string) => {
+    if (!confirm("ยืนยันการลบข้อมูลลูกค้า?")) return
+    try {
+      await deleteCustomer(id)
+      loadCustomers()
+    } catch (error) {
+      console.error(error)
+      alert("เกิดข้อผิดพลาดในการลบ")
     }
+  }
+
+  const updateForm = (key: string, value: string) => {
+    setFormData((prev: any) => ({ ...prev, [key]: value }))
   }
 
   return (
     <DashboardLayout>
-      {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground flex items-center gap-3">
-            <Users className="text-emerald-500" />
-            จัดการลูกค้า
+      {/* Premium Header Container */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-8 mb-12 bg-white/40 p-10 rounded-[2.5rem] border border-white/40 backdrop-blur-xl shadow-2xl relative overflow-hidden group">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 blur-3xl rounded-full -mr-20 -mt-20 pointer-events-none" />
+        
+        <div className="relative z-10">
+          <h1 className="text-5xl font-black text-gray-900 mb-2 tracking-tighter flex items-center gap-4">
+            <div className="p-3 bg-gradient-to-br from-emerald-500 to-green-600 rounded-3xl shadow-2xl shadow-emerald-500/20 text-white transform group-hover:scale-110 transition-transform duration-500">
+              <Building2 size={32} />
+            </div>
+            Customer CRM
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">ฐานข้อมูลลูกค้า (Master Data)</p>
+          <p className="text-gray-500 font-bold ml-[4.5rem] uppercase tracking-[0.2em] text-[10px]">Master Data • Client Relationship Management</p>
         </div>
-        <div className="flex gap-2">
+
+        <div className="flex flex-wrap gap-4 relative z-10">
             <ExcelImport 
                 trigger={
-                    <Button variant="outline" className="gap-2 border-border hover:bg-muted">
-                        <FileSpreadsheet size={16} /> 
-                        นำเข้า Excel
-                    </Button>
+                    <PremiumButton variant="outline" className="h-14 px-8 rounded-2xl">
+                        <FileSpreadsheet size={20} className="mr-2" /> 
+                        Import Excel
+                    </PremiumButton>
                 }
                 title="นำเข้าข้อมูลลูกค้า"
                 onImport={createBulkCustomers}
@@ -200,219 +158,244 @@ export default function CustomersSettingsPage() {
                 ]}
                 templateFilename="template_customers.xlsx"
             />
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={() => handleOpenDialog()} className="bg-emerald-600 hover:bg-emerald-700">
-              <Plus className="w-4 h-4 mr-2" /> เพิ่มลูกค้า
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="bg-background border-border text-foreground max-w-2xl shadow-2xl">
-            <DialogHeader className="border-b border-border pb-4">
-              <DialogTitle className="text-foreground">
-                {editingCustomer ? "แก้ไขข้อมูลลูกค้า" : "เพิ่มลูกค้าใหม่"}
-              </DialogTitle>
-            </DialogHeader>
-            
-            <div className="space-y-4 mt-4">
-              {isAdmin && branches.length > 0 && (
-                <div className="space-y-2">
-                    <Label className="text-yellow-500 font-bold">สาขา (Super Admin Only)</Label>
-                    <Select 
-                      value={formData.Branch_ID || ""} 
-                      onValueChange={(val) => updateForm("Branch_ID", val)}
-                    >
-                      <SelectTrigger className="bg-card border-amber-500/50 text-foreground">
-                        <SelectValue placeholder="-- เลือกสาขา --" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-card border-border">
-                        {branches.map(b => (
-                          <SelectItem key={b.Branch_ID} value={b.Branch_ID} className="text-foreground">
-                            {b.Branch_Name} ({b.Branch_ID})
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                </div>
-              )}
+            <PremiumButton onClick={() => handleOpenDialog()} className="h-14 px-8 rounded-2xl shadow-emerald-500/20">
+              <Plus size={24} className="mr-2" />
+              เพิ่มลูกค้า
+            </PremiumButton>
+        </div>
+      </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label className="text-muted-foreground">รหัสลูกค้า (Auto if empty)</Label>
-                  <Input
-                    value={formData.Customer_ID || ""}
-                    onChange={(e) => updateForm("Customer_ID", e.target.value)}
-                    placeholder="Auto Generate"
-                    className="bg-card border-border text-foreground"
-                    disabled={!!editingCustomer}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-muted-foreground flex items-center gap-1">
-                    <CreditCard className="w-3 h-3" /> เลขประจำตัวผู้เสียภาษี
-                  </Label>
-                  <Input
-                    value={formData.Tax_ID || ""}
-                    onChange={(e) => updateForm("Tax_ID", e.target.value)}
-                    placeholder="0123456789012"
-                    className="bg-card border-border text-foreground"
-                  />
-                </div>
-              </div>
+      {/* Analytics Bento Grid */}
+      {!loading && kpis && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+            {[
+                { label: "Partner Customers", value: customers.length, icon: Building2, color: "emerald", trend: `${kpis.revenue.growth.toFixed(1)}%` },
+                { label: "Monthly Revenue", value: `฿${kpis.revenue.current.toLocaleString()}`, icon: CreditCard, color: "blue", trend: "Target Focus" },
+                { label: "Profit Margin", value: `${kpis.margin.current.toFixed(1)}%`, icon: TrendingUp, color: "purple", trend: "Optimal" },
+            ].map((stat, idx) => (
+                <PremiumCard key={idx} className="p-8 group backdrop-blur-2xl">
+                    <div className="flex items-center justify-between mb-6">
+                        <div className={cn(
+                            "p-3 rounded-2xl text-white shadow-xl transform group-hover:scale-110 group-hover:rotate-3 transition-all duration-500",
+                            stat.color === 'emerald' ? "bg-emerald-500 shadow-emerald-500/20" :
+                            stat.color === 'blue' ? "bg-blue-500 shadow-blue-500/20" : "bg-purple-500 shadow-purple-500/20"
+                        )}>
+                            <stat.icon size={20} />
+                        </div>
+                        <div className="flex items-center gap-1 px-3 py-1 bg-gray-50 rounded-full border border-gray-100">
+                             <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">{stat.trend}</span>
+                        </div>
+                    </div>
+                    <div>
+                        <p className="text-gray-400 font-bold text-[10px] uppercase tracking-[0.2em] mb-1">{stat.label}</p>
+                        <p className="text-3xl font-black text-gray-900 tracking-tighter">{stat.value}</p>
+                    </div>
+                </PremiumCard>
+            ))}
+        </div>
+      )}
 
+      {/* Search Bar */}
+      <div className="mb-12 relative group max-w-2xl">
+        <div className="absolute inset-0 bg-emerald-500/10 blur-2xl rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+        <div className="relative bg-white/60 backdrop-blur-xl border border-white/40 p-4 rounded-3xl shadow-xl">
+          <div className="flex items-center gap-4 px-4">
+            <Search className="text-emerald-500 animate-pulse" size={24} />
+            <Input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="ค้นหาชื่อหรือรหัสลูกค้า..."
+                className="bg-transparent border-none focus-visible:ring-0 text-xl font-black text-gray-900 placeholder:text-gray-300 tracking-tighter"
+            />
+          </div>
+        </div>
+      </div>
+
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogContent className="bg-white border-gray-200 text-gray-900 max-w-2xl shadow-2xl rounded-[2.5rem] p-0 overflow-hidden">
+            <div className="bg-gradient-to-br from-emerald-500 to-green-600 p-8 text-white relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 blur-2xl rounded-full -mr-16 -mt-16" />
+                <DialogHeader>
+                  <DialogTitle className="text-3xl font-black tracking-tighter flex items-center gap-3">
+                    <div className="p-2 bg-white/20 rounded-xl backdrop-blur-md">
+                        <Building2 size={24} />
+                    </div>
+                    {editingCustomer ? "แก้ไขข้อมูลลูกค้า" : "เพิ่มลูกค้าใหม่"}
+                  </DialogTitle>
+                </DialogHeader>
+            </div>
+
+            <div className="p-8 space-y-6">
               <div className="space-y-2">
-                <Label className="text-muted-foreground flex items-center gap-1">
-                  <Building2 className="w-3 h-3" /> ชื่อบริษัท/ลูกค้า *
-                </Label>
+                <Label className="text-[10px] font-black uppercase tracking-widest text-gray-400">ชื่อลูกค้า/บริษัท *</Label>
                 <Input
-                  value={formData.Customer_Name || ""}
+                  value={formData.Customer_Name}
                   onChange={(e) => updateForm("Customer_Name", e.target.value)}
-                  placeholder="บริษัท ตัวอย่าง จำกัด"
-                  className="bg-card border-border text-foreground"
+                  placeholder="เช่น บริษัท โลจิสติกส์ ไทย จำกัด"
+                  className="bg-gray-50 border-gray-100 text-xl font-black tracking-tighter rounded-2xl h-14"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label className="text-muted-foreground">ผู้ติดต่อ</Label>
-                  <Input
-                    value={formData.Contact_Person || ""}
-                    onChange={(e) => updateForm("Contact_Person", e.target.value)}
-                    placeholder="คุณสมชาย"
-                    className="bg-card border-border text-foreground"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-muted-foreground flex items-center gap-1">
-                    <Phone className="w-3 h-3" /> เบอร์โทร
-                  </Label>
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-gray-400">เบอร์โทรศัพท์</Label>
                   <Input
                     value={formData.Phone || ""}
                     onChange={(e) => updateForm("Phone", e.target.value)}
                     placeholder="02-XXX-XXXX"
-                    className="bg-card border-border text-foreground"
+                    className="bg-gray-50 border-gray-100 rounded-xl h-12 font-bold"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-gray-400">อีเมล</Label>
+                  <Input
+                    value={formData.Email || ""}
+                    onChange={(e) => updateForm("Email", e.target.value)}
+                    placeholder="contact@company.com"
+                    className="bg-gray-50 border-gray-100 rounded-xl h-12 font-bold"
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label className="text-muted-foreground flex items-center gap-1">
-                  <Mail className="w-3 h-3" /> อีเมล
-                </Label>
-                <Input
-                  type="email"
-                  value={formData.Email || ""}
-                  onChange={(e) => updateForm("Email", e.target.value)}
-                  placeholder="contact@company.com"
-                  className="bg-card border-border text-foreground"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-muted-foreground flex items-center gap-1">
-                  <MapPin className="w-3 h-3" /> ที่อยู่
+                <Label className="text-[10px] font-black uppercase tracking-widest text-gray-400 flex items-center gap-1">
+                  ที่อยู่รับสินค้า/ออกใบกำกับ
                 </Label>
                 <Textarea
                   value={formData.Address || ""}
                   onChange={(e) => updateForm("Address", e.target.value)}
-                  placeholder="ที่อยู่สำหรับออกใบแจ้งหนี้/ใบเสร็จ"
-                  className="bg-card border-border text-foreground min-h-[80px]"
+                  placeholder="เลขที่, อาคาร, ถนน, แขวง/ตำบล, เขต/อำเภอ, จังหวัด"
+                  className="bg-gray-50 border-gray-100 rounded-2xl min-h-[100px] font-bold"
                 />
               </div>
 
-              <div className="flex gap-3 pt-6 border-t border-border mt-4">
-                <Button onClick={handleSave} disabled={saving} className="flex-1 bg-emerald-600 hover:bg-emerald-700">
-                  {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
-                  บันทึก
-                </Button>
-                <Button variant="outline" onClick={() => setIsDialogOpen(false)} className="flex-1 border-border">
-                  <X className="w-4 h-4 mr-2" /> ยกเลิก
-                </Button>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-gray-400">รหัสลูกค้า (Auto if empty)</Label>
+                  <Input
+                    value={formData.Customer_ID || ""}
+                    onChange={(e) => updateForm("Customer_ID", e.target.value)}
+                    placeholder="Auto Generate"
+                    className="bg-gray-50 border-gray-100 rounded-xl h-12 font-bold"
+                    disabled={!!editingCustomer}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-gray-400">เลขประจำตัวผู้เสียภาษี</Label>
+                  <Input
+                    value={formData.Tax_ID || ""}
+                    onChange={(e) => updateForm("Tax_ID", e.target.value)}
+                    placeholder="0123456789012"
+                    className="bg-gray-50 border-gray-100 rounded-xl h-12 font-bold"
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-4 pt-8 border-t border-gray-50 mt-6">
+                <PremiumButton onClick={handleSave} disabled={saving} className="flex-1 bg-emerald-600 hover:bg-green-700 shadow-emerald-500/20 h-14 rounded-2xl">
+                  {saving ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : <Save className="w-5 h-5 mr-2" />}
+                  บันทึกข้อมูลลูกค้า
+                </PremiumButton>
+                <PremiumButton variant="outline" onClick={() => setIsDialogOpen(false)} className="flex-1 border-gray-200 h-14 rounded-2xl">
+                  <X className="w-5 h-5 mr-2" /> ยกเลิก
+                </PremiumButton>
               </div>
             </div>
           </DialogContent>
-        </Dialog>
-        </div>
-      </div>
-
-      <div className="mb-6 bg-card/50 p-2 rounded-xl border border-border">
-        <div className="relative max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="ค้นหาชื่อหรือรหัสลูกค้า..."
-            className="pl-10 bg-transparent border-none focus-visible:ring-0 text-foreground placeholder:text-muted-foreground"
-          />
-        </div>
-      </div>
+      </Dialog>
 
       {loading ? (
-        <div className="text-muted-foreground text-center py-12 flex items-center justify-center gap-2">
-            <Loader2 className="animate-spin" /> กำลังโหลดข้อมูลลูกค้า...
+        <div className="flex flex-col items-center justify-center py-32 bg-gray-50/50 rounded-[3rem] border border-dashed border-gray-200">
+            <Loader2 className="animate-spin text-emerald-500 mb-4" size={48} />
+             <p className="text-gray-400 font-black uppercase tracking-widest text-xs">กำลังวิเคราะห์ข้อมูลโครงการ...</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {customers.map((customer) => (
-            <Card key={customer.Customer_ID} className="bg-card border-border hover:border-primary/50 transition-all shadow-sm hover:shadow-md">
-              <CardContent className="p-5">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center shadow-lg">
-                      <Building2 className="w-6 h-6 text-white" />
+            <PremiumCard key={customer.Customer_ID} className="p-0 overflow-hidden group">
+              <div className="p-8">
+                <div className="flex items-start justify-between mb-8">
+                  <div className="flex items-center gap-4">
+                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center text-white font-bold shadow-2xl shadow-emerald-500/20 transform group-hover:scale-110 group-hover:rotate-3 transition-all duration-500">
+                      <Building2 size={28} />
                     </div>
                     <div>
-                      <h3 className="font-bold text-foreground">{customer.Customer_Name}</h3>
-                      <p className="text-xs text-muted-foreground">{customer.Customer_ID}</p>
+                      <h3 className="text-2xl font-black text-gray-900 tracking-tighter group-hover:text-emerald-600 transition-colors line-clamp-1">{customer.Customer_Name}</h3>
+                      <div className="flex items-center gap-2 mt-1">
+                          <span className="text-gray-400 font-bold text-[10px] uppercase tracking-[0.2em]">{customer.Customer_ID}</span>
+                          <div className="w-1 h-1 rounded-full bg-gray-200" />
+                          <span className="text-emerald-500 font-black text-[9px] uppercase tracking-wider italic">PARTNER</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="opacity-0 group-hover:opacity-100 transition-all duration-500 translate-x-4 group-hover:translate-x-0 flex flex-col gap-2">
+                    <PremiumButton 
+                        variant="outline" 
+                        size="sm" 
+                        className="h-10 w-10 p-0 rounded-xl"
+                        onClick={() => handleOpenDialog(customer)}
+                    >
+                        <Edit size={16} />
+                    </PremiumButton>
+                    <PremiumButton 
+                        variant="outline" 
+                        size="sm" 
+                        className="h-10 w-10 p-0 rounded-xl text-red-500 border-red-50 hover:bg-red-50"
+                        onClick={() => handleDelete(customer.Customer_ID)}
+                    >
+                        <Trash2 size={16} />
+                    </PremiumButton>
+                  </div>
+                </div>
+
+                <div className="space-y-4 mb-2">
+                  <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100 group-hover:bg-white group-hover:shadow-lg transition-all duration-500 flex items-center gap-3">
+                        <div className="p-2 bg-emerald-500/10 rounded-lg text-emerald-600">
+                            <CreditCard size={14} />
+                        </div>
+                        <div>
+                            <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Tax Identity</p>
+                            <p className="text-sm font-black text-gray-700">{customer.Tax_ID || "N/A"}</p>
+                        </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100 group-hover:bg-white group-hover:shadow-lg transition-all duration-500">
+                        <div className="flex items-center gap-2 mb-1">
+                            <Phone size={12} className="text-emerald-500" />
+                            <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Phone</span>
+                        </div>
+                        <p className="text-xs font-black text-gray-700 line-clamp-1">{customer.Phone || "-"}</p>
+                    </div>
+                    <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100 group-hover:bg-white group-hover:shadow-lg transition-all duration-500">
+                        <div className="flex items-center gap-2 mb-1">
+                            <MapPin size={12} className="text-emerald-500" />
+                            <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Region</span>
+                        </div>
+                        <p className="text-xs font-black text-gray-700 line-clamp-1">{customer.Branch_ID || "HQ"}</p>
                     </div>
                   </div>
                 </div>
+              </div>
 
-                <div className="space-y-2 text-sm mb-4">
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <CreditCard className="w-4 h-4 text-emerald-500/70" />
-                    <span>Tax ID: {customer.Tax_ID || "-"}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <Building2 className="w-4 h-4 text-emerald-500/70" />
-                    <span>Branch: {customer.Branch_ID || "HQ"}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <Phone className="w-4 h-4 text-emerald-500/70" />
-                    <span>{customer.Phone || "-"}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <MapPin className="w-4 h-4 text-emerald-500/70" />
-                    <span className="truncate">{customer.Address || "-"}</span>
-                  </div>
+              <div className="px-8 py-4 bg-gray-50/50 border-t border-gray-50 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                    <Mail size={14} className="text-gray-300" />
+                    <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest truncate max-w-[150px]">{customer.Email || "no-contact@email.com"}</span>
                 </div>
-
-                <div className="flex gap-2 pt-3 border-t border-border">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="flex-1 border-border text-foreground hover:bg-muted"
-                    onClick={() => handleOpenDialog(customer)}
-                  >
-                    <Edit className="w-4 h-4 mr-1" /> แก้ไข
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="border-border text-red-500 hover:text-red-600 hover:bg-red-500/10"
-                    onClick={() => handleDelete(customer.Customer_ID)}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
+                <div className="flex items-center gap-1.5 px-3 py-1 bg-white rounded-full border border-gray-100 shadow-sm">
+                    <TrendingUp size={12} className="text-emerald-500" />
+                    <span className="text-[9px] font-black text-emerald-500 uppercase tracking-widest">TOP TIER</span>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </PremiumCard>
           ))}
           
           {/* Empty State */}
           {customers.length === 0 && (
-            <div className="col-span-full text-center py-12">
-              <Building2 className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
-              <p className="text-muted-foreground">ไม่พบข้อมูลลูกค้า</p>
+            <div className="col-span-full text-center py-24 bg-gray-50 rounded-[3rem] border border-dashed border-gray-200">
+              <Building2 className="w-16 h-16 text-gray-200 mx-auto mb-4" />
+              <p className="text-gray-400 font-black uppercase tracking-widest text-xs">ไม่พบข้อมูลลูกค้าในคลังข้อมูล</p>
             </div>
           )}
         </div>

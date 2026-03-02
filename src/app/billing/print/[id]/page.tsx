@@ -54,7 +54,7 @@ export default async function BillingPrintPage(props: Props) {
     console.log("DEBUG BILLING JOBS:", JSON.stringify(jobs.map(j => ({ id: j.Job_ID, extra: j.extra_costs_json })), null, 2))
 
     return (
-        <div className="bg-white min-h-screen p-8 text-black print:p-0">
+        <div className="bg-white min-h-screen p-8 text-black print:p-0 print-container">
             <AutoPrint />
             {/* ... (Actions Bar skipped in replacement mostly) */}
             

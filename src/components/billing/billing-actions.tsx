@@ -25,12 +25,23 @@ export function BillingActions({ billingNoteId, customerEmail = "", customerName
     const [isAttachmentsOpen, setIsAttachmentsOpen] = useState(false)
     
     // Email Form
+    const [emailFrom, setEmailFrom] = useState("")
     const [emailTo, setEmailTo] = useState(customerEmail)
     const [subject, setSubject] = useState(`ใบวางบิล / Billing Note #${billingNoteId}`)
     const [message, setMessage] = useState(`เรียน ${customerName},\n\nทางบริษัทขอส่งใบวางบิลเลขที่ ${billingNoteId} ดังแนบ\n\nขอบคุณครับ`)
     const [sending, setSending] = useState(false)
 
     useEffect(() => {
+        // Load default sender email from company profile
+        const loadDefaultSender = async () => {
+             const res = await fetch('/api/settings/company') // Assuming this exists or using a direct lib call
+             if (res.ok) {
+                 const data = await res.json()
+                 if (data?.email) setEmailFrom(data.email)
+             }
+        }
+        loadDefaultSender()
+
         // Append link to message on client side to avoid hydration mismatch
         const appUrl = process.env.NEXT_PUBLIC_APP_URL || window.location.origin
         const link = `${appUrl}/billing/print/${billingNoteId}`
@@ -88,6 +99,7 @@ export function BillingActions({ billingNoteId, customerEmail = "", customerName
             }
 
             const { success, error } = await sendBillingEmail({
+                from: emailFrom,
                 to: emailTo,
                 subject: subject,
                 html: message.replace(/\n/g, '<br/>'),
@@ -124,7 +136,7 @@ export function BillingActions({ billingNoteId, customerEmail = "", customerName
                     </Button>
                 )}
                 {!hidePrint && (
-                    <Button onClick={handlePrint} className="bg-blue-600 hover:bg-blue-700 text-white">
+                    <Button onClick={handlePrint} className="bg-emerald-600 hover:bg-blue-700 text-white">
                         <Printer className="w-4 h-4 mr-2" />
                         พิมพ์ / Print
                     </Button>
@@ -150,28 +162,37 @@ export function BillingActions({ billingNoteId, customerEmail = "", customerName
 
                     <div className="grid gap-4 py-4">
                         <div className="space-y-2">
-                            <Label className="text-slate-200">ถึง (Email)</Label>
+                            <Label className="text-gray-800">จาก (Sender Email)</Label>
+                            <Input 
+                                value={emailFrom} 
+                                onChange={e => setEmailFrom(e.target.value)} 
+                                className="bg-background border-gray-200 text-gray-900 placeholder:text-gray-400"
+                                placeholder="sender@company.com"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label className="text-gray-800">ถึง (Email)</Label>
                             <Input 
                                 value={emailTo} 
                                 onChange={e => setEmailTo(e.target.value)} 
-                                className="bg-slate-950 border-slate-700 text-slate-100 placeholder:text-slate-500"
+                                className="bg-background border-gray-200 text-gray-900 placeholder:text-gray-400"
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label className="text-slate-200">หัวข้อ (Subject)</Label>
+                            <Label className="text-gray-800">หัวข้อ (Subject)</Label>
                             <Input 
                                 value={subject} 
                                 onChange={e => setSubject(e.target.value)} 
-                                className="bg-slate-950 border-slate-700 text-slate-100 placeholder:text-slate-500"
+                                className="bg-background border-gray-200 text-gray-900 placeholder:text-gray-400"
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label className="text-slate-200">ข้อความ</Label>
+                            <Label className="text-gray-800">ข้อความ</Label>
                             <Textarea 
                                 value={message} 
                                 onChange={e => setMessage(e.target.value)} 
                                 rows={8}
-                                className="bg-slate-950 border-slate-700 text-slate-100 placeholder:text-slate-500 min-h-[150px]"
+                                className="bg-background border-gray-200 text-gray-900 placeholder:text-gray-400 min-h-[150px]"
                             />
                         </div>
                     </div>

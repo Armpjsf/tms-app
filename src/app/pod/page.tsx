@@ -28,7 +28,7 @@ export default async function PODPage() {
     Delivered: { label: "ส่งแล้ว", color: "text-emerald-400 bg-emerald-500/20", icon: <CheckCircle2 size={14} /> },
     Complete: { label: "เสร็จสิ้น", color: "text-emerald-400 bg-emerald-500/20", icon: <CheckCircle2 size={14} /> },
     "In Transit": { label: "กำลังส่ง", color: "text-amber-400 bg-amber-500/20", icon: <Clock size={14} /> },
-    "Picked Up": { label: "รับแล้ว", color: "text-blue-400 bg-blue-500/20", icon: <Clock size={14} /> },
+    "Picked Up": { label: "รับแล้ว", color: "text-emerald-500 bg-emerald-500/15", icon: <Clock size={14} /> },
     Failed: { label: "ล้มเหลว", color: "text-red-400 bg-red-500/20", icon: <AlertCircle size={14} /> },
   }
 
@@ -37,45 +37,45 @@ export default async function PODPage() {
       {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-white mb-2 flex items-center gap-3">
-            <FileText className="text-indigo-400" />
+          <h1 className="text-3xl font-bold text-slate-900 mb-2 flex items-center gap-3">
+            <FileText className="text-emerald-600" />
             จัดการ POD
           </h1>
-          <p className="text-slate-400">Proof of Delivery - หลักฐานการจัดส่ง</p>
+          <p className="text-gray-500">Proof of Delivery - หลักฐานการจัดส่ง</p>
         </div>
         <PODExport data={pods} />
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        <div className="rounded-xl p-4 bg-indigo-500/10 border border-indigo-500/20">
-          <p className="text-2xl font-bold text-indigo-400">{stats.total}</p>
-          <p className="text-xs text-slate-400">งานวันนี้</p>
+        <div className="rounded-xl p-4 bg-emerald-500/10 border border-emerald-500/20">
+          <p className="text-2xl font-bold text-emerald-600">{stats.total}</p>
+          <p className="text-xs text-gray-500">งานวันนี้</p>
         </div>
         <div className="rounded-xl p-4 bg-emerald-500/10 border border-emerald-500/20">
           <p className="text-2xl font-bold text-emerald-400">{stats.complete}</p>
-          <p className="text-xs text-slate-400">ส่งสำเร็จ</p>
+          <p className="text-xs text-gray-500">ส่งสำเร็จ</p>
         </div>
-        <div className="rounded-xl p-4 bg-blue-500/10 border border-blue-500/20">
+        <div className="rounded-xl p-4 bg-blue-500/10 border border-emerald-500/15">
           <div className="flex items-center gap-2">
-            <ImageIcon size={16} className="text-blue-400" />
-            <p className="text-2xl font-bold text-blue-400">{stats.withPhoto}</p>
+            <ImageIcon size={16} className="text-emerald-500" />
+            <p className="text-2xl font-bold text-emerald-500">{stats.withPhoto}</p>
           </div>
-          <p className="text-xs text-slate-400">มีรูปถ่าย</p>
+          <p className="text-xs text-gray-500">มีรูปถ่าย</p>
         </div>
         <div className="rounded-xl p-4 bg-purple-500/10 border border-purple-500/20">
           <div className="flex items-center gap-2">
             <PenTool size={16} className="text-purple-400" />
             <p className="text-2xl font-bold text-purple-400">{stats.withSignature}</p>
           </div>
-          <p className="text-xs text-slate-400">มีลายเซ็น</p>
+          <p className="text-xs text-gray-500">มีลายเซ็น</p>
         </div>
       </div>
 
       {/* Search */}
       <div className="mb-6">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
           <Input placeholder="ค้นหา Job ID, ลูกค้า, คนขับ..." className="pl-10 h-11" />
         </div>
       </div>
@@ -84,40 +84,40 @@ export default async function PODPage() {
       <Card variant="glass">
         <CardContent className="p-0">
           {pods.length === 0 ? (
-            <div className="text-center py-12 text-slate-500">
+            <div className="text-center py-12 text-gray-400">
               ไม่พบข้อมูล POD
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-white/10">
-                    <th className="text-left p-4 text-xs font-medium text-slate-400 uppercase">Job ID</th>
-                    <th className="text-left p-4 text-xs font-medium text-slate-400 uppercase">วันที่</th>
-                    <th className="text-left p-4 text-xs font-medium text-slate-400 uppercase">ลูกค้า</th>
-                    <th className="text-left p-4 text-xs font-medium text-slate-400 uppercase">คนขับ</th>
-                    <th className="text-center p-4 text-xs font-medium text-slate-400 uppercase">รูปถ่าย</th>
-                    <th className="text-center p-4 text-xs font-medium text-slate-400 uppercase">ลายเซ็น</th>
-                    <th className="text-left p-4 text-xs font-medium text-slate-400 uppercase">สถานะ</th>
-                    <th className="text-right p-4 text-xs font-medium text-slate-400 uppercase">Actions</th>
+                  <tr className="border-b border-gray-200">
+                    <th className="text-left p-4 text-xs font-medium text-gray-500 uppercase">Job ID</th>
+                    <th className="text-left p-4 text-xs font-medium text-gray-500 uppercase">วันที่</th>
+                    <th className="text-left p-4 text-xs font-medium text-gray-500 uppercase">ลูกค้า</th>
+                    <th className="text-left p-4 text-xs font-medium text-gray-500 uppercase">คนขับ</th>
+                    <th className="text-center p-4 text-xs font-medium text-gray-500 uppercase">รูปถ่าย</th>
+                    <th className="text-center p-4 text-xs font-medium text-gray-500 uppercase">ลายเซ็น</th>
+                    <th className="text-left p-4 text-xs font-medium text-gray-500 uppercase">สถานะ</th>
+                    <th className="text-right p-4 text-xs font-medium text-gray-500 uppercase">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {pods.map((pod) => (
                     <tr 
                       key={pod.Job_ID} 
-                      className="border-b border-white/5 hover:bg-white/5 transition-colors"
+                      className="border-b border-gray-200 hover:bg-white/5 transition-colors"
                     >
                       <td className="p-4">
                         <Link href={`/admin/jobs/${pod.Job_ID}`}>
-                          <span className="text-indigo-400 font-medium text-sm hover:underline cursor-pointer">{pod.Job_ID}</span>
+                          <span className="text-emerald-600 font-medium text-sm hover:underline cursor-pointer">{pod.Job_ID}</span>
                         </Link>
                       </td>
-                      <td className="p-4 text-sm text-slate-300">
+                      <td className="p-4 text-sm text-gray-700">
                         {pod.Plan_Date ? new Date(pod.Plan_Date).toLocaleDateString('th-TH', { timeZone: 'Asia/Bangkok' }) : "-"}
                       </td>
-                      <td className="p-4 text-sm text-white">{pod.Customer_Name || "-"}</td>
-                      <td className="p-4 text-sm text-slate-300">{pod.Driver_Name || "-"}</td>
+                      <td className="p-4 text-sm text-slate-900 font-medium">{pod.Customer_Name || "-"}</td>
+                      <td className="p-4 text-sm text-gray-700">{pod.Driver_Name || "-"}</td>
                       <td className="p-4 text-center">
                         {pod.Photo_Proof_Url ? (
                           <div className="relative w-10 h-10 mx-auto rounded border border-border overflow-hidden bg-muted group">
@@ -130,7 +130,7 @@ export default async function PODPage() {
                             <a href={pod.Photo_Proof_Url.split(',')[0]} target="_blank" rel="noreferrer" className="absolute inset-0 z-10" />
                           </div>
                         ) : (
-                          <span className="text-slate-500">-</span>
+                          <span className="text-gray-400">-</span>
                         )}
                       </td>
                       <td className="p-4 text-center">
@@ -145,12 +145,12 @@ export default async function PODPage() {
                            <a href={pod.Signature_Url} target="_blank" rel="noreferrer" className="absolute inset-0 z-10" />
                          </div>
                         ) : (
-                          <span className="text-slate-500">-</span>
+                          <span className="text-gray-400">-</span>
                         )}
                       </td>
                       <td className="p-4">
                         <span className={`flex items-center gap-1 w-fit px-2 py-0.5 rounded-full text-xs font-medium ${
-                          statusConfig[pod.Job_Status]?.color || 'text-slate-400 bg-slate-500/20'
+                          statusConfig[pod.Job_Status]?.color || 'text-gray-500 bg-slate-500/20'
                         }`}>
                           {statusConfig[pod.Job_Status]?.icon}
                           {statusConfig[pod.Job_Status]?.label || pod.Job_Status}
@@ -158,7 +158,7 @@ export default async function PODPage() {
                       </td>
                       <td className="p-4 text-right">
                         <Link href={`/admin/jobs/${pod.Job_ID}`}>
-                          <Button variant="ghost" size="sm" className="hover:bg-indigo-500/10">ดูรายละเอียด</Button>
+                          <Button variant="ghost" size="sm" className="hover:bg-emerald-500/10">ดูรายละเอียด</Button>
                         </Link>
                       </td>
                     </tr>

@@ -31,6 +31,7 @@ export function BranchProviderInner({ children, initialBranchParam }: { children
   // useSearchParams is now handled by the wrapper
 
   useEffect(() => {
+    let isMounted = true
     async function init() {
         try {
             const [fetchedBranches, roleId] = await Promise.all([
@@ -38,6 +39,8 @@ export function BranchProviderInner({ children, initialBranchParam }: { children
                 getCurrentUserRole()
             ])
             
+            if (!isMounted) return
+
             setBranches(fetchedBranches || [])
             setIsAdmin(roleId === 1)
 
@@ -61,11 +64,12 @@ export function BranchProviderInner({ children, initialBranchParam }: { children
       } catch (e) {
           console.error("Failed to init branch context", e)
       } finally {
-          setIsLoading(false)
+          if (isMounted) setIsLoading(false)
       }
-  }
-  init()
-}, [initialBranchParam])
+    }
+    init()
+    return () => { isMounted = false }
+  }, [initialBranchParam])
 
   const setSelectedBranch = (branchId: string) => {
     setSelectedBranchState(branchId)

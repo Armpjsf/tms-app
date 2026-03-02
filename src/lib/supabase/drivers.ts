@@ -205,7 +205,7 @@ export async function getAllDrivers(page?: number, limit?: number, query?: strin
 export async function getDriverStats(providedBranchId?: string) {
   try {
     const supabase = await createClient()
-    let query = supabase.from('Master_Drivers').select('Driver_ID, Role')
+    let query = supabase.from('Master_Drivers').select('*')
 
     const isAdmin = await isSuperAdmin()
     const branchId = providedBranchId || await getUserBranchId()
@@ -219,8 +219,30 @@ export async function getDriverStats(providedBranchId?: string) {
     const { data, error } = await query
     if (error) return { total: 0, active: 0, onJob: 0 }
     
+    // Get drivers currently on job (assigned to jobs with Plan_Date = today)
+    const today = new Date().toISOString().split('T')[0]
+    let onJobQuery = supabase
+      .from('Jobs_Main')
+      .select('Driver_ID')
+      .eq('Plan_Date', today)
+      .not('Driver_ID', 'is', null)
+      .in('Job_Status', ['Pending', 'Confirmed', 'In Progress'])
+
+    if (branchId && branchId !== 'All') {
+        onJobQuery = onJobQuery.eq('Branch_ID', branchId)
+    }
+
+    const { data: activeJobs } = await onJobQuery
+    const uniqueDriversOnJob = new Set(activeJobs?.map(j => j.Driver_ID)).size
+
     const total = data?.length || 0
-    return { total, active: total, onJob: Math.floor(total * 0.3) }
+    const active = data?.filter(d => d.Active_Status === 'Active').length || 0
+    
+    return { 
+      total, 
+      active, 
+      onJob: uniqueDriversOnJob 
+    }
   } catch {
     return { total: 0, active: 0, onJob: 0 }
   }

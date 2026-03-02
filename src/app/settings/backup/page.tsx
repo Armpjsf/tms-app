@@ -44,10 +44,10 @@ export default function BackupSettingsPage() {
           กลับไปตั้งค่า
         </Button>
         <h1 className="text-3xl font-bold text-white mb-2 flex items-center gap-3">
-          <Database className="text-blue-400" />
+          <Database className="text-emerald-500" />
           สำรองข้อมูล
         </h1>
-        <p className="text-slate-400">ดาวน์โหลดข้อมูลสำรองในรูปแบบ JSON</p>
+        <p className="text-gray-500">ดาวน์โหลดข้อมูลสำรองในรูปแบบ JSON</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -59,15 +59,15 @@ export default function BackupSettingsPage() {
             { label: "Maintenance", table: "Repair_Tickets", desc: "ประวัติการซ่อมบำรุง" },
             { label: "Customers", table: "Master_Customers", desc: "ฐานข้อมูลลูกค้า" },
         ].map((item) => (
-            <Card key={item.table} className="bg-slate-900/50 border-slate-800">
+            <Card key={item.table} className="bg-white/80 border-gray-200">
                 <CardContent className="p-6">
                     <div className="flex justify-between items-start mb-4">
                         <div className="p-3 rounded-lg bg-blue-500/10">
-                            <FileJson className="text-blue-400" size={24} />
+                            <FileJson className="text-emerald-500" size={24} />
                         </div>
                     </div>
                     <h3 className="text-lg font-bold text-white mb-1">{item.label}</h3>
-                    <p className="text-sm text-slate-500 mb-4">{item.desc}</p>
+                    <p className="text-sm text-gray-400 mb-4">{item.desc}</p>
                     <Button 
                         variant="outline" 
                         className="w-full gap-2" 

@@ -108,55 +108,55 @@ export function InvoiceForm({ customers }: { customers: any[] }) {
   return (
     <div className="space-y-6">
         {/* Customer & Dates */}
-        <Card className="bg-slate-900 border-slate-800">
+        <Card className="bg-white border-gray-200">
             <CardContent className="p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="space-y-2">
-                    <Label className="text-slate-300">ลูกค้า (Customer)</Label>
+                    <Label className="text-gray-700">ลูกค้า (Customer)</Label>
                     <CustomerAutocomplete 
                         value={customerId}
                         onChange={setCustomerId}
                         customers={customers}
                         onSelect={(c) => setCustomerId(c.Customer_ID)}
-                        className="bg-slate-800 border-slate-700"
+                        className="bg-gray-100 border-gray-200"
                     />
                 </div>
                 <div className="space-y-2">
-                    <Label className="text-slate-300">วันที่ออกเอกสาร (Issue Date)</Label>
+                    <Label className="text-gray-700">วันที่ออกเอกสาร (Issue Date)</Label>
                     <DateCallbackSelect date={issueDate} setDate={setIssueDate} />
                 </div>
                 <div className="space-y-2">
-                    <Label className="text-slate-300">วันครบกำหนด (Due Date)</Label>
+                    <Label className="text-gray-700">วันครบกำหนด (Due Date)</Label>
                     <DateCallbackSelect date={dueDate} setDate={setDueDate} />
                 </div>
             </CardContent>
         </Card>
 
         {/* Job Selection */}
-        <Card className="bg-slate-900 border-slate-800">
+        <Card className="bg-white border-gray-200">
             <CardContent className="p-0">
-                <div className="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-800/50">
-                    <h3 className="font-semibold text-slate-200 flex items-center gap-2">
+                <div className="p-4 border-b border-gray-200 flex justify-between items-center bg-gray-50">
+                    <h3 className="font-semibold text-gray-800 flex items-center gap-2">
                         <Calculator className="w-4 h-4 text-purple-400" />
                         รายการงานที่วางบิลได้ ({availableJobs.length})
                     </h3>
-                    <div className="text-xs text-slate-400">
+                    <div className="text-xs text-gray-500">
                         เลือก {selectedJobs.length} รายการ
                     </div>
                 </div>
                 
                 {fetchingJobs ? (
-                    <div className="p-8 flex justify-center text-slate-500 gap-2">
+                    <div className="p-8 flex justify-center text-gray-400 gap-2">
                         <Loader2 className="animate-spin" /> กำลังโหลดรายการงาน...
                     </div>
                 ) : availableJobs.length === 0 ? (
-                    <div className="p-8 text-center text-slate-500">
+                    <div className="p-8 text-center text-gray-400">
                         {customerId ? "ไม่มีงานที่รอวางบิลสำหรับลูกค้านี้" : "กรุณาเลือกลูกค้าก่อน"}
                     </div>
                 ) : (
                     <div className="max-h-[400px] overflow-y-auto">
                         <Table>
-                            <TableHeader className="bg-slate-800 sticky top-0 z-10">
-                                <TableRow className="border-slate-700">
+                            <TableHeader className="bg-gray-100 sticky top-0 z-10">
+                                <TableRow className="border-gray-200">
                                     <TableHead className="w-[50px]">
                                         <Checkbox 
                                             checked={selectedJobIds.length === availableJobs.length && availableJobs.length > 0}
@@ -167,15 +167,15 @@ export function InvoiceForm({ customers }: { customers: any[] }) {
                                             className="border-slate-500 data-[state=checked]:bg-purple-600 data-[state=checked]:border-purple-600"
                                         />
                                     </TableHead>
-                                    <TableHead className="text-slate-300">Job ID</TableHead>
-                                    <TableHead className="text-slate-300">วันที่</TableHead>
-                                    <TableHead className="text-slate-300">เส้นทาง</TableHead>
-                                    <TableHead className="text-right text-slate-300">ราคา</TableHead>
+                                    <TableHead className="text-gray-700">Job ID</TableHead>
+                                    <TableHead className="text-gray-700">วันที่</TableHead>
+                                    <TableHead className="text-gray-700">เส้นทาง</TableHead>
+                                    <TableHead className="text-right text-gray-700">ราคา</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {availableJobs.map((job) => (
-                                    <TableRow key={job.Job_ID} className="border-slate-800 hover:bg-slate-800/30">
+                                    <TableRow key={job.Job_ID} className="border-gray-200 hover:bg-gray-50">
                                         <TableCell>
                                             <Checkbox 
                                                 checked={selectedJobIds.includes(job.Job_ID)}
@@ -205,24 +205,24 @@ export function InvoiceForm({ customers }: { customers: any[] }) {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="md:col-span-2 space-y-4">
                  <div className="space-y-2">
-                    <Label className="text-slate-300">หมายเหตุ (Notes)</Label>
+                    <Label className="text-gray-700">หมายเหตุ (Notes)</Label>
                     <Input 
                         value={notes} 
                         onChange={(e) => setNotes(e.target.value)} 
-                        className="bg-slate-900 border-slate-800" 
+                        className="bg-white border-gray-200" 
                         placeholder="ระบุหมายเหตุ..."
                     />
                  </div>
             </div>
-            <Card className="bg-slate-900 border-slate-800 shadow-xl">
+            <Card className="bg-white border-gray-200 shadow-xl">
                 <CardContent className="p-6 space-y-4">
-                    <div className="flex justify-between text-sm text-slate-400">
+                    <div className="flex justify-between text-sm text-gray-500">
                         <span>รวมราคา ({selectedJobs.length} รายการ)</span>
                         <span>{subtotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                     </div>
                     
                     <div className="flex items-center justify-between text-sm">
-                        <span className="text-slate-400">VAT {vatRate}%</span>
+                        <span className="text-gray-500">VAT {vatRate}%</span>
                         <div className="flex items-center gap-2">
                             {/* Toggle VAT? For now assumed on, edit rate 0-7 */}
                         </div>
@@ -231,11 +231,11 @@ export function InvoiceForm({ customers }: { customers: any[] }) {
 
                     <div className="flex items-center justify-between text-sm">
                          <div className="flex items-center gap-2">
-                            <span className="text-slate-400">หัก ณ ที่จ่าย</span>
+                            <span className="text-gray-500">หัก ณ ที่จ่าย</span>
                             <select 
                                 value={whtRate} 
                                 onChange={(e) => setWhtRate(Number(e.target.value))}
-                                className="h-6 text-xs bg-slate-800 border-slate-700 rounded text-white"
+                                className="h-6 text-xs bg-gray-100 border-gray-200 rounded text-white"
                             >
                                 <option value="0">0%</option>
                                 <option value="1">1% (ขนส่ง)</option>
@@ -246,8 +246,8 @@ export function InvoiceForm({ customers }: { customers: any[] }) {
                          <span className="text-red-400">-{whtAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                     </div>
 
-                    <div className="border-t border-slate-800 pt-4 flex justify-between items-end">
-                        <div className="text-xs text-slate-500">
+                    <div className="border-t border-gray-200 pt-4 flex justify-between items-end">
+                        <div className="text-xs text-gray-400">
                             ยอดชำระสุทธิ (Net Total) <br/>
                             <span className="text-[10px]">(Grand Total: {grandTotal.toLocaleString()})</span>
                         </div>
@@ -278,7 +278,7 @@ function DateCallbackSelect({ date, setDate }: { date: Date | undefined, setDate
           <Button
             variant={"outline"}
             className={cn(
-              "w-full justify-start text-left font-normal bg-slate-800 border-slate-700 hover:bg-slate-700",
+              "w-full justify-start text-left font-normal bg-gray-100 border-gray-200 hover:bg-slate-700",
               !date && "text-muted-foreground"
             )}
           >
@@ -286,13 +286,13 @@ function DateCallbackSelect({ date, setDate }: { date: Date | undefined, setDate
             {date ? format(date, "PPP", { locale: th }) : <span>เลือกวันที่</span>}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-auto p-0 bg-slate-900 border-slate-800">
+        <PopoverContent className="w-auto p-0 bg-white border-gray-200">
           <Calendar
             mode="single"
             selected={date}
             onSelect={setDate}
             initialFocus
-            className="bg-slate-900 text-white"
+            className="bg-white text-white"
           />
         </PopoverContent>
       </Popover>

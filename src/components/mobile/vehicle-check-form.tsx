@@ -177,30 +177,30 @@ export function MobileVehicleCheckForm({ driverId, driverName, defaultVehiclePla
              />
         </div>
 
-        <Card className="bg-slate-900 border-slate-800">
+        <Card className="bg-white border-gray-200">
 
             <CardContent className="p-4 space-y-4">
                 
                 {/* Driver Info - Read Only */}
                 <div className="space-y-2">
-                    <Label className="text-white">ชื่อผู้ตรวจสอบ</Label>
+                    <Label className="text-foreground">ชื่อผู้ตรวจสอบ</Label>
                     <div className="relative">
-                        <User className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+                        <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                         <Input 
                             value={driverName} 
                             disabled 
-                            className="bg-slate-800 border-slate-700 pl-10 text-slate-300" 
+                            className="bg-gray-100 border-gray-200 pl-10 text-gray-700" 
                         />
                     </div>
                 </div>
 
                 <div className="space-y-2">
-                    <Label className="text-white">ทะเบียนรถ</Label>
+                    <Label className="text-foreground">ทะเบียนรถ</Label>
                     <div className="relative">
-                         <Truck className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+                         <Truck className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                         <Input 
                             placeholder="เลขทะเบียนรถ" 
-                            className="bg-slate-950 border-slate-700 pl-10 text-white"
+                            className="bg-background border-gray-200 pl-10 text-white"
                             value={plate}
                             onChange={(e) => setPlate(e.target.value)}
                             required
@@ -214,7 +214,7 @@ export function MobileVehicleCheckForm({ driverId, driverName, defaultVehiclePla
                 </div>
                 
                 {checklist.map((item) => (
-                    <div key={item} className="flex items-center space-x-3 p-3 rounded-lg bg-slate-950 border border-slate-800">
+                    <div key={item} className="flex items-center space-x-3 p-3 rounded-lg bg-background border border-gray-200">
                         <Checkbox 
                             id={item} 
                             checked={checkedItems[item] || false}
@@ -230,14 +230,14 @@ export function MobileVehicleCheckForm({ driverId, driverName, defaultVehiclePla
                     </div>
                 ))}
 
-                <div className="space-y-4 pt-4 border-t border-slate-800">
+                <div className="space-y-4 pt-4 border-t border-gray-200">
                     <div className="space-y-2">
-                        <Label className="text-white">ถ่ายรูปบริเวณจุดที่ตรวจสอบ (ถ้ามี)</Label>
+                        <Label className="text-foreground">ถ่ายรูปบริเวณจุดที่ตรวจสอบ (ถ้ามี)</Label>
                         <CameraInput onImagesChange={setPhotos} maxImages={5} />
                     </div>
 
                     <div className="space-y-2">
-                        <Label className="text-white font-medium">ลายเซ็นผู้ตรวจสอบ</Label>
+                        <Label className="text-gray-800 font-medium">ลายเซ็นผู้ตรวจสอบ</Label>
                         <SignaturePad onSave={setSignature} />
                     </div>
                 </div>
@@ -249,7 +249,7 @@ export function MobileVehicleCheckForm({ driverId, driverName, defaultVehiclePla
             className={`w-full h-14 font-bold text-lg shadow-lg transition-all ${
                 signature && !loading
                     ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-500/20" 
-                    : "bg-slate-800 text-slate-400 cursor-not-allowed"
+                    : "bg-gray-100 text-gray-500 cursor-not-allowed"
             }`}
             disabled={loading || !signature}
         >

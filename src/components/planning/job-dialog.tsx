@@ -18,6 +18,9 @@ import { useBranch } from "@/components/providers/branch-provider"
 import { Driver } from "@/lib/supabase/drivers"
 import { Vehicle } from "@/lib/supabase/vehicles"
 import { Customer } from "@/lib/supabase/customers"
+import { AiSuggestionCard } from "@/components/planning/ai-suggestion-card"
+import { geocodeAddress } from "@/lib/ai/geocoding"
+import { Search as SearchIcon } from "lucide-react"
 
 export type JobAssignment = {
   Vehicle_Type: string
@@ -92,7 +95,7 @@ type ExtraCost = {
 
 type JobDialogProps = {
   mode?: 'create' | 'edit'
-  job?: Job
+  job?: Job | null
   drivers?: Driver[]
   vehicles?: Vehicle[]
   customers?: Customer[]
@@ -188,7 +191,7 @@ export function JobDialog({
   )
 
   // Helper to safely parse JSON or return existing array
-  const parseJson = (val: any, defaultVal: any) => {
+  const parseJson = (val: unknown, defaultVal: any) => {
     if (!val) return defaultVal
     if (Array.isArray(val)) return val
     if (typeof val === 'string') {
@@ -255,6 +258,44 @@ export function JobDialog({
     navigator.clipboard.writeText(url)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
+  }
+
+  const handleGeocodeOrigin = async (index: number) => {
+    const origin = origins[index]
+    if (!origin.name) return
+    setLoading(true)
+    try {
+      const res = await geocodeAddress(origin.name)
+      if (res) {
+        updateOrigin(index, 'lat', res.lat.toString())
+        updateOrigin(index, 'lng', res.lng.toString())
+      } else {
+        alert("ไม่พบพิกัดสำหรับสถานที่นี้")
+      }
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleGeocodeDestination = async (index: number) => {
+    const dest = destinations[index]
+    if (!dest.name) return
+    setLoading(true)
+    try {
+      const res = await geocodeAddress(dest.name)
+      if (res) {
+        updateDestination(index, 'lat', res.lat.toString())
+        updateDestination(index, 'lng', res.lng.toString())
+      } else {
+        alert("ไม่พบพิกัดสำหรับสถานที่นี้")
+      }
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setLoading(false)
+    }
   }
 
   
@@ -473,7 +514,7 @@ export function JobDialog({
       {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-background border-border text-foreground">
         <DialogHeader>
-          <DialogTitle className="text-xl">
+          <DialogTitle className="text-2xl font-black text-slate-950">
             {mode === 'create' ? 'สร้างงานใหม่' : 'แก้ไขงาน'}
           </DialogTitle>
         </DialogHeader>
@@ -485,10 +526,10 @@ export function JobDialog({
               key={tab.id}
               type="button"
               onClick={() => setActiveTab(tab.id)}
-              className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+              className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-black transition-colors ${
                 activeTab === tab.id 
-                  ? 'bg-primary text-primary-foreground' 
-                  : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                  ? 'bg-emerald-600 text-white shadow-lg' 
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
               }`}
             >
               {tab.icon}
@@ -620,7 +661,7 @@ export function JobDialog({
                     onChange={(val) => setFormData(prev => ({ ...prev, Customer_Name: val }))}
                     customers={customers}
                     onSelect={handleCustomerSelect}
-                    className="bg-slate-800 border-slate-700"
+                    className="bg-background border-input"
                   />
                 </div>
                 <div className="space-y-2">
@@ -631,7 +672,7 @@ export function JobDialog({
                     value={formData.Cargo_Type}
                     onChange={(e) => setFormData({ ...formData, Cargo_Type: e.target.value })}
                     placeholder="ประเภทสินค้า"
-                    className="bg-slate-800 border-slate-700"
+                    className="bg-background border-input"
                   />
                 </div>
               </div>
@@ -703,19 +744,35 @@ export function JobDialog({
                                     locations={originLocations}
                                     className="bg-background border-input"
                                 />
-                                <div className="grid grid-cols-2 gap-2">
-                                    <Input
-                                        placeholder="Latitude"
-                                        value={origin.lat}
-                                        onChange={(e) => updateOrigin(index, 'lat', e.target.value)}
-                                        className="bg-background border-input text-xs"
-                                    />
-                                    <Input
-                                        placeholder="Longitude"
-                                        value={origin.lng}
-                                        onChange={(e) => updateOrigin(index, 'lng', e.target.value)}
-                                        className="bg-background border-input text-xs"
-                                    />
+                                <div className="grid grid-cols-12 gap-2">
+                                    <div className="col-span-5">
+                                        <Input
+                                            placeholder="Lat"
+                                            value={origin.lat}
+                                            onChange={(e) => updateOrigin(index, 'lat', e.target.value)}
+                                            className="bg-background border-input text-xs"
+                                        />
+                                    </div>
+                                    <div className="col-span-5">
+                                        <Input
+                                            placeholder="Lng"
+                                            value={origin.lng}
+                                            onChange={(e) => updateOrigin(index, 'lng', e.target.value)}
+                                            className="bg-background border-input text-xs"
+                                        />
+                                    </div>
+                                    <div className="col-span-2">
+                                        <Button 
+                                            type="button" 
+                                            size="icon" 
+                                            variant="outline" 
+                                            className="h-8 w-full bg-emerald-50 text-emerald-600 border-emerald-200"
+                                            onClick={() => handleGeocodeOrigin(index)}
+                                            title="ค้นหาพิกัด"
+                                        >
+                                            <SearchIcon className="w-3 h-3" />
+                                        </Button>
+                                    </div>
                                 </div>
                             </div>
                             <div className="col-span-12 flex justify-end">
@@ -737,10 +794,10 @@ export function JobDialog({
                     {/* Destinations */}
                     <div className="space-y-3">
                         <div className="flex items-center justify-between">
-                        <Label className="text-indigo-600 dark:text-indigo-400 flex items-center gap-2">
+                        <Label className="text-indigo-600 dark:text-emerald-600 flex items-center gap-2">
                             <MapPin className="w-4 h-4" /> จุดปลายทาง <span className="text-muted-foreground text-xs">({destinationLocations.length})</span>
                         </Label>
-                        <Button type="button" size="sm" variant="outline" onClick={addDestination} className="border-indigo-500/50 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/10 hover:text-indigo-700 dark:hover:text-indigo-300">
+                        <Button type="button" size="sm" variant="outline" onClick={addDestination} className="border-indigo-500/50 text-indigo-600 dark:text-emerald-600 hover:bg-emerald-500/10 hover:text-indigo-700 dark:hover:text-emerald-500">
                             <Plus className="w-4 h-4 mr-1" /> เพิ่มจุด
                         </Button>
                         </div>
@@ -757,19 +814,35 @@ export function JobDialog({
                                     locations={destinationLocations}
                                     className="bg-background border-input"
                                 />
-                                <div className="grid grid-cols-2 gap-2">
-                                    <Input
-                                        placeholder="Latitude"
-                                        value={dest.lat}
-                                        onChange={(e) => updateDestination(index, 'lat', e.target.value)}
-                                        className="bg-background border-input text-xs"
-                                    />
-                                    <Input
-                                        placeholder="Longitude"
-                                        value={dest.lng}
-                                        onChange={(e) => updateDestination(index, 'lng', e.target.value)}
-                                        className="bg-background border-input text-xs"
-                                    />
+                                <div className="grid grid-cols-12 gap-2">
+                                    <div className="col-span-5">
+                                        <Input
+                                            placeholder="Lat"
+                                            value={dest.lat}
+                                            onChange={(e) => updateDestination(index, 'lat', e.target.value)}
+                                            className="bg-background border-input text-xs"
+                                        />
+                                    </div>
+                                    <div className="col-span-5">
+                                        <Input
+                                            placeholder="Lng"
+                                            value={dest.lng}
+                                            onChange={(e) => updateDestination(index, 'lng', e.target.value)}
+                                            className="bg-background border-input text-xs"
+                                        />
+                                    </div>
+                                    <div className="col-span-2">
+                                        <Button 
+                                            type="button" 
+                                            size="icon" 
+                                            variant="outline" 
+                                            className="h-8 w-full bg-indigo-50 text-indigo-600 border-indigo-200 shadow-sm"
+                                            onClick={() => handleGeocodeDestination(index)}
+                                            title="ค้นหาพิกัด"
+                                        >
+                                            <SearchIcon className="w-3 h-3" />
+                                        </Button>
+                                    </div>
                                 </div>
                             </div>
                             <div className="col-span-12 flex justify-end">
@@ -798,10 +871,55 @@ export function JobDialog({
             <div className="space-y-4">
               {/* Assignment List */}
               {assignments.map((assignment, index: number) => (
-                <div key={index} className="p-4 bg-slate-800/50 rounded-lg border border-slate-700 relative group">
+                <div key={index} className="p-4 bg-muted/30 rounded-lg border border-border relative group">
+                    {/* AI Suggestion Section */}
+                    {mode === 'create' && index === 0 && (
+                        <div className="mb-4">
+                            <AiSuggestionCard 
+                                jobData={{
+                                    Pickup_Date: formData.Plan_Date,
+                                    Vehicle_Type: assignment.Vehicle_Type,
+                                    // Pass coordinates from first origin if available
+                                    Pickup_Lat: origins[0]?.lat ? Number(origins[0].lat) : undefined,
+                                    Pickup_Lon: origins[0]?.lng ? Number(origins[0].lng) : undefined
+                                }}
+                                onSelect={(s) => {
+                                    const newAssignments = [...assignments]
+                                    newAssignments[index] = {
+                                        ...newAssignments[index],
+                                        Driver_ID: s.Driver_ID,
+                                        Vehicle_Plate: s.Vehicle_Plate,
+                                        Vehicle_Type: s.Vehicle_Type,
+                                        // Auto-calculate suggested cost if AI provides it, otherwise keep current
+                                        Cost_Driver_Total: assignment.Cost_Driver_Total || 0,
+                                        Price_Cust_Total: assignment.Price_Cust_Total || 0
+                                    }
+                                    setAssignments(newAssignments)
+                                    
+                                    // Sync to main form data for the first assignment
+                                    if (index === 0) {
+                                        setFormData(prev => ({
+                                            ...prev,
+                                            Driver_ID: s.Driver_ID,
+                                            Vehicle_Plate: s.Vehicle_Plate,
+                                            Vehicle_Type: s.Vehicle_Type
+                                        }))
+                                    }
+                                }}
+                            />
+                            <div className="relative my-4">
+                                <div className="absolute inset-0 flex items-center">
+                                    <span className="w-full border-t border-border" />
+                                </div>
+                                <div className="relative flex justify-center text-xs uppercase">
+                                    <span className="bg-muted px-2 text-muted-foreground">หรือเลือกแบบกำหนดเอง (Manual Selection)</span>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                     {/* Header with Remove Button */}
                     <div className="flex justify-between items-center mb-3">
-                        <Label className="text-indigo-400 font-medium">
+                        <Label className="text-emerald-600 font-medium">
                             รถคันที่ {index + 1}
                         </Label>
                         {assignments.length > 1 && (
@@ -869,7 +987,7 @@ export function JobDialog({
                     </div>
 
                     <div className="space-y-2">
-                        <Label className="flex items-center gap-1 text-xs text-slate-400">
+                        <Label className="flex items-center gap-1 text-xs text-gray-500">
                            <User className="w-3 h-3" /> คนขับ
                         </Label>
                         <DriverAutocomplete
@@ -895,7 +1013,7 @@ export function JobDialog({
                                 }
                                 setAssignments(newAssignments)
                             }}
-                            className="bg-slate-800 border-slate-700 text-sm"
+                            className="bg-background border-input text-sm"
                         />
                     </div>
 
@@ -908,7 +1026,7 @@ export function JobDialog({
                                 type="number"
                                 value={assignment.Cost_Driver_Total}
                                 onChange={(e) => updateAssignment(index, 'Cost_Driver_Total', Number(e.target.value))}
-                                className="h-8 text-xs bg-slate-900 border-slate-700"
+                                className="h-8 text-xs bg-background border-input"
                             />
                         </div>
                         <div className="space-y-1">
@@ -919,7 +1037,7 @@ export function JobDialog({
                                 type="number"
                                 value={assignment.Price_Cust_Total}
                                 onChange={(e) => updateAssignment(index, 'Price_Cust_Total', Number(e.target.value))}
-                                className="h-8 text-xs bg-slate-900 border-slate-700"
+                                className="h-8 text-xs bg-background border-input"
                             />
                         </div>
                     </div>
@@ -930,7 +1048,7 @@ export function JobDialog({
                             {assignment.Show_Price_To_Driver ? (
                                 <Eye className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                             ) : (
-                                <EyeOff className="w-4 h-4 text-muted-foreground" />
+                                <EyeOff className="w-4 h-4 text-gray-700 font-bold" />
                             )}
                             <span className="text-sm font-medium">โชว์ค่าเที่ยวให้คนขับเห็น</span>
                         </div>
@@ -991,7 +1109,7 @@ export function JobDialog({
                                     <div className="flex items-center gap-2 mb-1">
                                         <span className="text-xs font-semibold text-muted-foreground">ตรวจสอบการบรรทุก (Capacity)</span>
                                         {(isOverweight || isOverVolume) && (
-                                            <span className="text-[10px] bg-red-500/20 text-red-600 dark:text-red-400 px-1.5 py-0.5 rounded-full font-bold animate-pulse">
+                                            <span className="text-[10px] bg-red-500/20 text-red-700 font-black px-1.5 py-0.5 rounded-full font-bold animate-pulse">
                                                 OVERLOAD
                                             </span>
                                         )}
@@ -1001,10 +1119,10 @@ export function JobDialog({
                                 {maxWeight > 0 && (
                                     <div className="space-y-1">
                                         <div className="flex justify-between text-[10px]">
-                                            <span className={isOverweight ? "text-red-600 dark:text-red-400" : "text-muted-foreground"}>
+                                            <span className={isOverweight ? "text-red-700 font-black" : "text-muted-foreground"}>
                                                 น้ำหนัก: {jobWeight.toLocaleString()} / {maxWeight.toLocaleString()} kg
                                             </span>
-                                            <span className={isOverweight ? "text-red-600 dark:text-red-400 font-bold" : "text-muted-foreground"}>
+                                            <span className={isOverweight ? "text-red-700 font-black font-bold" : "text-muted-foreground"}>
                                                 {weightPercent.toFixed(1)}%
                                             </span>
                                         </div>
@@ -1020,10 +1138,10 @@ export function JobDialog({
                                 {maxVolume > 0 && (
                                     <div className="space-y-1">
                                         <div className="flex justify-between text-[10px]">
-                                            <span className={isOverVolume ? "text-red-600 dark:text-red-400" : "text-muted-foreground"}>
+                                            <span className={isOverVolume ? "text-red-700 font-black" : "text-muted-foreground"}>
                                                 ปริมาตร: {jobVolume.toLocaleString()} / {maxVolume.toLocaleString()} m³
                                             </span>
-                                            <span className={isOverVolume ? "text-red-600 dark:text-red-400 font-bold" : "text-muted-foreground"}>
+                                            <span className={isOverVolume ? "text-red-700 font-black font-bold" : "text-muted-foreground"}>
                                                 {volumePercent.toFixed(1)}%
                                             </span>
                                         </div>
@@ -1046,7 +1164,7 @@ export function JobDialog({
                 type="button" 
                 variant="outline" 
                 onClick={addAssignment}
-                className="w-full border-dashed border-slate-600 hover:bg-slate-800 text-slate-400 hover:text-white"
+                className="w-full border-dashed border-border hover:bg-muted text-muted-foreground hover:text-emerald-600"
               >
                 <Plus className="w-4 h-4 mr-2" /> เพิ่มรถอีกคัน
               </Button>
@@ -1059,7 +1177,7 @@ export function JobDialog({
                   value={formData.Notes}
                   onChange={(e) => setFormData({ ...formData, Notes: e.target.value })}
                   placeholder="รายละเอียดเพิ่มเติม"
-                  className="bg-slate-800 border-slate-700"
+                  className="bg-background border-input"
                   rows={3}
                 />
               </div>
@@ -1144,8 +1262,8 @@ export function JobDialog({
                 ))}
 
                 <div className="p-3 bg-muted rounded-lg flex justify-between items-center text-sm">
-                    <span className="text-muted-foreground">รวมกำไรเบื้องต้น</span>
-                    <span className="font-bold text-emerald-600 dark:text-emerald-400">
+                    <span className="text-muted-foreground font-medium">รวมกำไรเบื้องต้น</span>
+                    <span className="font-bold text-emerald-700">
                         {(
                             (Number(formData.Price_Cust_Total || 0) + extraCosts.reduce((sum, c) => sum + Number(c.charge_cust || 0), 0)) - 
                             (Number(formData.Cost_Driver_Total || 0) + extraCosts.reduce((sum, c) => sum + Number(c.cost_driver || 0), 0))

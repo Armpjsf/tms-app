@@ -72,26 +72,26 @@ export function MobileMaintenanceForm({ driverId, driverName, defaultVehiclePlat
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-        <Card className="bg-slate-900 border-slate-800">
+        <Card className="bg-white border-gray-200">
             <CardContent className="p-4 space-y-4">
                 
                 <div className="space-y-2">
-                    <Label className="text-white">ชื่อผู้แจ้ง</Label>
+                    <Label className="text-foreground">ชื่อผู้แจ้ง</Label>
                     <div className="relative">
-                        <User className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+                        <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                         <Input 
                             value={driverName} 
                             disabled 
-                            className="bg-slate-800 border-slate-700 pl-10 text-slate-300" 
+                            className="bg-gray-100 border-gray-200 pl-10 text-gray-700" 
                         />
                     </div>
                 </div>
 
                 <div className="space-y-2">
-                    <Label className="text-white">ทะเบียนรถ</Label>
+                    <Label className="text-foreground">ทะเบียนรถ</Label>
                     <Input 
                         placeholder="เลขทะเบียนรถ" 
-                        className="bg-slate-950 border-slate-700 text-white"
+                        className="bg-background border-gray-200 text-white"
                         value={plate}
                         onChange={(e) => setPlate(e.target.value)}
                         required
@@ -99,13 +99,13 @@ export function MobileMaintenanceForm({ driverId, driverName, defaultVehiclePlat
                 </div>
 
                 <div className="space-y-2">
-                    <Label className="text-white">เลขไมล์</Label>
+                    <Label className="text-foreground">เลขไมล์</Label>
                     <div className="relative">
-                        <Gauge className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+                        <Gauge className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                         <Input 
                             type="number"
                             placeholder="เลขไมล์ปัจจุบัน" 
-                            className="bg-slate-950 border-slate-700 pl-10 text-white"
+                            className="bg-background border-gray-200 pl-10 text-white"
                             value={odometer}
                             onChange={(e) => setOdometer(e.target.value)}
                             required
@@ -114,12 +114,12 @@ export function MobileMaintenanceForm({ driverId, driverName, defaultVehiclePlat
                 </div>
 
                 <div className="space-y-2">
-                    <Label className="text-white">หัวข้อการซ่อม</Label>
+                    <Label className="text-foreground">หัวข้อการซ่อม</Label>
                     <div className="relative">
-                        <Wrench className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+                        <Wrench className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                         <Input 
                             placeholder="เช่น เบรคมีเสียงดัง, แอร์ไม่เย็น" 
-                            className="bg-slate-950 border-slate-700 pl-10 text-white"
+                            className="bg-background border-gray-200 pl-10 text-white"
                             value={title}
                             onChange={(e) => setTitle(e.target.value)}
                             required
@@ -128,10 +128,10 @@ export function MobileMaintenanceForm({ driverId, driverName, defaultVehiclePlat
                 </div>
 
                 <div className="space-y-2">
-                    <Label className="text-white">รายละเอียดเพิ่มเติม</Label>
+                    <Label className="text-foreground">รายละเอียดเพิ่มเติม</Label>
                     <Textarea 
                         placeholder="อธิบายอาการเสีย..." 
-                        className="bg-slate-950 border-slate-700 text-white min-h-[100px]"
+                        className="bg-background border-gray-200 text-white min-h-[100px]"
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
                         required
@@ -139,7 +139,7 @@ export function MobileMaintenanceForm({ driverId, driverName, defaultVehiclePlat
                 </div>
 
                 <div className="space-y-2">
-                    <Label className="text-white">รูปถ่ายอาการเสีย</Label>
+                    <Label className="text-foreground">รูปถ่ายอาการเสีย</Label>
                     <CameraInput onImagesChange={(files) => setPhoto(files[0] || null)} maxImages={3} />
                 </div>
             </CardContent>

@@ -88,19 +88,19 @@ export default async function MaintenancePage(props: Props) {
                     type="date" 
                     name="startDate"
                     defaultValue={startDate}
-                    className="bg-slate-900/60 border-slate-800 text-foreground w-auto rounded-xl"
+                    className="bg-white/80 border-gray-200 text-foreground w-auto rounded-xl"
                 />
                 <span className="text-muted-foreground">-</span>
                 <Input 
                     type="date" 
                     name="endDate"
                     defaultValue={endDate}
-                    className="bg-slate-900/60 border-slate-800 text-foreground w-auto rounded-xl"
+                    className="bg-white/80 border-gray-200 text-foreground w-auto rounded-xl"
                 />
                 <select 
                     name="status" 
                     defaultValue={status}
-                    className="h-10 rounded-xl border border-slate-800 bg-slate-900/60 px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    className="h-10 rounded-xl border border-gray-200 bg-white/80 px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-amber-500"
                 >
                     <option value="">ทุกสถานะ</option>
                     <option value="Pending">รอดำเนินการ</option>
@@ -121,7 +121,7 @@ export default async function MaintenancePage(props: Props) {
             ไม่พบรายการแจ้งซ่อม
           </div>
         ) : tickets.map((ticket) => (
-          <Card key={ticket.Ticket_ID} className="bg-slate-900/40 border-slate-800/80 backdrop-blur-sm hover:border-primary/50 transition-all shadow-xl hover:shadow-2xl hover:scale-[1.01] rounded-2xl relative group">
+          <Card key={ticket.Ticket_ID} className="bg-white/80 border-gray-200/80 backdrop-blur-sm hover:border-primary/50 transition-all shadow-xl hover:shadow-2xl hover:scale-[1.01] rounded-2xl relative group">
             <div className="absolute top-2 right-2 opacity-100 z-10 bg-background/50 rounded-full backdrop-blur-sm border border-border shadow-sm">
                  <MaintenanceActions 
                     ticket={ticket} 
@@ -145,7 +145,7 @@ export default async function MaintenancePage(props: Props) {
                 </div>
                 <span className={`px-2 py-0.5 rounded-full text-xs font-medium mt-1 mr-8 ${
                   ticket.Status === 'Completed' ? 'bg-emerald-500/20 text-emerald-400' :
-                  ticket.Status === 'In Progress' ? 'bg-blue-500/20 text-blue-400' :
+                  ticket.Status === 'In Progress' ? 'bg-emerald-500/15 text-emerald-500' :
                   ticket.Status === 'Rejected' ? 'bg-red-500/20 text-red-400' :
                   'bg-amber-500/20 text-amber-400'
                 }`}>

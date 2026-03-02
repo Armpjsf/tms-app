@@ -99,7 +99,7 @@ export default function AccountingSettingsPage() {
           กลับไปตั้งค่า
         </Button>
         <h1 className="text-3xl font-bold text-foreground mb-2 flex items-center gap-3">
-          <CloudSync className="text-indigo-400" />
+          <CloudSync className="text-emerald-600" />
           การเชื่อมต่อระบบบัญชี (Akaunting)
         </h1>
         <p className="text-muted-foreground">จัดการการเชื่อมต่อและตรวจสอบสถานะกับ Akaunting Cloud</p>
@@ -183,8 +183,8 @@ export default function AccountingSettingsPage() {
             <CardContent className="space-y-6">
                 <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg border border-border">
                     <div className="flex items-center gap-3">
-                        <div className="p-2 bg-indigo-500/10 rounded-lg">
-                            <CloudSync className="h-6 w-6 text-indigo-400" />
+                        <div className="p-2 bg-emerald-500/10 rounded-lg">
+                            <CloudSync className="h-6 w-6 text-emerald-600" />
                         </div>
                         <div>
                             <p className="text-sm font-medium text-foreground">Akaunting Cloud</p>

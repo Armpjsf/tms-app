@@ -1,6 +1,7 @@
-import { createClient } from '@/utils/supabase/server'
+import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { getUserBranchId, isSuperAdmin } from "@/lib/permissions"
 import { sendPushToDriver } from '@/lib/actions/push-actions'
+import { SupabaseClient } from '@supabase/supabase-js'
 
 export type ChatMessage = {
   id: number
@@ -21,23 +22,101 @@ export type ChatContact = {
   updated_at: string
 }
 
+// Helper to detect table and column casing
+export async function getChatSchema(supabase: SupabaseClient) {
+  let tableName = 'Chat_Messages'
+  // Check table casing
+  const { error: tableError } = await supabase.from('Chat_Messages').select('id').limit(1)
+  if (tableError && (tableError.code === '42P01' || tableError.message?.includes('not found'))) {
+    tableName = 'chat_messages'
+  }
+
+  // Common column names to check
+  const columns = {
+    id: 'id',
+    sender_id: 'sender_id',
+    receiver_id: 'receiver_id',
+    message: 'message',
+    is_read: 'is_read',
+    created_at: 'created_at'
+  }
+
+  // Detect column casing - try to fetch a single row to see keys
+  const { data } = await supabase.from(tableName).select('*').limit(1)
+  
+  if (data && data.length > 0) {
+    const row = data[0]
+    if ('Created_At' in row) columns.created_at = 'Created_At'
+    if ('Sender_ID' in row) columns.sender_id = 'Sender_ID'
+    if ('Receiver_ID' in row) columns.receiver_id = 'Receiver_ID'
+    if ('Message' in row) columns.message = 'Message'
+    if ('Is_Read' in row) columns.is_read = 'Is_Read'
+  } else {
+    // Fallback: If no data, try a quick probe for Created_At
+    const { error: probeError } = await supabase.from(tableName).select('Created_At').limit(1)
+    if (!probeError) {
+      columns.created_at = 'Created_At'
+      columns.sender_id = 'Sender_ID'
+      columns.receiver_id = 'Receiver_ID'
+      columns.message = 'Message'
+      columns.is_read = 'Is_Read'
+    }
+  }
+
+  return { tableName, columns }
+}
+
 // Get list of drivers with their last message
 export async function getChatContacts(): Promise<ChatContact[]> {
   try {
-    const supabase = await createClient()
+    let supabase = await createClient()
 
     // 0. Filter by Branch
     const branchId = await getUserBranchId()
     const isAdmin = await isSuperAdmin()
 
-    const query = supabase.from('Chat_Messages').select('*')
+    // 0. Detect correct schema
+    let { tableName, columns } = await getChatSchema(supabase)
 
-    const { data: messages, error } = await query.order('created_at', { ascending: false })
+    // Try normal client first
+    let result = await supabase
+      .from(tableName)
+      .select('*')
+      .order(columns.created_at, { ascending: false })
 
-    if (error) {
-      console.error('Error fetching chat messages:', error)
-      return []
+    let messages = result.data
+
+    // FALLBACK: Use Admin Client if error occurs (likely RLS / Auth issue)
+    if (result.error) {
+      console.warn(`[Chat] Normal client failed, trying Admin Client for table: ${tableName}. Error: ${JSON.stringify(result.error)}`)
+      const adminSupabase = createAdminClient()
+      
+      // Re-detect schema with admin client just in case
+      const adminSchema = await getChatSchema(adminSupabase)
+      tableName = adminSchema.tableName
+      columns = adminSchema.columns
+
+      const { data: adminMessages, error: adminError } = await adminSupabase
+        .from(tableName)
+        .select('*')
+        .order(columns.created_at, { ascending: false })
+      
+      if (adminError) {
+        console.error(`[Chat] CRITICAL: Admin Client also failed for table ${tableName} and column ${columns.created_at}: ${JSON.stringify(adminError)}`)
+        return []
+      }
+      messages = adminMessages
     }
+
+    // Normalizing results to lowercase keys for internal logic
+    const normalizedMessages = messages?.map(msg => ({
+        id: msg[columns.id],
+        sender_id: msg[columns.sender_id],
+        receiver_id: msg[columns.receiver_id],
+        message: msg[columns.message],
+        is_read: msg[columns.is_read],
+        created_at: msg[columns.created_at]
+    })) || []
 
     // 1. Get Drivers in my branch to filter messages
     let allowedDriverIds: Set<string> | null = null
@@ -55,7 +134,7 @@ export async function getChatContacts(): Promise<ChatContact[]> {
     // 2. Group by driver and find last message
     const contactMap = new Map<string, ChatContact>()
 
-    messages?.forEach((msg) => {
+    normalizedMessages.forEach((msg) => {
       const driverId = msg.sender_id === 'admin' ? msg.receiver_id : msg.sender_id
       
       if (allowedDriverIds && !allowedDriverIds.has(driverId)) return
@@ -89,38 +168,93 @@ export async function getChatContacts(): Promise<ChatContact[]> {
 // Get messages for a specific driver
 export async function getMessages(driverId: string): Promise<ChatMessage[]> {
   try {
-    const supabase = await createClient()
-    const { data, error } = await supabase
-      .from('Chat_Messages')
-      .select('*')
-      .or(`sender_id.eq.${driverId},receiver_id.eq.${driverId}`)
-      .order('created_at', { ascending: true })
+    let supabase = await createClient()
+    
+    // 0. Detect correct schema
+    let { tableName, columns } = await getChatSchema(supabase)
 
-    if (error) throw error
-    return data || []
+    let result = await supabase
+      .from(tableName)
+      .select('*')
+      .or(`${columns.sender_id}.eq.${driverId},${columns.receiver_id}.eq.${driverId}`)
+      .order(columns.created_at, { ascending: true })
+
+    let data = result.data
+
+    if (result.error) {
+        console.warn(`[Chat] Normal getMessages failed, trying Admin Client: ${JSON.stringify(result.error)}`)
+        const adminSupabase = createAdminClient()
+        
+        const adminSchema = await getChatSchema(adminSupabase)
+        tableName = adminSchema.tableName
+        columns = adminSchema.columns
+
+        const { data: adminData, error: adminError } = await adminSupabase
+            .from(tableName)
+            .select('*')
+            .or(`${columns.sender_id}.eq.${driverId},${columns.receiver_id}.eq.${driverId}`)
+            .order(columns.created_at, { ascending: true })
+        
+        if (adminError) {
+            console.error(`[Chat] getMessages Admin also failed: ${JSON.stringify(adminError)}`)
+            throw adminError
+        }
+        data = adminData
+    }
+
+    // Normalize
+    return data?.map(msg => ({
+        id: msg[columns.id],
+        sender_id: msg[columns.sender_id],
+        receiver_id: msg[columns.receiver_id],
+        message: msg[columns.message],
+        is_read: msg[columns.is_read],
+        created_at: msg[columns.created_at]
+    })) || []
   } catch (error) {
     console.error('Error fetching messages:', error)
     return []
   }
 }
 
+
 // Send a message (as admin)
 export async function sendMessage(driverId: string, driverName: string, message: string) {
   try {
     const supabase = await createClient()
+    
+    // 0. Detect correct schema
+    const { tableName, columns } = await getChatSchema(supabase)
+
+    const payload: any = {
+      [columns.sender_id]: 'admin',
+      [columns.receiver_id]: driverId,
+      [columns.message]: message,
+      [columns.is_read]: false,
+      [columns.created_at]: new Date().toISOString()
+    }
+
     const { data, error } = await supabase
-      .from('Chat_Messages')
-      .insert({
-        sender_id: 'admin',
-        receiver_id: driverId,
-        message: message,
-        is_read: false,
-        created_at: new Date().toISOString()
-      })
+      .from(tableName)
+      .insert(payload)
       .select()
       .single()
 
-    if (error) throw error
+    if (error) {
+        console.warn(`[Chat] sendMessage Normal client failed, trying Admin Client: ${JSON.stringify(error)}`)
+        const adminSupabase = createAdminClient()
+        const { data: adminData, error: adminError } = await adminSupabase
+            .from(tableName)
+            .insert(payload)
+            .select()
+            .single()
+        
+        if (adminError) {
+            console.error(`[Chat] sendMessage Admin failed: ${JSON.stringify(adminError)}`)
+            throw adminError
+        }
+        return { success: true, data: adminData }
+    }
 
     // Notify Driver via Push
     await sendPushToDriver(driverId, {
@@ -140,14 +274,29 @@ export async function sendMessage(driverId: string, driverName: string, message:
 export async function markAsRead(driverId: string) {
   try {
     const supabase = await createClient()
-    const { error } = await supabase
-      .from('Chat_Messages')
-      .update({ is_read: true })
-      .eq('receiver_id', 'admin')
-      .eq('sender_id', driverId)
-      .eq('is_read', false)
 
-    if (error) throw error
+    // 0. Detect correct schema
+    const { tableName, columns } = await getChatSchema(supabase)
+
+    const { error } = await supabase
+      .from(tableName)
+      .update({ [columns.is_read]: true })
+      .eq(columns.receiver_id, 'admin')
+      .eq(columns.sender_id, driverId)
+      .eq(columns.is_read, false)
+
+    if (error) {
+        console.warn(`[Chat] markAsRead Normal client failed, trying Admin Client: ${JSON.stringify(error)}`)
+        const adminSupabase = createAdminClient()
+        const { error: adminError } = await adminSupabase
+            .from(tableName)
+            .update({ [columns.is_read]: true })
+            .eq(columns.receiver_id, 'admin')
+            .eq(columns.sender_id, driverId)
+            .eq(columns.is_read, false)
+        
+        if (adminError) throw adminError
+    }
     return { success: true }
   } catch (error) {
     console.error('Error marking messages as read:', error)
@@ -159,13 +308,27 @@ export async function markAsRead(driverId: string) {
 export async function getUnreadChatCountForDriver(driverId: string): Promise<number> {
   try {
     const supabase = await createClient()
+
+    // 0. Detect correct schema
+    const { tableName, columns } = await getChatSchema(supabase)
+
     const { count, error } = await supabase
-      .from('Chat_Messages')
+      .from(tableName)
       .select('*', { count: 'exact', head: true })
-      .eq('receiver_id', driverId)
-      .eq('is_read', false)
+      .eq(columns.receiver_id, driverId)
+      .eq(columns.is_read, false)
     
-    if (error) return 0
+    if (error) {
+        const adminSupabase = createAdminClient()
+        const { count: adminCount, error: adminError } = await adminSupabase
+            .from(tableName)
+            .select('*', { count: 'exact', head: true })
+            .eq(columns.receiver_id, driverId)
+            .eq(columns.is_read, false)
+        
+        if (adminError) return 0
+        return adminCount || 0
+    }
     return count || 0
   } catch {
     return 0

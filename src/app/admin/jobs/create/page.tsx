@@ -25,9 +25,12 @@ import {
   Loader2,
   CheckCircle2,
   ChevronRight,
-  Eye
+  Eye,
+  Navigation
 } from "lucide-react"
 import { CustomerAutocomplete } from "@/components/customer-autocomplete"
+import { AiSuggestionCard } from "@/components/planning/ai-suggestion-card"
+import { DriverSuggestion } from "@/lib/ai/ai-assign"
 
 // Step indicator component
 function StepIndicator({ steps, currentStep }: { steps: string[], currentStep: number }) {
@@ -41,11 +44,11 @@ function StepIndicator({ steps, currentStep }: { steps: string[], currentStep: n
                 ? 'bg-emerald-500 text-white' 
                 : index === currentStep 
                 ? 'bg-blue-500 text-white ring-4 ring-blue-500/20' 
-                : 'bg-slate-700 text-slate-400'
+                : 'bg-slate-700 text-gray-500'
             }`}>
               {index < currentStep ? <CheckCircle2 className="w-4 h-4" /> : index + 1}
             </div>
-            <span className={`text-sm hidden md:block ${index <= currentStep ? 'text-white' : 'text-slate-500'}`}>
+            <span className={`text-sm hidden md:block ${index <= currentStep ? 'text-white' : 'text-gray-400'}`}>
               {step}
             </span>
           </div>
@@ -67,8 +70,9 @@ export default function CreateJobPage() {
   const [lists, setLists] = useState<{
     drivers: any[],
     vehicles: any[],
-    customers: any[]
-  }>({ drivers: [], vehicles: [], customers: [] })
+    customers: any[],
+    routes: any[]
+  }>({ drivers: [], vehicles: [], customers: [], routes: [] })
 
   useEffect(() => {
     getJobCreationData().then(data => {
@@ -99,7 +103,12 @@ export default function CreateJobPage() {
     Weight: '',
     Price_Cust_Total: '0',
     Cost_Driver_Total: '0',
-    Show_Price_To_Driver: true
+    Show_Price_To_Driver: true,
+    Pickup_Lat: null as number | null,
+    Pickup_Lon: null as number | null,
+    Delivery_Lat: null as number | null,
+    Delivery_Lon: null as number | null,
+    Est_Distance_KM: 0
   })
 
   // Autofill customer data when selected
@@ -109,10 +118,24 @@ export default function CreateJobPage() {
       Customer_Name: customer.Customer_Name,
       Customer_Phone: customer.Phone || customer.Customer_Phone || '',
       Customer_Address: customer.Address || customer.Customer_Address || '',
-      // Master Customers doesn't have location defaults, but we keep it safe
-      Origin_Location: customer.Origin_Location || '', 
-      Dest_Location: customer.Dest_Location || '' 
     }))
+  }
+
+  const handleRouteSelect = (routeName: string) => {
+    const route = lists.routes.find(r => r.Route_Name === routeName)
+    if (route) {
+      setFormData(prev => ({
+        ...prev,
+        Route_Name: route.Route_Name,
+        Origin_Location: route.Origin || '',
+        Dest_Location: route.Destination || '',
+        Pickup_Lat: route.Origin_Lat,
+        Pickup_Lon: route.Origin_Lon,
+        Delivery_Lat: route.Dest_Lat,
+        Delivery_Lon: route.Dest_Lon,
+        Est_Distance_KM: route.Distance_KM || 0,
+      }))
+    }
   }
 
   const handleDriverChange = (driverId: string) => {
@@ -150,6 +173,11 @@ export default function CreateJobPage() {
         Price_Cust_Total: parseFloat(formData.Price_Cust_Total) || 0,
         Cost_Driver_Total: parseFloat(formData.Cost_Driver_Total) || 0,
         Show_Price_To_Driver: formData.Show_Price_To_Driver,
+        Pickup_Lat: formData.Pickup_Lat,
+        Pickup_Lon: formData.Pickup_Lon,
+        Delivery_Lat: formData.Delivery_Lat,
+        Delivery_Lon: formData.Delivery_Lon,
+        Est_Distance_KM: formData.Est_Distance_KM,
         Job_Status: 'New'
       })
 
@@ -174,13 +202,13 @@ export default function CreateJobPage() {
       {/* Header */}
       <div className="flex items-center gap-4 mb-6">
         <Link href="/planning">
-          <Button variant="outline" size="icon" className="h-10 w-10 border-slate-700 bg-slate-900 hover:bg-slate-800">
-            <ArrowLeft className="h-5 w-5 text-slate-400" />
+          <Button variant="outline" size="icon" className="h-10 w-10 border-gray-200 bg-white hover:bg-gray-100">
+            <ArrowLeft className="h-5 w-5 text-gray-500" />
           </Button>
         </Link>
         <div>
           <h1 className="text-2xl font-bold text-white">สร้างงานใหม่</h1>
-          <p className="text-sm text-slate-400">กรอกข้อมูลเพื่อสร้างงานขนส่ง (เชื่อมต่อฐานข้อมูลจริง)</p>
+          <p className="text-sm text-gray-500">กรอกข้อมูลเพื่อสร้างงานขนส่ง (เชื่อมต่อฐานข้อมูลจริง)</p>
         </div>
       </div>
 
@@ -188,7 +216,7 @@ export default function CreateJobPage() {
       <StepIndicator steps={steps} currentStep={currentStep} />
 
       {/* Step Content */}
-      <Card className="bg-slate-900/50 border-slate-800 backdrop-blur-sm">
+      <Card className="bg-white/80 border-gray-200 backdrop-blur-sm">
         <CardContent className="p-6">
           
           {/* Step 1: Job Info */}
@@ -196,27 +224,27 @@ export default function CreateJobPage() {
             <div className="space-y-6">
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center">
-                  <Package className="w-5 h-5 text-blue-400" />
+                  <Package className="w-5 h-5 text-emerald-500" />
                 </div>
                 <div>
                   <h2 className="text-lg font-semibold text-white">ข้อมูลงาน</h2>
-                  <p className="text-sm text-slate-400">กำหนด Job ID และวันเวลาที่ต้องการ</p>
+                  <p className="text-sm text-gray-500">กำหนด Job ID และวันเวลาที่ต้องการ</p>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label className="text-slate-300">Job ID</Label>
+                  <Label className="text-gray-700">Job ID</Label>
                   <Input 
                     value={formData.Job_ID}
                     onChange={(e) => updateForm('Job_ID', e.target.value)}
-                    className="bg-slate-800 border-slate-700 text-white"
+                    className="bg-gray-100 border-gray-200 text-white"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-slate-300">ความเร่งด่วน</Label>
+                  <Label className="text-gray-700">ความเร่งด่วน</Label>
                   <Select value={formData.Priority} onValueChange={(val) => updateForm('Priority', val)}>
-                    <SelectTrigger className="bg-slate-800 border-slate-700 text-white">
+                    <SelectTrigger className="bg-gray-100 border-gray-200 text-white">
                       <SelectValue placeholder="เลือกความเร่งด่วน" />
                     </SelectTrigger>
                     <SelectContent>
@@ -227,47 +255,47 @@ export default function CreateJobPage() {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-slate-300 flex items-center gap-2">
+                  <Label className="text-gray-700 flex items-center gap-2">
                     <Calendar className="w-4 h-4" /> วันที่
                   </Label>
                   <Input 
                     type="date"
                     value={formData.Plan_Date}
                     onChange={(e) => updateForm('Plan_Date', e.target.value)}
-                    className="bg-slate-800 border-slate-700 text-white"
+                    className="bg-gray-100 border-gray-200 text-white"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-slate-300 flex items-center gap-2">
+                  <Label className="text-gray-700 flex items-center gap-2">
                     <Clock className="w-4 h-4" /> เวลา
                   </Label>
                   <Input 
                     type="time"
                     value={formData.Plan_Time}
                     onChange={(e) => updateForm('Plan_Time', e.target.value)}
-                    className="bg-slate-800 border-slate-700 text-white"
+                    className="bg-gray-100 border-gray-200 text-white"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label className="text-slate-300">ประเภทสินค้า</Label>
+                  <Label className="text-gray-700">ประเภทสินค้า</Label>
                   <Input 
                     placeholder="เช่น เอกสาร, อาหาร, วัสดุก่อสร้าง"
                     value={formData.Cargo_Type}
                     onChange={(e) => updateForm('Cargo_Type', e.target.value)}
-                    className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-500"
+                    className="bg-gray-100 border-gray-200 text-white placeholder:text-gray-400"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-slate-300">น้ำหนัก (kg)</Label>
+                  <Label className="text-gray-700">น้ำหนัก (kg)</Label>
                   <Input 
                     type="number"
                     placeholder="0"
                     value={formData.Weight}
                     onChange={(e) => updateForm('Weight', e.target.value)}
-                    className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-500"
+                    className="bg-gray-100 border-gray-200 text-white placeholder:text-gray-400"
                   />
                 </div>
               </div>
@@ -283,13 +311,13 @@ export default function CreateJobPage() {
                 </div>
                 <div>
                   <h2 className="text-lg font-semibold text-white">ข้อมูลลูกค้า</h2>
-                  <p className="text-sm text-slate-400">ข้อมูลผู้รับสินค้าและที่อยู่</p>
+                  <p className="text-sm text-gray-500">ข้อมูลผู้รับสินค้าและที่อยู่</p>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label className="text-slate-300 flex items-center gap-2">
+                  <Label className="text-gray-700 flex items-center gap-2">
                     <Building2 className="w-4 h-4" /> ชื่อลูกค้า / บริษัท
                   </Label>
                   <CustomerAutocomplete 
@@ -300,49 +328,91 @@ export default function CreateJobPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-slate-300 flex items-center gap-2">
+                  <Label className="text-gray-700 flex items-center gap-2">
                     <Phone className="w-4 h-4" /> เบอร์โทรศัพท์
                   </Label>
                   <Input 
                     placeholder="08X-XXX-XXXX"
                     value={formData.Customer_Phone}
                     onChange={(e) => updateForm('Customer_Phone', e.target.value)}
-                    className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-500"
+                    className="bg-gray-100 border-gray-200 text-white placeholder:text-gray-400"
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label className="text-slate-300 flex items-center gap-2">
+                <Label className="text-gray-700 flex items-center gap-2">
                   <MapPin className="w-4 h-4" /> ที่อยู่จัดส่ง
                 </Label>
                 <Textarea 
                   placeholder="กรอกที่อยู่เต็ม..."
                   value={formData.Customer_Address}
                   onChange={(e) => updateForm('Customer_Address', e.target.value)}
-                  className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-500 min-h-[100px]"
+                  className="bg-gray-100 border-gray-200 text-white placeholder:text-gray-400 min-h-[100px]"
                 />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-4 pt-4 border-t border-slate-700/50">
                 <div className="space-y-2">
-                  <Label className="text-slate-300">ต้นทาง</Label>
-                  <Input 
-                    placeholder="สถานที่รับสินค้า"
-                    value={formData.Origin_Location}
-                    onChange={(e) => updateForm('Origin_Location', e.target.value)}
-                    className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-500"
-                  />
+                  <Label className="text-emerald-400 flex items-center gap-2">
+                    <Navigation className="w-4 h-4" /> เลือกเส้นทางมาตรฐาน (Master Route)
+                  </Label>
+                  <Select value={formData.Route_Name} onValueChange={handleRouteSelect}>
+                    <SelectTrigger className="bg-emerald-500/5 border-emerald-500/30 text-white">
+                      <SelectValue placeholder="เลือกเส้นทาง..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {lists.routes.map(r => (
+                        <SelectItem key={r.Route_Name} value={r.Route_Name}>
+                          {r.Route_Name} ({r.Origin} → {r.Destination})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
-                <div className="space-y-2">
-                  <Label className="text-slate-300">ปลายทาง</Label>
-                  <Input 
-                    placeholder="สถานที่ส่งสินค้า"
-                    value={formData.Dest_Location}
-                    onChange={(e) => updateForm('Dest_Location', e.target.value)}
-                    className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-500"
-                  />
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label className="text-gray-700">ต้นทาง</Label>
+                    <Input 
+                      placeholder="สถานที่รับสินค้า"
+                      value={formData.Origin_Location}
+                      onChange={(e) => updateForm('Origin_Location', e.target.value)}
+                      className="bg-gray-100 border-gray-200 text-white placeholder:text-gray-400"
+                    />
+                    {formData.Pickup_Lat && (
+                      <div className="text-[10px] text-emerald-500 flex items-center gap-1 mt-1">
+                        <MapPin className="w-3 h-3" /> พิกัดต้นทาง: {formData.Pickup_Lat}, {formData.Pickup_Lon}
+                      </div>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-gray-700">ปลายทาง</Label>
+                    <Input 
+                      placeholder="สถานที่ส่งสินค้า"
+                      value={formData.Dest_Location}
+                      onChange={(e) => updateForm('Dest_Location', e.target.value)}
+                      className="bg-gray-100 border-gray-200 text-white placeholder:text-gray-400"
+                    />
+                    {formData.Delivery_Lat && (
+                      <div className="text-[10px] text-red-400 flex items-center gap-1 mt-1">
+                        <MapPin className="w-3 h-3" /> พิกัดปลายทาง: {formData.Delivery_Lat}, {formData.Delivery_Lon}
+                      </div>
+                    )}
+                  </div>
                 </div>
+
+                {formData.Est_Distance_KM > 0 && (
+                  <div className="p-3 bg-emerald-500/5 border border-emerald-500/20 rounded-xl flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                        <Navigation className="w-4 h-4 text-emerald-500" />
+                      </div>
+                      <span className="text-sm font-bold text-white uppercase tracking-wider">Distance Preview</span>
+                    </div>
+                    <span className="text-lg font-black text-emerald-400">{formData.Est_Distance_KM} KM</span>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -351,20 +421,43 @@ export default function CreateJobPage() {
           {currentStep === 2 && (
             <div className="space-y-6">
               <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center">
-                  <Truck className="w-5 h-5 text-indigo-400" />
+                <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center">
+                  <Truck className="w-5 h-5 text-emerald-600" />
                 </div>
                 <div>
                   <h2 className="text-lg font-semibold text-white">มอบหมายงาน</h2>
-                  <p className="text-sm text-slate-400">เลือกคนขับและรถที่จะใช้</p>
+                  <p className="text-sm text-gray-500">เลือกคนขับและรถที่จะใช้</p>
                 </div>
+              </div>
+
+              {/* AI Auto-Assign */}
+              <AiSuggestionCard
+                jobData={{
+                  Pickup_Lat: formData.Pickup_Lat,
+                  Pickup_Lon: formData.Pickup_Lon,
+                  Plan_Date: formData.Plan_Date,
+                }}
+                onSelect={(driver: DriverSuggestion) => {
+                  setFormData(prev => ({
+                    ...prev,
+                    Driver_ID: driver.Driver_ID,
+                    Driver_Name: driver.Driver_Name,
+                    Vehicle_Plate: driver.Vehicle_Plate,
+                  }))
+                }}
+              />
+
+              {/* Divider */}
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-200" /></div>
+                <div className="relative flex justify-center"><span className="px-3 text-[10px] font-bold text-gray-400 bg-white uppercase tracking-widest">หรือเลือกเอง</span></div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label className="text-slate-300">คนขับ</Label>
+                  <Label className="text-gray-700">คนขับ</Label>
                   <Select value={formData.Driver_ID} onValueChange={handleDriverChange}>
-                    <SelectTrigger className="bg-slate-800 border-slate-700 text-white">
+                    <SelectTrigger className="bg-gray-100 border-gray-200 text-white">
                       <SelectValue placeholder="เลือกคนขับ" />
                     </SelectTrigger>
                     <SelectContent>
@@ -377,9 +470,9 @@ export default function CreateJobPage() {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-slate-300">ทะเบียนรถ</Label>
+                  <Label className="text-gray-700">ทะเบียนรถ</Label>
                   <Select value={formData.Vehicle_Plate} onValueChange={(val) => updateForm('Vehicle_Plate', val)}>
-                    <SelectTrigger className="bg-slate-800 border-slate-700 text-white">
+                    <SelectTrigger className="bg-gray-100 border-gray-200 text-white">
                       <SelectValue placeholder="เลือกทะเบียนรถ" />
                     </SelectTrigger>
                     <SelectContent>
@@ -395,36 +488,36 @@ export default function CreateJobPage() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label className="text-slate-300 flex items-center gap-2">
+                  <Label className="text-gray-700 flex items-center gap-2">
                      <FileText className="w-4 h-4" /> ค่าจ้างรถ (บาท)
                   </Label>
                   <Input 
                     type="number"
                     value={formData.Cost_Driver_Total}
                     onChange={(e) => updateForm('Cost_Driver_Total', e.target.value)}
-                    className="bg-slate-800 border-slate-700 text-white"
+                    className="bg-gray-100 border-gray-200 text-white"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-slate-300 flex items-center gap-2">
+                  <Label className="text-gray-700 flex items-center gap-2">
                      <FileText className="w-4 h-4" /> ราคาลูกค้า (บาท)
                   </Label>
                   <Input 
                     type="number"
                     value={formData.Price_Cust_Total}
                     onChange={(e) => updateForm('Price_Cust_Total', e.target.value)}
-                    className="bg-slate-800 border-slate-700 text-white"
+                    className="bg-gray-100 border-gray-200 text-white"
                   />
                 </div>
               </div>
 
-              <div className="p-4 rounded-xl bg-slate-800/50 border border-slate-700 flex items-center justify-between">
+              <div className="p-4 rounded-xl bg-gray-50 border border-gray-200 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center">
                     <Eye className="w-4 h-4 text-emerald-400" />
                   </div>
                   <div>
-                    <Label className="text-white font-medium cursor-pointer" htmlFor="show-price">
+                    <Label className="text-gray-800 font-medium cursor-pointer" htmlFor="show-price">
                       โชว์ค่าเที่ยวให้คนขับเห็น
                     </Label>
                   </div>
@@ -437,14 +530,14 @@ export default function CreateJobPage() {
               </div>
 
               <div className="space-y-2">
-                <Label className="text-slate-300 flex items-center gap-2">
+                <Label className="text-gray-700 flex items-center gap-2">
                   <FileText className="w-4 h-4" /> หมายเหตุ
                 </Label>
                 <Textarea 
                   placeholder="รายละเอียดเพิ่มเติม..."
                   value={formData.Notes}
                   onChange={(e) => updateForm('Notes', e.target.value)}
-                  className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-500 min-h-[100px]"
+                  className="bg-gray-100 border-gray-200 text-white placeholder:text-gray-400 min-h-[100px]"
                 />
               </div>
             </div>
@@ -459,40 +552,40 @@ export default function CreateJobPage() {
                 </div>
                 <div>
                   <h2 className="text-lg font-semibold text-white">ยืนยันข้อมูล</h2>
-                  <p className="text-sm text-slate-400">ตรวจสอบข้อมูลก่อนสร้างงาน</p>
+                  <p className="text-sm text-gray-500">ตรวจสอบข้อมูลก่อนสร้างงาน</p>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Card className="bg-slate-800/50 border-slate-700">
+                <Card className="bg-gray-50 border-gray-200">
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-sm text-slate-400">ข้อมูลงาน</CardTitle>
+                    <CardTitle className="text-sm text-gray-500">ข้อมูลงาน</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-2 text-sm">
-                    <p><span className="text-slate-400">Job ID:</span> <span className="text-white font-medium">{formData.Job_ID}</span></p>
-                    <p><span className="text-slate-400">วันที่:</span> <span className="text-white">{formData.Plan_Date} {formData.Plan_Time}</span></p>
-                    <p><span className="text-slate-400">ประเภท:</span> <span className="text-white">{formData.Cargo_Type || '-'}</span></p>
+                    <p><span className="text-gray-500">Job ID:</span> <span className="text-gray-800 font-medium">{formData.Job_ID}</span></p>
+                    <p><span className="text-gray-500">วันที่:</span> <span className="text-foreground">{formData.Plan_Date} {formData.Plan_Time}</span></p>
+                    <p><span className="text-gray-500">ประเภท:</span> <span className="text-foreground">{formData.Cargo_Type || '-'}</span></p>
                   </CardContent>
                 </Card>
 
-                <Card className="bg-slate-800/50 border-slate-700">
+                <Card className="bg-gray-50 border-gray-200">
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-sm text-slate-400">ลูกค้า</CardTitle>
+                    <CardTitle className="text-sm text-gray-500">ลูกค้า</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-2 text-sm">
-                    <p><span className="text-slate-400">ชื่อ:</span> <span className="text-white">{formData.Customer_Name || '-'}</span></p>
-                    <p><span className="text-slate-400">โทร:</span> <span className="text-white">{formData.Customer_Phone || '-'}</span></p>
-                    <p><span className="text-slate-400">เส้นทาง:</span> <span className="text-white">{formData.Origin_Location || '-'} → {formData.Dest_Location || '-'}</span></p>
+                    <p><span className="text-gray-500">ชื่อ:</span> <span className="text-foreground">{formData.Customer_Name || '-'}</span></p>
+                    <p><span className="text-gray-500">โทร:</span> <span className="text-foreground">{formData.Customer_Phone || '-'}</span></p>
+                    <p><span className="text-gray-500">เส้นทาง:</span> <span className="text-foreground">{formData.Origin_Location || '-'} → {formData.Dest_Location || '-'}</span></p>
                   </CardContent>
                 </Card>
 
-                <Card className="bg-slate-800/50 border-slate-700 md:col-span-2">
+                <Card className="bg-gray-50 border-gray-200 md:col-span-2">
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-sm text-slate-400">มอบหมาย</CardTitle>
+                    <CardTitle className="text-sm text-gray-500">มอบหมาย</CardTitle>
                   </CardHeader>
                   <CardContent className="flex gap-8 text-sm">
-                    <p><span className="text-slate-400">คนขับ:</span> <span className="text-white">{formData.Driver_Name || 'ยังไม่ระบุ'}</span></p>
-                    <p><span className="text-slate-400">รถ:</span> <span className="text-white">{formData.Vehicle_Plate || 'ยังไม่ระบุ'}</span></p>
+                    <p><span className="text-gray-500">คนขับ:</span> <span className="text-foreground">{formData.Driver_Name || 'ยังไม่ระบุ'}</span></p>
+                    <p><span className="text-gray-500">รถ:</span> <span className="text-foreground">{formData.Vehicle_Plate || 'ยังไม่ระบุ'}</span></p>
                   </CardContent>
                 </Card>
               </div>
@@ -500,13 +593,13 @@ export default function CreateJobPage() {
           )}
 
           {/* Navigation */}
-          <div className="flex justify-between mt-8 pt-6 border-t border-slate-700">
-            <Button variant="outline" onClick={prevStep} disabled={currentStep === 0} className="border-slate-700">
+          <div className="flex justify-between mt-8 pt-6 border-t border-gray-200">
+            <Button variant="outline" onClick={prevStep} disabled={currentStep === 0} className="border-gray-200">
               ย้อนกลับ
             </Button>
             
             {currentStep < steps.length - 1 ? (
-              <Button onClick={nextStep} className="bg-blue-600 hover:bg-blue-700">
+              <Button onClick={nextStep} className="bg-emerald-600 hover:bg-blue-700">
                 ถัดไป <ChevronRight className="w-4 h-4 ml-1" />
               </Button>
             ) : (

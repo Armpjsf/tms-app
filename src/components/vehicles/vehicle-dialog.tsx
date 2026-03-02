@@ -63,7 +63,10 @@ export function VehicleDialog({
     branch_id: vehicle?.branch_id || '',
     sub_id: vehicle?.sub_id || '',
     max_weight_kg: vehicle?.max_weight_kg || 0,
-    max_volume_cbm: vehicle?.max_volume_cbm || 0
+    max_volume_cbm: vehicle?.max_volume_cbm || 0,
+    tax_expiry: vehicle?.tax_expiry || '',
+    insurance_expiry: vehicle?.insurance_expiry || '',
+    act_expiry: vehicle?.act_expiry || ''
   })
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -91,7 +94,10 @@ export function VehicleDialog({
             branch_id: '',
             sub_id: '',
             max_weight_kg: 0,
-            max_volume_cbm: 0
+            max_volume_cbm: 0,
+            tax_expiry: '',
+            insurance_expiry: '',
+            act_expiry: ''
         })
       }
       router.refresh()
@@ -106,16 +112,16 @@ export function VehicleDialog({
   return (
     <Dialog open={show} onOpenChange={setShow}>
       {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
-      <DialogContent className="sm:max-w-[425px] bg-slate-900/95 border-white/10 text-white">
+      <DialogContent className="sm:max-w-[425px] bg-white border-gray-200 text-gray-900">
         <DialogHeader>
           <DialogTitle>{mode === 'create' ? 'เพิ่มรถใหม่' : 'แก้ไขข้อมูลรถ'}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 mt-4">
           {branches.length > 0 && (
             <div className="space-y-2">
-                <Label htmlFor="Branch_ID" className="text-yellow-400">เลือกสาขา (Super Admin)</Label>
+                <Label htmlFor="Branch_ID" className="text-amber-600 font-bold">เลือกสาขา (Super Admin)</Label>
                 <Select value={formData.branch_id || undefined} onValueChange={(val) => setFormData({ ...formData, branch_id: val })}>
-                    <SelectTrigger className="w-full h-10 border-yellow-500/50 bg-yellow-500/10 text-white">
+                    <SelectTrigger className="w-full h-10 border-amber-200 bg-amber-50 text-gray-900">
                         <SelectValue placeholder="-- เลือกสาขา --" />
                     </SelectTrigger>
                     <SelectContent>
@@ -131,9 +137,9 @@ export function VehicleDialog({
 
           {subcontractors && subcontractors.length > 0 && (
             <div className="space-y-2">
-                <Label htmlFor="sub_id" className="text-blue-400">รถร่วมบริการ (Subcontractor)</Label>
+                <Label htmlFor="sub_id" className="text-blue-700 font-bold">รถร่วมบริการ (Subcontractor)</Label>
                 <Select value={formData.sub_id || "__company__"} onValueChange={(val) => setFormData({ ...formData, sub_id: val === "__company__" ? "" : val })}>
-                    <SelectTrigger className="w-full h-10 border-blue-500/50 bg-blue-500/10 text-white">
+                    <SelectTrigger className="w-full h-10 border-blue-200 bg-blue-50 text-gray-900">
                         <SelectValue placeholder="-- รถบริษัท (Company Fleet) --" />
                     </SelectTrigger>
                     <SelectContent>
@@ -155,7 +161,7 @@ export function VehicleDialog({
               placeholder="1กข-1234"
               required
               disabled={mode === 'edit'}
-              className="bg-white/5 border-white/10"
+              className="bg-gray-50 border-gray-200 text-gray-900"
             />
           </div>
           
@@ -167,7 +173,7 @@ export function VehicleDialog({
                 value={formData.brand}
                 onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
                 placeholder="Toyota"
-                className="bg-white/5 border-white/10"
+                className="bg-gray-50 border-gray-200 text-gray-900"
                 />
             </div>
             <div className="space-y-2">
@@ -177,7 +183,7 @@ export function VehicleDialog({
                 value={formData.model}
                 onChange={(e) => setFormData({ ...formData, model: e.target.value })}
                 placeholder="Hilux Revo"
-                className="bg-white/5 border-white/10"
+                className="bg-gray-50 border-gray-200 text-gray-900"
                 />
             </div>
           </div>
@@ -190,7 +196,7 @@ export function VehicleDialog({
                 type="number"
                 value={formData.current_mileage}
                 onChange={(e) => setFormData({ ...formData, current_mileage: Number(e.target.value) })}
-                className="bg-white/5 border-white/10"
+                className="bg-gray-50 border-gray-200 text-gray-900"
                 />
             </div>
             <div className="space-y-2">
@@ -200,12 +206,12 @@ export function VehicleDialog({
                 type="number"
                 value={formData.next_service_mileage}
                 onChange={(e) => setFormData({ ...formData, next_service_mileage: Number(e.target.value) })}
-                className="bg-white/5 border-white/10"
+                className="bg-gray-50 border-gray-200 text-gray-900"
                 />
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4 border-t border-white/10 pt-4">
+          <div className="grid grid-cols-2 gap-4 border-t border-gray-200 pt-4">
              <div className="space-y-2">
                 <Label htmlFor="max_weight_kg" className="text-emerald-400">น้ำหนักบรรทุกสูงสุด (kg)</Label>
                 <Input
@@ -214,7 +220,7 @@ export function VehicleDialog({
                 value={formData.max_weight_kg}
                 onChange={(e) => setFormData({ ...formData, max_weight_kg: Number(e.target.value) })}
                 placeholder="e.g. 1500"
-                className="bg-white/5 border-emerald-500/30 text-emerald-100"
+                className="bg-emerald-50 border-emerald-200 text-emerald-900"
                 />
             </div>
             <div className="space-y-2">
@@ -226,8 +232,47 @@ export function VehicleDialog({
                 onChange={(e) => setFormData({ ...formData, max_volume_cbm: Number(e.target.value) })}
                 placeholder="e.g. 2.5"
                 step="0.1"
-                className="bg-white/5 border-emerald-500/30 text-emerald-100"
+                className="bg-emerald-50 border-emerald-200 text-emerald-900"
                 />
+            </div>
+          </div>
+
+          <div className="space-y-3 border-t border-gray-200 pt-4">
+            <Label className="text-blue-400 font-bold block mb-1">เอกสารสำคัญ (Compliance)</Label>
+            
+            <div className="grid grid-cols-1 gap-3">
+                <div className="grid grid-cols-2 items-center gap-4">
+                    <Label htmlFor="tax_expiry" className="text-xs">ภาษีรถ (Tax Expiry)</Label>
+                    <Input
+                        id="tax_expiry"
+                        type="date"
+                        value={formData.tax_expiry}
+                        onChange={(e) => setFormData({ ...formData, tax_expiry: e.target.value })}
+                        className="bg-gray-50 border-gray-200 h-9 text-xs text-gray-900"
+                    />
+                </div>
+                
+                <div className="grid grid-cols-2 items-center gap-4">
+                    <Label htmlFor="insurance_expiry" className="text-xs">ประกันภัย (Insurance)</Label>
+                    <Input
+                        id="insurance_expiry"
+                        type="date"
+                        value={formData.insurance_expiry}
+                        onChange={(e) => setFormData({ ...formData, insurance_expiry: e.target.value })}
+                        className="bg-gray-50 border-gray-200 h-9 text-xs text-gray-900"
+                    />
+                </div>
+
+                <div className="grid grid-cols-2 items-center gap-4">
+                    <Label htmlFor="act_expiry" className="text-xs">พ.ร.บ. (ACT Expiry)</Label>
+                    <Input
+                        id="act_expiry"
+                        type="date"
+                        value={formData.act_expiry}
+                        onChange={(e) => setFormData({ ...formData, act_expiry: e.target.value })}
+                        className="bg-gray-50 border-gray-200 h-9 text-xs text-gray-900"
+                    />
+                </div>
             </div>
           </div>
 
@@ -238,7 +283,7 @@ export function VehicleDialog({
           <div className="space-y-2">
             <Label htmlFor="vehicle_type">ประเภทรถ</Label>
             <Select value={formData.vehicle_type} onValueChange={(val) => setFormData({ ...formData, vehicle_type: val })}>
-                <SelectTrigger className="w-full h-10 border-white/10 bg-white/5 text-white">
+                <SelectTrigger className="w-full h-10 border-gray-200 bg-gray-50 text-gray-900">
                     <SelectValue placeholder="เลือกประเภทรถ" />
                 </SelectTrigger>
                 <SelectContent>
@@ -263,7 +308,7 @@ export function VehicleDialog({
              <div className="space-y-2">
               <Label htmlFor="active_status">สถานะ</Label>
               <Select value={formData.active_status} onValueChange={(val) => setFormData({ ...formData, active_status: val })}>
-                <SelectTrigger className="w-full h-10 border-white/10 bg-white/5 text-white">
+                <SelectTrigger className="w-full h-10 border-gray-200 bg-gray-50 text-gray-900">
                     <SelectValue placeholder="เลือกสถานะ" />
                 </SelectTrigger>
                 <SelectContent>

@@ -1,6 +1,7 @@
 "use server"
 
 import { createClient } from '@/utils/supabase/server'
+import { getChatSchema } from './chat'
 import { getUserBranchId, isSuperAdmin } from '@/lib/permissions'
 import { cookies } from 'next/headers'
 
@@ -139,12 +140,15 @@ export async function getNotifications(): Promise<AppNotification[]> {
 
   try {
     // 4. Unread Chat Messages from Drivers
+    // Detect correct schema resilience
+    const { tableName: chatTableName, columns: chatCols } = await getChatSchema(supabase)
+
     const chatQuery = supabase
-      .from('Chat_Messages')
-      .select('id, sender_id, message, created_at')
-      .eq('receiver_id', 'admin')
-      .eq('is_read', false)
-      .order('created_at', { ascending: false })
+      .from(chatTableName)
+      .select('*')
+      .eq(chatCols.receiver_id, 'admin')
+      .eq(chatCols.is_read, false)
+      .order(chatCols.created_at, { ascending: false })
       .limit(10)
 
     const { data: unreadMsgs } = await chatQuery
@@ -154,12 +158,16 @@ export async function getNotifications(): Promise<AppNotification[]> {
       const { data: drivers } = await supabase
         .from('Master_Drivers')
         .select('Driver_ID, Driver_Name, Branch_ID')
-        .in('Driver_ID', unreadMsgs.map(m => m.sender_id))
+        .in('Driver_ID', (unreadMsgs as any[]).map(m => m[chatCols.sender_id]))
 
-      const driverMap = new Map(drivers?.map(d => [d.Driver_ID, d]) || [])
+      const driverMap = new Map<string, any>()
+      if (drivers) {
+        drivers.forEach(d => driverMap.set(d.Driver_ID, d))
+      }
 
-      unreadMsgs.forEach(msg => {
-        const driver = driverMap.get(msg.sender_id)
+      (unreadMsgs as any[]).forEach((msg: any) => {
+        const senderId = msg[chatCols.sender_id]
+        const driver = driverMap.get(senderId)
         
         // Filter by branch if needed
         if (isAdmin && selectedBranch && selectedBranch !== 'All') {
@@ -169,11 +177,11 @@ export async function getNotifications(): Promise<AppNotification[]> {
         }
 
         notifications.push({
-          id: `chat-${msg.id}`,
+          id: `chat-${msg[chatCols.id]}`,
           type: 'system', // or use a new 'message' type if UI supports it
-          title: `💬 ข้อความใหม่จาก ${driver?.Driver_Name || msg.sender_id}`,
-          message: msg.message,
-          timestamp: msg.created_at,
+          title: `💬 ข้อความใหม่จาก ${driver?.Driver_Name || senderId}`,
+          message: msg[chatCols.message],
+          timestamp: msg[chatCols.created_at],
           read: false,
           href: '/chat',
           severity: 'info'

@@ -14,17 +14,17 @@ export function RouteRiskAnalysis({ risks }: { risks: RouteRisk[] }) {
         <div>
             <h2 className="text-lg font-bold uppercase tracking-[0.2em] flex items-center gap-2">
                 Route Risk Analysis
-                <span className="text-[10px] bg-slate-700 text-slate-300 px-2 py-0.5 rounded-full normal-case tracking-normal">Beta</span>
+                <span className="text-[10px] bg-slate-700 text-gray-700 px-2 py-0.5 rounded-full normal-case tracking-normal">Beta</span>
             </h2>
-            <p className="text-xs text-slate-500">Historical failure & delay probability per route</p>
+            <p className="text-xs text-gray-400">Historical failure & delay probability per route</p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Risk Heatmap List */}
-        <Card className="lg:col-span-2 bg-slate-900/50 border-slate-800 backdrop-blur-sm">
-           <CardHeader className="border-b border-white/5 pb-4">
-             <CardTitle className="text-sm font-medium text-slate-200 flex items-center gap-2">
+        <Card className="lg:col-span-2 bg-white/80 border-gray-200 backdrop-blur-sm">
+           <CardHeader className="border-b border-gray-200 pb-4">
+             <CardTitle className="text-sm font-medium text-gray-800 flex items-center gap-2">
                <MapPin size={16} className="text-orange-400" />
                Highest Risk Routes
              </CardTitle>
@@ -38,15 +38,15 @@ export function RouteRiskAnalysis({ risks }: { risks: RouteRisk[] }) {
                                 <div className={`text-sm font-bold ${r.risk_level === 'High' ? 'text-red-500' : r.risk_level === 'Medium' ? 'text-yellow-500' : 'text-emerald-500'}`}>
                                     {r.risk_score}
                                 </div>
-                                <div className="text-[10px] text-slate-600 uppercase">Score</div>
+                                <div className="text-[10px] text-gray-500 uppercase">Score</div>
                             </div>
                             
                             <div>
-                                <div className="text-white font-medium text-sm group-hover:text-orange-400 transition-colors">
+                                <div className="text-gray-800 font-medium text-sm group-hover:text-orange-400 transition-colors">
                                     {r.route_name}
                                 </div>
                                 <div className="flex items-center gap-3 mt-1.5">
-                                    <div className="flex items-center gap-1.5 text-xs text-slate-400">
+                                    <div className="flex items-center gap-1.5 text-xs text-gray-500">
                                         <div className="w-1.5 h-1.5 rounded-full bg-slate-600"></div>
                                         {r.total_jobs} Jobs
                                     </div>
@@ -61,11 +61,11 @@ export function RouteRiskAnalysis({ risks }: { risks: RouteRisk[] }) {
                         <div className="flex items-center gap-4">
                              {/* Mini Bar Chart for Risk Factors */}
                              <div className="hidden md:flex flex-col gap-1 w-24">
-                                <div className="flex justify-between text-[10px] text-slate-500">
+                                <div className="flex justify-between text-[10px] text-gray-400">
                                     <span>Reliability</span>
                                     <span>{100 - Math.round(r.failure_count / r.total_jobs * 100)}%</span>
                                 </div>
-                                <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
+                                <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
                                     <div 
                                         className={`h-full rounded-full ${r.risk_level === 'High' ? 'bg-red-500' : 'bg-emerald-500'}`} 
                                         style={{ width: `${100 - (r.failure_count / r.total_jobs * 100)}%` }}
@@ -84,7 +84,7 @@ export function RouteRiskAnalysis({ risks }: { risks: RouteRisk[] }) {
                     </div>
                 ))}
                 {risks.length === 0 && (
-                     <div className="py-8 text-center text-slate-500 text-sm">ไม่พบข้อมูลความเสี่ยง</div>
+                     <div className="py-8 text-center text-gray-400 text-sm">ไม่พบข้อมูลความเสี่ยง</div>
                 )}
              </div>
            </CardContent>

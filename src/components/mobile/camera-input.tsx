@@ -79,7 +79,7 @@ export function CameraInput({ onImagesChange, maxImages = 5 }: Props) {
       {previews.length > 0 && (
         <div className="grid grid-cols-2 gap-2">
             {previews.map((src, index) => (
-                <div key={index} className="relative rounded-xl overflow-hidden border border-slate-700 aspect-video bg-slate-900 group">
+                <div key={index} className="relative rounded-xl overflow-hidden border border-gray-200 aspect-video bg-white group">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={src} alt={`Captured ${index + 1}`} className="w-full h-full object-cover" />
                     <button
@@ -97,7 +97,7 @@ export function CameraInput({ onImagesChange, maxImages = 5 }: Props) {
                 <button
                     type="button"
                     onClick={triggerCamera}
-                    className="aspect-video rounded-xl border-2 border-dashed border-slate-700 bg-slate-900/50 flex flex-col items-center justify-center gap-2 text-slate-500 hover:text-slate-300 hover:border-slate-500 transition-colors active:bg-slate-800"
+                    className="aspect-video rounded-xl border-2 border-dashed border-gray-200 bg-white/80 flex flex-col items-center justify-center gap-2 text-gray-400 hover:text-gray-700 hover:border-slate-500 transition-colors active:bg-gray-100"
                 >
                     <Plus size={24} />
                     <span className="text-xs">เพิ่มรูป</span>
@@ -111,9 +111,9 @@ export function CameraInput({ onImagesChange, maxImages = 5 }: Props) {
         <button
           type="button"
           onClick={triggerCamera}
-          className="w-full aspect-video rounded-xl border-2 border-dashed border-slate-700 bg-slate-900/50 flex flex-col items-center justify-center gap-2 text-slate-500 hover:text-slate-300 hover:border-slate-500 transition-colors active:bg-slate-800"
+          className="w-full aspect-video rounded-xl border-2 border-dashed border-gray-200 bg-white/80 flex flex-col items-center justify-center gap-2 text-gray-400 hover:text-gray-700 hover:border-slate-500 transition-colors active:bg-gray-100"
         >
-          <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center">
+          <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center">
             <Camera size={24} />
           </div>
           <span className="text-sm font-medium">ถ่ายรูปสินค้า ({files.length}/{maxImages})</span>

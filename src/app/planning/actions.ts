@@ -13,6 +13,7 @@ export type JobFormData = {
   Job_ID: string
   Branch_ID?: string | null
   Plan_Date?: string | null
+  Pickup_Date?: string | null
   Delivery_Date?: string | null
   Customer_Name?: string | null
   Route_Name?: string | null
@@ -34,6 +35,11 @@ export type JobFormData = {
   Volume_Cbm?: number | null
   Origin_Location?: string | null
   Dest_Location?: string | null
+  Est_Distance_KM?: number | null
+  Pickup_Lat?: number | null
+  Pickup_Lon?: number | null
+  Delivery_Lat?: number | null
+  Delivery_Lon?: number | null
 }
 
 export async function createJob(data: JobFormData) {
@@ -136,6 +142,11 @@ function buildInsertPayload(data: JobFormData, driverName: string, subId: string
       Volume_Cbm: data.Volume_Cbm || 0,
       Origin_Location: data.Origin_Location || null,
       Dest_Location: data.Dest_Location || null,
+      Est_Distance_KM: data.Est_Distance_KM || 0,
+      Pickup_Lat: data.Pickup_Lat || null,
+      Pickup_Lon: data.Pickup_Lon || null,
+      Delivery_Lat: data.Delivery_Lat || null,
+      Delivery_Lon: data.Delivery_Lon || null,
       Branch_ID: data.Branch_ID || null,
       Created_At: new Date().toISOString(),
   }
@@ -170,6 +181,10 @@ export async function createBulkJobs(jobs: Partial<JobFormData>[]) {
       Show_Price_To_Driver: j.Show_Price_To_Driver ?? true,
       Weight_Kg: j.Weight_Kg || 0,
       Volume_Cbm: j.Volume_Cbm || 0,
+      Pickup_Lat: j.Pickup_Lat || null,
+      Pickup_Lon: j.Pickup_Lon || null,
+      Delivery_Lat: j.Delivery_Lat || null,
+      Delivery_Lon: j.Delivery_Lon || null,
       Branch_ID: j.Branch_ID || null,
       Created_At: new Date().toISOString(),
   })).filter(j => j.Customer_Name)
@@ -185,6 +200,38 @@ export async function createBulkJobs(jobs: Partial<JobFormData>[]) {
   if (error) {
     console.error('Error bulk creating jobs:', error)
     return { success: false, message: `Failed to import: ${error.message}` }
+  }
+
+  // Audit: Log any backdated job entries
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const backdatedJobs = cleanData.filter(j => {
+    if (!j.Plan_Date) return false
+    const planDate = new Date(j.Plan_Date)
+    planDate.setHours(0, 0, 0, 0)
+    return planDate < today
+  })
+  if (backdatedJobs.length > 0) {
+    const daysDiff = (d: string) => {
+      const diff = today.getTime() - new Date(d).getTime()
+      return Math.floor(diff / (1000 * 60 * 60 * 24))
+    }
+    for (const j of backdatedJobs) {
+      logActivity({
+        module: 'Jobs',
+        action_type: 'CREATE',
+        target_id: j.Job_ID,
+        details: {
+          type: 'BACKDATED_ENTRY',
+          customer: j.Customer_Name,
+          plan_date: j.Plan_Date,
+          days_backdated: daysDiff(j.Plan_Date!),
+          created_at_actual: new Date().toISOString(),
+          note: `Admin created job for past date (${j.Plan_Date}) on ${new Date().toLocaleDateString('th-TH')}`
+        }
+      }).catch(err => console.error('[Audit] Failed to log backdated entry:', err))
+    }
+    console.log(`[Audit] Logged ${backdatedJobs.length} backdated job(s) for admin review`)
   }
 
   revalidatePath('/planning')
@@ -311,4 +358,66 @@ export async function getJobCreationData() {
     customers: customersResult.data || [],
     routes: routesResult.data || []
   }
+}
+
+import { getCustomerId } from '@/lib/permissions'
+
+export async function requestShipment(data: {
+  Plan_Date: string
+  Origin_Location: string
+  Dest_Location: string
+  Cargo_Type: string
+  Notes?: string
+}) {
+  const supabase = await createClient()
+  const customerId = await getCustomerId()
+
+  if (!customerId) {
+    return { success: false, message: 'Unauthorized: Customer ID not found' }
+  }
+
+  // Get Customer Name for easier display
+  const { data: customer } = await supabase
+    .from('Master_Customers')
+    .select('Customer_Name')
+    .eq('Customer_ID', customerId)
+    .single()
+
+  const jobId = `REQ-${Date.now().toString().slice(-6)}-${Math.floor(Math.random() * 1000)}`
+
+  const payload = {
+    Job_ID: jobId,
+    Customer_ID: customerId,
+    Customer_Name: customer?.Customer_Name || 'Unknown Customer',
+    Plan_Date: data.Plan_Date,
+    Origin_Location: data.Origin_Location,
+    Dest_Location: data.Dest_Location,
+    Cargo_Type: data.Cargo_Type,
+    Notes: data.Notes,
+    Job_Status: 'Requested',
+    Created_At: new Date().toISOString()
+  }
+
+  const { error } = await supabase.from('Jobs_Main').insert(payload)
+
+  if (error) {
+    console.error('Error requesting shipment:', error)
+    return { success: false, message: 'Failed to submit request: ' + error.message }
+  }
+
+  revalidatePath('/dashboard')
+  revalidatePath('/planning')
+
+  // Log activity
+  await logActivity({
+    module: 'Jobs',
+    action_type: 'CREATE',
+    target_id: jobId,
+    details: {
+      type: 'CUSTOMER_REQUEST',
+      customer: customer?.Customer_Name
+    }
+  })
+
+  return { success: true, message: 'Shipment request submitted successfully' }
 }

@@ -31,11 +31,11 @@ export function StatusDistribution({ data }: { data: StatusItem[] }) {
                 const percentage = total > 0 ? (item.value / total) * 100 : 0;
                 return (
                     <div key={item.name} className="space-y-1">
-                        <div className="flex justify-between text-xs">
-                            <span className="text-slate-400 font-medium">{item.name}</span>
-                            <span className="text-white font-bold">{item.value} <span className="text-slate-500 font-normal">({percentage.toFixed(1)}%)</span></span>
+                        <div className="flex justify-between text-xs transition-colors">
+                            <span className="text-gray-700 font-black">{item.name}</span>
+                            <span className="text-gray-900 font-black">{item.value} <span className="text-gray-550 font-bold">({percentage.toFixed(1)}%)</span></span>
                         </div>
-                        <div className="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                        <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
                             <div 
                                 className={`${getStatusColor(item.name)} h-full transition-all`}
                                 style={{ width: `${percentage}%` }}
@@ -44,9 +44,9 @@ export function StatusDistribution({ data }: { data: StatusItem[] }) {
                     </div>
                 );
             })}
-            <div className="pt-2 border-t border-slate-800 flex justify-between items-center">
-                <span className="text-xs text-slate-500">งานทั้งหมด (Total Jobs)</span>
-                <span className="text-sm font-bold text-white">{total} รายการ</span>
+            <div className="pt-2 border-t border-gray-200 flex justify-between items-center transition-colors">
+                <span className="text-xs text-gray-700 font-black">งานทั้งหมด (Total Jobs)</span>
+                <span className="text-sm font-black text-gray-950">{total} รายการ</span>
             </div>
         </div>
     );

@@ -52,7 +52,7 @@ export function CostBreakdownChart({ data }: { data: CostData }) {
                 </PieChart>
             </ResponsiveContainer>
         ) : (
-            <div className="text-slate-500 font-medium">ไม่มีข้อมูลต้นทุนในช่วงเวลานี้</div>
+            <div className="text-gray-400 font-medium">ไม่มีข้อมูลต้นทุนในช่วงเวลานี้</div>
         )}
     </div>
   )

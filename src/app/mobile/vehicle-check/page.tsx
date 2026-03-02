@@ -14,7 +14,7 @@ export default async function MobileVehicleCheckPage() {
   const driver = await getDriverById(session.driverId)
 
   return (
-    <div className="min-h-screen bg-slate-950 pb-24 pt-16 px-4">
+    <div className="min-h-screen bg-background pb-24 pt-16 px-4">
       <MobileHeader title="เช็คสภาพรถประจำวัน" showBack />
       <MobileVehicleCheckForm 
         driverId={session.driverId} 
