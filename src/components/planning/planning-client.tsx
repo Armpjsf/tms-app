@@ -23,7 +23,7 @@ import { useState, useMemo } from "react"
 import Link from "next/link"
 import { ExcelImport } from "@/components/ui/excel-import"
 import { RecentJobItem } from "@/components/planning/recent-job-item"
-import { Job } from "@/types/database"
+import { Job } from "@/lib/supabase/jobs"
 import { JobDialog } from "@/components/planning/job-dialog"
 import { CreateJobButton } from "@/components/planning/create-job-button"
 import { KanbanBoard } from "@/components/planning/kanban-board"
@@ -213,11 +213,11 @@ export function PlanningClient({
 
             {/* Content Area */}
             <motion.div variants={item}>
-                {view === 'list' ? (
+                {view === 'list' || view === 'requests' ? (
                     <PremiumCard className="p-0 overflow-hidden shadow-2xl border-none">
                         <PremiumCardHeader className="p-8 border-b border-gray-50 bg-gray-50/10">
                             <PremiumCardTitle icon={<Package className="text-emerald-500" />}>
-                               Recent Deliveries
+                               {view === 'requests' ? "Customer Requests" : "Recent Deliveries"}
                             </PremiumCardTitle>
                             <Link href="/jobs/history">
                                 <PremiumButton variant="ghost" size="sm" className="text-[10px] tracking-[0.2em]">
