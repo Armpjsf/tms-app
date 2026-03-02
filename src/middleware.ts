@@ -68,6 +68,11 @@ export async function middleware(request: NextRequest) {
 
     for (const rule of restrictions) {
       if (pathname.startsWith(rule.path)) {
+        // Special Exception: Allow customers to access their specific billing page
+        if (rule.path === '/billing' && pathname.startsWith('/billing/customer') && payload.customerId) {
+            continue; // Bypass the role restriction for this specific path
+        }
+        
         if (!rule.allowed.includes(roleId)) {
           return NextResponse.redirect(new URL('/dashboard', request.url))
         }

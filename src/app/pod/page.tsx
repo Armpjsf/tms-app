@@ -4,6 +4,7 @@ import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { 
   FileText, 
   Search,
@@ -18,9 +19,15 @@ import { PODExport } from "@/components/pod/pod-export"
 import Link from "next/link"
 import NextImage from "next/image"
 
-export default async function PODPage() {
+export default async function PODPage(props: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+}) {
+  const searchParams = await props.searchParams
+  const dateFrom = (searchParams.from as string) || ''
+  const dateTo = (searchParams.to as string) || ''
+
   const [{ data: pods }, stats] = await Promise.all([
-    getAllPODs(1, 100), // Fetch more for export if needed
+    getAllPODs(1, 100, dateFrom, dateTo), // Fetch more for export if needed
     getPODStats(),
   ])
 
@@ -72,12 +79,36 @@ export default async function PODPage() {
         </div>
       </div>
 
-      {/* Search */}
-      <div className="mb-6">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
-          <Input placeholder="ค้นหา Job ID, ลูกค้า, คนขับ..." className="pl-10 h-11" />
-        </div>
+      {/* Filters & Search */}
+      <div className="mb-6 bg-white/50 backdrop-blur-sm p-4 rounded-2xl border border-gray-100">
+        <form className="flex flex-col md:flex-row gap-4 items-end">
+          <div className="flex-1 w-full relative">
+            <Label className="text-xs text-gray-500 mb-1.5 block">ค้นหา (Search)</Label>
+            <Search className="absolute left-3 top-[34px] text-gray-400" size={18} />
+            <Input placeholder="ค้นหา Job ID, ลูกค้า, คนขับ..." className="pl-10 h-11 bg-white" />
+          </div>
+          <div className="w-full md:w-[200px]">
+            <Label className="text-xs text-gray-500 mb-1.5 block">วันที่เริ่มต้น (From Date)</Label>
+            <Input 
+                type="date" 
+                name="from" 
+                defaultValue={dateFrom} 
+                className="h-11 bg-white" 
+            />
+          </div>
+          <div className="w-full md:w-[200px]">
+            <Label className="text-xs text-gray-500 mb-1.5 block">วันที่สิ้นสุด (To Date)</Label>
+            <Input 
+                type="date" 
+                name="to" 
+                defaultValue={dateTo} 
+                className="h-11 bg-white" 
+            />
+          </div>
+          <Button type="submit" className="h-11 px-8 bg-emerald-600 hover:bg-emerald-700 w-full md:w-auto">
+             <Search className="w-4 h-4 mr-2" /> ค้นหา
+          </Button>
+        </form>
       </div>
 
       {/* POD Table */}

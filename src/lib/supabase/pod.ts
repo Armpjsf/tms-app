@@ -56,7 +56,7 @@ export async function getTodayPODs(): Promise<PODRecord[]> {
 }
 
 // ดึงรายการ POD ทั้งหมด
-export async function getAllPODs(page = 1, limit = 50): Promise<{ data: PODRecord[], count: number }> {
+export async function getAllPODs(page = 1, limit = 50, dateFrom?: string, dateTo?: string): Promise<{ data: PODRecord[], count: number }> {
   try {
     const supabase = await createClient()
     const offset = (page - 1) * limit
@@ -78,6 +78,13 @@ export async function getAllPODs(page = 1, limit = 50): Promise<{ data: PODRecor
         dbQuery = dbQuery.eq('Branch_ID', branchId)
     } else if (!isAdmin && !branchId) {
         return { data: [], count: 0 }
+    }
+
+    if (dateFrom) {
+        dbQuery = dbQuery.gte('Plan_Date', dateFrom)
+    }
+    if (dateTo) {
+        dbQuery = dbQuery.lte('Plan_Date', dateTo)
     }
 
     const { data, error, count } = await dbQuery
