@@ -62,6 +62,8 @@ export type Job = {
   assignments?: JobAssignment[] | null
   Sub_ID?: string | null
   Show_Price_To_Driver?: boolean | null
+  Origin_Location?: string | null
+  Dest_Location?: string | null
 }
 import { 
   Loader2, 
@@ -101,7 +103,7 @@ type JobDialogProps = {
   drivers?: Driver[]
   vehicles?: Vehicle[]
   customers?: Customer[]
-  routes?: any[]
+  routes?: { Origin?: string; Destination?: string }[]
   trigger?: React.ReactNode
   open?: boolean
   onOpenChange?: (open: boolean) => void
@@ -193,7 +195,7 @@ export function JobDialog({
   )
 
   // Helper to safely parse JSON or return existing array
-  const parseJson = (val: unknown, defaultVal: any) => {
+  const parseJson = (val: string | any[] | null | undefined, defaultVal: any) => {
     if (!val) return defaultVal
     if (Array.isArray(val)) return val
     if (typeof val === 'string') {
@@ -207,14 +209,28 @@ export function JobDialog({
   }
 
   // Multi-point origins
-  const [origins, setOrigins] = useState<LocationPoint[]>(
-    parseJson(job?.origins || job?.original_origins_json, [{ name: '', lat: '', lng: '' }])
-  )
+  const [origins, setOrigins] = useState<LocationPoint[]>(() => {
+    const fromJson = parseJson(job?.origins || job?.original_origins_json, [])
+    if (fromJson && fromJson.length > 0) return fromJson
+    
+    // Fallback for requested jobs which save as plain strings
+    if (job?.Origin_Location) {
+        return [{ name: job.Origin_Location, lat: '', lng: '' }]
+    }
+    return [{ name: '', lat: '', lng: '' }]
+  })
 
   // Multi-point destinations
-  const [destinations, setDestinations] = useState<LocationPoint[]>(
-    parseJson(job?.destinations || job?.original_destinations_json, [{ name: '', lat: '', lng: '' }])
-  )
+  const [destinations, setDestinations] = useState<LocationPoint[]>(() => {
+    const fromJson = parseJson(job?.destinations || job?.original_destinations_json, [])
+    if (fromJson && fromJson.length > 0) return fromJson
+    
+    // Fallback for requested jobs which save as plain strings
+    if (job?.Dest_Location) {
+        return [{ name: job.Dest_Location, lat: '', lng: '' }]
+    }
+    return [{ name: '', lat: '', lng: '' }]
+  })
 
   // Extra costs
   const [extraCosts, setExtraCosts] = useState<ExtraCost[]>(
@@ -679,6 +695,19 @@ export function JobDialog({
                 </div>
               </div>
 
+              <div className="space-y-2">
+                <Label className="flex items-center gap-1">
+                   หมายเหตุ (Customer Notes)
+                </Label>
+                <Textarea
+                  value={formData.Notes}
+                  onChange={(e) => setFormData({ ...formData, Notes: e.target.value })}
+                  placeholder="รายละเอียดเพิ่มเติมจากลูกค้า"
+                  className="bg-background border-input"
+                  rows={2}
+                />
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                  <div className="space-y-2">
                     <Label className="text-emerald-600 dark:text-emerald-400">น้ำหนัก (kg)</Label>
@@ -879,7 +908,7 @@ export function JobDialog({
                         <div className="mb-4">
                             <AiSuggestionCard 
                                 jobData={{
-                                    Pickup_Date: formData.Plan_Date,
+                                    Plan_Date: formData.Plan_Date,
                                     Vehicle_Type: assignment.Vehicle_Type,
                                     // Pass coordinates from first origin if available
                                     Pickup_Lat: origins[0]?.lat ? Number(origins[0].lat) : undefined,
@@ -1171,18 +1200,6 @@ export function JobDialog({
                 <Plus className="w-4 h-4 mr-2" /> เพิ่มรถอีกคัน
               </Button>
 
-               <div className="space-y-2 pt-2">
-                <Label className="flex items-center gap-1">
-                   หมายเหตุ (ทุกคัน)
-                </Label>
-                <Textarea
-                  value={formData.Notes}
-                  onChange={(e) => setFormData({ ...formData, Notes: e.target.value })}
-                  placeholder="รายละเอียดเพิ่มเติม"
-                  className="bg-background border-input"
-                  rows={3}
-                />
-              </div>
             </div>
           )}
 

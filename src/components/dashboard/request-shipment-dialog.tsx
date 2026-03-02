@@ -57,7 +57,7 @@ export function RequestShipmentDialog({ open, onOpenChange }: RequestShipmentDia
             } else {
                 toast.error(res.message)
             }
-        } catch (error) {
+        } catch {
             toast.error("เกิดข้อผิดพลาดในการส่งคำขอ")
         } finally {
             setLoading(false)
@@ -92,7 +92,7 @@ export function RequestShipmentDialog({ open, onOpenChange }: RequestShipmentDia
                                     <div className="p-2 bg-emerald-500 rounded-xl text-white">
                                         <Package size={20} />
                                     </div>
-                                    <DialogTitle className="text-2xl font-black tracking-tighter">ขอกดคิวงานใหม่</DialogTitle>
+                                    <DialogTitle className="text-2xl font-black tracking-tighter text-gray-900">ขอนัดคิวงานใหม่</DialogTitle>
                                 </div>
                                 <DialogDescription className="text-gray-500 font-bold uppercase tracking-widest text-[10px]">
                                     Request New Shipment
