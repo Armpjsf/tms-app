@@ -149,6 +149,7 @@ export function JobDialog({
   const [loading, setLoading] = useState(false)
   const [open, setOpen] = useState(false)
   const [activeTab, setActiveTab] = useState<'info' | 'location' | 'assign' | 'price'>('info')
+  const [internalMode, setInternalMode] = useState<'create' | 'edit'>(mode)
   
   const isControlled = controlledOpen !== undefined
   const show = isControlled ? controlledOpen : open
@@ -237,16 +238,15 @@ export function JobDialog({
     parseJson(job?.extra_costs || job?.extra_costs_json, [])
   )
 
-  // Generate new ID on dialog open (create mode)
   useEffect(() => {
-    if (show && mode === 'create') {
+    if (show && internalMode === 'create' && !job) {
       setFormData(prev => ({ ...prev, Job_ID: generateJobId() }))
     }
-  }, [show, mode])
+  }, [show, internalMode, job])
 
   // Sync initial assignment state from job prop if editing
   useEffect(() => {
-    if (show && mode === 'edit' && job) {
+    if (show && internalMode === 'edit' && job) {
         setAssignments([{
             Vehicle_Type: job.Vehicle_Type || '4-Wheel',
             Vehicle_Plate: job.Vehicle_Plate || '',
@@ -256,8 +256,8 @@ export function JobDialog({
             Cost_Driver_Total: job.Cost_Driver_Total ? Number(job.Cost_Driver_Total) : 0,
             Price_Cust_Total: job.Price_Cust_Total ? Number(job.Price_Cust_Total) : 0
         }])
-    } else if (show && mode === 'create') {
-        // Reset to one empty assignment
+    } else if (show && internalMode === 'create' && !job?.assignments) {
+        // Reset to one empty assignment if not cloned
         setAssignments([{ 
             Vehicle_Type: '4-Wheel', 
             Vehicle_Plate: '', 
@@ -268,7 +268,30 @@ export function JobDialog({
             Price_Cust_Total: 0
         }])
     }
-  }, [show, mode, job])
+  }, [show, internalMode, job])
+
+  const handleDuplicate = () => {
+    setInternalMode('create')
+    setFormData(prev => ({
+        ...prev,
+        Job_ID: generateJobId(),
+        Job_Status: 'New',
+        Driver_ID: '',
+        Vehicle_Plate: '',
+        Vehicle_Type: job?.Vehicle_Type || '4-Wheel'
+    }))
+    setAssignments([{ 
+        Vehicle_Type: job?.Vehicle_Type || '4-Wheel', 
+        Vehicle_Plate: '', 
+        Driver_ID: '', 
+        Sub_ID: '', 
+        Show_Price_To_Driver: true,
+        Cost_Driver_Total: job?.Cost_Driver_Total ? Number(job.Cost_Driver_Total) : 0,
+        Price_Cust_Total: job?.Price_Cust_Total ? Number(job.Price_Cust_Total) : 0
+    }])
+    setActiveTab('assign')
+    toast.success("คัดลอกข้อมูลงานเรียบร้อยแล้ว กรุณามอบหมายคนขับสำหรับงานใหม่")
+  }
 
   const handleCopyTrackingLink = () => {
     const origin = window.location.origin
@@ -462,7 +485,7 @@ export function JobDialog({
         extra_costs_json: JSON.stringify(extraCosts),
       }
 
-      if (mode === 'create') {
+      if (internalMode === 'create') {
         // Prepare array for bulk creation
         const jobsToCreate = assignments.map((assignment, index: number) => ({
             ...baseData,
@@ -532,9 +555,22 @@ export function JobDialog({
       {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-background border-border text-foreground">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-black text-slate-950">
-            {mode === 'create' ? 'สร้างงานใหม่' : 'แก้ไขงาน'}
-          </DialogTitle>
+          <div className="flex items-center justify-between pr-8">
+            <DialogTitle className="text-2xl font-black text-slate-950">
+                {internalMode === 'create' ? 'สร้างงานใหม่' : 'แก้ไขงาน'}
+            </DialogTitle>
+            {internalMode === 'edit' && (
+                <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleDuplicate}
+                    className="border-emerald-600/30 text-emerald-600 hover:bg-emerald-50 bg-emerald-50/10 font-bold"
+                >
+                    <Plus className="w-4 h-4 mr-2" /> คัดลอกงาน (เพิ่มรถ)
+                </Button>
+            )}
+          </div>
         </DialogHeader>
 
         {/* Tabs */}
@@ -904,7 +940,7 @@ export function JobDialog({
               {assignments.map((assignment, index: number) => (
                 <div key={index} className="p-4 bg-muted/30 rounded-lg border border-border relative group">
                     {/* AI Suggestion Section */}
-                    {mode === 'create' && index === 0 && (
+                    {internalMode === 'create' && index === 0 && (
                         <div className="mb-4">
                             <AiSuggestionCard 
                                 jobData={{
@@ -1294,7 +1330,7 @@ export function JobDialog({
           )}
 
           <div className="flex justify-between pt-4 border-t border-border">
-            {mode === 'edit' && canDelete && (
+            {internalMode === 'edit' && canDelete && (
                 <Button 
                     type="button" 
                     variant="ghost" 
@@ -1304,13 +1340,13 @@ export function JobDialog({
                     <Trash2 className="w-4 h-4 mr-2" /> ลบงาน
                 </Button>
             )}
-            <div className={`flex gap-3 ${mode === 'create' ? 'w-full justify-end' : ''}`}>
+            <div className={`flex gap-3 ${internalMode === 'create' ? 'w-full justify-end' : ''}`}>
                 <Button type="button" variant="outline" onClick={() => setShow(false)} className="border-border hover:bg-muted text-muted-foreground hover:text-foreground">
                 ยกเลิก
                 </Button>
                 <Button type="submit" disabled={loading} className="bg-primary hover:bg-primary/90 text-primary-foreground">
                     {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                    {mode === 'create' ? 'สร้างงาน' : 'บันทึกการแก้ไข'}
+                    {internalMode === 'create' ? 'สร้างงาน' : 'บันทึกการแก้ไข'}
                 </Button>
             </div>
           </div>
