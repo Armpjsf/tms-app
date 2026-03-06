@@ -188,7 +188,8 @@ export default function CustomerBillingClient({ initialJobs, companyProfile, cus
         'Job ID': job.Job_ID,
         'วันที่': job.Plan_Date ? new Date(job.Plan_Date).toLocaleDateString('th-TH') : '-',
         'ลูกค้า': job.Customer_Name || '-',
-        'เส้นทาง': job.Route_Name || '-',
+        'ต้นทาง': (job.Route_Name || '-').split('→').map(s => s.trim())[0] || '-',
+        'ปลายทาง': (job.Route_Name || '-').split('→').map(s => s.trim()).slice(1).join(' → ') || '-',
         'ค่าขนส่ง': job.Price_Cust_Total || 0,
         'รวมทั้งหมด': getJobTotal(job),
         'สถานะ': job.Job_Status
