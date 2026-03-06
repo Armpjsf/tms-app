@@ -19,6 +19,7 @@ import {
   Clock,
   AlertCircle,
   FileDown,
+  ArrowLeft,
   Mail,
   Receipt,
   Undo2,
@@ -155,6 +156,9 @@ export default function CustomerBillingHistory() {
            initial={{ opacity: 0, x: -20 }}
            animate={{ opacity: 1, x: 0 }}
         >
+          <button onClick={() => router.back()} className="flex items-center gap-2 text-gray-500 hover:text-emerald-600 transition-colors mb-3 text-sm font-bold">
+            <ArrowLeft className="w-4 h-4" /> ย้อนกลับ
+          </button>
           <h1 className="text-4xl font-black text-gray-900 tracking-tighter flex items-center gap-4">
             <div className="p-3 bg-emerald-500 rounded-3xl shadow-xl shadow-emerald-500/20 text-white">
                 <Receipt size={32} />

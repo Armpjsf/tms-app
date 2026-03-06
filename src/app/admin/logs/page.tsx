@@ -4,7 +4,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge'
 import { getAllBranches } from '@/lib/supabase/branches'
 import { Input } from '@/components/ui/input'
-import { Search } from 'lucide-react'
+import { Search, ArrowLeft } from 'lucide-react'
 import { format } from 'date-fns'
 import { th } from 'date-fns/locale'
 
@@ -71,6 +71,9 @@ export default async function LogsPage({
     <div className="flex flex-col gap-6 p-6">
       <div className="flex justify-between items-center">
         <div>
+          <a href="/dashboard" className="flex items-center gap-2 text-gray-500 hover:text-emerald-600 transition-colors mb-3 text-sm font-bold">
+            <ArrowLeft className="w-4 h-4" /> ย้อนกลับ
+          </a>
           <h1 className="text-3xl font-bold tracking-tight">System Logs</h1>
           <p className="text-muted-foreground">ติดตามประวัติการใช้งานและกิจกรรมในระบบทั้งหมด</p>
         </div>

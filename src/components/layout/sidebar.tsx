@@ -149,6 +149,7 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
   const pathname = usePathname()
   const [userRole, setUserRole] = React.useState<number | null>(null)
   const [isCustomerUser, setIsCustomerUser] = React.useState(false)
+  const [roleLoaded, setRoleLoaded] = React.useState(false)
 
   React.useEffect(() => {
     async function checkRole() {
@@ -159,6 +160,7 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
         const { isCustomer } = await import("@/lib/permissions")
         const customerFlag = await isCustomer()
         setIsCustomerUser(customerFlag)
+        setRoleLoaded(true)
     }
     checkRole()
   }, [])
@@ -167,7 +169,7 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
   const activeNavigation = isCustomerUser ? customerNavigation : navigation
 
   const filteredNavigation = activeNavigation.filter(group => {
-    if (userRole === null) return true 
+    if (!roleLoaded || userRole === null) return true 
     
     // Customers skip internal logic
     if (isCustomerUser) return true
@@ -241,6 +243,20 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
 
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto py-6 px-3 custom-scrollbar">
+        {!roleLoaded ? (
+          /* Skeleton placeholder while role loads - prevents admin menu flash for customers */
+          <div className="space-y-4 px-2">
+            {[1, 2, 3, 4].map(i => (
+              <div key={i} className="space-y-2">
+                <div className="h-2 w-16 bg-gray-100 rounded animate-pulse" />
+                {[1, 2].map(j => (
+                  <div key={j} className="h-9 bg-gray-50 rounded-xl animate-pulse" />
+                ))}
+              </div>
+            ))}
+          </div>
+        ) : (
+        <>
         <motion.div variants={navContainer} initial="hidden" animate="show">
         {filteredNavigation.map((group) => (
           <div key={group.title} className="mb-6">
@@ -321,6 +337,8 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
                     </motion.div>
                 </Link>
             </div>
+        )}
+        </>
         )}
       </nav>
 
