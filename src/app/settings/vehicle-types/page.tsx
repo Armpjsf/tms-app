@@ -168,7 +168,7 @@ export default function VehicleTypesPage() {
 
         {/* Create/Edit Dialog */}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogContent className="sm:max-w-[425px] bg-white border-gray-200 text-white">
+            <DialogContent className="sm:max-w-[425px] bg-white border-gray-200 text-gray-900">
                 <DialogHeader>
                     <DialogTitle>{currentType ? 'แก้ไขประเภทรถ' : 'เพิ่มประเภทรถใหม่'}</DialogTitle>
                 </DialogHeader>

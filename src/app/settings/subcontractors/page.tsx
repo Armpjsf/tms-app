@@ -296,7 +296,7 @@ export default function SubcontractorsPage() {
             </PremiumCard>
 
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                <DialogContent className="bg-white border-gray-200 text-white max-w-lg">
+                <DialogContent className="bg-white border-gray-200 text-gray-900 max-w-lg">
                     <DialogHeader>
                         <DialogTitle>{editingId ? "แก้ไขบริษัทรถร่วม" : "เพิ่มบริษัทรถร่วม"}</DialogTitle>
                     </DialogHeader>
@@ -340,7 +340,7 @@ export default function SubcontractorsPage() {
                                     <SelectTrigger className="bg-gray-100 border-gray-200">
                                         <SelectValue placeholder="เลือกสาขา" />
                                     </SelectTrigger>
-                                    <SelectContent className="bg-white border-gray-200 text-white">
+                                    <SelectContent className="bg-white border-gray-200 text-gray-900">
                                         {branches.map(b => (
                                             <SelectItem key={b.Branch_ID} value={b.Branch_ID}>
                                                 {b.Branch_Name} ({b.Branch_ID})

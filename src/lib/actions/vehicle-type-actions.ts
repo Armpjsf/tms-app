@@ -1,6 +1,6 @@
 'use server'
 
-import { createClient } from '@/utils/supabase/server'
+import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
 
 export type VehicleType = {
@@ -28,7 +28,7 @@ export async function getVehicleTypes() {
 }
 
 export async function createVehicleType(data: { type_name: string; description?: string }) {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
 
   // Check for duplicate name
   const { data: existing } = await supabase
@@ -60,7 +60,7 @@ export async function createVehicleType(data: { type_name: string; description?:
 }
 
 export async function updateVehicleType(id: number, data: { type_name: string; description?: string; active_status?: string }) {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
 
   const { error } = await supabase
     .from('Master_Vehicle_Types')
@@ -82,7 +82,7 @@ export async function updateVehicleType(id: number, data: { type_name: string; d
 }
 
 export async function deleteVehicleType(id: number) {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
 
   const { error } = await supabase
     .from('Master_Vehicle_Types')
