@@ -59,6 +59,7 @@ const navigation: NavGroup[] = [
     title: "ปฏิบัติการ",
     items: [
       { title: "วางแผนงาน", href: "/planning", icon: <CalendarDays size={20} /> },
+      { title: "ปฏิทินงาน", href: "/calendar", icon: <CalendarDays size={20} /> },
       { title: "ประวัติงาน", href: "/jobs/history", icon: <History size={20} /> },
       { title: "Control Centre", href: "/monitoring", icon: <Activity size={20} />, badge: "Live", badgeColor: "green" },
       { title: "จัดการ POD", href: "/pod", icon: <FileText size={20} /> },
