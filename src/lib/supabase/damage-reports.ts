@@ -1,0 +1,97 @@
+"use server"
+
+import { createClient } from '@/utils/supabase/server'
+
+export interface DamageReport {
+  id: string
+  Job_ID: string
+  Driver_ID: string
+  Driver_Name: string | null
+  Vehicle_Plate: string | null
+  Incident_Date: string
+  Reason_Category: string
+  Description: string | null
+  Image_Path: string | null
+  Status: string
+  Resolved_By: string | null
+  Created_At: string
+}
+
+export async function getDamageReports(): Promise<DamageReport[]> {
+  const supabase = await createClient()
+  // Just fetch latest 100 for simplicity in admin view
+  try {
+    const { data, error } = await supabase
+      .from('Damage_Reports')
+      .select('*')
+      .order('Created_At', { ascending: false })
+      .limit(100)
+
+    if (error) return []
+    return (data || []) as DamageReport[]
+  } catch {
+    return []
+  }
+}
+
+export async function getMyDamageReports(driverId: string): Promise<DamageReport[]> {
+  const supabase = await createClient()
+  try {
+    const { data, error } = await supabase
+      .from('Damage_Reports')
+      .select('*')
+      .eq('Driver_ID', driverId)
+      .order('Created_At', { ascending: false })
+      .limit(50)
+
+    if (error) return []
+    return (data || []) as DamageReport[]
+  } catch {
+    return []
+  }
+}
+
+export async function createDamageReport(data: {
+  Job_ID: string
+  Driver_ID: string
+  Driver_Name: string
+  Vehicle_Plate?: string
+  Incident_Date: string
+  Reason_Category: string
+  Description?: string
+  Image_Path?: string
+}) {
+  const supabase = await createClient()
+  try {
+    const { error } = await supabase.from('Damage_Reports').insert({
+      Job_ID: data.Job_ID,
+      Driver_ID: data.Driver_ID,
+      Driver_Name: data.Driver_Name,
+      Vehicle_Plate: data.Vehicle_Plate || null,
+      Incident_Date: data.Incident_Date,
+      Reason_Category: data.Reason_Category,
+      Description: data.Description || null,
+      Image_Path: data.Image_Path || null,
+      Status: 'Pending',
+    })
+    if (error) return { success: false, error: error.message }
+    return { success: true }
+  } catch (e: unknown) {
+    return { success: false, error: String(e) }
+  }
+}
+
+export async function updateDamageReportStatus(reportId: string, status: 'Reviewing' | 'Resolved' | 'Rejected', resolvedBy: string) {
+  const supabase = await createClient()
+  try {
+    const { error } = await supabase
+      .from('Damage_Reports')
+      .update({ Status: status, Resolved_By: resolvedBy, Updated_At: new Date().toISOString() })
+      .eq('id', reportId)
+
+    if (error) return { success: false, error: error.message }
+    return { success: true }
+  } catch (e: unknown) {
+    return { success: false, error: String(e) }
+  }
+}
