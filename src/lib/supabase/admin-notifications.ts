@@ -1,0 +1,124 @@
+"use server"
+
+import { createClient } from '@/utils/supabase/server'
+import { getUserBranchId } from "@/lib/permissions"
+
+export interface AdminAlert {
+  id: string
+  type: 'expiry' | 'inspection_fail' | 'maintenance'
+  severity: 'critical' | 'warning' | 'info'
+  title: string
+  description: string
+  date: string
+  meta?: Record<string, string>
+}
+
+export async function getAdminAlerts(): Promise<AdminAlert[]> {
+  const supabase = await createClient()
+  const branchId = await getUserBranchId()
+  const alerts: AdminAlert[] = []
+  const today = new Date()
+
+  // 1. Vehicle document expiry alerts (tax, insurance, ACT)
+  try {
+    let vQuery = supabase
+      .from('master_vehicles')
+      .select('vehicle_plate, tax_expiry, insurance_expiry, act_expiry, active_status')
+      .eq('active_status', 'Active')
+
+    if (branchId && branchId !== 'All') {
+      vQuery = vQuery.eq('branch_id', branchId)
+    }
+
+    const { data: vehicles } = await vQuery
+    vehicles?.forEach(v => {
+      const checks = [
+        { field: v.tax_expiry, label: 'ภาษีรถ (Tax)', type: 'tax' },
+        { field: v.insurance_expiry, label: 'ประกันภัย (Insurance)', type: 'insurance' },
+        { field: v.act_expiry, label: 'พ.ร.บ. (ACT)', type: 'act' },
+      ]
+      checks.forEach(c => {
+        if (!c.field) return
+        const expDate = new Date(c.field)
+        const diffDays = Math.ceil((expDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+        
+        if (diffDays <= 30) {
+          alerts.push({
+            id: `${v.vehicle_plate}-${c.type}`,
+            type: 'expiry',
+            severity: diffDays <= 0 ? 'critical' : diffDays <= 15 ? 'warning' : 'info',
+            title: `${c.label} — ${v.vehicle_plate}`,
+            description: diffDays <= 0 
+              ? `หมดอายุแล้ว ${Math.abs(diffDays)} วัน` 
+              : `เหลืออีก ${diffDays} วัน (หมดอายุ ${expDate.toLocaleDateString('th-TH')})`,
+            date: c.field,
+            meta: { plate: v.vehicle_plate, expiryType: c.type }
+          })
+        }
+      })
+    })
+  } catch { /* ignore */ }
+
+  // 2. Recent failed vehicle inspections (last 7 days)
+  try {
+    const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString()
+    const { data: checks } = await supabase
+      .from('Vehicle_Checks')
+      .select('id, Vehicle_Plate, Driver_Name, Check_Date, Passed_Items')
+      .gte('Check_Date', weekAgo)
+      .order('Check_Date', { ascending: false })
+      .limit(50)
+
+    const CHECKLIST = ["น้ำมันเครื่อง", "น้ำในหม้อน้ำ", "ลมยาง", "ไฟเบรค/ไฟเลี้ยว", "สภาพยางรถยนต์", "อุปกรณ์ฉุกเฉิน", "เอกสารประจำรถ"]
+
+    checks?.forEach(check => {
+      const items = (check.Passed_Items || {}) as Record<string, boolean>
+      const failedItems = CHECKLIST.filter(item => !items[item])
+      if (failedItems.length > 0) {
+        alerts.push({
+          id: `check-${check.id}`,
+          type: 'inspection_fail',
+          severity: failedItems.length >= 3 ? 'critical' : 'warning',
+          title: `ตรวจรถไม่ผ่าน — ${check.Vehicle_Plate}`,
+          description: `ไม่ผ่าน ${failedItems.length} รายการ: ${failedItems.join(', ')}`,
+          date: check.Check_Date,
+          meta: { 
+            plate: check.Vehicle_Plate, 
+            driver: check.Driver_Name || '-',
+            failCount: String(failedItems.length) 
+          }
+        })
+      }
+    })
+  } catch { /* ignore */ }
+
+  // 3. Pending maintenance (open repair tickets)
+  try {
+    let mQuery = supabase
+      .from('Repair_Tickets')
+      .select('Ticket_ID, Vehicle_Plate, Issue_Desc, Status, Date_Report, Priority')
+      .in('Status', ['Pending', 'In Progress'])
+      .order('Date_Report', { ascending: false })
+      .limit(20)
+
+    const { data: tickets } = await mQuery
+    tickets?.forEach(ticket => {
+      const reported = new Date(ticket.Date_Report)
+      const daysOpen = Math.ceil((today.getTime() - reported.getTime()) / (1000 * 60 * 60 * 24))
+      
+      alerts.push({
+        id: `repair-${ticket.Ticket_ID}`,
+        type: 'maintenance',
+        severity: ticket.Priority === 'High' || daysOpen > 7 ? 'critical' : daysOpen > 3 ? 'warning' : 'info',
+        title: `แจ้งซ่อม — ${ticket.Vehicle_Plate}`,
+        description: `${ticket.Issue_Desc || 'ไม่ระบุ'} (เปิดมา ${daysOpen} วัน)`,
+        date: ticket.Date_Report,
+        meta: { plate: ticket.Vehicle_Plate, status: ticket.Status, ticketId: ticket.Ticket_ID }
+      })
+    })
+  } catch { /* ignore */ }
+
+  // Sort: critical first, then warning, then info
+  const severityOrder = { critical: 0, warning: 1, info: 2 }
+  return alerts.sort((a, b) => severityOrder[a.severity] - severityOrder[b.severity])
+}

@@ -29,6 +29,7 @@ import {
   PieChart,
   CloudSync,
   CheckCircle2,
+  Bell,
 } from "lucide-react"
 
 import { SidebarProfile } from "./sidebar-profile"
@@ -64,6 +65,7 @@ const navigation: NavGroup[] = [
       { title: "Control Centre", href: "/monitoring", icon: <Activity size={20} />, badge: "Live", badgeColor: "green" },
       { title: "จัดการ POD", href: "/pod", icon: <FileText size={20} /> },
       { title: "SOS Alerts", href: "/sos", icon: <AlertTriangle size={20} />, badgeColor: "red" },
+      { title: "แจ้งเตือนระบบ", href: "/notifications", icon: <Bell size={20} />, badgeColor: "yellow" },
       { title: "แชท", href: "/chat", icon: <MessageSquare size={20} />, badgeColor: "blue" },
     ],
   },
