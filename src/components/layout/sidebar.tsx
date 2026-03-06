@@ -132,12 +132,6 @@ const customerNavigation: NavGroup[] = [
         items: [
             { title: "จัดการ POD", href: "/pod", icon: <FileText size={20} /> },
         ]
-    },
-    {
-      title: "ช่วยเหลือ",
-      items: [
-        { title: "คู่มือการใช้งาน", href: "/manual", icon: <BookOpen size={20} /> },
-      ],
     }
 ]
 

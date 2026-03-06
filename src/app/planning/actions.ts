@@ -422,3 +422,53 @@ export async function requestShipment(data: {
 
   return { success: true, message: 'Shipment request submitted successfully' }
 }
+
+export async function cancelJobRequest(jobId: string) {
+  const supabase = await createClient()
+  const customerId = await getCustomerId()
+
+  if (!customerId) {
+    return { success: false, message: 'Unauthorized' }
+  }
+
+  // Verify ownership and status
+  const { data: job, error: fetchError } = await supabase
+    .from('Jobs_Main')
+    .select('Job_Status')
+    .eq('Job_ID', jobId)
+    .eq('Customer_ID', customerId)
+    .single()
+
+  if (fetchError || !job) {
+    return { success: false, message: 'Job not found or unauthorized' }
+  }
+
+  if (job.Job_Status !== 'Requested' && job.Job_Status !== 'New') {
+    return { success: false, message: 'Only Requested or New jobs can be cancelled' }
+  }
+
+  const { error } = await supabase
+    .from('Jobs_Main')
+    .update({ Job_Status: 'Cancelled' })
+    .eq('Job_ID', jobId)
+
+  if (error) {
+    console.error('Error cancelling job:', error)
+    return { success: false, message: 'Failed to cancel job: ' + error.message }
+  }
+
+  revalidatePath('/dashboard')
+  revalidatePath('/planning')
+  revalidatePath('/jobs/history')
+
+  await logActivity({
+    module: 'Jobs',
+    action_type: 'UPDATE',
+    target_id: jobId,
+    details: {
+      description: `Customer cancelled job request ${jobId}`
+    }
+  })
+
+  return { success: true, message: 'Job request cancelled successfully' }
+}

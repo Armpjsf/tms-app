@@ -65,14 +65,12 @@ export async function getTodayJobs(): Promise<Job[]> {
     const isAdmin = await isSuperAdmin()
     const customerId = await getCustomerId()
     
-    if (branchId && branchId !== 'All') {
-        dbQuery = dbQuery.eq('Branch_ID', branchId)
-    } else if (!isAdmin && !customerId && !branchId) {
-        return []
-    }
-
     if (customerId) {
         dbQuery = dbQuery.eq('Customer_ID', customerId)
+    } else if (branchId && branchId !== 'All') {
+        dbQuery = dbQuery.eq('Branch_ID', branchId)
+    } else if (!isAdmin && !branchId) {
+        return []
     }
 
     const { data, error } = await dbQuery
@@ -148,17 +146,14 @@ export async function getAllJobs(
     const isAdmin = await isSuperAdmin()
     const customerId = await getCustomerId()
     
-    // Super Admins see everything if branchId is 'All' or empty
-    if (isAdmin && (!branchId || branchId === 'All')) {
+    if (customerId) {
+        dbQuery = dbQuery.eq('Customer_ID', customerId)
+    } else if (isAdmin && (!branchId || branchId === 'All')) {
         // No filter
     } else if (branchId && branchId !== 'All') {
         dbQuery = dbQuery.eq('Branch_ID', branchId)
-    } else if (!isAdmin && !customerId && !branchId) {
+    } else if (!isAdmin && !branchId) {
         return { data: [], count: 0 }
-    }
-
-    if (customerId) {
-        dbQuery = dbQuery.eq('Customer_ID', customerId)
     }
 
     dbQuery = dbQuery

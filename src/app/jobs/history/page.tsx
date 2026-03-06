@@ -29,6 +29,7 @@ import { getJobCreationData } from "@/app/planning/actions"
 import { ExcelExport } from "@/components/ui/excel-export"
 import { JobHistoryActions } from "@/components/jobs/job-history-actions"
 import { HistoryStatusFilter } from "@/components/jobs/history-status-filter"
+import { CustomerCancelButton } from "@/components/jobs/customer-cancel-button"
 import NextImage from "next/image"
 import { cn } from "@/lib/utils"
 
@@ -345,6 +346,9 @@ export default async function JobHistoryPage(props: Props) {
                                     canDelete={canDelete}
                                 />
                               </div>
+                          )}
+                          {customerMode && (
+                              <CustomerCancelButton jobId={job.Job_ID} jobStatus={job.Job_Status || ''} />
                           )}
                       </td>
                     </tr>
