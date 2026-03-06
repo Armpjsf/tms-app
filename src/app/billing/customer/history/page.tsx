@@ -31,6 +31,7 @@ import { BillingActions } from "@/components/billing/billing-actions"
 import { manualSyncInvoice } from "@/app/settings/accounting/actions"
 import { format } from "date-fns"
 import { th } from "date-fns/locale"
+import { exportToCSV } from "@/lib/utils/export"
 
 export default function CustomerBillingHistory() {
   const router = useRouter()
@@ -119,6 +120,22 @@ export default function CustomerBillingHistory() {
     n.Customer_Name.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
+  const handleExport = () => {
+    if (filteredNotes.length === 0) {
+      toast.error("ไม่มีข้อมูลให้ Export")
+      return
+    }
+    const dataToExport = filteredNotes.map(note => ({
+      'เลขที่เอกสาร': note.Billing_Note_ID,
+      'วันที่เอกสาร': format(new Date(note.Billing_Date), "dd/MM/yyyy"),
+      'ลูกค้า': note.Customer_Name,
+      'จำนวนเงินรวม': note.Total_Amount,
+      'สถานะ': note.Status === 'Paid' ? 'ชำระแล้ว' : note.Status === 'Pending' ? 'รอดำเนินการ' : note.Status,
+    }))
+    exportToCSV(dataToExport, `Billing_History_${new Date().toISOString().split('T')[0]}`)
+    toast.success(`Export ${filteredNotes.length} รายการสำเร็จ`)
+  }
+
   const getStatusBadge = (status: string) => {
     switch(status) {
         case 'Paid':
@@ -148,7 +165,7 @@ export default function CustomerBillingHistory() {
         </motion.div>
 
         <div className="flex items-center gap-3">
-            <PremiumButton variant="outline" className="rounded-2xl">
+            <PremiumButton variant="outline" className="rounded-2xl" onClick={handleExport}>
                 <FileDown size={18} className="mr-2" /> Export
             </PremiumButton>
         </div>
