@@ -1,11 +1,12 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Bell, Info, CheckCircle2, AlertTriangle, XCircle, CheckCheck } from "lucide-react"
 import { DriverNotification, markNotificationRead, markAllNotificationsRead } from "@/lib/actions/notification-actions"
+import { createClient } from "@/utils/supabase/client"
 
 interface NotificationsContentProps {
   notifications: DriverNotification[]
@@ -15,6 +16,25 @@ interface NotificationsContentProps {
 export function NotificationsContent({ notifications: initialNotifications, driverId }: NotificationsContentProps) {
   const router = useRouter()
   const [notifications, setNotifications] = useState(initialNotifications)
+  const supabase = createClient()
+
+  useEffect(() => {
+    const channel = supabase.channel('mobile-notifications-list')
+      .on('postgres_changes', { 
+          event: '*', 
+          schema: 'public', 
+          table: 'Notifications',
+          filter: `Driver_ID=eq.${driverId}`
+      }, async () => {
+          // Re-fetch to get complete formatted data with fallback ordering
+          const { getDriverNotifications } = await import('@/lib/actions/notification-actions')
+          const updated = await getDriverNotifications(driverId)
+          setNotifications(updated)
+      })
+      .subscribe()
+
+    return () => { supabase.removeChannel(channel) }
+  }, [driverId, supabase])
 
   const getIcon = (type: string) => {
     switch (type) {

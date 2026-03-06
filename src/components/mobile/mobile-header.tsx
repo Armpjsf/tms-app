@@ -1,8 +1,8 @@
 "use client"
 
-import { Bell } from "lucide-react"
-import Link from "next/link"
+
 import { ThemeToggle } from "@/components/ui/theme-toggle"
+import { MobileNotificationBadge } from "./notification-badge"
 
 type Props = {
   title: string
@@ -41,10 +41,7 @@ export function MobileHeader({ title, rightElement }: Props) {
         {rightElement ? (
           rightElement
         ) : (
-          <Link href="/mobile/notifications" className="text-gray-500 hover:text-white relative">
-              <Bell size={20} />
-              <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-red-500" />
-          </Link>
+          <MobileNotificationBadge />
         )}
       </div>
     </header>

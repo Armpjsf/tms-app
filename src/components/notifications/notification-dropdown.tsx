@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { Bell, AlertTriangle, Truck, Wrench, X, ExternalLink, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import Link from "next/link"
+import { createClient } from "@/utils/supabase/client"
 
 interface Notification {
   id: string
@@ -63,29 +64,37 @@ export function NotificationDropdown() {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [open])
 
-  // Fetch notifications when opened
-  useEffect(() => {
-    if (!open) return
-    let cancelled = false
-    const fetchNotifications = async () => {
-      try {
-        const r = await fetch('/api/notifications')
-        const data = await r.json()
-        if (!cancelled) setNotifications(data.notifications || [])
-      } catch {
-        if (!cancelled) setNotifications([])
-      } finally {
-        if (!cancelled) setLoading(false)
-      }
+  // Fetch notifications
+  const fetchNotifications = async () => {
+    try {
+      const r = await fetch('/api/notifications')
+      const data = await r.json()
+      setNotifications(data.notifications || [])
+    } catch {
+      // Silently fail
+    } finally {
+      setLoading(false)
     }
+  }
+
+  // Initial fetch and Realtime subscription
+  useEffect(() => {
     setLoading(true)
     fetchNotifications()
-    return () => { cancelled = true }
-  }, [open])
 
-  // Auto-refresh every 60s if open
+    const supabase = createClient()
+    const channel = supabase.channel('admin-notifications-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'Jobs_Main' }, () => fetchNotifications())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'Chat_Messages' }, () => fetchNotifications())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'chat_messages' }, () => fetchNotifications())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'sos_alerts' }, () => fetchNotifications())
+      .subscribe()
+
+    return () => { supabase.removeChannel(channel) }
+  }, [])
+
+  // Auto-refresh every 60s as a fallback
   useEffect(() => {
-    if (!open) return
     const interval = setInterval(() => {
       fetch('/api/notifications')
         .then(r => r.json())
@@ -93,7 +102,7 @@ export function NotificationDropdown() {
         .catch(() => {})
     }, 60000)
     return () => clearInterval(interval)
-  }, [open])
+  }, [])
 
   const visibleNotifications = notifications.filter(n => !dismissed.has(n.id))
   const unreadCount = visibleNotifications.filter(n => !n.read).length
