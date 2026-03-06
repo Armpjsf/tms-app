@@ -4,8 +4,10 @@ import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { createClient } from '@/utils/supabase/client'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Send, Search, MessageSquare, Check, CheckCheck } from "lucide-react"
+import { Send, Search, MessageSquare, Check, CheckCheck, Loader2, Image as ImageIcon } from "lucide-react"
 import { ChatMessage } from '@/lib/actions/chat-actions'
+import { uploadImageToDrive } from '@/lib/actions/upload-actions'
+import Image from 'next/image'
 
 interface ChatWindowProps {
   initialContacts: any[]
@@ -50,8 +52,10 @@ export function ChatWindow({ initialContacts, initialDrivers, forcedDriverId }: 
   const [contacts, setContacts] = useState(initialContacts)
   const [searchQuery, setSearchQuery] = useState('')
   const [isSending, setIsSending] = useState(false)
+  const [uploadingImage, setUploadingImage] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const chatContainerRef = useRef<HTMLDivElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   
   const supabase = createClient()
 
@@ -140,6 +144,34 @@ export function ChatWindow({ initialContacts, initialDrivers, forcedDriverId }: 
     setIsSending(false)
   }, [inputMessage, selectedDriverId, isSending, scrollToBottom])
 
+  // Handle image upload
+  const handleImageUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file || !selectedDriverId) return
+    
+    setUploadingImage(true)
+    const formData = new FormData()
+    formData.append('file', file)
+    formData.append('folder', 'Chat_Images')
+    
+    try {
+        const uploadResult = await uploadImageToDrive(formData)
+        if (uploadResult.success && uploadResult.directLink) {
+            const imageUrlMessage = `[IMAGE] ${uploadResult.directLink}`
+            const { sendChatMessage } = await import('@/lib/actions/chat-actions')
+            await sendChatMessage(selectedDriverId, imageUrlMessage)
+        } else {
+            alert('อัปโหลดรูปภาพไม่สำเร็จ')
+        }
+    } catch (error) {
+        console.error("Upload error:", error)
+        alert('เกิดข้อผิดพลาดในการอัปโหลด')
+    } finally {
+        setUploadingImage(false)
+        if (fileInputRef.current) fileInputRef.current.value = ''
+    }
+  }, [selectedDriverId])
+
   // Mark messages as read
   const markAllAsRead = useCallback(async (driverId: string) => {
     const { markAsReadAction } = await import('@/lib/actions/chat-actions')
@@ -160,7 +192,9 @@ export function ChatWindow({ initialContacts, initialDrivers, forcedDriverId }: 
       if (existing) {
         return prev.map(c => c.driver_id === driverId ? {
           ...c,
-          last_message: newMsg.sender_id === 'admin' ? `คุณ: ${newMsg.message}` : newMsg.message,
+          last_message: newMsg.message.startsWith('[IMAGE] ') 
+            ? (newMsg.sender_id === 'admin' ? 'คุณ: 📷 ส่งรูปภาพ' : '📷 ส่งรูปภาพ')
+            : (newMsg.sender_id === 'admin' ? `คุณ: ${newMsg.message}` : newMsg.message),
           unread: (newMsg.sender_id !== 'admin' && driverId !== selectedDriverId) ? (c.unread || 0) + 1 : c.unread,
           updated_at: newMsg.created_at
         } : c).sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
@@ -168,7 +202,7 @@ export function ChatWindow({ initialContacts, initialDrivers, forcedDriverId }: 
         return [{
           driver_id: driverId,
           driver_name: newMsg.driver_name || 'Driver',
-          last_message: newMsg.message,
+          last_message: newMsg.message.startsWith('[IMAGE] ') ? '📷 ส่งรูปภาพ' : newMsg.message,
           unread: newMsg.sender_id !== 'admin' ? 1 : 0,
           updated_at: newMsg.created_at
         }, ...prev]
@@ -221,7 +255,12 @@ export function ChatWindow({ initialContacts, initialDrivers, forcedDriverId }: 
         
         if (newMsg.sender_id !== 'admin') {
           import('@/lib/actions/chat-actions').then(({ markAsReadAction }) => markAsReadAction(relevantDriverId))
+          // Play sound
+          try { new Audio('/sounds/notification.mp3').play().catch(e => console.log('Audio disabled:', e)) } catch {}
         }
+      } else if (newMsg.sender_id !== 'admin') {
+         // Play sound for incoming message even if not selected driver
+         try { new Audio('/sounds/notification.mp3').play().catch(e => console.log('Audio disabled:', e)) } catch {}
       }
       
       updateContactList(newMsg)
@@ -378,7 +417,13 @@ export function ChatWindow({ initialContacts, initialDrivers, forcedDriverId }: 
                                 ? 'bg-emerald-600 text-white rounded-br-sm' 
                                 : 'bg-gray-100 text-gray-800 rounded-bl-sm'
                             }`}>
-                              <p className="text-sm leading-relaxed break-words">{msg.message}</p>
+                              {msg.message.startsWith('[IMAGE] ') ? (
+                                <div className="relative w-48 h-48 sm:w-64 sm:h-64 rounded-xl overflow-hidden mb-1 border border-black/10">
+                                    <Image src={msg.message.replace('[IMAGE] ', '')} alt="Chat image" fill className="object-cover" />
+                                </div>
+                              ) : (
+                                <p className="text-sm leading-relaxed break-words">{msg.message}</p>
+                              )}
                               <div className={`flex items-center gap-1 mt-0.5 ${isAdmin ? 'justify-end' : ''}`}>
                                 <span className="text-[10px] opacity-50">
                                   {formatTime(msg.created_at)}
@@ -403,6 +448,22 @@ export function ChatWindow({ initialContacts, initialDrivers, forcedDriverId }: 
             {/* Message Input */}
             <div className="p-3 border-t border-gray-200 bg-white/60">
               <div className="flex gap-2">
+                <input 
+                    type="file" 
+                    ref={fileInputRef} 
+                    className="hidden" 
+                    accept="image/*" 
+                    onChange={handleImageUpload} 
+                />
+                <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isSending || uploadingImage}
+                    className="text-gray-500 hover:text-emerald-600 hover:bg-emerald-50 shrink-0 h-10 w-10 p-0"
+                >
+                    {uploadingImage ? <Loader2 className="animate-spin" size={18} /> : <ImageIcon size={20} />}
+                </Button>
                 <Input 
                   value={inputMessage}
                   onChange={(e) => setInputMessage(e.target.value)}

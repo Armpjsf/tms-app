@@ -200,7 +200,7 @@ export function MobileVehicleCheckForm({ driverId, driverName, defaultVehiclePla
                          <Truck className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                         <Input 
                             placeholder="เลขทะเบียนรถ" 
-                            className="bg-background border-gray-200 pl-10 text-white"
+                            className="bg-background border-gray-200 pl-10 text-gray-900"
                             value={plate}
                             onChange={(e) => setPlate(e.target.value)}
                             required
@@ -223,7 +223,7 @@ export function MobileVehicleCheckForm({ driverId, driverName, defaultVehiclePla
                         />
                         <Label 
                             htmlFor={item} 
-                            className="text-white cursor-pointer flex-1"
+                            className="text-gray-800 cursor-pointer flex-1 font-medium"
                         >
                             {item}
                         </Label>

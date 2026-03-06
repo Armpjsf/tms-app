@@ -91,7 +91,7 @@ export function MobileMaintenanceForm({ driverId, driverName, defaultVehiclePlat
                     <Label className="text-foreground">ทะเบียนรถ</Label>
                     <Input 
                         placeholder="เลขทะเบียนรถ" 
-                        className="bg-background border-gray-200 text-white"
+                        className="bg-background border-gray-200 text-gray-900"
                         value={plate}
                         onChange={(e) => setPlate(e.target.value)}
                         required
@@ -105,7 +105,7 @@ export function MobileMaintenanceForm({ driverId, driverName, defaultVehiclePlat
                         <Input 
                             type="number"
                             placeholder="เลขไมล์ปัจจุบัน" 
-                            className="bg-background border-gray-200 pl-10 text-white"
+                            className="bg-background border-gray-200 pl-10 text-gray-900"
                             value={odometer}
                             onChange={(e) => setOdometer(e.target.value)}
                             required
@@ -119,7 +119,7 @@ export function MobileMaintenanceForm({ driverId, driverName, defaultVehiclePlat
                         <Wrench className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                         <Input 
                             placeholder="เช่น เบรคมีเสียงดัง, แอร์ไม่เย็น" 
-                            className="bg-background border-gray-200 pl-10 text-white"
+                            className="bg-background border-gray-200 pl-10 text-gray-900"
                             value={title}
                             onChange={(e) => setTitle(e.target.value)}
                             required
@@ -131,7 +131,7 @@ export function MobileMaintenanceForm({ driverId, driverName, defaultVehiclePlat
                     <Label className="text-foreground">รายละเอียดเพิ่มเติม</Label>
                     <Textarea 
                         placeholder="อธิบายอาการเสีย..." 
-                        className="bg-background border-gray-200 text-white min-h-[100px]"
+                        className="bg-background border-gray-200 text-gray-900 min-h-[100px]"
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
                         required

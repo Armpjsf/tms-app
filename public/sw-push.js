@@ -8,7 +8,8 @@ self.addEventListener("push", function (event) {
       body: data.body || "มีงานจองใหม่สำหรับคุณ",
       icon: "/logo.png",
       badge: "/logo.png", // Small icon for notification bar
-      vibrate: [200, 100, 200],
+      vibrate: [200, 100, 200, 100, 200, 100, 200], // Longer vibration pattern
+      requireInteraction: true, // Forces the user to dismiss it
       data: {
         url: data.url || "/mobile/jobs",
       },

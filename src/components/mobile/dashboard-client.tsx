@@ -273,7 +273,7 @@ export function DashboardClient({ session, stats, currentJob, gamification, toda
                             <div className="bg-gray-50 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3">
                                <Clock className="text-gray-500" size={20} />
                             </div>
-                            <p className="text-gray-400 text-sm font-medium">ไม่มีงานที่ดำเนินอยู่ในขณะนี้</p>
+                            <p className="text-gray-500 text-sm font-medium">ไม่มีงานที่ดำเนินอยู่ในขณะนี้</p>
                             <Link href="/mobile/jobs" className="text-primary text-xs font-black mt-2 inline-block uppercase tracking-widest">
                                 ค้นหางานใหม่
                             </Link>
@@ -311,13 +311,13 @@ export function DashboardClient({ session, stats, currentJob, gamification, toda
                         className="relative group"
                     >
                         <div className="absolute -inset-0.5 bg-gradient-to-r from-emerald-500 to-teal-600 rounded-2xl blur opacity-30 group-hover:opacity-50 transition duration-1000 group-hover:duration-200" />
-                        <Button className="relative w-full h-20 bg-background border border-gray-200 hover:bg-white text-white rounded-2xl flex items-center justify-between px-6 shadow-2xl">
+                        <Button className="relative w-full h-20 bg-background border border-gray-200 hover:bg-white rounded-2xl flex items-center justify-between px-6 shadow-2xl">
                             <div className="flex items-center gap-4">
                                 <div className="p-3 bg-primary/20 rounded-xl">
                                     <Truck className="text-primary" size={24} />
                                 </div>
                                 <div className="text-left">
-                                    <div className="text-sm font-black uppercase tracking-widest">Vehicle Check</div>
+                                    <div className="text-sm font-black uppercase tracking-widest text-emerald-800">Vehicle Check</div>
                                     <div className="text-[10px] text-muted-foreground font-bold">ตรวจสอบสภาพรถประจำวัน</div>
                                 </div>
                             </div>

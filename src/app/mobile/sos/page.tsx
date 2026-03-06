@@ -79,7 +79,7 @@ export default function MobileSOSPage() {
         </div>
 
         <div className="space-y-2">
-            <h1 className="text-2xl font-bold text-white">ฉุกเฉิน / อุบัติเหตุ</h1>
+            <h1 className="text-2xl font-bold text-gray-900">ฉุกเฉิน / อุบัติเหตุ</h1>
             <p className="text-gray-500">
                 กดปุ่มด้านล่างเพื่อโทรออกทันที
             </p>

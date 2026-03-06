@@ -5,10 +5,12 @@ import { useRouter } from "next/navigation"
 import { MobileHeader } from "@/components/mobile/mobile-header"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Send, User, Bot, Loader2, MessageSquare } from "lucide-react"
+import { Send, User, Bot, Loader2, MessageSquare, Image as ImageIcon } from "lucide-react"
 import { createClient } from "@/utils/supabase/client" // Client side supabase for realtime
 import { getChatHistory, sendChatMessage, ChatMessage } from "@/lib/actions/chat-actions"
 import { getDriverSession } from "@/lib/actions/auth-actions"
+import { uploadImageToDrive } from "@/lib/actions/upload-actions"
+import Image from "next/image"
 
 export default function MobileChatPage() {
   const router = useRouter()
@@ -17,7 +19,9 @@ export default function MobileChatPage() {
   const [driverId, setDriverId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
+  const [uploadingImage, setUploadingImage] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const supabase = createClient()
 
   // 1. Init Session & Load History
@@ -84,6 +88,10 @@ export default function MobileChatPage() {
                     }
                     setMessages(prev => {
                         if (prev.find(m => m.id === newMsg.id)) return prev
+                        // Play sound if from admin
+                        if (newMsg.sender_id === 'admin') {
+                            try { new Audio('/sounds/notification.mp3').play().catch(e => console.log('Audio disabled:', e)) } catch {}
+                        }
                         return [...prev, newMsg]
                     })
                 }
@@ -136,7 +144,35 @@ export default function MobileChatPage() {
         setInputText(text) // Restore input
     }
     
+    
     setSending(false)
+  }
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file || !driverId) return
+    
+    setUploadingImage(true)
+    const formData = new FormData()
+    formData.append('file', file)
+    formData.append('folder', 'Chat_Images')
+    
+    try {
+        const uploadResult = await uploadImageToDrive(formData)
+        if (uploadResult.success && uploadResult.directLink) {
+            const imageUrlMessage = `[IMAGE] ${uploadResult.directLink}`
+            // Sending will update via Realtime automatically
+            await sendChatMessage(driverId, imageUrlMessage)
+        } else {
+            alert('อัปโหลดรูปภาพไม่สำเร็จ')
+        }
+    } catch (error) {
+        console.error("Upload error:", error)
+        alert('เกิดข้อผิดพลาดในการอัปโหลด')
+    } finally {
+        setUploadingImage(false)
+        if (fileInputRef.current) fileInputRef.current.value = ''
+    }
   }
 
   return (
@@ -172,7 +208,13 @@ export default function MobileChatPage() {
                                     ? "bg-indigo-600 text-white rounded-tr-none" 
                                     : "bg-gray-100 text-gray-800 rounded-tl-none border border-gray-200"
                             }`}>
-                                <p className="break-words">{msg.message}</p>
+                                {msg.message.startsWith('[IMAGE] ') ? (
+                                    <div className="relative w-48 h-48 sm:w-64 sm:h-64 rounded-xl overflow-hidden mb-1 border border-black/10">
+                                        <Image src={msg.message.replace('[IMAGE] ', '')} alt="Chat image" fill className="object-cover" />
+                                    </div>
+                                ) : (
+                                    <p className="break-words">{msg.message}</p>
+                                )}
                                 <p className={`text-[10px] mt-1 text-right ${isMe ? "text-indigo-200" : "text-gray-400"}`}>
                                     {new Date(msg.created_at).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })}
                                 </p>
@@ -186,6 +228,22 @@ export default function MobileChatPage() {
 
       <div className="p-3 bg-white/90 backdrop-blur-md border-t border-gray-200 pb-safe">
         <div className="flex gap-2">
+            <input 
+                type="file" 
+                ref={fileInputRef} 
+                className="hidden" 
+                accept="image/*" 
+                onChange={handleImageUpload} 
+            />
+            <Button 
+                variant="ghost" 
+                size="icon" 
+                className="shrink-0 h-11 w-11 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-full"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={sending || uploadingImage}
+            >
+                {uploadingImage ? <Loader2 className="animate-spin" size={20} /> : <ImageIcon size={22} />}
+            </Button>
             <Input 
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
