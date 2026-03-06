@@ -29,6 +29,7 @@ import {
   CloudSync,
   CheckCircle2,
   Bell,
+  BookOpen,
 } from "lucide-react"
 
 import { SidebarProfile } from "./sidebar-profile"
@@ -99,6 +100,12 @@ const navigation: NavGroup[] = [
     ],
   },
   {
+    title: "ช่วยเหลือ",
+    items: [
+      { title: "คู่มือการใช้งาน", href: "/manual", icon: <BookOpen size={20} /> },
+    ],
+  },
+  {
     title: "ตั้งค่าระบบ",
     items: [
       { title: "ข้อมูลบริษัท", href: "/settings/company", icon: <Building size={20} /> },
@@ -125,6 +132,12 @@ const customerNavigation: NavGroup[] = [
         items: [
             { title: "จัดการ POD", href: "/pod", icon: <FileText size={20} /> },
         ]
+    },
+    {
+      title: "ช่วยเหลือ",
+      items: [
+        { title: "คู่มือการใช้งาน", href: "/manual", icon: <BookOpen size={20} /> },
+      ],
     }
 ]
 

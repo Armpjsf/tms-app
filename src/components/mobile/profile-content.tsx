@@ -1,6 +1,6 @@
 "use client"
 
-import { Fuel, Wrench, ClipboardCheck, Bell, Settings, ChevronRight, LogOut, AlertTriangle, User, Banknote } from "lucide-react"
+import { Fuel, Wrench, ClipboardCheck, Bell, Settings, ChevronRight, LogOut, AlertTriangle, User, Banknote, BookOpen } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
@@ -30,6 +30,7 @@ export function ProfileContent({ session, score, unreadChatCount = 0 }: ProfileC
     { icon: Bell, label: "การแจ้งเตือน", href: "/mobile/notifications" },
     { icon: User, label: "ติดต่อแอดมิน", href: "/mobile/chat", badge: unreadChatCount },
     { icon: AlertTriangle, label: "แจ้งเหตุฉุกเฉิน (SOS)", href: "/mobile/sos" },
+    { icon: BookOpen, label: "คู่มือการใช้งาน", href: "/mobile/manual" },
     { icon: Settings, label: "ตั้งค่า", href: "/mobile/settings" },
   ]
 

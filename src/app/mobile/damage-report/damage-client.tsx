@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { MobileHeader } from "@/components/mobile/mobile-header"
 import { createDamageReport, getMyDamageReports, DamageReport } from "@/lib/supabase/damage-reports"
-import { AlertOctagon, CheckCircle2, XCircle, Clock, Send, Upload, FileText } from "lucide-react"
+import { AlertOctagon, CheckCircle2, Send, Upload, FileText } from "lucide-react"
 
 const CATEGORIES = [
   { value: 'อุบัติเหตุ', label: '💥 อุบัติเหตุ', color: 'bg-red-100 text-red-700 border-red-300' },
@@ -104,11 +104,11 @@ export function MobileDamageClient({ driverId, driverName, initialReports, recen
 
             {/* Select Job */}
             <div>
-              <p className="text-sm font-bold text-gray-500 mb-1">เลือกงานที่เกิดปัญหา</p>
+              <p className="text-base font-black text-gray-700 mb-1">เลือกงานที่เกิดปัญหา</p>
               <select
                 value={jobId}
                 onChange={handleJobSelect}
-                className="w-full p-3 border-2 border-gray-200 rounded-xl text-sm font-bold text-gray-900 focus:border-rose-500 focus:outline-none bg-white"
+                className="w-full p-3 border-2 border-gray-300 rounded-xl text-base font-black text-gray-900 focus:border-rose-500 focus:outline-none bg-white"
               >
                 <option value="">-- เลือกงาน --</option>
                 {recentJobs.map(j => (
@@ -121,25 +121,25 @@ export function MobileDamageClient({ driverId, driverName, initialReports, recen
 
             {/* Date */}
             <div>
-              <p className="text-sm font-bold text-gray-500 mb-1">วันที่เกิดเหตุ</p>
+              <p className="text-base font-black text-gray-700 mb-1">วันที่เกิดเหตุ</p>
               <input
                 type="date"
                 value={incidentDate}
                 onChange={e => setIncidentDate(e.target.value)}
-                className="w-full p-3 border-2 border-gray-200 rounded-xl text-base font-bold text-gray-900 focus:border-rose-500 focus:outline-none"
+                className="w-full p-3 border-2 border-gray-300 rounded-xl text-base font-black text-gray-900 focus:border-rose-500 focus:outline-none"
               />
             </div>
 
             {/* Category */}
             <div>
-              <p className="text-sm font-bold text-gray-500 mb-2">ประเภทปัญหา</p>
+              <p className="text-base font-black text-gray-700 mb-2">ประเภทปัญหา</p>
               <div className="grid grid-cols-2 gap-2">
                 {CATEGORIES.map(t => (
                   <button
                     key={t.value}
                     onClick={() => setCategory(t.value)}
-                    className={`p-3 rounded-xl border-2 text-center font-black transition-all text-sm
-                      ${category === t.value ? `${t.color} ring-2 ring-offset-1 scale-[0.98]` : 'bg-gray-50 text-gray-600 border-gray-200'}
+                    className={`p-3 rounded-xl border-2 text-center font-black transition-all text-base
+                      ${category === t.value ? `${t.color} ring-2 ring-offset-1 scale-[0.98]` : 'bg-gray-100 text-gray-700 border-gray-300'}
                     `}
                   >
                     {t.label}
@@ -150,39 +150,39 @@ export function MobileDamageClient({ driverId, driverName, initialReports, recen
 
             {/* Photo Upload Placeholder */}
             <div>
-              <p className="text-sm font-bold text-gray-500 mb-1">ถ่ายรูปปัญหา (หลักฐาน)</p>
-              <div className="w-full h-24 border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center text-gray-400 bg-gray-50">
-                <Upload size={24} className="mb-1" />
-                <p className="text-xs font-bold">แตะเพื่อถ่ายรูป</p>
+              <p className="text-base font-black text-gray-700 mb-1">ถ่ายรูปปัญหา (หลักฐาน)</p>
+              <div className="w-full h-24 border-2 border-dashed border-gray-400 rounded-xl flex flex-col items-center justify-center text-gray-600 bg-gray-50">
+                <Upload size={28} className="mb-2" />
+                <p className="text-sm font-black">แตะเพื่อถ่ายรูป</p>
               </div>
             </div>
 
             {/* Description */}
             <div>
-              <p className="text-sm font-bold text-gray-500 mb-1">รายละเอียด</p>
+              <p className="text-base font-black text-gray-700 mb-1">รายละเอียด</p>
               <textarea
                 value={desc}
                 onChange={e => setDesc(e.target.value)}
                 placeholder="อธิบายเหตุการณ์ หรือระบุป้ายทะเบียนที่ถูกชน..."
                 rows={3}
-                className="w-full p-3 border-2 border-gray-200 rounded-xl text-base text-gray-900 resize-none focus:border-rose-500 focus:outline-none"
+                className="w-full p-3 border-2 border-gray-300 rounded-xl text-base font-medium text-gray-900 resize-none focus:border-rose-500 focus:outline-none"
               />
             </div>
 
             {/* Actions */}
-            <div className="flex gap-3">
+            <div className="flex gap-3 mt-4">
               <button
                 onClick={() => setShowForm(false)}
-                className="flex-1 p-4 rounded-xl text-gray-600 bg-gray-100 font-bold text-base"
+                className="flex-1 p-4 rounded-xl text-gray-700 bg-gray-200 font-black text-lg"
               >
                 ยกเลิก
               </button>
               <button
                 onClick={handleSubmit}
                 disabled={!jobId || !category || !incidentDate || submitting}
-                className="flex-1 p-4 rounded-xl bg-gradient-to-r from-rose-500 to-red-600 text-white font-black text-base flex items-center justify-center gap-2 disabled:opacity-50 shadow-lg"
+                className="flex-1 p-4 rounded-xl bg-gradient-to-r from-rose-500 to-red-600 text-white font-black text-lg flex items-center justify-center gap-2 disabled:opacity-50 shadow-lg"
               >
-                <Send size={18} />
+                <Send size={20} />
                 {submitting ? 'กำลังส่ง...' : 'ส่งรายงาน'}
               </button>
             </div>
@@ -190,43 +190,43 @@ export function MobileDamageClient({ driverId, driverName, initialReports, recen
         )}
 
         {/* History */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-          <div className="px-5 py-3 border-b border-gray-100 bg-gray-50">
-            <p className="font-black text-gray-900 text-sm">📋 ประวัติการแจ้งปัญหาของฉัน</p>
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden mt-6">
+          <div className="px-5 py-4 border-b border-gray-200 bg-gray-100">
+            <p className="font-black text-gray-900 text-base">📋 ประวัติการแจ้งปัญหาของฉัน</p>
           </div>
           {reports.length === 0 ? (
-            <div className="p-8 text-center text-gray-400">
-              <p className="text-lg font-bold">ยังไม่เคยมีรายงาน</p>
+            <div className="p-8 text-center text-gray-500">
+              <p className="text-lg font-black">ยังไม่เคยมีรายงาน</p>
             </div>
           ) : (
-            <div className="divide-y divide-gray-50">
+            <div className="divide-y divide-gray-100">
               {reports.map(report => {
                 const isResolved = report.Status === 'Resolved'
                 const isRejected = report.Status === 'Rejected'
                 return (
-                  <div key={report.id} className="px-5 py-4 flex flex-col gap-2">
+                  <div key={report.id} className="px-5 py-4 flex flex-col gap-3">
                     <div className="flex justify-between items-start">
                       <div className="flex items-center gap-2">
-                        <span className="font-bold text-gray-900">{report.Reason_Category}</span>
-                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-black
-                          ${isResolved ? 'bg-emerald-100 text-emerald-700' : ''}
-                          ${isRejected ? 'bg-red-100 text-red-700' : ''}
-                          ${(!isResolved && !isRejected) ? 'bg-amber-100 text-amber-700' : ''}
+                        <span className="font-black text-gray-900 text-base">{report.Reason_Category}</span>
+                        <span className={`px-2 py-1 rounded-full text-xs font-black
+                          ${isResolved ? 'bg-emerald-100 text-emerald-800' : ''}
+                          ${isRejected ? 'bg-red-100 text-red-800' : ''}
+                          ${(!isResolved && !isRejected) ? 'bg-amber-100 text-amber-800' : ''}
                         `}>
                           {isResolved ? 'ปิดแล้ว' : isRejected ? 'ยกเลิก' : 'รอตรวจสอบ'}
                         </span>
                       </div>
-                      <span className="text-xs text-gray-400">
+                      <span className="text-sm font-bold text-gray-500">
                         {new Date(report.Created_At).toLocaleDateString('th-TH')}
                       </span>
                     </div>
                     
-                    <div className="bg-gray-50 rounded-lg p-2 flex items-center gap-2 text-xs">
-                       <FileText size={12} className="text-gray-400" /> 
-                       <span className="font-mono text-gray-600 truncate">{report.Job_ID}</span>
+                    <div className="bg-gray-100 rounded-lg p-3 flex items-center gap-2 text-sm">
+                       <FileText size={16} className="text-gray-500" /> 
+                       <span className="font-mono font-bold text-gray-800 truncate">{report.Job_ID}</span>
                     </div>
 
-                    <p className="text-sm text-gray-600">{report.Description}</p>
+                    <p className="text-base font-medium text-gray-800">{report.Description}</p>
                   </div>
                 )
               })}

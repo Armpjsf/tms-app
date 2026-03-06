@@ -40,17 +40,17 @@ export default async function MobileKPIPage() {
           
           {kpi.nextRankPoints > 0 && (
             <div className="mt-4">
-              <div className="flex justify-between text-sm font-bold text-gray-500 mb-1">
+              <div className="flex justify-between text-base font-black text-gray-700 mb-1">
                 <span>{kpi.rank}</span>
                 <span>{kpi.nextRankPoints} แต้ม</span>
               </div>
               <div className="h-4 bg-white/60 rounded-full overflow-hidden">
                 <div 
-                  className="h-full bg-gradient-to-r from-emerald-400 to-emerald-600 rounded-full transition-all duration-1000"
+                  className="h-full bg-gradient-to-r from-emerald-500 to-emerald-700 rounded-full transition-all duration-1000"
                   style={{ width: `${progressToNext}%` }}
                 />
               </div>
-              <p className="text-xs text-gray-500 mt-1 font-bold">อีก {kpi.nextRankPoints - kpi.points} แต้ม ถึงระดับถัดไป</p>
+              <p className="text-sm text-gray-700 mt-2 font-black">อีก {kpi.nextRankPoints - kpi.points} แต้ม ถึงระดับถัดไป</p>
             </div>
           )}
         </div>
@@ -58,20 +58,20 @@ export default async function MobileKPIPage() {
         {/* Stats Grid — BIG NUMBERS */}
         <div className="grid grid-cols-2 gap-3">
           <div className="bg-white rounded-2xl p-5 text-center shadow-sm border border-gray-100">
-            <p className="text-4xl font-black text-emerald-600">{kpi.monthlyCompleted}</p>
-            <p className="text-sm font-bold text-gray-500 mt-1">เที่ยวเดือนนี้</p>
+            <p className="text-4xl font-black text-emerald-700">{kpi.monthlyCompleted}</p>
+            <p className="text-base font-black text-gray-700 mt-1">เที่ยวเดือนนี้</p>
           </div>
           <div className="bg-white rounded-2xl p-5 text-center shadow-sm border border-gray-100">
-            <p className="text-4xl font-black text-blue-600">{kpi.totalCompleted}</p>
-            <p className="text-sm font-bold text-gray-500 mt-1">เที่ยวทั้งหมด</p>
+            <p className="text-4xl font-black text-blue-700">{kpi.totalCompleted}</p>
+            <p className="text-base font-black text-gray-700 mt-1">เที่ยวทั้งหมด</p>
           </div>
           <div className="bg-white rounded-2xl p-5 text-center shadow-sm border border-gray-100">
-            <p className="text-4xl font-black text-indigo-600">{kpi.onTimeRate}%</p>
-            <p className="text-sm font-bold text-gray-500 mt-1">ตรงเวลา</p>
+            <p className="text-4xl font-black text-indigo-700">{kpi.onTimeRate}%</p>
+            <p className="text-base font-black text-gray-700 mt-1">ตรงเวลา</p>
           </div>
           <div className="bg-white rounded-2xl p-5 text-center shadow-sm border border-gray-100">
-            <p className="text-4xl font-black text-amber-600">🔥 {kpi.streakDays}</p>
-            <p className="text-sm font-bold text-gray-500 mt-1">วันติดต่อกัน</p>
+            <p className="text-4xl font-black text-amber-700">🔥 {kpi.streakDays}</p>
+            <p className="text-base font-black text-gray-700 mt-1">วันติดต่อกัน</p>
           </div>
         </div>
 
@@ -79,18 +79,18 @@ export default async function MobileKPIPage() {
         <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
           <div className="flex justify-between items-center mb-3">
             <p className="text-lg font-black text-gray-900">🎯 เป้าหมายเดือนนี้</p>
-            <p className="text-lg font-black text-emerald-600">{kpi.monthlyCompleted}/{kpi.monthlyGoal}</p>
+            <p className="text-lg font-black text-emerald-700">{kpi.monthlyCompleted}/{kpi.monthlyGoal}</p>
           </div>
-          <div className="h-5 bg-gray-100 rounded-full overflow-hidden">
+          <div className="h-5 bg-gray-200 rounded-full overflow-hidden">
             <div 
-              className="h-full bg-gradient-to-r from-emerald-400 to-emerald-600 rounded-full transition-all duration-1000"
+              className="h-full bg-gradient-to-r from-emerald-500 to-emerald-700 rounded-full transition-all duration-1000"
               style={{ width: `${monthlyProgress}%` }}
             />
           </div>
-          <p className="text-sm text-gray-500 font-bold mt-2 text-center">
+          <p className="text-base text-gray-700 font-black mt-3 text-center">
             {kpi.monthlyCompleted >= kpi.monthlyGoal 
               ? '🎉 ยอดเยี่ยม! ถึงเป้าหมายแล้ว' 
-              : `อีก ${kpi.monthlyGoal - kpi.monthlyCompleted} เที่ยวถึงเป้า`}
+              : `อีก ${kpi.monthlyGoal - kpi.monthlyCompleted} เที่ยวถึงเป้าหมาย`}
           </p>
         </div>
 
@@ -101,11 +101,11 @@ export default async function MobileKPIPage() {
             {kpi.achievements.map(ach => (
               <div 
                 key={ach.id} 
-                className={`text-center rounded-2xl p-3 ${ach.earned ? 'bg-emerald-50 border border-emerald-200' : 'bg-gray-50 border border-gray-100 opacity-40'}`}
+                className={`text-center rounded-2xl p-3 ${ach.earned ? 'bg-emerald-50 border border-emerald-300 shadow-sm' : 'bg-gray-100 border border-gray-200 opacity-60'}`}
               >
                 <p className="text-3xl mb-1">{ach.icon}</p>
-                <p className="text-xs font-black text-gray-700 leading-tight">{ach.title}</p>
-                <p className="text-[10px] text-gray-400 mt-0.5">{ach.desc}</p>
+                <p className="text-sm font-black text-gray-900 leading-tight">{ach.title}</p>
+                <p className="text-xs font-bold text-gray-600 mt-1">{ach.desc}</p>
               </div>
             ))}
           </div>

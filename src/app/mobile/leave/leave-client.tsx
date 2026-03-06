@@ -83,14 +83,14 @@ export function MobileLeaveClient({ driverId, driverName, initialLeaves }: Props
 
             {/* Leave Type — BIG BUTTONS */}
             <div>
-              <p className="text-sm font-bold text-gray-500 mb-2">ประเภทการลา</p>
-              <div className="grid grid-cols-1 gap-2">
+              <p className="text-base font-black text-gray-700 mb-2">ประเภทการลา</p>
+              <div className="grid grid-cols-1 gap-3">
                 {LEAVE_TYPES.map(t => (
                   <button
                     key={t.value}
                     onClick={() => setLeaveType(t.value)}
-                    className={`p-4 rounded-xl border-2 text-left text-lg font-black transition-all
-                      ${leaveType === t.value ? `${t.color} ring-2 ring-offset-1 scale-[0.98]` : 'bg-gray-50 text-gray-600 border-gray-200'}
+                    className={`p-4 rounded-xl border-2 text-left text-xl font-black transition-all
+                      ${leaveType === t.value ? `${t.color} ring-2 ring-offset-1 scale-[0.98]` : 'bg-gray-100 text-gray-700 border-gray-300'}
                     `}
                   >
                     {t.label}
@@ -100,54 +100,54 @@ export function MobileLeaveClient({ driverId, driverName, initialLeaves }: Props
             </div>
 
             {/* Dates — LARGE */}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-3 mt-4">
               <div>
-                <p className="text-sm font-bold text-gray-500 mb-1">วันที่เริ่ม</p>
+                <p className="text-sm font-black text-gray-700 mb-1">วันที่เริ่ม</p>
                 <input
                   type="date"
                   value={startDate}
                   onChange={e => { setStartDate(e.target.value); if (!endDate) setEndDate(e.target.value) }}
-                  className="w-full p-3 border-2 border-gray-200 rounded-xl text-base font-bold text-gray-900 focus:border-cyan-500 focus:outline-none"
+                  className="w-full p-3 border-2 border-gray-300 rounded-xl text-lg font-black text-gray-900 focus:border-cyan-500 focus:outline-none"
                 />
               </div>
               <div>
-                <p className="text-sm font-bold text-gray-500 mb-1">ถึงวันที่</p>
+                <p className="text-sm font-black text-gray-700 mb-1">ถึงวันที่</p>
                 <input
                   type="date"
                   value={endDate}
                   onChange={e => setEndDate(e.target.value)}
                   min={startDate}
-                  className="w-full p-3 border-2 border-gray-200 rounded-xl text-base font-bold text-gray-900 focus:border-cyan-500 focus:outline-none"
+                  className="w-full p-3 border-2 border-gray-300 rounded-xl text-lg font-black text-gray-900 focus:border-cyan-500 focus:outline-none"
                 />
               </div>
             </div>
 
             {/* Reason */}
-            <div>
-              <p className="text-sm font-bold text-gray-500 mb-1">เหตุผล (ไม่บังคับ)</p>
+            <div className="mt-4">
+              <p className="text-base font-black text-gray-700 mb-1">เหตุผล (ไม่บังคับ)</p>
               <textarea
                 value={reason}
                 onChange={e => setReason(e.target.value)}
                 placeholder="ระบุเหตุผล..."
                 rows={2}
-                className="w-full p-3 border-2 border-gray-200 rounded-xl text-base text-gray-900 resize-none focus:border-cyan-500 focus:outline-none"
+                className="w-full p-3 border-2 border-gray-300 rounded-xl text-lg font-medium text-gray-900 resize-none focus:border-cyan-500 focus:outline-none"
               />
             </div>
 
             {/* Actions — BIG BUTTONS */}
-            <div className="flex gap-3">
+            <div className="flex gap-3 mt-6">
               <button
                 onClick={() => setShowForm(false)}
-                className="flex-1 p-4 rounded-xl text-gray-600 bg-gray-100 font-bold text-base"
+                className="flex-1 p-4 rounded-xl text-gray-700 bg-gray-200 font-black text-lg"
               >
                 ยกเลิก
               </button>
               <button
                 onClick={handleSubmit}
                 disabled={!leaveType || !startDate || !endDate || submitting}
-                className="flex-1 p-4 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-black text-base flex items-center justify-center gap-2 disabled:opacity-50 shadow-lg"
+                className="flex-1 p-4 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-black text-lg flex items-center justify-center gap-2 disabled:opacity-50 shadow-lg"
               >
-                <Send size={18} />
+                <Send size={20} />
                 {submitting ? 'กำลังส่ง...' : 'ส่งใบลา'}
               </button>
             </div>
@@ -155,40 +155,40 @@ export function MobileLeaveClient({ driverId, driverName, initialLeaves }: Props
         )}
 
         {/* My Leaves History */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-          <div className="px-5 py-3 border-b border-gray-100 bg-gray-50">
-            <p className="font-black text-gray-900 text-sm">📋 ประวัติใบลาของฉัน</p>
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden mt-6">
+          <div className="px-5 py-4 border-b border-gray-200 bg-gray-100">
+            <p className="font-black text-gray-900 text-base">📋 ประวัติใบลาของฉัน</p>
           </div>
           {leaves.length === 0 ? (
-            <div className="p-8 text-center text-gray-400">
-              <p className="text-lg font-bold">ยังไม่มีใบลา</p>
+            <div className="p-8 text-center text-gray-500">
+              <p className="text-lg font-black">ยังไม่มีใบลา</p>
             </div>
           ) : (
-            <div className="divide-y divide-gray-50">
+            <div className="divide-y divide-gray-100">
               {leaves.map(leave => {
                 const startD = new Date(leave.Start_Date + 'T00:00:00')
                 const endD = new Date(leave.End_Date + 'T00:00:00')
                 const days = Math.ceil((endD.getTime() - startD.getTime()) / 86400000) + 1
 
                 return (
-                  <div key={leave.id} className="px-5 py-4 flex items-center gap-3">
+                  <div key={leave.id} className="px-5 py-5 flex items-center gap-3">
                     <div className="flex-shrink-0">
-                      {leave.Status === 'Approved' && <CheckCircle2 size={24} className="text-emerald-500" />}
-                      {leave.Status === 'Rejected' && <XCircle size={24} className="text-red-500" />}
-                      {leave.Status === 'Pending' && <Clock size={24} className="text-amber-500" />}
+                      {leave.Status === 'Approved' && <CheckCircle2 size={28} className="text-emerald-500" />}
+                      {leave.Status === 'Rejected' && <XCircle size={28} className="text-red-500" />}
+                      {leave.Status === 'Pending' && <Clock size={28} className="text-amber-500" />}
                     </div>
                     <div className="flex-1">
-                      <p className="font-bold text-gray-900">{leave.Leave_Type}</p>
-                      <p className="text-sm text-gray-500">
+                      <p className="font-black text-gray-900 text-lg">{leave.Leave_Type}</p>
+                      <p className="text-sm font-bold text-gray-600">
                         {startD.toLocaleDateString('th-TH', { day: 'numeric', month: 'short' })}
                         {days > 1 ? ` — ${endD.toLocaleDateString('th-TH', { day: 'numeric', month: 'short' })}` : ''}
                         {' '}({days} วัน)
                       </p>
                     </div>
-                    <span className={`px-2 py-1 rounded-lg text-xs font-black
-                      ${leave.Status === 'Approved' ? 'bg-emerald-100 text-emerald-700' : ''}
-                      ${leave.Status === 'Rejected' ? 'bg-red-100 text-red-700' : ''}
-                      ${leave.Status === 'Pending' ? 'bg-amber-100 text-amber-700' : ''}
+                    <span className={`px-3 py-1.5 rounded-lg text-sm font-black
+                      ${leave.Status === 'Approved' ? 'bg-emerald-100 text-emerald-800' : ''}
+                      ${leave.Status === 'Rejected' ? 'bg-red-100 text-red-800' : ''}
+                      ${leave.Status === 'Pending' ? 'bg-amber-100 text-amber-800' : ''}
                     `}>
                       {leave.Status === 'Approved' ? 'อนุมัติ' : leave.Status === 'Rejected' ? 'ไม่อนุมัติ' : 'รอ'}
                     </span>
