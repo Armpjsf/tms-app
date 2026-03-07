@@ -99,7 +99,7 @@ export default function VehicleTypesPage() {
   }
 
   return (
-    <div className="container mx-auto p-6 text-white max-w-4xl">
+    <div className="container mx-auto p-6 text-gray-900 max-w-4xl">
         <div className="flex items-center gap-4 mb-6">
             <Link href="/settings">
                 <Button variant="ghost" size="icon" className="hover:bg-white/10">
@@ -170,7 +170,7 @@ export default function VehicleTypesPage() {
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogContent className="sm:max-w-[425px] bg-white border-gray-200 text-gray-900">
                 <DialogHeader>
-                    <DialogTitle>{currentType ? 'แก้ไขประเภทรถ' : 'เพิ่มประเภทรถใหม่'}</DialogTitle>
+                    <DialogTitle className="text-gray-900">{currentType ? 'แก้ไขประเภทรถ' : 'เพิ่มประเภทรถใหม่'}</DialogTitle>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-4 mt-4">
                     <div className="space-y-2">
