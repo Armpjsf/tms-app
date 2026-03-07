@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { Activity, MapPin, ArrowRight, Truck, Clock, Currency } from "lucide-react"
+import { Activity, MapPin, Truck, Clock } from "lucide-react"
 import { MobileHeader } from "@/components/mobile/mobile-header"
 import { BottomNav } from "@/components/mobile/bottom-nav"
 import { submitBid } from "@/lib/actions/marketplace-actions"
@@ -129,7 +129,7 @@ export function MarketplaceClient({ initialJobs, driverId, driverName }: Marketp
                                             <div className="flex justify-between items-center bg-white rounded-xl mb-4 text-xs font-medium border border-gray-100 p-2">
                                                 <div className="flex items-center gap-1.5 text-gray-600">
                                                     <Clock size={14} className="text-orange-500"/>
-                                                    <span>{job.Date_Req ? new Date(job.Date_Req).toLocaleDateString('th-TH') : 'ไม่ระบุวัน'}</span>
+                                                    <span>{job.Plan_Date ? new Date(job.Plan_Date).toLocaleDateString('th-TH') : 'ไม่ระบุวัน'}</span>
                                                 </div>
                                                 <div className="flex items-center gap-1.5 text-gray-600">
                                                     <Truck size={14} className="text-blue-500"/>

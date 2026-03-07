@@ -2,7 +2,7 @@
 
 import { createClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
-import { logActivity } from './logs'
+import { logActivity } from '@/lib/supabase/logs'
 
 export type JobBid = {
   bid_id: string
@@ -70,7 +70,7 @@ export async function submitBid(jobId: string, driverId: string, driverName: str
   revalidatePath('/dashboard') // Update admin dashboard
   
   await logActivity({
-      module: 'Marketplace',
+      module: 'Jobs',
       action_type: 'CREATE',
       target_id: jobId,
       details: { description: `Driver ${driverName} bid ฿${amount} for job ${jobId}` }
@@ -151,7 +151,7 @@ export async function acceptBid(jobId: string, bidId: string, driverId: string, 
     revalidatePath('/jobs')
 
     await logActivity({
-        module: 'Marketplace',
+        module: 'Jobs',
         action_type: 'UPDATE',
         target_id: jobId,
         details: { description: `Admin accepted bid from ${driverName} at ฿${amount}` }
