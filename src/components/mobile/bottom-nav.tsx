@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Home, ListChecks, MapPin, User, Camera } from "lucide-react"
+import { Home, ListChecks, MapPin, User, Activity } from "lucide-react"
 
 export function BottomNav() {
   const pathname = usePathname()
@@ -12,7 +12,7 @@ export function BottomNav() {
   const navItems = [
     { href: "/mobile/dashboard", icon: Home, label: "หน้าแรก" },
     { href: "/mobile/jobs", icon: ListChecks, label: "งานของฉัน" },
-    { href: "/mobile/scan", icon: Camera, label: "สแกน", isCenter: true },
+    { href: "/mobile/marketplace", icon: Activity, label: "หาเที่ยวงาน", isCenter: true },
     { href: "/mobile/map", icon: MapPin, label: "แผนที่งาน" },
     { href: "/mobile/profile", icon: User, label: "ข้อมูลพื้นฐาน" },
   ]
