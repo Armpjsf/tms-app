@@ -161,8 +161,7 @@ export default function MobileChatPage() {
         const uploadResult = await uploadImageToDrive(formData)
         if (uploadResult.success && uploadResult.directLink) {
             const imageUrlMessage = `[IMAGE] ${uploadResult.directLink}`
-            // Sending will update via Realtime automatically
-            await sendChatMessage(driverId, imageUrlMessage)
+            await sendChatMessage(driverId, imageUrlMessage, 'admin')
         } else {
             alert('อัปโหลดรูปภาพไม่สำเร็จ')
         }

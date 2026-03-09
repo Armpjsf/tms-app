@@ -18,27 +18,52 @@ export async function getChatHistory(driverId: string) {
     const supabase = await createClient()
     
     // 0. Detect correct schema
-    const { tableName, columns } = await getChatSchema(supabase)
+    let { tableName, columns } = await getChatSchema(supabase)
 
-    const { data, error } = await supabase
+    const result = await supabase
         .from(tableName)
         .select('*')
         .or(`${columns.sender_id}.eq.${driverId},${columns.receiver_id}.eq.${driverId}`)
         .order(columns.created_at, { ascending: true })
 
-    if (error) {
-        console.error("Error fetching chat:", error)
-        return []
+    if (result.error) {
+        // Fallback to admin client (bypass RLS)
+        console.warn("[Chat] getChatHistory - normal client failed, using admin client:", result.error.message)
+        const adminSupabase = createAdminClient()
+        const adminSchema = await getChatSchema(adminSupabase)
+        tableName = adminSchema.tableName
+        columns = adminSchema.columns
+
+        const { data: adminData, error: adminError } = await adminSupabase
+            .from(tableName)
+            .select('*')
+            .or(`${columns.sender_id}.eq.${driverId},${columns.receiver_id}.eq.${driverId}`)
+            .order(columns.created_at, { ascending: true })
+        
+        if (adminError) {
+            console.error("[Chat] getChatHistory admin also failed:", adminError.message)
+            return []
+        }
+
+        // Return normalized data from admin fallback
+        return ((adminData ?? []) as Record<string, unknown>[]).map(msg => ({
+            id: msg[columns.id] as number,
+            sender_id: msg[columns.sender_id] as string,
+            receiver_id: msg[columns.receiver_id] as string,
+            message: msg[columns.message] as string,
+            is_read: msg[columns.is_read] as boolean,
+            created_at: msg[columns.created_at] as string
+        })) as ChatMessage[]
     }
 
     // Normalize
-    return (data as any[]).map(msg => ({
-        id: msg[columns.id],
-        sender_id: msg[columns.sender_id],
-        receiver_id: msg[columns.receiver_id],
-        message: msg[columns.message],
-        is_read: msg[columns.is_read],
-        created_at: msg[columns.created_at]
+    return ((result.data ?? []) as Record<string, unknown>[]).map(msg => ({
+        id: msg[columns.id] as number,
+        sender_id: msg[columns.sender_id] as string,
+        receiver_id: msg[columns.receiver_id] as string,
+        message: msg[columns.message] as string,
+        is_read: msg[columns.is_read] as boolean,
+        created_at: msg[columns.created_at] as string
     })) as ChatMessage[]
 }
 

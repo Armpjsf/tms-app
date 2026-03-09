@@ -253,6 +253,14 @@ export async function sendMessage(driverId: string, driverName: string, message:
             console.error(`[Chat] sendMessage Admin failed: ${JSON.stringify(adminError)}`)
             throw adminError
         }
+
+        // Also send push in admin fallback path
+        await sendPushToDriver(driverId, {
+            title: '💬 ข้อความใหม่จากเจ้าหน้าที่',
+            body: message,
+            url: '/mobile/chat'
+        }).catch(err => console.error('[Chat] Push error (fallback):', err))
+
         return { success: true, data: adminData }
     }
 
