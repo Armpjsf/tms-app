@@ -11,6 +11,10 @@ export async function OPTIONS() {
   return NextResponse.json({}, { headers: corsHeaders })
 }
 
+export async function GET() {
+    return NextResponse.json({ message: "Subscribe route is reachable!" }, { headers: corsHeaders })
+}
+
 export async function POST(req: NextRequest) {
     try {
         const { driverId, subscription } = await req.json()
