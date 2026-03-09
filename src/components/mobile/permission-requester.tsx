@@ -59,8 +59,7 @@ export function PermissionRequester({ driverId }: Props) {
       PushNotifications.checkPermissions().then(async (status) => {
         if (status.receive === 'granted') {
           // Already granted → silently register FCM token immediately
-          // Temporarily disabled to debug crash: await registerNativeFCM()
-          console.log('[DEBUG] registerNativeFCM() bypassed to test crash')
+          await registerNativeFCM()
         } else if (status.receive === 'prompt') {
           setTimeout(() => setShowPrompt(true), 2000)
         }
