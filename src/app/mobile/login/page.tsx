@@ -2,11 +2,12 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { Lock, User, Truck } from "lucide-react"
+import { Lock, User } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { loginDriver } from "@/lib/actions/auth-actions"
+import Image from "next/image"
 
 export default function DriverLoginPage() {
   const router = useRouter()
@@ -39,40 +40,40 @@ export default function DriverLoginPage() {
         <div className="bg-white/80 backdrop-blur-xl border border-gray-200 rounded-[2rem] p-8 shadow-2xl relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-indigo-500/5 pointer-events-none" />
         <div className="text-center space-y-2 relative">
-          <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl mx-auto flex items-center justify-center shadow-xl shadow-blue-500/30 mb-4 ring-4 ring-blue-500/10">
-             <Truck className="text-white w-10 h-10" />
+          <div className="w-24 h-24 mx-auto flex items-center justify-center mb-2">
+             <Image src="/logo.png" alt="LOGIS Driver Logo" width={80} height={80} className="w-full h-full object-contain" priority />
           </div>
-          <h1 className="text-3xl font-black text-white tracking-tight">LOGIS Driver</h1>
+          <h1 className="text-3xl font-black text-gray-900 tracking-tight">LOGIS Driver</h1>
           <p className="text-gray-500 font-medium">เข้าสู่ระบบพนักงานขับรถ</p>
         </div>
 
         <form action={handleSubmit} className="space-y-6">
           <div className="space-y-3">
-            <Label htmlFor="identifier" className="text-gray-800 text-sm">เบอร์โทรศัพท์ หรือ ชื่อผู้ใช้งาน</Label>
+            <Label htmlFor="identifier" className="text-gray-800 text-sm font-semibold">เบอร์โทรศัพท์ หรือ ชื่อผู้ใช้งาน</Label>
             <div className="relative">
-              <User className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <User className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 w-5 h-5 pointer-events-none" />
               <Input 
                 id="identifier" 
                 name="identifier" 
                 type="text" 
                 inputMode="text"
                 placeholder="0XXXXXXXXX" 
-                className="pl-12 bg-background/60 border-gray-200 text-white placeholder:text-gray-500 h-14 text-lg rounded-xl focus:ring-2 focus:ring-blue-500/50"
+                className="pl-12 bg-gray-50/80 border-gray-200 text-gray-900 placeholder:text-gray-400 h-14 text-lg rounded-xl focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all shadow-sm"
                 required
               />
             </div>
           </div>
 
           <div className="space-y-3">
-            <Label htmlFor="password" className="text-gray-800 text-sm">รหัสผ่าน</Label>
+            <Label htmlFor="password" className="text-gray-800 text-sm font-semibold">รหัสผ่าน</Label>
             <div className="relative">
-              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 w-5 h-5 pointer-events-none" />
               <Input 
                 id="password" 
                 name="password" 
                 type="password" 
                 placeholder="••••••" 
-                className="pl-12 bg-background/60 border-gray-200 text-white placeholder:text-gray-500 h-14 text-lg rounded-xl focus:ring-2 focus:ring-blue-500/50"
+                className="pl-12 bg-gray-50/80 border-gray-200 text-gray-900 placeholder:text-gray-400 h-14 text-lg rounded-xl focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all shadow-sm"
                 required
               />
             </div>
@@ -94,13 +95,7 @@ export default function DriverLoginPage() {
         </form>
         </div> {/* end glass card */}
 
-        <div className="pt-4 text-center">
-           <Button variant="link" className="text-gray-400 text-xs" onClick={() => router.push('/login')}>
-             เข้าสู่ระบบสำหรับเจ้าหน้าที่?
-           </Button>
-        </div>
-
-        <p className="text-center text-[10px] text-gray-500">
+        <p className="text-center text-[10px] text-gray-500 mt-6">
           © 2024 LOGIS-PRO TMS. สงวนลิขสิทธิ์
         </p>
       </div>

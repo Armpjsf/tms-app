@@ -3,6 +3,7 @@
 import { createClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { logActivity } from '@/lib/supabase/logs'
+import { sendPushToDriver } from '@/lib/actions/push-actions'
 
 export type JobBid = {
   bid_id: string
@@ -144,7 +145,12 @@ export async function acceptBid(jobId: string, bidId: string, driverId: string, 
         .eq('job_id', jobId)
         .neq('bid_id', bidId)
 
-    // TODO: แจ้งเตือน Push Notification หาคนขับ (ถ้ามีระบบ push ที่พร้อมใช้)
+    // แจ้งเตือน Push Notification หาคนขับ
+    await sendPushToDriver(driverId, {
+      title: '🎉 ยินดีด้วย! คุณได้รับงานจากการประมูล',
+      body: `แอดมินยืนยันให้คุณรับงาน ${jobId} แล้วในราคา ฿${amount}`,
+      url: `/mobile/jobs/${jobId}`
+    })
 
     revalidatePath('/dashboard')
     revalidatePath('/planning')

@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">TMS_ePOD</string>
-    <string name="title_activity_main">TMS_ePOD</string>
+    <string name="app_name">LOGIS Driver</string>
+    <string name="title_activity_main">LOGIS Driver</string>
     <string name="package_name">com.armdd.tmsepod</string>
     <string name="custom_url_scheme">com.armdd.tmsepod</string>
 </resources>

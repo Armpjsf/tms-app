@@ -134,7 +134,7 @@ export function ChatWindow({ initialContacts, initialDrivers, forcedDriverId }: 
     scrollToBottom()
 
     const { sendChatMessage } = await import('@/lib/actions/chat-actions')
-    const result = await sendChatMessage(selectedDriverId, messageText)
+    const result = await sendChatMessage('admin', messageText, selectedDriverId)
 
     if (!result.success) {
       // Remove optimistic message on error
@@ -159,7 +159,7 @@ export function ChatWindow({ initialContacts, initialDrivers, forcedDriverId }: 
         if (uploadResult.success && uploadResult.directLink) {
             const imageUrlMessage = `[IMAGE] ${uploadResult.directLink}`
             const { sendChatMessage } = await import('@/lib/actions/chat-actions')
-            await sendChatMessage(selectedDriverId, imageUrlMessage)
+            await sendChatMessage('admin', imageUrlMessage, selectedDriverId)
         } else {
             alert('อัปโหลดรูปภาพไม่สำเร็จ')
         }

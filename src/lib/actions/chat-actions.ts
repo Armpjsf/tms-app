@@ -2,6 +2,7 @@
 
 import { createClient, createAdminClient } from "@/utils/supabase/server"
 import { getChatSchema } from "@/lib/supabase/chat"
+import { sendPushToDriver } from "@/lib/actions/push-actions"
 
 export interface ChatMessage {
     id: number
@@ -41,10 +42,10 @@ export async function getChatHistory(driverId: string) {
     })) as ChatMessage[]
 }
 
-export async function sendChatMessage(senderId: string, message: string) {
+export async function sendChatMessage(senderId: string, message: string, receiverId: string = 'admin') {
     const supabase = await createClient()
 
-    console.log(`[Chat] Sending message from ${senderId}: ${message}`)
+    console.log(`[Chat] Sending message from ${senderId} to ${receiverId}: ${message}`)
 
     // 0. Detect correct schema
     const { tableName, columns } = await getChatSchema(supabase)
@@ -56,7 +57,7 @@ export async function sendChatMessage(senderId: string, message: string) {
         .from(tableName)
         .insert({
             [columns.sender_id]: senderId,
-            [columns.receiver_id]: 'admin', // Defaulting to admin
+            [columns.receiver_id]: receiverId,
             [columns.message]: message,
             [columns.is_read]: false,
             [columns.created_at]: new Date().toISOString()
@@ -65,6 +66,16 @@ export async function sendChatMessage(senderId: string, message: string) {
     if (error) {
         console.error("[Chat] Error sending message:", error)
         return { success: false, error: error.message }
+    }
+    
+    // Trigger push notification if Admin is sending to a Driver
+    if (senderId === 'admin' && receiverId !== 'admin') {
+        const isImage = message.startsWith('[IMAGE] ')
+        await sendPushToDriver(receiverId, {
+            title: '💬 ข้อความใหม่จากแอดมิน',
+            body: isImage ? '📷 ส่งรูปภาพ' : message,
+            url: '/mobile/chat'
+        })
     }
     
     return { success: true }

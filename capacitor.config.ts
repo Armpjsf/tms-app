@@ -2,7 +2,7 @@ import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'com.armdd.tmsepod',
-  appName: 'TMS_ePOD',
+  appName: 'LOGIS Driver',
   webDir: 'public',
   server: {
     url: 'https://tms-app-five.vercel.app',
