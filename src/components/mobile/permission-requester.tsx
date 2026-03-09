@@ -11,29 +11,67 @@ import { PushNotifications } from '@capacitor/push-notifications'
 export function PermissionRequester() {
   const [showPrompt, setShowPrompt] = useState(false)
 
+  const getDriverId = () => {
+    const getCookie = (name: string) => {
+      const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'))
+      return match ? decodeURIComponent(match[2]) : null
+    }
+    const raw = getCookie('driver_session')
+    if (!raw) return null
+    try {
+      const parsed = JSON.parse(raw)
+      return parsed.driverId || parsed.Driver_ID || parsed.driver_id || raw
+    } catch { return raw }
+  }
+
+  // Register FCM token with backend (silent, no prompt needed)
+  const registerNativeFCM = async () => {
+    const driverId = getDriverId()
+    if (!driverId) return
+
+    let tokenReceived = false
+    await PushNotifications.addListener('registration', async (token) => {
+      if (tokenReceived) return
+      tokenReceived = true
+      console.log('[Native Push] Token:', token.value)
+      await fetch('/api/push/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ driverId, subscription: { endpoint: token.value, isFCM: true } })
+      })
+    })
+    await PushNotifications.addListener('registrationError', (err) =>
+      console.error('[Native Push] Registration error:', JSON.stringify(err))
+    )
+    await PushNotifications.register()
+  }
+
   useEffect(() => {
-    // 1. Check Native Push Permission
+    // 1. Native Push
     if (Capacitor.isNativePlatform()) {
-      PushNotifications.checkPermissions().then(status => {
-         if (status.receive === 'prompt') {
-            const timer = setTimeout(() => setShowPrompt(true), 2000)
-            return () => clearTimeout(timer)
-         }
+      PushNotifications.checkPermissions().then(async (status) => {
+        if (status.receive === 'granted') {
+          // Already granted → auto-register silently (most important fix)
+          await registerNativeFCM()
+        } else if (status.receive === 'prompt') {
+          const timer = setTimeout(() => setShowPrompt(true), 2000)
+          return () => clearTimeout(timer)
+        }
       })
     }
-    // 2. Check Web Push Permission
+    // 2. Web Push
     else {
       if ('serviceWorker' in navigator) {
-          navigator.serviceWorker.register('/sw-push.js', { scope: '/' })
-              .then(reg => console.log('Push Service Worker Registered:', reg.scope))
-              .catch(err => console.error('Push SW Registration Failed:', err));
+        navigator.serviceWorker.register('/sw-push.js', { scope: '/' })
+          .then(reg => console.log('Push SW Registered:', reg.scope))
+          .catch(err => console.error('Push SW Failed:', err))
       }
-
       if ("Notification" in window && Notification.permission === "default") {
         const timer = setTimeout(() => setShowPrompt(true), 2000)
         return () => clearTimeout(timer)
-      } 
+      }
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const subscribeToPush = async () => {

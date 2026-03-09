@@ -279,6 +279,16 @@ export function ChatWindow({ initialContacts, initialDrivers, forcedDriverId }: 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedDriverId])
 
+  // Polling fallback — re-fetch every 8s in case Supabase Realtime does not fire
+  useEffect(() => {
+    if (!selectedDriverId) return
+    const poll = setInterval(() => {
+      fetchMessages(selectedDriverId)
+    }, 8000)
+    return () => clearInterval(poll)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedDriverId])
+
   // Message groups
   const messageGroups = useMemo(() => groupMessagesByDate(messages), [messages])
 
