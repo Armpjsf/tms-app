@@ -43,7 +43,7 @@ export function PermissionRequester() {
         return match ? decodeURIComponent(match[2]) : null
       }
       
-      const driverSession = getCookie('driverSession')
+      const driverSession = getCookie('driver_session')
       if (!driverSession) {
         console.error('[Push] No driver session found')
         setShowPrompt(false)
@@ -53,12 +53,12 @@ export function PermissionRequester() {
       let parsedDriverId = driverSession
       try {
         const parsed = JSON.parse(driverSession)
-        parsedDriverId = parsed.Driver_ID || parsed.driver_id || driverSession
+        parsedDriverId = parsed.driverId || parsed.Driver_ID || parsed.driver_id || driverSession
       } catch { /* use as-is */ }
 
       if (Capacitor.isNativePlatform()) {
         // --- NATIVE PUSH LOGIC (FCM via Capacitor) ---
-        let permStatus = await PushNotifications.requestPermissions()
+        const permStatus = await PushNotifications.requestPermissions()
         if (permStatus.receive === 'granted') {
           // Register for native push
           let tokenReceived = false;

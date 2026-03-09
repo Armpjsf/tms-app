@@ -10,11 +10,21 @@ import { readFileSync } from 'fs'
 // Initialize Firebase Admin for Native Push (FCM)
 if (!admin.apps.length) {
     try {
-        const KEY_FILE_PATH = join(process.cwd(), 'service_account.json')
-        const serviceAccount = JSON.parse(readFileSync(KEY_FILE_PATH, 'utf8'))
+        let serviceAccount: admin.ServiceAccount
+
+        // In production (Vercel), use environment variable
+        // In development, fall back to service_account.json file
+        if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+            serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT) as admin.ServiceAccount
+        } else {
+            const KEY_FILE_PATH = join(process.cwd(), 'service_account.json')
+            serviceAccount = JSON.parse(readFileSync(KEY_FILE_PATH, 'utf8')) as admin.ServiceAccount
+        }
+
         admin.initializeApp({
             credential: admin.credential.cert(serviceAccount)
         })
+        console.log('[Firebase Admin] Initialized successfully')
     } catch (error) {
         console.error('[Firebase Admin] Initialization error:', error)
     }
