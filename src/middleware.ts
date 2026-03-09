@@ -32,12 +32,13 @@ export async function middleware(request: NextRequest) {
   // For all other routes, update the Supabase session
   const response = await updateSession(request)
 
-  // Protect Admin/Dashboard routes (all routes except /mobile, /login, /track, and public assets)
+  // Protect Admin/Dashboard routes (all routes except /api, /mobile, /login, /track, and public assets)
+  const isApiRoute = pathname.startsWith('/api')
   const isLoginPage = pathname.startsWith('/login')
   const isPublicTrack = pathname.startsWith('/track')
   const isMobile = pathname.startsWith('/mobile')
   
-  if (!isMobile && !isLoginPage && !isPublicTrack && pathname !== '/favicon.ico') {
+  if (!isApiRoute && !isMobile && !isLoginPage && !isPublicTrack && pathname !== '/favicon.ico') {
     const sessionCookie = request.cookies.get('session')
 
     if (!sessionCookie) {
