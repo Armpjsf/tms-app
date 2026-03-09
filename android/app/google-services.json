@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "153491463767",
+    "project_id": "tmsepod",
+    "storage_bucket": "tmsepod.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:153491463767:android:fb1b2d1b9d79c5e9288d12",
+        "android_client_info": {
+          "package_name": "com.armdd.tmsepod"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBtHIEuZ_kP33se_yED0g2du4pS2xySxi0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

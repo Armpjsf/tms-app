@@ -3,6 +3,22 @@
 import webpush from 'web-push'
 import { createClient } from '@/utils/supabase/server'
 import { createNotification } from './notification-actions'
+import * as admin from 'firebase-admin'
+import { join } from 'path'
+import { readFileSync } from 'fs'
+
+// Initialize Firebase Admin for Native Push (FCM)
+if (!admin.apps.length) {
+    try {
+        const KEY_FILE_PATH = join(process.cwd(), 'service_account.json')
+        const serviceAccount = JSON.parse(readFileSync(KEY_FILE_PATH, 'utf8'))
+        admin.initializeApp({
+            credential: admin.credential.cert(serviceAccount)
+        })
+    } catch (error) {
+        console.error('[Firebase Admin] Initialization error:', error)
+    }
+}
 
 // Configure web-push with VAPID keys
 const VAPID_PUBLIC = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!
@@ -16,8 +32,11 @@ if (VAPID_PUBLIC && VAPID_PRIVATE) {
 /**
  * Save a push subscription to the database
  */
-export async function savePushSubscription(driverId: string, subscription: PushSubscriptionJSON) {
+export async function savePushSubscription(driverId: string, subscription: any) {
     const supabase = await createClient()
+
+    // Native FCM Push tokens pass { isFCM: true, endpoint: 'token_string' }
+    const isFCM = subscription.isFCM === true
 
     // Upsert — if driver already has a subscription, replace it
     const { error } = await supabase
@@ -26,7 +45,7 @@ export async function savePushSubscription(driverId: string, subscription: PushS
             Driver_ID: driverId,
             Endpoint: subscription.endpoint,
             Keys_P256dh: subscription.keys?.p256dh || '',
-            Keys_Auth: subscription.keys?.auth || '',
+            Keys_Auth: isFCM ? 'FCM' : (subscription.keys?.auth || ''),
             Updated_At: new Date().toISOString()
         }, { onConflict: 'Driver_ID' })
 
@@ -35,7 +54,7 @@ export async function savePushSubscription(driverId: string, subscription: PushS
         return { success: false, error: error.message }
     }
 
-    console.log(`[Push] Subscription saved for driver: ${driverId}`)
+    console.log(`[Push] Subscription saved for driver: ${driverId} (FCM: ${isFCM})`)
     return { success: true }
 }
 
@@ -61,7 +80,33 @@ export async function sendPushToDriver(driverId: string, payload: {
         return { success: false, reason: 'no_subscription' }
     }
 
-    // 2. Build the push subscription object
+    // Check if this is an FCM Native Push notification
+    if (sub.Keys_Auth === 'FCM') {
+        try {
+            const message = {
+                notification: {
+                    title: payload.title,
+                    body: payload.body,
+                },
+                data: {
+                    url: payload.url || '/mobile/jobs'
+                },
+                token: sub.Endpoint
+            }
+            await admin.messaging().send(message)
+            console.log(`[Push] Native FCM Notification sent to driver: ${driverId}`)
+            return { success: true }
+        } catch (err: any) {
+            console.error(`[Push] FCM Send failed for ${driverId}:`, err)
+            // Remove token if not found/unregistered
+            if (err.code === 'messaging/registration-token-not-registered') {
+                await supabase.from('Push_Subscriptions').delete().eq('Driver_ID', driverId)
+            }
+            return { success: false, reason: 'send_failed' }
+        }
+    }
+
+    // 2. Build the Web Push subscription object
     const pushSubscription = {
         endpoint: sub.Endpoint,
         keys: {
@@ -70,7 +115,7 @@ export async function sendPushToDriver(driverId: string, payload: {
         }
     }
 
-    // 3. Send push notification
+    // 3. Send Web Push notification
     try {
         await webpush.sendNotification(
             pushSubscription,
@@ -80,7 +125,7 @@ export async function sendPushToDriver(driverId: string, payload: {
                 url: payload.url || '/mobile/jobs'
             })
         )
-        console.log(`[Push] Notification sent to driver: ${driverId}`)
+        console.log(`[Push] Web Notification sent to driver: ${driverId}`)
         return { success: true }
     } catch (err: any) {
         console.error(`[Push] Send failed for ${driverId}:`, err.statusCode, err.body)

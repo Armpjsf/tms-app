@@ -5,101 +5,145 @@ import { Bell, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 
+import { Capacitor } from '@capacitor/core'
+import { PushNotifications } from '@capacitor/push-notifications'
+
 export function PermissionRequester() {
   const [showPrompt, setShowPrompt] = useState(false)
 
   useEffect(() => {
-    // 1. Register sw-push.js explicitly if available
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/sw-push.js', { scope: '/' })
-            .then(reg => console.log('Push Service Worker Registered:', reg.scope))
-            .catch(err => console.error('Push SW Registration Failed:', err));
+    // 1. Check Native Push Permission
+    if (Capacitor.isNativePlatform()) {
+      PushNotifications.checkPermissions().then(status => {
+         if (status.receive === 'prompt') {
+            const timer = setTimeout(() => setShowPrompt(true), 2000)
+            return () => clearTimeout(timer)
+         }
+      })
     }
+    // 2. Check Web Push Permission
+    else {
+      if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.register('/sw-push.js', { scope: '/' })
+              .then(reg => console.log('Push Service Worker Registered:', reg.scope))
+              .catch(err => console.error('Push SW Registration Failed:', err));
+      }
 
-    // 2. Check Notification Permission
-    if ("Notification" in window && Notification.permission === "default") {
-      // Show prompt after a short delay to be less intrusive
-      const timer = setTimeout(() => setShowPrompt(true), 2000)
-      return () => clearTimeout(timer)
-    } 
+      if ("Notification" in window && Notification.permission === "default") {
+        const timer = setTimeout(() => setShowPrompt(true), 2000)
+        return () => clearTimeout(timer)
+      } 
+    }
   }, [])
 
   const subscribeToPush = async () => {
     try {
-      const result = await Notification.requestPermission()
-      if (result !== "granted") {
-        setShowPrompt(false)
-        return
-      }
-
-      // Get service worker registration
-      const reg = await navigator.serviceWorker.ready
-
-      // Get VAPID public key from env
-      const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
-      if (!vapidKey) {
-        console.error('[Push] VAPID public key not configured')
-        setShowPrompt(false)
-        return
-      }
-
-      // Convert VAPID key to Uint8Array
-      const urlBase64ToUint8Array = (base64String: string) => {
-        const padding = '='.repeat((4 - base64String.length % 4) % 4)
-        const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/')
-        const rawData = window.atob(base64)
-        const outputArray = new Uint8Array(rawData.length)
-        for (let i = 0; i < rawData.length; ++i) {
-          outputArray[i] = rawData.charCodeAt(i)
-        }
-        return outputArray
-      }
-
-      // Subscribe to push service
-      const subscription = await reg.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(vapidKey)
-      })
-
-      console.log('[Push] Subscription obtained:', subscription.endpoint)
-
-      // Get driver ID from cookie/session
       const getCookie = (name: string) => {
         const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'))
         return match ? decodeURIComponent(match[2]) : null
       }
       
-      const driverId = getCookie('driverSession')
-      if (!driverId) {
+      const driverSession = getCookie('driverSession')
+      if (!driverSession) {
         console.error('[Push] No driver session found')
         setShowPrompt(false)
         return
       }
 
-      // Parse driver session to get Driver_ID
-      let parsedDriverId = driverId
+      let parsedDriverId = driverSession
       try {
-        const parsed = JSON.parse(driverId)
-        parsedDriverId = parsed.Driver_ID || parsed.driver_id || driverId
+        const parsed = JSON.parse(driverSession)
+        parsedDriverId = parsed.Driver_ID || parsed.driver_id || driverSession
       } catch { /* use as-is */ }
 
-      // Send subscription to server
-      const res = await fetch('/api/push/subscribe', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          driverId: parsedDriverId,
-          subscription: subscription.toJSON()
-        })
-      })
+      if (Capacitor.isNativePlatform()) {
+        // --- NATIVE PUSH LOGIC (FCM via Capacitor) ---
+        let permStatus = await PushNotifications.requestPermissions()
+        if (permStatus.receive === 'granted') {
+          // Register for native push
+          let tokenReceived = false;
+          
+          await PushNotifications.addListener('registration', async (token) => {
+             if (tokenReceived) return; // Prevent multiple calls
+             tokenReceived = true;
+             console.log('[Native Push] Registration token: ', token.value);
+             
+             // Send FCM token to server
+             const res = await fetch('/api/push/subscribe', {
+               method: 'POST',
+               headers: { 'Content-Type': 'application/json' },
+               body: JSON.stringify({
+                 driverId: parsedDriverId,
+                 subscription: {
+                   endpoint: token.value,
+                   isFCM: true
+                 }
+               })
+             })
+             
+             if (res.ok) console.log('[Native Push] FCM Token saved to server!')
+             else console.error('[Native Push] Failed to save FCM token')
+             
+             setShowPrompt(false)
+          })
 
-      if (res.ok) {
-        console.log('[Push] Subscription saved to server!')
+          await PushNotifications.addListener('registrationError', (error: any) => {
+            console.error('[Native Push] Error on registration: ' + JSON.stringify(error));
+            setShowPrompt(false)
+          })
+
+          await PushNotifications.register()
+          return; // Exit here properly mapped to native sequence
+        } else {
+           setShowPrompt(false)
+           return;
+        }
       } else {
-        console.error('[Push] Failed to save subscription')
-      }
+        // --- WEB PUSH LOGIC ---
+        const result = await Notification.requestPermission()
+        if (result !== "granted") {
+          setShowPrompt(false)
+          return
+        }
 
-      setShowPrompt(false)
+        const reg = await navigator.serviceWorker.ready
+        const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
+        if (!vapidKey) {
+          console.error('[Push] VAPID public key not configured')
+          setShowPrompt(false)
+          return
+        }
+
+        const urlBase64ToUint8Array = (base64String: string) => {
+          const padding = '='.repeat((4 - base64String.length % 4) % 4)
+          const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/')
+          const rawData = window.atob(base64)
+          const outputArray = new Uint8Array(rawData.length)
+          for (let i = 0; i < rawData.length; ++i) {
+            outputArray[i] = rawData.charCodeAt(i)
+          }
+          return outputArray
+        }
+
+        const subscription = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(vapidKey)
+        })
+
+        const res = await fetch('/api/push/subscribe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            driverId: parsedDriverId,
+            subscription: subscription.toJSON()
+          })
+        })
+
+        if (res.ok) console.log('[Web Push] Subscription saved to server!')
+        else console.error('[Web Push] Failed to save subscription')
+
+        setShowPrompt(false)
+      }
     } catch (error) {
       console.error("[Push] Error:", error)
       setShowPrompt(false)
