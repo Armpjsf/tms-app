@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Bell, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -8,54 +8,45 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Capacitor } from '@capacitor/core'
 import { PushNotifications } from '@capacitor/push-notifications'
 
-export function PermissionRequester() {
+type Props = { driverId: string | null }
+
+export function PermissionRequester({ driverId }: Props) {
   const [showPrompt, setShowPrompt] = useState(false)
 
-  const getDriverId = () => {
-    const getCookie = (name: string) => {
-      const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'))
-      return match ? decodeURIComponent(match[2]) : null
-    }
-    const raw = getCookie('driver_session')
-    if (!raw) return null
-    try {
-      const parsed = JSON.parse(raw)
-      return parsed.driverId || parsed.Driver_ID || parsed.driver_id || raw
-    } catch { return raw }
-  }
-
-  // Register FCM token with backend (silent, no prompt needed)
-  const registerNativeFCM = async () => {
-    const driverId = getDriverId()
-    if (!driverId) return
+  // Register FCM token with backend silently
+  const registerNativeFCM = useCallback(async () => {
+    if (!driverId) return  // Guard: only register when logged in
 
     let tokenReceived = false
     await PushNotifications.addListener('registration', async (token) => {
       if (tokenReceived) return
       tokenReceived = true
-      console.log('[Native Push] Token:', token.value)
-      await fetch('/api/push/subscribe', {
+      console.log('[Native Push] FCM Token:', token.value)
+      const res = await fetch('/api/push/subscribe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ driverId, subscription: { endpoint: token.value, isFCM: true } })
       })
+      if (res.ok) console.log('[Native Push] Token saved ✓')
+      else console.error('[Native Push] Failed to save token', await res.text())
     })
     await PushNotifications.addListener('registrationError', (err) =>
       console.error('[Native Push] Registration error:', JSON.stringify(err))
     )
     await PushNotifications.register()
-  }
+  }, [driverId])
 
   useEffect(() => {
-    // 1. Native Push
+    if (!driverId) return  // Not logged in yet — skip all registration
+
+    // 1. Native Push (FCM)
     if (Capacitor.isNativePlatform()) {
       PushNotifications.checkPermissions().then(async (status) => {
         if (status.receive === 'granted') {
-          // Already granted → auto-register silently (most important fix)
+          // Already granted → silently register FCM token immediately
           await registerNativeFCM()
         } else if (status.receive === 'prompt') {
-          const timer = setTimeout(() => setShowPrompt(true), 2000)
-          return () => clearTimeout(timer)
+          setTimeout(() => setShowPrompt(true), 2000)
         }
       })
     }
@@ -63,36 +54,18 @@ export function PermissionRequester() {
     else {
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('/sw-push.js', { scope: '/' })
-          .then(reg => console.log('Push SW Registered:', reg.scope))
-          .catch(err => console.error('Push SW Failed:', err))
+          .then(reg => console.log('[Web Push] SW Registered:', reg.scope))
+          .catch(err => console.error('[Web Push] SW Failed:', err))
       }
       if ("Notification" in window && Notification.permission === "default") {
-        const timer = setTimeout(() => setShowPrompt(true), 2000)
-        return () => clearTimeout(timer)
+        setTimeout(() => setShowPrompt(true), 2000)
       }
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [driverId, registerNativeFCM])
 
   const subscribeToPush = async () => {
     try {
-      const getCookie = (name: string) => {
-        const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'))
-        return match ? decodeURIComponent(match[2]) : null
-      }
-      
-      const driverSession = getCookie('driver_session')
-      if (!driverSession) {
-        console.error('[Push] No driver session found')
-        setShowPrompt(false)
-        return
-      }
-
-      let parsedDriverId = driverSession
-      try {
-        const parsed = JSON.parse(driverSession)
-        parsedDriverId = parsed.driverId || parsed.Driver_ID || parsed.driver_id || driverSession
-      } catch { /* use as-is */ }
+      if (!driverId) { setShowPrompt(false); return }
 
       if (Capacitor.isNativePlatform()) {
         // --- NATIVE PUSH LOGIC (FCM via Capacitor) ---
@@ -111,7 +84,7 @@ export function PermissionRequester() {
                method: 'POST',
                headers: { 'Content-Type': 'application/json' },
                body: JSON.stringify({
-                 driverId: parsedDriverId,
+                 driverId: driverId,
                  subscription: {
                    endpoint: token.value,
                    isFCM: true
@@ -172,7 +145,7 @@ export function PermissionRequester() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            driverId: parsedDriverId,
+            driverId: driverId,
             subscription: subscription.toJSON()
           })
         })
