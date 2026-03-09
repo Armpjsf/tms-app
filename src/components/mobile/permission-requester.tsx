@@ -15,15 +15,13 @@ export function PermissionRequester({ driverId }: Props) {
 
   // Register FCM token with backend silently
   const registerNativeFCM = useCallback(async () => {
-    if (!driverId) return  // Guard: only register when logged in
+    if (!driverId) return
 
     let tokenReceived = false
     await PushNotifications.addListener('registration', async (token) => {
       if (tokenReceived) return
       tokenReceived = true
-      console.log('[Native Push] FCM Token:', token.value)
       
-      // Use absolute URL for Capacitor to avoid native localhost fetch issues
       const baseUrl = Capacitor.isNativePlatform() ? 'https://tms-app-five.vercel.app' : ''
       const apiUrl = `${baseUrl}/api/push/subscribe`
       
@@ -33,18 +31,24 @@ export function PermissionRequester({ driverId }: Props) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ driverId, subscription: { endpoint: token.value, isFCM: true } })
         })
-        if (res.ok) console.log('[Native Push] Token saved ✓')
-        else console.error('[Native Push] Failed to save token:', await res.text())
+        if (!res.ok) {
+            const errText = await res.text()
+            alert(`[DEBUG] Push Save Failed: ${res.status} ${errText}`)
+        }
       } catch (err) {
-        console.error('[Native Push] Fetch error:', err)
+        alert(`[DEBUG] Push Fetch Error: ${String(err)}`)
       }
     })
     
-    await PushNotifications.addListener('registrationError', (err) =>
-      console.error('[Native Push] Registration error:', JSON.stringify(err))
-    )
+    await PushNotifications.addListener('registrationError', (err) => {
+      alert(`[DEBUG] Push Registration Error: ${JSON.stringify(err)}`)
+    })
     
-    await PushNotifications.register()
+    try {
+        await PushNotifications.register()
+    } catch (err) {
+        alert(`[DEBUG] Push Register Call Error: ${String(err)}`)
+    }
   }, [driverId])
 
   useEffect(() => {
@@ -94,7 +98,6 @@ export function PermissionRequester({ driverId }: Props) {
              const apiUrl = `${baseUrl}/api/push/subscribe`
              
              try {
-               // Send FCM token to server
                const res = await fetch(apiUrl, {
                  method: 'POST',
                  headers: { 'Content-Type': 'application/json' },
@@ -107,21 +110,27 @@ export function PermissionRequester({ driverId }: Props) {
                  })
                })
                
-               if (res.ok) console.log('[Native Push] FCM Token saved to server!')
-               else console.error('[Native Push] Failed to save FCM token')
+               if (!res.ok) {
+                   const errText = await res.text()
+                   alert(`[DEBUG] Push Save Failed: ${res.status} ${errText}`)
+               }
              } catch (err) {
-               console.error('[Native Push] Fetch error:', err)
+               alert(`[DEBUG] Push Fetch Error: ${String(err)}`)
              }
              
              setShowPrompt(false)
           })
 
           await PushNotifications.addListener('registrationError', (error: any) => {
-            console.error('[Native Push] Error on registration: ' + JSON.stringify(error));
+            alert(`[DEBUG] Push Registration Error: ${JSON.stringify(error)}`)
             setShowPrompt(false)
           })
 
-          await PushNotifications.register()
+          try {
+              await PushNotifications.register()
+          } catch (err) {
+              alert(`[DEBUG] Push Register Call Error: ${String(err)}`)
+          }
           return; // Exit here properly mapped to native sequence
         } else {
            setShowPrompt(false)
