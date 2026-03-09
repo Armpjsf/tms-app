@@ -22,17 +22,28 @@ export function PermissionRequester({ driverId }: Props) {
       if (tokenReceived) return
       tokenReceived = true
       console.log('[Native Push] FCM Token:', token.value)
-      const res = await fetch('/api/push/subscribe', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ driverId, subscription: { endpoint: token.value, isFCM: true } })
-      })
-      if (res.ok) console.log('[Native Push] Token saved ✓')
-      else console.error('[Native Push] Failed to save token', await res.text())
+      
+      // Use absolute URL for Capacitor to avoid native localhost fetch issues
+      const baseUrl = Capacitor.isNativePlatform() ? 'https://tms-app-five.vercel.app' : ''
+      const apiUrl = `${baseUrl}/api/push/subscribe`
+      
+      try {
+        const res = await fetch(apiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ driverId, subscription: { endpoint: token.value, isFCM: true } })
+        })
+        if (res.ok) console.log('[Native Push] Token saved ✓')
+        else console.error('[Native Push] Failed to save token:', await res.text())
+      } catch (err) {
+        console.error('[Native Push] Fetch error:', err)
+      }
     })
+    
     await PushNotifications.addListener('registrationError', (err) =>
       console.error('[Native Push] Registration error:', JSON.stringify(err))
     )
+    
     await PushNotifications.register()
   }, [driverId])
 
@@ -79,21 +90,28 @@ export function PermissionRequester({ driverId }: Props) {
              tokenReceived = true;
              console.log('[Native Push] Registration token: ', token.value);
              
-             // Send FCM token to server
-             const res = await fetch('/api/push/subscribe', {
-               method: 'POST',
-               headers: { 'Content-Type': 'application/json' },
-               body: JSON.stringify({
-                 driverId: driverId,
-                 subscription: {
-                   endpoint: token.value,
-                   isFCM: true
-                 }
-               })
-             })
+             const baseUrl = Capacitor.isNativePlatform() ? 'https://tms-app-five.vercel.app' : ''
+             const apiUrl = `${baseUrl}/api/push/subscribe`
              
-             if (res.ok) console.log('[Native Push] FCM Token saved to server!')
-             else console.error('[Native Push] Failed to save FCM token')
+             try {
+               // Send FCM token to server
+               const res = await fetch(apiUrl, {
+                 method: 'POST',
+                 headers: { 'Content-Type': 'application/json' },
+                 body: JSON.stringify({
+                   driverId: driverId,
+                   subscription: {
+                     endpoint: token.value,
+                     isFCM: true
+                   }
+                 })
+               })
+               
+               if (res.ok) console.log('[Native Push] FCM Token saved to server!')
+               else console.error('[Native Push] Failed to save FCM token')
+             } catch (err) {
+               console.error('[Native Push] Fetch error:', err)
+             }
              
              setShowPrompt(false)
           })
