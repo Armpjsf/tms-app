@@ -10,21 +10,31 @@ import { readFileSync } from 'fs'
 // Initialize Firebase Admin for Native Push (FCM)
 if (!admin.apps.length) {
     try {
-        let serviceAccount: admin.ServiceAccount
+        let credential: admin.credential.Credential
 
-        // In production (Vercel), use environment variable
-        // In development, fall back to service_account.json file
-        if (process.env.FIREBASE_SERVICE_ACCOUNT) {
-            serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT) as admin.ServiceAccount
+        if (process.env.FIREBASE_PRIVATE_KEY && process.env.FIREBASE_CLIENT_EMAIL && process.env.FIREBASE_PROJECT_ID) {
+            // Preferred: individual env vars (safer for Vercel — avoids JSON newline corruption)
+            const privateKey = process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n')
+            credential = admin.credential.cert({
+                projectId: process.env.FIREBASE_PROJECT_ID,
+                clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+                privateKey,
+            })
+            console.log('[Firebase Admin] Initialized via individual env vars')
+        } else if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+            // Fallback: full JSON blob
+            const sa = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT) as admin.ServiceAccount
+            credential = admin.credential.cert(sa)
+            console.log('[Firebase Admin] Initialized via FIREBASE_SERVICE_ACCOUNT JSON')
         } else {
+            // Local dev fallback: read from file
             const KEY_FILE_PATH = join(process.cwd(), 'service_account.json')
-            serviceAccount = JSON.parse(readFileSync(KEY_FILE_PATH, 'utf8')) as admin.ServiceAccount
+            const sa = JSON.parse(readFileSync(KEY_FILE_PATH, 'utf8')) as admin.ServiceAccount
+            credential = admin.credential.cert(sa)
+            console.log('[Firebase Admin] Initialized via local service_account.json')
         }
 
-        admin.initializeApp({
-            credential: admin.credential.cert(serviceAccount)
-        })
-        console.log('[Firebase Admin] Initialized successfully')
+        admin.initializeApp({ credential })
     } catch (error) {
         console.error('[Firebase Admin] Initialization error:', error)
     }
