@@ -7,26 +7,16 @@ import { readFileSync } from 'fs'
 export async function GET(req: NextRequest) {
     const report: Record<string, unknown> = {}
 
-    // 1. Check env var
-    const envVar = process.env.FIREBASE_SERVICE_ACCOUNT
-    report['1_firebase_env_var'] = envVar 
-        ? `FOUND (length: ${envVar.length} chars)` 
-        : 'MISSING'
+    // 1. Check env vars
+    const envBlob = process.env.FIREBASE_SERVICE_ACCOUNT
+    const envProjectId = process.env.FIREBASE_PROJECT_ID
+    const envEmail = process.env.FIREBASE_CLIENT_EMAIL
+    const envKey = process.env.FIREBASE_PRIVATE_KEY
 
-    // 2. Try parse
-    if (envVar) {
-        try {
-            const parsed = JSON.parse(envVar)
-            report['2_json_parse'] = 'OK'
-            report['2a_project_id'] = parsed.project_id || 'missing'
-            report['2b_client_email'] = parsed.client_email || 'missing'
-            report['2c_private_key_starts'] = parsed.private_key 
-                ? parsed.private_key.substring(0, 50) + '...'
-                : 'MISSING'
-        } catch (e) {
-            report['2_json_parse'] = 'FAILED: ' + String(e)
-        }
-    }
+    report['1_firebase_env_blob'] = envBlob ? `FOUND (length: ${envBlob.length} chars)` : 'MISSING'
+    report['1a_firebase_project_id'] = envProjectId ? `FOUND (${envProjectId})` : 'MISSING'
+    report['1b_firebase_client_email'] = envEmail ? `FOUND (${envEmail})` : 'MISSING'
+    report['1c_firebase_private_key'] = envKey ? `FOUND (length: ${envKey.length} chars, starts with: ${envKey.substring(0, 30)}...)` : 'MISSING'
 
     // 3. Firebase init status
     report['3_firebase_apps_count'] = admin.apps.length
