@@ -17,10 +17,19 @@ export default function StaffLoginPage() {
 
   // Mobile detection and redirect
   useEffect(() => {
-    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-    if (isMobile) {
-      router.push('/mobile/login');
-    }
+    const checkMobile = () => {
+      const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
+      const isSmallScreen = window.innerWidth <= 768;
+      
+      if (isMobile || isSmallScreen) {
+        router.replace('/mobile/login');
+      }
+    };
+
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
   }, [router]);
 
   async function handleSubmit(formData: FormData) {

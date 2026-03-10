@@ -185,8 +185,11 @@ export default function MobileChatPage() {
     } finally {
         setUploadingImage(false)
         if (fileInputRef.current) fileInputRef.current.value = ''
+        if (cameraInputRef.current) cameraInputRef.current.value = ''
     }
   }
+
+  const cameraInputRef = useRef<HTMLInputElement>(null)
 
   return (
     <div className="flex flex-col h-[calc(100dvh-64px)] bg-background overflow-hidden">
@@ -248,15 +251,36 @@ export default function MobileChatPage() {
                 accept="image/*" 
                 onChange={handleImageUpload} 
             />
-            <Button 
-                variant="ghost" 
-                size="icon" 
-                className="shrink-0 h-11 w-11 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-full"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={sending || uploadingImage}
-            >
-                {uploadingImage ? <Loader2 className="animate-spin" size={20} /> : <ImageIcon size={22} />}
-            </Button>
+            <input 
+                type="file" 
+                ref={cameraInputRef} 
+                className="hidden" 
+                accept="image/*" 
+                capture="environment"
+                onChange={handleImageUpload} 
+            />
+            <div className="flex gap-1">
+                <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="shrink-0 h-11 w-11 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-full"
+                    onClick={() => cameraInputRef.current?.click()}
+                    disabled={sending || uploadingImage}
+                    title="ถ่ายรูป"
+                >
+                    <Camera size={22} />
+                </Button>
+                <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="shrink-0 h-11 w-11 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-full"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={sending || uploadingImage}
+                    title="แนบรูปภาพ"
+                >
+                    {uploadingImage ? <Loader2 className="animate-spin" size={20} /> : <ImageIcon size={22} />}
+                </Button>
+            </div>
             <Input 
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
@@ -267,7 +291,7 @@ export default function MobileChatPage() {
                     }
                 }}
                 placeholder="พิมพ์ข้อความ..."
-                className="bg-white/80 border-gray-200 text-foreground focus-visible:ring-indigo-500 h-11"
+                className="bg-white/80 border-gray-200 text-foreground focus-visible:ring-indigo-500 h-11 flex-1"
                 disabled={sending}
             />
             <Button 
