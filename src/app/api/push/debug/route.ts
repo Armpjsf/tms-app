@@ -32,7 +32,17 @@ export async function GET(req: NextRequest) {
                 credential = admin.credential.cert(sa)
             } else if (envProjectId && envEmail && envKey) {
                 // Initialize via individual env vars
-                const privateKey = envKey.replace(/\\n/g, '\n')
+                // Robust sanitization: handle escaped newlines, literal quotes, and extra whitespace
+                const privateKey = envKey
+                    .replace(/\\n/g, '\n')
+                    .replace(/"/g, '') // Remove literal quotes if present
+                    .trim()
+                
+                // Diagnostic check for email/project mismatch
+                if (!envEmail.includes(envProjectId)) {
+                    console.warn(`[Firebase Debug] Logic Mismatch? Email: ${envEmail} vs Project: ${envProjectId}`)
+                }
+
                 credential = admin.credential.cert({
                     projectId: envProjectId,
                     clientEmail: envEmail,

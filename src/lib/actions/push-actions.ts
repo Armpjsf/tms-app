@@ -12,20 +12,41 @@ if (!admin.apps.length) {
     try {
         let credential: admin.credential.Credential
 
-        if (process.env.FIREBASE_PRIVATE_KEY && process.env.FIREBASE_CLIENT_EMAIL && process.env.FIREBASE_PROJECT_ID) {
+        // Define environment variables for clarity and potential sanitization
+        const envProjectId = process.env.FIREBASE_PROJECT_ID
+        const envClientEmail = process.env.FIREBASE_CLIENT_EMAIL
+        const envPrivateKey = process.env.FIREBASE_PRIVATE_KEY
+        const envServiceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT
+
+        if (envProjectId && envClientEmail && envPrivateKey) {
             // Preferred: individual env vars (safer for Vercel — avoids JSON newline corruption)
-            const privateKey = process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n')
+            // Robust sanitization: handle escaped newlines, literal quotes, and extra whitespace
+            const privateKey = envPrivateKey
+                .replace(/\\n/g, '\n')
+                .replace(/"/g, '') // Remove literal quotes if present
+                .trim()
+            
+            // Diagnostic check for email/project mismatch (optional, but good for debugging)
+            if (!envClientEmail.includes(envProjectId)) {
+                console.warn(`[Firebase Debug] Client Email (${envClientEmail}) does not contain Project ID (${envProjectId}). This might indicate a misconfiguration.`)
+            }
+
             credential = admin.credential.cert({
-                projectId: process.env.FIREBASE_PROJECT_ID,
-                clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+                projectId: envProjectId,
+                clientEmail: envClientEmail,
                 privateKey,
             })
-            console.log('[Firebase Admin] Initialized via individual env vars')
-        } else if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+            console.log(`[Firebase Admin] Initialized via individual env vars for project: ${envProjectId}`)
+        } else if (envServiceAccountJson) {
             // Fallback: full JSON blob
-            const sa = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT) as admin.ServiceAccount
-            credential = admin.credential.cert(sa)
-            console.log('[Firebase Admin] Initialized via FIREBASE_SERVICE_ACCOUNT JSON')
+            try {
+                const sa = JSON.parse(envServiceAccountJson) as admin.ServiceAccount
+                credential = admin.credential.cert(sa)
+                console.log('[Firebase Admin] Initialized via FIREBASE_SERVICE_ACCOUNT JSON')
+            } catch (jsonError) {
+                console.error('[Firebase Admin] Error parsing FIREBASE_SERVICE_ACCOUNT JSON:', jsonError)
+                throw new Error('Invalid FIREBASE_SERVICE_ACCOUNT JSON format.')
+            }
         } else {
             // Local dev fallback: read from file
             const KEY_FILE_PATH = join(process.cwd(), 'service_account.json')
