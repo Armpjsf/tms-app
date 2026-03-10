@@ -25,14 +25,26 @@ export async function GET(req: NextRequest) {
     } else {
         // Try init now
         try {
-            let serviceAccount: admin.ServiceAccount
-            if (envVar) {
-                serviceAccount = JSON.parse(envVar) as admin.ServiceAccount
+            let credential: admin.credential.Credential
+            if (envBlob) {
+                // Initialize via JSON blob
+                const sa = JSON.parse(envBlob) as admin.ServiceAccount
+                credential = admin.credential.cert(sa)
+            } else if (envProjectId && envEmail && envKey) {
+                // Initialize via individual env vars
+                const privateKey = envKey.replace(/\\n/g, '\n')
+                credential = admin.credential.cert({
+                    projectId: envProjectId,
+                    clientEmail: envEmail,
+                    privateKey,
+                })
             } else {
+                // Local dev fallback: read from file
                 const path = join(process.cwd(), 'service_account.json')
-                serviceAccount = JSON.parse(readFileSync(path, 'utf8')) as admin.ServiceAccount
+                const sa = JSON.parse(readFileSync(path, 'utf8')) as admin.ServiceAccount
+                credential = admin.credential.cert(sa)
             }
-            admin.initializeApp({ credential: admin.credential.cert(serviceAccount) })
+            admin.initializeApp({ credential })
             report['3a_firebase_status'] = 'Initialized OK (on demand)'
         } catch (e) {
             report['3a_firebase_status'] = 'INIT FAILED: ' + String(e)
