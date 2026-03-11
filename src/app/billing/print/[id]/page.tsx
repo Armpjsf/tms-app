@@ -53,68 +53,78 @@ export default async function BillingPrintPage(props: Props) {
             {/* ... (Actions Bar skipped in replacement mostly) */}
             
             {/* A4 Page Container */}
-            <div id="printable-content" className="max-w-[210mm] mx-auto bg-white p-8 print:w-full print:max-w-none print:px-12 print:py-6">
+            <div id="printable-content" className="max-w-[210mm] mx-auto bg-white p-4 print:w-full print:max-w-none print:p-0">
                 
-                {/* Header */}
-                <div className="flex justify-between items-start mb-4 border-b pb-4">
-                    <div>
-                        <h1 className="text-3xl font-bold text-slate-800">ใบวางบิล</h1>
-                        <h2 className="text-xl text-slate-500 font-light">BILLING NOTE</h2>
+                {/* Header with Logo */}
+                <div className="flex justify-between items-center mb-4 border-b-2 border-slate-800 pb-2">
+                    <div className="flex items-center gap-4">
+                        {company?.logo_url ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img 
+                                src={company.logo_url} 
+                                alt="Company Logo" 
+                                className="h-14 w-auto object-contain print:block" 
+                                style={{ display: 'block' }}
+                            />
+                        ) : company?.company_name ? (
+                             <div className="h-14 w-14 bg-slate-100 flex items-center justify-center rounded text-[8px] text-slate-400">NO LOGO</div>
+                        ) : null}
+                        <div>
+                            <h1 className="text-2xl font-black text-slate-900 tracking-tight leading-none">ใบวางบิล</h1>
+                            <p className="text-[10px] text-slate-500 font-bold tracking-[0.2em]">BILLING NOTE</p>
+                        </div>
                     </div>
                     <div className="text-right">
-                        <div className="text-2xl font-bold text-slate-800"># {note.Billing_Note_ID}</div>
-                        <div className="text-slate-500">วันที่: {new Date(note.Billing_Date).toLocaleDateString('th-TH')}</div>
-                        {note.Due_Date && (
-                            <div className="text-slate-500">ครบกำหนด: {new Date(note.Due_Date).toLocaleDateString('th-TH')}</div>
-                        )}
+                        <div className="bg-slate-900 text-white px-3 py-0.5 rounded text-lg font-bold inline-block">
+                            # {note.Billing_Note_ID}
+                        </div>
+                        <div className="text-[10px] font-bold text-slate-600 mt-0.5">วันที่: {new Date(note.Billing_Date).toLocaleDateString('th-TH')}</div>
                     </div>
                 </div>
 
-                {/* Addresses */}
-                <div className="grid grid-cols-2 gap-8 mb-4">
-                    <div>
-                        <h3 className="font-bold text-slate-700 mb-2">ผู้วางบิล (Bill From)</h3>
+                {/* Addresses - Compact */}
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                    <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                        <h3 className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">ผู้วางบิล (Bill From)</h3>
                         {company ? (
-                            <div className="text-sm text-slate-600 leading-relaxed">
-                                {company.logo_url && (
-                                    // eslint-disable-next-line @next/next/no-img-element
-                                    <img src={company.logo_url} alt="Company Logo" className="h-16 mb-2 object-contain" />
-                                )}
-                                <strong>{company.company_name}</strong><br/>
-                                {company.address}<br/>
-                                <span>เลขประจำตัวผู้เสียภาษี: {company.tax_id}</span><br/>
-                                {company.phone && <span>โทร: {company.phone}</span>}
+                            <div className="text-[11px] text-slate-700 leading-tight">
+                                <p className="font-bold text-slate-900">{company.company_name}</p>
+                                <p className="text-[10px] text-slate-500 line-clamp-2">{company.address}</p>
+                                <div className="pt-1 flex gap-2">
+                                    <span className="text-[9px] font-bold"><span className="text-slate-400">TAX:</span> {company.tax_id}</span>
+                                    {company.phone && <span className="text-[9px] font-bold"><span className="text-slate-400">TEL:</span> {company.phone}</span>}
+                                </div>
                             </div>
                         ) : (
-                            <p className="text-sm text-slate-600 leading-relaxed text-red-500">
-                                (กรุณาตั้งค่าข้อมูลบริษัทในเมนูตั้งค่า)
-                            </p>
+                            <p className="text-[10px] text-red-500">(กรุณาตั้งค่าข้อมูลบริษัท)</p>
                         )}
                     </div>
-                    <div>
-                        <h3 className="font-bold text-slate-700 mb-2">ลูกค้า (Bill To)</h3>
-                        <p className="text-sm text-slate-600 leading-relaxed">
-                            <strong>{note.Customer_Name}</strong><br/>
+                    <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                        <h3 className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">ลูกค้า (Bill To)</h3>
+                        <div className="text-[11px] text-slate-700 leading-tight">
+                            <p className="font-bold text-slate-900">{note.Customer_Name}</p>
                             {note.Customer_Address ? (
                                 <>
-                                {note.Customer_Address}<br/>
-                                <span>เลขประจำตัวผู้เสียภาษี: {note.Customer_Tax_ID}</span>
+                                    <p className="text-[10px] text-slate-500 line-clamp-1">{note.Customer_Address}</p>
+                                    <div className="pt-1 font-bold text-[9px]">
+                                        <span className="text-slate-400">TAX ID:</span> {note.Customer_Tax_ID || '-'}
+                                    </div>
                                 </>
                             ) : (
-                                <span className="text-red-400">ไม่พบที่อยู่ลูกค้า (กรุณาตวจสอบใน Master Data)</span>
+                                <span className="text-red-400 text-[10px] italic">ไม่พบที่อยู่ลูกค้า</span>
                             )}
-                        </p>
+                        </div>
                     </div>
                 </div>
 
-                {/* Table */}
-                <table className="w-full mb-4">
+                {/* Table - Very Compact */}
+                <table className="w-full mb-4 border-collapse">
                     <thead>
-                        <tr className="bg-slate-100 text-slate-600 text-sm">
-                            <th className="py-2 px-4 text-left">ลำดับ</th>
-                            <th className="py-2 px-4 text-center w-32">วันที่ขนส่ง</th>
-                            <th className="py-2 px-4 text-left">รายละเอียด (Job ID / Route)</th>
-                            <th className="py-2 px-4 text-right">จำนวนเงิน</th>
+                        <tr className="bg-slate-900 text-white text-[9px] uppercase font-black tracking-widest">
+                            <th className="py-1.5 px-3 text-left rounded-l">No.</th>
+                            <th className="py-1.5 px-3 text-center">Date</th>
+                            <th className="py-1.5 px-3 text-left">Description</th>
+                            <th className="py-1.5 px-3 text-right rounded-r">Amount</th>
                         </tr>
                     </thead>
                     {jobs.map((job, index) => {
@@ -137,33 +147,23 @@ export default async function BillingPrintPage(props: Props) {
                             const chargeableExtras = extraCosts.filter(c => c.charge_cust > 0)
 
                             return (
-                                <tbody key={job.Job_ID} className="text-sm text-slate-700 border-b border-slate-200">
-                                    {/* Main Job Row */}
-                                    <tr>
-                                        <td className="py-2 px-4 align-top">{index + 1}</td>
-                                        <td className="py-2 px-4 text-center align-top">
+                                <tbody key={job.Job_ID} className="text-[11px] text-slate-700">
+                                    <tr className="border-b border-slate-50">
+                                        <td className="py-1.5 px-3 align-top font-bold text-slate-400">{index + 1}</td>
+                                        <td className="py-1.5 px-3 text-center align-top whitespace-nowrap">
                                             {new Date(job.Plan_Date).toLocaleDateString('th-TH')}
                                         </td>
-                                        <td className="py-2 px-4">
-                                            <div className="font-bold">ค่าขนส่ง (Job: {job.Job_ID})</div>
-                                            <div className="text-slate-500 text-xs">{job.Route_Name}</div>
+                                        <td className="py-1.5 px-3">
+                                            <div className="font-bold text-slate-900">ค่าขนส่ง (Job: {job.Job_ID})</div>
+                                            <div className="text-slate-500 text-[10px]">{job.Route_Name}</div>
                                         </td>
-                                        <td className="py-2 px-4 text-right align-top">{job.Price_Cust_Total?.toLocaleString()}</td>
+                                        <td className="py-1.5 px-3 text-right align-top font-black">{job.Price_Cust_Total?.toLocaleString()}</td>
                                     </tr>
-
-                                    {/* Extra Costs Rows */}
                                     {chargeableExtras.map((extra, i) => (
-                                        <tr key={`${job.Job_ID}-extra-${i}`} className="text-slate-600">
-                                            <td className="py-1 px-4"></td>
-                                            <td className="py-1 px-4 text-center">
-                                                {/* Same Date or empty */}
-                                            </td>
-                                            <td className="py-1 px-4">
-                                                <div className="text-sm border-l-2 border-slate-300 pl-2">
-                                                    {extra.type}
-                                                </div>
-                                            </td>
-                                            <td className="py-1 px-4 text-right">{Number(extra.charge_cust).toLocaleString()}</td>
+                                        <tr key={`${job.Job_ID}-extra-${i}`} className="text-slate-500 bg-slate-50/20 border-b border-slate-50/50">
+                                            <td className="py-1 px-3" colSpan={2}></td>
+                                            <td className="py-1 px-3 text-[10px]">↳ {extra.type}</td>
+                                            <td className="py-1 px-3 text-right text-[10px] font-bold">{Number(extra.charge_cust).toLocaleString()}</td>
                                         </tr>
                                     ))}
                                 </tbody>
@@ -171,49 +171,82 @@ export default async function BillingPrintPage(props: Props) {
                         })}
                 </table>
 
-                {/* Totals */}
-                <div className="flex justify-end mb-6">
-                    <div className="w-64 space-y-2">
-                        <div className="flex justify-between text-sm text-slate-600">
-                            <span>รวมเป็นเงิน</span>
-                            <span>{subtotal.toLocaleString()} บาท</span>
+                {/* Totals and Remarks - Side by Side */}
+                <div className="flex justify-between items-start gap-8 mb-4 break-inside-avoid">
+                    <div className="flex-1 bg-slate-50 p-3 rounded-xl border border-slate-100 max-w-xs">
+                        <h4 className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">หมายเหตุ (Remarks)</h4>
+                        <div className="text-[9px] text-slate-500 leading-tight space-y-0.5">
+                            <p>• ชำระเงินโดยการโอนเข้าบัญชีบริษัท</p>
+                            <p className="font-bold text-slate-700 mt-1">ธนาคารกสิกรไทย: 123-4-56789-0</p>
+                            <p className="text-[8px]">ชื่อ: บจก. ดีดี ออร์แกนไนซ์ แอนด์ ทรานสปอร์ต</p>
                         </div>
-                        <div className="flex justify-between text-sm text-slate-600">
-                            <span>ภาษีมูลค่าเพิ่ม 7%</span>
-                            <span>{vat.toLocaleString()} บาท</span>
+                    </div>
+
+                    <div className="w-56 space-y-1">
+                        <div className="flex justify-between text-[10px] font-bold text-slate-500">
+                            <span>SUBTOTAL</span>
+                            <span className="text-slate-900">{subtotal.toLocaleString()}</span>
                         </div>
-                        <div className="flex justify-between font-bold text-lg text-slate-800 border-t pt-2 mt-2">
-                            <span>ยอดรวมสุทธิ</span>
-                            <span>{total.toLocaleString()} บาท</span>
+                        <div className="flex justify-between text-[10px] font-bold text-slate-500">
+                            <span>VAT 7%</span>
+                            <span className="text-slate-900">{vat.toLocaleString()}</span>
+                        </div>
+                        <div className="flex justify-between items-end font-black text-xl text-slate-900 border-t-2 border-slate-900 pt-2 mt-1">
+                            <span className="text-[8px] text-slate-400">TOTAL</span>
+                            <div className="border-b-2 border-double border-slate-900">
+                                <span className="text-xs font-bold mr-1 text-slate-400">฿</span>
+                                {total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                {/* Signatures */}
-                <div className="grid grid-cols-2 gap-12 mt-8 break-inside-avoid">
-                    <div className="border-t border-slate-300 pt-4 text-center">
-                        <p className="text-sm text-slate-600">ลงชื่อ ผู้วางบิล</p>
-                        <div className="h-8 mt-2"></div>
-                        <p className="text-xs text-slate-400 mt-1">วันที่ .......................................</p>
+                {/* Signatures Area - Compact */}
+                <div className="grid grid-cols-2 gap-8 mt-10 break-inside-avoid">
+                    <div className="text-center">
+                        <div className="h-12 border-b border-dashed border-slate-300 mb-1"></div>
+                        <p className="text-[8px] font-black text-slate-300 uppercase tracking-widest">Authorized Signature</p>
+                        <p className="text-[10px] text-slate-800 font-bold">ผู้วางบิล</p>
                     </div>
-                    <div className="border-t border-slate-300 pt-4 text-center">
-                        <p className="text-sm text-slate-600">ลงชื่อ ผู้รับวางบิล</p>
-                        <div className="h-8 mt-2"></div>
-                        <p className="text-xs text-slate-400 mt-1">วันที่ .......................................</p>
+                    <div className="text-center">
+                        <div className="h-12 border-b border-dashed border-slate-300 mb-1"></div>
+                        <p className="text-[8px] font-black text-slate-300 uppercase tracking-widest">Receiver Signature</p>
+                        <p className="text-[10px] text-slate-800 font-bold">ผู้รับวางบิล</p>
                     </div>
                 </div>
-                
             </div>
 
             <style type="text/css" media="print">{`
-                @page { size: auto;  margin: 0mm; }
-                body { visibility: hidden; }
-                #printable-content, #printable-content * { visibility: visible; }
+                @page { 
+                    size: A4; 
+                    margin: 8mm 12mm; 
+                }
+                body { 
+                    visibility: hidden; 
+                    -webkit-print-color-adjust: exact !important;
+                    print-color-adjust: exact !important;
+                }
+                #printable-content, #printable-content * { 
+                    visibility: visible; 
+                }
                 #printable-content {
                     position: absolute;
                     left: 0;
                     top: 0;
                     width: 100%;
+                    background: white !important;
+                }
+                img {
+                    display: block !important;
+                    visibility: visible !important;
+                    opacity: 1 !important;
+                    height: 15mm !important; /* Strict height for print */
+                    width: auto !important;
+                    max-width: 50mm !important;
+                }
+                .print-logo {
+                    height: 15mm !important;
+                    width: auto !important;
                 }
             `}</style>
         </div>

@@ -265,6 +265,7 @@ export default function CustomerBillingHistory() {
                                 billingNoteId={note.Billing_Note_ID}
                                 customerEmail={note.Customer_Email}
                                 customerName={note.Customer_Name}
+                                hidePrint={true}
                                 trigger={
                                     <PremiumButton size="sm" variant="outline" className="h-9 w-9 p-0 rounded-xl border-emerald-100 text-emerald-600 hover:bg-emerald-50">
                                         <Mail className="w-4 h-4" />

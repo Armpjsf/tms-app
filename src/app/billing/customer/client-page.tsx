@@ -16,7 +16,6 @@ import {
   Building2,
   FileText,
   Search,
-  Printer,
   CheckCircle2,
   Clock,
   Banknote,
@@ -41,7 +40,6 @@ import {
 } from "@/components/ui/select"
 import { Job } from "@/lib/supabase/jobs"
 import { toast } from "sonner"
-import { Billing_Note } from "@/types/database"
 import { createBillingNote } from "@/lib/supabase/billing"
 
 import { CompanyProfile } from "@/lib/supabase/settings"
@@ -202,9 +200,7 @@ export default function CustomerBillingClient({ initialJobs, companyProfile, cus
 
   // ... (previous state existing) ...
 
-  const handlePrint = () => {
-    window.print()
-  }
+  // handlePrint removed as per user request
 
   // Preview Component (Reused for Print and Dialog)
   const InvoicePreview = () => {
@@ -342,7 +338,7 @@ export default function CustomerBillingClient({ initialJobs, companyProfile, cus
                         }
                     } catch {}
 
-                    const chargeableExtras = extraCosts.filter(c => c.charge_cust > 0)
+                    const chargeableExtras = extraCosts.filter((c: any) => Number(c.charge_cust) > 0)
 
                     return (
                         <tbody key={job.Job_ID} className="text-sm text-gray-400 border-b border-slate-200">
@@ -368,7 +364,7 @@ export default function CustomerBillingClient({ initialJobs, companyProfile, cus
                                     <td className="py-1 px-4 text-center"></td>
                                     <td className="py-1 px-4">
                                         <div className="text-sm border-l-2 border-slate-300 pl-2">
-                                            {extra.type}
+                                            {(extra as any).type}
                                         </div>
                                     </td>
                                     <td className="py-1 px-4 text-right">
@@ -625,15 +621,7 @@ export default function CustomerBillingClient({ initialJobs, companyProfile, cus
               </Button>
             )}
 
-            <Button 
-                size="sm" 
-                variant="outline" 
-                className="border-gray-200 text-gray-700" 
-                disabled={!isCustomerMode && selectedItems.length === 0}
-                onClick={handlePrint}
-            >
-              <Printer className="w-4 h-4 mr-2" /> พิมพ์
-            </Button>
+            {/* Removed handlePrint button as per user request */}
             
             {!isCustomerMode && (
               <Button 
