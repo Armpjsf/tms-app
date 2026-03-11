@@ -16,8 +16,8 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(
     const variants = {
       default: "bg-card text-card-foreground border-border",
       glass: "glass-card",
-      gradient: "bg-gradient-to-br from-card/80 to-muted/80 border-border",
-      glow: "bg-card/50 border-primary/30 shadow-lg shadow-primary/10",
+      gradient: "bg-gradient-to-br from-card/98 to-muted/98 border-border",
+      glow: "bg-card/90 border-primary/30 shadow-lg shadow-primary/10",
     }
 
     return (

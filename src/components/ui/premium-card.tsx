@@ -26,7 +26,7 @@ export function PremiumCard({
       whileHover={{ y: -4, transition: { duration: 0.2 } }}
       className={cn(
         "rounded-[2.5rem] border border-gray-100 p-6 overflow-hidden relative",
-        glass ? "bg-white/80 backdrop-blur-xl" : "bg-white",
+        glass ? "bg-white/98 backdrop-blur-xl" : "bg-white",
         glow ? "shadow-2xl hover:shadow-[0_20px_50px_rgba(0,0,0,0.1)]" : "shadow-md",
         "transition-all duration-300",
         className
