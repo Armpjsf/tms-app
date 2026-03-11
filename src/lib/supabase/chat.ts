@@ -88,7 +88,6 @@ export async function getChatContacts(): Promise<ChatContact[]> {
 
     // FALLBACK: Use Admin Client if error occurs (likely RLS / Auth issue)
     if (result.error) {
-      console.warn(`[Chat] Normal client failed, trying Admin Client for table: ${tableName}. Error: ${JSON.stringify(result.error)}`)
       const adminSupabase = createAdminClient()
       
       // Re-detect schema with admin client just in case
@@ -102,7 +101,6 @@ export async function getChatContacts(): Promise<ChatContact[]> {
         .order(columns.created_at, { ascending: false })
       
       if (adminError) {
-        console.error(`[Chat] CRITICAL: Admin Client also failed for table ${tableName} and column ${columns.created_at}: ${JSON.stringify(adminError)}`)
         return []
       }
       messages = adminMessages
@@ -160,7 +158,6 @@ export async function getChatContacts(): Promise<ChatContact[]> {
 
     return Array.from(contactMap.values())
   } catch (error) {
-    console.error('Error getting chat contacts:', error)
     return []
   }
 }
@@ -182,7 +179,6 @@ export async function getMessages(driverId: string): Promise<ChatMessage[]> {
     let data = result.data
 
     if (result.error) {
-        console.warn(`[Chat] Normal getMessages failed, trying Admin Client: ${JSON.stringify(result.error)}`)
         const adminSupabase = createAdminClient()
         
         const adminSchema = await getChatSchema(adminSupabase)
@@ -196,7 +192,6 @@ export async function getMessages(driverId: string): Promise<ChatMessage[]> {
             .order(columns.created_at, { ascending: true })
         
         if (adminError) {
-            console.error(`[Chat] getMessages Admin also failed: ${JSON.stringify(adminError)}`)
             throw adminError
         }
         data = adminData
@@ -212,7 +207,6 @@ export async function getMessages(driverId: string): Promise<ChatMessage[]> {
         created_at: msg[columns.created_at]
     })) || []
   } catch (error) {
-    console.error('Error fetching messages:', error)
     return []
   }
 }
@@ -241,7 +235,6 @@ export async function sendMessage(driverId: string, driverName: string, message:
       .single()
 
     if (error) {
-        console.warn(`[Chat] sendMessage Normal client failed, trying Admin Client: ${JSON.stringify(error)}`)
         const adminSupabase = createAdminClient()
         const { data: adminData, error: adminError } = await adminSupabase
             .from(tableName)
@@ -250,7 +243,6 @@ export async function sendMessage(driverId: string, driverName: string, message:
             .single()
         
         if (adminError) {
-            console.error(`[Chat] sendMessage Admin failed: ${JSON.stringify(adminError)}`)
             throw adminError
         }
 
@@ -259,7 +251,7 @@ export async function sendMessage(driverId: string, driverName: string, message:
             title: '💬 ข้อความใหม่จากเจ้าหน้าที่',
             body: message,
             url: '/mobile/chat'
-        }).catch(err => console.error('[Chat] Push error (fallback):', err))
+        }).catch(() => {})
 
         return { success: true, data: adminData }
     }
@@ -269,11 +261,10 @@ export async function sendMessage(driverId: string, driverName: string, message:
         title: '💬 ข้อความใหม่จากเจ้าหน้าที่',
         body: message,
         url: '/mobile/chat'
-    }).catch(err => console.error('[Chat] Push error:', err))
+    }).catch(() => {})
 
     return { success: true, data }
   } catch (error) {
-    console.error('Error sending message:', error)
     return { success: false, error }
   }
 }
@@ -294,7 +285,6 @@ export async function markAsRead(driverId: string) {
       .eq(columns.is_read, false)
 
     if (error) {
-        console.warn(`[Chat] markAsRead Normal client failed, trying Admin Client: ${JSON.stringify(error)}`)
         const adminSupabase = createAdminClient()
         const { error: adminError } = await adminSupabase
             .from(tableName)
@@ -307,7 +297,6 @@ export async function markAsRead(driverId: string) {
     }
     return { success: true }
   } catch (error) {
-    console.error('Error marking messages as read:', error)
     return { success: false, error }
   }
 }

@@ -30,14 +30,14 @@ export default async function CustomerFeedbackPage() {
     .limit(50)
 
   if (fetchError) {
-    console.error("Error fetching feedback:", fetchError.message || fetchError)
+    // Error fetching feedback - continue with empty data
   }
 
   const baseFeedback = feedback || []
   const jobIds = [...new Set(baseFeedback.map(f => f.job_id).filter(Boolean))]
 
   // 2. Fetch related job details manually (to avoid schema join errors)
-  let jobsMap: Record<string, any> = {}
+  let jobsMap: Record<string, { Job_ID: string; Customer_Name: string; Driver_Name: string }> = {}
   if (jobIds.length > 0) {
     const { data: jobsData } = await supabase
       .from('Jobs_Main')
@@ -45,7 +45,7 @@ export default async function CustomerFeedbackPage() {
       .in('Job_ID', jobIds)
     
     if (jobsData) {
-        jobsMap = jobsData.reduce((acc: any, job: any) => ({
+        jobsMap = jobsData.reduce((acc, job) => ({
             ...acc,
             [job.Job_ID]: job
         }), {})
@@ -60,7 +60,7 @@ export default async function CustomerFeedbackPage() {
 
   const totalFeedback = feedbackData.length
   const averageRating = totalFeedback > 0 
-    ? (feedbackData.reduce((acc: number, f: any) => acc + (f.rating || 0), 0) / totalFeedback).toFixed(1)
+    ? (feedbackData.reduce((acc: number, f: typeof baseFeedback[0]) => acc + (f.rating || 0), 0) / totalFeedback).toFixed(1)
     : "0.0"
 
   return (
@@ -98,7 +98,7 @@ export default async function CustomerFeedbackPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-4">
-          {feedbackData.map((item: any) => (
+          {feedbackData.map((item: typeof baseFeedback[0]) => (
               <PremiumCard key={item.id} className="p-6 transition-all hover:border-indigo-500/30 group">
                   <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
                       <div className="space-y-3 flex-1">

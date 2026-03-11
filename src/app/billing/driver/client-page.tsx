@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -49,12 +49,17 @@ import { Subcontractor } from "@/types/subcontractor"
 const WITHHOLDING_TAX_RATE = 0.01 // 1%
 import { exportToCSV } from "@/lib/utils/export"
 
+interface ExtraCost {
+    cost_driver: string | number
+    type: string
+}
+
 const getJobTotal = (job: Job) => {
     const basePrice = job.Cost_Driver_Total || 0
     let extra = 0
     if (job.extra_costs_json) {
         try {
-            let costs: any = job.extra_costs_json
+            let costs: ExtraCost[] | unknown = job.extra_costs_json
             if (typeof costs === 'string') {
                 try { costs = JSON.parse(costs) } catch {}
             }
@@ -62,10 +67,10 @@ const getJobTotal = (job: Job) => {
                 try { costs = JSON.parse(costs) } catch {}
             }
             if (Array.isArray(costs)) {
-                extra = costs.reduce((sum: number, c: any) => sum + (Number(c.cost_driver) || 0), 0)
+                extra = (costs as ExtraCost[]).reduce((sum: number, c: ExtraCost) => sum + (Number(c.cost_driver) || 0), 0)
             }
-        } catch (e) {
-            console.error("Error parsing extra costs", e)
+        } catch {
+            // Error parsing extra costs
         }
     }
     return basePrice + extra
@@ -134,7 +139,7 @@ export default function DriverPaymentClient({ initialJobs, drivers, companyProfi
   const handleCreatePayment = async () => {
     if (selectedItems.length === 0) return
     if (!selectedEntityId) {
-        alert(paymentModel === 'individual' ? "กรุณาเลือกคนขับก่อนสร้างใบสรุปจ่าย" : "กรุณาเลือกบริษัทรถร่วมก่อนสร้างใบสรุปจ่าย")
+        // Missing entity selection
         return
     }
 
@@ -153,15 +158,13 @@ export default function DriverPaymentClient({ initialJobs, drivers, companyProfi
         )
 
         if (result.success) {
-            alert(`สร้างใบสรุปจ่ายเลขที่ ${result.id} สำเร็จ!`)
             setSelectedItems([])
             router.refresh() 
         } else {
-            alert(`เกิดข้อผิดพลาด: ${result.error}`)
+            // Error creating payment
         }
-    } catch (e) {
-        console.error(e)
-        alert("เกิดข้อผิดพลาดในการสร้างใบสรุปจ่าย")
+    } catch {
+        // Payment creation error
     } finally {
         setLoading(false)
     }
@@ -220,7 +223,6 @@ export default function DriverPaymentClient({ initialJobs, drivers, companyProfi
     }
 
     if (missingBankEntities.length > 0) {
-        alert(`ไม่สามารถ Export รายการเหล่านี้ได้เนื่องจากไม่มีเลขบัญชี:\n${missingBankEntities.join(", ")}\n\n(รายการอื่นๆ จะถูก Export ตามปกติ)`)
         if (lines.length === 1) return // header only, nothing to export
     }
 
@@ -389,10 +391,10 @@ export default function DriverPaymentClient({ initialJobs, drivers, companyProfi
                 </thead>
                 <tbody>
                     {selectedData.map((item, index) => {
-                        let extraCosts: any[] = []
+                        let extraCosts: ExtraCost[] = []
                         try {
                             if (item.extra_costs_json) {
-                                let parsed: any = item.extra_costs_json
+                                let parsed: ExtraCost[] | unknown = item.extra_costs_json
                                 if (typeof parsed === 'string') {
                                     try { parsed = JSON.parse(parsed) } catch {}
                                 }
@@ -400,7 +402,7 @@ export default function DriverPaymentClient({ initialJobs, drivers, companyProfi
                                     try { parsed = JSON.parse(parsed) } catch {}
                                 }
                                 if (Array.isArray(parsed)) {
-                                    extraCosts = parsed.filter(c => (Number(c.cost_driver) || 0) > 0)
+                                    extraCosts = (parsed as ExtraCost[]).filter(c => (Number(c.cost_driver) || 0) > 0)
                                 }
                             }
                         } catch {}

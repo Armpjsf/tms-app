@@ -10,9 +10,6 @@ export async function submitJobPOD(jobId: string, formData: FormData) {
   const photoFile = formData.get("photo") as File
   const signatureFile = formData.get("signature") as File
   
-  console.log("--- submitJobPOD Debug ---")
-  console.log("Job ID:", jobId)
-  
   const hasLegacyPhoto = !!photoFile && photoFile.size > 0
   const hasNewPhoto = !!formData.get("photo_0")
   const hasPhotos = hasLegacyPhoto || hasNewPhoto
@@ -35,7 +32,6 @@ export async function submitJobPOD(jobId: string, formData: FormData) {
             const res = await uploadFileToSupabase(buffer, name, file.type, folder)
             return res.directLink
         } catch (e) {
-            console.error(`Failed to upload ${name}:`, e)
             throw e
         }
     }
@@ -49,12 +45,9 @@ export async function submitJobPOD(jobId: string, formData: FormData) {
         try {
             const reportName = `${jobId}_${timestamp}_REPORT.jpg`
             podReportUrl = await uploadWithRename(podReportFile, reportName, 'POD_Documents')
-            console.log(`[submitJobPOD] Report uploaded successfully: ${podReportUrl}`)
-        } catch (err) {
-            console.error("[submitJobPOD] Failed to upload POD Report", err)
+        } catch {
+            // Failed
         }
-    } else {
-        console.log("[submitJobPOD] No POD report file found in formData")
     }
 
     const photoCount = parseInt(formData.get("photo_count") as string || "0")
@@ -108,41 +101,33 @@ export async function submitJobPOD(jobId: string, formData: FormData) {
 
     if (updateError) throw updateError
 
-    if (updateError) throw updateError
-
     let warning = ""
     // Important: Await the report generation to prevent race conditions
     // This ensures the worker doesn't terminate before the PDF is uploaded
     try {
-        console.log(`[submitJobPOD] Triggering Automated Report for ${jobId}...`)
         const { generateJobPDF } = await import("@/lib/actions/report-actions")
         const reportResult = await generateJobPDF(jobId)
         if (reportResult.success) {
-            console.log(`[submitJobPOD] Automated Report Success: ${reportResult.url}`)
+            // Success
         } else {
-            console.error(`[submitJobPOD] Automated Report Failed: ${reportResult.error}`)
             warning = `ใบงาน PDF ไม่ถูกสร้าง: ${reportResult.error}`
         }
-    } catch (reportErr) {
-        console.error("[submitJobPOD] Automated Report Critical Error:", reportErr)
+    } catch {
         warning = "เกิดข้อผิดพลาดในการสร้างใบงาน PDF"
     }
 
     revalidatePath("/mobile/jobs")
-    revalidatePath("/dashboard")
     return warning ? { success: true, warning } : { success: true }
-
   } catch (error: unknown) {
-    console.error(`[submitJobPOD] Catch Error for jobId ${jobId}:`, error)
-    
     let errorMessage = "เกิดข้อผิดพลาดในการบันทึกข้อมูล"
     if (typeof error === 'string') errorMessage = error
     else if (error instanceof Error) errorMessage = error.message
-    else if (error && typeof error === 'object') {
+    else if (error && typeof error === 'object' && 'message' in error) {
+        errorMessage = String((error as { message: unknown }).message)
+    } else if (error && typeof error === 'object') {
         try {
-            errorMessage = error.message || JSON.stringify(error)
-        } catch (err) {
-            console.error("Error stringifying error:", err)
+            errorMessage = JSON.stringify(error)
+        } catch {
             errorMessage = String(error)
         }
     }
@@ -174,8 +159,8 @@ export async function submitJobPickup(jobId: string, formData: FormData) {
           try {
               const reportName = `${jobId}_${timestamp}_PICKUP_REPORT.jpg`
               pickupReportUrl = await uploadWithRename(pickupReportFile, reportName, 'Pickup_Documents')
-          } catch (err) {
-              console.error("Failed to upload Pickup Report", err)
+          } catch {
+              // Failed
           }
       }
 
@@ -200,7 +185,6 @@ export async function submitJobPickup(jobId: string, formData: FormData) {
       }
     } catch (e: unknown) {
       const errMsg = e instanceof Error ? e.message : String(e)
-      console.error("Supabase Storage upload failed:", errMsg)
       uploadWarning = `อัปโหลดหลักฐานไม่สำเร็จ: ${errMsg}`
     }
 
@@ -220,7 +204,6 @@ export async function submitJobPickup(jobId: string, formData: FormData) {
       .eq("Job_ID", jobId)
 
     if (error) {
-      console.error("Critical: Pickup update failed:", error)
       throw error
     }
 
@@ -228,16 +211,15 @@ export async function submitJobPickup(jobId: string, formData: FormData) {
     return uploadWarning ? { success: true, warning: uploadWarning } : { success: true }
     
   } catch (error: unknown) {
-    console.error(`[submitJobPickup] Catch Error for jobId ${jobId}:`, error)
-    
     let errorMessage = "เกิดข้อผิดพลาดในการบันทึกข้อมูล"
     if (typeof error === 'string') errorMessage = error
     else if (error instanceof Error) errorMessage = error.message
-    else if (error && typeof error === 'object') {
+    else if (error && typeof error === 'object' && 'message' in error) {
+        errorMessage = String((error as { message: unknown }).message)
+    } else if (error && typeof error === 'object') {
         try {
-            errorMessage = error.message || JSON.stringify(error)
-        } catch (err) {
-            console.error("Error stringifying error:", err)
+            errorMessage = JSON.stringify(error)
+        } catch {
             errorMessage = String(error)
         }
     }

@@ -44,13 +44,11 @@ export async function getTodayPODs(): Promise<PODRecord[]> {
       .order('Actual_Delivery_Time', { ascending: false })
     
     if (error) {
-      console.error('Error fetching PODs:', JSON.stringify(error))
       return []
     }
     
     return data || []
   } catch (e) {
-    console.error('Exception fetching PODs:', e)
     return []
   }
 }
@@ -92,13 +90,11 @@ export async function getAllPODs(page = 1, limit = 50, dateFrom?: string, dateTo
       .range(offset, offset + limit - 1)
     
     if (error) {
-      console.error('Error fetching all PODs:', JSON.stringify(error))
       return { data: [], count: 0 }
     }
     
     return { data: data || [], count: count || 0 }
   } catch (e) {
-    console.error('Exception fetching all PODs:', e)
     return { data: [], count: 0 }
   }
 }
@@ -129,7 +125,6 @@ export async function getPODStats() {
     const { data, error } = await dbQuery
     
     if (error) {
-      console.error('Error fetching POD stats:', JSON.stringify(error))
       return { total: 0, withPhoto: 0, withSignature: 0, complete: 0 }
     }
     
@@ -141,7 +136,6 @@ export async function getPODStats() {
       complete: jobs.filter(j => j.Job_Status === 'Delivered' || j.Job_Status === 'Complete').length,
     }
   } catch (e) {
-    console.error('Exception fetching POD stats:', e)
     return { total: 0, withPhoto: 0, withSignature: 0, complete: 0 }
   }
 }

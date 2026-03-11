@@ -44,7 +44,6 @@ export async function getUsers(providedBranchId?: string) {
     const { data, error } = await query.order("Username")
 
     if (error) {
-        console.error("Error fetching users:", error)
         return []
     }
 
@@ -103,7 +102,6 @@ export async function createUser(user: UserData) {
         }])
 
     if (error) {
-        console.error("Database error during user creation:", error)
         return { success: false, error: error.message }
     }
 
@@ -156,11 +154,9 @@ export async function updateUser(username: string, updates: Partial<UserData>) {
         .eq("Username", username)
 
     if (error) {
-        console.error("Update user error:", error)
         return { success: false, error: error.message }
     }
 
-    console.log(`User ${username} updated successfully. Permissions:`, !!updatePayload.Permissions)
     revalidatePath("/settings/users")
     return { success: true }
 }
@@ -293,7 +289,6 @@ export async function createBulkUsers(users: Record<string, unknown>[]) {
         })
 
     if (error) {
-        console.error("Bulk create users error:", error)
         return { success: false, message: `Failed to import: ${error.message}` }
     }
 

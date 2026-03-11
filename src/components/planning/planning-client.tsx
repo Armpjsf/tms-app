@@ -24,6 +24,11 @@ import Link from "next/link"
 import { ExcelImport } from "@/components/ui/excel-import"
 import { RecentJobItem } from "@/components/planning/recent-job-item"
 import { Job } from "@/lib/supabase/jobs"
+import { Driver } from "@/lib/supabase/drivers"
+import { Vehicle } from "@/lib/supabase/vehicles"
+import { Route } from "@/lib/supabase/routes"
+import { Customer } from "@/lib/supabase/customers"
+import { JobFormData } from "@/app/planning/actions"
 import { JobDialog } from "@/components/planning/job-dialog"
 import { CreateJobButton } from "@/components/planning/create-job-button"
 import { KanbanBoard } from "@/components/planning/kanban-board"
@@ -38,15 +43,15 @@ interface PlanningClientProps {
     todayJobs: Job[]
     requestedJobs: Job[]
     jobCreationData: {
-        drivers: any[]
-        vehicles: any[]
-        customers: any[]
-        routes: any[]
+        drivers: Driver[]
+        vehicles: Vehicle[]
+        customers: Customer[]
+        routes: Route[]
     }
     canViewPrice: boolean
     canDelete: boolean
     canCreate: boolean
-    createBulkJobs: (data: any[]) => Promise<any>
+    createBulkJobs: (data: Partial<JobFormData>[]) => Promise<{ success: boolean; message: string }>
 }
 
 const container = {
@@ -81,7 +86,7 @@ export function PlanningClient({
         if (view === 'requests') {
             return requestedJobs
         }
-        return todayJobs.filter(j => (j as any).Job_Status !== 'Requested').slice(0, 10)
+        return todayJobs.filter(j => j.Job_Status !== 'Requested').slice(0, 10)
     }, [todayJobs, requestedJobs, view])
 
     const requestCount = requestedJobs.length
@@ -267,7 +272,7 @@ export function PlanningClient({
                                             className="transition-colors"
                                         >
                                             <RecentJobItem 
-                                                job={job as any}
+                                                job={job}
                                                 drivers={drivers}
                                                 vehicles={vehicles}
                                                 customers={customers}

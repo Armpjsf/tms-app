@@ -36,22 +36,16 @@ export default async function BillingPrintPage(props: Props) {
                 
                 if (Array.isArray(costs)) {
                     extra = costs
-                        .filter((c: any) => c.charge_cust > 0)
-                        .reduce((acc: number, c: any) => acc + (Number(c.charge_cust) || 0), 0)
+                        .filter((c: { charge_cust?: number }) => c.charge_cust && c.charge_cust > 0)
+                        .reduce((acc: number, c: { charge_cust?: number }) => acc + (Number(c.charge_cust) || 0), 0)
                 }
             }
-        } catch (e) {
-            console.error("Error calculating extra costs", e)
-        }
+        } catch {}
         return sum + base + extra
     }, 0)
 
-    // const subtotal = note.Total_Amount // Legacy: Don't use stored total as it might be outdated
     const vat = subtotal * 0.07 
     const total = subtotal + vat
-
-    // DEBUG: Check data
-    console.log("DEBUG BILLING JOBS:", JSON.stringify(jobs.map(j => ({ id: j.Job_ID, extra: j.extra_costs_json })), null, 2))
 
     return (
         <div className="bg-white min-h-screen p-8 text-black print:p-0 print-container">
@@ -124,7 +118,7 @@ export default async function BillingPrintPage(props: Props) {
                         </tr>
                     </thead>
                     {jobs.map((job, index) => {
-                            let extraCosts: any[] = []
+                            let extraCosts: { type?: string; charge_cust?: number }[] = []
                             try {
                                 if (job.extra_costs_json) {
                                     let parsed = job.extra_costs_json

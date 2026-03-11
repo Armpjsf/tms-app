@@ -50,12 +50,11 @@ export async function adminUpdateJobStatus(jobId: string, newStatus: string, not
     .eq('Job_ID', jobId)
 
   if (error) {
-    console.error('Error admin updating job:', error)
     return { success: false, message: `Failed to update: ${error.message}` }
   }
 
   // 4. Log Admin Action (Optional, can be added to a logs table later)
-  // console.log(`Admin updated job ${jobId} to ${newStatus}`)
+  // No console.error or console.log statements
 
   revalidatePath(`/admin/jobs/${jobId}`)
   revalidatePath('/admin/jobs')

@@ -4,7 +4,9 @@ import { useState, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { ImagePlus, X, Loader2 } from "lucide-react"
 import Image from "next/image"
-import { uploadImageToDrive } from "@/lib/actions/upload-actions"
+import { toast } from "sonner"
+import Logger from "@/lib/utils/logger"
+import { uploadImageToSupabase } from "@/lib/actions/supabase-upload"
 
 interface ImageUploadProps {
   value?: string
@@ -29,18 +31,19 @@ export function ImageUpload({
     try {
       const formData = new FormData()
       formData.append('file', file)
-      formData.append('folder', 'Web_Uploads') // Default folder for generic uploads
+      formData.append('folder', 'Web_Uploads')
 
-      const result = await uploadImageToDrive(formData)
+      const result = await uploadImageToSupabase(formData)
 
-      if (!result.success || !result.directLink) {
+      if (!result.success || !result.url) {
         throw new Error(result.error || 'Upload failed')
       }
 
-      onChange(result.directLink)
-    } catch (error) {
-      console.error('Error uploading image:', error)
-      alert('เกิดข้อผิดพลาดในการอัปโหลดรูปภาพไปยัง Google Drive')
+      onChange(result.url)
+
+    } catch (err) {
+      Logger.error('ImageUpload error:', err)
+      toast.error('เกิดข้อผิดพลาดในการอัปโหลดรูปภาพไปยัง Google Drive')
     } finally {
       setLoading(false)
     }

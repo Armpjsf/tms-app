@@ -121,8 +121,7 @@ const statusOptions: Record<string, { value: string; label: string }[]> = {
   ],
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function exportToCSV(data: any[], columns: string[], fileName: string) {
+function exportToCSV(data: Record<string, unknown>[], columns: string[], fileName: string) {
   const headers = columns.map(c => columnLabels[c] || c)
   const csvContent = [
     headers.join(','),
@@ -147,8 +146,7 @@ function exportToCSV(data: any[], columns: string[], fileName: string) {
   document.body.removeChild(link)
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function exportToExcel(data: any[], columns: string[], fileName: string) {
+function exportToExcel(data: Record<string, unknown>[], columns: string[], fileName: string) {
   const headers = columns.map(c => columnLabels[c] || c)
   const rows = data.map(row => columns.map(col => row[col]))
   const ws = XLSX.utils.aoa_to_sheet([headers, ...rows])
@@ -210,8 +208,7 @@ export function ReportBuilder() {
   const [dateTo, setDateTo] = useState('')
   const [status, setStatus] = useState('all')
   const [searchTerm, setSearchTerm] = useState('')
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [data, setData] = useState<any[]>([])
+  const [data, setData] = useState<Record<string, unknown>[]>([])
   const [columns, setColumns] = useState<string[]>([])
   const [loading, setLoading] = useState(false)
   const [generated, setGenerated] = useState(false)

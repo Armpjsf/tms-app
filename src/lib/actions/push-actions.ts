@@ -28,7 +28,7 @@ if (!admin.apps.length) {
             
             // Diagnostic check for email/project mismatch (optional, but good for debugging)
             if (!envClientEmail.includes(envProjectId)) {
-                console.warn(`[Firebase Debug] Client Email (${envClientEmail}) does not contain Project ID (${envProjectId}). This might indicate a misconfiguration.`)
+                // Email does not contain Project ID - might indicate misconfiguration
             }
 
             credential = admin.credential.cert({
@@ -36,15 +36,12 @@ if (!admin.apps.length) {
                 clientEmail: envClientEmail,
                 privateKey,
             })
-            console.log(`[Firebase Admin] Initialized via individual env vars for project: ${envProjectId}`)
         } else if (envServiceAccountJson) {
             // Fallback: full JSON blob
             try {
                 const sa = JSON.parse(envServiceAccountJson) as admin.ServiceAccount
                 credential = admin.credential.cert(sa)
-                console.log('[Firebase Admin] Initialized via FIREBASE_SERVICE_ACCOUNT JSON')
-            } catch (jsonError) {
-                console.error('[Firebase Admin] Error parsing FIREBASE_SERVICE_ACCOUNT JSON:', jsonError)
+            } catch {
                 throw new Error('Invalid FIREBASE_SERVICE_ACCOUNT JSON format.')
             }
         } else {
@@ -52,12 +49,11 @@ if (!admin.apps.length) {
             const KEY_FILE_PATH = join(process.cwd(), 'service_account.json')
             const sa = JSON.parse(readFileSync(KEY_FILE_PATH, 'utf8')) as admin.ServiceAccount
             credential = admin.credential.cert(sa)
-            console.log('[Firebase Admin] Initialized via local service_account.json')
         }
 
         admin.initializeApp({ credential })
-    } catch (error) {
-        console.error('[Firebase Admin] Initialization error:', error)
+    } catch {
+        // Initialization error - Firebase Admin not available
     }
 }
 
@@ -73,7 +69,16 @@ if (VAPID_PUBLIC && VAPID_PRIVATE) {
 /**
  * Save a push subscription to the database
  */
-export async function savePushSubscription(driverId: string, subscription: any) {
+interface PushSubscription {
+    endpoint: string;
+    keys?: {
+        p256dh: string;
+        auth: string;
+    };
+    isFCM?: boolean;
+}
+
+export async function savePushSubscription(driverId: string, subscription: PushSubscription) {
     const supabase = await createClient()
 
     // Native FCM Push tokens pass { isFCM: true, endpoint: 'token_string' }
@@ -91,11 +96,9 @@ export async function savePushSubscription(driverId: string, subscription: any) 
         }, { onConflict: 'Driver_ID' })
 
     if (error) {
-        console.error('[Push] Save subscription error:', error)
         return { success: false, error: error.message }
     }
 
-    console.log(`[Push] Subscription saved for driver: ${driverId} (FCM: ${isFCM})`)
     return { success: true }
 }
 
@@ -117,7 +120,6 @@ export async function sendPushToDriver(driverId: string, payload: {
         .single()
 
     if (error || !sub) {
-        console.log(`[Push] No subscription found for driver: ${driverId}`)
         return { success: false, reason: 'no_subscription' }
     }
 
@@ -135,12 +137,10 @@ export async function sendPushToDriver(driverId: string, payload: {
                 token: sub.Endpoint
             }
             await admin.messaging().send(message)
-            console.log(`[Push] Native FCM Notification sent to driver: ${driverId}`)
             return { success: true }
-        } catch (err: any) {
-            console.error(`[Push] FCM Send failed for ${driverId}:`, err)
+        } catch (err: unknown) {
             // Remove token if not found/unregistered
-            if (err.code === 'messaging/registration-token-not-registered') {
+            if (err && typeof err === 'object' && 'code' in err && (err as { code: string }).code === 'messaging/registration-token-not-registered') {
                 await supabase.from('Push_Subscriptions').delete().eq('Driver_ID', driverId)
             }
             return { success: false, reason: 'send_failed' }
@@ -166,18 +166,19 @@ export async function sendPushToDriver(driverId: string, payload: {
                 url: payload.url || '/mobile/jobs'
             })
         )
-        console.log(`[Push] Web Notification sent to driver: ${driverId}`)
         return { success: true }
-    } catch (err: any) {
-        console.error(`[Push] Send failed for ${driverId}:`, err.statusCode, err.body)
+    } catch (err: unknown) {
+        if (err && typeof err === 'object' && 'statusCode' in err) {
+            const errorObj = err as { statusCode: number; body?: unknown }
+            const status = errorObj.statusCode
 
-        // If subscription has expired/is invalid, remove it
-        if (err.statusCode === 404 || err.statusCode === 410) {
+            // If subscription has expired/is invalid, remove it
+            if (status === 404 || status === 410) {
             await supabase
                 .from('Push_Subscriptions')
                 .delete()
                 .eq('Driver_ID', driverId)
-            console.log(`[Push] Removed expired subscription for ${driverId}`)
+            }
         }
 
         return { success: false, reason: 'send_failed' }

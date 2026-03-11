@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react"
 import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 import { MobileHeader } from "@/components/mobile/mobile-header"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -104,7 +105,7 @@ export default function MobileChatPage() {
                         if (prev.find(m => m.id === newMsg.id)) return prev
                         // Play sound if from admin
                         if (newMsg.sender_id === 'admin') {
-                            try { new Audio('/sounds/notification.mp3').play().catch(e => console.log('Audio disabled:', e)) } catch {}
+                            try { new Audio('/sounds/notification.mp3').play().catch(() => {}) } catch {}
                         }
                         return [...prev, newMsg]
                     })
@@ -177,11 +178,10 @@ export default function MobileChatPage() {
             const imageUrlMessage = `[IMAGE] ${uploadResult.directLink}`
             await sendChatMessage(driverId, imageUrlMessage, 'admin')
         } else {
-            alert('อัปโหลดรูปภาพไม่สำเร็จ')
+            toast.error('อัปโหลดรูปภาพไม่สำเร็จ')
         }
-    } catch (error) {
-        console.error("Upload error:", error)
-        alert('เกิดข้อผิดพลาดในการอัปโหลด')
+    } catch {
+        toast.error('เกิดข้อผิดพลาดในการอัปโหลด')
     } finally {
         setUploadingImage(false)
         if (fileInputRef.current) fileInputRef.current.value = ''

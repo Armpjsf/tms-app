@@ -21,50 +21,10 @@ import { Customer } from "@/lib/supabase/customers"
 import { AiSuggestionCard } from "@/components/planning/ai-suggestion-card"
 import { geocodeAddress } from "@/lib/ai/geocoding"
 import { Search as SearchIcon } from "lucide-react"
+import { toast } from "sonner"
 
-export type JobAssignment = {
-  Vehicle_Type: string
-  Vehicle_Plate: string
-  Driver_ID: string
-  Sub_ID?: string
-  Show_Price_To_Driver?: boolean
-  Cost_Driver_Total?: number
-  Price_Cust_Total?: number
-}
-
-export type Job = {
-  Job_ID: string
-  Plan_Date?: string | null
-  Pickup_Date?: string | null
-  Delivery_Date?: string | null
-  Customer_Name?: string | null
-  Customer_ID?: string | null
-  Route_Name?: string | null
-  Driver_ID?: string | null
-  Driver_Name?: string | null
-  Vehicle_Plate?: string | null
-  Vehicle_Type?: string | null
-  Cargo_Type?: string | null
-  Notes?: string | null
-  Price_Cust_Total?: number | string | null
-  Cost_Driver_Total?: number | string | null
-  Job_Status?: string | null
-  Weight_Kg?: number | null
-  Volume_Cbm?: number | null
-  Zone?: string | null
-  Branch_ID?: string | null
-  origins?: LocationPoint[] | string | null
-  destinations?: LocationPoint[] | string | null
-  extra_costs?: ExtraCost[] | string | null
-  original_origins_json?: string | null
-  original_destinations_json?: string | null
-  extra_costs_json?: string | null
-  assignments?: JobAssignment[] | null
-  Sub_ID?: string | null
-  Show_Price_To_Driver?: boolean | null
-  Origin_Location?: string | null
-  Dest_Location?: string | null
-}
+import { Job, JobAssignment } from "@/lib/supabase/jobs"
+import { Route } from "@/lib/supabase/routes"
 import { 
   Loader2, 
   Plus, 
@@ -103,12 +63,13 @@ type JobDialogProps = {
   drivers?: Driver[]
   vehicles?: Vehicle[]
   customers?: Customer[]
-  routes?: { Origin?: string; Destination?: string }[]
+  routes?: Route[]
   trigger?: React.ReactNode
   open?: boolean
   onOpenChange?: (open: boolean) => void
   canViewPrice?: boolean
   canDelete?: boolean
+  defaultDate?: string
 }
 
 // Common expense types
@@ -142,7 +103,8 @@ export function JobDialog({
   open: controlledOpen,
   onOpenChange: setControlledOpen,
   canViewPrice = true,
-  canDelete = true
+  canDelete = false,
+  defaultDate
 }: JobDialogProps) {
   const { branches, isAdmin } = useBranch()
   const router = useRouter()
@@ -158,9 +120,9 @@ export function JobDialog({
 
   // Form State
   const [formData, setFormData] = useState({
-    Job_ID: job?.Job_ID || generateJobId(),
-    Plan_Date: job?.Pickup_Date || job?.Plan_Date || new Date().toISOString().split('T')[0],
-    Delivery_Date: job?.Delivery_Date || new Date().toISOString().split('T')[0],
+    Job_ID: job?.Job_ID || '', // Empty for new jobs to allow manual entry or auto-gen
+    Plan_Date: job?.Pickup_Date || job?.Plan_Date || defaultDate || new Date().toISOString().split('T')[0],
+    Delivery_Date: job?.Delivery_Date || defaultDate || new Date().toISOString().split('T')[0],
     Customer_Name: job?.Customer_Name || '',
     Route_Name: job?.Route_Name || '', // Not used directly in UI but kept for compatibility
     
@@ -177,7 +139,9 @@ export function JobDialog({
     Weight_Kg: job?.Weight_Kg || 0,
     Volume_Cbm: job?.Volume_Cbm || 0,
     Zone: job?.Zone || '',
-    Branch_ID: job?.Branch_ID || ''
+    branch_id: job?.branch_id || '',
+    Delivery_Lat: job?.Delivery_Lat || null,
+    Delivery_Lon: job?.Delivery_Lon || null,
   })
 
   // Multi-Assignment State
@@ -196,7 +160,7 @@ export function JobDialog({
   )
 
   // Helper to safely parse JSON or return existing array
-  const parseJson = (val: string | any[] | null | undefined, defaultVal: any) => {
+  const parseJson = (val: string | unknown[] | null | undefined, defaultVal: unknown) => {
     if (!val) return defaultVal
     if (Array.isArray(val)) return val
     if (typeof val === 'string') {
@@ -211,7 +175,7 @@ export function JobDialog({
 
   // Multi-point origins
   const [origins, setOrigins] = useState<LocationPoint[]>(() => {
-    const fromJson = parseJson(job?.origins || job?.original_origins_json, [])
+    const fromJson = parseJson((job?.origins || job?.original_origins_json) as string | unknown[], []) as LocationPoint[]
     if (fromJson && fromJson.length > 0) return fromJson
     
     // Fallback for requested jobs which save as plain strings
@@ -223,7 +187,7 @@ export function JobDialog({
 
   // Multi-point destinations
   const [destinations, setDestinations] = useState<LocationPoint[]>(() => {
-    const fromJson = parseJson(job?.destinations || job?.original_destinations_json, [])
+    const fromJson = parseJson((job?.destinations || job?.original_destinations_json) as string | unknown[], []) as LocationPoint[]
     if (fromJson && fromJson.length > 0) return fromJson
     
     // Fallback for requested jobs which save as plain strings
@@ -235,14 +199,19 @@ export function JobDialog({
 
   // Extra costs
   const [extraCosts, setExtraCosts] = useState<ExtraCost[]>(
-    parseJson(job?.extra_costs || job?.extra_costs_json, [])
+    parseJson((job?.extra_costs || job?.extra_costs_json) as string | unknown[], []) as ExtraCost[]
   )
 
   useEffect(() => {
     if (show && internalMode === 'create' && !job) {
-      setFormData(prev => ({ ...prev, Job_ID: generateJobId() }))
+      setFormData(prev => ({ 
+        ...prev, 
+        Job_ID: '',
+        Plan_Date: defaultDate || new Date().toISOString().split('T')[0],
+        Delivery_Date: defaultDate || new Date().toISOString().split('T')[0]
+      }))
     }
-  }, [show, internalMode, job])
+  }, [show, internalMode, job, defaultDate])
 
   // Sync initial assignment state from job prop if editing
   useEffect(() => {
@@ -251,6 +220,7 @@ export function JobDialog({
             Vehicle_Type: job.Vehicle_Type || '4-Wheel',
             Vehicle_Plate: job.Vehicle_Plate || '',
             Driver_ID: job.Driver_ID || '',
+            branch_id: job.branch_id || '',
             Sub_ID: job.Sub_ID || '',
             Show_Price_To_Driver: job.Show_Price_To_Driver !== false,
             Cost_Driver_Total: job.Cost_Driver_Total ? Number(job.Cost_Driver_Total) : 0,
@@ -290,7 +260,8 @@ export function JobDialog({
         Price_Cust_Total: job?.Price_Cust_Total ? Number(job.Price_Cust_Total) : 0
     }])
     setActiveTab('assign')
-    toast.success("คัดลอกข้อมูลงานเรียบร้อยแล้ว กรุณามอบหมายคนขับสำหรับงานใหม่")
+    // Assuming 'toast' is defined elsewhere or meant to be a placeholder for a notification system
+    // toast.success("คัดลอกข้อมูลงานเรียบร้อยแล้ว กรุณามอบหมายคนขับสำหรับงานใหม่")
   }
 
   const handleCopyTrackingLink = () => {
@@ -311,10 +282,10 @@ export function JobDialog({
         updateOrigin(index, 'lat', res.lat.toString())
         updateOrigin(index, 'lng', res.lng.toString())
       } else {
-        alert("ไม่พบพิกัดสำหรับสถานที่นี้")
+        toast.info("ไม่พบพิกัดสำหรับสถานที่นี้")
       }
-    } catch (e) {
-      console.error(e)
+    } catch {
+      // Geocoding error
     } finally {
       setLoading(false)
     }
@@ -330,10 +301,10 @@ export function JobDialog({
         updateDestination(index, 'lat', res.lat.toString())
         updateDestination(index, 'lng', res.lng.toString())
       } else {
-        alert("ไม่พบพิกัดสำหรับสถานที่นี้")
+        toast.info("ไม่พบพิกัดสำหรับสถานที่นี้")
       }
-    } catch (e) {
-      console.error(e)
+    } catch {
+      // Geocoding error
     } finally {
       setLoading(false)
     }
@@ -411,15 +382,7 @@ export function JobDialog({
     if (!origins[0].name) errors.push("กรุณาระบุต้นทางอย่างน้อย 1 แห่ง")
     if (!destinations[0].name) errors.push("กรุณาระบุปลายทางอย่างน้อย 1 แห่ง")
     
-    // Check assignments
-    if (mode === 'create') {
-        assignments.forEach((a, i) => {
-            if (!a.Vehicle_Plate && !a.Driver_ID) {
-                errors.push(`กรุณาระบุข้อมูลรถหรือคนขับ สำหรับรถคันที่ ${i + 1}`)
-            }
-        })
-    }
-    
+    // Check assignments - Relaxed for bidding system (Optional driver/vehicle)
     return errors
   }
 
@@ -432,11 +395,11 @@ export function JobDialog({
         const result = await deleteJob(job.Job_ID)
         if (!result.success) throw new Error(result.message)
         setShow(false)
+        toast.success("ลบงานเรียบร้อยแล้ว")
         router.refresh()
-    } catch (e) {
-        const error = e as Error
-        console.error(error)
-        alert(error.message || 'ลบงานไม่สำเร็จ')
+    } catch {
+        // Delete error
+        toast.error('ลบงานไม่สำเร็จ')
     } finally {
         setLoading(false)
     }
@@ -459,22 +422,26 @@ export function JobDialog({
     }
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleSubmit = async (e?: React.FormEvent, stayOpen = false) => {
+    if (e) e.preventDefault()
     
     // Validation
     const errors = validateForm()
     if (errors.length > 0) {
-        alert(errors.join('\n'))
+        toast.warning(errors.join('\n'))
         return
     }
 
     setLoading(true)
 
     try {
+      // Job ID Handling: Manual or Auto-gen
+      const effectiveJobId = formData.Job_ID.trim() || generateJobId()
+
       // Base data common to all jobs
       const baseData = {
         ...formData,
+        Job_ID: effectiveJobId,
         Plan_Date: formData.Plan_Date, // Ensure Plan_Date is used
         Origin_Location: origins.map(o => o.name).join(' → '),
         Dest_Location: destinations.map(d => d.name).join(' → '),
@@ -490,7 +457,7 @@ export function JobDialog({
         const jobsToCreate = assignments.map((assignment, index: number) => ({
             ...baseData,
             // If multiple assignments, append suffix to ensure unique Job_ID (e.g. JOB-001-1, JOB-001-2)
-            Job_ID: assignments.length > 1 ? `${baseData.Job_ID}-${index + 1}` : baseData.Job_ID,
+            Job_ID: assignments.length > 1 ? `${effectiveJobId}-${index + 1}` : effectiveJobId,
             // Per-job assignment details
             Vehicle_Type: assignment.Vehicle_Type,
             Vehicle_Plate: assignment.Vehicle_Plate,
@@ -531,12 +498,33 @@ export function JobDialog({
         if (!result.success) throw new Error(result.message)
       }
       
-      setShow(false)
+      if (stayOpen) {
+        // Reset only transient fields, keep Driver/Vehicle/Date
+        setFormData(prev => ({
+          ...prev,
+          Job_ID: '',
+          Customer_Name: '',
+          Cargo_Type: '',
+          Notes: '',
+          Price_Cust_Total: 0,
+          Cost_Driver_Total: 0,
+          Weight_Kg: 0,
+          Volume_Cbm: 0,
+        }))
+        setOrigins([{ name: '', lat: '', lng: '' }])
+        setDestinations([{ name: '', lat: '', lng: '' }])
+        setExtraCosts([])
+        setAssignments(prev => prev.map(a => ({ ...a, Sub_ID: a.Sub_ID, Driver_ID: a.Driver_ID, Vehicle_Plate: a.Vehicle_Plate })))
+        setActiveTab('info')
+      } else {
+        setShow(false)
+      }
+      
+      toast.success(internalMode === 'create' ? "บันทึกงานเรียบร้อย" : "แก้ไขข้อมูลเรียบร้อย")
       router.refresh()
-    } catch (e) {
-      const error = e as Error
-      console.error(error)
-      alert(error.message || 'เกิดข้อผิดพลาด กรุณาลองใหม่')
+    } catch {
+      // Submit error
+      toast.error('เกิดข้อผิดพลาด กรุณาลองใหม่')
     } finally {
       setLoading(false)
     }
@@ -553,7 +541,11 @@ export function JobDialog({
   return (
     <Dialog open={show} onOpenChange={setShow}>
       {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-background border-border text-foreground">
+      <DialogContent 
+        className="max-w-3xl max-h-[90vh] overflow-y-auto bg-background border-border text-foreground"
+        onPointerDownOutside={(e) => e.preventDefault()}
+        onEscapeKeyDown={(e) => e.preventDefault()}
+      >
         <DialogHeader>
           <div className="flex items-center justify-between pr-8">
             <DialogTitle className="text-2xl font-black text-slate-950">
@@ -601,16 +593,18 @@ export function JobDialog({
                   <Label>Job ID</Label>
                   <Input
                     value={formData.Job_ID}
-                    disabled
-                    className="bg-muted/50 border-input text-muted-foreground"
+                    onChange={(e) => setFormData({ ...formData, Job_ID: e.target.value })}
+                    placeholder="ปล่อยว่างเพื่อ gen อัตโนมัติ"
+                    className="bg-background border-input"
                   />
-                  <p className="text-xs text-muted-foreground">สร้างอัตโนมัติ</p>
+                  <p className="text-[10px] text-muted-foreground italic">เว้นว่างไว้หากต้องการให้ระบบรันเลขให้</p>
                   <Button
                     type="button"
                     variant="outline"
                     size="sm"
                     onClick={handleCopyTrackingLink}
                     className="w-full mt-1 border-primary/30 text-primary hover:bg-primary/10"
+                    disabled={!formData.Job_ID}
                   >
                     {copied ? <Check className="w-3 h-3 mr-2" /> : <LinkIcon className="w-3 h-3 mr-2" />}
                     {copied ? 'คัดลอกแล้ว' : 'Copy Tracking Link'}
@@ -684,8 +678,8 @@ export function JobDialog({
                 <div className="p-4 bg-yellow-500/5 border border-yellow-500/20 rounded-lg">
                     <Label className="text-yellow-500 font-bold mb-2 block font-medium">สาขาสำหรับงานนี้ (Super Admin Only)</Label>
                     <Select 
-                      value={formData.Branch_ID || "none"} 
-                      onValueChange={(val) => setFormData({ ...formData, Branch_ID: val === "none" ? "" : val })}
+                      value={formData.branch_id || "none"} 
+                      onValueChange={(val) => setFormData({ ...formData, branch_id: val === "none" ? "" : val })}
                     >
                       <SelectTrigger className="bg-background border-yellow-500/30">
                         <SelectValue placeholder="-- ใช้สาขาปัจจุบัน --" />
@@ -1340,10 +1334,22 @@ export function JobDialog({
                     <Trash2 className="w-4 h-4 mr-2" /> ลบงาน
                 </Button>
             )}
-            <div className={`flex gap-3 ${internalMode === 'create' ? 'w-full justify-end' : ''}`}>
+            <div className={`flex flex-wrap gap-3 ${internalMode === 'create' ? 'w-full justify-end' : ''}`}>
                 <Button type="button" variant="outline" onClick={() => setShow(false)} className="border-border hover:bg-muted text-muted-foreground hover:text-foreground">
                 ยกเลิก
                 </Button>
+                {internalMode === 'create' && (
+                  <Button 
+                    type="button" 
+                    variant="outline"
+                    disabled={loading}
+                    onClick={() => handleSubmit(undefined, true)}
+                    className="border-emerald-600/30 text-emerald-600 hover:bg-emerald-50 bg-emerald-50/10 font-bold"
+                  >
+                    {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                    บันทึกและสร้างต่อ
+                  </Button>
+                )}
                 <Button type="submit" disabled={loading} className="bg-primary hover:bg-primary/90 text-primary-foreground">
                     {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                     {internalMode === 'create' ? 'สร้างงาน' : 'บันทึกการแก้ไข'}

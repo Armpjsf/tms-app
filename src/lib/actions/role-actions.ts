@@ -12,7 +12,6 @@ export async function getRoles() {
         .order("Role_ID", { ascending: true })
 
     if (error) {
-        console.error("Error fetching roles:", error)
         return []
     }
 
@@ -34,17 +33,21 @@ export async function getRoleById(id: number) {
 
 export async function createRole(role: Omit<Role, "Role_ID">) {
     const supabase = await createClient()
-    const { data, error } = await supabase
-        .from("Master_Roles")
-        .insert([role])
-        .select()
+    try {
+        const { data, error } = await supabase
+            .from("Master_Roles")
+            .insert([role])
+            .select()
 
-    if (error) {
-        return { success: false, error: error.message }
+        if (error) {
+            return { success: false, error: error.message }
+        }
+
+        revalidatePath("/settings/roles")
+        return { success: true, data }
+    } catch {
+        return { success: false, error: 'Upload failed' }
     }
-
-    revalidatePath("/settings/roles")
-    return { success: true, data }
 }
 
 export async function updateRole(id: number, role: Partial<Role>) {

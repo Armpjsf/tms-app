@@ -47,8 +47,7 @@ export async function getJobGPSData(jobId: string, driverId: string, date: strin
                 timestamp: latest.timestamp || latest.Timestamp
             } : null
         }
-    } catch (e) {
-        console.error("Failed to fetch GPS data for job summary:", e)
+    } catch {
         return { route: [], latest: null }
     }
 }

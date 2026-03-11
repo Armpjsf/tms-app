@@ -38,13 +38,11 @@ export async function getActiveSOSAlerts(): Promise<SOSAlert[]> {
       .order('Failed_Time', { ascending: false })
     
     if (error) {
-      console.error('Error fetching SOS alerts:', JSON.stringify(error))
       return []
     }
     
     return data || []
   } catch (e) {
-    console.error('Exception fetching SOS alerts:', e)
     return []
   }
 }
@@ -73,13 +71,11 @@ export async function getAllSOSAlerts(): Promise<SOSAlert[]> {
       .limit(50)
     
     if (error) {
-      console.error('Error fetching all SOS:', JSON.stringify(error))
       return []
     }
     
     return data || []
   } catch (e) {
-    console.error('Exception fetching all SOS:', e)
     return []
   }
 }
@@ -106,13 +102,11 @@ export async function getSOSCount(): Promise<number> {
     const { count, error } = await dbQuery
     
     if (error) {
-      console.error('Error counting SOS:', JSON.stringify(error))
       return 0
     }
     
     return count || 0
-  } catch (e) {
-    console.error('Exception counting SOS:', e)
+  } catch {
     return 0
   }
 }

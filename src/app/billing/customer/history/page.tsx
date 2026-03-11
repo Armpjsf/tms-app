@@ -56,8 +56,7 @@ export default function CustomerBillingHistory() {
     try {
         const data = await getBillingNotes() // Or getBillingNotesByFilter if filtering is done server-side
         setNotes(data)
-    } catch (error) {
-        console.error("Failed to load billing history", error)
+    } catch {
         toast.error("โหลดข้อมูลไม่สำเร็จ")
     } finally {
         setLoading(false)

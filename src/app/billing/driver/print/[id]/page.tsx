@@ -37,13 +37,11 @@ export default async function DriverPaymentPrintPage(props: Props) {
                 
                 if (Array.isArray(costs)) {
                     extra = costs
-                        .filter((c: any) => c.cost_driver > 0)
-                        .reduce((acc: number, c: any) => acc + (Number(c.cost_driver) || 0), 0)
+                        .filter((c: { cost_driver?: number }) => c.cost_driver && c.cost_driver > 0)
+                        .reduce((acc: number, c: { cost_driver?: number }) => acc + (Number(c.cost_driver) || 0), 0)
                 }
             }
-        } catch (e) {
-            console.error("Error calculating extra costs", e)
-        }
+        } catch {}
         return sum + base + extra
     }, 0)
 
@@ -162,7 +160,7 @@ export default async function DriverPaymentPrintPage(props: Props) {
                             </tr>
                         </thead>
                         {jobs.map((item, index) => {
-                                let extraCosts: any[] = []
+                                let extraCosts: { type?: string; cost_driver?: number }[] = []
                                 try {
                                     if (item.extra_costs_json) {
                                         let parsed = item.extra_costs_json

@@ -18,8 +18,8 @@ export default async function LogsPage({
   const branchId = typeof searchParams.branchId === 'string' ? searchParams.branchId : undefined
   const moduleFilter = typeof searchParams.module === 'string' ? searchParams.module : undefined
   
-  let logs: any[] = []
-  let branches: any[] = []
+  let logs: Record<string, unknown>[] = []
+  let branches: { Branch_ID: string; Branch_Name: string }[] = []
 
   try {
     logs = await getSystemLogs({
@@ -28,8 +28,8 @@ export default async function LogsPage({
       limit: 100
     })
     branches = await getAllBranches()
-  } catch (error) {
-    console.error('Error fetching logs data:', error)
+  } catch {
+    // Error fetching logs data
   }
 
   const getActionBadge = (action: string) => {
@@ -121,7 +121,7 @@ export default async function LogsPage({
                       </TableCell>
                       <TableCell>
                         <div className="flex flex-col">
-                          <span className="font-medium">{log.username}</span>
+                          <span className="font-medium">{log.user_name}</span>
                           <span className="text-[10px] text-muted-foreground">{log.role}</span>
                         </div>
                       </TableCell>

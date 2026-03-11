@@ -44,8 +44,7 @@ export default function DriverPaymentHistory() {
     try {
         const data = await getDriverPayments()
         setPayments(data)
-    } catch (error) {
-        console.error("Failed to load driver payments history", error)
+    } catch {
         toast.error("โหลดข้อมูลไม่สำเร็จ")
     } finally {
         setLoading(false)
@@ -123,13 +122,13 @@ export default function DriverPaymentHistory() {
         }
 
         const subtotal = jobs.reduce((sum, j) => sum + (j.Cost_Driver_Total || 0), 0)
-        const withholding = Math.round(subtotal * WITHHOLDING_TAX_RATE)
-        const netTotal = subtotal - withholding
+        const vat = subtotal * 0.07
+        const total = subtotal + vat
 
         // Format for SCB Mass Payout (Simple CSV)
         const lines = [
             "Bank Code,Account No,Amount,Beneficiary Name,Ref1,Ref2",
-            `${bankInfo.Bank_Name || 'SCB'},${bankInfo.Bank_Account_No},${netTotal.toFixed(2)},${bankInfo.Bank_Account_Name || payment.Driver_Name},Salary,${payment.Driver_Payment_ID}`
+            `${bankInfo.Bank_Name || 'SCB'},${bankInfo.Bank_Account_No},${total.toFixed(2)},${bankInfo.Bank_Account_Name || payment.Driver_Name},Salary,${payment.Driver_Payment_ID}`
         ]
 
         const csvContent = "data:text/csv;charset=utf-8,\uFEFF" + lines.join("\n") // Add BOM for Excel Thai support
@@ -142,8 +141,7 @@ export default function DriverPaymentHistory() {
         document.body.removeChild(link)
 
         toast.success("เตรียมไฟล์ Export เรียบร้อย")
-    } catch (e) {
-        console.error(e)
+    } catch {
         toast.error("Export ไม่สำเร็จ")
     } finally {
         setProcessingId(null)

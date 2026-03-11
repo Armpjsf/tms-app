@@ -16,7 +16,6 @@ export async function updateJobStatus(jobId: string, status: string) {
       .eq('Job_ID', jobId)
 
     if (error) {
-      console.error(`[JobStatusUpdate] Error for jobId ${jobId}:`, error)
       return { success: false, message: `Failed to update status: ${error.message}` }
     }
 
@@ -26,7 +25,6 @@ export async function updateJobStatus(jobId: string, status: string) {
     
     return { success: true, message: 'Status updated successfully' }
   } catch (err) {
-    console.error(`[JobStatusUpdate] Exception for jobId ${jobId}:`, err)
     return { success: false, message: err instanceof Error ? err.message : "Internal Server Error" }
   }
 }

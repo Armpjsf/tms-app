@@ -47,13 +47,11 @@ export async function getTodayFuelLogs(): Promise<FuelLog[]> {
       .order('Date_Time', { ascending: false })
     
     if (error) {
-      console.error('Error fetching fuel logs:', error)
       return []
     }
     
     return data || []
   } catch (e) {
-    console.error('Exception fetching fuel logs:', e)
     return []
   }
 }
@@ -113,7 +111,6 @@ export async function getAllFuelLogs(
     const { data: logs, error, count } = await dbQuery.range(offset, offset + limit - 1)
   
     if (error) {
-      console.error('Error fetching fuel logs:', error)
       return { data: [], count: 0 }
     }
 
@@ -169,7 +166,6 @@ export async function getAllFuelLogs(
   
     return { data: enrichedLogs, count: count || 0 }
   } catch (e) {
-    console.error('Exception fetching fuel logs:', e)
     return { data: [], count: 0 }
   }
 }
@@ -197,7 +193,6 @@ export async function getTodayFuelStats() {
     const { data, error } = await query
     
     if (error) {
-      console.error('Error fetching fuel stats:', error)
       return { totalLiters: 0, totalAmount: 0, count: 0 }
     }
     
@@ -208,7 +203,6 @@ export async function getTodayFuelStats() {
       count: logs.length,
     }
   } catch (e) {
-    console.error('Exception fetching fuel stats:', e)
     return { totalLiters: 0, totalAmount: 0, count: 0 }
   }
 }

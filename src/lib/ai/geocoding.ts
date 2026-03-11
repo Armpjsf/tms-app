@@ -26,7 +26,6 @@ export async function geocodeAddress(address: string): Promise<GeocodeResult | n
     });
 
     if (!response.ok) {
-        console.error("[Geocoding] Nominatim Error:", response.statusText);
         return null;
     }
 
@@ -41,8 +40,7 @@ export async function geocodeAddress(address: string): Promise<GeocodeResult | n
     }
 
     return null;
-  } catch (error) {
-    console.error("[Geocoding] Exception:", error);
+  } catch {
     return null;
   }
 }

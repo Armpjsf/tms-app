@@ -5,6 +5,7 @@ import { deleteVehicle } from "@/app/vehicles/actions"
 import { Pencil, Trash2 } from "lucide-react"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 import { VehicleDialog } from "./vehicle-dialog"
 import { Vehicle } from "@/lib/supabase/vehicles"
 import { Branch } from "@/lib/supabase/branches"
@@ -21,10 +22,8 @@ export function VehicleActions({ vehicle, branches = [], subcontractors = [] }: 
     setLoading(true)
     try {
       await deleteVehicle(vehicle.vehicle_plate)
-      router.refresh()
-    } catch (error) {
-      console.error(error)
-      alert('ลบไม่สำเร็จ')
+    } catch {
+      toast.error('เกิดข้อผิดพลาด กรุณาลองใหม่')
     } finally {
       setLoading(false)
     }

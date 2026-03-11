@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Bell, ArrowLeft, Save } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { getSetting, saveSetting } from "@/lib/supabase/system_settings"
+import { toast } from "sonner"
 
 interface NotificationSettings {
   push_enabled: boolean
@@ -42,7 +43,7 @@ export default function NotificationSettingsPage() {
     setSaving(true)
     await saveSetting('notification_settings', settings, 'Admin Notification Preferences')
     setSaving(false)
-    alert("บันทึกการตั้งค่าเรียบร้อยแล้ว")
+    toast.success("บันทึกการตั้งค่าเรียบร้อยแล้ว")
   }
 
   return (

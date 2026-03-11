@@ -47,6 +47,7 @@ import {
 import { ExcelImport } from "@/components/ui/excel-import"
 import { LocationAutocomplete } from "@/components/location-autocomplete"
 import { useBranch } from "@/components/providers/branch-provider"
+import { toast } from "sonner"
 
 export default function RoutesPage() {
   const { selectedBranch, branches } = useBranch()
@@ -98,8 +99,8 @@ export default function RoutesPage() {
     return () => clearTimeout(timer)
   }, [searchQuery, selectedBranch, fetchData])
 
-  const updateForm = (field: keyof Route, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }))
+  const updateForm = (field: keyof Route, data: string | number | null) => {
+    setFormData(prev => ({ ...prev, [field]: data }))
   }
 
   const resetForm = () => {
@@ -132,7 +133,7 @@ export default function RoutesPage() {
 
   const handleSave = async () => {
     if (!formData.Route_Name) {
-      alert("กรุณาระบุชื่อเส้นทาง")
+      toast.warning("กรุณาระบุชื่อเส้นทาง")
       return
     }
 
@@ -151,9 +152,8 @@ export default function RoutesPage() {
       setIsDialogOpen(false)
       resetForm()
       fetchData()
-    } catch (e) {
-      console.error(e)
-      alert("เกิดข้อผิดพลาดในการบันทึก")
+    } catch {
+      toast.error("เกิดข้อผิดพลาดในการบันทึก")
     } finally {
       setSaving(false)
     }

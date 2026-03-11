@@ -25,6 +25,7 @@ import { DashboardMap } from "@/components/dashboard/dashboard-map"
 import { ActiveTripTimeline } from "@/components/dashboard/active-trip-timeline"
 import { CargoCapacity } from "@/components/logistics/cargo-capacity"
 import { Job } from "@/lib/supabase/jobs"
+import { toast } from "sonner"
 import { Driver } from "@/lib/supabase/drivers"
 import { HealthAlert } from "@/lib/supabase/fleet-health"
 import { cn } from "@/lib/utils"
@@ -50,7 +51,7 @@ interface Vehicle {
 interface MonitoringCommandCenterProps {
     initialJobs: Job[]
     initialDrivers: DriverWithGPS[]
-    initialContacts?: any[]
+    initialContacts?: { id: string; name?: string; phone?: string }[]
     allDrivers?: Driver[]
     initialHealthAlerts?: HealthAlert[]
 }
@@ -81,8 +82,6 @@ export function MonitoringCommandCenter({
     // Real-time GPS Tracking
     useEffect(() => {
         const supabase = createClient()
-        
-        console.log("[MonitoringCommandCenter] Subscribing to GPS logs...")
         
         const channel = supabase
             .channel('fleet-gps-live')
@@ -236,7 +235,6 @@ export function MonitoringCommandCenter({
 
         const fetchVehicle = async () => {
             const supabase = createClient()
-            console.log(`[MonitoringCommandCenter] Fetching vehicle info for: "${plate}"`)
 
             // 1. Try exact match
             const { data: exactMatch } = await supabase
@@ -351,14 +349,14 @@ export function MonitoringCommandCenter({
                     ? JSON.parse(job.original_destinations_json) 
                     : job.original_destinations_json
                 if (Array.isArray(stops)) {
-                    stops.forEach((s: any) => {
+                    stops.forEach((s: { lat?: number; lng?: number; name?: string }) => {
                         if (s.lat && s.lng) {
                             points.push({ lat: Number(s.lat), lng: Number(s.lng), name: s.name || 'Stop', type: 'stop' })
                         }
                     })
                 }
-            } catch (e) {
-                console.error("Error parsing stops for map:", e)
+            } catch {
+                // Error parsing stops
             }
         }
         
@@ -382,7 +380,7 @@ export function MonitoringCommandCenter({
                     ? JSON.parse(job.original_destinations_json) 
                     : job.original_destinations_json
                 if (Array.isArray(stops)) {
-                    const nextStop = stops.find((s: any) => s.status !== 'Completed')
+                    const nextStop = stops.find((s: { status?: string; name?: string }) => s.status !== 'Completed')
                     if (nextStop) targetName = nextStop.name || 'Next Stop'
                 }
             } catch (e) { /* ignore */ }
@@ -552,7 +550,7 @@ export function MonitoringCommandCenter({
                                         <MapPin size={12} />
                                         <span className="truncate flex-1">
                                             {job.Dest_Location}
-                                            {job.original_destinations_json?.length > 0 && (
+                                            {Array.isArray(job.original_destinations_json) && job.original_destinations_json.length > 0 && (
                                                 <span className="ml-1 text-emerald-600 font-black">
                                                     +{job.original_destinations_json.length} stops
                                                 </span>
@@ -700,7 +698,12 @@ export function MonitoringCommandCenter({
                                         className="rounded-2xl h-14 bg-emerald-500 hover:bg-emerald-600 text-white font-black shadow-lg shadow-emerald-500/20"
                                         onClick={() => {
                                             const phone = selectedDriver?.Mobile_No || 'N/A'
-                                            alert(`Driver Phone: ${phone}`)
+                                            toast(`Phone: ${phone}`, {
+                                                action: {
+                                                    label: 'Copy',
+                                                    onClick: () => navigator.clipboard.writeText(phone || '')
+                                                },
+                                            })
                                         }}
                                     >
                                         <Phone className="mr-2" size={18} /> {selectedDriver?.Mobile_No || 'Call Driver'}

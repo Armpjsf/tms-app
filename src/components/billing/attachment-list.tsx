@@ -42,15 +42,14 @@ export function AttachmentList({ billingNoteId, readonly = false }: AttachmentLi
 
             const result = await uploadAttachment(formData)
             
-            if (!result.success) {
-                throw new Error(result.error)
+            if (!result || !result.success) {
+                throw new Error(result?.error)
             }
 
             toast.success("อัปโหลดไฟล์เรียบร้อย")
             loadAttachments()
-        } catch (error: any) {
-            console.error("Upload failed:", error)
-            toast.error(error.message || "อัปโหลดล้มเหลว")
+        } catch {
+            toast.error("อัปโหลดล้มเหลว")
         } finally {
             setUploading(false)
             // Reset input
@@ -67,7 +66,7 @@ export function AttachmentList({ billingNoteId, readonly = false }: AttachmentLi
             
             toast.success("ลบไฟล์เรียบร้อย")
             loadAttachments()
-        } catch (error: any) {
+        } catch (error) {
             toast.error("ลบไฟล์ล้มเหลว")
         }
     }

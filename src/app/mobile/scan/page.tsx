@@ -2,6 +2,7 @@
 
 import { useState, useRef } from "react"
 import Link from "next/link"
+import { toast } from "sonner"
 import { Camera, QrCode } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -17,7 +18,7 @@ export default function ScanPage() {
       // Simulate scanning delay
       setTimeout(() => {
         setScanning(false)
-        alert("ไม่พบรหัส QR Code ในรูปภาพ (ระบบสแกนยังไม่เปิดใช้งาน)")
+        toast.error("ไม่พบรหัส QR Code ในรูปภาพ (ระบบสแกนยังไม่เปิดใช้งาน)")
       }, 2000)
     }
   }

@@ -12,8 +12,7 @@ export interface ReportFilters {
   branchId?: string
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export async function getFilteredReportData(filters: ReportFilters): Promise<{ data: any[], columns: string[] }> {
+export async function getFilteredReportData(filters: ReportFilters): Promise<{ data: Record<string, unknown>[], columns: string[] }> {
   const supabase = await createClient()
   const userBranchId = await getUserBranchId()
   const isAdmin = await isSuperAdmin()
@@ -59,7 +58,7 @@ export async function getFilteredReportData(filters: ReportFilters): Promise<{ d
         const sortedExtraTypes = Array.from(extraCostTypes).sort()
 
         const processedData = rawData.map(job => {
-          const row: any = { ...job }
+          const row: Record<string, unknown> = { ...job }
           // Initialize all extra columns with 0
           sortedExtraTypes.forEach(type => {
             row[type] = 0
@@ -123,7 +122,7 @@ export async function getFilteredReportData(filters: ReportFilters): Promise<{ d
 
         const { data } = await query
         return { 
-          data: (data as any[] || []).map(v => ({
+          data: (data || []).map((v: Record<string, unknown>) => ({
             ...v,
             vehicle_plate: v.Vehicle_Plate,
             vehicle_type: v.Vehicle_Type,
@@ -148,7 +147,7 @@ export async function getFilteredReportData(filters: ReportFilters): Promise<{ d
 
         const { data } = await query
         return { 
-          data: (data as any[] || []).map(f => ({
+          data: (data || []).map((f: Record<string, unknown>) => ({
             ...f,
             fuel_date: f.Date_Time,
             vehicle_plate: f.Vehicle_Plate,
@@ -174,7 +173,7 @@ export async function getFilteredReportData(filters: ReportFilters): Promise<{ d
 
         const { data } = await query
         return { 
-          data: (data as any[] || []).map(m => ({
+          data: (data || []).map((m: Record<string, unknown>) => ({
             ...m,
             created_at: m.Date_Report,
             vehicle_plate: m.Vehicle_Plate,
@@ -237,7 +236,7 @@ export async function getFilteredReportData(filters: ReportFilters): Promise<{ d
           .select('Sub_ID, Sub_Name')
           .in('Sub_ID', subIds as string[])
 
-        const subMap = (subs || []).reduce((acc: any, s) => {
+        const subMap = (subs || []).reduce((acc: Record<string, string>, s: Record<string, string>) => {
           acc[s.Sub_ID] = s.Sub_Name
           return acc
         }, {})
@@ -293,10 +292,8 @@ export async function getFilteredReportData(filters: ReportFilters): Promise<{ d
       default:
         return { data: [], columns: [] }
     }
-  } catch (error) {
-    console.error('Error fetching filtered report data:', error)
-    return { data: [], columns: [] }
-  }
+  } catch {}
+  return { data: [], columns: [] }
 }
 
 // Get available status options for each report type

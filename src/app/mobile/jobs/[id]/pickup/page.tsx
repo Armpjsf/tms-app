@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { CameraInput } from "@/components/mobile/camera-input"
 import { SignaturePad } from "@/components/mobile/signature-pad"
 import { PickupReport } from "@/components/mobile/pickup-report"
+import { toast } from "sonner"
 import { submitJobPickup } from "@/lib/actions/pod-actions"
 import { getJobDetails } from "@/app/mobile/jobs/actions"
 import { Job } from "@/lib/supabase/jobs"
@@ -55,8 +56,8 @@ export default function JobPickupPage() {
                 if (reportBlob) {
                     formData.append("pickup_report", reportBlob, `Pickup_Report_${params.id}.jpg`)
                 }
-            } catch (err) {
-                console.error("Pickup Report Generation Failed:", err)
+            } catch {
+                // Pickup Report Generation Failed
             }
         }
 
@@ -73,24 +74,22 @@ export default function JobPickupPage() {
         
         if (result.success) {
           if (result.warning) {
-            alert(String(result.warning)) 
+            toast.warning(String(result.warning)) 
           }
           router.push(`/mobile/jobs/${params.id}?success=pickup`)
         } else {
-          alert(typeof result.error === 'string' ? result.error : JSON.stringify(result.error))
+          toast.error(typeof result.error === 'string' ? result.error : JSON.stringify(result.error))
           setLoading(false)
         }
     } catch (error: unknown) {
-        console.error("Pickup Submit Error:", error)
-        
-        // ... (network error check)
+        // Pickup Submit Error
         const isNetworkError = !navigator.onLine || error instanceof TypeError || (error instanceof Error && error.message.includes('fetch'))
         
         if (isNetworkError) {
              // ...
         } else {
             const msg = error instanceof Error ? error.message : (typeof error === 'object' ? JSON.stringify(error) : String(error))
-            alert(`เกิดข้อผิดพลาดในการส่งข้อมูล: ${msg}`)
+            toast.error(`เกิดข้อผิดพลาดในการส่งข้อมูล: ${msg}`)
             setLoading(false)
         }
     }

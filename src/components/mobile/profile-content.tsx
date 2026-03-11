@@ -1,6 +1,7 @@
 "use client"
 
 import { Fuel, Wrench, ClipboardCheck, Bell, Settings, ChevronRight, LogOut, AlertTriangle, User, Banknote, BookOpen } from "lucide-react"
+import { toast } from "sonner"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
@@ -38,7 +39,7 @@ export function ProfileContent({ session, score, unreadChatCount = 0 }: ProfileC
     // If we have any remaining placeholders
     if (href === "#") {
       e.preventDefault()
-      window.alert("ฟีเจอร์นี้กำลังอยู่ในระหว่างการพัฒนาครับ")
+      toast.info("ฟีเจอร์นี้กำลังอยู่ในระหว่างการพัฒนาครับ")
     }
   }
 

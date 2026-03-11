@@ -1,17 +1,12 @@
 "use server"
 
 import { jsPDF } from "jspdf"
-import "jspdf-autotable"
+import autoTable from "jspdf-autotable"
 import { createAdminClient } from "@/utils/supabase/server"
 import { uploadFileToSupabase } from "@/lib/actions/supabase-upload"
 
-interface jsPDFWithPlugin extends jsPDF {
-    autoTable: (options: Record<string, unknown>) => void;
-    lastAutoTable: { finalY: number };
-}
-
 export async function generateJobPDF(jobId: string) {
-    console.log(`[generateJobPDF] Starting PDF generation for Job: ${jobId}...`)
+    // PDF generation started
     
     try {
         const supabase = createAdminClient()
@@ -24,7 +19,6 @@ export async function generateJobPDF(jobId: string) {
             .single()
             
         if (error || !job) {
-            console.error(`[generateJobPDF] Job not found or error:`, error)
             throw new Error("Job not found")
         }
 
@@ -58,12 +52,12 @@ export async function generateJobPDF(jobId: string) {
             ["Delivery Time", job.Actual_Delivery_Time || "-"],
         ]
 
-        ;(doc as unknown as jsPDFWithPlugin).autoTable({
+        autoTable(doc, {
             startY: 50,
             head: [['Field', 'Value']],
             body: detailsData,
             theme: 'striped',
-            headStyles: { fillStyle: accentColor },
+            headStyles: { fillColor: accentColor as any },
             styles: { fontSize: 10, cellPadding: 3 }
         })
 
@@ -71,7 +65,7 @@ export async function generateJobPDF(jobId: string) {
         // Since fetching and converting all images might be heavy, for now we will 
         // provide links in metadata but let's try to embed at least the signature.
         
-        let finalY = (doc as unknown as jsPDFWithPlugin).lastAutoTable.finalY + 20
+        let finalY = (doc as any).lastAutoTable.finalY + 20
 
         // Signatures
         if (job.Signature_Url || job.Pickup_Signature_Url) {
@@ -105,8 +99,8 @@ export async function generateJobPDF(jobId: string) {
         // 4. Upload to Supabase Storage
         const fileName = `Report_${jobId}_${Date.now()}.pdf`
         const uploadResult = await uploadFileToSupabase(pdfBuffer, fileName, 'application/pdf', 'POD_Reports')
-
-        console.log(`PDF Generated & Uploaded: ${uploadResult.directLink}`)
+        
+        // Report uploaded successfully (no log)
 
         // 5. Update Job with PDF Link - FETCH LATEST AGAIN to avoid overwriting recent POD data
         const { data: latestJob } = await supabase
@@ -138,14 +132,8 @@ export async function generateJobPDF(jobId: string) {
 
         return { success: true, url: uploadResult.directLink }
 
-    } catch (e) {
-        console.error("[generateJobPDF] Fatal Exception:", e);
-        
-        let errorMsg = String(e);
-        if (e instanceof Error) {
-            errorMsg = `${e.name}: ${e.message}\n${e.stack}`;
-        }
-        
+    } catch (e: unknown) {
+        const errorMsg = e instanceof Error ? `${e.name}: ${e.message}\n${e.stack}` : String(e);
         return { success: false, error: errorMsg };
     }
 }

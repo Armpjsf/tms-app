@@ -7,9 +7,11 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { updateFuelLog, createFuelLog } from "@/app/fuel/actions"
+import { toast } from "sonner"
 import { Loader2 } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ImageUpload } from "@/components/ui/image-upload"
+import Logger from "@/lib/utils/logger"
 
 interface Driver {
   Driver_ID: string;
@@ -20,13 +22,25 @@ interface Vehicle {
   Vehicle_Plate: string;
 }
 
+export interface FuelLog {
+  Log_ID: string
+  Date_Time: string
+  Driver_ID: string
+  Vehicle_Plate: string
+  Liters: number
+  Price_Total: number
+  Odometer: number
+  Station_Name: string
+  Photo_Url: string
+}
+
 type FuelDialogProps = {
   drivers: Driver[]
   vehicles: Vehicle[]
   trigger?: React.ReactNode
   open?: boolean
   onOpenChange?: (open: boolean) => void
-  initialData?: any // Keeping loose for now as refactor is minimal
+  initialData?: FuelLog
 }
 
 export function FuelDialog({
@@ -111,8 +125,10 @@ export function FuelDialog({
 
       if (initialData) {
         await updateFuelLog(initialData.Log_ID, payload)
+        toast.success('Updated fuel log successfully')
       } else {
         await createFuelLog(payload)
+        toast.success('Created fuel log successfully')
       }
       
       setShow(false)
@@ -130,9 +146,9 @@ export function FuelDialog({
         })
       }
       router.refresh()
-    } catch (error) {
-      console.error(error)
-      alert('เกิดข้อผิดพลาด กรุณาลองใหม่')
+    } catch (err) {
+      Logger.error("Fuel log submit error:", err)
+      toast.error('An error occurred while saving')
     } finally {
       setLoading(false)
     }
@@ -171,10 +187,10 @@ export function FuelDialog({
                                 Total_Amount: result.totalAmount || prev.Total_Amount,
                                 Station_Name: result.stationName || prev.Station_Name
                             }))
-                            alert('สแกนข้อมูลเรียบร้อย! กรุณาตรวจสอบความถูกต้อง')
-                        } catch (e) {
-                            console.error(e)
-                            alert('ไม่สามารถอ่านข้อมูลได้')
+                            toast.success('สแกนข้อมูลเรียบร้อย! กรุณาตรวจสอบความถูกต้อง')
+                        } catch (err) {
+                            Logger.error("Fuel OCR error:", err)
+                            toast.error('ไม่สามารถอ่านข้อมูลได้')
                         } finally {
                             setLoading(false)
                         }

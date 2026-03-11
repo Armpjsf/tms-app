@@ -55,8 +55,6 @@ export const syncOfflineJobs = async () => {
     const jobs = getOfflineJobs()
     if (jobs.length === 0) return
 
-    console.log(`Attempting to sync ${jobs.length} offline jobs...`)
-
     for (const job of jobs) {
         try {
             // Reconstruct FormData from stored data
@@ -84,11 +82,10 @@ export const syncOfflineJobs = async () => {
                 : await submitJobPOD(job.jobId, formData)
 
             if (result.success) {
-                console.log(`Successfully synced offline job: ${job.jobId} (${job.type})`)
                 removeOfflineJob(job.id)
             }
-        } catch (err) {
-            console.error(`Failed to sync offline job ${job.jobId}:`, err)
+        } catch {
+            // Failed to sync
         }
     }
 }

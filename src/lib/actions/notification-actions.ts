@@ -24,7 +24,6 @@ export async function getDriverNotifications(driverId: string): Promise<DriverNo
     .limit(50)
 
   if (error) {
-    console.error('Error fetching notifications:', error)
     return []
   }
 
@@ -40,7 +39,6 @@ export async function markNotificationRead(notificationId: number) {
     .eq('id', notificationId)
 
   if (error) {
-    console.error('Error marking notification read:', error)
     return { success: false }
   }
 
@@ -57,7 +55,6 @@ export async function markAllNotificationsRead(driverId: string) {
     .eq('Is_Read', false)
 
   if (error) {
-    console.error('Error marking all notifications read:', error)
     return { success: false }
   }
 
@@ -86,7 +83,6 @@ export async function createNotification(data: {
     })
 
   if (error) {
-    console.error('Error creating notification:', error)
     return { success: false }
   }
 

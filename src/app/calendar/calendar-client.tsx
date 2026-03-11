@@ -1,10 +1,15 @@
 "use client"
 
-import { useState, useTransition } from "react"
+import { useState, useTransition, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { ChevronLeft, ChevronRight, CalendarDays, MapPin, Truck, User, Plus } from "lucide-react"
 import Link from "next/link"
 import { CalendarJob, getJobsForMonth } from "./actions"
+import { JobDialog } from "@/components/planning/job-dialog"
+import { Driver } from "@/lib/supabase/drivers"
+import { Vehicle } from "@/lib/supabase/vehicles"
+import { Customer } from "@/lib/supabase/customers"
+import { Route } from "@/lib/supabase/routes"
 
 const STATUS_COLORS: Record<string, string> = {
   Draft: "bg-gray-400",
@@ -41,14 +46,32 @@ interface Props {
   initialJobs: CalendarJob[]
   initialYear: number
   initialMonth: number
+  drivers: Driver[]
+  vehicles: Vehicle[]
+  customers: Customer[]
+  routes: Route[]
 }
 
-export function CalendarClient({ initialJobs, initialYear, initialMonth }: Props) {
+export function CalendarClient({ 
+  initialJobs, 
+  initialYear, 
+  initialMonth,
+  drivers,
+  vehicles,
+  customers,
+  routes
+}: Props) {
   const [year, setYear] = useState(initialYear)
   const [month, setMonth] = useState(initialMonth)
   const [jobs, setJobs] = useState<CalendarJob[]>(initialJobs)
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
+
+  // Sync state with props after router.refresh()
+  useEffect(() => {
+    setJobs(initialJobs)
+  }, [initialJobs])
 
   const changeMonth = (delta: number) => {
     let newMonth = month + delta
@@ -122,13 +145,13 @@ export function CalendarClient({ initialJobs, initialYear, initialMonth }: Props
           >
             วันนี้
           </button>
-          <Link
-            href="/planning"
+          <button
+            onClick={() => setIsDialogOpen(true)}
             className="flex items-center gap-2 px-4 py-2 bg-emerald-500 text-white rounded-xl text-sm font-bold hover:bg-emerald-600 transition-colors shadow-lg shadow-emerald-500/20"
           >
             <Plus size={16} />
             สร้างงาน
-          </Link>
+          </button>
         </div>
       </div>
 
@@ -247,9 +270,12 @@ export function CalendarClient({ initialJobs, initialYear, initialMonth }: Props
               <div className="flex flex-col items-center justify-center py-12 text-gray-400">
                 <CalendarDays size={48} strokeWidth={1.5} />
                 <p className="mt-3 font-bold">ไม่มีงานในวันนี้</p>
-                <Link href="/planning" className="mt-3 text-sm text-indigo-600 font-bold hover:underline">
+                <button 
+                  onClick={() => setIsDialogOpen(true)}
+                  className="mt-3 text-sm text-indigo-600 font-bold hover:underline"
+                >
                   + สร้างงานใหม่
-                </Link>
+                </button>
               </div>
             ) : (
               <div className="divide-y divide-gray-50">
@@ -290,6 +316,17 @@ export function CalendarClient({ initialJobs, initialYear, initialMonth }: Props
           </motion.div>
         )}
       </AnimatePresence>
+
+      <JobDialog
+        open={isDialogOpen}
+        onOpenChange={setIsDialogOpen}
+        mode="create"
+        drivers={drivers}
+        vehicles={vehicles}
+        customers={customers}
+        routes={routes}
+        defaultDate={selectedDate || undefined}
+      />
     </div>
   )
 }

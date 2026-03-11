@@ -10,7 +10,6 @@ export type Branch = {
 }
 
 export async function getAllBranches() {
-  console.log("[DEBUG] getAllBranches: Starting")
   try {
     const supabase = await createClient()
     const { data, error } = await supabase
@@ -19,14 +18,11 @@ export async function getAllBranches() {
       .order('Branch_Name')
 
     if (error) {
-      console.error('[DEBUG] Error fetching branches:', error)
-      return []
+      return null
     }
 
-    console.log(`[DEBUG] getAllBranches: Found ${data?.length} branches`)
     return data as Branch[]
-  } catch (error) {
-    console.error('[DEBUG] Error fetching branches (Catch):', error)
+  } catch {
     return []
   }
 }
@@ -41,8 +37,8 @@ export async function updateBranchSettings(branchId: string, settings: Partial<P
 
         if (error) throw error
         return { success: true }
-    } catch (error: any) {
-        console.error('Error updating branch settings:', error)
-        return { success: false, error: error.message }
+    } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : 'Unknown error'
+        return { success: false, error: message }
     }
 }

@@ -93,7 +93,7 @@ export default async function InvoicesPage({
                         </TableCell>
                     </TableRow>
                 ) : (
-                    invoices.map((inv: any) => (
+                    invoices.map((inv: Record<string, unknown>) => (
                       <TableRow key={inv.Invoice_ID} className="border-gray-200 hover:bg-white/[0.02]">
                         <TableCell className="font-medium text-gray-800">
                             <div className="flex flex-col">

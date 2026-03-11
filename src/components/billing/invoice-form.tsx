@@ -20,6 +20,7 @@ import {
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { CustomerAutocomplete } from "@/components/customer-autocomplete"
+import { toast } from "sonner"
 import { getBillableJobsAction } from "@/app/billing/invoices/actions"
 import { createInvoiceAction } from "@/app/billing/invoices/actions"
 import { CalendarIcon, Loader2, Save, Trash2, Calculator } from "lucide-react"
@@ -27,14 +28,14 @@ import { format } from "date-fns"
 import { th } from "date-fns/locale"
 import { cn } from "@/lib/utils"
 
-export function InvoiceForm({ customers }: { customers: any[] }) {
+export function InvoiceForm({ customers }: { customers: { Customer_ID: string; Customer_Name: string }[] }) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [fetchingJobs, setFetchingJobs] = useState(false)
   
   // Data State
   const [customerId, setCustomerId] = useState("")
-  const [availableJobs, setAvailableJobs] = useState<any[]>([])
+  const [availableJobs, setAvailableJobs] = useState<{ Job_ID: string; Customer_Name: string; Price_Cust_Total: number }[]>([])
   const [selectedJobIds, setSelectedJobIds] = useState<string[]>([])
   
   // Invoice Details
@@ -87,19 +88,18 @@ export function InvoiceForm({ customers }: { customers: any[] }) {
             Net_Total: netTotal,
             Status: 'Draft',
             Notes: notes,
-            Items_JSON: selectedJobs, // Snapshot
-            Created_By: 'System' // Should be user ID
+            Items_JSON: selectedJobs as Record<string, unknown>[], // Snapshot
+            Created_By: 'System' as string // Should be user ID
         })
 
         if (!result || !result.success) {
-            console.error(result?.error)
-            alert("Error creating invoice: " + ((result?.error as any)?.message || JSON.stringify(result?.error || 'Unknown error')))
+            toast.error("Error creating invoice: " + ((result?.error as Error)?.message || JSON.stringify(result?.error || 'Unknown error')))
         } else {
             router.push('/billing/invoices')
             router.refresh()
         }
     } catch (e) {
-        alert("Exception: " + e)
+        toast.error("Exception: " + e)
     } finally {
         setLoading(false)
     }
@@ -146,18 +146,14 @@ export function InvoiceForm({ customers }: { customers: any[] }) {
                 
                 {fetchingJobs ? (
                     <div className="p-8 flex justify-center text-gray-400 gap-2">
-                        <Loader2 className="animate-spin" /> กำลังโหลดรายการงาน...
-                    </div>
-                ) : availableJobs.length === 0 ? (
-                    <div className="p-8 text-center text-gray-400">
-                        {customerId ? "ไม่มีงานที่รอวางบิลสำหรับลูกค้านี้" : "กรุณาเลือกลูกค้าก่อน"}
+                        <Loader2 className="animate-spin" /> กำลังโหลด...
                     </div>
                 ) : (
-                    <div className="max-h-[400px] overflow-y-auto">
+                    <div className="p-0">
                         <Table>
-                            <TableHeader className="bg-gray-100 sticky top-0 z-10">
-                                <TableRow className="border-gray-200">
-                                    <TableHead className="w-[50px]">
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>
                                         <Checkbox 
                                             checked={selectedJobIds.length === availableJobs.length && availableJobs.length > 0}
                                             onCheckedChange={(checked) => {
@@ -271,7 +267,7 @@ export function InvoiceForm({ customers }: { customers: any[] }) {
   )
 }
 
-function DateCallbackSelect({ date, setDate }: { date: Date | undefined, setDate: (d: any) => void }) {
+function DateCallbackSelect({ date, setDate }: { date: Date | undefined, setDate: (d: Date | undefined) => void }) {
     return (
         <Popover>
         <PopoverTrigger asChild>

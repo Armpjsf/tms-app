@@ -20,6 +20,7 @@ import { getRolePermissions } from "@/lib/actions/permission-actions"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Separator } from "@/components/ui/separator"
 import { useCallback } from "react"
+import { toast } from "sonner"
 
 export default function UserSettingsPage() {
     const { branches, isAdmin, selectedBranch } = useBranch()
@@ -141,11 +142,11 @@ export default function UserSettingsPage() {
 
     const handleSave = async () => {
         if (!formData.Username || !formData.Name || !formData.Branch_ID || !formData.Role) {
-            return alert("กรุณากรอกข้อมูลให้ครบถ้วน")
+            return toast.warning("กรุณากรอกข้อมูลให้ครบถ้วน")
         }
 
         if (!editingUser && !formData.Password) {
-            return alert("กรุณากำหนดรหัสผ่าน")
+            return toast.warning("กรุณากำหนดรหัสผ่าน")
         }
         
         setSaving(true)
@@ -162,16 +163,15 @@ export default function UserSettingsPage() {
             }
 
             if (result.success) {
-                alert(editingUser ? "แก้ไขข้อมูลเรียบร้อย" : "สร้างผู้ใช้งานเรียบร้อย")
+                toast.success(editingUser ? "แก้ไขข้อมูลเรียบร้อย" : "สร้างผู้ใช้งานเรียบร้อย")
                 setIsDialogOpen(false)
                 loadData()
             } else {
-                alert("เกิดข้อผิดพลาด: " + (result.error || "ไม่สามารถบันทึกข้อมูลได้"))
+                toast.error("เกิดข้อผิดพลาด: " + (result.error || "ไม่สามารถบันทึกข้อมูลได้"))
             }
         } catch (e) {
             const error = e as Error
-            console.error(error)
-            alert("เกิดข้อผิดพลาดทางเทคนิค: " + (error.message || "Unknown error"))
+            toast.error("เกิดข้อผิดพลาดทางเทคนิค: " + (error.message || "Unknown error"))
         } finally {
             setSaving(false)
         }

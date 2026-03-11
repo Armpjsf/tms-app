@@ -31,12 +31,11 @@ export class AkauntingProvider implements AccountingProvider {
         };
     }
 
-    private async safeJson(response: Response, url: string) {
+    private async safeJson(response: Response) {
         const contentType = response.headers.get("content-type");
         if (!contentType || !contentType.includes("application/json")) {
             const text = await response.text();
-            console.error(`Akaunting non-JSON response from ${url}:`, text.substring(0, 100));
-            throw new Error(`Expected JSON but got ${contentType || 'unknown'}. (Possible redirect)`);
+            throw new Error(`Expected JSON but got ${contentType || 'unknown'}. Response: ${text.substring(0, 100)}`);
         }
         return response.json();
     }
@@ -88,18 +87,15 @@ export class AkauntingProvider implements AccountingProvider {
             const response = await fetch(url, { headers: this.getHeaders() });
             
             if (!response.ok) {
-                const text = await response.text().catch(() => "N/A");
-                console.error(`findContact failed (${response.status}) for ${name}:`, text.substring(0, 100));
                 return { id: null };
             }
 
-            const data = await this.safeJson(response, url);
+            const data = await this.safeJson(response);
             if (data.data && data.data.length > 0) {
                 return { id: data.data[0].id, type: data.data[0].type };
             }
             return { id: null };
-        } catch (error) {
-            console.error(`Akaunting findContact exception for ${name}:`, error);
+        } catch {
             return { id: null };
         }
     }
@@ -142,7 +138,7 @@ export class AkauntingProvider implements AccountingProvider {
                 };
             }
 
-            const data = await this.safeJson(response, url);
+            const data = await this.safeJson(response);
             return {
                 success: true,
                 externalId: data.data?.id,
@@ -192,7 +188,7 @@ export class AkauntingProvider implements AccountingProvider {
                 };
             }
 
-            const data = await this.safeJson(response, url);
+            const data = await this.safeJson(response);
             return {
                 success: true,
                 externalId: data.data?.id,
@@ -209,10 +205,9 @@ export class AkauntingProvider implements AccountingProvider {
             const response = await fetch(url, {
                 headers: this.getHeaders()
             });
-            const data = await this.safeJson(response, url);
+            const data = await this.safeJson(response);
             return { status: data.data?.status || 'unknown' };
-        } catch (error) {
-            console.error(`Akaunting getPaymentStatus failed for ${externalId}:`, error);
+        } catch {
             return { status: 'error' };
         }
     }

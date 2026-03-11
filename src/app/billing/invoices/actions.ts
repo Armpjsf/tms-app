@@ -5,7 +5,7 @@ import { createInvoice as createInvoiceLib, getInvoiceById as getInvoiceByIdLib,
 import { getBillableJobs as getBillableJobsLib } from "@/lib/supabase/jobs"
 
 // Wrapper for Server Actions
-export async function createInvoiceAction(invoice: any) {
+export async function createInvoiceAction(invoice: Record<string, unknown>) {
   return await createInvoiceLib(invoice)
 }
 

@@ -19,8 +19,8 @@ export default function MobileSOSPage() {
         try {
             const data = await getCompanyProfile()
             setProfile(data)
-        } catch (error) {
-            console.error(error)
+        } catch {
+            // Error fetching profile
         }
     }
     fetchProfile()
@@ -43,8 +43,7 @@ export default function MobileSOSPage() {
                     }
                 } catch {}
             },
-            (error) => {
-                console.error("GPS Error:", error)
+            () => {
                 setAddress("ไม่สามารถระบุพิกัดได้")
                 setLoading(false)
             },

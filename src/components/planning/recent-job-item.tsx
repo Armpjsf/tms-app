@@ -5,8 +5,8 @@ import { Package } from "lucide-react"
 import { JobDialog } from "./job-dialog"
 import { RequestPreviewDialog } from "./request-preview-dialog"
 import { cn } from "@/lib/utils"
-import { Job } from "@/types/database"
-
+import { Job } from "@/lib/supabase/jobs"
+import { Route } from "@/lib/supabase/routes"
 import { Driver } from "@/lib/supabase/drivers"
 import { Vehicle } from "@/lib/supabase/vehicles"
 import { Customer } from "@/lib/supabase/customers"
@@ -16,7 +16,7 @@ type Props = {
   drivers: Driver[]
   vehicles: Vehicle[]
   customers: Customer[]
-  routes: { Origin?: string; Destination?: string }[]
+  routes: Route[]
   canViewPrice?: boolean
   canDelete?: boolean
 }

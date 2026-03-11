@@ -40,6 +40,8 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Job } from "@/lib/supabase/jobs"
+import { toast } from "sonner"
+import { Billing_Note } from "@/types/database"
 import { createBillingNote } from "@/lib/supabase/billing"
 
 import { CompanyProfile } from "@/lib/supabase/settings"
@@ -108,9 +110,9 @@ export default function CustomerBillingClient({ initialJobs, companyProfile, cus
               if (Array.isArray(costs)) {
                   extra = costs.reduce((sum: number, c: { charge_cust?: string | number }) => sum + (Number(c.charge_cust) || 0), 0)
               }
-          } catch (e) {
-              console.error("Error parsing extra costs", e)
-          }
+          } catch {
+      // Continue without error logging
+    }
       }
       return basePrice + extra
   }
@@ -144,7 +146,7 @@ export default function CustomerBillingClient({ initialJobs, companyProfile, cus
   const handleCreateBilling = async () => {
     if (selectedItems.length === 0) return
     if (!selectedCustomer) {
-        alert("กรุณาเลือกลูกค้าก่อนสร้างใบวางบิล")
+        toast.error("กรุณาเลือกลูกค้าก่อนสร้างใบวางบิล")
         return
     }
 
@@ -166,15 +168,13 @@ export default function CustomerBillingClient({ initialJobs, companyProfile, cus
         )
 
         if (result.success) {
-            alert(`สร้างใบวางบิลเลขที่ ${result.id} สำเร็จ!`)
             setSelectedItems([])
-            router.refresh() // Reload data to remove billed items (logic needs to handle excluding billed items)
+            router.refresh() // Reload data to remove billed items
         } else {
-            alert(`เกิดข้อผิดพลาด: ${result.error}`)
+            throw new Error(result.error || 'Failed to create billing note')
         }
-    } catch (e) {
-        console.error(e)
-        alert("เกิดข้อผิดพลาดในการสร้างใบวางบิล")
+    } catch {
+        // Error creating billing note
     } finally {
         setLoading(false)
     }

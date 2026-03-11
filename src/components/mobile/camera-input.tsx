@@ -30,8 +30,7 @@ export function CameraInput({ onImagesChange, maxImages = 5 }: Props) {
                 type: 'image/jpeg',
                 lastModified: Date.now(),
             })
-        } catch (err) {
-            console.error("Compression failed for file:", file.name, err)
+        } catch {
             return file // Fallback to original
         }
     }))

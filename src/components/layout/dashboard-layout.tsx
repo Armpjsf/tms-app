@@ -5,13 +5,35 @@ import { motion } from "framer-motion"
 import { Sidebar } from "./sidebar"
 import { Header } from "./header"
 import { cn } from "@/lib/utils"
+import { usePathname } from "next/navigation"
+import Image from "next/image"
+
 interface DashboardLayoutProps {
   children: React.ReactNode
+}
+
+const ROUTE_BACKGROUNDS: Record<string, string> = {
+  "/planning": "/images/backgrounds/planning-bg.png",
+  "/calendar": "/images/backgrounds/calendar-bg.png",
+  "/sos": "/images/backgrounds/sos-bg.png",
+  "/notifications": "/images/backgrounds/notifications-bg.png",
+  "/chat": "/images/backgrounds/chat-bg.png",
+  "/vehicles": "/images/backgrounds/vehicles-bg.png",
+  "/admin/vehicle-checks": "/images/backgrounds/inspection-bg.png",
+  "/maintenance": "/images/backgrounds/maintenance-bg.png",
+  "/fuel": "/images/backgrounds/fuel-bg.png",
+  "/billing/customer": "/images/backgrounds/billing-bg.png",
+  "/billing/invoices": "/images/backgrounds/invoice-bg.png",
+  "/billing/driver": "/images/backgrounds/payment-bg.png",
+  "/admin/analytics": "/images/backgrounds/executive-bg.png",
+  "/jobs/history": "/images/backgrounds/planning-bg.png", // Using planning as fallback for history
+  "/reports/fleet": "/images/backgrounds/vehicles-bg.png",  // Using vehicles as fallback for fleet report
 }
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = React.useState(false)
   const [isMounted, setIsMounted] = React.useState(false)
+  const pathname = usePathname()
 
   // Load state on mount
   React.useEffect(() => {
@@ -28,10 +50,26 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     localStorage.setItem("sidebar_collapsed", String(newState))
   }
 
+  const bgImage = ROUTE_BACKGROUNDS[pathname]
+
   return (
     <div className="min-h-screen bg-background text-foreground transition-colors duration-300">
       {/* Background Effects */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+      <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
+        {/* Dynamic Contextual Background */}
+        {bgImage && (
+          <div className="absolute inset-0 transition-opacity duration-1000">
+            <Image 
+              src={bgImage} 
+              alt="Context Background" 
+              fill 
+              className="object-cover opacity-[0.6] blur-[1px]"
+              priority
+            />
+            <div className="absolute inset-0 bg-gradient-to-tr from-white/80 via-white/20 to-white/60" />
+          </div>
+        )}
+
         {/* Animated Gradient Orbs */}
         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-emerald-500/5 rounded-full blur-[120px] animate-pulse" />
         <div className="absolute bottom-[10%] right-[-10%] w-[50%] h-[50%] bg-teal-500/5 rounded-full blur-[120px] animate-pulse delay-1000" />
@@ -45,7 +83,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 backgroundSize: '40px 40px'
             }}
         />
-        <div className="absolute inset-0 bg-gradient-to-tr from-background via-transparent to-background/50" />
       </div>
 
       {/* Sidebar */}

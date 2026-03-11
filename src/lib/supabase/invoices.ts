@@ -56,7 +56,6 @@ export async function getInvoices(page = 1, limit = 20, query = '') {
     const { data, error, count } = await q.range((page - 1) * limit, page * limit - 1)
     
     if (error) {
-        console.error('Error fetching invoices:', error)
         return { data: [], count: 0 }
     }
 
@@ -69,7 +68,6 @@ export async function getInvoices(page = 1, limit = 20, query = '') {
 
     return { data: formattedData, count: count || 0 }
   } catch (error) {
-    console.error('Error in getInvoices:', error)
     return { data: [], count: 0 }
   }
 }
@@ -93,7 +91,6 @@ export async function getInvoiceById(id: string) {
     
     return { success: true, data }
   } catch (error) {
-    console.error('Error fetching invoice:', error)
     return { success: false, error }
   }
 }
@@ -145,7 +142,6 @@ export async function createInvoice(invoice: Partial<Invoice>) {
                 .in('Job_ID', jobIds)
             
             if (updateError) {
-                console.error('Error linking jobs to invoice:', updateError)
                 // Should we rollback? For now, just log.
             }
         }
@@ -153,7 +149,6 @@ export async function createInvoice(invoice: Partial<Invoice>) {
 
     return { success: true, data }
   } catch (error) {
-    console.error('Error creating invoice:', error)
     return { success: false, error }
   }
 }
@@ -183,7 +178,6 @@ export async function updateInvoice(id: string, updates: Partial<Invoice>) {
 
     return { success: true, data }
   } catch (error) {
-    console.error('Error updating invoice:', error)
     return { success: false, error }
   }
 }
@@ -210,7 +204,6 @@ export async function deleteInvoice(id: string) {
 
       return { success: true }
     } catch (error) {
-      console.error('Error deleting invoice:', error)
       return { success: false, error }
     }
   }

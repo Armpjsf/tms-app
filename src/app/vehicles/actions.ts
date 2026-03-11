@@ -3,6 +3,7 @@
 import { createClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { getUserBranchId, isSuperAdmin } from '@/lib/permissions'
+import { Vehicle } from "@/lib/supabase/vehicles"
 
 export type VehicleFormData = {
   vehicle_plate: string
@@ -28,12 +29,6 @@ export async function createVehicle(data: VehicleFormData) {
 
   const finalBranchId = (isAdmin && data.Branch_ID) ? data.Branch_ID : userBranchId
   
-  console.log('[createVehicle] Attempting to create vehicle:', { 
-      plate: data.vehicle_plate, 
-      finalBranchId, 
-      userBranchId,
-      isAdmin 
-  })
 
   const { error } = await supabase
     .from('master_vehicles')
@@ -55,55 +50,55 @@ export async function createVehicle(data: VehicleFormData) {
     })
 
   if (error) {
-    console.error('[createVehicle] DB Error:', error)
     return { success: false, message: 'Failed to create vehicle' }
   }
 
-  console.log('[createVehicle] Success')
   revalidatePath('/vehicles')
   return { success: true, message: 'Vehicle created successfully' }
 }
 
-export async function createBulkVehicles(vehicles: any[]) {
+export async function createBulkVehicles(vehicles: Vehicle[]) {
   const supabase = await createClient()
   const branchId = await getUserBranchId()
 
   // Helper to normalize keys
-  const normalizeData = (row: any) => {
-    const normalized: any = {}
+  const normalizeData = (row: Vehicle) => {
+    const normalized: Partial<Vehicle> = {}
     
     // Helper to find value by possible keys (case-insensitive)
     const getValue = (keys: string[]) => {
       const rowKeys = Object.keys(row)
       for (const key of keys) {
         const foundKey = rowKeys.find(k => k.toLowerCase().replace(/\s+/g, '') === key.toLowerCase().replace(/\s+/g, ''))
-        if (foundKey && row[foundKey] !== undefined && row[foundKey] !== null) {
-          return row[foundKey]
+        const rowAsRecord = row as unknown as Record<string, unknown>
+        if (foundKey && rowAsRecord[foundKey] !== undefined && rowAsRecord[foundKey] !== null) {
+          return rowAsRecord[foundKey]
         }
       }
       return undefined
     }
 
     // Mapping rules
-    normalized.vehicle_plate = getValue(['vehicle_plate', 'plate', 'ทะเบียน', 'ทะเบียนรถ', 'license_plate', 'licenseplate'])
-    normalized.vehicle_type = getValue(['vehicle_type', 'type', 'ประเภท', 'ประเภทรถ', 'vehicletype']) || '4-Wheel'
-    normalized.brand = getValue(['brand', 'make', 'ยี่ห้อ'])
-    normalized.model = getValue(['model', 'รุ่น'])
-    normalized.active_status = getValue(['active_status', 'status', 'สถานะ']) || 'Active'
-    normalized.current_mileage = getValue(['current_mileage', 'mileage', 'เลขไมล์', 'currentmileage']) || 0
-    normalized.next_service_mileage = getValue(['next_service_mileage', 'next_service', 'เช็คระยะถัดไป', 'nextservicemileage', 'nextservice']) || 0
+    normalized.vehicle_plate = getValue(['vehicle_plate', 'plate', 'ทะเบียน', 'ทะเบียนรถ', 'license_plate', 'licenseplate']) as string
+    normalized.vehicle_type = (getValue(['vehicle_type', 'type', 'ประเภท', 'ประเภทรถ', 'vehicletype']) as string) || '4-Wheel'
+    normalized.brand = getValue(['brand', 'make', 'ยี่ห้อ']) as string
+    normalized.model = getValue(['model', 'รุ่น']) as string
+    normalized.active_status = (getValue(['active_status', 'status', 'สถานะ']) as string) || 'Active'
+    normalized.current_mileage = (getValue(['current_mileage', 'mileage', 'เลขไมล์', 'currentmileage']) as number) || 0
+    normalized.next_service_mileage = (getValue(['next_service_mileage', 'next_service', 'เช็คระยะถัดไป', 'nextservicemileage', 'nextservice']) as number) || 0
     
     // Compliance Dates
-    normalized.tax_expiry = getValue(['tax_expiry', 'tax_date', 'ภาษี', 'วันหมดอายุภาษี'])
-    normalized.insurance_expiry = getValue(['insurance_expiry', 'insurance_date', 'ประกันภัย', 'วันหมดอายุประกัน'])
-    normalized.act_expiry = getValue(['act_expiry', 'act_date', 'พรบ', 'วันหมดอายุพรบ'])
+    normalized.tax_expiry = getValue(['tax_expiry', 'tax_date', 'ภาษี', 'วันหมดอายุภาษี']) as string
+    normalized.insurance_expiry = getValue(['insurance_expiry', 'insurance_date', 'ประกันภัย', 'วันหมดอายุประกัน']) as string
+    normalized.act_expiry = getValue(['act_expiry', 'act_date', 'พรบ', 'วันหมดอายุพรบ']) as string
     
     // Specs
-    normalized.max_weight_kg = getValue(['max_weight_kg', 'max_weight', 'น้ำหนักบรรทุก', 'capacity_kg'])
-    normalized.max_volume_cbm = getValue(['max_volume_cbm', 'max_volume', 'ปริมาตรบรรทุก', 'capacity_cbm'])
+    normalized.max_weight_kg = getValue(['max_weight_kg', 'max_weight', 'น้ำหนักบรรทุก', 'capacity_kg']) as number
+    normalized.max_volume_cbm = getValue(['max_volume_cbm', 'max_volume', 'ปริมาตรบรรทุก', 'capacity_cbm']) as number
     
     // Keep internal fields
-    if (row.Branch_ID) normalized.Branch_ID = row.Branch_ID
+    const rowAsRecord = row as unknown as Record<string, unknown>
+    if (rowAsRecord.branch_id) normalized.branch_id = rowAsRecord.branch_id as string
 
     return normalized
   }
@@ -131,7 +126,6 @@ export async function createBulkVehicles(vehicles: any[]) {
   // Deduplicate input data by vehicle_plate
   const uniqueData = Array.from(new Map(cleanData.map(item => [item.vehicle_plate, item])).values())
 
-  console.log('[createBulkVehicles] Input:', vehicles.length, 'Clean:', cleanData.length, 'Unique:', uniqueData.length)
 
   if (uniqueData.length === 0) {
      return { success: false, message: 'ไม่พบข้อมูลที่ถูกต้อง (กรุณาตรวจสอบชื่อคอลัมน์ เช่น ทะเบียนรถ, ยี่ห้อ, รุ่น)' }
@@ -147,7 +141,6 @@ export async function createBulkVehicles(vehicles: any[]) {
     .select()
 
   if (error) {
-    console.error('Error bulk creating vehicles:', error)
     return { success: false, message: `นำเข้าไม่สำเร็จ: ${error.message}` }
   }
 
@@ -160,7 +153,7 @@ export async function updateVehicle(plate: string, data: Partial<VehicleFormData
   const branchId = await getUserBranchId()
   const isAdmin = await isSuperAdmin()
 
-    const updatePayload: any = {
+    const updatePayload: Partial<Vehicle> = {
         vehicle_type: data.vehicle_type,
         brand: data.brand,
         model: data.model,
@@ -192,7 +185,6 @@ export async function updateVehicle(plate: string, data: Partial<VehicleFormData
   const { error } = await query
 
   if (error) {
-    console.error('Error updating vehicle:', error)
     return { success: false, message: 'Failed to update vehicle' }
   }
 
@@ -217,7 +209,6 @@ export async function deleteVehicle(plate: string) {
   const { error } = await query
 
   if (error) {
-    console.error('Error deleting vehicle:', error)
     return { success: false, message: 'Failed to delete vehicle' }
   }
 

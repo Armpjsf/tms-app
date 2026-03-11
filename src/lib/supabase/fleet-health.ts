@@ -150,8 +150,7 @@ export async function getFleetHealthAlerts(): Promise<HealthAlert[]> {
             return priorityMap[a.priority] - priorityMap[b.priority]
         })
 
-    } catch (e) {
-        console.error('Error fetching fleet health alerts:', e)
+    } catch {
         return []
     }
 }

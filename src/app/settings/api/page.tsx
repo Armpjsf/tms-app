@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Globe, ArrowLeft, Copy, RefreshCw, Key } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { getSetting, saveSetting } from "@/lib/supabase/system_settings"
+import { toast } from "sonner"
 
 export default function ApiSettingsPage() {
   const router = useRouter()
@@ -32,9 +33,9 @@ export default function ApiSettingsPage() {
     await saveSetting('api_key', newKey, 'Public API Key')
   }
 
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText(apiKey)
-    alert("คัดลอก API Key แล้ว")
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text)
+    toast.success("คัดลอก API Key แล้ว")
   }
 
   if (loading) {
@@ -74,7 +75,7 @@ export default function ApiSettingsPage() {
                         readOnly 
                         className="bg-muted font-mono text-foreground border-border"
                     />
-                    <Button variant="outline" onClick={copyToClipboard}>
+                    <Button variant="outline" onClick={() => copyToClipboard(apiKey)}>
                         <Copy size={16} />
                     </Button>
                 </div>

@@ -23,7 +23,6 @@ export async function login(formData: FormData) {
     .single()
 
   if (error || !users) {
-    console.error("Login failed: User not found or DB error", error)
     redirect('/login?error=Invalid credentials')
   }
 
@@ -33,11 +32,9 @@ export async function login(formData: FormData) {
     if (users.Password.startsWith('$argon2')) {
        isValid = await argon2.verify(users.Password, data.password)
     } else {
-       console.warn("Legacy password format detected")
        isValid = false 
     }
-  } catch (e) {
-    console.error("Argon2 verification failed", e)
+  } catch {
     isValid = false
   }
 
@@ -74,8 +71,8 @@ export async function login(formData: FormData) {
         if (rolePerms) {
             rolePermissions = rolePerms.Permissions
         }
-      } catch (e) {
-          console.error("Failed to load role permissions", e)
+      } catch {
+          // Failed to load role permissions
       }
   }
 

@@ -32,22 +32,21 @@ export function PermissionRequester({ driverId }: Props) {
           body: JSON.stringify({ driverId, subscription: { endpoint: token.value, isFCM: true } })
         })
         if (!res.ok) {
-            const errText = await res.text()
-            alert(`[DEBUG] Push Save Failed: ${res.status} ${errText}`)
+            // Error handling ignored for silent registration
         }
-      } catch (err) {
-        alert(`[DEBUG] Push Fetch Error: ${String(err)}`)
+      } catch {
+        // Error handling ignored for silent registration
       }
     })
     
-    await PushNotifications.addListener('registrationError', (err) => {
-      alert(`[DEBUG] Push Registration Error: ${JSON.stringify(err)}`)
+    await PushNotifications.addListener('registrationError', () => {
+      // Error handling ignored for silent registration
     })
     
     try {
         await PushNotifications.register()
-    } catch (err) {
-        alert(`[DEBUG] Push Register Call Error: ${String(err)}`)
+    } catch {
+        // Error handling ignored for silent registration
     }
   }, [driverId])
 
@@ -69,8 +68,8 @@ export function PermissionRequester({ driverId }: Props) {
     else {
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('/sw-push.js', { scope: '/' })
-          .then(reg => console.log('[Web Push] SW Registered:', reg.scope))
-          .catch(err => console.error('[Web Push] SW Failed:', err))
+          .then(() => { /* SW Registered */ })
+          .catch(() => {})
       }
       if ("Notification" in window && Notification.permission === "default") {
         setTimeout(() => setShowPrompt(true), 2000)
@@ -92,7 +91,6 @@ export function PermissionRequester({ driverId }: Props) {
           await PushNotifications.addListener('registration', async (token) => {
              if (tokenReceived) return; // Prevent multiple calls
              tokenReceived = true;
-             console.log('[Native Push] Registration token: ', token.value);
              
              const baseUrl = Capacitor.isNativePlatform() ? 'https://tms-app-five.vercel.app' : ''
              const apiUrl = `${baseUrl}/api/push/subscribe`
@@ -111,25 +109,23 @@ export function PermissionRequester({ driverId }: Props) {
                })
                
                if (!res.ok) {
-                   const errText = await res.text()
-                   alert(`[DEBUG] Push Save Failed: ${res.status} ${errText}`)
+                   // Error handling ignored
                }
-             } catch (err) {
-               alert(`[DEBUG] Push Fetch Error: ${String(err)}`)
+             } catch {
+               // Error handling ignored
              }
              
              setShowPrompt(false)
           })
 
-          await PushNotifications.addListener('registrationError', (error: any) => {
-            alert(`[DEBUG] Push Registration Error: ${JSON.stringify(error)}`)
+          await PushNotifications.addListener('registrationError', () => {
             setShowPrompt(false)
           })
 
           try {
               await PushNotifications.register()
-          } catch (err) {
-              alert(`[DEBUG] Push Register Call Error: ${String(err)}`)
+          } catch {
+              // Error handling ignored
           }
           return; // Exit here properly mapped to native sequence
         } else {
@@ -147,7 +143,6 @@ export function PermissionRequester({ driverId }: Props) {
         const reg = await navigator.serviceWorker.ready
         const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
         if (!vapidKey) {
-          console.error('[Push] VAPID public key not configured')
           setShowPrompt(false)
           return
         }
@@ -177,13 +172,12 @@ export function PermissionRequester({ driverId }: Props) {
           })
         })
 
-        if (res.ok) console.log('[Web Push] Subscription saved to server!')
-        else console.error('[Web Push] Failed to save subscription')
+        if (res.ok) { /* Success */ }
+        else { /* Failed */ }
 
         setShowPrompt(false)
       }
-    } catch (error) {
-      console.error("[Push] Error:", error)
+    } catch {
       setShowPrompt(false)
     }
   }

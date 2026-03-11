@@ -38,7 +38,7 @@ type Props = {
     }
 }
 
-export function ProfitabilitySection({ data, financials }: Props) {
+export function ProfitabilitySection({ data = [], financials }: Props) {
     // Sort by profit for the chart
     const topPerformers = [...data].sort((a, b) => b.netProfit - a.netProfit).slice(0, 5)
     
@@ -65,7 +65,7 @@ export function ProfitabilitySection({ data, financials }: Props) {
                             <YAxis dataKey="plate" type="category" stroke="#94a3b8" width={100} />
                             <Tooltip 
                                 contentStyle={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', color: '#0f172a' }}
-                                formatter={(value: any) => [`฿${Number(value).toLocaleString()}`, 'Net Profit']}
+                                formatter={(value: number) => [`฿${Number(value).toLocaleString()}`, 'Net Profit']}
                             />
                             <Bar dataKey="netProfit" radius={[0, 4, 4, 0]}>
                                 {topPerformers.map((entry, index) => (
@@ -103,7 +103,7 @@ export function ProfitabilitySection({ data, financials }: Props) {
                                 </Pie>
                                 <Tooltip 
                                     contentStyle={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', color: '#0f172a' }}
-                                    formatter={(value: any) => [`฿${Number(value).toLocaleString()}`, 'Cost']}
+                                    formatter={(value: number) => [`฿${Number(value).toLocaleString()}`, 'Cost']}
                                 />
                             </PieChart>
                         </ResponsiveContainer>

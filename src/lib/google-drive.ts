@@ -16,7 +16,7 @@ export function getOAuth2Client() {
   const REFRESH_TOKEN = process.env.GOOGLE_REFRESH_TOKEN
 
   if (!CLIENT_ID || !CLIENT_SECRET) {
-    console.error("[GoogleDrive] CRITICAL: GOOGLE_CLIENT_ID or SECRET missing")
+    // Missing credentials - Google Drive not available
   }
 
   const oAuth2Client = new google.auth.OAuth2(
@@ -26,10 +26,7 @@ export function getOAuth2Client() {
   )
   
   if (REFRESH_TOKEN) {
-      console.log("[GoogleDrive] Auth: Using Refresh Token from Environment")
       oAuth2Client.setCredentials({ refresh_token: REFRESH_TOKEN })
-  } else {
-      console.warn("[GoogleDrive] Warning: GOOGLE_REFRESH_TOKEN is empty")
   }
   
   return oAuth2Client
@@ -40,13 +37,11 @@ export async function getDriveClient() {
 
   // If we have a refresh token, use OAuth (User Storage)
   if (REFRESH_TOKEN) {
-      console.log("[GoogleDrive] Using OAuth2 Client (User Storage)")
       const auth = getOAuth2Client()
       return google.drive({ version: 'v3', auth })
   }
 
   // Fallback to Service Account (System Storage - 0GB)
-  console.warn("[GoogleDrive] Falling back to Service Account (Quota limited)")
   const KEY_FILE_PATH = join(process.cwd(), 'service_account.json')
   const auth = new google.auth.GoogleAuth({
     keyFile: KEY_FILE_PATH,
@@ -81,12 +76,10 @@ export async function getOrCreateFolder(folderName: string, parentId?: string): 
         if (res.data.files && res.data.files.length > 0) {
             const id = res.data.files[0].id!
             folderIdCache[cacheKey] = id
-            console.log(`[GoogleDrive] Found existing folder: ${folderName} (${id})`)
             return id
         }
 
         // Create folder if not exists
-        console.log(`[GoogleDrive] Creating new folder: ${folderName}`)
         const fileMetadata: { name: string; mimeType: string; parents?: string[] } = {
             name: folderName,
             mimeType: 'application/vnd.google-apps.folder',
@@ -102,11 +95,9 @@ export async function getOrCreateFolder(folderName: string, parentId?: string): 
 
         const id = file.data.id!
         folderIdCache[cacheKey] = id
-        console.log(`[GoogleDrive] Folder created successfully: ${id}`)
         return id
     } catch (err: unknown) {
         const errMsg = err instanceof Error ? err.message : String(err)
-        console.error(`[GoogleDrive] Error in getOrCreateFolder (${folderName}):`, errMsg)
         throw new Error(`Google Drive Folder Error: ${errMsg}`)
     }
 }
@@ -159,23 +150,18 @@ export async function uploadFileToDrive(
     mimeType: string,
     folderName: string = 'TMS_Uploads'
 ) {
-    console.log(`[GoogleDrive] Starting upload: ${fileName} to folder: ${folderName}`)
     try {
         // 1. Use the shared root folder directly
         const rootFolderId = ROOT_FOLDER_ID
-        console.log(`[GoogleDrive] Using ROOT_FOLDER_ID: ${rootFolderId}`)
         
         // 2. Get or Create specific subfolder inside the shared folder
         const targetFolderId = await getOrCreateFolder(folderName, rootFolderId)
-        console.log(`[GoogleDrive] Target folder ID: ${targetFolderId}`)
 
         // 3. Upload using the ID
         const result = await uploadFileByFolderId(fileBuffer, fileName, mimeType, targetFolderId)
-        console.log(`[GoogleDrive] Upload success: ${result.fileId}`)
         return result
 
     } catch (error) {
-        console.error('Google Drive Upload Error:', error)
         throw error
     }
 }

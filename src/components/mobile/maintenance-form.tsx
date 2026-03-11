@@ -10,6 +10,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { CameraInput } from "@/components/mobile/camera-input"
 import { Loader2, Wrench, User, Gauge } from "lucide-react"
 import { createRepairTicket } from "@/app/maintenance/actions"
+import { toast } from "sonner"
 import { uploadImageToDrive } from "@/lib/actions/upload-actions"
 
 interface MobileMaintenanceFormProps {
@@ -56,15 +57,14 @@ export function MobileMaintenanceForm({ driverId, driverName, defaultVehiclePlat
         })
 
         if (result.success) {
-            alert("ส่งแจ้งซ่อมเรียบร้อยแล้ว")
+            toast.success("ส่งแจ้งซ่อมเรียบร้อยแล้ว")
             router.push('/mobile/dashboard')
         } else {
-            alert(`เกิดข้อผิดพลาด: ${result.message}`)
+            toast.error(`เกิดข้อผิดพลาด: ${result.message}`)
         }
     } catch (error) {
-        console.error("Maintenance form error:", error)
         const errMsg = error instanceof Error ? error.message : String(error)
-        alert(`เกิดข้อผิดพลาดในการเชื่อมต่อ: ${errMsg}`)
+        toast.error(`เกิดข้อผิดพลาดในการเชื่อมต่อ: ${errMsg}`)
     } finally {
         setLoading(false)
     }

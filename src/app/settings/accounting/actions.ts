@@ -19,7 +19,6 @@ export async function checkAccountingConnection() {
         };
     } catch (error: unknown) {
         const message = error instanceof Error ? error.message : String(error);
-        console.error("Accounting connection check failed:", error);
         return { success: false, connected: false, message };
     }
 }
@@ -36,8 +35,7 @@ export async function manualSyncInvoice(noteId: string) {
         // 2. Trigger sync
         const result = await accountingService.syncBillingNoteToInvoice(data.note, data.jobs);
         return result;
-    } catch (error) {
-        console.error("Manual invoice sync failed:", error);
+    } catch {
         return { success: false, message: "Internal error during manual sync" };
     }
 }
@@ -54,8 +52,7 @@ export async function manualSyncBill(paymentId: string) {
         // 2. Trigger sync
         const result = await accountingService.syncDriverPaymentToBill(data.payment, data.jobs);
         return result;
-    } catch (error) {
-        console.error("Manual bill sync failed:", error);
+    } catch {
         return { success: false, message: "Internal error during manual sync" };
     }
 }
@@ -71,7 +68,6 @@ export async function saveAccountingSettings(apiKey: string, companyId: string, 
         return { success: true, message: "Settings saved successfully" };
     } catch (error: unknown) {
         const message = error instanceof Error ? error.message : String(error);
-        console.error("Failed to save accounting settings:", error);
         return { success: false, message };
     }
 }
@@ -83,8 +79,7 @@ export async function syncJobToAccounting(job: Job) {
     try {
         const result = await accountingService.syncJobToInvoice(job);
         return result;
-    } catch (error) {
-        console.error("Sync job to accounting failed:", error);
+    } catch {
         return { success: false, message: "Internal error during job sync" };
     }
 }

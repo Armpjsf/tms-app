@@ -4,12 +4,16 @@ import { PremiumButton } from "@/components/ui/premium-button"
 import { JobDialog } from "@/components/planning/job-dialog"
 import { Plus } from "lucide-react"
 import { useState } from "react"
+import { Driver } from "@/lib/supabase/drivers"
+import { Vehicle } from "@/lib/supabase/vehicles"
+import { Customer } from "@/lib/supabase/customers"
+import { Route } from "@/lib/supabase/routes"
 
 type Props = {
-  drivers: any[]
-  vehicles: any[]
-  customers: any[]
-  routes: any[]
+  drivers: Driver[]
+  vehicles: Vehicle[]
+  customers: Customer[]
+  routes: Route[]
 }
 
 export function CreateJobButton({ drivers, vehicles, customers, routes }: Props) {

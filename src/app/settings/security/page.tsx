@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Shield, ArrowLeft, Key, Lock, Smartphone } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 import { createClient } from "@/utils/supabase/client"
 
 export default function SecuritySettingsPage() {
@@ -18,11 +19,11 @@ export default function SecuritySettingsPage() {
 
   const handleUpdatePassword = async () => {
     if (password !== confirmPassword) {
-      alert("รหัสผ่านไม่ตรงกัน")
+      toast.warning("รหัสผ่านไม่ตรงกัน")
       return
     }
     if (password.length < 6) {
-      alert("รหัสผ่านต้องมีความยาวอย่างน้อย 6 ตัวอักษร")
+      toast.warning("รหัสผ่านต้องมีความยาวอย่างน้อย 6 ตัวอักษร")
       return
     }
 
@@ -30,9 +31,9 @@ export default function SecuritySettingsPage() {
     const { error } = await supabase.auth.updateUser({ password: password })
 
     if (error) {
-      alert("เกิดข้อผิดพลาด: " + error.message)
+      toast.error("เกิดข้อผิดพลาด: " + error.message)
     } else {
-      alert("อัพเดทรหัสผ่านเรียบร้อยแล้ว")
+      toast.success("อัพเดทรหัสผ่านเรียบร้อยแล้ว")
       setPassword("")
       setConfirmPassword("")
     }

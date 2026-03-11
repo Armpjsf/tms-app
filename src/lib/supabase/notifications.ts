@@ -158,14 +158,14 @@ export async function getNotifications(): Promise<AppNotification[]> {
       const { data: drivers } = await supabase
         .from('Master_Drivers')
         .select('Driver_ID, Driver_Name, Branch_ID')
-        .in('Driver_ID', (unreadMsgs as any[]).map(m => m[chatCols.sender_id]))
+        .in('Driver_ID', (unreadMsgs as Record<string, string>[]).map(m => m[chatCols.sender_id]))
 
-      const driverMap = new Map<string, any>()
+      const driverMap = new Map<string, Record<string, string>>()
       if (drivers) {
         drivers.forEach(d => driverMap.set(d.Driver_ID, d))
       }
 
-      (unreadMsgs as any[]).forEach((msg: any) => {
+      (unreadMsgs as Record<string, string>[]).forEach((msg: Record<string, string>) => {
         const senderId = msg[chatCols.sender_id]
         const driver = driverMap.get(senderId)
         
@@ -189,7 +189,7 @@ export async function getNotifications(): Promise<AppNotification[]> {
       })
     }
   } catch (err) {
-    console.error('Chat notification error:', err)
+    // Chat notification error
   }
 
   // Sort: critical first, then by timestamp

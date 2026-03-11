@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { Ban } from "lucide-react"
 import { cancelJobRequest } from "@/app/planning/actions"
+import { toast } from "sonner"
 import { PremiumButton } from "@/components/ui/premium-button"
 
 export function CustomerCancelButton({ jobId, jobStatus }: { jobId: string, jobStatus: string }) {
@@ -19,13 +20,12 @@ export function CustomerCancelButton({ jobId, jobStatus }: { jobId: string, jobS
     try {
       const res = await cancelJobRequest(jobId)
       if (res.success) {
-        alert("ยกเลิกคำขอเรียบร้อยแล้ว")
+        toast.success("ยกเลิกคำขอเรียบร้อยแล้ว")
       } else {
-        alert(res.message || "เกิดข้อผิดพลาดในการยกเลิกคำขอ")
+        toast.error(res.message || "เกิดข้อผิดพลาดในการยกเลิกคำขอ")
       }
-    } catch (e) {
-      alert("System error")
-      console.error(e)
+    } catch {
+      toast.error("System error")
     } finally {
       setLoading(false)
     }

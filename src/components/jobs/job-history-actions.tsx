@@ -1,5 +1,7 @@
 "use client"
 
+import { toast } from "sonner"
+import Logger from "@/lib/utils/logger"
 import { useState } from "react"
 import { 
   ExternalLink, 
@@ -12,14 +14,19 @@ import { JobSummaryDialog } from "@/components/jobs/job-summary-dialog"
 import { syncJobToAccounting } from "@/app/settings/accounting/actions"
 
 
-import { Job } from "@/types/database"
+import { Job } from "@/lib/supabase/jobs"
+
+import { Driver } from "@/lib/supabase/drivers"
+import { Vehicle } from "@/lib/supabase/vehicles"
+import { Customer } from "@/lib/supabase/customers"
+import { Route } from "@/lib/supabase/routes"
 
 type Props = {
   job: Job
-  drivers: any[]
-  vehicles: any[]
-  customers: any[]
-  routes: any[]
+  drivers: Driver[]
+  vehicles: Vehicle[]
+  customers: Customer[]
+  routes: Route[]
   canViewPrice?: boolean
   canDelete?: boolean
 }
@@ -36,12 +43,13 @@ export function JobHistoryActions({ job, drivers, vehicles, customers, routes, c
     try {
         const result = await syncJobToAccounting(job)
         if (result.success) {
-            alert(`สำเร็จ: ${result.message}`)
+            // Success
         } else {
-            alert(`ผิดพลาด: ${result.message}`)
+            // Error
         }
-    } catch {
-        alert("เกิดข้อผิดพลาดในการเชื่อมต่อ")
+    } catch (err) {
+        Logger.error('Job delete error:', err)
+        toast.error("เกิดข้อผิดพลาดในการลบ")
     } finally {
         setSyncing(false)
     }

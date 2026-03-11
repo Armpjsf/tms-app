@@ -79,15 +79,16 @@ export function BillingActions({ billingNoteId, customerEmail = "", customerName
                         .replace(/href="\//g, `href="${appUrl}/`)
                         .replace(/src="\//g, `src="${appUrl}/`)
                 }
-            } catch (e) {
-                console.error("Failed to fetch billing html", e)
+            } catch {
+                // Failed to fetch billing html
             }
 
             // 2. Fetch current attachments
             const attachments = await getAttachments(billingNoteId)
-            const emailAttachments: any[] = attachments?.map(a => ({
+            const emailAttachments: { filename: string; path: string }[] = attachments?.map(a => ({
                 filename: a.File_Name,
-                path: `${process.env.NEXT_PUBLIC_SUPABASE_URL!}/storage/v1/object/public/billing-documents/${a.File_Path}`
+                path: `${process.env.NEXT_PUBLIC_SUPABASE_URL!}/storage/v1/object/public/billing-documents/${a.File_Path}`,
+                Created_By: 'System' as string // Should be user ID
             })) || []
 
             // 3. Add Billing Note As Attachment (Default)
@@ -103,16 +104,17 @@ export function BillingActions({ billingNoteId, customerEmail = "", customerName
                 to: emailTo,
                 subject: subject,
                 html: message.replace(/\n/g, '<br/>'),
-                attachments: emailAttachments
+                attachments: emailAttachments,
+                Items_JSON: [] as Record<string, unknown>[] // Snapshot
             })
 
             if (!success) throw new Error(error)
             
             toast.success("ส่งอีเมลเรียบร้อย")
             setIsEmailOpen(false)
-        } catch (error: any) {
-            console.error(error)
-            toast.error("ส่งอีเมลไม่สำเร็จ: " + error.message)
+        } catch (error) {
+            toast.error("ส่งอีเมลไม่สำเร็จ")
+            console.error("Error creating invoice: " + ((error as Error)?.message || JSON.stringify(error || 'Unknown error')))
         } finally {
             setSending(false)
         }

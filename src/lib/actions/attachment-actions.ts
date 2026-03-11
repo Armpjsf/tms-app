@@ -22,7 +22,6 @@ export async function getAttachments(billingNoteId: string) {
         .order('Uploaded_At', { ascending: false })
 
     if (error) {
-        console.error("Error fetching attachments:", error)
         return []
     }
 
@@ -69,14 +68,12 @@ export async function uploadAttachment(formData: FormData) {
             }])
 
         if (dbError) {
-            console.error("DB Error:", dbError)
             return { success: false, error: "บันทึกข้อมูลไม่สำเร็จ: " + dbError.message }
         }
 
         revalidatePath(`/billing/customer/history`)
         return { success: true }
     } catch (e: unknown) {
-        console.error("Upload Exception:", e)
         const errMsg = e instanceof Error ? e.message : String(e)
         return { success: false, error: errMsg }
     }

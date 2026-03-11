@@ -101,8 +101,7 @@ export async function globalSearch(query: string): Promise<SearchResult[]> {
     })
 
     return results
-  } catch (error) {
-    console.error('Global search error:', error)
+  } catch {
     return []
   }
 }

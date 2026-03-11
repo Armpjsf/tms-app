@@ -67,7 +67,7 @@ export default async function InvoiceViewPage({ params }: { params: Promise<{ id
                 </thead>
                 <tbody>
                     {invoice.Items_JSON && Array.isArray(invoice.Items_JSON) ? (
-                        invoice.Items_JSON.map((item: any, idx: number) => (
+                        invoice.Items_JSON.map((item: { Route_Name: string; Job_ID: string; Plan_Date: string; Price_Cust_Total: number }, idx: number) => (
                             <tr key={idx} className="border-b border-gray-200">
                                 <td className="p-3 align-top">{idx + 1}</td>
                                 <td className="p-3">

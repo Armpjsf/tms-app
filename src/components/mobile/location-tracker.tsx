@@ -52,12 +52,9 @@ export function LocationTracker({ driverId }: { driverId?: string }) {
                     speed: speed || 0,
                     // battery: we can't easily get battery in web without experimental API
                 })
-                
-                console.log("📍 GPS Updated:", latitude, longitude)
             }
         },
-        (error) => {
-            console.error("GPS Error:", error)
+        () => {
             if (status !== "error") {
                 setTimeout(() => setStatus("error"), 0)
             }

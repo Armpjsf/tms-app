@@ -61,8 +61,8 @@ export function BranchProviderInner({ children, initialBranchParam }: { children
           if (finalBranch !== savedBranch) {
               Cookies.set("selectedBranch", finalBranch, { expires: 365 })
           }
-      } catch (e) {
-          console.error("Failed to init branch context", e)
+      } catch {
+          // Continue without logging
       } finally {
           if (isMounted) setIsLoading(false)
       }

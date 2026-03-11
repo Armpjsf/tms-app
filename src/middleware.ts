@@ -40,9 +40,27 @@ export async function middleware(request: NextRequest) {
   
   if (!isApiRoute && !isMobile && !isLoginPage && !isPublicTrack && pathname !== '/favicon.ico') {
     const sessionCookie = request.cookies.get('session')
+    const driverSession = request.cookies.get('driver_session')
 
     if (!sessionCookie) {
-      console.log(`Middleware: No session cookie for ${pathname}, redirecting to /login`)
+      // Mobile detection for redirection
+      const userAgent = request.headers.get('user-agent') || ''
+      const isDeviceMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent)
+      
+      // If mobile, check if they already have a driver session
+      if (isDeviceMobile && !pathname.startsWith('/mobile/login')) {
+        // If they have a driver session, redirect to mobile jobs, NOT login
+        if (driverSession) {
+          return NextResponse.redirect(new URL('/mobile/jobs', request.url))
+        }
+
+        // Only redirect to mobile login if they are NOT trying to access admin login with bypass
+        const searchParams = request.nextUrl.searchParams
+        if (searchParams.get('type') !== 'staff') {
+          return NextResponse.redirect(new URL('/mobile/login', request.url))
+        }
+      }
+
       const loginUrl = new URL('/login', request.url)
       return NextResponse.redirect(loginUrl)
     }
@@ -51,7 +69,6 @@ export async function middleware(request: NextRequest) {
     const payload = await decrypt(sessionCookie.value)
     
     if (!payload) {
-      console.log(`Middleware: Invalid session for ${pathname}, redirecting to /login`)
       const loginUrl = new URL('/login', request.url)
       const response = NextResponse.redirect(loginUrl)
       response.cookies.delete('session')

@@ -11,14 +11,15 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { deleteFuelLog, updateFuelLogStatus } from "@/app/fuel/actions"
+import { toast } from "sonner"
 import { FuelLog } from "@/lib/supabase/fuel"
 import { FuelDialog } from "./fuel-dialog"
 import { CheckCircle2, XCircle } from "lucide-react"
 
 interface FuelActionsProps {
   log: FuelLog
-  drivers: any[]
-  vehicles: any[]
+  drivers: { Driver_ID: string; Driver_Name: string }[]
+  vehicles: { Vehicle_Plate: string; Vehicle_Type: string }[]
 }
 
 export function FuelActions({ log, drivers, vehicles }: FuelActionsProps) {
@@ -31,12 +32,8 @@ export function FuelActions({ log, drivers, vehicles }: FuelActionsProps) {
     setLoading(true)
     try {
       const result = await deleteFuelLog(log.Log_ID)
-      if (!result.success) {
-        alert(result.message)
-      }
-    } catch (error) {
-      console.error(error)
-      alert("เกิดข้อผิดพลาดในการลบ")
+    } catch {
+      toast.error('ไม่สามารถอ่านข้อมูลได้')
     } finally {
       setLoading(false)
     }
@@ -47,11 +44,10 @@ export function FuelActions({ log, drivers, vehicles }: FuelActionsProps) {
     try {
       const result = await updateFuelLogStatus(log.Log_ID, status)
       if (!result.success) {
-        alert(result.message)
+        toast.error(result.message)
       }
-    } catch (error) {
-      console.error(error)
-      alert("เกิดข้อผิดพลาดในการอัปเดตสถานะ")
+    } catch {
+      toast.error('เกิดข้อผิดพลาด กรุณาลองใหม่')
     } finally {
       setLoading(false)
     }

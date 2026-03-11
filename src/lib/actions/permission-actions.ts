@@ -21,9 +21,9 @@ export async function getRolePermissions() {
 
         if (error) throw error
         return { success: true, data: data as RolePermission[] }
-    } catch (error: any) {
-        console.error('Error fetching role permissions:', error)
-        return { success: false, error: error.message }
+    } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : 'Unknown error'
+        return { success: false, error: message }
     }
 }
 
@@ -48,9 +48,9 @@ export async function updateRolePermissions(role: string, permissions: Record<st
 
         revalidatePath('/settings/roles')
         return { success: true }
-    } catch (error: any) {
-        console.error('Error updating role permissions:', error)
-        return { success: false, error: error.message }
+    } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : 'Unknown error'
+        return { success: false, error: message }
     }
 }
 

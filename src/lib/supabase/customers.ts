@@ -51,7 +51,6 @@ export async function getAllCustomers(page?: number, limit?: number, query?: str
     const { data, error, count } = await queryBuilder.order('Customer_ID', { ascending: false })
     
     if (error) {
-      console.error('Error fetching customers:', JSON.stringify(error))
       return { data: [], count: 0 }
     }
     
@@ -94,7 +93,6 @@ export async function createCustomer(customerData: Partial<Customer>) {
       .single()
     
     if (error) {
-      console.error('Error creating customer:', JSON.stringify(error))
       return { success: false, error }
     }
     return { success: true, data }
@@ -115,7 +113,6 @@ export async function updateCustomer(id: string, customerData: Partial<Customer>
       .single()
     
     if (error) {
-      console.error('Error updating customer:', JSON.stringify(error))
       return { success: false, error }
     }
     return { success: true, data }
@@ -134,7 +131,6 @@ export async function deleteCustomer(id: string) {
       .eq('Customer_ID', id)
     
     if (error) {
-      console.error('Error deleting customer:', JSON.stringify(error))
       return { success: false, error }
     }
     return { success: true }
@@ -219,7 +215,6 @@ export async function createBulkCustomers(customers: Record<string, unknown>[]) 
             .insert(validInserts)
 
         if (error) {
-            console.error("Bulk create customers error:", error)
             return { success: false, message: `Failed to import: ${error.message}` }
         }
     

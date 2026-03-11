@@ -12,15 +12,14 @@ export interface ParsedReceipt {
 export async function parseFuelReceipt(imageUrl: string): Promise<ParsedReceipt> {
   try {
     const result = await Tesseract.recognize(imageUrl, 'eng+tha', {
-      logger: (m) => console.log(m), // Optional: log progress
+      // logger suppressed
     });
 
     const text = result.data.text;
-    console.log('OCR Text:', text);
+    // OCR text extracted (no log)
 
     return extractDataFromText(text);
-  } catch (error) {
-    console.error('OCR Error:', error);
+  } catch {
     return {};
   }
 }

@@ -91,7 +91,9 @@ export async function createJob(data: JobFormData) {
   if (!error1) {
       // Send push notification to the assigned driver
       if (data.Driver_ID) {
-          notifyDriverNewJob(data.Driver_ID, data.Job_ID, data.Customer_Name || 'ไม่ระบุ').catch(err => console.error('[Push] Error in createJob:', err))
+          notifyDriverNewJob(data.Driver_ID, data.Job_ID, data.Customer_Name || 'ไม่ระบุ').catch(() => {
+              // Notification failed
+          })
       }
       revalidatePath('/planning')
       return { success: true, message: 'Job created successfully' }
@@ -99,7 +101,6 @@ export async function createJob(data: JobFormData) {
 
   // If duplicate key (23505), try regenerating ID once
   if (error1.code === '23505') {
-      console.log('Duplicate Job ID detected, retrying with suffix...')
       const newId = `${data.Job_ID}-${Math.floor(Math.random() * 1000)}`
       const { error: error2 } = await supabase.from('Jobs_Main').insert(buildInsertPayload({ ...data, Job_ID: newId }, driverName, subId))
       
@@ -155,6 +156,10 @@ function buildInsertPayload(data: JobFormData, driverName: string, subId: string
 export async function createBulkJobs(jobs: Partial<JobFormData>[]) {
   const supabase = await createClient()
 
+  // Get Branch_ID for auto-assignment
+  const userBranchId = await getUserBranchId()
+  const effectiveBranchId = (userBranchId && userBranchId !== 'All') ? userBranchId : null
+
   const parseIfString = (val: string | undefined) => {
       if (!val) return null
       try { return JSON.parse(val) } catch { return val }
@@ -162,6 +167,7 @@ export async function createBulkJobs(jobs: Partial<JobFormData>[]) {
 
   const cleanData = jobs.map(j => ({
       Job_ID: j.Job_ID || `JOB-${Date.now().toString().slice(-6)}-${Math.floor(Math.random()*1000)}`,
+      Branch_ID: j.Branch_ID || effectiveBranchId,
       Plan_Date: j.Plan_Date || new Date().toISOString().split('T')[0],
       Delivery_Date: j.Delivery_Date,
       Customer_Name: j.Customer_Name,
@@ -185,7 +191,6 @@ export async function createBulkJobs(jobs: Partial<JobFormData>[]) {
       Pickup_Lon: j.Pickup_Lon || null,
       Delivery_Lat: j.Delivery_Lat || null,
       Delivery_Lon: j.Delivery_Lon || null,
-      Branch_ID: j.Branch_ID || null,
       Created_At: new Date().toISOString(),
   })).filter(j => j.Customer_Name)
 
@@ -198,7 +203,6 @@ export async function createBulkJobs(jobs: Partial<JobFormData>[]) {
     .upsert(cleanData, { onConflict: 'Job_ID' })
 
   if (error) {
-    console.error('Error bulk creating jobs:', error)
     return { success: false, message: `Failed to import: ${error.message}` }
   }
 
@@ -229,9 +233,10 @@ export async function createBulkJobs(jobs: Partial<JobFormData>[]) {
           created_at_actual: new Date().toISOString(),
           note: `Admin created job for past date (${j.Plan_Date}) on ${new Date().toLocaleDateString('th-TH')}`
         }
-      }).catch(err => console.error('[Audit] Failed to log backdated entry:', err))
+      }).catch(() => {
+          // Log failed
+      })
     }
-    console.log(`[Audit] Logged ${backdatedJobs.length} backdated job(s) for admin review`)
   }
 
   revalidatePath('/planning')
@@ -240,8 +245,6 @@ export async function createBulkJobs(jobs: Partial<JobFormData>[]) {
 
 export async function updateJob(jobId: string, data: Partial<JobFormData>) {
   const supabase = await createClient()
-
-  console.log(`[DEBUG] updateJob RCVD JobID: ${jobId}`, JSON.stringify(data, null, 2))
 
   const parseIfString = (val: string | undefined) => {
       if (!val) return null
@@ -279,15 +282,12 @@ export async function updateJob(jobId: string, data: Partial<JobFormData>) {
     if (vehicle) updateData.Sub_ID = vehicle.sub_id || null
   }
   
-  console.log(`[DEBUG] updateJob SENT:`, JSON.stringify(updateData, null, 2))
-
   const { error } = await supabase
     .from('Jobs_Main')
     .update(updateData)
     .eq('Job_ID', jobId)
 
   if (error) {
-    console.error('Error updating job:', error)
     return { success: false, message: `Failed to update job: ${error.message}` }
   }
 
@@ -316,7 +316,6 @@ export async function deleteJob(jobId: string) {
     .eq('Job_ID', jobId)
 
   if (error) {
-    console.error('Error deleting job:', error)
     return { success: false, message: 'Failed to delete job' }
   }
 
@@ -349,7 +348,7 @@ export async function getJobCreationData() {
   ])
 
   if (customersResult.error) {
-    console.error('Error fetching customers:', customersResult.error)
+    // Error fetching customers
   }
 
   return {
@@ -402,7 +401,6 @@ export async function requestShipment(data: {
   const { error } = await supabase.from('Jobs_Main').insert(payload)
 
   if (error) {
-    console.error('Error requesting shipment:', error)
     return { success: false, message: 'Failed to submit request: ' + error.message }
   }
 
@@ -453,7 +451,6 @@ export async function cancelJobRequest(jobId: string) {
     .eq('Job_ID', jobId)
 
   if (error) {
-    console.error('Error cancelling job:', error)
     return { success: false, message: 'Failed to cancel job: ' + error.message }
   }
 

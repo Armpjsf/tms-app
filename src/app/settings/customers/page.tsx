@@ -33,15 +33,23 @@ import { ExcelImport } from "@/components/ui/excel-import"
 import { createBulkCustomers, getAllCustomers, createCustomer, updateCustomer, deleteCustomer } from "@/lib/supabase/customers"
 import { getExecutiveKPIs } from "@/lib/supabase/analytics"
 import { cn } from "@/lib/utils"
+import { toast } from "sonner"
+import { Customer } from "@/lib/supabase/customers"
+
+interface ExecutiveKPIs {
+  revenue: { current: number; previous: number; growth: number; target: number; attainment: number; };
+  profit: { current: number; previous: number; growth: number; };
+  margin: { current: number | undefined; previous: number | undefined; growth: number; target: number; };
+}
 
 export default function CustomersSettingsPage() {
-  const [customers, setCustomers] = useState<any[]>([])
+  const [customers, setCustomers] = useState<Customer[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
   const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const [editingCustomer, setEditingCustomer] = useState<any | null>(null)
-  const [kpis, setKpis] = useState<any>(null)
-  const [formData, setFormData] = useState<any>({
+  const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null)
+  const [kpis, setKpis] = useState<ExecutiveKPIs | null>(null)
+  const [formData, setFormData] = useState<Partial<Customer>>({
     Customer_ID: "",
     Customer_Name: "",
     Tax_ID: "",
@@ -59,7 +67,7 @@ export default function CustomersSettingsPage() {
         getExecutiveKPIs()
     ])
     setCustomers(result.data)
-    setKpis(kpiData)
+    setKpis(kpiData as unknown as ExecutiveKPIs)
     setLoading(false)
   }, [searchQuery])
 
@@ -67,7 +75,7 @@ export default function CustomersSettingsPage() {
     loadCustomers()
   }, [loadCustomers])
 
-  const handleOpenDialog = (customer?: any) => {
+  const handleOpenDialog = (customer?: Customer) => {
     if (customer) {
       setEditingCustomer(customer)
       setFormData(customer)
@@ -87,19 +95,20 @@ export default function CustomersSettingsPage() {
   }
 
   const handleSave = async () => {
-    if (!formData.Customer_Name) return alert("กรุณากรอกชื่อลูกค้า")
+    if (!formData.Customer_Name) return toast.warning("กรุณากรอกชื่อลูกค้า")
     setSaving(true)
     try {
       if (editingCustomer) {
-        await updateCustomer(formData.Customer_ID, formData)
+        await updateCustomer(formData.Customer_ID!, formData)
+        toast.success("แก้ไขข้อมูลลูกค้าเรียบร้อยแล้ว")
       } else {
         await createCustomer(formData)
+        toast.success("เพิ่มลูกค้าใหม่เรียบร้อยแล้ว")
       }
       setIsDialogOpen(false)
       loadCustomers()
-    } catch (error) {
-      console.error(error)
-      alert("เกิดข้อผิดพลาดในการบันทึก")
+    } catch {
+      toast.error("เกิดข้อผิดพลาดในการบันทึก")
     } finally {
       setSaving(false)
     }
@@ -109,15 +118,15 @@ export default function CustomersSettingsPage() {
     if (!confirm("ยืนยันการลบข้อมูลลูกค้า?")) return
     try {
       await deleteCustomer(id)
+      toast.success("ลบข้อมูลลูกค้าเรียบร้อยแล้ว")
       loadCustomers()
-    } catch (error) {
-      console.error(error)
-      alert("เกิดข้อผิดพลาดในการลบ")
+    } catch {
+      toast.error("เกิดข้อผิดพลาดในการลบ")
     }
   }
 
   const updateForm = (key: string, value: string) => {
-    setFormData((prev: any) => ({ ...prev, [key]: value }))
+    setFormData((prev: Partial<Customer>) => ({ ...prev, [key]: value }))
   }
 
   return (
@@ -169,9 +178,9 @@ export default function CustomersSettingsPage() {
       {!loading && kpis && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
             {[
-                { label: "Partner Customers", value: customers.length, icon: Building2, color: "emerald", trend: `${kpis.revenue.growth.toFixed(1)}%` },
-                { label: "Monthly Revenue", value: `฿${kpis.revenue.current.toLocaleString()}`, icon: CreditCard, color: "blue", trend: "Target Focus" },
-                { label: "Profit Margin", value: `${kpis.margin.current.toFixed(1)}%`, icon: TrendingUp, color: "purple", trend: "Optimal" },
+                { label: "Partner Customers", value: customers.length, icon: Building2, color: "emerald", trend: `${kpis?.revenue?.growth?.toFixed(1) || '0.0'}%` },
+                { label: "Monthly Revenue", value: `฿${kpis?.revenue?.current?.toLocaleString() || '0'}`, icon: CreditCard, color: "blue", trend: "Target Focus" },
+                { label: "Profit Margin", value: `${kpis?.margin?.current?.toFixed(1) || '0.0'}%`, icon: TrendingUp, color: "purple", trend: "Optimal" },
             ].map((stat, idx) => (
                 <PremiumCard key={idx} className="p-8 group backdrop-blur-2xl">
                     <div className="flex items-center justify-between mb-6">

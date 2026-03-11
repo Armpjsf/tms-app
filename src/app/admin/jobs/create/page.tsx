@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 import Link from "next/link"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -11,6 +12,10 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { createJob, getJobCreationData } from "@/app/planning/actions"
+import { Driver } from "@/lib/supabase/drivers"
+import { Vehicle } from "@/lib/supabase/vehicles"
+import { Route } from "@/lib/supabase/routes"
+import { Customer } from "@/lib/supabase/customers"
 import { 
   ArrowLeft, 
   Package,
@@ -68,16 +73,14 @@ export default function CreateJobPage() {
   
   // Real data lists
   const [lists, setLists] = useState<{
-    drivers: any[],
-    vehicles: any[],
-    customers: any[],
-    routes: any[]
+    drivers: Driver[],
+    vehicles: Vehicle[],
+    customers: Customer[],
+    routes: Route[]
   }>({ drivers: [], vehicles: [], customers: [], routes: [] })
 
   useEffect(() => {
     getJobCreationData().then(data => {
-        console.log("Job Creation Data Loaded:", data)
-        console.log("Customers Count:", data.customers.length)
         setLists(data)
     })
   }, [])
@@ -112,7 +115,7 @@ export default function CreateJobPage() {
   })
 
   // Autofill customer data when selected
-  const handleCustomerSelect = (customer: any) => {
+  const handleCustomerSelect = (customer: Customer) => {
     setFormData(prev => ({
       ...prev,
       Customer_Name: customer.Customer_Name,
@@ -150,7 +153,7 @@ export default function CreateJobPage() {
     }
   }
 
-  const updateForm = (field: string, value: any) => {
+  const updateForm = (field: string, value: string | number | boolean | null) => {
     setFormData(prev => ({ ...prev, [field]: value }))
   }
 
@@ -184,11 +187,10 @@ export default function CreateJobPage() {
       if (result.success) {
         router.push('/planning')
       } else {
-        alert('เกิดข้อผิดพลาด: ' + result.message)
+        toast.error('เกิดข้อผิดพลาด: ' + result.message)
       }
-    } catch (e) {
-      console.error(e)
-      alert('เกิดข้อผิดพลาด กรุณาลองใหม่')
+    } catch {
+      toast.error('เกิดข้อผิดพลาด กรุณาลองใหม่')
     } finally {
       setLoading(false)
     }

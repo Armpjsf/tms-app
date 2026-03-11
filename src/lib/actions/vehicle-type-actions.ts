@@ -20,7 +20,6 @@ export async function getVehicleTypes() {
     .order('type_id', { ascending: true })
 
   if (error) {
-    console.error('Error fetching vehicle types:', error)
     return []
   }
 
@@ -50,7 +49,6 @@ export async function createVehicleType(data: { type_name: string; description?:
     })
 
   if (error) {
-    console.error('Error creating vehicle type:', error)
     return { success: false, message: `Failed to create: ${error.message}` }
   }
 
@@ -72,7 +70,6 @@ export async function updateVehicleType(id: number, data: { type_name: string; d
     .eq('type_id', id)
 
   if (error) {
-    console.error('Error updating vehicle type:', error)
     return { success: false, message: `Failed to update: ${error.message}` }
   }
 
@@ -90,7 +87,6 @@ export async function deleteVehicleType(id: number) {
     .eq('type_id', id)
 
   if (error) {
-    console.error('Error deleting vehicle type:', error)
     return { success: false, message: `Failed to delete: ${error.message}` }
   }
 

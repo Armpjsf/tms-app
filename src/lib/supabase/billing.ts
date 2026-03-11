@@ -55,8 +55,8 @@ export async function createBillingNote(
                      if (Array.isArray(costs)) {
                          extra = costs.reduce((cHigh: number, c: Record<string, unknown>) => cHigh + (Number(c.charge_cust) || 0), 0)
                      }
-                 } catch (e) {
-                     console.error("Error parsing extra costs for job", job, e)
+                 } catch {
+                     // Error parsing extra costs
                  }
              }
 
@@ -98,8 +98,6 @@ export async function createBillingNote(
             .in('Job_ID', jobIds)
 
         if (updateError) {
-             // Rollback (Optional: Delete created billing note if critical)
-             console.error("Failed to link jobs to billing note")
              throw updateError
         }
 
@@ -126,18 +124,17 @@ export async function createBillingNote(
             };
             
             // Trigger sync in background
-            accountingService.syncBillingNoteToInvoice(noteData, (jobs as unknown as Job[]) || []).then(res => {
-                if (!res.success) console.error("Auto-sync to accounting failed:", res.message);
+            accountingService.syncBillingNoteToInvoice(noteData, (jobs as unknown as Job[]) || []).then(() => {
+                // Background sync
             });
-        } catch (e) {
-            console.error("Error triggering auto-sync:", e);
+        } catch {
+            // Error triggering auto-sync
         }
 
         return { success: true, id: billingNoteId }
 
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : String(e)
-        console.error("createBillingNote Error:", e)
         return { success: false, error: message }
     }
 }
@@ -193,7 +190,6 @@ export async function createDriverPayment(
             .in('Job_ID', jobIds)
 
         if (updateError) {
-             console.error("Failed to link jobs to driver payment")
              throw updateError
         }
 
@@ -219,17 +215,16 @@ export async function createDriverPayment(
             };
             
             // Trigger sync in background
-            accountingService.syncDriverPaymentToBill(paymentData, (jobs as unknown as Job[]) || []).then(res => {
-                if (!res.success) console.error("Auto-sync to accounting (payout) failed:", res.message);
+            accountingService.syncDriverPaymentToBill(paymentData, (jobs as unknown as Job[]) || []).then(() => {
+                // Background sync
             });
-        } catch (e) {
-            console.error("Error triggering auto-sync (payout):", e);
+        } catch {
+            // Error triggering auto-sync
         }
 
         return { success: true, id: paymentId }
 
     } catch {
-        console.error("createDriverPayment Error")
         return { success: false, error: "เกิดข้อผิดพลาดในการบันทึกข้อมูล" }
     }
 }
@@ -247,17 +242,13 @@ export async function getBillingNotes() {
         if (branchId && !isAdmin) {
             query = query.or(`Branch_ID.eq.${branchId},Branch_ID.is.null`)
         } else if (!isAdmin && !branchId) {
-            console.warn("getBillingNotes: No branch ID and not admin. Returning empty.")
             return []
         }
-        
-        console.log(`getBillingNotes: Admin=${isAdmin}, Branch=${branchId}`)
 
         const { data, error } = await query
             .order('Created_At', { ascending: false })
         
         if (error) {
-            console.error("Error fetching billing notes:", error)
             return []
         }
         return data as BillingNote[]
@@ -302,8 +293,8 @@ export async function getBillingNoteByIdWithJobs(id: string) {
         if (profileData?.value) {
             try {
                 companyProfile = typeof profileData.value === 'string' ? JSON.parse(profileData.value) : profileData.value
-            } catch (e) {
-                console.error("Error parsing company profile:", e)
+            } catch {
+                // Error parsing company profile
             }
         }
 
@@ -322,7 +313,7 @@ export async function getBillingNoteByIdWithJobs(id: string) {
                 .maybeSingle()
             
             if (custError) {
-                console.error("Error fetching Customer for Billing:", custError)
+                // Error fetching customer
             }
 
             if (customer) {
@@ -330,7 +321,7 @@ export async function getBillingNoteByIdWithJobs(id: string) {
                 customerAddress = customer.Address
                 customerTaxId = customer.Tax_ID
             } else {
-                console.warn(`Customer '${note.Customer_Name}' not found in Master_Customers`)
+                // Customer not found
             }
         }
 
@@ -343,8 +334,7 @@ export async function getBillingNoteByIdWithJobs(id: string) {
 
         return { note: billingNoteWithDetails, jobs: jobs || [], company: companyProfile }
 
-    } catch (e) {
-        console.error("Error fetching billing note details:", e)
+    } catch {
         return null
     }
 }
@@ -379,7 +369,6 @@ export async function getDriverPayments() {
             .order('Created_At', { ascending: false })
         
         if (error) {
-            console.error("Error fetching driver payments:", error)
             return []
         }
         return data as DriverPayment[]
@@ -420,8 +409,8 @@ export async function getDriverPaymentByIdWithJobs(id: string) {
         if (profileData?.value) {
             try {
                 companyProfile = typeof profileData.value === 'string' ? JSON.parse(profileData.value) : profileData.value
-            } catch (e) {
-                console.error("Error parsing company profile:", e)
+            } catch {
+                // Error parsing company profile
             }
         }
 
@@ -459,8 +448,7 @@ export async function getDriverPaymentByIdWithJobs(id: string) {
             bankInfo
         }
 
-    } catch (e) {
-        console.error("Error fetching driver payment details:", e)
+    } catch {
         return null
     }
 }
@@ -492,7 +480,6 @@ export async function updateBillingNoteStatus(id: string, status: string) {
         return { success: true }
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : String(e)
-        console.error("updateBillingNoteStatus Error:", e)
         return { success: false, error: message }
     }
 }
@@ -524,7 +511,6 @@ export async function updateDriverPaymentStatus(id: string, status: string) {
         return { success: true }
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : String(e)
-        console.error("updateDriverPaymentStatus Error:", e)
         return { success: false, error: message }
     }
 }
@@ -565,7 +551,6 @@ export async function recallBillingNote(id: string) {
         return { success: true }
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : String(e)
-        console.error("recallBillingNote Error:", e)
         return { success: false, error: message }
     }
 }
@@ -606,7 +591,6 @@ export async function recallDriverPayment(id: string) {
         return { success: true }
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : String(e)
-        console.error("recallDriverPayment Error:", e)
         return { success: false, error: message }
     }
 }

@@ -49,38 +49,58 @@ CREATE TABLE IF NOT EXISTS "Vehicle_Checks" (
 -- Notifications table
 CREATE TABLE IF NOT EXISTS "Notifications" (
     id BIGSERIAL PRIMARY KEY,
-    driver_id TEXT NOT NULL,
-    title TEXT NOT NULL,
-    message TEXT NOT NULL,
-    type TEXT DEFAULT 'info',
+    "Driver_ID" TEXT NOT NULL,
+    "Title" TEXT NOT NULL,
+    "Message" TEXT NOT NULL,
+    "Type" TEXT DEFAULT 'info',
     -- info / success / warning / error
-    is_read BOOLEAN DEFAULT FALSE,
-    link TEXT,
+    "Is_Read" BOOLEAN DEFAULT FALSE,
+    "Link" TEXT,
     -- optional link to navigate to
-    created_at TIMESTAMPTZ DEFAULT NOW()
+    "Created_At" TIMESTAMPTZ DEFAULT NOW()
 );
 -- Chat Messages table (for driver <-> admin chat)
 CREATE TABLE IF NOT EXISTS "Chat_Messages" (
     id BIGSERIAL PRIMARY KEY,
-    sender_id TEXT NOT NULL,
-    receiver_id TEXT NOT NULL,
-    message TEXT NOT NULL,
-    is_read BOOLEAN DEFAULT FALSE,
-    created_at TIMESTAMPTZ DEFAULT NOW()
+    "Sender_ID" TEXT NOT NULL,
+    "Receiver_ID" TEXT NOT NULL,
+    "Message" TEXT NOT NULL,
+    "Is_Read" BOOLEAN DEFAULT FALSE,
+    "Created_At" TIMESTAMPTZ DEFAULT NOW()
 );
 -- Indexes for performance
 CREATE INDEX IF NOT EXISTS idx_vehicle_checks_driver ON "Vehicle_Checks" ("Driver_ID");
-CREATE INDEX IF NOT EXISTS idx_notifications_driver ON "Notifications" (driver_id, is_read);
-CREATE INDEX IF NOT EXISTS idx_chat_sender ON "Chat_Messages" (sender_id);
-CREATE INDEX IF NOT EXISTS idx_chat_receiver ON "Chat_Messages" (receiver_id);
+CREATE INDEX IF NOT EXISTS idx_notifications_driver ON "Notifications" ("Driver_ID", "Is_Read");
+CREATE INDEX IF NOT EXISTS idx_chat_sender ON "Chat_Messages" ("Sender_ID");
+CREATE INDEX IF NOT EXISTS idx_chat_receiver ON "Chat_Messages" ("Receiver_ID");
 -- Enable realtime for Chat_Messages (for live chat)
-ALTER PUBLICATION supabase_realtime
-ADD TABLE "Chat_Messages";
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_publication_tables
+        WHERE pubname = 'supabase_realtime'
+        AND schemaname = 'public'
+        AND tablename = 'Chat_Messages'
+    ) THEN
+        ALTER PUBLICATION supabase_realtime ADD TABLE "Chat_Messages";
+    END IF;
+END $$;
+
 -- Enable RLS
 ALTER TABLE "Vehicle_Checks" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "Notifications" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "Chat_Messages" ENABLE ROW LEVEL SECURITY;
+
 -- RLS Policies (allow all for authenticated users - adjust as needed)
-CREATE POLICY "Allow all for authenticated" ON "Vehicle_Checks" FOR ALL USING (true);
-CREATE POLICY "Allow all for authenticated" ON "Notifications" FOR ALL USING (true);
-CREATE POLICY "Allow all for authenticated" ON "Chat_Messages" FOR ALL USING (true);
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow all for authenticated' AND tablename = 'Vehicle_Checks') THEN
+        CREATE POLICY "Allow all for authenticated" ON "Vehicle_Checks" FOR ALL USING (true);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow all for authenticated' AND tablename = 'Notifications') THEN
+        CREATE POLICY "Allow all for authenticated" ON "Notifications" FOR ALL USING (true);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow all for authenticated' AND tablename = 'Chat_Messages') THEN
+        CREATE POLICY "Allow all for authenticated" ON "Chat_Messages" FOR ALL USING (true);
+    END IF;
+END $$;

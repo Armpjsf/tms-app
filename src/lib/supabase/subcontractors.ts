@@ -15,7 +15,6 @@ export async function getAllSubcontractors(branchId?: string): Promise<Subcontra
         const { data, error } = await query.order('Sub_Name')
         
         if (error) {
-            console.error('Error fetching subcontractors:', error)
             return []
         }
         return data || []

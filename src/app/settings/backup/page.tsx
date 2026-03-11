@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Database, ArrowLeft, Download, FileJson } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 import { createClient } from "@/utils/supabase/client"
 
 export default function BackupSettingsPage() {
@@ -30,7 +31,7 @@ export default function BackupSettingsPage() {
         document.body.removeChild(a)
         URL.revokeObjectURL(url)
     } catch (error) {
-        alert("Backup failed: " + (error instanceof Error ? error.message : "Unknown error"))
+        toast.error("Backup failed: " + (error instanceof Error ? error.message : "Unknown error"))
     } finally {
         setLoading(false)
     }

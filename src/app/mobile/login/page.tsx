@@ -95,9 +95,19 @@ export default function DriverLoginPage() {
         </form>
         </div> {/* end glass card */}
 
-        <p className="text-center text-[10px] text-gray-500 mt-6">
-          © 2024 LOGIS-PRO TMS. สงวนลิขสิทธิ์
-        </p>
+        <div className="flex flex-col items-center gap-4 mt-8">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => router.push('/login?type=staff')}
+            className="text-gray-400 hover:text-blue-500 hover:bg-blue-50/50 text-xs font-medium"
+          >
+            เข้าสู่ระบบเจ้าหน้าที่ (Staff/Admin)
+          </Button>
+          <p className="text-center text-[10px] text-gray-500">
+            © 2024 LOGIS-PRO TMS. สงวนลิขสิทธิ์
+          </p>
+        </div>
       </div>
     </div>
   )

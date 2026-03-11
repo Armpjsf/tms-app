@@ -39,12 +39,6 @@ export async function createRepairTicket(data: TicketFormData) {
       })
 
     if (error) {
-      console.error('Error creating ticket:', error, {
-          driver_id: data.Driver_ID,
-          vehicle_plate: data.Vehicle_Plate,
-          issue_type: data.Issue_Type,
-          priority: data.Priority
-      })
       return { success: false, message: `Failed to create ticket: ${error.message}` }
     }
 
@@ -81,7 +75,6 @@ export async function createRepairTicket(data: TicketFormData) {
 
     return { success: true, message: 'Ticket created successfully' }
   } catch (err: unknown) {
-    console.error("createRepairTicket Exception:", err)
     const errMsg = err instanceof Error ? err.message : "Internal Server Error"
     return { success: false, message: errMsg }
   }
@@ -115,7 +108,6 @@ export async function updateRepairTicket(ticketId: string, data: TicketUpdateDat
     .eq('Ticket_ID', ticketId)
 
   if (error) {
-    console.error('Error updating ticket:', error)
     return { success: false, message: `Failed to update ticket: ${error.message}` }
   }
 
@@ -154,7 +146,6 @@ export async function deleteRepairTicket(ticketId: string) {
     .eq('Ticket_ID', ticketId)
 
   if (error) {
-    console.error('Error deleting ticket:', error)
     return { success: false, message: 'Failed to delete ticket' }
   }
 

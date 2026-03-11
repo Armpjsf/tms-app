@@ -3,11 +3,23 @@
 import { createClient } from '@/utils/supabase/server'
 import { logActivity } from '@/lib/supabase/logs'
 import { getDriverSession } from '@/lib/actions/auth-actions'
+ 
+export type JobAssignment = {
+  Vehicle_Type: string
+  Vehicle_Plate: string
+  Driver_ID: string
+  Sub_ID?: string
+  Show_Price_To_Driver?: boolean
+  Cost_Driver_Total?: number
+  Price_Cust_Total?: number
+  branch_id?: string
+}
 
 export type Job = {
   Job_ID: string
   Job_Status: string
   Plan_Date: string | null
+  Pickup_Date?: string | null
   Delivery_Date: string | null
   Customer_ID: string | null
   Customer_Name: string | null
@@ -25,9 +37,13 @@ export type Job = {
   Cost_Driver_Extra?: number | null
   Cargo_Type: string | null
   Notes: string | null
-  original_origins_json: unknown
-  original_destinations_json: unknown
-  extra_costs_json: unknown
+  original_origins_json: string | null
+  original_destinations_json: string | null
+  extra_costs_json: string | null
+  origins?: unknown
+  destinations?: unknown
+  extra_costs?: unknown
+  assignments?: JobAssignment[]
   Created_At: string | null
   Photo_Proof_Url: string | null
   Signature_Url: string | null
@@ -45,7 +61,10 @@ export type Job = {
   Pickup_Lon?: number | null
   Delivery_Lat?: number | null
   Delivery_Lon?: number | null
+  branch_id?: string | null
 }
+
+// Removed duplicate definition
 
 // ดึงงานทั้งหมดวันนี้
 import { getUserBranchId, isSuperAdmin, getCustomerId } from "@/lib/permissions"
@@ -53,7 +72,7 @@ import { getUserBranchId, isSuperAdmin, getCustomerId } from "@/lib/permissions"
 export async function getTodayJobs(): Promise<Job[]> {
   try {
     const supabase = await createClient()
-    const today = new Date().toISOString().split('T')[0]
+    const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' })
     
     let dbQuery = supabase
       .from('Jobs_Main')
@@ -73,17 +92,15 @@ export async function getTodayJobs(): Promise<Job[]> {
         return []
     }
 
-    const { data, error } = await dbQuery
+    const { data } = await dbQuery
       .order('Created_At', { ascending: false })
     
-    if (error) {
-      console.error('Error fetching today jobs:', JSON.stringify(error))
+    if (data === null) {
       return []
     }
     
     return data || []
   } catch (e) {
-    console.error('Exception fetching today jobs:', e)
     return []
   }
 }
@@ -110,18 +127,16 @@ export async function getJobsByStatus(status: string): Promise<Job[]> {
         return []
     }
 
-    const { data, error } = await dbQuery
+    const { data } = await dbQuery
       .order('Created_At', { ascending: false })
       .limit(100)
     
-    if (error) {
-      console.error('Error fetching jobs by status:', JSON.stringify(error))
+    if (data === null) {
       return []
     }
     
     return data || []
-  } catch (e) {
-    console.error('Exception fetching jobs by status:', e)
+  } catch {
     return []
   }
 }
@@ -168,16 +183,14 @@ export async function getAllJobs(
       dbQuery = dbQuery.eq('Job_Status', status)
     }
 
-    const { data, error, count } = await dbQuery.range(offset, offset + limit - 1)
+    const { data, count } = await dbQuery.range(offset, offset + limit - 1)
     
-    if (error) {
-      console.error('Error fetching all jobs:', JSON.stringify(error))
+    if (data === null) {
       return { data: [], count: 0 }
     }
     
     return { data: data || [], count: count || 0 }
-  } catch (e) {
-    console.error('Exception fetching all jobs:', e)
+  } catch {
     return { data: [], count: 0 }
   }
 }
@@ -186,7 +199,7 @@ export async function getAllJobs(
 export async function getTodayJobStats(branchId?: string) {
   try {
     const supabase = await createClient()
-    const today = new Date().toISOString().split('T')[0]
+    const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' })
     const userBranchId = await getUserBranchId()
     const isAdmin = await isSuperAdmin()
     const customerId = await getCustomerId()
@@ -207,10 +220,9 @@ export async function getTodayJobStats(branchId?: string) {
         }
     }
     
-    const { data, error } = await dbQuery
+    const { data } = await dbQuery
     
-    if (error) {
-      console.error('Error fetching job stats:', JSON.stringify(error))
+    if (data === null) {
       return { total: 0, delivered: 0, inProgress: 0, pending: 0 }
     }
     
@@ -221,8 +233,7 @@ export async function getTodayJobStats(branchId?: string) {
       inProgress: jobs.filter(j => j.Job_Status === 'In Transit' || j.Job_Status === 'In Progress').length,
       pending: jobs.filter(j => j.Job_Status === 'New' || j.Job_Status === 'Assigned').length,
     }
-  } catch (e) {
-    console.error('Exception fetching job stats:', e)
+  } catch {
     return { total: 0, delivered: 0, inProgress: 0, pending: 0 }
   }
 }
@@ -252,12 +263,12 @@ export async function getTodayFinancials(branchId?: string) {
         }
     }
 
-    const { data, error } = await dbQuery
+    const { data } = await dbQuery
       .neq('Job_Status', 'Cancelled') // Exclude cancelled jobs
     
-    if (error) return { revenue: 0 }
+    if (!data) return { revenue: 0 }
 
-    const revenue = data?.reduce((sum, job) => sum + (job.Price_Cust_Total || 0), 0) || 0
+    const revenue = data.reduce((sum, job) => sum + (job.Price_Cust_Total || 0), 0) || 0
     return { revenue }
   } catch {
     return { revenue: 0 }
@@ -302,19 +313,17 @@ export async function getDriverJobs(
         query = query.eq('Job_Status', options.status)
     }
 
-    const { data, error } = await query
+    const { data } = await query
       .order('Plan_Date', { ascending: false })
       .order('Created_At', { ascending: false })
       .limit(100)
     
-    if (error) {
-      console.error('Error fetching driver jobs:', JSON.stringify(error))
+    if (data === null) {
       return []
     }
     
     return data || []
-  } catch (e) {
-    console.error('Exception fetching driver jobs:', e)
+  } catch {
     return []
   }
 }
@@ -353,10 +362,10 @@ export async function getJobById(jobId: string): Promise<Job | null> {
             return null
         }
 
-        const { data, error } = await query
+        const { data } = await query
             .single()
         
-        if (error) {
+        if (!data) {
             // Second chance: If not found and is admin, try finding without branch filter
             // (in case it was created in another branch)
             if (isAdmin) {
@@ -366,8 +375,7 @@ export async function getJobById(jobId: string): Promise<Job | null> {
             return null
         }
         return data
-    } catch (e) {
-        console.error(e)
+    } catch {
         return null
     }
 }
@@ -401,11 +409,10 @@ export async function getWeeklyJobStats(branchId?: string) {
         }
     }
 
-    const { data, error } = await dbQuery
+    const { data } = await dbQuery
       .order('Plan_Date', { ascending: true })
 
-    if (error) {
-      console.error('Error fetching weekly stats:', JSON.stringify(error))
+    if (data === null) {
       return []
     }
 
@@ -432,8 +439,7 @@ export async function getWeeklyJobStats(branchId?: string) {
     })
 
     return Object.values(dailyStats)
-  } catch (e) {
-    console.error('Exception fetching weekly stats:', e)
+  } catch {
     return []
   }
 }
@@ -461,9 +467,9 @@ export async function getJobStatusDistribution(branchId?: string) {
             }
         }
 
-        const { data, error } = await dbQuery
+        const { data } = await dbQuery
 
-        if (error) return []
+        if (!data) return []
 
         const statusCounts: Record<string, number> = {}
         data?.forEach(job => {
@@ -520,9 +526,8 @@ export async function createJob(jobData: Partial<Job>) {
             })
             .select()
             .single()
-
+ 
         if (error) {
-            console.error('Error creating job:', JSON.stringify(error))
             return { success: false, error }
         }
 
@@ -534,13 +539,13 @@ export async function createJob(jobData: Partial<Job>) {
             details: { 
                 customer_name: jobData.Customer_Name,
                 plan_date: jobData.Plan_Date,
-                route: jobData.Route_Name
+                route: jobData.Route_Name,
+                branch_id: jobData.branch_id || ''
             }
         })
 
         return { success: true, data }
     } catch (e) {
-        console.error('Exception creating job:', e)
         return { success: false, error: e }
     }
 }
@@ -563,9 +568,9 @@ export async function getAllDrivers() {
             return []
         }
 
-        const { data, error } = await query
+        const { data } = await query
         
-        if (error) return []
+        if (!data) return []
 
         // De-duplicate by Driver_ID
         const uniqueDrivers = new Map()
@@ -599,9 +604,9 @@ export async function getAllVehicles() {
             return []
         }
 
-        const { data, error } = await query
+        const { data } = await query
 
-        if (error) return []
+        if (!data) return []
 
         const uniqueVehicles = new Map()
         data?.forEach(item => {
@@ -649,16 +654,14 @@ export async function getJobsForBilling(startDate?: string, endDate?: string): P
             query = query.lte('Plan_Date', endDate)
         }
         
-        const { data, error } = await query
+        const { data } = await query
         
-        if (error) {
-            console.error('Error fetching billing jobs:', error)
+        if (!data) {
             return []
         }
         
         return data || []
-    } catch (e) {
-        console.error('Exception fetching billing jobs:', e)
+    } catch {
         return []
     }
 }
@@ -669,7 +672,7 @@ export async function getDriverDashboardStats(driverId: string) {
     const today = new Date().toISOString().split('T')[0]
     
     // 1. Get ALL jobs for this driver (not just today) that are not cancelled
-    const { data: jobs, error } = await supabase
+    const { data: jobs } = await supabase
       .from('Jobs_Main')
       .select('*')
       .eq('Driver_ID', driverId)
@@ -677,8 +680,7 @@ export async function getDriverDashboardStats(driverId: string) {
       .order('Plan_Date', { ascending: true }) // Show oldest/overdue jobs first
       .order('Created_At', { ascending: true }) 
 
-    if (error) {
-      console.error('Error fetching driver dashboard stats:', error)
+    if (!jobs) {
       return { 
         stats: { total: 0, completed: 0 }, 
         gamification: { points: 0, rank: 'Bronze', nextRankPoints: 300, monthlyCompleted: 0 },
@@ -732,8 +734,7 @@ export async function getDriverDashboardStats(driverId: string) {
       },
       currentJob
     }
-  } catch (e) {
-    console.error('Exception fetching driver dashboard stats:', e)
+  } catch {
      return { 
         stats: { total: 0, completed: 0 }, 
         gamification: { points: 0, rank: 'Bronze', nextRankPoints: 300, monthlyCompleted: 0 },
@@ -764,17 +765,15 @@ export async function getBillableJobs(customerId: string) {
         return []
     }
 
-    const { data, error } = await dbQuery
+    const { data } = await dbQuery
       .order('Plan_Date', { ascending: true })
 
-    if (error) {
-      console.error('Error fetching billable jobs:', error)
+    if (data === null) {
       return []
     }
     
     return data || []
-  } catch (error) {
-    console.error('Error:', error)
+  } catch {
     return []
   }
 }
@@ -800,18 +799,16 @@ export async function getMarketplaceJobs(providedBranchId?: string): Promise<Job
         return []
     }
 
-    const { data, error } = await dbQuery
+    const { data } = await dbQuery
       .order('Created_At', { ascending: false })
       .limit(10)
     
-    if (error) {
-      console.error('Error fetching marketplace jobs:', JSON.stringify(error))
+    if (data === null) {
       return []
     }
     
     return data || []
-  } catch (e) {
-    console.error('Exception fetching marketplace jobs:', e)
+  } catch {
     return []
   }
 }
@@ -837,16 +834,14 @@ export async function getRequestedJobs(): Promise<Job[]> {
             return []
         }
 
-        const { data, error } = await dbQuery.order('Created_At', { ascending: false })
+        const { data } = await dbQuery.order('Created_At', { ascending: false })
 
-        if (error) {
-            console.error('Error fetching requested jobs:', JSON.stringify(error))
+        if (!data) {
             return []
         }
 
         return data || []
-    } catch (e) {
-        console.error('Exception fetching requested jobs:', e)
+    } catch {
         return []
     }
 }

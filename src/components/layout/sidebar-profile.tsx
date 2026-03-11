@@ -14,8 +14,8 @@ export function SidebarProfile({ collapsed }: { collapsed: boolean }) {
         try {
             const data = await getUserProfile()
             setProfile(data)
-        } catch (error) {
-            console.error(error)
+        } catch {
+            // Continue without logging
         } finally {
             setLoading(false)
         }

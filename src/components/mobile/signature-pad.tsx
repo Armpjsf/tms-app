@@ -32,8 +32,8 @@ export function SignaturePad({ onSave }: Props) {
                 const blob = await (await fetch(dataURL)).blob()
                 onSave(blob)
                 setIsEmpty(false)
-            } catch (e) {
-                console.error("Signature save error:", e)
+            } catch {
+                // Continue without logging
             }
         }
     }

@@ -30,7 +30,6 @@ export async function createFuelLog(data: FuelFormData) {
         logId = crypto.randomUUID();
     } catch {
         logId = `${Date.now()}-${Math.floor(Math.random() * 1000000)}`;
-        console.warn("[FuelActions] crypto.randomUUID failed, using fallback ID:", logId);
     }
 
     const insertData = {
@@ -46,18 +45,12 @@ export async function createFuelLog(data: FuelFormData) {
         Branch_ID: branchId === 'All' ? null : branchId
     };
 
-    console.log("[FuelActions] Attempting to insert fuel log:", JSON.stringify(insertData));
 
     const { error } = await supabase
       .from('Fuel_Logs')
       .insert(insertData)
 
     if (error) {
-      console.error('Error creating fuel log:', error, {
-          driver_id: data.Driver_ID,
-          vehicle_plate: data.Vehicle_Plate,
-          amount: data.Total_Amount
-      })
       return { success: false, message: `Failed to create log: ${error.message}` }
     }
 
@@ -76,7 +69,6 @@ export async function createFuelLog(data: FuelFormData) {
     revalidatePath('/fuel')
     return { success: true, message: 'Fuel Log created successfully' }
   } catch (err: unknown) {
-    console.error("createFuelLog Exception:", err)
     const errMsg = err instanceof Error ? err.message : "Internal Server Error"
     return { success: false, message: errMsg }
   }
@@ -100,7 +92,6 @@ export async function updateFuelLog(logId: string, data: FuelFormData) {
     .eq('Log_ID', logId)
 
   if (error) {
-    console.error('Error updating fuel log:', error)
     return { success: false, message: 'Failed to update log' }
   }
 
@@ -128,7 +119,6 @@ export async function updateFuelLogStatus(logId: string, status: string) {
     .eq('Log_ID', logId)
 
   if (error) {
-    console.error('Error updating fuel log status:', error)
     return { success: false, message: 'Failed to update status' }
   }
 
@@ -155,7 +145,6 @@ export async function deleteFuelLog(logId: string) {
     .eq('Log_ID', logId)
 
   if (error) {
-    console.error('Error deleting fuel log:', error)
     return { success: false, message: 'Failed to delete log' }
   }
 

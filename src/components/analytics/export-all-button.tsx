@@ -4,15 +4,41 @@ import { Button } from "@/components/ui/button"
 import { Download } from "lucide-react"
 import { exportToCSV } from "@/lib/utils/export"
 
+interface Financials {
+    revenue: number;
+    cost: {
+        total: number;
+        driver: number;
+        fuel: number;
+        maintenance: number;
+        secondary: number;
+    };
+    netProfit: number;
+    profitMargin: number;
+}
+
+interface StatusDistItem {
+    name: string;
+    value: number;
+}
+
+interface BranchPerformance {
+    branchId: string;
+    branchName: string;
+    revenue: number;
+    jobsCount: number;
+    profit: number;
+}
+
 interface ExportAllButtonProps {
     data: {
-        financials: any;
-        revenueTrend: any[];
-        topCustomers: any[];
-        statusDist: any[];
-        branchPerf: any[];
-        subPerf: any[];
-        [key: string]: any; // Allow additional modules
+        financials: Financials;
+        revenueTrend: Record<string, unknown>[];
+        topCustomers: Record<string, unknown>[];
+        statusDist: StatusDistItem[];
+        branchPerf: BranchPerformance[];
+        subPerf: Record<string, unknown>[];
+        [key: string]: unknown; // Allow additional modules
     }
 }
 
@@ -32,7 +58,7 @@ export function ExportAllButton({ data }: ExportAllButtonProps) {
             total_cost: data.financials.cost.total,
             net_profit: data.financials.netProfit,
             margin: `${data.financials.profitMargin.toFixed(2)}%`,
-            total_jobs: data.statusDist.reduce((sum: number, item: any) => sum + item.value, 0)
+            total_jobs: data.statusDist.reduce((sum: number, item: StatusDistItem) => sum + item.value, 0)
         }];
         exportToCSV(summary, "executive_monthly_report_summary");
     };

@@ -11,14 +11,31 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { createRepairTicket, updateRepairTicket } from "@/app/maintenance/actions"
 import { Loader2 } from "lucide-react"
 import { ImageUpload } from "@/components/ui/image-upload"
+import Logger from "@/lib/utils/logger"
+
+import { Driver } from "@/lib/supabase/drivers"
+
+export interface MaintenanceTicket {
+  Ticket_ID: string
+  Date_Report: string
+  Driver_ID: string
+  Vehicle_Plate: string
+  Issue_Type: string
+  Description: string
+  Priority: string
+  Photo_Url: string
+  Status: string
+  Cost_Total: number
+  Remark: string
+}
 
 type MaintenanceDialogProps = {
-  drivers: any[]
-  vehicles: any[]
+  drivers: Driver[]
+  vehicles: { Vehicle_Plate: string }[]
   trigger?: React.ReactNode
   open?: boolean
   onOpenChange?: (open: boolean) => void
-  initialData?: any
+  initialData?: MaintenanceTicket
 }
 
 export function MaintenanceDialog({
@@ -60,7 +77,9 @@ export function MaintenanceDialog({
                 photoUrl = parsed[0]
             }
         }
-      } catch (e) {}
+      } catch {
+        // Error parsing photo JSON, falling back to raw string
+      }
 
       setFormData({
         Date_Report: initialData.Date_Report ? new Date(initialData.Date_Report).toISOString().slice(0, 16) : new Date().toISOString().slice(0, 16),
@@ -109,9 +128,9 @@ export function MaintenanceDialog({
         })
       }
       router.refresh()
-    } catch (error) {
-      console.error(error)
-      alert('เกิดข้อผิดพลาด กรุณาลองใหม่')
+    } catch (err) {
+      Logger.error("Maintenance submit error:", err)
+      // toast.error('เกิดข้อผิดพลาด กรุณาลองใหม่')
     } finally {
       setLoading(false)
     }
@@ -153,7 +172,7 @@ export function MaintenanceDialog({
                         <SelectValue placeholder="เลือกคนขับ" />
                     </SelectTrigger>
                     <SelectContent>
-                        {drivers.map((d: any) => (
+                        {drivers.map((d: Driver) => (
                             <SelectItem key={d.Driver_ID} value={d.Driver_ID}>{d.Driver_Name}</SelectItem>
                         ))}
                     </SelectContent>
@@ -166,7 +185,7 @@ export function MaintenanceDialog({
                         <SelectValue placeholder="เลือกทะเบียน" />
                     </SelectTrigger>
                     <SelectContent>
-                        {vehicles.map((v: any) => (
+                        {vehicles.map((v: { Vehicle_Plate: string }) => (
                             <SelectItem key={v.Vehicle_Plate} value={v.Vehicle_Plate}>{v.Vehicle_Plate}</SelectItem>
                         ))}
                     </SelectContent>

@@ -13,7 +13,6 @@ export async function uploadFileToSupabase(
     mimeType: string,
     folderName: string = 'General'
 ) {
-    console.log(`[SupabaseStorage] Starting upload: ${fileName} to folder: ${folderName}`)
     try {
         const supabase = createAdminClient()
 
@@ -29,7 +28,6 @@ export async function uploadFileToSupabase(
             })
 
         if (error) {
-            console.error('[SupabaseStorage] Upload error:', error)
             throw error
         }
 
@@ -38,7 +36,7 @@ export async function uploadFileToSupabase(
             .from(ASSETS_BUCKET)
             .getPublicUrl(filePath)
 
-        console.log(`[SupabaseStorage] Upload success: ${publicUrl}`)
+        // Upload success case (no log)
 
         return {
             fileId: data.path,
@@ -48,7 +46,6 @@ export async function uploadFileToSupabase(
         }
 
     } catch (error) {
-        console.error('[SupabaseStorage] Fatal Error:', error)
         throw error
     }
 }
@@ -82,7 +79,6 @@ export async function uploadImageToSupabase(formData: FormData) {
         }
 
     } catch (error) {
-        console.error('[SupabaseStorage] Action Error:', error)
         return { success: false, error: 'Upload failed' }
     }
 }

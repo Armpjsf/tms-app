@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
+import { toast } from 'sonner'
 import { createClient } from '@/utils/supabase/client'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -9,9 +10,17 @@ import { ChatMessage } from '@/lib/actions/chat-actions'
 import { uploadImageToDrive } from '@/lib/actions/upload-actions'
 import Image from 'next/image'
 
+interface Contact {
+  driver_id: string
+  driver_name: string
+  last_message: string
+  unread: number
+  updated_at: string
+}
+
 interface ChatWindowProps {
-  initialContacts: any[]
-  initialDrivers: any[]
+  initialContacts: Contact[]
+  initialDrivers: { Driver_ID: string; Driver_Name?: string }[] // Keeping any here for now as it's passed from server-side with unknown shape, or use Driver[]
   forcedDriverId?: string | null
 }
 
@@ -49,7 +58,7 @@ export function ChatWindow({ initialContacts, initialDrivers, forcedDriverId }: 
   const [selectedDriverId, setSelectedDriverId] = useState<string | null>(null)
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [inputMessage, setInputMessage] = useState('')
-  const [contacts, setContacts] = useState(initialContacts)
+  const [contacts, setContacts] = useState<Contact[]>(initialContacts)
   const [searchQuery, setSearchQuery] = useState('')
   const [isSending, setIsSending] = useState(false)
   const [uploadingImage, setUploadingImage] = useState(false)
@@ -88,11 +97,13 @@ export function ChatWindow({ initialContacts, initialDrivers, forcedDriverId }: 
       updated_at: new Date().toISOString()
     }))
     
+// ... (existing imports)
+
     if (!searchQuery.trim()) return all
     const q = searchQuery.toLowerCase()
-    return all.filter((c: any) => 
-      (c.driver_name || c.Driver_Name || '').toLowerCase().includes(q) ||
-      (c.driver_id || c.Driver_ID || '').toLowerCase().includes(q)
+    return all.filter((c: Contact) => 
+      c.driver_name.toLowerCase().includes(q) ||
+      c.driver_id.toLowerCase().includes(q)
     )
   }, [contacts, initialDrivers, searchQuery])
 
@@ -161,11 +172,10 @@ export function ChatWindow({ initialContacts, initialDrivers, forcedDriverId }: 
             const { sendChatMessage } = await import('@/lib/actions/chat-actions')
             await sendChatMessage('admin', imageUrlMessage, selectedDriverId)
         } else {
-            alert('อัปโหลดรูปภาพไม่สำเร็จ')
+            toast.error('อัปโหลดรูปภาพไม่สำเร็จ')
         }
-    } catch (error) {
-        console.error("Upload error:", error)
-        alert('เกิดข้อผิดพลาดในการอัปโหลด')
+    } catch {
+        toast.error('เกิดข้อผิดพลาดในการอัปโหลด')
     } finally {
         setUploadingImage(false)
         if (fileInputRef.current) fileInputRef.current.value = ''
@@ -227,16 +237,16 @@ export function ChatWindow({ initialContacts, initialDrivers, forcedDriverId }: 
       )
       .subscribe()
 
-    const handleRealtimeInsert = (payload: any) => {
+    const handleRealtimeInsert = (payload: { new: Record<string, unknown> }) => {
       // Normalize payload keys
       const raw = payload.new
       const newMsg: ChatMessage = {
-        id: raw.id || raw.Id,
-        sender_id: raw.sender_id || raw.Sender_ID,
-        receiver_id: raw.receiver_id || raw.Receiver_ID,
-        message: raw.message || raw.Message,
-        is_read: raw.is_read || raw.Is_Read,
-        created_at: raw.created_at || raw.Created_At
+        id: (raw.id || raw.Id) as number,
+        sender_id: (raw.sender_id || raw.Sender_ID) as string,
+        receiver_id: (raw.receiver_id || raw.Receiver_ID) as string,
+        message: (raw.message || raw.Message) as string,
+        is_read: (raw.is_read || raw.Is_Read) as boolean,
+        created_at: (raw.created_at || raw.Created_At) as string
       }
 
       const relevantDriverId = newMsg.sender_id === 'admin' ? newMsg.receiver_id : newMsg.sender_id
@@ -256,11 +266,11 @@ export function ChatWindow({ initialContacts, initialDrivers, forcedDriverId }: 
         if (newMsg.sender_id !== 'admin') {
           import('@/lib/actions/chat-actions').then(({ markAsReadAction }) => markAsReadAction(relevantDriverId))
           // Play sound
-          try { new Audio('/sounds/notification.mp3').play().catch(e => console.log('Audio disabled:', e)) } catch {}
+          try { new Audio('/sounds/notification.mp3').play().catch(() => {}) } catch {}
         }
       } else if (newMsg.sender_id !== 'admin') {
          // Play sound for incoming message even if not selected driver
-         try { new Audio('/sounds/notification.mp3').play().catch(e => console.log('Audio disabled:', e)) } catch {}
+         try { new Audio('/sounds/notification.mp3').play().catch(() => {}) } catch {}
       }
       
       updateContactList(newMsg)
@@ -325,9 +335,9 @@ export function ChatWindow({ initialContacts, initialDrivers, forcedDriverId }: 
           {filteredContacts.length === 0 ? (
             <div className="text-center py-8 text-gray-500 text-sm">ไม่พบผลลัพธ์</div>
           ) : (
-            filteredContacts.map((c: any) => {
-              const id = c.driver_id || c.Driver_ID
-              const name = c.driver_name || c.Driver_Name || 'Unknown'
+            filteredContacts.map((c: Contact) => {
+              const id = c.driver_id
+              const name = c.driver_name
               const isSelected = selectedDriverId === id
               return (
                 <div 

@@ -82,7 +82,7 @@ const navigation: NavGroup[] = [
   {
     title: "ผู้บริหารและรายงาน",
     items: [
-      { title: "Executive Dashboard", href: "/executive", icon: <BarChart3 size={20} />, badgeColor: "blue" },
+      { title: "Executive Dashboard", href: "/admin/analytics", icon: <BarChart3 size={20} />, badgeColor: "blue" },
       { title: "รายงานรถและคนขับ", href: "/reports/fleet", icon: <Truck size={20} /> },
       { title: "ต้นทุนต่อเที่ยว", href: "/reports/cost-per-trip", icon: <Coins size={20} />, badgeColor: "yellow" },
       { title: "ปัญหาสินค้า/เคลม", href: "/admin/damage-reports", icon: <AlertTriangle size={20} />, badgeColor: "red" },

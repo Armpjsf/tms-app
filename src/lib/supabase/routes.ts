@@ -24,13 +24,10 @@ export type Branch = {
 }
 
 export async function getCurrentUserRole() {
-  console.log("[DEBUG] getCurrentUserRole: Starting")
   try {
     const role = await getUserRole()
-    console.log("[DEBUG] getCurrentUserRole: Role =", role)
     return role
-  } catch (e) {
-    console.error("[DEBUG] getCurrentUserRole: Error", e)
+  } catch {
     return null
   }
 }
@@ -65,13 +62,11 @@ export async function getAllRoutes(page?: number, limit?: number, query?: string
     const { data, error, count } = await queryBuilder.order('Route_Name', { ascending: true })
     
     if (error) {
-      console.error('Error fetching routes:', error)
       return { data: [], count: 0 }
     }
     
     return { data: data || [], count: count || 0 }
-  } catch (e) {
-    console.error(e)
+  } catch {
     return { data: [], count: 0 }
   }
 }
@@ -83,12 +78,10 @@ export async function getBranches() {
     const { data, error } = await supabase.from('Master_Branches').select('Branch_ID, Branch_Name').order('Branch_Name')
     
     if (error) {
-       console.error('Error fetching branches:', error)
        return []
     }
     return data || []
-  } catch (e) {
-    console.error(e)
+  } catch {
     return []
   }
 }
@@ -122,12 +115,12 @@ export async function createRoute(routeData: Partial<Route>) {
       .single()
     
     if (error) {
-        console.error('Error creating route:', error)
       return { success: false, error: error.message }
     }
     return { success: true, data }
-  } catch (e: any) {
-    return { success: false, error: e.message }
+  } catch (e: unknown) {
+    const message = e instanceof Error ? e.message : String(e)
+    return { success: false, error: message }
   }
 }
 
@@ -158,8 +151,9 @@ export async function updateRoute(originalRouteName: string, routeData: Partial<
       return { success: false, error: error.message }
     }
     return { success: true, data }
-  } catch (e: any) {
-    return { success: false, error: e.message }
+  } catch (e: unknown) {
+    const message = e instanceof Error ? e.message : String(e)
+    return { success: false, error: message }
   }
 }
 
@@ -176,13 +170,14 @@ export async function deleteRoute(routeName: string) {
       return { success: false, error: error.message }
     }
     return { success: true }
-  } catch (e: any) {
-    return { success: false, error: e.message }
+  } catch (e: unknown) {
+    const message = e instanceof Error ? e.message : String(e)
+    return { success: false, error: message }
   }
 }
 
 // Bulk create routes
-export async function createBulkRoutes(routes: any[]) {
+export async function createBulkRoutes(routes: Record<string, unknown>[]) {
     try {
         const supabase = await createClient()
         const currentUserBranch = await getUserBranchId()
@@ -198,8 +193,8 @@ export async function createBulkRoutes(routes: any[]) {
         }
 
         // Normalize keys
-        const normalizeData = (row: any) => {
-            const normalized: any = {}
+        const normalizeData = (row: Record<string, unknown>) => {
+            const normalized: Partial<Route> = {}
             const getValue = (keys: string[]) => {
                 const rowKeys = Object.keys(row)
                 for (const key of keys) {
@@ -211,19 +206,18 @@ export async function createBulkRoutes(routes: any[]) {
                 return undefined
             }
     
-            normalized.Route_Name = getValue(['route_name', 'name', 'route', 'ชื่อเส้นทาง', 'เส้นทาง'])
-            normalized.Origin = getValue(['origin', 'source', 'start', 'ต้นทาง', 'จุดเริ่มต้น'])
-            normalized.Origin_Lat = getValue(['origin_lat', 'start_lat', 'lat_start', 'ละติจูดต้นทาง'])
-            normalized.Origin_Lon = getValue(['origin_lon', 'start_lon', 'lon_start', 'ลองติจูดต้นทาง'])
-            normalized.Destination = getValue(['destination', 'dest', 'end', 'ปลายทาง', 'จุดสิ้นสุด'])
-            normalized.Dest_Lat = getValue(['dest_lat', 'end_lat', 'lat_end', 'ละติจูดปลายทาง'])
-            normalized.Dest_Lon = getValue(['dest_lon', 'end_lon', 'lon_end', 'ลองติจูดปลายทาง'])
-            // Map Links & Distance
-            normalized.Map_Link_Origin = getValue(['map_link_origin', 'origin_link', 'link_start', 'ลิ้งค์ต้นทาง'])
-            normalized.Map_Link_Destination = getValue(['map_link_destination', 'destination_link', 'link_end', 'ลิ้งค์ปลายทาง'])
-            normalized.Distance_KM = getValue(['distance', 'km', 'distance_km', 'ระยะทาง'])
+            normalized.Route_Name = getValue(['route_name', 'name', 'route', 'ชื่อเส้นทาง', 'เส้นทาง']) as string
+            normalized.Origin = getValue(['origin', 'source', 'start', 'ต้นทาง', 'จุดเริ่มต้น']) as string
+            normalized.Origin_Lat = getValue(['origin_lat', 'start_lat', 'lat_start', 'ละติจูดต้นทาง']) as number
+            normalized.Origin_Lon = getValue(['origin_lon', 'start_lon', 'lon_start', 'ลองติจูดต้นทาง']) as number
+            normalized.Destination = getValue(['destination', 'dest', 'end', 'ปลายทาง', 'จุดสิ้นสุด']) as string
+            normalized.Dest_Lat = getValue(['dest_lat', 'end_lat', 'lat_end', 'ละติจูดปลายทาง']) as number
+            normalized.Dest_Lon = getValue(['dest_lon', 'end_lon', 'lon_end', 'ลองติจูดปลายทาง']) as number
+            normalized.Map_Link_Origin = getValue(['map_link_origin', 'origin_link', 'link_start', 'ลิ้งค์ต้นทาง']) as string
+            normalized.Map_Link_Destination = getValue(['map_link_destination', 'destination_link', 'link_end', 'ลิ้งค์ปลายทาง']) as string
+            normalized.Distance_KM = getValue(['distance', 'km', 'distance_km', 'ระยะทาง']) as number
             
-            normalized.Branch_ID = getValue(['branch_id', 'branch', 'สาขา'])
+            normalized.Branch_ID = getValue(['branch_id', 'branch', 'สาขา']) as string
             
             return normalized
         }
@@ -235,7 +229,7 @@ export async function createBulkRoutes(routes: any[]) {
         }
 
         // Prepare data with Branch ID resolved
-        const preparedRoutes = cleanData.map(r => {
+        const preparedRoutes: Route[] = cleanData.map(r => {
              // Resolve Branch ID
              let branchId = currentUserBranch || 'HQ'
              if (r.Branch_ID) {
@@ -254,16 +248,16 @@ export async function createBulkRoutes(routes: any[]) {
              }
 
              return {
-                Route_Name: r.Route_Name,
-                Origin: r.Origin,
-                Origin_Lat: r.Origin_Lat ? parseFloat(r.Origin_Lat) : null,
-                Origin_Lon: r.Origin_Lon ? parseFloat(r.Origin_Lon) : null,
-                Map_Link_Origin: r.Map_Link_Origin,
-                Destination: r.Destination,
-                Dest_Lat: r.Dest_Lat ? parseFloat(r.Dest_Lat) : null,
-                Dest_Lon: r.Dest_Lon ? parseFloat(r.Dest_Lon) : null,
-                Map_Link_Destination: r.Map_Link_Destination,
-                Distance_KM: r.Distance_KM ? parseFloat(r.Distance_KM) : null,
+                Route_Name: r.Route_Name as string,
+                Origin: r.Origin ?? null,
+                Origin_Lat: r.Origin_Lat ? parseFloat(String(r.Origin_Lat)) : null,
+                Origin_Lon: r.Origin_Lon ? parseFloat(String(r.Origin_Lon)) : null,
+                Map_Link_Origin: r.Map_Link_Origin ?? null,
+                Destination: r.Destination ?? null,
+                Dest_Lat: r.Dest_Lat ? parseFloat(String(r.Dest_Lat)) : null,
+                Dest_Lon: r.Dest_Lon ? parseFloat(String(r.Dest_Lon)) : null,
+                Map_Link_Destination: r.Map_Link_Destination ?? null,
+                Distance_KM: r.Distance_KM ? parseFloat(String(r.Distance_KM)) : null,
                 Branch_ID: branchId
              }
         })
@@ -278,8 +272,8 @@ export async function createBulkRoutes(routes: any[]) {
 
         const existingNames = new Set(existingRoutes?.map(r => r.Route_Name) || [])
         
-        const toInsert: any[] = []
-        const toUpdate: any[] = []
+        const toInsert: Route[] = []
+        const toUpdate: Route[] = []
 
         preparedRoutes.forEach(r => {
             if (existingNames.has(r.Route_Name)) {
@@ -293,7 +287,6 @@ export async function createBulkRoutes(routes: any[]) {
         if (toInsert.length > 0) {
             const { error } = await supabase.from('Master_Routes').insert(toInsert)
             if (error) {
-                console.error("Bulk create routes error (insert):", error)
                 return { success: false, message: `Failed to import new routes: ${error.message}` }
             }
         }
@@ -323,8 +316,9 @@ export async function createBulkRoutes(routes: any[]) {
             message: `นำเข้าสำเร็จ: เพิ่มใหม่ ${toInsert.length} รายการ, อัปเดต ${toUpdate.length} รายการ`
         }
 
-    } catch (e: any) {
-        return { success: false, message: e.message }
+    } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : String(e)
+        return { success: false, message: message }
     }
 }
 
@@ -360,8 +354,7 @@ export async function getUniqueLocations() {
     }
     
     return Array.from(locationSet).sort()
-  } catch (e) {
-    console.error("Error fetching locations:", e)
+  } catch {
     return []
   }
 }

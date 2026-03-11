@@ -13,28 +13,29 @@ const STANDARD_CHECKLIST = [
 export default async function AdminVehicleChecksPage() {
     const supabase = createAdminClient()
     
-    const { data: checks, error } = await supabase
-        .from('Vehicle_Checks')
-        .select('*')
-        .order('Check_Date', { ascending: false })
-        .limit(100)
+    try {
+        const { data: checks, error } = await supabase
+            .from('Vehicle_Checks')
+            .select('*')
+            .order('Check_Date', { ascending: false })
+            .limit(100)
 
-    if (error) {
-        console.error("Error fetching vehicle checks:", error)
-    }
+        if (error) {
+            // Error fetching vehicle checks
+        }
 
-    return (
-        <div className="space-y-8">
-            <div className="mb-8">
-                <Link href="/dashboard" className="flex items-center gap-2 text-gray-500 hover:text-emerald-600 transition-colors mb-3 text-sm font-bold">
-                    <ArrowLeft className="w-4 h-4" /> ย้อนกลับ
-                </Link>
-                <h1 className="text-3xl font-bold flex items-center gap-3">
-                    <Truck className="text-indigo-500" />
-                    สรุปการตรวจเช็ครถ (Driver Inspections)
-                </h1>
-                <p className="text-muted-foreground mt-2">รายการตรวจสอบสภาพรถประจำวันจากคนขับ</p>
-            </div>
+        return (
+            <div className="space-y-8">
+                <div className="mb-8">
+                    <Link href="/dashboard" className="flex items-center gap-2 text-gray-500 hover:text-emerald-600 transition-colors mb-3 text-sm font-bold">
+                        <ArrowLeft className="w-4 h-4" /> ย้อนกลับ
+                    </Link>
+                    <h1 className="text-3xl font-bold flex items-center gap-3">
+                        <Truck className="text-indigo-500" />
+                        สรุปการตรวจเช็ครถ (Driver Inspections)
+                    </h1>
+                    <p className="text-muted-foreground mt-2">รายการตรวจสอบสภาพรถประจำวันจากคนขับ</p>
+                </div>
 
             <div className="grid grid-cols-1 gap-6">
                 <Card className="bg-card border-border">
@@ -169,4 +170,12 @@ export default async function AdminVehicleChecksPage() {
             </div>
         </div>
     )
+  } catch {
+    return (
+      <div className="p-8">
+        <h1>สรุปการตรวจเช็ครถ</h1>
+        <p>ไม่สามารถโหลดข้อมูลได้</p>
+      </div>
+    )
+  }
 }

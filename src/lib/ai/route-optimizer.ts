@@ -71,8 +71,7 @@ export async function optimizeRoute(
       estimatedDistanceKm: Math.round((trip?.distance || 0) / 1000)
     };
 
-  } catch (error) {
-    console.error("[AI Route] OSRM Optimization Error:", error);
+  } catch {
     return fallbackSort(origin, destinations);
   }
 }

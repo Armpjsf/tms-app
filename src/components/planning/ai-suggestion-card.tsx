@@ -37,8 +37,8 @@ export function AiSuggestionCard({ jobData, onSelect }: AiSuggestionCardProps) {
     try {
       const results = await getSuggestedDrivers(jobData, 5)
       setSuggestions(results)
-    } catch (e) {
-      console.error("AI suggestion error:", e)
+    } catch {
+      // Continue without logging
     } finally {
       setLoading(false)
     }
@@ -67,6 +67,7 @@ export function AiSuggestionCard({ jobData, onSelect }: AiSuggestionCardProps) {
       {/* Trigger Button */}
       {!hasSearched && (
         <Button
+          type="button"
           onClick={handleSearch}
           disabled={loading}
           className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white font-bold py-3 rounded-xl shadow-lg shadow-violet-500/20 transition-all hover:shadow-violet-500/40"
@@ -112,7 +113,13 @@ export function AiSuggestionCard({ jobData, onSelect }: AiSuggestionCardProps) {
                 AI Recommendations
               </span>
             </div>
-            <Button variant="ghost" size="sm" onClick={handleSearch} className="text-gray-400 hover:text-white text-xs">
+            <Button 
+              type="button" 
+              variant="ghost" 
+              size="sm" 
+              onClick={handleSearch} 
+              className="text-gray-400 hover:text-white text-xs"
+            >
               รีเฟรช
             </Button>
           </div>
@@ -182,6 +189,7 @@ export function AiSuggestionCard({ jobData, onSelect }: AiSuggestionCardProps) {
                 {/* Select Button (visible on hover) */}
                 <div className="mt-3 opacity-0 group-hover:opacity-100 transition-opacity">
                   <Button
+                    type="button"
                     size="sm"
                     className="w-full bg-white/10 hover:bg-white/20 text-white font-bold text-xs"
                     onClick={(e) => {

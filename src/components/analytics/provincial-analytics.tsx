@@ -12,7 +12,7 @@ const provinceData = [
     { name: "อื่นๆ", range: "105 KM", percentage: 5, color: "bg-gray-400" },
 ]
 
-export function ZoneAnalytics({ data = [] }: { data?: any[] }) {
+export function ZoneAnalytics({ data = [] }: { data?: { name: string; range: string; percentage: number; color: string }[] }) {
     const zoneData = data.length > 0 ? data : [
         { name: "No data available", range: "0 KM", percentage: 0, color: "bg-gray-400" },
     ]
@@ -66,6 +66,6 @@ export function ZoneAnalytics({ data = [] }: { data?: any[] }) {
     )
 }
 
-function cn(...inputs: any[]) {
+function cn(...inputs: (string | undefined | null | boolean)[]) {
     return inputs.filter(Boolean).join(' ')
 }

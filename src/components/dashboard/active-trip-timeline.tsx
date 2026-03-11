@@ -70,7 +70,7 @@ export function ActiveTripTimeline({ job }: ActiveTripTimelineProps) {
 
     // If multi-stop, add each stop as a step
     if (isMultiStop) {
-        stops.forEach((stop: any, idx: number) => {
+        stops.forEach((stop: { name?: string; lat?: number; lng?: number; status?: string }, idx: number) => {
             steps.push({
                 id: `stop-${idx}`,
                 title: `Stop: ${stop.name || 'Unknown'}`,

@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -101,9 +102,8 @@ export function VehicleDialog({
         })
       }
       router.refresh()
-    } catch (error) {
-      console.error(error)
-      alert('เกิดข้อผิดพลาด กรุณาลองใหม่')
+    } catch {
+      toast.error('เกิดข้อผิดพลาด กรุณาลองใหม่')
     } finally {
       setLoading(false)
     }

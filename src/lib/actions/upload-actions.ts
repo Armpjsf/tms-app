@@ -7,8 +7,7 @@ import { uploadImageToSupabase } from "@/lib/actions/supabase-upload"
 export async function uploadImageToDrive(formData: FormData) {
   try {
     return await uploadImageToSupabase(formData)
-  } catch (error) {
-    console.error('Upload Action Error:', error)
+  } catch {
     return { success: false, error: 'Upload failed' }
   }
 }

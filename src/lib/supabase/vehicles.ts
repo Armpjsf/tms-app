@@ -51,7 +51,6 @@ export async function getAllVehiclesFromTable(): Promise<Vehicle[]> {
     const { data, error } = await query
     
     if (error) {
-      console.error('Error fetching vehicles:', JSON.stringify(error))
       return []
     }
     return data || []
@@ -98,7 +97,6 @@ export async function createVehicle(vehicleData: Partial<Vehicle>) {
       .single()
     
     if (error) {
-      console.error('Error creating vehicle:', JSON.stringify(error))
       return { success: false, error }
     }
     return { success: true, data }
@@ -127,7 +125,6 @@ export async function updateVehicle(plate: string, vehicleData: Partial<Vehicle>
       .single()
     
     if (error) {
-      console.error('Error updating vehicle:', JSON.stringify(error))
       return { success: false, error }
     }
     return { success: true, data }
@@ -146,7 +143,6 @@ export async function deleteVehicle(plate: string) {
       .eq('vehicle_plate', plate)
     
     if (error) {
-      console.error('Error deleting vehicle:', JSON.stringify(error))
       return { success: false, error }
     }
     return { success: true }
@@ -187,7 +183,6 @@ export async function getAllVehicles(page?: number, limit?: number, query?: stri
     const { data, error, count } = await queryBuilder
     
     if (error) {
-      console.error('[getAllVehicles] Error fetching vehicles:', JSON.stringify(error))
       return { data: [], count: 0 }
     }
     

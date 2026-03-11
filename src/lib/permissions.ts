@@ -22,13 +22,12 @@ export async function getUserBranchId() {
             try {
                 const driverSession = JSON.parse(driverSessionStr)
                 return driverSession.branchId || null
-            } catch (e) {
-                console.error("Failed to parse driver session:", e)
+            } catch {
                 return null
             }
         }
-    } catch (err) {
-        console.error("Error in getUserBranchId:", err)
+    } catch {
+        return null
     }
 
     return null

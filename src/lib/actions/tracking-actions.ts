@@ -46,7 +46,6 @@ export async function submitJobFeedback(
     .eq("Job_ID", jobId);
 
   if (jobError) {
-    console.error("Error updating job rating:", jobError);
     return { success: false, message: "Failed to update job rating" };
   }
 
@@ -58,7 +57,6 @@ export async function submitJobFeedback(
   });
 
   if (feedbackError) {
-    console.error("Error inserting feedback:", feedbackError);
     return { 
       success: false, 
       message: `Failed to insert detailed feedback: ${feedbackError.message}` 
@@ -81,7 +79,6 @@ export async function getPublicJobDetails(
     .single();
 
   if (error || !job) {
-    console.error("Error fetching job:", error);
     return null;
   }
 

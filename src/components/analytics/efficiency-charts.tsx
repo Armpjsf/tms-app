@@ -14,7 +14,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Coins, Zap } from "lucide-react"
 
-export function EfficiencyCharts({ data }: { data: any[] }) {
+export function EfficiencyCharts({ data }: { data: { date: string; revenue: number; cost: number; jobCount: number }[] }) {
   // Process data for correlation (Revenue vs Cost per Job)
   const correlationData = data.filter(d => d.jobCount > 0).map(d => ({
     name: d.date,

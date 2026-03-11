@@ -12,6 +12,7 @@ import { CameraInput } from "@/components/mobile/camera-input"
 import { SignaturePad } from "@/components/mobile/signature-pad"
 import { submitVehicleCheck } from "@/app/mobile/actions"
 import html2canvas from "html2canvas"
+import { toast } from "sonner"
 
 
 interface MobileVehicleCheckFormProps {
@@ -43,10 +44,9 @@ export function MobileVehicleCheckForm({ driverId, driverName, defaultVehiclePla
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    console.log("Submit start", { signature: !!signature, plate })
     
     if (!signature) {
-        alert("กรุณาลงลายเซ็นก่อนบันทึก")
+        toast.warning("กรุณาลงลายเซ็นก่อนบันทึก")
         return
     }
 
@@ -75,7 +75,6 @@ export function MobileVehicleCheckForm({ driverId, driverName, defaultVehiclePla
                 })
                 const reportBlob = await new Promise<Blob | null>(resolve => {
                     const timeout = setTimeout(() => {
-                        console.error("toBlob timeout")
                         resolve(null)
                     }, 5000)
                     canvas.toBlob((blob) => {
@@ -86,12 +85,9 @@ export function MobileVehicleCheckForm({ driverId, driverName, defaultVehiclePla
                 
                 if (reportBlob) {
                     formData.append("check_report", reportBlob, `Report_${plate}.jpg`)
-                } else {
-                    console.warn("Step 3 Error: ได้รับ Blob ว่างเปล่าสำหรับตัวรายงาน")
                 }
-            } catch (err) {
-                console.error("Report capture failed:", err)
-                alert(`เตือน: สร้างรายงานรูปภาพไม่สำเร็จ แต่อาจจะบันทึกส่วนอื่นได้: ${err}`)
+            } catch {
+                toast.warning("เตือน: สร้างรายงานรูปภาพไม่สำเร็จ แต่อาจจะบันทึกส่วนอื่นได้")
             }
         }
 
@@ -115,17 +111,15 @@ export function MobileVehicleCheckForm({ driverId, driverName, defaultVehiclePla
         const result = await submitVehicleCheck(formData)
         
         if (result.success) {
-             alert("✅ บันทึกข้อมูลเรียบร้อยแล้ว!")
+             toast.success("✅ บันทึกข้อมูลเรียบร้อยแล้ว!")
              router.push('/mobile/dashboard')
         } else {
              setSubmitStatus("")
-             alert(`❌ บันทึกไม่สำเร็จ: ${result.message}`)
+             toast.error(`❌ บันทึกไม่สำเร็จ: ${result.message}`)
         }
-    } catch (err) {
-        console.error("Vehicle Check Error:", err)
+    } catch {
         setSubmitStatus("")
-        const errMsg = err instanceof Error ? err.message : String(err)
-        alert(`Submit Catch Error: ${errMsg}`)
+        toast.error("เกิดข้อผิดพลาดในการบันทึกข้อมูล (Submit Error)")
     } finally {
         setLoading(false)
     }
@@ -147,17 +141,14 @@ export function MobileVehicleCheckForm({ driverId, driverName, defaultVehiclePla
           
           setReportPhotos(newPhotos)
           setReportSig(newSig)
-          console.log("Capture data updated", { photos: newPhotos.length, sig: !!newSig })
-      } catch (e) {
-          console.error("updateCaptureData Error:", e)
-          alert("เกิดข้อผิดพลาดในการโหลดรูปเพื่อสร้างรายงาน: " + e)
+      } catch {
+          toast.error("เกิดข้อผิดพลาดในการโหลดรูปเพื่อสร้างรายงาน")
       }
   }
 
   return (
     <form onSubmit={(e) => { 
         e.preventDefault(); 
-        console.log("Form submit triggered");
         updateCaptureData(); 
         setTimeout(() => handleSubmit(e), 800); 
     }} className="space-y-6">

@@ -30,7 +30,6 @@ export async function createSubcontractor(data: Partial<Subcontractor>) {
         return { success: true }
     } catch (error: unknown) {
         const message = error instanceof Error ? error.message : String(error)
-        console.error("Error creating subcontractor:", error)
         return { success: false, error: message }
     }
 }
@@ -49,7 +48,6 @@ export async function updateSubcontractor(id: string, data: Partial<Subcontracto
         return { success: true }
     } catch (error: unknown) {
         const message = error instanceof Error ? error.message : String(error)
-        console.error("Error updating subcontractor:", error)
         return { success: false, error: message }
     }
 }
@@ -68,7 +66,6 @@ export async function deleteSubcontractor(id: string) {
         return { success: true }
     } catch (error: unknown) {
         const message = error instanceof Error ? error.message : String(error)
-        console.error("Error deleting subcontractor:", error)
         return { success: false, error: message }
     }
 }

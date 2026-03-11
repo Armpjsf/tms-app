@@ -6,6 +6,8 @@ import { Pencil, Trash2 } from "lucide-react"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { DriverDialog } from "./driver-dialog"
+import { toast } from "sonner"
+import Logger from "@/lib/utils/logger"
 import { Driver } from "@/lib/supabase/drivers"
 import { Vehicle } from "@/lib/supabase/vehicles"
 import { Subcontractor } from "@/types/subcontractor"
@@ -24,9 +26,9 @@ export function DriverActions({ driver, vehicles, subcontractors, branches = [] 
     try {
       await deleteDriver(driver.Driver_ID)
       router.refresh()
-    } catch (error) {
-      console.error(error)
-      alert('ลบไม่สำเร็จ')
+    } catch (err) {
+      Logger.error('Driver delete error:', err)
+      toast.error('ลบไม่สำเร็จ')
     } finally {
       setLoading(false)
     }

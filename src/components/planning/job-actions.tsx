@@ -5,9 +5,10 @@ import { deleteJob } from "@/app/planning/actions"
 import { Pencil, Trash2 } from "lucide-react"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 import { JobDialog } from "./job-dialog"
 
-export function JobActions({ job, drivers, vehicles }: { job: any, drivers: any[], vehicles: any[] }) {
+export function JobActions({ job, drivers, vehicles }: { job: Record<string, unknown>, drivers: Record<string, unknown>[], vehicles: Record<string, unknown>[] }) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [showEdit, setShowEdit] = useState(false)
@@ -19,9 +20,8 @@ export function JobActions({ job, drivers, vehicles }: { job: any, drivers: any[
     try {
       await deleteJob(job.Job_ID)
       router.refresh()
-    } catch (error) {
-      console.error(error)
-      alert('ลบไม่สำเร็จ')
+    } catch {
+      toast.error('ลบไม่สำเร็จ')
     } finally {
       setLoading(false)
     }

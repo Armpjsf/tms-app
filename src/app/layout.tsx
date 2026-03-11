@@ -33,6 +33,8 @@ export const viewport = {
 import { BranchProvider } from "@/components/providers/branch-provider";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { GlobalClientComponents } from "@/components/providers/global-client-components";
+import ErrorBoundary from "@/components/error-boundary";
+import { PerformanceMonitor } from "@/components/performance-monitor";
 
 export default function RootLayout({
   children,
@@ -50,10 +52,13 @@ export default function RootLayout({
           forcedTheme="light"
           disableTransitionOnChange
         >
-          <BranchProvider>
-            {children}
-            <GlobalClientComponents />
-          </BranchProvider>
+          <ErrorBoundary>
+            <PerformanceMonitor />
+            <BranchProvider>
+              {children}
+              <GlobalClientComponents />
+            </BranchProvider>
+          </ErrorBoundary>
         </ThemeProvider>
       </body>
     </html>

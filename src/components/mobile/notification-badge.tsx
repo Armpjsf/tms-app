@@ -42,8 +42,8 @@ export function MobileNotificationBadge() {
               filter: `Driver_ID=eq.${session.driverId}`
           }, () => checkUnread())
           .subscribe()
-      } catch (err) {
-        console.error("Error init mobile badge:", err)
+      } catch {
+        // Continue without logging
       }
     }
     

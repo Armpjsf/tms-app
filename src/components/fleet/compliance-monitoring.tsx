@@ -11,7 +11,7 @@ const complianceData = [
     { name: "Medical Certificates", status: "expiring", date: "2024-03-25", daysLeft: 22 },
 ]
 
-export function FleetCompliance({ data = [] }: { data?: any[] }) {
+export function FleetCompliance({ data = [] }: { data?: { name: string; status: string; date: string; daysLeft: number }[] }) {
     const complianceData = data.length > 0 ? data : [
         { name: "No records found", status: "valid", date: "-", daysLeft: 0 },
     ]

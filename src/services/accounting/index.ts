@@ -36,8 +36,7 @@ class AccountingServiceManager {
                 message: result.message || (result.success ? "Synced successfully" : "Failed to sync")
             };
 
-        } catch (error) {
-            console.error("Accounting Sync Error:", error);
+        } catch {
             return { success: false, message: "Internal error during sync" };
         }
     }
@@ -58,8 +57,7 @@ class AccountingServiceManager {
                 message: result.message || (result.success ? "Synced successfully" : "Failed to sync")
             };
 
-        } catch (error) {
-            console.error("Accounting Sync Error:", error);
+        } catch {
             return { success: false, message: "Internal error during sync" };
         }
     }
@@ -73,8 +71,7 @@ class AccountingServiceManager {
                 success: result.success,
                 message: result.message || (result.success ? "Payout synced successfully" : "Failed to sync payout")
             };
-        } catch (error) {
-            console.error("Accounting Sync Error (Payout):", error);
+        } catch {
             return { success: false, message: "Internal error during payout sync" };
         }
     }

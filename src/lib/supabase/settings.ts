@@ -28,14 +28,13 @@ export async function getCompanyProfile(): Promise<CompanyProfile | null> {
     .single()
 
   if (error) {
-    console.error('Error fetching company profile:', error)
     return null
   }
 
   // Parse JSON if stored as text, or return distinct object if jsonb
   try {
       return typeof data.value === 'string' ? JSON.parse(data.value) : data.value
-  } catch (e) {
+  } catch {
       return data.value
   }
 }
@@ -68,7 +67,6 @@ export async function uploadCompanyLogo(file: File) {
     })
 
   if (error) {
-    console.error('Error uploading logo:', error)
     return { success: false, error }
   }
 

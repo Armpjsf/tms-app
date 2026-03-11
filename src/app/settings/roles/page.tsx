@@ -39,7 +39,6 @@ export default function RolesPage() {
                      : (item.Permissions || {})
              }))
         } else if (result.error) {
-             console.error(result.error)
              setError(result.error)
         }
 
@@ -75,7 +74,6 @@ export default function RolesPage() {
                         [permId]: !currentPerms[permId]
                     }
                 }
-                console.log(`Toggled ${permId} for ${role.Role}:`, updatedRole.Permissions[permId])
                 return updatedRole
             })
             return next

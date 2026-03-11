@@ -9,6 +9,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { CameraInput } from "@/components/mobile/camera-input"
 import { Loader2, Fuel, User } from "lucide-react"
 import { createFuelLog } from "@/app/fuel/actions"
+import { toast } from "sonner"
 import { uploadImageToDrive } from "@/lib/actions/upload-actions"
 
 interface MobileFuelFormProps {
@@ -59,15 +60,14 @@ export function MobileFuelForm({ driverId, driverName, defaultVehiclePlate }: Mo
         const result = await createFuelLog(fuelData)
 
         if (result.success) {
-            alert("บันทึกข้อมูลเรียบร้อยแล้ว")
+            toast.success("บันทึกข้อมูลเรียบร้อยแล้ว")
             router.push('/mobile/dashboard')
         } else {
-            alert(`เกิดข้อผิดพลาด: ${result.message}`)
+            toast.error(`เกิดข้อผิดพลาด: ${result.message}`)
         }
     } catch (error) {
-        console.error("Fuel form error:", error)
         const errMsg = error instanceof Error ? error.message : String(error)
-        alert(`เกิดข้อผิดพลาดในการเชื่อมต่อ: ${errMsg}`)
+        toast.error(`เกิดข้อผิดพลาดในการเชื่อมต่อ: ${errMsg}`)
     } finally {
         setLoading(false)
     }

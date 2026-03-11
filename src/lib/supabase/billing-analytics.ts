@@ -72,9 +72,9 @@ export async function getBillingAnalytics(
     arQuery = arQuery.eq('Branch_ID', effectiveBranchId)
   }
 
-  const { data: unpaidNotes, error: arError } = await arQuery
+  const { data: unpaidNotes, error } = await arQuery
 
-  if (arError) console.error('Error fetching AR:', arError)
+  if (error) return []
 
   const receivables = unpaidNotes || []
   const totalAr = receivables.reduce((sum, n) => sum + (n.Total_Amount || 0), 0)

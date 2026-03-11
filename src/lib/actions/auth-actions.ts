@@ -97,7 +97,9 @@ export async function loginDriver(formData: FormData) {
     httpOnly: true, 
     secure: process.env.NODE_ENV === "production",
     expires,
-    path: "/" 
+    sameSite: "lax",
+    path: "/",
+    priority: "high"
   })
 
   return { success: true }

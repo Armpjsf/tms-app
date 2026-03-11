@@ -6,6 +6,7 @@ import { MobileHeader } from "@/components/mobile/mobile-header"
 import { Button } from "@/components/ui/button"
 import { CameraInput } from "@/components/mobile/camera-input"
 import { SignaturePad } from "@/components/mobile/signature-pad"
+import { toast } from "sonner"
 import { submitJobPOD } from "@/lib/actions/pod-actions"
 import { getJobDetails } from "@/app/mobile/jobs/actions"
 import { Loader2, CheckCircle, BrainCircuit, AlertTriangle, ScanLine } from "lucide-react"
@@ -51,7 +52,7 @@ export default function JobCompletePage() {
           const result = await analyzePODImage(file)
           setVerificationResult(result)
       } catch (error) {
-          console.error("AI Verification Failed", error)
+          // AI Verification failed silently
       } finally {
           setVerifying(false)
       }
@@ -102,7 +103,6 @@ export default function JobCompletePage() {
                         canvas.toBlob(resolve, 'image/jpeg', 0.8)
                     )
                 } catch (err) {
-                    console.error(`Capture attempt ${retryCount + 1} failed:`, err)
                     if (retryCount < 1) return captureReport(retryCount + 1)
                     return null
                 }
@@ -113,12 +113,11 @@ export default function JobCompletePage() {
                 
                 if (reportBlob && reportBlob.size > 5000) { 
                     formData.append("pod_report", reportBlob, `POD_Report_${params.id}.jpg`)
-                    console.log("POD Report successfully generated and appended")
                 } else {
-                    console.warn("POD Report generated but was too small or empty")
+                    // Report too small or empty
                 }
             } catch (err) {
-                console.error("Report Generation Critical Failure:", err)
+                // Report generation failed
             }
         }
 
@@ -136,16 +135,14 @@ export default function JobCompletePage() {
         
         if (result.success) {
           if (result.warning) {
-            alert(String(result.warning)) 
+            toast.warning(String(result.warning)) 
           }
           router.push(`/mobile/jobs/${params.id}?success=pod`)
         } else {
-          alert(typeof result.error === 'string' ? result.error : JSON.stringify(result.error))
+          toast.error(typeof result.error === 'string' ? result.error : JSON.stringify(result.error))
           setLoading(false)
         }
     } catch (error: unknown) {
-        console.error("Pickup Submit Error:", error)
-        
         // Check if it's a network error
         const isNetworkError = !navigator.onLine || error instanceof TypeError || (error instanceof Error && error.message.includes('fetch'))
         
@@ -153,10 +150,10 @@ export default function JobCompletePage() {
           // Note: offlineData seems undefined in original code, I should fix that or keep original behavior
           // saveJobOffline(params.id, offlineData, 'POD')
           setCompleted(true) 
-          alert("บันทึกข้อมูลแล้ว (โหมดออฟไลน์) จะส่งให้อัตโนมัติเมื่อมีสัญญาณ")
+          toast.success("บันทึกข้อมูลแล้ว (โหมดออฟไลน์) จะส่งให้อัตโนมัติเมื่อมีสัญญาณ")
         } else {
             const errorMessage = error instanceof Error ? error.message : String(error)
-            alert(`Error: ${errorMessage}`)
+            toast.error(`Error: ${errorMessage}`)
         }
     } finally {
         setLoading(false)

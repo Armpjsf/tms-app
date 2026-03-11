@@ -33,7 +33,7 @@ export async function getDriverLeaves(month?: number, year?: number): Promise<Dr
       .or(`Start_Date.lte.${lastDayStr},End_Date.gte.${firstDay}`)
       .order('Start_Date', { ascending: true })
 
-    if (error) { console.error('getDriverLeaves error:', error); return [] }
+    if (error) return []
     return (data || []) as DriverLeave[]
   } catch {
     return []

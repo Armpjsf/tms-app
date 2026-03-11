@@ -40,7 +40,7 @@ export async function GET(req: NextRequest) {
                 
                 // Diagnostic check for email/project mismatch
                 if (!envEmail.includes(envProjectId)) {
-                    console.warn(`[Firebase Debug] Logic Mismatch? Email: ${envEmail} vs Project: ${envProjectId}`)
+                    // Email/Project mismatch detected
                 }
 
                 credential = admin.credential.cert({

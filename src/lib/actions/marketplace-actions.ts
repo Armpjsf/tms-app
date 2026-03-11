@@ -27,7 +27,6 @@ export async function getUnassignedJobs() {
     .order('Created_At', { ascending: false })
 
   if (error) {
-    console.error('Error fetching unassigned jobs:', error)
     return []
   }
 
@@ -63,7 +62,6 @@ export async function submitBid(jobId: string, driverId: string, driverName: str
     })
 
   if (error) {
-    console.error('Error submitting bid:', error)
     return { success: false, message: 'เกิดข้อผิดพลาดในการเสนอราคา' }
   }
 
@@ -90,7 +88,6 @@ export async function getBidsForJob(jobId: string) {
         .order('bid_amount', { ascending: true }) // เรียงจากราคาถูกสุดขึ้นก่อน
         
     if (error) {
-        console.error('Error fetching bids:', error)
         return []
     }
     return data as JobBid[]
@@ -106,7 +103,6 @@ export async function getAllActiveBids() {
         .order('created_at', { ascending: false })
         
     if (error) {
-        console.error('Error fetching all bids:', error)
         return []
     }
     return data as JobBid[]
@@ -128,7 +124,6 @@ export async function acceptBid(jobId: string, bidId: string, driverId: string, 
         .eq('Job_ID', jobId)
 
     if (updateJobError) {
-        console.error('Error updating job with winner:', updateJobError)
         return { success: false, message: 'ไม่สามารถอัปเดตงานได้' }
     }
 

@@ -10,7 +10,6 @@ import {
   useSensor,
   useSensors,
   DragStartEvent,
-  DragOverEvent,
   DragEndEvent,
   defaultDropAnimationSideEffects,
 } from "@dnd-kit/core"
@@ -23,19 +22,27 @@ import {
 } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
 import { Job } from "@/lib/supabase/jobs"
-import { PremiumCard } from "@/components/ui/premium-card"
+import { Driver } from "@/lib/supabase/drivers"
+import { Vehicle } from "@/lib/supabase/vehicles"
+import { Customer } from "@/lib/supabase/customers"
+import { Route } from "@/lib/supabase/routes"
 import { Badge } from "@/components/ui/badge"
-import { 
-  Package, 
-  Truck, 
-  MapPin, 
+import { PremiumCard } from "@/components/ui/premium-card"
+import {
+  Search,
+  Filter,
+  MoreHorizontal,
+  LayoutGrid,
+  List as ListIcon,
+  Plus,
+  Trash2,
+  MapPin,
   Calendar,
-  ChevronRight,
+  Building2,
+  Truck,
+  Package,
   MoreVertical,
-  CheckCircle2,
-  Clock,
   User,
-  AlertCircle
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { updateJob } from "@/app/planning/actions"
@@ -44,10 +51,10 @@ import { JobDialog } from "./job-dialog"
 
 interface KanbanBoardProps {
   jobs: Job[]
-  drivers: any[]
-  vehicles: any[]
-  customers: any[]
-  routes: any[]
+  drivers: Driver[]
+  vehicles: Vehicle[]
+  customers: Customer[]
+  routes: Route[]
   canViewPrice: boolean
   canDelete: boolean
 }
@@ -69,7 +76,7 @@ const COLUMNS: Column[] = [
   { id: "Completed", title: "ปิดงานแล้ว", statuses: ["Completed"], color: "gray" },
 ]
 
-export function KanbanBoard({ 
+export function KanbanBoard({
   jobs: initialJobs,
   drivers,
   vehicles,
@@ -218,10 +225,10 @@ export function KanbanBoard({
 interface KanbanColumnProps {
   column: Column
   jobs: Job[]
-  drivers: any[]
-  vehicles: any[]
-  customers: any[]
-  routes: any[]
+  drivers: Driver[]
+  vehicles: Vehicle[]
+  customers: Customer[]
+  routes: Route[]
   canViewPrice: boolean
   canDelete: boolean
 }
@@ -297,10 +304,10 @@ function KanbanColumn({
 interface KanbanCardProps {
   job: Job
   isDragging?: boolean
-  drivers: any[]
-  vehicles: any[]
-  customers: any[]
-  routes: any[]
+  drivers: Driver[]
+  vehicles: Vehicle[]
+  customers: Customer[]
+  routes: Route[]
   canViewPrice: boolean
   canDelete: boolean
 }

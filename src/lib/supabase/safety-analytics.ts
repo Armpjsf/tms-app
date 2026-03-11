@@ -65,7 +65,9 @@ export async function getSafetyAnalytics(
 
   const { data: sosData, error: sosError } = await sosQuery
   
-  if (sosError) console.error('Error fetching SOS analytics:', JSON.stringify(sosError, null, 2))
+  if (sosError) {
+    // Continue with empty data
+  }
   
   const incidents = sosData || []
   const totalSos = incidents.length
@@ -117,7 +119,9 @@ export async function getSafetyAnalytics(
   
   const { data: podData, error: podError } = await podQuery
   
-  if (podError) console.error('Error fetching POD analytics:', podError)
+  if (podError) {
+    // Continue with empty data
+  }
   
   const completedJobs = podData || []
   const totalCompleted = completedJobs.length

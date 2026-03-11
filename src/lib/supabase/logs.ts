@@ -81,13 +81,11 @@ export async function logActivity(options: LogOptions) {
     });
 
     if (error) {
-      console.error("Error logging activity:", error);
       return { success: false, error };
     }
 
     return { success: true };
   } catch (error) {
-    console.error("Unexpected error in logActivity:", error);
     return { success: false, error };
   }
 }
@@ -127,7 +125,6 @@ export async function getSystemLogs(filters: {
   const { data, error } = await query;
 
   if (error) {
-    console.error("Error fetching logs:", error);
     throw error;
   }
 

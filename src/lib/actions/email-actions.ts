@@ -21,7 +21,6 @@ interface SendBillingEmailProps {
 
 export async function sendBillingEmail({ from, to, subject, html, attachments }: SendBillingEmailProps) {
     if (!process.env.RESEND_API_KEY) {
-        console.error("RESEND_API_KEY is missing in environment variables");
         return { success: false, error: "RESEND_API_KEY is not configured" };
     }
 
@@ -49,8 +48,8 @@ export async function sendBillingEmail({ from, to, subject, html, attachments }:
                             : branch.Email;
                     }
                 }
-            } catch (err) {
-                console.error("Failed to fetch branch email settings:", err);
+            } catch {
+                // Failed to fetch branch email settings
             }
         }
 
@@ -64,13 +63,12 @@ export async function sendBillingEmail({ from, to, subject, html, attachments }:
         });
 
         if (error) {
-            console.error("Resend Error:", error);
             return { success: false, error: error.message };
         }
 
         return { success: true, data };
-    } catch (e: any) {
-        console.error("Sending Email Failed:", e);
-        return { success: false, error: e.message };
+    } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : String(e);
+        return { success: false, error: message };
     }
 }

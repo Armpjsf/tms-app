@@ -35,7 +35,6 @@ export function createAdminClient() {
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY
   
   if (!url || !key) {
-    console.error("CRITICAL: Supabase Admin ENVs are missing!", { url: !!url, key: !!key })
     throw new Error("Missing Supabase configuration")
   }
 

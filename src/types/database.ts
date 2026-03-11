@@ -5,7 +5,7 @@ export interface Job {
     Route_Name?: string | null;
     Price_Cust_Total?: string | number | null;
     Cost_Driver_Total?: string | number | null;
-    extra_costs_json?: any;
+    extra_costs_json?: unknown;
     Customer_Name?: string | null;
     Dest_Location?: string | null;
     Origin_Location?: string | null;

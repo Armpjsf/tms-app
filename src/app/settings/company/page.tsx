@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { toast } from "sonner"
 import { getCompanyProfile, saveCompanyProfile, uploadCompanyLogo } from "@/lib/supabase/settings"
 import {
   Building,
@@ -78,11 +79,10 @@ export default function CompanySettingsPage() {
       if (result.success && result.url) {
         updateForm("logo_url", result.url)
       } else {
-        alert("อัปโหลดไม่สำเร็จ: " + (result.error?.message || "Unknown error"))
+        toast.error("อัปโหลดไม่สำเร็จ: " + (result.error?.message || "Unknown error"))
       }
-    } catch (e) {
-      console.error(e)
-      alert("Upload failed")
+    } catch {
+      toast.error('ไม่สามารถอัปโหลดรูปภาพได้')
     } finally {
       setUploading(false)
     }
@@ -93,13 +93,12 @@ export default function CompanySettingsPage() {
     try {
       const result = await saveCompanyProfile(formData)
       if (result.success) {
-        alert("บันทึกข้อมูลสำเร็จ!")
+        toast.success("บันทึกข้อมูลสำเร็จ!")
       } else {
         throw result.error
       }
-    } catch (e) {
-      console.error(e)
-      alert("เกิดข้อผิดพลาดในการบันทึก")
+    } catch {
+      toast.error("เกิดข้อผิดพลาดในการบันทึก")
     } finally {
       setLoading(false)
     }

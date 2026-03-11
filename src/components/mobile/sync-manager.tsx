@@ -43,7 +43,6 @@ export function SyncManager() {
 
         // Sync when coming back online
         const handleOnline = () => {
-            console.log("Connection restored. Syncing...")
             handleSync()
         }
 

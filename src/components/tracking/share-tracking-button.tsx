@@ -17,8 +17,9 @@ export function ShareTrackingButton({ jobId }: { jobId: string }) {
           text: `คุณสามารถติดตามสถานะการขนส่งงาน ${jobId} ได้ที่นี่:`,
           url: url,
         })
-      } catch (err) {
-        console.error("Share failed:", err)
+        try { new Audio('/sounds/notification.mp3').play().catch(() => {}) } catch {}
+      } catch {
+        // Share cancelled or failed silently
       }
     } else {
       // Fallback to clipboard
@@ -26,8 +27,8 @@ export function ShareTrackingButton({ jobId }: { jobId: string }) {
         await navigator.clipboard.writeText(url)
         setCopied(true)
         setTimeout(() => setCopied(false), 2000)
-      } catch (err) {
-        console.error("Copy failed:", err)
+      } catch {
+        // Copy failed silently
       }
     }
   }

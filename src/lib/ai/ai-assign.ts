@@ -159,8 +159,7 @@ export async function getSuggestedDrivers(jobData: {
     suggestions.sort((a, b) => b.match_score - a.match_score)
     return suggestions.slice(0, topN)
 
-  } catch (error) {
-    console.error('AI Auto-Assign Error:', error)
+  } catch {
     return []
   }
 }

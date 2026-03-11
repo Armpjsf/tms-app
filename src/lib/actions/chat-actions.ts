@@ -28,7 +28,6 @@ export async function getChatHistory(driverId: string) {
 
     if (result.error) {
         // Fallback to admin client (bypass RLS)
-        console.warn("[Chat] getChatHistory - normal client failed, using admin client:", result.error.message)
         const adminSupabase = createAdminClient()
         const adminSchema = await getChatSchema(adminSupabase)
         tableName = adminSchema.tableName
@@ -41,7 +40,6 @@ export async function getChatHistory(driverId: string) {
             .order(columns.created_at, { ascending: true })
         
         if (adminError) {
-            console.error("[Chat] getChatHistory admin also failed:", adminError.message)
             return []
         }
 
@@ -70,8 +68,6 @@ export async function getChatHistory(driverId: string) {
 export async function sendChatMessage(senderId: string, message: string, receiverId: string = 'admin') {
     const supabase = await createClient()
 
-    console.log(`[Chat] Sending message from ${senderId} to ${receiverId}: ${message}`)
-
     // 0. Detect correct schema
     const { tableName, columns } = await getChatSchema(supabase)
 
@@ -89,7 +85,6 @@ export async function sendChatMessage(senderId: string, message: string, receive
         })
 
     if (error) {
-        console.error("[Chat] Error sending message:", error)
         return { success: false, error: error.message }
     }
     

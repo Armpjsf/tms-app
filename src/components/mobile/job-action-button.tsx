@@ -15,11 +15,19 @@ import { cn } from "@/lib/utils"
 import { optimizeRoute } from "@/lib/ai/route-optimizer"
 import { updateJob } from "@/app/planning/actions"
 import { Sparkles } from "lucide-react"
+import { toast } from "sonner"
+
+interface Destination {
+    name: string
+    lat: string
+    lng: string
+    [key: string]: unknown
+}
 
 interface Job {
     Job_ID: string
     Job_Status: string
-    original_destinations_json: unknown[]
+    original_destinations_json: Destination[]
     Notes: string | null
     [key: string]: unknown
 }
@@ -37,11 +45,12 @@ export function JobActionButton({ job }: JobActionButtonProps) {
     try {
         const result = await updateJobStatus(job.Job_ID, newStatus)
         if (!result.success) {
-            alert(result.message)
+            toast.error(result.message)
+        } else {
+            toast.success("อัปเดตสถานะเรียบร้อย")
         }
-    } catch (error) {
-        console.error(error)
-        alert("เกิดข้อผิดพลาด")
+    } catch {
+        toast.error("เกิดข้อผิดพลาดในการอัปเดตสถานะ")
     } finally {
         setLoading(false)
     }
@@ -69,7 +78,7 @@ export function JobActionButton({ job }: JobActionButtonProps) {
         // 2. Prepare destinations
         const dests = job.original_destinations_json || [];
         if (!Array.isArray(dests) || dests.length < 2) {
-            alert("งานนี้มีจุดหมายเดียว ไม่จำเป็นต้องจัดลำดับใหม่ครับ");
+            toast.info("งานนี้มีจุดหมายเดียว ไม่จำเป็นต้องจัดลำดับใหม่ครับ");
             return;
         }
 
@@ -81,7 +90,7 @@ export function JobActionButton({ job }: JobActionButtonProps) {
         })).filter(d => !isNaN(d.lat) && !isNaN(d.lng));
 
         if (validDests.length < dests.length) {
-            alert("บางจุดหมายไม่มีพิกัด (Lat/Lon) กรุณาแจ้งผู้ควบคุมงานเพื่ออัปเดตข้อมูลพิกัดก่อนครับ");
+            toast.warning("บางจุดหมายไม่มีพิกัด (Lat/Lon) กรุณาแจ้งผู้ควบคุมงานเพื่ออัปเดตข้อมูลพิกัดก่อนครับ");
             return;
         }
 
@@ -98,15 +107,14 @@ export function JobActionButton({ job }: JobActionButtonProps) {
             });
 
             if (updateRes.success) {
-                alert(`AI จัดเส้นทางให้ใหม่เรียบร้อย! ประหยัดเวลาไปได้ประมาณ ${result.estimatedDurationMinutes} นาที`);
+                toast.success(`AI จัดเส้นทางให้ใหม่เรียบร้อย! ประหยัดเวลาไปได้ประมาณ ${result.estimatedDurationMinutes} นาที`);
                 router.refresh();
             } else {
-                alert("ไม่สามารถบันทึกลำดับเส้นทางใหม่ได้");
+                toast.error("ไม่สามารถบันทึกลำดับเส้นทางใหม่ได้");
             }
         }
-    } catch (e) {
-        console.error(e);
-        alert("ไม่สามารถเข้าถึงตำแหน่งปัจจุบันของคุณได้ กรุณาเปิด GPS");
+    } catch {
+        toast.error("ไม่สามารถเข้าถึงตำแหน่งปัจจุบันของคุณได้ กรุณาเปิด GPS");
     } finally {
         setLoading(false)
     }

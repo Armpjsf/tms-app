@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -57,10 +58,10 @@ export default function AccountingSettingsPage() {
     const result = await saveAccountingSettings(apiKey, companyId, userEmail)
     setSaving(false)
     if (result.success) {
-      alert("บันทึกการตั้งค่าเรียบร้อยแล้ว")
+      toast.success("บันทึกการตั้งค่าเรียบร้อยแล้ว")
       setStatus('idle') // Reset status after save to encourage re-test
     } else {
-      alert("ไม่สามารถบันทึกการตั้งค่าได้: " + result.message)
+      toast.error("ไม่สามารถบันทึกการตั้งค่าได้: " + result.message)
     }
   }
 

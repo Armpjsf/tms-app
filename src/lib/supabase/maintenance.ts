@@ -67,13 +67,11 @@ export async function getAllRepairTickets(
     const { data, error, count } = await dbQuery.range(offset, offset + limit - 1)
   
     if (error) {
-      console.error('Error fetching repair tickets:', error)
       return { data: [], count: 0 }
     }
   
     return { data: data || [], count: count || 0 }
   } catch (e) {
-    console.error('Exception fetching repair tickets:', e)
     return { data: [], count: 0 }
   }
 }
@@ -102,13 +100,11 @@ export async function getPendingRepairTickets(): Promise<RepairTicket[]> {
       .order('Date_Report', { ascending: false })
     
     if (error) {
-      console.error('Error fetching pending tickets:', error)
       return []
     }
     
     return data || []
   } catch (e) {
-    console.error('Exception fetching pending tickets:', e)
     return []
   }
 }
@@ -132,7 +128,6 @@ export async function getRepairTicketStats() {
     const { data, error } = await query
     
     if (error) {
-      console.error('Error fetching repair stats:', error)
       return { total: 0, pending: 0, inProgress: 0, completed: 0 }
     }
     
@@ -144,7 +139,6 @@ export async function getRepairTicketStats() {
       completed: tickets.filter(t => t.Status === 'Completed' || t.Status === 'เสร็จสิ้น').length,
     }
   } catch (e) {
-    console.error('Exception fetching repair stats:', e)
     return { total: 0, pending: 0, inProgress: 0, completed: 0 }
   }
 }

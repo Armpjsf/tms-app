@@ -124,7 +124,7 @@ export function OrderBidding({ orders = [] }: OrderBiddingProps) {
                                                     ราคาตั้งต้น (Base)
                                                 </p>
                                                 <p className="text-lg font-black text-gray-900">
-                                                    ฿{(order.Price_Cust_Total || 0).toLocaleString()}
+                                                    ฿{(order.Cost_Driver_Total || 0).toLocaleString()}
                                                 </p>
                                             </div>
                                             <Button 

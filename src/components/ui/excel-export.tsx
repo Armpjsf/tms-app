@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button"
 import * as XLSX from "xlsx"
 
 interface ExcelExportProps {
-  data: any[]
+  data: Record<string, unknown>[]
   filename?: string
   title?: string
   trigger?: React.ReactNode
@@ -27,7 +27,7 @@ export function ExcelExport({
   }
 
   return (
-    <div onClick={handleExport}>
+    <div onClick={handleExport} className="cursor-pointer">
       {trigger || <Button variant="outline">Export to Excel</Button>}
     </div>
   )

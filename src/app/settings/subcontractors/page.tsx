@@ -31,6 +31,7 @@ import { getSubcontractorPerformance, getOperationalStats } from "@/lib/supabase
 import { Subcontractor } from "@/types/subcontractor"
 import { useBranch } from "@/components/providers/branch-provider"
 import { cn } from "@/lib/utils"
+import { toast } from "sonner"
 
 export default function SubcontractorsPage() {
     const { selectedBranch, branches } = useBranch()
@@ -39,7 +40,10 @@ export default function SubcontractorsPage() {
     const [isDialogOpen, setIsDialogOpen] = useState(false)
     const [saving, setSaving] = useState(false)
     const [searchTerm, setSearchTerm] = useState("")
-    const [stats, setStats] = useState<any>(null)
+    const [stats, setStats] = useState<{
+        performance: { name: string; count: number }[];
+        ops: { fleet: { onTimeDelivery: number } }
+    } | null>(null)
 
     // Form State
     const [editingId, setEditingId] = useState<string | null>(null)
@@ -92,7 +96,7 @@ export default function SubcontractorsPage() {
 
     const handleSave = async () => {
         if (!formData.Sub_ID || !formData.Sub_Name) {
-            return alert("กรุณากรอกรหัสและชื่อบริษัท")
+            return toast.warning("กรุณากรอกรหัสและชื่อบริษัท")
         }
         
         setSaving(true)
@@ -106,12 +110,13 @@ export default function SubcontractorsPage() {
 
             if (res.success) {
                 setIsDialogOpen(false)
+                toast.success(editingId ? "แก้ไขข้อมูลเรียบร้อย" : "สร้างบริษัทเรียบร้อย")
                 loadData()
             } else {
-                alert("Error: " + res.error)
+                toast.error("Error: " + res.error)
             }
         } catch (error: unknown) {
-            alert("เกิดข้อผิดพลาด: " + (error as Error).message)
+            toast.error("เกิดข้อผิดพลาด: " + (error as Error).message)
         } finally {
             setSaving(false)
         }
@@ -120,8 +125,11 @@ export default function SubcontractorsPage() {
     const handleDelete = async (id: string) => {
         if (!confirm("คุณต้องการลบข้อมูลนี้ใช่หรือไม่?")) return
         const res = await deleteSubcontractor(id)
-        if (res.success) loadData()
-        else alert("Error: " + res.error)
+        if (res.success) {
+            toast.success("ลบข้อมูลเรียบร้อย")
+            loadData()
+        }
+        else toast.error("Error: " + res.error)
     }
 
     const filtered = list.filter(i => 
@@ -176,7 +184,7 @@ export default function SubcontractorsPage() {
                         </div>
                         <p className="text-gray-400 font-bold text-[10px] uppercase tracking-[0.2em] mb-1">Subcontractor Share</p>
                         <p className="text-3xl font-black text-gray-900 tracking-tighter">
-                            {stats.performance.find((p: any) => p.name.includes('Sub'))?.count || 0} <span className="text-sm text-gray-400 font-bold tracking-normal ml-1">Jobs</span>
+                            {stats.performance.find((p: { name: string }) => p.name.includes('Sub'))?.count || 0} <span className="text-sm text-gray-400 font-bold tracking-normal ml-1">Jobs</span>
                         </p>
                     </PremiumCard>
 

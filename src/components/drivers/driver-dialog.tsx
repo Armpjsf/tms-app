@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -16,7 +17,7 @@ import { Branch } from "@/lib/supabase/branches"
 type DriverDialogProps = {
   mode?: 'create' | 'edit'
   driver?: Partial<Driver>
-  vehicles?: any[]
+  vehicles?: { vehicle_plate: string; brand?: string }[]
   subcontractors?: Subcontractor[]
   branches?: Branch[]
   trigger?: React.ReactNode
@@ -51,7 +52,7 @@ export function DriverDialog({
     Active_Status: driver?.Active_Status || 'Active',
     License_Expiry: driver?.License_Expiry || '',
     Sub_ID: driver?.Sub_ID || '',
-    Branch_ID: (driver as any)?.Branch_ID || ''
+    Branch_ID: (driver as { Branch_ID?: string })?.Branch_ID || ''
   })
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -87,9 +88,8 @@ export function DriverDialog({
         })
       }
       router.refresh()
-    } catch (error: any) {
-      console.error(error)
-      alert(error.message || 'เกิดข้อผิดพลาด กรุณาลองใหม่')
+    } catch {
+      toast.error('เกิดข้อผิดพลาด กรุณาลองใหม่')
     } finally {
       setLoading(false)
     }
@@ -205,7 +205,7 @@ export function DriverDialog({
                 </SelectTrigger>
                 <SelectContent>
                     <SelectItem value="__none__">ไม่ระบุ / ไม่มีรถประจำ</SelectItem>
-                    {vehicles.map((v: any) => (
+                    {vehicles.map((v: { vehicle_plate: string; brand?: string }) => (
                         <SelectItem key={v.vehicle_plate} value={v.vehicle_plate}>
                             {v.vehicle_plate} {v.brand ? `(${v.brand})` : ''}
                         </SelectItem>

@@ -1,6 +1,9 @@
 "use client"
 
 import { useState, useRef } from "react"
+import { useRouter } from "next/navigation"
+import { toast } from "sonner"
+import Logger from "@/lib/utils/logger"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -19,8 +22,8 @@ interface ExcelImportProps {
   trigger: React.ReactNode
   title: string
   description?: string
-  onImport: (data: any[]) => Promise<{ success: boolean; message: string }>
-  templateData?: any[]
+  onImport: (data: Record<string, unknown>[]) => Promise<{ success: boolean; message: string; error?: string }>;
+  templateData?: Record<string, unknown>[]
   templateFilename?: string
 }
 
@@ -32,10 +35,11 @@ export function ExcelImport({
   templateData,
   templateFilename = "template.xlsx",
 }: ExcelImportProps) {
+  const router = useRouter()
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [file, setFile] = useState<File | null>(null)
-  const [previewData, setPreviewData] = useState<any[]>([])
+  const [previewData, setPreviewData] = useState<Record<string, unknown>[]>([])
   const [error, setError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -53,15 +57,15 @@ export function ExcelImport({
       if (data.length === 0) {
         setError("ไม่พบข้อมูลในไฟล์")
       }
-    } catch (err: any) {
-      console.error(err)
-      setError("ไม่สามารถอ่านไฟล์ได้: " + err.message)
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err)
+      setError("ไม่สามารถอ่านไฟล์ได้: " + msg)
     } finally {
       setLoading(false)
     }
   }
 
-  const parseExcel = (file: File): Promise<any[]> => {
+  const parseExcel = (file: File): Promise<Record<string, unknown>[]> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader()
       reader.onload = (e) => {
@@ -95,13 +99,14 @@ export function ExcelImport({
         setOpen(false)
         setFile(null)
         setPreviewData([])
-        // Optional: Show success toast/alert
-        alert(result.message || "นำเข้าข้อมูลสำเร็จ")
+        toast.success(result.message || "นำเข้าข้อมูลสำเร็จ")
+        router.refresh()
       } else {
-        setError(result.message)
+        Logger.error("Excel import failed:", result.error)
+        toast.error(result.message || "เกิดข้อผิดพลาดในการนำเข้าข้อมูล")
       }
-    } catch (err: any) {
-      setError(err.message || "เกิดข้อผิดพลาดในการนำเข้า")
+    } catch {
+      setError("เกิดข้อผิดพลาดในการนำเข้า")
     } finally {
       setLoading(false)
     }
@@ -194,7 +199,7 @@ export function ExcelImport({
                     <tbody className="divide-y divide-slate-800">
                         {previewData.slice(0, 5).map((row, i) => (
                             <tr key={i} className="hover:bg-gray-50">
-                                {Object.values(row).slice(0, 5).map((val: any, j) => (
+                                {Object.values(row).slice(0, 5).map((val: unknown, j) => (
                                     <td key={j} className="p-2 text-gray-500">{String(val)}</td>
                                 ))}
                                 {Object.values(row).length > 5 && <td className="p-2 text-gray-400">...</td>}

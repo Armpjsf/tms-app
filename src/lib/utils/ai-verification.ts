@@ -34,8 +34,8 @@ export async function analyzePODImage(file: File): Promise<AIAnalysisResult> {
           score -= 20
           issues.push("รูปภาพสว่างเกินไป")
       }
-  } catch (e) {
-      console.warn("Brightness check failed", e)
+  } catch {
+      // Brightness check failed
   }
 
   // Final Decision

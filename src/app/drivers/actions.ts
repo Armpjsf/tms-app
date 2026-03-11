@@ -38,7 +38,6 @@ export async function createDriver(data: DriverFormData) {
     })
 
   if (error) {
-    console.error('Error creating driver:', error)
     return { success: false, message: `Failed to create driver: ${error.message} ${error.details || ''}` }
   }
 
@@ -73,7 +72,6 @@ export async function createBulkDrivers(drivers: Partial<DriverFormData>[]) {
     .insert(cleanData)
 
   if (error) {
-    console.error('Error bulk creating drivers:', error)
     return { success: false, message: `Failed to import: ${error.message}` }
   }
 
@@ -116,11 +114,9 @@ export async function updateDriver(driverId: string, data: Partial<DriverFormDat
     const { error } = await query
 
     if (error) {
-      console.error('Error updating driver:', error)
       return { success: false, message: `Failed to update driver: ${error.message} ${error.details || ''}` }
     }
   } catch (error: unknown) {
-    console.error('Error updating driver:', error)
     return { success: false, message: error instanceof Error ? error.message : 'Database error' }
   }
 
@@ -145,7 +141,6 @@ export async function deleteDriver(driverId: string) {
   const { error } = await query
 
   if (error) {
-    console.error('Error deleting driver:', error)
     return { success: false, message: `Failed to delete driver: ${error.message} ${error.details || ''}` }
   }
 

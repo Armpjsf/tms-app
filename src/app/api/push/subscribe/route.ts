@@ -33,8 +33,7 @@ export async function POST(req: NextRequest) {
         }
 
         return NextResponse.json({ success: true }, { headers: corsHeaders })
-    } catch (error) {
-        console.error('[API Push Subscribe] Error:', error)
+    } catch {
         return NextResponse.json({ error: 'Internal server error' }, { status: 500, headers: corsHeaders })
     }
 }

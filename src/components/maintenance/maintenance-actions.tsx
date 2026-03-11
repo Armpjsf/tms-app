@@ -15,13 +15,14 @@ import {
   DropdownMenuSubContent,
 } from "@/components/ui/dropdown-menu"
 import { deleteRepairTicket, updateRepairTicket } from "@/app/maintenance/actions"
+import { toast } from "sonner"
 import { MaintenanceDialog } from "./maintenance-dialog"
 import { RepairTicket } from "@/lib/supabase/maintenance"
 
 interface MaintenanceActionsProps {
   ticket: RepairTicket
-  drivers: any[]
-  vehicles: any[]
+  drivers: { Driver_ID: string; Driver_Name: string }[]
+  vehicles: { Vehicle_Plate: string; Vehicle_Type: string }[]
 }
 
 export function MaintenanceActions({ ticket, drivers, vehicles }: MaintenanceActionsProps) {
@@ -35,11 +36,10 @@ export function MaintenanceActions({ ticket, drivers, vehicles }: MaintenanceAct
     try {
       const result = await deleteRepairTicket(ticket.Ticket_ID)
       if (!result.success) {
-        alert(result.message)
+        toast.error(result.message)
       }
-    } catch (error) {
-      console.error(error)
-      alert("เกิดข้อผิดพลาดในการลบ")
+    } catch {
+      toast.error("เกิดข้อผิดพลาดในการลบ")
     } finally {
       setLoading(false)
     }
@@ -51,11 +51,10 @@ export function MaintenanceActions({ ticket, drivers, vehicles }: MaintenanceAct
       // For quick status update, we just send the status and required ID
       const result = await updateRepairTicket(ticket.Ticket_ID, { ...ticket, Status: status })
       if (!result.success) {
-        alert(result.message)
+        toast.error(result.message)
       }
-    } catch (error) {
-      console.error(error)
-      alert("เกิดข้อผิดพลาดในการอัปเดตสถานะ")
+    } catch {
+      toast.error("เกิดข้อผิดพลาดในการอัปเดตสถานะ")
     } finally {
       setLoading(false)
     }
