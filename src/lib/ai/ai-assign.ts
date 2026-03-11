@@ -165,20 +165,59 @@ export async function getSuggestedDrivers(jobData: {
 }
 
 // ============================================================
+// Job Bundling: Get nearby unassigned jobs
+// ============================================================
+export async function getNearbyUnassignedJobs(pivotJob: {
+    Job_ID: string
+    Pickup_Lat: number
+    Pickup_Lon: number
+}, radiusKm = 10): Promise<Array<{ Job_ID: string; Customer_Name: string | null; Route_Name: string | null; Pickup_Lat: number | null; Pickup_Lon: number | null; Plan_Date: string | null }>> {
+    try {
+        const supabase = await createClient()
+
+        // 1. Get all unassigned jobs
+        const { data: jobs } = await supabase
+            .from('Jobs_Main')
+            .select('Job_ID, Customer_Name, Route_Name, Pickup_Lat, Pickup_Lon, Plan_Date')
+            .eq('Job_Status', 'New')
+            .is('Driver_ID', null)
+            .neq('Job_ID', pivotJob.Job_ID)
+
+        if (!jobs) return []
+
+        // 2. Filter by distance
+        const nearby = jobs.filter(job => {
+            if (!job.Pickup_Lat || !job.Pickup_Lon) return false
+            const distance = haversineKm(
+                pivotJob.Pickup_Lat, 
+                pivotJob.Pickup_Lon, 
+                job.Pickup_Lat, 
+                job.Pickup_Lon
+            )
+            return distance <= radiusKm
+        })
+
+        return nearby
+    } catch {
+        return []
+    }
+}
+
+// ============================================================
 // Haversine Formula — Calculate distance between two GPS points
 // ============================================================
 function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
-  const R = 6371 // Earth's radius in km
-  const dLat = toRad(lat2 - lat1)
-  const dLon = toRad(lon2 - lon1)
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
-    Math.sin(dLon / 2) * Math.sin(dLon / 2)
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
-  return R * c
+    const R = 6371 // Earth's radius in km
+    const dLat = toRad(lat2 - lat1)
+    const dLon = toRad(lon2 - lon1)
+    const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+        Math.sin(dLon / 2) * Math.sin(dLon / 2)
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+    return R * c
 }
 
 function toRad(deg: number): number {
-  return deg * (Math.PI / 180)
+    return deg * (Math.PI / 180)
 }

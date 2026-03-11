@@ -342,16 +342,16 @@ export async function getExecutiveKPIs(startDate?: string, endDate?: string, bra
             growth: calculateGrowth(currentStats.netProfit, prevStats.netProfit),
         },
         margin: {
-            current: currentStats.profitMargin,
-            previous: prevStats.profitMargin,
-            growth: currentStats.profitMargin - prevStats.profitMargin,
+            current: currentStats.profitMargin ?? 0,
+            previous: prevStats.profitMargin ?? 0,
+            growth: (currentStats.profitMargin ?? 0) - (prevStats.profitMargin ?? 0),
             target: targets.profitMargin
         }
     }
 }
 
 // 9. Route Efficiency (Revenue vs Cost per Route)
-export async function getRouteEfficiency(startDate?: string, endDate?: string, branchId?: string) {
+export async function getRouteProfitability(startDate?: string, endDate?: string, branchId?: string) {
     const supabase = await createClient()
     const effectiveBranchId = await getEffectiveBranchId(branchId)
 
@@ -360,7 +360,7 @@ export async function getRouteEfficiency(startDate?: string, endDate?: string, b
 
     let query = supabase
         .from('Jobs_Main')
-        .select('Route_Name, Price_Cust_Total, Cost_Driver_Total')
+        .select('Route_Name, Price_Cust_Total, Cost_Driver_Total, Price_Cust_Extra, Cost_Driver_Extra')
         .in('Job_Status', REVENUE_STATUSES)
 
     if (sDate) query = query.gte('Plan_Date', sDate)
@@ -369,21 +369,68 @@ export async function getRouteEfficiency(startDate?: string, endDate?: string, b
 
     const { data: jobs } = await query
 
-    const routeStats: Record<string, { route: string, revenue: number, cost: number, count: number }> = {}
+    const routeStats: Record<string, { route: string, revenue: number, cost: number, count: number, extra: number }> = {}
 
     jobs?.forEach(job => {
         const route = job.Route_Name || 'Unknown Route'
         if (!routeStats[route]) {
-            routeStats[route] = { route, revenue: 0, cost: 0, count: 0 }
+            routeStats[route] = { route, revenue: 0, cost: 0, count: 0, extra: 0 }
         }
         routeStats[route].revenue += (job.Price_Cust_Total || 0)
         routeStats[route].cost += (job.Cost_Driver_Total || 0)
+        routeStats[route].extra += (job.Price_Cust_Extra || 0) + (job.Cost_Driver_Extra || 0)
         routeStats[route].count++
     })
 
     return Object.values(routeStats)
-        .map(r => ({ ...r, margin: r.revenue > 0 ? ((r.revenue - r.cost) / r.revenue) * 100 : 0 }))
-        .sort((a, b) => b.revenue - a.revenue)
+        .map(r => {
+            const totalCost = r.cost + r.extra
+            const netProfit = r.revenue - totalCost
+            return { 
+                ...r, 
+                netProfit,
+                margin: r.revenue > 0 ? (netProfit / r.revenue) * 100 : 0 
+            }
+        })
+        .sort((a, b) => b.netProfit - a.netProfit)
+}
+
+// 10. Detailed Trip Profitability (Top 50 Jobs by Margin)
+export async function getDetailedProfitability(startDate?: string, endDate?: string, branchId?: string) {
+    const supabase = await createClient()
+    const effectiveBranchId = await getEffectiveBranchId(branchId)
+
+    const sDate = formatDateSafe(startDate)
+    const eDate = formatDateSafe(endDate)
+
+    let query = supabase
+        .from('Jobs_Main')
+        .select('Job_ID, Customer_Name, Route_Name, Price_Cust_Total, Cost_Driver_Total, Price_Cust_Extra, Cost_Driver_Extra, Plan_Date')
+        .in('Job_Status', REVENUE_STATUSES)
+        .order('Plan_Date', { ascending: false })
+        .limit(50)
+
+    if (sDate) query = query.gte('Plan_Date', sDate)
+    if (eDate) query = query.lte('Plan_Date', eDate)
+    if (effectiveBranchId) query = query.eq('Branch_ID', effectiveBranchId)
+
+    const { data: jobs } = await query
+
+    return (jobs || []).map(job => {
+        const totalCost = (job.Cost_Driver_Total || 0) + (job.Cost_Driver_Extra || 0)
+        const revenue = (job.Price_Cust_Total || 0) + (job.Price_Cust_Extra || 0)
+        const netProfit = revenue - totalCost
+        return {
+            id: job.Job_ID,
+            date: job.Plan_Date,
+            customer: job.Customer_Name,
+            route: job.Route_Name,
+            revenue,
+            cost: totalCost,
+            profit: netProfit,
+            margin: revenue > 0 ? (netProfit / revenue) * 100 : 0
+        }
+    })
 }
 
 // 11. Regional / Branch Deep-Dive

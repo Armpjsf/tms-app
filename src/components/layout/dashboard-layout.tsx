@@ -63,10 +63,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               src={bgImage} 
               alt="Context Background" 
               fill 
-              className="object-cover opacity-[0.85]"
+              className="object-cover opacity-[0.4] saturate-[1.2]"
               priority
             />
-            <div className="absolute inset-0 bg-gradient-to-tr from-white/60 via-white/10 to-white/40" />
+            <div className="absolute inset-0 bg-gradient-to-tr from-white/80 via-white/20 to-white/60" />
           </div>
         )}
 

@@ -97,6 +97,7 @@ export async function loginDriver(formData: FormData) {
     httpOnly: true, 
     secure: process.env.NODE_ENV === "production",
     expires,
+    maxAge: 7 * 24 * 60 * 60, // 7 days in seconds
     sameSite: "lax",
     path: "/",
     priority: "high"

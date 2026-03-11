@@ -14,7 +14,6 @@ import {
   defaultDropAnimationSideEffects,
 } from "@dnd-kit/core"
 import {
-  arrayMove,
   SortableContext,
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
@@ -26,19 +25,12 @@ import { Driver } from "@/lib/supabase/drivers"
 import { Vehicle } from "@/lib/supabase/vehicles"
 import { Customer } from "@/lib/supabase/customers"
 import { Route } from "@/lib/supabase/routes"
+import { Subcontractor } from "@/types/subcontractor"
 import { Badge } from "@/components/ui/badge"
 import { PremiumCard } from "@/components/ui/premium-card"
 import {
-  Search,
-  Filter,
-  MoreHorizontal,
-  LayoutGrid,
-  List as ListIcon,
-  Plus,
-  Trash2,
   MapPin,
   Calendar,
-  Building2,
   Truck,
   Package,
   MoreVertical,
@@ -55,6 +47,7 @@ interface KanbanBoardProps {
   vehicles: Vehicle[]
   customers: Customer[]
   routes: Route[]
+  subcontractors: Subcontractor[]
   canViewPrice: boolean
   canDelete: boolean
 }
@@ -82,6 +75,7 @@ export function KanbanBoard({
   vehicles,
   customers,
   routes,
+  subcontractors,
   canViewPrice,
   canDelete
 }: KanbanBoardProps) {
@@ -115,10 +109,6 @@ export function KanbanBoard({
 
     return acc
   }, [jobs])
-
-  const findColumn = (status: string) => {
-      return COLUMNS.find(c => c.statuses.includes(status))?.id || "New"
-  }
 
   const handleDragStart = (event: DragStartEvent) => {
     setActiveId(event.active.id as string)
@@ -188,6 +178,7 @@ export function KanbanBoard({
             vehicles={vehicles}
             customers={customers}
             routes={routes}
+            subcontractors={subcontractors}
             canViewPrice={canViewPrice}
             canDelete={canDelete}
           />
@@ -211,6 +202,7 @@ export function KanbanBoard({
                     vehicles={vehicles}
                     customers={customers}
                     routes={routes}
+                    subcontractors={subcontractors}
                     canViewPrice={canViewPrice}
                     canDelete={canDelete}
                 />
@@ -229,6 +221,7 @@ interface KanbanColumnProps {
   vehicles: Vehicle[]
   customers: Customer[]
   routes: Route[]
+  subcontractors: Subcontractor[]
   canViewPrice: boolean
   canDelete: boolean
 }
@@ -240,6 +233,7 @@ function KanbanColumn({
     vehicles,
     customers,
     routes,
+    subcontractors,
     canViewPrice,
     canDelete
 }: KanbanColumnProps) {
@@ -285,6 +279,7 @@ function KanbanColumn({
                 vehicles={vehicles}
                 customers={customers}
                 routes={routes}
+                subcontractors={subcontractors}
                 canViewPrice={canViewPrice}
                 canDelete={canDelete}
             />
@@ -308,6 +303,7 @@ interface KanbanCardProps {
   vehicles: Vehicle[]
   customers: Customer[]
   routes: Route[]
+  subcontractors: Subcontractor[]
   canViewPrice: boolean
   canDelete: boolean
 }
@@ -319,6 +315,7 @@ function KanbanCard({
     vehicles,
     customers,
     routes,
+    subcontractors,
     canViewPrice,
     canDelete
 }: KanbanCardProps) {
@@ -368,6 +365,7 @@ function KanbanCard({
             vehicles={vehicles}
             customers={customers}
             routes={routes}
+            subcontractors={subcontractors}
             canViewPrice={canViewPrice}
             canDelete={canDelete}
             trigger={

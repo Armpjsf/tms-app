@@ -25,6 +25,7 @@ import { toast } from "sonner"
 
 import { Job, JobAssignment } from "@/lib/supabase/jobs"
 import { Route } from "@/lib/supabase/routes"
+import { Subcontractor } from "@/types/subcontractor"
 import { 
   Loader2, 
   Plus, 
@@ -64,6 +65,7 @@ type JobDialogProps = {
   vehicles?: Vehicle[]
   customers?: Customer[]
   routes?: Route[]
+  subcontractors?: Subcontractor[]
   trigger?: React.ReactNode
   open?: boolean
   onOpenChange?: (open: boolean) => void
@@ -99,6 +101,7 @@ export function JobDialog({
   vehicles = [],
   customers = [],
   routes = [],
+  subcontractors = [],
   trigger,
   open: controlledOpen,
   onOpenChange: setControlledOpen,
@@ -142,6 +145,8 @@ export function JobDialog({
     branch_id: job?.branch_id || '',
     Delivery_Lat: job?.Delivery_Lat || null,
     Delivery_Lon: job?.Delivery_Lon || null,
+    Sub_ID: job?.Sub_ID || '',
+    Show_Price_To_Driver: job?.Show_Price_To_Driver !== false,
   })
 
   // Multi-Assignment State
@@ -202,6 +207,9 @@ export function JobDialog({
     parseJson((job?.extra_costs || job?.extra_costs_json) as string | unknown[], []) as ExtraCost[]
   )
 
+  // Job Bundling State
+  const [nearbyJobs, setNearbyJobs] = useState<Array<{ Job_ID: string; Customer_Name: string | null }>>([])
+
   useEffect(() => {
     if (show && internalMode === 'create' && !job) {
       setFormData(prev => ({ 
@@ -212,6 +220,22 @@ export function JobDialog({
       }))
     }
   }, [show, internalMode, job, defaultDate])
+
+  // Fetch nearby unassigned jobs when origin coordinates available
+  useEffect(() => {
+    const fetchNearby = async () => {
+        if (origins[0]?.lat && origins[0]?.lng) {
+            const { getNearbyUnassignedJobs } = await import('@/lib/ai/ai-assign')
+            const jobs = await getNearbyUnassignedJobs({
+                Job_ID: formData.Job_ID,
+                Pickup_Lat: Number(origins[0].lat),
+                Pickup_Lon: Number(origins[0].lng)
+            })
+            setNearbyJobs(jobs)
+        }
+    }
+    if (show && internalMode === 'create') fetchNearby()
+  }, [origins, formData.Job_ID, show, internalMode])
 
   // Sync initial assignment state from job prop if editing
   useEffect(() => {
@@ -968,6 +992,39 @@ export function JobDialog({
                                     }
                                 }}
                             />
+
+                            {/* Nearby Job Bundling Suggestions */}
+                            {nearbyJobs.length > 0 && (
+                                <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                                    <h4 className="text-xs font-bold text-blue-700 flex items-center gap-2 mb-2">
+                                        <LinkIcon className="w-3 h-3" /> แนะนำ: ยุบรวมงาน (Job Bundling)
+                                    </h4>
+                                    <p className="text-[10px] text-blue-600 mb-2">พบงานที่อยู่ใกล้เคียงกัน สามารถส่งพร้อมกันได้:</p>
+                                    <div className="space-y-2">
+                                        {nearbyJobs.slice(0, 2).map((nj) => (
+                                            <div key={nj.Job_ID} className="flex items-center justify-between bg-white p-2 rounded border border-blue-100 shadow-sm">
+                                                <div>
+                                                    <p className="text-[10px] font-bold text-slate-900">{nj.Job_ID}</p>
+                                                    <p className="text-[9px] text-slate-500">{nj.Customer_Name}</p>
+                                                </div>
+                                                <Button 
+                                                    type="button" 
+                                                    size="sm" 
+                                                    variant="ghost" 
+                                                    className="h-7 text-[10px] text-blue-600 hover:bg-blue-50 font-bold"
+                                                    onClick={() => {
+                                                        toast.info(`กรุณามอบหมายงาน ${nj.Job_ID} ให้คนขับคนเดียวกันแยกต่างหาก`)
+                                                        // Future: actually add to bulk create list
+                                                    }}
+                                                >
+                                                    มอบหมายเพิ่ม
+                                                </Button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
                             <div className="relative my-4">
                                 <div className="absolute inset-0 flex items-center">
                                     <span className="w-full border-t border-border" />
@@ -1040,6 +1097,17 @@ export function JobDialog({
                                     Driver_ID: assignedDriver ? assignedDriver.Driver_ID : current.Driver_ID
                                 }
                                 setAssignments(newAssignments)
+
+                                // Sync to main form data for the first assignment
+                                if (index === 0) {
+                                    setFormData(prev => ({
+                                        ...prev,
+                                        Vehicle_Plate: v.vehicle_plate,
+                                        Vehicle_Type: v.vehicle_type || prev.Vehicle_Type,
+                                        Sub_ID: v.sub_id || prev.Sub_ID,
+                                        Driver_ID: assignedDriver ? assignedDriver.Driver_ID : prev.Driver_ID
+                                    }))
+                                }
                             }}
                             placeholder="พิมพ์ทะเบียนรถ..."
                             className="bg-background border-input text-sm"
@@ -1047,35 +1115,64 @@ export function JobDialog({
                         </div>
                     </div>
 
-                    <div className="space-y-2">
-                        <Label className="flex items-center gap-1 text-xs text-gray-500">
-                           <User className="w-3 h-3" /> คนขับ
-                        </Label>
-                        <DriverAutocomplete
-                            value={assignment.Driver_ID}
-                            onChange={(val) => updateAssignment(index, 'Driver_ID', val)}
-                            drivers={drivers}
-                            onSelect={(d) => {
-                                // Auto-fill vehicle and other driver details
-                                const newAssignments = [...assignments]
-                                const current = newAssignments[index]
-                                
-                                // Find assigned vehicle if any
-                                const assignedVehicle = d.Vehicle_Plate ? vehicles.find(v => v.vehicle_plate === d.Vehicle_Plate) : null
-                                
-                                newAssignments[index] = {
-                                    ...current,
-                                    Driver_ID: d.Driver_ID,
-                                    Sub_ID: d.Sub_ID || current.Sub_ID,
-                                    Vehicle_Plate: assignedVehicle ? assignedVehicle.vehicle_plate : (d.Vehicle_Plate || current.Vehicle_Plate),
-                                    Vehicle_Type: assignedVehicle ? assignedVehicle.vehicle_type : (d.Vehicle_Type || current.Vehicle_Type),
-                                    // Use driver default if explicitly set, otherwise keep current
-                                    Show_Price_To_Driver: d.Show_Price_Default ?? current.Show_Price_To_Driver
-                                }
-                                setAssignments(newAssignments)
-                            }}
-                            className="bg-background border-input text-sm"
-                        />
+                    <div className="grid grid-cols-2 gap-4 mb-4">
+                        <div className="space-y-2">
+                            <Label className="flex items-center gap-1 text-xs text-muted-foreground">
+                                <Building2 className="w-3 h-3" /> บริษัทรถร่วม (Carrier)
+                            </Label>
+                            <select
+                                value={assignment.Sub_ID || ""}
+                                onChange={(e) => updateAssignment(index, 'Sub_ID', e.target.value)}
+                                className="w-full h-10 px-3 rounded-md bg-background border border-input text-foreground text-sm"
+                            >
+                                <option value="">ไม่ได้ระบุ (Internal)</option>
+                                {subcontractors.map((sub) => (
+                                    <option key={sub.Sub_ID} value={sub.Sub_ID}>{sub.Sub_Name}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="space-y-2">
+                            <Label className="flex items-center gap-1 text-xs text-gray-500">
+                                <User className="w-3 h-3" /> คนขับ
+                            </Label>
+                            <DriverAutocomplete
+                                value={assignment.Driver_ID}
+                                onChange={(val) => updateAssignment(index, 'Driver_ID', val)}
+                                drivers={drivers}
+                                onSelect={(d) => {
+                                    // Auto-fill vehicle and other driver details
+                                    const newAssignments = [...assignments]
+                                    const current = newAssignments[index]
+                                    
+                                    // Find assigned vehicle if any
+                                    const assignedVehicle = d.Vehicle_Plate ? vehicles.find(v => v.vehicle_plate === d.Vehicle_Plate) : null
+                                    
+                                    newAssignments[index] = {
+                                        ...current,
+                                        Driver_ID: d.Driver_ID,
+                                        Sub_ID: d.Sub_ID || current.Sub_ID,
+                                        Vehicle_Plate: assignedVehicle ? assignedVehicle.vehicle_plate : (d.Vehicle_Plate || current.Vehicle_Plate),
+                                        Vehicle_Type: assignedVehicle ? assignedVehicle.vehicle_type : (d.Vehicle_Type || current.Vehicle_Type),
+                                        // Use driver default if explicitly set, otherwise keep current
+                                        Show_Price_To_Driver: d.Show_Price_Default ?? current.Show_Price_To_Driver
+                                    }
+                                    setAssignments(newAssignments)
+                                    
+                                    // Sync to main form data for the first assignment
+                                    if (index === 0) {
+                                        setFormData(prev => ({
+                                            ...prev,
+                                            Driver_ID: d.Driver_ID,
+                                            Sub_ID: d.Sub_ID || prev.Sub_ID,
+                                            Vehicle_Plate: assignedVehicle ? assignedVehicle.vehicle_plate : (d.Vehicle_Plate || prev.Vehicle_Plate),
+                                            Vehicle_Type: assignedVehicle ? assignedVehicle.vehicle_type : (d.Vehicle_Type || prev.Vehicle_Type),
+                                            Show_Price_To_Driver: d.Show_Price_Default ?? prev.Show_Price_To_Driver
+                                        }))
+                                    }
+                                }}
+                                className="bg-background border-input text-sm"
+                            />
+                        </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">

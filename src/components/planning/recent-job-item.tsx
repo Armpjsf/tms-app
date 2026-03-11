@@ -10,6 +10,7 @@ import { Route } from "@/lib/supabase/routes"
 import { Driver } from "@/lib/supabase/drivers"
 import { Vehicle } from "@/lib/supabase/vehicles"
 import { Customer } from "@/lib/supabase/customers"
+import { Subcontractor } from "@/types/subcontractor"
 
 type Props = {
   job: Job
@@ -17,11 +18,12 @@ type Props = {
   vehicles: Vehicle[]
   customers: Customer[]
   routes: Route[]
+  subcontractors: Subcontractor[]
   canViewPrice?: boolean
   canDelete?: boolean
 }
 
-export function RecentJobItem({ job, drivers, vehicles, customers, routes, canViewPrice = true, canDelete = true }: Props) {
+export function RecentJobItem({ job, drivers, vehicles, customers, routes, subcontractors, canViewPrice = true, canDelete = true }: Props) {
   const [open, setOpen] = useState(false)
   const [previewOpen, setPreviewOpen] = useState(false)
 
@@ -93,6 +95,7 @@ export function RecentJobItem({ job, drivers, vehicles, customers, routes, canVi
         vehicles={vehicles}
         customers={customers}
         routes={routes}
+        subcontractors={subcontractors}
         canViewPrice={canViewPrice}
         canDelete={canDelete}
       />

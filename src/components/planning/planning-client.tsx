@@ -28,6 +28,7 @@ import { Driver } from "@/lib/supabase/drivers"
 import { Vehicle } from "@/lib/supabase/vehicles"
 import { Route } from "@/lib/supabase/routes"
 import { Customer } from "@/lib/supabase/customers"
+import { Subcontractor } from "@/types/subcontractor"
 import { JobFormData } from "@/app/planning/actions"
 import { JobDialog } from "@/components/planning/job-dialog"
 import { CreateJobButton } from "@/components/planning/create-job-button"
@@ -47,6 +48,7 @@ interface PlanningClientProps {
         vehicles: Vehicle[]
         customers: Customer[]
         routes: Route[]
+        subcontractors: Subcontractor[]
     }
     canViewPrice: boolean
     canDelete: boolean
@@ -79,7 +81,7 @@ export function PlanningClient({
     canCreate,
     createBulkJobs
 }: PlanningClientProps) {
-    const { drivers, vehicles, customers, routes } = jobCreationData
+    const { drivers, vehicles, customers, routes, subcontractors } = jobCreationData
     const [view, setView] = useState<'list' | 'kanban' | 'requests'>('list')
 
     const filteredJobs = useMemo(() => {
@@ -177,6 +179,7 @@ export function PlanningClient({
                         vehicles={vehicles}
                         customers={customers}
                         routes={routes}
+                        subcontractors={subcontractors}
                     />
                 </div>
             </motion.div>
@@ -247,6 +250,7 @@ export function PlanningClient({
                                                 vehicles={vehicles}
                                                 customers={customers}
                                                 routes={routes}
+                                                subcontractors={subcontractors}
                                                 canViewPrice={canViewPrice}
                                                 canDelete={canDelete}
                                                 trigger={
@@ -277,6 +281,7 @@ export function PlanningClient({
                                                 vehicles={vehicles}
                                                 customers={customers}
                                                 routes={routes}
+                                                subcontractors={subcontractors}
                                                 canViewPrice={canViewPrice}
                                                 canDelete={canDelete}
                                             />
@@ -300,6 +305,7 @@ export function PlanningClient({
                         vehicles={vehicles}
                         customers={customers}
                         routes={routes}
+                        subcontractors={subcontractors}
                         canViewPrice={canViewPrice}
                         canDelete={canDelete}
                     />

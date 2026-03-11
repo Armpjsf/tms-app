@@ -8,15 +8,17 @@ import { Driver } from "@/lib/supabase/drivers"
 import { Vehicle } from "@/lib/supabase/vehicles"
 import { Customer } from "@/lib/supabase/customers"
 import { Route } from "@/lib/supabase/routes"
+import { Subcontractor } from "@/types/subcontractor"
 
 type Props = {
   drivers: Driver[]
   vehicles: Vehicle[]
   customers: Customer[]
   routes: Route[]
+  subcontractors: Subcontractor[]
 }
 
-export function CreateJobButton({ drivers, vehicles, customers, routes }: Props) {
+export function CreateJobButton({ drivers, vehicles, customers, routes, subcontractors }: Props) {
   const [open, setOpen] = useState(false)
 
   return (
@@ -37,6 +39,7 @@ export function CreateJobButton({ drivers, vehicles, customers, routes }: Props)
         vehicles={vehicles}
         customers={customers}
         routes={routes}
+        subcontractors={subcontractors}
       />
     </>
   )

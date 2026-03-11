@@ -192,6 +192,61 @@ export async function getNotifications(): Promise<AppNotification[]> {
     // Chat notification error
   }
 
+  try {
+    // 5. Idle Detection (Smart Alert)
+    // Find jobs that are active (In Transit/Progress) but haven't sent a GPS update or moved for 30 mins
+    const { data: activeJobs } = await supabase
+      .from('Jobs_Main')
+      .select('Job_ID, Driver_ID, Driver_Name, Vehicle_Plate, updated_at')
+      .in('Job_Status', ['In Transit', 'In Progress', 'Arrived Pickup', 'Arrived Dropoff'])
+
+    if (activeJobs && activeJobs.length > 0) {
+      for (const job of activeJobs) {
+        if (!job.Driver_ID) continue
+
+        // Get last 2 logs to check movement
+        const { data: recentLogs } = await supabase
+          .from('gps_logs')
+          .select('latitude, longitude, timestamp')
+          .eq('driver_id', job.Driver_ID)
+          .order('timestamp', { ascending: false })
+          .limit(2)
+
+        if (recentLogs && recentLogs.length > 0) {
+          const latest = recentLogs[0]
+          const lastUpdate = new Date(latest.timestamp)
+          const idleMinutes = (now.getTime() - lastUpdate.getTime()) / (1000 * 60)
+
+          if (idleMinutes > 30) {
+            // Check if they are actually moving (if 2 logs exist)
+            let isMoving = true
+            if (recentLogs.length === 2) {
+               const prev = recentLogs[1]
+               // If distance < 10 meters, consider stopped
+               const dist = Math.sqrt(Math.pow(latest.latitude - prev.latitude, 2) + Math.pow(latest.longitude - prev.longitude, 2))
+               if (dist < 0.0001) isMoving = false
+            }
+
+            if (!isMoving || idleMinutes > 60) {
+                notifications.push({
+                    id: `idle-${job.Job_ID}`,
+                    type: 'system',
+                    title: '🐢 รถจอดแช่นานผิดปกติ',
+                    message: `${job.Driver_Name || 'คนขับ'} (${job.Vehicle_Plate || job.Job_ID}) จอดนิ่งเกิน ${Math.round(idleMinutes)} นาที`,
+                    timestamp: latest.timestamp,
+                    read: false,
+                    href: `/monitoring?driver=${job.Driver_ID}`,
+                    severity: idleMinutes > 60 ? 'critical' : 'warning'
+                })
+            }
+          }
+        }
+      }
+    }
+  } catch (err) {
+    // Idle detection error
+  }
+
   // Sort: critical first, then by timestamp
   return notifications.sort((a, b) => {
     const severityOrder = { critical: 0, warning: 1, info: 2 }

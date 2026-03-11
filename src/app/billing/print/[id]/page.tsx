@@ -1,6 +1,5 @@
 import { getBillingNoteByIdWithJobs } from "@/lib/supabase/billing"
 import { notFound } from "next/navigation"
-import { BillingActions } from "@/components/billing/billing-actions"
 import { AutoPrint } from "@/components/utils/auto-print"
 
 export const dynamic = 'force-dynamic'
@@ -144,7 +143,7 @@ export default async function BillingPrintPage(props: Props) {
                                 }
                             } catch {}
 
-                            const chargeableExtras = extraCosts.filter(c => c.charge_cust > 0)
+                            const chargeableExtras = extraCosts.filter(c => (c.charge_cust ?? 0) > 0)
 
                             return (
                                 <tbody key={job.Job_ID} className="text-[11px] text-slate-700">
@@ -202,14 +201,14 @@ export default async function BillingPrintPage(props: Props) {
                 </div>
 
                 {/* Signatures Area - Compact */}
-                <div className="grid grid-cols-2 gap-8 mt-10 break-inside-avoid">
+                <div className="grid grid-cols-2 gap-8 mt-6 page-break-avoid">
                     <div className="text-center">
-                        <div className="h-12 border-b border-dashed border-slate-300 mb-1"></div>
+                        <div className="h-10 border-b border-dashed border-slate-300 mb-1"></div>
                         <p className="text-[8px] font-black text-slate-300 uppercase tracking-widest">Authorized Signature</p>
                         <p className="text-[10px] text-slate-800 font-bold">ผู้วางบิล</p>
                     </div>
                     <div className="text-center">
-                        <div className="h-12 border-b border-dashed border-slate-300 mb-1"></div>
+                        <div className="h-10 border-b border-dashed border-slate-300 mb-1"></div>
                         <p className="text-[8px] font-black text-slate-300 uppercase tracking-widest">Receiver Signature</p>
                         <p className="text-[10px] text-slate-800 font-bold">ผู้รับวางบิล</p>
                     </div>
@@ -219,7 +218,7 @@ export default async function BillingPrintPage(props: Props) {
             <style type="text/css" media="print">{`
                 @page { 
                     size: A4; 
-                    margin: 8mm 12mm; 
+                    margin: 5mm 10mm; 
                 }
                 body { 
                     visibility: hidden; 
@@ -236,17 +235,18 @@ export default async function BillingPrintPage(props: Props) {
                     width: 100%;
                     background: white !important;
                 }
+                .page-break-avoid {
+                    break-inside: avoid;
+                    page-break-inside: avoid;
+                }
                 img {
                     display: block !important;
                     visibility: visible !important;
                     opacity: 1 !important;
-                    height: 15mm !important; /* Strict height for print */
+                    height: 20mm !important; 
                     width: auto !important;
-                    max-width: 50mm !important;
-                }
-                .print-logo {
-                    height: 15mm !important;
-                    width: auto !important;
+                    max-width: 60mm !important;
+                    object-fit: contain !important;
                 }
             `}</style>
         </div>

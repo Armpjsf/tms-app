@@ -96,8 +96,7 @@ export async function getPublicJobDetails(
     const { data: gpsData } = await supabase
       .from("gps_logs")
       .select("*")
-      .eq("driver_id", job.Driver_Name) // Assuming Driver_Name is the foreign key or ID in some cases, but usually we need Driver_ID.
-      // Let's check if Driver_ID is available in job.
+      .eq("driver_id", job.Driver_ID) 
       .order("timestamp", { ascending: false })
       .limit(1);
 

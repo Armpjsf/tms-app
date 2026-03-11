@@ -340,11 +340,12 @@ export async function deleteJob(jobId: string) {
 export async function getJobCreationData() {
   const supabase = await createClient()
 
-  const [driversResult, vehiclesResult, customersResult, routesResult] = await Promise.all([
+  const [driversResult, vehiclesResult, customersResult, routesResult, subcontractorsResult] = await Promise.all([
     getAllDriversFromTable(),
     getAllVehiclesFromTable(),
     supabase.from('Master_Customers').select('*').order('Customer_Name', { ascending: true }),
-    supabase.from('Master_Routes').select('*').order('Route_Name', { ascending: true })
+    supabase.from('Master_Routes').select('*').order('Route_Name', { ascending: true }),
+    supabase.from('Master_Subcontractors').select('*').order('Sub_Name', { ascending: true })
   ])
 
   if (customersResult.error) {
@@ -355,7 +356,8 @@ export async function getJobCreationData() {
     drivers: driversResult,
     vehicles: vehiclesResult,
     customers: customersResult.data || [],
-    routes: routesResult.data || []
+    routes: routesResult.data || [],
+    subcontractors: subcontractorsResult.data || []
   }
 }
 

@@ -4,6 +4,20 @@ import { jsPDF } from "jspdf"
 import autoTable from "jspdf-autotable"
 import { createAdminClient } from "@/utils/supabase/server"
 import { uploadFileToSupabase } from "@/lib/actions/supabase-upload"
+import { THAI_FONT_LEELAWADEE } from "@/lib/fonts/thai-font"
+
+// Helper to fetch image and return base64
+async function getImageBase64(url: string): Promise<string | null> {
+    try {
+        const response = await fetch(url)
+        if (!response.ok) return null
+        const blob = await response.arrayBuffer()
+        const buffer = Buffer.from(blob)
+        return `data:image/png;base64,${buffer.toString('base64')}`
+    } catch {
+        return null
+    }
+}
 
 export async function generateJobPDF(jobId: string) {
     // PDF generation started
@@ -24,6 +38,12 @@ export async function generateJobPDF(jobId: string) {
 
         // 2. Initialize PDF
         const doc = new jsPDF()
+        
+        // Register Thai Font
+        doc.addFileToVFS('Leelawadee.ttf', THAI_FONT_LEELAWADEE)
+        doc.addFont('Leelawadee.ttf', 'Leelawadee', 'normal')
+        doc.setFont('Leelawadee')
+
         const primaryColor = [30, 41, 59] // Slate 800
         const accentColor = [79, 70, 229] // Indigo 600
 
@@ -33,11 +53,11 @@ export async function generateJobPDF(jobId: string) {
         
         doc.setTextColor(255, 255, 255)
         doc.setFontSize(22)
-        doc.text("DELIVERY SUMMARY REPORT", 15, 20)
+        doc.text("DELIVERY SUMMARY REPORT (สรุปใบงาน)", 15, 20)
         
         doc.setFontSize(10)
         doc.text(`Job ID: ${job.Job_ID}`, 15, 30)
-        doc.text(`Generated: ${new Date().toLocaleString('th-TH')}`, 15, 35)
+        doc.text(`Generated (วันที่สร้าง): ${new Date().toLocaleString('th-TH')}`, 15, 35)
 
         // Job Details Table
         const detailsData = [
@@ -54,41 +74,58 @@ export async function generateJobPDF(jobId: string) {
 
         autoTable(doc, {
             startY: 50,
-            head: [['Field', 'Value']],
+            head: [['Field (ฟิลด์)', 'Value (ข้อมูล)']],
             body: detailsData,
             theme: 'striped',
-            headStyles: { fillColor: accentColor as any },
-            styles: { fontSize: 10, cellPadding: 3 }
+            headStyles: { 
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                fillColor: accentColor as any,
+                font: 'Leelawadee'
+            },
+            styles: { 
+                fontSize: 10, 
+                cellPadding: 3,
+                font: 'Leelawadee'
+            }
         })
 
         // Photos Section (Basic implementation - embedding images in PDF requires base64)
         // Since fetching and converting all images might be heavy, for now we will 
         // provide links in metadata but let's try to embed at least the signature.
         
-        let finalY = (doc as any).lastAutoTable.finalY + 20
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const finalYFromTable = (doc as any).lastAutoTable.finalY || 150
+        let finalY = finalYFromTable + 20
 
-        // Signatures
+        // Signatures (Embedded Images)
         if (job.Signature_Url || job.Pickup_Signature_Url) {
-            doc.setFontSize(12)
+            doc.setFontSize(14)
             doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2])
-            doc.text("SIGNATURES", 15, finalY)
+            doc.text("SIGNATURES (ลายเซ็น)", 15, finalY)
             finalY += 10
 
-            // Helper to get image as base64 (Simplified for logic)
-            // Note: In real server environment, we'd use fetch + buffer -> base64
-            // Since we can't easily fetch external images right now, we'll add links
-            doc.setFontSize(8)
+            // Pickup Signature
             if (job.Pickup_Signature_Url) {
-                doc.text("Pickup Signature:", 15, finalY)
-                doc.setTextColor(accentColor[0], accentColor[1], accentColor[2])
-                doc.text("(View Signature Link)", 15, finalY + 5)
-                doc.setTextColor(0, 0, 0)
+                doc.setFontSize(10)
+                doc.text("ต้นทาง (Pickup Signature):", 15, finalY)
+                const base64 = await getImageBase64(job.Pickup_Signature_Url)
+                if (base64) {
+                    doc.addImage(base64, 'PNG', 15, finalY + 5, 40, 20)
+                } else {
+                    doc.text("(Image load failed)", 15, finalY + 5)
+                }
             }
+
+            // POD Signature
             if (job.Signature_Url) {
-                doc.text("POD Signature:", 100, finalY)
-                doc.setTextColor(accentColor[0], accentColor[1], accentColor[2])
-                doc.text("(View Signature Link)", 100, finalY + 5)
-                doc.setTextColor(0, 0, 0)
+                doc.setFontSize(10)
+                doc.text("ปลายทาง (POD Signature):", 110, finalY)
+                const base64 = await getImageBase64(job.Signature_Url)
+                if (base64) {
+                    doc.addImage(base64, 'PNG', 110, finalY + 5, 40, 20)
+                } else {
+                    doc.text("(Image load failed)", 110, finalY + 5)
+                }
             }
         }
 

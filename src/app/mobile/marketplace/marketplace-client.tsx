@@ -131,6 +131,10 @@ export function MarketplaceClient({ initialJobs, driverId, driverName }: Marketp
                                                     <Clock size={14} className="text-orange-500"/>
                                                     <span>{job.Plan_Date ? new Date(job.Plan_Date).toLocaleDateString('th-TH') : 'ไม่ระบุวัน'}</span>
                                                 </div>
+                                                <div className="flex items-center gap-1.5 text-emerald-600 font-bold">
+                                                    <Activity size={14} />
+                                                    <span>เป้าหมาย: ฿{(job.Cost_Driver_Total || 0).toLocaleString()}</span>
+                                                </div>
                                                 <div className="flex items-center gap-1.5 text-gray-600">
                                                     <Truck size={14} className="text-blue-500"/>
                                                     <span>{job.Vehicle_Type || 'ไม่ระบุประเภทรถ'}</span>
