@@ -63,24 +63,26 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               src={bgImage} 
               alt="Context Background" 
               fill 
-              className="object-cover opacity-[0.4] saturate-[1.2]"
+              className="object-cover opacity-[0.15] saturate-[1.2] contrast-[1.1] scale-105 blur-[2px]"
               priority
             />
-            <div className="absolute inset-0 bg-gradient-to-tr from-white/80 via-white/20 to-white/60" />
+            {/* Darker Overlay to make content pop */}
+            <div className="absolute inset-0 bg-slate-950/40" />
+            <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent" />
           </div>
         )}
 
-        {/* Animated Gradient Orbs */}
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-emerald-500/5 rounded-full blur-[120px] animate-pulse" />
-        <div className="absolute bottom-[10%] right-[-10%] w-[50%] h-[50%] bg-teal-500/5 rounded-full blur-[120px] animate-pulse delay-1000" />
-        <div className="absolute top-[30%] right-[10%] w-[30%] h-[30%] bg-cyan-500/5 rounded-full blur-[100px] animate-pulse delay-500" />
+        {/* Global Premium Glows */}
+        <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] bg-emerald-500/10 rounded-full blur-[150px] animate-pulse pointer-events-none" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-indigo-500/10 rounded-full blur-[130px] animate-pulse delay-700 pointer-events-none" />
         
         {/* Subtle Grid Pattern with mask */}
         <div 
-            className="absolute inset-0 opacity-[0.03]"
+            className="absolute inset-0 opacity-[0.05]"
             style={{
-                backgroundImage: `linear-gradient(rgba(0,0,0,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.05) 1px, transparent 1px)`,
-                backgroundSize: '40px 40px'
+                backgroundImage: `linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px)`,
+                backgroundSize: '60px 60px',
+                maskImage: 'radial-gradient(circle at center, black, transparent 80%)'
             }}
         />
       </div>
@@ -100,12 +102,15 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           animate={isMounted ? { opacity: 1 } : { opacity: 0 }}
           transition={{ duration: 0.2 }}
           className={cn(
-          "relative pt-16 min-h-screen transition-all duration-300",
-          sidebarCollapsed ? "pl-20" : "pl-[280px]"
+            "relative pt-16 min-h-screen transition-all duration-300",
+            sidebarCollapsed ? "pl-20" : "pl-[280px]"
           )}
       >
-          <div className="p-6">
-          {children}
+          {/* Content Glass Effect Container */}
+          <div className="relative z-20 min-h-screen">
+            <div className="p-6">
+            {children}
+            </div>
           </div>
       </motion.main>
     </div>

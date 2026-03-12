@@ -10,10 +10,11 @@ import {
     ResponsiveContainer, 
     LineChart, 
     Line,
-    Legend
+    Legend,
+    Cell
 } from 'recharts'
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Package, CheckCircle2 } from "lucide-react"
+import { PremiumCard } from "@/components/ui/premium-card"
+import { Package, CheckCircle2, Activity, Zap } from "lucide-react"
 
 type PerformanceData = {
   date: string
@@ -32,88 +33,119 @@ export function PerformanceCharts({ data }: { data: PerformanceData[] }) {
   }))
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
       {/* Job Volume Trend */}
-      <Card className="bg-white/80 backdrop-blur-sm border-gray-200 shadow-xl">
-        <CardHeader className="border-b border-gray-200 bg-white/80">
-            <CardTitle className="text-gray-950 font-black flex items-center gap-3 text-sm flex items-center gap-3 text-sm font-bold">
-                <Package className="text-emerald-600" size={18} /> 
-                <span>ปริมาณงานสะสม <span className="text-gray-400 font-normal text-xs ml-1">(Job Volume Trend)</span></span>
-            </CardTitle>
-        </CardHeader>
-        <CardContent className="pt-6 h-[300px]">
+      <PremiumCard className="bg-white border-none shadow-[0_30px_100px_rgba(0,0,0,0.1)] p-0 overflow-hidden rounded-br-[5rem] rounded-tl-[3rem]">
+        <div className="p-8 border-b border-slate-50 bg-slate-950 relative overflow-hidden flex items-center justify-between">
+            <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 to-transparent pointer-events-none" />
+            <div className="flex items-center gap-3 relative z-10">
+                <div className="p-2 bg-emerald-600 rounded-xl text-white shadow-lg">
+                    <Package size={16} />
+                </div>
+                <div>
+                    <h3 className="text-lg font-black text-white tracking-tight italic uppercase">Mission Volume</h3>
+                    <p className="text-emerald-400 text-[9px] font-bold uppercase tracking-[0.2em]">Operational Throughput Trend</p>
+                </div>
+            </div>
+        </div>
+        <div className="p-10 h-[350px]">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} opacity={0.3} />
+              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
               <XAxis 
                 dataKey="date" 
                 stroke="#64748b" 
                 fontSize={10} 
+                fontWeight="900"
                 tickLine={false} 
                 axisLine={false}
+                className="uppercase italic"
               />
               <YAxis 
                 stroke="#64748b" 
                 fontSize={10} 
+                fontWeight="900"
                 tickLine={false} 
                 axisLine={false}
               />
               <Tooltip 
-                contentStyle={{ backgroundColor: '#ffffff', borderColor: '#e2e8f0', color: '#0f172a', borderRadius: '8px' }}
-                itemStyle={{ fontSize: '12px' }}
+                cursor={{ fill: '#f8fafc' }}
+                contentStyle={{ 
+                    backgroundColor: 'rgba(2, 6, 23, 0.95)', 
+                    borderColor: 'rgba(30, 41, 59, 0.5)', 
+                    borderRadius: '16px', 
+                    border: '1px solid rgba(255,255,255,0.05)',
+                    backdropFilter: 'blur(12px)'
+                }}
+                itemStyle={{ fontSize: '11px', fontWeight: '900', textTransform: 'uppercase' }}
               />
-              <Legend iconType="circle" wrapperStyle={{ paddingTop: '10px', fontSize: '10px' }} verticalAlign="top" height={36}/>
-              <Bar dataKey="onTimeCount" name="ส่งตรงเวลา" stackId="a" fill="#10b981" radius={[0, 0, 0, 0]} />
-              <Bar dataKey="lateJobs" name="ส่งล่าช้า" stackId="a" fill="#f59e0b" radius={[4, 4, 0, 0]} />
+              <Legend verticalAlign="top" align="right" iconType="circle" wrapperStyle={{ paddingBottom: '20px', fontSize: '10px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '0.1em' }}/>
+              <Bar dataKey="onTimeCount" name="Nominal Ops" stackId="a" fill="#10b981" radius={[0, 0, 0, 0]} />
+              <Bar dataKey="lateJobs" name="Delayed" stackId="a" fill="#f59e0b" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
-        </CardContent>
-      </Card>
+        </div>
+      </PremiumCard>
 
       {/* On-Time Efficiency */}
-      <Card className="bg-white/80 backdrop-blur-sm border-gray-200 shadow-xl">
-        <CardHeader className="border-b border-gray-200 bg-white/80">
-            <CardTitle className="text-gray-950 font-black flex items-center gap-3 text-sm flex items-center gap-3 text-sm font-bold">
-                <CheckCircle2 className="text-emerald-400" size={18} /> 
-                <span>เปอร์เซ็นต์ความตรงเวลา <span className="text-gray-400 font-normal text-xs ml-1">(On-Time Reliability)</span></span>
-            </CardTitle>
-        </CardHeader>
-        <CardContent className="pt-6 h-[300px]">
+      <PremiumCard className="bg-white border-none shadow-[0_30_100px_rgba(0,0,0,0.1)] p-0 overflow-hidden rounded-br-[5rem] rounded-tl-[3rem]">
+        <div className="p-8 border-b border-slate-50 bg-slate-950 relative overflow-hidden flex items-center justify-between">
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-transparent pointer-events-none" />
+            <div className="flex items-center gap-3 relative z-10">
+                <div className="p-2 bg-blue-600 rounded-xl text-white shadow-lg">
+                    <CheckCircle2 size={16} />
+                </div>
+                <div>
+                    <h3 className="text-lg font-black text-white tracking-tight italic uppercase">Reliability Index</h3>
+                    <p className="text-blue-400 text-[9px] font-bold uppercase tracking-[0.2em]">On-Time Performance Efficiency</p>
+                </div>
+            </div>
+        </div>
+        <div className="p-10 h-[350px]">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} opacity={0.3} />
+              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
               <XAxis 
                 dataKey="date" 
                 stroke="#64748b" 
                 fontSize={10} 
+                fontWeight="900"
                 tickLine={false} 
                 axisLine={false}
+                className="uppercase italic"
               />
               <YAxis 
                 stroke="#64748b" 
                 fontSize={10} 
+                fontWeight="900"
                 tickLine={false} 
                 axisLine={false}
                 domain={[0, 100]}
                 tickFormatter={(val) => `${val}%`}
               />
               <Tooltip 
-                contentStyle={{ backgroundColor: '#ffffff', borderColor: '#e2e8f0', color: '#0f172a', borderRadius: '8px' }}
-                itemStyle={{ fontSize: '12px' }}
-                formatter={(val) => [`${Number(val).toFixed(1)}%`, 'ตรงเวลา']}
+                contentStyle={{ 
+                    backgroundColor: 'rgba(2, 6, 23, 0.95)', 
+                    borderColor: 'rgba(30, 41, 59, 0.5)', 
+                    borderRadius: '16px', 
+                    border: '1px solid rgba(255,255,255,0.05)',
+                    backdropFilter: 'blur(12px)'
+                }}
+                itemStyle={{ fontSize: '11px', fontWeight: '900', textTransform: 'uppercase' }}
+                formatter={(val) => [`${Number(val).toFixed(1)}%`, 'Reliability']}
               />
               <Line 
                 type="monotone" 
                 dataKey="onTimeRate" 
-                stroke="#10b981" 
-                strokeWidth={3} 
-                dot={{ r: 4, strokeWidth: 2, fill: '#0f172a' }}
+                stroke="#3b82f6" 
+                strokeWidth={4} 
+                dot={{ r: 4, strokeWidth: 2, fill: '#0f172a', stroke: '#3b82f6' }}
                 activeDot={{ r: 6, strokeWidth: 0 }}
               />
             </LineChart>
           </ResponsiveContainer>
-        </CardContent>
-      </Card>
+        </div>
+      </PremiumCard>
     </div>
   )
 }

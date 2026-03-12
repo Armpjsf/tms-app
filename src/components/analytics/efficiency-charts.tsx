@@ -11,8 +11,9 @@ import {
     ResponsiveContainer,
     Cell
 } from 'recharts'
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Coins, Zap } from "lucide-react"
+import { PremiumCard } from "@/components/ui/premium-card"
+import { Coins, Zap, Activity, TrendingUp, Target, BarChart3 } from "lucide-react"
+import { cn } from "@/lib/utils"
 
 export function EfficiencyCharts({ data }: { data: { date: string; revenue: number; cost: number; jobCount: number }[] }) {
   // Process data for correlation (Revenue vs Cost per Job)
@@ -23,86 +24,158 @@ export function EfficiencyCharts({ data }: { data: { date: string; revenue: numb
     jobCount: d.jobCount
   }))
 
+  const avgMargin = correlationData.length > 0 
+    ? (correlationData.reduce((acc, curr) => acc + (curr.revenuePerJob - curr.costPerJob), 0) / correlationData.length) / 
+      (correlationData.reduce((acc, curr) => acc + curr.revenuePerJob, 0) / correlationData.length) * 100
+    : 0
+
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      {/* Revenue vs Cost Correlation */}
-      <Card className="bg-white/80 backdrop-blur-sm border-gray-200 shadow-xl">
-        <CardHeader className="border-b border-gray-200 bg-white/80">
-            <CardTitle className="text-gray-900 flex items-center gap-3 text-sm font-black">
-                <Coins className="text-amber-500" size={18} /> 
-                <span>ประสิทธิภาพต้นทุนเฉลี่ยต่อชิ้น <span className="text-gray-700 font-bold font-normal text-xs ml-1">(Cost vs Revenue per Job)</span></span>
-            </CardTitle>
-        </CardHeader>
-        <CardContent className="pt-6 h-[300px]">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      {/* Revenue vs Cost Correlation - Large Matrix */}
+      <PremiumCard className="lg:col-span-2 bg-white border-none shadow-[0_30px_100px_rgba(0,0,0,0.1)] p-0 overflow-hidden rounded-br-[5rem] rounded-tl-[3rem]">
+        <div className="p-8 border-b border-slate-50 bg-slate-950 relative overflow-hidden flex items-center justify-between">
+           <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-transparent pointer-events-none" />
+           <div className="flex items-center gap-3 relative z-10">
+             <div className="p-2 bg-blue-600 rounded-xl text-white shadow-lg">
+               <BarChart3 size={16} />
+             </div>
+             <div>
+               <h3 className="text-lg font-black text-white tracking-tight italic uppercase">Yield Optimization Matrix</h3>
+               <p className="text-blue-400 text-[9px] font-bold uppercase tracking-[0.2em]">Efficiency Correlation: Cost vs Revenue per Mission</p>
+             </div>
+           </div>
+        </div>
+        <div className="p-10 h-[450px]">
           <ResponsiveContainer width="100%" height="100%">
-            <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: -20 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.3} />
+            <ScatterChart margin={{ top: 40, right: 40, bottom: 40, left: 0 }}>
+              <defs>
+                <linearGradient id="scatterGradient" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
+                  <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
               <XAxis 
                 type="number" 
                 dataKey="costPerJob" 
-                name="ต้นทุนเฉลี่ย" 
+                name="Unit Cost" 
                 unit="฿" 
                 stroke="#64748b" 
                 fontSize={10}
+                fontWeight="900"
                 tickLine={false}
+                axisLine={false}
+                label={{ value: 'UNIT OPERATIONAL COST (฿)', position: 'insideBottom', offset: -20, fontSize: 10, fontWeight: 900, fill: '#94a3b8' }}
               />
               <YAxis 
                 type="number" 
                 dataKey="revenuePerJob" 
-                name="รายได้เฉลี่ย" 
+                name="Unit Revenue" 
                 unit="฿" 
                 stroke="#64748b" 
                 fontSize={10}
+                fontWeight="900"
                 tickLine={false}
+                axisLine={false}
+                label={{ value: 'UNIT GROSS REVENUE (฿)', angle: -90, position: 'insideLeft', offset: 20, fontSize: 10, fontWeight: 900, fill: '#94a3b8' }}
               />
-              <ZAxis type="number" dataKey="jobCount" range={[50, 400]} name="จำนวนงาน" />
+              <ZAxis type="number" dataKey="jobCount" range={[100, 1000]} name="Mission Volume" />
               <Tooltip 
-                cursor={{ strokeDasharray: '3 3' }} 
-                contentStyle={{ backgroundColor: '#ffffff', borderColor: '#e2e8f0', borderRadius: '12px', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
-                itemStyle={{ color: '#0f172a', fontWeight: '800' }}
+                cursor={{ strokeDasharray: '3 3', stroke: '#3b82f6' }} 
+                content={({ active, payload }) => {
+                  if (active && payload && payload.length) {
+                    const data = payload[0].payload;
+                    return (
+                      <div className="bg-slate-950 p-6 border border-slate-800 rounded-2xl shadow-2xl">
+                        <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-2 italic">{data.name}</p>
+                        <div className="space-y-4">
+                            <div className="flex justify-between gap-8">
+                                <span className="text-slate-500 text-[10px] font-bold uppercase">Cost/Mission</span>
+                                <span className="text-white font-black italic">฿{data.costPerJob.toLocaleString()}</span>
+                            </div>
+                            <div className="flex justify-between gap-8">
+                                <span className="text-slate-500 text-[10px] font-bold uppercase">Rev/Mission</span>
+                                <span className="text-white font-black italic">฿{data.revenuePerJob.toLocaleString()}</span>
+                            </div>
+                            <div className="pt-2 border-t border-slate-800 flex justify-between gap-8">
+                                <span className="text-emerald-400 text-[10px] font-black uppercase">Margin Yield</span>
+                                <span className="text-emerald-400 font-black italic">+{((data.revenuePerJob - data.costPerJob) / data.revenuePerJob * 100).toFixed(1)}%</span>
+                            </div>
+                        </div>
+                      </div>
+                    );
+                  }
+                  return null;
+                }}
               />
-              <Scatter name="Days" data={correlationData} fill="#3b82f6">
+              <Scatter name="Days" data={correlationData}>
                 {correlationData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.revenuePerJob > entry.costPerJob ? '#10b981' : '#ef4444'} fillOpacity={0.6} />
+                    <Cell 
+                        key={`cell-${index}`} 
+                        fill={entry.revenuePerJob > entry.costPerJob ? '#10b981' : '#ef4444'} 
+                        fillOpacity={0.8}
+                        stroke={entry.revenuePerJob > entry.costPerJob ? '#059669' : '#dc2626'}
+                        strokeWidth={2}
+                    />
                 ))}
               </Scatter>
             </ScatterChart>
           </ResponsiveContainer>
-        </CardContent>
-      </Card>
+        </div>
+      </PremiumCard>
 
-      {/* Summary KPI for Efficiency */}
-      <Card className="bg-white/80 backdrop-blur-sm border-gray-200 shadow-xl border-l-4 border-l-indigo-500">
-        <CardContent className="p-8 flex flex-col justify-center h-full space-y-6">
-           <div className="flex items-center gap-4">
-              <div className="p-4 bg-emerald-500/10 rounded-2xl text-emerald-700">
-                  <Zap size={32} />
+      {/* Efficiency Intelligence Hub */}
+      <div className="flex flex-col gap-6">
+        <PremiumCard className="bg-slate-950 border-none shadow-2xl relative overflow-hidden group p-8 rounded-br-[3rem] rounded-tl-[1.5rem] flex-1">
+            <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-transparent pointer-events-none" />
+            <div className="flex items-center justify-between mb-8 relative z-10">
+              <div className="space-y-1">
+                <span className="text-emerald-400 text-[10px] font-black uppercase tracking-[0.2em] italic">Yield Index</span>
+                <p className="text-[8px] text-slate-500 font-bold uppercase tracking-widest italic">Temporal Efficiency Performance</p>
               </div>
-              <div>
-                  <h3 className="text-gray-700 text-sm font-black uppercase tracking-wider">Efficiency Index</h3>
-                  <p className="text-2xl font-black text-gray-900">Cost/Revenue Optimization</p>
+              <div className="p-3 bg-emerald-500/10 rounded-2xl text-emerald-400 shadow-xl shadow-emerald-500/10">
+                <Target size={24} />
               </div>
-           </div>
-           
-           <div className="grid grid-cols-2 gap-4">
-              <div className="bg-gray-100/40 p-4 rounded-xl border border-gray-200">
-                  <p className="text-[10px] text-gray-700 uppercase font-black mb-1">Avg Margin</p>
-                  <p className="text-xl font-black text-emerald-700">
-                    {((correlationData.reduce((acc, curr) => acc + (curr.revenuePerJob - curr.costPerJob), 0) / correlationData.length) / (correlationData.reduce((acc, curr) => acc + curr.revenuePerJob, 0) / correlationData.length) * 100).toFixed(1)}%
-                  </p>
-              </div>
-              <div className="bg-gray-100/40 p-4 rounded-xl border border-gray-200">
-                  <p className="text-[10px] text-gray-700 uppercase font-black mb-1">Cost Volatility</p>
-                  <p className="text-xl font-black text-emerald-700">Low</p>
-              </div>
-           </div>
-           
-           <p className="text-xs text-gray-700 font-bold leading-relaxed">
-             การวิเคราะห์ความสัมพันธ์ระหว่างรายได้และต้นทุนแสดงให้เห็นว่าจุดคุ้มทุนของงานส่วนใหญ่อยู่ในเกณฑ์มาตรฐาน 
-             ควรจับตามองวันที่จุดข้อมูลเป็นสีแดงเพื่อวิเคราะห์หาสาเหตุของต้นทุนที่สูงผิดปกติ
-           </p>
-        </CardContent>
-      </Card>
+            </div>
+            
+            <div className="space-y-8 relative z-10">
+                <div>
+                   <div className="text-5xl font-black text-white tracking-tighter italic">{avgMargin.toFixed(1)}%</div>
+                   <p className="text-[10px] text-emerald-400 font-black uppercase tracking-widest mt-2">Aggregate Profit Margin</p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 pt-6 border-t border-slate-900">
+                    <div>
+                        <p className="text-[9px] text-slate-500 font-black uppercase tracking-widest mb-1">Volatility</p>
+                        <p className="text-sm font-black text-white italic">LOW-STABLE</p>
+                    </div>
+                    <div>
+                        <p className="text-[9px] text-slate-500 font-black uppercase tracking-widest mb-1">Optimization</p>
+                        <p className="text-sm font-black text-emerald-400 italic">PEAK</p>
+                    </div>
+                </div>
+
+                <div className="bg-slate-900/50 p-6 rounded-2xl border border-slate-800">
+                    <p className="text-[10px] text-slate-400 font-bold leading-relaxed italic">
+                        "Operational cost mapping indicates a strong correlation between route density and mission yield. Current optimization threshold is within Tier-1 benchmarks."
+                    </p>
+                </div>
+            </div>
+        </PremiumCard>
+
+        <PremiumCard className="bg-indigo-600 border-none shadow-2xl relative overflow-hidden group p-8 rounded-br-[3rem] rounded-tl-[1.5rem]">
+            <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent pointer-events-none" />
+            <div className="flex items-center gap-4 relative z-10">
+                <div className="p-2 bg-white/10 rounded-xl text-white">
+                    <TrendingUp size={16} />
+                </div>
+                <div className="text-sm font-black text-white tracking-tight italic uppercase">System Recommendation</div>
+            </div>
+            <p className="text-[10px] text-indigo-100 font-bold mt-4 relative z-10 italic leading-tight">
+                ANALYTIC: REDIRECT ASSETS TO HIGH-YIELD CORRIDORS DURING PEAK DEMAND TO MAXIMIZE REGIONAL MARGIN THRESHOLDS.
+            </p>
+        </PremiumCard>
+      </div>
     </div>
   )
 }

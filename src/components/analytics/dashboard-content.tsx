@@ -32,8 +32,9 @@ import { CustomerRouteSection } from "@/components/analytics/customer-route-sect
 import { ExportAllButton } from "@/components/analytics/export-all-button"
 import { ProfitabilitySection } from "@/components/analytics/profitability-section"
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { BarChart3, TrendingUp, Truck, ShieldAlert, Layers, Trophy, Star } from "lucide-react"
+import { PremiumCard } from "@/components/ui/premium-card"
+import { cn } from "@/lib/utils"
+import { BarChart3, TrendingUp, Truck, ShieldAlert, Layers, Trophy, Star, Zap, Building2, Activity } from "lucide-react"
 
 interface DriverStats {
   name: string
@@ -90,126 +91,137 @@ export async function DashboardContent({
   ])
 
   return (
-    <div className="space-y-12">
-        {/* Hidden Export Button Interface to lift data up? 
-            No, we can pass data down or place the button here if needed.
-            But the button was in the header. 
-            We can put a *new* specific export button here or pass data back (not possible in server components).
+    <div className="space-y-24">
+        {/* Intelligence Data Utility Bar */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 p-10 bg-slate-950 border border-slate-800 rounded-[3rem] shadow-2xl relative overflow-hidden group">
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-transparent pointer-events-none" />
+            <div className="flex items-center gap-6 relative z-10">
+                <div className="w-14 h-14 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-2xl shadow-blue-500/40 border border-white/10 group-hover:scale-110 transition-transform duration-500">
+                    <Zap size={24} className="animate-pulse" />
+                </div>
+                <div>
+                    <h3 className="text-lg font-black text-white uppercase tracking-[0.2em] italic leading-tight">Tactical Intelligence Feed</h3>
+                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.3em] mt-1 italic">Fleet-wide data synchronization: ACTIVE // NOMINAL STATUS</p>
+                </div>
+            </div>
             
-            Actually, let's put the Export button logic INSIDE here, but maybe display it?
-            Wait, the ExportButton was in the Header. 
-            If is in the header, it needs the data. 
-            Detailed Plan: The Export Button needs data. If we move fetching here, the Header (parent) won't have data.
-            Solution: Put the Export Button HERE in the content area? 
-            OR: Keep the Export Button in the header but make it fetch its own data? (Inefficient)
-            OR: Use a slot?
-            
-            Let's place a "Data Actions" bar right below the header? 
-            Or... Render the ExportButton here but using CSS Portal? No.
-            
-            Let's simply move the Export Button to be inside this Content area, perhaps at the top right of the *content* block.
-        */}
+            <div className="flex items-center gap-3 relative z-10">
+                <ExportAllButton 
+                    data={{
+                        financials,
+                        revenueTrend,
+                        topCustomers,
+                        statusDist,
+                        branchPerf,
+                        subPerf,
+                        billing,
+                        fuel,
+                        maintenance,
+                        safety,
+                        workforce,
+                        routes
+                    }} 
+                />
+            </div>
+        </div>
 
-        {/* Section 1: Financial & Commercial */}
-        <section className="space-y-8 relative">
-           {/* Re-position Export Button here for now, or finding a way to slot it. 
-               Let's put it in a flex row at the top of the content. 
-           */}
-           <div className="flex justify-end mb-[-2rem]">
-              <ExportAllButton 
-                  data={{
-                      financials,
-                      revenueTrend,
-                      topCustomers,
-                      statusDist,
-                      branchPerf,
-                      subPerf,
-                      billing,
-                      fuel,
-                      maintenance,
-                      safety,
-                      workforce,
-                      routes
-                  }} 
-              />
-           </div>
-
-          <div className="flex items-center gap-3 text-emerald-700 font-black">
-              <div className="p-2 bg-emerald-500/10 rounded-lg">
-                  <TrendingUp size={20} />
+        {/* Section 1: Financial Intelligence COMMAND */}
+        <section className="space-y-12 relative">
+          <div className="flex items-center gap-5 group/h">
+              <div className="p-4 bg-emerald-500 rounded-2xl text-white shadow-2xl shadow-emerald-500/20 group-hover/h:scale-110 transition-transform duration-500 border border-white/10">
+                  <TrendingUp size={28} />
               </div>
-              <h2 className="text-lg font-bold uppercase tracking-[0.2em]">Financial & Commercial</h2>
+              <div>
+                  <h2 className="text-4xl font-black text-slate-950 tracking-tighter italic uppercase">Financial Intelligence</h2>
+                  <p className="text-emerald-500 text-[11px] font-black uppercase tracking-[0.4em] mt-1 italic">Commercial Vector & Revenue Growth Monitoring // TIER-1 AUDIT</p>
+              </div>
           </div>
           
           <FinancialSummaryCards data={exeKPIs} />
           
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <Card className="lg:col-span-2 bg-white/80 backdrop-blur-sm border-gray-200 shadow-2xl hover:border-gray-200 transition-colors group">
-                  <CardHeader className="border-b border-gray-200 bg-white/80">
-                      <CardTitle className="text-gray-900 font-black flex items-center gap-3">
-                          <BarChart3 className="text-emerald-400" size={18} /> 
-                          <span>ผลประกอบการ <span className="text-gray-700 font-bold font-normal text-sm ml-2">(Revenue vs Cost)</span></span>
-                      </CardTitle>
-                  </CardHeader>
-                  <CardContent className="pt-6 min-h-[400px]"><RevenueTrendChart data={revenueTrend} /></CardContent>
-              </Card>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+              <PremiumCard className="lg:col-span-2 overflow-hidden p-0 bg-white border-none shadow-[0_30px_100px_rgba(0,0,0,0.1)] rounded-br-[5rem] rounded-tl-[3rem]">
+                  <div className="p-8 border-b border-slate-50 bg-slate-950 relative overflow-hidden flex items-center justify-between">
+                      <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 to-transparent pointer-events-none" />
+                      <div className="flex items-center gap-3 relative z-10">
+                          <div className="p-2 bg-emerald-600 rounded-xl text-white shadow-lg">
+                              <BarChart3 size={18} />
+                          </div>
+                          <div>
+                              <h3 className="text-xl font-black text-white tracking-tight italic uppercase">Market Yield Dynamics</h3>
+                              <p className="text-emerald-400 text-[9px] font-bold uppercase tracking-[0.2em]">Temporal performance & Gross realization Real-time Feed</p>
+                          </div>
+                      </div>
+                  </div>
+                  <div className="p-10 min-h-[450px]"><RevenueTrendChart data={revenueTrend} /></div>
+              </PremiumCard>
               
-              <div className="space-y-6">
-                 {/* Driver Leaderboard Mini-Widget */}
-                 <Card className="bg-white/80 backdrop-blur-sm border-gray-200 shadow-xl h-full">
-                    <CardHeader className="border-b border-gray-200">
-                        <CardTitle className="text-sm font-bold text-gray-900 font-black flex items-center gap-2">
-                            <Trophy className="text-amber-400" size={16} />
-                            ทำเนียบคนขับยอดเยี่ยม (Top Drivers)
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent className="pt-4">
-                        <div className="space-y-4">
-                            {driverLeaderboard.slice(0, 5).map((driver: DriverStats, idx: number) => (
-                                <div key={driver.name} className="flex items-center justify-between group">
-                                    <div className="flex items-center gap-3">
+              <div className="flex flex-col">
+                 <PremiumCard className="overflow-hidden p-0 bg-slate-950 border-none shadow-2xl rounded-br-[4rem] rounded-tl-[21rem] group/leaderboard flex-1">
+                    <div className="p-10 border-b border-white/5 relative overflow-hidden">
+                        <div className="absolute inset-0 bg-gradient-to-br from-amber-500/10 to-transparent pointer-events-none" />
+                        <div className="flex items-center gap-4 relative z-10">
+                            <div className="p-3 bg-amber-600 rounded-2xl text-white shadow-2xl shadow-amber-500/40 border border-white/10">
+                                <Trophy size={20} />
+                            </div>
+                            <div>
+                                <h3 className="text-xl font-black text-white tracking-tight italic uppercase">Operator ELITE</h3>
+                                <p className="text-amber-400 text-[9px] font-bold uppercase tracking-[0.2em]">Top Asset performance Registry</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="p-0">
+                        <div className="divide-y divide-white/5">
+                            {driverLeaderboard.slice(0, 6).map((driver: DriverStats, idx: number) => (
+                                <div key={driver.name} className="p-8 flex items-center justify-between group/driver transition-all hover:bg-white/5 border-l-4 border-transparent hover:border-amber-500">
+                                    <div className="flex items-center gap-6">
                                         <div className="relative">
-                                            <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-[10px] font-bold text-gray-500 border border-gray-200">
+                                            <div className="w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center text-xs font-black text-white border border-white/10 group-hover/driver:border-amber-500/50 transition-colors uppercase italic">
                                                 {driver.name.slice(0, 2)}
                                             </div>
                                             {idx < 3 && (
-                                                <div className="absolute -top-1 -right-1">
-                                                    <Star size={10} className="fill-amber-500 text-amber-500" />
+                                                <div className="absolute -top-2 -right-2 p-1.5 bg-amber-500 rounded-full shadow-2xl border-2 border-slate-950">
+                                                    <Star size={10} className="fill-white text-white" />
                                                 </div>
                                             )}
                                         </div>
                                         <div>
-                                            <div className="text-xs font-semibold text-gray-800">{driver.name}</div>
-                                            <div className="text-[10px] text-gray-700 font-bold">{driver.completedJobs} jobs | {driver.onTimeRate.toFixed(1)}% On-time</div>
+                                            <div className="text-sm font-black text-white tracking-tight uppercase italic">{driver.name}</div>
+                                            <div className="text-[9px] text-slate-500 font-bold uppercase tracking-[0.2em] mt-1.5 flex items-center gap-2">
+                                                {driver.completedJobs} OPS // <span className="text-amber-400">{driver.onTimeRate.toFixed(1)}% SYNC</span>
+                                            </div>
                                         </div>
                                     </div>
                                     <div className="text-right">
-                                        <div className="text-xs font-bold text-emerald-400">฿{Math.round(driver.revenue / 1000)}k</div>
+                                        <div className="text-lg font-black text-emerald-400 italic bg-emerald-500/5 px-3 py-1 rounded-xl tracking-tighter border border-emerald-500/10 shadow-sm transition-all group-hover/driver:scale-105 group-hover/driver:bg-emerald-500/10">
+                                            ฿{Math.round(driver.revenue / 1000)}K
+                                        </div>
                                     </div>
                                 </div>
                             ))}
                         </div>
-                    </CardContent>
-                 </Card>
+                    </div>
+                 </PremiumCard>
               </div>
           </div>
           
-          {/* Detailed Performance Charts (Phase 4) */}
           <PerformanceCharts data={revenueTrend} />
-          
           <BillingSection data={billing} />
           <CustomerRouteSection customers={topCustomers} routes={routes} />
         </section>
         
-        <hr className="border-gray-200" />
+        <div className="h-px bg-slate-100" />
 
-        {/* Section 2: Fleet & Operations */}
-        <section className="space-y-8">
-           <div className="flex items-center gap-3 text-emerald-500">
-              <div className="p-2 bg-blue-500/10 rounded-lg">
-                  <Truck size={20} />
+        {/* Section 2: Fleet & Operations COMMAND */}
+        <section className="space-y-12">
+           <div className="flex items-center gap-5 group/h">
+              <div className="p-4 bg-blue-600 rounded-2xl text-white shadow-2xl shadow-blue-500/20 group-hover/h:scale-110 transition-transform duration-500 border border-white/10">
+                  <Truck size={28} />
               </div>
-              <h2 className="text-lg font-bold uppercase tracking-[0.2em]">Fleet & Operations</h2>
+              <div>
+                  <h2 className="text-4xl font-black text-slate-950 tracking-tighter italic uppercase">Fleet Command</h2>
+                  <p className="text-blue-600 text-[11px] font-black uppercase tracking-[0.4em] mt-1 italic">Operational Throughput & Asset Utilization Registry // REAL-TIME MONITOR</p>
+              </div>
            </div>
            
            <FuelSection data={fuel} />
@@ -218,66 +230,86 @@ export async function DashboardContent({
            <MaintenanceSection data={maintenance} />
         </section>
 
-        <hr className="border-gray-200" />
+        <div className="h-px bg-slate-100" />
 
-        {/* Section 3: Workforce & Safety */}
-        <section className="space-y-8">
-           <div className="flex items-center gap-3 text-red-400">
-              <div className="p-2 bg-red-500/10 rounded-lg">
-                  <ShieldAlert size={20} />
+        {/* Section 3: Workforce & Safety COMMAND */}
+        <section className="space-y-12">
+           <div className="flex items-center gap-5 group/h">
+              <div className="p-4 bg-rose-600 rounded-2xl text-white shadow-2xl shadow-rose-500/20 group-hover/h:scale-110 transition-transform duration-500 border border-white/10">
+                  <ShieldAlert size={28} />
               </div>
-              <h2 className="text-lg font-bold uppercase tracking-[0.2em]">Workforce & Safety</h2>
+              <div>
+                  <h2 className="text-4xl font-black text-slate-950 tracking-tighter italic uppercase">Tactical Safety</h2>
+                  <p className="text-rose-600 text-[11px] font-black uppercase tracking-[0.4em] mt-1 italic">Human Capital Efficiency & Safety Protocol Audit // CRITICAL VECTORS</p>
+              </div>
            </div>
            
-           <div className="grid grid-cols-1 space-y-8">
+           <div className="grid grid-cols-1 space-y-12">
                <WorkforceSection data={workforce} />
                <SafetySection data={safety} />
            </div>
         </section>
 
-        <hr className="border-gray-200" />
+        <div className="h-px bg-slate-100" />
 
-        {/* Section 4: Departmental Health (Scorecards) */}
-        <section className="space-y-8">
-          <div className="flex items-center gap-3 text-gray-500">
-              <div className="p-2 bg-gray-100 rounded-lg">
-                  <Layers size={20} />
+        {/* Section 4: Sector Integrity COMMAND */}
+        <section className="space-y-12">
+          <div className="flex items-center gap-5 group/h">
+              <div className="p-4 bg-slate-950 rounded-2xl text-white shadow-2xl shadow-slate-950/20 group-hover/h:scale-110 transition-transform duration-500 border border-white/10">
+                  <Layers size={28} />
               </div>
-              <h2 className="text-lg font-bold uppercase tracking-[0.2em]">Departmental Health Check</h2>
+              <div>
+                  <h2 className="text-4xl font-black text-slate-950 tracking-tighter italic uppercase">Sector Integrity</h2>
+                  <p className="text-slate-500 text-[11px] font-black uppercase tracking-[0.4em] mt-1 italic">Cross-Functional Operational Health Scorecards // AGGREGATE INDEX</p>
+              </div>
           </div>
           
           <ExecutiveSectorHealth 
               sectors={[
                   {
-                      title: "Operations (Jobs)",
+                      title: "Tactical Operations",
                       icon: "layers",
                       href: "/admin/jobs",
                       metrics: [
-                          { label: "On-Time Success", value: `${opStats.fleet.onTimeDelivery.toFixed(1)}%`, status: opStats.fleet.onTimeDelivery > 90 ? 'good' : 'warning' },
-                          { label: "Active Pipeline", value: statusDist.reduce((a: number, b: { value: number }) => a + b.value, 0), status: 'good' }
+                          { label: "Execution Success", value: `${opStats.fleet.onTimeDelivery.toFixed(1)}%`, status: opStats.fleet.onTimeDelivery > 90 ? 'good' : 'warning' },
+                          { label: "Active Mission Pipeline", value: statusDist.reduce((a: number, b: { value: number }) => a + b.value, 0), status: 'good' }
                       ]
                   },
                   {
-                      title: "Fleet (Assets)",
+                      title: "Asset Readiness",
                       icon: "truck",
                       href: "/admin/vehicles/dashboard",
                       metrics: [
-                          { label: "Utilization", value: `${opStats.fleet.utilization.toFixed(1)}%`, status: opStats.fleet.utilization > 70 ? 'good' : 'warning' },
-                          { label: "Fleet Health", value: "Optimal", status: 'good' }
+                          { label: "Fleet Utilization", value: `${opStats.fleet.utilization.toFixed(1)}%`, status: opStats.fleet.utilization > 70 ? 'good' : 'warning' },
+                          { label: "Technical Integrity", value: "NOMINAL", status: 'good' }
                       ]
                   },
                   {
-                      title: "Regional (Branches)",
+                      title: "Regional Intelligence",
                       icon: "building",
                       href: "/admin/analytics/regional",
                       metrics: [
-                          { label: "Active Branches", value: branchPerf.length, status: 'good' },
-                          { label: "Top Branch", value: branchPerf[0]?.branchName || 'N/A', status: 'good' }
+                          { label: "Strategic Branches", value: branchPerf.length, status: 'good' },
+                          { label: "Apex Branch", value: branchPerf[0]?.branchName || 'N/A', status: 'good' }
                       ]
                   }
               ]}
           />
         </section>
+
+        {/* Strategic Footer Notice */}
+        <div className="p-12 bg-slate-50 rounded-[3rem] border border-slate-100 flex flex-col items-center text-center space-y-4">
+            <div className="p-3 bg-white rounded-2xl shadow-sm border border-slate-100">
+                <Activity size={24} className="text-slate-400" />
+            </div>
+            <div>
+                <h4 className="text-sm font-black text-slate-900 uppercase tracking-widest italic">Industrial Elite Data Engine</h4>
+                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em] mt-1.5 leading-relaxed">
+                    Aggregate Intelligence synchronized across all operational vectors. <br />
+                    Tactical data processing cycle complete.
+                </p>
+            </div>
+        </div>
     </div>
   )
 }

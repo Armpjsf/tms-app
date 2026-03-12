@@ -96,13 +96,18 @@ export default function SettingsPage() {
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="mb-8"
+        className="mb-12 bg-slate-950 p-10 rounded-br-[5rem] rounded-tl-[2rem] border border-slate-800 shadow-2xl relative overflow-hidden group"
       >
-        <h1 className="text-3xl font-bold text-foreground mb-2 flex items-center gap-3">
-          <Settings className="text-primary" />
-          ตั้งค่า
-        </h1>
-        <p className="text-muted-foreground">จัดการการตั้งค่าระบบและบัญชีผู้ใช้</p>
+        <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 to-transparent pointer-events-none" />
+        <div className="relative z-10">
+            <h1 className="text-5xl font-black text-white mb-2 tracking-tighter flex items-center gap-4">
+            <div className="p-3 bg-emerald-500 rounded-3xl shadow-2xl shadow-emerald-500/20 text-white transform group-hover:scale-110 transition-transform duration-500">
+                <Settings size={32} />
+            </div>
+            Terminal Configuration
+            </h1>
+            <p className="text-emerald-400 font-black ml-[4.5rem] uppercase tracking-[0.3em] text-[10px]">System Parameter & Account Management</p>
+        </div>
       </motion.div>
 
       {/* User Profile Card */}
@@ -112,25 +117,48 @@ export default function SettingsPage() {
         transition={{ delay: 0.1 }}
         className="mb-8"
       >
-        <Card className="bg-card border-border">
-          <CardContent className="p-6">
+        <Card className="bg-slate-950/80 backdrop-blur-xl border-slate-800 rounded-br-[4rem] rounded-tl-[2rem] shadow-2xl overflow-hidden relative group">
+          <div className="absolute inset-0 bg-gradient-to-tr from-emerald-500/5 to-transparent pointer-events-none" />
+          <CardContent className="p-10 relative z-10">
             {loading ? (
               <div className="flex items-center justify-center py-4">
-                <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                <Loader2 className="w-8 h-8 animate-spin text-emerald-500" />
               </div>
             ) : (
-              <div className="flex items-center gap-4">
-                <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center text-primary-foreground text-2xl font-bold shadow-lg">
+              <div className="flex flex-col md:flex-row items-center gap-8">
+                <div className="w-24 h-24 rounded-3xl bg-slate-900 border border-slate-800 flex items-center justify-center text-white text-4xl font-black shadow-inner shadow-emerald-500/10 overflow-hidden relative">
+                   <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-transparent" />
                   {(profile?.First_Name || profile?.Username || "A").charAt(0)}
                 </div>
-                <div className="flex-1">
-                  <h2 className="text-xl font-bold text-foreground">
-                    {profile ? `${profile.First_Name || ""} ${profile.Last_Name || ""}`.trim() || profile.Username : "User"}
-                  </h2>
-                  <p className="text-muted-foreground">{profile?.Email || "no email provided"}</p>
-                  <p className="text-xs text-primary mt-1">{profile?.Role || "Staff"}</p>
+                <div className="flex-1 text-center md:text-left">
+                  <div className="flex items-center justify-center md:justify-start gap-3 mb-1">
+                      <h2 className="text-3xl font-black text-white tracking-tighter">
+                        {profile ? `${profile.First_Name || ""} ${profile.Last_Name || ""}`.trim() || profile.Username : "Operator Alpha"}
+                      </h2>
+                      <div className="px-3 py-1 bg-emerald-500/10 rounded-full border border-emerald-500/20">
+                          <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest leading-none">Verified ID</span>
+                      </div>
+                  </div>
+                  <p className="text-slate-400 font-bold tracking-tight text-lg mb-4">{profile?.Email || "ops_command@tms.system"}</p>
+                  
+                  <div className="flex items-center justify-center md:justify-start gap-6">
+                      <div className="flex flex-col">
+                          <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest whitespace-nowrap mb-1">Assigned Role</span>
+                          <span className="text-xs font-black text-white bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-800 uppercase tracking-[0.1em]">{profile?.Role || "Operational Staff"}</span>
+                      </div>
+                      <div className="h-10 w-px bg-slate-800 hidden md:block" />
+                      <div className="flex flex-col">
+                          <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest whitespace-nowrap mb-1">Session Identity</span>
+                          <span className="text-xs font-black text-slate-300">@{profile?.Username || "operator_001"}</span>
+                      </div>
+                  </div>
                 </div>
-                <Button variant="outline" onClick={() => handleNavigate("/settings/profile")}>แก้ไขโปรไฟล์</Button>
+                <Button 
+                    className="h-14 px-8 bg-slate-900 border-slate-800 text-slate-300 hover:bg-slate-800 hover:text-white rounded-2xl transition-all font-black text-xs uppercase tracking-widest"
+                    onClick={() => handleNavigate("/settings/profile")}
+                >
+                    Edit Profile
+                </Button>
               </div>
             )}
           </CardContent>
@@ -158,10 +186,12 @@ export default function SettingsPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.15 + sectionIndex * 0.05 }}
           >
-            <Card className="bg-card border-border h-full hover:border-primary/50 transition-colors">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-lg text-foreground">
-                  <section.icon className="text-primary" size={20} />
+            <Card className="bg-white/80 backdrop-blur-md border-white/50 h-full hover:border-emerald-500/50 transition-all rounded-br-[3rem] rounded-tl-[1.5rem] shadow-xl overflow-hidden group/section">
+              <CardHeader className="bg-slate-950/5 border-b border-black/5 p-6">
+                <CardTitle className="flex items-center gap-3 text-sm font-black text-slate-900 uppercase tracking-[0.2em]">
+                  <div className="p-2 bg-slate-950 rounded-lg text-white group-hover/section:bg-emerald-500 transition-colors">
+                    <section.icon size={18} />
+                  </div>
                   {section.title}
                 </CardTitle>
               </CardHeader>
@@ -169,15 +199,15 @@ export default function SettingsPage() {
                 {filteredItems.map((item) => (
                   <motion.div
                     key={item.label}
-                    whileHover={{ x: 4 }}
-                    className="flex items-center justify-between p-3 rounded-xl hover:bg-muted cursor-pointer transition-colors group"
+                    whileHover={{ x: 6 }}
+                    className="flex items-center justify-between p-4 rounded-xl hover:bg-slate-950 hover:text-white cursor-pointer transition-all group"
                     onClick={() => handleNavigate(item.path)}
                   >
                     <div>
-                      <p className="font-medium text-foreground">{item.label}</p>
-                      <p className="text-xs text-muted-foreground">{item.desc}</p>
+                      <p className="font-black text-sm tracking-tight">{item.label}</p>
+                      <p className="text-[10px] uppercase font-bold text-slate-400 group-hover:text-emerald-400 transition-colors">{item.desc}</p>
                     </div>
-                    <ChevronRight className="text-muted-foreground group-hover:text-primary transition-colors" size={18} />
+                    <ChevronRight className="text-slate-300 group-hover:text-emerald-400 transition-colors" size={18} />
                   </motion.div>
                 ))}
               </CardContent>

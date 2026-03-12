@@ -28,7 +28,7 @@ export default async function FleetStatusPage() {
     <DashboardLayout>
       <div className="space-y-8 pb-12">
         {/* Header Section */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white/40 p-8 rounded-[2.5rem] border border-white/40 backdrop-blur-xl shadow-2xl relative overflow-hidden group">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-2xl relative overflow-hidden group">
           <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/5 blur-3xl rounded-full -mr-20 -mt-20 pointer-events-none" />
           <div className="relative z-10">
             <h1 className="text-4xl font-black text-gray-900 tracking-tighter flex items-center gap-4">

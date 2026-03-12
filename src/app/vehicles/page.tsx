@@ -47,23 +47,23 @@ export default async function VehiclesPage(props: Props) {
   return (
     <DashboardLayout>
       {/* Premium Header Container */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-8 mb-12 bg-white/40 p-10 rounded-[2.5rem] border border-white/40 backdrop-blur-xl shadow-2xl relative overflow-hidden group">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-purple-500/5 blur-3xl rounded-full -mr-20 -mt-20 pointer-events-none" />
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-8 mb-12 bg-slate-950 p-10 rounded-br-[5rem] rounded-tl-[2rem] border border-slate-800 shadow-2xl relative overflow-hidden group">
+        <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-transparent pointer-events-none" />
         
         <div className="relative z-10">
-          <h1 className="text-5xl font-black text-gray-900 mb-2 tracking-tighter flex items-center gap-4">
+          <h1 className="text-5xl font-black text-white mb-2 tracking-tighter flex items-center gap-4">
             <div className="p-3 bg-gradient-to-br from-purple-500 to-pink-600 rounded-3xl shadow-2xl shadow-purple-500/20 text-white transform group-hover:scale-110 transition-transform duration-500">
               <Truck size={32} />
             </div>
             Fleet Master
           </h1>
-          <p className="text-gray-500 font-bold ml-[4.5rem] uppercase tracking-[0.2em] text-[10px]">Asset Management • Maintenance Control</p>
+          <p className="text-purple-400 font-black ml-[4.5rem] uppercase tracking-[0.3em] text-[10px]">Asset Management • Maintenance Command Control</p>
         </div>
 
         <div className="flex flex-wrap gap-4 relative z-10">
           <ExcelImport 
               trigger={
-                  <PremiumButton variant="outline" className="h-14 px-8 rounded-2xl">
+                  <PremiumButton variant="outline" className="h-14 px-8 rounded-2xl bg-slate-900/50 border-slate-800 text-slate-300 hover:bg-slate-900">
                       <FileSpreadsheet size={20} className="mr-2" /> 
                       Import Excel
                   </PremiumButton>
@@ -93,12 +93,12 @@ export default async function VehiclesPage(props: Props) {
       {/* Stats Bento Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         {[
-          { label: "รถทั้งหมด", value: stats.total, icon: Truck, color: "purple" },
-          { label: "ความคุ้มค่า (Yield)", value: `${opStats.fleet.utilization.toFixed(1)}%`, icon: TrendingUp, color: "emerald" },
+          { label: "Total Asset Count", value: stats.total, icon: Truck, color: "purple" },
+          { label: "Fleet Yield Yield", value: `${opStats.fleet.utilization.toFixed(1)}%`, icon: TrendingUp, color: "emerald" },
           { label: "Fuel Efficiency", value: `${opStats.fleet.fuelEfficiency.toFixed(1)} km/L`, icon: Gauge, color: "amber" },
-          { label: "ซ่อมบำรุง", value: stats.maintenance, icon: Wrench, color: "red" },
+          { label: "In Maintenance", value: stats.maintenance, icon: Wrench, color: "red" },
         ].map((stat, idx) => (
-          <PremiumCard key={idx} className="p-8 group">
+          <PremiumCard key={idx} className="p-8 group border-none bg-white/80 backdrop-blur-md shadow-2xl relative overflow-hidden">
             <div className="flex items-center justify-between mb-8">
                 <div className={cn(
                     "p-4 rounded-2xl shadow-xl transition-all duration-500 group-hover:scale-110 group-hover:rotate-3 text-white",
@@ -108,14 +108,18 @@ export default async function VehiclesPage(props: Props) {
                 )}>
                     <stat.icon size={24} />
                 </div>
-                <div className="flex items-center gap-1.5 px-3 py-1 bg-gray-50 rounded-full border border-gray-100">
-                    <TrendingUp size={12} className="text-gray-400" />
-                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest italic">REALTIME</span>
+                <div className="flex items-center gap-1.5 px-3 py-1 bg-slate-950/5 rounded-full border border-black/5">
+                    <TrendingUp size={12} className="text-slate-400" />
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">REALTIME</span>
                 </div>
             </div>
-            <div>
+            <div className="relative z-10">
                 <p className="text-gray-500 font-bold text-[10px] uppercase tracking-[0.2em] mb-1">{stat.label}</p>
-                <p className="text-4xl font-black text-gray-900 tracking-tighter">{stat.value}</p>
+                <p className="text-4xl font-black text-gray-900 tracking-tighter leading-none">{stat.value}</p>
+            </div>
+            {/* High-end numeric glow */}
+            <div className="absolute top-1/2 right-4 -translate-y-1/2 text-7xl font-black text-slate-100/50 pointer-events-none select-none">
+                0{idx + 1}
             </div>
           </PremiumCard>
         ))}
@@ -128,25 +132,27 @@ export default async function VehiclesPage(props: Props) {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {vehicles.length === 0 ? (
-          <div className="col-span-full text-center py-24 bg-gray-50 rounded-[2.5rem] border border-dashed border-gray-200">
-             <Truck className="w-16 h-16 text-gray-200 mx-auto mb-4" />
-             <p className="text-gray-400 font-black uppercase tracking-widest text-xs">ไม่พบข้อมูลรถในระบบ</p>
+          <div className="col-span-full text-center py-24 bg-slate-950/5 rounded-br-[5rem] rounded-tl-[3rem] border border-dashed border-slate-200">
+             <Truck className="w-16 h-16 text-slate-200 mx-auto mb-4" />
+             <p className="text-slate-400 font-black uppercase tracking-widest text-xs">ไม่พบข้อมูลรถในระบบ</p>
           </div>
         ) : vehicles.map((vehicle) => (
-          <PremiumCard key={vehicle.vehicle_plate} className="p-0 overflow-hidden group">
+          <PremiumCard key={vehicle.vehicle_plate} className="p-0 overflow-hidden group border-white/20 bg-white/[0.85] backdrop-blur-xl rounded-br-[5rem] rounded-tl-[3rem] shadow-[0_25px_60px_-15px_rgba(0,0,0,0.08)] relative hover:shadow-[0_45px_100px_-20px_rgba(168,85,247,0.15)] transition-all duration-700">
+            <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-purple-500 via-pink-500 to-orange-400 opacity-0 group-hover:opacity-100 transition-all duration-700 blur-[0.5px]" />
             <div className="p-8">
               <div className="flex items-start justify-between mb-8">
-                <div className="flex items-center gap-4">
-                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center text-white font-bold shadow-2xl shadow-purple-500/20 transform group-hover:scale-110 group-hover:rotate-3 transition-all duration-500">
-                    <Truck size={28} />
+                <div className="flex items-center gap-5">
+                  <div className="w-16 h-16 rounded-2xl bg-slate-950 flex items-center justify-center text-white font-bold shadow-2xl shadow-purple-500/30 transform group-hover:scale-110 group-hover:rotate-3 transition-all duration-700 overflow-hidden relative">
+                    <div className="absolute inset-0 bg-gradient-to-br from-purple-500/30 to-transparent animate-pulse" />
+                    <Truck size={28} className="relative z-10" />
                   </div>
                   <div>
-                    <h3 className="text-2xl font-black text-gray-900 tracking-tighter group-hover:text-purple-600 transition-colors">{vehicle.vehicle_plate}</h3>
-                    <p className="text-gray-400 font-bold text-[10px] uppercase tracking-[0.2em] mt-0.5">{vehicle.brand} {vehicle.model}</p>
+                    <h3 className="text-2xl font-black text-slate-900 tracking-tighter group-hover:text-purple-600 transition-colors duration-500 uppercase">{vehicle.vehicle_plate}</h3>
+                    <p className="text-slate-400 font-black text-[10px] uppercase tracking-[0.3em] mt-1 italic">{vehicle.brand} {vehicle.model}</p>
                     {vehicle.sub_id && (
-                        <div className="mt-2 inline-flex items-center gap-1.5 px-2 py-0.5 bg-emerald-50 rounded-lg border border-emerald-100">
-                            <span className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse" />
-                            <p className="text-[9px] text-emerald-600 font-black uppercase tracking-wider">
+                        <div className="mt-3 inline-flex items-center gap-2 px-3 py-1 bg-emerald-500/10 rounded-xl border border-emerald-500/20 shadow-sm">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.8)]" />
+                            <p className="text-[9px] text-emerald-600 font-black uppercase tracking-widest">
                                 {subcontractors.find(s => s.Sub_ID === vehicle.sub_id)?.Sub_Name || vehicle.sub_id}
                             </p>
                         </div>
@@ -155,55 +161,57 @@ export default async function VehiclesPage(props: Props) {
                 </div>
                 <div className="flex flex-col items-end gap-3">
                     <span className={cn(
-                        "px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all duration-500",
-                        vehicle.active_status === 'Active' ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20 shadow-emerald-500/5' :
-                        vehicle.active_status === 'Maintenance' ? 'bg-amber-500/10 text-amber-600 border-amber-500/20 shadow-amber-500/5' :
-                        'bg-gray-100 text-gray-500 border-gray-200'
+                        "px-4 py-2 rounded-2xl text-[9px] font-black uppercase tracking-[0.2em] border transition-all duration-700 shadow-sm",
+                        vehicle.active_status === 'Active' ? 'bg-emerald-500 text-white border-emerald-400 shadow-emerald-500/30' :
+                        vehicle.active_status === 'Maintenance' ? 'bg-amber-500 text-white border-amber-400 shadow-amber-500/30' :
+                        'bg-slate-100 text-slate-400 border-slate-200'
                     )}>
                         {vehicle.active_status}
                     </span>
-                    <div className="opacity-0 group-hover:opacity-100 transition-all duration-500 translate-x-4 group-hover:translate-x-0">
+                    <div className="opacity-0 group-hover:opacity-100 transition-all duration-700 translate-x-4 group-hover:translate-x-0">
                         <VehicleActions vehicle={vehicle} branches={branches} subcontractors={subcontractors} />
                     </div>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100 group-hover:bg-white group-hover:shadow-lg transition-all duration-500">
-                    <div className="flex items-center gap-2 mb-2">
+              <div className="grid grid-cols-2 gap-5">
+                <div className="p-5 bg-slate-50/50 rounded-2xl border border-slate-100 group-hover:bg-white group-hover:shadow-[0_20px_40px_-10px_rgba(0,0,0,0.05)] transition-all duration-700 relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-16 h-16 bg-purple-500/5 blur-2xl rounded-full" />
+                    <div className="flex items-center gap-2 mb-3">
                         <Gauge size={14} className="text-purple-500" />
-                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Mileage</span>
+                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Live Mileage</span>
                     </div>
-                    <p className="text-xl font-black text-gray-900 tracking-tighter">{vehicle.current_mileage ? vehicle.current_mileage.toLocaleString() : "0"}<span className="text-xs ml-1 text-gray-400">km</span></p>
+                    <p className="text-2xl font-black text-slate-900 tracking-tighter">{vehicle.current_mileage ? vehicle.current_mileage.toLocaleString() : "0"}<span className="text-xs ml-1 text-slate-400 font-bold uppercase tracking-widest">km</span></p>
                 </div>
-                <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100 group-hover:bg-white group-hover:shadow-lg transition-all duration-500">
-                    <div className="flex items-center gap-2 mb-2">
+                <div className="p-5 bg-slate-50/50 rounded-2xl border border-slate-100 group-hover:bg-white group-hover:shadow-[0_20px_40px_-10px_rgba(0,0,0,0.05)] transition-all duration-700 relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-16 h-16 bg-pink-500/5 blur-2xl rounded-full" />
+                    <div className="flex items-center gap-2 mb-3">
                         <Calendar size={14} className="text-pink-500" />
-                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Next Svc</span>
+                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Next Svc</span>
                     </div>
-                    <p className="text-xl font-black text-gray-900 tracking-tighter">{vehicle.next_service_mileage ? (vehicle.next_service_mileage / 1000).toFixed(0) + "k" : "-"}<span className="text-xs ml-1 text-gray-400">km</span></p>
+                    <p className="text-2xl font-black text-slate-900 tracking-tighter">{vehicle.next_service_mileage ? (vehicle.next_service_mileage / 1000).toFixed(0) + "k" : "-"}<span className="text-xs ml-1 text-slate-400 font-bold uppercase tracking-widest">km</span></p>
                 </div>
               </div>
             </div>
 
             {/* Footer with Capabilities */}
-            <div className="px-8 py-4 bg-gray-50/50 border-t border-gray-50 flex items-center justify-between">
-                <div className="flex gap-4">
+            <div className="px-8 py-5 bg-slate-50/30 border-t border-slate-100/50 flex items-center justify-between">
+                <div className="flex gap-6">
                     {vehicle.max_weight_kg && (
-                        <div className="flex items-center gap-1.5">
-                            <div className="w-1.5 h-1.5 rounded-full bg-purple-500" />
-                            <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">{vehicle.max_weight_kg}kg</span>
+                        <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 rounded-full bg-purple-500 shadow-[0_0_8px_rgba(168,85,247,0.5)]" />
+                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">{vehicle.max_weight_kg}kg</span>
                         </div>
                     )}
                     {vehicle.max_volume_cbm && (
-                        <div className="flex items-center gap-1.5">
-                            <div className="w-1.5 h-1.5 rounded-full bg-pink-500" />
-                            <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">{vehicle.max_volume_cbm}m³</span>
+                        <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 rounded-full bg-pink-500 shadow-[0_0_8px_rgba(236,72,153,0.5)]" />
+                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">{vehicle.max_volume_cbm}m³</span>
                         </div>
                     )}
                 </div>
-                <div className="text-[9px] font-bold text-gray-400 uppercase tracking-[0.2em] italic">
-                    ID: {vehicle.vehicle_type}
+                <div className="text-[9px] font-black text-slate-300 uppercase tracking-[0.3em] italic">
+                    {vehicle.vehicle_type}
                 </div>
             </div>
           </PremiumCard>

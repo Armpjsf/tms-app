@@ -1,9 +1,5 @@
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
-import { Card, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { PageHeader } from "@/components/ui/page-header"
-import { StatsGrid } from "@/components/ui/stats-grid"
 import { DataSection } from "@/components/ui/data-section"
 import { 
   Wrench, 
@@ -12,7 +8,8 @@ import {
   Clock,
   Filter,
   CheckCircle2,
-  Loader2
+  Loader2,
+  TrendingUp
 } from "lucide-react"
 import { getAllRepairTickets, getRepairTicketStats } from "@/lib/supabase/maintenance"
 import { getAllDrivers } from "@/lib/supabase/drivers"
@@ -24,6 +21,9 @@ import { MaintenanceScheduleDashboard } from "@/components/maintenance/maintenan
 
 import { SearchInput } from "@/components/ui/search-input"
 import { Pagination } from "@/components/ui/pagination"
+import { PremiumCard } from "@/components/ui/premium-card"
+import { PremiumButton } from "@/components/ui/premium-button"
+import { cn } from "@/lib/utils"
 import Image from "next/image"
 
 type Props = {
@@ -52,77 +52,116 @@ export default async function MaintenancePage(props: Props) {
 
   return (
     <DashboardLayout>
-      <PageHeader
-        icon={<Wrench size={28} />}
-        title="แจ้งซ่อมบำรุง"
-        subtitle="รายการแจ้งซ่อมและประวัติการบำรุงรักษา"
-        actions={
+      {/* Bespoke Elite Header */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-8 mb-12 bg-slate-950 p-10 rounded-br-[5rem] rounded-tl-[2rem] border border-slate-800 shadow-2xl relative overflow-hidden group">
+        <div className="absolute inset-0 bg-gradient-to-r from-amber-500/10 to-transparent pointer-events-none" />
+        
+        <div className="relative z-10">
+          <h1 className="text-5xl font-black text-white mb-2 tracking-tighter flex items-center gap-4">
+            <div className="p-3 bg-gradient-to-br from-amber-500 to-orange-600 rounded-3xl shadow-2xl shadow-amber-500/20 text-white transform group-hover:scale-110 transition-transform duration-500">
+              <Wrench size={32} />
+            </div>
+            Maintenance HUB
+          </h1>
+          <p className="text-amber-400 font-black ml-[4.5rem] uppercase tracking-[0.3em] text-[10px]">Fleet Integrity & Technical Operations Command</p>
+        </div>
+
+        <div className="flex flex-wrap gap-4 relative z-10">
           <MaintenanceDialog 
               drivers={drivers.data}
               vehicles={vehicles.data}
               trigger={
-                  <Button size="lg" className="h-11 px-6 rounded-xl gap-2 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 shadow-lg shadow-amber-500/20">
-                      <Plus size={20} />
-                      แจ้งซ่อม
-                  </Button>
+                  <PremiumButton className="h-14 px-8 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 shadow-lg shadow-amber-500/20">
+                      <Plus size={24} className="mr-2" />
+                      Issue Ticket
+                  </PremiumButton>
               }
           />
-        }
-      />
+        </div>
+      </div>
 
-      <StatsGrid columns={4} stats={[
-        { label: "รายการทั้งหมด", value: stats.total, icon: <Wrench size={20} />, color: "amber" },
-        { label: "รอดำเนินการ", value: stats.pending, icon: <AlertTriangle size={20} />, color: "red" },
-        { label: "กำลังซ่อม", value: stats.inProgress, icon: <Loader2 size={20} />, color: "blue" },
-        { label: "เสร็จสิ้น", value: stats.completed, icon: <CheckCircle2 size={20} />, color: "emerald" },
-      ]} />
+      {/* Stats Bento Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        {[
+          { label: "Total Request Log", value: stats.total, icon: Wrench, color: "amber" },
+          { label: "Pending Approval", value: stats.pending, icon: AlertTriangle, color: "red" },
+          { label: "Active Maintenance", value: stats.inProgress, icon: Loader2, color: "blue" },
+          { label: "Service Complete", value: stats.completed, icon: CheckCircle2, color: "emerald" },
+        ].map((stat, idx) => (
+          <PremiumCard key={idx} className="p-8 group border-none bg-white/80 backdrop-blur-md shadow-2xl relative overflow-hidden">
+            <div className="flex items-center justify-between mb-8">
+                <div className={cn(
+                    "p-4 rounded-2xl shadow-xl transition-all duration-500 group-hover:scale-110 group-hover:rotate-3 text-white",
+                    stat.color === 'amber' ? "bg-amber-500 shadow-amber-500/20" :
+                    stat.color === 'red' ? "bg-red-500 shadow-red-500/20" :
+                    stat.color === 'blue' ? "bg-blue-500 shadow-blue-500/20" : "bg-emerald-500 shadow-emerald-500/20"
+                )}>
+                    <stat.icon size={24} className={stat.icon === Loader2 ? 'animate-spin' : ''} />
+                </div>
+                <div className="flex items-center gap-1.5 px-3 py-1 bg-slate-950/5 rounded-full border border-black/5">
+                    <TrendingUp size={12} className="text-slate-400" />
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">REALTIME</span>
+                </div>
+            </div>
+            <div className="relative z-10">
+                <p className="text-gray-500 font-bold text-[10px] uppercase tracking-[0.2em] mb-1">{stat.label}</p>
+                <p className="text-4xl font-black text-gray-900 tracking-tighter leading-none">{stat.value}</p>
+            </div>
+            {/* High-end numeric glow */}
+            <div className="absolute top-1/2 right-4 -translate-y-1/2 text-7xl font-black text-slate-100/50 pointer-events-none select-none">
+                0{idx + 1}
+            </div>
+          </PremiumCard>
+        ))}
+      </div>
 
       {/* Search and Filter */}
-      <div className="flex flex-col md:flex-row gap-4 mb-6">
+      <div className="flex flex-col md:flex-row gap-4 mb-10">
         <div className="flex-1">
-            <SearchInput placeholder="ค้นหา Ticket ID, ทะเบียนรถ..." />
+            <SearchInput placeholder="Search Ticket ID, Plate Number..." />
         </div>
-        <div className="flex gap-2 flex-wrap">
+        <div className="flex gap-2 flex-wrap relative z-20">
             <form className="flex gap-2 items-center flex-wrap">
                 <Input 
                     type="date" 
                     name="startDate"
                     defaultValue={startDate}
-                    className="bg-white/80 border-gray-200 text-foreground w-auto rounded-xl"
+                    className="h-14 bg-white/80 border-slate-200 text-slate-900 w-auto rounded-2xl shadow-sm px-6 font-bold"
                 />
-                <span className="text-muted-foreground">-</span>
+                <span className="text-slate-400 font-black">—</span>
                 <Input 
                     type="date" 
                     name="endDate"
                     defaultValue={endDate}
-                    className="bg-white/80 border-gray-200 text-foreground w-auto rounded-xl"
+                    className="h-14 bg-white/80 border-slate-200 text-slate-900 w-auto rounded-2xl shadow-sm px-6 font-bold"
                 />
                 <select 
                     name="status" 
                     defaultValue={status}
-                    className="h-10 rounded-xl border border-gray-200 bg-white/80 px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    className="h-14 rounded-2xl border border-slate-200 bg-white/80 px-6 py-2 text-sm font-black text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500 shadow-sm"
                 >
-                    <option value="">ทุกสถานะ</option>
-                    <option value="Pending">รอดำเนินการ</option>
-                    <option value="In Progress">กำลังซ่อม</option>
-                    <option value="Completed">เสร็จสิ้น</option>
+                    <option value="">ALL STATUS</option>
+                    <option value="Pending">PENDING</option>
+                    <option value="In Progress">ACTIVE</option>
+                    <option value="Completed">COMPLETE</option>
                 </select>
-                <Button type="submit" variant="secondary" className="gap-2 rounded-xl">
-                    <Filter size={16} />
-                    กรอง
-                </Button>
+                <PremiumButton type="submit" variant="secondary" className="h-14 px-8 rounded-2xl">
+                    <Filter size={20} className="mr-2" />
+                    Filter
+                </PremiumButton>
             </form>
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {tickets.length === 0 ? (
-          <div className="col-span-full text-center py-12 text-muted-foreground">
-            ไม่พบรายการแจ้งซ่อม
+          <div className="col-span-full text-center py-24 bg-slate-950/5 rounded-br-[5rem] rounded-tl-[3rem] border border-dashed border-slate-200">
+             <Wrench className="w-16 h-16 text-slate-200 mx-auto mb-4" />
+             <p className="text-slate-400 font-black uppercase tracking-widest text-xs">ไม่พบรายการแจ้งซ่อมในระบบ</p>
           </div>
         ) : tickets.map((ticket) => (
-          <Card key={ticket.Ticket_ID} className="bg-white/80 border-gray-200/80 backdrop-blur-sm hover:border-primary/50 transition-all shadow-xl hover:shadow-2xl hover:scale-[1.01] rounded-2xl relative group">
-            <div className="absolute top-2 right-2 opacity-100 z-10 bg-background/50 rounded-full backdrop-blur-sm border border-border shadow-sm">
+          <PremiumCard key={ticket.Ticket_ID} className="p-0 overflow-hidden group border-none bg-white rounded-br-[4rem] rounded-tl-[2rem] shadow-2xl relative">
+            <div className="absolute top-4 right-4 opacity-100 z-20 bg-slate-950/10 rounded-full backdrop-blur-md border border-white/50 shadow-sm">
                  <MaintenanceActions 
                     ticket={ticket} 
                     drivers={drivers.data || []} 
@@ -130,32 +169,38 @@ export default async function MaintenancePage(props: Props) {
                  />
             </div>
             
-            <CardContent className="p-5">
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center shadow-sm ${
-                    ticket.Priority === 'High' ? 'bg-red-500/20 text-red-500' : 'bg-amber-500/20 text-amber-500'
+            <div className="p-10">
+              <div className="flex items-start justify-between mb-8">
+                <div className="flex items-center gap-4">
+                  <div className={`w-16 h-16 rounded-2xl flex items-center justify-center shadow-2xl transform group-hover:scale-110 transition-all duration-500 ${
+                    ticket.Priority === 'High' ? 'bg-red-500 shadow-red-500/20 text-white' : 'bg-slate-950 shadow-slate-950/20 text-white'
                   }`}>
-                    {ticket.Priority === 'High' ? <AlertTriangle size={24} /> : <Wrench size={24} />}
+                    {ticket.Priority === 'High' ? <AlertTriangle size={28} /> : <Wrench size={28} />}
                   </div>
                   <div>
-                    <h3 className="font-bold text-foreground uppercase">{ticket.Vehicle_Plate}</h3>
-                    <p className="text-xs text-muted-foreground font-mono">#{ticket.Ticket_ID}</p>
+                    <h3 className="text-2xl font-black text-slate-900 tracking-tighter uppercase">{ticket.Vehicle_Plate}</h3>
+                    <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-black text-slate-400 font-mono tracking-widest uppercase italic">CONTROL ID: {ticket.Ticket_ID}</span>
+                        <div className="w-1 h-1 rounded-full bg-slate-300" />
+                        <span className="text-[10px] font-black text-amber-500 uppercase tracking-widest">{ticket.Issue_Type}</span>
+                    </div>
                   </div>
                 </div>
-                <span className={`px-2 py-0.5 rounded-full text-xs font-medium mt-1 mr-8 ${
-                  ticket.Status === 'Completed' ? 'bg-emerald-500/20 text-emerald-400' :
-                  ticket.Status === 'In Progress' ? 'bg-emerald-500/15 text-emerald-500' :
-                  ticket.Status === 'Rejected' ? 'bg-red-500/20 text-red-400' :
-                  'bg-amber-500/20 text-amber-400'
-                }`}>
-                  {ticket.Status === 'Rejected' ? 'ไม่อนุมัติ' : ticket.Status}
-                </span>
+                <div className="flex flex-col items-end gap-2">
+                    <span className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all duration-500 shadow-sm ${
+                        ticket.Status === 'Completed' ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20 shadow-emerald-500/5' :
+                        ticket.Status === 'In Progress' ? 'bg-blue-500/10 text-blue-600 border-blue-500/20 shadow-blue-500/5' :
+                        ticket.Status === 'Rejected' ? 'bg-red-500/10 text-red-600 border-red-500/20 shadow-red-500/5' :
+                        'bg-amber-500/10 text-amber-600 border-amber-500/20 shadow-amber-500/5'
+                    }`}>
+                    {ticket.Status === 'Rejected' ? 'REJECTED' : ticket.Status?.toUpperCase()}
+                    </span>
+                </div>
               </div>
 
-              <div className="mb-4 space-y-2">
+              <div className="space-y-6">
                  {ticket.Photo_Url && (
-                    <div className="relative w-full h-32 rounded-lg overflow-hidden border border-border mb-2 bg-muted/30">
+                    <div className="relative w-full h-48 rounded-[2rem] overflow-hidden border border-slate-100 shadow-inner group-hover:shadow-xl transition-all duration-500">
                         <Image 
                             src={(() => {
                                 try {
@@ -170,33 +215,37 @@ export default async function MaintenancePage(props: Props) {
                             })()}
                             alt="Issue Photo" 
                             fill 
-                            className="object-cover"
+                            className="object-cover transform group-hover:scale-110 transition-transform duration-700"
                         />
                     </div>
                  )}
-                <div>
-                    <p className="text-sm text-foreground font-bold mb-1">{ticket.Issue_Type}</p>
-                    <p className="text-xs text-muted-foreground line-clamp-2 italic">{ticket.Description}</p>
-                </div>
-              </div>
+                 <div>
+                    <p className="text-xs text-slate-500 font-medium leading-relaxed bg-slate-50 p-6 rounded-[2rem] border border-slate-100 relative overflow-hidden group-hover:bg-white group-hover:shadow-lg transition-all duration-500">
+                        <span className="absolute -top-1 -left-1 text-4xl text-slate-100 font-serif leading-none select-none">“</span>
+                        {ticket.Description}
+                    </p>
+                 </div>
 
-              <div className="flex items-center justify-between text-xs text-muted-foreground pt-4 border-t border-border">
-                <div className="flex items-center gap-1">
-                  <Clock size={12} className="text-primary/70" />
-                  <span>{ticket.Date_Report ? new Date(ticket.Date_Report).toLocaleDateString('th-TH') : "-"}</span>
-                </div>
-                {ticket.Cost_Total && ticket.Cost_Total > 0 ? (
-                    <div className="text-emerald-600 dark:text-emerald-400 font-bold text-sm">
-                        ฿{ticket.Cost_Total.toLocaleString()}
+                 <div className="flex items-center justify-between text-xs text-slate-400 pt-6 border-t border-slate-100">
+                    <div className="flex items-center gap-2">
+                      <div className="p-1.5 bg-slate-100 rounded-lg">
+                        <Clock size={12} className="text-slate-500" />
+                      </div>
+                      <span className="font-black uppercase tracking-widest text-[10px]">{ticket.Date_Report ? new Date(ticket.Date_Report).toLocaleDateString('th-TH') : "-"}</span>
                     </div>
-                ) : (
-                    <div className="flex items-center gap-1 font-bold text-primary/80">
-                        {ticket.Priority}
-                    </div>
-                )}
+                    {ticket.Cost_Total && ticket.Cost_Total > 0 ? (
+                        <div className="bg-emerald-500/5 px-4 py-2 rounded-xl border border-emerald-500/20">
+                            <span className="text-emerald-600 font-black text-lg tracking-tighter">฿{ticket.Cost_Total.toLocaleString()}</span>
+                        </div>
+                    ) : (
+                        <div className="flex items-center gap-2 font-black text-slate-300 uppercase tracking-widest text-[10px]">
+                            Operational Expense TBD
+                        </div>
+                    )}
+                 </div>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </PremiumCard>
         ))}
       </div>
       

@@ -79,26 +79,26 @@ export default async function JobHistoryPage(props: Props) {
   return (
     <DashboardLayout>
       {/* Premium Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-8 mb-12 bg-white/40 p-10 rounded-[2.5rem] border border-white/40 backdrop-blur-xl shadow-2xl relative overflow-hidden group">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 blur-3xl rounded-full -mr-20 -mt-20 pointer-events-none" />
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-8 mb-12 bg-slate-950 p-10 rounded-br-[5rem] rounded-tl-[2rem] border border-slate-800 shadow-2xl relative overflow-hidden group">
+        <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 to-transparent pointer-events-none" />
         
         <div className="relative z-10">
-          <h1 className="text-5xl font-black text-gray-900 mb-2 tracking-tighter flex items-center gap-4">
-            <div className="p-3 bg-primary rounded-3xl shadow-2xl shadow-primary/20 text-white transform group-hover:scale-110 transition-transform duration-500">
+          <h1 className="text-5xl font-black text-white mb-2 tracking-tighter flex items-center gap-4">
+            <div className="p-3 bg-emerald-500 rounded-3xl shadow-2xl shadow-emerald-500/20 text-white transform group-hover:scale-110 transition-transform duration-500">
               <History size={32} />
             </div>
-            {customerMode ? "My Shipment History" : "Job History"}
+            {customerMode ? "Archives" : "Job History"}
           </h1>
-          <p className="text-gray-500 font-bold ml-[4.5rem] uppercase tracking-[0.2em] text-[10px]">
-            {customerMode ? "รายการขนส่งและสถานะพัสดุ" : "Operations Archive & Analytics"}
+          <p className="text-emerald-400 font-bold ml-[4.5rem] uppercase tracking-[0.3em] text-[10px]">
+            {customerMode ? "FLEET OPERATIONS RECORD" : "Operations Archive & Analytics Control"}
           </p>
         </div>
 
         <div className="flex flex-wrap gap-4 relative z-10">
           <Link href="/planning">
-            <PremiumButton variant="outline" className="h-14 px-8 rounded-2xl">
+            <PremiumButton variant="outline" className="h-14 px-8 rounded-2xl bg-slate-900/50 border-slate-800 text-slate-300 hover:bg-slate-900 transition-all">
               <ArrowLeft size={20} className="mr-2" />
-              กลับ
+              Return
             </PremiumButton>
           </Link>
           {canExport && (
@@ -119,12 +119,12 @@ export default async function JobHistoryPage(props: Props) {
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         {[
-          { label: "งานทั้งหมด", value: count || 0, icon: Package, color: "blue" },
-          { label: "งานที่สำเร็จ", value: jobs?.filter(j => ['Delivered', 'Complete', 'Completed'].includes(j?.Job_Status || '')).length || 0, icon: CheckCircle2, color: "emerald" },
-          { label: "งานที่ล้มเหลว", value: jobs?.filter(j => j?.Job_Status === 'Failed').length || 0, icon: AlertCircle, color: "red" },
-          { label: "งานที่ยกเลิก", value: jobs?.filter(j => j?.Job_Status === 'Cancelled').length || 0, icon: XCircle, color: "slate" },
+          { label: "Total Volume", value: count || 0, icon: Package, color: "blue" },
+          { label: "Successful", value: jobs?.filter(j => ['Delivered', 'Complete', 'Completed'].includes(j?.Job_Status || '')).length || 0, icon: CheckCircle2, color: "emerald" },
+          { label: "Failed Ops", value: jobs?.filter(j => j?.Job_Status === 'Failed').length || 0, icon: AlertCircle, color: "red" },
+          { label: "Cancelled", value: jobs?.filter(j => j?.Job_Status === 'Cancelled').length || 0, icon: XCircle, color: "slate" },
         ].map((stat, idx) => (
-          <PremiumCard key={idx} className="p-8 group">
+          <PremiumCard key={idx} className="p-8 group border-none bg-white/80 backdrop-blur-md shadow-2xl relative overflow-hidden">
             <div className="flex items-center justify-between mb-8">
                 <div className={cn(
                     "p-4 rounded-2xl shadow-xl transition-all duration-500 group-hover:scale-110 group-hover:rotate-3 text-white",
@@ -134,33 +134,35 @@ export default async function JobHistoryPage(props: Props) {
                 )}>
                     <stat.icon size={24} />
                 </div>
-                <div className="flex items-center gap-1.5 px-3 py-1 bg-gray-50 rounded-full border border-gray-100">
-                    <TrendingUp size={12} className="text-gray-400" />
-                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest italic">HISTORICAL</span>
+                <div className="flex items-center gap-1.5 px-3 py-1 bg-slate-950/5 rounded-full border border-black/5">
+                    <TrendingUp size={12} className="text-slate-400" />
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">HISTORICAL</span>
                 </div>
             </div>
-            <div>
+            <div className="relative z-10">
                 <p className="text-gray-500 font-bold text-[10px] uppercase tracking-[0.2em] mb-1">{stat.label}</p>
-                <p className="text-4xl font-black text-gray-900 tracking-tighter">{stat.value}</p>
+                <p className="text-4xl font-black text-gray-900 tracking-tighter leading-none">{stat.value}</p>
             </div>
-            <div className="absolute -right-6 -bottom-6 opacity-5 group-hover:opacity-10 transition-opacity duration-700 pointer-events-none rotate-12">
-                <stat.icon size={120} />
+            {/* High-end numeric glow */}
+            <div className="absolute top-1/2 right-4 -translate-y-1/2 text-7xl font-black text-slate-100/50 pointer-events-none select-none">
+                0{idx + 1}
             </div>
           </PremiumCard>
         ))}
       </div>
 
       {/* Filters & Results Container */}
-      <PremiumCard className="overflow-hidden border-none shadow-2xl p-0">
+      <PremiumCard className="overflow-hidden border-none shadow-[0_30px_100px_rgba(0,0,0,0.1)] p-0 bg-white rounded-br-[5rem] rounded-tl-[3rem]">
           {/* Filter Header */}
-          <div className="p-10 border-b border-gray-50 bg-gray-50/20">
-            <div className="flex items-center gap-3 mb-8">
+          <div className="p-10 border-b border-slate-50 bg-slate-950 relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 to-transparent pointer-events-none" />
+            <div className="flex items-center gap-3 mb-8 relative z-10">
                 <div className="p-2 bg-emerald-500 rounded-xl text-white shadow-lg shadow-emerald-500/20">
                     <ListFilter size={20} />
                 </div>
                 <div>
-                    <h2 className="text-2xl font-black text-gray-900 tracking-tight">Advanced Filtering</h2>
-                    <p className="text-gray-400 text-[10px] font-bold uppercase tracking-[0.2em] mt-0.5">Refine operations data</p>
+                    <h2 className="text-2xl font-black text-white tracking-tight">Advanced Filtering</h2>
+                    <p className="text-emerald-400 text-[10px] font-bold uppercase tracking-[0.2em] mt-0.5">Tactical Operations Search</p>
                 </div>
             </div>
 
@@ -194,12 +196,12 @@ export default async function JobHistoryPage(props: Props) {
             </form>
           </div>
           {/* Jobs List Header */}
-          <div className="p-10 border-b border-gray-50 flex items-center justify-between bg-white/[0.02]">
+          <div className="p-10 border-b border-slate-100 flex items-center justify-between bg-white">
             <div className="flex items-center gap-3">
-                <div className="w-2 h-10 bg-primary rounded-full" />
+                <div className="w-2 h-10 bg-emerald-500 rounded-full" />
                 <div>
-                    <h3 className="text-2xl font-black text-gray-900 tracking-tight">Operations Log</h3>
-                    <p className="text-gray-400 text-[10px] font-bold uppercase tracking-[0.2em] mt-0.5">Tracking {historyJobs.length} records</p>
+                    <h3 className="text-2xl font-black text-slate-900 tracking-tight">Operations Log</h3>
+                    <p className="text-slate-400 text-[10px] font-bold uppercase tracking-[0.2em] mt-0.5">ARCHIVED RECORDS Feed • {count} total entries</p>
                 </div>
             </div>
           </div>

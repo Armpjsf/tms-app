@@ -140,7 +140,7 @@ export default function SubcontractorsPage() {
     return (
         <DashboardLayout>
             {/* Premium Header Container */}
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-8 mb-12 bg-white/40 p-10 rounded-[2.5rem] border border-white/40 backdrop-blur-xl shadow-2xl relative overflow-hidden group">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-8 mb-12 bg-white p-10 rounded-[2.5rem] border border-gray-100 shadow-2xl relative overflow-hidden group">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/5 blur-3xl rounded-full -mr-20 -mt-20 pointer-events-none" />
                 
                 <div className="relative z-10">

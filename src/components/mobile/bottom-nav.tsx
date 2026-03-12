@@ -18,34 +18,44 @@ export function BottomNav() {
   ]
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-xl border-t border-gray-200 pb-safe z-50 transition-colors duration-300 shadow-[0_-4px_20px_rgba(0,0,0,0.3)]">
-      <div className="flex justify-around items-center h-16 px-2">
-        {navItems.map((item) => {
-          const isActive = pathname === item.href
-          
-          if (item.isCenter) {
-            return (
-              <Link key={item.href} href={item.href} className="relative -top-5">
-                <div className="w-14 h-14 rounded-full bg-gradient-to-r from-emerald-500 to-emerald-600 flex items-center justify-center shadow-xl shadow-emerald-500/30 border-4 border-white ring-2 ring-emerald-500/20">
-                  <item.icon className="text-white" size={24} />
-                </div>
-              </Link>
-            )
-          }
+    <div className="fixed bottom-6 left-4 right-6 z-[100] pointer-events-none">
+      <div className="max-w-md mx-auto pointer-events-auto">
+        <div className="bg-slate-950/90 backdrop-blur-2xl border border-white/10 rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.5)] px-2 py-3">
+          <div className="flex justify-around items-center h-14">
+            {navItems.map((item) => {
+              const isActive = pathname === item.href
+              
+              if (item.isCenter) {
+                return (
+                  <Link key={item.href} href={item.href} className="relative -top-8 transition-transform active:scale-90">
+                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center shadow-[0_10px_30px_rgba(16,185,129,0.4)] border-4 border-slate-950 group overflow-hidden">
+                      <div className="absolute inset-0 bg-white/20 -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+                      <item.icon className="text-white relative z-10" size={28} strokeWidth={2.5} />
+                    </div>
+                  </Link>
+                )
+              }
 
-          return (
-            <Link 
-              key={item.href} 
-              href={item.href}
-              className={`flex flex-col items-center justify-center w-14 space-y-1 transition-colors ${
-                isActive ? "text-primary font-bold" : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <item.icon size={20} />
-              <span className="text-[10px] font-medium">{item.label}</span>
-            </Link>
-          )
-        })}
+              return (
+                <Link 
+                  key={item.href} 
+                  href={item.href}
+                  className={`relative flex flex-col items-center justify-center w-12 transition-all duration-300 active:scale-90 ${
+                    isActive ? "text-emerald-400" : "text-slate-500 hover:text-slate-300"
+                  }`}
+                >
+                  {isActive && (
+                      <div className="absolute -top-3 w-1 h-1 rounded-full bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,1)] animate-pulse" />
+                  )}
+                  <item.icon size={22} strokeWidth={isActive ? 2.5 : 2} />
+                  <span className={`text-[9px] mt-1 font-black uppercase tracking-widest transition-opacity ${isActive ? "opacity-100" : "opacity-60"}`}>
+                    {item.label}
+                  </span>
+                </Link>
+              )
+            })}
+          </div>
+        </div>
       </div>
     </div>
   )

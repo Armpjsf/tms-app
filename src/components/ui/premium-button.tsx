@@ -39,11 +39,11 @@ export function PremiumButton({
 
   return (
     <motion.button
-      whileHover={{ scale: 1.02 }}
+      whileHover={{ scale: 1.02, y: -2 }}
       whileTap={{ scale: 0.98 }}
       disabled={disabled || loading}
       className={cn(
-        "rounded-2xl font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all duration-300",
+        "rounded-2xl font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all duration-300 relative overflow-hidden group",
         variants[variant],
         sizes[size],
         (disabled || loading) && "opacity-50 cursor-not-allowed grayscale",
@@ -51,8 +51,13 @@ export function PremiumButton({
       )}
       {...props}
     >
-      {loading && <Loader2 className="w-4 h-4 animate-spin" />}
-      {children}
+      {/* Premium Shine Overlay */}
+      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out pointer-events-none" />
+      
+      {loading && <Loader2 className="w-4 h-4 animate-spin shrink-0" />}
+      <span className="relative z-10 flex items-center gap-2">
+        {children}
+      </span>
     </motion.button>
   )
 }

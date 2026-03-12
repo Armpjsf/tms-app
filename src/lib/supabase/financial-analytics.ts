@@ -351,7 +351,7 @@ export async function getExecutiveKPIs(startDate?: string, endDate?: string, bra
 }
 
 // 9. Route Efficiency (Revenue vs Cost per Route)
-export async function getRouteProfitability(startDate?: string, endDate?: string, branchId?: string) {
+export async function getRouteEfficiency(startDate?: string, endDate?: string, branchId?: string) {
     const supabase = await createClient()
     const effectiveBranchId = await getEffectiveBranchId(branchId)
 

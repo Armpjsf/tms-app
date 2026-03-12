@@ -1,8 +1,9 @@
 "use client"
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { PremiumCard } from "@/components/ui/premium-card"
 import { BillingAnalytics } from "@/lib/supabase/billing-analytics"
-import { DollarSign, Wallet, Percent, FileText, AlertCircle, Clock } from "lucide-react"
+import { Wallet, Percent, FileText, AlertCircle, Clock, ArrowRightLeft, ShieldCheck } from "lucide-react"
+import { cn } from "@/lib/utils"
 
 export function BillingSection({ data }: { data: BillingAnalytics }) {
   const { accountsReceivable, accountsPayable, collectionRate } = data
@@ -16,141 +17,176 @@ export function BillingSection({ data }: { data: BillingAnalytics }) {
   ) || 1
 
   return (
-    <div className="space-y-6">
-      {/* Section Header */}
-      <div className="flex items-center gap-3 text-emerald-600">
-        <div className="p-2 bg-emerald-500/10 rounded-lg">
-          <Wallet size={20} />
+    <div className="space-y-10">
+      {/* Sub-Section Header */}
+      <div className="flex items-center gap-3">
+        <div className="p-2 bg-slate-950 rounded-xl text-emerald-400 shadow-lg border border-slate-800">
+          <Wallet size={18} />
         </div>
-        <h2 className="text-lg font-bold uppercase tracking-[0.2em]">Billing & Accounts</h2>
+        <h3 className="text-xl font-black text-slate-800 tracking-tight uppercase">Billing & Accounts Registry</h3>
       </div>
 
-      {/* KPI Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* KPI Bento Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {/* AR Card */}
-        <Card className="bg-white/80 border-gray-200 backdrop-blur-sm">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between mb-4">
+        <PremiumCard className="bg-slate-950 border-none shadow-2xl relative overflow-hidden group p-8 rounded-br-[3rem] rounded-tl-[1.5rem]">
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent pointer-events-none" />
+            <div className="flex items-center justify-between mb-6 relative z-10">
               <div className="space-y-1">
-                <span className="text-gray-500 text-sm font-medium">ลูกหนี้คงค้าง (AR)</span>
-                <p className="text-[10px] text-muted-foreground font-medium">คำนวณจากใบวางบิลที่ยังไม่ชำระ (Billing Notes)</p>
+                <span className="text-blue-400 text-[10px] font-black uppercase tracking-[0.2em] italic">Accounts Receivable</span>
+                <p className="text-[8px] text-slate-500 font-bold uppercase tracking-widest italic">Asset Exposure Index</p>
               </div>
-              <div className="p-2 bg-blue-500/10 rounded-full text-emerald-500">
+              <div className="p-2 bg-blue-500/10 rounded-xl text-blue-500 shadow-lg shadow-blue-500/10">
                 <FileText size={16} />
               </div>
             </div>
-            <div className="text-2xl font-black text-gray-900">฿{accountsReceivable.totalOutstanding.toLocaleString()}</div>
-            <p className="text-xs text-gray-700 font-bold mt-1">{accountsReceivable.invoiceCount} รายการค้างชำระ</p>
-          </CardContent>
-        </Card>
+            <div className="text-3xl font-black text-white tracking-tighter relative z-10">฿{accountsReceivable.totalOutstanding.toLocaleString()}</div>
+            <div className="flex items-center gap-2 mt-4 opacity-50 relative z-10">
+                <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest italic">{accountsReceivable.invoiceCount} ACTIVE ENTITIES</p>
+            </div>
+        </PremiumCard>
 
         {/* AP Card */}
-        <Card className="bg-white/80 border-gray-200 backdrop-blur-sm">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between mb-4">
+        <PremiumCard className="bg-slate-950 border-none shadow-2xl relative overflow-hidden group p-8 rounded-br-[3rem] rounded-tl-[1.5rem]">
+            <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-transparent pointer-events-none" />
+            <div className="flex items-center justify-between mb-6 relative z-10">
               <div className="space-y-1">
-                <span className="text-gray-500 text-sm font-medium">เจ้าหนี้คงค้าง (AP)</span>
-                <p className="text-[10px] text-muted-foreground font-medium">คำนวณจากยอดรอจ่ายคนขับ (Driver Payments)</p>
+                <span className="text-indigo-400 text-[10px] font-black uppercase tracking-[0.2em] italic">Accounts Payable</span>
+                <p className="text-[8px] text-slate-500 font-bold uppercase tracking-widest italic">Liability Distribution Registry</p>
               </div>
-              <div className="p-2 bg-purple-500/10 rounded-full text-purple-400">
-                <DollarSign size={16} />
+              <div className="p-2 bg-indigo-500/10 rounded-xl text-indigo-400 shadow-lg shadow-indigo-500/10">
+                <ArrowRightLeft size={16} />
               </div>
             </div>
-            <div className="text-2xl font-black text-gray-900">฿{accountsPayable.totalOutstanding.toLocaleString()}</div>
-            <p className="text-xs text-gray-700 font-bold mt-1">{accountsPayable.paymentCount} รายการรอจ่าย</p>
-          </CardContent>
-        </Card>
+            <div className="text-3xl font-black text-white tracking-tighter relative z-10">฿{accountsPayable.totalOutstanding.toLocaleString()}</div>
+            <div className="flex items-center gap-2 mt-4 opacity-50 relative z-10">
+                <div className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
+                <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest italic">{accountsPayable.paymentCount} PENDING DISBURSEMENTS</p>
+            </div>
+        </PremiumCard>
 
         {/* Collection Rate */}
-        <Card className="bg-white/80 border-gray-200 backdrop-blur-sm">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-gray-500 text-sm font-medium">อัตราการเก็บเงิน</span>
-              <div className="p-2 bg-emerald-500/10 rounded-full text-emerald-400">
+        <PremiumCard className="bg-slate-950 border-none shadow-2xl relative overflow-hidden group p-8 rounded-br-[3rem] rounded-tl-[1.5rem]">
+            <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent pointer-events-none" />
+            <div className="flex items-center justify-between mb-6 relative z-10">
+               <div className="space-y-1">
+                <span className="text-emerald-400 text-[10px] font-black uppercase tracking-[0.2em] italic">Collection Rate</span>
+                <p className="text-[8px] text-slate-500 font-bold uppercase tracking-widest italic">Yield Conversion Registry</p>
+              </div>
+              <div className="p-2 bg-emerald-500/10 rounded-xl text-emerald-400 shadow-lg shadow-emerald-500/10">
                 <Percent size={16} />
               </div>
             </div>
-            <div className="text-2xl font-black text-gray-900">{collectionRate.toFixed(1)}%</div>
-            <p className="text-xs text-gray-700 font-bold mt-1">เทียบกับยอดบิลทั้งหมด</p>
-          </CardContent>
-        </Card>
+            <div className="text-3xl font-black text-white tracking-tighter relative z-10">{collectionRate.toFixed(1)}%</div>
+            <div className="flex items-center gap-2 mt-4 relative z-10">
+                <div className="w-full bg-slate-900 rounded-full h-1 overflow-hidden border border-white/5">
+                    <div className="bg-emerald-500 h-full rounded-full" style={{ width: `${collectionRate}%` }} />
+                </div>
+            </div>
+        </PremiumCard>
 
          {/* Overdue Alert */}
-         <Card className="bg-white/80 border-gray-200 backdrop-blur-sm">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-gray-500 text-sm font-medium">เกินกำหนด (90+ วัน)</span>
-              <div className="p-2 bg-red-500/10 rounded-full text-red-400">
+         <PremiumCard className="bg-rose-600 border-none shadow-2xl relative overflow-hidden group p-8 rounded-br-[3rem] rounded-tl-[1.5rem]">
+            <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent pointer-events-none" />
+            <div className="flex items-center justify-between mb-6 relative z-10">
+              <div className="space-y-1">
+                <span className="text-rose-100 text-[10px] font-black uppercase tracking-[0.2em] italic">Critical Exposure</span>
+                <p className="text-[8px] text-rose-200 font-bold uppercase tracking-widest italic">Strategic Risk &gt; 90 Days</p>
+              </div>
+              <div className="p-2 bg-white/10 rounded-xl text-white shadow-lg">
                 <AlertCircle size={16} />
               </div>
             </div>
-            <div className="text-2xl font-black text-red-700">฿{accountsReceivable.aging['90+'].toLocaleString()}</div>
-            <p className="text-xs text-gray-700 font-bold mt-1">ต้องติดตามเร่งด่วน</p>
-          </CardContent>
-        </Card>
+            <div className="text-3xl font-black text-white tracking-tighter relative z-10 animate-pulse">฿{accountsReceivable.aging['90+'].toLocaleString()}</div>
+            <div className="flex items-center gap-2 mt-4 relative z-10">
+                <p className="text-[9px] text-white font-black uppercase tracking-widest italic flex items-center gap-2">
+                    <Clock size={10} strokeWidth={3} /> IMMEDIATE RECOVERY REQUIRED
+                </p>
+            </div>
+        </PremiumCard>
       </div>
 
-      {/* Charts & Lists */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* AR Aging */}
-        <Card className="bg-white/80 border-gray-200 backdrop-blur-sm">
-           <CardHeader className="border-b border-gray-200 pb-4">
-             <CardTitle className="text-sm font-medium text-gray-800 flex items-center gap-2">
-               <Clock size={16} className="text-gray-500" />
-               AR Aging Timeline
-             </CardTitle>
-           </CardHeader>
-           <CardContent className="pt-6 space-y-5">
+      {/* Charts & Lists Elite Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* AR Aging Timeline */}
+        <PremiumCard className="bg-white border-none shadow-[0_30px_100px_rgba(0,0,0,0.1)] p-0 overflow-hidden rounded-br-[5rem] rounded-tl-[3rem]">
+           <div className="p-8 border-b border-slate-50 bg-slate-950 relative overflow-hidden flex items-center justify-between">
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-transparent pointer-events-none" />
+              <div className="flex items-center gap-3 relative z-10">
+                <div className="p-2 bg-blue-600 rounded-xl text-white">
+                  <Clock size={16} />
+                </div>
+                <div>
+                  <h3 className="text-lg font-black text-white tracking-tight">AR Aging Dynamics</h3>
+                  <p className="text-blue-400 text-[9px] font-bold uppercase tracking-[0.2em]">Temporal exposure analytics</p>
+                </div>
+              </div>
+           </div>
+           <div className="p-10 space-y-8">
               {Object.entries(accountsReceivable.aging).map(([range, amount]) => (
-                <div key={range} className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                     <span className="text-gray-500">{range} วัน</span>
-                     <span className="text-gray-800 font-medium">฿{amount.toLocaleString()}</span>
+                <div key={range} className="space-y-3">
+                  <div className="flex justify-between items-end">
+                     <span className="text-[11px] font-black text-slate-500 uppercase tracking-widest">{range} DAYS EXPOSURE</span>
+                     <span className="text-lg font-black text-slate-900 tracking-tighter italic shadow-sm bg-slate-50 px-3 py-1 rounded-lg">฿{amount.toLocaleString()}</span>
                   </div>
-                  <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
+                  <div className="h-2 w-full bg-slate-50 rounded-full overflow-hidden border border-slate-100 p-0.5">
                      <div 
-                        className={`h-full rounded-full transition-all duration-500 ${
-                            range === '90+' ? 'bg-red-500' :
-                            range === '61-90' ? 'bg-orange-500' :
-                            range === '31-60' ? 'bg-yellow-500' : 'bg-blue-500'
-                        }`}
+                        className={cn(
+                            "h-full rounded-full transition-all duration-700 shadow-sm",
+                            range === '90+' ? 'bg-gradient-to-r from-red-600 to-rose-500 animate-pulse' :
+                            range === '61-90' ? 'bg-gradient-to-r from-orange-500 to-amber-400' :
+                            range === '31-60' ? 'bg-gradient-to-r from-amber-400 to-yellow-300' : 
+                            'bg-gradient-to-r from-blue-600 to-blue-400'
+                        )}
                         style={{ width: `${(amount / maxAging) * 100}%` }}
                      />
                   </div>
                 </div>
               ))}
-           </CardContent>
-        </Card>
+           </div>
+        </PremiumCard>
 
-        {/* Recent Unpaid */}
-        <Card className="bg-white/80 border-gray-200 backdrop-blur-sm">
-            <CardHeader className="border-b border-gray-200 pb-4">
-             <CardTitle className="text-sm font-medium text-gray-800 flex items-center gap-2">
-               <AlertCircle size={16} className="text-gray-500" />
-               Top Overdue Invoices
-             </CardTitle>
-           </CardHeader>
-           <CardContent className="pt-0">
-              <div className="divide-y divide-white/5">
+        {/* Recent Strategic Unpaid */}
+        <PremiumCard className="bg-white border-none shadow-[0_30px_100px_rgba(0,0,0,0.1)] p-0 overflow-hidden rounded-br-[5rem] rounded-tl-[3rem]">
+           <div className="p-8 border-b border-slate-50 bg-slate-950 relative overflow-hidden flex items-center justify-between">
+              <div className="absolute inset-0 bg-gradient-to-r from-rose-500/10 to-transparent pointer-events-none" />
+              <div className="flex items-center gap-3 relative z-10">
+                <div className="p-2 bg-rose-600 rounded-xl text-white shadow-lg shadow-rose-500/20">
+                  <AlertCircle size={16} />
+                </div>
+                <div>
+                  <h3 className="text-lg font-black text-white tracking-tight">Critical Exposure LOG</h3>
+                  <p className="text-rose-400 text-[9px] font-bold uppercase tracking-[0.2em]">High-priority recovery assets</p>
+                </div>
+              </div>
+           </div>
+           <div className="p-0">
+              <div className="divide-y divide-slate-50">
                 {accountsReceivable.recentUnpaid.length === 0 ? (
-                    <div className="py-8 text-center text-gray-400 text-sm">ไม่มีรายการค้างชำระ</div>
+                    <div className="p-20 text-center">
+                        <ShieldCheck size={48} strokeWidth={1} className="mx-auto mb-4 text-emerald-100" />
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Minimal Exposure Detected</p>
+                    </div>
                 ) : (
                     accountsReceivable.recentUnpaid.map((inv) => (
-                        <div key={inv.id} className="py-4 flex items-center justify-between group">
+                        <div key={inv.id} className="p-8 flex items-center justify-between group/inv hover:bg-slate-50 transition-all border-l-4 border-transparent hover:border-rose-500">
                             <div>
-                                <div className="text-gray-800 font-medium text-sm group-hover:text-emerald-500 transition-colors">{inv.customer}</div>
-                                <div className="text-xs text-red-700 font-bold mt-1">เกินกำหนด {inv.daysOverdue} วัน</div>
+                                <div className="text-slate-900 font-black text-sm tracking-tight group-hover/inv:text-rose-600 transition-colors uppercase">{inv.customer}</div>
+                                <div className="text-[9px] text-rose-500 font-black mt-2 bg-rose-50 px-2 py-1 rounded-md w-fit tracking-widest italic border border-rose-100 uppercase">
+                                   Exposure: {inv.daysOverdue} Days Relative
+                                </div>
                             </div>
                             <div className="text-right">
-                                <div className="text-emerald-700 font-black text-sm">฿{inv.amount.toLocaleString()}</div>
-                                <div className="text-[10px] text-gray-700 font-bold mt-0.5">{inv.id}</div>
+                                <div className="text-xl font-black text-slate-900 tracking-tighter">฿{inv.amount.toLocaleString()}</div>
+                                <div className="text-[9px] text-slate-400 font-black mt-1 uppercase tracking-widest italic">ENTITY_ID: {inv.id}</div>
                             </div>
                         </div>
                     ))
                 )}
               </div>
-           </CardContent>
-        </Card>
+           </div>
+        </PremiumCard>
       </div>
     </div>
   )

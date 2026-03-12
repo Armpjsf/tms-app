@@ -1,7 +1,8 @@
 "use client"
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Building2, MapPin, TrendingUp, DollarSign } from "lucide-react"
+import { PremiumCard } from "@/components/ui/premium-card"
+import { Building2, MapPin, TrendingUp, DollarSign, Target, Activity } from "lucide-react"
+import { cn } from "@/lib/utils"
 
 type CustomerStat = {
   name: string
@@ -26,81 +27,111 @@ export function CustomerRouteSection({
 }) {
 
   return (
-    <div className="space-y-6">
-      {/* Section Header */}
-      <div className="flex items-center gap-3 text-purple-400">
-        <div className="p-2 bg-purple-500/10 rounded-lg">
-          <MapPin size={20} />
+    <div className="space-y-10">
+      {/* Sub-Section Header */}
+      <div className="flex items-center gap-3">
+        <div className="p-2 bg-slate-950 rounded-xl text-purple-500 shadow-lg border border-slate-800">
+          <MapPin size={18} />
         </div>
-        <h2 className="text-lg font-bold uppercase tracking-[0.2em]">Customer & Route Intelligence</h2>
+        <h3 className="text-xl font-black text-slate-800 tracking-tight uppercase">Customer & Route Intelligence</h3>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Top Customers */}
-        <Card className="bg-white/80 border-gray-200 backdrop-blur-sm">
-           <CardHeader className="border-b border-gray-200 pb-4">
-             <CardTitle className="text-sm font-medium text-gray-800 flex items-center gap-2">
-               <Building2 size={16} className="text-purple-400" />
-               Top Customers (Revenue)
-             </CardTitle>
-           </CardHeader>
-           <CardContent className="pt-0">
-             <div className="divide-y divide-white/5">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Top Customers Elite */}
+        <PremiumCard className="bg-white border-none shadow-[0_30px_100px_rgba(0,0,0,0.1)] p-0 overflow-hidden rounded-br-[5rem] rounded-tl-[3rem]">
+           <div className="p-8 border-b border-slate-50 bg-slate-950 relative overflow-hidden flex items-center justify-between">
+              <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-transparent pointer-events-none" />
+              <div className="flex items-center gap-3 relative z-10">
+                <div className="p-2 bg-purple-600 rounded-xl text-white shadow-lg">
+                  <Building2 size={16} />
+                </div>
+                <div>
+                  <h3 className="text-lg font-black text-white tracking-tight italic uppercase">Market COMMAND</h3>
+                  <p className="text-purple-400 text-[9px] font-bold uppercase tracking-[0.2em]">Strategic Customer Yield Registry</p>
+                </div>
+              </div>
+           </div>
+           <div className="p-0">
+              <div className="divide-y divide-slate-50">
                 {customers.map((c, i) => (
-                    <div key={i} className="py-4 flex items-center justify-between group">
-                        <div className="flex items-center gap-3">
-                             <div className={`w-8 h-8 rounded flex items-center justify-center text-sm font-bold text-white ${i < 3 ? 'bg-purple-500/20 text-purple-400' : 'bg-gray-100 text-gray-500'}`}>
-                                {i + 1}
+                    <div key={i} className="p-8 flex items-center justify-between group/cust hover:bg-slate-50 transition-all border-l-4 border-transparent hover:border-purple-500">
+                        <div className="flex items-center gap-6">
+                            <div className={cn(
+                                "w-14 h-14 rounded-2xl flex items-center justify-center text-[12px] font-black shadow-xl italic transition-transform duration-500 transition-all uppercase",
+                                i < 3 ? "bg-purple-100 text-purple-700" : "bg-slate-950 text-white"
+                            )}>
+                                #{i + 1}
                             </div>
                             <div>
-                                <div className="text-gray-800 font-medium text-sm group-hover:text-purple-400 transition-colors">{c.name}</div>
-                                <div className="text-xs text-gray-700 font-black mt-0.5">{c.jobCount} Jobs</div>
+                                <div className="text-slate-900 font-black text-sm tracking-tight uppercase italic group-hover/cust:text-purple-600 transition-colors">{c.name}</div>
+                                <div className="text-[10px] text-slate-500 font-black mt-2 tracking-widest italic uppercase">
+                                    MISSION VOLUME: {c.jobCount}
+                                </div>
                             </div>
                         </div>
                         <div className="text-right">
-                             <div className="text-gray-950 font-black text-sm">฿{c.revenue.toLocaleString()}</div>
-                             {/* <div className="text-[10px] text-gray-400 mt-0.5">Revenue</div> */}
+                             <div className="text-lg font-black text-slate-950 tracking-tighter italic">฿{c.revenue.toLocaleString()}</div>
+                             <div className="text-[9px] text-slate-400 font-black uppercase tracking-widest mt-1 italic">Aggregate Revenue</div>
                         </div>
                     </div>
                 ))}
                 {customers.length === 0 && (
-                     <div className="py-8 text-center text-gray-400 text-sm">ไม่มีข้อมูลลูกค้า</div>
+                     <div className="p-24 text-center">
+                        <Building2 size={48} strokeWidth={1} className="mx-auto mb-4 text-slate-100" />
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">Awaiting Market Data</p>
+                    </div>
                 )}
-             </div>
-           </CardContent>
-        </Card>
+              </div>
+           </div>
+        </PremiumCard>
 
-        {/* Route Profitability */}
-        <Card className="bg-white/80 border-gray-200 backdrop-blur-sm">
-           <CardHeader className="border-b border-gray-200 pb-4">
-             <CardTitle className="text-sm font-medium text-gray-800 flex items-center gap-2">
-               <TrendingUp size={16} className="text-emerald-400" />
-               Route Profitability (Top 5)
-             </CardTitle>
-           </CardHeader>
-           <CardContent className="pt-0">
-             <div className="divide-y divide-white/5">
+        {/* Route Profitability Elite */}
+        <PremiumCard className="bg-white border-none shadow-[0_30px_100px_rgba(0,0,0,0.1)] p-0 overflow-hidden rounded-br-[5rem] rounded-tl-[3rem]">
+           <div className="p-8 border-b border-slate-50 bg-slate-950 relative overflow-hidden flex items-center justify-between">
+              <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 to-transparent pointer-events-none" />
+              <div className="flex items-center gap-3 relative z-10">
+                <div className="p-2 bg-emerald-600 rounded-xl text-white shadow-lg">
+                  <TrendingUp size={16} />
+                </div>
+                <div>
+                  <h3 className="text-lg font-black text-white tracking-tight italic uppercase">Corridor Yield</h3>
+                  <p className="text-emerald-400 text-[9px] font-bold uppercase tracking-[0.2em]">Route Performance & Margin Audit</p>
+                </div>
+              </div>
+           </div>
+           <div className="p-0">
+              <div className="divide-y divide-slate-50">
                 {routes.slice(0, 5).map((r, i) => (
-                    <div key={i} className="py-4 flex items-center justify-between">
-                        <div>
-                            <div className="text-gray-800 font-medium text-sm">{r.route}</div>
-                            <div className="flex items-center gap-2 mt-1">
-                                <span className="text-[10px] bg-gray-100 px-1.5 rounded text-gray-500">{r.count} trips</span>
-                                <span className="text-[10px] text-gray-400">Cost: ฿{r.cost.toLocaleString()}</span>
+                    <div key={i} className="p-8 flex items-center justify-between group/route hover:bg-slate-50 transition-all border-l-4 border-transparent hover:border-emerald-500">
+                        <div className="flex items-center gap-6">
+                            <div className="w-14 h-14 rounded-2xl bg-slate-950 text-white flex items-center justify-center text-[12px] font-black shadow-xl italic uppercase">
+                                {r.route.slice(0, 2)}
+                            </div>
+                            <div>
+                                <div className="text-slate-900 font-black text-sm tracking-tight uppercase italic">{r.route}</div>
+                                <div className="flex items-center gap-3 mt-2">
+                                    <span className="text-[10px] font-black text-slate-400 bg-slate-50 px-2 py-0.5 rounded-full border border-slate-100 tracking-widest uppercase">
+                                        {r.count} MISSIONS
+                                    </span>
+                                    <span className="text-[10px] text-slate-400 font-bold italic">COST: ฿{r.cost.toLocaleString()}</span>
+                                </div>
                             </div>
                         </div>
                         <div className="text-right">
-                             <div className="text-emerald-700 font-black text-sm">{r.margin.toFixed(1)}% Margin</div>
-                             <div className="text-[10px] text-gray-700 font-black mt-0.5">Rev: ฿{r.revenue.toLocaleString()}</div>
+                             <div className="text-lg font-black text-emerald-600 tracking-tighter italic">+{r.margin.toFixed(1)}%</div>
+                             <div className="text-[9px] text-slate-400 font-black uppercase tracking-widest mt-1 italic">Net Margin Yield</div>
                         </div>
                     </div>
                 ))}
                 {routes.length === 0 && (
-                     <div className="py-8 text-center text-gray-400 text-sm">ไม่มีข้อมูลเส้นทาง</div>
+                     <div className="p-24 text-center">
+                        <Activity size={48} strokeWidth={1} className="mx-auto mb-4 text-slate-100" />
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">Sector Activity Nominal</p>
+                    </div>
                 )}
-             </div>
-           </CardContent>
-        </Card>
+              </div>
+           </div>
+        </PremiumCard>
       </div>
     </div>
   )

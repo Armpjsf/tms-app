@@ -209,11 +209,11 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
       transition={{ duration: 0.3, ease: "easeInOut" }}
       className={cn(
         "fixed top-0 left-0 h-screen z-[1000] flex flex-col",
-        "bg-white border-r border-gray-100 text-gray-700 shadow-xl transition-all duration-300"
+        "bg-slate-950 border-r border-slate-800/50 text-slate-300 shadow-2xl transition-all duration-300"
       )}
     >
       {/* Logo */}
-      <div className="flex items-center justify-between h-20 px-4 border-b border-gray-100 bg-emerald-50/10 backdrop-blur-sm">
+      <div className="flex items-center justify-between h-20 px-4 border-b border-slate-800/50 bg-slate-900/50 backdrop-blur-md">
         <AnimatePresence mode="wait">
           {!collapsed && (
             <motion.div
@@ -224,18 +224,18 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
               className="flex items-center gap-3"
             >
               <div className="relative">
-                <div className="absolute inset-0 bg-emerald-500 blur-lg opacity-30 rounded-full"></div>
+                <div className="absolute inset-0 bg-emerald-500 blur-lg opacity-20 rounded-full"></div>
                 <Image 
                     src="/logo.png" 
                     alt="LOGIS-PRO 360" 
                     width={40}
                     height={40}
-                    className="relative h-10 w-auto object-contain drop-shadow-lg"
+                    className="relative h-10 w-auto object-contain brightness-110 drop-shadow-[0_0_8px_rgba(16,185,129,0.3)]"
                 />
               </div>
               <div>
-                <h1 className="text-gray-900 font-black text-lg leading-tight tracking-tight">LOGIS-PRO</h1>
-                <p className="text-[10px] text-emerald-600/80 font-black tracking-widest">360 ENTERPRISE</p>
+                <h1 className="text-white font-black text-lg leading-tight tracking-tight">LOGIS-PRO</h1>
+                <p className="text-[10px] text-emerald-400 font-black tracking-widest uppercase">360 Enterprise</p>
               </div>
             </motion.div>
           )}
@@ -243,7 +243,7 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
         
         <button
           onClick={onToggle}
-          className="p-2 rounded-xl hover:bg-gray-100 transition-colors text-gray-500 hover:text-emerald-700"
+          className="p-2 rounded-xl hover:bg-slate-800 transition-colors text-slate-500 hover:text-emerald-400"
         >
           <ChevronLeft
             size={20}
@@ -255,24 +255,14 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto py-6 px-3 custom-scrollbar">
         {!roleLoaded ? (
-          /* Skeleton placeholder while role loads - prevents admin menu flash for customers */
-          <div className="space-y-4 px-2">
-            {[1, 2, 3, 4].map(i => (
-              <div key={i} className="space-y-2">
-                <div className="h-2 w-16 bg-gray-100 rounded animate-pulse" />
-                {[1, 2].map(j => (
-                  <div key={j} className="h-9 bg-gray-50 rounded-xl animate-pulse" />
-                ))}
-              </div>
-            ))}
-          </div>
+          <SidebarSkeleton collapsed={collapsed} />
         ) : (
         <>
         <motion.div variants={navContainer} initial="hidden" animate="show">
         {filteredNavigation.map((group) => (
           <div key={group.title} className="mb-6">
             {!collapsed && (
-              <h2 className="px-4 mb-3 text-[10px] font-black uppercase tracking-widest text-slate-400">
+              <h2 className="px-4 mb-3 text-[10px] font-black uppercase tracking-widest text-slate-500">
                 {group.title}
               </h2>
             )}
@@ -282,31 +272,34 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
                 const isActive = pathname === item.href
                 return (
                   <div key={item.href}>
-                    <Link href={item.href} prefetch={false} className="block">
+                    <Link href={item.href} prefetch={true} className="block mb-2">
                         <div
                           className={cn(
-                               "relative flex items-center gap-3 px-3 py-3 rounded-2xl transition-all duration-200 group",
+                               "relative flex items-center gap-3 px-4 py-3 rounded-2xl transition-all duration-300 group border shadow-sm",
                                 isActive
-                                ? "bg-emerald-50 text-emerald-700 border border-emerald-100 shadow-sm"
-                                : "text-slate-600 hover:text-emerald-700 hover:bg-emerald-50/50 border border-transparent"
+                                ? "bg-emerald-600/20 text-white border-emerald-500/50 shadow-[0_4px_20px_rgba(16,185,129,0.15)]"
+                                : "bg-slate-900/80 text-slate-300 border-slate-800/50 hover:bg-slate-800 hover:border-slate-700 hover:text-white"
                           )}
                         >
-                          {/* Active Indicator Strip */}
+                          {/* Active Indicator Glow */}
                           {isActive && (
                               <div
-                                className="absolute left-0 top-1/2 -translate-y-1/2 h-7 w-1 bg-emerald-500 rounded-r-full"
+                                className="absolute left-0 top-1/2 -translate-y-1/2 h-8 w-1 bg-emerald-400 rounded-r-full shadow-[0_0_15px_rgba(52,211,153,0.8)]"
                               />
                           )}
                           
                           <span className={cn(
-                              "flex-shrink-0 transition-colors duration-200",
-                               isActive ? "text-emerald-600" : "group-hover:text-emerald-600"
+                              "flex-shrink-0 transition-all duration-300",
+                               isActive ? "text-emerald-400 scale-110" : "text-slate-500 group-hover:text-emerald-400 group-hover:scale-110"
                           )}>
                               {item.icon}
                           </span>
                           
                           {!collapsed && (
-                            <span className="text-sm font-bold whitespace-nowrap">
+                            <span className={cn(
+                                "text-sm font-black whitespace-nowrap tracking-tight transition-colors",
+                                isActive ? "text-white" : "text-slate-300 group-hover:text-white"
+                            )}>
                                 {item.title}
                             </span>
                           )}
@@ -314,13 +307,13 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
                           {/* Badge */}
                           {item.badge && !collapsed && (
                               <span
-                                className={cn(
-                                    "ml-auto px-2 py-0.5 text-[10px] font-black rounded-full",
-                                    item.badgeColor === "red" && "bg-red-50 text-red-700 border border-red-100",
-                                    item.badgeColor === "blue" && "bg-blue-50 text-blue-700 border border-blue-100",
-                                    item.badgeColor === "green" && "bg-emerald-50 text-emerald-700 border border-emerald-100",
-                                    item.badgeColor === "yellow" && "bg-yellow-50 text-yellow-700 border border-yellow-100"
-                                )}
+                                  className={cn(
+                                      "ml-auto px-2 py-0.5 text-[10px] font-black rounded-full",
+                                      item.badgeColor === "red" && "bg-red-500/10 text-red-500 border border-red-500/20",
+                                      item.badgeColor === "blue" && "bg-blue-500/10 text-blue-500 border border-blue-500/20",
+                                      item.badgeColor === "green" && "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20",
+                                      item.badgeColor === "yellow" && "bg-yellow-500/10 text-yellow-500 border border-yellow-500/20"
+                                  )}
                               >
                                 {item.badge}
                               </span>
@@ -341,9 +334,9 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
                 <Link href="/settings">
                     <motion.div
                         whileHover={{ x: 4 }}
-                        className="flex items-center gap-3 px-3 py-3 rounded-xl text-gray-600 hover:text-emerald-700 hover:bg-emerald-50 transition-all group"
+                        className="flex items-center gap-3 px-3 py-3 rounded-xl text-slate-400 hover:text-emerald-400 hover:bg-slate-900/50 transition-all group"
                     >
-                        <Settings size={20} className="group-hover:text-emerald-600 transition-colors" />
+                        <Settings size={20} className="group-hover:text-emerald-400 transition-colors" />
                         {!collapsed && <span className="text-sm font-bold">ตั้งค่า</span>}
                     </motion.div>
                 </Link>
@@ -354,9 +347,32 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
       </nav>
 
       {/* Bottom Profile Section */}
-      <div className="p-4 border-t border-gray-100 bg-gray-50/50">
+      <div className="p-4 border-t border-slate-800/50 bg-slate-950/50">
         <SidebarProfile collapsed={collapsed} />
       </div>
     </motion.aside>
+  )
+}
+
+function SidebarSkeleton({ collapsed }: { collapsed: boolean }) {
+  return (
+    <div className="space-y-6 px-2">
+      {[1, 2, 3].map((i) => (
+        <div key={i} className="space-y-3">
+          {!collapsed && (
+            <div className="h-2 w-16 bg-slate-800/50 rounded animate-pulse ml-4" />
+          )}
+          {[1, 2].map((j) => (
+            <div
+              key={j}
+              className={cn(
+                "h-12 bg-slate-900/50 rounded-2xl animate-pulse border border-slate-800/30",
+                collapsed ? "w-12 mx-auto" : "w-full"
+              )}
+            />
+          ))}
+        </div>
+      ))}
+    </div>
   )
 }

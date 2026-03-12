@@ -70,14 +70,15 @@ const container = {
     show: {
         opacity: 1,
         transition: {
-            staggerChildren: 0.1
+            staggerChildren: 0.05,
+            delayChildren: 0.05
         }
     }
 }
 
 const item = {
-    hidden: { opacity: 0, scale: 0.95, y: 20 },
-    show: { opacity: 1, scale: 1, y: 0 }
+    hidden: { opacity: 0, scale: 0.98, y: 10 },
+    show: { opacity: 1, scale: 1, y: 0, transition: { duration: 0.2, ease: "easeOut" } }
 }
 
 export function DashboardClient({ 
@@ -114,41 +115,42 @@ export function DashboardClient({
                     className="max-w-[1600px] mx-auto space-y-8 pb-20"
                 >
                     {/* Floating Header Card */}
-                    <motion.div variants={item} className="bg-white border border-gray-100 p-6 rounded-[2.5rem] shadow-2xl flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-                        <div className="flex items-center gap-5">
-                            <div className="p-4 bg-emerald-500 rounded-3xl shadow-xl shadow-emerald-500/30">
-                                <Activity className="text-white w-8 h-8" />
+                    <motion.div variants={item} className="bg-white/[0.85] backdrop-blur-2xl border border-white/40 p-8 rounded-[3rem] shadow-[0_30px_100px_rgba(0,0,0,0.1)] flex flex-col lg:flex-row lg:items-center justify-between gap-8 relative overflow-hidden group">
+                        <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/[0.03] to-transparent pointer-events-none" />
+                        <div className="flex items-center gap-6 relative z-10">
+                            <div className="p-5 bg-slate-950 rounded-[2rem] shadow-2xl shadow-emerald-500/20 transform group-hover:scale-110 group-hover:rotate-3 transition-all duration-700">
+                                <Activity className="text-emerald-400 w-10 h-10" strokeWidth={2.5} />
                             </div>
                             <div>
-                                <h1 className="text-3xl font-black text-gray-900 tracking-tight leading-none mb-2">
-                                    {customerMode ? `Welcome back, ${userName || 'Customer'}` : "Operational Dashboard"}
+                                <h1 className="text-4xl font-black text-slate-900 tracking-tighter leading-none mb-3">
+                                    {customerMode ? `Welcome back, ${userName || 'Strategic Partner'}` : "Command Centre Dashboard"}
                                 </h1>
-                                <div className="flex items-center gap-3">
-                                    <span className="flex items-center gap-1.5 px-3 py-1 bg-emerald-500/10 text-emerald-600 rounded-full text-[10px] font-black uppercase tracking-wider">
-                                        <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
-                                        {customerMode ? "Shipment Tracking" : "Live Fleet"}
+                                <div className="flex flex-wrap items-center gap-4">
+                                    <span className="flex items-center gap-2 px-4 py-1.5 bg-emerald-500/10 text-emerald-600 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] border border-emerald-500/20 shadow-sm">
+                                        <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(16,185,129,1)]" />
+                                        {customerMode ? "Enterprise Logistics Portal" : "Active Ops Registry"}
                                     </span>
-                                    <p className="text-gray-700 text-sm font-bold">
-                                        {customerMode ? "ระบบพอร์ทัลส่วนตัวสำหรับการติดตามและจัดการงานขนส่งของคุณ" : `Real-time tracking for ${branchId === 'All' ? 'All Branches' : branchId}`}
+                                    <p className="text-slate-500 text-sm font-black uppercase tracking-widest opacity-60">
+                                        {customerMode ? "Secure real-time shipment intelligence & monitoring" : `Fleet Intelligence for ${branchId === 'All' ? 'Global Network' : branchId}`}
                                     </p>
                                 </div>
                             </div>
                         </div>
                         
                         {customerMode ? (
-                             <div className="flex items-center gap-3">
+                             <div className="flex items-center gap-4 relative z-10">
                                 <button 
                                     onClick={() => setIsRequestDialogOpen(true)}
-                                    className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-2xl font-black text-sm transition-all shadow-lg shadow-emerald-500/20 active:scale-95"
+                                    className="bg-emerald-600 hover:bg-emerald-700 text-white px-10 py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-[0_15px_30px_rgba(16,185,129,0.3)] active:scale-95 border border-emerald-400/30"
                                 >
-                                    Request New Shipment
+                                    Initiate New Shipment
                                 </button>
                              </div>
                         ) : (
-                            <div className="flex items-center gap-3">
-                                <div className="bg-black/5 px-4 py-3 rounded-2xl">
-                                    <p className="text-[10px] font-black text-gray-700 uppercase tracking-widest mb-0.5">Fleet Connectivity</p>
-                                    <p className="text-emerald-700 font-black text-sm">{fleetHealth}% Active</p>
+                            <div className="flex items-center gap-4 relative z-10">
+                                <div className="bg-slate-950 px-6 py-4 rounded-2xl shadow-xl border border-white/10">
+                                    <p className="text-[9px] font-black text-emerald-500/60 uppercase tracking-[0.3em] mb-1.5">Network Integrity</p>
+                                    <p className="text-white font-black text-lg tracking-tighter">{fleetHealth}% <span className="text-[10px] text-emerald-400 opacity-60 ml-1">SYNCED</span></p>
                                 </div>
                             </div>
                         )}

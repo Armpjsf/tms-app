@@ -6,7 +6,6 @@ import {
     Search, 
     Truck, 
     MapPin, 
-    Navigation, 
     ChevronRight, 
     X,
     Phone,
@@ -396,10 +395,13 @@ export function MonitoringCommandCenter({
     return (
         <div className="relative w-full h-[calc(100vh-64px)] overflow-hidden flex bg-gray-50">
             {/* 1. Left Sidebar: Control Panel */}
-            <div className="w-[380px] h-full bg-white border-r border-gray-100 flex flex-col z-20 shadow-xl">
-                <div className="p-6 border-b border-gray-100">
-                    <h2 className="text-2xl font-black text-gray-900 tracking-tight flex items-center gap-3 mb-6">
-                        <Activity className="text-emerald-500" size={24} />
+            <div className="w-[380px] h-full bg-white border-r border-gray-100 flex flex-col z-20 shadow-2xl">
+                <div className="p-6 bg-slate-950 border-b border-emerald-500/20 relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 blur-3xl rounded-full -mr-16 -mt-16 pointer-events-none" />
+                    <h2 className="text-2xl font-black text-white tracking-tight flex items-center gap-3 mb-6 relative z-10">
+                        <div className="p-2 bg-emerald-500/20 rounded-xl border border-emerald-500/30 shadow-[0_0_15px_rgba(16,185,129,0.2)]">
+                            <Activity className="text-emerald-400" size={20} />
+                        </div>
                         Control Centre
                     </h2>
                     
@@ -419,12 +421,15 @@ export function MonitoringCommandCenter({
                                 key={t}
                                 onClick={() => setFilter(t)}
                                 className={cn(
-                                    "flex-1 py-2 text-[8px] font-black uppercase tracking-widest rounded-xl border transition-all",
+                                    "flex-1 py-2 text-[8px] font-black uppercase tracking-widest rounded-xl border transition-all duration-300 relative overflow-hidden",
                                     filter === t 
-                                        ? "bg-emerald-500 border-emerald-500 text-white shadow-lg shadow-emerald-500/20" 
-                                        : "bg-gray-50 border-transparent text-gray-500 hover:bg-gray-100"
+                                        ? "bg-slate-900 border-emerald-500/50 text-white shadow-[0_0_20px_rgba(16,185,129,0.15)] scale-105 z-10" 
+                                        : "bg-slate-800/10 border-transparent text-slate-500 hover:bg-slate-800/20"
                                 )}
                             >
+                                {filter === t && (
+                                    <div className="absolute inset-x-0 bottom-0 h-0.5 bg-emerald-500" />
+                                )}
                                 <div className="flex flex-col items-center gap-1">
                                     {t === 'all' && <Activity size={14} />}
                                     {t === 'jobs' && <Truck size={14} />}
@@ -452,8 +457,12 @@ export function MonitoringCommandCenter({
                             {filteredHealthAlerts.map((alert, idx) => (
                                 <motion.div 
                                     key={`${alert.vehicle_plate}-${idx}`}
-                                    whileHover={{ x: 4 }}
-                                    className="p-4 rounded-3xl bg-white border border-gray-100 shadow-sm hover:border-emerald-500/20 transition-all cursor-pointer group"
+                                    whileHover={{ x: 8, scale: 1.02 }}
+                                    className={cn(
+                                        "p-5 bg-white border border-gray-100 shadow-xl cursor-pointer transition-all duration-300 relative overflow-hidden group",
+                                        "rounded-br-[3rem] rounded-tl-[1.5rem] rounded-tr-lg rounded-bl-lg",
+                                        alert.priority === 'high' ? "border-l-8 border-l-red-500" : "border-l-8 border-l-amber-500"
+                                    )}
                                     onClick={() => {
                                         const driver = drivers.find(d => d.Vehicle_Plate === alert.vehicle_plate)
                                         if (driver) handleDriverClick(driver)
@@ -520,15 +529,16 @@ export function MonitoringCommandCenter({
                             {filteredJobs.map(job => (
                                 <motion.div 
                                     key={job.Job_ID}
-                                    whileHover={{ x: 4 }}
+                                    whileHover={{ x: 8, scale: 1.02 }}
                                     onClick={() => handleJobClick(job)}
                                     className={cn(
-                                        "p-4 rounded-3xl border cursor-pointer transition-all",
+                                        "p-5 border cursor-pointer transition-all duration-300 relative overflow-hidden",
+                                        "rounded-br-[3rem] rounded-tl-[1.5rem] rounded-tr-lg rounded-bl-lg",
                                         selectedId === job.Job_ID 
-                                            ? "bg-emerald-50 border-emerald-500/30 shadow-md" 
+                                            ? "bg-emerald-50/50 border-emerald-500/30 border-l-8 border-l-emerald-500 shadow-2xl" 
                                             : job.Job_Status === 'SOS'
-                                                ? "bg-red-50 border-red-500/50 shadow-lg shadow-red-500/20 animate-pulse"
-                                                : "bg-white border-gray-100 hover:border-emerald-500/20 shadow-sm"
+                                                ? "bg-red-50/50 border-red-500/50 border-l-8 border-l-red-500 shadow-2xl shadow-red-500/10 animate-pulse"
+                                                : "bg-white border-gray-100 border-l-8 border-l-emerald-500/30 shadow-xl hover:shadow-2xl hover:border-emerald-500/20"
                                     )}
                                 >
                                     <div className="flex items-center justify-between mb-2">
@@ -622,29 +632,38 @@ export function MonitoringCommandCenter({
                     routeSummary={routeSummary}
                 />
                 
-                {/* Floating Stats Bar */}
-                <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex gap-4 z-10">
-                    <div className="bg-white/90 backdrop-blur-md px-6 py-3 rounded-3xl border border-gray-100 shadow-2xl flex items-center gap-6">
-                        <div className="flex items-center gap-2">
-                            <Navigation className="text-emerald-500" size={18} />
-                            <span className="text-sm font-black text-gray-900">{initialJobs.length}</span>
-                            <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Jobs</span>
+                <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex gap-4 z-10 scale-110">
+                    <div className="bg-slate-950/90 backdrop-blur-xl px-8 py-4 rounded-full border border-emerald-500/30 shadow-[0_0_30px_rgba(16,185,129,0.15)] flex items-center gap-8 relative overflow-hidden group">
+                        <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/5 to-transparent pointer-events-none" />
+                        <div className="flex items-center gap-3 relative z-10">
+                            <div className="flex flex-col">
+                                <span className="text-lg font-black text-white leading-none">{initialJobs.length}</span>
+                                <span className="text-[8px] font-black text-emerald-500/60 uppercase tracking-[0.2em]">Active Jobs</span>
+                            </div>
                         </div>
-                        <div className="w-px h-6 bg-gray-200" />
-                        <div className="flex items-center gap-2">
-                            <Signal className="text-emerald-500" size={18} />
-                            <span className="text-sm font-black text-gray-900">
-                                {drivers.filter(d => getDriverStatus(d.Last_Update) === 'online').length}
-                            </span>
-                            <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Online</span>
+                        <div className="w-px h-8 bg-white/10" />
+                        <div className="flex items-center gap-3 relative z-10">
+                            <div className="p-2 bg-emerald-500/20 rounded-lg">
+                                <Signal className="text-emerald-400" size={18} />
+                            </div>
+                            <div className="flex flex-col">
+                                <span className="text-lg font-black text-white leading-none">
+                                    {drivers.filter(d => getDriverStatus(d.Last_Update) === 'online').length}
+                                </span>
+                                <span className="text-[8px] font-black text-emerald-500/60 uppercase tracking-[0.2em]">Online Fleet</span>
+                            </div>
                         </div>
-                        <div className="w-px h-6 bg-gray-200" />
-                        <div className="flex items-center gap-2">
-                            <Activity className="text-blue-500" size={18} />
-                            <span className="text-sm font-black text-gray-900">
-                                {initialJobs.filter(j => j.Job_Status === 'In Transit').length}
-                            </span>
-                            <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">In Transit</span>
+                        <div className="w-px h-8 bg-white/10" />
+                        <div className="flex items-center gap-3 relative z-10">
+                            <div className="p-2 bg-blue-500/20 rounded-lg">
+                                <Activity className="text-blue-400" size={18} />
+                            </div>
+                            <div className="flex flex-col">
+                                <span className="text-lg font-black text-white leading-none">
+                                    {initialJobs.filter(j => j.Job_Status === 'In Transit').length}
+                                </span>
+                                <span className="text-[8px] font-black text-blue-500/60 uppercase tracking-[0.2em]">Live Trips</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -657,8 +676,9 @@ export function MonitoringCommandCenter({
                             animate={{ x: 0 }}
                             exit={{ x: 500 }}
                             transition={{ type: "spring", damping: 25, stiffness: 200 }}
-                            className="absolute right-0 top-0 bottom-0 w-[450px] bg-white/95 backdrop-blur-xl border-l border-gray-100 z-30 shadow-[-20px_0_50px_rgba(0,0,0,0.1)] p-8 overflow-y-auto custom-scrollbar"
+                            className="absolute right-0 top-0 bottom-0 w-[450px] bg-white border-l border-gray-100 z-30 shadow-[-20px_0_80px_rgba(0,0,0,0.15)] p-0 overflow-y-auto custom-scrollbar rounded-tl-[10rem]"
                         >
+                            <div className="p-8 relative">
                             <Button 
                                 variant="ghost" 
                                 size="icon" 
@@ -720,6 +740,7 @@ export function MonitoringCommandCenter({
                                     </Button>
                                 </div>
                             </div>
+                        </div>
                         </motion.div>
                     )}
                 </AnimatePresence>

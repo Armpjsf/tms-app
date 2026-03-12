@@ -176,7 +176,7 @@ export default function CustomerBillingHistory() {
 
       <div className="grid grid-cols-1 gap-6">
         {/* Search & Filters */}
-        <PremiumCard className="bg-white/40 border-white/40">
+        <PremiumCard className="bg-white border-gray-100">
           <div className="flex flex-col md:flex-row gap-4 items-center">
             <div className="relative flex-1 w-full">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />

@@ -128,46 +128,47 @@ export function CalendarClient({
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-black text-gray-900 tracking-tight flex items-center gap-3">
+      <div className="bg-slate-950 p-8 rounded-br-[4rem] rounded-tl-[2rem] border border-slate-800 shadow-2xl mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative overflow-hidden group">
+        <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/10 to-transparent pointer-events-none" />
+        <div className="relative z-10">
+          <h1 className="text-3xl font-black text-white tracking-tight flex items-center gap-3">
             <div className="p-2.5 bg-indigo-500 rounded-2xl text-white shadow-lg shadow-indigo-500/20">
               <CalendarDays size={28} />
             </div>
             ปฏิทินงานขนส่ง
           </h1>
-          <p className="text-gray-500 font-medium mt-1 text-sm">ภาพรวมงานประจำเดือน — คลิกที่วันเพื่อดูรายละเอียด</p>
+          <p className="text-slate-400 font-bold uppercase tracking-widest text-[10px] mt-2">Operational Command — Monthly Overview</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 relative z-10">
           <button
             onClick={goToToday}
-            className="px-4 py-2 bg-indigo-50 text-indigo-700 rounded-xl text-sm font-bold hover:bg-indigo-100 transition-colors"
+            className="px-6 py-3 bg-slate-900 text-slate-300 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-slate-800 transition-all border border-slate-800"
           >
-            วันนี้
+            Today
           </button>
           <button
             onClick={() => setIsDialogOpen(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-emerald-500 text-white rounded-xl text-sm font-bold hover:bg-emerald-600 transition-colors shadow-lg shadow-emerald-500/20"
+            className="flex items-center gap-2 px-6 py-3 bg-emerald-500 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-500/20"
           >
             <Plus size={16} />
-            สร้างงาน
+            New Job
           </button>
         </div>
       </div>
 
       {/* Month stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-2">
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3 mb-8">
         {Object.entries(statusCounts).sort((a, b) => b[1] - a[1]).slice(0, 6).map(([status, count]) => (
-          <div key={status} className="flex items-center gap-2 bg-white rounded-xl px-3 py-2 border border-gray-100">
-            <div className={`w-2.5 h-2.5 rounded-full ${STATUS_COLORS[status] || 'bg-gray-400'}`} />
-            <span className="text-xs font-bold text-gray-600">{STATUS_LABELS[status] || status}</span>
+          <div key={status} className="flex items-center gap-3 bg-white/80 backdrop-blur-md rounded-xl px-4 py-3 border border-white/50 shadow-sm">
+            <div className={`w-3 h-3 rounded-full ${STATUS_COLORS[status] || 'bg-gray-400'} shadow-sm`} />
+            <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest leading-none">{STATUS_LABELS[status] || status}</span>
             <span className="ml-auto text-sm font-black text-gray-900">{count}</span>
           </div>
         ))}
       </div>
 
       {/* Calendar Card */}
-      <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-br-[5rem] rounded-tl-[3rem] border border-white shadow-2xl overflow-hidden relative">
         {/* Month Navigation */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-indigo-50 to-white">
           <button onClick={() => changeMonth(-1)} className="p-2 hover:bg-indigo-100 rounded-xl transition-colors">
@@ -257,13 +258,14 @@ export function CalendarClient({
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden"
+            className="bg-white rounded-br-[4rem] rounded-tl-[2rem] border border-white shadow-2xl overflow-hidden mt-8"
           >
-            <div className="px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-indigo-50 to-white flex items-center justify-between">
-              <h3 className="text-lg font-black text-gray-900">
-                📅 {new Date(selectedDate + 'T00:00:00').toLocaleDateString('th-TH', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+            <div className="px-8 py-6 border-b border-gray-100 bg-slate-950 flex items-center justify-between relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/10 to-transparent pointer-events-none" />
+              <h3 className="text-lg font-black text-white relative z-10">
+                DATE DETAILS: {new Date(selectedDate + 'T00:00:00').toLocaleDateString('th-TH', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
               </h3>
-              <span className="text-sm font-bold text-indigo-600">{selectedJobs.length} งาน</span>
+              <span className="text-xs font-black text-indigo-400 uppercase tracking-widest relative z-10">{selectedJobs.length} Operations Scheduled</span>
             </div>
 
             {selectedJobs.length === 0 ? (

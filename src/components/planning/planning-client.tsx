@@ -101,27 +101,26 @@ export function PlanningClient({
             className="space-y-8"
         >
             {/* Header Section */}
-            <motion.div variants={item} className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 bg-white/40 p-10 rounded-[2.5rem] border border-white/40 backdrop-blur-xl shadow-2xl relative overflow-hidden group">
-                {/* Background Accent */}
-                <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 blur-3xl rounded-full -mr-20 -mt-20 pointer-events-none" />
+            <motion.div variants={item} className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 bg-slate-950 p-10 rounded-br-[5rem] rounded-tl-[2rem] border border-slate-800 shadow-2xl relative overflow-hidden group">
+                <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 to-transparent pointer-events-none" />
                 
                 <div className="relative z-10">
-                    <h1 className="text-5xl font-black text-gray-900 mb-2 tracking-tighter flex items-center gap-4">
+                    <h1 className="text-5xl font-black text-white mb-2 tracking-tighter flex items-center gap-4">
                         <div className="p-3 bg-emerald-500 rounded-3xl shadow-2xl shadow-emerald-500/20 text-white transform group-hover:scale-110 transition-transform duration-500">
                             <LayoutDashboard size={32} />
                         </div>
                         Planning Board
                     </h1>
-                    <p className="text-gray-500 font-bold ml-[4.5rem] uppercase tracking-[0.2em] text-[10px]">Logistics Control Center</p>
+                    <p className="text-emerald-400 font-black ml-[4.5rem] uppercase tracking-[0.3em] text-[10px]">Strategic Fleet Operations Command</p>
                 </div>
                 <div className="flex flex-wrap items-center gap-3 relative z-10">
                     {/* View Toggle */}
-                    <div className="flex bg-gray-100/50 p-1 rounded-2xl mr-2">
+                    <div className="flex bg-slate-900/50 p-1.5 rounded-2xl mr-2 border border-slate-800/50">
                         <button 
                             onClick={() => setView('list')}
                             className={cn(
                                 "flex items-center gap-2 px-6 py-3 rounded-xl transition-all font-black text-[10px] uppercase tracking-widest",
-                                view === 'list' ? "bg-white text-emerald-600 shadow-md" : "text-gray-400 hover:text-gray-600"
+                                view === 'list' ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20" : "text-slate-500 hover:text-slate-300"
                             )}
                         >
                             <LayoutList size={16} />
@@ -131,7 +130,7 @@ export function PlanningClient({
                             onClick={() => setView('kanban')}
                             className={cn(
                                 "flex items-center gap-2 px-6 py-3 rounded-xl transition-all font-black text-[10px] uppercase tracking-widest",
-                                view === 'kanban' ? "bg-white text-emerald-600 shadow-md" : "text-gray-400 hover:text-gray-600"
+                                view === 'kanban' ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20" : "text-slate-500 hover:text-slate-300"
                             )}
                         >
                             <Trello size={16} />
@@ -141,13 +140,13 @@ export function PlanningClient({
                             onClick={() => setView('requests')}
                             className={cn(
                                 "flex items-center gap-2 px-6 py-3 rounded-xl transition-all font-black text-[10px] uppercase tracking-widest relative",
-                                view === 'requests' ? "bg-white text-orange-600 shadow-md" : "text-gray-400 hover:text-gray-600"
+                                view === 'requests' ? "bg-orange-500 text-white shadow-lg shadow-orange-500/20" : "text-slate-500 hover:text-slate-300"
                             )}
                         >
                             <Inbox size={16} />
                             Requests
                             {requestCount > 0 && (
-                                <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-orange-500 text-white text-[9px] flex items-center justify-center rounded-full border-2 border-white animate-pulse">
+                                <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-orange-500 text-white text-[9px] flex items-center justify-center rounded-full border-2 border-slate-950 animate-pulse">
                                     {requestCount}
                                 </span>
                             )}
@@ -155,9 +154,9 @@ export function PlanningClient({
                     </div>
 
                     <Link href="/jobs/history">
-                        <PremiumButton variant="outline" className="h-14 px-8 rounded-2xl">
+                        <PremiumButton variant="outline" className="h-14 px-8 rounded-2xl bg-slate-900/50 border-slate-800 text-slate-300 hover:bg-slate-900">
                             <History size={20} className="mr-2" />
-                            ประวัติงาน
+                            Job History
                         </PremiumButton>
                     </Link>
                     <ExcelImport 
@@ -187,12 +186,12 @@ export function PlanningClient({
             {/* Bento Stats Grid */}
             <motion.div variants={item} className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 {[
-                    { label: 'งานทั้งหมด', value: stats.total, icon: Package, color: 'emerald', bg: 'emerald' },
-                    { label: 'รอรับงาน', value: stats.pending, icon: Clock, color: 'amber', bg: 'amber' },
-                    { label: 'กำลังส่ง', value: stats.inProgress, icon: Truck, color: 'blue', bg: 'blue' },
-                    { label: 'ส่งสำเร็จ', value: stats.delivered, icon: CheckCircle2, color: 'emerald', bg: 'teal' },
+                    { label: 'Total Operations', value: stats.total, icon: Package, color: 'emerald', bg: 'emerald' },
+                    { label: 'Awaiting Assignment', value: stats.pending, icon: Clock, color: 'amber', bg: 'amber' },
+                    { label: 'Active In-Transit', value: stats.inProgress, icon: Truck, color: 'blue', bg: 'blue' },
+                    { label: 'Successful Delivery', value: stats.delivered, icon: CheckCircle2, color: 'emerald', bg: 'teal' },
                 ].map((stat, idx) => (
-                    <PremiumCard key={idx} className="group p-8">
+                    <PremiumCard key={idx} className="group p-8 border-none bg-white/80 backdrop-blur-md shadow-2xl relative overflow-hidden">
                         <div className="flex items-center justify-between mb-8">
                             <div className={cn(
                                 "p-4 rounded-2xl shadow-2xl transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3 text-white",
@@ -202,18 +201,18 @@ export function PlanningClient({
                             )}>
                                 <stat.icon size={24} />
                             </div>
-                            <div className="flex items-center gap-1.5 px-3 py-1 bg-emerald-500/10 rounded-full">
+                            <div className="flex items-center gap-1.5 px-3 py-1 bg-slate-950/5 rounded-full border border-black/5">
                                 <TrendingUp size={12} className="text-emerald-500" />
-                                <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">LIVE</span>
+                                <span className="text-[10px] font-black text-slate-900 uppercase tracking-widest">LIVE DATA</span>
                             </div>
                         </div>
-                        <div>
+                        <div className="relative z-10">
                             <p className="text-gray-500 font-bold text-[10px] uppercase tracking-[0.2em] mb-1">{stat.label}</p>
-                            <p className="text-5xl font-black text-gray-900 tracking-tighter">{stat.value}</p>
+                            <p className="text-5xl font-black text-gray-900 tracking-tighter leading-none">{stat.value}</p>
                         </div>
-                        {/* Decorative background icon */}
-                        <div className="absolute -right-6 -bottom-6 opacity-5 group-hover:opacity-10 transition-opacity duration-700 pointer-events-none rotate-12">
-                            <stat.icon size={120} />
+                        {/* High-end numeric glow */}
+                        <div className="absolute top-1/2 right-4 -translate-y-1/2 text-8xl font-black text-slate-100/50 pointer-events-none select-none">
+                            {idx + 1}
                         </div>
                     </PremiumCard>
                 ))}
@@ -222,14 +221,15 @@ export function PlanningClient({
             {/* Content Area */}
             <motion.div variants={item}>
                 {view === 'list' || view === 'requests' ? (
-                    <PremiumCard className="p-0 overflow-hidden shadow-2xl border-none">
-                        <PremiumCardHeader className="p-8 border-b border-gray-50 bg-gray-50/10">
-                            <PremiumCardTitle icon={<Package className="text-emerald-500" />}>
-                               {view === 'requests' ? "Customer Requests" : "Recent Deliveries"}
+                    <PremiumCard className="p-0 overflow-hidden shadow-[0_30px_100px_rgba(0,0,0,0.1)] border-none bg-white rounded-br-[5rem] rounded-tl-[3rem]">
+                        <PremiumCardHeader className="p-8 border-b border-slate-50 bg-slate-950 relative overflow-hidden">
+                            <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 to-transparent pointer-events-none" />
+                            <PremiumCardTitle icon={<Package className="text-emerald-400" />} className="text-white relative z-10">
+                               {view === 'requests' ? "ASSET REQUESTS" : "LIVE MONITORING FEED"}
                             </PremiumCardTitle>
-                            <Link href="/jobs/history">
-                                <PremiumButton variant="ghost" size="sm" className="text-[10px] tracking-[0.2em]">
-                                    VIEW ALL ACTIVITY <ArrowRight className="w-4 h-4 ml-2" />
+                            <Link href="/jobs/history" className="relative z-10">
+                                <PremiumButton variant="ghost" size="sm" className="text-[10px] tracking-[0.2em] text-slate-400 hover:text-white hover:bg-white/5">
+                                    ARCHIVE DATA <ArrowRight className="w-4 h-4 ml-2" />
                                 </PremiumButton>
                             </Link>
                         </PremiumCardHeader>

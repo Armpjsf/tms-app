@@ -1,145 +1,217 @@
 "use client"
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { PremiumCard } from "@/components/ui/premium-card"
 import { WorkforceAnalytics } from "@/lib/supabase/workforce-analytics"
-import { Users, UserCheck, AlertOctagon, Trophy, FileWarning } from "lucide-react"
+import { Users, UserCheck, AlertOctagon, Trophy, FileWarning, ShieldCheck, Activity } from "lucide-react"
+import { cn } from "@/lib/utils"
 
 export function WorkforceSection({ data }: { data: WorkforceAnalytics }) {
   const { kpis, topPerformers, driversWithIssues } = data
 
   return (
-    <div className="space-y-6">
-      {/* Section Header */}
-      <div className="flex items-center gap-3 text-cyan-400">
-        <div className="p-2 bg-cyan-500/10 rounded-lg">
-          <Users size={20} />
+    <div className="space-y-10">
+      {/* Sub-Section Header */}
+      <div className="flex items-center gap-3">
+        <div className="p-2 bg-slate-950 rounded-xl text-blue-500 shadow-lg border border-slate-800">
+          <Users size={18} />
         </div>
-        <h2 className="text-lg font-bold uppercase tracking-[0.2em]">Workforce & Drivers</h2>
+        <h3 className="text-xl font-black text-slate-800 tracking-tight uppercase">Workforce Intelligence registry</h3>
       </div>
 
-      {/* KPI Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* KPI Bento Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {/* Total Drivers */}
-        <Card className="bg-white/80 border-gray-200 backdrop-blur-sm">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-gray-500 text-sm font-medium">พนักงานขับรถทั้งหมด</span>
-              <div className="p-2 bg-slate-700/50 rounded-full text-gray-500">
+        <PremiumCard className="bg-slate-950 border-none shadow-2xl relative overflow-hidden group p-8 rounded-br-[3rem] rounded-tl-[1.5rem]">
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent pointer-events-none" />
+            <div className="flex items-center justify-between mb-6 relative z-10">
+              <div className="space-y-1">
+                <span className="text-blue-400 text-[10px] font-black uppercase tracking-[0.2em] italic">Total Box</span>
+                <p className="text-[8px] text-slate-500 font-bold uppercase tracking-widest italic">Global Operator Registry</p>
+              </div>
+              <div className="p-2 bg-blue-500/10 rounded-xl text-blue-500 shadow-lg shadow-blue-500/10">
                 <Users size={16} />
               </div>
             </div>
-            <div className="text-2xl font-black text-gray-900">{kpis.totalBox} คน</div>
-            <p className="text-xs text-gray-400 mt-1">ในระบบ</p>
-          </CardContent>
-        </Card>
+            <div className="text-3xl font-black text-white tracking-tighter relative z-10 italic">{kpis.totalBox} PERSONNEL</div>
+            <div className="flex items-center gap-2 mt-4 relative z-10 opacity-50">
+                <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest italic">ACTIVE ROLLING CAPACITY</p>
+            </div>
+        </PremiumCard>
 
         {/* Active Today */}
-        <Card className="bg-white/80 border-gray-200 backdrop-blur-sm">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-gray-500 text-sm font-medium">ปฏิบัติงานวันนี้ (Active)</span>
-              <div className="p-2 bg-emerald-500/10 rounded-full text-emerald-400">
+        <PremiumCard className="bg-slate-950 border-none shadow-2xl relative overflow-hidden group p-8 rounded-br-[3rem] rounded-tl-[1.5rem]">
+            <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent pointer-events-none" />
+            <div className="flex items-center justify-between mb-6 relative z-10">
+              <div className="space-y-1">
+                <span className="text-emerald-400 text-[10px] font-black uppercase tracking-[0.2em] italic">Active Mission</span>
+                <p className="text-[8px] text-slate-500 font-bold uppercase tracking-widest italic">Real-Time Deployment Status</p>
+              </div>
+              <div className="p-2 bg-emerald-500/10 rounded-xl text-emerald-400 shadow-lg shadow-emerald-500/10">
                 <UserCheck size={16} />
               </div>
             </div>
-            <div className="text-2xl font-black text-gray-900">{kpis.activeToday} คน</div>
-            <p className="text-xs text-gray-400 mt-1">มีงานขนส่งวันนี้</p>
-          </CardContent>
-        </Card>
+            <div className="text-3xl font-black text-white tracking-tighter relative z-10 italic">{kpis.activeToday} ACTIVE</div>
+            <div className="flex items-center gap-2 mt-4 relative z-10">
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <p className="text-[10px] text-emerald-400 font-black uppercase tracking-widest italic">DEPLOYED TO FIELD</p>
+            </div>
+        </PremiumCard>
 
         {/* Expiring Soon */}
-        <Card className="bg-white/80 border-gray-200 backdrop-blur-sm">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-gray-500 text-sm font-medium">เอกสารใกล้หมดอายุ</span>
-              <div className="p-2 bg-yellow-500/10 rounded-full text-yellow-400">
+        <PremiumCard className="bg-slate-950 border-none shadow-2xl relative overflow-hidden group p-8 rounded-br-[3rem] rounded-tl-[1.5rem]">
+            <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-transparent pointer-events-none" />
+            <div className="flex items-center justify-between mb-6 relative z-10">
+              <div className="space-y-1">
+                <span className="text-amber-400 text-[10px] font-black uppercase tracking-[0.2em] italic">Compliance Risk</span>
+                <p className="text-[8px] text-slate-500 font-bold uppercase tracking-widest italic">Temporal Document Expiry</p>
+              </div>
+              <div className="p-2 bg-amber-500/10 rounded-xl text-amber-500 shadow-lg shadow-amber-500/10">
                 <FileWarning size={16} />
               </div>
             </div>
-            <div className="text-2xl font-bold text-yellow-400">{kpis.licenseExpiring} คน</div>
-            <p className="text-xs text-gray-400 mt-1">ต้องต่ออายุภายใน 30 วัน</p>
-          </CardContent>
-        </Card>
+            <div className="text-3xl font-black text-white tracking-tighter relative z-10 italic">{kpis.licenseExpiring} AT RISK</div>
+            <div className="flex items-center gap-2 mt-4 relative z-10">
+                <p className="text-[10px] text-amber-400 font-black uppercase tracking-widest italic flex items-center gap-2">
+                    <Activity size={10} /> 30D COMPLIANCE WINDOW
+                </p>
+            </div>
+        </PremiumCard>
 
         {/* Expired */}
-        <Card className="bg-white/80 border-gray-200 backdrop-blur-sm">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-gray-500 text-sm font-medium">เอกสารหมดอายุแล้ว</span>
-              <div className="p-2 bg-red-500/10 rounded-full text-red-400">
+        <PremiumCard className={cn(
+            "border-none shadow-2xl relative overflow-hidden group p-8 rounded-br-[3rem] rounded-tl-[1.5rem]",
+            kpis.licenseExpired > 0 ? "bg-rose-600" : "bg-slate-950"
+        )}>
+            <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent pointer-events-none" />
+            <div className="flex items-center justify-between mb-6 relative z-10">
+              <div className="space-y-1">
+                <span className={cn("text-[10px] font-black uppercase tracking-[0.2em] italic", kpis.licenseExpired > 0 ? "text-rose-100" : "text-slate-500")}>
+                    Critical Breach
+                </span>
+                <p className={cn("text-[8px] font-bold uppercase tracking-widest italic", kpis.licenseExpired > 0 ? "text-rose-200" : "text-slate-600")}>
+                    Operational Suspension Log
+                </p>
+              </div>
+              <div className={cn("p-2 rounded-xl shadow-lg", kpis.licenseExpired > 0 ? "bg-white/20 text-white" : "bg-slate-900 text-slate-500")}>
                 <AlertOctagon size={16} />
               </div>
             </div>
-            <div className="text-2xl font-bold text-red-500">{kpis.licenseExpired} คน</div>
-            <p className="text-xs text-gray-400 mt-1">ห้ามปฏิบัติงาน</p>
-          </CardContent>
-        </Card>
+            <div className="text-3xl font-black text-white tracking-tighter relative z-10 italic">{kpis.licenseExpired} HALTED</div>
+            <div className="flex items-center gap-2 mt-4 relative z-10">
+                <p className={cn("text-[10px] font-black uppercase tracking-widest italic", kpis.licenseExpired > 0 ? "text-white" : "text-slate-500")}>
+                    IMMEDIATE LOCKOUT ACTIVE
+                </p>
+            </div>
+        </PremiumCard>
       </div>
 
-      {/* Lists */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Top Performers */}
-        <Card className="bg-white/80 border-gray-200 backdrop-blur-sm">
-           <CardHeader className="border-b border-gray-200 pb-4">
-             <CardTitle className="text-sm font-medium text-gray-800 flex items-center gap-2">
-               <Trophy size={16} className="text-yellow-500" />
-               Top Performers (Revenue)
-             </CardTitle>
-           </CardHeader>
-           <CardContent className="pt-0">
-             <div className="divide-y divide-white/5">
+      {/* Workforce Insight Elite Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Top Performers Elite */}
+        <PremiumCard className="bg-white border-none shadow-[0_30px_100px_rgba(0,0,0,0.1)] p-0 overflow-hidden rounded-br-[5rem] rounded-tl-[3rem]">
+           <div className="p-8 border-b border-slate-50 bg-slate-950 relative overflow-hidden flex items-center justify-between">
+              <div className="absolute inset-0 bg-gradient-to-r from-amber-500/10 to-transparent pointer-events-none" />
+              <div className="flex items-center gap-3 relative z-10">
+                <div className="p-2 bg-amber-600 rounded-xl text-white shadow-lg">
+                  <Trophy size={16} />
+                </div>
+                <div>
+                  <h3 className="text-lg font-black text-white tracking-tight italic uppercase">Operator ELITE</h3>
+                  <p className="text-amber-400 text-[9px] font-bold uppercase tracking-[0.2em]">High-Yield Performance metrics</p>
+                </div>
+              </div>
+           </div>
+           <div className="p-0">
+              <div className="divide-y divide-slate-50">
                 {topPerformers.map((d, i) => (
-                    <div key={i} className="py-4 flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                             <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white ${i === 0 ? 'bg-yellow-500' : 'bg-slate-700'}`}>
-                                {i + 1}
+                    <div key={i} className="p-8 flex items-center justify-between group/perf hover:bg-slate-50 transition-all border-l-4 border-transparent hover:border-amber-500">
+                        <div className="flex items-center gap-6">
+                            <div className={cn(
+                                "w-14 h-14 rounded-2xl flex items-center justify-center text-[12px] font-black shadow-xl italic transition-transform duration-500",
+                                i === 0 ? "bg-amber-100 text-amber-700" : "bg-slate-950 text-white"
+                            )}>
+                                #{i + 1}
                             </div>
                             <div>
-                                <div className="text-gray-800 font-medium text-sm">{d.name}</div>
-                                <div className="text-xs text-gray-700 font-bold mt-0.5">{d.jobCount} Jobs • {d.successRate.toFixed(0)}% Success</div>
-                            </div>
-                        </div>
-                        <div className="text-emerald-700 font-black text-sm">฿{d.revenue.toLocaleString()}</div>
-                    </div>
-                ))}
-                {topPerformers.length === 0 && (
-                    <div className="py-8 text-center text-gray-400 text-sm">ไม่มีข้อมูลผลงาน</div>
-                )}
-             </div>
-           </CardContent>
-        </Card>
-
-        {/* Compliance Issues */}
-        <Card className="bg-white/80 border-gray-200 backdrop-blur-sm">
-           <CardHeader className="border-b border-gray-200 pb-4">
-             <CardTitle className="text-sm font-medium text-gray-800 flex items-center gap-2">
-               <AlertOctagon size={16} className="text-gray-500" />
-               Compliance Alerts
-             </CardTitle>
-           </CardHeader>
-           <CardContent className="pt-0">
-             <div className="divide-y divide-white/5">
-                {driversWithIssues.map((d) => (
-                    <div key={d.id} className="py-4 flex items-center justify-between">
-                        <div>
-                            <div className="text-gray-800 font-medium text-sm">{d.name}</div>
-                            <div className={`text-xs mt-1 ${d.issue === 'ใบขับขี่หมดอายุ' ? 'text-red-400' : 'text-yellow-400'}`}>
-                                {d.issue}
+                                <div className="flex items-center gap-3">
+                                    <span className="text-slate-900 font-black text-sm tracking-tight uppercase italic">{d.name}</span>
+                                    <span className="text-[9px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full tracking-widest">
+                                        {d.successRate.toFixed(0)}% SYNC
+                                    </span>
+                                </div>
+                                <div className="text-[10px] text-slate-500 font-black mt-2 tracking-widest italic uppercase">
+                                    MISSIONS COMPLETED: {d.jobCount}
+                                </div>
                             </div>
                         </div>
                         <div className="text-right">
-                             <div className="text-gray-500 text-xs font-bold">
-                                {d.issue === 'ใบขับขี่หมดอายุ' ? `เกินกำหนด ${d.daysAuth} วัน` : `อีก ${d.daysAuth} วัน`}
+                             <div className="text-lg font-black text-slate-950 tracking-tighter italic">฿{d.revenue.toLocaleString()}</div>
+                             <div className="text-[9px] text-slate-400 font-black uppercase tracking-widest mt-1 italic">Gross Yield</div>
+                        </div>
+                    </div>
+                ))}
+                {topPerformers.length === 0 && (
+                    <div className="p-24 text-center">
+                        <Users size={48} strokeWidth={1} className="mx-auto mb-4 text-slate-100" />
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">Performance Data Recalibrating</p>
+                    </div>
+                )}
+              </div>
+           </div>
+        </PremiumCard>
+
+        {/* Compliance Alerts Registry */}
+        <PremiumCard className="bg-white border-none shadow-[0_30px_100px_rgba(0,0,0,0.1)] p-0 overflow-hidden rounded-br-[5rem] rounded-tl-[3rem]">
+           <div className="p-8 border-b border-slate-50 bg-slate-950 relative overflow-hidden flex items-center justify-between">
+              <div className="absolute inset-0 bg-gradient-to-r from-rose-500/10 to-transparent pointer-events-none" />
+              <div className="flex items-center gap-3 relative z-10">
+                <div className="p-2 bg-rose-600 rounded-xl text-white shadow-lg">
+                  <ShieldCheck size={16} />
+                </div>
+                <div>
+                  <h3 className="text-lg font-black text-white tracking-tight italic uppercase">Compliance Registry</h3>
+                  <p className="text-rose-400 text-[9px] font-bold uppercase tracking-[0.2em]">Operational Risk & License Audit</p>
+                </div>
+              </div>
+           </div>
+           <div className="p-0">
+              <div className="divide-y divide-slate-50">
+                {driversWithIssues.map((d) => (
+                    <div key={d.id} className="p-8 flex items-center justify-between group/risk hover:bg-slate-50 transition-all border-l-4 border-transparent hover:border-rose-500">
+                        <div className="flex items-center gap-6">
+                            <div className="w-14 h-14 rounded-2xl bg-slate-950 text-white flex items-center justify-center text-[12px] font-black shadow-xl italic uppercase">
+                                {d.name.slice(0, 2)}
+                            </div>
+                            <div>
+                                <div className="text-slate-900 font-black text-sm tracking-tight uppercase italic">{d.name}</div>
+                                <div className={cn(
+                                    "text-[10px] font-black mt-2 bg-opacity-10 px-3 py-1 rounded-lg w-fit tracking-widest italic border uppercase",
+                                    d.issue === 'ใบขับขี่หมดอายุ' ? "text-rose-600 bg-rose-600 border-rose-100" : "text-amber-600 bg-amber-600 border-amber-100"
+                                )}>
+                                    BREACH: {d.issue}
+                                </div>
+                            </div>
+                        </div>
+                        <div className="text-right">
+                             <div className={cn(
+                                 "text-sm font-black tracking-widest uppercase",
+                                 d.issue === 'ใบขับขี่หมดอายุ' ? "text-rose-600" : "text-amber-500"
+                             )}>
+                                {d.issue === 'ใบขับขี่หมดอายุ' ? `EXPIRED ${d.daysAuth}D` : `EXPIRY: ${d.daysAuth}D`}
                              </div>
+                             <div className="text-[9px] text-slate-400 font-black uppercase tracking-widest mt-1 italic">Immediate Rectification Reqd</div>
                         </div>
                     </div>
                 ))}
                 {driversWithIssues.length === 0 && (
-                     <div className="py-8 text-center text-gray-400 text-sm">เอกสารครบถ้วนสมบูรณ์</div>
+                     <div className="p-24 text-center">
+                        <ShieldCheck size={48} strokeWidth={1} className="mx-auto mb-4 text-emerald-100" />
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">Compliance Perimeter Secure</p>
+                    </div>
                 )}
-             </div>
-           </CardContent>
-        </Card>
+              </div>
+           </div>
+        </PremiumCard>
       </div>
     </div>
   )
