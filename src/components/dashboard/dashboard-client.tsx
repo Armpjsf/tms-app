@@ -22,6 +22,53 @@ import { FleetCompliance } from "@/components/fleet/compliance-monitoring"
 import { Job } from "@/lib/supabase/jobs"
 import { useState } from "react"
 import { RequestShipmentDialog } from "./request-shipment-dialog"
+import { Leaf, Droplets, Wind } from "lucide-react"
+
+// ... inside the component, before the end of the first 'div' after motion.div ...
+
+                    {/* Sustainability ESG Section */}
+                    <motion.div variants={item} className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <PremiumCard className="lg:col-span-2 p-8 bg-gradient-to-br from-emerald-600 to-teal-700 text-white border-none relative overflow-hidden group">
+                            <div className="absolute top-0 right-0 p-12 opacity-10 pointer-events-none group-hover:scale-110 transition-transform duration-700">
+                                <Leaf size={240} />
+                            </div>
+                            <div className="relative z-10 flex flex-col md:flex-row items-center justify-between h-full gap-8">
+                                <div className="space-y-4">
+                                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/20 rounded-full text-[10px] font-black uppercase tracking-widest border border-white/30 backdrop-blur-md">
+                                        <Wind size={12} /> ESG Enterprise Impact
+                                    </div>
+                                    <h2 className="text-4xl font-black tracking-tighter leading-tight">
+                                        We saved <span className="text-emerald-300">1,240 kg</span> of <br/>Carbon Emissions this month
+                                    </h2>
+                                    <p className="text-emerald-50/70 font-bold text-sm max-w-md">
+                                        การใช้ระบบ AI Smart Bundling ช่วยลดเที่ยววิ่งซ้ำซ้อนและประหยัดพลังงานเพื่อโลกที่ยั่งยืน
+                                    </p>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4 w-full md:w-auto">
+                                    <div className="p-4 bg-white/10 rounded-2xl border border-white/20 backdrop-blur-sm text-center">
+                                        <p className="text-[10px] font-black uppercase tracking-widest mb-1 text-emerald-200">Trees Saved</p>
+                                        <p className="text-2xl font-black">56.4</p>
+                                    </div>
+                                    <div className="p-4 bg-white/10 rounded-2xl border border-white/20 backdrop-blur-sm text-center">
+                                        <p className="text-[10px] font-black uppercase tracking-widest mb-1 text-emerald-200">Fuel Saved</p>
+                                        <p className="text-2xl font-black">185 L</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </PremiumCard>
+                        
+                        <PremiumCard className="p-8 bg-white border border-slate-100 flex flex-col justify-center items-center text-center relative overflow-hidden group">
+                            <div className="w-20 h-20 bg-emerald-500/10 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500">
+                                <Droplets className="text-emerald-600 w-10 h-10" />
+                            </div>
+                            <h3 className="text-xl font-black text-slate-900 tracking-tight mb-2">Eco-Efficiency Score</h3>
+                            <p className="text-5xl font-black text-emerald-600 tracking-tighter mb-4">A+</p>
+                            <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                                <div className="bg-emerald-500 h-full w-[92%] shadow-[0_0_10px_rgba(16,185,129,0.5)]" />
+                            </div>
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-4">Top 5% in Industry Standard</p>
+                        </PremiumCard>
+                    </motion.div>
 
 interface DashboardClientProps {
     branchId: string

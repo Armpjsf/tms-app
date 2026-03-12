@@ -204,6 +204,170 @@ export async function getNearbyUnassignedJobs(pivotJob: {
 }
 
 // ============================================================
+// Route Optimization: Sort jobs for shortest delivery path (TSP Greedy)
+// ============================================================
+export function getOptimizedJobSequence<T extends { Delivery_Lat?: number | null; Delivery_Lon?: number | null }>(
+    startLat: number, 
+    startLon: number, 
+    jobs: T[]
+): T[] {
+    const unvisited = [...jobs]
+    const optimized: T[] = []
+    let currentLat = startLat
+    let currentLon = startLon
+
+    while (unvisited.length > 0) {
+        let nearestIdx = -1
+        let minDistance = Infinity
+
+        for (let i = 0; i < unvisited.length; i++) {
+            const job = unvisited[i]
+            if (job.Delivery_Lat && job.Delivery_Lon) {
+                const dist = haversineKm(currentLat, currentLon, job.Delivery_Lat, job.Delivery_Lon)
+                if (dist < minDistance) {
+                    minDistance = dist
+                    nearestIdx = i
+                }
+            }
+        }
+
+        if (nearestIdx === -1) {
+            // No valid coordinates left, push remaining and break
+            optimized.push(...unvisited)
+            break
+        }
+
+        const [nearestJob] = unvisited.splice(nearestIdx, 1)
+        optimized.push(nearestJob)
+        currentLat = nearestJob.Delivery_Lat!
+        currentLon = nearestJob.Delivery_Lon!
+    }
+
+    return optimized
+}
+
+// ============================================================
+// Job Bundling Strategy: Find potential jobs to group together
+// ============================================================
+export async function findPotentialBundles(branchId?: string, radiusKm = 5): Promise<Array<{ pivot: string; bundled: string[]; total_saved_km: number }>> {
+    try {
+        const supabase = await createClient()
+        
+        let query = supabase
+            .from('Jobs_Main')
+            .select('Job_ID, Pickup_Lat, Pickup_Lon, Delivery_Lat, Delivery_Lon, Vehicle_Type')
+            .eq('Job_Status', 'New')
+            .is('Driver_ID', null)
+
+        if (branchId && branchId !== 'All') {
+            query = query.eq('Branch_ID', branchId)
+        }
+
+        const { data: jobs } = await query
+        if (!jobs || jobs.length < 2) return []
+
+        const bundles: Array<{ pivot: string; bundled: string[]; total_saved_km: number }> = []
+        const handled = new Set<string>()
+
+        for (const pivot of jobs) {
+            if (handled.has(pivot.Job_ID)) continue
+            if (!pivot.Pickup_Lat || !pivot.Pickup_Lon) continue
+
+            const cluster = jobs.filter(j => 
+                j.Job_ID !== pivot.Job_ID && 
+                !handled.has(j.Job_ID) &&
+                j.Pickup_Lat && j.Pickup_Lon &&
+                haversineKm(pivot.Pickup_Lat!, pivot.Pickup_Lon!, j.Pickup_Lat, j.Pickup_Lon) <= radiusKm
+            )
+
+            if (cluster.length > 0) {
+                const bundledIds = cluster.map(c => c.Job_ID)
+                bundles.push({
+                    pivot: pivot.Job_ID,
+                    bundled: bundledIds,
+                    total_saved_km: cluster.length * 8.5 // Estimated avg savings per bundled job
+                })
+                handled.add(pivot.Job_ID)
+                bundledIds.forEach(id => handled.add(id))
+            }
+        }
+
+        return bundles
+    } catch {
+        return []
+    }
+}
+
+// ============================================================
+// Auto-Batch Dispatch: Assign all "New" jobs to best matching drivers
+// ============================================================
+export async function autoBatchAssign(branchId?: string): Promise<{ successCount: number; errors: string[] }> {
+    try {
+        const supabase = await createClient()
+
+        // 1. Get all unassigned 'New' jobs
+        let query = supabase
+            .from('Jobs_Main')
+            .select('Job_ID, Pickup_Lat, Pickup_Lon, Vehicle_Type, Plan_Date')
+            .eq('Job_Status', 'New')
+            .is('Driver_ID', null)
+        
+        if (branchId && branchId !== 'All') {
+            query = query.eq('Branch_ID', branchId)
+        }
+
+        const { data: unassignedJobs, error: fetchError } = await query
+        if (fetchError || !unassignedJobs) return { successCount: 0, errors: [fetchError?.message || 'No jobs found'] }
+
+        let successCount = 0
+        const errors: string[] = []
+
+        // 2. Iterate through jobs and find the BEST driver for each
+        // To prevent over-assigning, we'll keep track of assigned jobs in this session
+        const tempJobCountMap = new Map<string, number>()
+
+        for (const job of unassignedJobs) {
+            const suggestions = await getSuggestedDrivers({
+                Pickup_Lat: job.Pickup_Lat,
+                Pickup_Lon: job.Pickup_Lon,
+                Vehicle_Type: job.Vehicle_Type,
+                Plan_Date: job.Plan_Date
+            }, 3) // Get top 3 candidates
+
+            if (suggestions.length > 0) {
+                // Find candidate who has the lowest temporary load
+                const bestCandidate = suggestions.sort((a, b) => {
+                    const loadA = (tempJobCountMap.get(a.Driver_ID) || 0) + a.active_jobs_today
+                    const loadB = (tempJobCountMap.get(b.Driver_ID) || 0) + b.active_jobs_today
+                    return loadA - loadB || b.match_score - a.match_score
+                })[0]
+
+                // 3. Update job with Driver_ID and change status to 'Confirmed'
+                const { error: updateError } = await supabase
+                    .from('Jobs_Main')
+                    .update({ 
+                        Driver_ID: bestCandidate.Driver_ID,
+                        Job_Status: 'Confirmed',
+                        Updated_At: new Date().toISOString()
+                    })
+                    .eq('Job_ID', job.Job_ID)
+
+                if (!updateError) {
+                    successCount++
+                    tempJobCountMap.set(bestCandidate.Driver_ID, (tempJobCountMap.get(bestCandidate.Driver_ID) || 0) + 1)
+                } else {
+                    errors.push(`Job ${job.Job_ID}: ${updateError.message}`)
+                }
+            }
+        }
+
+        return { successCount, errors }
+    } catch (err) {
+        return { successCount: 0, errors: [String(err)] }
+    }
+}
+
+// ============================================================
 // Haversine Formula — Calculate distance between two GPS points
 // ============================================================
 function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): number {

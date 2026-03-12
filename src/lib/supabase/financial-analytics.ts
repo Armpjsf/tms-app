@@ -459,3 +459,74 @@ export async function getRegionalDeepDive(startDate?: string, endDate?: string) 
         }
     })
 }
+
+// 12. Predictive Revenue Forecasting
+export async function getRevenueForecast(branchId?: string): Promise<{ month: string; actual?: number; forecast?: number }[]> {
+    try {
+        const supabase = await createClient()
+        const effectiveBranchId = await getEffectiveBranchId(branchId)
+        
+        // 1. Get historical revenue (last 6 months)
+        const sixMonthsAgo = new Date()
+        sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6)
+        
+        let query = supabase
+            .from('Jobs_Main')
+            .select('Price_Cust_Total, Plan_Date')
+            .gte('Plan_Date', sixMonthsAgo.toISOString().split('T')[0])
+            .in('Job_Status', REVENUE_STATUSES)
+
+        if (effectiveBranchId) {
+            query = query.eq('Branch_ID', effectiveBranchId)
+        }
+
+        const { data: history } = await query
+        if (!history) return []
+
+        // Group by month
+        const monthlyData: Record<string, number> = {}
+        history.forEach(j => {
+            const month = (j.Plan_Date as string).substring(0, 7) // YYYY-MM
+            monthlyData[month] = (monthlyData[month] || 0) + (Number(j.Price_Cust_Total) || 0)
+        })
+
+        const sortedMonths = Object.keys(monthlyData).sort()
+        if (sortedMonths.length === 0) return []
+        
+        const values = sortedMonths.map(m => monthlyData[m])
+
+        // Simple Linear Trend Calculation
+        const n = values.length
+        if (n < 2) return sortedMonths.map(m => ({ month: m, actual: monthlyData[m] }))
+
+        let sumX = 0, sumY = 0, sumXY = 0, sumXX = 0
+        for (let i = 0; i < n; i++) {
+            sumX += i
+            sumY += values[i]
+            sumXY += i * values[i]
+            sumXX += i * i
+        }
+
+        const denominator = (n * sumXX - sumX * sumX)
+        const slope = denominator === 0 ? 0 : (n * sumXY - sumX * sumY) / denominator
+        const intercept = (sumY - slope * sumX) / n
+
+        // 2. Generate result with history + 3 months forecast
+        const result = sortedMonths.map(m => ({ month: m, actual: monthlyData[m] }))
+        
+        const lastMonthDate = new Date(sortedMonths[sortedMonths.length - 1] + "-01")
+        for (let i = 1; i <= 3; i++) {
+            const forecastMonth = new Date(lastMonthDate)
+            forecastMonth.setMonth(forecastMonth.getMonth() + i)
+            const monthStr = forecastMonth.toISOString().substring(0, 7)
+            
+            const forecastValue = slope * (n + i - 1) + intercept
+            result.push({ month: monthStr, forecast: Math.max(0, Math.round(forecastValue)) })
+        }
+
+        return result
+    } catch (err) {
+        console.error('Forecast Error:', err)
+        return []
+    }
+}
