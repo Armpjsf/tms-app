@@ -206,11 +206,11 @@ export async function getNearbyUnassignedJobs(pivotJob: {
 // ============================================================
 // Route Optimization: Sort jobs for shortest delivery path (TSP Greedy)
 // ============================================================
-export function getOptimizedJobSequence<T extends { Delivery_Lat?: number | null; Delivery_Lon?: number | null }>(
+export async function getOptimizedJobSequence<T extends { Delivery_Lat?: number | null; Delivery_Lon?: number | null }>(
     startLat: number, 
     startLon: number, 
     jobs: T[]
-): T[] {
+): Promise<T[]> {
     const unvisited = [...jobs]
     const optimized: T[] = []
     let currentLat = startLat
