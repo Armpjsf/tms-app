@@ -208,13 +208,18 @@ export function JobActionButton({ job }: JobActionButtonProps) {
                         onClick={onClick}
                         disabled={loading}
                         className={cn(
-                            "w-full h-16 text-lg shadow-lg gap-3 font-bold transition-all active:scale-95",
+                            "w-full h-20 text-xl shadow-[0_20px_50px_-10px_rgba(0,0,0,0.3)] gap-4 font-black uppercase tracking-widest transition-all active:scale-95 rounded-[2rem] relative overflow-hidden group",
                             colorClass
                         )}
                     >
-                        {loading ? <Loader2 className="animate-spin" /> : icon}
-                        {label}
-                        <ArrowRight size={20} className="ml-1 opacity-50" />
+                        {/* Premium Shine Overlay */}
+                        <div className="absolute inset-0 bg-gradient-to-tr from-white/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                        
+                        <div className="relative z-10 flex items-center justify-center gap-4">
+                            {loading ? <Loader2 className="animate-spin w-6 h-6" /> : icon}
+                            {label}
+                            <ArrowRight size={24} className="ml-1 opacity-40 group-hover:translate-x-2 transition-transform duration-500" />
+                        </div>
                     </Button>
                 </div>
             )

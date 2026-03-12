@@ -80,41 +80,43 @@ export default function StaffLoginPage() {
             </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 px-4 max-w-4xl mx-auto animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-300">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-10 px-4 max-w-5xl mx-auto animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-300">
             {/* Driver Login Option */}
             <div 
                 onClick={() => router.push('/mobile/login')}
-                className="group cursor-pointer relative overflow-hidden bg-white/5 backdrop-blur-2xl border border-white/10 hover:border-emerald-500/50 rounded-[2.5rem] p-10 shadow-2xl transition-all hover:shadow-emerald-500/10 hover:-translate-y-2 text-center flex flex-col items-center gap-6"
+                className="group cursor-pointer relative overflow-hidden bg-white/[0.03] backdrop-blur-3xl border border-white/10 hover:border-emerald-500/50 rounded-[3.5rem] p-12 shadow-2xl transition-all duration-500 hover:shadow-[0_0_50px_rgba(16,185,129,0.15)] hover:-translate-y-3 text-center flex flex-col items-center gap-8"
             >
-                <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                <div className="w-20 h-20 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-2xl flex items-center justify-center shadow-xl shadow-emerald-500/20 group-hover:rotate-6 transition-all">
-                    <Truck className="text-white w-10 h-10" />
+                <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/[0.05] to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="w-24 h-24 bg-slate-950 border border-white/10 rounded-3xl flex items-center justify-center shadow-2xl group-hover:rotate-6 group-hover:bg-emerald-600 transition-all duration-700 relative overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-tr from-emerald-400/20 to-transparent opacity-0 group-hover:opacity-100 animate-pulse" />
+                    <Truck className="text-white w-12 h-12 relative z-10" strokeWidth={2.5} />
                 </div>
-                <div className="space-y-2 relative z-10">
-                    <h2 className="text-3xl font-bold text-white">พนักงานขับรถ</h2>
-                    <p className="text-slate-400 text-sm leading-relaxed px-4">ระบบนำทางงานขนส่ง, เช็คอินจุดส่งของ และรายงานสถานะแบบ Real-time</p>
+                <div className="space-y-3 relative z-10">
+                    <h2 className="text-4xl font-black text-white tracking-tighter">DRIVER</h2>
+                    <p className="text-slate-400 text-sm font-bold uppercase tracking-[0.2em] opacity-60">Mobile Force Portal</p>
                 </div>
-                <Button className="w-full h-14 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-lg mt-4 shadow-lg shadow-emerald-500/20 border-none relative z-10">
-                    เข้าสู่ระบบ Driver
-                </Button>
+                <button className="w-full h-16 rounded-[1.5rem] bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs uppercase tracking-[0.3em] mt-4 shadow-2xl shadow-emerald-500/30 transition-all relative z-10 active:scale-95 border border-emerald-400/30">
+                    Enter Operation
+                </button>
             </div>
 
             {/* Staff Login Option */}
             <div 
                 onClick={() => setActiveTab('staff_form')}
-                className="group cursor-pointer relative overflow-hidden bg-white/5 backdrop-blur-2xl border border-white/10 hover:border-blue-500/50 rounded-[2.5rem] p-10 shadow-2xl transition-all hover:shadow-blue-500/10 hover:-translate-y-2 text-center flex flex-col items-center gap-6"
+                className="group cursor-pointer relative overflow-hidden bg-white/[0.03] backdrop-blur-3xl border border-white/10 hover:border-blue-500/50 rounded-[3.5rem] p-12 shadow-2xl transition-all duration-500 hover:shadow-[0_0_50px_rgba(59,130,246,0.15)] hover:-translate-y-3 text-center flex flex-col items-center gap-8"
             >
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-xl shadow-blue-500/20 group-hover:-rotate-6 transition-all">
-                    <Shield className="text-white w-10 h-10" />
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/[0.05] to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="w-24 h-24 bg-slate-950 border border-white/10 rounded-3xl flex items-center justify-center shadow-2xl group-hover:-rotate-6 group-hover:bg-blue-600 transition-all duration-700 relative overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-tr from-blue-400/20 to-transparent opacity-0 group-hover:opacity-100 animate-pulse" />
+                    <Shield className="text-white w-12 h-12 relative z-10" strokeWidth={2.5} />
                 </div>
-                <div className="space-y-2 relative z-10">
-                    <h2 className="text-3xl font-bold text-white">ผู้บริหาร / เจ้าหน้าที่</h2>
-                    <p className="text-slate-400 text-sm leading-relaxed px-4">แดชบอร์ดควบคุม, วางแผนเที่ยวรถ, จัดการคิวงาน และรายงานวิเคราะห์ข้อมูล</p>
+                <div className="space-y-3 relative z-10">
+                    <h2 className="text-4xl font-black text-white tracking-tighter">ADMIN</h2>
+                    <p className="text-slate-400 text-sm font-bold uppercase tracking-[0.2em] opacity-60">Enterprise Command Center</p>
                 </div>
-                <Button variant="outline" className="w-full h-14 rounded-2xl border-2 border-blue-500/30 text-blue-400 font-bold text-lg mt-4 hover:bg-blue-500 hover:text-white transition-all relative z-10">
-                    เข้าสู่ระบบ Staff / Admin
-                </Button>
+                <button className="w-full h-16 rounded-[1.5rem] bg-slate-900 border border-white/10 hover:bg-slate-800 text-blue-400 font-black text-xs uppercase tracking-[0.3em] mt-4 shadow-2xl transition-all relative z-10 active:scale-95">
+                    Command Login
+                </button>
             </div>
         </div>
 

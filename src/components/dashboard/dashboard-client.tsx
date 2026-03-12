@@ -147,195 +147,166 @@ export function DashboardClient({
     const [isRequestDialogOpen, setIsRequestDialogOpen] = useState(false)
 
     return (
-        <div className="relative w-full h-[calc(100vh-64px)] overflow-hidden">
+        <div className="space-y-10">
             <RequestShipmentDialog open={isRequestDialogOpen} onOpenChange={setIsRequestDialogOpen} />
             
-            {/* Background Live Map */}
-            <DashboardMap drivers={fleetStatus} />
-            
-            {/* Scrollable Overlay Layer */}
-            <div className="absolute inset-0 z-10 overflow-y-auto px-6 py-8 custom-scrollbar">
-                <motion.div 
-                    variants={container}
-                    initial="hidden"
-                    animate="show"
-                    className="max-w-[1600px] mx-auto space-y-8 pb-20"
-                >
-                    {/* Floating Header Card */}
-                    <motion.div variants={item} className="bg-white/[0.85] backdrop-blur-2xl border border-white/40 p-8 rounded-[3rem] shadow-[0_30px_100px_rgba(0,0,0,0.1)] flex flex-col lg:flex-row lg:items-center justify-between gap-8 relative overflow-hidden group">
-                        <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/[0.03] to-transparent pointer-events-none" />
-                        <div className="flex items-center gap-6 relative z-10">
-                            <div className="p-5 bg-slate-950 rounded-[2rem] shadow-2xl shadow-emerald-500/20 transform group-hover:scale-110 group-hover:rotate-3 transition-all duration-700">
-                                <Activity className="text-emerald-400 w-10 h-10" strokeWidth={2.5} />
-                            </div>
-                            <div>
-                                <h1 className="text-4xl font-black text-slate-900 tracking-tighter leading-none mb-3">
-                                    {customerMode ? `Welcome back, ${userName || 'Strategic Partner'}` : "Command Centre Dashboard"}
-                                </h1>
-                                <div className="flex flex-wrap items-center gap-4">
-                                    <span className="flex items-center gap-2 px-4 py-1.5 bg-emerald-500/10 text-emerald-600 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] border border-emerald-500/20 shadow-sm">
-                                        <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(16,185,129,1)]" />
-                                        {customerMode ? "Enterprise Logistics Portal" : "Active Ops Registry"}
-                                    </span>
-                                    <p className="text-slate-500 text-sm font-black uppercase tracking-widest opacity-60">
-                                        {customerMode ? "Secure real-time shipment intelligence & monitoring" : `Fleet Intelligence for ${branchId === 'All' ? 'Global Network' : branchId}`}
-                                    </p>
-                                </div>
-                            </div>
+            {/* Elite Welcome & Actions Header */}
+            <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8">
+                <div>
+                    <h1 className="text-6xl font-black text-white tracking-tighter mb-4 premium-gradient-text">
+                        {customerMode ? `Identity: ${userName || 'Partner'}` : "Command Centre"}
+                    </h1>
+                    <div className="flex items-center gap-4">
+                        <div className="px-4 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-2">
+                            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_10px_rgba(16,185,129,1)]" />
+                            System Pulse: Optimal
                         </div>
-                        
-                        {customerMode ? (
-                             <div className="flex items-center gap-4 relative z-10">
-                                <button 
-                                    onClick={() => setIsRequestDialogOpen(true)}
-                                    className="bg-emerald-600 hover:bg-emerald-700 text-white px-10 py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-[0_15px_30px_rgba(16,185,129,0.3)] active:scale-95 border border-emerald-400/30"
-                                >
-                                    Initiate New Shipment
-                                </button>
-                             </div>
-                        ) : (
-                            <div className="flex items-center gap-4 relative z-10">
-                                <div className="bg-slate-950 px-6 py-4 rounded-2xl shadow-xl border border-white/10">
-                                    <p className="text-[9px] font-black text-emerald-500/60 uppercase tracking-[0.3em] mb-1.5">Network Integrity</p>
-                                    <p className="text-white font-black text-lg tracking-tighter">{fleetHealth}% <span className="text-[10px] text-emerald-400 opacity-60 ml-1">SYNCED</span></p>
-                                </div>
-                            </div>
-                        )}
+                        <p className="text-slate-500 text-sm font-bold uppercase tracking-widest opacity-60">
+                            {customerMode ? "Secure Intelligence Matrix Active" : `Fleet Monitoring: ${branchId}`}
+                        </p>
+                    </div>
+                </div>
+                <div className="flex gap-4">
+                    {customerMode && (
+                        <button 
+                            onClick={() => setIsRequestDialogOpen(true)}
+                            className="h-16 px-10 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] transition-all shadow-[0_20px_40px_rgba(16,185,129,0.2)] active:scale-95 border border-emerald-400/30"
+                        >
+                            Create Shipment
+                        </button>
+                    )}
+                    <div className="h-16 px-8 glass-panel rounded-2xl flex items-center gap-4">
+                        <div className="text-right">
+                            <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Network Health</p>
+                            <p className="text-white font-black text-lg leading-none">{fleetHealth}%</p>
+                        </div>
+                        <Activity className="text-emerald-500" size={24} />
+                    </div>
+                </div>
+            </div>
+
+            {/* THE BENTO MATRIX */}
+            <motion.div 
+                variants={container}
+                initial="hidden"
+                animate="show"
+                className="grid grid-cols-1 lg:grid-cols-12 gap-6"
+            >
+                {/* 1. PRIMARY OPS (MAP) - Large Span */}
+                <motion.div variants={item} className="lg:col-span-8 h-[600px] glass-panel rounded-[3.5rem] relative group border-white/10 shadow-2xl overflow-hidden">
+                    <div className="absolute inset-0 z-0">
+                        <DashboardMap drivers={fleetStatus} />
+                    </div>
+                    <div className="absolute top-8 left-8 z-10">
+                        <div className="px-6 py-3 glass-panel rounded-2xl border-white/20 backdrop-blur-3xl">
+                            <p className="text-[10px] font-black text-emerald-400 uppercase tracking-[0.3em] mb-1">Live Asset Matrix</p>
+                            <p className="text-white font-black text-xl tracking-tighter">{fleetStatus.length} Active Units</p>
+                        </div>
+                    </div>
+                    {/* Dark inner shadow for depth */}
+                    <div className="absolute inset-0 pointer-events-none shadow-[inset_0_0_100px_rgba(0,0,0,0.5)]" />
+                </motion.div>
+
+                {/* 2. INTELLIGENCE STACK (Right Side) */}
+                <div className="lg:col-span-4 space-y-6 flex flex-col">
+                    {/* Performance Score Card */}
+                    <motion.div variants={item} className="flex-1 glass-panel rounded-[3rem] p-10 flex flex-col justify-center items-center text-center group">
+                        <div className="w-24 h-24 rounded-full bg-emerald-500/10 flex items-center justify-center mb-8 border border-emerald-500/20 group-hover:scale-110 transition-transform duration-700">
+                            <CheckCircle2 className="text-emerald-500 w-12 h-12" strokeWidth={2.5} />
+                        </div>
+                        <h3 className="text-slate-400 font-black text-[10px] uppercase tracking-[0.4em] mb-4">Operations Integrity</h3>
+                        <p className="text-8xl font-black text-white tracking-tighter leading-none mb-4">A+</p>
+                        <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden mb-4">
+                            <motion.div 
+                                initial={{ width: 0 }}
+                                animate={{ width: '94%' }}
+                                transition={{ duration: 1.5, delay: 0.5 }}
+                                className="h-full bg-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.8)]" 
+                            />
+                        </div>
+                        <p className="text-emerald-400/60 text-[10px] font-bold uppercase tracking-widest">94.2% Reliability Index</p>
                     </motion.div>
 
-                    {/* Quick Stats Bento */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                        <motion.div variants={item}>
-                            <MetricCard
-                                title="ความสำเร็จในการจัดส่ง"
-                                value={`${jobStats.total > 0 ? Math.round((jobStats.delivered / jobStats.total) * 100) : 0}%`}
-                                icon={<CheckCircle2 size={22} />}
-                                gradient="success"
-                                subtitle={`จากทั้งหมด ${jobStats.total} แผนงาน`}
-                            />
+                    {/* Quick Stats Grid within Bento */}
+                    <div className="grid grid-cols-2 gap-6">
+                        <motion.div variants={item} className="glass-panel rounded-[2.5rem] p-8">
+                            <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2">SOS Alerts</p>
+                            <div className="flex items-end justify-between">
+                                <p className={cn("text-4xl font-black tracking-tighter", sosCount > 0 ? "text-rose-500" : "text-white")}>{sosCount}</p>
+                                <AlertTriangle size={20} className={sosCount > 0 ? "text-rose-500 animate-bounce" : "text-slate-700"} />
+                            </div>
                         </motion.div>
-                        <motion.div variants={item}>
-                            <MetricCard
-                                title={customerMode ? "งานที่กำลังมาส่ง" : "งานขนส่งวันนี้"}
-                                value={jobStats.total}
-                                icon={<Package size={22} />}
-                                gradient="primary"
-                                subtitle={`${jobStats.inProgress} งานกำลังเดินทาง`}
-                            />
+                        <motion.div variants={item} className="glass-panel rounded-[2.5rem] p-8">
+                            <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2">Transit Units</p>
+                            <div className="flex items-end justify-between">
+                                <p className="text-4xl font-black text-white tracking-tighter">{jobStats.inProgress}</p>
+                                <Truck size={20} className="text-emerald-500" />
+                            </div>
                         </motion.div>
-                        <motion.div variants={item}>
-                            <MetricCard
-                                title={customerMode ? "รายการแจ้งเตือน" : "สถานะ SOS/ปัญหา"}
-                                value={sosCount}
-                                icon={<AlertTriangle size={22} />}
-                                gradient="danger"
-                                subtitle={customerMode ? "ความล่าช้าหรือเหตุขัดข้อง" : "ต้องการการตรวจสอบทันที"}
-                            />
-                        </motion.div>
-                        {!customerMode && (
-                        <motion.div variants={item}>
-                            <MetricCard
-                                title="รายได้วันนี้ (ประมาณการ)"
-                                value={`฿${financials.revenue.toLocaleString()}`}
-                                icon={<CalendarDays size={22} />}
-                                gradient="purple"
-                                subtitle="Current Daily Revenue"
-                            />
-                        </motion.div>
-                        )}
                     </div>
+                </div>
 
-                    {/* Center Section: Charts & Feed */}
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                        {/* Operational Intelligence Area */}
-                        <div className="lg:col-span-9 space-y-6">
-                            {!customerMode && (
-                                <motion.div variants={item} className="grid grid-cols-1 gap-6">
-                                    <Card className="bg-white border border-gray-100 rounded-[2.5rem] shadow-2xl overflow-hidden group">
-                                        <CardContent className="p-4 lg:p-6">
-                                            <OrderBidding orders={marketplaceJobs} />
-                                        </CardContent>
-                                    </Card>
-                                </motion.div>
-                            )}
-
-                            <motion.div variants={item} className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-                                <Card className="bg-white border border-gray-100 rounded-[2.5rem] shadow-2xl overflow-hidden group">
-                                    <CardHeader className="p-6 border-b border-gray-100">
-                                        <CardTitle className="text-lg font-bold flex items-center gap-3">
-                                            <div className="p-2 bg-blue-500/10 rounded-xl text-blue-600">
-                                                <TrendingUp size={20} />
-                                            </div>
-                                            {customerMode ? "แนวโน้มการส่งสินค้า" : "Weekly Growth"}
-                                        </CardTitle>
-                                    </CardHeader>
-                                    <CardContent className="p-6">
-                                        <WeeklyShipmentChart data={weeklyStats} />
-                                    </CardContent>
-                                </Card>
- 
-                                <Card className="bg-white border border-gray-100 rounded-[2.5rem] shadow-2xl overflow-hidden group">
-                                    <CardHeader className="p-6 border-b border-gray-100">
-                                        <CardTitle className="text-lg font-bold flex items-center gap-3">
-                                            <div className="p-2 bg-emerald-500/10 rounded-xl text-emerald-600">
-                                                <Activity size={20} />
-                                            </div>
-                                            {customerMode ? "สถานะพัสดุรวม" : "Status Pulse"}
-                                        </CardTitle>
-                                    </CardHeader>
-                                    <CardContent className="p-6 flex items-center justify-center">
-                                        <JobStatusChart data={statusDist} />
-                                    </CardContent>
-                                </Card>
-                            </motion.div>
-
-                            <motion.div variants={item} className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-                                <ZoneAnalytics data={zoneData} />
-                                {!customerMode && <FleetCompliance data={complianceData} />}
-                            </motion.div>
-                            
-                            {/* Performance Strip */}
-                            {!customerMode && (
-                                <motion.div 
-                                    variants={item}
-                                    whileHover={{ scale: 1.005 }}
-                                    className="bg-white overflow-hidden relative p-8 rounded-[2.5rem] border border-gray-100 shadow-2xl group transition-all duration-500"
-                                >
-                                    <div className="absolute top-0 right-0 p-12 opacity-5 pointer-events-none group-hover:scale-110 transition-transform duration-700">
-                                        <TrendingUp size={200} className="text-emerald-500" />
-                                    </div>
-                                    <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
-                                        <div className="flex items-center gap-6">
-                                            <div className="w-20 h-20 rounded-[2rem] bg-emerald-500/10 flex items-center justify-center shadow-inner border border-emerald-500/20">
-                                                <div className="w-12 h-12 bg-emerald-500 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-500/30">
-                                                    <BarChart3 className="text-white w-6 h-6" />
-                                                </div>
-                                            </div>
-                                            <div>
-                                                <p className="text-emerald-700 font-black uppercase tracking-[0.2em] text-[10px] mb-2">Month-to-date Profit</p>
-                                                <h3 className="text-5xl font-black text-gray-900 tracking-tighter mb-1">
-                                                    ฿{financialStats.netProfit.toLocaleString()}
-                                                </h3>
-                                                <p className="text-gray-700 font-bold text-sm">ประสิทธิภาพการเงินระดับสูงสุด (Optimal)</p>
-                                            </div>
-                                        </div>
-                                        <div className="h-16 w-px bg-gray-100 hidden md:block" />
-                                        <div className="text-center md:text-right">
-                                            <p className="text-gray-700 font-black text-[10px] uppercase tracking-widest mb-1">Gross Revenue (MTD)</p>
-                                            <p className="text-2xl font-black text-gray-900 tracking-tight">฿{financialStats.revenue.toLocaleString()}</p>
-                                        </div>
-                                    </div>
-                                </motion.div>
-                            )}
+                {/* 3. SUSTAINABILITY IMPACT - Full Width Banner */}
+                <motion.div variants={item} className="lg:col-span-12 glass-panel rounded-[3.5rem] p-12 bg-gradient-to-br from-emerald-600/20 via-transparent to-transparent border-emerald-500/10 group">
+                    <div className="flex flex-col lg:flex-row items-center justify-between gap-12">
+                        <div className="space-y-6">
+                            <div className="inline-flex items-center gap-3 px-4 py-1.5 glass-panel rounded-full text-[10px] font-black uppercase tracking-[0.3em] text-emerald-400 border-emerald-500/20">
+                                <Leaf size={14} /> ESG Intelligence
+                            </div>
+                            <h2 className="text-5xl font-black text-white tracking-tighter leading-tight">
+                                Delivering a <span className="text-emerald-400">Cleaner Future</span>. <br/>
+                                Monthly Offset: <span className="premium-gradient-text italic">1,240 kg CO2</span>
+                            </h2>
+                            <p className="text-slate-400 font-bold text-sm max-w-xl">
+                                AI Smart Bundling has eliminated 42 empty return trips this month, saving 185 liters of fuel and improving carbon efficiency by 14.2%.
+                            </p>
                         </div>
+                        <div className="flex gap-10">
+                            <div className="text-center">
+                                <p className="text-6xl font-black text-white tracking-tighter mb-2">56.4</p>
+                                <p className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.3em]">Trees Saved</p>
+                            </div>
+                            <div className="w-px h-20 bg-white/10" />
+                            <div className="text-center">
+                                <p className="text-6xl font-black text-white tracking-tighter mb-2">185<span className="text-2xl text-slate-500 ml-1">L</span></p>
+                                <p className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.3em]">Fuel Saved</p>
+                            </div>
+                        </div>
+                    </div>
+                </motion.div>
 
-                        {/* Sidebar: Activity Feed Only */}
-                        <div className="lg:col-span-3">
+                {/* 4. ANALYTICS & MARKETPLACE (Bottom Row) */}
+                <motion.div variants={item} className="lg:col-span-7 space-y-6">
+                    <Card className="glass-panel rounded-[3rem] border-none shadow-2xl overflow-hidden p-8">
+                        <div className="flex items-center justify-between mb-8">
+                            <h3 className="text-xl font-black text-white tracking-tight flex items-center gap-3">
+                                <div className="p-2 bg-indigo-500/20 rounded-xl text-indigo-400">
+                                    <TrendingUp size={20} />
+                                </div>
+                                Growth Matrix
+                            </h3>
+                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Last 7 Cycles</span>
+                        </div>
+                        <WeeklyShipmentChart data={weeklyStats} />
+                    </Card>
+                </motion.div>
+
+                <motion.div variants={item} className="lg:col-span-5 h-full">
+                    <div className="glass-panel rounded-[3rem] h-full p-8 flex flex-col">
+                        <div className="flex items-center justify-between mb-8">
+                            <h3 className="text-xl font-black text-white tracking-tight flex items-center gap-3">
+                                <div className="p-2 bg-emerald-500/20 rounded-xl text-emerald-400">
+                                    <Activity size={20} />
+                                </div>
+                                Active Stream
+                            </h3>
+                        </div>
+                        <div className="flex-1 overflow-y-auto custom-scrollbar pr-2">
                             <ActivityFeed jobStats={jobStats} sosCount={sosCount} />
                         </div>
                     </div>
                 </motion.div>
-            </div>
+            </motion.div>
         </div>
     )
 }
