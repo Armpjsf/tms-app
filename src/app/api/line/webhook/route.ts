@@ -108,14 +108,17 @@ export async function POST(req: NextRequest) {
 
                 // 3. JOB TRACKING (Enhanced)
                 if (text.startsWith('JOB-')) {
-                    const { data: job, error } = await supabase
+                    const { data: jobList, error: queryError } = await supabase
                         .from('Jobs_Main')
-                        .select('Job_Status, Customer_Name, Driver_ID, Driver_Name, Updated_At')
-                        .eq('Job_ID', text)
-                        .single()
+                        .select('*')
+                        .ilike('Job_ID', text.trim())
+                        .limit(1)
 
-                    if (error || !job) {
-                        await replyToUser(replyToken, `❌ ไม่พบข้อมูลงานหมายเลข: ${text}`)
+                    const job = jobList?.[0]
+
+                    if (queryError || !job) {
+                        const errorHint = queryError ? ` (Error: ${queryError.message})` : ''
+                        await replyToUser(replyToken, `❌ ไม่พบข้อมูลงานหมายเลข: ${text}${errorHint}`)
                         continue
                     }
 
@@ -126,6 +129,7 @@ export async function POST(req: NextRequest) {
                             .from('Master_Drivers')
                             .select('Mobile_No')
                             .eq('Driver_ID', job.Driver_ID)
+                            .limit(1)
                             .single()
                         
                         if (driver?.Mobile_No) {
@@ -139,7 +143,7 @@ export async function POST(req: NextRequest) {
                                 .eq('Driver_ID', job.Driver_ID)
                                 .order('Timestamp', { ascending: false })
                                 .limit(1)
-                                .single()
+                                .maybeSingle()
                             
                             if (gps) {
                                 extraInfo += `\n📍 พิกัดปัจจุบัน: https://www.google.com/maps?q=${gps.Latitude},${gps.Longitude}`
@@ -147,7 +151,8 @@ export async function POST(req: NextRequest) {
                         }
                     }
 
-                    const reply = `🔍 ข้อมูลงาน: ${text}\n👤 ลูกค้า: ${job.Customer_Name}\n📦 สถานะ: ${job.Job_Status}\n🕒 อัปเดตล่าสุด: ${new Date(job.Updated_At).toLocaleString('th-TH')}${extraInfo}`
+                    const lastUpdate = job.Updated_At || job.Created_At || new Date().toISOString()
+                    const reply = `🔍 ข้อมูลงาน: ${job.Job_ID}\n👤 ลูกค้า: ${job.Customer_Name}\n📦 สถานะ: ${job.Job_Status}\n🕒 อัปเดตล่าสุด: ${new Date(lastUpdate).toLocaleString('th-TH')}${extraInfo}`
                     
                     await replyToUser(replyToken, reply)
                 }
