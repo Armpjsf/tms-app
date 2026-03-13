@@ -11,6 +11,10 @@ import {
   Activity,
   BarChart3,
   TrendingUp,
+  Truck,
+  Leaf,
+  Droplets,
+  Wind
 } from "lucide-react"
 import { WeeklyShipmentChart } from "@/components/dashboard/charts/weekly-shipment-chart"
 import { JobStatusChart } from "@/components/dashboard/charts/job-status-chart"
@@ -22,53 +26,26 @@ import { FleetCompliance } from "@/components/fleet/compliance-monitoring"
 import { Job } from "@/lib/supabase/jobs"
 import { useState } from "react"
 import { RequestShipmentDialog } from "./request-shipment-dialog"
-import { Leaf, Droplets, Wind } from "lucide-react"
+import { cn } from "@/lib/utils"
 
-// ... inside the component, before the end of the first 'div' after motion.div ...
+// ============================================
+// Animation Constants (Must be initialized first)
+// ============================================
+const container = {
+    hidden: { opacity: 0 },
+    show: {
+        opacity: 1,
+        transition: {
+            staggerChildren: 0.05,
+            delayChildren: 0.05
+        }
+    }
+}
 
-                    {/* Sustainability ESG Section */}
-                    <motion.div variants={item} className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        <PremiumCard className="lg:col-span-2 p-8 bg-gradient-to-br from-emerald-600 to-teal-700 text-white border-none relative overflow-hidden group">
-                            <div className="absolute top-0 right-0 p-12 opacity-10 pointer-events-none group-hover:scale-110 transition-transform duration-700">
-                                <Leaf size={240} />
-                            </div>
-                            <div className="relative z-10 flex flex-col md:flex-row items-center justify-between h-full gap-8">
-                                <div className="space-y-4">
-                                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/20 rounded-full text-[10px] font-black uppercase tracking-widest border border-white/30 backdrop-blur-md">
-                                        <Wind size={12} /> ESG Enterprise Impact
-                                    </div>
-                                    <h2 className="text-4xl font-black tracking-tighter leading-tight">
-                                        We saved <span className="text-emerald-300">1,240 kg</span> of <br/>Carbon Emissions this month
-                                    </h2>
-                                    <p className="text-emerald-50/70 font-bold text-sm max-w-md">
-                                        การใช้ระบบ AI Smart Bundling ช่วยลดเที่ยววิ่งซ้ำซ้อนและประหยัดพลังงานเพื่อโลกที่ยั่งยืน
-                                    </p>
-                                </div>
-                                <div className="grid grid-cols-2 gap-4 w-full md:w-auto">
-                                    <div className="p-4 bg-white/10 rounded-2xl border border-white/20 backdrop-blur-sm text-center">
-                                        <p className="text-[10px] font-black uppercase tracking-widest mb-1 text-emerald-200">Trees Saved</p>
-                                        <p className="text-2xl font-black">56.4</p>
-                                    </div>
-                                    <div className="p-4 bg-white/10 rounded-2xl border border-white/20 backdrop-blur-sm text-center">
-                                        <p className="text-[10px] font-black uppercase tracking-widest mb-1 text-emerald-200">Fuel Saved</p>
-                                        <p className="text-2xl font-black">185 L</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </PremiumCard>
-                        
-                        <PremiumCard className="p-8 bg-white border border-slate-100 flex flex-col justify-center items-center text-center relative overflow-hidden group">
-                            <div className="w-20 h-20 bg-emerald-500/10 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500">
-                                <Droplets className="text-emerald-600 w-10 h-10" />
-                            </div>
-                            <h3 className="text-xl font-black text-slate-900 tracking-tight mb-2">Eco-Efficiency Score</h3>
-                            <p className="text-5xl font-black text-emerald-600 tracking-tighter mb-4">A+</p>
-                            <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
-                                <div className="bg-emerald-500 h-full w-[92%] shadow-[0_0_10px_rgba(16,185,129,0.5)]" />
-                            </div>
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-4">Top 5% in Industry Standard</p>
-                        </PremiumCard>
-                    </motion.div>
+const item = {
+    hidden: { opacity: 0, scale: 0.98, y: 10 },
+    show: { opacity: 1, scale: 1, y: 0, transition: { duration: 0.2, ease: "easeOut" } }
+}
 
 interface DashboardClientProps {
     branchId: string
@@ -110,22 +87,6 @@ interface DashboardClientProps {
     zoneData: { name: string; range: string; percentage: number; color: string }[]
     complianceData: { name: string; status: string; date: string; daysLeft: number }[]
     fleetHealth: number
-}
-
-const container = {
-    hidden: { opacity: 0 },
-    show: {
-        opacity: 1,
-        transition: {
-            staggerChildren: 0.05,
-            delayChildren: 0.05
-        }
-    }
-}
-
-const item = {
-    hidden: { opacity: 0, scale: 0.98, y: 10 },
-    show: { opacity: 1, scale: 1, y: 0, transition: { duration: 0.2, ease: "easeOut" } }
 }
 
 export function DashboardClient({ 
@@ -277,7 +238,8 @@ export function DashboardClient({
 
                 {/* 4. ANALYTICS & MARKETPLACE (Bottom Row) */}
                 <motion.div variants={item} className="lg:col-span-7 space-y-6">
-                    <Card className="glass-panel rounded-[3rem] border-none shadow-2xl overflow-hidden p-8">
+                    {/* Dark Card - Light Text */}
+                    <div className="glass-panel rounded-[3rem] border-none shadow-2xl overflow-hidden p-8">
                         <div className="flex items-center justify-between mb-8">
                             <h3 className="text-xl font-black text-white tracking-tight flex items-center gap-3">
                                 <div className="p-2 bg-indigo-500/20 rounded-xl text-indigo-400">
@@ -287,11 +249,14 @@ export function DashboardClient({
                             </h3>
                             <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Last 7 Cycles</span>
                         </div>
-                        <WeeklyShipmentChart data={weeklyStats} />
-                    </Card>
+                        <div className="text-white">
+                            <WeeklyShipmentChart data={weeklyStats} />
+                        </div>
+                    </div>
                 </motion.div>
 
                 <motion.div variants={item} className="lg:col-span-5 h-full">
+                    {/* Dark Card - Light Text */}
                     <div className="glass-panel rounded-[3rem] h-full p-8 flex flex-col">
                         <div className="flex items-center justify-between mb-8">
                             <h3 className="text-xl font-black text-white tracking-tight flex items-center gap-3">
@@ -301,7 +266,7 @@ export function DashboardClient({
                                 Active Stream
                             </h3>
                         </div>
-                        <div className="flex-1 overflow-y-auto custom-scrollbar pr-2">
+                        <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 text-slate-200">
                             <ActivityFeed jobStats={jobStats} sosCount={sosCount} />
                         </div>
                     </div>
@@ -310,4 +275,3 @@ export function DashboardClient({
         </div>
     )
 }
-
