@@ -90,29 +90,60 @@ export async function POST(req: NextRequest) {
                     } 
                 }
 
-                // 4. SUMMARY (With Date Filter)
+                // 4. SUMMARY (Enhanced Multi-format & Range Support)
                 if (text.startsWith('SUMMARY') || text.startsWith('สรุป')) {
                     if (!boundCustomer) continue
 
-                    let targetDate = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' })
+                    let targetPattern = ''
                     let dateDisplay = 'วันนี้'
+                    
+                    // Default to today in Thai timezone
+                    const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' }) // YYYY-MM-DD
+                    targetPattern = `${todayStr}%`
 
-                    // Check for specific date format: "สรุป DD/MM/YYYY"
-                    const dateMatch = text.match(/(\d{2})\/(\d{2})\/(\d{4})/)
-                    if (dateMatch) {
-                        const [full, day, month, year] = dateMatch
-                        targetDate = `${year}-${month}-${day}`
-                        dateDisplay = full
+                    // 1. Year only (e.g., สรุป 2026)
+                    const yearMatch = text.match(/\b(20\d{2})\b/)
+                    // 2. Month/Year (e.g., สรุป 02/2026 or 2026/02)
+                    const monthYearMatch = text.match(/(\d{2})\/(\d{4})/) || text.match(/(\d{4})\/(\d{2})/)
+                    // 3. Full Date (e.g., สรุป 27/02/2026 or 2026/02/27)
+                    const fullDateMatch = text.match(/(\d{2})\/(\d{2})\/(\d{4})/) || text.match(/(\d{4})\/(\d{2})\/(\d{2})/)
+
+                    if (fullDateMatch) {
+                        // Handle both DD/MM/YYYY and YYYY/MM/DD
+                        if (fullDateMatch[1].length === 4) { // YYYY/MM/DD
+                            const [, y, m, d] = fullDateMatch
+                            targetPattern = `${y}-${m}-${d}%`
+                            dateDisplay = `${d}/${m}/${y}`
+                        } else { // DD/MM/YYYY
+                            const [, d, m, y] = fullDateMatch
+                            targetPattern = `${y}-${m}-${d}%`
+                            dateDisplay = fullDateMatch[0]
+                        }
+                    } else if (monthYearMatch) {
+                        if (monthYearMatch[1].length === 4) { // YYYY/MM
+                            const [, y, m] = monthYearMatch
+                            targetPattern = `${y}-${m}-%`
+                            dateDisplay = `เดือน ${m}/${y}`
+                        } else { // MM/YYYY
+                            const [, m, y] = monthYearMatch
+                            targetPattern = `${y}-${m}-%`
+                            dateDisplay = `เดือน ${m}/${y}`
+                        }
+                    } else if (yearMatch) {
+                        const y = yearMatch[1]
+                        targetPattern = `${y}-%`
+                        dateDisplay = `ปี ${y}`
                     }
 
-                    const { data: jobs } = await supabase
+                    const { data: jobs, error: summaryError } = await supabase
                         .from('Jobs_Main')
                         .select('Job_Status')
                         .eq('Customer_ID', boundCustomer.Customer_ID)
-                        .eq('Plan_Date', targetDate)
+                        .like('Plan_Date', targetPattern)
 
-                    if (!jobs || jobs.length === 0) {
-                        await replyToUser(replyToken, `📦 สำหรับคุณ ${boundCustomer.Customer_Name}\nวันที่ ${dateDisplay} ยังไม่มีรายการในระบบครับ`)
+                    if (summaryError || !jobs || jobs.length === 0) {
+                        const errorHint = summaryError ? ` (Error: ${summaryError.message})` : ''
+                        await replyToUser(replyToken, `📦 สำหรับคุณ ${boundCustomer.Customer_Name}\nช่วงเวลา ${dateDisplay} ยังไม่มีรายการในระบบครับ${errorHint}`)
                         continue
                     }
 
