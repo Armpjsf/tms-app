@@ -11,10 +11,10 @@ export function BottomNav() {
 
   const navItems = [
     { href: "/mobile/dashboard", icon: Home, label: "หน้าแรก" },
-    { href: "/mobile/jobs", icon: ListChecks, label: "งานของฉัน" },
-    { href: "/mobile/marketplace", icon: Activity, label: "หาเที่ยวงาน", isCenter: true },
-    { href: "/mobile/map", icon: MapPin, label: "แผนที่งาน" },
-    { href: "/mobile/profile", icon: User, label: "ข้อมูลพื้นฐาน" },
+    { href: "/mobile/jobs", icon: ListChecks, label: "งาน" },
+    { href: "/mobile/marketplace", icon: Activity, label: "หาเที่ยว", isCenter: true },
+    { href: "/mobile/map", icon: MapPin, label: "แผนที่" },
+    { href: "/mobile/profile", icon: User, label: "ข้อมูล" },
   ]
 
   return (
@@ -29,7 +29,6 @@ export function BottomNav() {
                 return (
                   <Link key={item.href} href={item.href} className="relative -top-8 transition-transform active:scale-90">
                     <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center shadow-[0_10px_30px_rgba(16,185,129,0.4)] border-4 border-slate-950 group overflow-hidden">
-                      <div className="absolute inset-0 bg-white/20 -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
                       <item.icon className="text-white relative z-10" size={28} strokeWidth={2.5} />
                     </div>
                   </Link>

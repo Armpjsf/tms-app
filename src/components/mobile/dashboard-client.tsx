@@ -64,10 +64,10 @@ export function DashboardClient({ session, stats, currentJob, gamification, toda
 
     const getRankColor = (rank: string) => {
         switch(rank) {
-            case 'Platinum': return 'from-emerald-600/40 via-teal-600/20 to-transparent border-emerald-500/40 shadow-emerald-500/10'
-            case 'Gold': return 'from-yellow-600/40 via-orange-600/20 to-transparent border-yellow-500/40 shadow-yellow-500/10'
-            case 'Silver': return 'from-slate-500/40 via-slate-700/20 to-transparent border-slate-400/40 shadow-slate-400/10'
-            default: return 'from-emerald-700/40 via-emerald-900/20 to-transparent border-emerald-700/40 shadow-emerald-700/10'
+            case 'Platinum': return 'from-emerald-700/60 via-teal-800/40 to-slate-950 border-emerald-500/50 shadow-emerald-500/20'
+            case 'Gold': return 'from-yellow-700/60 via-orange-800/40 to-slate-950 border-yellow-500/50 shadow-yellow-500/20'
+            case 'Silver': return 'from-slate-600/60 via-slate-800/40 to-slate-950 border-slate-400/50 shadow-slate-400/20'
+            default: return 'from-emerald-800/60 via-emerald-950/40 to-slate-950 border-emerald-700/50 shadow-emerald-700/20'
         }
     }
 
@@ -93,9 +93,9 @@ export function DashboardClient({ session, stats, currentJob, gamification, toda
                         <span className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-background rounded-full animate-pulse" />
                     </div>
                     <div>
-                        <h2 className="text-xl font-bold tracking-tight text-foreground">สวัสดี, {session.driverName}</h2>
-                        <p className="text-muted-foreground text-xs font-medium flex items-center gap-1">
-                            <Clock size={12} className="text-primary" /> สู่ระบบเมื่อ 5 นาทีที่แล้ว
+                        <h2 className="text-xl font-bold tracking-tight text-white">สวัสดี, {session.driverName}</h2>
+                        <p className="text-slate-300 text-xs font-medium flex items-center gap-1">
+                            <Clock size={12} className="text-emerald-400" /> สู่ระบบเมื่อ 5 นาทีที่แล้ว
                         </p>
                     </div>
                 </div>
@@ -103,12 +103,12 @@ export function DashboardClient({ session, stats, currentJob, gamification, toda
                     <motion.div 
                         initial={{ scale: 0.8 }}
                         animate={{ scale: 1 }}
-                        className="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl px-3 py-1.5"
+                        className="bg-emerald-500/15 border border-emerald-500/30 rounded-2xl px-3 py-1.5"
                     >
-                        <div className="text-lg font-black text-emerald-400">
+                        <div className="text-lg font-black text-white">
                            ฿{(todayIncome || 0).toLocaleString()}
                         </div>
-                        <div className="text-[9px] text-emerald-500/80 font-bold uppercase tracking-widest">Income</div>
+                        <div className="text-[9px] text-emerald-400 font-bold uppercase tracking-widest">Income</div>
                     </motion.div>
                 </div>
             </motion.div>
@@ -124,26 +124,26 @@ export function DashboardClient({ session, stats, currentJob, gamification, toda
                                 <motion.div 
                                     animate={{ rotate: [0, 10, -10, 0] }}
                                     transition={{ repeat: Infinity, duration: 4 }}
-                                    className="p-3 bg-white/10 rounded-2xl shadow-inner border border-gray-200"
+                                    className="p-3 bg-white/10 rounded-2xl shadow-inner border border-white/20"
                                 >
                                     {getRankIcon(gamification.rank)}
                                 </motion.div>
                                 <div>
                                     <div className="flex items-center gap-1.5 mb-0.5">
-                                        <Star size={12} className="text-yellow-500 fill-yellow-500" />
-                                        <span className="text-[10px] text-white/50 uppercase tracking-[0.2em] font-black">Driver Status</span>
+                                        <Star size={12} className="text-yellow-400 fill-yellow-400" />
+                                        <span className="text-[10px] text-white/80 uppercase tracking-[0.2em] font-black">Driver Status</span>
                                     </div>
                                     <div className="text-xl font-black text-white">{gamification.rank} Elite</div>
                                 </div>
                             </div>
-                            <div className="text-right bg-black/20 px-3 py-2 rounded-xl border border-gray-200">
+                            <div className="text-right bg-black/40 px-3 py-2 rounded-xl border border-white/10">
                                 <div className="text-xl font-black text-white">{gamification.points}</div>
-                                <div className="text-[8px] text-white/40 font-bold uppercase tracking-widest">Points</div>
+                                <div className="text-[8px] text-white/70 font-bold uppercase tracking-widest">Points</div>
                             </div>
                         </div>
                         
                         <div className="space-y-2">
-                            <div className="flex justify-between items-end text-[10px] font-bold text-white/60">
+                            <div className="flex justify-between items-end text-[10px] font-bold text-white/90">
                                 <span className="flex items-center gap-1"><TrendingUp size={10} /> แผนงานประจำเดือน</span>
                                 {gamification.nextRankPoints > 0 ? (
                                     <span>เป้าหมาย {gamification.nextRankPoints} คะแนน</span>
@@ -151,7 +151,7 @@ export function DashboardClient({ session, stats, currentJob, gamification, toda
                                     <span className="text-emerald-300">Level Max!</span>
                                 )}
                             </div>
-                            <div className="relative h-2.5 w-full bg-black/20 rounded-full overflow-hidden border border-gray-200">
+                            <div className="relative h-2.5 w-full bg-black/40 rounded-full overflow-hidden border border-white/10">
                                 <motion.div 
                                     initial={{ width: 0 }}
                                     animate={{ width: `${progressPercent}%` }}
@@ -164,10 +164,10 @@ export function DashboardClient({ session, stats, currentJob, gamification, toda
                                 />
                             </div>
                             <div className="flex justify-between items-center mt-1">
-                                <p className="text-[9px] text-white/40">
+                                <p className="text-[9px] text-white/80">
                                      เสร็จสิ้นงานเดือนนี้ <span className="text-white font-bold">{gamification.monthlyCompleted} ครั้ง</span>
                                 </p>
-                                <p className="text-[9px] text-white/40">
+                                <p className="text-[9px] text-white/80">
                                     อีก <span className="text-white font-bold">{Math.max(0, gamification.nextRankPoints - gamification.points)}</span> คะแนนเพื่อเลื่อนขั้น
                                 </p>
                             </div>

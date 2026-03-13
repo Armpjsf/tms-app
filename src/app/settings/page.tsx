@@ -186,9 +186,9 @@ export default function SettingsPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.15 + sectionIndex * 0.05 }}
           >
-            <Card className="bg-white/80 backdrop-blur-md border-white/50 h-full hover:border-emerald-500/50 transition-all rounded-br-[3rem] rounded-tl-[1.5rem] shadow-xl overflow-hidden group/section">
-              <CardHeader className="bg-slate-950/5 border-b border-black/5 p-6">
-                <CardTitle className="flex items-center gap-3 text-sm font-black text-slate-900 uppercase tracking-[0.2em]">
+            <Card className="bg-slate-900/60 backdrop-blur-xl border-slate-800 h-full hover:border-emerald-500/50 transition-all rounded-br-[3rem] rounded-tl-[1.5rem] shadow-2xl overflow-hidden group/section">
+              <CardHeader className="bg-slate-950/20 border-b border-white/5 p-6">
+                <CardTitle className="flex items-center gap-3 text-sm font-black text-white uppercase tracking-[0.2em]">
                   <div className="p-2 bg-slate-950 rounded-lg text-white group-hover/section:bg-emerald-500 transition-colors">
                     <section.icon size={18} />
                   </div>
@@ -204,8 +204,8 @@ export default function SettingsPage() {
                     onClick={() => handleNavigate(item.path)}
                   >
                     <div>
-                      <p className="font-black text-sm tracking-tight">{item.label}</p>
-                      <p className="text-[10px] uppercase font-bold text-slate-400 group-hover:text-emerald-400 transition-colors">{item.desc}</p>
+                      <p className="font-black text-sm tracking-tight text-white">{item.label}</p>
+                      <p className="text-[10px] uppercase font-bold text-slate-300 group-hover:text-emerald-400 transition-colors">{item.desc}</p>
                     </div>
                     <ChevronRight className="text-slate-300 group-hover:text-emerald-400 transition-colors" size={18} />
                   </motion.div>

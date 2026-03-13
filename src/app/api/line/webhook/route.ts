@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/utils/supabase/server'
+import { createAdminClient } from '@/utils/supabase/server'
 
 import { replyToUser, verifyLineSignature } from '@/lib/integrations/line'
 
@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
         const body = JSON.parse(bodyText)
         const events = body.events || []
 
-        const supabase = await createClient()
+        const supabase = createAdminClient()
 
         for (const event of events) {
             if (event.type === 'message' && event.message.type === 'text') {
