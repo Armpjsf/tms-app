@@ -57,6 +57,7 @@ export default function CustomersSettingsPage() {
     Phone: "",
     Address: "",
     Email: "",
+    Line_User_ID: "",
   })
   const [saving, setSaving] = useState(false)
 
@@ -89,6 +90,7 @@ export default function CustomersSettingsPage() {
         Phone: "",
         Address: "",
         Email: "",
+        Line_User_ID: "",
       })
     }
     setIsDialogOpen(true)
@@ -290,7 +292,7 @@ export default function CustomersSettingsPage() {
                     disabled={!!editingCustomer}
                   />
                 </div>
-                <div className="space-y-3">
+                 <div className="space-y-3">
                   <Label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 ml-1">Tax Identity Number</Label>
                   <Input
                     value={formData.Tax_ID || ""}
@@ -298,6 +300,21 @@ export default function CustomersSettingsPage() {
                     placeholder="13-digit identification"
                     className="bg-slate-50 border-slate-100 rounded-xl h-14 font-black px-6"
                   />
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <Label className="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-500 ml-1 flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                    LINE User ID (For Intelligence Bot Binding)
+                </Label>
+                <div className="flex gap-4">
+                    <Input
+                        value={formData.Line_User_ID || ""}
+                        onChange={(e) => updateForm("Line_User_ID", e.target.value)}
+                        placeholder="Uxxxx..."
+                        className="bg-emerald-50/50 border-emerald-100 text-slate-900 font-black rounded-xl h-14 px-6 flex-1 focus:bg-white"
+                    />
                 </div>
               </div>
 

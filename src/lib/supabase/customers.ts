@@ -15,6 +15,7 @@ export type Customer = {
   Origin_Location?: string | null
   Dest_Location?: string | null
   Default_Origin?: string | null
+  Line_User_ID?: string | null
 }
 
 // Get all customers

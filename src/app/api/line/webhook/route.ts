@@ -31,12 +31,49 @@ export async function POST(req: NextRequest) {
                 
                 // 1. HELP / MENU
                 if (text === 'HELP' || text === 'MENU' || text === 'เมนู' || text === 'ช่วยเหลือ') {
-                    const menu = `🤖 ยินดีต้อนรับสู่ TMS Intelligence Bot\n\n🔹 พิมพ์ "JOB-[ตามด้วยหมายเลข]" เพื่อเช็คสถานะและพิกัดงาน\n🔹 พิมพ์ "SUMMARY" หรือ "สรุป" เพื่อดูงานทั้งหมดของคุณวันนี้\n🔹 พิมพ์ "MENU" เพื่อดูรายการคำสั่งนี้อีกครั้ง`
+                    const menu = `🤖 ยินดีต้อนรับสู่ TMS Intelligence Bot\n\n🔹 พิมพ์ "JOB-[ตามด้วยหมายเลข]" เพื่อเช็คสถานะและพิกัดงาน\n🔹 พิมพ์ "SUMMARY" หรือ "สรุป" เพื่อดูงานทั้งหมดของคุณวันนี้\n🔹 พิมพ์ "BIND [รหัสลูกค้า] [เบอร์โทร]" เพื่อผูกบัญชีเข้ากับระบบ\n   ตัวอย่าง: BIND CUST-2603-0001 0812345678\n🔹 พิมพ์ "MENU" เพื่อดูรายการคำสั่งนี้อีกครั้ง`
                     await replyToUser(replyToken, menu)
                     continue
                 }
 
-                // 2. TODAY'S SUMMARY (Customer-bound)
+                // 2. SELF-BINDING (New Feature)
+                if (text.startsWith('BIND ')) {
+                    const parts = text.split(' ')
+                    if (parts.length < 3) {
+                        await replyToUser(replyToken, `❌ รูปแบบไม่ถูกต้อง\nกรุณาพิมพ์: BIND [รหัสลูกค้า] [เบอร์โทร]`)
+                        continue
+                    }
+
+                    const custId = parts[1]
+                    const phone = parts[2]
+
+                    const { data: customer, error: findError } = await supabase
+                        .from('Master_Customers')
+                        .select('Customer_ID, Customer_Name')
+                        .eq('Customer_ID', custId)
+                        .eq('Phone', phone)
+                        .single()
+
+                    if (findError || !customer) {
+                        await replyToUser(replyToken, `❌ ไม่พบข้อมูลลูกค้านี้ในระบบ หรือรหัส/เบอร์โทรไม่ถูกต้อง`)
+                        continue
+                    }
+
+                    const { error: updateError } = await supabase
+                        .from('Master_Customers')
+                        .update({ Line_User_ID: userId })
+                        .eq('Customer_ID', custId)
+
+                    if (updateError) {
+                        await replyToUser(replyToken, `❌ เกิดข้อผิดพลาดในการผูกบัญชี กรุณาลองใหม่อีกครั้ง`)
+                        continue
+                    }
+
+                    await replyToUser(replyToken, `✅ ยินดีด้วยครับ! คุณ ${customer.Customer_Name} ได้ผูกบัญชีกับ LINE สำเร็จแล้ว\nตอนนี้คุณสามารถพิมพ์ "สรุป" เพื่อดูงานวันนี้ได้ทันทีครับ`)
+                    continue
+                }
+
+                // 3. TODAY'S SUMMARY (Customer-bound)
                 if (text === 'SUMMARY' || text === 'สรุป') {
                     // Find customer by Line_User_ID
                     const { data: customer } = await supabase
@@ -46,7 +83,7 @@ export async function POST(req: NextRequest) {
                         .single()
 
                     if (!customer) {
-                        await replyToUser(replyToken, `⚠️ ขออภัยครับ บัญชี LINE ของคุณยังไม่ได้ผูกกับระบบลูกค้ า\nกรุณาแจ้งเลข ID นี้กับเจ้าหน้าที่: ${userId}`)
+                        await replyToUser(replyToken, `⚠️ บัญชี LINE ของคุณยังไม่ได้ผูกกับระบบครับ\n\n💡 วิธีผูกบัญชี:\nพิมพ์ BIND [รหัสลูกค้า] [เบอร์โทรที่ลงทะเบียนไว้]\n\nตัวอย่าง: BIND CUST-2603-0001 0812345678`)
                         continue
                     }
 
