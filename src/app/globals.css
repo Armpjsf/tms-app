@@ -63,6 +63,12 @@
     background-image: var(--gradient-elite);
     min-height: 100vh;
   }
+  label {
+    @apply text-slate-300 font-bold tracking-wide;
+  }
+  input, textarea, select {
+    @apply bg-slate-900/50 border-slate-800 text-white placeholder:text-slate-600 focus:border-emerald-500/50 focus:bg-slate-900 transition-all !important;
+  }
 }
 
 /* ============================================

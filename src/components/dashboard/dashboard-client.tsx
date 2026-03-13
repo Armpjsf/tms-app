@@ -238,6 +238,13 @@ export function DashboardClient({
 
                 {/* 4. ANALYTICS & MARKETPLACE (Bottom Row) */}
                 <motion.div variants={item} className="lg:col-span-7 space-y-6">
+                    {/* Bidding System (Restored) */}
+                    {!customerMode && (
+                        <div className="glass-panel rounded-[3rem] overflow-hidden p-2 border-emerald-500/20 shadow-[0_0_40px_rgba(16,185,129,0.05)]">
+                            <OrderBidding orders={marketplaceJobs} />
+                        </div>
+                    )}
+
                     {/* Dark Card - Light Text */}
                     <div className="glass-panel rounded-[3rem] border-none shadow-2xl overflow-hidden p-8">
                         <div className="flex items-center justify-between mb-8">
