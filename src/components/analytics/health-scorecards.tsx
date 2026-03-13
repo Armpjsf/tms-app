@@ -64,8 +64,8 @@ export function ExecutiveSectorHealth({ sectors }: { sectors: SectorHealth[] }) 
                         <Icon size={20} />
                     </div>
                     <div>
-                        <h4 className="text-[11px] font-black text-white/50 uppercase tracking-[0.3em] italic leading-none">{sector.title}</h4>
-                        <p className="text-[8px] text-slate-600 font-bold uppercase tracking-widest mt-1">Sector integrity Monitor</p>
+                        <h4 className="text-[11px] font-black text-white uppercase tracking-[0.3em] italic leading-none">{sector.title}</h4>
+                        <p className="text-[8px] text-slate-500 font-bold uppercase tracking-widest mt-1">Sector integrity Monitor</p>
                     </div>
                 </div>
                 <div className="relative z-10">
@@ -100,7 +100,7 @@ export function ExecutiveSectorHealth({ sectors }: { sectors: SectorHealth[] }) 
               </div>
               
               <Link href={sector.href} className="block group/link">
-                <button className="w-full h-12 rounded-2xl bg-slate-900 border border-slate-800 text-white font-black text-[10px] uppercase tracking-[0.2em] italic flex items-center justify-between px-6 group-hover/link:bg-white group-hover/link:text-slate-950 transition-all duration-500 overflow-hidden relative">
+                <button className="w-full h-12 rounded-2xl bg-slate-900 border border-slate-800 text-white font-black text-[10px] uppercase tracking-[0.2em] italic flex items-center justify-between px-6 group-hover/link:bg-white group-hover/link:text-white transition-all duration-500 overflow-hidden relative">
                     <span className="relative z-10">ACCESS SECTOR COMMAND</span>
                     <ChevronRight size={14} className="relative z-10 group-hover/link:translate-x-1 transition-transform" />
                 </button>

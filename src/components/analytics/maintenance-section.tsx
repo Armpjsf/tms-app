@@ -15,7 +15,7 @@ export function MaintenanceSection({ data }: { data: MaintenanceScheduleData }) 
         <div className="p-2 bg-slate-950 rounded-xl text-amber-500 shadow-lg border border-slate-800">
           <Wrench size={18} />
         </div>
-        <h3 className="text-xl font-black text-slate-800 tracking-tight uppercase">Fleet Maintenance Ecosystem</h3>
+        <h3 className="text-xl font-black text-white tracking-tight uppercase premium-text-gradient">Fleet Maintenance Ecosystem</h3>
       </div>
 
       {/* KPI Bento Grid */}

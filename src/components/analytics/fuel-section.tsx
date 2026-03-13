@@ -18,7 +18,7 @@ export function FuelSection({ data }: { data: FuelAnalytics }) {
         <div className="p-2 bg-slate-950 rounded-xl text-orange-400 shadow-lg border border-slate-800">
           <Fuel size={18} />
         </div>
-        <h3 className="text-xl font-black text-slate-800 tracking-tight uppercase">Fuel & Energy Dynamics</h3>
+        <h3 className="text-xl font-black text-white tracking-tight uppercase premium-text-gradient">Fuel & Energy Dynamics</h3>
       </div>
 
       {/* KPI Bento Grid */}

@@ -15,7 +15,7 @@ export function WorkforceSection({ data }: { data: WorkforceAnalytics }) {
         <div className="p-2 bg-slate-950 rounded-xl text-blue-500 shadow-lg border border-slate-800">
           <Users size={18} />
         </div>
-        <h3 className="text-xl font-black text-slate-800 tracking-tight uppercase">Workforce Intelligence registry</h3>
+        <h3 className="text-xl font-black text-white tracking-tight uppercase premium-text-gradient">Workforce Intelligence registry</h3>
       </div>
 
       {/* KPI Bento Grid */}

@@ -114,7 +114,7 @@ export function DashboardClient({
             {/* Elite Welcome & Actions Header */}
             <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8">
                 <div>
-                    <h1 className="text-6xl font-black text-white tracking-tighter mb-4 premium-gradient-text">
+                    <h1 className="text-6xl font-black text-white tracking-tighter mb-4 premium-text-gradient">
                         {customerMode ? `Identity: ${userName || 'Partner'}` : "Command Centre"}
                     </h1>
                     <div className="flex items-center gap-4">

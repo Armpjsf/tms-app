@@ -56,7 +56,7 @@ export function ProfitabilitySection({ data = [], financials }: Props) {
                 <div className="p-2 bg-slate-950 rounded-xl text-emerald-500 shadow-lg border border-slate-800">
                 <TrendingUp size={18} />
                 </div>
-                <h3 className="text-xl font-black text-slate-800 tracking-tight uppercase">Operational Profitability Matrix</h3>
+                <h3 className="text-xl font-black text-white tracking-tight uppercase premium-text-gradient">Operational Profitability Matrix</h3>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

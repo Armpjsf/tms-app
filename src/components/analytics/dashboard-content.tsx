@@ -17,6 +17,8 @@ import { getFuelAnalytics } from "@/lib/supabase/fuel-analytics"
 import { getMaintenanceSchedule } from "@/lib/supabase/maintenance-schedule"
 import { getSafetyAnalytics } from "@/lib/supabase/safety-analytics"
 import { getWorkforceAnalytics } from "@/lib/supabase/workforce-analytics"
+import { getESGStats } from "@/lib/supabase/esg-analytics"
+import { ESGSection } from "@/components/analytics/esg-section"
 
 import { FinancialSummaryCards } from "@/components/analytics/summary-cards"
 import { RevenueTrendChart } from "@/components/analytics/revenue-chart"
@@ -70,7 +72,8 @@ export async function DashboardContent({
     workforce,
     routes,
     driverLeaderboard,
-    vehicleProfitability
+    vehicleProfitability,
+    esgStats
   ] = await Promise.all([
     getFinancialStats(startDate, endDate, branchId),
     getRevenueTrend(startDate, endDate, branchId),
@@ -87,7 +90,8 @@ export async function DashboardContent({
     getWorkforceAnalytics(startDate, endDate, branchId),
     getRouteEfficiency(startDate, endDate, branchId),
     getDriverLeaderboard(startDate, endDate, branchId),
-    getVehicleProfitability(startDate, endDate, branchId)
+    getVehicleProfitability(startDate, endDate, branchId),
+    getESGStats(startDate, endDate, branchId)
   ])
 
   return (
@@ -132,7 +136,7 @@ export async function DashboardContent({
                   <TrendingUp size={28} />
               </div>
               <div>
-                  <h2 className="text-4xl font-black text-slate-950 tracking-tighter italic uppercase">Financial Intelligence</h2>
+                  <h2 className="text-4xl font-black text-white tracking-tighter italic uppercase premium-text-gradient">Financial Intelligence</h2>
                   <p className="text-emerald-500 text-[11px] font-black uppercase tracking-[0.4em] mt-1 italic">Commercial Vector & Revenue Growth Monitoring // TIER-1 AUDIT</p>
               </div>
           </div>
@@ -219,7 +223,7 @@ export async function DashboardContent({
                   <Truck size={28} />
               </div>
               <div>
-                  <h2 className="text-4xl font-black text-slate-950 tracking-tighter italic uppercase">Fleet Command</h2>
+                  <h2 className="text-4xl font-black text-white tracking-tighter italic uppercase premium-text-gradient">Fleet Command</h2>
                   <p className="text-blue-600 text-[11px] font-black uppercase tracking-[0.4em] mt-1 italic">Operational Throughput & Asset Utilization Registry // REAL-TIME MONITOR</p>
               </div>
            </div>
@@ -239,7 +243,7 @@ export async function DashboardContent({
                   <ShieldAlert size={28} />
               </div>
               <div>
-                  <h2 className="text-4xl font-black text-slate-950 tracking-tighter italic uppercase">Tactical Safety</h2>
+                  <h2 className="text-4xl font-black text-white tracking-tighter italic uppercase premium-text-gradient">Tactical Safety</h2>
                   <p className="text-rose-600 text-[11px] font-black uppercase tracking-[0.4em] mt-1 italic">Human Capital Efficiency & Safety Protocol Audit // CRITICAL VECTORS</p>
               </div>
            </div>
@@ -247,6 +251,7 @@ export async function DashboardContent({
            <div className="grid grid-cols-1 space-y-12">
                <WorkforceSection data={workforce} />
                <SafetySection data={safety} />
+               <ESGSection data={esgStats} />
            </div>
         </section>
 
@@ -259,7 +264,7 @@ export async function DashboardContent({
                   <Layers size={28} />
               </div>
               <div>
-                  <h2 className="text-4xl font-black text-slate-950 tracking-tighter italic uppercase">Sector Integrity</h2>
+                  <h2 className="text-4xl font-black text-white tracking-tighter italic uppercase premium-text-gradient">Sector Integrity</h2>
                   <p className="text-slate-500 text-[11px] font-black uppercase tracking-[0.4em] mt-1 italic">Cross-Functional Operational Health Scorecards // AGGREGATE INDEX</p>
               </div>
           </div>

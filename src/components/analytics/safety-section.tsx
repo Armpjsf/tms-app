@@ -14,7 +14,7 @@ export function SafetySection({ data }: { data: SafetyAnalytics }) {
         <div className="p-2 bg-slate-950 rounded-xl text-rose-500 shadow-lg border border-slate-800">
           <ShieldAlert size={18} />
         </div>
-        <h3 className="text-xl font-black text-slate-800 tracking-tight uppercase">Safety & Intelligence Registry</h3>
+        <h3 className="text-xl font-black text-white tracking-tight uppercase premium-text-gradient">Safety & Intelligence Registry</h3>
       </div>
 
       {/* KPI Bento Grid */}

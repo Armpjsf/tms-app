@@ -33,7 +33,7 @@ export function CustomerRouteSection({
         <div className="p-2 bg-slate-950 rounded-xl text-purple-500 shadow-lg border border-slate-800">
           <MapPin size={18} />
         </div>
-        <h3 className="text-xl font-black text-slate-800 tracking-tight uppercase">Customer & Route Intelligence</h3>
+        <h3 className="text-xl font-black text-white tracking-tight uppercase premium-text-gradient">Customer & Route Intelligence</h3>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">

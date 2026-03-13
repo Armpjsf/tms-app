@@ -1,5 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/utils/supabase/server'
+import { validateApiKey } from '@/lib/security/api-security'
 
 /**
  * Enterprise Integration API (v1)
@@ -9,9 +8,12 @@ export async function POST(req: NextRequest) {
     try {
         const authHeader = req.headers.get('Authorization')
         
-        // Basic API Key check (In production, validate against a Master_API_Keys table)
-        if (!authHeader || !authHeader.startsWith('Bearer tms_live_')) {
-            return NextResponse.json({ error: 'Unauthorized: Invalid API Key' }, { status: 401 })
+        // Industrial-grade API Key validation across Master_API_Keys registry
+        let clientContext
+        try {
+            clientContext = await validateApiKey(authHeader || '')
+        } catch (authError: Error | any) {
+            return NextResponse.json({ error: authError.message }, { status: 401 })
         }
 
         const body = await req.json()

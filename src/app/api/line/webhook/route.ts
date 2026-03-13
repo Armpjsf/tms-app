@@ -1,13 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/utils/supabase/server'
 
+import { replyToUser, verifyLineSignature } from '@/lib/integrations/line'
+
 /**
  * LINE Chatbot Webhook
  * Handles customer inquiries about shipment status and location.
  */
 export async function POST(req: NextRequest) {
     try {
-        const body = await req.json()
+        const bodyText = await req.text()
+        const signature = req.headers.get('x-line-signature') || ''
+        
+        // 1. Validate Signature
+        if (!verifyLineSignature(bodyText, signature)) {
+            console.warn('Unauthorized LINE Webhook attempt')
+            return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
+        }
+
+        const body = JSON.parse(bodyText)
         const events = body.events || []
 
         const supabase = await createClient()
@@ -15,41 +26,93 @@ export async function POST(req: NextRequest) {
         for (const event of events) {
             if (event.type === 'message' && event.message.type === 'text') {
                 const text = event.message.text.trim().toUpperCase()
+                const replyToken = event.replyToken
+                const userId = event.source.userId
                 
-                // Regex to match Job ID (e.g., JOB-12345)
+                // 1. HELP / MENU
+                if (text === 'HELP' || text === 'MENU' || text === 'เมนู' || text === 'ช่วยเหลือ') {
+                    const menu = `🤖 ยินดีต้อนรับสู่ TMS Intelligence Bot\n\n🔹 พิมพ์ "JOB-[ตามด้วยหมายเลข]" เพื่อเช็คสถานะและพิกัดงาน\n🔹 พิมพ์ "SUMMARY" หรือ "สรุป" เพื่อดูงานทั้งหมดของคุณวันนี้\n🔹 พิมพ์ "MENU" เพื่อดูรายการคำสั่งนี้อีกครั้ง`
+                    await replyToUser(replyToken, menu)
+                    continue
+                }
+
+                // 2. TODAY'S SUMMARY (Customer-bound)
+                if (text === 'SUMMARY' || text === 'สรุป') {
+                    // Find customer by Line_User_ID
+                    const { data: customer } = await supabase
+                        .from('Master_Customers')
+                        .select('Customer_ID, Customer_Name')
+                        .eq('Line_User_ID', userId)
+                        .single()
+
+                    if (!customer) {
+                        await replyToUser(replyToken, `⚠️ ขออภัยครับ บัญชี LINE ของคุณยังไม่ได้ผูกกับระบบลูกค้ า\nกรุณาแจ้งเลข ID นี้กับเจ้าหน้าที่: ${userId}`)
+                        continue
+                    }
+
+                    const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' })
+                    const { data: jobs } = await supabase
+                        .from('Jobs_Main')
+                        .select('Job_Status')
+                        .eq('Customer_ID', customer.Customer_ID)
+                        .eq('Plan_Date', today)
+
+                    if (!jobs || jobs.length === 0) {
+                        await replyToUser(replyToken, `📦 สำหรับคุณ ${customer.Customer_Name}\nวันนี้ยังไม่มีรายการขนส่งในระบบครับ`)
+                        continue
+                    }
+
+                    const total = jobs.length
+                    const done = jobs.filter(j => ['Delivered', 'Completed'].includes(j.Job_Status)).length
+                    const summary = `📋 สรุปงานวันนี้ (${customer.Customer_Name})\n\nทั้งหมด: ${total} รายการ\nสำเร็จแล้ว: ${done} ✅\nรอดำเนินการ: ${total - done} ⏳`
+                    await replyToUser(replyToken, summary)
+                    continue
+                }
+
+                // 3. JOB TRACKING (Enhanced)
                 if (text.startsWith('JOB-')) {
                     const { data: job, error } = await supabase
                         .from('Jobs_Main')
-                        .select('Job_Status, Customer_Name, Driver_ID, Updated_At')
+                        .select('Job_Status, Customer_Name, Driver_ID, Driver_Name, Updated_At')
                         .eq('Job_ID', text)
                         .single()
 
                     if (error || !job) {
-                        // Reply: Job not found
-                        console.log('Job not found:', text)
+                        await replyToUser(replyToken, `❌ ไม่พบข้อมูลงานหมายเลข: ${text}`)
                         continue
                     }
 
-                    // Get Driver location if in progress
-                    let locationMsg = ''
-                    if (job.Job_Status === 'In Progress' && job.Driver_ID) {
-                        const { data: gps } = await supabase
-                            .from('GPS_Logs')
-                            .select('Latitude, Longitude')
+                    // Get Driver location & Contact if in progress
+                    let extraInfo = ''
+                    if (job.Driver_ID) {
+                        const { data: driver } = await supabase
+                            .from('Master_Drivers')
+                            .select('Mobile_No')
                             .eq('Driver_ID', job.Driver_ID)
-                            .order('Timestamp', { ascending: false })
-                            .limit(1)
                             .single()
                         
-                        if (gps) {
-                            locationMsg = `\n📍 พิกัดปัจจุบัน: https://www.google.com/maps?q=${gps.Latitude},${gps.Longitude}`
+                        if (driver?.Mobile_No) {
+                            extraInfo += `\n📞 ติดต่อคนขับ (${job.Driver_Name}): ${driver.Mobile_No}`
+                        }
+
+                        if (job.Job_Status === 'In Progress' || job.Job_Status === 'In Transit') {
+                            const { data: gps } = await supabase
+                                .from('GPS_Logs')
+                                .select('Latitude, Longitude')
+                                .eq('Driver_ID', job.Driver_ID)
+                                .order('Timestamp', { ascending: false })
+                                .limit(1)
+                                .single()
+                            
+                            if (gps) {
+                                extraInfo += `\n📍 พิกัดปัจจุบัน: https://www.google.com/maps?q=${gps.Latitude},${gps.Longitude}`
+                            }
                         }
                     }
 
-                    const reply = `🔍 ข้อมูลงาน: ${text}\n👤 ลูกค้า: ${job.Customer_Name}\n📦 สถานะ: ${job.Job_Status}\n🕒 อัปเดตล่าสุด: ${new Date(job.Updated_At).toLocaleString('th-TH')}${locationMsg}`
+                    const reply = `🔍 ข้อมูลงาน: ${text}\n👤 ลูกค้า: ${job.Customer_Name}\n📦 สถานะ: ${job.Job_Status}\n🕒 อัปเดตล่าสุด: ${new Date(job.Updated_At).toLocaleString('th-TH')}${extraInfo}`
                     
-                    // Note: Here you would call LINE Messaging API to send the 'reply' back
-                    console.log('LINE Reply:', reply)
+                    await replyToUser(replyToken, reply)
                 }
             }
         }

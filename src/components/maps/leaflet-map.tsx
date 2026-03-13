@@ -222,14 +222,33 @@ function MovingMarker({ driver }: { driver: DriverLocation }) {
         icon={L.divIcon({
             className: 'custom-div-icon',
             html: `
-                <div class="${driver.status === 'SOS' ? 'sos-marker-container' : ''}" style="transform: rotate(${heading}deg); transition: transform 0.5s ease-in-out; position: relative;">
-                    ${driver.status === 'SOS' ? '<div class="sos-pulse-ring"></div>' : ''}
-                    <img src="/images/map/truck-marker.png" style="width: 35px; height: 35px; position: relative; z-index: 2;" />
+                <div class="relative flex items-center justify-center" style="width: 50px; height: 50px;">
+                    <!-- Direction Aura / Shadow -->
+                    <div class="absolute inset-0 rounded-full bg-emerald-500/10 animate-pulse border border-emerald-500/20" 
+                         style="transform: scale(1.2) rotate(${heading}deg); transition: transform 0.5s ease-out;">
+                        <div class="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1 w-2 h-2 bg-emerald-500 rounded-full shadow-[0_0_10px_rgba(16,185,129,1)]"></div>
+                    </div>
+
+                    <!-- Marker Body -->
+                    <div class="relative flex items-center justify-center p-2 bg-slate-950 rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.5)] border border-white/10"
+                         style="transform: rotate(${heading}deg); transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);">
+                        
+                        <!-- SOS Pulse if active -->
+                        ${driver.status === 'SOS' ? '<div class="absolute inset-0 bg-red-500/40 rounded-xl animate-ping"></div>' : ''}
+                        
+                        <!-- Premium Truck Icon -->
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="${driver.status === 'SOS' ? 'text-red-500' : 'text-emerald-400'} relative z-10">
+                            <path d="M1 14H17M1 14L2 7H14L17 14M1 14V18H3M17 14V18H15M17 14H23V18H21M17 11H21L23 14M7 18C7 19.1046 6.10457 20 5 20C3.89543 20 3 19.1046 3 18C3 16.8954 3.89543 16 5 18ZM7 18C7 16.8954 7.89543 16 9 16C10.1046 16 11 16.8954 11 18M11 18C11 19.1046 10.1046 20 9 20C7.89543 20 7 19.1046 7 18ZM19 18C19 19.1046 18.1046 20 17 20C15.8954 20 15 19.1046 15 18C15 16.8954 15.8954 16 17 16C18.1046 16 19 16.8954 19 18ZM21 18C21 19.1046 20.1046 20 19 20C17.8954 20 17 19.1046 17 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+
+                    <!-- Online/Status Badge -->
+                    <div class="absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 border-slate-950 ${driver.status === 'Online' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,1)]' : 'bg-slate-500'} z-20"></div>
                 </div>
             `,
-            iconSize: [35, 35],
-            iconAnchor: [17, 17],
-            popupAnchor: [0, -15]
+            iconSize: [50, 50],
+            iconAnchor: [25, 25],
+            popupAnchor: [0, -20]
         })}
     >
       <Popup>
@@ -247,8 +266,11 @@ function DriverPopup({ driver }: { driver: DriverLocation }) {
     const fetchAddress = async () => {
       try {
         const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${driver.lat}&lon=${driver.lng}&zoom=14&addressdetails=1`, {
-          headers: { 'User-Agent': 'TMS-ePOD/1.0' }
+          headers: { 'User-Agent': 'TMS-ePOD/1.0' },
+          signal: AbortSignal.timeout(5000) // 5 second timeout
         })
+        
+        if (!res.ok) throw new Error('API Response Error')
         const data = await res.json()
         
         if (isMounted) {
@@ -257,13 +279,14 @@ function DriverPopup({ driver }: { driver: DriverLocation }) {
                 const district = addr.city_district || addr.district || addr.suburb || ''
                 const province = addr.province || addr.state || ''
                 const road = addr.road || ''
-                setAddress(`${road} ${district} ${province}`.trim() || 'Address not found')
+                setAddress(`${road} ${district} ${province}`.trim() || 'Address found (no details)')
             } else {
                 setAddress('Address not found')
             }
         }
-      } catch {
-        if (isMounted) setAddress('Address lookup failed')
+      } catch (err) {
+        console.warn('Map geocoding failed:', err)
+        if (isMounted) setAddress('Location services unavailable')
       }
     }
 

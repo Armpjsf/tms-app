@@ -23,7 +23,7 @@ export function BillingSection({ data }: { data: BillingAnalytics }) {
         <div className="p-2 bg-slate-950 rounded-xl text-emerald-400 shadow-lg border border-slate-800">
           <Wallet size={18} />
         </div>
-        <h3 className="text-xl font-black text-slate-800 tracking-tight uppercase">Billing & Accounts Registry</h3>
+        <h3 className="text-xl font-black text-white tracking-tight uppercase premium-text-gradient">Billing & Accounts Registry</h3>
       </div>
 
       {/* KPI Bento Grid */}
