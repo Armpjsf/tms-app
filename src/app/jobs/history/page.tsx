@@ -96,7 +96,7 @@ export default async function JobHistoryPage(props: Props) {
         </div>
 
         <div className="flex flex-wrap gap-4 relative z-10">
-          <Link href="/planning">
+          <Link href={customerMode ? "/dashboard" : "/planning"}>
             <PremiumButton variant="outline" className="h-14 px-8 rounded-2xl bg-slate-900/50 border-slate-800 text-slate-300 hover:bg-slate-900 transition-all">
               <ArrowLeft size={20} className="mr-2" />
               Return
