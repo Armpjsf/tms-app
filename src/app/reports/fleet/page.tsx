@@ -2,13 +2,9 @@ import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { 
   Truck, 
   Users, 
-  ShieldCheck, 
-  AlertTriangle, 
   Settings,
   UserCheck,
-  Package,
   CheckCircle2,
-  Calendar
 } from "lucide-react"
 import { getVehicleStats, getAllVehiclesFromTable } from "@/lib/supabase/vehicles"
 import { getDriverStats, getAllDriversFromTable } from "@/lib/supabase/drivers"
@@ -28,16 +24,19 @@ export default async function FleetStatusPage() {
     <DashboardLayout>
       <div className="space-y-8 pb-12">
         {/* Header Section */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-2xl relative overflow-hidden group">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/5 blur-3xl rounded-full -mr-20 -mt-20 pointer-events-none" />
+        {/* Strategic Header Section */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 bg-slate-950 p-10 rounded-br-[5rem] rounded-tl-[3rem] border border-slate-800 shadow-2xl relative overflow-hidden group">
+          <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-400 opacity-0 group-hover:opacity-100 transition-all duration-700 blur-[0.5px]" />
+          <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 blur-3xl rounded-full -mr-20 -mt-20 pointer-events-none" />
+          
           <div className="relative z-10">
-            <h1 className="text-4xl font-black text-gray-900 tracking-tighter flex items-center gap-4">
-              <div className="p-3 bg-blue-600 rounded-2xl shadow-xl shadow-blue-500/20 text-white transform group-hover:scale-110 transition-transform duration-500">
-                <Truck size={32} />
+            <h1 className="text-5xl font-black text-white mb-2 tracking-tighter flex items-center gap-4">
+              <div className="p-3 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-3xl shadow-2xl shadow-blue-500/20 text-white transform group-hover:scale-110 transition-transform duration-500">
+                <Truck size={36} />
               </div>
               สถานะรถและคนขับ (Fleet Status)
             </h1>
-            <p className="text-gray-500 font-bold ml-[4.5rem] uppercase tracking-[0.2em] text-[10px]">Strategic Asset Visibility & Compliance</p>
+            <p className="text-blue-400 font-black ml-[4.5rem] uppercase tracking-[0.3em] text-[10px]">Strategic Asset Visibility • Operational Compliance COMMAND</p>
           </div>
         </div>
 

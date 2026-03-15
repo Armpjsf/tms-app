@@ -499,31 +499,29 @@ export default function DriverPaymentClient({ initialJobs, drivers, companyProfi
     <>
     <div className="print:hidden">
     <DashboardLayout>
-      {/* Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 bg-white/80 p-6 lg:p-8 rounded-[2rem] border border-gray-200 backdrop-blur-md shadow-2xl relative overflow-hidden mb-6">
-            <div className="absolute top-0 right-0 p-6 opacity-[0.04] pointer-events-none scale-150">
-              <Wallet size={120} />
+      {/* Bespoke Elite Header */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-8 mb-12 bg-slate-950 p-10 rounded-br-[5rem] rounded-tl-[2rem] border border-slate-800 shadow-2xl relative overflow-hidden group">
+        <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/10 to-transparent pointer-events-none" />
+        
+        <div className="relative z-10">
+          <h1 className="text-5xl font-black text-white mb-2 tracking-tighter flex items-center gap-4">
+            <div className="p-3 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-3xl shadow-2xl shadow-indigo-500/20 text-white transform group-hover:scale-110 transition-transform duration-500">
+              <Wallet size={32} />
             </div>
-            <div className="relative z-10">
-              <div className="flex items-center gap-4 mb-2">
-                <div className="p-2.5 bg-emerald-500/20 rounded-2xl shadow-lg shadow-indigo-500/20">
-                  <Wallet className="text-emerald-600 w-7 h-7" />
-                </div>
-                <div>
-                  <h1 className="text-3xl lg:text-4xl font-black text-foreground tracking-tight">
-                    สรุปจ่ายรถ
-                  </h1>
-                  <p className="text-muted-foreground font-medium mt-1">สร้างเอกสารสรุปการทำจ่ายให้คนขับ (หัก ณ ที่จ่าย 1%)</p>
-                </div>
-              </div>
-            </div>
+            สรุปจ่ายรถ
+          </h1>
+          <p className="text-indigo-400 font-black ml-[4.5rem] uppercase tracking-[0.3em] text-[10px]">FLLET SETTLEMENT & OPERATIONAL PAYOUT COMMAND</p>
+        </div>
+
+        <div className="flex flex-wrap gap-4 relative z-10">
             <Button 
                 variant="outline" 
-                className="h-11 px-5 rounded-xl border-gray-200 bg-white/80 hover:bg-white text-gray-700 hover:text-white gap-2 relative z-10"
+                className="h-14 px-8 rounded-2xl border-slate-800 bg-slate-900/50 hover:bg-slate-900 text-slate-300 hover:text-white gap-2 transition-all duration-300"
                 onClick={() => router.push('/billing/driver/history')}
             >
-                <History className="w-4 h-4" /> ประวัติการจ่าย
+                <History className="w-5 h-5" /> ประวัติการจ่าย
             </Button>
+        </div>
       </div>
 
       {/* Filters */}

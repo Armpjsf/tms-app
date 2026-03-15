@@ -4,7 +4,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge'
 import { getAllBranches } from '@/lib/supabase/branches'
 import { Input } from '@/components/ui/input'
-import { Search, ArrowLeft } from 'lucide-react'
+import { Search, ArrowLeft, Link } from 'lucide-react'
+import LinkNext from 'next/link'
 import { format } from 'date-fns'
 import { th } from 'date-fns/locale'
 
@@ -69,14 +70,28 @@ export default async function LogsPage({
 
   return (
     <div className="flex flex-col gap-6 p-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <a href="/dashboard" className="flex items-center gap-2 text-gray-500 hover:text-emerald-600 transition-colors mb-3 text-sm font-bold">
-            <ArrowLeft className="w-4 h-4" /> ย้อนกลับ
-          </a>
-          <h1 className="text-3xl font-bold tracking-tight">System Logs</h1>
-          <p className="text-muted-foreground">ติดตามประวัติการใช้งานและกิจกรรมในระบบทั้งหมด</p>
-        </div>
+      {/* Bespoke Obsidian Header */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-8 mb-6 bg-slate-950 p-10 rounded-br-[5rem] rounded-tl-[2rem] border border-slate-800 shadow-2xl relative overflow-hidden group">
+          <div className="absolute inset-0 bg-gradient-to-r from-slate-500/10 to-transparent pointer-events-none" />
+          
+          <div className="relative z-10">
+              <LinkNext href="/dashboard" className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors mb-6 text-[10px] font-black uppercase tracking-[0.2em] w-fit">
+                  <ArrowLeft className="w-4 h-4" /> Command Central
+              </LinkNext>
+              <h1 className="text-5xl font-black text-white mb-2 tracking-tighter flex items-center gap-4">
+                  <div className="p-3 bg-slate-800 rounded-3xl shadow-2xl shadow-slate-500/20 text-white transform group-hover:scale-110 transition-transform duration-500">
+                      <Search size={32} />
+                  </div>
+                  System LOGS
+              </h1>
+              <p className="text-slate-400 font-black ml-[4.5rem] uppercase tracking-[0.3em] text-[10px]">Registry of all logistical & administrative transmissions</p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-6 relative z-10">
+              <div className="flex items-center gap-3 px-6 py-3 bg-slate-500/10 rounded-2xl border border-slate-500/20 backdrop-blur-md">
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">Live Audit Feed: ACTIVE</span>
+              </div>
+          </div>
       </div>
 
       <Card>

@@ -34,22 +34,27 @@ export default async function AdminJobDetailPage({
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
-      {/* Header & Back Button */}
-      <div className="flex items-center gap-4">
-        <Link href="/admin/jobs">
-          <Button variant="outline" size="icon" className="h-10 w-10 border-slate-700 bg-slate-900 hover:bg-slate-800">
-            <ArrowLeft className="h-5 w-5 text-slate-400" />
-          </Button>
-        </Link>
-        <div>
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold text-slate-900">Job # {job.Job_ID}</h1>
-            <StatusBadge status={job.Job_Status} />
+      {/* Bespoke Elite Header */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-8 mb-12 bg-slate-950 p-10 rounded-br-[5rem] rounded-tl-[2rem] border border-slate-800 shadow-2xl relative overflow-hidden group">
+        <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 to-transparent pointer-events-none" />
+        
+        <div className="relative z-10">
+          <div className="flex items-center gap-4 mb-4">
+            <Link href="/jobs/history">
+              <Button variant="outline" size="icon" className="h-10 w-10 border-slate-700 bg-slate-900 hover:bg-slate-800 rounded-xl">
+                <ArrowLeft className="h-5 w-5 text-slate-400" />
+              </Button>
+            </Link>
+            <div className="p-2.5 bg-emerald-500 rounded-2xl shadow-lg shadow-emerald-500/20 text-white">
+              <Package size={24} />
+            </div>
+            <h1 className="text-4xl font-black text-white tracking-tighter">Job # {job.Job_ID}</h1>
+            <StatusBadge status={job.Job_Status || ''} />
           </div>
-          <p className="text-slate-400 text-sm mt-1">
-          </p>
+          <p className="text-emerald-400 font-black ml-[4.5rem] uppercase tracking-[0.3em] text-[10px]">OPERATIONAL JOB LIFECYCLE & EXECUTION TRACKING</p>
         </div>
-        <div className="ml-auto">
+
+        <div className="flex flex-wrap gap-4 relative z-10">
             <AdminJobActions jobId={job.Job_ID} currentStatus={job.Job_Status || 'New'} />
         </div>
       </div>

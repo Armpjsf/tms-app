@@ -170,24 +170,21 @@ export default function RoutesPage() {
     <DashboardLayout>
       {/* Header */}
       <div className="flex flex-col gap-4 mb-6">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 bg-white/80 p-6 lg:p-8 rounded-[2rem] border border-gray-200 backdrop-blur-md shadow-2xl relative overflow-hidden">
-            <div className="absolute top-0 right-0 p-6 opacity-[0.04] pointer-events-none scale-150">
-              <Navigation size={120} />
+      {/* Strategic Header Container */}
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8 mb-10 bg-slate-950 p-10 rounded-br-[5rem] rounded-tl-[3rem] border border-slate-800 shadow-2xl relative overflow-hidden group">
+        <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/10 to-transparent pointer-events-none" />
+        
+        <div className="relative z-10">
+          <h1 className="text-5xl font-black text-white mb-2 tracking-tighter flex items-center gap-4">
+            <div className="p-3 bg-gradient-to-br from-indigo-500 to-blue-600 rounded-3xl shadow-2xl shadow-indigo-500/20 text-white transform group-hover:scale-110 transition-transform duration-500">
+              <Navigation size={32} />
             </div>
-            <div className="relative z-10">
-              <div className="flex items-center gap-4 mb-2">
-                <div className="p-2.5 bg-emerald-500/15 rounded-2xl shadow-lg shadow-blue-500/20">
-                  <Navigation className="text-emerald-500 w-7 h-7" />
-                </div>
-                <div>
-                  <h1 className="text-3xl lg:text-4xl font-black text-foreground tracking-tight">
-                    จัดการเส้นทาง (Routes)
-                  </h1>
-                  <p className="text-muted-foreground font-medium mt-1">กำหนดจุดรับ-ส่งสินค้า GPS และระยะทาง</p>
-                </div>
-              </div>
-            </div>
-            <div className="flex gap-2 relative z-10">
+            จัดการเส้นทาง (Routes)
+          </h1>
+          <p className="text-indigo-400 font-black ml-[4.5rem] uppercase tracking-[0.3em] text-[10px]">Geospatial Intelligence • Route Optimization • GPS Command</p>
+        </div>
+
+        <div className="flex flex-wrap gap-4 relative z-10">
                 <ExcelImport 
                     trigger={
                         <Button variant="outline" className="h-11 px-5 rounded-xl border-gray-200 bg-white/80 hover:bg-white text-gray-700 hover:text-white transition-all">

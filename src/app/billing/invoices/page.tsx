@@ -1,6 +1,5 @@
 
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
-import { PageHeader } from "@/components/ui/page-header"
 import { DataSection } from "@/components/ui/data-section"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -13,23 +12,18 @@ import {
   TableRow 
 } from "@/components/ui/table"
 import { 
-  FileText, 
   Plus, 
   Search, 
   Download,
   MoreHorizontal,
-  FileCheck,
-  AlertCircle
+  FileCheck
 } from "lucide-react"
 import Link from "next/link"
 import { getInvoices } from "@/lib/supabase/invoices"
 import { Badge } from "@/components/ui/badge"
 import {
-  DropdownMenu,
-  DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 
@@ -42,23 +36,33 @@ export default async function InvoicesPage({
   const page = Number(resolvedParams?.page) || 1
   const query = resolvedParams?.query || ""
   
-  const { data: invoices, count } = await getInvoices(page, 20, query)
+  const { data: invoices } = await getInvoices(page, 20, query)
 
   return (
     <DashboardLayout>
-      <PageHeader
-        icon={<FileText size={28} />}
-        title="ใบกำกับภาษี (Tax Invoices)"
-        subtitle="จัดการและออกใบกำกับภาษีเต็มรูป"
-        actions={
+      {/* Bespoke Elite Header */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-8 mb-12 bg-slate-950 p-10 rounded-br-[5rem] rounded-tl-[2rem] border border-slate-800 shadow-2xl relative overflow-hidden group">
+        <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-transparent pointer-events-none" />
+        
+        <div className="relative z-10">
+          <h1 className="text-5xl font-black text-white mb-2 tracking-tighter flex items-center gap-4">
+            <div className="p-3 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-3xl shadow-2xl shadow-purple-500/20 text-white transform group-hover:scale-110 transition-transform duration-500">
+              <FileText size={32} />
+            </div>
+            ใบกำกับภาษี
+          </h1>
+          <p className="text-purple-400 font-black ml-[4.5rem] uppercase tracking-[0.3em] text-[10px]">Tax Invoices & Financial Documentation</p>
+        </div>
+
+        <div className="flex flex-wrap gap-4 relative z-10">
           <Link href="/billing/invoices/create">
-            <Button className="h-11 px-6 rounded-xl gap-2 bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 shadow-lg shadow-purple-500/20">
-              <Plus size={18} />
+            <Button className="h-14 px-8 rounded-2xl bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 shadow-lg shadow-purple-500/20">
+              <Plus size={24} className="mr-2" />
               ออกใบกำกับภาษี
             </Button>
           </Link>
-        }
-      />
+        </div>
+      </div>
 
       <DataSection title="รายการใบกำกับภาษี" icon={<FileText size={18} />}
         headerAction={
@@ -93,20 +97,20 @@ export default async function InvoicesPage({
                         </TableCell>
                     </TableRow>
                 ) : (
-                    invoices.map((inv: Record<string, unknown>) => (
-                      <TableRow key={inv.Invoice_ID} className="border-gray-200 hover:bg-white/[0.02]">
+                    invoices.map((inv: any) => (
+                      <TableRow key={inv.Invoice_ID as string} className="border-gray-200 hover:bg-white/[0.02]">
                         <TableCell className="font-medium text-gray-800">
                             <div className="flex flex-col">
-                                <span>{inv.Invoice_ID}</span>
+                                <span>{inv.Invoice_ID as string}</span>
                                 {inv.Tax_Invoice_ID && (
-                                    <span className="text-xs text-gray-400">{inv.Tax_Invoice_ID}</span>
+                                    <span className="text-xs text-gray-400">{inv.Tax_Invoice_ID as string}</span>
                                 )}
                             </div>
                         </TableCell>
-                        <TableCell className="text-gray-700">{inv.Customer_Name}</TableCell>
-                        <TableCell className="text-gray-500">{new Date(inv.Issue_Date).toLocaleDateString('th-TH')}</TableCell>
+                        <TableCell className="text-gray-700">{inv.Customer_Name as string}</TableCell>
+                        <TableCell className="text-gray-500">{new Date(inv.Issue_Date as string).toLocaleDateString('th-TH')}</TableCell>
                         <TableCell className="text-gray-500">
-                            {inv.Due_Date ? new Date(inv.Due_Date).toLocaleDateString('th-TH') : '-'}
+                            {inv.Due_Date ? new Date(inv.Due_Date as string).toLocaleDateString('th-TH') : '-'}
                         </TableCell>
                         <TableCell className="text-right font-medium text-gray-800">
                             {Number(inv.Grand_Total || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
@@ -118,7 +122,7 @@ export default async function InvoicesPage({
                                   inv.Status === 'Overdue' ? 'border-red-500 text-red-500 bg-red-500/10' :
                                   'border-slate-500 text-gray-400 bg-slate-500/10'}
                             `}>
-                                {inv.Status}
+                                {inv.Status as string}
                             </Badge>
                         </TableCell>
                         <TableCell>
@@ -135,7 +139,7 @@ export default async function InvoicesPage({
                                 <FileCheck className="mr-2 h-4 w-4" /> ดูรายละเอียด
                               </DropdownMenuItem>
                               <DropdownMenuItem className="focus:bg-gray-100 cursor-pointer" asChild>
-                                <Link href={`/billing/print/${inv.Invoice_ID}`} target="_blank">
+                                <Link href={`/billing/print/${inv.Invoice_ID as string}`} target="_blank">
                                   <Download className="mr-2 h-4 w-4" /> ดาวน์โหลด PDF
                                 </Link>
                               </DropdownMenuItem>

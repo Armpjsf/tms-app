@@ -55,18 +55,29 @@ export default async function AdminNotificationsPage() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        {/* Header */}
-        <div>
-          <Link href="/dashboard" className="flex items-center gap-2 text-gray-500 hover:text-emerald-600 transition-colors mb-3 text-sm font-bold">
-            <ArrowLeft className="w-4 h-4" /> ย้อนกลับ
-          </Link>
-          <h1 className="text-3xl font-black text-gray-900 tracking-tight flex items-center gap-3">
-            <div className="p-2.5 bg-amber-500 rounded-2xl text-white shadow-lg shadow-amber-500/20">
-              <Bell size={28} />
-            </div>
-            ศูนย์การแจ้งเตือน
-          </h1>
-          <p className="text-gray-500 font-medium mt-1 text-sm">แจ้งเตือนเอกสารหมดอายุ, ตรวจรถไม่ผ่าน, แจ้งซ่อมค้าง</p>
+        {/* Strategic Header Container */}
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-8 mb-10 bg-slate-950 p-10 rounded-br-[5rem] rounded-tl-[3rem] border border-slate-800 shadow-2xl relative overflow-hidden group">
+          <div className="absolute inset-0 bg-gradient-to-r from-amber-500/10 to-transparent pointer-events-none" />
+          
+          <div className="relative z-10">
+            <Link href="/dashboard" className="flex items-center gap-2 text-slate-500 hover:text-amber-400 transition-colors mb-6 text-[10px] font-black uppercase tracking-[0.2em]">
+                <ArrowLeft className="w-4 h-4" /> ย้อนกลับ (Back to Control)
+            </Link>
+            <h1 className="text-5xl font-black text-white mb-2 tracking-tighter flex items-center gap-4">
+              <div className="p-3 bg-gradient-to-br from-amber-500 to-orange-600 rounded-3xl shadow-2xl shadow-amber-500/20 text-white transform group-hover:scale-110 transition-transform duration-500">
+                <Bell size={32} />
+              </div>
+              ศูนย์การแจ้งเตือน
+            </h1>
+            <p className="text-amber-400 font-black ml-[4.5rem] uppercase tracking-[0.3em] text-[10px]">Strategic Alerts • Asset Compliance • Operational Safety</p>
+          </div>
+
+          <div className="flex gap-3 relative z-10">
+              <div className="flex items-center gap-2 px-4 py-2 bg-slate-900/50 rounded-2xl border border-slate-800">
+                  <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                  <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">{criticalCount} Critical</span>
+              </div>
+          </div>
         </div>
 
         {/* Summary Cards */}

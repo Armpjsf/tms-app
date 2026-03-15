@@ -30,23 +30,27 @@ export default async function FleetDashboardPage(props: { searchParams: Promise<
 
   return (
     <div className="space-y-10 pb-20">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 border-b border-gray-200 pb-8">
-        <div className="flex items-center gap-4">
-          <Link href="/admin/analytics">
-            <Button variant="outline" size="icon" className="border-gray-200 bg-white">
-               <ArrowLeft className="h-5 w-5 text-gray-500" />
-            </Button>
+      {/* Bespoke Elite Header */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-8 mb-12 bg-slate-950 p-10 rounded-br-[5rem] rounded-tl-[2rem] border border-slate-800 shadow-2xl relative overflow-hidden group">
+        <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 to-transparent pointer-events-none" />
+        
+        <div className="relative z-10">
+          <Link href="/admin/analytics" className="flex items-center gap-2 text-emerald-400 hover:text-white transition-colors mb-6 text-[10px] font-black uppercase tracking-[0.2em] w-fit">
+              <ArrowLeft className="w-4 h-4" /> Strategic Intelligence
           </Link>
-          <div>
-            <h1 className="text-3xl font-black text-gray-900 tracking-tight">Fleet & Efficiency</h1>
-            <p className="text-gray-700 font-bold">Asset Optimization & Driver Performance</p>
-          </div>
+          <h1 className="text-5xl font-black text-white mb-2 tracking-tighter flex items-center gap-4">
+            <div className="p-3 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-3xl shadow-2xl shadow-emerald-500/20 text-white transform group-hover:scale-110 transition-transform duration-500">
+              <Truck size={32} />
+            </div>
+            Fleet & EFFICIENCY
+          </h1>
+          <p className="text-emerald-400 font-black ml-[4.5rem] uppercase tracking-[0.3em] text-[10px]">Asset Optimization & Tactical Performance Control</p>
         </div>
 
-        <div className="flex items-center gap-3 bg-white border border-gray-200 p-2 rounded-xl">
-            {/* Branch Filter removed (Global Header) */}
-            <MonthFilter />
+        <div className="flex flex-wrap items-center gap-6 relative z-10">
+            <div className="flex items-center gap-3 px-6 py-3 bg-emerald-500/10 rounded-2xl border border-emerald-500/20 backdrop-blur-md">
+                <MonthFilter />
+            </div>
         </div>
       </div>
 

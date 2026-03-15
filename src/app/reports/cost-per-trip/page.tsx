@@ -2,7 +2,7 @@ export const dynamic = 'force-dynamic'
 
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { getCostPerTrip } from "./actions"
-import { DollarSign, TrendingUp, TrendingDown, Truck, MapPin, User, ArrowLeft, Fuel } from "lucide-react"
+import { DollarSign, TrendingUp, TrendingDown, Truck, MapPin, User, ArrowLeft } from "lucide-react"
 import Link from "next/link"
 
 function formatMoney(n: number) {
@@ -15,18 +15,29 @@ export default async function CostPerTripPage() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        {/* Header */}
-        <div>
-          <Link href="/reports" className="flex items-center gap-2 text-gray-500 hover:text-emerald-600 transition-colors mb-3 text-sm font-bold">
-            <ArrowLeft className="w-4 h-4" /> ย้อนกลับ
-          </Link>
-          <h1 className="text-3xl font-black text-gray-900 tracking-tight flex items-center gap-3">
-            <div className="p-2.5 bg-violet-500 rounded-2xl text-white shadow-lg shadow-violet-500/20">
-              <DollarSign size={28} />
+        {/* Bespoke Strategic Header */}
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-8 mb-12 bg-slate-950 p-10 rounded-br-[5rem] rounded-tl-[2rem] border border-slate-800 shadow-2xl relative overflow-hidden group">
+          <div className="absolute inset-0 bg-gradient-to-r from-violet-500/10 to-transparent pointer-events-none" />
+          
+          <div className="relative z-10 text-left">
+            <Link href="/reports" className="flex items-center gap-2 text-violet-400 hover:text-white transition-colors mb-6 text-[10px] font-black uppercase tracking-[0.2em] w-fit">
+              <ArrowLeft className="w-4 h-4" /> Reports Hub
+            </Link>
+            <h1 className="text-5xl font-black text-white mb-2 tracking-tighter flex items-center gap-4">
+              <div className="p-3 bg-violet-500 rounded-3xl shadow-2xl shadow-violet-500/20 text-white transform group-hover:scale-110 transition-transform duration-500">
+                <DollarSign size={32} />
+              </div>
+              Trip PERFORMANCE
+            </h1>
+            <p className="text-violet-400 font-black ml-[4.5rem] uppercase tracking-[0.3em] text-[10px]">Cost Efficiency & Profitability Analysis (Last 30 Days)</p>
+          </div>
+
+          <div className="flex flex-wrap gap-4 relative z-10">
+            <div className="flex items-center gap-3 px-6 py-3 bg-violet-500/10 rounded-2xl border border-violet-500/20">
+              <div className="w-2 h-2 rounded-full bg-violet-500 animate-pulse" />
+              <span className="text-[10px] font-black text-violet-400 uppercase tracking-widest">Live Financial Audit</span>
             </div>
-            ต้นทุนต่อเที่ยว
-          </h1>
-          <p className="text-gray-500 font-medium mt-1 text-sm">วิเคราะห์ต้นทุนและกำไรแยกรายเที่ยว (30 วันล่าสุด)</p>
+          </div>
         </div>
 
         {/* Summary Cards */}

@@ -106,19 +106,26 @@ export default function CompanySettingsPage() {
 
   return (
     <DashboardLayout>
-      {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground flex items-center gap-3">
-            <Building className="text-emerald-600" />
-            ข้อมูลบริษัท
+      {/* Bespoke Strategic Header */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-8 mb-12 bg-slate-950 p-10 rounded-br-[5rem] rounded-tl-[2rem] border border-slate-800 shadow-2xl relative overflow-hidden group">
+        <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 to-transparent pointer-events-none" />
+        
+        <div className="relative z-10 text-left">
+          <h1 className="text-5xl font-black text-white mb-2 tracking-tighter flex items-center gap-4">
+            <div className="p-3 bg-emerald-500 rounded-3xl shadow-2xl shadow-emerald-500/20 text-white transform group-hover:scale-110 transition-transform duration-500">
+              <Building size={32} />
+            </div>
+            Corporate IDENTITY
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">ตั้งค่าข้อมูลบริษัทสำหรับใช้ในเอกสาร</p>
+          <p className="text-emerald-400 font-black ml-[4.5rem] uppercase tracking-[0.3em] text-[10px]">ENTREPRISE PROFILE & DOCUMENTATION PARAMETERS</p>
         </div>
-        <Button onClick={handleSave} disabled={loading} className="bg-emerald-600 hover:bg-blue-700 text-white font-bold shadow-md">
-          {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
-          บันทึก
-        </Button>
+
+        <div className="flex flex-wrap gap-4 relative z-10">
+          <Button onClick={handleSave} disabled={loading} className="h-14 px-8 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-black shadow-xl shadow-emerald-600/20 transition-all active:scale-95">
+            {loading ? <Loader2 className="w-5 h-5 mr-3 animate-spin" /> : <Save className="w-5 h-5 mr-3" />}
+            Save Profile
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

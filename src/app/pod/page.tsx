@@ -41,16 +41,23 @@ export default async function PODPage(props: {
 
   return (
     <DashboardLayout>
-      {/* Page Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900 mb-2 flex items-center gap-3">
-            <FileText className="text-emerald-600" />
+      {/* Bespoke Elite Header */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-8 mb-12 bg-slate-950 p-10 rounded-br-[5rem] rounded-tl-[2rem] border border-slate-800 shadow-2xl relative overflow-hidden group">
+        <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 to-transparent pointer-events-none" />
+        
+        <div className="relative z-10">
+          <h1 className="text-5xl font-black text-white mb-2 tracking-tighter flex items-center gap-4">
+            <div className="p-3 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-3xl shadow-2xl shadow-emerald-500/20 text-white transform group-hover:scale-110 transition-transform duration-500">
+              <FileText size={32} />
+            </div>
             จัดการ POD
           </h1>
-          <p className="text-gray-500">Proof of Delivery - หลักฐานการจัดส่ง</p>
+          <p className="text-emerald-400 font-black ml-[4.5rem] uppercase tracking-[0.3em] text-[10px]">Proof of Delivery - หลักฐานการจัดส่ง</p>
         </div>
-        <PODExport data={pods} />
+
+        <div className="flex flex-wrap gap-4 relative z-10">
+          <PODExport data={pods} />
+        </div>
       </div>
 
       {/* Stats */}

@@ -64,17 +64,18 @@ export default async function TrackingPage(props: { params: Promise<{ jobId: str
   return (
     <div className="max-w-2xl mx-auto space-y-8 pb-20 px-4 pt-4">
       {/* Premium Header Card */}
-      <div className="relative rounded-3xl overflow-hidden bg-slate-900 border border-slate-800 shadow-2xl">
+      <div className="relative rounded-[2.5rem] overflow-hidden bg-slate-950 border border-slate-800 shadow-2xl group">
         <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-indigo-500 via-purple-500 to-emerald-500"></div>
-        
-        <div className="p-6 md:p-8 space-y-8">
+        <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-transparent pointer-events-none" />
+
+        <div className="p-8 md:p-10 space-y-8 relative z-10">
             <div className="flex justify-between items-start">
-                <div className="space-y-1">
-                    <div className="flex items-center gap-2 text-emerald-600 font-bold text-[10px] uppercase tracking-widest">
-                        <ClipboardList size={14} />
-                        <span>Live Tracking Portfolio</span>
+                <div className="space-y-1.5">
+                    <div className="flex items-center gap-2 text-emerald-400 font-black text-[10px] uppercase tracking-[0.3em]">
+                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                        <span>Live Intelligence Portfolio</span>
                     </div>
-                    <h1 className="text-3xl font-black text-white tracking-tight">{job.jobId}</h1>
+                    <h1 className="text-4xl font-black text-white tracking-tighter uppercase">{job.jobId}</h1>
                 </div>
                 <div className="flex flex-col items-end gap-2">
                     <Badge className={`px-4 py-1.5 rounded-full text-xs font-bold border-0 shadow-lg ${

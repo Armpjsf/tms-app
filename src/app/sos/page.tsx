@@ -5,8 +5,8 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { PageHeader } from "@/components/ui/page-header"
 import { StatsGrid } from "@/components/ui/stats-grid"
-import { 
-  AlertTriangle, 
+import {
+  AlertTriangle,
   Phone,
   MapPin,
   Clock,
@@ -24,17 +24,27 @@ export default async function SOSPage() {
 
   return (
     <DashboardLayout>
-      <PageHeader
-        icon={<AlertTriangle size={28} />}
-        title="แจ้งเหตุฉุกเฉิน (SOS)"
-        subtitle="ติดตามและจัดการเหตุฉุกเฉินทั้งหมด"
-        badge={activeCount > 0 ? (
-          <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-red-500/20 border border-red-500/30">
-            <span className="w-3 h-3 rounded-full bg-red-500 animate-pulse" />
-            <span className="text-red-400 font-medium text-sm">{activeCount} เหตุการณ์ที่ยังไม่แก้ไข</span>
+      {/* Strategic SOS Header */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-8 mb-10 bg-slate-950 p-10 rounded-br-[5rem] rounded-tl-[3rem] border border-slate-800 shadow-2xl relative overflow-hidden group">
+        <div className="absolute inset-0 bg-gradient-to-r from-red-500/10 to-transparent pointer-events-none" />
+        
+        <div className="relative z-10">
+          <h1 className="text-5xl font-black text-white mb-2 tracking-tighter flex items-center gap-4">
+            <div className="p-3 bg-gradient-to-br from-red-500 to-rose-600 rounded-3xl shadow-2xl shadow-red-500/20 text-white transform group-hover:scale-110 transition-transform duration-500 animate-pulse">
+              <AlertTriangle size={36} />
+            </div>
+            แจ้งเหตุฉุกเฉิน (SOS)
+          </h1>
+          <p className="text-red-400 font-black ml-[4.5rem] uppercase tracking-[0.3em] text-[10px]">Tracking Emergency Events • Immediate Response Command</p>
+        </div>
+
+        {activeCount > 0 && (
+          <div className="relative z-10 flex items-center gap-3 px-6 py-3 bg-red-500/10 border border-red-500/30 rounded-2xl shadow-2xl shadow-red-500/20">
+            <div className="w-3 h-3 rounded-full bg-red-500 animate-ping" />
+            <span className="text-red-400 font-black text-xs uppercase tracking-widest leading-none">{activeCount} เหตุการณ์ที่ยังไม่แก้ไข</span>
           </div>
-        ) : undefined}
-      />
+        )}
+      </div>
 
       <StatsGrid columns={3} stats={[
         { label: "SOS Active", value: activeCount, icon: <AlertTriangle size={20} />, color: "red" },
