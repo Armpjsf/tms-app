@@ -52,7 +52,7 @@ export default async function JobHistoryPage(props: Props) {
 
   // Fetch jobs and creation data for dialog
   const [jobsResult, creationData, canViewPrice, canDelete, canExport] = await Promise.all([
-    getAllJobs(page, limit, query, status),
+    getAllJobs(page, limit, query, status, dateFrom, dateTo),
     getJobCreationData(),
     hasPermission('job_price_view'),
     hasPermission('job_delete'),

@@ -16,12 +16,15 @@ import {
   Search, 
   Download,
   MoreHorizontal,
-  FileCheck
+  FileCheck,
+  FileText
 } from "lucide-react"
 import Link from "next/link"
 import { getInvoices } from "@/lib/supabase/invoices"
 import { Badge } from "@/components/ui/badge"
 import {
+  DropdownMenu,
+  DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuTrigger,

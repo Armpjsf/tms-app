@@ -8,6 +8,7 @@ import { getAllVehiclesFromTable } from '@/lib/supabase/vehicles'
 import { logActivity } from '@/lib/supabase/logs'
 import { getUserBranchId } from '@/lib/permissions'
 import { notifyDriverNewJob } from '@/lib/actions/push-actions'
+import { getCustomerId } from '@/lib/permissions'
 
 export type JobFormData = {
   Job_ID: string
@@ -15,6 +16,7 @@ export type JobFormData = {
   Plan_Date?: string | null
   Pickup_Date?: string | null
   Delivery_Date?: string | null
+  Customer_ID?: string | null
   Customer_Name?: string | null
   Route_Name?: string | null
   Driver_ID?: string | null
@@ -40,6 +42,13 @@ export type JobFormData = {
   Pickup_Lon?: number | null
   Delivery_Lat?: number | null
   Delivery_Lon?: number | null
+  Ref_No?: string | null
+}
+
+const parseIfString = (val: string | undefined | null) => {
+  if (!val) return null
+  if (typeof val !== 'string') return val
+  try { return JSON.parse(val) } catch { return val }
 }
 
 export async function createJob(data: JobFormData) {
@@ -83,8 +92,6 @@ export async function createJob(data: JobFormData) {
     if (vehicle) subId = vehicle.sub_id || null
   }
 
-
-
   // Attempt 1
   const { error: error1 } = await supabase.from('Jobs_Main').insert(buildInsertPayload(data, driverName, subId))
   
@@ -115,14 +122,11 @@ export async function createJob(data: JobFormData) {
 }
 
 function buildInsertPayload(data: JobFormData, driverName: string, subId: string | null) {
-  const parseIfString = (val: string | undefined) => {
-      if (!val) return null
-      try { return JSON.parse(val) } catch { return val }
-  }
   return {
       Job_ID: data.Job_ID,
       Plan_Date: data.Plan_Date,
       Delivery_Date: data.Delivery_Date,
+      Customer_ID: data.Customer_ID,
       Customer_Name: data.Customer_Name,
       Route_Name: data.Route_Name,
       Driver_ID: data.Driver_ID,
@@ -161,13 +165,15 @@ export async function createBulkJobs(jobs: Partial<JobFormData>[]) {
   const effectiveBranchId = (userBranchId && userBranchId !== 'All') ? userBranchId : null
 
   // Fetch Master Data for lookups
-  const [{ data: allDrivers }, { data: allVehicles }] = await Promise.all([
+  const [{ data: allDrivers }, { data: allVehicles }, { data: allCustomers }] = await Promise.all([
     supabase.from('Master_Drivers').select('Driver_ID, Driver_Name, Sub_ID'),
-    supabase.from('master_vehicles').select('vehicle_plate, sub_id')
+    supabase.from('master_vehicles').select('vehicle_plate, sub_id'),
+    supabase.from('Master_Customers').select('Customer_ID, Customer_Name')
   ])
 
   const driverMap = new Map(allDrivers?.map(d => [d.Driver_ID, d]) || [])
   const vehicleMap = new Map(allVehicles?.map(v => [v.vehicle_plate, v]) || [])
+  const customerMap = new Map(allCustomers?.map(c => [c.Customer_Name?.toLowerCase().trim(), c.Customer_ID]) || [])
 
   // Helper to normalize keys
   const normalizeData = (row: Partial<JobFormData>) => {
@@ -186,6 +192,7 @@ export async function createBulkJobs(jobs: Partial<JobFormData>[]) {
 
     normalized.Job_ID = getValue(['Job_ID', 'id', 'รหัสงาน'])
     normalized.Plan_Date = getValue(['Plan_Date', 'date', 'วันที่แผน', 'วันที่'])
+    normalized.Customer_ID = getValue(['Customer_ID', 'cust_id', 'รหัสลูกค้า'])
     normalized.Customer_Name = getValue(['Customer_Name', 'customer', 'ลูกค้า', 'ชื่อลูกค้า'])
     normalized.Route_Name = getValue(['Route_Name', 'route', 'เส้นทาง'])
     normalized.Driver_ID = getValue(['Driver_ID', 'driver', 'รหัสคนขับ'])
@@ -196,13 +203,7 @@ export async function createBulkJobs(jobs: Partial<JobFormData>[]) {
     normalized.Cost_Driver_Total = getValue(['Cost_Driver_Total', 'cost', 'ต้นทุน', 'ค่ารถ'])
     normalized.Notes = getValue(['Notes', 'remark', 'หมายเหตุ'])
     normalized.Ref_No = getValue(['Ref_No', 'so', 'do', 'เลขที่อ้างอิง'])
-    
     return normalized
-  }
-
-  const parseIfString = (val: string | undefined) => {
-      if (!val) return null
-      try { return JSON.parse(val) } catch { return val }
   }
 
   const cleanData = jobs.map(j => {
@@ -217,6 +218,7 @@ export async function createBulkJobs(jobs: Partial<JobFormData>[]) {
       Job_ID: (data.Job_ID as string) || `JOB-${Date.now().toString().slice(-6)}-${Math.floor(Math.random()*1000)}`,
       Branch_ID: effectiveBranchId,
       Plan_Date: (data.Plan_Date as string) || new Date().toISOString().split('T')[0],
+      Customer_ID: (data.Customer_ID as string) || customerMap.get((data.Customer_Name as string)?.toLowerCase().trim()) || null,
       Customer_Name: data.Customer_Name as string,
       Route_Name: (data.Route_Name as string) || 'Direct',
       Driver_ID: driverId || null,
@@ -230,6 +232,7 @@ export async function createBulkJobs(jobs: Partial<JobFormData>[]) {
       Weight_Kg: Number(data.Weight_Kg) || 0,
       Volume_Cbm: Number(data.Volume_Cbm) || 0,
       Created_At: new Date().toISOString(),
+      Ref_No: (data.Ref_No as string) || null,
     }
   }).filter(j => j.Customer_Name)
 
@@ -284,11 +287,6 @@ export async function createBulkJobs(jobs: Partial<JobFormData>[]) {
 
 export async function updateJob(jobId: string, data: Partial<JobFormData>) {
   const supabase = await createClient()
-
-  const parseIfString = (val: string | undefined) => {
-      if (!val) return null
-      try { return JSON.parse(val) } catch { return val }
-  }
 
   const updateData: Record<string, unknown> = { ...data }
   
@@ -373,9 +371,6 @@ export async function deleteJob(jobId: string) {
   return { success: true, message: 'Job deleted successfully' }
 }
 
-// Remove getAllCustomers import if it's the only usage
-// ...
-
 export async function getJobCreationData() {
   const supabase = await createClient()
 
@@ -387,10 +382,6 @@ export async function getJobCreationData() {
     supabase.from('Master_Subcontractors').select('*').order('Sub_Name', { ascending: true })
   ])
 
-  if (customersResult.error) {
-    // Error fetching customers
-  }
-
   return {
     drivers: driversResult,
     vehicles: vehiclesResult,
@@ -399,8 +390,6 @@ export async function getJobCreationData() {
     subcontractors: subcontractorsResult.data || []
   }
 }
-
-import { getCustomerId } from '@/lib/permissions'
 
 export async function requestShipment(data: {
   Plan_Date: string

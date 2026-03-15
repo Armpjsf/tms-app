@@ -150,7 +150,9 @@ export async function getAllJobs(
   page = 1, 
   limit = 50, 
   query = '',
-  status = '' // Add status parameter
+  status = '', // Add status parameter
+  startDate = '', // Add startDate parameter
+  endDate = '' // Add endDate parameter
 ): Promise<{ data: Job[], count: number }> {
   try {
     const supabase = await createClient()
@@ -173,6 +175,13 @@ export async function getAllJobs(
         dbQuery = dbQuery.eq('Branch_ID', branchId)
     } else if (!isAdmin && !branchId) {
         return { data: [], count: 0 }
+    }
+
+    if (startDate) {
+      dbQuery = dbQuery.gte('Plan_Date', startDate)
+    }
+    if (endDate) {
+      dbQuery = dbQuery.lte('Plan_Date', endDate)
     }
 
     dbQuery = dbQuery

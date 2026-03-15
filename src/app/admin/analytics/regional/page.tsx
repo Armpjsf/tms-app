@@ -57,10 +57,10 @@ export default async function RegionalAnalyticsPage(props: { searchParams: Promi
             </Button>
           </Link>
           <div>
-            <h1 className="text-3xl font-extrabold text-gray-950 tracking-tight mb-1">
+            <h1 className="text-3xl font-extrabold text-foreground tracking-tight mb-1">
               Regional Analytics
             </h1>
-            <p className="text-gray-700 font-bold text-lg">ติดตามผลงานรายสาขา • Branch Performance Comparison</p>
+            <p className="text-slate-400 font-bold text-lg italic">ติดตามผลงานรายสาขา • Branch Performance Comparison</p>
           </div>
         </div>
         <div className="flex items-center gap-3 bg-white/90 backdrop-blur-md border border-gray-200 p-2 rounded-xl">

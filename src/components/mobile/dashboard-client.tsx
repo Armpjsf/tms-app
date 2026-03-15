@@ -93,9 +93,9 @@ export function DashboardClient({ session, stats, currentJob, gamification, toda
                         <span className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-background rounded-full animate-pulse" />
                     </div>
                     <div>
-                        <h2 className="text-xl font-bold tracking-tight text-white">สวัสดี, {session.driverName}</h2>
-                        <p className="text-slate-300 text-xs font-medium flex items-center gap-1">
-                            <Clock size={12} className="text-emerald-400" /> สู่ระบบเมื่อ 5 นาทีที่แล้ว
+                        <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">สวัสดี, {session.driverName}</h2>
+                        <p className="text-slate-500 dark:text-slate-400 text-xs font-medium flex items-center gap-1">
+                            <Clock size={12} className="text-emerald-500" /> สู่ระบบเมื่อ 5 นาทีที่แล้ว
                         </p>
                     </div>
                 </div>
@@ -103,10 +103,10 @@ export function DashboardClient({ session, stats, currentJob, gamification, toda
                     <motion.div 
                         initial={{ scale: 0.8 }}
                         animate={{ scale: 1 }}
-                        className="bg-emerald-500/15 border border-emerald-500/30 rounded-2xl px-3 py-1.5"
+                        className="bg-emerald-500/10 dark:bg-emerald-500/15 border border-emerald-500/20 dark:border-emerald-500/30 rounded-2xl px-3 py-1.5"
                     >
-                        <div className="text-lg font-black text-white">
-                           ฿{(todayIncome || 0).toLocaleString()}
+                        <div className="text-lg font-black text-emerald-600 dark:text-emerald-400">
+                            ฿{(todayIncome || 0).toLocaleString()}
                         </div>
                         <div className="text-[9px] text-emerald-400 font-bold uppercase tracking-widest">Income</div>
                     </motion.div>

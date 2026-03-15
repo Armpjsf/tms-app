@@ -26,11 +26,11 @@ export default async function ChatPage() {
     <DashboardLayout>
       {/* Page Header */}
       <div className="mb-6">
-        <h1 className="text-3xl font-bold text-slate-900 mb-2 flex items-center gap-3">
+        <h1 className="text-3xl font-bold text-foreground dark:text-white mb-2 flex items-center gap-3">
           <MessageSquare className="text-emerald-500" />
           แชท
         </h1>
-        <p className="text-gray-500">สื่อสารกับคนขับรถ</p>
+        <p className="text-slate-400 font-medium">สื่อสารกับคนขับรถ</p>
       </div>
 
       <ChatWindow initialContacts={displayContacts} initialDrivers={drivers} />

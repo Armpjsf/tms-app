@@ -161,7 +161,7 @@ export default async function FuelPage(props: Props) {
                 </div>
             ) : (
                 <table className="w-full">
-                  <thead className="text-[9px] uppercase bg-slate-50 text-slate-500 border-b border-slate-100 font-black tracking-widest">
+                  <thead className="text-[10px] uppercase bg-slate-100/80 text-slate-700 border-b border-slate-200 font-black tracking-widest">
                     <tr>
                       <th className="text-left p-6">Timestamp / OP ID</th>
                       <th className="text-left p-6">Operator</th>
@@ -180,22 +180,22 @@ export default async function FuelPage(props: Props) {
                     {logs.map((log) => (
                   <tr 
                     key={log.Log_ID} 
-                    className="border-b border-gray-200 hover:bg-white/[0.02] transition-colors"
+                    className="border-b border-gray-200 hover:bg-slate-50/50 transition-colors"
                   >
                     <td className="p-4">
-                      <span className="text-foreground text-sm">
+                      <span className="text-slate-900 font-bold text-sm">
                         {log.Date_Time ? new Date(log.Date_Time).toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' }) : "-"}
                       </span>
                     </td>
-                    <td className="p-4 text-foreground font-medium text-sm">{log.Driver_Name || "-"}</td>
-                    <td className="p-4 text-muted-foreground text-sm">{log.Vehicle_Plate || "-"}</td>
-                    <td className="p-4 text-muted-foreground text-sm">
+                    <td className="p-4 text-slate-900 font-black text-sm">{log.Driver_Name || "-"}</td>
+                    <td className="p-4 text-slate-600 font-bold text-sm">{log.Vehicle_Plate || "-"}</td>
+                    <td className="p-4 text-slate-600 text-sm">
                       <div className="flex flex-col">
-                          <span className="text-foreground">{log.Station_Name || "-"}</span>
-                          <span className={`text-[10px] px-1.5 py-0.5 rounded-full w-fit ${
-                              log.Status === 'Approved' ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400' :
-                              log.Status === 'Rejected' ? 'bg-red-500/20 text-red-600 dark:text-red-400' :
-                              'bg-muted text-muted-foreground'
+                          <span className="text-slate-900 font-bold">{log.Station_Name || "-"}</span>
+                          <span className={`text-[10px] px-1.5 py-0.5 rounded-full w-fit font-black ${
+                              log.Status === 'Approved' ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-400' :
+                              log.Status === 'Rejected' ? 'bg-red-500/20 text-red-700 dark:text-red-400' :
+                              'bg-slate-100 text-slate-500'
                           }`}>
                               {log.Status === 'Approved' ? 'อนุมัติแล้ว' : 
                                log.Status === 'Rejected' ? 'ไม่อนุมัติ' : 'รอตรวจสอบ'}
@@ -204,7 +204,7 @@ export default async function FuelPage(props: Props) {
                     </td>
                     <td className="p-4 text-center">
                       {log.Photo_Url ? (
-                          <div className="relative w-10 h-10 mx-auto rounded-lg overflow-hidden border border-gray-200 bg-muted group cursor-pointer">
+                          <div className="relative w-10 h-10 mx-auto rounded-lg overflow-hidden border border-gray-200 bg-muted group cursor-pointer shadow-sm">
                               <NextImage 
                                   src={log.Photo_Url} 
                                   alt="Receipt" 
@@ -220,32 +220,32 @@ export default async function FuelPage(props: Props) {
                               </div>
                           </div>
                       ) : (
-                          <span className="text-muted-foreground/30 text-xs">-</span>
+                          <span className="text-slate-300 text-xs">-</span>
                       )}
                     </td>
                     <td className="p-4 text-right">
                        <div className="flex flex-col items-end">
-                           <span className={`text-sm ${log.Capacity_Status === 'Overflow' ? 'text-red-600 dark:text-red-400 font-bold' : 'text-foreground'}`}>
+                           <span className={`text-sm font-black ${log.Capacity_Status === 'Overflow' ? 'text-red-600 font-black' : 'text-slate-900'}`}>
                                {log.Liters?.toFixed(2)}
                            </span>
                            {log.Capacity_Status === 'Overflow' && (
-                               <span className="text-[10px] text-red-400 bg-red-400/10 px-1 rounded">
+                               <span className="text-[10px] text-red-600 bg-red-100 px-1 rounded font-bold">
                                    Over ({log.Tank_Capacity}L)
                                </span>
                            )}
                        </div>
                     </td>
                     <td className="p-4 text-right">
-                      <span className="text-muted-foreground text-sm">
+                      <span className="text-slate-500 font-bold text-sm">
                         ฿{(log.Price_Total && log.Liters) ? (log.Price_Total / log.Liters).toFixed(2) : "-"}
                       </span>
                     </td>
                     <td className="p-4 text-right">
-                      <span className="text-emerald-600 dark:text-emerald-400 font-bold text-sm">
+                      <span className="text-emerald-700 font-black text-sm">
                         ฿{log.Price_Total?.toLocaleString()}
                       </span>
                     </td>
-                    <td className="p-4 text-right text-muted-foreground font-mono text-sm">{log.Odometer?.toLocaleString() || "-"}</td>
+                    <td className="p-4 text-right text-slate-700 font-mono font-bold text-sm">{log.Odometer?.toLocaleString() || "-"}</td>
                     <td className="p-4 text-right">
                        {log.Km_Per_Liter && log.Km_Per_Liter > 0 ? (
                            <div className="flex flex-col items-end">
