@@ -3,8 +3,8 @@
 import { useEffect, useRef, useState } from "react"
 import { saveGPSLog } from "@/lib/supabase/gps"
 
-const UPDATE_INTERVAL = 30000 // Update every 30 seconds
-const MIN_DISTANCE = 0.0001 // Approx 10-15 meters difference to trigger update
+const UPDATE_INTERVAL = 300000 // Update every 5 minutes (300,000 ms)
+const MIN_DISTANCE = 0.0005 // Approx 50-70 meters difference to trigger update
 
 export function LocationTracker({ driverId }: { driverId?: string }) {
   const [status, setStatus] = useState<"idle" | "tracking" | "error">("idle")
