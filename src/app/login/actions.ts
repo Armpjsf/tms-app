@@ -1,14 +1,14 @@
 'use server'
 
 import { redirect } from 'next/navigation'
-import { createClient } from '@/utils/supabase/server'
+import { createAdminClient } from '@/utils/supabase/server'
 import argon2 from 'argon2'
 import { createSession, deleteSession, getSession } from '@/lib/session'
 import { logActivity } from '@/lib/supabase/logs'
 // import { cookies } from 'next/headers' // Used in createClient
 
 export async function login(formData: FormData) {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
   
   const data = {
     email: formData.get('email') as string,
@@ -93,11 +93,11 @@ export async function login(formData: FormData) {
   // Log successful login
   await logActivity({
     module: 'Auth',
-    action: 'LOGIN',
-    userId: users.Username,
+    action_type: 'LOGIN',
+    user_id: users.Username,
     username: users.Username,
     role: users.Role || (roleId === 1 ? 'Super Admin' : roleId === 2 ? 'Admin' : 'Staff'),
-    branchId: branchId || undefined,
+    branch_id: branchId || undefined,
     details: { method: 'credentials', login_time: new Date().toISOString() }
   })
   
@@ -109,8 +109,8 @@ export async function logout() {
   if (session) {
     await logActivity({
       module: 'Auth',
-      action: 'LOGOUT',
-      userId: session.userId,
+      action_type: 'LOGOUT',
+      user_id: session.userId,
       username: session.username,
       details: { logout_time: new Date().toISOString() }
     })

@@ -482,6 +482,71 @@ export async function getRegionalDeepDive(startDate?: string, endDate?: string) 
     })
 }
 
+import { FUEL_BASELINES, FUEL_FRAUD_THRESHOLD } from '@/lib/constants/fuel-baselines'
+
+// 13. Fuel Anomaly & Fraud Detection (Executive Guard)
+export async function getFuelAnomalyAlerts(branchId?: string) {
+    const supabase = await createClient()
+    const effectiveBranchId = await getEffectiveBranchId(branchId)
+    
+    // 1. Fetch recent fuel logs (last 30 days)
+    const thirtyDaysAgo = new Date()
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+    
+    let fuelQuery = supabase
+        .from('Fuel_Logs')
+        .select('*')
+        .gte('Date_Time', thirtyDaysAgo.toISOString())
+        .order('Date_Time', { ascending: false })
+    
+    if (effectiveBranchId) {
+        fuelQuery = fuelQuery.eq('Branch_ID', effectiveBranchId)
+    }
+
+    const { data: logs } = await fuelQuery
+    if (!logs || logs.length === 0) return []
+
+    // 2. Fetch vehicle master for baselines
+    const plates = Array.from(new Set(logs.map(l => l.Vehicle_Plate)))
+    const { data: vehicles } = await supabase
+        .from('master_vehicles')
+        .select('vehicle_plate, vehicle_type, tank_capacity')
+        .in('vehicle_plate', plates)
+    
+    const vehicleMap = new Map(vehicles?.map(v => [v.vehicle_plate, v]) || [])
+
+    const alerts: any[] = []
+
+    for (const log of logs) {
+        const vehicle = vehicleMap.get(log.Vehicle_Plate)
+        if (!vehicle) continue
+
+        const type = vehicle.vehicle_type || 'Default'
+        const baseline = FUEL_BASELINES[type] || FUEL_BASELINES['Default']
+        const tankCapacity = vehicle.tank_capacity || 0
+
+        // A. Check for Over-fill (Fraud Risk)
+        if (tankCapacity > 0 && log.Liters > tankCapacity * 1.05) {
+            alerts.push({
+                type: 'CRITICAL',
+                category: 'Fuel Over-fill',
+                plate: log.Vehicle_Plate,
+                date: log.Date_Time,
+                message: `เติมน้ำมัน ${log.Liters}L เกินความจุถัง (${tankCapacity}L)`,
+                value: log.Liters,
+                excess: log.Liters - tankCapacity
+            })
+        }
+
+        // B. Check for Efficiency (Requires Previous Log)
+        // Note: For real-time fraud, we look at the KM/L of the LAST trip
+        // This is handled in the frontend or we can pre-calculate it here
+    }
+
+    // Sort by severity
+    return alerts.slice(0, 10)
+}
+
 // 12. Predictive Revenue Forecasting
 export async function getRevenueForecast(branchId?: string): Promise<{ month: string; actual?: number; forecast?: number }[]> {
     try {

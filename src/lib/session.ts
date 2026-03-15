@@ -2,6 +2,7 @@ import 'server-only'
 import { SignJWT, jwtVerify } from 'jose'
 import { cookies } from 'next/headers'
 
+// Use exactly the same logic as middleware
 const secretKey = process.env.SESSION_SECRET || 'default_secret_key_change_me_in_production'
 const encodedKey = new TextEncoder().encode(secretKey)
 
@@ -10,13 +11,13 @@ export type SessionPayload = {
   roleId: number
   branchId: string | null
   customerId: string | null
-  permissions: Record<string, boolean>
   username: string
-  expiresAt: Date
+  expiresAt: string // Changed to string for safe JWT serialization
+  // permissions are intentionally omitted from JWT to prevent Cookie > 4KB limit
 }
 
 export async function encrypt(payload: SessionPayload) {
-  return new SignJWT(payload)
+  return new SignJWT(payload as any)
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
     .setExpirationTime('7d')
@@ -42,22 +43,24 @@ export async function createSession(
   customerId: string | null = null,
   permissions: Record<string, boolean> = {}
 ) {
-  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+  
+  // Create a lean payload to avoid 4KB cookie limit
   const session = await encrypt({ 
     userId, 
     roleId, 
     branchId, 
     username, 
     customerId, 
-    permissions,
     expiresAt 
   })
+  
   const cookieStore = await cookies()
 
   cookieStore.set('session', session, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    expires: expiresAt,
+    expires: new Date(expiresAt),
     maxAge: 7 * 24 * 60 * 60, // 7 days in seconds
     sameSite: 'lax',
     path: '/',

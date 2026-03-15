@@ -139,7 +139,7 @@ export function DashboardClient({
                     <div className="h-16 px-8 glass-panel rounded-2xl flex items-center gap-4">
                         <div className="text-right">
                             <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Network Health</p>
-                            <p className="text-white font-black text-lg leading-none">{fleetHealth}%</p>
+                            <p className="text-white font-black text-lg leading-none">{fleetHealth || 0}%</p>
                         </div>
                         <Activity className="text-emerald-500" size={24} />
                     </div>
@@ -161,7 +161,7 @@ export function DashboardClient({
                     <div className="absolute top-8 left-8 z-10">
                         <div className="px-6 py-3 glass-panel rounded-2xl border-white/20 backdrop-blur-3xl">
                             <p className="text-[10px] font-black text-emerald-400 uppercase tracking-[0.3em] mb-1">Live Asset Matrix</p>
-                            <p className="text-white font-black text-xl tracking-tighter">{fleetStatus.length} Active Units</p>
+                            <p className="text-white font-black text-xl tracking-tighter">{(fleetStatus || []).length} Active Units</p>
                         </div>
                     </div>
                     {/* Dark inner shadow for depth */}
@@ -200,7 +200,7 @@ export function DashboardClient({
                         <motion.div variants={item} className="glass-panel rounded-[2.5rem] p-8">
                             <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2">Transit Units</p>
                             <div className="flex items-end justify-between">
-                                <p className="text-4xl font-black text-white tracking-tighter">{jobStats.inProgress}</p>
+                                <p className="text-4xl font-black text-white tracking-tighter">{jobStats?.inProgress || 0}</p>
                                 <Truck size={20} className="text-emerald-500" />
                             </div>
                         </motion.div>

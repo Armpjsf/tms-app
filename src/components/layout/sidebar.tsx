@@ -154,23 +154,34 @@ const navContainer = {
 
 export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
   const pathname = usePathname()
-  const [userRole, setUserRole] = React.useState<number | null>(null)
-  const [isCustomerUser, setIsCustomerUser] = React.useState(false)
-  const [roleLoaded, setRoleLoaded] = React.useState(false)
+  const [sidebarState, setSidebarState] = React.useState<{
+    userRole: number | null
+    isCustomerUser: boolean
+    roleLoaded: boolean
+  }>({
+    userRole: null,
+    isCustomerUser: false,
+    roleLoaded: false
+  })
 
   React.useEffect(() => {
     async function checkRole() {
         const role = await getUserRole()
-        setUserRole(role || null)
         
         // Also check if customer
         const { isCustomer } = await import("@/lib/permissions")
         const customerFlag = await isCustomer()
-        setIsCustomerUser(customerFlag)
-        setRoleLoaded(true)
+        
+        setSidebarState({
+            userRole: role || null,
+            isCustomerUser: customerFlag,
+            roleLoaded: true
+        })
     }
     checkRole()
   }, [])
+
+  const { userRole, isCustomerUser, roleLoaded } = sidebarState
 
   // If customer, show customer-only menu
   const activeNavigation = isCustomerUser ? customerNavigation : navigation

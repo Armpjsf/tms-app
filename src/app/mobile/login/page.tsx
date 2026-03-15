@@ -1,7 +1,7 @@
 "use client"
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useState, useEffect } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Lock, User } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -11,8 +11,23 @@ import Image from "next/image"
 
 export default function DriverLoginPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+
+  const urlError = searchParams.get("error")
+
+  useEffect(() => {
+    if (urlError) {
+      if (urlError === 'session_missing') {
+        setError("กรุณาเข้าสู่ระบบก่อนใช้งาน")
+      } else if (urlError === 'session_invalid') {
+        setError("เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่")
+      } else {
+        setError(urlError)
+      }
+    }
+  }, [urlError])
 
   async function handleSubmit(formData: FormData) {
     setLoading(true)

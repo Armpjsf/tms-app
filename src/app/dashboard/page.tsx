@@ -28,6 +28,16 @@ export default async function DashboardPage(props: {
   ])
 
 
+  // Helper to run query safely
+  const safeQuery = async <T,>(promise: Promise<T>, defaultValue: T): Promise<T> => {
+    try {
+      return await promise
+    } catch (error) {
+      console.error("Dashboard Query Error:", error)
+      return defaultValue
+    }
+  }
+
   // ดึงข้อมูลจาก Supabase (Pass branchId if SuperAdmin)
   const [
     jobStats, 
@@ -42,17 +52,25 @@ export default async function DashboardPage(props: {
     complianceData,
     fleetHealth
   ] = await Promise.all([
-    getTodayJobStats(branchId),
-    getSosCount(branchId),
-    getWeeklyJobStats(branchId),
-    getJobStatusDistribution(undefined, undefined, branchId),
-    getTodayFinancials(branchId),
-    getFinancialStats(undefined, undefined, branchId),
-    getFleetGPSStatus(),
-    getMarketplaceJobs(branchId),
-    getProvincialMileageStats(branchId),
-    getFleetComplianceMetrics(branchId),
-    getFleetHealthScore(branchId),
+    safeQuery(getTodayJobStats(branchId), { total: 0, pending: 0, inProgress: 0, delivered: 0 }),
+    safeQuery(getSosCount(branchId), 0),
+    safeQuery(getWeeklyJobStats(branchId), []),
+    safeQuery(getJobStatusDistribution(undefined, undefined, branchId), []),
+    safeQuery(getTodayFinancials(branchId), { revenue: 0 }),
+    safeQuery(getFinancialStats(undefined, undefined, branchId), { 
+      revenue: 0, 
+      netProfit: 0, 
+      cost: { total: 0, driver: 0, fuel: 0, maintenance: 0, secondary: 0 },
+      profitMargin: 0,
+      fuelCost: 0,
+      maintenanceCost: 0,
+      secondaryCosts: 0
+    } as never),
+    safeQuery(getFleetGPSStatus(), []),
+    safeQuery(getMarketplaceJobs(branchId), []),
+    safeQuery(getProvincialMileageStats(branchId), []),
+    safeQuery(getFleetComplianceMetrics(branchId), []),
+    safeQuery(getFleetHealthScore(branchId), 100),
   ])
 
   // Map statusDist to include fill colors for compatibility with DashboardClient
@@ -66,7 +84,7 @@ export default async function DashboardPage(props: {
     'Cancelled': '#ef4444'
   }
   
-  const statusDistWithColors = statusDist.map(item => ({
+  const statusDistWithColors = (statusDist || []).map(item => ({
     ...item,
     fill: statusColors[item.name] || '#94a3b8'
   }))
@@ -121,9 +139,13 @@ async function getSosCount(providedBranchId?: string): Promise<number> {
 
     const { count, error } = await dbQuery
 
-    if (error) return 0
+    if (error) {
+        console.error("SOS Count Error:", error)
+        return 0
+    }
     return count || 0
-  } catch {
+  } catch (err) {
+    console.error("SOS Count Exception:", err)
     return 0
   }
 }

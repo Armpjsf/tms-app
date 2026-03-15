@@ -61,7 +61,7 @@ export async function middleware(request: NextRequest) {
         }
       }
 
-      const loginUrl = new URL('/login', request.url)
+      const loginUrl = new URL('/login?error=session_missing', request.url)
       return NextResponse.redirect(loginUrl)
     }
 
@@ -69,13 +69,14 @@ export async function middleware(request: NextRequest) {
     const payload = await decrypt(sessionCookie.value)
     
     if (!payload) {
-      const loginUrl = new URL('/login', request.url)
+      console.error('Middleware: Session decryption failed or expired')
+      const loginUrl = new URL('/login?error=session_invalid', request.url)
       const response = NextResponse.redirect(loginUrl)
       response.cookies.delete('session')
       return response
     }
 
-    // RBAC logic...
+    // Role-based Access Control (RBAC)
     const roleId = Number(payload.roleId)
     const restrictions = [
       { path: '/settings', allowed: [1, 2] },

@@ -34,7 +34,7 @@ import { BranchProvider } from "@/components/providers/branch-provider";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { GlobalClientComponents } from "@/components/providers/global-client-components";
 import ErrorBoundary from "@/components/error-boundary";
-import { PerformanceMonitor } from "@/components/performance-monitor";
+// import { PerformanceMonitor } from "@/components/performance-monitor";
 
 export default function RootLayout({
   children,
@@ -53,7 +53,7 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <ErrorBoundary>
-            <PerformanceMonitor />
+            {/* <PerformanceMonitor /> */}
             <BranchProvider>
               {children}
               <GlobalClientComponents />

@@ -1,8 +1,9 @@
 "use server"
 
-import { createClient } from "@/utils/supabase/server"
+import { createAdminClient } from "@/utils/supabase/server"
 import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
+import argon2 from "argon2"
 
 export async function loginDriver(formData: FormData) {
   const identifier = formData.get("identifier") as string
@@ -12,7 +13,7 @@ export async function loginDriver(formData: FormData) {
     return { error: "กรุณากรอกข้อมูลให้ครบถ้วน" }
   }
 
-  const supabase = await createClient()
+  const supabase = createAdminClient()
 
   // Try to find driver by Mobile_No first, then by Driver_ID
   let driver = null
@@ -56,9 +57,32 @@ export async function loginDriver(formData: FormData) {
   }
 
   // 2. Password Check
-  // In production, we should use hashed passwords (Argon2/Bcrypt)
-  // For now, we compare with the plain text password stored in DB (as per current implementation)
-  if (password !== driver.Password) { 
+  let isValid = false
+  const dbPassword = driver.Password || ""
+
+  try {
+    if (dbPassword.startsWith("$argon2")) {
+      // Hashed password
+      isValid = await argon2.verify(dbPassword, password)
+    } else {
+      // Plain-text password fallback
+      isValid = password === dbPassword
+
+      // If plain-text is correct, migrate to Argon2 automatically
+      if (isValid) {
+        const hashedPassword = await argon2.hash(password)
+        await supabase
+          .from("Master_Drivers")
+          .update({ Password: hashedPassword })
+          .eq("Driver_ID", driver.Driver_ID)
+      }
+    }
+  } catch (error) {
+    console.error("Driver Auth Error:", error)
+    isValid = false
+  }
+
+  if (!isValid) { 
       return { error: "รหัสผ่านไม่ถูกต้อง" }
   }
 

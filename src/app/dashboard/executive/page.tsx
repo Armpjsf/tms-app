@@ -8,7 +8,8 @@ import {
     getRevenueTrend, 
     getExecutiveKPIs,
     getVehicleProfitability,
-    getJobStatusDistribution
+    getJobStatusDistribution,
+    getFuelAnomalyAlerts
 } from "@/lib/supabase/financial-analytics"
 import { getFleetComplianceMetrics, getFleetHealthScore } from "@/lib/supabase/fleet-analytics"
 import { getSetting, saveSetting } from "@/lib/supabase/system_settings"
@@ -48,6 +49,7 @@ export default function ExecutiveDashboard() {
                 compliance, 
                 health, 
                 statusDist,
+                fuelAlerts,
                 savedRemark
             ] = await Promise.all([
                 getFinancialStats(undefined, undefined, selectedBranch),
@@ -57,10 +59,11 @@ export default function ExecutiveDashboard() {
                 getFleetComplianceMetrics(selectedBranch),
                 getFleetHealthScore(selectedBranch),
                 getJobStatusDistribution(undefined, undefined, selectedBranch),
+                getFuelAnomalyAlerts(selectedBranch),
                 getSetting(`exec_remark_${currentMonth}_${selectedBranch}`, "")
             ])
 
-            setData({ financial, trend, kpi, vehicles, compliance, health, statusDist })
+            setData({ financial, trend, kpi, vehicles, compliance, health, statusDist, fuelAlerts })
             setRemark(savedRemark)
         } catch (e) {
             toast.error("Failed to load executive data")
@@ -276,6 +279,42 @@ export default function ExecutiveDashboard() {
                         </div>
                     </PremiumCard>
                 </div>
+
+                {/* Fuel Guard & Fraud Detection Section */}
+                {data.fuelAlerts && data.fuelAlerts.length > 0 && (
+                <PremiumCard className="p-8 bg-rose-50 border-2 border-rose-200 shadow-xl rounded-3xl">
+                    <div className="flex items-center gap-3 mb-6">
+                        <div className="p-2 bg-rose-600 rounded-xl shadow-lg shadow-rose-500/20">
+                            <AlertTriangle className="text-white" size={24} />
+                        </div>
+                        <div>
+                            <h2 className="text-2xl font-black text-rose-950 tracking-tight">Fuel Guard - Fraud Detection Alerts</h2>
+                            <p className="text-rose-600 text-xs font-bold uppercase tracking-widest">ตรวจพบความผิดปกติในการเติมน้ำมันหรืออัตราสิ้นเปลือง</p>
+                        </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {data.fuelAlerts.map((alert: any, i: number) => (
+                            <div key={i} className="bg-white p-4 rounded-2xl border border-rose-100 shadow-sm flex items-center justify-between group hover:border-rose-300 transition-all">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-12 h-12 bg-rose-50 rounded-xl flex items-center justify-center text-rose-600 font-black text-xs">
+                                        {alert.type}
+                                    </div>
+                                    <div>
+                                        <p className="font-black text-slate-950 tracking-tighter">{alert.plate}</p>
+                                        <p className="text-[11px] text-rose-600 font-bold">{alert.message}</p>
+                                        <p className="text-[9px] text-slate-400 mt-1 uppercase">{new Date(alert.date).toLocaleString()}</p>
+                                    </div>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-rose-700 font-black tracking-tighter">+{alert.excess.toFixed(1)}L</p>
+                                    <p className="text-[9px] text-slate-400 font-bold uppercase">Overfilled</p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </PremiumCard>
+                )}
 
                 {/* Management Remarks Section */}
                 <PremiumCard className="p-8 bg-slate-950 shadow-2xl border-none rounded-[3rem]">

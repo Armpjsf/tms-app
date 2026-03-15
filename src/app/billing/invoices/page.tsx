@@ -40,6 +40,7 @@ export default async function InvoicesPage({
   const query = resolvedParams?.query || ""
   
   const { data: invoices } = await getInvoices(page, 20, query)
+  const safeInvoices = Array.isArray(invoices) ? invoices : []
 
   return (
     <DashboardLayout>
@@ -93,14 +94,14 @@ export default async function InvoicesPage({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {invoices.length === 0 ? (
+                {safeInvoices.length === 0 ? (
                     <TableRow>
                         <TableCell colSpan={7} className="h-24 text-center text-gray-400">
                             ไม่พบรายการใบกำกับภาษี
                         </TableCell>
                     </TableRow>
                 ) : (
-                    invoices.map((inv: any) => (
+                    safeInvoices.map((inv: Record<string, unknown>) => (
                       <TableRow key={inv.Invoice_ID as string} className="border-gray-200 hover:bg-white/[0.02]">
                         <TableCell className="font-medium text-gray-800">
                             <div className="flex flex-col">
@@ -111,7 +112,9 @@ export default async function InvoicesPage({
                             </div>
                         </TableCell>
                         <TableCell className="text-gray-700">{inv.Customer_Name as string}</TableCell>
-                        <TableCell className="text-gray-500">{new Date(inv.Issue_Date as string).toLocaleDateString('th-TH')}</TableCell>
+                        <TableCell className="text-gray-500">
+                            {inv.Issue_Date ? new Date(inv.Issue_Date as string).toLocaleDateString('th-TH') : '-'}
+                        </TableCell>
                         <TableCell className="text-gray-500">
                             {inv.Due_Date ? new Date(inv.Due_Date as string).toLocaleDateString('th-TH') : '-'}
                         </TableCell>

@@ -7,9 +7,7 @@ import {
   AlertTriangle, 
   Clock,
   Truck,
-  Activity,
-  Phone,
-  MessageSquare
+  Activity
 } from "lucide-react"
 
 interface ActivityFeedProps {
@@ -23,42 +21,45 @@ interface ActivityFeedProps {
 }
 
 export function ActivityFeed({ jobStats, sosCount }: ActivityFeedProps) {
+  const stats = jobStats || { total: 0, pending: 0, inProgress: 0, delivered: 0 }
+  const sCount = sosCount || 0
+
   const activities = [
-    ...(jobStats.total > 0 ? [{
+    ...(stats.total > 0 ? [{
       icon: Package,
-      label: `${jobStats.total} งานถูกสร้างวันนี้`,
+      label: `${stats.total} งานถูกสร้างวันนี้`,
       time: 'วันนี้',
       color: 'text-emerald-600',
       bgColor: 'bg-emerald-500/10',
       borderColor: 'border-emerald-500/10',
     }] : []),
-    ...(jobStats.inProgress > 0 ? [{
+    ...(stats.inProgress > 0 ? [{
       icon: Truck,
-      label: `${jobStats.inProgress} งานกำลังดำเนินการ`,
+      label: `${stats.inProgress} งานกำลังดำเนินการ`,
       time: 'กำลังดำเนินการ',
       color: 'text-amber-600',
       bgColor: 'bg-amber-500/10',
       borderColor: 'border-amber-500/10',
     }] : []),
-    ...(jobStats.delivered > 0 ? [{
+    ...(stats.delivered > 0 ? [{
       icon: CheckCircle2,
-      label: `${jobStats.delivered} งานส่งมอบสำเร็จ`,
+      label: `${stats.delivered} งานส่งมอบสำเร็จ`,
       time: 'เสร็จสิ้น',
       color: 'text-emerald-600',
       bgColor: 'bg-emerald-500/10',
       borderColor: 'border-emerald-500/10',
     }] : []),
-    ...(sosCount > 0 ? [{
+    ...(sCount > 0 ? [{
       icon: AlertTriangle,
-      label: `${sosCount} แจ้งเตือน SOS`,
+      label: `${sCount} แจ้งเตือน SOS`,
       time: 'ต้องตรวจสอบ',
       color: 'text-red-600',
       bgColor: 'bg-red-500/10',
       borderColor: 'border-red-500/10',
     }] : []),
-    ...(jobStats.pending > 0 ? [{
+    ...(stats.pending > 0 ? [{
       icon: Clock,
-      label: `${jobStats.pending} งานรอดำเนินการ`,
+      label: `${stats.pending} งานรอดำเนินการ`,
       time: 'รอมอบหมาย',
       color: 'text-gray-900',
       bgColor: 'bg-slate-500/10',
