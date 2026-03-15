@@ -153,11 +153,11 @@ export async function POST(req: NextRequest) {
                         dateDisplay = `ปี ${yearMatch[1]}`
                     }
 
-                    // Query using gte/lt for date stability (resolves "date ~~ unknown" error)
+                    // Query using gte/lt for date stability and OR for smarter matching (ID or Name)
                     let query = supabase
                         .from('Jobs_Main')
                         .select('Job_Status')
-                        .eq('Customer_ID', boundCustomer.Customer_ID)
+                        .or(`Customer_ID.eq.${boundCustomer.Customer_ID},Customer_Name.ilike.%${boundCustomer.Customer_Name.trim()}%`)
 
                     if (startDate === endDate) {
                         query = query.eq('Plan_Date', startDate)
