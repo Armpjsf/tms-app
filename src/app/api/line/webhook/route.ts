@@ -94,52 +94,78 @@ export async function POST(req: NextRequest) {
                 if (text.startsWith('SUMMARY') || text.startsWith('สรุป')) {
                     if (!boundCustomer) continue
 
-                    let targetPattern = ''
                     let dateDisplay = 'วันนี้'
+                    let startDate = ''
+                    let endDate = ''
                     
                     // Default to today in Thai timezone
                     const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' }) // YYYY-MM-DD
-                    targetPattern = `${todayStr}%`
+                    startDate = todayStr
+                    endDate = todayStr
 
-                    // 1. Year only (e.g., สรุป 2026)
-                    const yearMatch = text.match(/\b(20\d{2})\b/)
-                    // 2. Month/Year (e.g., สรุป 02/2026 or 2026/02)
-                    const monthYearMatch = text.match(/(\d{2})\/(\d{4})/) || text.match(/(\d{4})\/(\d{2})/)
-                    // 3. Full Date (e.g., สรุป 27/02/2026 or 2026/02/27)
-                    const fullDateMatch = text.match(/(\d{2})\/(\d{2})\/(\d{4})/) || text.match(/(\d{4})\/(\d{2})\/(\d{2})/)
+                    // Helper: Handle BE Year conversion (Buddhist Era to AD)
+                    const normalizeYear = (y: string) => {
+                        let year = parseInt(y)
+                        if (year > 2500) year -= 543 // Convert BE to AD
+                        return year.toString()
+                    }
+
+                    // 1. Year only (e.g., สรุป 2569 or 2026)
+                    const yearMatch = text.match(/\b(20\d{2}|25\d{2})\b/)
+                    // 2. Month/Year (e.g., สรุป 02/2569 or 2026/02)
+                    const monthYearMatch = text.match(/(\d{2})\/(\d{2,4})/) || text.match(/(\d{2,4})\/(\d{2})/)
+                    // 3. Full Date (e.g., สรุป 27/02/2569 or 2026/02/27)
+                    const fullDateMatch = text.match(/(\d{2})\/(\d{2})\/(\d{2,4})/) || text.match(/(\d{2,4})\/(\d{2})\/(\d{2})/)
 
                     if (fullDateMatch) {
                         // Handle both DD/MM/YYYY and YYYY/MM/DD
-                        if (fullDateMatch[1].length === 4) { // YYYY/MM/DD
+                        if (fullDateMatch[1].length >= 3) { // YYYY/MM/DD
                             const [, y, m, d] = fullDateMatch
-                            targetPattern = `${y}-${m}-${d}%`
+                            const adYear = normalizeYear(y)
+                            startDate = `${adYear}-${m}-${d}`
+                            endDate = startDate
                             dateDisplay = `${d}/${m}/${y}`
                         } else { // DD/MM/YYYY
                             const [, d, m, y] = fullDateMatch
-                            targetPattern = `${y}-${m}-${d}%`
+                            const adYear = normalizeYear(y)
+                            startDate = `${adYear}-${m}-${d}`
+                            endDate = startDate
                             dateDisplay = fullDateMatch[0]
                         }
                     } else if (monthYearMatch) {
-                        if (monthYearMatch[1].length === 4) { // YYYY/MM
-                            const [, y, m] = monthYearMatch
-                            targetPattern = `${y}-${m}-%`
-                            dateDisplay = `เดือน ${m}/${y}`
+                        let y, m
+                        if (monthYearMatch[1].length >= 3) { // YYYY/MM
+                            [, y, m] = monthYearMatch
                         } else { // MM/YYYY
-                            const [, m, y] = monthYearMatch
-                            targetPattern = `${y}-${m}-%`
-                            dateDisplay = `เดือน ${m}/${y}`
+                            [, m, y] = monthYearMatch
                         }
+                        const adYear = normalizeYear(y)
+                        startDate = `${adYear}-${m}-01`
+                        // Set end date to first day of next month
+                        const nextMonth = parseInt(m) === 12 ? 1 : parseInt(m) + 1
+                        const nextYear = parseInt(m) === 12 ? parseInt(adYear) + 1 : adYear
+                        endDate = `${nextYear}-${nextMonth.toString().padStart(2, '0')}-01`
+                        dateDisplay = `เดือน ${m}/${y}`
                     } else if (yearMatch) {
-                        const y = yearMatch[1]
-                        targetPattern = `${y}-%`
-                        dateDisplay = `ปี ${y}`
+                        const adYear = normalizeYear(yearMatch[1])
+                        startDate = `${adYear}-01-01`
+                        endDate = `${(parseInt(adYear) + 1)}-01-01`
+                        dateDisplay = `ปี ${yearMatch[1]}`
                     }
 
-                    const { data: jobs, error: summaryError } = await supabase
+                    // Query using gte/lt for date stability (resolves "date ~~ unknown" error)
+                    let query = supabase
                         .from('Jobs_Main')
                         .select('Job_Status')
                         .eq('Customer_ID', boundCustomer.Customer_ID)
-                        .like('Plan_Date', targetPattern)
+
+                    if (startDate === endDate) {
+                        query = query.eq('Plan_Date', startDate)
+                    } else {
+                        query = query.gte('Plan_Date', startDate).lt('Plan_Date', endDate)
+                    }
+
+                    const { data: jobs, error: summaryError } = await query
 
                     if (summaryError || !jobs || jobs.length === 0) {
                         const errorHint = summaryError ? ` (Error: ${summaryError.message})` : ''
@@ -172,14 +198,14 @@ export async function POST(req: NextRequest) {
 
                     let billText = `🧾 ประวัติการวางบิล 5 รายการล่าสุด\n👤 ${boundCustomer.Customer_Name}\n`
                     bills.forEach(b => {
-                        const status = b.Status === 'Paid' ? 'ชำระแล้ว ✅' : 'รอดำเนินการ ⏳'
+                        const status = b.Status === 'Paid' ? 'ชำแล้ว ✅' : 'รอดำเนินการ ⏳'
                         billText += `\n🔹 ${b.Billing_Note_ID}\n   วันที่: ${new Date(b.Billing_Date).toLocaleDateString('th-TH')}\n   ยอดรวม: ฿${b.Total_Amount.toLocaleString()}\n   สถานะ: ${status}\n`
                     })
                     await replyToUser(replyToken, billText)
                     continue
                 }
 
-                // 6. JOB TRACKING (With Security Check)
+                // 6. JOB TRACKING (With Enhanced Security Check)
                 if (text.startsWith('JOB-')) {
                     const { data: jobList, error: queryError } = await supabase
                         .from('Jobs_Main')
@@ -195,9 +221,15 @@ export async function POST(req: NextRequest) {
                         continue
                     }
 
-                    // Security: If user is bound to a customer, they can only see THEIR jobs
-                    if (boundCustomer && job.Customer_ID !== boundCustomer.Customer_ID) {
-                        await replyToUser(replyToken, `🚫 ขออภัยครับ คุณไม่มีสิทธิ์ดูข้อมูลงรายเลขานี้`)
+                    // Security: Improved matching (Check both ID and Name, case-insensitive)
+                    const isAuthorized = boundCustomer && (
+                        job.Customer_ID === boundCustomer.Customer_ID || 
+                        job.Customer_Name?.toLowerCase().trim().includes(boundCustomer.Customer_Name.toLowerCase().trim()) ||
+                        boundCustomer.Customer_Name.toLowerCase().trim().includes(job.Customer_Name?.toLowerCase().trim() || '')
+                    )
+
+                    if (!isAuthorized) {
+                        await replyToUser(replyToken, `🚫 ขออภัยครับ คุณไม่มีสิทธิ์ดูข้อมูลหมายเลขนี้`)
                         continue
                     }
 
