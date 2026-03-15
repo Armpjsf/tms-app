@@ -154,10 +154,11 @@ export async function POST(req: NextRequest) {
                     }
 
                     // Query using gte/lt for date stability and OR for smarter matching (ID or Name)
+                    // Added quotes to handle special characters like () or spaces in Customer_Name
                     let query = supabase
                         .from('Jobs_Main')
                         .select('Job_Status')
-                        .or(`Customer_ID.eq.${boundCustomer.Customer_ID},Customer_Name.ilike.%${boundCustomer.Customer_Name.trim()}%`)
+                        .or(`Customer_ID.eq."${boundCustomer.Customer_ID}",Customer_Name.ilike."%${boundCustomer.Customer_Name.trim()}%"`)
 
                     if (startDate === endDate) {
                         query = query.eq('Plan_Date', startDate)
@@ -174,7 +175,12 @@ export async function POST(req: NextRequest) {
                     }
 
                     const total = jobs.length
-                    const done = jobs.filter(j => ['Delivered', 'Completed'].includes(j.Job_Status)).length
+                    // Expanded status check to include variations (case-insensitive and common terms)
+                    const doneJobs = jobs.filter(j => {
+                        const st = (j.Job_Status || '').toLowerCase()
+                        return ['delivered', 'completed', 'success', 'สำเร็จ'].includes(st)
+                    })
+                    const done = doneJobs.length
                     const summary = `📋 สรุปงาน (${dateDisplay})\n👤 ${boundCustomer.Customer_Name}\n\nทั้งหมด: ${total} รายการ\nสำเร็จแล้ว: ${done} ✅\nรอดำเนินการ: ${total - done} ⏳`
                     await replyToUser(replyToken, summary)
                     continue
