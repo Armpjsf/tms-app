@@ -184,8 +184,8 @@ export function DashboardClient({ session, stats, currentJob, gamification, toda
                         <div className="p-2.5 bg-primary/20 rounded-xl w-fit mb-2">
                             <Clock className="w-5 h-5 text-primary" />
                         </div>
-                        <span className="text-2xl font-black text-foreground">{stats.total}</span>
-                        <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">งานวันนี้</span>
+                        <span className="text-2xl font-black text-slate-900">{stats.total}</span>
+                        <span className="text-[10px] text-slate-600 font-bold uppercase tracking-wider">งานวันนี้</span>
                     </CardContent>
                 </Card>
                 
@@ -195,8 +195,8 @@ export function DashboardClient({ session, stats, currentJob, gamification, toda
                         <div className="p-2.5 bg-emerald-500/20 rounded-xl w-fit mb-2">
                             <CheckCircle className="w-5 h-5 text-emerald-500" />
                         </div>
-                        <span className="text-2xl font-black text-foreground">{stats.completed}</span>
-                        <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">สำเร็จแล้ว</span>
+                        <span className="text-2xl font-black text-slate-900">{stats.completed}</span>
+                        <span className="text-[10px] text-slate-600 font-bold uppercase tracking-wider">สำเร็จแล้ว</span>
                     </CardContent>
                 </Card>
             </motion.div>
@@ -232,8 +232,8 @@ export function DashboardClient({ session, stats, currentJob, gamification, toda
                                             <Truck className="text-foreground" size={20} />
                                         </div>
                                         <div>
-                                            <h4 className="text-foreground font-black text-sm">{currentJob.Job_ID}</h4>
-                                            <p className="text-muted-foreground text-xs font-bold uppercase tracking-tight">{currentJob.Customer_Name}</p>
+                                            <h4 className="text-slate-900 font-black text-sm">{currentJob.Job_ID}</h4>
+                                            <p className="text-slate-600 text-xs font-bold uppercase tracking-tight">{currentJob.Customer_Name}</p>
                                         </div>
                                     </div>
                                     <ChevronRight className="text-gray-500" size={18} />
@@ -243,16 +243,16 @@ export function DashboardClient({ session, stats, currentJob, gamification, toda
                                     <div className="flex items-center gap-3">
                                         <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
                                         <div className="flex-1 min-w-0">
-                                            <p className="text-gray-400 text-[9px] font-black uppercase mb-0.5">Pickup Origin</p>
-                                            <p className="text-gray-800 text-xs font-medium truncate">{currentJob.Origin_Location || 'ไม่ระบุ'}</p>
+                                            <p className="text-slate-500 text-[9px] font-black uppercase mb-0.5">Pickup Origin</p>
+                                            <p className="text-slate-900 text-xs font-medium truncate">{currentJob.Origin_Location || 'ไม่ระบุ'}</p>
                                         </div>
                                     </div>
                                     
                                     <div className="flex items-center gap-3">
                                         <div className="w-2.5 h-2.5 rounded-full border-2 border-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.5)]" />
                                         <div className="flex-1 min-w-0">
-                                            <p className="text-gray-400 text-[9px] font-black uppercase mb-0.5">Delivery Point</p>
-                                            <p className="text-gray-800 text-xs font-medium truncate">{currentJob.Dest_Location || currentJob.Route_Name || 'ไม่ระบุ'}</p>
+                                            <p className="text-slate-500 text-[9px] font-black uppercase mb-0.5">Delivery Point</p>
+                                            <p className="text-slate-900 text-xs font-medium truncate">{currentJob.Dest_Location || currentJob.Route_Name || 'ไม่ระบุ'}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -317,8 +317,8 @@ export function DashboardClient({ session, stats, currentJob, gamification, toda
                                     <Truck className="text-primary" size={24} />
                                 </div>
                                 <div className="text-left">
-                                    <div className="text-sm font-black uppercase tracking-widest text-emerald-800">Vehicle Check</div>
-                                    <div className="text-[10px] text-muted-foreground font-bold">ตรวจสอบสภาพรถประจำวัน</div>
+                                    <div className="text-sm font-black uppercase tracking-widest text-emerald-900">Vehicle Check</div>
+                                    <div className="text-[10px] text-slate-700 font-bold">ตรวจสอบสภาพรถประจำวัน</div>
                                 </div>
                             </div>
                             <ChevronRight className="text-gray-400" size={20} />

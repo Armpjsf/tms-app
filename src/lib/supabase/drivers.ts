@@ -86,6 +86,9 @@ export async function createDriver(driverData: Partial<Driver>) {
         Password: driverData.Password,
         Active_Status: driverData.Active_Status || 'Active',
         License_Expiry: driverData.License_Expiry,
+        Bank_Name: driverData.Bank_Name,
+        Bank_Account_No: driverData.Bank_Account_No,
+        Bank_Account_Name: driverData.Bank_Account_Name,
         Branch_ID: driverData.Branch_ID || await getUserBranchId()
       })
       .select()
@@ -112,7 +115,10 @@ export async function updateDriver(id: string, driverData: Partial<Driver>) {
         Vehicle_Type: driverData.Vehicle_Type,
         Password: driverData.Password,
         Active_Status: driverData.Active_Status,
-        License_Expiry: driverData.License_Expiry
+        License_Expiry: driverData.License_Expiry,
+        Bank_Name: driverData.Bank_Name,
+        Bank_Account_No: driverData.Bank_Account_No,
+        Bank_Account_Name: driverData.Bank_Account_Name
       })
       .eq('Driver_ID', id)
       .select()

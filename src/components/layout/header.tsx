@@ -42,7 +42,7 @@ export function Header({ sidebarCollapsed = false }: HeaderProps) {
                     <SelectTrigger className="bg-slate-900/50 border-slate-800 text-slate-300 h-10 w-full focus:ring-0 hover:bg-slate-900 transition-colors">
                             <div className="flex items-center gap-2 truncate">
                             <Building2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                            <span className="truncate font-bold">
+                            <span className="truncate font-black text-white">
                                 {selectedBranch === 'All' ? 'ทุกสาขา' : branches.find(b => b.Branch_ID === selectedBranch)?.Branch_Name || selectedBranch}
                             </span>
                             </div>
@@ -65,8 +65,8 @@ export function Header({ sidebarCollapsed = false }: HeaderProps) {
           onClick={() => window.dispatchEvent(new CustomEvent('toggle-command-palette'))}
         >
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-emerald-400 group-hover:scale-110 transition-transform" size={18} />
-          <div className="w-72 h-11 pl-12 pr-4 rounded-2xl bg-slate-900/50 border border-slate-800 text-slate-400 flex items-center text-sm font-bold hover:bg-slate-900 hover:border-emerald-500/30 transition-all shadow-inner">
-             ค้นหางาน, ลูกค้า, คนขับ... <span className="ml-auto text-[10px] bg-slate-800 px-2 py-1 rounded-lg border border-slate-700 text-slate-500">Ctrl + K</span>
+          <div className="w-72 h-11 pl-12 pr-4 rounded-2xl bg-slate-900/50 border border-slate-800 text-slate-300 flex items-center text-sm font-bold hover:bg-slate-900 hover:border-emerald-500/30 transition-all shadow-inner">
+             ค้นหางาน, ลูกค้า, คนขับ... <span className="ml-auto text-[10px] bg-slate-800 px-2 py-1 rounded-lg border border-slate-700 text-slate-400">Ctrl + K</span>
           </div>
         </div>
       </div>

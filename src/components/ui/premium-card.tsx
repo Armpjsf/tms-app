@@ -59,7 +59,7 @@ export function PremiumCardTitle({ children, className, icon }: { children: Reac
   return (
     <div className="flex items-center gap-3">
       {icon && (
-        <div className="p-2.5 bg-emerald-500/10 rounded-xl text-emerald-600 shadow-inner">
+        <div className="p-2.5 bg-emerald-500/15 rounded-xl text-emerald-600 shadow-inner border border-emerald-500/10">
           {icon}
         </div>
       )}

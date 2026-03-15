@@ -160,42 +160,81 @@ export async function createBulkJobs(jobs: Partial<JobFormData>[]) {
   const userBranchId = await getUserBranchId()
   const effectiveBranchId = (userBranchId && userBranchId !== 'All') ? userBranchId : null
 
+  // Fetch Master Data for lookups
+  const [{ data: allDrivers }, { data: allVehicles }] = await Promise.all([
+    supabase.from('Master_Drivers').select('Driver_ID, Driver_Name, Sub_ID'),
+    supabase.from('master_vehicles').select('vehicle_plate, sub_id')
+  ])
+
+  const driverMap = new Map(allDrivers?.map(d => [d.Driver_ID, d]) || [])
+  const vehicleMap = new Map(allVehicles?.map(v => [v.vehicle_plate, v]) || [])
+
+  // Helper to normalize keys
+  const normalizeData = (row: Partial<JobFormData>) => {
+    const normalized: Record<string, unknown> = {}
+    const getValue = (keys: string[]) => {
+      const rowKeys = Object.keys(row)
+      for (const key of keys) {
+        const foundKey = rowKeys.find(k => k.toLowerCase().replace(/\s+/g, '_') === key.toLowerCase().replace(/\s+/g, '_'))
+        const rowAsRecord = row as unknown as Record<string, unknown>
+        if (foundKey && rowAsRecord[foundKey] !== undefined && rowAsRecord[foundKey] !== null) {
+          return rowAsRecord[foundKey]
+        }
+      }
+      return undefined
+    }
+
+    normalized.Job_ID = getValue(['Job_ID', 'id', 'รหัสงาน'])
+    normalized.Plan_Date = getValue(['Plan_Date', 'date', 'วันที่แผน', 'วันที่'])
+    normalized.Customer_Name = getValue(['Customer_Name', 'customer', 'ลูกค้า', 'ชื่อลูกค้า'])
+    normalized.Route_Name = getValue(['Route_Name', 'route', 'เส้นทาง'])
+    normalized.Driver_ID = getValue(['Driver_ID', 'driver', 'รหัสคนขับ'])
+    normalized.Vehicle_Plate = getValue(['Vehicle_Plate', 'plate', 'ทะเบียนรถ', 'ทะเบียน'])
+    normalized.Weight_Kg = getValue(['Weight_Kg', 'weight', 'น้ำหนัก', 'น้ำหนักสินค้า'])
+    normalized.Volume_Cbm = getValue(['Volume_Cbm', 'volume', 'ปริมาตร', 'คิว'])
+    normalized.Price_Cust_Total = getValue(['Price_Cust_Total', 'price', 'รายได้', 'ราคาขาย'])
+    normalized.Cost_Driver_Total = getValue(['Cost_Driver_Total', 'cost', 'ต้นทุน', 'ค่ารถ'])
+    normalized.Notes = getValue(['Notes', 'remark', 'หมายเหตุ'])
+    normalized.Ref_No = getValue(['Ref_No', 'so', 'do', 'เลขที่อ้างอิง'])
+    
+    return normalized
+  }
+
   const parseIfString = (val: string | undefined) => {
       if (!val) return null
       try { return JSON.parse(val) } catch { return val }
   }
 
-  const cleanData = jobs.map(j => ({
-      Job_ID: j.Job_ID || `JOB-${Date.now().toString().slice(-6)}-${Math.floor(Math.random()*1000)}`,
-      Branch_ID: j.Branch_ID || effectiveBranchId,
-      Plan_Date: j.Plan_Date || new Date().toISOString().split('T')[0],
-      Delivery_Date: j.Delivery_Date,
-      Customer_Name: j.Customer_Name,
-      Route_Name: j.Route_Name || 'Direct',
-      Driver_ID: j.Driver_ID || null,
-      Vehicle_Plate: j.Vehicle_Plate || null,
-      Vehicle_Type: j.Vehicle_Type,
+  const cleanData = jobs.map(j => {
+    const data = normalizeData(j)
+    const driverId = data.Driver_ID as string
+    const vehiclePlate = data.Vehicle_Plate as string
+    
+    const driver = driverMap.get(driverId)
+    const vehicle = vehicleMap.get(vehiclePlate)
+
+    return {
+      Job_ID: (data.Job_ID as string) || `JOB-${Date.now().toString().slice(-6)}-${Math.floor(Math.random()*1000)}`,
+      Branch_ID: effectiveBranchId,
+      Plan_Date: (data.Plan_Date as string) || new Date().toISOString().split('T')[0],
+      Customer_Name: data.Customer_Name as string,
+      Route_Name: (data.Route_Name as string) || 'Direct',
+      Driver_ID: driverId || null,
+      Driver_Name: driver?.Driver_Name || null,
+      Vehicle_Plate: vehiclePlate || null,
       Job_Status: 'New',
-      Cargo_Type: j.Cargo_Type,
-      Notes: j.Notes,
-      Price_Cust_Total: j.Price_Cust_Total || 0,
-      Cost_Driver_Total: j.Cost_Driver_Total || 0,
-      original_origins_json: parseIfString(j.original_origins_json),
-      original_destinations_json: parseIfString(j.original_destinations_json),
-      extra_costs_json: parseIfString(j.extra_costs_json),
-      Sub_ID: j.Sub_ID || null,
-      Show_Price_To_Driver: j.Show_Price_To_Driver ?? true,
-      Weight_Kg: j.Weight_Kg || 0,
-      Volume_Cbm: j.Volume_Cbm || 0,
-      Pickup_Lat: j.Pickup_Lat || null,
-      Pickup_Lon: j.Pickup_Lon || null,
-      Delivery_Lat: j.Delivery_Lat || null,
-      Delivery_Lon: j.Delivery_Lon || null,
+      Notes: data.Notes as string || null,
+      Price_Cust_Total: Number(data.Price_Cust_Total) || 0,
+      Cost_Driver_Total: Number(data.Cost_Driver_Total) || 0,
+      Sub_ID: driver?.Sub_ID || vehicle?.sub_id || null,
+      Weight_Kg: Number(data.Weight_Kg) || 0,
+      Volume_Cbm: Number(data.Volume_Cbm) || 0,
       Created_At: new Date().toISOString(),
-  })).filter(j => j.Customer_Name)
+    }
+  }).filter(j => j.Customer_Name)
 
   if (cleanData.length === 0) {
-     return { success: false, message: 'No valid data found' }
+     return { success: false, message: 'ไม่พบข้อมูลที่ถูกต้อง (ต้องระบุชื่อลูกค้า)' }
   }
 
   const { error } = await supabase

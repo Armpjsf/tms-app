@@ -159,12 +159,15 @@ export default function CustomersSettingsPage() {
                 onImport={createBulkCustomers}
                 templateData={[
                     { 
+                        Customer_ID: "CUST-001",
                         Customer_Name: "บริษัท ตัวอย่าง จำกัด", 
                         Contact_Person: "คุณสมชาย", 
                         Phone: "02-123-4567", 
                         Email: "contact@example.com",
                         Address: "123 ถ.สุขุมวิท กทม.",
-                        Tax_ID: "1234567890123" 
+                        Tax_ID: "1234567890123",
+                        Branch_ID: "HQ",
+                        Line_User_ID: ""
                     }
                 ]}
                 templateFilename="template_customers.xlsx"

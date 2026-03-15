@@ -9,17 +9,14 @@ import {
 import { Button } from "@/components/ui/button"
 import { 
   MapPin, 
-  Truck, 
   User, 
-  Calendar, 
   CheckCircle2, 
   Package,
   FileText,
-  Check,
-  FileX,
   Eye,
   ClipboardList,
-  ExternalLink
+  ExternalLink,
+  FileX
 } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
@@ -29,7 +26,6 @@ import dynamic from "next/dynamic"
 import { getJobGPSData } from "@/lib/actions/gps-actions"
 import { cn } from "@/lib/utils"
 import { OrderTimeline } from "@/components/ui/order-timeline"
-// @ts-expect-error - Leaflet may not have types in some environments
 import { DriverLocation } from "@/components/maps/leaflet-map"
 
 const LeafletMap = dynamic(() => import('@/components/maps/leaflet-map'), { 
@@ -56,7 +52,6 @@ type JobSummaryDialogProps = {
 
 export function JobSummaryDialog({ open, onOpenChange, job }: JobSummaryDialogProps) {
   const [gpsData, setGpsData] = useState<JobGPSData | null>(null)
-  const [loadingGps, setLoadingGps] = useState(false)
 
   const jobId = job?.Job_ID
   const driverName = job?.Driver_Name
@@ -65,11 +60,10 @@ export function JobSummaryDialog({ open, onOpenChange, job }: JobSummaryDialogPr
   useEffect(() => {
     async function fetchGps() {
       if (open && jobId) {
-        setLoadingGps(true)
         try {
           const data = await getJobGPSData(jobId, job.Driver_ID, planDate)
           setGpsData(data as JobGPSData)
-        } finally {}
+        } catch {}
       }
     }
     fetchGps()
@@ -80,25 +74,6 @@ export function JobSummaryDialog({ open, onOpenChange, job }: JobSummaryDialogPr
   const pickupPhotos = job.Pickup_Photo_Url ? job.Pickup_Photo_Url.split(',').filter(Boolean) : []
   const podPhotos = job.Photo_Proof_Url ? job.Photo_Proof_Url.split(',').filter(Boolean) : []
   
-  // Timeline Logic
-  const steps = [
-    { id: 'new', label: 'สร้างงาน', icon: Calendar },
-    { id: 'assigned', label: 'จัดรถแล้ว', icon: User },
-    { id: 'pickup', label: 'รับของแล้ว', icon: Package },
-    { id: 'transit', label: 'กำลังส่ง', icon: Truck },
-    { id: 'completed', label: 'เสร็จสิ้น', icon: CheckCircle2 },
-  ]
-
-  const getCurrentStepIndex = () => {
-    const status = job.Job_Status
-    if (['Delivered', 'Completed', 'Complete'].includes(status)) return 4
-    if (status === 'In Transit') return 3
-    if (status === 'Picked Up') return 2
-    if (status === 'Assigned') return 1
-    return 0
-  }
-
-  const currentStepIndex = getCurrentStepIndex()
   const gpsPoints = gpsData?.route || []
   const latestLocation = gpsData?.latest
   const mapDrivers: DriverLocation[] = latestLocation ? [{
@@ -109,7 +84,7 @@ export function JobSummaryDialog({ open, onOpenChange, job }: JobSummaryDialogPr
     status: 'Latest Location',
     lastUpdate: latestLocation.timestamp
   }] : []
-  const reportUrl = podPhotos.find(url => url.toUpperCase().includes('REPORT'))
+  const reportUrl = podPhotos.find((url: string) => url.toUpperCase().includes('REPORT'))
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -165,7 +140,7 @@ export function JobSummaryDialog({ open, onOpenChange, job }: JobSummaryDialogPr
             {/* Timeline + Info Grid — side by side */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Left: Vertical Order Timeline (Dribbble-inspired) */}
-              <div className="lg:col-span-1 bg-white/80 rounded-2xl border border-gray-200 p-5 no-print">
+              <div className="lg:col-span-1 bg-white rounded-2xl border border-gray-200 p-5 no-print shadow-sm">
                 <div className="flex items-center gap-2 mb-4 text-slate-900">
                   <div className="w-1.5 h-6 bg-indigo-500 rounded-full" />
                   <h3 className="font-black text-sm uppercase tracking-wider">Order Timeline</h3>
@@ -185,22 +160,22 @@ export function JobSummaryDialog({ open, onOpenChange, job }: JobSummaryDialogPr
                         <User size={18} className="text-emerald-600" />
                         <span>ข้อมูลทั่วไป</span>
                     </div>
-                    <div className="bg-white/80 rounded-xl p-4 border border-gray-200 grid grid-cols-2 gap-y-4">
+                    <div className="bg-white rounded-xl p-4 border border-gray-200 grid grid-cols-2 gap-y-4 shadow-sm">
                         <div>
-                            <p className="text-[10px] uppercase text-gray-400 mb-1">ลูกค้า (Customer)</p>
-                            <p className="text-sm font-medium">{job.Customer_Name || '-'}</p>
+                            <p className="text-[10px] uppercase text-slate-600 font-bold mb-1">ลูกค้า (Customer)</p>
+                            <p className="text-sm font-bold text-slate-900">{job.Customer_Name || '-'}</p>
                         </div>
                         <div>
-                            <p className="text-[10px] uppercase text-gray-400 mb-1">เส้นทาง (Route)</p>
-                            <p className="text-sm font-medium">{job.Route_Name || '-'}</p>
+                            <p className="text-[10px] uppercase text-slate-600 font-bold mb-1">เส้นทาง (Route)</p>
+                            <p className="text-sm font-bold text-slate-900">{job.Route_Name || '-'}</p>
                         </div>
                         <div>
-                            <p className="text-[10px] uppercase text-gray-400 mb-1">ทะเบียนรถ (Vehicle)</p>
-                            <p className="text-sm font-medium">{job.Vehicle_Plate || '-'}</p>
+                            <p className="text-[10px] uppercase text-slate-600 font-bold mb-1">ทะเบียนรถ (Vehicle)</p>
+                            <p className="text-sm font-bold text-slate-900">{job.Vehicle_Plate || '-'}</p>
                         </div>
                         <div>
-                            <p className="text-[10px] uppercase text-gray-400 mb-1">คนขับ (Driver)</p>
-                            <p className="text-sm font-medium">{job.Driver_Name || job.Driver_ID || '-'}</p>
+                            <p className="text-[10px] uppercase text-slate-600 font-bold mb-1">คนขับ (Driver)</p>
+                            <p className="text-sm font-bold text-slate-900">{job.Driver_Name || job.Driver_ID || '-'}</p>
                         </div>
                     </div>
                 </section>
@@ -210,19 +185,19 @@ export function JobSummaryDialog({ open, onOpenChange, job }: JobSummaryDialogPr
                         <MapPin size={18} className="text-emerald-400" />
                         <span>สถานที่และเวลา</span>
                     </div>
-                    <div className="bg-white/80 rounded-xl p-4 border border-gray-200 space-y-4">
+                    <div className="bg-white rounded-xl p-4 border border-gray-200 space-y-4 shadow-sm">
                         <div className="flex gap-3">
                             <div className="mt-1"><div className="w-2 h-2 rounded-full bg-indigo-500 ring-4 ring-indigo-500/20" /></div>
                             <div>
-                                <p className="text-[10px] uppercase text-gray-400">ต้นทาง (Origin)</p>
-                                <p className="text-xs text-gray-700">{job.Origin_Location || job.Location_Origin_Name || '-'}</p>
+                                <p className="text-[10px] uppercase text-slate-600 font-bold">ต้นทาง (Origin)</p>
+                                <p className="text-xs text-slate-700 font-medium">{job.Origin_Location || job.Location_Origin_Name || '-'}</p>
                             </div>
                         </div>
                         <div className="flex gap-3">
                             <div className="mt-1"><MapPin size={14} className="text-emerald-500" /></div>
                             <div>
-                                <p className="text-[10px] uppercase text-gray-400">ปลายทาง (Destination)</p>
-                                <p className="text-xs white font-medium">{job.Dest_Location || job.Location_Destination_Name || '-'}</p>
+                                <p className="text-[10px] uppercase text-slate-600 font-bold">ปลายทาง (Destination)</p>
+                                <p className="text-xs text-slate-900 font-bold">{job.Dest_Location || job.Location_Destination_Name || '-'}</p>
                             </div>
                         </div>
                     </div>
@@ -264,7 +239,7 @@ export function JobSummaryDialog({ open, onOpenChange, job }: JobSummaryDialogPr
                 </div>
                 
                 <div className="grid grid-cols-2 gap-3">
-                  {pickupPhotos.map((url, i) => (
+                  {pickupPhotos.map((url: string, i: number) => (
                     <div key={i} className="relative aspect-[4/3] rounded-xl overflow-hidden border border-gray-200 bg-white group cursor-pointer" onClick={() => window.open(url, '_blank')}>
                       <Image 
                         src={url} 
@@ -279,8 +254,8 @@ export function JobSummaryDialog({ open, onOpenChange, job }: JobSummaryDialogPr
                   ))}
                 </div>
 
-                <div className="rounded-xl border border-gray-200 bg-white/80 p-4">
-                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">ลายเซ็น ณ จุดรับ</p>
+                <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+                  <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest mb-3">ลายเซ็น ณ จุดรับ</p>
                   <div className="h-24 flex items-center justify-center border border-dashed border-gray-200 rounded-lg relative overflow-hidden bg-white/5">
                     {job.Signature_Pickup_Url || job.Pickup_Signature_Url ? (
                       <Image 
@@ -307,7 +282,7 @@ export function JobSummaryDialog({ open, onOpenChange, job }: JobSummaryDialogPr
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
-                  {podPhotos.map((url, i) => {
+                  {podPhotos.map((url: string, i: number) => {
                     const isReport = url.toUpperCase().includes('REPORT');
                     return (
                       <div key={i} className={cn(
@@ -334,8 +309,8 @@ export function JobSummaryDialog({ open, onOpenChange, job }: JobSummaryDialogPr
                   })}
                 </div>
 
-                <div className="rounded-xl border border-gray-200 bg-white/80 p-4">
-                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">ลายเซ็นผู้รับสินค้า</p>
+                <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+                   <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest mb-3">ลายเซ็นผู้รับสินค้า</p>
                   <div className="h-24 flex items-center justify-center border border-dashed border-gray-200 rounded-lg relative overflow-hidden bg-white/5">
                     {job.Signature_Proof_Url || job.Signature_Url ? (
                       <Image 

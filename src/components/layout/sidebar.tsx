@@ -151,10 +151,6 @@ const navContainer = {
   }
 }
 
-const navItemVar = {
-  hidden: { opacity: 0, x: -10 },
-  show: { opacity: 1, x: 0 }
-}
 
 export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
   const pathname = usePathname()
@@ -262,7 +258,7 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
         {filteredNavigation.map((group) => (
           <div key={group.title} className="mb-6">
             {!collapsed && (
-              <h2 className="px-4 mb-3 text-[10px] font-black uppercase tracking-widest text-slate-500">
+              <h2 className="px-4 mb-3 text-[10px] font-black uppercase tracking-widest text-slate-300/80">
                 {group.title}
               </h2>
             )}

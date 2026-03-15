@@ -71,8 +71,36 @@ export default async function VehiclesPage(props: Props) {
               title="นำเข้าข้อมูลรถ"
               onImport={createBulkVehicles}
               templateData={[
-                  { vehicle_plate: "1กข-1234", vehicle_type: "4-Wheel", brand: "Toyota", model: "Revo", active_status: "Active", current_mileage: 50000, next_service_mileage: 60000 },
-                  { vehicle_plate: "2กข-5678", vehicle_type: "6-Wheel", brand: "Isuzu", model: "Elf", active_status: "Maintenance", current_mileage: 120000, next_service_mileage: 125000 }
+                  { 
+                      vehicle_plate: "1กข-1234", 
+                      vehicle_type: "4-Wheel", 
+                      brand: "Toyota", 
+                      model: "Revo", 
+                      active_status: "Active", 
+                      current_mileage: 50000, 
+                      next_service_mileage: 60000,
+                      max_weight_kg: 1500,
+                      max_volume_cbm: 2.5,
+                      tax_expiry: "2025-12-31",
+                      insurance_expiry: "2025-12-31",
+                      act_expiry: "2025-12-31",
+                      sub_id: "" // ใส่ ID ผู้รับเหมาถ้ามี
+                  },
+                  { 
+                      vehicle_plate: "2กข-5678", 
+                      vehicle_type: "6-Wheel", 
+                      brand: "Isuzu", 
+                      model: "Elf", 
+                      active_status: "Maintenance", 
+                      current_mileage: 120000, 
+                      next_service_mileage: 125000,
+                      max_weight_kg: 4500,
+                      max_volume_cbm: 12.0,
+                      tax_expiry: "2025-06-30",
+                      insurance_expiry: "2025-06-30",
+                      act_expiry: "2025-06-30",
+                      sub_id: "SUB-001"
+                  }
               ]}
               templateFilename="template_vehicles.xlsx"
           />

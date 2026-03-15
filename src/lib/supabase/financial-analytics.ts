@@ -360,7 +360,7 @@ export async function getRouteEfficiency(startDate?: string, endDate?: string, b
 
     let query = supabase
         .from('Jobs_Main')
-        .select('Route_Name, Price_Cust_Total, Cost_Driver_Total, Price_Cust_Extra, Cost_Driver_Extra')
+        .select('Route_Name, Price_Cust_Total, Cost_Driver_Total, Price_Cust_Extra, Cost_Driver_Extra, Distance_Km')
         .in('Job_Status', REVENUE_STATUSES)
 
     if (sDate) query = query.gte('Plan_Date', sDate)
@@ -369,16 +369,17 @@ export async function getRouteEfficiency(startDate?: string, endDate?: string, b
 
     const { data: jobs } = await query
 
-    const routeStats: Record<string, { route: string, revenue: number, cost: number, count: number, extra: number }> = {}
+    const routeStats: Record<string, { route: string, revenue: number, cost: number, count: number, extra: number, totalKm: number }> = {}
 
     jobs?.forEach(job => {
         const route = job.Route_Name || 'Unknown Route'
         if (!routeStats[route]) {
-            routeStats[route] = { route, revenue: 0, cost: 0, count: 0, extra: 0 }
+            routeStats[route] = { route, revenue: 0, cost: 0, count: 0, extra: 0, totalKm: 0 }
         }
         routeStats[route].revenue += (job.Price_Cust_Total || 0)
         routeStats[route].cost += (job.Cost_Driver_Total || 0)
         routeStats[route].extra += (job.Price_Cust_Extra || 0) + (job.Cost_Driver_Extra || 0)
+        routeStats[route].totalKm += (Number(job.Distance_Km) || 0)
         routeStats[route].count++
     })
 
@@ -389,10 +390,31 @@ export async function getRouteEfficiency(startDate?: string, endDate?: string, b
             return { 
                 ...r, 
                 netProfit,
-                margin: r.revenue > 0 ? (netProfit / r.revenue) * 100 : 0 
+                margin: r.revenue > 0 ? (netProfit / r.revenue) * 100 : 0,
+                profitPerKm: r.totalKm > 0 ? (netProfit / r.totalKm) : 0
             }
         })
         .sort((a, b) => b.netProfit - a.netProfit)
+}
+
+// 9.1 Advanced Efficiency Score (Executive View)
+export async function getExecutiveEfficiencyScores(branchId?: string) {
+    const stats = await getFinancialStats(undefined, undefined, branchId)
+    const routeEfficiency = await getRouteEfficiency(undefined, undefined, branchId)
+    
+    const avgProfitPerKm = routeEfficiency.reduce((sum, r) => sum + r.profitPerKm, 0) / (routeEfficiency.length || 1)
+    
+    // Efficiency Grade based on Margin and Profit/KM
+    let grade = 'C'
+    if (stats.profitMargin > 20 && avgProfitPerKm > 15) grade = 'A+'
+    else if (stats.profitMargin > 15 && avgProfitPerKm > 10) grade = 'A'
+    else if (stats.profitMargin > 10) grade = 'B'
+    
+    return {
+        avgProfitPerKm,
+        grade,
+        topEfficiencyRoute: routeEfficiency[0]?.route || 'N/A'
+    }
 }
 
 // 10. Detailed Trip Profitability (Top 50 Jobs by Margin)

@@ -198,7 +198,19 @@ export default function RoutesPage() {
                     title="นำเข้าเส้นทาง"
                     onImport={createBulkRoutes}
                     templateData={[
-                        { Route_Name: "เส้นทาง A", Origin: "จุด A", Destination: "จุด B", Distance_KM: "10.5", Map_Link_Origin: "https://...", Map_Link_Destination: "https://...", Branch_ID: "HQ" }
+                        { 
+                            Route_Name: "เส้นทาง A", 
+                            Origin: "จุด A", 
+                            Origin_Lat: 13.7563,
+                            Origin_Lon: 100.5018,
+                            Map_Link_Origin: "https://maps.google.com/...",
+                            Destination: "จุด B", 
+                            Dest_Lat: 13.8123,
+                            Dest_Lon: 100.5678,
+                            Map_Link_Destination: "https://maps.google.com/...",
+                            Distance_KM: 10.5, 
+                            Branch_ID: "HQ" 
+                        }
                     ]}
                     templateFilename="template_routes.xlsx"
                 />

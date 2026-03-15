@@ -13,6 +13,9 @@ export type DriverFormData = {
   Active_Status: string
   Sub_ID?: string
   Branch_ID?: string
+  Bank_Name?: string
+  Bank_Account_No?: string
+  Bank_Account_Name?: string
 }
 
 export async function createDriver(data: DriverFormData) {
@@ -34,6 +37,9 @@ export async function createDriver(data: DriverFormData) {
       Role: 'Driver',
       Active_Status: 'Active',
       Sub_ID: data.Sub_ID || null, // Fix: Convert empty string to null
+      Bank_Name: data.Bank_Name || null,
+      Bank_Account_No: data.Bank_Account_No || null,
+      Bank_Account_Name: data.Bank_Account_Name || null,
       Branch_ID: finalBranchId
     })
 
@@ -48,35 +54,73 @@ export async function createDriver(data: DriverFormData) {
 export async function createBulkDrivers(drivers: Partial<DriverFormData>[]) {
   const supabase = await createClient()
   const branchId = await getUserBranchId()
+
+  // Helper to normalize keys
+  const normalizeData = (row: Partial<DriverFormData>) => {
+    const normalized: Partial<DriverFormData> & { License_Expiry?: string } = {}
+    
+    const getValue = (keys: string[]) => {
+      const rowKeys = Object.keys(row)
+      for (const key of keys) {
+        const foundKey = rowKeys.find(k => k.toLowerCase().replace(/\s+/g, '_') === key.toLowerCase().replace(/\s+/g, '_'))
+        const rowAsRecord = row as unknown as Record<string, unknown>
+        if (foundKey && rowAsRecord[foundKey] !== undefined && rowAsRecord[foundKey] !== null) {
+          return rowAsRecord[foundKey]
+        }
+      }
+      return undefined
+    }
+
+    // Mapping rules
+    normalized.Driver_ID = getValue(['Driver_ID', 'id', 'รหัสพนักงาน', 'รหัส']) as string
+    normalized.Driver_Name = getValue(['Driver_Name', 'name', 'ชื่อ-นามสกุล', 'ชื่อนามสกุล', 'ชื่อ']) as string
+    normalized.Mobile_No = getValue(['Mobile_No', 'phone', 'mobile', 'เบอร์โทร', 'เบอร์โทรศัพท์']) as string
+    normalized.Password = getValue(['Password', 'pass', 'รหัสผ่าน']) as string
+    normalized.Vehicle_Plate = getValue(['Vehicle_Plate', 'plate', 'ทะเบียนรถ', 'ทะเบียน']) as string
+    normalized.License_Expiry = getValue(['License_Expiry', 'license_date', 'วันหมดอายุใบขับขี่']) as string
+    normalized.Sub_ID = getValue(['Sub_ID', 'subcontractor_id', 'รหัสผู้รับเหมา', 'รหัสรถร่วม']) as string
+    normalized.Bank_Name = getValue(['Bank_Name', 'bank', 'ธนาคาร']) as string
+    normalized.Bank_Account_No = getValue(['Bank_Account_No', 'account_no', 'เลขบัญชี']) as string
+    normalized.Bank_Account_Name = getValue(['Bank_Account_Name', 'account_name', 'ชื่อบัญชี']) as string
+    
+    return normalized
+  }
   
   // Prepare data with defaults
-  const cleanData = drivers.map(d => ({
-    Driver_ID: d.Driver_ID || `DRV-${Math.floor(Math.random()*100000)}`, // Fallback ID
-    Driver_Name: d.Driver_Name,
-    Mobile_No: d.Mobile_No,
-    Password: d.Password || '123456',
-    Vehicle_Plate: d.Vehicle_Plate || null,
-    Vehicle_Type: '4-Wheel',
-    Role: 'Driver',
-    Active_Status: 'Active',
-    Sub_ID: d.Sub_ID || null, // Fix: Convert empty string to null
-    Branch_ID: branchId
-  })).filter(d => d.Driver_Name) // Ensure name exists
+  const cleanData = drivers.map(d => {
+    const data = normalizeData(d)
+    return {
+      Driver_ID: data.Driver_ID || `DRV-${Math.floor(Math.random()*100000)}`,
+      Driver_Name: data.Driver_Name ? String(data.Driver_Name).trim() : null,
+      Mobile_No: data.Mobile_No ? String(data.Mobile_No).trim() : null,
+      Password: data.Password || '123456',
+      Vehicle_Plate: data.Vehicle_Plate || null,
+      Vehicle_Type: '4-Wheel',
+      Role: 'Driver',
+      Active_Status: 'Active',
+      License_Expiry: data.License_Expiry || null,
+      Sub_ID: data.Sub_ID || null,
+      Bank_Name: data.Bank_Name || null,
+      Bank_Account_No: data.Bank_Account_No || null,
+      Bank_Account_Name: data.Bank_Account_Name || null,
+      Branch_ID: branchId
+    }
+  }).filter(d => d.Driver_Name && d.Mobile_No) // Ensure essential fields exist
 
   if (cleanData.length === 0) {
-     return { success: false, message: 'No valid data found' }
+     return { success: false, message: 'ไม่พบข้อมูลพนักงานที่ถูกต้อง (กรุณาระบุชื่อและเบอร์โทร)' }
   }
 
   const { error } = await supabase
     .from('Master_Drivers')
-    .insert(cleanData)
+    .upsert(cleanData, { onConflict: 'Driver_ID' })
 
   if (error) {
-    return { success: false, message: `Failed to import: ${error.message}` }
+    return { success: false, message: `นำเข้าไม่สำเร็จ: ${error.message}` }
   }
 
   revalidatePath('/drivers')
-  return { success: true, message: `Successfully imported ${cleanData.length} drivers` }
+  return { success: true, message: `นำเข้าข้อมูลสำเร็จ ${cleanData.length} รายการ` }
 }
 
 export async function updateDriver(driverId: string, data: Partial<DriverFormData>) {
@@ -90,6 +134,9 @@ export async function updateDriver(driverId: string, data: Partial<DriverFormDat
     Vehicle_Plate: data.Vehicle_Plate,
     Active_Status: data.Active_Status,
     Sub_ID: data.Sub_ID || null, // Fix: Convert empty string to null
+    Bank_Name: data.Bank_Name || null,
+    Bank_Account_No: data.Bank_Account_No || null,
+    Bank_Account_Name: data.Bank_Account_Name || null,
   }
 
   if (isAdmin && data.Branch_ID) {

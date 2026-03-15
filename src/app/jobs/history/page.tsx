@@ -34,6 +34,7 @@ import NextImage from "next/image"
 import { cn } from "@/lib/utils"
 
 import { isCustomer, hasPermission } from "@/lib/permissions"
+import { Badge } from "@/components/ui/badge"
 
 type Props = {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
@@ -221,6 +222,7 @@ export default async function JobHistoryPage(props: Props) {
                     <th className="text-left py-6 px-10 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Job Details</th>
                     <th className="text-left py-6 px-4 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Route & Location</th>
                     <th className="text-left py-6 px-4 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Resource</th>
+                    <th className="text-center py-6 px-4 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Audit & Verify</th>
                     <th className="text-center py-6 px-4 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Proof</th>
                     {canViewPrice && <th className="text-right py-6 px-4 text-[10px] font-black text-emerald-600 uppercase tracking-[0.2em]">Finance</th>}
                     <th className="text-left py-6 px-4 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Status</th>
@@ -265,6 +267,26 @@ export default async function JobHistoryPage(props: Props) {
                                 <p className="text-gray-700 font-bold text-sm tracking-tight">{job.Vehicle_Plate || "-"}</p>
                             </div>
                             <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.25em] pl-1">{job.Driver_Name || "-"}</p>
+                        </div>
+                      </td>
+                      <td className="py-8 px-4">
+                        <div className="flex flex-col items-center gap-1.5 min-w-[120px]">
+                           {job.Verification_Status ? (
+                               <Badge className={cn(
+                                   "rounded-full px-3 py-1 font-black text-[9px] border-none shadow-sm",
+                                   job.Verification_Status === 'Verified' ? "bg-emerald-500 text-white" :
+                                   job.Verification_Status === 'Rejected' ? "bg-red-500 text-white" : "bg-amber-500 text-white"
+                               )}>
+                                   {job.Verification_Status}
+                               </Badge>
+                           ) : (
+                               <span className="text-[9px] font-black text-gray-300 uppercase tracking-[0.2em] italic">Waiting</span>
+                           )}
+                           {job.Verified_At && (
+                               <p className="text-[8px] font-bold text-gray-400 truncate w-32 text-center">
+                                   By {job.Verified_By?.split('@')[0]}
+                               </p>
+                           )}
                         </div>
                       </td>
                       <td className="py-8 px-4">

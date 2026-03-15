@@ -6,12 +6,15 @@ import { useState } from "react"
 import { 
   ExternalLink, 
   Banknote, 
-  FileText
+  FileText,
+  ShieldCheck
 } from "lucide-react"
+import { AdminVerificationDialog } from "./admin-verification-dialog"
 import { Button } from "@/components/ui/button"
 import { JobDialog } from "@/components/planning/job-dialog"
 import { JobSummaryDialog } from "@/components/jobs/job-summary-dialog"
 import { syncJobToAccounting } from "@/app/settings/accounting/actions"
+import { cn } from "@/lib/utils"
 
 
 import { Job } from "@/lib/supabase/jobs"
@@ -34,6 +37,7 @@ type Props = {
 export function JobHistoryActions({ job, drivers, vehicles, customers, routes, canViewPrice = true, canDelete = true }: Props) {
   const [open, setOpen] = useState(false)
   const [showSummary, setShowSummary] = useState(false)
+  const [showVerify, setShowVerify] = useState(false)
   const [syncing, setSyncing] = useState(false)
 
   const handleSyncToAccounting = async () => {
@@ -73,7 +77,7 @@ export function JobHistoryActions({ job, drivers, vehicles, customers, routes, c
           </Button>
       )}
 
-      {/* 2. Job Details / Edit Button */}
+      {/* 2. Job Detail / Edit Button */}
       <Button
         variant="ghost"
         size="sm"
@@ -83,6 +87,23 @@ export function JobHistoryActions({ job, drivers, vehicles, customers, routes, c
       >
         <ExternalLink className="h-4 w-4" />
       </Button>
+
+      {/* 2.5. Admin Verification Button */}
+      {isFinished && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className={cn(
+                "h-8 w-8 p-0 hover:bg-black/5 transition-all outline-none border-none",
+                job.Verification_Status === 'Verified' ? "text-emerald-500" : 
+                job.Verification_Status === 'Rejected' ? "text-red-500" : "text-amber-500"
+            )}
+            onClick={() => setShowVerify(true)}
+            title="ตรวจสอบและอนุมัติรายงาน"
+          >
+            <ShieldCheck className="h-4 w-4" />
+          </Button>
+      )}
 
       {/* 3. Sync to Accounting */}
       {canViewPrice && (
@@ -114,6 +135,12 @@ export function JobHistoryActions({ job, drivers, vehicles, customers, routes, c
       <JobSummaryDialog
         open={showSummary}
         onOpenChange={setShowSummary}
+        job={job}
+      />
+
+      <AdminVerificationDialog
+        open={showVerify}
+        onOpenChange={setShowVerify}
         job={job}
       />
     </div>

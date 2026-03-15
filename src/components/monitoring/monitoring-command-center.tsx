@@ -67,7 +67,7 @@ export function MonitoringCommandCenter({
     const [filter, setFilter] = useState<'all' | 'jobs' | 'drivers' | 'alerts' | 'health'>('all')
     const [drivers, setDrivers] = useState(initialDrivers)
     const [jobs, setJobs] = useState(initialJobs)
-    const [healthAlerts, setHealthAlerts] = useState(initialHealthAlerts)
+    const healthAlerts = initialHealthAlerts
     const [focusPosition, setFocusPosition] = useState<[number, number] | undefined>(undefined)
 
     const [isChatOpen, setIsChatOpen] = useState(false)
@@ -148,8 +148,37 @@ export function MonitoringCommandCenter({
         }
     }, [])
 
+    // Detect if a job is delayed
+    const getJobDelayStatus = (job: Job) => {
+        if (!job.Plan_Date || ['Completed', 'Delivered', 'Cancelled'].includes(job.Job_Status)) return null
+        
+        const now = new Date()
+        const planDate = new Date(job.Plan_Date)
+        
+        // If plan date is before today, it's definitely delayed
+        const isPastDay = planDate.setHours(0,0,0,0) < now.setHours(0,0,0,0)
+        
+        // For today's jobs, check if it's still 'New' or 'Assigned' after a certain hour (e.g., 2PM)
+        const isOverdueToday = job.Plan_Date === now.toISOString().split('T')[0] && 
+                               now.getHours() >= 14 && 
+                               ['New', 'Assigned'].includes(job.Job_Status)
+
+        return isPastDay || isOverdueToday ? 'delayed' : null
+    }
+
+    // Exception flagging logic
+    const getJobExceptions = (job: Job) => {
+        const exceptions: string[] = []
+        if (['Delivered', 'Completed'].includes(job.Job_Status)) {
+            if (!job.Photo_Proof_Url) exceptions.push('Missing Photo')
+            if (!job.Signature_Url) exceptions.push('Missing Sig')
+        }
+        if (job.Job_Status === 'SOS') exceptions.push('Emergency')
+        return exceptions
+    }
+
     const filteredDrivers = useMemo(() => {
-        return drivers.filter(d => 
+        return drivers.filter(d =>
             d.Driver_Name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
             d.Vehicle_Plate?.toLowerCase().includes(searchQuery.toLowerCase())
         )
@@ -266,7 +295,7 @@ export function MonitoringCommandCenter({
         return () => {
             isCancelled = true
         }
-    }, [selectedId, selectedDriver?.Vehicle_Plate, selectedJob?.Vehicle_Plate])
+    }, [selectedId, selectedDriver?.Vehicle_Plate, selectedJob?.Vehicle_Plate, selectedVehicle])
 
     // Detect online status (within 10 mins)
     const getDriverStatus = (lastUpdate: string | null) => {
@@ -382,7 +411,7 @@ export function MonitoringCommandCenter({
                     const nextStop = stops.find((s: { status?: string; name?: string }) => s.status !== 'Completed')
                     if (nextStop) targetName = nextStop.name || 'Next Stop'
                 }
-            } catch (e) { /* ignore */ }
+            } catch { /* ignore */ }
         }
 
         return {
@@ -411,7 +440,10 @@ export function MonitoringCommandCenter({
                             placeholder="Search jobs, plates, drivers..."
                             className="pl-10 rounded-2xl bg-gray-50 border-transparent focus:bg-white focus:border-emerald-500/50 transition-all h-12 text-sm font-bold"
                             value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
+                            onChange={(evt) => {
+                                const val = evt.target.value
+                                setSearchQuery(val)
+                            }}
                         />
                     </div>
 
@@ -542,9 +574,16 @@ export function MonitoringCommandCenter({
                                     )}
                                 >
                                     <div className="flex items-center justify-between mb-2">
-                                        <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest leading-none">
-                                            {job.Job_ID.slice(-4)}
-                                        </span>
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest leading-none">
+                                                {job.Job_ID.slice(-4)}
+                                            </span>
+                                            {getJobDelayStatus(job) === 'delayed' && (
+                                                <Badge className="bg-red-500 text-white border-0 text-[8px] font-black animate-pulse py-0 h-4">
+                                                    DELAYED
+                                                </Badge>
+                                            )}
+                                        </div>
                                         <Badge className={cn(
                                             "border-0 text-[9px] font-black",
                                             job.Job_Status === 'SOS' ? "bg-red-500 text-white" : "bg-emerald-500/10 text-emerald-600"
@@ -553,6 +592,17 @@ export function MonitoringCommandCenter({
                                         </Badge>
                                     </div>
                                     <h4 className="text-sm font-black text-gray-900 truncate mb-1">{job.Customer_Name}</h4>
+                                    
+                                    {getJobExceptions(job).length > 0 && (
+                                        <div className="flex flex-wrap gap-1 mb-2">
+                                            {getJobExceptions(job).map(ex => (
+                                                <span key={ex} className="text-[8px] font-black px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 uppercase tracking-tighter">
+                                                    {ex}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    )}
+
                                     <div className="flex items-center gap-2 text-[10px] font-bold text-gray-500">
                                         <Truck size={12} />
                                         {job.Vehicle_Plate}

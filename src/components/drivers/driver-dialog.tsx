@@ -13,6 +13,7 @@ import { Loader2 } from "lucide-react"
 import { Driver } from "@/lib/supabase/drivers"
 import { Subcontractor } from "@/types/subcontractor"
 import { Branch } from "@/lib/supabase/branches"
+import { BANKS } from "@/lib/constants/banks"
 
 type DriverDialogProps = {
   mode?: 'create' | 'edit'
@@ -52,7 +53,10 @@ export function DriverDialog({
     Active_Status: driver?.Active_Status || 'Active',
     License_Expiry: driver?.License_Expiry || '',
     Sub_ID: driver?.Sub_ID || '',
-    Branch_ID: (driver as { Branch_ID?: string })?.Branch_ID || ''
+    Branch_ID: (driver as { Branch_ID?: string })?.Branch_ID || '',
+    Bank_Name: driver?.Bank_Name || '',
+    Bank_Account_No: driver?.Bank_Account_No || '',
+    Bank_Account_Name: driver?.Bank_Account_Name || ''
   })
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -62,10 +66,10 @@ export function DriverDialog({
     try {
       let result;
       if (mode === 'create') {
-        // @ts-ignore
+        // @ts-expect-error - Form data type mismatch
         result = await createDriver(formData)
       } else {
-        // @ts-ignore
+        // @ts-expect-error - Driver ID type mismatch
         result = await updateDriver(driver.Driver_ID, formData)
       }
       
@@ -84,7 +88,10 @@ export function DriverDialog({
             Active_Status: 'Active',
             License_Expiry: '',
             Sub_ID: '',
-            Branch_ID: ''
+            Branch_ID: '',
+            Bank_Name: '',
+            Bank_Account_No: '',
+            Bank_Account_Name: ''
         })
       }
       router.refresh()
@@ -212,6 +219,49 @@ export function DriverDialog({
                     ))}
                 </SelectContent>
             </Select>
+        </div>
+
+        {/* Bank Information Section */}
+        <div className="p-4 rounded-xl bg-emerald-50/50 border border-emerald-100 space-y-4">
+            <h3 className="text-xs font-black text-emerald-600 uppercase tracking-widest">ข้อมูลบัญชีธนาคาร (Payment Details)</h3>
+            
+            <div className="space-y-2">
+                <Label htmlFor="Bank_Name">เลือกธนาคาร</Label>
+                <Select value={formData.Bank_Name || "__none__"} onValueChange={(val) => setFormData({ ...formData, Bank_Name: val === "__none__" ? "" : val })}>
+                    <SelectTrigger className="w-full h-10 border-emerald-200 bg-white text-gray-900">
+                        <SelectValue placeholder="-- เลือกธนาคาร --" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="__none__">ไม่ระบุ</SelectItem>
+                        {BANKS.map((b) => (
+                            <SelectItem key={b.value} value={b.value}>{b.label}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                    <Label htmlFor="Bank_Account_No">เลขที่บัญชี</Label>
+                    <Input
+                        id="Bank_Account_No"
+                        value={formData.Bank_Account_No}
+                        onChange={(e) => setFormData({ ...formData, Bank_Account_No: e.target.value })}
+                        placeholder="000-0-00000-0"
+                        className="bg-white border-emerald-100 text-gray-900"
+                    />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="Bank_Account_Name">ชื่อบัญชี</Label>
+                    <Input
+                        id="Bank_Account_Name"
+                        value={formData.Bank_Account_Name}
+                        onChange={(e) => setFormData({ ...formData, Bank_Account_Name: e.target.value })}
+                        placeholder="ชื่อ-นามสกุล"
+                        className="bg-white border-emerald-100 text-gray-900"
+                    />
+                </div>
+            </div>
         </div>
 
           {mode === 'edit' && (

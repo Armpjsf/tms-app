@@ -7,8 +7,7 @@ import {
   Package, 
   Truck, 
   CheckCircle2,
-  Clock,
-  MapPin
+  Clock
 } from "lucide-react"
 
 interface OrderTimelineProps {
@@ -27,10 +26,10 @@ const STEPS = [
     description: 'สร้างคำสั่งงานเข้าระบบ',
     color: 'text-gray-500',
     bgColor: 'bg-slate-500/20',
-    activeColor: 'text-emerald-600',
-    activeBg: 'bg-emerald-500/20',
-    completedColor: 'text-emerald-400',
-    completedBg: 'bg-emerald-500/20',
+    activeColor: 'text-emerald-700',
+    activeBg: 'bg-emerald-500/15',
+    completedColor: 'text-emerald-600',
+    completedBg: 'bg-emerald-500/10',
   },
   { 
     id: 'assigned', 
@@ -104,7 +103,6 @@ export function OrderTimeline({ currentStatus, planDate, createdAt, className }:
         {STEPS.map((step, index) => {
           const isCompleted = index <= currentIndex
           const isActive = index === currentIndex
-          const isPending = index > currentIndex
           const Icon = step.icon
           const isLast = index === STEPS.length - 1
 
@@ -139,14 +137,14 @@ export function OrderTimeline({ currentStatus, planDate, createdAt, className }:
                 <div className="flex items-center gap-3">
                   <div>
                     <p className={cn(
-                      "text-sm font-bold transition-colors",
-                      isCompleted ? "text-foreground" : "text-gray-400"
+                      "text-sm font-black transition-colors",
+                      isCompleted ? "text-slate-900" : "text-slate-400"
                     )}>
                       {step.label}
                     </p>
                     <p className={cn(
-                      "text-[10px] font-medium uppercase tracking-wider",
-                      isCompleted ? "text-gray-500" : "text-gray-500"
+                      "text-[10px] font-black uppercase tracking-wider",
+                      isCompleted ? "text-slate-500" : "text-slate-400"
                     )}>
                       {step.labelEn}
                     </p>
@@ -178,8 +176,8 @@ export function OrderTimeline({ currentStatus, planDate, createdAt, className }:
 
                 {/* Description */}
                 <p className={cn(
-                  "text-[11px] mt-1",
-                  isCompleted ? "text-gray-400" : "text-gray-400"
+                  "text-[11px] mt-1 font-medium",
+                  isCompleted ? "text-slate-500" : "text-slate-400"
                 )}>
                   {step.description}
                 </p>

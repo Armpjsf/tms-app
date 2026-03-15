@@ -91,8 +91,30 @@ export async function DriversContent({ searchParams, branches = [], isSuperAdmin
                 title="Import Personnel Data"
                 onImport={createBulkDrivers}
                 templateData={[
-                    { Driver_Name: "นาย สมชาย ใจดี", Mobile_No: "0812345678", Vehicle_Plate: "1กข-1234" },
-                    { Driver_Name: "นางสาว สมหญิง รักงาน", Mobile_No: "0898765432", Vehicle_Plate: "" }
+                    { 
+                        Driver_ID: "DRV-001",
+                        Driver_Name: "นาย สมชาย ใจดี", 
+                        Mobile_No: "0812345678", 
+                        Password: "password123",
+                        Vehicle_Plate: "1กข-1234",
+                        License_Expiry: "2025-12-31",
+                        Sub_ID: "", // ใส่ ID ผู้รับเหมาถ้ามี
+                        Bank_Name: "KBank",
+                        Bank_Account_No: "000-0-00000-0",
+                        Bank_Account_Name: "นาย สมชาย ใจดี"
+                    },
+                    { 
+                        Driver_ID: "DRV-002",
+                        Driver_Name: "นางสาว สมหญิง รักงาน", 
+                        Mobile_No: "0898765432", 
+                        Password: "password123",
+                        Vehicle_Plate: "",
+                        License_Expiry: "2025-06-30",
+                        Sub_ID: "SUB-001",
+                        Bank_Name: "SCB",
+                        Bank_Account_No: "111-1-11111-1",
+                        Bank_Account_Name: "นางสาว สมหญิง รักงาน"
+                    }
                 ]}
                 templateFilename="template_drivers.xlsx"
             />

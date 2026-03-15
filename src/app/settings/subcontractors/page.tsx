@@ -32,6 +32,7 @@ import { Subcontractor } from "@/types/subcontractor"
 import { useBranch } from "@/components/providers/branch-provider"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
+import { BANKS } from "@/lib/constants/banks"
 
 export default function SubcontractorsPage() {
     const { selectedBranch, branches } = useBranch()
@@ -363,12 +364,21 @@ export default function SubcontractorsPage() {
                             
                             <div className="space-y-2">
                                 <Label>ธนาคาร</Label>
-                                <Input 
+                                <Select 
                                     value={formData.Bank_Name || ""} 
-                                    onChange={e => setFormData({...formData, Bank_Name: e.target.value})} 
-                                    placeholder="เช่น กสิกรไทย, ไทยพาณิชย์"
-                                    className="bg-gray-100 border-gray-200" 
-                                />
+                                    onValueChange={(v: string) => setFormData({...formData, Bank_Name: v})}
+                                >
+                                    <SelectTrigger className="bg-gray-100 border-gray-200">
+                                        <SelectValue placeholder="เลือกธนาคาร" />
+                                    </SelectTrigger>
+                                    <SelectContent className="bg-white border-gray-200 text-gray-900">
+                                        {BANKS.map(b => (
+                                            <SelectItem key={b.value} value={b.value}>
+                                                {b.label}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">

@@ -198,7 +198,7 @@ export async function createBulkRoutes(routes: Record<string, unknown>[]) {
             const getValue = (keys: string[]) => {
                 const rowKeys = Object.keys(row)
                 for (const key of keys) {
-                    const foundKey = rowKeys.find(k => k.toLowerCase().replace(/\\s+/g, '') === key.toLowerCase().replace(/\\s+/g, ''))
+                    const foundKey = rowKeys.find(k => k.toLowerCase().replace(/\s+/g, '_') === key.toLowerCase().replace(/\s+/g, '_'))
                     if (foundKey && row[foundKey] !== undefined && row[foundKey] !== null) {
                         return row[foundKey]
                     }
@@ -208,16 +208,16 @@ export async function createBulkRoutes(routes: Record<string, unknown>[]) {
     
             normalized.Route_Name = getValue(['route_name', 'name', 'route', 'ชื่อเส้นทาง', 'เส้นทาง']) as string
             normalized.Origin = getValue(['origin', 'source', 'start', 'ต้นทาง', 'จุดเริ่มต้น']) as string
-            normalized.Origin_Lat = getValue(['origin_lat', 'start_lat', 'lat_start', 'ละติจูดต้นทาง']) as number
-            normalized.Origin_Lon = getValue(['origin_lon', 'start_lon', 'lon_start', 'ลองติจูดต้นทาง']) as number
+            normalized.Origin_Lat = getValue(['origin_lat', 'start_lat', 'lat_start', 'ละติจูดต้นทาง', 'lat_ต้นทาง']) as number
+            normalized.Origin_Lon = getValue(['origin_lon', 'start_lon', 'lon_start', 'ลองติจูดต้นทาง', 'lon_ต้นทาง']) as number
             normalized.Destination = getValue(['destination', 'dest', 'end', 'ปลายทาง', 'จุดสิ้นสุด']) as string
-            normalized.Dest_Lat = getValue(['dest_lat', 'end_lat', 'lat_end', 'ละติจูดปลายทาง']) as number
-            normalized.Dest_Lon = getValue(['dest_lon', 'end_lon', 'lon_end', 'ลองติจูดปลายทาง']) as number
+            normalized.Dest_Lat = getValue(['dest_lat', 'end_lat', 'lat_end', 'ละติจูดปลายทาง', 'lat_ปลายทาง']) as number
+            normalized.Dest_Lon = getValue(['dest_lon', 'end_lon', 'lon_end', 'ลองติจูดปลายทาง', 'lon_ปลายทาง']) as number
             normalized.Map_Link_Origin = getValue(['map_link_origin', 'origin_link', 'link_start', 'ลิ้งค์ต้นทาง']) as string
             normalized.Map_Link_Destination = getValue(['map_link_destination', 'destination_link', 'link_end', 'ลิ้งค์ปลายทาง']) as string
             normalized.Distance_KM = getValue(['distance', 'km', 'distance_km', 'ระยะทาง']) as number
             
-            normalized.Branch_ID = getValue(['branch_id', 'branch', 'สาขา']) as string
+            normalized.Branch_ID = getValue(['branch_id', 'branch', 'สาขา', 'รหัสสาขา']) as string
             
             return normalized
         }

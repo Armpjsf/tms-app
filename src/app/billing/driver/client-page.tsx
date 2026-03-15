@@ -45,6 +45,7 @@ import { createDriverPayment } from "@/lib/supabase/billing"
 
 import { CompanyProfile } from "@/lib/supabase/settings"
 import { Subcontractor } from "@/types/subcontractor"
+import { getBankCode } from "@/lib/constants/banks"
 
 const WITHHOLDING_TAX_RATE = 0.01 // 1%
 import { exportToCSV } from "@/lib/utils/export"
@@ -197,7 +198,8 @@ export default function DriverPaymentClient({ initialJobs, drivers, companyProfi
             const subtotal = p_jobs.reduce((sum, j) => sum + getJobTotal(j), 0)
             const withholding = Math.round(subtotal * WITHHOLDING_TAX_RATE)
             const netTotal = subtotal - withholding
-            lines.push(`${driverInfo.Bank_Name || 'SCB'},${driverInfo.Bank_Account_No},${netTotal.toFixed(2)},${driverInfo.Bank_Account_Name || driverName},Salary,${new Date().toISOString().split('T')[0]}`)
+            const bankCode = getBankCode(driverInfo.Bank_Name)
+            lines.push(`${bankCode},${driverInfo.Bank_Account_No},${netTotal.toFixed(2)},${driverInfo.Bank_Account_Name || driverName},Salary,${new Date().toISOString().split('T')[0]}`)
         })
     } else {
         // Subcontractor grouping
@@ -218,7 +220,8 @@ export default function DriverPaymentClient({ initialJobs, drivers, companyProfi
             const subtotal = p_jobs.reduce((sum, j) => sum + getJobTotal(j), 0)
             const withholding = Math.round(subtotal * WITHHOLDING_TAX_RATE)
             const netTotal = subtotal - withholding
-            lines.push(`${subInfo.Bank_Name || 'SCB'},${subInfo.Bank_Account_No},${netTotal.toFixed(2)},${subInfo.Bank_Account_Name || subInfo.Sub_Name},Salary,${new Date().toISOString().split('T')[0]}`)
+            const bankCode = getBankCode(subInfo.Bank_Name)
+            lines.push(`${bankCode},${subInfo.Bank_Account_No},${netTotal.toFixed(2)},${subInfo.Bank_Account_Name || subInfo.Sub_Name},Salary,${new Date().toISOString().split('T')[0]}`)
         })
     }
 

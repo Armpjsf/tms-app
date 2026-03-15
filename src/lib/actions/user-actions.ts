@@ -238,7 +238,7 @@ export async function createBulkUsers(users: Record<string, unknown>[]) {
         const getValue = (keys: string[]) => {
             const rowKeys = Object.keys(row)
             for (const key of keys) {
-                const foundKey = rowKeys.find(k => k.toLowerCase().replace(/\s+/g, '') === key.toLowerCase().replace(/\s+/g, ''))
+                const foundKey = rowKeys.find(k => k.toLowerCase().replace(/\s+/g, '_') === key.toLowerCase().replace(/\s+/g, '_'))
                 if (foundKey && row[foundKey] !== undefined && row[foundKey] !== null) {
                     return row[foundKey]
                 }
@@ -248,9 +248,11 @@ export async function createBulkUsers(users: Record<string, unknown>[]) {
 
         normalized.Username = getValue(['username', 'user', 'ชื่อผู้ใช้'])
         normalized.Name = getValue(['name', 'fullname', 'ชื่อ', 'ชื่อ-นามสกุล', 'ชื่อนามสกุล'])
-        normalized.Branch_ID = getValue(['branch_id', 'branch', 'สาขา'])
+        normalized.Branch_ID = getValue(['branch_id', 'branch', 'สาขา', 'รหัสสาขา'])
         normalized.Role = getValue(['role', 'position', 'ตำแหน่ง', 'บทบาท']) || 'Staff'
         normalized.Password = getValue(['password', 'pass', 'รหัสผ่าน']) || '123456'
+        normalized.Active_Status = getValue(['active_status', 'status', 'สถานะ']) || 'Active'
+        normalized.Customer_ID = getValue(['customer_id', 'client_id', 'รหัสลูกค้า'])
         
         return normalized
     }
@@ -269,9 +271,11 @@ export async function createBulkUsers(users: Record<string, unknown>[]) {
         Username: u.Username,
         Password: await argon2.hash(String(u.Password)),
         Name: u.Name,
-        Branch_ID: u.Branch_ID || 'Head Office', // Default branch?
+        Branch_ID: u.Branch_ID || 'HQ', 
         Role: u.Role,
-        Active_Status: 'Active'
+        Role_ID: ROLE_MAP[String(u.Role)] || 5,
+        Active_Status: u.Active_Status,
+        Customer_ID: u.Customer_ID || null
     })))
 
     // Use upsert or insert? creating users usually shouldn't overwrite existing ones easily to avoid password reset

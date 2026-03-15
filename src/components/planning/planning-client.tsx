@@ -169,7 +169,20 @@ export function PlanningClient({
                         title="นำเข้างาน (Jobs)"
                         onImport={createBulkJobs}
                         templateData={[
-                            { Job_ID: "JOB-001", Plan_Date: "2024-03-20", Customer_Name: "ลูกค้า A", Route_Name: "BKK-CNX", Price_Cust_Total: 5000 }
+                            { 
+                                Job_ID: "JOB-001", 
+                                Plan_Date: "2024-03-20", 
+                                Customer_Name: "ลูกค้า A", 
+                                Route_Name: "BKK-CNX", 
+                                Driver_ID: "DRV-001",
+                                Vehicle_Plate: "1กข-1234",
+                                Weight_Kg: 1500,
+                                Volume_Cbm: 2.5,
+                                Price_Cust_Total: 5000,
+                                Cost_Driver_Total: 3500,
+                                Notes: "ด่วนพิเศษ",
+                                Ref_No: "SO-12345"
+                            }
                         ]}
                         templateFilename="template_jobs.xlsx"
                     />

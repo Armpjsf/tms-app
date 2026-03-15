@@ -209,8 +209,24 @@ export default function UserSettingsPage() {
                         title="นำเข้าผู้ใช้งาน"
                         onImport={createBulkUsers}
                         templateData={[
-                            { Username: "user01", Name: "นาย สมชาย ใจดี", Branch: "สำนักงานใหญ่", Role: "Staff", Password: "change_me" },
-                            { Username: "driver01", Name: "นาย ขับรถ เก่ง", Branch: "สาขา 1", Role: "Driver" }
+                            { 
+                                Username: "user01", 
+                                Name: "นาย สมชาย ใจดี", 
+                                Branch: "สำนักงานใหญ่", 
+                                Role: "Staff", 
+                                Password: "password123",
+                                Active_Status: "Active",
+                                Customer_ID: "" // ใส่รหัสลูกค้าถ้าเป็น User ของลูกค้า
+                            },
+                            { 
+                                Username: "driver01", 
+                                Name: "นาย ขับรถ เก่ง", 
+                                Branch: "สาขา 1", 
+                                Role: "Driver",
+                                Password: "password123",
+                                Active_Status: "Active",
+                                Customer_ID: ""
+                            }
                         ]}
                         templateFilename="template_users.xlsx"
                     />
