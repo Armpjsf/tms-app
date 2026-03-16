@@ -75,7 +75,13 @@ export async function POST(req: NextRequest) {
                         // For Admin, we'll allow binding if they provide their correct Username or 'ADMIN' as the verification
                         if (phone === id || phone === 'ADMIN' || phone === 'admin') { 
                             await supabase.from('Master_Users').update({ Line_User_ID: userId }).eq('Username', id)
-                            await replyToUser(replyToken, `👑 ยินดีต้อนรับท่านผู้บริหาร! คุณ ${adminUser.Name} ผูกบัญชีสำเร็จแล้ว\n\n🔹 ตอนนี้ท่านสามารถถาม "กำไร" หรือ "ยอดขาย" ได้ทันทีครับ`)
+                            
+                            const isSuper = adminUser.Role_ID === 1 || adminUser.Role === 'Super Admin' || adminUser.Role === 'Executive'
+                            const welcomeMsg = isSuper 
+                                ? `👑 ยินดีต้อนรับท่านผู้บริหาร! คุณ ${adminUser.Name} ผูกบัญชีสำเร็จแล้ว\n\n🔹 ตอนนี้ท่านสามารถถาม "กำไร" หรือ "ยอดขาย" ได้ทันทีครับ`
+                                : `👨‍💼 ยินดีต้อนรับคุณ ${adminUser.Name} (Staff/Admin)! ผูกบัญชีสำเร็จแล้ว\n\n🔹 คุณสามารถเช็คสถานะงานได้โดยพิมพ์ JOB-[เลขงาน] ครับ`
+                            
+                            await replyToUser(replyToken, welcomeMsg)
                             continue
                         }
                     }
@@ -292,11 +298,12 @@ export async function POST(req: NextRequest) {
                     }
 
                     // Security: Improved matching (Check both ID and Name, case-insensitive)
-                    const isAuthorized = boundCustomer && (
+                    // Admins/Super Admins (boundAdmin) are always authorized
+                    const isAuthorized = boundAdmin || (boundCustomer && (
                         job.Customer_ID === boundCustomer.Customer_ID || 
                         job.Customer_Name?.toLowerCase().trim().includes(boundCustomer.Customer_Name.toLowerCase().trim()) ||
                         boundCustomer.Customer_Name.toLowerCase().trim().includes(job.Customer_Name?.toLowerCase().trim() || '')
-                    )
+                    ))
 
                     if (!isAuthorized) {
                         await replyToUser(replyToken, `🚫 ขออภัยครับ คุณไม่มีสิทธิ์ดูข้อมูลหมายเลขนี้`)
