@@ -134,33 +134,33 @@ export default async function PODPage(props: {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-gray-200">
-                    <th className="text-left p-4 text-xs font-medium text-gray-500 uppercase">Job ID</th>
-                    <th className="text-left p-4 text-xs font-medium text-gray-500 uppercase">วันที่</th>
-                    <th className="text-left p-4 text-xs font-medium text-gray-500 uppercase">ลูกค้า</th>
-                    <th className="text-left p-4 text-xs font-medium text-gray-500 uppercase">คนขับ</th>
-                    <th className="text-center p-4 text-xs font-medium text-gray-500 uppercase">รูปถ่าย</th>
-                    <th className="text-center p-4 text-xs font-medium text-gray-500 uppercase">ลายเซ็น</th>
-                    <th className="text-left p-4 text-xs font-medium text-gray-500 uppercase">สถานะ</th>
-                    <th className="text-right p-4 text-xs font-medium text-gray-500 uppercase">Actions</th>
+                  <tr className="border-b border-white/10 bg-white/5">
+                    <th className="text-left p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Job ID</th>
+                    <th className="text-left p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">วันที่</th>
+                    <th className="text-left p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">ลูกค้า</th>
+                    <th className="text-left p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">คนขับ</th>
+                    <th className="text-center p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">รูปถ่าย</th>
+                    <th className="text-center p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">ลายเซ็น</th>
+                    <th className="text-left p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">สถานะ</th>
+                    <th className="text-right p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {pods.map((pod) => (
                     <tr 
                       key={pod.Job_ID} 
-                      className="border-b border-gray-200 hover:bg-white/5 transition-colors"
+                      className="border-b border-white/5 hover:bg-white/5 transition-colors group"
                     >
                       <td className="p-4">
                         <Link href={`/admin/jobs/${pod.Job_ID}`}>
-                          <span className="text-emerald-600 font-medium text-sm hover:underline cursor-pointer">{pod.Job_ID}</span>
+                          <span className="text-emerald-400 font-bold text-sm hover:underline cursor-pointer tracking-tight">{pod.Job_ID}</span>
                         </Link>
                       </td>
-                      <td className="p-4 text-sm text-gray-700">
+                      <td className="p-4 text-sm text-slate-300 font-medium">
                         {pod.Plan_Date ? new Date(pod.Plan_Date).toLocaleDateString('th-TH', { timeZone: 'Asia/Bangkok' }) : "-"}
                       </td>
-                      <td className="p-4 text-sm text-slate-900 font-medium">{pod.Customer_Name || "-"}</td>
-                      <td className="p-4 text-sm text-gray-700">{pod.Driver_Name || "-"}</td>
+                      <td className="p-4 text-sm text-white font-black italic tracking-tight">{pod.Customer_Name || "-"}</td>
+                      <td className="p-4 text-sm text-slate-300 font-bold">{pod.Driver_Name || "-"}</td>
                       <td className="p-4 text-center">
                         {pod.Photo_Proof_Url ? (
                           <div className="relative w-10 h-10 mx-auto rounded border border-border overflow-hidden bg-muted group">

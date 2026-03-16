@@ -36,12 +36,15 @@ export async function getFinancialStats(startDate?: string, endDate?: string, br
       jobsQuery = jobsQuery.eq('Branch_ID', effectiveBranchId)
   }
 
-  const { data: jobs } = await jobsQuery as { data: FinancialJob[] | null }
+  const { data: jobs, error: jobsError } = await jobsQuery as { data: FinancialJob[] | null, error: any }
+  
+  if (jobsError) console.error('[getFinancialStats] Query Error:', jobsError)
+  console.log(`[getFinancialStats] Found ${(jobs || []).length} jobs for range ${firstDay} to ${lastDay}, branchId=${effectiveBranchId}`)
 
   const revenue: number = (jobs || []).reduce((sum: number, job: FinancialJob) => sum + (Number(job.Price_Cust_Total) || 0), 0)
   
   if (customerId) {
-      return { revenue, netProfit: 0, fuelCost: 0, maintenanceCost: 0, secondaryCosts: 0 }
+      return { revenue, netProfit: 0, fuelCost: 0, maintenanceCost: 0, secondaryCosts: 0, profitMargin: 0, revenueGrowth: 0 }
   }
 
   const driverCost: number = (jobs || []).reduce((sum: number, job: FinancialJob) => sum + (Number(job.Cost_Driver_Total) || 0), 0)

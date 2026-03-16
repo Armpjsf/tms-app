@@ -50,7 +50,7 @@ export default function ChatPage() {
                             Intelligence Support
                             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                         </h1>
-                        <p className="text-emerald-400 text-[10px] font-black uppercase tracking-[0.3em]">Real-time Data Assistant</p>
+                        <p className="text-emerald-400 text-xs font-black uppercase tracking-[0.3em] drop-shadow-[0_0_8px_rgba(52,211,153,0.3)]">Real-time Data Assistant</p>
                     </div>
                 </div>
 
@@ -60,16 +60,19 @@ export default function ChatPage() {
                         {messages.length === 1 && (
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
                                 {[
-                                    { label: '💰 ขอดูยอดขายเดือนนี้', query: 'ขอดูยอดขายเดือนนี้หน่อย' },
-                                    { label: '📈 กำไรปัจจุบันเท่าไหร่', query: 'กำไรปัจจุบันปัจจุบันเป็นยังไงบ้าง' },
-                                    { label: '🚛 รถที่ทำกำไรดีที่สุด', query: 'รถคันไหนทำกำไรดีที่สุด 3 อันดับแรก' },
+                                    { label: '💰 ยอดขาย/กำไร', query: 'ขอดูสรุปรายได้และกำไรของสาขาหน่อย' },
+                                    { label: '🛠️ รายงานซ่อมบำรุง', query: 'มีรถคันไหนต้องซ่อมหรือเช็คระยะบ้างไหม' },
+                                    { label: '🚨 SOS & ความปลอดภัย', query: 'วันนี้มีรายงาน SOS หรืออุบัติเหตุไหม' },
+                                    { label: '🍃 สิ่งแวดล้อม (ESG)', query: 'เราลด CO2 ไปได้เท่าไหร่แล้ว' },
+                                    { label: '🏆 ผลงานคนขับ', query: 'ใครคือพนักงานขับรถที่ดีที่สุด 3 อันดับแรก' },
+                                    { label: '🚛 สถานะงานวันนี้', query: 'สรุปการส่งงานวันนี้เป็นยังไงบ้าง' },
                                 ].map((chip, i) => (
                                     <button 
                                         key={i}
                                         onClick={() => handleSend(chip.query)}
                                         className="p-4 bg-slate-900/40 border border-slate-800/50 rounded-2xl text-left hover:bg-emerald-500/10 hover:border-emerald-500/30 transition-all group"
                                     >
-                                        <p className="text-xs font-black text-emerald-400 group-hover:text-emerald-300 uppercase tracking-widest">{chip.label}</p>
+                                        <p className="text-xs font-black text-emerald-300 group-hover:text-white uppercase tracking-widest transition-colors">{chip.label}</p>
                                     </button>
                                 ))}
                             </div>
@@ -80,7 +83,7 @@ export default function ChatPage() {
                                 <div className={`max-w-[85%] p-5 rounded-3xl flex gap-4 transition-all duration-300 ${
                                     msg.role === 'user' 
                                     ? 'bg-emerald-600 text-white rounded-tr-none shadow-lg shadow-emerald-500/10' 
-                                    : 'bg-slate-800/90 text-white/95 border border-slate-700/50 shadow-xl rounded-tl-none'
+                                    : 'bg-slate-800 text-white border border-slate-700/80 shadow-2xl rounded-tl-none'
                                 }`}>
                                     <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-inner ${
                                         msg.role === 'user' ? 'bg-white/10 text-white' : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
@@ -100,7 +103,7 @@ export default function ChatPage() {
                                         <Loader2 className="w-5 h-5 animate-spin text-emerald-500" />
                                         <div className="absolute inset-0 blur-sm bg-emerald-500/20 animate-pulse" />
                                     </div>
-                                    <span className="text-xs font-black uppercase tracking-widest text-emerald-500/70">กำลังประมวลผลข้อมูล...</span>
+                                    <span className="text-xs font-black uppercase tracking-widest text-emerald-400 drop-shadow-[0_0_5px_rgba(52,211,153,0.2)]">กำลังประมวลผลข้อมูล...</span>
                                 </div>
                             </div>
                         )}

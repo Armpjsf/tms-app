@@ -291,7 +291,9 @@ export async function getVehicleProfitability(startDate?: string, endDate?: stri
         jobsQuery = jobsQuery.eq('Branch_ID', effectiveBranchId)
     }
 
-    const { data: jobs } = await jobsQuery
+    const { data: jobs, error: jobsError } = await jobsQuery
+    if (jobsError) console.error('[getVehicleProfitability] Query Error:', jobsError)
+    console.log(`[getVehicleProfitability] Found ${(jobs || []).length} jobs for range ${firstDay} to ${lastDay}, branchId=${effectiveBranchId}`)
 
     const fuelQuery = supabase
         .from('Fuel_Logs')

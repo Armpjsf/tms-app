@@ -1,58 +1,57 @@
-export type SystemPermissionId = 
-    | 'job_view' | 'job_create' | 'job_delete' | 'job_export' | 'job_price_view' | 'job_price_edit'
-    | 'fleet_view' | 'fleet_edit' | 'fleet_service' | 'fleet_fuel'
-    | 'billing_view' | 'billing_create' | 'billing_approve'
-    | 'settings_user' | 'settings_company' | 'settings_audit';
 
-export interface PermissionDefinition {
-    id: SystemPermissionId;
-    label: string;
-    desc: string;
-    category: 'Operation' | 'Fleet' | 'Financial' | 'System';
+export type Permission = {
+  id: string
+  label: string
+  desc: string
+  category: 'Operations' | 'Fleet' | 'Financial' | 'Executive' | 'System' | 'People'
 }
 
-export const SYSTEM_PERMISSIONS: PermissionDefinition[] = [
-    // 🚚 Operation
-    { id: 'job_view', label: 'ดูงานขนส่ง (View Jobs)', desc: 'ดูรายการและรายละเอียดงานขนส่ง', category: 'Operation' },
-    { id: 'job_create', label: 'สร้าง/แก้ไขงาน (Create/Edit)', desc: 'สร้างงานใหม่หรือแก้ไขข้อมูลงานเดิม', category: 'Operation' },
-    { id: 'job_delete', label: '🔴 ลบงาน (Delete Jobs)', desc: 'ลบข้อมูลงานออกจากระบบ', category: 'Operation' },
-    { id: 'job_export', label: 'ส่งออก Excel (Export Jobs)', desc: 'ดาวน์โหลดข้อมูลงานเป็นไฟล์ Excel', category: 'Operation' },
-    { id: 'job_price_view', label: '💰 ดูราคา/ต้นทุน (View Financials)', desc: 'มองเห็นคอลัมน์ราคาและต้นทุนค่าขนส่ง', category: 'Operation' },
-    { id: 'job_price_edit', label: '💰 แก้ไขราคา (Edit Price)', desc: 'แก้ไขตัวเลขราคาและต้นทุนได้', category: 'Operation' },
-
-    // 🛠️ Fleet
-    { id: 'fleet_view', label: 'ดูข้อมูลรถ/คนขับ (View Fleet)', desc: 'ดูรายชื่อรถและคนขับ', category: 'Fleet' },
-    { id: 'fleet_edit', label: 'จัดการข้อมูล (Manage Fleet)', desc: 'เพิ่ม/แก้ไข ข้อมูลรถและคนขับ', category: 'Fleet' },
-    { id: 'fleet_service', label: 'แจ้งซ่อม/บำรุงรักษา (Maintenance)', desc: 'เข้าถึงเมนูแจ้งซ่อมและประวัติการซ่อม', category: 'Fleet' },
-    { id: 'fleet_fuel', label: 'บันทึกน้ำมัน (Fuel)', desc: 'บันทึกและดูประวัติการเติมน้ำมัน', category: 'Fleet' },
-
-    // 💵 Financial
-    { id: 'billing_view', label: 'ดูเอกสารวางบิล (View Billing)', desc: 'เข้าถึงหน้าสรุปวางบิลและใบแจ้งหนี้', category: 'Financial' },
-    { id: 'billing_create', label: 'สร้างใบวางบิล (Create Billing)', desc: 'สร้างเอกสารวางบิลและใบเสร็จ', category: 'Financial' },
-    { id: 'billing_approve', label: '✅ อนุมัติการจ่าย (Approve Payment)', desc: 'กดอนุมัติการจ่ายเงิน/ปิดยอด', category: 'Financial' },
-
-    // ⚙️ System
-    { id: 'settings_user', label: 'จัดการผู้ใช้งาน (User Management)', desc: 'เพิ่ม/ลบ/แก้ไข ผู้ใช้งานระบบ', category: 'System' },
-    { id: 'settings_company', label: 'ตั้งค่าบริษัท (Company Info)', desc: 'แก้ไขข้อมูลบริษัทและโลโก้', category: 'System' },
-    { id: 'settings_audit', label: 'ดู Log การทำงาน (Audit Logs)', desc: 'ตรวจสอบประวัติการใช้งานระบบ', category: 'System' },
-];
-
-export const STANDARD_ROLES = [
-    'Super Admin',
-    'Admin',
-    'Dispatcher',
-    'Accountant',
-    'Staff',
-    'Driver',
-    'Customer'
-] as const;
-
-export type StandardRole = typeof STANDARD_ROLES[number];
-
-export interface Role {
-    Role_ID: number;
-    Role_Name: string;
-    Description?: string | null;
+export type RolePermission = {
+  Role: string
+  Permissions: Record<string, boolean>
 }
 
-export type RolePermissions = Record<string, boolean>;
+export const STANDARD_ROLES = ['Super Admin', 'Admin', 'Executive', 'Accountant', 'Dispatcher', 'Driver', 'Customer']
+
+export const PERMISSION_CATEGORIES = [
+    { id: 'Executive', label: 'Executive Intelligence', icon: 'Target' },
+    { id: 'Operations', label: 'Order & Planning', icon: 'FileText' },
+    { id: 'Fleet', label: 'Fleet & Maintenance', icon: 'Truck' },
+    { id: 'Financial', label: 'Financial & Billing', icon: 'Wallet' },
+    { id: 'People', label: 'Personnel & Drivers', icon: 'Users' },
+    { id: 'System', label: 'System Configuration', icon: 'Settings' }
+]
+
+export const SYSTEM_PERMISSIONS: Permission[] = [
+  // Executive
+  { id: 'view_executive_dashboard', label: 'View Executive Dashboard', desc: 'เข้าถึงหน้าจอสรุปกำไร-ขาดทุน และสถิติบริหารระดับสูง', category: 'Executive' },
+  { id: 'view_revenue_forecast', label: 'View Revenue Forecast', desc: 'ดูการคาดการณ์รายได้และแนวโน้มธุรกิจ', category: 'Executive' },
+  { id: 'manage_executive_remarks', label: 'Manage Executive Remarks', desc: 'บันทึกหมายเหตุและการสั่งการบริหารประจำเดือน', category: 'Executive' },
+  
+  // Financial
+  { id: 'view_financial_reports', label: 'View Financial Reports', desc: 'ดูรายงานรายได้และต้นทุนทั้งหมด', category: 'Financial' },
+  { id: 'manage_billing', label: 'Manage Customer Billing', desc: 'จัดการการวางบิลและสถานะการชำระเงินของลูกค้า', category: 'Financial' },
+  { id: 'manage_driver_settlement', label: 'Manage Driver Settlement', desc: 'จัดการค่าเที่ยวและเคลียร์เงินพนักงาน/รถร่วม', category: 'Financial' },
+  { id: 'view_fuel_fraud_alerts', label: 'View Fuel Fraud Alerts', desc: 'เข้าถึงระบบตรวจสอบความผิดปกติของการเติมน้ำมัน', category: 'Financial' },
+
+  // Operations
+  { id: 'create_job', label: 'Create & Edit Jobs', desc: 'สร้างงานใหม่และแก้ไขรายละเอียดงานขนส่ง', category: 'Operations' },
+  { id: 'dispatch_job', label: 'Dispatch & Assign Drivers', desc: 'จ่ายงานให้คนขับและเลือกรถขนส่ง', category: 'Operations' },
+  { id: 'view_live_tracking', label: 'Live GPS Tracking', desc: 'ติดตามตำแหน่งรถแบบเรียลไทม์บนแผนที่', category: 'Operations' },
+  { id: 'manage_routes', label: 'Manage Routes & Zones', desc: 'จัดการข้อมูลเส้นทางและพื้นที่ให้บริการ', category: 'Operations' },
+
+  // Fleet
+  { id: 'manage_vehicles', label: 'Manage Vehicles Registry', desc: 'จัดการข้อมูลทะเบียนรถ ประวัติการตรวจสภาพ', category: 'Fleet' },
+  { id: 'manage_maintenance', label: 'Manage Maintenance Tickets', desc: 'อนุมัติงานซ่อมและบันทึกประวัติการบำรุงรักษา', category: 'Fleet' },
+  { id: 'view_fleet_compliance', label: 'View Compliance Status', desc: 'ติดตามวันหมดอายุภาษี/ประกัน/พรบ.', category: 'Fleet' },
+
+  // People
+  { id: 'manage_drivers', label: 'Manage Driver Profiles', desc: 'จัดการข้อมูลพนักงานขับรถและประวัติการทำงาน', category: 'People' },
+  { id: 'manage_customers', label: 'Manage Customer Master', desc: 'จัดการข้อมูลบริษัทลูกค้าและเงื่อนไขการให้บริการ', category: 'People' },
+  { id: 'manage_users', label: 'Manage System Users', desc: 'จัดการบัญชีผู้ใช้งานระบบและกำหนดบทบาท', category: 'People' },
+
+  // System
+  { id: 'manage_system_settings', label: 'Core System Settings', desc: 'กำหนดค่าพื้นฐานของระบบและพารามิเตอร์การทำงาน', category: 'System' },
+  { id: 'manage_roles_permissions', label: 'Manage Roles & Security', desc: 'แก้ไขสิทธิ์การเข้าถึงเมนูต่างๆ ของแต่ละบทบาท', category: 'System' },
+  { id: 'view_audit_logs', label: 'View System Audit Logs', desc: 'ตรวจสอบประวัติการเข้าใช้งานและการแก้ไขข้อมูลย้อนหลัง', category: 'System' },
+]
