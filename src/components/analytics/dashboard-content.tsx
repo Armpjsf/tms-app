@@ -123,7 +123,11 @@ export async function DashboardContent({
                         maintenance,
                         safety,
                         workforce,
-                        routes
+                        routes,
+                        driverLeaderboard,
+                        vehicleProfitability,
+                        esgStats,
+                        opStats
                     }} 
                 />
             </div>
