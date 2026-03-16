@@ -1,6 +1,6 @@
 "use server"
 
-import { createClient } from '@/utils/supabase/server'
+import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { getUserBranchId, isSuperAdmin } from "@/lib/permissions"
 
 // Type matching actual Supabase schema (lowercase columns!)
@@ -33,14 +33,11 @@ export type Vehicle = {
 
 export async function getAllVehiclesFromTable(): Promise<Vehicle[]> {
   try {
-    const supabase = await createClient()
-    let query = supabase
-      .from('master_vehicles')
-      .select('*')
-    
-    // Filter by Branch
-    const branchId = await getUserBranchId()
     const isAdmin = await isSuperAdmin()
+    const branchId = await getUserBranchId()
+    const supabase = isAdmin ? await createAdminClient() : await createClient()
+    
+    let query = supabase.from('master_vehicles').select('*')
     
     if (branchId && branchId !== 'All') {
         query = query.eq('branch_id', branchId)
@@ -49,10 +46,7 @@ export async function getAllVehiclesFromTable(): Promise<Vehicle[]> {
     }
 
     const { data, error } = await query
-    
-    if (error) {
-      return []
-    }
+    if (error) return []
     return data || []
   } catch {
     return []
@@ -62,7 +56,8 @@ export async function getAllVehiclesFromTable(): Promise<Vehicle[]> {
 // Get vehicle by plate
 export async function getVehicleByPlate(plate: string): Promise<Vehicle | null> {
   try {
-    const supabase = await createClient()
+    const isAdmin = await isSuperAdmin()
+    const supabase = isAdmin ? await createAdminClient() : await createClient()
     const { data, error } = await supabase
       .from('master_vehicles')
       .select('*')
@@ -79,7 +74,8 @@ export async function getVehicleByPlate(plate: string): Promise<Vehicle | null> 
 // Create vehicle
 export async function createVehicle(vehicleData: Partial<Vehicle>) {
   try {
-    const supabase = await createClient()
+    const isAdmin = await isSuperAdmin()
+    const supabase = isAdmin ? await createAdminClient() : await createClient()
     const { data, error } = await supabase
       .from('master_vehicles')
       .insert({
@@ -108,7 +104,8 @@ export async function createVehicle(vehicleData: Partial<Vehicle>) {
 // Update vehicle
 export async function updateVehicle(plate: string, vehicleData: Partial<Vehicle>) {
   try {
-    const supabase = await createClient()
+    const isAdmin = await isSuperAdmin()
+    const supabase = isAdmin ? await createAdminClient() : await createClient()
     const { data, error } = await supabase
       .from('master_vehicles')
       .update({
@@ -136,7 +133,8 @@ export async function updateVehicle(plate: string, vehicleData: Partial<Vehicle>
 // Delete vehicle
 export async function deleteVehicle(plate: string) {
   try {
-    const supabase = await createClient()
+    const isAdmin = await isSuperAdmin()
+    const supabase = isAdmin ? await createAdminClient() : await createClient()
     const { error } = await supabase
       .from('master_vehicles')
       .delete()
@@ -155,12 +153,11 @@ export async function deleteVehicle(plate: string) {
 // Also supports pagination for /vehicles page
 export async function getAllVehicles(page?: number, limit?: number, query?: string, providedBranchId?: string) {
   try {
-    const supabase = await createClient()
-    let queryBuilder = supabase.from('master_vehicles').select('*', { count: 'exact' })
-    
-    // Filter by Branch
     const isAdmin = await isSuperAdmin()
     const branchId = providedBranchId || await getUserBranchId()
+    const supabase = isAdmin ? await createAdminClient() : await createClient()
+    
+    let queryBuilder = supabase.from('master_vehicles').select('*', { count: 'exact' })
     
     if (branchId && branchId !== 'All') {
         queryBuilder = queryBuilder.eq('branch_id', branchId)
@@ -168,12 +165,10 @@ export async function getAllVehicles(page?: number, limit?: number, query?: stri
         return { data: [], count: 0 }
     }
     
-    // Apply search filter if query provided
     if (query) {
       queryBuilder = queryBuilder.or(`vehicle_plate.ilike.%${query}%,brand.ilike.%${query}%,model.ilike.%${query}%`)
     }
     
-    // Apply pagination if provided
     if (page && limit) {
       const from = (page - 1) * limit
       const to = from + limit - 1
@@ -181,10 +176,7 @@ export async function getAllVehicles(page?: number, limit?: number, query?: stri
     }
     
     const { data, error, count } = await queryBuilder
-    
-    if (error) {
-      return { data: [], count: 0 }
-    }
+    if (error) return { data: [], count: 0 }
     
     return { data: data || [], count: count || 0 }
   } catch {
@@ -195,14 +187,13 @@ export async function getAllVehicles(page?: number, limit?: number, query?: stri
 // Get vehicle stats for dashboard
 export async function getVehicleStats(providedBranchId?: string) {
   try {
-    const supabase = await createClient()
+    const isAdmin = await isSuperAdmin()
+    const branchId = providedBranchId || await getUserBranchId()
+    const supabase = isAdmin ? await createAdminClient() : await createClient()
+    
     let query = supabase
       .from('master_vehicles')
       .select('vehicle_plate, active_status, current_mileage, next_service_mileage')
-    
-    // Filter by Branch
-    const isAdmin = await isSuperAdmin()
-    const branchId = providedBranchId || await getUserBranchId()
     
     if (branchId && branchId !== 'All') {
         query = query.eq('branch_id', branchId)
@@ -211,16 +202,12 @@ export async function getVehicleStats(providedBranchId?: string) {
     }
 
     const { data, error } = await query
-
-    if (error) {
-      return { total: 0, active: 0, maintenance: 0, dueSoon: 0 }
-    }
+    if (error) return { total: 0, active: 0, maintenance: 0, dueSoon: 0 }
     
     const total = data?.length || 0
     const active = data?.filter(v => v.active_status === 'Active').length || 0
     const maintenance = data?.filter(v => v.active_status === 'Maintenance').length || 0
     
-    // Calculate dueSoon (within 1000km of service)
     const dueSoon = data?.filter(v => {
       if (v.current_mileage && v.next_service_mileage) {
         return (v.next_service_mileage - v.current_mileage) <= 1000
@@ -236,9 +223,9 @@ export async function getVehicleStats(providedBranchId?: string) {
 // Get a sampled vehicle's utilization for the dashboard
 export async function getSampledVehicleUtilization(providedBranchId?: string) {
   try {
-    const supabase = await createClient()
-    const branchId = providedBranchId || await getUserBranchId()
     const isAdmin = await isSuperAdmin()
+    const branchId = providedBranchId || await getUserBranchId()
+    const supabase = isAdmin ? await createAdminClient() : await createClient()
 
     let query = supabase
       .from('master_vehicles')

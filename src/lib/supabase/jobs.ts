@@ -1,8 +1,9 @@
 "use server"
 
-import { createClient } from '@/utils/supabase/server'
+import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { logActivity } from '@/lib/supabase/logs'
 import { getDriverSession } from '@/lib/actions/auth-actions'
+import { getUserBranchId, isSuperAdmin, getCustomerId } from "@/lib/permissions"
  
 export type JobAssignment = {
   Vehicle_Type: string
@@ -71,22 +72,20 @@ export type Job = {
 // Removed duplicate definition
 
 // ดึงงานทั้งหมดวันนี้
-import { getUserBranchId, isSuperAdmin, getCustomerId } from "@/lib/permissions"
 
 export async function getTodayJobs(): Promise<Job[]> {
   try {
-    const supabase = await createClient()
+    const isAdmin = await isSuperAdmin()
+    const branchId = await getUserBranchId()
+    const customerId = await getCustomerId()
+    const supabase = isAdmin ? await createAdminClient() : await createClient()
+    
     const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' })
     
     let dbQuery = supabase
       .from('Jobs_Main')
       .select('*')
       .eq('Plan_Date', today)
-    
-    // Filter by Branch
-    const branchId = await getUserBranchId()
-    const isAdmin = await isSuperAdmin()
-    const customerId = await getCustomerId()
     
     if (customerId) {
         dbQuery = dbQuery.eq('Customer_ID', customerId)
@@ -112,11 +111,10 @@ export async function getTodayJobs(): Promise<Job[]> {
 // ดึงงานตามสถานะ
 export async function getJobsByStatus(status: string): Promise<Job[]> {
   try {
-    const supabase = await createClient()
-    
-    const branchId = await getUserBranchId()
     const isAdmin = await isSuperAdmin()
+    const branchId = await getUserBranchId()
     const customerId = await getCustomerId()
+    const supabase = isAdmin ? await createAdminClient() : await createClient()
 
     let dbQuery = supabase
       .from('Jobs_Main')
@@ -155,17 +153,16 @@ export async function getAllJobs(
   endDate = '' // Add endDate parameter
 ): Promise<{ data: Job[], count: number }> {
   try {
-    const supabase = await createClient()
+    const isAdmin = await isSuperAdmin()
+    const branchId = await getUserBranchId()
+    const customerId = await getCustomerId()
+    const supabase = isAdmin ? await createAdminClient() : await createClient()
+    
     const offset = (page - 1) * limit
     
     let dbQuery = supabase
       .from('Jobs_Main')
       .select('*', { count: 'exact' })
-    
-    // Filter by Branch
-    const branchId = await getUserBranchId()
-    const isAdmin = await isSuperAdmin()
-    const customerId = await getCustomerId()
     
     if (customerId) {
         dbQuery = dbQuery.eq('Customer_ID', customerId)
@@ -211,10 +208,10 @@ export async function getAllJobs(
 // นับสถิติงานวันนี้
 export async function getTodayJobStats(branchId?: string) {
   try {
-    const supabase = await createClient()
+    const isAdmin = await isSuperAdmin()
+    const supabase = isAdmin ? await createAdminClient() : await createClient()
     const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' })
     const userBranchId = await getUserBranchId()
-    const isAdmin = await isSuperAdmin()
     const customerId = await getCustomerId()
     
     let dbQuery = supabase
@@ -254,10 +251,10 @@ export async function getTodayJobStats(branchId?: string) {
 // ยอดเงินวันนี้ (Estimated)
 export async function getTodayFinancials(branchId?: string) {
   try {
-    const supabase = await createClient()
+    const isAdmin = await isSuperAdmin()
+    const supabase = isAdmin ? await createAdminClient() : await createClient()
     const today = new Date().toISOString().split('T')[0]
     const userBranchId = await getUserBranchId()
-    const isAdmin = await isSuperAdmin()
     const customerId = await getCustomerId()
 
     let dbQuery = supabase
@@ -296,10 +293,9 @@ export async function getDriverJobs(
   options: { startDate?: string, endDate?: string, status?: string } = {}
 ): Promise<Job[]> {
   try {
-    const supabase = await createClient()
-    
-    const branchId = await getUserBranchId()
     const isAdmin = await isSuperAdmin()
+    const branchId = await getUserBranchId()
+    const supabase = isAdmin ? await createAdminClient() : await createClient()
     
     let query = supabase
       .from('Jobs_Main')
@@ -344,9 +340,10 @@ export async function getDriverJobs(
 // ดึงรายละเอียดงาน By ID
 export async function getJobById(jobId: string): Promise<Job | null> {
     try {
-        const supabase = await createClient()
-        const branchId = await getUserBranchId()
         const isAdmin = await isSuperAdmin()
+        const branchId = await getUserBranchId()
+        const customerId = await getCustomerId()
+        const supabase = isAdmin ? await createAdminClient() : await createClient()
         
         // For driver-specific checks, we look at the session first
         const driverSession = await getDriverSession()
@@ -356,14 +353,7 @@ export async function getJobById(jobId: string): Promise<Job | null> {
             .select('*')
             .eq('Job_ID', jobId)
         
-        // Super Admins should see the job regardless of current branch selection
-        // Drivers should see jobs assigned to them
-        // Regular Customers should see jobs belonging to them
-        // Regular Admins should see jobs in their branch
-        const isAdminUser = await isSuperAdmin()
-        const customerId = await getCustomerId()
-
-        if (isAdminUser) {
+        if (isAdmin) {
             // No filter for Super Admin in detail view to avoid 404
         } else if (customerId) {
             query = query.eq('Customer_ID', customerId)
@@ -395,15 +385,16 @@ export async function getJobById(jobId: string): Promise<Job | null> {
 // สถิติยอดจัดส่งย้อนหลัง 7 วัน
 export async function getWeeklyJobStats(branchId?: string) {
   try {
-    const supabase = await createClient()
+    const isAdmin = await isSuperAdmin()
+    const userBranchId = await getUserBranchId()
+    const customerId = await getCustomerId()
+    const supabase = isAdmin ? await createAdminClient() : await createClient()
+    
     const today = new Date()
     const sevenDaysAgo = new Date(today)
     sevenDaysAgo.setDate(today.getDate() - 6)
 
     const startDate = sevenDaysAgo.toISOString().split('T')[0]
-    const userBranchId = await getUserBranchId()
-    const isAdmin = await isSuperAdmin()
-    const customerId = await getCustomerId()
     
     // ดึงข้อมูล 7 วันล่าสุด
     let dbQuery = supabase
@@ -460,10 +451,10 @@ export async function getWeeklyJobStats(branchId?: string) {
 // สัดส่วนสถานะงาน (ทั้งหมด)
 export async function getJobStatusDistribution(branchId?: string) {
     try {
-        const supabase = await createClient()
-        const userBranchId = await getUserBranchId()
         const isAdmin = await isSuperAdmin()
+        const userBranchId = await getUserBranchId()
         const customerId = await getCustomerId()
+        const supabase = isAdmin ? await createAdminClient() : await createClient()
 
         let dbQuery = supabase
             .from('Jobs_Main')
@@ -520,7 +511,8 @@ function getStatusColor(status: string) {
 // สร้างงานใหม่
 export async function createJob(jobData: Partial<Job>) {
     try {
-        const supabase = await createClient()
+        const isAdmin = await isSuperAdmin()
+        const supabase = isAdmin ? await createAdminClient() : await createClient()
         
         // Generate Job ID (Format: JOB-YYYYMMDD-XXXX)
         const today = new Date()
@@ -566,9 +558,9 @@ export async function createJob(jobData: Partial<Job>) {
 // ดึงรายชื่อคนขับทั้งหมด (จากประวัติงาน)
 export async function getAllDrivers() {
     try {
-        const supabase = await createClient()
-        const branchId = await getUserBranchId()
         const isAdmin = await isSuperAdmin()
+        const supabase = isAdmin ? await createAdminClient() : await createClient()
+        const branchId = await getUserBranchId()
 
         let query = supabase
             .from('Jobs_Main')
@@ -602,9 +594,9 @@ export async function getAllDrivers() {
 // ดึงรายชื่อรถทั้งหมด
 export async function getAllVehicles() {
     try {
-        const supabase = await createClient()
-        const branchId = await getUserBranchId()
         const isAdmin = await isSuperAdmin()
+        const supabase = isAdmin ? await createAdminClient() : await createClient()
+        const branchId = await getUserBranchId()
 
         let query = supabase
             .from('Jobs_Main')
@@ -637,11 +629,10 @@ export async function getAllVehicles() {
 // ดึงข้อมูลสำหรับหน้า Billing (Completed/Delivered)
 export async function getJobsForBilling(startDate?: string, endDate?: string): Promise<Job[]> {
     try {
-        const supabase = await createClient()
-        const customerId = await getCustomerId()
-
-        const branchId = await getUserBranchId()
         const isAdmin = await isSuperAdmin()
+        const branchId = await getUserBranchId()
+        const customerId = await getCustomerId()
+        const supabase = isAdmin ? await createAdminClient() : await createClient()
 
         let dbQuery = supabase
             .from('Jobs_Main')
@@ -681,7 +672,8 @@ export async function getJobsForBilling(startDate?: string, endDate?: string): P
 // ดึงข้อมูล Dashboard สำหรับ Driver (Mobile)
 export async function getDriverDashboardStats(driverId: string) {
   try {
-    const supabase = await createClient()
+    const isAdmin = await isSuperAdmin()
+    const supabase = isAdmin ? await createAdminClient() : await createClient()
     const today = new Date().toISOString().split('T')[0]
     
     // 1. Get ALL jobs for this driver (not just today) that are not cancelled
@@ -759,10 +751,9 @@ export async function getDriverDashboardStats(driverId: string) {
 // Get billable jobs for a customer
 export async function getBillableJobs(customerId: string) {
   try {
-    const supabase = await createClient()
-    
-    const branchId = await getUserBranchId()
     const isAdmin = await isSuperAdmin()
+    const branchId = await getUserBranchId()
+    const supabase = isAdmin ? await createAdminClient() : await createClient()
 
     // Get jobs that are Complete/Delivered and NOT yet invoiced
     let dbQuery = supabase
