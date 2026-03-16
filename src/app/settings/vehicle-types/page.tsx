@@ -99,7 +99,7 @@ export default function VehicleTypesPage() {
   }
 
   return (
-    <div className="container mx-auto p-6 text-gray-900 max-w-4xl">
+    <div className="container mx-auto p-6 text-slate-100 max-w-4xl">
         <div className="flex items-center gap-4 mb-6">
             <Link href="/settings">
                 <Button variant="ghost" size="icon" className="hover:bg-white/10">
@@ -110,9 +110,9 @@ export default function VehicleTypesPage() {
         </div>
 
         <div className="flex justify-between items-center mb-6">
-            <p className="text-gray-500">กำหนดประเภทรถที่ใช้งานในระบบ</p>
+            <p className="text-slate-400">กำหนดประเภทรถที่ใช้งานในระบบ</p>
             <Button onClick={handleOpenCreate} className="bg-emerald-600 hover:bg-blue-700 gap-2">
-                <Plus size={16} /> เติ่มประเภทรถ
+                <Plus size={16} /> เพิ่มประเภทรถ
             </Button>
         </div>
 
@@ -129,7 +129,7 @@ export default function VehicleTypesPage() {
                 </div>
             ) : (
                 <table className="w-full text-left">
-                    <thead className="bg-background text-gray-500 text-sm uppercase">
+                    <thead className="bg-gray-50 text-gray-600 text-sm uppercase">
                         <tr>
                             <th className="px-6 py-3 font-medium">ชื่อประเภท</th>
                             <th className="px-6 py-3 font-medium">รายละเอียด</th>
@@ -140,8 +140,8 @@ export default function VehicleTypesPage() {
                     <tbody className="divide-y divide-slate-800">
                         {types.map((type) => (
                             <tr key={type.type_id} className="hover:bg-gray-50 transition-colors">
-                                <td className="px-6 py-4 font-medium">{type.type_name}</td>
-                                <td className="px-6 py-4 text-gray-500">{type.description || '-'}</td>
+                                <td className="px-6 py-4 font-medium text-gray-900">{type.type_name}</td>
+                                <td className="px-6 py-4 text-gray-600">{type.description || '-'}</td>
                                 <td className="px-6 py-4">
                                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                                         type.active_status === 'Active' 

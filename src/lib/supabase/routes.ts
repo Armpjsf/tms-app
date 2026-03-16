@@ -1,7 +1,7 @@
 "use server"
 
-import { createClient } from '@/utils/supabase/server'
-import { getUserBranchId, isSuperAdmin, getUserRole } from "@/lib/permissions"
+import { createClient, createAdminClient } from '@/utils/supabase/server'
+import { getUserBranchId, isSuperAdmin, getUserRole, isAdmin } from "@/lib/permissions"
 
 export type Route = {
   Route_Name: string
@@ -35,7 +35,8 @@ export async function getCurrentUserRole() {
 // Get all routes
 export async function getAllRoutes(page?: number, limit?: number, query?: string, branchId?: string) {
   try {
-    const supabase = await createClient()
+    const isAdminUser = await isSuperAdmin()
+    const supabase = isAdminUser ? await createAdminClient() : await createClient()
     let queryBuilder = supabase.from('Master_Routes').select('*', { count: 'exact' })
     
     if (page && limit) {
@@ -50,12 +51,11 @@ export async function getAllRoutes(page?: number, limit?: number, query?: string
 
     // Unified Branch Filtering
     const userBranchId = await getUserBranchId()
-    const isAdmin = await isSuperAdmin()
     const effectiveBranchId = branchId || userBranchId
 
-    if (effectiveBranchId && effectiveBranchId !== 'All') {
+    if (effectiveBranchId && effectiveBranchId !== 'All' && !isAdminUser) {
         queryBuilder = queryBuilder.eq('Branch_ID', effectiveBranchId)
-    } else if (!isAdmin && !effectiveBranchId) {
+    } else if (!isAdminUser && !effectiveBranchId) {
         return { data: [], count: 0 }
     }
     
@@ -74,7 +74,8 @@ export async function getAllRoutes(page?: number, limit?: number, query?: string
 // Get all branches
 export async function getBranches() {
   try {
-    const supabase = await createClient()
+    const isAdminUser = await isSuperAdmin()
+    const supabase = isAdminUser ? await createAdminClient() : await createClient()
     const { data, error } = await supabase.from('Master_Branches').select('Branch_ID, Branch_Name').order('Branch_Name')
     
     if (error) {
@@ -89,7 +90,9 @@ export async function getBranches() {
 // Create route
 export async function createRoute(routeData: Partial<Route>) {
   try {
-    const supabase = await createClient()
+    const isSuper = await isSuperAdmin()
+    const isAdminUser = await isAdmin()
+    const supabase = (isSuper || isAdminUser) ? await createAdminClient() : await createClient()
     
     // Route_Name is PK, must be provided
     if (!routeData.Route_Name) {
@@ -127,7 +130,8 @@ export async function createRoute(routeData: Partial<Route>) {
 // Update route
 export async function updateRoute(originalRouteName: string, routeData: Partial<Route>) {
   try {
-    const supabase = await createClient()
+    const isAdminUser = await isSuperAdmin()
+    const supabase = isAdminUser ? await createAdminClient() : await createClient()
     const { data, error } = await supabase
       .from('Master_Routes')
       .update({
@@ -160,7 +164,8 @@ export async function updateRoute(originalRouteName: string, routeData: Partial<
 // Delete route
 export async function deleteRoute(routeName: string) {
   try {
-    const supabase = await createClient()
+    const isAdminUser = await isSuperAdmin()
+    const supabase = isAdminUser ? await createAdminClient() : await createClient()
     const { error } = await supabase
       .from('Master_Routes')
       .delete()
@@ -179,7 +184,9 @@ export async function deleteRoute(routeName: string) {
 // Bulk create routes
 export async function createBulkRoutes(routes: Record<string, unknown>[]) {
     try {
-        const supabase = await createClient()
+        const isSuper = await isSuperAdmin()
+        const isAdminUser = await isAdmin()
+        const supabase = (isSuper || isAdminUser) ? await createAdminClient() : await createClient()
         const currentUserBranch = await getUserBranchId()
         
         // Fetch All Branches to map Name -> ID
@@ -325,7 +332,9 @@ export async function createBulkRoutes(routes: Record<string, unknown>[]) {
 // Get all unique locations (Origin + Destination) for autocomplete
 export async function getUniqueLocations() {
   try {
-    const supabase = await createClient()
+    const isSuper = await isSuperAdmin()
+    const isAdminUser = await isAdmin()
+    const supabase = (isSuper || isAdminUser) ? await createAdminClient() : await createClient()
     
     // Fetch unique Origins
     const { data: origins } = await supabase

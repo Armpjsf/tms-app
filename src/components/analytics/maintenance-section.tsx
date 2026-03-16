@@ -137,7 +137,7 @@ export function MaintenanceSection({ data }: { data: MaintenanceScheduleData }) 
                             <div>
                                 <div className="flex items-center gap-3">
                                     <span className="text-slate-900 font-black text-sm tracking-tight uppercase italic">{item.vehicle_plate}</span>
-                                    <span className="text-[9px] font-black text-slate-400 border border-slate-200 px-2 py-0.5 rounded-full tracking-widest">{item.vehicle_type}</span>
+                                    <span className="text-[9px] font-black text-slate-600 border border-slate-200 px-2 py-0.5 rounded-full tracking-widest">{item.vehicle_type}</span>
                                 </div>
                                 <div className="text-[10px] text-amber-600 font-black mt-2 bg-amber-50 px-3 py-1 rounded-lg w-fit tracking-widest italic border border-amber-100 uppercase">
                                    SERVICE: {item.service_type}

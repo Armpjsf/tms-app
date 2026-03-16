@@ -151,7 +151,7 @@ export default function SubcontractorsPage() {
                         </div>
                         Sub-Contractors
                     </h1>
-                    <p className="text-gray-500 font-bold ml-[4.5rem] uppercase tracking-[0.2em] text-[10px]">Logistics Network • Partner Management</p>
+                    <p className="text-gray-700 font-bold ml-[4.5rem] uppercase tracking-[0.2em] text-[10px]">Logistics Network • Partner Management</p>
                 </div>
 
                 <div className="flex flex-wrap gap-4 relative z-10">
@@ -172,7 +172,7 @@ export default function SubcontractorsPage() {
                             </div>
                             <div className="px-3 py-1 bg-amber-50 rounded-full border border-amber-100 italic font-black text-[9px] text-amber-600 uppercase tracking-widest">Network</div>
                         </div>
-                        <p className="text-gray-400 font-bold text-[10px] uppercase tracking-[0.2em] mb-1">Total Partners</p>
+                        <p className="text-gray-600 font-bold text-[10px] uppercase tracking-[0.2em] mb-1">Total Partners</p>
                         <p className="text-3xl font-black text-gray-900 tracking-tighter">{list.length}</p>
                     </PremiumCard>
 
@@ -183,7 +183,7 @@ export default function SubcontractorsPage() {
                             </div>
                             <div className="px-3 py-1 bg-blue-50 rounded-full border border-blue-100 italic font-black text-[9px] text-blue-600 uppercase tracking-widest">Share</div>
                         </div>
-                        <p className="text-gray-400 font-bold text-[10px] uppercase tracking-[0.2em] mb-1">Subcontractor Share</p>
+                        <p className="text-gray-600 font-bold text-[10px] uppercase tracking-[0.2em] mb-1">Subcontractor Share</p>
                         <p className="text-3xl font-black text-gray-900 tracking-tighter">
                             {stats.performance.find((p: { name: string }) => p.name.includes('Sub'))?.count || 0} <span className="text-sm text-gray-400 font-bold tracking-normal ml-1">Jobs</span>
                         </p>
@@ -196,7 +196,7 @@ export default function SubcontractorsPage() {
                             </div>
                             <div className="px-3 py-1 bg-emerald-50 rounded-full border border-emerald-100 italic font-black text-[9px] text-emerald-600 uppercase tracking-widest">Quality</div>
                         </div>
-                        <p className="text-gray-400 font-bold text-[10px] uppercase tracking-[0.2em] mb-1">On-Time Reliability</p>
+                        <p className="text-gray-600 font-bold text-[10px] uppercase tracking-[0.2em] mb-1">On-Time Reliability</p>
                         <p className="text-3xl font-black text-gray-900 tracking-tighter">{stats.ops.fleet.onTimeDelivery.toFixed(1)}%</p>
                     </PremiumCard>
                 </div>
@@ -212,7 +212,7 @@ export default function SubcontractorsPage() {
                             placeholder="ค้นหาชื่อหรือรหัสบริษัท..." 
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="bg-transparent border-none focus-visible:ring-0 text-xl font-black text-gray-900 placeholder:text-gray-300 tracking-tighter"
+                            className="bg-transparent border-none focus-visible:ring-0 text-xl font-black text-gray-900 placeholder:text-gray-500 tracking-tighter"
                         />
                     </div>
                 </div>
@@ -223,11 +223,11 @@ export default function SubcontractorsPage() {
                     <table className="w-full text-sm text-left border-collapse">
                         <thead>
                             <tr className="bg-gray-50/50 border-b border-gray-100">
-                                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-gray-400">Identity</th>
-                                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-gray-400">Partner Details</th>
-                                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-gray-400">Payment Channel</th>
-                                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-gray-400">Status</th>
-                                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-gray-400 text-right">Actions</th>
+                                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-gray-600">Identity</th>
+                                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-gray-600">Partner Details</th>
+                                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-gray-600">Payment Channel</th>
+                                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-gray-600">Status</th>
+                                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-gray-600 text-right">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-50">
@@ -235,12 +235,12 @@ export default function SubcontractorsPage() {
                                 <tr>
                                     <td colSpan={5} className="text-center py-20">
                                         <Loader2 className="w-10 h-10 text-amber-500 animate-spin mx-auto mb-4" />
-                                        <p className="text-gray-400 font-black uppercase tracking-widest text-[10px]">Synchronizing Partners...</p>
+                                        <p className="text-gray-600 font-black uppercase tracking-widest text-[10px]">Synchronizing Partners...</p>
                                     </td>
                                 </tr>
                             ) : filtered.length === 0 ? (
                                 <tr>
-                                    <td colSpan={5} className="text-center py-20 text-gray-400 font-bold uppercase tracking-widest text-xs">
+                                    <td colSpan={5} className="text-center py-20 text-gray-700 font-black uppercase tracking-widest text-xs">
                                         No partners found in the network
                                     </td>
                                 </tr>
@@ -258,7 +258,7 @@ export default function SubcontractorsPage() {
                                         <td className="px-8 py-6">
                                             <div>
                                                 <div className="font-black text-gray-900 tracking-tighter group-hover:text-amber-600 transition-colors">{item.Sub_Name}</div>
-                                                <div className="flex items-center gap-1.5 mt-1 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                                                <div className="flex items-center gap-1.5 mt-1 text-[10px] font-bold text-gray-500 uppercase tracking-widest">
                                                     <ShieldCheck size={10} className="text-emerald-500" />
                                                     Tax: {item.Tax_ID || "PENDING"}
                                                 </div>
@@ -271,7 +271,7 @@ export default function SubcontractorsPage() {
                                                         <Banknote size={14} className="text-emerald-500" />
                                                         <span className="text-xs font-black text-gray-700">{item.Bank_Name}</span>
                                                     </div>
-                                                    <span className="text-[10px] font-bold text-gray-400 tracking-wider ml-6">{item.Bank_Account_No}</span>
+                                                    <span className="text-[10px] font-bold text-gray-500 tracking-wider ml-6">{item.Bank_Account_No}</span>
                                                 </div>
                                             ) : (
                                                 <span className="text-[10px] font-bold text-gray-300 uppercase italic">Not Specified</span>
@@ -287,11 +287,11 @@ export default function SubcontractorsPage() {
                                             </div>
                                         </td>
                                         <td className="px-8 py-6 text-right">
-                                            <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <PremiumButton variant="outline" size="sm" onClick={() => handleOpenDialog(item)} className="h-9 w-9 p-0 rounded-xl">
-                                                    <Edit className="w-4 h-4" />
+                                            <div className="flex justify-end gap-2 transition-opacity">
+                                                <PremiumButton variant="outline" size="sm" onClick={() => handleOpenDialog(item)} className="h-9 w-9 p-0 rounded-xl border-gray-200">
+                                                    <Edit className="w-4 h-4 text-gray-600" />
                                                 </PremiumButton>
-                                                <PremiumButton variant="outline" size="sm" onClick={() => handleDelete(item.Sub_ID)} className="h-9 w-9 p-0 rounded-xl text-red-500 border-red-50 hover:bg-red-50">
+                                                <PremiumButton variant="outline" size="sm" onClick={() => handleDelete(item.Sub_ID)} className="h-9 w-9 p-0 rounded-xl text-red-600 border-red-200 hover:bg-red-50">
                                                     <Trash2 className="w-4 h-4" />
                                                 </PremiumButton>
                                             </div>
@@ -313,7 +313,7 @@ export default function SubcontractorsPage() {
                     <div className="space-y-4 py-4">
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <Label>รหัสบริษัท (ID) *</Label>
+                                <Label className="text-gray-900 font-black tracking-tight">รหัสบริษัท (ID) *</Label>
                                 <Input 
                                     value={formData.Sub_ID} 
                                     onChange={e => setFormData({...formData, Sub_ID: e.target.value})} 
@@ -322,7 +322,7 @@ export default function SubcontractorsPage() {
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label>เลขประจำตัวผู้เสียภาษี</Label>
+                                <Label className="text-gray-900 font-black tracking-tight">เลขประจำตัวผู้เสียภาษี</Label>
                                 <Input 
                                     value={formData.Tax_ID || ""} 
                                     onChange={e => setFormData({...formData, Tax_ID: e.target.value})} 
@@ -332,7 +332,7 @@ export default function SubcontractorsPage() {
                         </div>
 
                             <div className="space-y-2">
-                                <Label>ชื่อบริษัทรถร่วม *</Label>
+                                <Label className="text-gray-900 font-black tracking-tight">ชื่อบริษัทรถร่วม *</Label>
                                 <Input 
                                     value={formData.Sub_Name} 
                                     onChange={e => setFormData({...formData, Sub_Name: e.target.value})} 
@@ -341,7 +341,7 @@ export default function SubcontractorsPage() {
                             </div>
 
                             <div className="space-y-2">
-                                <Label>สาขา (Branch) *</Label>
+                                <Label className="text-gray-900 font-black tracking-tight">สาขา (Branch) *</Label>
                                 <Select 
                                     value={formData.Branch_ID || ""} 
                                     onValueChange={(v: string) => setFormData({...formData, Branch_ID: v})}
@@ -363,7 +363,7 @@ export default function SubcontractorsPage() {
                             <Label className="text-emerald-500 text-xs font-bold uppercase">ข้อมูลบัญชีธนาคารส่วนกลาง (Payment)</Label>
                             
                             <div className="space-y-2">
-                                <Label>ธนาคาร</Label>
+                                <Label className="text-gray-900 font-black tracking-tight">ธนาคาร</Label>
                                 <Select 
                                     value={formData.Bank_Name || ""} 
                                     onValueChange={(v: string) => setFormData({...formData, Bank_Name: v})}
@@ -383,7 +383,7 @@ export default function SubcontractorsPage() {
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <Label>เลขที่บัญชี</Label>
+                                    <Label className="text-gray-900 font-black tracking-tight">เลขที่บัญชี</Label>
                                     <Input 
                                         value={formData.Bank_Account_No || ""} 
                                         onChange={e => setFormData({...formData, Bank_Account_No: e.target.value})} 
@@ -391,7 +391,7 @@ export default function SubcontractorsPage() {
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label>ชื่อบัญชี</Label>
+                                    <Label className="text-gray-900 font-black tracking-tight">ชื่อบัญชี</Label>
                                     <Input 
                                         value={formData.Bank_Account_Name || ""} 
                                         onChange={e => setFormData({...formData, Bank_Account_Name: e.target.value})} 

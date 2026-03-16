@@ -2,6 +2,7 @@
 
 import { createAdminClient } from '@/utils/supabase/server'
 import { getUserBranchId, isSuperAdmin } from '@/lib/permissions'
+import { cookies } from 'next/headers'
 
 export interface ScheduledService {
   vehicle_plate: string
@@ -33,29 +34,42 @@ export async function getMaintenanceSchedule(): Promise<MaintenanceScheduleData>
   const supabase = await createAdminClient()
   const branchId = await getUserBranchId()
   const isAdmin = await isSuperAdmin()
+  const cookieStore = await cookies()
+  const selectedBranch = cookieStore.get('selectedBranch')?.value
   
   const now = new Date()
-  const monthStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`
+  // Use a true 30-day sliding window for "Mission Ready" as per UI description
+  const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString()
 
   // Get all vehicles
+  // SCHEMA FIX: status -> active_status, registration_expiry -> tax_expiry
   let vehicleQuery = supabase
     .from('master_vehicles')
-    .select('vehicle_plate, vehicle_type, status, insurance_expiry, registration_expiry, last_service_date, last_service_odometer, next_service_mileage, current_mileage')
+    .select('vehicle_plate, vehicle_type, active_status, insurance_expiry, tax_expiry, last_service_date, last_service_odometer, next_service_mileage, current_mileage')
 
-  if (branchId && !isAdmin) {
-    vehicleQuery = vehicleQuery.eq('Branch_ID', branchId)
+  // SCHEMA FIX: Branch filtering on vehicles uses 'branch_id' (lowercase)
+  if (isAdmin) {
+    if (selectedBranch && selectedBranch !== 'All') {
+      vehicleQuery = vehicleQuery.eq('branch_id', selectedBranch)
+    }
+  } else if (branchId) {
+    vehicleQuery = vehicleQuery.eq('branch_id', branchId)
   }
 
   const { data: vehicles } = await vehicleQuery
 
-  // Get active repair tickets (for active repairs count)
+  // Get active repair tickets
   let activeQuery = supabase
     .from('Repair_Tickets')
     .select('Ticket_ID, Vehicle_Plate, Status, Date_Report, Cost_Total, Date_Finish')
   
-  if (branchId && !isAdmin) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    activeQuery = (activeQuery as any).eq('Branch_ID', branchId)
+  if (isAdmin) {
+    if (selectedBranch && selectedBranch !== 'All') {
+      // Repair_Tickets uses 'Branch_ID' (uppercase)
+      activeQuery = activeQuery.eq('Branch_ID', selectedBranch)
+    }
+  } else if (branchId) {
+    activeQuery = activeQuery.eq('Branch_ID', branchId)
   }
 
   const { data: tickets } = await activeQuery
@@ -69,14 +83,14 @@ export async function getMaintenanceSchedule(): Promise<MaintenanceScheduleData>
     t.Status === 'รอดำเนินการ' || t.Status === 'กำลังซ่อม'
   ).length
 
-  // Completed this month
-  const monthTickets = allTickets.filter(t => 
-    (t.Date_Finish || t.Date_Report || '') >= monthStart
+  // Completed in last 30 days (Sliding Window)
+  const recentTickets = allTickets.filter(t => 
+    (t.Date_Finish || t.Date_Report || '') >= thirtyDaysAgo
   )
-  const completedThisMonth = monthTickets.filter(t => 
+  const completedThisMonth = recentTickets.filter(t => 
     t.Status === 'Completed' || t.Status === 'เสร็จสิ้น'
   ).length
-  const totalCostThisMonth = monthTickets
+  const totalCostThisMonth = recentTickets
     .filter(t => t.Status === 'Completed' || t.Status === 'เสร็จสิ้น')
     .reduce((s, t) => s + (t.Cost_Total || 0), 0)
 
@@ -85,7 +99,8 @@ export async function getMaintenanceSchedule(): Promise<MaintenanceScheduleData>
   const dayMs = 86400000
 
   for (const v of allVehicles) {
-    if (v.status === 'Inactive') continue
+    // SCHEMA FIX: active_status
+    if (v.active_status === 'Inactive') continue
 
     // Insurance expiry check
     if (v.insurance_expiry) {
@@ -103,16 +118,16 @@ export async function getMaintenanceSchedule(): Promise<MaintenanceScheduleData>
       }
     }
 
-    // Registration expiry check
-    if (v.registration_expiry) {
-      const expiry = new Date(v.registration_expiry)
+    // Registration expiry check (SCHEMA FIX: tax_expiry)
+    if (v.tax_expiry) {
+      const expiry = new Date(v.tax_expiry)
       const daysUntil = Math.ceil((expiry.getTime() - now.getTime()) / dayMs)
       if (daysUntil <= 30) {
         services.push({
           vehicle_plate: v.vehicle_plate,
           vehicle_type: v.vehicle_type || 'Unknown',
           service_type: 'ต่อทะเบียน',
-          due_date: v.registration_expiry,
+          due_date: v.tax_expiry,
           days_until: daysUntil,
           status: daysUntil <= 0 ? 'overdue' : daysUntil <= 7 ? 'due_soon' : 'upcoming',
         })

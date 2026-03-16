@@ -1,7 +1,7 @@
 'use server'
 
-import { createClient } from "@/utils/supabase/server"
-import { getUserBranchId, isSuperAdmin } from "@/lib/permissions"
+import { createClient, createAdminClient } from "@/utils/supabase/server"
+import { getUserBranchId, isAdmin, isSuperAdmin } from "@/lib/permissions"
 import { accountingService } from "@/services/accounting"
 import { Job, Driver_Payment } from "@/types/database"
 import { logActivity } from "./logs"
@@ -229,21 +229,25 @@ export async function createDriverPayment(
     }
 }
 
-export async function getBillingNotes() {
+export async function getBillingNotes(filters?: { dateFrom?: string, dateTo?: string, status?: string }) {
     try {
-        const supabase = await createClient()
+        const admin = await isAdmin()
+        const supabase = admin ? await createAdminClient() : await createClient()
         
         // Filter by Branch
         const branchId = await getUserBranchId()
-        const isAdmin = await isSuperAdmin()
         
         let query = supabase.from('Billing_Notes').select('*')
         
-        if (branchId && !isAdmin) {
+        if (branchId && !admin && branchId !== 'All') {
             query = query.or(`Branch_ID.eq.${branchId},Branch_ID.is.null`)
-        } else if (!isAdmin && !branchId) {
+        } else if (!admin && !branchId) {
             return []
         }
+
+        if (filters?.dateFrom) query = query.gte('Billing_Date', filters.dateFrom)
+        if (filters?.dateTo) query = query.lte('Billing_Date', filters.dateTo)
+        if (filters?.status && filters.status !== 'all') query = query.eq('Status', filters.status)
 
         const { data, error } = await query
             .order('Created_At', { ascending: false })
@@ -351,17 +355,17 @@ export interface DriverPayment {
 
 export async function getDriverPayments() {
     try {
-        const supabase = await createClient()
+        const admin = await isAdmin()
+        const supabase = admin ? await createAdminClient() : await createClient()
 
         // Filter by Branch
         const branchId = await getUserBranchId()
-        const isAdmin = await isSuperAdmin()
 
         let query = supabase.from('Driver_Payments').select('*')
 
-        if (branchId && !isAdmin) {
+        if (branchId && !admin && branchId !== 'All') {
             query = query.or(`Branch_ID.eq.${branchId},Branch_ID.is.null`)
-        } else if (!isAdmin && !branchId) {
+        } else if (!admin && !branchId) {
             return []
         }
 
@@ -379,7 +383,8 @@ export async function getDriverPayments() {
 
 export async function getDriverPaymentByIdWithJobs(id: string) {
     try {
-        const supabase = await createClient()
+        const admin = await isAdmin()
+        const supabase = admin ? await createAdminClient() : await createClient()
         
         // 1. Get Driver Payment
         const { data: payment, error: paymentError } = await supabase

@@ -24,9 +24,9 @@ export function PremiumButton({
   
   const variants = {
     primary: "bg-emerald-500 text-white shadow-lg shadow-emerald-500/25 hover:bg-emerald-600",
-    secondary: "bg-gray-900 text-white shadow-lg shadow-gray-900/20 hover:bg-black",
-    outline: "bg-transparent border-2 border-gray-100 text-gray-700 hover:border-emerald-500 hover:text-emerald-600",
-    ghost: "bg-transparent text-gray-500 hover:bg-gray-50 hover:text-gray-900",
+    secondary: "bg-slate-900 text-slate-100 border border-white/10 shadow-lg shadow-black/20 hover:bg-black",
+    outline: "bg-transparent border-2 border-white/10 text-slate-400 hover:border-emerald-500/50 hover:text-emerald-400 hover:bg-emerald-500/5",
+    ghost: "bg-transparent text-slate-500 hover:bg-white/5 hover:text-slate-200",
     danger: "bg-rose-500 text-white shadow-lg shadow-rose-500/25 hover:bg-rose-600",
   }
 

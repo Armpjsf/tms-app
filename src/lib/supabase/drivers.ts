@@ -1,7 +1,7 @@
 "use server"
 
 import { createClient, createAdminClient } from '@/utils/supabase/server'
-import { getUserBranchId, isSuperAdmin } from "@/lib/permissions"
+import { getUserBranchId, isSuperAdmin, isAdmin } from "@/lib/permissions"
 
 // Type matching actual Supabase schema
 export type Driver = {
@@ -32,15 +32,16 @@ export type Driver = {
 // Get all drivers from Master_Drivers table
 export async function getAllDriversFromTable(): Promise<Driver[]> {
   try {
-    const isAdmin = await isSuperAdmin()
+    const isSuper = await isSuperAdmin()
+    const isAdminUser = await isAdmin()
     const branchId = await getUserBranchId()
-    const supabase = isAdmin ? await createAdminClient() : await createClient()
+    const supabase = (isSuper || isAdminUser) ? await createAdminClient() : await createClient()
     
     let dbQuery = supabase.from('Master_Drivers').select('*')
     
-    if (branchId && branchId !== 'All') {
+    if (branchId && branchId !== 'All' && !isSuper) {
         dbQuery = dbQuery.eq('Branch_ID', branchId)
-    } else if (!isAdmin && !branchId) {
+    } else if (!isSuper && !isAdminUser && !branchId) {
         return []
     }
 
@@ -55,8 +56,9 @@ export async function getAllDriversFromTable(): Promise<Driver[]> {
 // Get driver by ID
 export async function getDriverById(id: string): Promise<Driver | null> {
   try {
-    const isAdmin = await isSuperAdmin()
-    const supabase = isAdmin ? await createAdminClient() : await createClient()
+    const isSuper = await isSuperAdmin()
+    const isAdminUser = await isAdmin()
+    const supabase = (isSuper || isAdminUser) ? await createAdminClient() : await createClient()
     const { data, error } = await supabase
       .from('Master_Drivers')
       .select('*')
@@ -73,8 +75,9 @@ export async function getDriverById(id: string): Promise<Driver | null> {
 // Create driver
 export async function createDriver(driverData: Partial<Driver>) {
   try {
-    const isAdmin = await isSuperAdmin()
-    const supabase = isAdmin ? await createAdminClient() : await createClient()
+    const isSuper = await isSuperAdmin()
+    const isAdminUser = await isAdmin()
+    const supabase = (isSuper || isAdminUser) ? await createAdminClient() : await createClient()
     const { data, error } = await supabase
       .from('Master_Drivers')
       .insert({
@@ -105,8 +108,9 @@ export async function createDriver(driverData: Partial<Driver>) {
 // Update driver
 export async function updateDriver(id: string, driverData: Partial<Driver>) {
   try {
-    const isAdmin = await isSuperAdmin()
-    const supabase = isAdmin ? await createAdminClient() : await createClient()
+    const isSuper = await isSuperAdmin()
+    const isAdminUser = await isAdmin()
+    const supabase = (isSuper || isAdminUser) ? await createAdminClient() : await createClient()
     const { data, error } = await supabase
       .from('Master_Drivers')
       .update({
@@ -136,8 +140,9 @@ export async function updateDriver(id: string, driverData: Partial<Driver>) {
 // Delete driver
 export async function deleteDriver(id: string) {
   try {
-    const isAdmin = await isSuperAdmin()
-    const supabase = isAdmin ? await createAdminClient() : await createClient()
+    const isSuper = await isSuperAdmin()
+    const isAdminUser = await isAdmin()
+    const supabase = (isSuper || isAdminUser) ? await createAdminClient() : await createClient()
     const { error } = await supabase
       .from('Master_Drivers')
       .delete()
@@ -153,18 +158,19 @@ export async function deleteDriver(id: string) {
 // ดึงรายชื่อคนขับที่ Active
 export async function getActiveDrivers() {
   try {
-    const isAdmin = await isSuperAdmin()
+    const isSuper = await isSuperAdmin()
+    const isAdminUser = await isAdmin()
     const branchId = await getUserBranchId()
-    const supabase = isAdmin ? await createAdminClient() : await createClient()
+    const supabase = (isSuper || isAdminUser) ? await createAdminClient() : await createClient()
 
     let queryBuilder = supabase
       .from('Master_Drivers')
       .select('*')
       .eq('Active_Status', 'Active')
     
-    if (branchId && branchId !== 'All') {
+    if (branchId && branchId !== 'All' && !isSuper) {
         queryBuilder = queryBuilder.eq('Branch_ID', branchId)
-    } else if (!isAdmin && !branchId) {
+    } else if (!isSuper && !isAdminUser && !branchId) {
         return []
     }
 
@@ -180,15 +186,16 @@ export async function getActiveDrivers() {
 // Alias for planning page compatibility
 export async function getAllDrivers(page?: number, limit?: number, query?: string, providedBranchId?: string) {
   try {
-    const isAdmin = await isSuperAdmin()
+    const isSuper = await isSuperAdmin()
+    const isAdminUser = await isAdmin()
     const branchId = providedBranchId || await getUserBranchId()
-    const supabase = isAdmin ? await createAdminClient() : await createClient()
+    const supabase = (isSuper || isAdminUser) ? await createAdminClient() : await createClient()
     
     let queryBuilder = supabase.from('Master_Drivers').select('*', { count: 'exact' })
     
-    if (branchId && branchId !== 'All') {
+    if (branchId && branchId !== 'All' && !isSuper) {
         queryBuilder = queryBuilder.eq('Branch_ID', branchId)
-    } else if (!isAdmin && !branchId) {
+    } else if (!isSuper && !isAdminUser && !branchId) {
         return { data: [], count: 0 }
     }
     
@@ -213,15 +220,16 @@ export async function getAllDrivers(page?: number, limit?: number, query?: strin
 // Get driver stats for dashboard
 export async function getDriverStats(providedBranchId?: string) {
   try {
-    const isAdmin = await isSuperAdmin()
+    const isSuper = await isSuperAdmin()
+    const isAdminUser = await isAdmin()
     const branchId = providedBranchId || await getUserBranchId()
-    const supabase = isAdmin ? await createAdminClient() : await createClient()
+    const supabase = (isSuper || isAdminUser) ? await createAdminClient() : await createClient()
     
     let query = supabase.from('Master_Drivers').select('*')
     
-    if (branchId && branchId !== 'All') {
+    if (branchId && branchId !== 'All' && !isSuper) {
         query = query.eq('Branch_ID', branchId)
-    } else if (!isAdmin && !branchId) {
+    } else if (!isSuper && !isAdminUser && !branchId) {
         return { total: 0, active: 0, onJob: 0 }
     }
 
@@ -297,12 +305,13 @@ export async function getDriverComplianceStats(branchId?: string) {
         let query = supabase.from('Master_Drivers').select('License_Expiry')
 
         const userBranchId = await getUserBranchId()
-        const isAdmin = await isSuperAdmin()
-        const targetBranchId = isAdmin ? (branchId && branchId !== 'All' ? branchId : null) : userBranchId
+        const isSuper = await isSuperAdmin()
+        const isAdminUser = await isAdmin()
+        const targetBranchId = isSuper ? (branchId && branchId !== 'All' ? branchId : null) : userBranchId
 
         if (targetBranchId) {
             query = query.eq('Branch_ID', targetBranchId)
-        } else if (!isAdmin && !userBranchId) {
+        } else if (!isSuper && !isAdminUser && !userBranchId) {
             return { valid: 0, expiring: 0, expired: 0, missing: 0 }
         }
 

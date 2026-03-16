@@ -1,4 +1,4 @@
-import { createClient } from '@/utils/supabase/server'
+import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { getUserBranchId, isSuperAdmin, getCustomerId } from "@/lib/permissions"
 
 export type PODRecord = {
@@ -19,12 +19,12 @@ export type PODRecord = {
 // ดึงรายการ POD วันนี้
 export async function getTodayPODs(): Promise<PODRecord[]> {
   try {
-    const supabase = await createClient()
+    const isAdmin = await isSuperAdmin()
+    const supabase = isAdmin ? await createAdminClient() : await createClient()
     const today = new Date().toISOString().split('T')[0]
     
     const branchId = await getUserBranchId()
     const customerId = await getCustomerId()
-    const isAdmin = await isSuperAdmin()
 
     let dbQuery = supabase
       .from('Jobs_Main')
@@ -48,7 +48,7 @@ export async function getTodayPODs(): Promise<PODRecord[]> {
     }
     
     return data || []
-  } catch (e) {
+  } catch {
     return []
   }
 }
@@ -56,12 +56,12 @@ export async function getTodayPODs(): Promise<PODRecord[]> {
 // ดึงรายการ POD ทั้งหมด
 export async function getAllPODs(page = 1, limit = 50, dateFrom?: string, dateTo?: string): Promise<{ data: PODRecord[], count: number }> {
   try {
-    const supabase = await createClient()
+    const isAdmin = await isSuperAdmin()
+    const supabase = isAdmin ? await createAdminClient() : await createClient()
     const offset = (page - 1) * limit
     
     const branchId = await getUserBranchId()
     const customerId = await getCustomerId()
-    const isAdmin = await isSuperAdmin()
 
     let dbQuery = supabase
       .from('Jobs_Main')
@@ -94,7 +94,7 @@ export async function getAllPODs(page = 1, limit = 50, dateFrom?: string, dateTo
     }
     
     return { data: data || [], count: count || 0 }
-  } catch (e) {
+  } catch {
     return { data: [], count: 0 }
   }
 }
@@ -102,12 +102,12 @@ export async function getAllPODs(page = 1, limit = 50, dateFrom?: string, dateTo
 // นับสถิติ POD
 export async function getPODStats() {
   try {
-    const supabase = await createClient()
+    const isAdmin = await isSuperAdmin()
+    const supabase = isAdmin ? await createAdminClient() : await createClient()
     const today = new Date().toISOString().split('T')[0]
     
     const branchId = await getUserBranchId()
     const customerId = await getCustomerId()
-    const isAdmin = await isSuperAdmin()
 
     let dbQuery = supabase
       .from('Jobs_Main')
@@ -135,7 +135,7 @@ export async function getPODStats() {
       withSignature: jobs.filter(j => j.Signature_Url).length,
       complete: jobs.filter(j => j.Job_Status === 'Delivered' || j.Job_Status === 'Complete').length,
     }
-  } catch (e) {
+  } catch {
     return { total: 0, withPhoto: 0, withSignature: 0, complete: 0 }
   }
 }

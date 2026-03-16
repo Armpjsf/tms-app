@@ -78,8 +78,10 @@ export async function getChatContacts(): Promise<ChatContact[]> {
     // 0. Detect correct schema
     let { tableName, columns } = await getChatSchema(supabase)
 
-    // Try normal client first
-    const result = await supabase
+    // Proactively use admin client for Super Admins for better performance/avoiding RLS errors
+    const effectiveSupabase = isAdmin ? createAdminClient() : supabase
+
+    const result = await effectiveSupabase
       .from(tableName)
       .select('*')
       .order(columns.created_at, { ascending: false })

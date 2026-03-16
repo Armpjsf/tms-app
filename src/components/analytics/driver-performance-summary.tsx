@@ -35,8 +35,8 @@ export function DriverPerformanceSummary({ leaderboard, compliance, efficiency }
             {/* 1. Yield Hero: Top Performers */}
             <Card className="lg:col-span-12 bg-gradient-to-br from-blue-900/20 to-slate-900 border-emerald-500/15 shadow-2xl overflow-hidden relative group">
                 <CardHeader className="pb-2">
-                    <CardTitle className="text-gray-950 font-black flex items-center gap-3">
-                        <Award className="text-amber-600" size={20} />
+                    <CardTitle className="text-white font-black flex items-center gap-3">
+                        <Award className="text-amber-500" size={24} />
                         Fleet Performance & Yield Leaders
                     </CardTitle>
                 </CardHeader>

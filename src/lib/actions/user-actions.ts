@@ -19,10 +19,13 @@ export interface UserData {
     Permissions?: Record<string, boolean>;
 }
 
-import { getUserBranchId, isSuperAdmin } from "@/lib/permissions"
+import { getUserBranchId, isSuperAdmin, isAdmin as checkIsAdmin } from "@/lib/permissions"
 
 export async function getUsers(providedBranchId?: string) {
-    const supabase = await createClient()
+    const isSuper = await isSuperAdmin()
+    const isAdminUser = await checkIsAdmin()
+    const { createAdminClient } = await import("@/utils/supabase/server")
+    const supabase = (isSuper || isAdminUser) ? createAdminClient() : await createClient()
     
     let query = supabase
         .from("Master_Users")
@@ -32,12 +35,11 @@ export async function getUsers(providedBranchId?: string) {
         `)
     
     // Filter by Branch
-    const isAdmin = await isSuperAdmin()
     const branchId = providedBranchId || await getUserBranchId()
     
     if (branchId && branchId !== 'All') {
         query = query.eq('Branch_ID', branchId)
-    } else if (!isAdmin && !branchId) {
+    } else if (!isSuper && !branchId) {
         return []
     }
 
@@ -206,7 +208,10 @@ export async function deleteUser(username: string) {
 }
 
 export async function createBulkUsers(users: Record<string, unknown>[]) {
-    const supabase = await createClient()
+    const isSuper = await isSuperAdmin()
+    const isAdminUser = await checkIsAdmin()
+    const { createAdminClient } = await import("@/utils/supabase/server")
+    const supabase = (isSuper || isAdminUser) ? createAdminClient() : await createClient()
     const session = await getSession()
     
     if (!session) return { success: false, message: "Not authenticated" }

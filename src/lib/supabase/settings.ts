@@ -1,4 +1,7 @@
-import { createClient } from "@/utils/supabase/client"
+"use server"
+
+import { createClient, createAdminClient } from "@/utils/supabase/server"
+import { isSuperAdmin, isAdmin } from "@/lib/permissions"
 
 export interface CompanyProfile {
   company_name: string
@@ -19,7 +22,9 @@ export interface CompanyProfile {
 const SETTING_KEY = 'company_profile'
 
 export async function getCompanyProfile(): Promise<CompanyProfile | null> {
-  const supabase = createClient()
+  const isSuper = await isSuperAdmin()
+  const isAdminUser = await isAdmin()
+  const supabase = (isSuper || isAdminUser) ? await createAdminClient() : await createClient()
   
   const { data, error } = await supabase
     .from('System_Settings')
@@ -40,7 +45,9 @@ export async function getCompanyProfile(): Promise<CompanyProfile | null> {
 }
 
 export async function saveCompanyProfile(profile: CompanyProfile) {
-  const supabase = createClient()
+  const isSuper = await isSuperAdmin()
+  const isAdminUser = await isAdmin()
+  const supabase = (isSuper || isAdminUser) ? await createAdminClient() : await createClient()
   
   // Upsert
   const { error } = await supabase
@@ -55,7 +62,9 @@ export async function saveCompanyProfile(profile: CompanyProfile) {
 }
 
 export async function uploadCompanyLogo(file: File) {
-  const supabase = createClient()
+  const isSuper = await isSuperAdmin()
+  const isAdminUser = await isAdmin()
+  const supabase = (isSuper || isAdminUser) ? await createAdminClient() : await createClient()
   const fileName = `company-logo-${Date.now()}.${file.name.split('.').pop()}`
 
   const { error } = await supabase

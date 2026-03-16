@@ -4,6 +4,7 @@ import { useState, useTransition, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { ChevronLeft, ChevronRight, CalendarDays, MapPin, Truck, User, Plus } from "lucide-react"
 import Link from "next/link"
+import { cn } from "@/lib/utils"
 import { CalendarJob, getJobsForMonth } from "./actions"
 import { JobDialog } from "@/components/planning/job-dialog"
 import { Driver } from "@/lib/supabase/drivers"
@@ -233,16 +234,27 @@ export function CalendarClient({
                 </div>
 
                 {/* Job indicators */}
-                <div className="space-y-0.5">
+                <div className="space-y-1 mt-1 overflow-hidden">
                   {dayJobs.slice(0, 3).map(job => (
                     <div 
                       key={job.Job_ID} 
-                      className={`h-1.5 rounded-full ${STATUS_COLORS[job.Job_Status] || 'bg-gray-300'}`}
+                      className={cn(
+                        "group/badge relative px-1.5 py-0.5 rounded-md flex items-center gap-1.5 transition-all duration-200",
+                        "border border-white/20 shadow-sm hover:shadow-md hover:scale-[1.02]",
+                        STATUS_COLORS[job.Job_Status] || 'bg-gray-400'
+                      )}
                       title={`${job.Customer_Name || job.Job_ID} — ${STATUS_LABELS[job.Job_Status] || job.Job_Status}`}
-                    />
+                    >
+                      <div className="w-1.5 h-1.5 rounded-full bg-white shrink-0 shadow-inner" />
+                      <span className="text-[9px] font-black text-white truncate leading-tight tracking-tight uppercase">
+                        {job.Customer_Name || job.Job_ID}
+                      </span>
+                    </div>
                   ))}
                   {dayJobs.length > 3 && (
-                    <p className="text-[9px] text-gray-400 font-bold text-center">+{dayJobs.length - 3} อื่นๆ</p>
+                    <div className="flex items-center justify-center py-0.5 bg-slate-50 rounded-md border border-slate-100 italic">
+                       <p className="text-[8px] text-slate-400 font-black uppercase tracking-tighter">+{dayJobs.length - 3} MORE JOBS</p>
+                    </div>
                   )}
                 </div>
               </motion.div>
@@ -269,48 +281,64 @@ export function CalendarClient({
             </div>
 
             {selectedJobs.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12 text-gray-400">
-                <CalendarDays size={48} strokeWidth={1.5} />
-                <p className="mt-3 font-bold">ไม่มีงานในวันนี้</p>
+              <div className="flex flex-col items-center justify-center py-16 text-slate-400">
+                <div className="w-16 h-16 bg-slate-900 rounded-3xl flex items-center justify-center mb-4 border border-slate-800 shadow-xl">
+                    <CalendarDays size={32} className="text-slate-600" />
+                </div>
+                <p className="font-black text-slate-500 uppercase tracking-widest text-xs">No active operations for this date</p>
                 <button 
                   onClick={() => setIsDialogOpen(true)}
-                  className="mt-3 text-sm text-indigo-600 font-bold hover:underline"
+                  className="mt-4 px-6 py-2.5 bg-indigo-500/10 text-indigo-400 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] border border-indigo-500/20 hover:bg-indigo-500/20 transition-all"
                 >
-                  + สร้างงานใหม่
+                  + Init New Workflow
                 </button>
               </div>
             ) : (
-              <div className="divide-y divide-gray-50">
+              <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {selectedJobs.map(job => (
-                  <Link key={job.Job_ID} href={`/admin/jobs/${job.Job_ID}`} className="block hover:bg-gray-50 transition-colors">
-                    <div className="px-6 py-4 flex items-center gap-4">
-                      <div className={`w-3 h-3 rounded-full flex-shrink-0 ${STATUS_COLORS[job.Job_Status] || 'bg-gray-300'}`} />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="font-bold text-gray-900 text-sm truncate">{job.Customer_Name || job.Job_ID}</span>
-                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-black text-white ${STATUS_COLORS[job.Job_Status] || 'bg-gray-400'}`}>
-                            {STATUS_LABELS[job.Job_Status] || job.Job_Status}
-                          </span>
+                  <Link key={job.Job_ID} href={`/admin/jobs/${job.Job_ID}`} className="block group/card">
+                    <motion.div 
+                      whileHover={{ y: -4 }}
+                      className="h-full bg-white rounded-3xl border border-slate-100 p-5 shadow-sm hover:shadow-xl transition-all relative overflow-hidden group-hover/card:border-indigo-200"
+                    >
+                      <div className={`absolute top-0 right-0 w-24 h-24 -mr-8 -mt-8 rounded-full opacity-5 ${STATUS_COLORS[job.Job_Status] || 'bg-gray-400'}`} />
+                      
+                      <div className="flex items-start justify-between mb-4 relative z-10">
+                        <div className={`px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest text-white shadow-sm ${STATUS_COLORS[job.Job_Status] || 'bg-gray-400'}`}>
+                          {STATUS_LABELS[job.Job_Status] || job.Job_Status}
                         </div>
-                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-500">
-                          {job.Route_Name && (
-                            <span className="flex items-center gap-1">
-                              <MapPin size={12} /> {job.Route_Name}
-                            </span>
-                          )}
-                          {job.Driver_Name && (
-                            <span className="flex items-center gap-1">
-                              <User size={12} /> {job.Driver_Name}
-                            </span>
-                          )}
-                          {job.Vehicle_Plate && (
-                            <span className="flex items-center gap-1">
-                              <Truck size={12} /> {job.Vehicle_Plate}
-                            </span>
-                          )}
+                        <span className="text-[10px] font-black text-slate-300 group-hover/card:text-indigo-400 transition-colors">#{job.Job_ID.slice(-6)}</span>
+                      </div>
+
+                      <h4 className="text-sm font-black text-slate-900 mb-4 line-clamp-1 flex items-center gap-2">
+                        {job.Customer_Name || 'Untitled Dispatch'}
+                      </h4>
+
+                      <div className="space-y-3 relative z-10">
+                        {job.Route_Name && (
+                          <div className="flex items-center gap-3 text-[10px] font-bold text-slate-500">
+                            <div className="p-1.5 bg-slate-50 rounded-lg group-hover/card:bg-indigo-50 group-hover/card:text-indigo-500 transition-colors">
+                                <MapPin size={14} />
+                            </div>
+                            <span className="truncate">{job.Route_Name}</span>
+                          </div>
+                        )}
+                        <div className="flex items-center gap-6">
+                           {job.Driver_Name && (
+                              <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400">
+                                <User size={12} className="text-slate-300" />
+                                <span className="truncate">{job.Driver_Name}</span>
+                              </div>
+                           )}
+                           {job.Vehicle_Plate && (
+                              <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400">
+                                <Truck size={12} className="text-slate-300" />
+                                <span className="truncate">{job.Vehicle_Plate}</span>
+                              </div>
+                           )}
                         </div>
                       </div>
-                    </div>
+                    </motion.div>
                   </Link>
                 ))}
               </div>

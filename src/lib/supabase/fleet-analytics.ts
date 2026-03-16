@@ -357,7 +357,7 @@ export async function getProvincialMileageStats(branchId?: string) {
 
         let query = supabase
             .from('Jobs_Main')
-            .select('Dest_Location, Zone, Weight_Kg, Distance_Km')
+            .select('Dest_Location, Zone, Weight_Kg, Est_Distance_KM')
             .in('Job_Status', REVENUE_STATUSES)
         
         if (effectiveBranchId) {
@@ -379,7 +379,7 @@ export async function getProvincialMileageStats(branchId?: string) {
                 stats[geoLabel] = { name: geoLabel, range: "0 KM", percentage: 0, color: colors[Object.keys(stats).length % colors.length], rawVal: 0, totalKm: 0 }
             }
             stats[geoLabel].rawVal += 1
-            stats[geoLabel].totalKm += (job.Distance_Km || 0)
+            stats[geoLabel].totalKm += (job.Est_Distance_KM || 0)
             totalVal += 1
         })
 

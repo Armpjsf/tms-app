@@ -75,7 +75,7 @@ export function PredictiveMaintenance({ risks }: { risks: VehicleRisk[] }) {
                             </div>
                             <div>
                                 <div className="text-gray-800 font-medium text-sm group-hover:text-purple-400 transition-colors">
-                                    {r.vehicle_plate} <span className="text-gray-600 font-black">({r.vehicle_type})</span>
+                                    {r.vehicle_plate} <span className="text-gray-700 font-black">({r.vehicle_type})</span>
                                 </div>
                                 <div className="text-xs text-red-700 font-black mt-1 flex items-center gap-1">
                                     <BrainCircuit size={12} />

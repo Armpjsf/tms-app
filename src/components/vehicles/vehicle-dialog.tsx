@@ -153,7 +153,7 @@ export function VehicleDialog({
           )}
 
           <div className="space-y-2">
-            <Label htmlFor="vehicle_plate">ทะเบียนรถ</Label>
+            <Label htmlFor="vehicle_plate" className="text-gray-900 font-bold text-sm">ทะเบียนรถ</Label>
             <Input
               id="vehicle_plate"
               value={formData.vehicle_plate}
@@ -167,30 +167,30 @@ export function VehicleDialog({
           
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-                <Label htmlFor="brand">ยี่ห้อ</Label>
+                <Label htmlFor="brand" className="text-gray-900 font-bold text-sm">ยี่ห้อ</Label>
                 <Input
                 id="brand"
                 value={formData.brand}
                 onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
                 placeholder="Toyota"
-                className="bg-gray-50 border-gray-200 text-gray-900"
+                className="bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400"
                 />
             </div>
             <div className="space-y-2">
-                <Label htmlFor="model">รุ่น</Label>
+                <Label htmlFor="model" className="text-gray-900 font-bold text-sm">รุ่น</Label>
                 <Input
                 id="model"
                 value={formData.model}
                 onChange={(e) => setFormData({ ...formData, model: e.target.value })}
                 placeholder="Hilux Revo"
-                className="bg-gray-50 border-gray-200 text-gray-900"
+                className="bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400"
                 />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-                <Label htmlFor="current_mileage">เลขไมล์ปัจจุบัน</Label>
+                <Label htmlFor="current_mileage" className="text-gray-900 font-bold text-sm">เลขไมล์ปัจจุบัน</Label>
                 <Input
                 id="current_mileage"
                 type="number"
@@ -200,7 +200,7 @@ export function VehicleDialog({
                 />
             </div>
             <div className="space-y-2">
-                <Label htmlFor="next_service_mileage">แจ้งซ่อมครั้งถัดไป</Label>
+                <Label htmlFor="next_service_mileage" className="text-gray-900 font-bold text-sm">แจ้งซ่อมครั้งถัดไป</Label>
                 <Input
                 id="next_service_mileage"
                 type="number"
@@ -213,18 +213,18 @@ export function VehicleDialog({
 
           <div className="grid grid-cols-2 gap-4 border-t border-gray-200 pt-4">
              <div className="space-y-2">
-                <Label htmlFor="max_weight_kg" className="text-emerald-400">น้ำหนักบรรทุกสูงสุด (kg)</Label>
+                <Label htmlFor="max_weight_kg" className="text-emerald-700 font-bold text-sm">น้ำหนักบรรทุกสูงสุด (kg)</Label>
                 <Input
                 id="max_weight_kg"
                 type="number"
                 value={formData.max_weight_kg}
                 onChange={(e) => setFormData({ ...formData, max_weight_kg: Number(e.target.value) })}
                 placeholder="e.g. 1500"
-                className="bg-emerald-50 border-emerald-200 text-emerald-900"
+                className="bg-emerald-50 border-emerald-200 text-emerald-900 placeholder:text-emerald-300"
                 />
             </div>
             <div className="space-y-2">
-                <Label htmlFor="max_volume_cbm" className="text-emerald-400">ปริมาตรบรรทุกสูงสุด (CBM)</Label>
+                <Label htmlFor="max_volume_cbm" className="text-emerald-700 font-bold text-sm">ปริมาตรบรรทุกสูงสุด (CBM)</Label>
                 <Input
                 id="max_volume_cbm"
                 type="number"
@@ -232,45 +232,45 @@ export function VehicleDialog({
                 onChange={(e) => setFormData({ ...formData, max_volume_cbm: Number(e.target.value) })}
                 placeholder="e.g. 2.5"
                 step="0.1"
-                className="bg-emerald-50 border-emerald-200 text-emerald-900"
+                className="bg-emerald-50 border-emerald-200 text-emerald-900 placeholder:text-emerald-300"
                 />
             </div>
           </div>
 
           <div className="space-y-3 border-t border-gray-200 pt-4">
-            <Label className="text-blue-400 font-bold block mb-1">เอกสารสำคัญ (Compliance)</Label>
+            <Label className="text-blue-700 font-black block mb-1 uppercase tracking-tight text-sm">เอกสารสำคัญ (Compliance)</Label>
             
             <div className="grid grid-cols-1 gap-3">
                 <div className="grid grid-cols-2 items-center gap-4">
-                    <Label htmlFor="tax_expiry" className="text-xs">ภาษีรถ (Tax Expiry)</Label>
+                    <Label htmlFor="tax_expiry" className="text-[11px] font-bold text-gray-700">ภาษีรถ (Tax Expiry)</Label>
                     <Input
                         id="tax_expiry"
                         type="date"
                         value={formData.tax_expiry}
                         onChange={(e) => setFormData({ ...formData, tax_expiry: e.target.value })}
-                        className="bg-gray-50 border-gray-200 h-9 text-xs text-gray-900"
+                        className="bg-gray-50 border-gray-200 h-9 text-xs text-gray-900 font-medium"
                     />
                 </div>
                 
                 <div className="grid grid-cols-2 items-center gap-4">
-                    <Label htmlFor="insurance_expiry" className="text-xs">ประกันภัย (Insurance)</Label>
+                    <Label htmlFor="insurance_expiry" className="text-[11px] font-bold text-gray-700">ประกันภัย (Insurance)</Label>
                     <Input
                         id="insurance_expiry"
                         type="date"
                         value={formData.insurance_expiry}
                         onChange={(e) => setFormData({ ...formData, insurance_expiry: e.target.value })}
-                        className="bg-gray-50 border-gray-200 h-9 text-xs text-gray-900"
+                        className="bg-gray-50 border-gray-200 h-9 text-xs text-gray-900 font-medium"
                     />
                 </div>
 
                 <div className="grid grid-cols-2 items-center gap-4">
-                    <Label htmlFor="act_expiry" className="text-xs">พ.ร.บ. (ACT Expiry)</Label>
+                    <Label htmlFor="act_expiry" className="text-[11px] font-bold text-gray-700">พ.ร.บ. (ACT Expiry)</Label>
                     <Input
                         id="act_expiry"
                         type="date"
                         value={formData.act_expiry}
                         onChange={(e) => setFormData({ ...formData, act_expiry: e.target.value })}
-                        className="bg-gray-50 border-gray-200 h-9 text-xs text-gray-900"
+                        className="bg-gray-50 border-gray-200 h-9 text-xs text-gray-900 font-medium"
                     />
                 </div>
             </div>
@@ -281,7 +281,7 @@ export function VehicleDialog({
 
 
           <div className="space-y-2">
-            <Label htmlFor="vehicle_type">ประเภทรถ</Label>
+            <Label htmlFor="vehicle_type" className="text-gray-900 font-bold text-sm">ประเภทรถ</Label>
             <Select value={formData.vehicle_type} onValueChange={(val) => setFormData({ ...formData, vehicle_type: val })}>
                 <SelectTrigger className="w-full h-10 border-gray-200 bg-gray-50 text-gray-900">
                     <SelectValue placeholder="เลือกประเภทรถ" />
@@ -306,7 +306,7 @@ export function VehicleDialog({
 
           {mode === 'edit' && (
              <div className="space-y-2">
-              <Label htmlFor="active_status">สถานะ</Label>
+              <Label htmlFor="active_status" className="text-gray-900 font-bold text-sm">สถานะ</Label>
               <Select value={formData.active_status} onValueChange={(val) => setFormData({ ...formData, active_status: val })}>
                 <SelectTrigger className="w-full h-10 border-gray-200 bg-gray-50 text-gray-900">
                     <SelectValue placeholder="เลือกสถานะ" />

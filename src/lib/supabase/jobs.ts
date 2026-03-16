@@ -103,7 +103,7 @@ export async function getTodayJobs(): Promise<Job[]> {
     }
     
     return data || []
-  } catch (e) {
+  } catch {
     return []
   }
 }

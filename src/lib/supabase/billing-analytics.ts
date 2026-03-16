@@ -46,35 +46,44 @@ export async function getBillingAnalytics(
 
   // Determine effective branch ID
   let effectiveBranchId = branchId
-  if (!effectiveBranchId) {
+  if (!effectiveBranchId || effectiveBranchId === 'All') {
     if (isAdmin && selectedBranch && selectedBranch !== 'All') {
       effectiveBranchId = selectedBranch
     } else if (!isAdmin) {
       effectiveBranchId = userBranchId || undefined
+    } else {
+      effectiveBranchId = undefined // Ensure 'All' translates to no filter
     }
+  }
+
+  // Helper for consistent error returns
+  const emptyResult: BillingAnalytics = {
+    accountsReceivable: { totalOutstanding: 0, invoiceCount: 0, aging: { '0-30': 0, '31-60': 0, '61-90': 0, '90+': 0 }, recentUnpaid: [] },
+    accountsPayable: { totalOutstanding: 0, paymentCount: 0 },
+    collectionRate: 0,
+    revenueVsPayout: []
   }
 
   const now = new Date()
   const dayMs = 86400000
 
   // 1. Fetch Accounts Receivable (Billing Notes)
-  // We want ALL outstanding invoices regardless of date range for the Balance Sheet view
-  // But for Collection Rate, we might filter by date. 
-  // For the dashboard, "Outstanding" usually means everything currently unpaid.
-  
   let arQuery = supabase
     .from('Billing_Notes')
     .select('Billing_Note_ID, Customer_Name, Total_Amount, Status, Due_Date, Billing_Date, Branch_ID')
     .neq('Status', 'Cancelled')
     .neq('Status', 'Paid') // Only unpaid
   
-  if (effectiveBranchId) {
+  if (effectiveBranchId && effectiveBranchId !== 'All') {
     arQuery = arQuery.eq('Branch_ID', effectiveBranchId)
   }
 
   const { data: unpaidNotes, error } = await arQuery
 
-  if (error) return []
+  if (error) {
+    console.error("AR Analytics Error:", error)
+    return emptyResult
+  }
 
   const receivables = unpaidNotes || []
   const totalAr = receivables.reduce((sum, n) => sum + (n.Total_Amount || 0), 0)

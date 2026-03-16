@@ -10,6 +10,7 @@ interface PremiumCardProps extends HTMLMotionProps<"div"> {
   glass?: boolean
   glow?: boolean
   asymmetric?: boolean
+  dark?: boolean
 }
 
 export function PremiumCard({ 
@@ -18,6 +19,7 @@ export function PremiumCard({
   glass = true,
   glow = true,
   asymmetric = false,
+  dark = false,
   ...props 
 }: PremiumCardProps) {
   return (
@@ -27,8 +29,12 @@ export function PremiumCard({
       transition={{ duration: 0.5, ease: "easeOut" }}
       whileHover={{ y: -6, transition: { duration: 0.3 } }}
       className={cn(
-        "rounded-[2.5rem] border border-white/40 p-6 overflow-hidden relative group",
-        glass ? "bg-white/[0.85] backdrop-blur-xl shadow-[0_25px_60px_-15px_rgba(0,0,0,0.08)]" : "bg-white",
+        "rounded-[2.5rem] border p-6 overflow-hidden relative group",
+        dark 
+          ? "bg-slate-900/60 backdrop-blur-2xl border-white/10 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.4)]"
+          : glass 
+            ? "bg-white/[0.85] backdrop-blur-xl border-white/40 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.08)]" 
+            : "bg-white border-gray-200",
         asymmetric && "rounded-tr-[5rem] rounded-bl-[5rem] rounded-tl-2xl rounded-br-2xl",
         glow ? "hover:shadow-[0_40px_80px_-15px_rgba(16,185,129,0.12)]" : "shadow-md",
         "transition-all duration-500",
@@ -55,7 +61,7 @@ export function PremiumCardHeader({ children, className }: { children: React.Rea
   )
 }
 
-export function PremiumCardTitle({ children, className, icon }: { children: React.ReactNode, className?: string, icon?: React.ReactNode }) {
+export function PremiumCardTitle({ children, className, icon, dark = false }: { children: React.ReactNode, className?: string, icon?: React.ReactNode, dark?: boolean }) {
   return (
     <div className="flex items-center gap-3">
       {icon && (
@@ -63,7 +69,11 @@ export function PremiumCardTitle({ children, className, icon }: { children: Reac
           {icon}
         </div>
       )}
-      <h3 className={cn("text-xl font-black text-gray-900 tracking-tight", className)}>
+      <h3 className={cn(
+        "text-xl font-black tracking-tight", 
+        dark ? "text-slate-100" : "text-gray-900",
+        className
+      )}>
         {children}
       </h3>
     </div>

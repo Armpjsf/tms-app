@@ -57,7 +57,7 @@ export async function getSafetyAnalytics(
   let sosQuery = supabase
     .from('Jobs_Main')
     .select('Job_ID, Job_Status, Failed_Reason, Failed_Time, Vehicle_Plate, Driver_Name')
-    .in('Job_Status', ['SOS', 'Failed', 'Issue', 'Problem']) // Filter for safety/problem incidents
+    .in('Job_Status', ['SOS', 'Failed', 'Issue', 'Problem', 'เกิดปัญหา', 'ส่งไม่สำเร็จ', 'แจ้งเหตุเขาสวม']) // Filter for safety/problem incidents
     
   if (startDate) sosQuery = sosQuery.gte('Plan_Date', startDate)
   if (endDate) sosQuery = sosQuery.lte('Plan_Date', endDate)

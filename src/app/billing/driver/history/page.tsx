@@ -3,8 +3,16 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
+import { PremiumCard, PremiumCardHeader, PremiumCardTitle } from "@/components/ui/premium-card"
+import { PremiumButton } from "@/components/ui/premium-button"
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from "@/components/ui/table"
 import {
   Wallet,
   ArrowLeft,
@@ -60,7 +68,7 @@ export default function DriverPaymentHistory() {
         } else {
             toast.error(res.message || "เกิดข้อผิดพลาดในการเชื่อมต่อ")
         }
-    } catch (e) {
+    } catch {
         toast.error("เกิดข้อผิดพลาด")
     } finally {
         setProcessingId(null)
@@ -78,7 +86,7 @@ export default function DriverPaymentHistory() {
         } else {
             toast.error(res.error || "เกิดข้อผิดพลาด")
         }
-    } catch (e) {
+    } catch {
         toast.error("เกิดข้อผิดพลาด")
     } finally {
         setProcessingId(null)
@@ -96,7 +104,7 @@ export default function DriverPaymentHistory() {
         } else {
             toast.error(res.error || "เกิดข้อผิดพลาด")
         }
-    } catch (e) {
+    } catch {
         toast.error("เกิดข้อผิดพลาด")
     } finally {
         setProcessingId(null)
@@ -114,7 +122,6 @@ export default function DriverPaymentHistory() {
         if (!data) throw new Error("Could not fetch details")
 
         const { payment, jobs, bankInfo } = data
-        const WITHHOLDING_TAX_RATE = 0.01
 
         if (!bankInfo.Bank_Account_No) {
             toast.error("ไม่สามารถ Export ได้เนื่องจากคนขับไม่มีเลขบัญชี")
@@ -167,151 +174,169 @@ export default function DriverPaymentHistory() {
   return (
     <DashboardLayout>
       {/* Header */}
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex justify-between items-end mb-10">
         <div>
-          <h1 className="text-2xl font-bold text-gray-950 flex items-center gap-3">
-            <Wallet className="text-emerald-600" />
+          <h1 className="text-4xl font-black text-slate-100 flex items-center gap-4 tracking-tight">
+            <span className="p-3 bg-emerald-500/10 rounded-2xl border border-emerald-500/20 shadow-[0_0_20px_rgba(16,185,129,0.1)]">
+                <Wallet className="text-emerald-400 w-8 h-8" />
+            </span>
             ประวัติการจ่ายเงินคนขับ
           </h1>
-          <p className="text-sm text-gray-500 mt-1">รายการใบสรุปจ่ายที่สร้างแล้วทั้งหมด</p>
+          <div className="text-sm font-bold text-slate-500 mt-3 uppercase tracking-widest flex items-center gap-2">
+              <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+              รายการใบสรุปจ่ายที่สร้างแล้วทั้งหมด
+          </div>
         </div>
-        <Button 
+        <PremiumButton 
             variant="outline" 
-            className="border-gray-200 text-gray-700"
             onClick={() => router.back()}
+            className="rounded-2xl border-white/5 hover:bg-white/5"
         >
             <ArrowLeft className="w-4 h-4 mr-2" /> ย้อนกลับ
-        </Button>
+        </PremiumButton>
       </div>
 
       {/* Filters */}
-      <Card className="bg-white/80 border-gray-200 mb-6">
-        <CardContent className="p-4">
+      <PremiumCard dark className="mb-8 border-white/5">
+        <div className="p-6">
             <div className="flex gap-4">
-                <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <div className="relative flex-1 group">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 group-focus-within:text-emerald-400 transition-colors" />
                     <input 
                         type="text" 
                         placeholder="ค้นหาเลขที่เอกสาร หรือ ชื่อคนขับ..." 
-                        className="w-full h-10 pl-10 pr-4 rounded-md bg-gray-100 border border-gray-200 text-gray-950 focus:outline-none focus:border-indigo-500"
+                        className="w-full h-14 pl-12 pr-6 rounded-2xl bg-white/10 border border-white/10 text-slate-100 font-bold placeholder:text-slate-500 focus:outline-none focus:border-emerald-500/50 focus:ring-4 focus:ring-emerald-500/10 transition-all shadow-inner"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
                 </div>
             </div>
-        </CardContent>
-      </Card>
+        </div>
+      </PremiumCard>
 
       {/* Table */}
-      <Card className="bg-white/80 border-gray-200">
-        <CardHeader>
-            <CardTitle className="text-gray-900 text-lg">รายการใบสรุปจ่าย ({filteredPayments.length})</CardTitle>
-        </CardHeader>
-        <CardContent>
+      <PremiumCard dark className="border-white/5 overflow-hidden">
+        <PremiumCardHeader className="bg-white/5 border-b border-white/5 px-8 py-6">
+            <PremiumCardTitle dark className="text-lg font-black uppercase tracking-widest flex items-center gap-3">
+                <div className="w-1.5 h-6 bg-emerald-500 rounded-full" />
+                รายการใบสรุปจ่าย ({filteredPayments.length})
+            </PremiumCardTitle>
+        </PremiumCardHeader>
+        <div className="p-0">
           <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-gray-200">
-                  <th className="text-left py-3 px-4 text-gray-500 font-medium text-sm">เลขที่เอกสาร</th>
-                  <th className="text-left py-3 px-4 text-gray-500 font-medium text-sm">วันที่ทำรายการ</th>
-                  <th className="text-left py-3 px-4 text-gray-500 font-medium text-sm">คนขับ</th>
-                  <th className="text-right py-3 px-4 text-gray-500 font-medium text-sm">ยอดเงิน</th>
-                  <th className="text-center py-3 px-4 text-gray-500 font-medium text-sm">สถานะ</th>
-                  <th className="text-right py-3 px-4 text-gray-500 font-medium text-sm">จัดการ</th>
-                </tr>
-              </thead>
-              <tbody>
+            <Table>
+              <TableHeader className="bg-white/5">
+                <TableRow className="border-white/5 hover:bg-transparent">
+                  <TableHead className="py-6 px-8 text-slate-200 font-black uppercase tracking-widest text-[10px]">เลขที่เอกสาร</TableHead>
+                  <TableHead className="py-6 px-4 text-slate-300 font-black uppercase tracking-widest text-[10px]">วันที่ทำรายการ</TableHead>
+                  <TableHead className="py-6 px-4 text-slate-300 font-black uppercase tracking-widest text-[10px]">คนขับ</TableHead>
+                  <TableHead className="py-6 px-4 text-right text-slate-300 font-black uppercase tracking-widest text-[10px]">ยอดเงิน</TableHead>
+                  <TableHead className="py-6 px-4 text-center text-slate-300 font-black uppercase tracking-widest text-[10px]">สถานะ</TableHead>
+                  <TableHead className="py-6 px-8 text-right text-slate-300 font-black uppercase tracking-widest text-[10px]">จัดการ</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {loading ? (
-                    <tr>
-                        <td colSpan={6} className="text-center py-8 text-gray-400">กำลังโหลด...</td>
-                    </tr>
+                    <TableRow className="border-white/5">
+                        <TableCell colSpan={6} className="text-center py-12">
+                            <div className="flex flex-col items-center justify-center gap-3 text-slate-500">
+                                <Loader2 className="w-8 h-8 animate-spin text-emerald-500" />
+                                <span className="font-bold uppercase tracking-tighter text-xs">กำลังโหลดข้อมูล...</span>
+                            </div>
+                        </TableCell>
+                    </TableRow>
                 ) : filteredPayments.length === 0 ? (
-                    <tr>
-                        <td colSpan={6} className="text-center py-8 text-gray-400">ไม่พบข้อมูล</td>
-                    </tr>
+                    <TableRow className="border-white/5">
+                        <TableCell colSpan={6} className="text-center py-12 text-slate-500 font-bold uppercase tracking-widest text-xs">ไม่พบข้อมูลใบสรุปจ่าย</TableCell>
+                    </TableRow>
                 ) : (
                     filteredPayments.map((item) => (
-                    <tr key={item.Driver_Payment_ID} className="border-b border-gray-200 hover:bg-gray-50">
-                        <td className="py-3 px-4 text-emerald-600 font-mono">{item.Driver_Payment_ID}</td>
-                        <td className="py-3 px-4 text-gray-500 flex items-center gap-2">
-                             <Calendar className="w-3 h-3" />
-                             {new Date(item.Created_At).toLocaleDateString('th-TH')}
-                        </td>
-                        <td className="py-3 px-4 text-gray-800 font-medium">{item.Driver_Name}</td>
-                        <td className="py-3 px-4 text-right text-gray-900 font-bold">
-                            ฿{item.Total_Amount.toLocaleString()}
-                        </td>
-                        <td className="py-3 px-4 text-center">
+                    <TableRow key={item.Driver_Payment_ID} className="border-white/5 hover:bg-white/5 transition-colors group">
+                        <TableCell className="py-5 px-8 font-black text-emerald-400 font-mono tracking-wider">{item.Driver_Payment_ID}</TableCell>
+                        <TableCell className="py-5 px-4">
+                             <div className="flex items-center gap-2 text-slate-400 font-bold">
+                                <Calendar className="w-3.5 h-3.5" />
+                                {new Date(item.Created_At).toLocaleDateString('th-TH')}
+                             </div>
+                        </TableCell>
+                        <TableCell className="py-5 px-4 text-slate-100 font-black tracking-tight">{item.Driver_Name}</TableCell>
+                        <TableCell className="py-5 px-4 text-right">
+                            <span className="text-slate-100 font-black text-lg tracking-tighter">
+                                <span className="text-slate-500 text-xs mr-1">฿</span>
+                                {item.Total_Amount.toLocaleString()}
+                            </span>
+                        </TableCell>
+                        <TableCell className="py-5 px-4 text-center">
                             {getStatusBadge(item.Status)}
-                        </td>
-                        <td className="py-3 px-4 text-right">
-                             <div className="flex justify-end gap-1">
+                        </TableCell>
+                        <TableCell className="py-5 px-8 text-right">
+                             <div className="flex justify-end gap-2">
                                 {item.Status !== 'Paid' && (
-                                    <Button 
+                                    <PremiumButton 
                                         size="sm" 
                                         variant="ghost" 
-                                        className="text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10"
+                                        className="text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 rounded-xl"
                                         onClick={() => handleMarkAsPaid(item.Driver_Payment_ID)}
                                         disabled={processingId === item.Driver_Payment_ID}
                                         title="ชำระเงินแล้ว"
                                     >
                                         <CheckCircle2 className="w-4 h-4" />
-                                    </Button>
+                                    </PremiumButton>
                                 )}
 
-                                <Button 
+                                <PremiumButton 
                                     size="sm" 
                                     variant="ghost" 
-                                    className="text-emerald-600 hover:text-emerald-500"
+                                    className="text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 rounded-xl"
                                     onClick={() => handleSyncToAccounting(item.Driver_Payment_ID)}
                                     disabled={processingId === item.Driver_Payment_ID}
                                     title="ส่งไประบบบัญชี"
                                 >
                                     <CloudSync className="w-4 h-4" />
-                                </Button>
+                                </PremiumButton>
  
-                                <Button 
+                                <PremiumButton 
                                     size="sm" 
                                     variant="ghost" 
-                                    className="text-gray-500 hover:text-white" 
+                                    className="text-slate-400 hover:text-white hover:bg-white/5 rounded-xl" 
                                     title="Export SCB"
                                     onClick={() => handleExportSCB(item.Driver_Payment_ID)}
                                     disabled={processingId === item.Driver_Payment_ID}
                                 >
                                     {processingId === item.Driver_Payment_ID ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileDown className="w-4 h-4" />}
-                                </Button>
-                                <Button 
+                                </PremiumButton>
+                                <PremiumButton 
                                     size="sm" 
                                     variant="ghost" 
-                                    className="text-gray-500 hover:text-white" 
+                                    className="text-slate-400 hover:text-white hover:bg-white/5 rounded-xl" 
                                     title="พิมพ์"
                                     onClick={() => handlePrint(item.Driver_Payment_ID)}
                                 >
                                     <Printer className="w-4 h-4" />
-                                </Button>
+                                </PremiumButton>
 
                                 {isAdmin && (
-                                    <Button 
+                                    <PremiumButton 
                                         size="sm" 
                                         variant="ghost" 
-                                        className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                                        className="text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 rounded-xl"
                                         onClick={() => handleRecall(item.Driver_Payment_ID)}
                                         disabled={processingId === item.Driver_Payment_ID}
                                         title="ดึงรายการกลับ (Recall)"
                                     >
                                         <Undo2 className="w-4 h-4" />
-                                    </Button>
+                                    </PremiumButton>
                                 )}
                             </div>
-                        </td>
-                    </tr>
+                        </TableCell>
+                    </TableRow>
                     ))
                 )}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </PremiumCard>
     </DashboardLayout>
   )
 }

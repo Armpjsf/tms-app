@@ -1,4 +1,7 @@
-import { createClient } from "@/utils/supabase/client"
+"use server"
+
+import { createClient, createAdminClient } from "@/utils/supabase/server"
+import { isSuperAdmin, isAdmin } from "@/lib/permissions"
 
 export interface ExpenseType {
   id: string
@@ -8,7 +11,9 @@ export interface ExpenseType {
 }
 
 export async function getExpenseTypes() {
-  const supabase = createClient()
+  const isSuper = await isSuperAdmin()
+  const isAdminUser = await isAdmin()
+  const supabase = (isSuper || isAdminUser) ? await createAdminClient() : await createClient()
   
   const { data, error } = await supabase
     .from('Master_Expense_Types')
@@ -28,7 +33,9 @@ export async function getExpenseTypes() {
 }
 
 export async function addExpenseType(name: string, defaultAmount: number) {
-  const supabase = createClient()
+  const isSuper = await isSuperAdmin()
+  const isAdminUser = await isAdmin()
+  const supabase = (isSuper || isAdminUser) ? await createAdminClient() : await createClient()
   
   const { data, error } = await supabase
     .from('Master_Expense_Types')
@@ -43,7 +50,9 @@ export async function addExpenseType(name: string, defaultAmount: number) {
 }
 
 export async function updateExpenseType(id: string, updates: Partial<ExpenseType>) {
-  const supabase = createClient()
+  const isSuper = await isSuperAdmin()
+  const isAdminUser = await isAdmin()
+  const supabase = (isSuper || isAdminUser) ? await createAdminClient() : await createClient()
   
   const dbUpdates: Record<string, unknown> = {}
   if (updates.name !== undefined) dbUpdates.Expense_Name = updates.name
@@ -59,7 +68,9 @@ export async function updateExpenseType(id: string, updates: Partial<ExpenseType
 }
 
 export async function deleteExpenseType(id: string) {
-  const supabase = createClient()
+  const isSuper = await isSuperAdmin()
+  const isAdminUser = await isAdmin()
+  const supabase = (isSuper || isAdminUser) ? await createAdminClient() : await createClient()
   
   const { error } = await supabase
     .from('Master_Expense_Types')

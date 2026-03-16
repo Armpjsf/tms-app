@@ -212,6 +212,7 @@ export function ReportBuilder() {
   const [columns, setColumns] = useState<string[]>([])
   const [loading, setLoading] = useState(false)
   const [generated, setGenerated] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const [sortCol, setSortCol] = useState<string | null>(null)
   const [sortAsc, setSortAsc] = useState(true)
   const [showFilters, setShowFilters] = useState(true)
@@ -220,6 +221,7 @@ export function ReportBuilder() {
 
   const handleGenerate = useCallback(async () => {
     setLoading(true)
+    setError(null)
     try {
       const filters: ReportFilters = {
         reportType: selectedType,
@@ -228,11 +230,17 @@ export function ReportBuilder() {
         status: status !== 'all' ? status : undefined,
       }
       const result = await getFilteredReportData(filters)
-      setData(result.data)
-      setColumns(result.columns)
-      setGenerated(true)
-      setSortCol(null)
-    } catch {
+      if (result.error) {
+          setError(result.error)
+          console.error('[Generate Report Error]', result.error, result.debug)
+      } else {
+          setData(result.data)
+          setColumns(result.columns)
+          setGenerated(true)
+          setSortCol(null)
+      }
+    } catch (e: any) {
+      setError(e.message || 'Error generating report')
       setData([])
       setColumns([])
     } finally {
@@ -280,12 +288,12 @@ export function ReportBuilder() {
               onClick={() => { setSelectedType(rt.key); setGenerated(false); setStatus('all') }}
               className={`relative p-4 rounded-xl border transition-all text-left ${
                 isActive
-                  ? 'bg-primary/10 border-primary/50 ring-2 ring-primary/20'
-                  : 'bg-card/50 border-border hover:border-border/80 hover:bg-card/80'
+                  ? 'bg-blue-500/20 border-blue-400/50 ring-2 ring-blue-500/20'
+                  : 'bg-white/5 border-slate-700 hover:border-slate-500 hover:bg-white/10'
               }`}
             >
-              <Icon size={20} className={isActive ? 'text-primary' : 'text-gray-700'} />
-              <p className={`mt-2 text-sm font-black ${isActive ? 'text-foreground' : 'text-gray-700'}`}>
+              <Icon size={20} className={isActive ? 'text-blue-400' : 'text-slate-300'} />
+              <p className={`mt-2 text-sm font-black ${isActive ? 'text-white' : 'text-slate-100'}`}>
                 {rt.label}
               </p>
               {isActive && (
@@ -297,10 +305,10 @@ export function ReportBuilder() {
       </div>
 
       {/* Filters */}
-      <Card className="bg-card/50 border-border backdrop-blur-sm">
+      <Card className="bg-slate-900/50 border-slate-800 backdrop-blur-md">
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-base flex items-center gap-2 text-foreground">
+            <CardTitle className="text-base flex items-center gap-2 text-white">
               <Filter size={16} className="text-primary" />
               ตัวกรอง — {activeReport.label}
             </CardTitle>
@@ -322,7 +330,7 @@ export function ReportBuilder() {
                   {activeReport.hasDate && (
                     <>
                       <div className="space-y-1.5">
-                        <Label className="text-xs text-gray-700 font-black">จากวันที่</Label>
+                        <Label className="text-xs text-slate-300 font-black">จากวันที่</Label>
                         <Input
                           type="date"
                           value={dateFrom}
@@ -331,7 +339,7 @@ export function ReportBuilder() {
                         />
                       </div>
                       <div className="space-y-1.5">
-                        <Label className="text-xs text-gray-700 font-black">ถึงวันที่</Label>
+                        <Label className="text-xs text-slate-300 font-black">ถึงวันที่</Label>
                         <Input
                           type="date"
                           value={dateTo}
@@ -345,7 +353,7 @@ export function ReportBuilder() {
                   {/* Status */}
                   {activeReport.hasStatus && statusOptions[selectedType] && (
                     <div className="space-y-1.5">
-                      <Label className="text-xs text-gray-700 font-black">สถานะ</Label>
+                      <Label className="text-xs text-slate-300 font-black">สถานะ</Label>
                       <Select value={status} onValueChange={setStatus}>
                         <SelectTrigger className="bg-background border-input">
                           <SelectValue />
@@ -411,26 +419,26 @@ export function ReportBuilder() {
             exit={{ opacity: 0, y: -20 }}
           >
             <div id="report-to-pdf">
-              <Card className="bg-card/50 border-border backdrop-blur-sm">
+              <Card className="bg-slate-900/50 border-slate-800 backdrop-blur-md">
                 <CardHeader>
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                    <CardTitle className="text-base flex items-center gap-2 text-foreground">
+                    <CardTitle className="text-base flex items-center gap-2 text-white">
                       <FileSpreadsheet size={16} className="text-primary" />
                       ผลลัพธ์ ({filteredData.length.toLocaleString()} รายการ)
                     </CardTitle>
                     <div className="flex items-center gap-2">
                       {/* Search within results */}
                       <div className="relative">
-                        <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-700 font-bold" />
+                        <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
                         <Input
                           type="text"
                           placeholder="ค้นหาในผลลัพธ์..."
                           value={searchTerm}
                           onChange={(e) => setSearchTerm(e.target.value)}
-                          className="pl-8 h-9 w-48 bg-background text-sm"
+                          className="pl-8 h-9 w-48 bg-background text-sm border-slate-800"
                         />
                         {searchTerm && (
-                          <button onClick={() => setSearchTerm('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-700 font-bold hover:text-foreground">
+                          <button onClick={() => setSearchTerm('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-foreground">
                             <X size={12} />
                           </button>
                         )}
@@ -470,22 +478,22 @@ export function ReportBuilder() {
                 </CardHeader>
                 <CardContent className="p-0">
                   {filteredData.length === 0 ? (
-                    <div className="py-16 text-center text-gray-700 font-bold">
+                    <div className="py-16 text-center text-slate-400 font-bold">
                       <BarChart3 size={40} className="mx-auto mb-3 opacity-30" />
-                      <p>ไม่พบข้อมูล</p>
-                      <p className="text-xs mt-1">ลองปรับเงื่อนไขการค้นหา</p>
+                      <p className="text-slate-200">ไม่พบข้อมูล</p>
+                      <p className="text-xs mt-1 text-slate-500">ลองปรับเงื่อนไขการค้นหา</p>
                     </div>
                   ) : (
                     <div className="overflow-x-auto">
                       <table className="w-full text-sm">
                         <thead>
-                          <tr className="border-b border-border bg-muted/30">
-                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-900 font-bold w-10">#</th>
+                          <tr className="border-b border-white/10 bg-white/5">
+                            <th className="px-4 py-3 text-left text-xs font-black text-slate-400 w-10">#</th>
                             {columns.map(col => (
                               <th
                                 key={col}
                                 onClick={() => handleSort(col)}
-                                className="px-4 py-3 text-left text-xs font-medium text-gray-900 font-bold cursor-pointer hover:text-foreground transition-colors group"
+                                className="px-4 py-3 text-left text-xs font-black text-slate-200 cursor-pointer hover:text-white transition-colors group"
                               >
                                 <span className="flex items-center gap-1">
                                   {columnLabels[col] || (col.startsWith('Extra_') ? col.replace('Extra_', '') : col)}
@@ -496,17 +504,17 @@ export function ReportBuilder() {
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-border/50">
-                          {filteredData.slice(0, 500).map((row, i) => (
+                          {filteredData.slice(0, 500).map((row: any, i) => (
                             <tr key={i} className="hover:bg-muted/20 transition-colors">
-                              <td className="px-4 py-2.5 text-xs text-gray-700 font-bold">{i + 1}</td>
+                              <td className="px-4 py-2.5 text-xs text-slate-400">{i + 1}</td>
                               {columns.map(col => (
-                                <td key={col} className="px-4 py-2.5 text-foreground">
+                                <td key={col} className="px-4 py-2.5 text-slate-200">
                                   {(col === 'Status' || col === 'status' || col === 'Job_Status' || col === 'priority') && row[col] ? (
-                                    <StatusBadge status={row[col]} />
+                                    <StatusBadge status={String(row[col])} />
                                   ) : (col.toLowerCase().includes('cost') || col === 'amount' || col === 'Price_Cust_Total' || col.startsWith('Extra_')) ? (
                                     <span>฿{Number(row[col] || 0).toLocaleString()}</span>
                                   ) : (
-                                    <span className="line-clamp-1">{row[col] ?? '—'}</span>
+                                    <span className="line-clamp-1">{String(row[col] ?? '—')}</span>
                                   )}
                                 </td>
                               ))}

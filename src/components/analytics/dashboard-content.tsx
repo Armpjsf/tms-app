@@ -290,7 +290,11 @@ export async function DashboardContent({
                       href: "/admin/vehicles/dashboard",
                       metrics: [
                           { label: "Fleet Utilization", value: `${opStats.fleet.utilization.toFixed(1)}%`, status: opStats.fleet.utilization > 70 ? 'good' : 'warning' },
-                          { label: "Technical Integrity", value: "NOMINAL", status: 'good' }
+                          { 
+                            label: "Technical Integrity", 
+                            value: opStats.fleet.health >= 90 ? "NOMINAL" : opStats.fleet.health >= 50 ? "DEGRADED" : "CRITICAL", 
+                            status: opStats.fleet.health >= 90 ? 'good' : opStats.fleet.health >= 50 ? 'warning' : 'critical' 
+                          }
                       ]
                   },
                   {

@@ -61,58 +61,63 @@ export default async function PODPage(props: {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        <div className="rounded-xl p-4 bg-emerald-500/10 border border-emerald-500/20">
-          <p className="text-2xl font-bold text-emerald-600">{stats.total}</p>
-          <p className="text-xs text-gray-500">งานวันนี้</p>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
+        <div className="rounded-2xl p-6 bg-emerald-500/5 border border-emerald-500/20 shadow-lg group hover:bg-emerald-500/10 transition-all duration-300">
+          <p className="text-3xl font-black text-emerald-500 mb-1">{stats.total}</p>
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-500/60">งานวันนี้</p>
         </div>
-        <div className="rounded-xl p-4 bg-emerald-500/10 border border-emerald-500/20">
-          <p className="text-2xl font-bold text-emerald-400">{stats.complete}</p>
-          <p className="text-xs text-gray-500">ส่งสำเร็จ</p>
+        <div className="rounded-2xl p-6 bg-emerald-500/5 border border-emerald-500/20 shadow-lg group hover:bg-emerald-500/10 transition-all duration-300">
+          <p className="text-3xl font-black text-emerald-400 mb-1">{stats.complete}</p>
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-400/60">ส่งสำเร็จ</p>
         </div>
-        <div className="rounded-xl p-4 bg-blue-500/10 border border-emerald-500/15">
-          <div className="flex items-center gap-2">
-            <ImageIcon size={16} className="text-emerald-500" />
-            <p className="text-2xl font-bold text-emerald-500">{stats.withPhoto}</p>
+        <div className="rounded-2xl p-6 bg-blue-500/5 border border-blue-500/20 shadow-lg group hover:bg-blue-500/10 transition-all duration-300">
+          <div className="flex items-center gap-3 mb-1">
+            <ImageIcon size={20} className="text-blue-400" />
+            <p className="text-3xl font-black text-blue-400">{stats.withPhoto}</p>
           </div>
-          <p className="text-xs text-gray-500">มีรูปถ่าย</p>
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-400/60">มีรูปถ่าย</p>
         </div>
-        <div className="rounded-xl p-4 bg-purple-500/10 border border-purple-500/20">
-          <div className="flex items-center gap-2">
-            <PenTool size={16} className="text-purple-400" />
-            <p className="text-2xl font-bold text-purple-400">{stats.withSignature}</p>
+        <div className="rounded-2xl p-6 bg-purple-500/5 border border-purple-500/20 shadow-lg group hover:bg-purple-500/10 transition-all duration-300">
+          <div className="flex items-center gap-3 mb-1">
+            <PenTool size={20} className="text-purple-400" />
+            <p className="text-3xl font-black text-purple-400">{stats.withSignature}</p>
           </div>
-          <p className="text-xs text-gray-500">มีลายเซ็น</p>
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-purple-400/60">มีลายเซ็น</p>
         </div>
       </div>
 
       {/* Filters & Search */}
-      <div className="mb-6 bg-white/50 backdrop-blur-sm p-4 rounded-2xl border border-gray-100">
-        <form className="flex flex-col md:flex-row gap-4 items-end">
+      <div className="mb-6 bg-slate-900/50 backdrop-blur-xl p-6 rounded-3xl border border-slate-800 shadow-xl">
+        <form className="flex flex-col md:flex-row gap-6 items-end">
           <div className="flex-1 w-full relative">
-            <Label className="text-xs text-gray-500 mb-1.5 block">ค้นหา (Search)</Label>
-            <Search className="absolute left-3 top-[34px] text-gray-400" size={18} />
-            <Input placeholder="ค้นหา Job ID, ลูกค้า, คนขับ..." className="pl-10 h-11 bg-white" />
+            <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block">ค้นหา (Search)</Label>
+            <Search className="absolute left-3 top-[38px] text-slate-500" size={18} />
+            <Input 
+              name="q"
+              placeholder="ค้นหา Job ID, ลูกค้า, คนขับ..." 
+              className="pl-10 h-12 bg-slate-950/50 border-slate-800 text-white placeholder:text-slate-600 rounded-xl focus:ring-emerald-500/20 focus:border-emerald-500/50 transition-all" 
+              defaultValue={searchParams.q as string || ''}
+            />
           </div>
-          <div className="w-full md:w-[200px]">
-            <Label className="text-xs text-gray-500 mb-1.5 block">วันที่เริ่มต้น (From Date)</Label>
+          <div className="w-full md:w-[220px]">
+            <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block">วันที่เริ่มต้น (From Date)</Label>
             <Input 
                 type="date" 
                 name="from" 
                 defaultValue={dateFrom} 
-                className="h-11 bg-white" 
+                className="h-12 bg-slate-950/50 border-slate-800 text-white rounded-xl focus:ring-emerald-500/20 focus:border-emerald-500/50 transition-all" 
             />
           </div>
-          <div className="w-full md:w-[200px]">
-            <Label className="text-xs text-gray-500 mb-1.5 block">วันที่สิ้นสุด (To Date)</Label>
+          <div className="w-full md:w-[220px]">
+            <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block">วันที่สิ้นสุด (To Date)</Label>
             <Input 
                 type="date" 
                 name="to" 
                 defaultValue={dateTo} 
-                className="h-11 bg-white" 
+                className="h-12 bg-slate-950/50 border-slate-800 text-white rounded-xl focus:ring-emerald-500/20 focus:border-emerald-500/50 transition-all" 
             />
           </div>
-          <Button type="submit" className="h-11 px-8 bg-emerald-600 hover:bg-emerald-700 w-full md:w-auto">
+          <Button type="submit" className="h-12 px-10 bg-emerald-500 hover:bg-emerald-600 text-white font-black rounded-xl shadow-lg shadow-emerald-500/20 w-full md:w-auto transition-all active:scale-95">
              <Search className="w-4 h-4 mr-2" /> ค้นหา
           </Button>
         </form>

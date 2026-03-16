@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Users, Plus, Edit, Trash2, Search, Loader2 } from "lucide-react"
-import { createUser, updateUser, deleteUser, UserData, getCurrentUserRole, createBulkUsers } from "@/lib/actions/user-actions"
+import { createUser, updateUser, deleteUser, UserData, getCurrentUserRole, createBulkUsers, getUsers } from "@/lib/actions/user-actions"
 import { Customer } from "@/lib/supabase/customers"
 import { ExcelImport } from "@/components/ui/excel-import"
 import { FileSpreadsheet, Shield } from "lucide-react"
@@ -53,25 +53,19 @@ export default function UserSettingsPage() {
         try {
             const supabase = createClient()
 
-            // Query users directly from browser client
-            let usersQuery = supabase
-                .from('Master_Users')
-                .select('*, Master_Customers ( Customer_Name )')
-            if (selectedBranch && selectedBranch !== 'All') {
-                usersQuery = usersQuery.eq('Branch_ID', selectedBranch)
-            }
+            // Fetch users via server action with administrative bypass
+            const usersData = await getUsers(selectedBranch === 'All' ? undefined : selectedBranch)
 
             // Query customers directly from browser client
             const customersQuery = supabase.from('Master_Customers').select('*').order('Customer_Name').limit(1000)
 
-            const [usersResult, customersResult, userInfo, rolesResult] = await Promise.all([
-                usersQuery.order('Username'),
+            const [customersResult, userInfo, rolesResult] = await Promise.all([
                 customersQuery,
                 getCurrentUserRole(),
                 getRolePermissions()
             ])
 
-            setUserList(usersResult.data || [])
+            setUserList(usersData || [])
             setCustomers(customersResult.data || [])
             setCurrentRoleId(userInfo?.roleId || 3)
 

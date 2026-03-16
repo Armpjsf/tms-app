@@ -11,8 +11,11 @@ export type VehicleType = {
   created_at?: string
 }
 
+import { isAdmin } from '@/lib/permissions'
+
 export async function getVehicleTypes() {
-  const supabase = await createClient()
+  const adminStatus = await isAdmin()
+  const supabase = adminStatus ? createAdminClient() : await createClient()
   
   const { data, error } = await supabase
     .from('Master_Vehicle_Types')

@@ -12,7 +12,10 @@ export type FinancialJob = {
 }
 
 // Revenue-generating statuses used across all analytics
-export const REVENUE_STATUSES = ['Completed', 'Delivered', 'Finished', 'Closed']
+export const REVENUE_STATUSES = [
+    'Completed', 'Delivered', 'Finished', 'Closed', 
+    'เสร็จสิ้น', 'เรียบร้อย', 'ส่งสำเร็จ', 'ปิดงาน'
+]
 
 // Date helpers to avoid extra dependencies
 export const subDays = (date: Date, days: number) => new Date(date.getTime() - days * 24 * 60 * 60 * 1000)

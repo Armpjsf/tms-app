@@ -1,6 +1,6 @@
 "use server"
 
-import { createClient } from '@/utils/supabase/server'
+import { createClient, createAdminClient } from '@/utils/supabase/server'
 
 export type Customer = {
   Customer_ID: string
@@ -19,23 +19,25 @@ export type Customer = {
 }
 
 // Get all customers
-import { getUserBranchId, isSuperAdmin, getCustomerId } from "@/lib/permissions"
+import { getUserBranchId, isSuperAdmin, getCustomerId, isAdmin } from "@/lib/permissions"
 
 export async function getAllCustomers(page?: number, limit?: number, query?: string, providedBranchId?: string) {
   try {
-    const supabase = await createClient()
+    const isSuper = await isSuperAdmin()
+    const isAdminUser = await isAdmin()
+    const supabase = (isSuper || isAdminUser) ? await createAdminClient() : await createClient()
+    
     let queryBuilder = supabase.from('Master_Customers').select('*', { count: 'exact' })
     
     // Filter by Branch
-    const isAdmin = await isSuperAdmin()
     const branchId = providedBranchId || await getUserBranchId()
     const customerId = await getCustomerId()
     
     if (customerId) {
         queryBuilder = queryBuilder.eq('Customer_ID', customerId)
-    } else if (branchId && branchId !== 'All') {
+    } else if (branchId && branchId !== 'All' && !isSuper && !isAdminUser) {
         queryBuilder = queryBuilder.eq('Branch_ID', branchId)
-    } else if (!isAdmin && !branchId) {
+    } else if (!isSuper && !isAdminUser && !branchId) {
         return { data: [], count: 0 }
     }
     
@@ -64,7 +66,9 @@ export async function getAllCustomers(page?: number, limit?: number, query?: str
 // Create customer
 export async function createCustomer(customerData: Partial<Customer>) {
   try {
-    const supabase = await createClient()
+    const isSuper = await isSuperAdmin()
+    const isAdminUser = await isAdmin()
+    const supabase = (isSuper || isAdminUser) ? await createAdminClient() : await createClient()
     
     // Generate ID if not provided: CUST-YYYYMM-XXXX
     let customerId = customerData.Customer_ID
@@ -105,7 +109,10 @@ export async function createCustomer(customerData: Partial<Customer>) {
 // Update customer
 export async function updateCustomer(id: string, customerData: Partial<Customer>) {
   try {
-    const supabase = await createClient()
+    const isSuper = await isSuperAdmin()
+    const isAdminUser = await isAdmin()
+    const supabase = (isSuper || isAdminUser) ? await createAdminClient() : await createClient()
+
     const { data, error } = await supabase
       .from('Master_Customers')
       .update(customerData)
@@ -125,7 +132,10 @@ export async function updateCustomer(id: string, customerData: Partial<Customer>
 // Delete customer
 export async function deleteCustomer(id: string) {
   try {
-    const supabase = await createClient()
+    const isSuper = await isSuperAdmin()
+    const isAdminUser = await isAdmin()
+    const supabase = (isSuper || isAdminUser) ? await createAdminClient() : await createClient()
+
     const { error } = await supabase
       .from('Master_Customers')
       .delete()
@@ -143,7 +153,9 @@ export async function deleteCustomer(id: string) {
 // Bulk create customers
 export async function createBulkCustomers(customers: Record<string, unknown>[]) {
     try {
-        const supabase = await createClient()
+        const isSuper = await isSuperAdmin()
+        const isAdminUser = await isAdmin()
+        const supabase = (isSuper || isAdminUser) ? await createAdminClient() : await createClient()
         const branchId = await getUserBranchId()
         
         // Normalize keys

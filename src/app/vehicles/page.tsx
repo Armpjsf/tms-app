@@ -207,7 +207,7 @@ export default async function VehiclesPage(props: Props) {
                     <div className="absolute top-0 right-0 w-16 h-16 bg-purple-500/5 blur-2xl rounded-full" />
                     <div className="flex items-center gap-2 mb-3">
                         <Gauge size={14} className="text-purple-500" />
-                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Live Mileage</span>
+                        <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Live Mileage</span>
                     </div>
                     <p className="text-2xl font-black text-slate-900 tracking-tighter">{vehicle.current_mileage ? vehicle.current_mileage.toLocaleString() : "0"}<span className="text-xs ml-1 text-slate-400 font-bold uppercase tracking-widest">km</span></p>
                 </div>
@@ -215,7 +215,7 @@ export default async function VehiclesPage(props: Props) {
                     <div className="absolute top-0 right-0 w-16 h-16 bg-pink-500/5 blur-2xl rounded-full" />
                     <div className="flex items-center gap-2 mb-3">
                         <Calendar size={14} className="text-pink-500" />
-                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Next Svc</span>
+                        <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Next Svc</span>
                     </div>
                     <p className="text-2xl font-black text-slate-900 tracking-tighter">{vehicle.next_service_mileage ? (vehicle.next_service_mileage / 1000).toFixed(0) + "k" : "-"}<span className="text-xs ml-1 text-slate-400 font-bold uppercase tracking-widest">km</span></p>
                 </div>
@@ -238,7 +238,7 @@ export default async function VehiclesPage(props: Props) {
                         </div>
                     )}
                 </div>
-                <div className="text-[9px] font-black text-slate-300 uppercase tracking-[0.3em] italic">
+                <div className="text-[9px] font-black text-slate-600 uppercase tracking-[0.3em] italic">
                     {vehicle.vehicle_type}
                 </div>
             </div>

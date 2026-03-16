@@ -1,7 +1,7 @@
 "use server"
 
-import { createClient } from '@/utils/supabase/server'
-import { getUserBranchId, getCustomerId } from "@/lib/permissions"
+import { createClient, createAdminClient } from '@/utils/supabase/server'
+import { getUserBranchId, getCustomerId, isSuperAdmin } from "@/lib/permissions"
 
 export interface CalendarJob {
   Job_ID: string
@@ -16,7 +16,8 @@ export interface CalendarJob {
 }
 
 export async function getJobsForMonth(year: number, month: number) {
-  const supabase = await createClient()
+  const isAdmin = await isSuperAdmin()
+  const supabase = isAdmin ? await createAdminClient() : await createClient()
   const customerId = await getCustomerId()
   const userBranchId = await getUserBranchId()
 

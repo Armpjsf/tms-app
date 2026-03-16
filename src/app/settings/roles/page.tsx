@@ -99,11 +99,11 @@ export default function RolesPage() {
     return (
         <DashboardLayout>
             <div className="mb-8">
-                <h1 className="text-3xl font-bold text-gray-900 mb-2 flex items-center gap-3">
+                <h1 className="text-3xl font-bold text-foreground mb-2 flex items-center gap-3">
                     <Shield className="text-purple-400" />
                     บทบาทและสิทธิ์การใช้งาน (Roles & Permissions)
                 </h1>
-                <p className="text-gray-500">กำหนดสิทธิ์การเข้าถึงเมนูและการจัดการข้อมูลสำหรับแต่ละตำแหน่ง</p>
+                <p className="text-muted-foreground">กำหนดสิทธิ์การเข้าถึงเมนูและการจัดการข้อมูลสำหรับแต่ละตำแหน่ง</p>
             </div>
 
             {error && (
@@ -126,13 +126,13 @@ export default function RolesPage() {
             ) : (
                 <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
                     {roles.map((role, index) => (
-                        <Card key={role.Role} className={`border-gray-200 bg-white/80 ${role.Role === 'Super Admin' ? 'border-purple-500/30 bg-purple-500/5' : ''}`}>
+                        <Card key={role.Role} className={`border-border bg-card/50 backdrop-blur-sm ${role.Role === 'Super Admin' ? 'border-purple-500/30 bg-purple-500/5' : ''}`}>
                             <CardHeader className="flex flex-row items-center justify-between pb-2">
                                 <div>
-                                    <CardTitle className={`text-xl ${role.Role === 'Super Admin' ? 'text-purple-400' : 'text-gray-900'}`}>
+                                    <CardTitle className={`text-xl ${role.Role === 'Super Admin' ? 'text-purple-400' : 'text-foreground'}`}>
                                         {role.Role}
                                     </CardTitle>
-                                    <CardDescription>
+                                    <CardDescription className="text-muted-foreground/70">
                                         {role.Role === 'Super Admin' ? 'Full System Access' : 'Customizable Permissions'}
                                     </CardDescription>
                                 </div>
@@ -157,12 +157,12 @@ export default function RolesPage() {
                                 ) : (
                                     <div className="space-y-4">
                                         {SYSTEM_PERMISSIONS.map((perm) => (
-                                            <div key={perm.id} className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors border border-transparent hover:border-gray-200">
+                                            <div key={perm.id} className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors border border-transparent hover:border-border">
                                                 <div className="space-y-0.5">
-                                                    <Label className="text-base text-gray-800 cursor-pointer">
+                                                    <Label className="text-base text-foreground cursor-pointer">
                                                         {perm.label}
                                                     </Label>
-                                                    <p className="text-xs text-gray-400">
+                                                    <p className="text-xs text-muted-foreground">
                                                         {perm.desc}
                                                     </p>
                                                 </div>

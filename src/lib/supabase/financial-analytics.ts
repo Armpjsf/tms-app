@@ -360,7 +360,7 @@ export async function getRouteEfficiency(startDate?: string, endDate?: string, b
 
     let query = supabase
         .from('Jobs_Main')
-        .select('Route_Name, Price_Cust_Total, Cost_Driver_Total, Price_Cust_Extra, Cost_Driver_Extra, Distance_Km')
+        .select('Route_Name, Price_Cust_Total, Cost_Driver_Total, Price_Cust_Extra, Cost_Driver_Extra, Est_Distance_KM')
         .in('Job_Status', REVENUE_STATUSES)
 
     if (sDate) query = query.gte('Plan_Date', sDate)
@@ -379,7 +379,7 @@ export async function getRouteEfficiency(startDate?: string, endDate?: string, b
         routeStats[route].revenue += (job.Price_Cust_Total || 0)
         routeStats[route].cost += (job.Cost_Driver_Total || 0)
         routeStats[route].extra += (job.Price_Cust_Extra || 0) + (job.Cost_Driver_Extra || 0)
-        routeStats[route].totalKm += (Number(job.Distance_Km) || 0)
+        routeStats[route].totalKm += (Number(job.Est_Distance_KM) || 0)
         routeStats[route].count++
     })
 

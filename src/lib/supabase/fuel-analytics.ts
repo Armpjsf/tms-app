@@ -52,6 +52,7 @@ export async function getFuelAnalytics(dateFrom?: string, dateTo?: string): Prom
   const from = dateFrom || new Date(now.getTime() - 90 * 86400000).toISOString().split('T')[0]
   const to = dateTo || now.toISOString().split('T')[0]
 
+  // Base query for fuel logs
   let query = supabase
     .from('Fuel_Logs')
     .select('Vehicle_Plate, Date_Time, Liters, Price_Total, Odometer')
@@ -60,15 +61,18 @@ export async function getFuelAnalytics(dateFrom?: string, dateTo?: string): Prom
     .order('Date_Time', { ascending: false })
     .limit(5000)
 
-  if (isAdmin && selectedBranch && selectedBranch !== 'All') {
-    query = query.eq('Branch_ID', selectedBranch)
-  } else if (branchId && !isAdmin) {
+  // Enhanced Branch Filtering
+  if (isAdmin) {
+    if (selectedBranch && selectedBranch !== 'All') {
+      query = query.eq('Branch_ID', selectedBranch)
+    }
+  } else if (branchId) {
     query = query.eq('Branch_ID', branchId)
   }
 
   const { data: logs } = await query
 
-  if (!logs || logs.length === 0) {
+  if (!logs) {
     return {
       totalLiters: 0, totalCost: 0, totalLogs: 0,
       avgCostPerLiter: 0, avgKmPerLiter: 0,
@@ -76,7 +80,31 @@ export async function getFuelAnalytics(dateFrom?: string, dateTo?: string): Prom
     }
   }
 
-  // Get vehicle tank capacities
+  // 1. Efficiency Enhancement: Fetch the last log BEFORE the range for vehicles in the current set
+  // This allows KM/L calculation even if a vehicle has only 1 log in the selected range
+  const platesInRange = Array.from(new Set(logs.map(l => l.Vehicle_Plate).filter(Boolean)))
+  let previousLogsMap = new Map<string, number>()
+
+  if (platesInRange.length > 0) {
+    // Fetch the most recent log before our 'from' date for each plate
+    const { data: prevLogs } = await supabase
+      .from('Fuel_Logs')
+      .select('Vehicle_Plate, Odometer')
+      .lt('Date_Time', `${from}T00:00:00`)
+      .in('Vehicle_Plate', platesInRange)
+      .order('Date_Time', { ascending: false })
+
+    if (prevLogs) {
+      // Since order is descending, the first occurrence for each plate is its most recent
+      prevLogs.forEach(pl => {
+        if (pl.Vehicle_Plate && pl.Odometer && !previousLogsMap.has(pl.Vehicle_Plate)) {
+          previousLogsMap.set(pl.Vehicle_Plate, pl.Odometer)
+        }
+      })
+    }
+  }
+
+  // Get vehicle tank capacities for anomaly detection
   const { data: vehicles } = await supabase
     .from('master_vehicles')
     .select('vehicle_plate, tank_capacity')
@@ -102,14 +130,20 @@ export async function getFuelAnalytics(dateFrom?: string, dateTo?: string): Prom
   const vehicleBreakdown = Array.from(vehicleMap.entries())
     .map(([plate, v]) => {
       const sortedOdo = v.odometers.sort((a, b) => a - b)
-      const totalKm = sortedOdo.length >= 2 ? sortedOdo[sortedOdo.length - 1] - sortedOdo[0] : 0
+      
+      // Use previous log odometer if available to get a start point
+      const startOdo = previousLogsMap.get(plate) || (sortedOdo.length >= 1 ? sortedOdo[0] : 0)
+      const endOdo = sortedOdo.length >= 1 ? sortedOdo[sortedOdo.length - 1] : startOdo
+      
+      const totalKm = endOdo > startOdo ? endOdo - startOdo : 0
+      
       return {
         vehicle_plate: plate,
         totalLiters: Math.round(v.liters * 10) / 10,
         totalCost: Math.round(v.cost),
         logCount: v.count,
         avgEfficiency: v.liters > 0 && totalKm > 0 ? Math.round((totalKm / v.liters) * 10) / 10 : 0,
-        lastOdometer: sortedOdo[sortedOdo.length - 1] || 0,
+        lastOdometer: endOdo,
       }
     })
     .sort((a, b) => b.totalCost - a.totalCost)
@@ -120,16 +154,23 @@ export async function getFuelAnalytics(dateFrom?: string, dateTo?: string): Prom
     ? Math.round((allEfficiencies.reduce((s, e) => s + e, 0) / allEfficiencies.length) * 10) / 10
     : 0
 
-  // Monthly trends
+  // 2. Monthly trends with 6-month Padding
   const monthMap = new Map<string, { liters: number; cost: number; count: number }>()
+  
+  // Initialize last 6 months with zeros
+  for (let i = 5; i >= 0; i--) {
+     const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
+     const mStr = d.toISOString().slice(0, 7)
+     monthMap.set(mStr, { liters: 0, cost: 0, count: 0 })
+  }
+
   for (const log of logs) {
     const month = (log.Date_Time || '').slice(0, 7) // YYYY-MM
-    if (!month) continue
-    const entry = monthMap.get(month) || { liters: 0, cost: 0, count: 0 }
+    if (!month || !monthMap.has(month)) continue
+    const entry = monthMap.get(month)!
     entry.liters += log.Liters || 0
     entry.cost += log.Price_Total || 0
     entry.count++
-    monthMap.set(month, entry)
   }
 
   const monthlyTrends = Array.from(monthMap.entries())
@@ -141,7 +182,7 @@ export async function getFuelAnalytics(dateFrom?: string, dateTo?: string): Prom
     }))
     .sort((a, b) => a.month.localeCompare(b.month))
 
-  // Anomaly detection
+  // 3. Anomaly detection
   const anomalies: FuelAnalytics['anomalies'] = []
   for (const log of logs) {
     const plate = log.Vehicle_Plate || 'Unknown'

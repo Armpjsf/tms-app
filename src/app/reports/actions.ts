@@ -1,7 +1,7 @@
 'use server'
 
-import { createClient } from '@/utils/supabase/server'
-import { getUserBranchId, isSuperAdmin } from '@/lib/permissions'
+import { createClient, createAdminClient } from '@/utils/supabase/server'
+import { getUserBranchId, isAdmin } from '@/lib/permissions'
 import { cookies } from 'next/headers'
 
 export interface ReportFilters {
@@ -12,23 +12,32 @@ export interface ReportFilters {
   branchId?: string
 }
 
-export async function getFilteredReportData(filters: ReportFilters): Promise<{ data: Record<string, unknown>[], columns: string[] }> {
-  const supabase = await createClient()
+export async function getFilteredReportData(filters: ReportFilters): Promise<{ 
+  data: Record<string, unknown>[], 
+  columns: string[], 
+  error?: string,
+  debug?: any
+}> {
+  const admin = await isAdmin()
+  const supabase = admin ? await createAdminClient() : await createClient()
   const userBranchId = await getUserBranchId()
-  const isAdmin = await isSuperAdmin()
   const cookieStore = await cookies()
   const selectedBranch = cookieStore.get('selectedBranch')?.value
 
-  const effectiveBranch = isAdmin 
+  const effectiveBranch = admin 
     ? (filters.branchId || selectedBranch || 'All')
     : userBranchId
+
+  console.log('[Report Debug] Filters:', filters)
+  console.log('[Report Debug] isAdmin (both roles):', admin)
+  console.log('[Report Debug] effectiveBranch:', effectiveBranch)
 
   try {
     switch (filters.reportType) {
       case 'jobs': {
         let query = supabase
           .from('Jobs_Main')
-          .select('Job_ID, Plan_Date, Customer_Name, Origin_Location, Dest_Location, Driver_Name, Vehicle_Plate, Job_Status, Price_Cust_Total, Extra_Cost_Amount, Toll_Amount, Distance_Km, extra_costs_json, Branch_ID')
+          .select('*')
           .order('Plan_Date', { ascending: false })
           .limit(2000)
 
@@ -37,17 +46,23 @@ export async function getFilteredReportData(filters: ReportFilters): Promise<{ d
         if (filters.status && filters.status !== 'all') query = query.eq('Job_Status', filters.status)
         if (effectiveBranch && effectiveBranch !== 'All') query = query.eq('Branch_ID', effectiveBranch)
 
-        const { data } = await query
+        const { data, error } = await query
+        if (error) {
+          console.error('[Report Debug] Jobs Query Error:', error)
+          throw error
+        }
+
+        console.log('[Report Debug] Jobs found:', data?.length || 0)
         const rawData = data || []
 
         // Extract all unique extra cost types to create columns
         const extraCostTypes = new Set<string>()
-        rawData.forEach(job => {
+        rawData.forEach((job: any) => {
           if (job.extra_costs_json) {
             try {
               const costs = typeof job.extra_costs_json === 'string' ? JSON.parse(job.extra_costs_json) : job.extra_costs_json
               if (Array.isArray(costs)) {
-                costs.forEach(c => {
+                costs.forEach((c: any) => {
                   if (c.type) extraCostTypes.add(`Extra_${c.type}`)
                 })
               }
@@ -57,7 +72,7 @@ export async function getFilteredReportData(filters: ReportFilters): Promise<{ d
 
         const sortedExtraTypes = Array.from(extraCostTypes).sort()
 
-        const processedData = rawData.map(job => {
+        const processedData = rawData.map((job: any) => {
           const row: Record<string, unknown> = { ...job }
           // Initialize all extra columns with 0
           sortedExtraTypes.forEach(type => {
@@ -69,10 +84,10 @@ export async function getFilteredReportData(filters: ReportFilters): Promise<{ d
             try {
               const costs = typeof job.extra_costs_json === 'string' ? JSON.parse(job.extra_costs_json) : job.extra_costs_json
               if (Array.isArray(costs)) {
-                costs.forEach(c => {
+                costs.forEach((c: any) => {
                   if (c.type) {
                     const colName = `Extra_${c.type}`
-                    row[colName] = (row[colName] || 0) + (Number(c.charge_base) || Number(c.amount) || 0)
+                    row[colName] = (Number(row[colName]) || 0) + (Number(c.charge_base) || Number(c.amount) || 0)
                   }
                 })
               }
@@ -89,40 +104,46 @@ export async function getFilteredReportData(filters: ReportFilters): Promise<{ d
             'Driver_Name', 'Vehicle_Plate', 'Job_Status', 
             'Price_Cust_Total', 'Extra_Cost_Amount', 'Toll_Amount', 'Distance_Km',
             ...sortedExtraTypes
-          ]
+          ],
+          debug: { admin, effectiveBranch, count: rawData.length }
         }
       }
 
       case 'drivers': {
         let query = supabase
           .from('Master_Drivers')
-          .select('Driver_ID, Driver_Name, Mobile_No, Active_Status, Branch_ID, Vehicle_Plate')
+          .select('*')
           .order('Driver_Name')
           .limit(500)
 
         if (filters.status && filters.status !== 'all') query = query.eq('Active_Status', filters.status)
         if (effectiveBranch && effectiveBranch !== 'All') query = query.eq('Branch_ID', effectiveBranch)
 
-        const { data } = await query
+        const { data, error } = await query
+        if (error) throw error
+
         return { 
           data: data || [], 
-          columns: ['Driver_ID', 'Driver_Name', 'Mobile_No', 'Active_Status', 'Vehicle_Plate']
+          columns: ['Driver_ID', 'Driver_Name', 'Mobile_No', 'Active_Status', 'Vehicle_Plate'],
+          debug: { admin, effectiveBranch, count: data?.length || 0 }
         }
       }
 
       case 'vehicles': {
         let query = supabase
           .from('Master_Vehicles')
-          .select('Vehicle_Plate, Vehicle_Type, Active_Status, Insurance_Expiry, Tax_Expiry, Branch_ID')
+          .select('*')
           .order('Vehicle_Plate')
           .limit(500)
 
         if (filters.status && filters.status !== 'all') query = query.eq('Active_Status', filters.status)
         if (effectiveBranch && effectiveBranch !== 'All') query = query.eq('Branch_ID', effectiveBranch)
 
-        const { data } = await query
+        const { data, error } = await query
+        if (error) throw error
+
         return { 
-          data: (data || []).map((v: Record<string, unknown>) => ({
+          data: (data || []).map((v: any) => ({
             ...v,
             vehicle_plate: v.Vehicle_Plate,
             vehicle_type: v.Vehicle_Type,
@@ -130,14 +151,15 @@ export async function getFilteredReportData(filters: ReportFilters): Promise<{ d
             insurance_expiry: v.Insurance_Expiry,
             registration_expiry: v.Tax_Expiry
           })), 
-          columns: ['vehicle_plate', 'vehicle_type', 'status', 'insurance_expiry', 'registration_expiry']
+          columns: ['vehicle_plate', 'vehicle_type', 'status', 'insurance_expiry', 'registration_expiry'],
+          debug: { admin, effectiveBranch, count: data?.length || 0 }
         }
       }
 
       case 'fuel': {
         let query = supabase
           .from('Fuel_Logs')
-          .select('Log_ID, Vehicle_Plate, Driver_ID, Date_Time, Liters, Price_Total, Station_Name, Odometer, Branch_ID')
+          .select('*')
           .order('Date_Time', { ascending: false })
           .limit(2000)
 
@@ -145,25 +167,28 @@ export async function getFilteredReportData(filters: ReportFilters): Promise<{ d
         if (filters.dateTo) query = query.lte('Date_Time', filters.dateTo)
         if (effectiveBranch && effectiveBranch !== 'All') query = query.eq('Branch_ID', effectiveBranch)
 
-        const { data } = await query
+        const { data, error } = await query
+        if (error) throw error
+
         return { 
-          data: (data || []).map((f: Record<string, unknown>) => ({
+          data: (data || []).map((f: any) => ({
             ...f,
             fuel_date: f.Date_Time,
             vehicle_plate: f.Vehicle_Plate,
             amount: f.Price_Total,
             station: f.Station_Name,
             odometer: f.Odometer,
-            price_per_liter: f.Liters > 0 ? (f.Price_Total / f.Liters) : 0
+            price_per_liter: Number(f.Liters) > 0 ? (Number(f.Price_Total) / Number(f.Liters)) : 0
           })), 
-          columns: ['fuel_date', 'vehicle_plate', 'station', 'Liters', 'price_per_liter', 'amount', 'odometer']
+          columns: ['fuel_date', 'vehicle_plate', 'station', 'Liters', 'price_per_liter', 'amount', 'odometer'],
+          debug: { admin, effectiveBranch, count: data?.length || 0 }
         }
       }
 
       case 'maintenance': {
         let query = supabase
           .from('Repair_Tickets')
-          .select('Ticket_ID, Vehicle_Plate, Issue_Type, Description, Status, Cost_Total, Date_Report, Date_Finish')
+          .select('*')
           .order('Date_Report', { ascending: false })
           .limit(1000)
 
@@ -171,9 +196,11 @@ export async function getFilteredReportData(filters: ReportFilters): Promise<{ d
         if (filters.dateTo) query = query.lte('Date_Report', filters.dateTo)
         if (filters.status && filters.status !== 'all') query = query.eq('Status', filters.status)
 
-        const { data } = await query
+        const { data, error } = await query
+        if (error) throw error
+
         return { 
-          data: (data || []).map((m: Record<string, unknown>) => ({
+          data: (data || []).map((m: any) => ({
             ...m,
             created_at: m.Date_Report,
             vehicle_plate: m.Vehicle_Plate,
@@ -182,7 +209,8 @@ export async function getFilteredReportData(filters: ReportFilters): Promise<{ d
             description: m.Description,
             status: m.Status
           })), 
-          columns: ['created_at', 'vehicle_plate', 'maintenance_type', 'status', 'cost', 'description']
+          columns: ['created_at', 'vehicle_plate', 'maintenance_type', 'status', 'cost', 'description'],
+          debug: { admin, effectiveBranch, count: data?.length || 0 }
         }
       }
 
@@ -242,25 +270,26 @@ export async function getFilteredReportData(filters: ReportFilters): Promise<{ d
         }, {})
 
         // Aggregate by Plate
-        const reportData = vehicles.map(v => {
+        /* eslint-disable @typescript-eslint/no-explicit-any */
+        const reportData = (vehicles as any[]).map((v: any) => {
           const vPlate = v.Vehicle_Plate
           const fuelTotal = (fuelLogs || [])
-            .filter(f => f.Vehicle_Plate === vPlate)
-            .reduce((sum, f) => sum + (Number(f.Price_Total) || 0), 0)
+            .filter((f: any) => f.Vehicle_Plate === vPlate)
+            .reduce((sum: number, f: any) => sum + (Number(f.Price_Total) || 0), 0)
           
           const maintTotal = (maintLogs || [])
-            .filter(m => m.Vehicle_Plate === vPlate)
-            .reduce((sum, m) => sum + (Number(m.Cost_Total) || 0), 0)
+            .filter((m: any) => m.Vehicle_Plate === vPlate)
+            .reduce((sum: number, m: any) => sum + (Number(m.Cost_Total) || 0), 0)
 
           const extraCosts = (rawJobs || [])
-            .filter(j => j.Vehicle_Plate === vPlate)
-            .reduce((sum, j) => {
+            .filter((j: any) => j.Vehicle_Plate === vPlate)
+            .reduce((sum: number, j: any) => {
               let extra = 0
               if (j.extra_costs_json) {
                 try {
                   const costs = typeof j.extra_costs_json === 'string' ? JSON.parse(j.extra_costs_json) : j.extra_costs_json
                   if (Array.isArray(costs)) {
-                    extra = costs.reduce((s, c) => s + (Number(c.charge_base) || Number(c.amount) || 0), 0)
+                    extra = costs.reduce((s: number, c: any) => s + (Number(c.charge_base) || Number(c.amount) || 0), 0)
                   }
                 } catch {}
               }
@@ -280,20 +309,24 @@ export async function getFilteredReportData(filters: ReportFilters): Promise<{ d
 
         // Filter by Owner Type if status filter is used (re-using status as owner type filter for this report)
         let finalData = reportData
-        if (filters.status === 'Company') finalData = reportData.filter(d => d.owner === 'รถบริษัท')
-        if (filters.status === 'Subcontractor') finalData = reportData.filter(d => d.owner !== 'รถบริษัท')
+        if (filters.status === 'Company') finalData = reportData.filter((d: any) => d.owner === 'รถบริษัท')
+        if (filters.status === 'Subcontractor') finalData = reportData.filter((d: any) => d.owner !== 'รถบริษัท')
+        /* eslint-enable @typescript-eslint/no-explicit-any */
 
         return {
           data: finalData,
-          columns: ['vehicle_plate', 'owner', 'vehicle_type', 'fuel_cost', 'maintenance_cost', 'extra_cost', 'total_cost']
+          columns: ['vehicle_plate', 'owner', 'vehicle_type', 'fuel_cost', 'maintenance_cost', 'extra_cost', 'total_cost'],
+          debug: { admin, effectiveBranch, count: finalData.length }
         }
       }
 
       default:
-        return { data: [], columns: [] }
+        return { data: [], columns: [], debug: { admin, effectiveBranch } }
     }
-  } catch {}
-  return { data: [], columns: [] }
+  } catch (error: any) {
+    console.error('[Report Action Error]', error)
+    return { data: [], columns: [], error: error.message || 'Unknown error occurred' }
+  }
 }
 
 // Get available status options for each report type

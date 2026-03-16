@@ -1,8 +1,9 @@
 "use server"
 
-import { createClient } from "@/utils/supabase/server"
+import { createClient, createAdminClient } from "@/utils/supabase/server"
 import { revalidatePath } from "next/cache"
 import { Subcontractor } from "@/types/subcontractor"
+import { isAdmin } from "@/lib/permissions"
 
 export async function createSubcontractor(data: Partial<Subcontractor>) {
     try {
@@ -10,7 +11,8 @@ export async function createSubcontractor(data: Partial<Subcontractor>) {
             throw new Error("Missing Sub_ID or Sub_Name")
         }
 
-        const supabase = await createClient()
+        const adminStatus = await isAdmin()
+        const supabase = adminStatus ? createAdminClient() : await createClient()
         const { error } = await supabase
             .from("Master_Subcontractors")
             .insert([{
@@ -36,7 +38,8 @@ export async function createSubcontractor(data: Partial<Subcontractor>) {
 
 export async function updateSubcontractor(id: string, data: Partial<Subcontractor>) {
     try {
-        const supabase = await createClient()
+        const adminStatus = await isAdmin()
+        const supabase = adminStatus ? createAdminClient() : await createClient()
         const { error } = await supabase
             .from("Master_Subcontractors")
             .update(data)
@@ -54,7 +57,8 @@ export async function updateSubcontractor(id: string, data: Partial<Subcontracto
 
 export async function deleteSubcontractor(id: string) {
     try {
-        const supabase = await createClient()
+        const adminStatus = await isAdmin()
+        const supabase = adminStatus ? createAdminClient() : await createClient()
         const { error } = await supabase
             .from("Master_Subcontractors")
             .delete()

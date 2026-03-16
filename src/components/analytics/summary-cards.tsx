@@ -142,7 +142,7 @@ export function FinancialSummaryCards({ data }: { data: ExecutiveKPIs }) {
         </div>
 
         <div className="flex flex-col items-start gap-1 relative z-10">
-            <div className="text-5xl font-black text-white tracking-tighter italic flex items-center gap-2">
+            <div className="text-5xl font-black text-emerald-600 tracking-tighter italic flex items-center gap-2">
                 NOMINAL <ShieldCheck className="text-emerald-500" size={32} />
             </div>
             <p className="text-[10px] text-slate-500 font-black uppercase tracking-tight mt-2 italic shadow-sm bg-slate-50 px-3 py-1 rounded-lg border border-slate-100">Performance Threshold: OPTIMAL</p>

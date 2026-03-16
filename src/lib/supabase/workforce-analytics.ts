@@ -128,9 +128,12 @@ export async function getWorkforceAnalytics(
   
   // Sort issues by urgency (expired first, then expiring soonest)
   driversWithIssues.sort((a, b) => {
-      if (a.issue === 'ใบขับขี่หมดอายุ' && b.issue !== 'ใบขับขี่หมดอายุ') return -1
-      if (b.issue === 'ใบขับขี่หมดอายุ' && a.issue !== 'ใบขับขี่หมดอายุ') return 1
-      return a.daysAuth - b.daysAuth // specific logic might vary but keep simple
+      const isAExpired = a.issue.includes('หมดอายุ') && !a.issue.includes('ใกล้')
+      const isBExpired = b.issue.includes('หมดอายุ') && !b.issue.includes('ใกล้')
+      
+      if (isAExpired && !isBExpired) return -1
+      if (!isAExpired && isBExpired) return 1
+      return a.daysAuth - b.daysAuth
   })
   
   // 2. Fetch Top Performers using existing logic

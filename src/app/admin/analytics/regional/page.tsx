@@ -75,8 +75,8 @@ export default async function RegionalAnalyticsPage(props: { searchParams: Promi
             <div className="flex items-center gap-3">
               <div className="p-2 bg-emerald-500/20 rounded-lg"><Building2 size={18} className="text-emerald-600" /></div>
               <div>
-                <p className="text-xs text-gray-700 font-bold">Active Branches</p>
-                <p className="text-2xl font-bold text-gray-950 font-black">{branches.length}</p>
+                <p className="text-xs text-white/70 font-bold uppercase tracking-widest leading-none">Active Branches</p>
+                <p className="text-2xl font-black text-white tracking-tighter mt-1">{branches.length}</p>
               </div>
             </div>
           </CardContent>
@@ -86,8 +86,8 @@ export default async function RegionalAnalyticsPage(props: { searchParams: Promi
             <div className="flex items-center gap-3">
               <div className="p-2 bg-emerald-500/20 rounded-lg"><DollarSign size={18} className="text-emerald-400" /></div>
               <div>
-                <p className="text-xs text-gray-700 font-bold">Total Revenue</p>
-                <p className="text-2xl font-bold text-gray-950 font-black">{formatCurrency(totalRevenue)}</p>
+                <p className="text-xs text-white/70 font-bold uppercase tracking-widest leading-none">Total Revenue</p>
+                <p className="text-2xl font-black text-white tracking-tighter mt-1">{formatCurrency(totalRevenue)}</p>
               </div>
             </div>
           </CardContent>
@@ -97,8 +97,8 @@ export default async function RegionalAnalyticsPage(props: { searchParams: Promi
             <div className="flex items-center gap-3">
               <div className="p-2 bg-emerald-500/15 rounded-lg"><Briefcase size={18} className="text-emerald-500" /></div>
               <div>
-                <p className="text-xs text-gray-700 font-bold">Total Jobs</p>
-                <p className="text-2xl font-bold text-gray-950 font-black">{totalJobs.toLocaleString()}</p>
+                <p className="text-xs text-white/70 font-bold uppercase tracking-widest leading-none">Total Jobs</p>
+                <p className="text-2xl font-black text-white tracking-tighter mt-1">{totalJobs.toLocaleString()}</p>
               </div>
             </div>
           </CardContent>
@@ -108,8 +108,8 @@ export default async function RegionalAnalyticsPage(props: { searchParams: Promi
             <div className="flex items-center gap-3">
               <div className="p-2 bg-amber-500/20 rounded-lg"><BarChart3 size={18} className="text-amber-400" /></div>
               <div>
-                <p className="text-xs text-gray-700 font-bold">Total Profit</p>
-                <p className="text-2xl font-bold text-gray-950 font-black">{formatCurrency(totalProfit)}</p>
+                <p className="text-xs text-white/70 font-bold uppercase tracking-widest leading-none">Total Profit</p>
+                <p className="text-2xl font-black text-white tracking-tighter mt-1">{formatCurrency(totalProfit)}</p>
               </div>
             </div>
           </CardContent>
@@ -157,11 +157,11 @@ export default async function RegionalAnalyticsPage(props: { searchParams: Promi
                     <div className="grid grid-cols-12 gap-4 items-center">
                       {/* Branch Name */}
                       <div className="col-span-3 pl-6">
-                        <h3 className="text-gray-900 font-black text-lg">{branch.branchName}</h3>
-                        <p className="text-gray-700 font-bold text-sm">{branch.jobsCount} jobs</p>
-                        <div className="flex items-center gap-1 mt-1">
-                            <span className="text-[10px] text-gray-500 uppercase font-black">Efficiency</span>
-                            <span className={`text-[10px] font-black ${branch.efficiency > 80 ? 'text-emerald-500' : 'text-amber-500'}`}>
+                        <h3 className="text-slate-950 font-black text-lg italic tracking-tight uppercase leading-none mb-1">{branch.branchName}</h3>
+                        <p className="text-slate-600 font-bold text-xs uppercase tracking-widest">{branch.jobsCount} jobs</p>
+                        <div className="flex items-center gap-1 mt-2">
+                            <span className="text-[9px] text-slate-700 uppercase font-black tracking-widest">Efficiency</span>
+                            <span className={`text-[10px] font-black italic ${branch.efficiency > 80 ? 'text-emerald-600' : 'text-amber-600'}`}>
                                 {branch.efficiency.toFixed(0)}%
                             </span>
                         </div>
@@ -197,16 +197,16 @@ export default async function RegionalAnalyticsPage(props: { searchParams: Promi
                       <div className="col-span-3 text-right">
                         <div className="flex items-center justify-end gap-2">
                           {isGrowthPositive ? (
-                            <TrendingUp size={16} className="text-emerald-400" />
+                            <TrendingUp size={16} className="text-emerald-600" />
                           ) : (
-                            <TrendingDown size={16} className="text-red-400" />
+                            <TrendingDown size={16} className="text-red-600" />
                           )}
-                          <span className={`text-lg font-bold ${isGrowthPositive ? 'text-emerald-400' : 'text-red-400'}`}>
+                          <span className={`text-xl font-black italic tracking-tighter ${isGrowthPositive ? 'text-emerald-600' : 'text-red-700'}`}>
                             {isGrowthPositive ? '+' : ''}{branch.revenueGrowth.toFixed(1)}%
                           </span>
                         </div>
-                        <p className="text-xs text-gray-500 mt-1">
-                          vs prev period ({formatCurrency(branch.previousRevenue)})
+                        <p className="text-[10px] text-slate-600 font-bold mt-1 uppercase tracking-widest italic leading-none">
+                          vs prev: {formatCurrency(branch.previousRevenue)}
                         </p>
                       </div>
                     </div>

@@ -1,6 +1,6 @@
 "use server"
 
-import { createClient } from '@/utils/supabase/server'
+import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { getUserBranchId, isSuperAdmin } from "@/lib/permissions"
 
 export type HealthAlert = {
@@ -16,9 +16,9 @@ export type HealthAlert = {
 
 export async function getFleetHealthAlerts(): Promise<HealthAlert[]> {
     try {
-        const supabase = await createClient()
-        const branchId = await getUserBranchId()
         const isAdmin = await isSuperAdmin()
+        const supabase = isAdmin ? await createAdminClient() : await createClient()
+        const branchId = await getUserBranchId()
 
         // 1. Fetch all active vehicles for the branch
         let vehicleQuery = supabase

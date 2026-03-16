@@ -1,6 +1,6 @@
 "use server";
 
-import { createClient } from "@/utils/supabase/server";
+import { createClient, createAdminClient } from "@/utils/supabase/server";
 import { getUserBranchId, isSuperAdmin } from "@/lib/permissions";
 
 // Type matching actual Supabase schema (ProperCase columns!)
@@ -56,7 +56,8 @@ export async function saveGPSLog(data: {
 // ดึงตำแหน่งล่าสุดของ Driver ทุกคน (สำหรับแสดงบน Map)
 export async function getLatestDriverLocations() {
   try {
-    const supabase = await createClient();
+    const isAdmin = await isSuperAdmin();
+    const supabase = isAdmin ? await createAdminClient() : await createClient();
 
     // ดึงข้อมูล GPS ย้อนหลัง 1 ชั่วโมง
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
@@ -116,7 +117,7 @@ export async function getLatestDriverLocations() {
     }
 
     return logs;
-  } catch (e) {
+  } catch {
     return [];
   }
 }
@@ -150,7 +151,7 @@ export async function getDriverRouteForDate(driverId: string, date: string) {
         Timestamp: d.timestamp || d.Timestamp,
       })) || []
     );
-  } catch (e) {
+  } catch {
     return [];
   }
 }
@@ -161,11 +162,11 @@ export async function getDriverRouteForDate(driverId: string, date: string) {
 
 export async function getFleetGPSStatus(customerId?: string | null) {
   try {
-    const supabase = await createClient();
+    const isAdmin = await isSuperAdmin();
+    const supabase = isAdmin ? await createAdminClient() : await createClient();
 
     // 1. Get all drivers
     const branchId = await getUserBranchId();
-    const isAdmin = await isSuperAdmin();
 
     let driversQuery = supabase
       .from("Master_Drivers")
@@ -225,7 +226,7 @@ export async function getFleetGPSStatus(customerId?: string | null) {
     );
 
     return driversWithLocation;
-  } catch (e) {
+  } catch {
     return [];
   }
 }
