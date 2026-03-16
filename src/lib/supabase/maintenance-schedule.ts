@@ -1,6 +1,6 @@
 "use server"
 
-import { createClient } from '@/utils/supabase/server'
+import { createAdminClient } from '@/utils/supabase/server'
 import { getUserBranchId, isSuperAdmin } from '@/lib/permissions'
 
 export interface ScheduledService {
@@ -30,7 +30,7 @@ export interface MaintenanceScheduleData {
 }
 
 export async function getMaintenanceSchedule(): Promise<MaintenanceScheduleData> {
-  const supabase = await createClient()
+  const supabase = await createAdminClient()
   const branchId = await getUserBranchId()
   const isAdmin = await isSuperAdmin()
   

@@ -1,6 +1,6 @@
 "use server"
 
-import { createClient } from '@/utils/supabase/server'
+import { createAdminClient } from '@/utils/supabase/server'
 import { getUserBranchId, isSuperAdmin } from '@/lib/permissions'
 import { cookies } from 'next/headers'
 
@@ -41,7 +41,7 @@ export interface FuelAnalytics {
 }
 
 export async function getFuelAnalytics(dateFrom?: string, dateTo?: string): Promise<FuelAnalytics> {
-  const supabase = await createClient()
+  const supabase = await createAdminClient()
   const branchId = await getUserBranchId()
   const isAdmin = await isSuperAdmin()
   const cookieStore = await cookies()

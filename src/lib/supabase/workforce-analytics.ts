@@ -1,6 +1,6 @@
 "use server"
 
-import { createClient } from '@/utils/supabase/server'
+import { createAdminClient } from '@/utils/supabase/server'
 import { getUserBranchId, isSuperAdmin } from '@/lib/permissions'
 import { cookies } from 'next/headers'
 import { getDriverLeaderboard } from './analytics'
@@ -31,7 +31,7 @@ export async function getWorkforceAnalytics(
   endDate?: string,
   branchId?: string
 ): Promise<WorkforceAnalytics> {
-  const supabase = await createClient()
+  const supabase = await createAdminClient()
   const userBranchId = await getUserBranchId()
   const isAdmin = await isSuperAdmin()
   const cookieStore = await cookies()

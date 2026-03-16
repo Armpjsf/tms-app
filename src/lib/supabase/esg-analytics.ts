@@ -1,6 +1,6 @@
 "use server"
 
-import { createClient } from '@/utils/supabase/server'
+import { createAdminClient } from '@/utils/supabase/server'
 import { getEffectiveBranchId, REVENUE_STATUSES } from './analytics-helpers'
 
 /**
@@ -21,7 +21,7 @@ const KG_CO2_PER_TREE_YEAR = 20 // 1 tree offsets ~20kg CO2 per year
 
 export async function getESGStats(startDate?: string, endDate?: string, branchId?: string): Promise<ESGStats> {
     try {
-        const supabase = await createClient()
+        const supabase = await createAdminClient()
         const effectiveBranchId = await getEffectiveBranchId(branchId)
 
         // 1. Fetch Job Data for Calculation

@@ -1,7 +1,7 @@
 // Analytics shared helpers, types, and constants
 // Note: No "use server" here — this is consumed by server action files
 
-import { createClient } from '@/utils/supabase/server'
+import { createAdminClient } from '@/utils/supabase/server'
 import { getUserBranchId } from "@/lib/permissions"
 
 export type FinancialJob = {
@@ -36,7 +36,7 @@ export const formatDateSafe = (dateInput: string | Date | null | undefined) => {
 
 // Helper to get vehicle plates for a branch
 export async function getBranchPlates(branchId: string) {
-    const supabase = await createClient()
+    const supabase = await createAdminClient()
     const { data } = await supabase
         .from('master_vehicles')
         .select('vehicle_plate')

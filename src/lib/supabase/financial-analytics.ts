@@ -1,6 +1,6 @@
 "use server"
 
-import { createClient } from '@/utils/supabase/server'
+import { createAdminClient } from '@/utils/supabase/server'
 import { isSuperAdmin, getCustomerId } from "@/lib/permissions"
 import {
     FinancialJob,
@@ -14,7 +14,7 @@ import {
 
 // 1. Financial Stats
 export async function getFinancialStats(startDate?: string, endDate?: string, branchId?: string) {
-  const supabase = await createClient()
+  const supabase = await createAdminClient()
   const customerId = await getCustomerId()
   
   const now = new Date()
@@ -101,7 +101,7 @@ export async function getFinancialStats(startDate?: string, endDate?: string, br
 
 // 2. Revenue Trend (Daily for the selected range)
 export async function getRevenueTrend(startDate?: string, endDate?: string, branchId?: string) {
-  const supabase = await createClient()
+  const supabase = await createAdminClient()
   
   const now = new Date()
   let start = formatDateSafe(startDate)
@@ -157,7 +157,7 @@ export async function getRevenueTrend(startDate?: string, endDate?: string, bran
 
 // 3. Customer Performance (Top 5)
 export async function getTopCustomers(startDate?: string, endDate?: string, branchId?: string) {
-    const supabase = await createClient()
+    const supabase = await createAdminClient()
     const effectiveBranchId = await getEffectiveBranchId(branchId)
     const customerId = await getCustomerId()
 
@@ -198,7 +198,7 @@ export async function getTopCustomers(startDate?: string, endDate?: string, bran
 
 // 5. Job Status Distribution
 export async function getJobStatusDistribution(startDate?: string, endDate?: string, branchId?: string) {
-    const supabase = await createClient()
+    const supabase = await createAdminClient()
     const effectiveBranchId = await getEffectiveBranchId(branchId)
 
     let query = supabase.from('Jobs_Main').select('Job_Status')
@@ -234,7 +234,7 @@ export async function getBranchPerformance(startDate?: string, endDate?: string)
     const isAdmin = await isSuperAdmin()
     if (!isAdmin) return []
 
-    const supabase = await createClient()
+    const supabase = await createAdminClient()
 
     const { data: branches } = await supabase.from('Master_Branches').select('Branch_ID, Branch_Name')
     if (!branches) return []
@@ -271,7 +271,7 @@ export async function getBranchPerformance(startDate?: string, endDate?: string)
 
 // 7. Subcontractor vs Internal Fleet Performance
 export async function getSubcontractorPerformance(startDate?: string, endDate?: string, branchId?: string) {
-    const supabase = await createClient()
+    const supabase = await createAdminClient()
     const effectiveBranchId = await getEffectiveBranchId(branchId)
 
     const sDate = formatDateSafe(startDate)
@@ -352,7 +352,7 @@ export async function getExecutiveKPIs(startDate?: string, endDate?: string, bra
 
 // 9. Route Efficiency (Revenue vs Cost per Route)
 export async function getRouteEfficiency(startDate?: string, endDate?: string, branchId?: string) {
-    const supabase = await createClient()
+    const supabase = await createAdminClient()
     const effectiveBranchId = await getEffectiveBranchId(branchId)
 
     const sDate = formatDateSafe(startDate)
@@ -419,7 +419,7 @@ export async function getExecutiveEfficiencyScores(branchId?: string) {
 
 // 10. Detailed Trip Profitability (Top 50 Jobs by Margin)
 export async function getDetailedProfitability(startDate?: string, endDate?: string, branchId?: string) {
-    const supabase = await createClient()
+    const supabase = await createAdminClient()
     const effectiveBranchId = await getEffectiveBranchId(branchId)
 
     const sDate = formatDateSafe(startDate)
@@ -486,7 +486,7 @@ import { FUEL_BASELINES, FUEL_FRAUD_THRESHOLD } from '@/lib/constants/fuel-basel
 
 // 13. Fuel Anomaly & Fraud Detection (Executive Guard)
 export async function getFuelAnomalyAlerts(branchId?: string) {
-    const supabase = await createClient()
+    const supabase = await createAdminClient()
     const effectiveBranchId = await getEffectiveBranchId(branchId)
     
     // 1. Fetch recent fuel logs (last 30 days)
@@ -550,7 +550,7 @@ export async function getFuelAnomalyAlerts(branchId?: string) {
 // 12. Predictive Revenue Forecasting
 export async function getRevenueForecast(branchId?: string): Promise<{ month: string; actual?: number; forecast?: number }[]> {
     try {
-        const supabase = await createClient()
+        const supabase = await createAdminClient()
         const effectiveBranchId = await getEffectiveBranchId(branchId)
         
         // 1. Get historical revenue (last 6 months)

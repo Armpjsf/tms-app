@@ -1,6 +1,6 @@
 "use server"
 
-import { createClient } from '@/utils/supabase/server'
+import { createAdminClient } from '@/utils/supabase/server'
 import {
     REVENUE_STATUSES,
     formatDateSafe,
@@ -10,7 +10,7 @@ import {
 
 // 4. Operational Stats
 export async function getOperationalStats(branchId?: string, startDate?: string, endDate?: string) {
-    const supabase = await createClient()
+    const supabase = await createAdminClient()
     const effectiveBranchId = await getEffectiveBranchId(branchId)
 
     const now = new Date()
@@ -132,7 +132,7 @@ export async function getOperationalStats(branchId?: string, startDate?: string,
 
 // 10. Driver Leaderboard (Efficiency & Volume)
 export async function getDriverLeaderboard(startDate?: string, endDate?: string, branchId?: string) {
-    const supabase = await createClient()
+    const supabase = await createAdminClient()
     const effectiveBranchId = await getEffectiveBranchId(branchId)
 
     const sDate = formatDateSafe(startDate)
@@ -190,7 +190,7 @@ export async function getDriverLeaderboard(startDate?: string, endDate?: string,
 
 // 10.1 Detailed Driver Analytics (Leaderboard & Export)
 export async function getDetailedDriverAnalytics(startDate?: string, endDate?: string, branchId?: string) {
-    const supabase = await createClient()
+    const supabase = await createAdminClient()
     const effectiveBranchId = await getEffectiveBranchId(branchId)
 
     const sDate = formatDateSafe(startDate)
@@ -271,7 +271,7 @@ export async function getDetailedDriverAnalytics(startDate?: string, endDate?: s
 
 // 12. Vehicle Profitability Breakdown
 export async function getVehicleProfitability(startDate?: string, endDate?: string, branchId?: string) {
-    const supabase = await createClient()
+    const supabase = await createAdminClient()
     
     const now = new Date()
     const firstDay = formatDateSafe(startDate) || formatDateSafe(new Date(now.getFullYear(), now.getMonth(), 1)) || ""
@@ -352,7 +352,7 @@ export async function getVehicleProfitability(startDate?: string, endDate?: stri
 // 13. Provincial Mileage Stats
 export async function getProvincialMileageStats(branchId?: string) {
     try {
-        const supabase = await createClient()
+        const supabase = await createAdminClient()
         const effectiveBranchId = await getEffectiveBranchId(branchId)
 
         let query = supabase
@@ -398,7 +398,7 @@ export async function getProvincialMileageStats(branchId?: string) {
 // 14. Fleet Compliance Metrics
 export async function getFleetComplianceMetrics(branchId?: string) {
     try {
-        const supabase = await createClient()
+        const supabase = await createAdminClient()
         const effectiveBranchId = await getEffectiveBranchId(branchId)
 
         let query = supabase.from('master_vehicles').select('vehicle_plate, tax_expiry, insurance_expiry, act_expiry')
@@ -452,7 +452,7 @@ export async function getFleetComplianceMetrics(branchId?: string) {
 // 15. Fleet Health Score
 export async function getFleetHealthScore(branchId?: string) {
     try {
-        const supabase = await createClient()
+        const supabase = await createAdminClient()
         const effectiveBranchId = await getEffectiveBranchId(branchId)
 
         let query = supabase.from('master_vehicles').select('active_status')
