@@ -45,7 +45,7 @@ export async function login(formData: FormData) {
   // 3. Create Session (Custom)
   // Map string Role to numeric Role_ID if Role_ID is missing
   let roleId = users.Role_ID
-  if (roleId === undefined && users.Role) {
+  if ((roleId === undefined || roleId === null) && users.Role) {
     const roleMap: Record<string, number> = {
       'Super Admin': 1,
       'Admin': 2,
@@ -54,7 +54,7 @@ export async function login(formData: FormData) {
       'Customer': 5
     }
     roleId = roleMap[users.Role] || 3
-  } else if (roleId === undefined) {
+  } else if (roleId === undefined || roleId === null) {
     roleId = 3
   }
 

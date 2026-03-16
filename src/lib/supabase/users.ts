@@ -24,7 +24,7 @@ export async function getUserProfile() {
         return null
     }
 
-    const supabase = await createClient()
+    const supabase = createAdminClient()
 
     const { data: rawData, error } = await supabase
       .from('Master_Users')
