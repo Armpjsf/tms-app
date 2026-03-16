@@ -91,7 +91,7 @@ export async function POST(req: NextRequest) {
                     supabase.from('Master_Users').select('Username, Name, Role, Role_ID, Branch_ID').eq('Line_User_ID', userId).maybeSingle()
                 ])
 
-                const isExecutive = boundAdmin && (boundAdmin.Role_ID <= 2 || boundAdmin.Role === 'Executive')
+                const isExecutive = boundAdmin && (boundAdmin.Role_ID === 1 || boundAdmin.Role === 'Executive' || boundAdmin.Role === 'Super Admin')
 
                 // 4. EXECUTIVE COMMANDS (Revenue, Profit, Analytics)
                 if (isExecutive) {
