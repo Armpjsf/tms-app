@@ -63,18 +63,17 @@ export async function POST(req: NextRequest) {
                         continue
                     }
 
-                    // Try Admin/Executive (using Username and Password check)
-                    // Note: In a production app, we would use a more secure verification, 
-                    // but for this demo, we'll check if the provided "phone" field matches their Username or a specific Admin Token
+                    // Try Admin/Executive (using Username or Phone check)
+                    // We use ilike for case-insensitive username matching
                     const { data: adminUser } = await supabase
                         .from('Master_Users')
-                        .select('Username, Name, Role, Role_ID')
-                        .eq('Username', id)
+                        .select('Username, Name, Role, Role_ID, Email')
+                        .or(`Username.ilike.${id},Email.ilike.${id}`)
                         .maybeSingle()
                     
-                    if (adminUser && (adminUser.Role_ID <= 2 || adminUser.Role === 'Executive')) {
-                        // For Admin, we'll allow binding if they provide their correct Username as the second parameter for verification
-                        if (phone === id || phone === 'ADMIN') { 
+                    if (adminUser && (adminUser.Role_ID <= 2 || adminUser.Role === 'Executive' || adminUser.Role === 'Super Admin')) {
+                        // For Admin, we'll allow binding if they provide their correct Username or 'ADMIN' as the verification
+                        if (phone === id || phone === 'ADMIN' || phone === 'admin') { 
                             await supabase.from('Master_Users').update({ Line_User_ID: userId }).eq('Username', id)
                             await replyToUser(replyToken, `👑 ยินดีต้อนรับท่านผู้บริหาร! คุณ ${adminUser.Name} ผูกบัญชีสำเร็จแล้ว\n\n🔹 ตอนนี้ท่านสามารถถาม "กำไร" หรือ "ยอดขาย" ได้ทันทีครับ`)
                             continue
