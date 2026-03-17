@@ -30,6 +30,7 @@ import {
   CheckCircle2,
   Bell,
   BookOpen,
+  Bot,
 } from "lucide-react"
 
 import { SidebarProfile } from "./sidebar-profile"
@@ -84,6 +85,7 @@ const navigation: NavGroup[] = [
     items: [
       { title: "Executive Dashboard", href: "/admin/analytics", icon: <BarChart3 size={20} />, badgeColor: "blue" },
       { title: "รายงานรถและคนขับ", href: "/reports/fleet", icon: <Truck size={20} /> },
+      { title: "Intelligence Support", href: "/intelligence", icon: <Bot size={20} />, badgeColor: "green" },
       { title: "ต้นทุนต่อเที่ยว", href: "/reports/cost-per-trip", icon: <Coins size={20} />, badgeColor: "yellow" },
       { title: "ปัญหาสินค้า/เคลม", href: "/admin/damage-reports", icon: <AlertTriangle size={20} />, badgeColor: "red" },
       { title: "ข้อเสนอแนะคนขับ", href: "/admin/user-feedback", icon: <MessageSquare size={20} /> },

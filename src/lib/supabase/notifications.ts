@@ -178,17 +178,17 @@ export async function getNotifications(): Promise<AppNotification[]> {
 
         notifications.push({
           id: `chat-${msg[chatCols.id]}`,
-          type: 'system', // or use a new 'message' type if UI supports it
+          type: 'system',
           title: `💬 ข้อความใหม่จาก ${driver?.Driver_Name || senderId}`,
           message: msg[chatCols.message],
           timestamp: msg[chatCols.created_at],
           read: false,
-          href: '/chat',
+          href: `/monitoring?driver=${senderId}&openChat=true`,
           severity: 'info'
         })
       })
     }
-  } catch (err) {
+  } catch {
     // Chat notification error
   }
 

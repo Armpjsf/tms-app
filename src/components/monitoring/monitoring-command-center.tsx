@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useMemo, useEffect, useRef } from 'react'
+import { useMemo, useEffect, useRef, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
     Search, 
@@ -73,6 +74,21 @@ export function MonitoringCommandCenter({
     const [isChatOpen, setIsChatOpen] = useState(false)
     const [chatDriverId, setChatDriverId] = useState<string | null>(null)
     const isMounted = useRef(true)
+    const searchParams = useSearchParams()
+
+    // Handle Deep-linking from Notifications
+    useEffect(() => {
+        const driverId = searchParams.get('driver')
+        const openChat = searchParams.get('openChat') === 'true'
+
+        if (driverId) {
+            setSelectedId(driverId)
+            if (openChat) {
+                setChatDriverId(driverId)
+                setIsChatOpen(true)
+            }
+        }
+    }, [searchParams])
 
     useEffect(() => {
         return () => { isMounted.current = false }
