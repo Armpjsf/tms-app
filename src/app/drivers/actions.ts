@@ -1,8 +1,8 @@
 'use server'
 
-import { createClient } from '@/utils/supabase/server'
+import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
-import { getUserBranchId, isSuperAdmin } from '@/lib/permissions'
+import { getUserBranchId, isSuperAdmin, isAdmin } from '@/lib/permissions'
 
 export type DriverFormData = {
   Driver_ID: string
@@ -52,8 +52,13 @@ export async function createDriver(data: DriverFormData) {
 }
 
 export async function createBulkDrivers(drivers: Partial<DriverFormData>[]) {
-  const supabase = await createClient()
-  const branchId = await getUserBranchId()
+  const isAdminUser = await isAdmin()
+  if (!isAdminUser) {
+    return { success: false, message: 'คุณไม่มีสิทธิ์ในการนำเข้าข้อมูล (Admin access required)' }
+  }
+
+  const supabase = await createAdminClient()
+  const currentBranchId = await getUserBranchId()
 
   // Helper to normalize keys
   const normalizeData = (row: Partial<DriverFormData>) => {
@@ -79,6 +84,7 @@ export async function createBulkDrivers(drivers: Partial<DriverFormData>[]) {
     normalized.Vehicle_Plate = getValue(['Vehicle_Plate', 'plate', 'ทะเบียนรถ', 'ทะเบียน']) as string
     normalized.Expire_Date = getValue(['Expire_Date', 'License_Expiry', 'License_Expirry', 'license_date', 'วันหมดอายุใบขับขี่']) as string
     normalized.Sub_ID = getValue(['Sub_ID', 'subcontractor_id', 'รหัสผู้รับเหมา', 'รหัสรถร่วม']) as string
+    normalized.Branch_ID = getValue(['Branch_ID', 'branch', 'สาขา', 'รหัสสาขา']) as string
     normalized.Bank_Name = getValue(['Bank_Name', 'bank', 'ธนาคาร']) as string
     normalized.Bank_Account_No = getValue(['Bank_Account_No', 'account_no', 'เลขบัญชี']) as string
     normalized.Bank_Account_Name = getValue(['Bank_Account_Name', 'account_name', 'ชื่อบัญชี']) as string
@@ -89,6 +95,13 @@ export async function createBulkDrivers(drivers: Partial<DriverFormData>[]) {
   // Prepare data with defaults
   const cleanData = drivers.map(d => {
     const data = normalizeData(d)
+    
+    // Smart Branch ID: 
+    // 1. If Branch_ID provided in row, use it.
+    // 2. Otherwise, use user's current branch (if not 'All').
+    // 3. Fallback to null.
+    const finalBranchId = data.Branch_ID || (currentBranchId !== 'All' ? currentBranchId : null)
+
     return {
       Driver_ID: data.Driver_ID || `DRV-${Math.floor(Math.random()*100000)}`,
       Driver_Name: data.Driver_Name ? String(data.Driver_Name).trim() : null,
@@ -103,7 +116,7 @@ export async function createBulkDrivers(drivers: Partial<DriverFormData>[]) {
       Bank_Name: data.Bank_Name || null,
       Bank_Account_No: data.Bank_Account_No || null,
       Bank_Account_Name: data.Bank_Account_Name || null,
-      Branch_ID: branchId
+      Branch_ID: finalBranchId
     }
   }).filter(d => d.Driver_Name && d.Mobile_No) // Ensure essential fields exist
 
