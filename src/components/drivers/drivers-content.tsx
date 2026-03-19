@@ -110,7 +110,7 @@ export async function DriversContent({ searchParams, branches = [], isSuperAdmin
                         Password: "password123",
                         Vehicle_Plate: "",
                         Expire_Date: "2025-06-30",
-                        Sub_ID: "SUB-001",
+                        Sub_ID: "", // ปล่อยว่างไว้หากไม่ใช่รถร่วม
                         Bank_Name: "SCB",
                         Bank_Account_No: "111-1-11111-1",
                         Bank_Account_Name: "นางสาว สมหญิง รักงาน"

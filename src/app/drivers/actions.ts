@@ -60,6 +60,10 @@ export async function createBulkDrivers(drivers: Partial<DriverFormData>[]) {
   const supabase = await createAdminClient()
   const currentBranchId = await getUserBranchId()
 
+  // Fetch valid subcontractors to prevent FK violations
+  const { data: validSubs } = await supabase.from('Master_Subcontractors').select('Sub_ID')
+  const validSubSet = new Set(validSubs?.map(s => s.Sub_ID) || [])
+
   // Helper to normalize keys
   const normalizeData = (row: Partial<DriverFormData>) => {
     const normalized: Partial<DriverFormData> & { Expire_Date?: string } = {}
@@ -112,7 +116,9 @@ export async function createBulkDrivers(drivers: Partial<DriverFormData>[]) {
       Role: 'Driver',
       Active_Status: 'Active',
       Expire_Date: data.Expire_Date || null,
-      Sub_ID: data.Sub_ID || null,
+      Sub_ID: (data.Sub_ID && String(data.Sub_ID).trim() !== '' && validSubSet.has(String(data.Sub_ID).trim())) 
+                ? String(data.Sub_ID).trim() 
+                : null,
       Bank_Name: data.Bank_Name || null,
       Bank_Account_No: data.Bank_Account_No || null,
       Bank_Account_Name: data.Bank_Account_Name || null,
