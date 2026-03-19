@@ -1,6 +1,6 @@
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { DriversContent } from "@/components/drivers/drivers-content"
-import { isSuperAdmin } from "@/lib/permissions"
+import { isAdmin } from "@/lib/permissions"
 import { getAllBranches, Branch } from "@/lib/supabase/branches"
 
 type Props = {
@@ -12,13 +12,14 @@ export const revalidate = 0
 
 export default async function DriversPage(props: Props) {
   const searchParams = await props.searchParams
-  const isAdmin = await isSuperAdmin()
-  const branches: Branch[] = isAdmin ? await getAllBranches() : []
+  const isUserAdmin = await isAdmin()
+  const branchesData = isUserAdmin ? await getAllBranches() : []
+  const branches: Branch[] = branchesData || []
 
   return (
     <DashboardLayout>
-      {/* @ts-ignore */}
-      <DriversContent searchParams={searchParams} branches={branches} isSuperAdmin={isAdmin} />
+      {/* @ts-expect-error - Complex server component props */}
+      <DriversContent searchParams={searchParams} branches={branches} isAdmin={isUserAdmin} />
     </DashboardLayout>
   )
 }

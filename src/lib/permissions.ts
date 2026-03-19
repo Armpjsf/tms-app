@@ -7,8 +7,9 @@ export async function getUserBranchId() {
     try {
         const session = await getSession()
         if (session) {
+            console.log(`[DEBUG] Session found: userId=${session.userId}, roleId=${session.roleId}`)
             // For Super Admin, use the selected branch from cookies if available
-            if (session.roleId === 1) {
+            if (Number(session.roleId) === 1) {
                 const cookieStore = await cookies()
                 return cookieStore.get('selectedBranch')?.value || 'All'
             }
@@ -58,12 +59,14 @@ export async function hasPermission(permission: string) {
 
 export async function isSuperAdmin() {
     const roleId = await getUserRole()
-    return roleId === 1
+    return Number(roleId) === 1
 }
 
 export async function isAdmin() {
     const roleId = await getUserRole()
-    return roleId === 1 || roleId === 2
+    const result = Number(roleId) === 1 || Number(roleId) === 2
+    console.log(`[DEBUG] isAdmin check: roleId=${roleId}, result=${result}`)
+    return result
 }
 
 export async function isCustomer() {

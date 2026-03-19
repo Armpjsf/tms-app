@@ -30,10 +30,10 @@ import { cn } from "@/lib/utils"
 type Props = {
   searchParams: { [key: string]: string | string[] | undefined }
   branches?: Branch[]
-  isSuperAdmin?: boolean
+  isAdmin?: boolean
 }
 
-export async function DriversContent({ searchParams, branches = [], isSuperAdmin = false }: Props) {
+export async function DriversContent({ searchParams, branches = [], isAdmin = false }: Props) {
   const page = Number(searchParams.page) || 1
   const query = (searchParams.q as string) || ''
   const limit = 12
@@ -75,7 +75,7 @@ export async function DriversContent({ searchParams, branches = [], isSuperAdmin
             <div className="p-3 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-3xl shadow-2xl shadow-blue-500/20 text-white transform group-hover:scale-110 transition-transform duration-500">
               <Users size={32} />
             </div>
-            Driver ELITE {isSuperAdmin ? <span className="text-xl bg-blue-500/20 text-blue-400 border border-blue-500/30 px-3 py-1 rounded-xl align-middle ml-2 font-black">COMMAND</span> : ""}
+            Driver ELITE {isAdmin ? <span className="text-xl bg-blue-500/20 text-blue-400 border border-blue-500/30 px-3 py-1 rounded-xl align-middle ml-2 font-black">COMMAND</span> : ""}
           </h1>
           <p className="text-blue-400 font-black ml-[4.5rem] uppercase tracking-[0.3em] text-[10px]">Human Capital & Tactical Performance Control</p>
         </div>
@@ -118,7 +118,7 @@ export async function DriversContent({ searchParams, branches = [], isSuperAdmin
                 ]}
                 templateFilename="template_drivers.xlsx"
             />
-            {isSuperAdmin && (
+            {isAdmin && (
                 <DriverDialog 
                     mode="create" 
                     vehicles={vehicles.data}
@@ -135,7 +135,7 @@ export async function DriversContent({ searchParams, branches = [], isSuperAdmin
         </div>
       </div>
 
-      {isSuperAdmin && (
+      {isAdmin && (
         <DriverPerformanceSummary 
           leaderboard={leaderboard} 
           compliance={compliance} 
