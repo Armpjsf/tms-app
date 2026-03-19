@@ -20,7 +20,7 @@ export type Driver = {
   Act_Expiry: string | null
   Current_Mileage: number | null
   Active_Status: string | null
-  License_Expiry: string | null
+  Expire_Date: string | null
   Bank_Name?: string | null
   Bank_Account_No?: string | null
   Bank_Account_Name?: string | null
@@ -89,7 +89,7 @@ export async function createDriver(driverData: Partial<Driver>) {
         Vehicle_Type: driverData.Vehicle_Type,
         Password: driverData.Password,
         Active_Status: driverData.Active_Status || 'Active',
-        License_Expiry: driverData.License_Expiry,
+        Expire_Date: driverData.Expire_Date,
         Bank_Name: driverData.Bank_Name,
         Bank_Account_No: driverData.Bank_Account_No,
         Bank_Account_Name: driverData.Bank_Account_Name,
@@ -121,7 +121,7 @@ export async function updateDriver(id: string, driverData: Partial<Driver>) {
         Vehicle_Type: driverData.Vehicle_Type,
         Password: driverData.Password,
         Active_Status: driverData.Active_Status,
-        License_Expiry: driverData.License_Expiry,
+        Expire_Date: driverData.Expire_Date,
         Bank_Name: driverData.Bank_Name,
         Bank_Account_No: driverData.Bank_Account_No,
         Bank_Account_Name: driverData.Bank_Account_Name
@@ -302,7 +302,7 @@ export async function getDriverScore(driverId: string) {
 export async function getDriverComplianceStats(branchId?: string) {
     try {
         const supabase = await createClient()
-        let query = supabase.from('Master_Drivers').select('License_Expiry')
+        let query = supabase.from('Master_Drivers').select('Expire_Date')
 
         const userBranchId = await getUserBranchId()
         const isSuper = await isSuperAdmin()
@@ -324,9 +324,9 @@ export async function getDriverComplianceStats(branchId?: string) {
 
         const stats = { valid: 0, expiring: 0, expired: 0, missing: 0 }
         data?.forEach(d => {
-            if (!d.License_Expiry) stats.missing++
+            if (!d.Expire_Date) stats.missing++
             else {
-                const expiry = new Date(d.License_Expiry)
+                const expiry = new Date(d.Expire_Date)
                 if (expiry < now) stats.expired++
                 else if (expiry < thirtyDays) stats.expiring++
                 else stats.valid++

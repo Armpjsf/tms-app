@@ -57,7 +57,7 @@ export async function createBulkDrivers(drivers: Partial<DriverFormData>[]) {
 
   // Helper to normalize keys
   const normalizeData = (row: Partial<DriverFormData>) => {
-    const normalized: Partial<DriverFormData> & { License_Expiry?: string } = {}
+    const normalized: Partial<DriverFormData> & { Expire_Date?: string } = {}
     
     const getValue = (keys: string[]) => {
       const rowKeys = Object.keys(row)
@@ -77,7 +77,7 @@ export async function createBulkDrivers(drivers: Partial<DriverFormData>[]) {
     normalized.Mobile_No = getValue(['Mobile_No', 'phone', 'mobile', 'เบอร์โทร', 'เบอร์โทรศัพท์']) as string
     normalized.Password = getValue(['Password', 'pass', 'รหัสผ่าน']) as string
     normalized.Vehicle_Plate = getValue(['Vehicle_Plate', 'plate', 'ทะเบียนรถ', 'ทะเบียน']) as string
-    normalized.License_Expiry = getValue(['License_Expiry', 'license_date', 'วันหมดอายุใบขับขี่']) as string
+    normalized.Expire_Date = getValue(['Expire_Date', 'License_Expiry', 'License_Expirry', 'license_date', 'วันหมดอายุใบขับขี่']) as string
     normalized.Sub_ID = getValue(['Sub_ID', 'subcontractor_id', 'รหัสผู้รับเหมา', 'รหัสรถร่วม']) as string
     normalized.Bank_Name = getValue(['Bank_Name', 'bank', 'ธนาคาร']) as string
     normalized.Bank_Account_No = getValue(['Bank_Account_No', 'account_no', 'เลขบัญชี']) as string
@@ -98,7 +98,7 @@ export async function createBulkDrivers(drivers: Partial<DriverFormData>[]) {
       Vehicle_Type: '4-Wheel',
       Role: 'Driver',
       Active_Status: 'Active',
-      License_Expiry: data.License_Expiry || null,
+      Expire_Date: data.Expire_Date || null,
       Sub_ID: data.Sub_ID || null,
       Bank_Name: data.Bank_Name || null,
       Bank_Account_No: data.Bank_Account_No || null,

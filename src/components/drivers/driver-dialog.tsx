@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { createDriver, updateDriver } from "@/app/drivers/actions"
+import { createDriver, updateDriver, type DriverFormData } from "@/app/drivers/actions"
 import { Loader2 } from "lucide-react"
 import { Driver } from "@/lib/supabase/drivers"
 import { Subcontractor } from "@/types/subcontractor"
@@ -51,7 +51,7 @@ export function DriverDialog({
     Password: driver?.Password || '',
     Vehicle_Plate: driver?.Vehicle_Plate || '',
     Active_Status: driver?.Active_Status || 'Active',
-    License_Expiry: driver?.License_Expiry || '',
+    Expire_Date: driver?.Expire_Date || '',
     Sub_ID: driver?.Sub_ID || '',
     Branch_ID: (driver as { Branch_ID?: string })?.Branch_ID || '',
     Bank_Name: driver?.Bank_Name || '',
@@ -66,11 +66,11 @@ export function DriverDialog({
     try {
       let result;
       if (mode === 'create') {
-        // @ts-expect-error - Form data type mismatch
-        result = await createDriver(formData)
+        result = await createDriver(formData as unknown as DriverFormData)
+      } else if (driver?.Driver_ID) {
+        result = await updateDriver(driver.Driver_ID, formData as unknown as DriverFormData)
       } else {
-        // @ts-expect-error - Driver ID type mismatch
-        result = await updateDriver(driver.Driver_ID, formData)
+        throw new Error('Driver ID is missing')
       }
       
       if (!result.success) {
@@ -86,7 +86,7 @@ export function DriverDialog({
             Password: '',
             Vehicle_Plate: '',
             Active_Status: 'Active',
-            License_Expiry: '',
+            Expire_Date: '',
             Sub_ID: '',
             Branch_ID: '',
             Bank_Name: '',
@@ -166,12 +166,12 @@ export function DriverDialog({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="License_Expiry">วันหมดอายุใบขับขี่</Label>
+            <Label htmlFor="Expire_Date">วันหมดอายุใบขับขี่</Label>
              <Input
-                id="License_Expiry"
+                id="Expire_Date"
                 type="date"
-                value={formData.License_Expiry}
-                onChange={(e) => setFormData({ ...formData, License_Expiry: e.target.value })}
+                value={formData.Expire_Date}
+                onChange={(e) => setFormData({ ...formData, Expire_Date: e.target.value })}
                 className="bg-gray-50 border-gray-200 text-gray-900"
              />
           </div>

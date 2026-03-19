@@ -97,7 +97,7 @@ export async function DriversContent({ searchParams, branches = [], isSuperAdmin
                         Mobile_No: "0812345678", 
                         Password: "password123",
                         Vehicle_Plate: "1กข-1234",
-                        License_Expiry: "2025-12-31",
+                        Expire_Date: "2025-12-31",
                         Sub_ID: "", // ใส่ ID ผู้รับเหมาถ้ามี
                         Bank_Name: "KBank",
                         Bank_Account_No: "000-0-00000-0",
@@ -109,7 +109,7 @@ export async function DriversContent({ searchParams, branches = [], isSuperAdmin
                         Mobile_No: "0898765432", 
                         Password: "password123",
                         Vehicle_Plate: "",
-                        License_Expiry: "2025-06-30",
+                        Expire_Date: "2025-06-30",
                         Sub_ID: "SUB-001",
                         Bank_Name: "SCB",
                         Bank_Account_No: "111-1-11111-1",
@@ -250,19 +250,19 @@ export async function DriversContent({ searchParams, branches = [], isSuperAdmin
                         </div>
                     </div>
                 </div>
-
-                {driver.License_Expiry && (
+ 
+                {driver.Expire_Date && (
                     <div className={cn(
                         "px-6 py-4 rounded-2xl border flex items-center justify-between transition-all duration-500 relative overflow-hidden",
-                        new Date(driver.License_Expiry) < now ? 'bg-red-500/5 text-red-600 border-red-500/20' :
-                        new Date(driver.License_Expiry) < thirtyDaysFromNow ? 'bg-amber-500/5 text-amber-600 border-amber-500/20' : 
+                        new Date(driver.Expire_Date) < now ? 'bg-red-500/5 text-red-600 border-red-500/20' :
+                        new Date(driver.Expire_Date) < thirtyDaysFromNow ? 'bg-amber-500/5 text-amber-600 border-amber-500/20' : 
                         'bg-slate-50 text-slate-500 border-slate-100'
                     )}>
                         <div className="flex items-center gap-3">
                             <Award size={16} className="opacity-70" />
                             <span className="text-[10px] font-black uppercase tracking-[0.2em] italic">Qualification Expiry</span>
                         </div>
-                        <span className="text-xs font-black tracking-widest font-mono">{new Date(driver.License_Expiry).toLocaleDateString('th-TH')}</span>
+                        <span className="text-xs font-black tracking-widest font-mono">{new Date(driver.Expire_Date).toLocaleDateString('th-TH')}</span>
                     </div>
                 )}
               </div>
