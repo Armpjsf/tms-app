@@ -15,8 +15,9 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 
-import { Upload, FileSpreadsheet, Loader2, Download, AlertCircle } from "lucide-react"
+import { Upload, FileSpreadsheet, Loader2, Download, AlertCircle, CheckCircle2 } from "lucide-react"
 import * as XLSX from "xlsx"
+import { motion, AnimatePresence } from "framer-motion"
 
 interface ExcelImportProps {
   trigger: React.ReactNode
@@ -75,7 +76,6 @@ export function ExcelImport({
           const sheetName = workbook.SheetNames[0]
           const sheet = workbook.Sheets[sheetName]
           const jsonData = XLSX.utils.sheet_to_json(sheet)
-          // Fix: Ensure data is plain objects by stripping any non-serializable properties (e.g. prototypes)
           const plainData = JSON.parse(JSON.stringify(jsonData))
           resolve(plainData)
         } catch (error) {
@@ -123,112 +123,156 @@ export function ExcelImport({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent className="sm:max-w-xl bg-white border-gray-200 text-white">
-        <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
-          <DialogDescription className="text-gray-500">{description}</DialogDescription>
-        </DialogHeader>
+      <DialogContent className="sm:max-w-xl bg-slate-900 border-white/10 text-white rounded-3xl p-0 overflow-hidden">
+        <div className="p-8 space-y-6">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-black tracking-tight flex items-center gap-3">
+              <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+                <FileSpreadsheet size={20} />
+              </div>
+              {title}
+            </DialogTitle>
+            <DialogDescription className="text-slate-400 font-medium">
+              {description}
+            </DialogDescription>
+          </DialogHeader>
 
-        <div className="grid gap-4 py-4">
-          {templateData && (
-            <div className="flex justify-end">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={downloadTemplate}
-                className="gap-2 border-gray-200 hover:bg-gray-100 text-gray-700"
-              >
-                <Download size={14} /> โหลดแบบฟอร์ม (Template)
-              </Button>
-            </div>
-          )}
+          <div className="grid gap-6">
+            {templateData && (
+              <div className="flex justify-end">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={downloadTemplate}
+                  className="h-10 px-4 rounded-xl gap-2 border-white/10 bg-white/5 hover:bg-white/10 text-slate-300 transition-all active:scale-95"
+                >
+                  <Download size={14} /> โหลดแบบฟอร์ม (Template)
+                </Button>
+              </div>
+            )}
 
-          <div
-            className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
-              file ? "border-blue-500/50 bg-blue-500/5" : "border-gray-200 hover:border-slate-500 hover:bg-gray-50"
-            }`}
-            onClick={() => fileInputRef.current?.click()}
-          >
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".xlsx, .xls"
-              className="hidden"
-              onChange={handleFileChange}
-            />
-            <div className="flex flex-col items-center gap-2">
-              {file ? (
-                <>
-                  <FileSpreadsheet className="w-10 h-10 text-emerald-500" />
-                  <p className="font-medium text-emerald-500">{file.name}</p>
-                  <p className="text-xs text-gray-400">
-                    {previewData.length > 0 ? `พบข้อมูล ${previewData.length} รายการ` : "กำลังอ่านไฟล์..."}
-                  </p>
-                </>
-              ) : (
-                <>
-                  <Upload className="w-10 h-10 text-gray-400" />
-                  <p className="text-gray-700">คลิกเพื่อเลือกไฟล์ หรือลากไฟล์มาวางที่นี่</p>
-                  <p className="text-xs text-gray-400">รองรับไฟล์ .xlsx, .xls</p>
-                </>
+            <motion.div
+              whileHover={{ scale: 1.01 }}
+              whileTap={{ scale: 0.99 }}
+              className={`relative border-2 border-dashed rounded-3xl p-10 text-center transition-all cursor-pointer group ${
+                file 
+                  ? "border-emerald-500/50 bg-emerald-500/5" 
+                  : "border-white/10 bg-white/5 hover:border-emerald-500/30 hover:bg-emerald-500/5"
+              }`}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".xlsx, .xls"
+                className="hidden"
+                onChange={handleFileChange}
+              />
+              <div className="flex flex-col items-center gap-4">
+                <AnimatePresence mode="wait">
+                  {file ? (
+                    <motion.div 
+                      key="file"
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className="flex flex-col items-center gap-3"
+                    >
+                      <div className="p-4 rounded-full bg-emerald-500/20 text-emerald-500">
+                        <CheckCircle2 className="w-8 h-8" />
+                      </div>
+                      <div className="text-center">
+                        <p className="font-bold text-white tracking-tight">{file.name}</p>
+                        <p className="text-xs text-slate-400 mt-1">
+                          {previewData.length > 0 ? `พบข้อมูล ${previewData.length} รายการ พร้อมนำเข้า` : "กำลังอ่านไฟล์..."}
+                        </p>
+                      </div>
+                    </motion.div>
+                  ) : (
+                    <motion.div 
+                      key="no-file"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="flex flex-col items-center gap-3"
+                    >
+                      <div className="p-4 rounded-full bg-white/5 text-slate-400 group-hover:text-emerald-500 group-hover:bg-emerald-500/10 transition-colors">
+                        <Upload className="w-8 h-8" />
+                      </div>
+                      <div className="text-center">
+                        <p className="font-bold text-slate-300">คลิกเพื่อเลือกไฟล์ หรือลากไฟล์มาวางที่นี่</p>
+                        <p className="text-xs text-slate-500 mt-1 uppercase tracking-widest font-black">รองรับไฟล์ .XLSX, .XLS</p>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            </motion.div>
+
+            <AnimatePresence>
+              {error && (
+                <motion.div 
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  className="bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-2xl flex items-start gap-3 text-sm"
+                >
+                  <AlertCircle className="h-5 w-5 shrink-0" />
+                  <div>
+                    <p className="font-black uppercase tracking-wider text-[10px]">Import Error</p>
+                    <p className="font-medium mt-1">{error}</p>
+                  </div>
+                </motion.div>
               )}
-            </div>
+            </AnimatePresence>
+
+            {previewData.length > 0 && !error && (
+               <div className="bg-white/5 rounded-2xl border border-white/5 overflow-hidden">
+                  <div className="max-h-[160px] overflow-auto">
+                    <table className="w-full text-[11px] text-left border-collapse">
+                        <thead className="bg-white/10 text-slate-300 sticky top-0 backdrop-blur-md">
+                            <tr>
+                                {Object.keys(previewData[0]).slice(0, 4).map(key => (
+                                    <th key={key} className="p-3 font-bold uppercase tracking-wider">{key}</th>
+                                ))}
+                                {Object.keys(previewData[0]).length > 4 && <th className="p-3 font-bold">...</th>}
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-white/5">
+                            {previewData.slice(0, 3).map((row, i) => (
+                                <tr key={i} className="hover:bg-white/5 transition-colors">
+                                    {Object.values(row).slice(0, 4).map((val: unknown, j) => (
+                                        <td key={j} className="p-3 text-slate-400 font-medium truncate max-w-[100px]">{String(val)}</td>
+                                    ))}
+                                    {Object.values(row).length > 4 && <td className="p-3 text-slate-500">...</td>}
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                  </div>
+                  {previewData.length > 3 && (
+                      <div className="p-2 text-[10px] text-center text-slate-500 bg-white/[0.02] border-t border-white/5 font-bold uppercase tracking-tighter">
+                          ... and {previewData.length - 3} more items
+                      </div>
+                  )}
+               </div>
+            )}
           </div>
 
-          {error && (
-            <div className="bg-red-900/20 border border-red-900/50 text-red-400 p-3 rounded-md flex items-start gap-2 text-sm">
-              <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
-              <div>
-                <p className="font-semibold">ผิดพลาด</p>
-                <p>{error}</p>
-              </div>
-            </div>
-          )}
-
-          {previewData.length > 0 && !error && (
-             <div className="max-h-[200px] overflow-auto rounded-md border border-gray-200">
-                <table className="w-full text-xs text-left">
-                    <thead className="bg-gray-100 text-gray-700 sticky top-0">
-                        <tr>
-                            {Object.keys(previewData[0]).slice(0, 5).map(key => (
-                                <th key={key} className="p-2">{key}</th>
-                            ))}
-                            {Object.keys(previewData[0]).length > 5 && <th className="p-2">...</th>}
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-800">
-                        {previewData.slice(0, 5).map((row, i) => (
-                            <tr key={i} className="hover:bg-gray-50">
-                                {Object.values(row).slice(0, 5).map((val: unknown, j) => (
-                                    <td key={j} className="p-2 text-gray-500">{String(val)}</td>
-                                ))}
-                                {Object.values(row).length > 5 && <td className="p-2 text-gray-400">...</td>}
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-                {previewData.length > 5 && (
-                    <p className="text-xs text-center p-2 text-gray-400 bg-white border-t border-gray-200">
-                        ...และอีก {previewData.length - 5} รายการ
-                    </p>
-                )}
-             </div>
-          )}
+          <DialogFooter className="flex gap-3 pt-4">
+            <Button 
+              variant="ghost" 
+              onClick={() => setOpen(false)}
+              className="flex-1 h-12 rounded-2xl border border-white/5 text-slate-400 hover:text-white hover:bg-white/5 font-bold transition-all"
+            >
+              ยกเลิก
+            </Button>
+            <Button
+              onClick={handleImport}
+              disabled={!file || loading || previewData.length === 0}
+              className="flex-1 h-12 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-black shadow-lg shadow-emerald-900/20 transition-all active:scale-95 disabled:opacity-50"
+            >
+              {loading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : "นำเข้าข้อมูล"}
+            </Button>
+          </DialogFooter>
         </div>
-
-        <DialogFooter>
-          <Button variant="ghost" onClick={() => setOpen(false)}>
-            ยกเลิก
-          </Button>
-          <Button
-            onClick={handleImport}
-            disabled={!file || loading || previewData.length === 0}
-            className="bg-emerald-600 hover:bg-blue-700"
-          >
-            {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            นำเข้าข้อมูล
-          </Button>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   )

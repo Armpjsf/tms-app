@@ -17,7 +17,7 @@ export function PageHeader({ icon, title, subtitle, badge, actions }: PageHeader
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 bg-white p-6 lg:p-8 rounded-[2rem] border border-gray-200 shadow-2xl mb-8 relative overflow-hidden"
+            className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 bg-slate-900/50 p-6 lg:p-8 rounded-[2.5rem] border border-white/10 shadow-2xl mb-8 relative overflow-hidden backdrop-blur-xl"
         >
             {/* Decorative background icon */}
             <div className="absolute top-0 right-0 p-6 opacity-[0.04] pointer-events-none scale-150">
