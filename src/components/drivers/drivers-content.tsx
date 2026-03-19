@@ -67,7 +67,7 @@ export async function DriversContent({ searchParams, branches = [], isAdmin = fa
   return (
     <>
       {/* Bespoke Elite Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-8 mb-12 bg-slate-950 p-10 rounded-br-[5rem] rounded-tl-[2rem] border border-slate-800 shadow-2xl relative overflow-hidden group">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-8 mb-12 bg-slate-950 p-10 rounded-br-[5rem] rounded-tl-[2rem] border border-slate-800 shadow-2xl relative group">
         <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-transparent pointer-events-none" />
         
         <div className="relative z-10">
@@ -81,6 +81,20 @@ export async function DriversContent({ searchParams, branches = [], isAdmin = fa
         </div>
 
         <div className="flex flex-wrap gap-4 relative z-10">
+            {isAdmin && (
+                <DriverDialog 
+                    mode="create" 
+                    vehicles={vehicles.data}
+                    branches={branches}
+                    subcontractors={subcontractors}
+                    trigger={
+                        <PremiumButton className="h-14 px-8 rounded-2xl bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 shadow-lg shadow-blue-500/20">
+                            <Plus size={24} className="mr-2" />
+                            Register Driver
+                        </PremiumButton>
+                    }
+                />
+            )}
             <ExcelImport 
                 trigger={
                     <PremiumButton variant="secondary" className="h-14 px-8 rounded-2xl">
@@ -118,20 +132,6 @@ export async function DriversContent({ searchParams, branches = [], isAdmin = fa
                 ]}
                 templateFilename="template_drivers.xlsx"
             />
-            {isAdmin && (
-                <DriverDialog 
-                    mode="create" 
-                    vehicles={vehicles.data}
-                    branches={branches}
-                    subcontractors={subcontractors}
-                    trigger={
-                        <PremiumButton className="h-14 px-8 rounded-2xl bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 shadow-lg shadow-blue-500/20">
-                            <Plus size={24} className="mr-2" />
-                            Register Driver
-                        </PremiumButton>
-                    }
-                />
-            )}
         </div>
       </div>
 
