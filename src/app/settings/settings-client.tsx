@@ -1,18 +1,14 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { DashboardLayout } from "@/components/layout/dashboard-layout"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { motion, AnimatePresence } from "framer-motion"
+import { motion } from "framer-motion"
 import { useRouter } from "next/navigation"
 import { 
-  Settings, 
+  Settings as SettingsIcon, 
   User,
   Bell,
   Shield,
   Palette,
-  Globe,
   Database,
   LogOut,
   ChevronRight,
@@ -20,66 +16,68 @@ import {
   Loader2,
   Cpu,
   Fingerprint,
-  Zap,
-  Activity
+  Activity,
+  Globe
 } from "lucide-react"
 import { getUserProfile, UserProfile } from "@/lib/supabase/users"
 import { PremiumButton } from "@/components/ui/premium-button"
 import { PremiumCard } from "@/components/ui/premium-card"
+import { useLanguage } from "@/components/providers/language-provider"
 
 const settingsSections = [
   {
-    title: "User Profile Node",
+    titleKey: "settings.sections.profile",
     icon: User,
     items: [
-      { label: "Identity Matrix", desc: "Profile data, credentials, visual ID", path: "/settings/profile" },
-      { label: "Security Protocol", desc: "Access tokens & key rotation", path: "/settings/security" },
+      { labelKey: "settings.items.identity", descKey: "settings.items.identity_desc", path: "/settings/profile" },
+      { labelKey: "settings.items.security", descKey: "settings.items.security_desc", path: "/settings/security" },
     ]
   },
   {
-    title: "Organizational Logic",
+    titleKey: "settings.sections.org",
     icon: Building,
     items: [
-        { label: "Entity Profile", desc: "Logo, logistics metadata, tax registry", path: "/settings/company" },
-        { label: "Access Control (RBAC)", desc: "Define clearance & permissions", path: "/settings/roles" },
-        { label: "Operator Registry", desc: "Manage mission staff & drivers", path: "/settings/users" },
-        { label: "Regional Nodes", desc: "Branch configuration & SMTP nodes", path: "/settings/branches" },
-        { label: "Partner Network", desc: "Subcontractor & Central Bank nodes", path: "/settings/subcontractors" },
-        { label: "Asset Classes", desc: "4W, 6W, Heavy Vector configuration", path: "/settings/vehicle-types" },
+        { labelKey: "settings.items.company", descKey: "settings.items.company_desc", path: "/settings/company" },
+        { labelKey: "settings.items.rbac", descKey: "settings.items.rbac_desc", path: "/settings/roles" },
+        { labelKey: "settings.items.operators", descKey: "settings.items.operators_desc", path: "/settings/users" },
+        { labelKey: "settings.items.branches", descKey: "settings.items.branches_desc", path: "/settings/branches" },
+        { labelKey: "settings.items.partners", descKey: "settings.items.partners_desc", path: "/settings/subcontractors" },
+        { labelKey: "settings.items.vehicles", descKey: "settings.items.vehicles_desc", path: "/settings/vehicle-types" },
     ]
   },
   {
-    title: "Signal Routing",
+    titleKey: "settings.sections.alerts",
     icon: Bell,
     items: [
-      { label: "Alert Configuration", desc: "Push, SMTP, SOS signal routing", path: "/settings/notifications" },
+      { labelKey: "settings.items.alerts_config", descKey: "settings.items.alerts_config_desc", path: "/settings/notifications" },
     ]
   },
   {
-    title: "External Integration",
+    titleKey: "settings.sections.integrations",
     icon: Database,
     items: [
-      { label: "Financial Sync", desc: "Akaunting ledger connectivity status", path: "/settings/accounting" },
+      { labelKey: "settings.items.accounting", descKey: "settings.items.accounting_desc", path: "/settings/accounting" },
     ]
   },
   {
-    title: "Interface Core",
+    titleKey: "settings.sections.interface",
     icon: Palette,
     items: [
-      { label: "Visual Aesthetics", desc: "Theme engine, font scaling, HUD style", path: "/settings/theme" },
+      { labelKey: "settings.items.theme", descKey: "settings.items.theme_desc", path: "/settings/theme" },
     ]
   },
   {
-    title: "System Integrity",
+    titleKey: "settings.sections.security",
     icon: Shield,
     items: [
-      { label: "Authentication Vault", desc: "2FA, multi-node login verification", path: "/settings/security" },
+      { labelKey: "settings.items.vault", descKey: "settings.items.vault_desc", path: "/settings/security" },
     ]
   },
 ]
 
 export default function SettingsPage() {
   const router = useRouter()
+  const { t } = useLanguage()
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
   
@@ -105,17 +103,17 @@ export default function SettingsPage() {
           <div>
             <div className="flex items-center gap-6 mb-4">
                <div className="p-4 bg-primary/20 rounded-[2rem] border-2 border-primary/30 shadow-[0_0_40px_rgba(255,30,133,0.2)] text-primary">
-                  <Settings size={40} strokeWidth={2.5} />
+                  <SettingsIcon size={40} strokeWidth={2.5} />
                </div>
                <div>
-                  <h1 className="text-5xl font-black text-white tracking-widest uppercase leading-none mb-2">Config Terminal</h1>
-                  <p className="text-[10px] font-black text-primary uppercase tracking-[0.6em] opacity-80 italic italic">System Parameter & Account Management Matrix</p>
+                  <h1 className="text-5xl font-black text-white tracking-widest uppercase leading-none mb-2">{t('settings.title')}</h1>
+                  <p className="text-[10px] font-black text-primary uppercase tracking-[0.6em] opacity-80 italic">{t('settings.subtitle')}</p>
                </div>
             </div>
           </div>
           <div className="flex items-center gap-4 bg-white/5 p-4 rounded-3xl border border-white/5 backdrop-blur-3xl">
              <div className="flex flex-col items-end">
-                <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Auth Level</span>
+                <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">{t('settings.auth_level')}</span>
                 <span className="text-xs font-black text-primary uppercase tracking-tighter">SECURE_ADMIN_V2</span>
              </div>
              <div className="w-12 h-12 rounded-2xl bg-primary/20 flex items-center justify-center text-primary shadow-lg border border-primary/30">
@@ -177,7 +175,7 @@ export default function SettingsPage() {
                   className="h-16 px-10 rounded-2xl gap-3 shadow-[0_15px_30px_rgba(255,30,133,0.3)]"
                   onClick={() => handleNavigate("/settings/profile")}
               >
-                  EDIT MATRIX
+                  {t('settings.edit_matrix')}
               </PremiumButton>
             </div>
           )}
@@ -188,8 +186,10 @@ export default function SettingsPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
         {settingsSections.map((section, sectionIndex) => {
             const filteredItems = section.items.filter(item => {
+                const userRole = profile?.Role
                 if (item.path === '/settings/roles') {
-                    return ['Super Admin', 'Admin'].includes(profile?.Role || '')
+                    // Super Admin (1) or Admin (2)
+                    return ['1', '2', 'Super Admin', 'Admin'].includes(String(userRole || ''))
                 }
                 return true
             })
@@ -198,7 +198,7 @@ export default function SettingsPage() {
 
             return (
           <motion.div
-            key={section.title}
+            key={section.titleKey}
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: sectionIndex * 0.05 }}
@@ -209,21 +209,21 @@ export default function SettingsPage() {
                   <div className="p-3 bg-white/5 rounded-2xl text-slate-400 group-hover/section:bg-primary group-hover/section:text-white transition-all duration-300">
                     <section.icon size={20} />
                   </div>
-                  {section.title}
+                  {t(section.titleKey)}
                 </h3>
                 <Activity size={18} className="text-slate-800 group-hover/section:text-primary transition-colors duration-500" />
               </div>
               <div className="p-4 space-y-2">
                 {filteredItems.map((item) => (
                   <motion.div
-                    key={item.label}
+                    key={item.labelKey}
                     whileHover={{ x: 10, backgroundColor: 'rgba(255,255,255,0.03)' }}
                     className="flex items-center justify-between p-6 rounded-3xl cursor-pointer transition-all group/item border-2 border-transparent hover:border-white/5"
                     onClick={() => handleNavigate(item.path)}
                   >
                     <div className="space-y-1">
-                      <p className="font-black text-base tracking-widest text-white uppercase italic">{item.label}</p>
-                      <p className="text-[10px] uppercase font-black text-slate-500 tracking-[0.2em] group-hover/item:text-primary transition-colors">{item.desc}</p>
+                      <p className="font-black text-base tracking-widest text-white uppercase italic">{t(item.labelKey)}</p>
+                      <p className="text-[10px] uppercase font-black text-slate-500 tracking-[0.2em] group-hover/item:text-primary transition-colors">{t(item.descKey)}</p>
                     </div>
                     <div className="p-3 rounded-full bg-white/5 group-hover/item:bg-primary/20 transition-all">
                        <ChevronRight className="text-slate-500 group-hover/item:text-primary transition-colors" size={20} />
@@ -282,3 +282,4 @@ export default function SettingsPage() {
     </div>
   )
 }
+

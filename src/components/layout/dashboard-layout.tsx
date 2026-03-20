@@ -109,7 +109,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           transition={{ duration: 0.5, ease: "easeOut" }}
           className={cn(
             "relative pt-16 min-h-screen transition-all duration-500 ease-in-out",
-            sidebarCollapsed ? "pl-20" : "pl-[280px]"
+            sidebarCollapsed ? "pl-[100px]" : "pl-[320px]"
           )}
       >
           {/* Elite Content Spacing */}
