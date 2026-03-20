@@ -71,12 +71,9 @@ export async function DriversContent({ searchParams, branches = [], isAdmin = fa
         <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-transparent pointer-events-none" />
         
         <div className="relative z-10">
-          <h1 className="text-5xl font-black text-white mb-2 tracking-tighter flex items-center gap-4">
-            <div className="p-3 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-3xl shadow-2xl shadow-blue-500/20 text-white transform group-hover:scale-110 transition-transform duration-500">
-              <Users size={32} />
-            </div>
-            Driver ELITE {isAdmin ? <span className="text-xl bg-blue-500/20 text-blue-400 border border-blue-500/30 px-3 py-1 rounded-xl align-middle ml-2 font-black">COMMAND</span> : ""}
-            <span className="text-[8px] text-white/5 ml-4 uppercase tracking-tighter">V:200320-1048</span>
+          <h1 className="text-5xl font-black text-white tracking-tighter flex items-center gap-3">
+            Driver ELITE <span className="text-lg font-medium px-4 py-1 rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30 uppercase tracking-widest">Command</span>
+            <span className="text-[8px] text-white/10 ml-2">V:200320-1200</span>
           </h1>
           <p className="text-blue-400 font-black ml-[4.5rem] uppercase tracking-[0.3em] text-[10px]">Human Capital & Tactical Performance Control</p>
         </div>
@@ -84,9 +81,19 @@ export async function DriversContent({ searchParams, branches = [], isAdmin = fa
         <div className="flex flex-wrap gap-4 relative z-10">
             <DriverDialog 
                 mode="create" 
-                vehicles={(vehicles?.data || []).slice(0, 100)}
-                branches={branches || []}
-                subcontractors={subcontractors || []}
+                // Normalize data to ensure it is 100% serializable from Server to Client
+                vehicles={(vehicles?.data || []).slice(0, 200).map(v => ({
+                    Vehicle_Plate: String(v.Vehicle_Plate),
+                    Brand: v.Brand ? String(v.Brand) : null
+                }))}
+                branches={(branches || []).map(b => ({
+                    Branch_ID: String(b.Branch_ID),
+                    Branch_Name: String(b.Branch_Name)
+                }))}
+                subcontractors={(subcontractors || []).map(s => ({
+                    Sub_ID: String(s.Sub_ID),
+                    Sub_Name: String(s.Sub_Name)
+                }))}
                 trigger={
                     <PremiumButton className="h-14 px-8 rounded-2xl bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/20">
                         <Plus size={24} className="mr-2" />
