@@ -118,7 +118,7 @@ export function DriverDialog({
                         <SelectValue placeholder="-- เลือกสาขา --" />
                     </SelectTrigger>
                     <SelectContent>
-                        {branches.map((b) => (
+                        {Array.isArray(branches) && branches.filter(b => b?.Branch_ID).map((b) => (
                             <SelectItem key={b.Branch_ID} value={b.Branch_ID}>
                                 {b.Branch_Name} ({b.Branch_ID})
                             </SelectItem>
