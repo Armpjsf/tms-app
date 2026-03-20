@@ -4,10 +4,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge'
 import { getAllBranches } from '@/lib/supabase/branches'
 import { Input } from '@/components/ui/input'
-import { Search, ArrowLeft, Link } from 'lucide-react'
+import { Search, ArrowLeft, ShieldCheck, Activity, Cpu, Target, Clock, User, HardDrive, Terminal } from 'lucide-react'
 import LinkNext from 'next/link'
 import { format } from 'date-fns'
 import { th } from 'date-fns/locale'
+import { PremiumCard } from '@/components/ui/premium-card'
+import { PremiumButton } from '@/components/ui/premium-button'
+import { cn } from '@/lib/utils'
 
 export const dynamic = 'force-dynamic'
 
@@ -19,7 +22,7 @@ export default async function LogsPage({
   const branchId = typeof searchParams.branchId === 'string' ? searchParams.branchId : undefined
   const moduleFilter = typeof searchParams.module === 'string' ? searchParams.module : undefined
   
-  let logs: Record<string, unknown>[] = []
+  let logs: any[] = []
   let branches: { Branch_ID: string; Branch_Name: string }[] = []
 
   try {
@@ -33,132 +36,189 @@ export default async function LogsPage({
     // Error fetching logs data
   }
 
-  const getActionBadge = (action: string) => {
+  const getActionStyle = (action: string) => {
     switch (action.toUpperCase()) {
       case 'CREATE':
-        return <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-emerald-200">สร้าง</Badge>
+        return { bg: 'bg-emerald-500/10', text: 'text-emerald-500', border: 'border-emerald-500/20', label: 'CREATE_ops' }
       case 'UPDATE':
-        return <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 border-blue-200">แก้ไข</Badge>
+        return { bg: 'bg-blue-500/10', text: 'text-blue-500', border: 'border-blue-500/20', label: 'SYNC_update' }
       case 'DELETE':
-        return <Badge className="bg-rose-100 text-rose-700 hover:bg-rose-100 border-rose-200">ลบ</Badge>
+        return { bg: 'bg-rose-500/10', text: 'text-rose-500', border: 'border-rose-500/20', label: 'VOID_deletion' }
       case 'APPROVE':
-        return <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-100 border-amber-200">อนุมัติ</Badge>
+        return { bg: 'bg-amber-500/10', text: 'text-amber-500', border: 'border-amber-500/20', label: 'AUTH_approval' }
       case 'EXPORT':
-        return <Badge className="bg-indigo-100 text-indigo-700 hover:bg-indigo-100 border-indigo-200">ดึงรายงาน</Badge>
+        return { bg: 'bg-indigo-500/10', text: 'text-indigo-500', border: 'border-indigo-500/20', label: 'EXPORT_stream' }
       case 'LOGIN':
-        return <Badge className="bg-slate-100 text-gray-400 hover:bg-slate-100 border-slate-200">เข้าสู่ระบบ</Badge>
+        return { bg: 'bg-slate-500/10', text: 'text-slate-400', border: 'border-white/5', label: 'AUTH_uplink' }
       case 'LOGOUT':
-        return <Badge className="bg-slate-50 text-gray-400 hover:bg-slate-50 border-slate-100">ออกจากระบบ</Badge>
+        return { bg: 'bg-slate-800/20', text: 'text-slate-600', border: 'border-white/5', label: 'AUTH_downlink' }
       default:
-        return <Badge variant="outline">{action}</Badge>
+        return { bg: 'bg-white/5', text: 'text-slate-500', border: 'border-white/5', label: action }
     }
   }
 
   const getModuleLabel = (module: string) => {
     switch (module) {
-      case 'Jobs': return 'จัดการงาน'
-      case 'Auth': return 'เข้าระบบ'
-      case 'Billing': return 'การเงิน/วางบิล'
-      case 'Reports': return 'รายงาน'
-      case 'Fuel': return 'น้ำมัน'
-      case 'Maintenance': return 'ซ่อมบำรุง'
-      case 'Settings': return 'ตั้งค่า'
-      case 'Users': return 'ผู้ใช้งาน'
-      default: return module
+      case 'Jobs': return 'MISSION_VECTOR'
+      case 'Auth': return 'ACCESS_security'
+      case 'Billing': return 'LEDGER_finance'
+      case 'Reports': return 'INTEL_reporting'
+      case 'Fuel': return 'ENERGY_telemetry'
+      case 'Maintenance': return 'ASSET_integrity'
+      case 'Settings': return 'CONFIG_terminal'
+      case 'Users': return 'PERSONNEL_registry'
+      default: return module.toUpperCase()
     }
   }
 
   return (
-    <div className="flex flex-col gap-6 p-6">
-      {/* Bespoke Obsidian Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-8 mb-6 bg-slate-950 p-10 rounded-br-[5rem] rounded-tl-[2rem] border border-slate-800 shadow-2xl relative overflow-hidden group">
-          <div className="absolute inset-0 bg-gradient-to-r from-slate-500/10 to-transparent pointer-events-none" />
+    <div className="space-y-12 pb-20 p-4 lg:p-10 bg-[#050110]">
+      {/* Tactical Audit Header */}
+      <div className="bg-[#0a0518]/60 backdrop-blur-3xl p-10 rounded-br-[6rem] rounded-tl-[3rem] border border-white/5 shadow-2xl relative overflow-hidden group">
+          <div className="absolute top-0 right-0 w-80 h-80 bg-slate-500/10 blur-[120px] rounded-full -mr-40 -mt-40 pointer-events-none" />
           
-          <div className="relative z-10">
-              <LinkNext href="/dashboard" className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors mb-6 text-[10px] font-black uppercase tracking-[0.2em] w-fit">
-                  <ArrowLeft className="w-4 h-4" /> Command Central
-              </LinkNext>
-              <h1 className="text-5xl font-black text-white mb-2 tracking-tighter flex items-center gap-4">
-                  <div className="p-3 bg-slate-800 rounded-3xl shadow-2xl shadow-slate-500/20 text-white transform group-hover:scale-110 transition-transform duration-500">
-                      <Search size={32} />
-                  </div>
-                  System LOGS
-              </h1>
-              <p className="text-slate-400 font-black ml-[4.5rem] uppercase tracking-[0.3em] text-[10px]">Registry of all logistical & administrative transmissions</p>
-          </div>
+          <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-12">
+              <div className="space-y-6">
+                <LinkNext href="/dashboard" className="inline-flex items-center gap-2 text-slate-500 hover:text-white transition-all font-black uppercase tracking-[0.4em] text-[10px] group/back italic">
+                    <ArrowLeft className="w-4 h-4 group-hover/back:-translate-x-1 transition-transform" /> 
+                    Command Central
+                </LinkNext>
+                <div className="flex items-center gap-6">
+                    <div className="p-4 bg-white/5 rounded-[2.5rem] border-2 border-white/10 shadow-[0_0_40px_rgba(255,255,255,0.05)] text-white group-hover:scale-110 transition-all duration-500">
+                      <Terminal size={40} strokeWidth={2.5} />
+                    </div>
+                    <div>
+                      <h1 className="text-5xl font-black text-white tracking-widest uppercase leading-none italic premium-text-gradient">Audit Registry</h1>
+                      <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.6em] mt-2 opacity-80 italic">Registry of all logistical & administrative transmissions // SECURE_AUDIT</p>
+                    </div>
+                </div>
+              </div>
 
-          <div className="flex flex-wrap items-center gap-6 relative z-10">
-              <div className="flex items-center gap-3 px-6 py-3 bg-slate-500/10 rounded-2xl border border-slate-500/20 backdrop-blur-md">
-                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">Live Audit Feed: ACTIVE</span>
+              <div className="flex flex-col items-end gap-3 self-end lg:self-center relative z-10">
+                <div className="bg-white/5 border border-white/5 px-6 py-3 rounded-2xl flex items-center gap-3 backdrop-blur-md">
+                    <Activity className="text-slate-400" size={16} />
+                    <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest italic">Live Audit Feed: ACTIVE</span>
+                </div>
               </div>
           </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>บันทึกกิจกรรมล่าสุด (100 รายการล่าสุด)</CardTitle>
-          <div className="flex flex-wrap gap-4 mt-4">
-            <div className="flex items-center gap-2 border rounded-md px-3 py-1 bg-background">
-              <Search className="h-4 w-4 text-muted-foreground" />
-              <Input 
-                placeholder="ค้นหาชื่อผู้ใช้หรือโมดูล..." 
-                className="border-0 focus-visible:ring-0 w-64 h-8"
-              />
-            </div>
-            {/* Filter UI would go here with Select components */}
+      <PremiumCard className="bg-[#0a0518]/40 border-2 border-white/5 shadow-3xl rounded-[4rem] overflow-hidden group/logs">
+        <div className="p-10 border-b border-white/5 bg-black/40 relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-10">
+          <div className="absolute top-0 left-0 w-80 h-80 bg-white/5 blur-[100px] pointer-events-none" />
+          
+          <div className="flex items-center gap-5 relative z-10">
+              <div className="p-4 bg-white/5 rounded-2xl text-slate-400 border border-white/10 shadow-inner group-hover/logs:rotate-12 transition-transform duration-500">
+                <HardDrive size={28} />
+              </div>
+              <div>
+                <h2 className="text-3xl font-black text-white tracking-[0.2em] uppercase italic">System Transmissions</h2>
+                <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.5em] mt-2 italic">100_LATEST_PACKETS_SYNCED</p>
+              </div>
           </div>
-        </CardHeader>
-        <CardContent>
-          <div className="rounded-md border overflow-hidden">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-muted/50">
-                  <TableHead className="w-[180px]">วันเวลา</TableHead>
-                  <TableHead>ผู้ใช้งาน</TableHead>
-                  <TableHead>สาขา</TableHead>
-                  <TableHead>โมดูล</TableHead>
-                  <TableHead>การกระทำ</TableHead>
-                  <TableHead className="max-w-[300px]">รายละเอียด</TableHead>
+
+          <div className="relative z-10 w-full md:w-96 group/search">
+            <Search size={22} className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-600 group-focus-within/search:text-white transition-colors" />
+            <input 
+              placeholder="SCAN_OPERATOR_OR_NODE..." 
+              className="w-full h-18 bg-[#0a0518] border-white/5 rounded-3xl pl-16 pr-8 text-xs font-black uppercase tracking-[0.2em] focus:border-white/20 transition-all text-white placeholder:text-slate-700 italic shadow-inner"
+            />
+          </div>
+        </div>
+
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-black/40 border-b border-white/5 hover:bg-black/40">
+                <TableHead className="p-10 text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] italic">Temporal Token</TableHead>
+                <TableHead className="p-10 text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] italic">Operator Entity</TableHead>
+                <TableHead className="p-10 text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] italic">Source Node</TableHead>
+                <TableHead className="p-10 text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] italic">Module Logic</TableHead>
+                <TableHead className="p-10 text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] italic">Transmission Type</TableHead>
+                <TableHead className="p-10 text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] italic">Intel Narrative</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody className="divide-y divide-white/[0.02]">
+              {logs.length === 0 ? (
+                <TableRow className="hover:bg-transparent">
+                  <TableCell colSpan={6} className="p-40 text-center opacity-20">
+                    <ShieldCheck size={80} strokeWidth={1} className="mx-auto mb-8 text-slate-500 animate-pulse" />
+                    <p className="text-sm font-black text-white uppercase tracking-[0.8em]">Registry Quiescent // No Packets Detected</p>
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {logs.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={6} className="text-center py-10 text-muted-foreground">
-                      ไม่พบข้อมูลบันทึกกิจกรรม
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  logs.map((log) => (
-                    <TableRow key={log.id}>
-                      <TableCell className="font-mono text-xs">
-                        {format(new Date(log.created_at), 'dd MMM yyyy HH:mm:ss', { locale: th })}
-                      </TableCell>
-                      <TableCell>
+              ) : (
+                logs.map((log) => {
+                  const actionStyle = getActionStyle(log.action_type)
+                  const date = new Date(log.created_at)
+
+                  return (
+                    <TableRow key={log.id} className="group/row hover:bg-white/[0.02] transition-colors border-0">
+                      <TableCell className="p-10">
                         <div className="flex flex-col">
-                          <span className="font-medium">{log.user_name}</span>
-                          <span className="text-[10px] text-muted-foreground">{log.role}</span>
+                          <span className="text-white font-black tracking-tight text-sm uppercase italic group-hover/row:text-primary transition-colors">
+                            {format(date, 'dd MMM yyyy', { locale: th })}
+                          </span>
+                          <span className="text-[10px] text-slate-600 font-black uppercase tracking-widest mt-1">
+                            {format(date, 'HH:mm:ss')}
+                          </span>
                         </div>
                       </TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className="font-normal">
-                          {log.branch_id || 'N/A'}
-                        </Badge>
+                      <TableCell className="p-10">
+                        <div className="flex items-center gap-4">
+                          <div className="w-10 h-10 rounded-2xl bg-white/5 flex items-center justify-center text-primary group-hover/row:scale-110 group-hover/row:bg-primary/20 transition-all duration-500 shadow-inner border border-white/5">
+                            <span className="font-black italic text-xs">{(log.user_name || "A").charAt(0)}</span>
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="font-black text-white text-sm tracking-widest uppercase italic">{log.user_name}</span>
+                            <span className="text-[9px] text-slate-600 font-black uppercase tracking-widest">{log.role}</span>
+                          </div>
+                        </div>
                       </TableCell>
-                      <TableCell className="font-medium text-emerald-600">{getModuleLabel(log.module)}</TableCell>
-                      <TableCell>{getActionBadge(log.action_type)}</TableCell>
-                      <TableCell className="max-w-[300px] truncate text-xs text-muted-foreground" title={JSON.stringify(log.details, null, 2)}>
-                        {log.target_id && <span className="text-foreground font-semibold mr-1">[{log.target_id}]</span>}
-                        {JSON.stringify(log.details)}
+                      <TableCell className="p-10">
+                        <div className="px-4 py-1.5 bg-white/5 rounded-xl border border-white/5 text-[10px] font-black text-slate-400 uppercase tracking-widest italic w-fit">
+                          {log.branch_id || 'GLOBAL_ROOT'}
+                        </div>
+                      </TableCell>
+                      <TableCell className="p-10 font-black text-emerald-500 text-[10px] uppercase tracking-widest italic">{getModuleLabel(log.module)}</TableCell>
+                      <TableCell className="p-10">
+                        <div className={cn("px-5 py-2 rounded-full text-[10px] font-black border uppercase tracking-widest italic shadow-lg transition-transform group-hover/row:translate-x-2", actionStyle.bg, actionStyle.text, actionStyle.border)}>
+                          {actionStyle.label}
+                        </div>
+                      </TableCell>
+                      <TableCell className="p-10 max-w-[300px]">
+                        <div className="flex items-center gap-3">
+                           {log.target_id && <span className="text-primary font-black text-[10px] uppercase italic bg-primary/10 px-2 py-0.5 rounded-md">[{log.target_id}]</span>}
+                           <span className="truncate text-[11px] font-bold text-slate-500 group-hover/row:text-slate-300 transition-colors italic" title={JSON.stringify(log.details)}>
+                              {JSON.stringify(log.details)}
+                           </span>
+                        </div>
                       </TableCell>
                     </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
+                  )
+                })
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </PremiumCard>
+
+      {/* Global Tactical Advisory */}
+      <div className="mt-20 p-12 rounded-[3.5rem] bg-white/5 border-2 border-white/5 flex flex-col md:flex-row gap-10 items-center relative overflow-hidden opacity-40 hover:opacity-100 transition-opacity">
+          <div className="absolute top-0 right-0 w-80 h-full bg-gradient-to-l from-white/5 to-transparent pointer-events-none" />
+          <div className="p-6 rounded-[2rem] bg-white/10 text-white border-2 border-white/20 shadow-2xl">
+              <Cpu size={32} />
           </div>
-        </CardContent>
-      </Card>
+          <div className="space-y-4 text-center md:text-left flex-1">
+              <p className="text-xl font-black text-white italic uppercase tracking-widest">REGISTRY_INTEGRITY_ADVISORY</p>
+              <p className="text-sm font-bold text-slate-500 leading-relaxed uppercase tracking-wider italic">
+                  Audit streams are persistent and immutable. All field operations are logged with zero-latency synchronization. <br />
+                  Strategic deletions or unauthorized access attempts are flagged for immediate counter-intelligence review.
+              </p>
+          </div>
+          <PremiumButton variant="outline" className="h-14 px-10 rounded-2xl border-white/10 text-white gap-3 uppercase font-black text-[10px] tracking-[0.3em] ml-auto italic">
+              <Target size={18} /> FULL_SYNC_REGISTRY
+          </PremiumButton>
+      </div>
     </div>
   )
 }

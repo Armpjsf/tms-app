@@ -4,8 +4,10 @@ import { PremiumCard } from "@/components/ui/premium-card"
 import { FuelAnalytics } from "@/lib/supabase/fuel-analytics"
 import { Fuel, Droplets, GaugeCircle, TrendingUp, AlertTriangle, Zap, Activity } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useLanguage } from "@/components/providers/language-provider"
 
 export function FuelSection({ data }: { data: FuelAnalytics }) {
+  const { t } = useLanguage()
   const { totalLiters, totalCost, avgCostPerLiter, avgKmPerLiter, monthlyTrends, vehicleBreakdown, anomalies } = data
 
   // Max value for trend bars
@@ -14,23 +16,23 @@ export function FuelSection({ data }: { data: FuelAnalytics }) {
   return (
     <div className="space-y-10">
       {/* Sub-Section Header */}
-      <div className="flex items-center gap-3">
-        <div className="p-2 bg-slate-950 rounded-xl text-orange-400 shadow-lg border border-slate-800">
-          <Fuel size={18} />
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-slate-950 rounded-xl text-orange-400 shadow-lg border border-slate-800">
+            <Fuel size={18} />
+          </div>
+          <h3 className="text-xl font-black text-white tracking-tight uppercase premium-text-gradient">{t('dashboard.fuel_energy')}</h3>
         </div>
-        <h3 className="text-xl font-black text-white tracking-tight uppercase premium-text-gradient">Fuel & Energy Dynamics</h3>
-      </div>
 
-      {/* KPI Bento Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {/* Total Cost */}
-        <PremiumCard className="bg-slate-950 border-none shadow-2xl relative overflow-hidden group p-8 rounded-br-[3rem] rounded-tl-[1.5rem]">
-            <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 to-transparent pointer-events-none" />
-            <div className="flex items-center justify-between mb-6 relative z-10">
-              <div className="space-y-1">
-                <span className="text-orange-400 text-[10px] font-black uppercase tracking-[0.2em] italic">Energy Expenditure</span>
-                <p className="text-[8px] text-slate-500 font-bold uppercase tracking-widest italic">Operational Fuel Matrix</p>
-              </div>
+        {/* KPI Bento Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {/* Total Cost */}
+          <PremiumCard className="bg-slate-950 border-none shadow-2xl relative overflow-hidden group p-8 rounded-br-[3rem] rounded-tl-[1.5rem]">
+              <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 to-transparent pointer-events-none" />
+              <div className="flex items-center justify-between mb-6 relative z-10">
+                <div className="space-y-1">
+                  <span className="text-orange-400 text-[10px] font-black uppercase tracking-[0.2em] italic">{t('dashboard.energy_expenditure')}</span>
+                  <p className="text-[8px] text-slate-500 font-bold uppercase tracking-widest italic">{t('dashboard.operational_fuel_matrix')}</p>
+                </div>
               <div className="p-2 bg-orange-500/10 rounded-xl text-orange-400 shadow-lg shadow-orange-500/10">
                 <Zap size={16} />
               </div>
@@ -77,7 +79,7 @@ export function FuelSection({ data }: { data: FuelAnalytics }) {
             <div className="text-4xl font-black text-white tracking-tighter relative z-10 italic">{avgKmPerLiter.toFixed(2)}</div>
             <div className="flex items-center gap-2 mt-4 relative z-10">
                 <p className="text-[10px] text-emerald-400 font-black uppercase tracking-widest italic flex items-center gap-2">
-                    <Activity size={10} strokeWidth={3} /> SYSTEM OPTIMAL
+                    <Activity size={10} strokeWidth={3} /> {t('dashboard.system_optimal')}
                 </p>
             </div>
         </PremiumCard>
@@ -106,7 +108,7 @@ export function FuelSection({ data }: { data: FuelAnalytics }) {
             </div>
             <div className="flex items-center gap-2 mt-4 relative z-10">
                 <p className={cn("text-[10px] font-black uppercase tracking-widest italic", anomalies.length > 0 ? "text-white animate-pulse" : "text-slate-600")}>
-                    {anomalies.length > 0 ? "CRITICAL REVIEW REQUIRED" : "NO ANOMALIES DETECTED"}
+                    {anomalies.length > 0 ? t('dashboard.critical_review') : t('dashboard.no_anomalies')}
                 </p>
             </div>
         </PremiumCard>
@@ -194,7 +196,7 @@ export function FuelSection({ data }: { data: FuelAnalytics }) {
                         <div className="text-right">
                              <div className="text-2xl font-black text-slate-950 tracking-tighter italic">฿{v.totalCost.toLocaleString()}</div>
                              <div className="text-[10px] text-emerald-600 font-black mt-1 uppercase tracking-widest italic bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100 w-fit ml-auto">
-                                Efficiency: {v.avgEfficiency.toFixed(1)} KM/L
+                                {t('dashboard.efficiency_prefix')} {v.avgEfficiency.toFixed(1)} KM/L
                              </div>
                         </div>
                     </div>

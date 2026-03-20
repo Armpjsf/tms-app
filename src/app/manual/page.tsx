@@ -1,4 +1,3 @@
-
 'use client'
 
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
@@ -7,93 +6,94 @@ import {
     BookOpen, LayoutDashboard, Truck, Users, 
     Bot, Shield, Target, FileText, 
     CheckCircle2, AlertTriangle, Info,
-    ChevronRight, ArrowRight, Zap, Wallet, Activity
+    ChevronRight, ArrowRight, Zap, Wallet, Activity,
+    ShieldCheck, Navigation
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const SECTIONS = [
     {
         id: 'dashboard',
-        title: 'Executive Dashboard & KPIs',
+        title: 'Mission Command & KPIs',
         icon: LayoutDashboard,
-        color: 'text-blue-400',
-        bg: 'bg-blue-400/10',
-        desc: 'หน้าจอหลักสำหรับผู้บริหาร เพื่อดูความเคลื่อนไหวของธุรกิจและสถานะการเงินแบบเรียลไทม์',
+        color: 'text-primary',
+        bg: 'bg-primary/10',
+        desc: 'Strategic command center for real-time operational monitoring and financial intelligence.',
         items: [
-            'Financial Stats: รายได้รวม, กำไรสุทธิ และ Profit Margin',
-            'Fleet Status: จำนวนรถที่ว่าง, กำลังวิ่ง และสถานะความพร้อม GPS',
-            'Service Level: อัตราการส่งมอบตรงเวลา (OTD) และการใช้รถ (Utilization)',
-            'Fuel Guard: แจ้งเตือนความผิดปกติในการเติมน้ำมันและอัตราสิ้นเปลือง Km/L'
+            'Financial Matrix: Revenue, Profit, and Nodal Margin',
+            'Fleet Vectors: Active units, GPS status, and readiness',
+            'Performance Index: OTD (On-Time Delivery) and Utilization',
+            'Energy Guard: Fuel consumption anomalies and Km/L logs'
         ]
     },
     {
         id: 'operations',
-        title: 'Planning & Assignment',
-        icon: FileText,
-        color: 'text-emerald-400',
-        bg: 'bg-emerald-400/10',
-        desc: 'การวางแผนงานขนส่งและการจ่ายงานให้คนขับรถผ่านระบบดิจิทัล',
+        title: 'Tactical Planning',
+        icon: Navigation,
+        color: 'text-blue-400',
+        bg: 'bg-blue-400/10',
+        desc: 'Digital mission deployment and real-time asset orchestration.',
         items: [
-            'Smart Planning: ใช้ระบบ AI ช่วยคำนวณการจ่ายงานให้เหมาะสมที่สุด',
-            'Monitoring: ติดตามตำแหน่งรถสดบนแผนที่ (Real-time GPS)',
-            'POD Management: ตรวจสอบหลักฐานการส่งมอบ รูปภาพ และลายเซ็นดิจิทัล',
-            'SOS Alerts: ระบบแจ้งเตือนอุบัติเหตุหรือเหตุฉุกเฉินจากคนขับทันที'
+            'AI-Agent Planning: Optimized n-node mission distribution',
+            'Vector Tracking: Real-time spatial asset monitoring',
+            'Digital POD: Encrypted proofs, media, and e-signatures',
+            'SOS Protocols: Instant emergency response matrix'
         ]
     },
     {
         id: 'fleet',
-        title: 'Fleet & Driver Management',
+        title: 'Asset & Unit Grid',
         icon: Truck,
-        color: 'text-orange-400',
-        bg: 'bg-orange-400/10',
-        desc: 'จัดการทรัพยากรบุคคลและพาหนะที่เป็นหัวใจสำคัญของการขนส่ง',
+        color: 'text-accent',
+        bg: 'bg-accent/10',
+        desc: 'Management of the core logistics hardware and elite driver personnel.',
         items: [
-            'Vehicle Master: บันทึกข้อมูลรถ, ความจุถังน้ำมัน และวันที่ต้องเช็คระยะ/ภาษี',
-            'Driver Master: จัดการข้อมูลคนขับและการเชื่อมต่อ LINE Bot',
-            'Maintenance: ติดตามประวัติการซ่อมบำรุงและสถานะรถเสีย',
-            'Workforce Compliance: ตรวจสอบวันหมดอายุใบขับขี่และบัตรพนักงาน'
+            'Asset Master: Vehicle technical specs and regulatory logs',
+            'Unit Master: Elite personnel records and LINE-Bot binding',
+            'Integrity Maintenance: History of repairs and asset status',
+            'Compliance Guard: Licensing and regulatory verifiers'
         ]
     },
     {
         id: 'finance',
-        title: 'Accounting & Billing',
+        title: 'Strategic Settlement',
         icon: Wallet,
-        color: 'text-amber-400',
-        bg: 'bg-amber-400/10',
-        desc: 'ระบบวางบิลลูกค้าและการคำนวณสรุปจ่ายค่าเที่ยวให้รถร่วม',
+        color: 'text-emerald-400',
+        bg: 'bg-emerald-400/10',
+        desc: 'Advanced billing cycles and partner settlement subsystems.',
         items: [
-            'Customer Billing: สรุปยอดวางบิลรายสัปดาห์/รายเดือน',
-            'Invoice Management: ออกใบแจ้งหนี้และบันทึกประวัติการรับชำระ',
-            'Subcontractor Settlement: สรุปกำไรรายเที่ยวที่หักต้นทุนค่าน้ำมันแล้ว',
-            'Expense Management: จัดการประเภทค่าใช้จ่ายพิเศษ (Extra Costs)'
+            'Partner Billing: Periodic billing cycles & aggregations',
+            'Fiscal Records: Invoice issuance and payment verification',
+            'Subcon Protocols: Net-margin calculation post-energy costs',
+            'Dynamic Expenses: Ad-hoc operational cost recording'
         ]
     },
     {
         id: 'intelligence',
-        title: 'Intelligence Support (AI)',
+        title: 'Neural AI Support',
         icon: Bot,
-        color: 'text-purple-400',
-        bg: 'bg-purple-400/10',
-        desc: 'ผู้ช่วยอัจฉริยะที่พร้อมตอบคำถามข้อมูลสถิติเพียงแค่คุณพิมพ์ถาม',
+        color: 'text-primary',
+        bg: 'bg-primary/20',
+        desc: 'Conversational data analyst providing instant operational insights.',
         items: [
-            'Ask Anything: พิมพ์ถามเรื่องรายได้, รถเสีย, หรือ SOS ได้ทันที',
-            'Discovery Chips: กดเลือกคำถามแนะนำเพื่อดูสถิติสำคัญแบบเร่งด่วน',
-            'Branch Sync: ให้ข้อมูลตามสาขาที่เลือกไว้อย่างแม่นยำ',
-            'ESG Insights: รายงานการลด CO2 และผลกระทบต่อสิ่งแวดล้อม'
+            'Natural Language Query: Instant revenue & performance stats',
+            'Discovery Nodes: One-tap access to critical analytics',
+            'Neural Branch Sync: Cross-branch intelligence parity',
+            'ESG Insights: Carbon reduction & environmental impact'
         ]
     },
     {
         id: 'security',
-        title: 'Security & Permissions',
-        icon: Shield,
-        color: 'text-rose-400',
-        bg: 'bg-rose-400/10',
-        desc: 'การจัดการความปลอดภัยและสิทธิ์การเข้าถึงเมนูต่างๆ ในระบบ',
+        title: 'Encryption & Clearance',
+        icon: ShieldCheck,
+        color: 'text-rose-500',
+        bg: 'bg-rose-500/10',
+        desc: 'Enterprise-grade security matrix and role-based access control.',
         items: [
-            'Access Matrix: กำหนดสิทธิ์รายบุคคลตามบทบาท (Role)',
-            'Branch Isolation: แบ่งแยกข้อมูลตามสาขาเพื่อความเป็นส่วนตัว',
-            'System Logs: ตรวจสอบความเคลื่อนไหวและประวัติการแก้ไขข้อมูล',
-            'Super Admin: สิทธิ์สูงสุดในการจัดการระบบภาพรวมทั่วประเทศ'
+            'Access Matrix: Precise role-based permission layering',
+            'Nodal Isolation: Sector-specific data privacy (Branch)',
+            'System Audit Logs: Traceable immutable modification history',
+            'Overlord Access: Global administrative command privileges'
         ]
     }
 ]
@@ -101,58 +101,58 @@ const SECTIONS = [
 export default function SmartManual() {
     return (
         <DashboardLayout>
-            <div className="max-w-6xl mx-auto space-y-12 pb-20">
-                {/* Hero Header */}
-                <div className="relative p-12 bg-slate-950 rounded-[3rem] border border-slate-800 shadow-2xl overflow-hidden group">
-                    <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 via-transparent to-purple-500/10 pointer-events-none" />
-                    <div className="absolute -top-24 -right-24 w-64 h-64 bg-emerald-500/10 rounded-full blur-[100px] animate-pulse" />
+            <div className="max-w-7xl mx-auto space-y-16 pb-24">
+                {/* Tactical Hero Header */}
+                <div className="relative p-16 bg-[#0a0518]/60 backdrop-blur-3xl rounded-[4rem] border border-white/5 shadow-2xl overflow-hidden group">
+                    <div className="absolute top-0 right-0 w-96 h-96 bg-primary/10 blur-[120px] pointer-events-none" />
+                    <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-accent/5 rounded-full blur-[100px] animate-pulse" />
                     
-                    <div className="relative z-10 flex flex-col md:flex-row items-center gap-10">
-                        <div className="w-24 h-24 bg-emerald-500 rounded-3xl flex items-center justify-center shrink-0 shadow-2xl shadow-emerald-500/20">
-                            <BookOpen className="text-white" size={48} />
+                    <div className="relative z-10 flex flex-col lg:flex-row lg:items-center gap-12">
+                        <div className="w-32 h-32 bg-primary rounded-[2.5rem] flex items-center justify-center shrink-0 shadow-[0_20px_60px_rgba(255,30,133,0.4)] group-hover:rotate-6 transition-transform duration-700">
+                            <BookOpen className="text-white" size={56} strokeWidth={2.5} />
                         </div>
-                        <div className="space-y-4 text-center md:text-left">
-                            <div className="flex flex-col md:flex-row md:items-center gap-4">
-                                <h1 className="text-5xl font-black text-white tracking-tight italic">
-                                    Knowledge <span className="text-emerald-500">Center</span>
+                        <div className="space-y-6 text-center lg:text-left">
+                            <div className="flex flex-col lg:flex-row lg:items-center gap-6">
+                                <h1 className="text-6xl font-black text-white tracking-tighter uppercase premium-text-gradient italic">
+                                    Knowledge <span className="text-primary">Matrix</span>
                                 </h1>
-                                <div className="inline-flex items-center gap-2 bg-white/5 border border-white/10 px-4 py-1.5 rounded-full">
-                                    <Zap className="text-amber-400" size={16} />
-                                    <span className="text-slate-300 text-[10px] font-black uppercase tracking-widest">Version 2026.3 Standard</span>
+                                <div className="inline-flex items-center gap-3 bg-white/5 border border-white/10 px-6 py-2 rounded-full backdrop-blur-md">
+                                    <Zap className="text-primary animate-pulse" size={18} />
+                                    <span className="text-slate-400 text-[10px] font-black uppercase tracking-[0.4em]">Protocol v9.4 Stable</span>
                                 </div>
                             </div>
-                            <p className="text-slate-400 text-lg max-w-2xl font-medium leading-relaxed">
-                                ยินดีต้อนรับสู่ระบบ TMS-ePOD อัจฉริยะ นี่คือคู่มือฉบับสมบูรณ์เพื่อให้คุณจัดการระบบได้อย่างมืออาชีพ คล่องตัว และเต็มประสิทธิภาพในการทำงาน
+                            <p className="text-slate-500 text-xl max-w-3xl font-bold leading-relaxed uppercase tracking-tight italic">
+                                ยินดีต้อนรับสู่ศูนย์กลางข้อมูล LOGISPRO นี่คือคู่มือปฏิบัติการเชิงยุทธวิธี เพื่อการบริหารจัดการระบบขนส่งอัจฉริยะอย่างเต็มประสิทธิภาพ
                             </p>
                         </div>
                     </div>
                 </div>
 
-                {/* Quick Navigation Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {/* Tactical Grid Modules */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     {SECTIONS.map((section) => (
                         <PremiumCard 
                             key={section.id}
-                            className="p-8 border-slate-800 hover:border-emerald-500/50 transition-all group relative overflow-hidden flex flex-col h-full bg-slate-900/40 backdrop-blur-sm"
+                            className="p-10 border-white/5 bg-[#0a0518]/40 backdrop-blur-2xl hover:border-primary/40 transition-all group relative overflow-hidden flex flex-col h-full rounded-[3.5rem] shadow-2xl hover:shadow-primary/5"
                         >
-                            <div className={cn("inline-flex p-3 rounded-2xl mb-6 shadow-xl", section.bg)}>
-                                <section.icon className={section.color} size={28} />
+                            <div className={cn("inline-flex p-4 rounded-2xl mb-8 shadow-2xl transition-all duration-700 group-hover:scale-110 group-hover:rotate-6", section.bg)}>
+                                <section.icon className={section.color} size={32} strokeWidth={2.5} />
                             </div>
                             
-                            <h3 className="text-xl font-black text-white mb-3 flex items-center gap-2">
+                            <h3 className="text-2xl font-black text-white mb-4 flex items-center gap-3 italic tracking-tight uppercase group-hover:text-primary transition-colors">
                                 {section.title}
-                                <ChevronRight className="opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all text-emerald-500" size={18} />
+                                <ArrowRight className="opacity-0 group-hover:opacity-100 group-hover:translate-x-2 transition-all text-primary" size={20} />
                             </h3>
                             
-                            <p className="text-slate-400 text-xs mb-8 font-medium leading-relaxed">
+                            <p className="text-slate-500 text-[13px] mb-10 font-bold leading-relaxed uppercase tracking-widest opacity-80">
                                 {section.desc}
                             </p>
 
-                            <div className="mt-auto space-y-3">
+                            <div className="mt-auto space-y-4">
                                 {section.items.map((item, i) => (
-                                    <div key={i} className="flex items-start gap-2 group/item">
-                                        <div className="mt-1.5 w-1.5 h-1.5 rounded-full bg-emerald-500/50 group-hover/item:bg-emerald-500 transition-colors" />
-                                        <span className="text-[11px] text-slate-500 group-hover/item:text-slate-200 transition-colors font-bold uppercase tracking-tight">
+                                    <div key={i} className="flex items-start gap-3 group/item">
+                                        <div className="mt-2 w-1.5 h-1.5 rounded-full bg-primary/20 group-hover/item:bg-primary transition-colors shadow-[0_0_8px_rgba(255,30,133,0)] group-hover/item:shadow-[0_0_8px_rgba(255,30,133,1)]" />
+                                        <span className="text-[10px] text-slate-500 group-hover/item:text-slate-300 transition-colors font-black uppercase tracking-widest leading-none italic">
                                             {item}
                                         </span>
                                     </div>
@@ -162,56 +162,60 @@ export default function SmartManual() {
                     ))}
                 </div>
 
-                {/* Premium Onboarding Guide */}
-                <div className="bg-slate-950 rounded-[4rem] p-16 shadow-2xl border border-slate-800 relative overflow-hidden">
-                    <div className="absolute top-0 right-0 p-12 opacity-[0.03] pointer-events-none text-emerald-500">
-                        <Activity size={350} />
+                {/* Strategic Deployment Guide */}
+                <div className="bg-[#0a0518]/60 backdrop-blur-3xl rounded-[5rem] p-20 shadow-3xl border border-white/5 relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 p-16 opacity-[0.02] pointer-events-none text-primary group-hover:opacity-[0.04] transition-opacity duration-1000">
+                        <Activity size={500} />
                     </div>
 
-                    <div className="max-w-4xl space-y-12 relative z-10">
-                        <div className="space-y-4">
-                            <h2 className="text-5xl font-black text-white tracking-tight">ขั้นตอนการเริ่มต้นใช้งาน</h2>
-                            <p className="text-emerald-500 text-lg font-black uppercase tracking-widest">3 Steps to Master the System</p>
+                    <div className="max-w-5xl space-y-16 relative z-10">
+                        <div className="flex items-center gap-6">
+                            <div className="w-2 h-16 bg-primary rounded-full shadow-[0_0_20px_rgba(255,30,133,0.8)]" />
+                            <div className="space-y-2">
+                                <h2 className="text-6xl font-black text-white tracking-tighter uppercase italic">Operational Launchpad</h2>
+                                <p className="text-primary text-sm font-black uppercase tracking-[0.5em] italic">3 Phases to Absolute Grid Control</p>
+                            </div>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
                             {[
-                                { step: '1', title: 'SETUP ROLES', desc: 'ตั้งค่าสาขาและกำหนดสิทธิ์ให้พนักงานในเมนู Settings' },
-                                { step: '2', title: 'REGISTER FLEET', desc: 'เพิ่มข้อมูลรถและสร้างบัญชีคนขับเพื่อให้พร้อมรับงาน' },
-                                { step: '3', title: 'SMART PLAN', desc: 'เริ่มสร้างงานและใช้ AI ช่วยจ่ายงานให้คนขับทันที' }
+                                { step: '01', title: 'MATRIX SETUP', desc: 'ตั้งค่าสาขาและกำหนดสิทธิ์เข้าถึงในหมวด SECURITY MESH Settings' },
+                                { step: '02', title: 'ASSET DEPLOY', desc: 'ลงทะเบียน Fleet และ Driver เพื่อเตรียมความพร้อมของทรัพยากร' },
+                                { step: '03', title: 'GRID MISSION', desc: 'เริ่มจ่ายงานผ่าน SMART PLAN และติดตามสถานะทางยุทธวิธีแบบเรียลไทม์' }
                             ].map((item, i) => (
-                                <div key={i} className="group space-y-6">
-                                    <div className="w-16 h-16 rounded-2xl bg-slate-900 border border-slate-800 text-white flex items-center justify-center font-black text-2xl shadow-xl group-hover:bg-emerald-500 group-hover:border-emerald-400 transition-all duration-500 group-hover:scale-110 group-hover:rotate-6">
+                                <div key={i} className="group/step space-y-8">
+                                    <div className="w-20 h-20 rounded-3xl bg-white/5 border border-white/5 text-slate-400 flex items-center justify-center font-black text-3xl shadow-2xl group-hover/step:bg-primary group-hover/step:text-white group-hover/step:border-primary/40 transition-all duration-700 group-hover/step:scale-110 group-hover/step:-rotate-3">
                                         {item.step}
                                     </div>
-                                    <div className="space-y-2">
-                                        <h4 className="text-lg font-black text-white uppercase tracking-tight group-hover:text-emerald-400 transition-colors">{item.title}</h4>
-                                        <p className="text-slate-400 text-sm font-medium leading-relaxed">{item.desc}</p>
+                                    <div className="space-y-3">
+                                        <h4 className="text-xl font-black text-white uppercase tracking-tight group-hover/step:text-primary transition-colors italic">{item.title}</h4>
+                                        <p className="text-slate-500 text-xs font-black uppercase tracking-widest leading-relaxed opacity-80">{item.desc}</p>
                                     </div>
                                 </div>
                             ))}
                         </div>
 
-                        <div className="p-10 bg-emerald-500/5 rounded-[2.5rem] border border-emerald-500/20 flex flex-col md:flex-row items-center gap-8 group">
-                            <div className="w-16 h-16 bg-emerald-500 rounded-2xl flex items-center justify-center text-white shadow-2xl shadow-emerald-500/30 shrink-0 group-hover:scale-110 transition-transform">
-                                <Info size={32} />
+                        <div className="p-12 bg-primary/5 rounded-[3.5rem] border border-primary/10 flex flex-col md:flex-row items-center gap-10 group/tip relative overflow-hidden">
+                            <div className="absolute top-0 right-0 w-40 h-40 bg-primary/5 blur-3xl" />
+                            <div className="w-20 h-20 bg-primary rounded-3xl flex items-center justify-center text-white shadow-[0_20px_50px_rgba(255,30,133,0.3)] shrink-0 group-hover/tip:scale-110 transition-transform duration-500">
+                                <Info size={40} strokeWidth={2.5} />
                             </div>
-                            <div className="space-y-2 flex-1 text-center md:text-left">
-                                <p className="font-black text-white text-lg tracking-tight uppercase">Professional Recommendation</p>
-                                <p className="text-slate-400 text-sm font-medium leading-relaxed">
-                                    หากคุณมีคำถามเร่งด่วน หรือต้องการวิเคราะห์สถิติแบบเจาะจง ลองใช้ฟีเจอร์ <span className="text-emerald-400 font-black">Intelligence Support</span> และพิมพ์แชทถามได้ทันที ระบบจะดึงข้อมูลจริงจากฐานข้อมูลมาตอบคุณในเสี้ยววินาทีครับ
+                            <div className="space-y-3 flex-1 text-center md:text-left">
+                                <p className="font-black text-white text-xl tracking-tighter uppercase italic">Neural Command Recommendation</p>
+                                <p className="text-slate-500 text-sm font-bold leading-relaxed uppercase tracking-tight italic">
+                                    หากต้องการข้อมูลวิเคราะห์ประมวลผลด่วน ลองใช้ระบบ <span className="text-primary font-black">Tactical Assistant</span> เพียงพิมพ์คำรหัสหรือคำสั่งที่คุณต้องการ ระบบจะดึงฐานพิกัดข้อมูลมาตอบคุณทันที
                                 </p>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                {/* Support Footer */}
-                <div className="flex flex-col items-center gap-8 py-10">
-                    <div className="flex items-center gap-4 text-slate-500 font-black uppercase tracking-[0.4em] text-[10px]">
-                        <div className="w-10 h-px bg-slate-800" />
-                        LOGIS-PRO Intellegent Ecosystem
-                        <div className="w-10 h-px bg-slate-800" />
+                {/* Final Tactical Signature */}
+                <div className="flex flex-col items-center gap-10 py-12">
+                    <div className="flex items-center gap-6 text-slate-700 font-black uppercase tracking-[0.8em] text-[10px] opacity-30 group-hover:opacity-100 transition-opacity">
+                        <div className="w-16 h-px bg-slate-800" />
+                        LOGISPRO INTEL ECOSYSTEM
+                        <div className="w-16 h-px bg-slate-800" />
                     </div>
                 </div>
             </div>

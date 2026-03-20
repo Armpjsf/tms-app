@@ -1,8 +1,8 @@
 "use client"
 
-
-import { ThemeToggle } from "@/components/ui/theme-toggle"
 import { MobileNotificationBadge } from "./notification-badge"
+import { ChevronLeft } from "lucide-react"
+import { useRouter } from "next/navigation"
 
 type Props = {
   title: string
@@ -10,7 +10,9 @@ type Props = {
   rightElement?: React.ReactNode
 }
 
-export function MobileHeader({ title, rightElement }: Props) {
+export function MobileHeader({ title, showBack, rightElement }: Props) {
+  const router = useRouter()
+  
   const clearCache = () => {
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.getRegistrations().then((registrations) => {
@@ -25,23 +27,34 @@ export function MobileHeader({ title, rightElement }: Props) {
   }
 
   return (
-    <header className="fixed top-0 left-0 right-0 h-14 bg-white dark:bg-slate-950 border-b border-gray-200 dark:border-slate-800 flex items-center justify-between px-4 z-40 transition-colors duration-300 shadow-lg">
-      <div className="flex items-baseline gap-2">
-        <h1 className="font-black text-slate-950 dark:text-white text-xl tracking-tight leading-none">{title}</h1>
-        <span 
-          onClick={clearCache}
-          className="text-[9px] text-slate-500 dark:text-slate-400 font-mono cursor-pointer hover:text-primary transition-colors px-1.5 py-0.5 bg-gray-50 dark:bg-slate-900 rounded border border-gray-100 dark:border-slate-800"
-        >
-          v1.2.0
-        </span>
+    <header className="fixed top-0 left-0 right-0 h-20 bg-[#0a0518]/80 backdrop-blur-2xl border-b border-white/5 flex items-center justify-between px-6 z-[100] transition-colors duration-300">
+      <div className="flex items-center gap-4">
+        {showBack && (
+            <button 
+                onClick={() => router.back()}
+                className="w-10 h-10 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 active:scale-95"
+            >
+                <ChevronLeft size={20} />
+            </button>
+        )}
+        <div className="flex flex-col">
+            <h1 className="font-black text-white text-xl tracking-tighter uppercase leading-none">{title}</h1>
+            <span 
+                onClick={clearCache}
+                className="text-[8px] text-primary font-black cursor-pointer hover:opacity-80 transition-opacity uppercase tracking-widest mt-1"
+            >
+                LOGIS-PRO v1.2.0
+            </span>
+        </div>
       </div>
       
-      <div className="flex items-center gap-2">
-        <ThemeToggle />
+      <div className="flex items-center gap-3">
         {rightElement ? (
           rightElement
         ) : (
-          <MobileNotificationBadge />
+          <div className="w-10 h-10 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center">
+            <MobileNotificationBadge />
+          </div>
         )}
       </div>
     </header>

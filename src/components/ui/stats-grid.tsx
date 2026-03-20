@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion"
 import { ReactNode } from "react"
-import { Card, CardContent } from "@/components/ui/card"
+import { cn } from "@/lib/utils"
 
 interface StatItem {
     label: string
@@ -16,15 +16,15 @@ interface StatsGridProps {
     columns?: number
 }
 
-const colorMap = {
-    indigo:  { bg: "bg-emerald-500/10",  text: "text-emerald-600",  border: "border-emerald-500/20" },
-    amber:   { bg: "bg-amber-500/10",   text: "text-amber-400",   border: "border-amber-500/20" },
-    blue:    { bg: "bg-blue-500/10",     text: "text-emerald-500",    border: "border-emerald-500/15" },
-    emerald: { bg: "bg-emerald-500/10",  text: "text-emerald-400", border: "border-emerald-500/20" },
-    red:     { bg: "bg-red-500/10",      text: "text-red-400",     border: "border-red-500/20" },
-    purple:  { bg: "bg-purple-500/10",   text: "text-purple-400",  border: "border-purple-500/20" },
-    cyan:    { bg: "bg-cyan-500/10",     text: "text-cyan-400",    border: "border-cyan-500/20" },
-    pink:    { bg: "bg-pink-500/10",     text: "text-pink-400",    border: "border-pink-500/20" },
+const colorMap: Record<string, { bg: string; text: string; border: string; shadow: string }> = {
+    indigo:  { bg: "bg-primary/10",    text: "text-primary",    border: "border-primary/20", shadow: "shadow-primary/5" },
+    amber:   { bg: "bg-amber-500/10",   text: "text-amber-400",   border: "border-amber-500/20", shadow: "shadow-amber-500/5" },
+    blue:    { bg: "bg-blue-500/10",    text: "text-blue-400",    border: "border-blue-500/20", shadow: "shadow-blue-500/5" },
+    emerald: { bg: "bg-emerald-500/10", text: "text-emerald-400", border: "border-emerald-500/20", shadow: "shadow-emerald-500/5" },
+    red:     { bg: "bg-rose-500/10",    text: "text-rose-400",    border: "border-rose-500/20", shadow: "shadow-rose-500/5" },
+    purple:  { bg: "bg-purple-500/10",  text: "text-purple-400",  border: "border-purple-500/20", shadow: "shadow-purple-500/5" },
+    cyan:    { bg: "bg-cyan-500/10",    text: "text-cyan-400",    border: "border-cyan-500/20", shadow: "shadow-cyan-500/5" },
+    pink:    { bg: "bg-pink-500/10",    text: "text-pink-400",    border: "border-pink-500/20", shadow: "shadow-pink-500/5" },
 }
 
 export function StatsGrid({ stats, columns = 4 }: StatsGridProps) {
@@ -37,38 +37,46 @@ export function StatsGrid({ stats, columns = 4 }: StatsGridProps) {
     }[columns] || "md:grid-cols-4"
 
     return (
-        <motion.div
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.1 }}
-            className={`grid grid-cols-2 ${gridCols} gap-4 mb-8`}
-        >
+        <div className={cn("grid grid-cols-2 gap-8 mb-12", gridCols)}>
             {stats.map((stat, idx) => {
-                const colors = colorMap[stat.color]
+                const colors = colorMap[stat.color] || colorMap.indigo
                 return (
-                    <Card
+                    <motion.div
                         key={idx}
-                        className={`bg-white/80 ${colors.border} backdrop-blur-md hover:border-gray-200/50 transition-all hover:scale-[1.02] shadow-xl relative overflow-hidden group`}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.5, delay: idx * 0.1 }}
+                        className={cn(
+                            "p-8 rounded-[3rem] border backdrop-blur-3xl shadow-2xl relative overflow-hidden group transition-all hover:scale-[1.03] bg-[#0a0518]/40",
+                            colors.border,
+                            colors.shadow
+                        )}
                     >
-                        <div className="absolute -right-4 -bottom-4 opacity-5 group-hover:opacity-10 transition-opacity duration-500">
+                        <div className="absolute -right-4 -bottom-4 opacity-5 group-hover:opacity-10 transition-opacity duration-700 pointer-events-none transform group-hover:scale-110">
                             <div className="w-24 h-24">{stat.icon}</div>
                         </div>
-                        <CardContent className="p-5">
-                            <div className={`p-2.5 ${colors.bg} rounded-xl w-fit mb-3`}>
-                                <div className={`w-5 h-5 ${colors.text} flex items-center justify-center`}>
+                        
+                        <div className="flex items-center justify-between mb-8">
+                            <div className={cn("p-4 rounded-2xl shadow-xl transition-all duration-700 group-hover:scale-110 group-hover:rotate-6", colors.bg, colors.text)}>
+                                <div className="w-6 h-6 flex items-center justify-center">
                                     {stat.icon}
                                 </div>
                             </div>
-                            <p className={`text-3xl font-black ${colors.text} tracking-tighter mb-0.5`}>
+                        </div>
+
+                        <div className="relative z-10">
+                            <p className="text-slate-500 font-black text-[10px] uppercase tracking-[0.3em] mb-2">{stat.label}</p>
+                            <p className={cn("text-4xl font-black tracking-tighter leading-none", colors.text)}>
                                 {typeof stat.value === 'number' ? stat.value.toLocaleString() : stat.value}
                             </p>
-                            <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
-                                {stat.label}
-                            </p>
-                        </CardContent>
-                    </Card>
+                        </div>
+
+                        <div className="absolute -bottom-4 -right-4 text-7xl font-black text-white/[0.02] pointer-events-none italic">
+                            0{idx + 1}
+                        </div>
+                    </motion.div>
                 )
             })}
-        </motion.div>
+        </div>
     )
 }

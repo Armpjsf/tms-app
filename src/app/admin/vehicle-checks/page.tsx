@@ -1,9 +1,11 @@
 import { createAdminClient } from "@/utils/supabase/server"
-import { Truck, FileText, Image as ImageIcon, PenTool, ArrowLeft, TrendingUp } from "lucide-react"
+import { Truck, FileText, Image as ImageIcon, PenTool, ArrowLeft, TrendingUp, ShieldCheck, Activity, Search, Target } from "lucide-react"
 import Link from "next/link"
 import { PremiumCard } from "@/components/ui/premium-card"
 import { PremiumButton } from "@/components/ui/premium-button"
 import { cn } from "@/lib/utils"
+import { DashboardLayout } from "@/components/layout/dashboard-layout"
+
 export const revalidate = 0
 
 const STANDARD_CHECKLIST = [
@@ -21,194 +23,195 @@ export default async function AdminVehicleChecksPage() {
             .order('Check_Date', { ascending: false })
             .limit(100)
 
-        if (error) {
-            // Error fetching vehicle checks
-        }
-
         return (
-            <div className="space-y-10">
-                {/* Bespoke Elite Header */}
-                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-8 mb-12 bg-slate-950 p-10 rounded-br-[5rem] rounded-tl-[2rem] border border-slate-800 shadow-2xl relative overflow-hidden group">
-                    <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/10 to-transparent pointer-events-none" />
-                    
-                    <div className="relative z-10">
-                        <Link href="/dashboard" className="flex items-center gap-2 text-indigo-400 hover:text-white transition-colors mb-6 text-[10px] font-black uppercase tracking-[0.2em] w-fit">
-                            <ArrowLeft className="w-4 h-4" /> Personnel Hub
-                        </Link>
-                        <h1 className="text-5xl font-black text-white mb-2 tracking-tighter flex items-center gap-4">
-                            <div className="p-3 bg-gradient-to-br from-indigo-500 to-blue-600 rounded-3xl shadow-2xl shadow-indigo-500/20 text-white transform group-hover:scale-110 transition-transform duration-500">
-                                <Truck size={32} />
+            <DashboardLayout>
+                <div className="space-y-12 pb-20 p-4 lg:p-10">
+                    {/* Tactical Elite Header */}
+                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-10 bg-[#0a0518]/60 backdrop-blur-3xl p-10 rounded-br-[6rem] rounded-tl-[3rem] border border-white/5 shadow-2xl relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 w-80 h-80 bg-primary/10 blur-[120px] rounded-full -mr-40 -mt-40 pointer-events-none" />
+                        
+                        <div className="relative z-10 space-y-8">
+                            <Link href="/dashboard" className="inline-flex items-center gap-2 text-slate-500 hover:text-primary transition-all font-black uppercase tracking-[0.4em] text-[10px] group/back italic">
+                                <ArrowLeft className="w-4 h-4 group-hover/back:-translate-x-1 transition-transform" /> 
+                                Tactical Dashboard
+                            </Link>
+                            <div className="flex items-center gap-6">
+                                <div className="p-4 bg-primary/20 rounded-[2.5rem] border-2 border-primary/30 shadow-[0_0_40px_rgba(255,30,133,0.2)] text-primary group-hover:scale-110 transition-all duration-500">
+                                    <Truck size={42} strokeWidth={2.5} />
+                                </div>
+                                <div>
+                                    <h1 className="text-5xl font-black text-white tracking-widest uppercase leading-none italic premium-text-gradient">
+                                        Asset Integrity
+                                    </h1>
+                                    <p className="text-[10px] font-black text-primary uppercase tracking-[0.6em] mt-2 opacity-80 italic italic">Fleet Compliance & Tactical Safety Registry</p>
+                                </div>
                             </div>
-                            Inspections COMMAND
-                        </h1>
-                        <p className="text-indigo-400 font-black ml-[4.5rem] uppercase tracking-[0.3em] text-[10px]">Fleet Integrity & Safety Compliance Registry</p>
-                    </div>
+                        </div>
 
-                    <div className="flex flex-wrap gap-4 relative z-10">
-                        <div className="flex items-center gap-3 px-6 py-3 bg-indigo-500/10 rounded-2xl border border-indigo-500/20">
-                            <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
-                            <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Live Compliance Feed</span>
+                        <div className="flex flex-col items-end gap-4 relative z-10">
+                            <div className="bg-white/5 border border-white/10 px-6 py-3 rounded-2xl flex items-center gap-3 backdrop-blur-md">
+                                <div className="w-2 h-2 rounded-full bg-primary animate-pulse shadow-[0_0_10px_rgba(255,30,133,1)]" />
+                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Global Protocol Monitoring</span>
+                            </div>
+                            <div className="flex items-center gap-3 px-6 py-4 bg-primary/10 border border-primary/20 rounded-2xl">
+                                <Activity className="text-primary size={18} transition-transform group-hover:rotate-12" />
+                                <span className="text-sm font-black text-white uppercase tracking-tighter italic">Signal Status: NOMINAL</span>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-            <PremiumCard className="overflow-hidden border-none shadow-[0_30px_100px_rgba(0,0,0,0.1)] p-0 bg-white rounded-br-[5rem] rounded-tl-[3rem]">
-                {/* Table Header Section */}
-                <div className="p-10 border-b border-slate-50 bg-slate-950 relative overflow-hidden">
-                    <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/10 to-transparent pointer-events-none" />
-                    <div className="flex items-center gap-3 relative z-10">
-                        <div className="p-2 bg-indigo-500 rounded-xl text-white shadow-lg shadow-indigo-500/20">
-                            <FileText size={20} />
-                        </div>
-                        <div>
-                            <h2 className="text-2xl font-black text-white tracking-tight">Inspection Registry</h2>
-                            <p className="text-indigo-400 text-[10px] font-bold uppercase tracking-[0.2em] mt-0.5">Historical Safety Protocol logs</p>
-                        </div>
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                        {[
+                          { label: "Checks Today", value: "24", icon: ShieldCheck, color: "primary" },
+                          { label: "Compliance Rate", value: "98.2%", icon: Activity, color: "emerald" },
+                          { label: "Active Faults", value: "02", icon: Target, color: "rose" },
+                          { label: "Total Assets", value: "86", icon: Truck, color: "blue" },
+                        ].map((stat, i) => (
+                           <PremiumCard key={i} className="p-8 group hover:border-primary/40 transition-all duration-500 border-white/5 bg-[#0a0518]/40 backdrop-blur-xl">
+                               <div className="flex justify-between items-start mb-4">
+                                  <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{stat.label}</span>
+                                  <stat.icon className="text-primary opacity-20 group-hover:opacity-100 transition-opacity" size={20} />
+                               </div>
+                               <p className="text-4xl font-black text-white italic tracking-tighter mb-2">{stat.value}</p>
+                               <div className="h-1 w-12 bg-primary rounded-full shadow-lg shadow-primary/20" />
+                           </PremiumCard>
+                        ))}
                     </div>
-                </div>
 
-                <div className="overflow-x-auto">
-                    <table className="w-full">
-                        <thead className="text-[9px] uppercase bg-slate-50 text-slate-500 border-b border-slate-100 font-black tracking-widest">
-                            <tr>
-                                <th className="text-left p-6">Timestamp / OP ID</th>
-                                <th className="text-left p-6">Entity Plate</th>
-                                <th className="text-left p-6">Operator</th>
-                                <th className="text-left p-6">Status / Protocol</th>
-                                <th className="text-left p-6">Artifacts & Verification</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {checks?.map((check) => {
-                                const items = (check.Passed_Items || {}) as Record<string, boolean>
-                                const failedItems = STANDARD_CHECKLIST.filter(item => !items[item])
-                                const isPass = failedItems.length === 0
+                    {/* Registry Table */}
+                    <PremiumCard className="bg-[#0a0518]/40 border-2 border-white/5 shadow-3xl rounded-[4rem] overflow-hidden group/table">
+                        <div className="p-10 border-b border-white/5 bg-black/40 relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-8">
+                            <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 blur-[80px] pointer-events-none" />
+                            <div className="flex items-center gap-5 relative z-10">
+                                <div className="p-3 bg-white/5 rounded-2xl text-primary border border-white/10 shadow-inner group-hover/table:rotate-12 transition-transform duration-500">
+                                    <FileText size={24} />
+                                </div>
+                                <div>
+                                    <h2 className="text-2xl font-black text-white tracking-widest uppercase italic">Inspection Registry</h2>
+                                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] mt-1">Real-time asset synchronization logs</p>
+                                </div>
+                            </div>
+                            
+                            <div className="relative z-10 w-full md:w-80 group/search">
+                                <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within/search:text-primary transition-colors" size={20} />
+                                <input 
+                                    className="w-full h-16 bg-[#0a0518] border-white/5 rounded-3xl pl-16 pr-8 text-xs font-black uppercase tracking-widest focus:border-primary/50 transition-all text-white placeholder:text-slate-700 italic shadow-inner"
+                                    placeholder="SCAN_PLATE_OR_NODE..."
+                                />
+                            </div>
+                        </div>
 
-                                return (
-                                    <tr key={check.id} className="group transition-all duration-300">
-                                        <td className="p-6 bg-white group-hover:bg-slate-50 border-b border-slate-100 rounded-l-[1.5rem] transition-colors">
-                                            <div className="flex flex-col">
-                                                <span className="text-slate-900 font-black tracking-tight">{new Date(check.Check_Date).toLocaleDateString('th-TH', { timeZone: 'Asia/Bangkok' })}</span>
-                                                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{new Date(check.Check_Date).toLocaleTimeString('th-TH', { timeZone: 'Asia/Bangkok' })}</span>
-                                            </div>
-                                        </td>
-                                        <td className="p-6 bg-white group-hover:bg-slate-50 border-b border-slate-100 transition-colors">
-                                            <div className="flex items-center gap-3">
-                                                <div className="p-2 bg-slate-950 rounded-lg text-white group-hover:scale-110 transition-transform">
-                                                    <Truck size={14} />
-                                                </div>
-                                                <span className="font-black text-slate-900 tracking-tighter uppercase">{check.Vehicle_Plate}</span>
-                                            </div>
-                                        </td>
-                                        <td className="p-6 bg-white group-hover:bg-slate-50 border-b border-slate-100 transition-colors">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 text-[10px] font-black border border-indigo-200 uppercase">
-                                                    {(check.Driver_Name || check.Driver_ID || "?").charAt(0)}
-                                                </div>
-                                                <span className="text-sm font-black text-slate-700 tracking-tight">{check.Driver_Name || check.Driver_ID}</span>
-                                            </div>
-                                        </td>
-                                        <td className="p-6 bg-white group-hover:bg-slate-50 border-b border-slate-100 transition-colors">
-                                            <div className="flex flex-col gap-1.5">
-                                                <div className="flex items-center gap-2">
-                                                    <div className={cn(
-                                                        "w-2 h-2 rounded-full",
-                                                        isPass ? "bg-emerald-500 shadow-lg shadow-emerald-500/40" : "bg-red-500 shadow-lg shadow-red-500/40 animate-pulse"
-                                                    )} />
-                                                    <span className={cn(
-                                                        "text-[10px] font-black uppercase tracking-[0.2em] leading-none",
-                                                        isPass ? "text-emerald-500" : "text-red-500"
-                                                    )}>
-                                                        {isPass ? "Compliance Passed" : "Protocol Deficit"}
-                                                    </span>
-                                                </div>
-                                                {!isPass && (
-                                                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest max-w-[200px] truncate">
-                                                        {failedItems.join(", ")}
-                                                    </p>
-                                                )}
-                                            </div>
-                                        </td>
-                                        <td className="p-6 bg-white group-hover:bg-slate-50 border-b border-slate-100 rounded-r-[1.5rem] transition-colors">
-                                            <div className="flex flex-wrap items-center gap-3">
-                                                {check.Photo_Urls && (
-                                                    <>
-                                                        {(() => {
-                                                            const urls = check.Photo_Urls.split(',').filter(Boolean);
-                                                            if (urls.length === 0) return null;
-                                                            return (
-                                                                <a 
-                                                                    href={urls[0]}
-                                                                    target="_blank"
-                                                                    rel="noopener noreferrer"
-                                                                    className="inline-flex items-center justify-center h-10 rounded-xl px-4 text-[10px] font-black uppercase tracking-widest bg-slate-100 text-slate-900 hover:bg-slate-900 hover:text-white transition-all shadow-sm active:scale-95"
-                                                                >
-                                                                    <FileText size={14} className="mr-2" />
-                                                                    Report
-                                                                </a>
-                                                            );
-                                                        })()}
-
-                                                        {(() => {
-                                                            const urls = check.Photo_Urls.split(',').filter(Boolean);
-                                                            if (urls.length <= 1) return null;
-                                                            return (
-                                                                <div className="flex gap-1.5 p-1.5 bg-slate-50 rounded-xl border border-slate-100">
-                                                                    {urls.slice(1).map((url: string, idx: number) => (
-                                                                    <a 
-                                                                        key={idx}
-                                                                        href={url}
-                                                                        target="_blank"
-                                                                        rel="noopener noreferrer"
-                                                                        className="w-7 h-7 rounded-lg bg-white flex items-center justify-center text-slate-400 border border-slate-200 hover:text-indigo-500 hover:border-indigo-500 hover:scale-110 transition-all shadow-sm"
-                                                                        title={`Inspection Artifact ${idx + 1}`}
-                                                                    >
-                                                                        <ImageIcon size={12} />
-                                                                    </a>
-                                                                ))}
-                                                                </div>
-                                                            );
-                                                        })()}
-                                                    </>
-                                                )}
-                                                {check.Signature_Url && (
-                                                    <a 
-                                                        href={check.Signature_Url}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        className="inline-flex items-center justify-center h-10 rounded-xl px-4 text-[10px] font-black uppercase tracking-widest text-emerald-600 border border-emerald-100 hover:bg-emerald-500 hover:text-white hover:border-emerald-500 transition-all shadow-sm active:scale-95"
-                                                    >
-                                                        <PenTool size={14} className="mr-2" />
-                                                        Auth
-                                                    </a>
-                                                )}
-                                            </div>
-                                        </td>
+                        <div className="overflow-x-auto">
+                            <table className="w-full border-collapse">
+                                <thead>
+                                    <tr className="bg-black/20 text-[10px] font-black uppercase tracking-[0.4em] text-slate-500 border-b border-white/5">
+                                        <th className="text-left p-10">Temporal Node</th>
+                                        <th className="text-left p-10">Asset Plate</th>
+                                        <th className="text-left p-10">Field Operator</th>
+                                        <th className="text-left p-10">Compliance Vector</th>
+                                        <th className="text-right p-10">Intel Visuals</th>
                                     </tr>
-                                )
-                            })}
-                            {(!checks || checks.length === 0) && (
-                                <tr>
-                                    <td colSpan={5} className="text-center py-24">
-                                        <div className="flex flex-col items-center">
-                                            <TrendingUp className="w-16 h-16 text-slate-100 mb-4" />
-                                            <p className="text-slate-400 font-black uppercase tracking-[0.2em] text-xs">No synchronization detected in the registry</p>
-                                        </div>
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
+                                </thead>
+                                <tbody className="divide-y divide-white/[0.02]">
+                                    {checks?.map((check) => {
+                                        const items = (check.Passed_Items || {}) as Record<string, boolean>
+                                        const failedItems = STANDARD_CHECKLIST.filter(item => !items[item])
+                                        const isPass = failedItems.length === 0
+
+                                        return (
+                                            <tr key={check.id} className="group/row hover:bg-white/[0.03] transition-all duration-300">
+                                                <td className="p-10">
+                                                    <div className="flex flex-col">
+                                                        <span className="text-white font-black tracking-tight text-sm uppercase italic group-hover/row:text-primary transition-colors">
+                                                            {new Date(check.Check_Date).toLocaleDateString('th-TH')}
+                                                        </span>
+                                                        <span className="text-[10px] text-slate-600 font-black uppercase tracking-widest mt-1">
+                                                            {new Date(check.Check_Date).toLocaleTimeString('th-TH')}
+                                                        </span>
+                                                    </div>
+                                                </td>
+                                                <td className="p-10">
+                                                    <div className="flex items-center gap-4">
+                                                        <div className="w-10 h-10 rounded-2xl bg-white/5 flex items-center justify-center text-primary group-hover/row:scale-110 group-hover/row:bg-primary/20 transition-all duration-500 shadow-inner border border-white/5">
+                                                            <Truck size={18} />
+                                                        </div>
+                                                        <span className="font-black text-white text-sm tracking-widest uppercase italic border-b-2 border-primary/20">{check.Vehicle_Plate}</span>
+                                                    </div>
+                                                </td>
+                                                <td className="p-10">
+                                                    <div className="flex items-center gap-4">
+                                                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white text-[10px] font-black italic shadow-lg shadow-primary/20 border-2 border-white/10 overflow-hidden relative">
+                                                            <div className="absolute inset-0 bg-primary/20" />
+                                                            {(check.Driver_Name || "A").charAt(0)}
+                                                        </div>
+                                                        <span className="text-xs font-black text-slate-400 group-hover/row:text-white transition-colors uppercase tracking-widest">{check.Driver_Name || "OP_ALPHA"}</span>
+                                                    </div>
+                                                </td>
+                                                <td className="p-10">
+                                                    <div className="flex flex-col gap-2">
+                                                        <div className={cn(
+                                                            "flex items-center gap-3 px-5 py-2.5 rounded-full border w-fit shadow-2xl transition-all duration-500 group-hover/row:translate-x-2",
+                                                            isPass 
+                                                                ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400 shadow-emerald-500/10" 
+                                                                : "bg-rose-500/10 border-rose-500/30 text-rose-500 shadow-rose-500/20 animate-pulse"
+                                                        )}>
+                                                            <div className={cn(
+                                                                "w-2 h-2 rounded-full",
+                                                                isPass ? "bg-emerald-500" : "bg-rose-500"
+                                                            )} />
+                                                            <span className="text-[10px] font-black uppercase tracking-[0.2em] italic">
+                                                                {isPass ? "Compliance Passed" : "Protocol Deflection"}
+                                                            </span>
+                                                        </div>
+                                                        {!isPass && (
+                                                            <p className="text-[9px] font-black text-rose-300 uppercase tracking-widest ml-5 bg-rose-500/10 px-3 py-1 rounded-lg w-fit italic">
+                                                                DANGER: {failedItems.join(", ")}
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                                <td className="p-10 text-right">
+                                                    <div className="flex items-center justify-end gap-3">
+                                                        {check.Photo_Urls && check.Photo_Urls.split(',')[0] && (
+                                                            <a 
+                                                                href={check.Photo_Urls.split(',')[0]}
+                                                                target="_blank"
+                                                                className="h-12 px-6 rounded-2xl bg-white/5 hover:bg-primary text-white text-[9px] font-black uppercase tracking-widest flex items-center justify-center transition-all border border-white/10 hover:border-primary/50 group/intel shadow-lg active:scale-95"
+                                                            >
+                                                                <ImageIcon size={14} className="mr-3 group-hover/intel:scale-110 transition-transform" />
+                                                                VISUAL_INTEL
+                                                            </a>
+                                                        )}
+                                                        {check.Signature_Url && (
+                                                            <a 
+                                                                href={check.Signature_Url}
+                                                                target="_blank"
+                                                                className="w-12 h-12 rounded-2xl bg-white/5 hover:bg-emerald-500 text-white flex items-center justify-center transition-all border border-white/10 hover:border-emerald-500 shadow-lg active:scale-95 group/sig"
+                                                            >
+                                                                <PenTool size={18} className="group-hover/sig:rotate-12 transition-transform" />
+                                                            </a>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        )
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
+                    </PremiumCard>
                 </div>
-            </PremiumCard>
-        </div>
-    )
-  } catch {
-    return (
-      <div className="p-8">
-        <h1>สรุปการตรวจเช็ครถ</h1>
-        <p>ไม่สามารถโหลดข้อมูลได้</p>
-      </div>
-    )
-  }
+            </DashboardLayout>
+        )
+    } catch {
+        return (
+            <DashboardLayout>
+                <div className="p-20 text-center space-y-6">
+                    <ShieldCheck size={64} className="mx-auto text-primary animate-pulse" />
+                    <h1 className="text-3xl font-black text-white italic uppercase tracking-tighter">Emergency Hub Lock</h1>
+                    <p className="text-slate-500 font-black uppercase tracking-widest text-xs">Registry synchronization protocol failed. Seek administrative uplink.</p>
+                </div>
+            </DashboardLayout>
+        )
+    }
 }

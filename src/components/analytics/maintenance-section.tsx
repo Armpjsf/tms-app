@@ -4,19 +4,21 @@ import { PremiumCard } from "@/components/ui/premium-card"
 import { MaintenanceScheduleData } from "@/lib/supabase/maintenance-schedule"
 import { Wrench, AlertTriangle, CheckCircle2, Truck, Activity, Clock, ShieldCheck } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useLanguage } from "@/components/providers/language-provider"
 
 export function MaintenanceSection({ data }: { data: MaintenanceScheduleData }) {
+  const { t } = useLanguage()
   const { overdue, dueSoon, activeRepairs, completedThisMonth, totalCostThisMonth, vehicleHealthSummary } = data
 
   return (
     <div className="space-y-10">
       {/* Sub-Section Header */}
-      <div className="flex items-center gap-3">
-        <div className="p-2 bg-slate-950 rounded-xl text-amber-500 shadow-lg border border-slate-800">
-          <Wrench size={18} />
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-slate-950 rounded-xl text-amber-500 shadow-lg border border-slate-800">
+            <Wrench size={18} />
+          </div>
+          <h3 className="text-xl font-black text-white tracking-tight uppercase premium-text-gradient">{t('common.maintenance_protocol')}</h3>
         </div>
-        <h3 className="text-xl font-black text-white tracking-tight uppercase premium-text-gradient">Fleet Maintenance Ecosystem</h3>
-      </div>
 
       {/* KPI Bento Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -25,17 +27,17 @@ export function MaintenanceSection({ data }: { data: MaintenanceScheduleData }) 
             <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent pointer-events-none" />
             <div className="flex items-center justify-between mb-6 relative z-10">
               <div className="space-y-1">
-                <span className="text-blue-400 text-[10px] font-black uppercase tracking-[0.2em] italic">Active Hangar</span>
-                <p className="text-[8px] text-slate-500 font-bold uppercase tracking-widest italic">Live Repair & Restoration Log</p>
+                <span className="text-blue-400 text-[10px] font-black uppercase tracking-[0.2em] italic">{t('dashboard.active_hangar')}</span>
+                <p className="text-[8px] text-slate-500 font-bold uppercase tracking-widest italic">{t('dashboard.live_repair_log')}</p>
               </div>
               <div className="p-2 bg-blue-500/10 rounded-xl text-blue-500 shadow-lg shadow-blue-500/10">
                 <Wrench size={16} />
               </div>
             </div>
-            <div className="text-3xl font-black text-white tracking-tighter relative z-10">{activeRepairs} ASSETS</div>
+            <div className="text-3xl font-black text-white tracking-tighter relative z-10">{activeRepairs} {t('dashboard.assets_label')}</div>
             <div className="flex items-center gap-2 mt-4 relative z-10">
                 <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
-                <p className="text-[10px] text-blue-400 font-black uppercase tracking-widest italic">MISSION INACTIVE</p>
+                <p className="text-[10px] text-blue-400 font-black uppercase tracking-widest italic">{t('dashboard.mission_inactive')}</p>
             </div>
         </PremiumCard>
 
@@ -48,10 +50,10 @@ export function MaintenanceSection({ data }: { data: MaintenanceScheduleData }) 
             <div className="flex items-center justify-between mb-6 relative z-10">
               <div className="space-y-1">
                 <span className={cn("text-[10px] font-black uppercase tracking-[0.2em] italic", overdue.length > 0 ? "text-red-100" : "text-slate-400")}>
-                    OVERDUE EXPOSURE
+                    {t('dashboard.overdue_exposure')}
                 </span>
                 <p className={cn("text-[8px] font-bold uppercase tracking-widest italic", overdue.length > 0 ? "text-red-200" : "text-slate-500")}>
-                    Strategic Service Breach
+                    {t('dashboard.strategic_service_breach')}
                 </p>
               </div>
               <div className={cn("p-2 rounded-xl shadow-lg", overdue.length > 0 ? "bg-white/10 text-white" : "bg-red-500/10 text-red-500")}>
@@ -59,11 +61,11 @@ export function MaintenanceSection({ data }: { data: MaintenanceScheduleData }) 
               </div>
             </div>
             <div className={cn("text-3xl font-black tracking-tighter relative z-10 italic", overdue.length > 0 ? "text-white" : "text-white/20")}>
-                {overdue.length} ALERTS
+                {overdue.length} {t('dashboard.alerts_label')}
             </div>
             <div className="flex items-center gap-2 mt-4 relative z-10">
                 <p className={cn("text-[9px] font-black uppercase tracking-widest italic", overdue.length > 0 ? "text-white animate-pulse" : "text-slate-600")}>
-                    {overdue.length > 0 ? "IMMEDIATE RESOLUTION REQUIRED" : "FLIGHT COMPLIANCE OPTIMAL"}
+                    {overdue.length > 0 ? t('dashboard.critical_review') : t('dashboard.system_optimal')}
                 </p>
             </div>
         </PremiumCard>
@@ -73,8 +75,8 @@ export function MaintenanceSection({ data }: { data: MaintenanceScheduleData }) 
             <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent pointer-events-none" />
             <div className="flex items-center justify-between mb-6 relative z-10">
               <div className="space-y-1">
-                <span className="text-emerald-400 text-[10px] font-black uppercase tracking-[0.2em] italic">Mission Ready</span>
-                <p className="text-[8px] text-slate-500 font-bold uppercase tracking-widest italic">Restored Assets: 30-Day Cycle</p>
+                <span className="text-emerald-400 text-[10px] font-black uppercase tracking-[0.2em] italic">{t('dashboard.mission_ready')}</span>
+                <p className="text-[8px] text-slate-500 font-bold uppercase tracking-widest italic">{t('dashboard.restored_assets_30d')}</p>
               </div>
               <div className="p-2 bg-emerald-500/10 rounded-xl text-emerald-400 shadow-lg shadow-emerald-500/10">
                 <CheckCircle2 size={16} />
@@ -83,7 +85,7 @@ export function MaintenanceSection({ data }: { data: MaintenanceScheduleData }) 
             <div className="text-3xl font-black text-white tracking-tighter relative z-10 italic">{completedThisMonth}</div>
             <div className="flex items-center gap-2 mt-4 relative z-10">
                 <p className="text-[10px] text-emerald-400 font-black uppercase tracking-widest italic flex items-center gap-2">
-                    <ShieldCheck size={10} strokeWidth={3} /> RESTORATION VERIFIED
+                    <ShieldCheck size={10} strokeWidth={3} /> {t('dashboard.restoration_verified')}
                 </p>
             </div>
         </PremiumCard>
@@ -93,8 +95,8 @@ export function MaintenanceSection({ data }: { data: MaintenanceScheduleData }) 
             <div className="absolute inset-0 bg-gradient-to-br from-rose-500/5 to-transparent pointer-events-none" />
             <div className="flex items-center justify-between mb-6 relative z-10">
               <div className="space-y-1">
-                <span className="text-rose-400 text-[10px] font-black uppercase tracking-[0.2em] italic">Fleet Burn Rate</span>
-                <p className="text-[8px] text-slate-500 font-bold uppercase tracking-widest italic">Total Restoration Expenditure</p>
+                <span className="text-rose-400 text-[10px] font-black uppercase tracking-[0.2em] italic">{t('dashboard.fleet_burn_rate')}</span>
+                <p className="text-[8px] text-slate-500 font-bold uppercase tracking-widest italic">{t('dashboard.total_restoration_expenditure')}</p>
               </div>
               <div className="p-2 bg-rose-500/10 rounded-xl text-rose-400 shadow-lg shadow-rose-500/10">
                 <Activity size={16} />
@@ -118,8 +120,8 @@ export function MaintenanceSection({ data }: { data: MaintenanceScheduleData }) 
                   <Clock size={16} />
                 </div>
                 <div>
-                  <h3 className="text-lg font-black text-white tracking-tight italic">Asset Compliance FEED</h3>
-                  <p className="text-amber-400 text-[9px] font-bold uppercase tracking-[0.2em]">Temporal Maintenance Scheduler</p>
+                  <h3 className="text-lg font-black text-white tracking-tight italic">{t('dashboard.asset_compliance_feed')}</h3>
+                  <p className="text-amber-400 text-[9px] font-bold uppercase tracking-[0.2em]">{t('dashboard.temporal_maintenance_scheduler')}</p>
                 </div>
               </div>
            </div>
@@ -140,7 +142,7 @@ export function MaintenanceSection({ data }: { data: MaintenanceScheduleData }) 
                                     <span className="text-[9px] font-black text-slate-600 border border-slate-200 px-2 py-0.5 rounded-full tracking-widest">{item.vehicle_type}</span>
                                 </div>
                                 <div className="text-[10px] text-amber-600 font-black mt-2 bg-amber-50 px-3 py-1 rounded-lg w-fit tracking-widest italic border border-amber-100 uppercase">
-                                   SERVICE: {item.service_type}
+                                   {t('dashboard.service_prefix')} {item.service_type}
                                 </div>
                             </div>
                         </div>
@@ -149,7 +151,7 @@ export function MaintenanceSection({ data }: { data: MaintenanceScheduleData }) 
                                 "text-[10px] font-black tracking-widest uppercase mb-1",
                                 item.status === 'overdue' ? 'text-red-600' : 'text-amber-600'
                              )}>
-                                {item.status === 'overdue' ? 'STRICT BREACH' : `${item.days_until} DAYS REMAINING`}
+                                {item.status === 'overdue' ? t('dashboard.strict_breach') : `${item.days_until} ${t('common.days')} REMAINING`}
                              </div>
                              <div className="text-[10px] text-slate-400 font-black bg-slate-50 px-2 py-0.5 rounded-full border border-slate-100 uppercase italic">
                                 {new Date(item.due_date).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}
@@ -176,8 +178,8 @@ export function MaintenanceSection({ data }: { data: MaintenanceScheduleData }) 
                   <Truck size={16} />
                 </div>
                 <div>
-                  <h3 className="text-lg font-black text-white tracking-tight italic">Asset Health MATRIX</h3>
-                  <p className="text-rose-400 text-[9px] font-bold uppercase tracking-[0.2em]">Operational Integrity Breakdown</p>
+                  <h3 className="text-lg font-black text-white tracking-tight italic">{t('dashboard.asset_health_matrix')}</h3>
+                  <p className="text-rose-400 text-[9px] font-bold uppercase tracking-[0.2em]">{t('dashboard.operational_integrity_breakdown')}</p>
                 </div>
               </div>
            </div>
@@ -193,7 +195,7 @@ export function MaintenanceSection({ data }: { data: MaintenanceScheduleData }) 
                                 <div className="text-slate-900 font-black text-lg tracking-tighter group-hover/v:text-rose-600 transition-colors uppercase italic">{v.vehicle_plate}</div>
                                 <div className="flex items-center gap-2 mt-2">
                                     <span className="text-[9px] text-rose-500 font-black uppercase tracking-widest italic bg-rose-50 px-2 py-0.5 rounded-full border border-rose-100">
-                                       {v.openTickets} ACTIVE TICKETS
+                                       {v.openTickets} {t('dashboard.active_tickets')}
                                     </span>
                                 </div>
                             </div>

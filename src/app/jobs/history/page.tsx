@@ -22,7 +22,10 @@ import {
   XCircle,
   ListFilter,
   TrendingUp,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Zap,
+  ShieldCheck,
+  Eye
 } from "lucide-react"
 import { getAllJobs } from "@/lib/supabase/jobs"
 import { getJobCreationData } from "@/app/planning/actions"
@@ -50,7 +53,6 @@ export default async function JobHistoryPage(props: Props) {
   const status = (searchParams.status as string) || ''
   const limit = 25
 
-  // Fetch jobs and creation data for dialog
   const [jobsResult, creationData, canViewPrice, canDelete, canExport] = await Promise.all([
     getAllJobs(page, limit, query, status, dateFrom, dateTo),
     getJobCreationData(),
@@ -61,55 +63,56 @@ export default async function JobHistoryPage(props: Props) {
 
   const { data: jobs, count } = jobsResult
   const { drivers, vehicles, customers, routes } = creationData
-  
-  // Use jobs directly as they are already filtered
   const historyJobs = jobs
 
   const statusConfig: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
-    New: { label: "ใหม่", color: "text-emerald-500 bg-emerald-500/15", icon: <Package size={14} /> },
-    Assigned: { label: "มอบหมายแล้ว", color: "text-emerald-600 bg-emerald-500/20", icon: <Truck size={14} /> },
-    "Picked Up": { label: "รับแล้ว", color: "text-cyan-400 bg-cyan-500/20", icon: <Package size={14} /> },
-    "In Transit": { label: "กำลังเดินทาง", color: "text-amber-400 bg-amber-500/20", icon: <Truck size={14} /> },
-    Delivered: { label: "ส่งแล้ว", color: "text-emerald-400 bg-emerald-500/20", icon: <CheckCircle2 size={14} /> },
-    Completed: { label: "เสร็จสิ้น", color: "text-emerald-400 bg-emerald-500/20", icon: <CheckCircle2 size={14} /> },
-    Complete: { label: "เสร็จสิ้น", color: "text-emerald-400 bg-emerald-500/20", icon: <CheckCircle2 size={14} /> },
-    Failed: { label: "ล้มเหลว", color: "text-red-400 bg-red-500/20", icon: <AlertCircle size={14} /> },
-    Cancelled: { label: "ยกเลิก", color: "text-gray-500 bg-slate-500/20", icon: <AlertCircle size={14} /> },
+    New: { label: "NEW MISSIONS", color: "text-primary bg-primary/10 border-primary/20", icon: <Package size={14} /> },
+    Assigned: { label: "ASSIGNED", color: "text-primary bg-primary/20 border-primary/30", icon: <Truck size={14} /> },
+    "Picked Up": { label: "PICKED UP", color: "text-accent bg-accent/20 border-accent/30", icon: <Package size={14} /> },
+    "In Transit": { label: "IN TRANSIT", color: "text-accent bg-accent/20 border-accent/30", icon: <Truck size={14} /> },
+    Delivered: { label: "DELIVERED", color: "text-primary bg-primary/10 border-primary/20", icon: <CheckCircle2 size={14} /> },
+    Completed: { label: "COMPLETED", color: "text-primary bg-primary/20 border-primary/30", icon: <CheckCircle2 size={14} /> },
+    Complete: { label: "SUCCESS", color: "text-primary bg-primary/20 border-primary/30", icon: <CheckCircle2 size={14} /> },
+    Failed: { label: "FAILED", color: "text-rose-500 bg-rose-500/10 border-rose-500/20", icon: <AlertCircle size={14} /> },
+    Cancelled: { label: "CANCELLED", color: "text-slate-500 bg-white/5 border-white/10", icon: <XCircle size={14} /> },
   }
 
   return (
     <DashboardLayout>
-      {/* Premium Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-8 mb-12 bg-slate-950 p-10 rounded-br-[5rem] rounded-tl-[2rem] border border-slate-800 shadow-2xl relative overflow-hidden group">
-        <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 to-transparent pointer-events-none" />
+      {/* Elite Tactical Header */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-10 mb-16 bg-[#0a0518]/60 backdrop-blur-3xl p-12 rounded-[4rem] border border-white/5 shadow-2xl relative group ring-1 ring-white/5 hover:ring-primary/20 transition-all duration-700">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 blur-[100px] pointer-events-none" />
         
-        <div className="relative z-10">
-          <h1 className="text-5xl font-black text-white mb-2 tracking-tighter flex items-center gap-4">
-            <div className="p-3 bg-emerald-500 rounded-3xl shadow-2xl shadow-emerald-500/20 text-white transform group-hover:scale-110 transition-transform duration-500">
-              <History size={32} />
+        <div className="relative z-10 space-y-4">
+            <div className="flex items-center gap-3">
+                <div className="p-2 bg-primary/20 rounded-xl shadow-lg">
+                    <History className="text-primary" size={20} />
+                </div>
+                <h2 className="text-[10px] font-black text-primary uppercase tracking-[0.4em]">Operations Intelligence Archives</h2>
             </div>
-            {customerMode ? "Archives" : "Job History"}
-          </h1>
-          <p className="text-emerald-400 font-bold ml-[4.5rem] uppercase tracking-[0.3em] text-[10px]">
-            {customerMode ? "FLEET OPERATIONS RECORD" : "Operations Archive & Analytics Control"}
-          </p>
+            <h1 className="text-6xl font-black text-white tracking-tighter flex items-center gap-5 uppercase premium-text-gradient">
+                {customerMode ? "Archives" : "Mission History"}
+            </h1>
+            <p className="text-slate-500 font-bold text-sm tracking-wide opacity-80 uppercase tracking-widest leading-relaxed">
+              {customerMode ? "FLEET OPERATIONS RECORD MATRIX" : "Comprehensive Archive of Strategic Logistics Execution"}
+            </p>
         </div>
 
         <div className="flex flex-wrap gap-4 relative z-10">
           <Link href={customerMode ? "/dashboard" : "/planning"}>
-            <PremiumButton variant="outline" className="h-14 px-8 rounded-2xl bg-slate-900/50 border-slate-800 text-slate-300 hover:bg-slate-900 transition-all">
-              <ArrowLeft size={20} className="mr-2" />
-              Return
+            <PremiumButton variant="outline" className="h-14 px-8 rounded-2xl border-white/5 bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white transition-all">
+              <ArrowLeft size={20} className="mr-3 opacity-50" />
+              Return to Module
             </PremiumButton>
           </Link>
           {canExport && (
             <ExcelExport 
                data={historyJobs} 
-               filename={`job_history_${new Date().toISOString().split('T')[0]}`}
-               title="ประวัติงาน"
+               filename={`mission_history_${new Date().toISOString().split('T')[0]}`}
+               title="Tactical Data Export"
                trigger={
-                 <PremiumButton variant="secondary" className="h-14 px-8 rounded-2xl">
-                     <Download className="w-5 h-5 mr-2" /> Export Excel
+                 <PremiumButton variant="secondary" className="h-14 px-8 rounded-2xl bg-primary text-white shadow-xl shadow-primary/20">
+                     <Download className="w-5 h-5 mr-3" /> STRATEGIC EXPORT
                  </PremiumButton>
                }
             />
@@ -117,249 +120,250 @@ export default async function JobHistoryPage(props: Props) {
         </div>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      {/* Metrics Matrix */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
         {[
-          { label: "Total Volume", value: count || 0, icon: Package, color: "blue" },
-          { label: "Successful", value: jobs?.filter(j => ['Delivered', 'Complete', 'Completed'].includes(j?.Job_Status || '')).length || 0, icon: CheckCircle2, color: "emerald" },
-          { label: "Failed Ops", value: jobs?.filter(j => j?.Job_Status === 'Failed').length || 0, icon: AlertCircle, color: "red" },
-          { label: "Cancelled", value: jobs?.filter(j => j?.Job_Status === 'Cancelled').length || 0, icon: XCircle, color: "slate" },
+          { label: "Archive Volume", value: count || 0, icon: Package, color: "text-slate-400", bg: "bg-white/5", border: "border-white/5" },
+          { label: "Mission Success", value: jobs?.filter(j => ['Delivered', 'Complete', 'Completed'].includes(j?.Job_Status || '')).length || 0, icon: CheckCircle2, color: "text-primary", bg: "bg-primary/20", border: "border-primary/20" },
+          { label: "Operational Failures", value: jobs?.filter(j => j?.Job_Status === 'Failed').length || 0, icon: AlertCircle, color: "text-rose-500", bg: "bg-rose-500/10", border: "border-rose-500/20" },
+          { label: "Decommissioned", value: jobs?.filter(j => j?.Job_Status === 'Cancelled').length || 0, icon: XCircle, color: "text-slate-500", bg: "bg-white/5", border: "border-white/5" },
         ].map((stat, idx) => (
-          <PremiumCard key={idx} className="p-8 group border-none bg-white/80 backdrop-blur-md shadow-2xl relative overflow-hidden">
-            <div className="flex items-center justify-between mb-8">
-                <div className={cn(
-                    "p-4 rounded-2xl shadow-xl transition-all duration-500 group-hover:scale-110 group-hover:rotate-3 text-white",
-                    stat.color === 'emerald' ? "bg-emerald-500 shadow-emerald-500/20" :
-                    stat.color === 'red' ? "bg-red-500 shadow-red-500/20" :
-                    stat.color === 'blue' ? "bg-blue-500 shadow-blue-500/20" : "bg-slate-500 shadow-slate-500/20"
-                )}>
-                    <stat.icon size={24} />
+          <div key={idx} className={cn(
+                  "p-8 rounded-[3rem] border backdrop-blur-3xl shadow-2xl relative overflow-hidden group transition-all hover:scale-[1.03] bg-[#0a0518]/40",
+                  stat.border
+              )}>
+                <div className="flex items-center justify-between mb-8">
+                    <div className={cn(
+                        "p-4 rounded-2xl shadow-xl transition-all duration-700 group-hover:scale-110 group-hover:rotate-6",
+                        stat.bg, stat.color
+                    )}>
+                        <stat.icon size={24} strokeWidth={2.5} />
+                    </div>
                 </div>
-                <div className="flex items-center gap-1.5 px-3 py-1 bg-slate-950/5 rounded-full border border-black/5">
-                    <TrendingUp size={12} className="text-slate-400" />
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">HISTORICAL</span>
+                <div className="relative z-10">
+                    <p className="text-slate-500 font-black text-[10px] uppercase tracking-[0.3em] mb-2">{stat.label}</p>
+                    <p className="text-4xl font-black text-white tracking-tighter leading-none">{stat.value}</p>
                 </div>
-            </div>
-            <div className="relative z-10">
-                <p className="text-gray-500 font-bold text-[10px] uppercase tracking-[0.2em] mb-1">{stat.label}</p>
-                <p className="text-4xl font-black text-gray-900 tracking-tighter leading-none">{stat.value}</p>
-            </div>
-            {/* High-end numeric glow */}
-            <div className="absolute top-1/2 right-4 -translate-y-1/2 text-7xl font-black text-slate-100/50 pointer-events-none select-none">
-                0{idx + 1}
-            </div>
-          </PremiumCard>
+          </div>
         ))}
       </div>
 
-      {/* Filters & Results Container */}
-      <PremiumCard className="overflow-hidden border-none shadow-[0_30px_100px_rgba(0,0,0,0.1)] p-0 bg-white rounded-br-[5rem] rounded-tl-[3rem]">
-          {/* Filter Header */}
-          <div className="p-10 border-b border-slate-50 bg-slate-950 relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 to-transparent pointer-events-none" />
-            <div className="flex items-center gap-3 mb-8 relative z-10">
-                <div className="p-2 bg-emerald-500 rounded-xl text-white shadow-lg shadow-emerald-500/20">
-                    <ListFilter size={20} />
+      {/* Advanced Command Grid */}
+      <div className="glass-panel rounded-[4rem] border-white/5 shadow-2xl overflow-hidden bg-[#0a0518]/20 group/archives">
+          {/* Tactical Filter Header */}
+          <div className="p-12 border-b border-white/5 bg-[#0a0518]/60 relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent pointer-events-none" />
+            <div className="flex items-center gap-4 mb-10 relative z-10">
+                <div className="p-3 bg-primary/20 rounded-2xl text-primary shadow-lg shadow-primary/10">
+                    <ListFilter size={24} />
                 </div>
                 <div>
-                    <h2 className="text-2xl font-black text-white tracking-tight">Advanced Filtering</h2>
-                    <p className="text-emerald-400 text-[10px] font-bold uppercase tracking-[0.2em] mt-0.5">Tactical Operations Search</p>
+                    <h2 className="text-2xl font-black text-white tracking-tight uppercase">Strategic Archive Filtering</h2>
+                    <p className="text-primary text-[9px] font-black uppercase tracking-[0.3em] mt-1 opacity-70">Deep Metadata Search Engine</p>
                 </div>
             </div>
 
-            <form className="grid grid-cols-1 md:grid-cols-12 gap-6">
+            <form className="grid grid-cols-1 md:grid-cols-12 gap-8 relative z-10">
                 <div className="md:col-span-5">
-                    <SearchInput placeholder="ค้นหา Job ID, ลูกค้า, เส้นทาง..." />
+                    <div className="glass-panel rounded-2xl p-0.5 border-white/5">
+                        <SearchInput placeholder="SCAN MISSION ID, CLIENTS, OR ROUTE VECTORS..." className="bg-transparent border-none text-white h-16 px-8 text-xs font-black tracking-widest uppercase placeholder:text-slate-700" />
+                    </div>
                 </div>
-                <div className="md:col-span-2 space-y-2">
-                    <Label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">Start Date</Label>
+                <div className="md:col-span-2 space-y-3">
+                    <Label className="text-[9px] font-black text-slate-500 uppercase tracking-[0.3em] ml-2">Temporal Start</Label>
                     <Input
                         type="date"
                         defaultValue={dateFrom}
                         name="from"
-                        className="h-14 bg-white border-gray-100 text-gray-900 font-bold rounded-2xl shadow-sm focus:ring-primary/20 transition-all px-6"
+                        className="h-16 bg-white/5 border-white/5 text-white font-black rounded-2xl shadow-inner focus:ring-primary/40 transition-all px-8 text-xs uppercase tracking-widest"
                     />
                 </div>
-                <div className="md:col-span-2 space-y-2">
-                    <Label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">End Date</Label>
+                <div className="md:col-span-2 space-y-3">
+                    <Label className="text-[9px] font-black text-slate-500 uppercase tracking-[0.3em] ml-2">Temporal End</Label>
                     <Input
                         type="date"
                         defaultValue={dateTo}
                         name="to"
-                        className="h-14 bg-white border-gray-100 text-gray-900 font-bold rounded-2xl shadow-sm focus:ring-primary/20 transition-all px-6"
+                        className="h-16 bg-white/5 border-white/5 text-white font-black rounded-2xl shadow-inner focus:ring-primary/40 transition-all px-8 text-xs uppercase tracking-widest"
                     />
                 </div>
-                <div className="md:col-span-3 space-y-2">
-                    <Label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">Process Status</Label>
+                <div className="md:col-span-3 space-y-3">
+                    <Label className="text-[9px] font-black text-slate-500 uppercase tracking-[0.3em] ml-2">Process Vector</Label>
                     <HistoryStatusFilter initialValue={status} />
                 </div>
                 <button type="submit" className="hidden" /> 
             </form>
           </div>
-          {/* Jobs List Header */}
-          <div className="p-10 border-b border-slate-100 flex items-center justify-between bg-white">
-            <div className="flex items-center gap-3">
-                <div className="w-2 h-10 bg-emerald-500 rounded-full" />
+
+          {/* Operation Log Feed */}
+          <div className="p-12 border-b border-white/5 flex items-center justify-between bg-white/[0.02]">
+            <div className="flex items-center gap-4">
+                <div className="w-1.5 h-10 bg-primary rounded-full shadow-[0_0_15px_rgba(255,30,133,0.8)]" />
                 <div>
-                    <h3 className="text-2xl font-black text-slate-900 tracking-tight">Operations Log</h3>
-                    <p className="text-slate-400 text-[10px] font-bold uppercase tracking-[0.2em] mt-0.5">ARCHIVED RECORDS Feed • {count} total entries</p>
+                    <h3 className="text-3xl font-black text-white tracking-tighter uppercase">Operations Log</h3>
+                    <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.4em] mt-1">Found {count} Mission Profiles • Historical Node</p>
                 </div>
             </div>
+            <Zap size={24} className="text-primary/20 opacity-50" />
           </div>
 
+          <div className="relative min-h-[500px]">
           {historyJobs.length === 0 ? (
-            <div className="text-center py-24">
-              <div className="w-24 h-24 bg-gray-50 rounded-[2rem] flex items-center justify-center mx-auto mb-6 border border-gray-100 shadow-inner">
-                <Package className="w-12 h-12 text-gray-300" />
+            <div className="flex flex-col items-center justify-center py-40 space-y-8">
+              <div className="w-32 h-32 rounded-[3.5rem] bg-white/5 flex items-center justify-center border border-dashed border-white/10 group-hover/archives:border-primary/30 transition-all group-hover/archives:scale-110 duration-700">
+                <Package className="w-16 h-16 text-slate-700 opacity-20" />
               </div>
-              <p className="text-gray-500 font-black uppercase tracking-widest text-xs">ไม่พบประวัติงานในระบบ</p>
+              <div className="text-center space-y-2">
+                <p className="text-slate-500 font-bold text-xl uppercase tracking-widest">No Tactical Records</p>
+                <p className="text-[10px] font-black text-slate-700 uppercase tracking-[0.5em]">The archives remain undisturbed</p>
+              </div>
             </div>
           ) : (
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto custom-scrollbar">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-gray-50 bg-gray-50/30">
-                    <th className="text-left py-6 px-10 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Job Details</th>
-                    <th className="text-left py-6 px-4 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Route & Location</th>
-                    <th className="text-left py-6 px-4 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Resource</th>
-                    <th className="text-center py-6 px-4 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Audit & Verify</th>
-                    <th className="text-center py-6 px-4 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Proof</th>
-                    {canViewPrice && <th className="text-right py-6 px-4 text-[10px] font-black text-emerald-600 uppercase tracking-[0.2em]">Finance</th>}
-                    <th className="text-left py-6 px-4 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Status</th>
-                    <th className="text-right py-6 px-10 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Control</th>
+                  <tr className="border-b border-white/5 bg-white/[0.02]">
+                    <th className="text-left py-8 px-12 text-[9px] font-black text-slate-500 uppercase tracking-[0.3em]">Mission Detail</th>
+                    <th className="text-left py-8 px-6 text-[9px] font-black text-slate-500 uppercase tracking-[0.3em]">Client Vector</th>
+                    <th className="text-left py-8 px-6 text-[9px] font-black text-slate-500 uppercase tracking-[0.3em]">Elite Resource</th>
+                    <th className="text-center py-8 px-6 text-[9px] font-black text-slate-500 uppercase tracking-[0.3em]">Integrity</th>
+                    <th className="text-center py-8 px-6 text-[9px] font-black text-slate-500 uppercase tracking-[0.3em]">Evidence Pod</th>
+                    {canViewPrice && <th className="text-right py-8 px-6 text-[9px] font-black text-primary uppercase tracking-[0.3em]">Finance Matrix</th>}
+                    <th className="text-left py-8 px-6 text-[9px] font-black text-slate-500 uppercase tracking-[0.3em]">Status</th>
+                    <th className="text-right py-8 px-12 text-[9px] font-black text-slate-500 uppercase tracking-[0.3em]">Command</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-50">
-                  {historyJobs.map((job) => (
+                <tbody className="divide-y divide-white/5">
+                  {historyJobs.map((job: any) => (
                     <tr 
                       key={job.Job_ID} 
-                      className="group transition-all duration-300 hover:bg-emerald-500/[0.02]"
+                      className="group/row transition-all duration-500 hover:bg-primary/[0.03]"
                     >
-                      <td className="py-8 px-10">
-                        <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 rounded-2xl bg-gray-50 flex items-center justify-center group-hover:bg-emerald-500 group-hover:text-white transition-all duration-500 shadow-inner">
-                                <Package size={20} />
+                      <td className="py-10 px-12">
+                        <div className="flex items-center gap-6">
+                            <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/5 flex items-center justify-center group-hover/row:bg-primary group-hover/row:text-white transition-all duration-500 shadow-xl group-hover/row:shadow-[0_0_30px_rgba(255,30,133,0.3)] group-hover/row:-rotate-3">
+                                <Package size={22} strokeWidth={2.5} />
                             </div>
                             <div>
-                                <p className="text-gray-900 font-black text-lg tracking-tighter group-hover:text-emerald-600 transition-colors">{job.Job_ID}</p>
-                                <div className="flex items-center gap-2 mt-1">
-                                    <Clock size={12} className="text-gray-300" />
-                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{job.Plan_Date || "-"}</p>
+                                <p className="text-white font-black text-xl tracking-tighter group-hover/row:text-primary transition-colors font-display uppercase">{job.Job_ID}</p>
+                                <div className="flex items-center gap-2 mt-2">
+                                    <Clock size={12} className="text-slate-600" />
+                                    <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">{job.Plan_Date || "UNSCHEDULED"}</p>
                                 </div>
                             </div>
                         </div>
                       </td>
-                      <td className="py-8 px-4">
-                         <div className="flex flex-col gap-1.5">
-                            <p className="text-gray-900 font-black text-sm tracking-tight">{job.Customer_Name || "-"}</p>
-                            <div className="flex items-center gap-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                                <MapPin size={12} className="text-emerald-500" />
-                                <span className="line-clamp-1">{job.Route_Name || `${job.Origin_Location || "-"} → ${job.Dest_Location || "-"}`}</span>
+                      <td className="py-10 px-6">
+                         <div className="flex flex-col gap-2">
+                            <p className="text-white font-black text-sm tracking-tight uppercase group-hover/row:text-primary transition-colors">{job.Customer_Name || "-"}</p>
+                            <div className="flex items-center gap-2 text-[9px] font-black text-slate-500 uppercase tracking-widest">
+                                <MapPin size={12} className="text-primary/60" />
+                                <span className="line-clamp-1">{job.Route_Name || "DIRECT VECTOR"}</span>
                             </div>
                          </div>
                       </td>
-                      <td className="py-8 px-4">
-                        <div className="flex flex-col gap-1.5">
-                            <div className="flex items-center gap-2">
-                                <div className="w-6 h-6 rounded-lg bg-gray-100 flex items-center justify-center text-gray-500">
-                                    <Truck size={14} />
+                      <td className="py-10 px-6">
+                        <div className="flex flex-col gap-2">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-white/5 rounded-xl text-slate-400 group-hover/row:text-primary transition-colors">
+                                    <Truck size={14} strokeWidth={2.5} />
                                 </div>
-                                <p className="text-gray-700 font-bold text-sm tracking-tight">{job.Vehicle_Plate || "-"}</p>
+                                <p className="text-white font-black text-sm tracking-tight uppercase">{job.Vehicle_Plate || "-"}</p>
                             </div>
-                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.25em] pl-1">{job.Driver_Name || "-"}</p>
+                            <p className="text-[9px] font-black text-slate-600 uppercase tracking-[0.2em] pl-1">{job.Driver_Name || "PENDING UNIT"}</p>
                         </div>
                       </td>
-                      <td className="py-8 px-4">
-                        <div className="flex flex-col items-center gap-1.5 min-w-[120px]">
+                      <td className="py-10 px-6">
+                        <div className="flex flex-col items-center gap-2 min-w-[120px]">
                            {job.Verification_Status ? (
                                <Badge className={cn(
-                                   "rounded-full px-3 py-1 font-black text-[9px] border-none shadow-sm",
-                                   job.Verification_Status === 'Verified' ? "bg-emerald-500 text-white" :
-                                   job.Verification_Status === 'Rejected' ? "bg-red-500 text-white" : "bg-amber-500 text-white"
+                                   "rounded-[1.25rem] px-4 py-1.5 font-black text-[9px] border-none shadow-lg tracking-widest uppercase",
+                                   job.Verification_Status === 'Verified' ? "bg-primary text-white shadow-primary/20" :
+                                   job.Verification_Status === 'Rejected' ? "bg-rose-500 text-white shadow-rose-500/20" : "bg-accent text-white shadow-accent/20"
                                )}>
                                    {job.Verification_Status}
                                </Badge>
                            ) : (
-                               <span className="text-[9px] font-black text-gray-300 uppercase tracking-[0.2em] italic">Waiting</span>
+                               <div className="flex items-center gap-2">
+                                <span className="w-1 h-1 rounded-full bg-slate-700 animate-ping" />
+                                <span className="text-[9px] font-black text-slate-700 uppercase tracking-[0.3em] italic">Pending Integrity</span>
+                               </div>
                            )}
                            {job.Verified_At && (
-                               <p className="text-[8px] font-bold text-gray-400 truncate w-32 text-center">
-                                   By {job.Verified_By?.split('@')[0]}
+                               <p className="text-[8px] font-black text-slate-600 uppercase tracking-widest truncate w-32 text-center">
+                                   Agent {job.Verified_By?.split('@')[0]}
                                </p>
                            )}
                         </div>
                       </td>
-                      <td className="py-8 px-4">
-                        <div className="flex items-center justify-center gap-3">
+                      <td className="py-10 px-6">
+                        <div className="flex items-center justify-center gap-4">
                              {job.Photo_Proof_Url ? (
-                                <div className="relative w-12 h-12 rounded-2xl border-2 border-white shadow-xl overflow-hidden bg-gray-100 group/img ring-4 ring-emerald-500/0 hover:ring-emerald-500/20 transition-all">
+                                <div className="relative w-14 h-14 rounded-2xl border border-white/10 shadow-2xl overflow-hidden bg-white/5 group/img ring-4 ring-primary/0 hover:ring-primary/40 transition-all duration-500 scale-95 hover:scale-100">
                                     <NextImage 
                                         src={job.Photo_Proof_Url.split(',')[0]} 
                                         alt="POD Photo" 
                                         fill 
-                                        className="object-cover group-hover/img:scale-125 transition-transform duration-700" 
+                                        className="object-cover group-hover/img:scale-125 transition-transform duration-1000" 
                                     />
-                                    <a href={job.Photo_Proof_Url.split(',')[0]} target="_blank" rel="noreferrer" className="absolute inset-0 z-10 flex items-center justify-center bg-black/40 opacity-0 group-hover/img:opacity-100 transition-opacity">
-                                        <ImageIcon size={16} className="text-white" />
+                                    <a href={job.Photo_Proof_Url.split(',')[0]} target="_blank" rel="noreferrer" className="absolute inset-0 z-10 flex items-center justify-center bg-primary/40 opacity-0 group-hover/img:opacity-100 transition-opacity">
+                                        <Eye size={20} className="text-white" />
                                     </a>
                                 </div>
                              ) : (
-                                <div className="w-12 h-12 rounded-2xl border-2 border-dashed border-gray-100 flex items-center justify-center text-gray-200">
-                                    <ImageIcon size={16} />
+                                <div className="w-14 h-14 rounded-2xl border-2 border-dashed border-white/5 flex items-center justify-center text-slate-800 transition-colors group-hover/row:border-primary/20">
+                                    <ImageIcon size={20} strokeWidth={1.5} />
                                 </div>
                              )}
                              {job.Signature_Url ? (
-                                <div className="relative w-16 h-12 rounded-2xl border-2 border-white shadow-xl overflow-hidden bg-white p-2 group/sig ring-4 ring-blue-500/0 hover:ring-blue-500/20 transition-all">
+                                <div className="relative w-20 h-14 rounded-2xl border border-white/10 shadow-2xl overflow-hidden bg-white/10 p-2 group/sig ring-4 ring-accent/0 hover:ring-accent/40 transition-all duration-500 scale-95 hover:scale-100">
                                     <NextImage 
                                         src={job.Signature_Url} 
                                         alt="Signature" 
                                         fill 
-                                        className="object-contain p-2 group-hover/sig:scale-110 transition-transform duration-500" 
+                                        className="object-contain p-2 group-hover/sig:scale-110 transition-transform duration-700 invert group-hover/sig:invert-0" 
                                     />
-                                    <a href={job.Signature_Url} target="_blank" rel="noreferrer" className="absolute inset-0 z-10 flex items-center justify-center bg-black/40 opacity-0 group-hover/sig:opacity-100 transition-opacity" />
+                                    <a href={job.Signature_Url} target="_blank" rel="noreferrer" className="absolute inset-0 z-10 flex items-center justify-center bg-accent/40 opacity-0 group-hover/sig:opacity-100 transition-opacity" />
                                 </div>
                              ) : (
-                                <div className="w-16 h-12 rounded-2xl border-2 border-dashed border-gray-100" />
+                                <div className="w-20 h-14 rounded-2xl border-2 border-dashed border-white/5 transition-colors group-hover/row:border-accent/20" />
                              )}
                         </div>
                       </td>
                       {canViewPrice && (
-                        <td className="py-8 px-4 text-right">
-                            <div className="flex flex-col items-end gap-1.5">
-                                <div className="flex items-center gap-1.5 px-3 py-1 bg-emerald-500/10 rounded-xl">
-                                    <span className="text-[10px] font-black text-emerald-600 tracking-[0.2em] uppercase">CREDIT</span>
-                                    <span className="text-emerald-700 font-black text-sm tracking-tight transition-all">
+                        <td className="py-10 px-6 text-right">
+                            <div className="flex flex-col items-end gap-2">
+                                <div className="flex items-center gap-2 px-4 py-1.5 bg-primary/10 rounded-xl border border-primary/20">
+                                    <span className="text-white font-black text-base tracking-tighter">
                                         {typeof job.Price_Cust_Total === 'number' 
                                             ? job.Price_Cust_Total.toLocaleString() 
                                             : (Number(job.Price_Cust_Total) || 0).toLocaleString()}
                                     </span>
+                                    <span className="text-[8px] font-black text-primary tracking-[0.2em] uppercase">CREDIT</span>
                                 </div>
-                                <div className="pr-3">
-                                    <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest italic pr-1">DEBIT</span>
-                                    <span className="text-[11px] font-black text-gray-400 tracking-tight">
+                                <div className="pr-4 flex items-center gap-2">
+                                    <span className="text-[12px] font-black text-slate-500 tracking-tighter">
                                         {typeof job.Cost_Driver_Total === 'number' 
                                             ? job.Cost_Driver_Total.toLocaleString() 
                                             : (Number(job.Cost_Driver_Total) || 0).toLocaleString()}
                                     </span>
+                                    <span className="text-[8px] font-black text-slate-600 uppercase tracking-widest italic">DEBIT</span>
                                 </div>
                             </div>
                         </td>
                       )}
-                      <td className="py-8 px-4">
+                      <td className="py-10 px-6">
                         <span className={cn(
-                            "inline-flex items-center gap-2 px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest border shadow-sm transition-all duration-500",
-                            statusConfig[job.Job_Status]?.color.includes('emerald') ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20 shadow-emerald-500/5' :
-                            statusConfig[job.Job_Status]?.color.includes('amber') ? 'bg-amber-500/10 text-amber-600 border-amber-500/20 shadow-amber-500/5' :
-                            statusConfig[job.Job_Status]?.color.includes('red') ? 'bg-red-500/10 text-red-600 border-red-500/20 shadow-red-500/5' :
-                            'bg-gray-100 text-gray-500 border-gray-200'
+                            "inline-flex items-center gap-2.5 px-5 py-2.5 rounded-[1.5rem] text-[10px] font-black uppercase tracking-widest border shadow-xl transition-all duration-500 group-hover/row:scale-105",
+                            statusConfig[job.Job_Status]?.color || 'bg-white/5 text-slate-500 border-white/10'
                         )}>
-                          <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
+                          <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse shadow-[0_0_10px_currentColor]" />
                           {statusConfig[job.Job_Status]?.label || job.Job_Status}
                         </span>
                       </td>
-                      <td className="py-8 px-10 text-right">
+                      <td className="py-10 px-12 text-right">
                           {!customerMode && (
-                              <div className="flex justify-end opacity-0 group-hover:opacity-100 transition-all duration-500 translate-x-4 group-hover:translate-x-0">
+                              <div className="flex justify-end opacity-0 group-hover/row:opacity-100 transition-all duration-500 translate-x-4 group-hover/row:translate-x-0">
                                 <JobHistoryActions 
                                     job={job}
                                     drivers={drivers}
@@ -381,11 +385,18 @@ export default async function JobHistoryPage(props: Props) {
               </table>
             </div>
           )}
+          </div>
           
-          <div className="p-10 border-t border-gray-50 bg-gray-50/10">
+          <div className="p-12 border-t border-white/5 bg-white/[0.02]">
              <Pagination totalItems={count || 0} limit={limit} />
           </div>
-      </PremiumCard>
+      </div>
+      
+      <div className="mt-12 text-center mb-20">
+        <div className="inline-flex items-center gap-3 px-6 py-2 glass-panel rounded-full text-[9px] font-black text-slate-600 uppercase tracking-[0.5em] opacity-40">
+            <ShieldCheck size={14} /> Encrypted Tactical Ledger Node v4.2
+        </div>
+      </div>
     </DashboardLayout>
   )
 }

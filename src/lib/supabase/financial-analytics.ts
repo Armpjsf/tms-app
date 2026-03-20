@@ -44,7 +44,12 @@ export async function getFinancialStats(startDate?: string, endDate?: string, br
   const revenue: number = (jobs || []).reduce((sum: number, job: FinancialJob) => sum + (Number(job.Price_Cust_Total) || 0), 0)
   
   if (customerId) {
-      return { revenue, netProfit: 0, fuelCost: 0, maintenanceCost: 0, secondaryCosts: 0, profitMargin: 0, revenueGrowth: 0 }
+      return { 
+        revenue, 
+        cost: { total: 0, driver: 0, fuel: 0, maintenance: 0, secondary: 0 },
+        netProfit: 0, 
+        profitMargin: 0 
+      }
   }
 
   const driverCost: number = (jobs || []).reduce((sum: number, job: FinancialJob) => sum + (Number(job.Cost_Driver_Total) || 0), 0)
@@ -485,7 +490,6 @@ export async function getRegionalDeepDive(startDate?: string, endDate?: string) 
     })
 }
 
-import { FUEL_BASELINES, FUEL_FRAUD_THRESHOLD } from '@/lib/constants/fuel-baselines'
 
 // 13. Fuel Anomaly & Fraud Detection (Executive Guard)
 export async function getFuelAnomalyAlerts(branchId?: string) {
@@ -524,8 +528,6 @@ export async function getFuelAnomalyAlerts(branchId?: string) {
         const vehicle = vehicleMap.get(log.Vehicle_Plate)
         if (!vehicle) continue
 
-        const type = vehicle.vehicle_type || 'Default'
-        const baseline = FUEL_BASELINES[type] || FUEL_BASELINES['Default']
         const tankCapacity = vehicle.tank_capacity || 0
 
         // A. Check for Over-fill (Fraud Risk)
@@ -602,7 +604,10 @@ export async function getRevenueForecast(branchId?: string): Promise<{ month: st
         const intercept = (sumY - slope * sumX) / n
 
         // 2. Generate result with history + 3 months forecast
-        const result = sortedMonths.map(m => ({ month: m, actual: monthlyData[m] }))
+        const result: { month: string; actual?: number; forecast?: number }[] = sortedMonths.map(m => ({ 
+            month: m, 
+            actual: monthlyData[m] 
+        }))
         
         const lastMonthDate = new Date(sortedMonths[sortedMonths.length - 1] + "-01")
         for (let i = 1; i <= 3; i++) {

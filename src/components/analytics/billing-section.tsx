@@ -4,16 +4,18 @@ import { PremiumCard } from "@/components/ui/premium-card"
 import { BillingAnalytics } from "@/lib/supabase/billing-analytics"
 import { Wallet, Percent, FileText, AlertCircle, Clock, ArrowRightLeft, ShieldCheck } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useLanguage } from "@/components/providers/language-provider"
 
 export function BillingSection({ data }: { data: BillingAnalytics }) {
+  const { t } = useLanguage()
   const { accountsReceivable, accountsPayable, collectionRate } = data
   
   // Max value for aging bars
   const maxAging = Math.max(
-    accountsReceivable.aging['0-30'], 
-    accountsReceivable.aging['31-60'], 
-    accountsReceivable.aging['61-90'], 
-    accountsReceivable.aging['90+']
+    accountsReceivable.aging['0-30'] || 0, 
+    accountsReceivable.aging['31-60'] || 0, 
+    accountsReceivable.aging['61-90'] || 0, 
+    accountsReceivable.aging['90+'] || 0
   ) || 1
 
   return (
@@ -23,7 +25,7 @@ export function BillingSection({ data }: { data: BillingAnalytics }) {
         <div className="p-2 bg-slate-950 rounded-xl text-emerald-400 shadow-lg border border-slate-800">
           <Wallet size={18} />
         </div>
-        <h3 className="text-xl font-black text-white tracking-tight uppercase premium-text-gradient">Billing & Accounts Registry</h3>
+        <h3 className="text-xl font-black text-white tracking-tight uppercase premium-text-gradient">{t('billing.registry_header')}</h3>
       </div>
 
       {/* KPI Bento Grid */}
@@ -33,8 +35,8 @@ export function BillingSection({ data }: { data: BillingAnalytics }) {
             <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent pointer-events-none" />
             <div className="flex items-center justify-between mb-6 relative z-10">
               <div className="space-y-1">
-                <span className="text-blue-400 text-[10px] font-black uppercase tracking-[0.2em] italic">Accounts Receivable</span>
-                <p className="text-[8px] text-slate-500 font-bold uppercase tracking-widest italic">Asset Exposure Index</p>
+                <span className="text-blue-400 text-[10px] font-black uppercase tracking-[0.2em] italic">{t('billing.accounts_receivable')}</span>
+                <p className="text-[8px] text-slate-500 font-bold uppercase tracking-widest italic">{t('billing.asset_exposure')}</p>
               </div>
               <div className="p-2 bg-blue-500/10 rounded-xl text-blue-500 shadow-lg shadow-blue-500/10">
                 <FileText size={16} />
@@ -43,7 +45,7 @@ export function BillingSection({ data }: { data: BillingAnalytics }) {
             <div className="text-3xl font-black text-white tracking-tighter relative z-10">฿{accountsReceivable.totalOutstanding.toLocaleString()}</div>
             <div className="flex items-center gap-2 mt-4 opacity-50 relative z-10">
                 <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
-                <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest italic">{accountsReceivable.invoiceCount} ACTIVE ENTITIES</p>
+                <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest italic">{accountsReceivable.invoiceCount} {t('billing.active_entities')}</p>
             </div>
         </PremiumCard>
 
@@ -52,8 +54,8 @@ export function BillingSection({ data }: { data: BillingAnalytics }) {
             <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-transparent pointer-events-none" />
             <div className="flex items-center justify-between mb-6 relative z-10">
               <div className="space-y-1">
-                <span className="text-indigo-400 text-[10px] font-black uppercase tracking-[0.2em] italic">Accounts Payable</span>
-                <p className="text-[8px] text-slate-500 font-bold uppercase tracking-widest italic">Liability Distribution Registry</p>
+                <span className="text-indigo-400 text-[10px] font-black uppercase tracking-[0.2em] italic">{t('billing.accounts_payable')}</span>
+                <p className="text-[8px] text-slate-500 font-bold uppercase tracking-widest italic">{t('billing.liability_registry')}</p>
               </div>
               <div className="p-2 bg-indigo-500/10 rounded-xl text-indigo-400 shadow-lg shadow-indigo-500/10">
                 <ArrowRightLeft size={16} />
@@ -62,7 +64,7 @@ export function BillingSection({ data }: { data: BillingAnalytics }) {
             <div className="text-3xl font-black text-white tracking-tighter relative z-10">฿{accountsPayable.totalOutstanding.toLocaleString()}</div>
             <div className="flex items-center gap-2 mt-4 opacity-50 relative z-10">
                 <div className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
-                <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest italic">{accountsPayable.paymentCount} PENDING DISBURSEMENTS</p>
+                <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest italic">{accountsPayable.paymentCount} {t('billing.pending_disbursements')}</p>
             </div>
         </PremiumCard>
 
@@ -71,8 +73,8 @@ export function BillingSection({ data }: { data: BillingAnalytics }) {
             <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent pointer-events-none" />
             <div className="flex items-center justify-between mb-6 relative z-10">
                <div className="space-y-1">
-                <span className="text-emerald-400 text-[10px] font-black uppercase tracking-[0.2em] italic">Collection Rate</span>
-                <p className="text-[8px] text-slate-500 font-bold uppercase tracking-widest italic">Yield Conversion Registry</p>
+                <span className="text-emerald-400 text-[10px] font-black uppercase tracking-[0.2em] italic">{t('billing.collection_rate')}</span>
+                <p className="text-[8px] text-slate-500 font-bold uppercase tracking-widest italic">{t('billing.yield_conversion')}</p>
               </div>
               <div className="p-2 bg-emerald-500/10 rounded-xl text-emerald-400 shadow-lg shadow-emerald-500/10">
                 <Percent size={16} />
@@ -91,8 +93,8 @@ export function BillingSection({ data }: { data: BillingAnalytics }) {
             <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent pointer-events-none" />
             <div className="flex items-center justify-between mb-6 relative z-10">
               <div className="space-y-1">
-                <span className="text-rose-100 text-[10px] font-black uppercase tracking-[0.2em] italic">Critical Exposure</span>
-                <p className="text-[8px] text-rose-200 font-bold uppercase tracking-widest italic">Strategic Risk &gt; 90 Days</p>
+                <span className="text-rose-100 text-[10px] font-black uppercase tracking-[0.2em] italic">{t('billing.critical_exposure')}</span>
+                <p className="text-[8px] text-rose-200 font-bold uppercase tracking-widest italic">{t('billing.strategic_risk')}</p>
               </div>
               <div className="p-2 bg-white/10 rounded-xl text-white shadow-lg">
                 <AlertCircle size={16} />
@@ -101,7 +103,7 @@ export function BillingSection({ data }: { data: BillingAnalytics }) {
             <div className="text-3xl font-black text-white tracking-tighter relative z-10 animate-pulse">฿{accountsReceivable.aging['90+'].toLocaleString()}</div>
             <div className="flex items-center gap-2 mt-4 relative z-10">
                 <p className="text-[9px] text-white font-black uppercase tracking-widest italic flex items-center gap-2">
-                    <Clock size={10} strokeWidth={3} /> IMMEDIATE RECOVERY REQUIRED
+                    <Clock size={10} strokeWidth={3} /> {t('billing.recovery_required')}
                 </p>
             </div>
         </PremiumCard>
@@ -118,8 +120,8 @@ export function BillingSection({ data }: { data: BillingAnalytics }) {
                   <Clock size={16} />
                 </div>
                 <div>
-                  <h3 className="text-lg font-black text-white tracking-tight">AR Aging Dynamics</h3>
-                  <p className="text-blue-400 text-[9px] font-bold uppercase tracking-[0.2em]">Temporal exposure analytics</p>
+                  <h3 className="text-lg font-black text-white tracking-tight">{t('billing.ar_aging')}</h3>
+                  <p className="text-blue-400 text-[9px] font-bold uppercase tracking-[0.2em]">{t('billing.temporal_exposure')}</p>
                 </div>
               </div>
            </div>
@@ -127,7 +129,7 @@ export function BillingSection({ data }: { data: BillingAnalytics }) {
               {Object.entries(accountsReceivable.aging).map(([range, amount]) => (
                 <div key={range} className="space-y-3">
                   <div className="flex justify-between items-end">
-                     <span className="text-[11px] font-black text-slate-500 uppercase tracking-widest">{range} DAYS EXPOSURE</span>
+                     <span className="text-[11px] font-black text-slate-500 uppercase tracking-widest">{range} {t('billing.days_exposure')}</span>
                      <span className="text-lg font-black text-slate-900 tracking-tighter italic shadow-sm bg-slate-50 px-3 py-1 rounded-lg">฿{amount.toLocaleString()}</span>
                   </div>
                   <div className="h-2 w-full bg-slate-50 rounded-full overflow-hidden border border-slate-100 p-0.5">
@@ -139,7 +141,7 @@ export function BillingSection({ data }: { data: BillingAnalytics }) {
                             range === '31-60' ? 'bg-gradient-to-r from-amber-400 to-yellow-300' : 
                             'bg-gradient-to-r from-blue-600 to-blue-400'
                         )}
-                        style={{ width: `${(amount / maxAging) * 100}%` }}
+                        style={{ width: `${(amount / (maxAging as any)) * 100}%` }}
                      />
                   </div>
                 </div>
@@ -156,8 +158,8 @@ export function BillingSection({ data }: { data: BillingAnalytics }) {
                   <AlertCircle size={16} />
                 </div>
                 <div>
-                  <h3 className="text-lg font-black text-white tracking-tight">Critical Exposure LOG</h3>
-                  <p className="text-rose-400 text-[9px] font-bold uppercase tracking-[0.2em]">High-priority recovery assets</p>
+                  <h3 className="text-lg font-black text-white tracking-tight">{t('billing.critical_log')}</h3>
+                  <p className="text-rose-400 text-[9px] font-bold uppercase tracking-[0.2em]">{t('billing.recovery_assets')}</p>
                 </div>
               </div>
            </div>
@@ -166,7 +168,7 @@ export function BillingSection({ data }: { data: BillingAnalytics }) {
                 {accountsReceivable.recentUnpaid.length === 0 ? (
                     <div className="p-20 text-center">
                         <ShieldCheck size={48} strokeWidth={1} className="mx-auto mb-4 text-emerald-100" />
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Minimal Exposure Detected</p>
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('billing.minimal_exposure')}</p>
                     </div>
                 ) : (
                     accountsReceivable.recentUnpaid.map((inv) => (
@@ -174,7 +176,7 @@ export function BillingSection({ data }: { data: BillingAnalytics }) {
                             <div>
                                 <div className="text-slate-900 font-black text-sm tracking-tight group-hover/inv:text-rose-600 transition-colors uppercase">{inv.customer}</div>
                                 <div className="text-[9px] text-rose-500 font-black mt-2 bg-rose-50 px-2 py-1 rounded-md w-fit tracking-widest italic border border-rose-100 uppercase">
-                                   Exposure: {inv.daysOverdue} Days Relative
+                                   {t('billing.exposure_relative')}: {inv.daysOverdue} Days
                                 </div>
                             </div>
                             <div className="text-right">

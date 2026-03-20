@@ -1,6 +1,6 @@
 "use client"
 
-import { CheckCircle2, Clock, MapPin, Package, Truck } from "lucide-react"
+import { CheckCircle2, Clock, MapPin, Package, Truck, Zap, ShieldCheck } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 export type JobStep = 'New' | 'Accepted' | 'Arrived Pickup' | 'In Transit' | 'Arrived Dropoff' | 'Completed'
@@ -11,11 +11,11 @@ interface JobWorkflowProps {
 }
 
 const STEPS: { status: JobStep; label: string; icon: React.ElementType; description: string }[] = [
-  { status: 'Accepted', label: 'รับงาน', icon: CheckCircle2, description: 'เตรียมตัวออกเดินทาง' },
-  { status: 'Arrived Pickup', label: 'ถึงจุดรับ', icon: MapPin, description: 'ตรวจสอบสิ่งของ' },
-  { status: 'In Transit', label: 'ระหว่างทาง', icon: Truck, description: 'กำลังเดินทางส่งของ' },
-  { status: 'Arrived Dropoff', label: 'ถึงจุดส่ง', icon: MapPin, description: 'ตรวจสอบสถานที่ส่ง' },
-  { status: 'Completed', label: 'ส่งงานสำเร็จ', icon: Package, description: 'บันทึกรูปภาพและลายเซ็น' }
+  { status: 'Accepted', label: 'ASSIGNED', icon: ShieldCheck, description: 'Mission briefing received' },
+  { status: 'Arrived Pickup', label: 'ORIGIN', icon: MapPin, description: 'Secure payload at base' },
+  { status: 'In Transit', label: 'TRANSIT', icon: Truck, description: 'Tactical deployment underway' },
+  { status: 'Arrived Dropoff', label: 'TARGET', icon: MapPin, description: 'Securing drop zone' },
+  { status: 'Completed', label: 'DELIVERED', icon: Package, description: 'Mission success verified' }
 ]
 
 export function JobWorkflow({ currentStatus, className }: JobWorkflowProps) {
@@ -30,14 +30,14 @@ export function JobWorkflow({ currentStatus, className }: JobWorkflowProps) {
   const currentIndex = getStepIndex(normalizedStatus)
 
   return (
-    <div className={cn("py-4", className)}>
-      <div className="relative flex justify-between">
-        {/* Background Line */}
-        <div className="absolute top-5 left-0 w-full h-0.5 bg-gray-100" />
+    <div className={cn("py-6", className)}>
+      <div className="relative flex justify-between px-2">
+        {/* Background Tactical Line */}
+        <div className="absolute top-6 left-0 w-full h-1 bg-white/5 rounded-full" />
         
-        {/* Progress Line */}
+        {/* Active Progress Line */}
         <div 
-          className="absolute top-5 left-0 h-0.5 bg-emerald-500 transition-all duration-500" 
+          className="absolute top-6 left-0 h-1 bg-gradient-to-r from-primary to-accent transition-all duration-700 shadow-[0_0_15px_rgba(255,30,133,0.4)]" 
           style={{ width: `${Math.max(0, (currentIndex / (STEPS.length - 1)) * 100)}%` }}
         />
 
@@ -50,17 +50,17 @@ export function JobWorkflow({ currentStatus, className }: JobWorkflowProps) {
             <div key={step.status} className="flex flex-col items-center relative z-10 w-1/5">
               <div 
                 className={cn(
-                  "w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300",
-                  isCompleted ? "bg-emerald-500 text-white" : 
-                  isActive ? "bg-emerald-600 text-white ring-4 ring-emerald-600/20 animate-pulse" : 
-                  "bg-white border-2 border-gray-200 text-gray-400"
+                  "w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-500 border-2 shadow-2xl",
+                  isCompleted ? "bg-primary border-primary text-white" : 
+                  isActive ? "bg-secondary border-primary/50 text-primary ring-8 ring-primary/10 animate-pulse" : 
+                  "bg-slate-900 border-white/5 text-slate-700"
                 )}
               >
-                <StepIcon size={18} />
+                <StepIcon size={20} className={isActive ? "animate-bounce" : ""} />
               </div>
               <p className={cn(
-                "mt-2 text-[10px] font-bold text-center",
-                isCompleted || isActive ? "text-gray-800" : "text-gray-400"
+                "mt-3 text-[8px] font-black text-center uppercase tracking-widest transition-colors duration-500",
+                isCompleted || isActive ? "text-white" : "text-slate-700"
               )}>
                 {step.label}
               </p>
@@ -69,18 +69,20 @@ export function JobWorkflow({ currentStatus, className }: JobWorkflowProps) {
         })}
       </div>
       
-      {/* Dynamic Instruction */}
+      {/* Tactical Guidance Overlay */}
       {currentIndex < STEPS.length - 1 && normalizedStatus !== 'Completed' && (
-        <div className="mt-6 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-lg flex items-start gap-3">
-          <Clock className="text-emerald-500 shrink-0 mt-0.5" size={16} />
-          <div>
-            <p className="text-xs font-bold text-emerald-500">คำแนะนำขั้นตอนปัจจุบัน:</p>
-            <p className="text-[11px] text-gray-700">
-               {currentIndex === -1 ? 'คุณได้รับมอบหมายงานใหม่ กรุณากดปุ่ม "รับงาน" ด้านล่างเพื่อเริ่มดำเนินการ' : 
-                currentIndex === 0 ? 'ขณะนี้คุณกำลังเดินทางไปรับสินค้า เมื่อถึงที่หมายแล้วให้กด "ถึงจุดรับสินค้า"' :
-                currentIndex === 1 ? 'กรุณาถ่ายรูปสินค้าและเซ็นชื่อรับของ เพื่อยืนยันการรับสินค้าเข้าระบบ' :
-                currentIndex === 2 ? 'กำลังเดินทางไปส่งสินค้า เมื่อถึงที่หมายแล้วให้กด "ถึงจุดส่งสินค้า"' :
-                'ถึงที่หมายแล้ว กรุณาถ่ายรูปหลักฐานการส่งมอบสินค้าและให้ลูกค้าเซ็นชื่อเพื่อปิดงาน'}
+        <div className="mt-10 p-6 glass-panel border-primary/20 rounded-[2rem] flex items-start gap-5 shadow-[0_20px_50px_rgba(0,0,0,0.3)] animate-in slide-in-from-bottom-2 duration-500 delay-300">
+          <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center flex-shrink-0">
+             <Clock className="text-primary animate-spin-slow" size={18} />
+          </div>
+          <div className="space-y-1">
+            <p className="text-[10px] font-black text-primary uppercase tracking-[0.3em]">Current Protocol:</p>
+            <p className="text-xs text-slate-300 font-bold leading-relaxed">
+               {currentIndex === -1 ? 'New mission detected. Tap "ACCEPT MISSION" to engage deployment protocols.' : 
+                currentIndex === 0 ? 'Asset transit initiated. Proceed to ORIGIN point and secure the payload.' :
+                currentIndex === 1 ? 'Payload reached. Verify cargo integrity, document assets, and clear for transit.' :
+                currentIndex === 2 ? 'Mission in critical path. Navigate to TARGET drop zone and ensure secure arrival.' :
+                'Drop zone reached. Finalize delivery, collect biometric signatures, and close mission file.'}
             </p>
           </div>
         </div>

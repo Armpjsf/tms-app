@@ -2,7 +2,7 @@ export const dynamic = 'force-dynamic'
 
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { getJobsByStatus } from '@/lib/supabase/jobs'
-import { getFleetGPSStatus } from '@/lib/supabase/gps'
+import { getActiveFleetStatus } from '@/lib/supabase/gps'
 import { getChatContacts } from '@/lib/supabase/chat'
 import { getFleetHealthAlerts } from '@/lib/supabase/fleet-health'
 import { MonitoringCommandCenter } from '@/components/monitoring/monitoring-command-center'
@@ -22,7 +22,7 @@ export default async function MonitoringPage() {
     getJobsByStatus('Arrived'),
     getJobsByStatus('SOS'),
     getJobsByStatus('Failed'),
-    getFleetGPSStatus(customerId),
+    getActiveFleetStatus(undefined, customerId),
     getChatContacts(),
     getFleetHealthAlerts(),
   ])

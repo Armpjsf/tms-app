@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { Lock, User } from "lucide-react"
+import { Lock, User, Truck, Shield, Fingerprint, QrCode } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -46,82 +46,99 @@ export default function DriverLoginPage() {
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6 relative overflow-hidden">
       {/* Premium Background Decor */}
-      <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-blue-500/10 rounded-full blur-[120px] -translate-y-1/2 animate-pulse" />
-      <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-emerald-500/10 rounded-full blur-[120px] translate-y-1/2 animate-pulse" />
-      <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(to_right,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:60px_60px] pointer-events-none" />
-
-      <div className="w-full max-w-sm space-y-8 relative">
-        {/* Glass Card */}
-        <div className="bg-white/80 backdrop-blur-xl border border-gray-200 rounded-[2rem] p-8 shadow-2xl relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-indigo-500/5 pointer-events-none" />
-        <div className="text-center space-y-2 relative">
-          <div className="w-24 h-24 mx-auto flex items-center justify-center mb-2">
-             <Image src="/logo.png" alt="LOGIS Driver Logo" width={80} height={80} className="w-full h-full object-contain" priority />
+      <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-primary/20 rounded-full blur-[120px] -translate-y-1/2 animate-pulse" />
+      <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-accent/10 rounded-full blur-[120px] translate-y-1/2 animate-pulse" />
+      
+      <div className="w-full max-w-sm space-y-8 relative z-10">
+        {/* Header Section */}
+        <div className="text-center space-y-4">
+          <div className="w-32 h-32 bg-[#050110]/80 border border-white/10 rounded-[3rem] overflow-hidden relative shadow-2xl shadow-primary/20 p-2">
+             <Image src="/logo-tactical.png" alt="LogisPro Logo" fill className="object-cover" />
           </div>
-          <h1 className="text-3xl font-black text-gray-900 tracking-tight">LOGIS Driver</h1>
-          <p className="text-gray-500 font-medium">เข้าสู่ระบบพนักงานขับรถ</p>
+          <div className="space-y-1">
+            <h1 className="text-4xl font-black text-white tracking-tighter">Logis<span className="text-primary">Pro</span></h1>
+            <p className="text-slate-400 text-sm font-medium">Sweet deliveries, serious logistics.</p>
+          </div>
         </div>
 
-        <form action={handleSubmit} className="space-y-6">
-          <div className="space-y-3">
-            <Label htmlFor="identifier" className="text-gray-800 text-sm font-semibold">เบอร์โทรศัพท์ หรือ ชื่อผู้ใช้งาน</Label>
-            <div className="relative">
-              <User className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 w-5 h-5 pointer-events-none" />
-              <Input 
-                id="identifier" 
-                name="identifier" 
-                type="text" 
-                inputMode="text"
-                placeholder="0XXXXXXXXX" 
-                className="pl-12 bg-gray-50/80 border-gray-200 text-gray-900 placeholder:text-gray-400 h-14 text-lg rounded-xl focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all shadow-sm"
-                required
-              />
+        {/* Login Form Card */}
+        <div className="glass-panel rounded-[2.5rem] p-8 shadow-2xl relative">
+          <form action={handleSubmit} className="space-y-6">
+            <div className="space-y-3">
+              <Label htmlFor="identifier" className="text-slate-400 text-[10px] font-black uppercase tracking-widest ml-1">Fleet ID / Mobile</Label>
+              <div className="relative">
+                <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 w-5 h-5 pointer-events-none" />
+                <Input 
+                  id="identifier" 
+                  name="identifier" 
+                  type="text" 
+                  placeholder="e.g. driver_sweet_01" 
+                  className="pl-12 bg-white/5 border-white/10 text-white placeholder:text-slate-600 h-14 rounded-2xl focus:ring-primary/50 transition-all"
+                  required
+                />
+              </div>
             </div>
-          </div>
 
-          <div className="space-y-3">
-            <Label htmlFor="password" className="text-gray-800 text-sm font-semibold">รหัสผ่าน</Label>
-            <div className="relative">
-              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 w-5 h-5 pointer-events-none" />
-              <Input 
-                id="password" 
-                name="password" 
-                type="password" 
-                placeholder="••••••" 
-                className="pl-12 bg-gray-50/80 border-gray-200 text-gray-900 placeholder:text-gray-400 h-14 text-lg rounded-xl focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all shadow-sm"
-                required
-              />
+            <div className="space-y-3">
+              <div className="flex justify-between items-end ml-1">
+                <Label htmlFor="password" className="text-slate-400 text-[10px] font-black uppercase tracking-widest">Security Key</Label>
+                <button type="button" className="text-[10px] font-black text-primary/80 uppercase tracking-widest hover:text-primary">Forgot?</button>
+              </div>
+              <div className="relative">
+                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 w-5 h-5 pointer-events-none" />
+                <Input 
+                  id="password" 
+                  name="password" 
+                  type="password" 
+                  placeholder="••••••••" 
+                  className="pl-12 bg-white/5 border-white/10 text-white placeholder:text-slate-600 h-14 rounded-2xl focus:ring-primary/50 transition-all"
+                  required
+                />
+              </div>
             </div>
-          </div>
 
-          {error && (
-            <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm text-center font-medium">
-              {error}
+            {error && (
+              <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-400 text-xs text-center font-bold animate-shake">
+                {error}
+              </div>
+            )}
+
+            <Button 
+              type="submit" 
+              className="w-full h-16 text-xs font-black uppercase tracking-[0.3em] bg-primary hover:brightness-110 shadow-xl shadow-primary/20 rounded-2xl transition-all active:scale-[0.98]"
+              disabled={loading}
+            >
+              {loading ? "Igniting..." : "Start Engine"}
+            </Button>
+
+            <div className="relative py-2">
+              <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-white/5"></div></div>
+              <div className="relative flex justify-center text-[8px] font-black uppercase tracking-[0.4em]"><span className="bg-[#050110] px-4 text-slate-600">Connect With</span></div>
             </div>
-          )}
 
-          <Button 
-            type="submit" 
-            className="w-full h-14 text-lg font-bold bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-xl shadow-blue-500/30 rounded-xl transition-all active:scale-[0.98]"
-            disabled={loading}
-          >
-            {loading ? "กำลังเข้าสู่ระบบ..." : "เข้าสู่ระบบ"}
-          </Button>
-        </form>
-        </div> {/* end glass card */}
+            <div className="grid grid-cols-2 gap-4">
+               <button type="button" className="flex items-center justify-center gap-2 h-14 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all">
+                  <Fingerprint size={16} className="text-primary" />
+                  <span className="text-[10px] font-black text-white uppercase tracking-widest pt-0.5">Biometrics</span>
+               </button>
+               <button type="button" className="flex items-center justify-center gap-2 h-14 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all">
+                  <QrCode size={16} className="text-accent" />
+                  <span className="text-[10px] font-black text-white uppercase tracking-widest pt-0.5">SSO Scan</span>
+               </button>
+            </div>
+          </form>
+        </div>
 
-        <div className="flex flex-col items-center gap-4 mt-8">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={() => router.push('/login?type=staff')}
-            className="text-gray-400 hover:text-blue-500 hover:bg-blue-50/50 text-xs font-medium"
-          >
-            เข้าสู่ระบบเจ้าหน้าที่ (Staff/Admin)
-          </Button>
-          <p className="text-center text-[10px] text-gray-500">
-            © 2024 LOGIS-PRO TMS. สงวนลิขสิทธิ์
-          </p>
+        <div className="text-center pt-4">
+           <p className="text-[10px] text-slate-500 font-medium">
+             New to the fleet? <button onClick={() => router.push('/mobile/apply')} className="text-primary font-black uppercase tracking-widest">Apply as Driver</button>
+           </p>
+        </div>
+
+        <div className="flex justify-center gap-8 pt-10 border-t border-white/5">
+             <Shield size={16} className="text-slate-700" />
+             <div className="w-4 h-4 rounded-full bg-slate-800 flex items-center justify-center"><div className="w-1.5 h-1.5 rounded-full bg-primary/50" /></div>
+             <div className="w-4 h-4 rounded-full bg-slate-800 flex items-center justify-center"><div className="w-1.5 h-1.5 rounded-full bg-slate-700" /></div>
         </div>
       </div>
     </div>

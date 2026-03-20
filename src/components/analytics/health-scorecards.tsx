@@ -1,10 +1,10 @@
 "use client"
 
 import { PremiumCard } from "@/components/ui/premium-card"
-import { PremiumButton } from "@/components/ui/premium-button"
-import { LucideIcon, CheckCircle2, AlertCircle, ChevronRight, Layers, Truck, Building2, Activity } from "lucide-react"
+import { LucideIcon, CheckCircle2, ChevronRight, Layers, Truck, Building2, Activity } from "lucide-react"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
+import { useLanguage } from "@/components/providers/language-provider"
 
 const ICON_MAP: Record<string, LucideIcon> = {
   layers: Layers,
@@ -26,6 +26,7 @@ type SectorHealth = {
 }
 
 export function ExecutiveSectorHealth({ sectors }: { sectors: SectorHealth[] }) {
+  const { t } = useLanguage()
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'good': return 'bg-emerald-500'
@@ -65,17 +66,17 @@ export function ExecutiveSectorHealth({ sectors }: { sectors: SectorHealth[] }) 
                     </div>
                     <div>
                         <h4 className="text-[11px] font-black text-white uppercase tracking-[0.3em] italic leading-none">{sector.title}</h4>
-                        <p className="text-[8px] text-slate-500 font-bold uppercase tracking-widest mt-1">Sector integrity Monitor</p>
+                        <p className="text-[8px] text-slate-500 font-bold uppercase tracking-widest mt-1">{t('dashboard.sector_integrity')}</p>
                     </div>
                 </div>
                 <div className="relative z-10">
                     {isOptimal ? (
                         <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-black text-[9px] uppercase tracking-tighter italic">
-                            <CheckCircle2 size={10} strokeWidth={3} /> OPTIMAL
+                            <CheckCircle2 size={10} strokeWidth={3} /> {t('dashboard.status_optimal')}
                         </div>
                     ) : (
                         <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 font-black text-[9px] uppercase tracking-tighter italic animate-pulse">
-                            <Activity size={10} strokeWidth={3} /> ATTENTION REQD
+                            <Activity size={10} strokeWidth={3} /> {t('dashboard.status_attention')}
                         </div>
                     )}
                 </div>
@@ -92,7 +93,7 @@ export function ExecutiveSectorHealth({ sectors }: { sectors: SectorHealth[] }) 
                     <div className="flex items-center gap-2">
                        <span className="text-3xl font-black text-white tracking-tighter italic leading-none">{m.value}</span>
                        <span className={cn("text-[9px] font-black border px-2 py-0.5 rounded-lg uppercase tracking-tighter italic", getStatusText(m.status))}>
-                          {m.status}
+                          {m.status.toUpperCase()}
                        </span>
                     </div>
                   </div>
@@ -100,14 +101,14 @@ export function ExecutiveSectorHealth({ sectors }: { sectors: SectorHealth[] }) 
               </div>
               
               <Link href={sector.href} className="block group/link">
-                <button className="w-full h-12 rounded-2xl bg-slate-900 border border-slate-800 text-white font-black text-[10px] uppercase tracking-[0.2em] italic flex items-center justify-between px-6 group-hover/link:bg-white group-hover/link:text-white transition-all duration-500 overflow-hidden relative">
-                    <span className="relative z-10">ACCESS SECTOR COMMAND</span>
+                <button className="w-full h-12 rounded-2xl bg-slate-900 border border-slate-800 text-white font-black text-[10px] uppercase tracking-[0.2em] italic flex items-center justify-between px-6 group-hover/link:bg-white group-hover/link:text-black transition-all duration-500 overflow-hidden relative">
+                    <span className="relative z-10">{t('dashboard.access_sector')}</span>
                     <ChevronRight size={14} className="relative z-10 group-hover/link:translate-x-1 transition-transform" />
                 </button>
               </Link>
             </div>
           </PremiumCard>
-      )})}
+        )})}
     </div>
   )
 }

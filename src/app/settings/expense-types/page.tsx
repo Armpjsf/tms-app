@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
+import { PremiumCard } from "@/components/ui/premium-card"
+import { PremiumButton } from "@/components/ui/premium-button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { getExpenseTypes, addExpenseType, updateExpenseType, deleteExpenseType, ExpenseType } from "@/lib/supabase/master-data"
@@ -14,18 +14,32 @@ import {
   Trash2,
   Save,
   X,
-  GripVertical
+  GripVertical,
+  ArrowLeft,
+  Activity,
+  Zap,
+  Target,
+  ShieldAlert,
+  Loader2,
+  TrendingUp
 } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { cn } from "@/lib/utils"
+import { toast } from "sonner"
 
 export default function ExpenseTypesPage() {
+  const router = useRouter()
   const [expenseTypes, setExpenseTypes] = useState<ExpenseType[]>([])
   const [editingId, setEditingId] = useState<string | null>(null)
   const [newType, setNewType] = useState({ name: "", default_amount: 0 })
   const [showAddForm, setShowAddForm] = useState(false)
+  const [loading, setLoading] = useState(true)
 
   const loadData = useCallback(async () => {
+    setLoading(true)
     const data = await getExpenseTypes()
     setExpenseTypes(data)
+    setLoading(false)
   }, [])
 
   useEffect(() => {
@@ -37,11 +51,11 @@ export default function ExpenseTypesPage() {
     await addExpenseType(newType.name, newType.default_amount)
     setNewType({ name: "", default_amount: 0 })
     setShowAddForm(false)
+    toast.success("Resource type deployed")
     loadData()
   }
 
   const handleUpdate = async (id: string, updates: Partial<ExpenseType>) => {
-    // Optimistic update for inputs
     setExpenseTypes(prev => prev.map(et => et.id === id ? { ...et, ...updates } : et))
   }
 
@@ -49,13 +63,15 @@ export default function ExpenseTypesPage() {
     const item = expenseTypes.find(e => e.id === id)
     if (item) {
         await updateExpenseType(id, { name: item.name, default_amount: item.default_amount })
+        toast.success("Resource parameters synchronized")
     }
     setEditingId(null)
   }
 
   const handleDelete = async (id: string) => {
-    if (confirm("ยืนยันลบประเภทค่าใช้จ่ายนี้?")) {
+    if (confirm("Confirm decommissioning of this resource type?")) {
       await deleteExpenseType(id)
+      toast.success("Resource type purged")
       loadData()
     }
   }
@@ -67,150 +83,239 @@ export default function ExpenseTypesPage() {
 
   return (
     <DashboardLayout>
-      {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground flex items-center gap-3">
-            <Coins className="text-amber-500" />
-            ประเภทค่าใช้จ่าย
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">จัดการหัวข้อค่าใช้จ่ายสำหรับใช้ในการสร้างงาน</p>
-        </div>
-        <Button onClick={() => setShowAddForm(true)} className="bg-amber-600 hover:bg-amber-700 text-white font-bold shadow-md">
-          <Plus className="w-4 h-4 mr-2" /> เพิ่มประเภท
-        </Button>
-      </div>
-
-      {/* Add Form */}
-      {showAddForm && (
-        <Card className="bg-card border-border shadow-md mb-6">
-          <CardContent className="p-4">
-            <div className="grid grid-cols-12 gap-4 items-end">
-              <div className="col-span-5 space-y-2">
-                <Label className="text-muted-foreground">ชื่อประเภท</Label>
-                <Input
-                  value={newType.name}
-                  onChange={(e) => setNewType({ ...newType, name: e.target.value })}
-                  placeholder="เช่น ค่าทางด่วน"
-                  className="bg-card border-border text-foreground"
-                />
-              </div>
-              <div className="col-span-4 space-y-2">
-                <Label className="text-muted-foreground">จำนวนเริ่มต้น (ไม่บังคับ)</Label>
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">฿</span>
-                  <Input
-                    type="number"
-                    value={newType.default_amount}
-                    onChange={(e) => setNewType({ ...newType, default_amount: Number(e.target.value) })}
-                    className="pl-8 bg-card border-border text-foreground"
-                  />
+      <div className="space-y-12 pb-20 p-4 lg:p-10">
+        {/* Tactical Elite Header */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-10 bg-[#0a0518]/60 backdrop-blur-3xl p-10 rounded-br-[6rem] rounded-tl-[3rem] border border-white/5 shadow-2xl relative overflow-hidden group">
+            <div className="absolute top-0 right-0 w-80 h-80 bg-primary/10 blur-[120px] rounded-full -mr-40 -mt-40 pointer-events-none" />
+            
+            <div className="relative z-10 space-y-8">
+                <button onClick={() => router.back()} className="inline-flex items-center gap-2 text-slate-500 hover:text-primary transition-all font-black uppercase tracking-[0.4em] text-[10px] group/back italic">
+                    <ArrowLeft className="w-4 h-4 group-hover/back:-translate-x-1 transition-transform" /> 
+                    Command Control
+                </button>
+                <div className="flex items-center gap-6">
+                    <div className="p-4 bg-primary/20 rounded-[2.5rem] border-2 border-primary/30 shadow-[0_0_40px_rgba(255,30,133,0.2)] text-primary group-hover:scale-110 transition-all duration-500">
+                        <Coins size={42} strokeWidth={2.5} />
+                    </div>
+                    <div>
+                        <h1 className="text-5xl font-black text-white tracking-widest uppercase leading-none italic premium-text-gradient">
+                            Resource Matrix
+                        </h1>
+                        <p className="text-[10px] font-black text-primary uppercase tracking-[0.6em] mt-2 opacity-80 italic italic">Expense Classification & Allocation Tokens</p>
+                    </div>
                 </div>
-              </div>
-              <div className="col-span-3 flex gap-2">
-                <Button onClick={handleAdd} className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold">
-                  <Save className="w-4 h-4 mr-1" /> บันทึก
-                </Button>
-                <Button variant="outline" onClick={() => setShowAddForm(false)} className="border-border text-foreground">
-                  <X className="w-4 h-4" />
-                </Button>
-              </div>
             </div>
-          </CardContent>
-        </Card>
-      )}
 
-      {/* List */}
-      <Card className="bg-card border-border shadow-sm">
-        <CardHeader className="border-b border-border">
-          <CardTitle className="text-foreground">รายการประเภทค่าใช้จ่าย</CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
-          <div className="divide-y divide-border">
-            {expenseTypes.map((et) => (
-              <div 
-                key={et.id} 
-                className={`p-4 flex items-center gap-4 hover:bg-muted/50 transition-colors ${
-                  !et.is_active ? 'opacity-50 grayscale' : ''
-                }`}
-              >
-                <div className="text-muted-foreground/30 cursor-move">
-                  <GripVertical className="w-5 h-5" />
+            <div className="flex flex-col items-end gap-6 relative z-10">
+                <div className="bg-white/5 border border-white/10 px-6 py-3 rounded-2xl flex items-center gap-3 backdrop-blur-md">
+                    <div className="w-2 h-2 rounded-full bg-primary animate-pulse shadow-[0_0_10px_rgba(255,30,133,1)]" />
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">MATRIX_SCAN: ONLINE</span>
                 </div>
+                <PremiumButton onClick={() => setShowAddForm(true)} className="h-16 px-12 rounded-2xl bg-primary text-white border-0 shadow-[0_20px_50px_rgba(255,30,133,0.3)] gap-4 text-sm tracking-widest">
+                    <Plus size={24} strokeWidth={3} />
+                    ENLIST_NEW_RESOURCE
+                </PremiumButton>
+            </div>
+        </div>
 
-                {editingId === et.id ? (
-                  <>
-                    <div className="flex-1">
-                      <Input
-                        value={et.name}
-                        onChange={(e) => handleUpdate(et.id, { name: e.target.value })}
-                        className="bg-card border-border text-foreground"
-                      />
+        {/* Add Form Matrix */}
+        {showAddForm && (
+            <PremiumCard className="bg-[#0a0518]/60 border-2 border-primary/20 shadow-3xl rounded-[3rem] overflow-hidden group/add animate-in fade-in slide-in-from-top-10 duration-500">
+                <div className="p-10 border-b border-white/5 bg-primary/5 flex items-center justify-between">
+                    <h3 className="text-xl font-black text-white tracking-widest uppercase italic flex items-center gap-3">
+                        <Plus size={20} className="text-primary" />
+                        Configure New Allocation Token
+                    </h3>
+                    <PremiumButton variant="outline" size="icon" onClick={() => setShowAddForm(false)} className="rounded-xl border-white/10 text-slate-500 hover:text-white">
+                        <X size={20} />
+                    </PremiumButton>
+                </div>
+                <div className="p-12">
+                    <div className="grid grid-cols-12 gap-10 items-end">
+                        <div className="col-span-12 md:col-span-6 space-y-4">
+                            <Label className="text-[10px] font-black uppercase text-primary/60 tracking-[0.4em] ml-6">RESOURCE_DESIGNATION</Label>
+                            <Input
+                                value={newType.name}
+                                onChange={(e) => setNewType({ ...newType, name: e.target.value })}
+                                placeholder="E.g. FUEL_CORE / TOLL_BRIDGE..."
+                                className="h-16 bg-black/40 border-white/5 rounded-[1.5rem] focus:border-primary/50 transition-all text-white font-black italic tracking-widest pl-8 shadow-inner"
+                            />
+                        </div>
+                        <div className="col-span-12 md:col-span-4 space-y-4">
+                            <Label className="text-[10px] font-black uppercase text-primary/60 tracking-[0.4em] ml-6">DEFAULT_YIELD (฿)</Label>
+                            <div className="relative">
+                                <span className="absolute left-6 top-1/2 -translate-y-1/2 text-primary font-black italic">฿</span>
+                                <Input
+                                    type="number"
+                                    value={newType.default_amount}
+                                    onChange={(e) => setNewType({ ...newType, default_amount: Number(e.target.value) })}
+                                    className="h-16 pl-12 bg-black/40 border-white/5 rounded-[1.5rem] focus:border-primary/50 transition-all text-white font-black italic tracking-widest shadow-inner text-xl"
+                                />
+                            </div>
+                        </div>
+                        <div className="col-span-12 md:col-span-2">
+                            <PremiumButton onClick={handleAdd} className="w-full h-16 rounded-[1.5rem] bg-primary text-white font-black italic tracking-widest shadow-xl border-0 gap-3">
+                                <Save size={20} /> DEPLOY
+                            </PremiumButton>
+                        </div>
                     </div>
-                    <div className="w-32">
-                      <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">฿</span>
-                        <Input
-                          type="number"
-                          value={et.default_amount || 0}
-                          onChange={(e) => handleUpdate(et.id, { default_amount: Number(e.target.value) })}
-                          className="pl-8 bg-card border-border text-foreground"
-                        />
-                      </div>
-                    </div>
-                    <Button size="sm" onClick={() => saveUpdate(et.id)} className="bg-emerald-600 hover:bg-emerald-700 text-white">
-                      <Save className="w-4 h-4" />
-                    </Button>
-                  </>
-                ) : (
-                  <>
-                    <div className="flex-1">
-                      <p className="text-foreground font-medium">{et.name}</p>
-                    </div>
-                    <div className="w-32 text-muted-foreground font-mono">
-                      {et.default_amount ? `฿${et.default_amount.toLocaleString()}` : '-'}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => handleToggleActive(et.id, et.is_active)}
-                        className={`px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${
-                          et.is_active 
-                            ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' 
-                            : 'bg-muted text-muted-foreground'
-                        }`}
-                      >
-                        {et.is_active ? 'ใช้งาน' : 'ปิดใช้'}
-                      </button>
-                      <Button 
-                        size="icon" 
-                        variant="ghost" 
-                        onClick={() => setEditingId(et.id)}
-                        className="text-muted-foreground hover:text-foreground hover:bg-muted"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button 
-                        size="icon" 
-                        variant="ghost" 
-                        onClick={() => handleDelete(et.id)}
-                        className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </>
-                )}
-              </div>
-            ))}
+                </div>
+            </PremiumCard>
+        )}
 
-            {expenseTypes.length === 0 && (
-              <div className="text-center py-12 text-muted-foreground italic">
-                -- ยังไม่มีประเภทค่าใช้จ่าย --
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+        {/* Global Resource Feed */}
+        <div className="grid grid-cols-1 gap-8">
+            <PremiumCard className="bg-[#0a0518]/40 border-2 border-white/5 shadow-3xl rounded-[4rem] overflow-hidden group/matrix">
+                <div className="p-10 border-b border-white/5 bg-black/40 flex items-center justify-between">
+                    <h3 className="text-xl font-black text-white tracking-widest uppercase italic flex items-center gap-3">
+                        <Activity size={20} className="text-primary" />
+                        Allocation Registry
+                    </h3>
+                    <div className="px-5 py-1.5 rounded-xl bg-primary/10 text-[9px] font-black text-primary uppercase tracking-[0.3em] border border-primary/20 italic">
+                        SCAN_RESULTS: {expenseTypes.length} NODES
+                    </div>
+                </div>
+                <div className="p-4 md:p-10">
+                    <div className="space-y-6">
+                        {loading ? (
+                            <div className="py-40 flex flex-col items-center justify-center opacity-30">
+                                <Loader2 size={60} className="animate-spin text-primary mb-6" />
+                                <span className="text-[10px] font-black text-white uppercase tracking-[0.6em]">Syncing Matrix...</span>
+                            </div>
+                        ) : (
+                            expenseTypes.map((et) => (
+                                <div 
+                                    key={et.id} 
+                                    className={cn(
+                                        "p-8 rounded-[2.5rem] border-2 transition-all duration-500 group/pref flex flex-col md:flex-row md:items-center gap-8 relative overflow-hidden",
+                                        et.is_active ? "bg-white/[0.02] border-white/5 hover:border-primary/30" : "bg-transparent border-white/5 opacity-40 grayscale"
+                                    )}
+                                >
+                                    <div className="flex items-center gap-6 shrink-0">
+                                        <div className="p-3 text-slate-700 cursor-move hover:text-primary transition-colors">
+                                            <GripVertical size={24} />
+                                        </div>
+                                        <div className={cn(
+                                            "w-16 h-16 rounded-2xl flex items-center justify-center transition-all duration-700 shadow-2xl border border-white/10",
+                                            et.is_active ? "bg-black/40" : "bg-white/5"
+                                        )}>
+                                            <TrendingUp size={28} className={cn(et.is_active ? "text-primary" : "text-slate-600")} />
+                                        </div>
+                                    </div>
+
+                                    <div className="flex-1 flex flex-col md:flex-row md:items-center gap-10">
+                                        {editingId === et.id ? (
+                                            <>
+                                                <div className="flex-[2] space-y-2">
+                                                    <Label className="text-[8px] font-black text-primary uppercase ml-4">EDIT_NAME</Label>
+                                                    <Input
+                                                        value={et.name}
+                                                        onChange={(e) => handleUpdate(et.id, { name: e.target.value })}
+                                                        className="h-14 bg-black/60 border-primary/30 rounded-xl text-white font-black italic pl-6"
+                                                    />
+                                                </div>
+                                                <div className="flex-1 space-y-2">
+                                                    <Label className="text-[8px] font-black text-primary uppercase ml-4">EDIT_YIELD</Label>
+                                                    <div className="relative">
+                                                        <span className="absolute left-6 top-1/2 -translate-y-1/2 text-primary font-black italic">฿</span>
+                                                        <Input
+                                                            type="number"
+                                                            value={et.default_amount || 0}
+                                                            onChange={(e) => handleUpdate(et.id, { default_amount: Number(e.target.value) })}
+                                                            className="h-14 pl-12 bg-black/60 border-primary/30 rounded-xl text-white font-black italic"
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <PremiumButton size="sm" onClick={() => saveUpdate(et.id)} className="h-14 w-14 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500 hover:text-white transition-all">
+                                                    <Save size={20} />
+                                                </PremiumButton>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <div className="flex-[2]">
+                                                    <h3 className={cn(
+                                                        "text-2xl font-black uppercase tracking-widest italic group-hover/matrix:text-primary transition-colors",
+                                                        et.is_active ? "text-white" : "text-slate-600"
+                                                    )}>
+                                                        {et.name}
+                                                    </h3>
+                                                    <p className="text-[9px] font-black text-slate-600 uppercase tracking-widest mt-1 opacity-60">ID_VECTOR: {et.id.substring(0, 8)}...</p>
+                                                </div>
+                                                <div className="flex-1">
+                                                    <p className="text-[9px] font-black text-primary uppercase tracking-[0.4em] mb-1 italic opacity-60">BASE_YIELD</p>
+                                                    <p className="text-3xl font-black text-white italic tracking-tighter">
+                                                        {et.default_amount ? `฿${et.default_amount.toLocaleString()}` : '฿0.00'}
+                                                    </p>
+                                                </div>
+                                                <div className="flex items-center gap-4">
+                                                    <button
+                                                        onClick={() => handleToggleActive(et.id, et.is_active)}
+                                                        className={cn(
+                                                            "px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all italic border-2 shadow-2xl",
+                                                            et.is_active 
+                                                              ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 shadow-emerald-500/5' 
+                                                              : 'bg-white/5 text-slate-600 border-white/5'
+                                                        )}
+                                                    >
+                                                        {et.is_active ? 'ENABLED_NODE' : 'OFFLINE_NODE'}
+                                                    </button>
+                                                    <PremiumButton 
+                                                        size="icon" 
+                                                        variant="ghost" 
+                                                        onClick={() => setEditingId(et.id)}
+                                                        className="w-12 h-12 rounded-xl bg-white/5 border border-white/5 text-slate-400 hover:text-white hover:bg-primary/20 hover:border-primary/30 transition-all"
+                                                    >
+                                                        <Edit size={18} />
+                                                    </PremiumButton>
+                                                    <PremiumButton 
+                                                        size="icon" 
+                                                        variant="ghost" 
+                                                        onClick={() => handleDelete(et.id)}
+                                                        className="w-12 h-12 rounded-xl bg-rose-500/5 border border-rose-500/10 text-rose-500/40 hover:text-white hover:bg-rose-500 transition-all"
+                                                    >
+                                                        <Trash2 size={18} />
+                                                    </PremiumButton>
+                                                </div>
+                                            </>
+                                        )}
+                                    </div>
+                                    {et.is_active && (
+                                        <div className="absolute top-0 right-0 w-64 h-full bg-gradient-to-l from-primary/[0.02] to-transparent pointer-events-none" />
+                                    )}
+                                </div>
+                            ))
+                        )}
+
+                        {!loading && expenseTypes.length === 0 && (
+                            <div className="py-40 text-center opacity-20">
+                                <ShieldAlert size={80} className="mx-auto text-slate-700 mb-8" />
+                                <p className="text-xl font-black uppercase tracking-[0.6em] text-white italic">Registry Depleted</p>
+                                <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest mt-4">Initialize allocation protocols to begin scanning.</p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </PremiumCard>
+        </div>
+
+        {/* Global Advisory */}
+        <div className="mt-20 p-12 rounded-[3.5rem] bg-primary/5 border-2 border-primary/10 flex flex-col md:flex-row gap-10 items-center relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-80 h-full bg-gradient-to-l from-primary/5 to-transparent pointer-events-none" />
+            <div className="p-6 rounded-[2rem] bg-primary/20 text-primary border-2 border-primary/30 shadow-2xl animate-pulse">
+                <Target size={32} />
+            </div>
+            <div className="space-y-4 text-center md:text-left flex-1">
+                <p className="text-xl font-black text-primary italic uppercase tracking-widest">RESOURCE_ALLOCATION_ADVISORY</p>
+                <p className="text-sm font-bold text-slate-600 leading-relaxed uppercase tracking-wider italic">
+                    Allocation tokens defined here are utilized across the entire mission-critical logistics engine. <br />
+                    Decommissioning active resource types may disrupt historical analytical continuity.
+                </p>
+            </div>
+            <PremiumButton variant="outline" className="h-14 px-10 rounded-2xl border-white/10 text-white gap-3 uppercase font-black text-[10px] tracking-[0.3em] ml-auto italic">
+                <Activity size={18} /> VIEW_ALLOCATION_TRENDS
+            </PremiumButton>
+        </div>
+      </div>
     </DashboardLayout>
   )
 }

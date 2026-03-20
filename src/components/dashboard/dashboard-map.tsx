@@ -117,7 +117,7 @@ export function DashboardMap({ drivers, allJobs = [], focusPosition, plannedRout
             <MapOverlay route={routeSummary} />
             
             {/* Subtle overlay to make cards more readable */}
-            <div className="absolute inset-0 bg-white/5 pointer-events-none backdrop-blur-[1px]" />
+            <div className="absolute inset-0 bg-white/5 pointer-events-none" />
         </div>
     )
 }

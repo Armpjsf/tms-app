@@ -1,9 +1,9 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
-import { Card, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
+import { PremiumCard } from "@/components/ui/premium-card"
+import { PremiumButton } from "@/components/ui/premium-button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { 
@@ -17,7 +17,11 @@ import {
   Trash2,
   MapPin,
   Phone,
-  CheckCircle2
+  CheckCircle2,
+  Activity,
+  Zap,
+  ShieldCheck,
+  Target
 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
@@ -32,6 +36,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { cn } from "@/lib/utils"
 
 export default function BranchSettingsPage() {
   const router = useRouter()
@@ -51,7 +56,7 @@ export default function BranchSettingsPage() {
   })
   const [editState, setEditState] = useState<Record<string, Branch>>({})
 
-  const loadBranches = async () => {
+  const loadBranches = useCallback(async () => {
     setLoading(true)
     const data = await getAllBranches()
     const branchesData = data || []
@@ -63,15 +68,11 @@ export default function BranchSettingsPage() {
     })
     setEditState(initialEditState)
     setLoading(false)
-  }
+  }, [])
 
   useEffect(() => {
-    let isMounted = true
-    if (isMounted) {
-      loadBranches()
-    }
-    return () => { isMounted = false }
-  }, [])
+    loadBranches()
+  }, [loadBranches])
 
   const handleInputChange = (branchId: string, field: keyof Branch, value: string) => {
     setEditState(prev => ({
@@ -86,7 +87,6 @@ export default function BranchSettingsPage() {
   const handleSave = async (branchId: string) => {
     setSavingId(branchId)
     const settings = editState[branchId]
-    
     const result = await updateBranchSettings(branchId, settings)
     
     if (result.success) {
@@ -100,7 +100,6 @@ export default function BranchSettingsPage() {
 
   const handleDelete = async (branchId: string) => {
     if (!confirm("คุณแน่ใจหรือไม่ว่าต้องการลบสาขานี้? การดำเนินการนี้ไม่สามารถย้อนกลับได้")) return
-    
     setDeletingId(branchId)
     const result = await deleteBranch(branchId)
     
@@ -118,22 +117,13 @@ export default function BranchSettingsPage() {
       toast.error("กรุณาระบุรหัสและชื่อสาขา")
       return
     }
-
     setCreating(true)
     try {
       const result = await createBranch(newBranch as Branch)
-      
       if (result.success) {
         toast.success("สร้างสาขาใหม่เรียบร้อยแล้ว")
         setIsCreateDialogOpen(false)
-        setNewBranch({
-          Branch_ID: "",
-          Branch_Name: "",
-          Address: "",
-          Phone: "",
-          Email: "",
-          Sender_Name: ""
-        })
+        setNewBranch({ Branch_ID: "", Branch_Name: "", Address: "", Phone: "", Email: "", Sender_Name: "" })
         await loadBranches()
       } else {
         toast.error(`เกิดข้อผิดพลาด: ${result.error}`)
@@ -148,284 +138,297 @@ export default function BranchSettingsPage() {
 
   return (
     <DashboardLayout>
-      <div className="max-w-5xl mx-auto pb-20 px-4">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12 bg-slate-900/50 p-8 rounded-3xl border border-white/5 backdrop-blur-xl mt-8">
-          <div className="flex items-center gap-4">
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              onClick={() => router.back()}
-              className="rounded-full hover:bg-primary/10 transition-colors"
-            >
-              <ArrowLeft className="text-primary" />
-            </Button>
-            <div>
-              <h1 className="text-3xl font-black text-white flex items-center gap-3 tracking-tight">
-                <Building className="text-primary" />
-                BRANCH Management
-              </h1>
-              <p className="text-slate-400 mt-1 font-medium">จัดการสาขา ข้อมูลการติดต่อ และการส่งเอกสาร</p>
+      <div className="space-y-12 pb-20 p-4 lg:p-10">
+        {/* Tactical Elite Header */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-10 bg-[#0a0518]/60 backdrop-blur-3xl p-10 rounded-br-[6rem] rounded-tl-[3rem] border border-white/5 shadow-2xl relative overflow-hidden group">
+            <div className="absolute top-0 right-0 w-80 h-80 bg-primary/10 blur-[120px] rounded-full -mr-40 -mt-40 pointer-events-none" />
+            
+            <div className="relative z-10 space-y-8">
+                <button onClick={() => router.back()} className="inline-flex items-center gap-2 text-slate-500 hover:text-primary transition-all font-black uppercase tracking-[0.4em] text-[10px] group/back italic">
+                    <ArrowLeft className="w-4 h-4 group-hover/back:-translate-x-1 transition-transform" /> 
+                    Command Control
+                </button>
+                <div className="flex items-center gap-6">
+                    <div className="p-4 bg-primary/20 rounded-[2.5rem] border-2 border-primary/30 shadow-[0_0_40px_rgba(255,30,133,0.2)] text-primary group-hover:scale-110 transition-all duration-500">
+                        <Building size={42} strokeWidth={2.5} />
+                    </div>
+                    <div>
+                        <h1 className="text-5xl font-black text-white tracking-widest uppercase leading-none italic premium-text-gradient">
+                            Hub Matrix
+                        </h1>
+                        <p className="text-[10px] font-black text-primary uppercase tracking-[0.6em] mt-2 opacity-80 italic italic">Network Node & Branch Identity Configuration</p>
+                    </div>
+                </div>
             </div>
-          </div>
-          <Button 
-            onClick={() => setIsCreateDialogOpen(true)}
-            className="h-12 px-6 rounded-2xl bg-primary hover:bg-primary/90 text-primary-foreground font-bold shadow-lg shadow-primary/20 transition-all active:scale-95"
-          >
-            <Plus className="w-5 h-5 mr-2" />
-            เพิ่มสาขาใหม่
-          </Button>
+
+            <div className="flex flex-col items-end gap-6 relative z-10">
+                <div className="bg-white/5 border border-white/10 px-6 py-3 rounded-2xl flex items-center gap-3 backdrop-blur-md">
+                    <div className="w-2 h-2 rounded-full bg-primary animate-pulse shadow-[0_0_10px_rgba(255,30,133,1)]" />
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">Signal Protocol: SECURE</span>
+                </div>
+                <PremiumButton 
+                    onClick={() => setIsCreateDialogOpen(true)}
+                    className="h-16 px-10 rounded-2xl bg-primary text-white border-0 shadow-[0_20px_50px_rgba(255,30,133,0.3)] gap-4 text-sm tracking-widest"
+                >
+                    <Plus size={20} /> INITIALIZE_NEW_HUB
+                </PremiumButton>
+            </div>
         </div>
 
         {loading && branches.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 gap-4">
-            <Loader2 className="w-10 h-10 animate-spin text-primary" />
-            <p className="text-muted-foreground animate-pulse">กำลังโหลดข้อมูลสาขา...</p>
+          <div className="flex flex-col items-center justify-center py-40 gap-6 opacity-30">
+            <Loader2 className="w-12 h-12 animate-spin text-primary" />
+            <p className="text-sm font-black text-white uppercase tracking-[0.8em] animate-pulse">Synchronizing Hub Network...</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-6">
+          <div className="grid grid-cols-1 gap-12">
             <AnimatePresence mode="popLayout">
               {branches.map((branch, index) => (
                 <motion.div
                   key={branch.Branch_ID}
-                  initial={{ opacity: 0, y: 20 }}
+                  initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.05 }}
+                  transition={{ delay: index * 0.1 }}
                 >
-                  <Card className="bg-slate-900/40 border-white/5 overflow-hidden hover:border-primary/30 transition-all group shadow-xl">
-                    <div className="bg-white/5 p-4 border-b border-white/5 flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <div className="p-3 rounded-2xl bg-primary/10 text-primary border border-primary/20">
-                          <Building size={24} />
+                  <PremiumCard className="bg-[#0a0518]/40 border-2 border-white/5 shadow-3xl rounded-[4rem] overflow-hidden group/branch">
+                    <div className="bg-black/40 p-10 border-b border-white/5 flex items-center justify-between relative overflow-hidden">
+                      <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 blur-[80px] pointer-events-none" />
+                      <div className="flex items-center gap-6 relative z-10">
+                        <div className="p-4 rounded-[2rem] bg-primary/10 text-primary border border-primary/20 shadow-inner group-hover/branch:rotate-6 transition-transform duration-500">
+                          <Building size={32} />
                         </div>
                         <div>
-                          <h3 className="text-lg font-black text-white tracking-tight">{branch.Branch_Name}</h3>
-                          <div className="flex items-center gap-2">
-                             <span className="px-2 py-0.5 rounded-md bg-white/5 text-[10px] font-bold text-slate-400 uppercase tracking-widest border border-white/5">
-                               ID: {branch.Branch_ID}
-                             </span>
+                          <h3 className="text-3xl font-black text-white tracking-widest uppercase italic group-hover/branch:text-primary transition-colors">{branch.Branch_Name}</h3>
+                          <div className="flex items-center gap-3 mt-2">
+                             <div className="px-5 py-1.5 rounded-xl bg-white/5 text-[10px] font-black text-primary uppercase tracking-[0.3em] border border-primary/20 shadow-lg italic">
+                               NODE_ID: {branch.Branch_ID}
+                             </div>
+                             <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,1)]" />
                           </div>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-4 relative z-10">
                         {savingId === branch.Branch_ID ? (
-                          <Button disabled size="sm" variant="ghost" className="gap-2 text-primary">
+                          <div className="flex items-center gap-3 px-8 text-primary font-black uppercase text-[10px] tracking-widest italic animate-pulse">
                             <Loader2 size={16} className="animate-spin" />
-                            Saving...
-                          </Button>
+                            SYNCING_STATE...
+                          </div>
                         ) : (
-                          <Button 
-                            variant="ghost"
-                            size="sm" 
-                            className="gap-2 text-emerald-400 hover:text-emerald-500 hover:bg-emerald-500/10"
+                          <PremiumButton 
+                            variant="outline"
+                            className="h-14 px-8 rounded-2xl gap-3 text-emerald-400 border-emerald-500/20 bg-emerald-500/5 hover:bg-emerald-500 hover:text-white transition-all shadow-xl italic"
                             onClick={() => handleSave(branch.Branch_ID)}
                           >
-                            <Save size={16} />
-                            Save
-                          </Button>
+                            <Save size={18} /> SAVE_CHANGES
+                          </PremiumButton>
                         )}
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
+                        <PremiumButton 
+                          variant="outline" 
+                          size="icon"
                           disabled={deletingId === branch.Branch_ID}
-                          className="text-red-400 hover:text-red-500 hover:bg-red-500/10"
+                          className="h-14 w-14 rounded-2xl bg-rose-500/5 text-rose-500 border-rose-500/20 hover:bg-rose-600 hover:text-white transition-all shadow-xl"
                           onClick={() => handleDelete(branch.Branch_ID)}
                         >
-                          {deletingId === branch.Branch_ID ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
-                        </Button>
+                          {deletingId === branch.Branch_ID ? <Loader2 size={20} className="animate-spin" /> : <Trash2 size={20} />}
+                        </PremiumButton>
                       </div>
                     </div>
-                    <CardContent className="p-8">
-                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+
+                    <div className="p-12 relative">
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
                         {/* Basic Info */}
-                        <div className="space-y-6">
-                          <div className="flex items-center gap-2 text-primary">
-                            <Building size={16} />
-                            <span className="text-xs font-black uppercase tracking-[0.2em]">General Information</span>
+                        <div className="space-y-10">
+                          <div className="flex items-center gap-4">
+                            <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary border border-primary/20">
+                                <Activity size={14} strokeWidth={2.5} />
+                            </div>
+                            <span className="text-[11px] font-black uppercase tracking-[0.5em] text-slate-500 italic">CORE_HUB_TELEMETRY</span>
                           </div>
-                          <div className="grid gap-4">
-                             <div className="space-y-2">
-                                <Label className="text-[10px] font-black uppercase text-slate-500 tracking-wider">Branch Name</Label>
+                          
+                          <div className="space-y-8">
+                             <div className="space-y-4">
+                                <Label className="text-[10px] font-black uppercase text-primary/60 tracking-[0.4em] ml-6">HUB_DESIGNATION</Label>
                                 <Input 
                                   value={editState[branch.Branch_ID]?.Branch_Name || ""}
                                   onChange={(e) => handleInputChange(branch.Branch_ID, 'Branch_Name', e.target.value)}
-                                  className="h-12 bg-white/5 border-white/5 rounded-xl focus:ring-primary focus:border-primary transition-all text-white font-medium"
+                                  className="h-16 bg-black/40 border-white/5 rounded-[1.5rem] focus:border-primary/50 transition-all text-white font-black italic tracking-widest pl-8 shadow-inner"
                                 />
                              </div>
-                             <div className="space-y-2">
-                                <Label className="text-[10px] font-black uppercase text-slate-500 tracking-wider">Address</Label>
+                             <div className="space-y-4">
+                                <Label className="text-[10px] font-black uppercase text-primary/60 tracking-[0.4em] ml-6">GEOSPATIAL_COORDINATES (Address)</Label>
                                 <Input 
                                   value={editState[branch.Branch_ID]?.Address || ""}
                                   onChange={(e) => handleInputChange(branch.Branch_ID, 'Address', e.target.value)}
-                                  placeholder="Address..."
-                                  className="h-12 bg-white/5 border-white/5 rounded-xl focus:ring-primary focus:border-primary transition-all text-white font-medium"
+                                  placeholder="Address protocol..."
+                                  className="h-16 bg-black/40 border-white/5 rounded-[1.5rem] focus:border-primary/50 transition-all text-white font-black italic tracking-widest pl-8 shadow-inner"
                                 />
                              </div>
-                             <div className="space-y-2">
-                                <Label className="text-[10px] font-black uppercase text-slate-500 tracking-wider">Phone</Label>
+                             <div className="space-y-4">
+                                <Label className="text-[10px] font-black uppercase text-primary/60 tracking-[0.4em] ml-6">COMMUNICATION_LINK (Phone)</Label>
                                 <Input 
                                   value={editState[branch.Branch_ID]?.Phone || ""}
                                   onChange={(e) => handleInputChange(branch.Branch_ID, 'Phone', e.target.value)}
-                                  placeholder="Phone number..."
-                                  className="h-12 bg-white/5 border-white/5 rounded-xl focus:ring-primary focus:border-primary transition-all text-white font-medium"
+                                  placeholder="Voice uplink..."
+                                  className="h-16 bg-black/40 border-white/5 rounded-[1.5rem] focus:border-primary/50 transition-all text-white font-black italic tracking-widest pl-8 shadow-inner"
                                 />
                              </div>
                           </div>
                         </div>
 
                         {/* Email Settings */}
-                        <div className="space-y-6">
-                          <div className="flex items-center gap-2 text-emerald-400">
-                            <Mail size={16} />
-                            <span className="text-xs font-black uppercase tracking-[0.2em]">Email & Notification Config</span>
+                        <div className="space-y-10">
+                          <div className="flex items-center gap-4">
+                            <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-500 border border-emerald-500/20">
+                                <Zap size={14} strokeWidth={2.5} />
+                            </div>
+                            <span className="text-[11px] font-black uppercase tracking-[0.5em] text-slate-500 italic">SIGNAL_EMISSION_CONFIG</span>
                           </div>
-                          <div className="grid gap-4">
-                             <div className="space-y-2">
-                                <Label className="text-[10px] font-black uppercase text-slate-500 tracking-wider">Sender Email</Label>
+
+                          <div className="space-y-8">
+                             <div className="space-y-4">
+                                <Label className="text-[10px] font-black uppercase text-emerald-500/60 tracking-[0.4em] ml-6">SENDER_GATEWAY (Email)</Label>
                                 <Input 
                                   value={editState[branch.Branch_ID]?.Email || ""}
                                   onChange={(e) => handleInputChange(branch.Branch_ID, 'Email', e.target.value)}
-                                  placeholder="example@resend.dev"
-                                  className="h-12 bg-white/5 border-white/5 rounded-xl focus:ring-emerald-500 focus:border-emerald-500 transition-all text-white font-medium"
+                                  placeholder="node@logispro.io"
+                                  className="h-16 bg-black/40 border-white/5 rounded-[1.5rem] focus:border-emerald-500/50 transition-all text-white font-black italic tracking-widest pl-8 shadow-inner"
                                 />
                              </div>
-                             <div className="space-y-2">
-                                <Label className="text-[10px] font-black uppercase text-slate-500 tracking-wider">Sender Name</Label>
+                             <div className="space-y-4">
+                                <Label className="text-[10px] font-black uppercase text-emerald-500/60 tracking-[0.4em] ml-6">AUTHORIZED_SENDER_NULL</Label>
                                 <Input 
                                   value={editState[branch.Branch_ID]?.Sender_Name || ""}
                                   onChange={(e) => handleInputChange(branch.Branch_ID, 'Sender_Name', e.target.value)}
-                                  placeholder="Logistic Team (Branch Name)"
-                                  className="h-12 bg-white/5 border-white/5 rounded-xl focus:ring-emerald-500 focus:border-emerald-500 transition-all text-white font-medium"
+                                  placeholder="LOGISPRO_COMMAND_UNIT"
+                                  className="h-16 bg-black/40 border-white/5 rounded-[1.5rem] focus:border-emerald-500/50 transition-all text-white font-black italic tracking-widest pl-8 shadow-inner"
                                 />
                              </div>
                           </div>
-                          <div className="p-4 rounded-xl bg-emerald-500/5 border border-emerald-500/10">
-                            <p className="text-[10px] text-slate-400 leading-relaxed font-medium capitalize">
-                              * configuration for automated reports and digital POD documents for this specific branch.
+                          
+                          <div className="p-10 rounded-[2.5rem] bg-emerald-500/5 border-2 border-emerald-500/10 shadow-inner group/intel relative overflow-hidden">
+                            <div className="absolute top-0 right-0 p-4 opacity-20">
+                                <ShieldCheck size={40} className="text-emerald-500" />
+                            </div>
+                            <p className="text-xs font-black text-emerald-500/60 leading-relaxed uppercase tracking-widest italic relative z-10">
+                              * THIS HUB CONFIGURATION OVERRIDES GLOBAL PROTOCOLS FOR AUTOMATED INTELLIGENCE REPORTS AND DIGITAL POD EMISSIONS.
                             </p>
                           </div>
                         </div>
                       </div>
-                    </CardContent>
-                  </Card>
+                    </div>
+                  </PremiumCard>
                 </motion.div>
               ))}
             </AnimatePresence>
 
             {branches.length === 0 && !loading && (
-              <Card className="bg-slate-900/40 border-white/5 border-dashed p-16 text-center rounded-3xl backdrop-blur-sm">
-                <div className="flex flex-col items-center gap-6">
-                  <div className="p-6 rounded-full bg-white/5 border border-white/10">
-                    <AlertCircle size={48} className="text-slate-600" />
-                  </div>
-                  <div>
-                    <p className="text-xl font-bold text-white mb-2">No branches found</p>
-                    <p className="text-slate-400">Add your first branch to start managing your fleet.</p>
-                  </div>
-                  <Button variant="outline" onClick={() => loadBranches()} className="border-white/10 hover:bg-white/10 text-white rounded-xl px-8">
-                    Refresh List
-                  </Button>
-                </div>
-              </Card>
+              <div className="p-40 text-center opacity-20">
+                <AlertCircle size={80} strokeWidth={1} className="mx-auto mb-8 text-primary animate-pulse" />
+                <p className="text-xl font-black text-white uppercase tracking-[0.8em]">Hub Network Void // No Operational Nodes</p>
+              </div>
             )}
           </div>
         )}
 
-        {/* Info Box */}
+        {/* Tactical Advisory */}
         <motion.div
            initial={{ opacity: 0 }}
            animate={{ opacity: 1 }}
-           transition={{ delay: 0.5 }}
-           className="mt-12 p-6 rounded-3xl bg-primary/5 border border-primary/10 flex gap-4"
+           transition={{ delay: 1 }}
+           className="mt-20 p-10 rounded-[3rem] bg-primary/5 border-2 border-primary/10 flex flex-col md:flex-row gap-10 items-center relative overflow-hidden"
         >
-          <div className="p-2 rounded-full bg-primary/20 text-primary h-fit">
-            <CheckCircle2 size={24} />
+          <div className="absolute top-0 right-0 w-64 h-full bg-gradient-to-l from-primary/5 to-transparent pointer-events-none" />
+          <div className="p-6 rounded-[2rem] bg-primary/20 text-primary border-2 border-primary/30 shadow-2xl animate-bounce">
+            <CheckCircle2 size={32} />
           </div>
-          <div className="text-sm space-y-1">
-            <p className="font-bold text-primary">คำแนะนำการใช้งาน</p>
-            <p className="text-muted-foreground leading-relaxed">
-              การตั้งค่าอีเมลแยกตามสาขาจะช่วยให้ลูกค้าจำแนกที่มาของรายงานได้ง่ายขึ้น หากสาขาใดไม่ได้ตั้งค่าไว้ ระบบจะใช้ค่าเริ่มต้นจากบริษัทส่วนกลางในการส่งอีเมล 
-              คุณสามารถเพิ่มสาขาใหม่ได้จากปุ่ม "เพิ่มสาขาใหม่" ด้านบนครับ
+          <div className="space-y-4 text-center md:text-left">
+            <p className="text-xl font-black text-primary italic uppercase tracking-widest">TACTICAL HUB ADVISORY</p>
+            <p className="text-sm font-bold text-slate-500 leading-relaxed uppercase tracking-wider italic">
+              Branch-specific signal overrides allow for granular client targeting. If a node is unconfigured, the system resorts to Global Command protocols for document emission. <br />
+              Ensure all node identifiers (IDs) are unique to prevent signal interference.
             </p>
           </div>
+          <PremiumButton variant="outline" className="h-14 px-10 rounded-2xl border-white/10 text-white gap-3 uppercase font-black text-[10px] tracking-[0.3em] ml-auto italic">
+            <Target size={18} /> SYNC_ALL_NODES
+          </PremiumButton>
         </motion.div>
       </div>
 
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-        <DialogContent className="sm:max-w-[500px] bg-slate-900 border-white/10 text-white rounded-3xl p-0 overflow-hidden">
-          <div className="p-8 space-y-8">
+        <DialogContent className="bg-[#0a0518] border-white/10 text-white max-w-2xl max-h-[90vh] overflow-hidden flex flex-col p-0 shadow-[0_40px_100px_rgba(0,0,0,1)] rounded-[4rem] backdrop-blur-3xl relative">
+          <div className="absolute top-0 left-0 w-full h-1 bg-primary animate-pulse shadow-[0_0_20px_rgba(255,30,133,1)]" />
+          
+          <div className="p-12 space-y-10">
             <DialogHeader>
-              <DialogTitle className="text-2xl font-black flex items-center gap-3">
-                <div className="p-2 rounded-xl bg-primary/10 text-primary border border-primary/20">
-                  <Plus size={24} />
+              <DialogTitle className="text-3xl font-black flex items-center gap-5 italic uppercase tracking-widest premium-text-gradient">
+                <div className="p-4 rounded-[1.5rem] bg-primary/20 text-primary border-2 border-primary/30 shadow-2xl">
+                  <Plus size={32} />
                 </div>
-                CREATE NEW BRANCH
+                NODE_INITIALIZATION
               </DialogTitle>
-              <DialogDescription className="text-slate-400 font-medium pt-2">
-                เพิ่มสาขาใหม่ในระบบเพื่อกระจายงานและแยกการจัดการข้อมูล
+              <DialogDescription className="text-slate-500 font-black uppercase tracking-[0.4em] pt-4 italic">
+                REGISTERING NEW OPERATIONAL NODE INTO THE LOGISPRO NETWORK
               </DialogDescription>
             </DialogHeader>
 
-            <div className="grid gap-6">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label className="text-[10px] font-black uppercase text-slate-500 tracking-wider flex items-center gap-2">
-                    Branch ID * <span className="text-primary text-xs">(Unique)</span>
-                  </Label>
+            <div className="grid gap-10">
+              <div className="grid grid-cols-2 gap-10">
+                <div className="space-y-3">
+                  <Label className="text-[10px] font-black uppercase text-slate-600 tracking-[0.4em] ml-4">NODE_ID (Unique)</Label>
                   <Input 
                     value={newBranch.Branch_ID || ""}
                     onChange={(e) => setNewBranch(prev => ({ ...prev, Branch_ID: e.target.value }))}
-                    placeholder="e.g. BKK, HY"
-                    className="h-12 bg-white/5 border-white/5 rounded-xl focus:ring-primary focus:border-primary transition-all text-white font-medium"
+                    placeholder="e.g. ALPHA_01"
+                    className="h-16 bg-black/40 border-white/5 rounded-[1.5rem] text-white font-black italic tracking-widest pl-8 shadow-inner"
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label className="text-[10px] font-black uppercase text-slate-500 tracking-wider">Branch Name *</Label>
+                <div className="space-y-3">
+                  <Label className="text-[10px] font-black uppercase text-slate-600 tracking-[0.4em] ml-4">NODE_DESIGNATION</Label>
                   <Input 
                     value={newBranch.Branch_Name || ""}
                     onChange={(e) => setNewBranch(prev => ({ ...prev, Branch_Name: e.target.value }))}
-                    placeholder="ชื่อสาขา"
-                    className="h-12 bg-white/5 border-white/5 rounded-xl focus:ring-primary focus:border-primary transition-all text-white font-medium"
+                    placeholder="Hub name..."
+                    className="h-16 bg-black/40 border-white/5 rounded-[1.5rem] text-white font-black italic tracking-widest pl-8 shadow-inner"
                   />
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase text-slate-500 tracking-wider">Address</Label>
+              <div className="space-y-3">
+                <Label className="text-[10px] font-black uppercase text-slate-600 tracking-[0.4em] ml-4">GEOSPATIAL_NULL</Label>
                 <Input 
                   value={newBranch.Address || ""}
                   onChange={(e) => setNewBranch(prev => ({ ...prev, Address: e.target.value }))}
-                  placeholder="สถานที่ตั้งสาขา"
-                  className="h-12 bg-white/5 border-white/5 rounded-xl focus:ring-primary focus:border-primary transition-all text-white font-medium"
+                  placeholder="Physical deployment site..."
+                  className="h-16 bg-black/40 border-white/5 rounded-[1.5rem] text-white font-black italic tracking-widest pl-8 shadow-inner"
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase text-slate-500 tracking-wider">Phone</Label>
+              <div className="space-y-3">
+                <Label className="text-[10px] font-black uppercase text-slate-600 tracking-[0.4em] ml-4">VOICE_UPLINK</Label>
                 <Input 
                   value={newBranch.Phone || ""}
                   onChange={(e) => setNewBranch(prev => ({ ...prev, Phone: e.target.value }))}
-                  placeholder="เบอร์โทรศัพท์ติดต่อ"
-                  className="h-12 bg-white/5 border-white/5 rounded-xl focus:ring-primary focus:border-primary transition-all text-white font-medium"
+                  placeholder="+T-PH-NODE-XXXX"
+                  className="h-16 bg-black/40 border-white/5 rounded-[1.5rem] text-white font-black italic tracking-widest pl-8 shadow-inner"
                 />
               </div>
             </div>
 
-            <DialogFooter className="flex gap-3">
-              <Button 
-                variant="ghost" 
+            <DialogFooter className="flex gap-6 mt-10">
+              <PremiumButton 
+                variant="outline" 
                 onClick={() => setIsCreateDialogOpen(false)}
-                className="flex-1 h-12 rounded-2xl border border-white/5 text-slate-300 hover:bg-white/5 font-bold"
+                className="flex-1 h-18 rounded-[1.5rem] border-white/5 text-slate-500 hover:text-white font-black uppercase tracking-widest italic"
               >
-                Cancel
-              </Button>
-              <Button 
+                ABORT
+              </PremiumButton>
+              <PremiumButton 
                 onClick={handleCreateBranch}
                 disabled={creating}
-                className="flex-1 h-12 rounded-2xl bg-primary hover:bg-primary/90 text-primary-foreground font-black shadow-lg shadow-primary/20 transition-all active:scale-95"
+                className="flex-1 h-18 rounded-[2rem] bg-primary text-white font-black italic tracking-[0.2em] shadow-[0_20px_50px_rgba(255,30,133,0.3)] border-0"
               >
-                {creating ? <Loader2 size={18} className="animate-spin" /> : "CREATE BRANCH"}
-              </Button>
+                {creating ? <Loader2 size={24} className="animate-spin" /> : "DEPLOY_NODE"}
+              </PremiumButton>
             </DialogFooter>
           </div>
         </DialogContent>

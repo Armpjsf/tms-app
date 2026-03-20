@@ -4,19 +4,21 @@ import { PremiumCard } from "@/components/ui/premium-card"
 import { WorkforceAnalytics } from "@/lib/supabase/workforce-analytics"
 import { Users, UserCheck, AlertOctagon, Trophy, FileWarning, ShieldCheck, Activity } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useLanguage } from "@/components/providers/language-provider"
 
 export function WorkforceSection({ data }: { data: WorkforceAnalytics }) {
+  const { t } = useLanguage()
   const { kpis, topPerformers, driversWithIssues } = data
 
   return (
     <div className="space-y-10">
       {/* Sub-Section Header */}
-      <div className="flex items-center gap-3">
-        <div className="p-2 bg-slate-950 rounded-xl text-blue-500 shadow-lg border border-slate-800">
-          <Users size={18} />
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-slate-950 rounded-xl text-blue-500 shadow-lg border border-slate-800">
+            <Users size={18} />
+          </div>
+          <h3 className="text-xl font-black text-white tracking-tight uppercase premium-text-gradient">{t('dashboard.workforce_intel')}</h3>
         </div>
-        <h3 className="text-xl font-black text-white tracking-tight uppercase premium-text-gradient">Workforce Intelligence registry</h3>
-      </div>
 
       {/* KPI Bento Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -25,16 +27,16 @@ export function WorkforceSection({ data }: { data: WorkforceAnalytics }) {
             <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent pointer-events-none" />
             <div className="flex items-center justify-between mb-6 relative z-10">
               <div className="space-y-1">
-                <span className="text-blue-400 text-[10px] font-black uppercase tracking-[0.2em] italic">Total Box</span>
-                <p className="text-[8px] text-slate-500 font-bold uppercase tracking-widest italic">Global Operator Registry</p>
+                <span className="text-blue-400 text-[10px] font-black uppercase tracking-[0.2em] italic">{t('dashboard.active_duty_roster')}</span>
+                <p className="text-[8px] text-slate-500 font-bold uppercase tracking-widest italic">{t('dashboard.workforce_matrix')}</p>
               </div>
               <div className="p-2 bg-blue-500/10 rounded-xl text-blue-500 shadow-lg shadow-blue-500/10">
                 <Users size={16} />
               </div>
             </div>
-            <div className="text-3xl font-black text-white tracking-tighter relative z-10 italic">{kpis.totalBox} PERSONNEL</div>
+            <div className="text-3xl font-black text-white tracking-tighter relative z-10 italic">{kpis.totalBox} {t('dashboard.personnel_label')}</div>
             <div className="flex items-center gap-2 mt-4 relative z-10 opacity-50">
-                <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest italic">ACTIVE ROLLING CAPACITY</p>
+                <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest italic">{t('dashboard.optimal_utilization_label')}</p>
             </div>
         </PremiumCard>
 
@@ -43,14 +45,14 @@ export function WorkforceSection({ data }: { data: WorkforceAnalytics }) {
             <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent pointer-events-none" />
             <div className="flex items-center justify-between mb-6 relative z-10">
               <div className="space-y-1">
-                <span className="text-emerald-400 text-[10px] font-black uppercase tracking-[0.2em] italic">Active Mission</span>
-                <p className="text-[8px] text-slate-500 font-bold uppercase tracking-widest italic">Real-Time Deployment Status</p>
+                <span className="text-emerald-400 text-[10px] font-black uppercase tracking-[0.2em] italic">{t('dashboard.driver_active')}</span>
+                <p className="text-[8px] text-slate-500 font-bold uppercase tracking-widest italic">{t('dashboard.labor_optimization_index')}</p>
               </div>
               <div className="p-2 bg-emerald-500/10 rounded-xl text-emerald-400 shadow-lg shadow-emerald-500/10">
                 <UserCheck size={16} />
               </div>
             </div>
-            <div className="text-3xl font-black text-white tracking-tighter relative z-10 italic">{kpis.activeToday} ACTIVE</div>
+            <div className="text-3xl font-black text-white tracking-tighter relative z-10 italic">{kpis.activeToday} {t('dashboard.active_label')}</div>
             <div className="flex items-center gap-2 mt-4 relative z-10">
                 <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                 <p className="text-[10px] text-emerald-400 font-black uppercase tracking-widest italic">DEPLOYED TO FIELD</p>
@@ -62,14 +64,14 @@ export function WorkforceSection({ data }: { data: WorkforceAnalytics }) {
             <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-transparent pointer-events-none" />
             <div className="flex items-center justify-between mb-6 relative z-10">
               <div className="space-y-1">
-                <span className="text-amber-400 text-[10px] font-black uppercase tracking-[0.2em] italic">Compliance Risk</span>
-                <p className="text-[8px] text-slate-500 font-bold uppercase tracking-widest italic">Temporal Document Expiry</p>
+                <span className="text-amber-400 text-[10px] font-black uppercase tracking-[0.2em] italic">{t('dashboard.fatigue_risk_threshold')}</span>
+                <p className="text-[8px] text-slate-500 font-bold uppercase tracking-widest italic">{t('dashboard.operator_health_index')}</p>
               </div>
               <div className="p-2 bg-amber-500/10 rounded-xl text-amber-500 shadow-lg shadow-amber-500/10">
                 <FileWarning size={16} />
               </div>
             </div>
-            <div className="text-3xl font-black text-white tracking-tighter relative z-10 italic">{kpis.licenseExpiring} AT RISK</div>
+            <div className="text-3xl font-black text-white tracking-tighter relative z-10 italic">{kpis.licenseExpiring} {t('dashboard.at_risk_label')}</div>
             <div className="flex items-center gap-2 mt-4 relative z-10">
                 <p className="text-[10px] text-amber-400 font-black uppercase tracking-widest italic flex items-center gap-2">
                     <Activity size={10} /> 30D COMPLIANCE WINDOW
@@ -86,20 +88,20 @@ export function WorkforceSection({ data }: { data: WorkforceAnalytics }) {
             <div className="flex items-center justify-between mb-6 relative z-10">
               <div className="space-y-1">
                 <span className={cn("text-[10px] font-black uppercase tracking-[0.2em] italic", kpis.licenseExpired > 0 ? "text-rose-100" : "text-slate-500")}>
-                    Critical Breach
+                    {t('dashboard.critical_breach')}
                 </span>
                 <p className={cn("text-[8px] font-bold uppercase tracking-widest italic", kpis.licenseExpired > 0 ? "text-rose-200" : "text-slate-600")}>
-                    Operational Suspension Log
+                    {t('dashboard.operational_suspension_log')}
                 </p>
               </div>
               <div className={cn("p-2 rounded-xl shadow-lg", kpis.licenseExpired > 0 ? "bg-white/20 text-white" : "bg-slate-900 text-slate-500")}>
                 <AlertOctagon size={16} />
               </div>
             </div>
-            <div className="text-3xl font-black text-white tracking-tighter relative z-10 italic">{kpis.licenseExpired} HALTED</div>
+            <div className="text-3xl font-black text-white tracking-tighter relative z-10 italic">{kpis.licenseExpired} {t('dashboard.halted_label')}</div>
             <div className="flex items-center gap-2 mt-4 relative z-10">
                 <p className={cn("text-[10px] font-black uppercase tracking-widest italic", kpis.licenseExpired > 0 ? "text-white" : "text-slate-500")}>
-                    IMMEDIATE LOCKOUT ACTIVE
+                    {t('dashboard.lockout_active_label')}
                 </p>
             </div>
         </PremiumCard>
@@ -116,8 +118,8 @@ export function WorkforceSection({ data }: { data: WorkforceAnalytics }) {
                   <Trophy size={16} />
                 </div>
                 <div>
-                  <h3 className="text-lg font-black text-white tracking-tight italic uppercase">Operator ELITE</h3>
-                  <p className="text-amber-400 text-[9px] font-bold uppercase tracking-[0.2em]">High-Yield Performance metrics</p>
+                  <h3 className="text-lg font-black text-white tracking-tight italic uppercase">{t('dashboard.operator_elite')}</h3>
+                  <p className="text-amber-400 text-[9px] font-bold uppercase tracking-[0.2em]">{t('dashboard.high_yield_performance_metrics')}</p>
                 </div>
               </div>
            </div>
@@ -140,20 +142,20 @@ export function WorkforceSection({ data }: { data: WorkforceAnalytics }) {
                                     </span>
                                 </div>
                                 <div className="text-[10px] text-slate-500 font-black mt-2 tracking-widest italic uppercase">
-                                    MISSIONS COMPLETED: {d.jobCount}
+                                    {t('dashboard.missions_completed_prefix')} {d.jobCount}
                                 </div>
                             </div>
                         </div>
                         <div className="text-right">
                              <div className="text-lg font-black text-slate-950 tracking-tighter italic">฿{d.revenue.toLocaleString()}</div>
-                             <div className="text-[9px] text-slate-400 font-black uppercase tracking-widest mt-1 italic">Gross Yield</div>
+                             <div className="text-[9px] text-slate-400 font-black uppercase tracking-widest mt-1 italic">{t('dashboard.gross_yield')}</div>
                         </div>
                     </div>
                 ))}
                 {topPerformers.length === 0 && (
                     <div className="p-24 text-center">
                         <Users size={48} strokeWidth={1} className="mx-auto mb-4 text-slate-100" />
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">Performance Data Recalibrating</p>
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">{t('dashboard.performance_data_recalibrating')}</p>
                     </div>
                 )}
               </div>
@@ -169,8 +171,8 @@ export function WorkforceSection({ data }: { data: WorkforceAnalytics }) {
                   <ShieldCheck size={16} />
                 </div>
                 <div>
-                  <h3 className="text-lg font-black text-white tracking-tight italic uppercase">Compliance Registry</h3>
-                  <p className="text-rose-400 text-[9px] font-bold uppercase tracking-[0.2em]">Operational Risk & License Audit</p>
+                  <h3 className="text-lg font-black text-white tracking-tight italic uppercase">{t('dashboard.compliance_registry')}</h3>
+                  <p className="text-rose-400 text-[9px] font-bold uppercase tracking-[0.2em]">{t('dashboard.operational_risk_audit')}</p>
                 </div>
               </div>
            </div>
@@ -188,7 +190,7 @@ export function WorkforceSection({ data }: { data: WorkforceAnalytics }) {
                                     "text-[10px] font-black mt-2 bg-opacity-10 px-3 py-1 rounded-lg w-fit tracking-widest italic border uppercase",
                                     d.issue === 'ใบขับขี่หมดอายุ' ? "text-rose-600 bg-rose-600 border-rose-100" : "text-amber-600 bg-amber-600 border-amber-100"
                                 )}>
-                                    BREACH: {d.issue}
+                                    {t('dashboard.breach_label')} {d.issue}
                                 </div>
                             </div>
                         </div>
@@ -199,14 +201,14 @@ export function WorkforceSection({ data }: { data: WorkforceAnalytics }) {
                              )}>
                                 {d.issue === 'ใบขับขี่หมดอายุ' ? `EXPIRED ${d.daysAuth}D` : `EXPIRY: ${d.daysAuth}D`}
                              </div>
-                             <div className="text-[9px] text-slate-400 font-black uppercase tracking-widest mt-1 italic">Immediate Rectification Reqd</div>
+                             <div className="text-[9px] text-slate-400 font-black uppercase tracking-widest mt-1 italic">{t('dashboard.immediate_rectification_reqd')}</div>
                         </div>
                     </div>
                 ))}
                 {driversWithIssues.length === 0 && (
                      <div className="p-24 text-center">
                         <ShieldCheck size={48} strokeWidth={1} className="mx-auto mb-4 text-emerald-100" />
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">Compliance Perimeter Secure</p>
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">{t('dashboard.compliance_perimeter_secure')}</p>
                     </div>
                 )}
               </div>

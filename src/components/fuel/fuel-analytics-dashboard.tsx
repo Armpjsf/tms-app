@@ -10,105 +10,119 @@ import {
   Gauge,
   DollarSign,
   Droplets,
+  Zap,
+  Activity,
+  Target
 } from "lucide-react"
 import type { FuelAnalytics } from "@/lib/supabase/fuel-analytics"
+import { PremiumCard } from "@/components/ui/premium-card"
+import { cn } from "@/lib/utils"
 
 export function FuelAnalyticsDashboard({ analytics }: { analytics: FuelAnalytics }) {
   const maxCost = Math.max(...analytics.vehicleBreakdown.map(v => v.totalCost), 1)
   const maxMonthCost = Math.max(...analytics.monthlyTrends.map(m => m.totalCost), 1)
 
   return (
-    <div className="space-y-6">
-      {/* KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-        <Card className="bg-card/50 border-border">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Droplets size={16} className="text-emerald-500" />
-              <span className="text-xs text-muted-foreground">ลิตรรวม</span>
-            </div>
-            <p className="text-2xl font-bold text-foreground">{analytics.totalLiters.toLocaleString()}</p>
-            <p className="text-[10px] text-muted-foreground mt-1">{analytics.totalLogs} ครั้ง</p>
-          </CardContent>
-        </Card>
-        <Card className="bg-card/50 border-border">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <DollarSign size={16} className="text-emerald-400" />
-              <span className="text-xs text-muted-foreground">ค่าใช้จ่ายรวม</span>
-            </div>
-            <p className="text-2xl font-bold text-foreground">฿{analytics.totalCost.toLocaleString()}</p>
-          </CardContent>
-        </Card>
-        <Card className="bg-card/50 border-border">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Fuel size={16} className="text-amber-400" />
-              <span className="text-xs text-muted-foreground">ราคาเฉลี่ย/ลิตร</span>
-            </div>
-            <p className="text-2xl font-bold text-foreground">฿{analytics.avgCostPerLiter.toFixed(2)}</p>
-          </CardContent>
-        </Card>
-        <Card className="bg-card/50 border-border">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Gauge size={16} className="text-cyan-400" />
-              <span className="text-xs text-muted-foreground">เฉลี่ย กม./ลิตร</span>
-            </div>
-            <p className="text-2xl font-bold text-foreground">{analytics.avgKmPerLiter || '—'}</p>
-            <p className="text-[10px] text-muted-foreground mt-1">
-              {analytics.avgKmPerLiter >= 8 ? '✅ ดี' : analytics.avgKmPerLiter >= 5 ? '⚠️ ปานกลาง' : analytics.avgKmPerLiter > 0 ? '🔴 ต่ำ' : ''}
-            </p>
-          </CardContent>
-        </Card>
-        <Card className="bg-card/50 border-border">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <AlertTriangle size={16} className="text-red-400" />
-              <span className="text-xs text-muted-foreground">ผิดปกติ</span>
-            </div>
-            <p className="text-2xl font-bold text-foreground">{analytics.anomalies.length}</p>
-            <p className="text-[10px] text-muted-foreground mt-1">รายการ</p>
-          </CardContent>
-        </Card>
+    <div className="space-y-10">
+      {/* Tactical KPI Hub */}
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-6">
+        <PremiumCard className="bg-[#0a0518] border-2 border-white/5 p-8 relative overflow-hidden group">
+           <div className="flex items-center justify-between mb-4">
+              <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">Total Volume</span>
+              <Droplets size={18} className="text-primary opacity-30 group-hover:opacity-100 transition-opacity" />
+           </div>
+           <p className="text-4xl font-black text-white italic tracking-tighter mb-1">{analytics.totalLiters.toLocaleString()} L</p>
+           <p className="text-[10px] text-primary font-black uppercase tracking-[0.2em]">{analytics.totalLogs} SYNC NODES</p>
+           <div className="absolute bottom-0 left-0 h-1 bg-primary w-12 rounded-full" />
+        </PremiumCard>
+
+        <PremiumCard className="bg-[#0a0518] border-2 border-white/5 p-8 relative overflow-hidden group">
+           <div className="flex items-center justify-between mb-4">
+              <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">Net Expenditure</span>
+              <DollarSign size={18} className="text-primary/80 opacity-30 group-hover:opacity-100 transition-opacity" />
+           </div>
+           <p className="text-4xl font-black text-white italic tracking-tighter">฿{analytics.totalCost.toLocaleString()}</p>
+           <div className="absolute bottom-0 left-0 h-1 bg-primary/50 w-8 rounded-full" />
+        </PremiumCard>
+
+        <PremiumCard className="bg-[#0a0518] border-2 border-white/5 p-8 relative overflow-hidden group">
+           <div className="flex items-center justify-between mb-4">
+              <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">Unit Valuation</span>
+              <Fuel size={18} className="text-blue-400 opacity-30 group-hover:opacity-100 transition-opacity" />
+           </div>
+           <p className="text-4xl font-black text-white italic tracking-tighter">฿{analytics.avgCostPerLiter.toFixed(2)}</p>
+           <div className="absolute bottom-0 left-0 h-1 bg-blue-500 w-8 rounded-full" />
+        </PremiumCard>
+
+        <PremiumCard className="bg-[#0a0518] border-2 border-white/5 p-8 relative overflow-hidden group">
+           <div className="flex items-center justify-between mb-4">
+              <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">Fleet Efficiency</span>
+              <Gauge size={18} className="text-blue-400 opacity-30 group-hover:opacity-100 transition-opacity" />
+           </div>
+           <p className="text-4xl font-black text-white italic tracking-tighter leading-none">{analytics.avgKmPerLiter || 'SECURE'}</p>
+           <div className="mt-2">
+              <span className={cn(
+                 "text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-widest",
+                 analytics.avgKmPerLiter >= 8 ? 'bg-emerald-500/10 text-emerald-400' : 
+                 analytics.avgKmPerLiter >= 5 ? 'bg-amber-500/10 text-amber-400' : 
+                 analytics.avgKmPerLiter > 0 ? 'bg-rose-500/10 text-rose-500' : 'bg-white/5 text-slate-600'
+              )}>
+                 {analytics.avgKmPerLiter >= 8 ? 'Optimal' : analytics.avgKmPerLiter >= 5 ? 'Degraded' : analytics.avgKmPerLiter > 0 ? 'Critical' : 'N/A'}
+              </span>
+           </div>
+        </PremiumCard>
+
+        <PremiumCard className="bg-[#0a0518]/50 border-2 border-rose-500/20 p-8 shadow-[0_0_30px_rgba(244,63,94,0.1)] relative overflow-hidden group">
+           <div className="flex items-center justify-between mb-4">
+              <span className="text-[10px] font-black text-rose-500 uppercase tracking-widest leading-none">Anomalies</span>
+              <AlertTriangle size={18} className="text-rose-500 animate-pulse" />
+           </div>
+           <p className="text-4xl font-black text-rose-500 italic tracking-tighter">{analytics.anomalies.length}</p>
+           <p className="text-[10px] font-black uppercase text-rose-700 tracking-[0.2em] mt-1">Divergent Signals</p>
+        </PremiumCard>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Monthly Trends */}
-        <Card className="bg-card/50 border-border">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm flex items-center gap-2 text-foreground">
-              <BarChart3 size={16} className="text-primary" />
-              แนวโน้มรายเดือน
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+        {/* Temporal Trends */}
+        <PremiumCard className="bg-[#0a0518] border-2 border-white/5 p-0 overflow-hidden rounded-[3rem]">
+          <div className="p-8 border-b border-white/5 bg-black/40 flex items-center justify-between">
+             <h3 className="text-sm font-black text-white uppercase tracking-[0.4em] flex items-center gap-4">
+                <BarChart3 className="text-primary" size={18} />
+                Temporal Drift
+             </h3>
+             <Activity className="text-primary/30" size={16} />
+          </div>
+          <div className="p-10 space-y-6">
             {analytics.monthlyTrends.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-8">ไม่มีข้อมูล</p>
+              <p className="text-xs font-black text-slate-500 text-center py-12 uppercase tracking-widest">No temporal data detected</p>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-6">
                 {analytics.monthlyTrends.map((month, i) => {
                   const prev = analytics.monthlyTrends[i - 1]
                   const change = prev ? ((month.totalCost - prev.totalCost) / prev.totalCost * 100) : 0
                   return (
-                    <div key={month.month} className="space-y-1.5">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground font-mono">{month.month}</span>
-                        <div className="flex items-center gap-3">
-                          <span className="text-xs text-muted-foreground">{month.totalLiters.toLocaleString()} L</span>
-                          <span className="font-medium text-foreground">฿{month.totalCost.toLocaleString()}</span>
+                    <div key={month.month} className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-black text-slate-400 uppercase tracking-widest">{month.month}</span>
+                        <div className="flex items-center gap-6">
+                          <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest">{month.totalLiters.toLocaleString()} L</span>
+                          <span className="text-sm font-black text-white italic">฿{month.totalCost.toLocaleString()}</span>
                           {prev && (
-                            <span className={`text-xs flex items-center gap-0.5 ${change > 0 ? 'text-red-400' : 'text-emerald-400'}`}>
+                            <div className={cn(
+                               "px-2 py-1 rounded-lg text-[9px] font-black flex items-center gap-1",
+                               change > 0 ? 'bg-rose-500/10 text-rose-500' : 'bg-emerald-500/10 text-emerald-400'
+                            )}>
                               {change > 0 ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
                               {Math.abs(change).toFixed(0)}%
-                            </span>
+                            </div>
                           )}
                         </div>
                       </div>
-                      <div className="h-2 bg-muted/30 rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full transition-all"
-                          style={{ width: `${(month.totalCost / maxMonthCost) * 100}%` }}
+                      <div className="h-2 bg-white/5 rounded-full overflow-hidden border border-white/5 p-0.5">
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{ width: `${(month.totalCost / maxMonthCost) * 100}%` }}
+                          className="h-full bg-gradient-to-r from-primary to-purple-600 rounded-full shadow-[0_0_10px_rgba(255,30,133,0.3)]"
                         />
                       </div>
                     </div>
@@ -116,88 +130,90 @@ export function FuelAnalyticsDashboard({ analytics }: { analytics: FuelAnalytics
                 })}
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </PremiumCard>
 
-        {/* Vehicle Cost Ranking */}
-        <Card className="bg-card/50 border-border">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm flex items-center gap-2 text-foreground">
-              <Fuel size={16} className="text-amber-400" />
-              ค่าใช้จ่ายรายรถ (Top 10)
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+        {/* Asset Yield Ranking */}
+        <PremiumCard className="bg-[#0a0518] border-2 border-white/5 p-0 overflow-hidden rounded-[3rem]">
+          <div className="p-8 border-b border-white/5 bg-black/40 flex items-center justify-between">
+             <h3 className="text-sm font-black text-white uppercase tracking-[0.4em] flex items-center gap-4">
+                <Fuel className="text-primary" size={18} />
+                Asset Consumption Hierarchy
+             </h3>
+             <Target className="text-primary/30" size={16} />
+          </div>
+          <div className="p-10 space-y-4">
             {analytics.vehicleBreakdown.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-8">ไม่มีข้อมูล</p>
+              <p className="text-xs font-black text-slate-500 text-center py-12 uppercase tracking-widest">No Asset data clusters found</p>
             ) : (
-              <div className="space-y-2.5">
+              <div className="space-y-5">
                 {analytics.vehicleBreakdown.slice(0, 10).map((v, i) => (
                   <div key={v.vehicle_plate} className="group">
-                    <div className="flex items-center justify-between text-sm mb-1">
-                      <div className="flex items-center gap-2">
-                        <span className="w-5 h-5 rounded-full bg-muted/50 flex items-center justify-center text-[10px] text-muted-foreground font-medium">
-                          {i + 1}
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-4">
+                        <span className="w-8 h-8 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-[10px] text-primary font-black">
+                          0{i + 1}
                         </span>
-                        <span className="font-medium text-foreground">{v.vehicle_plate}</span>
+                        <span className="text-sm font-black text-white tracking-widest uppercase">{v.vehicle_plate}</span>
                       </div>
-                      <div className="flex items-center gap-3 text-xs">
-                        <span className="text-muted-foreground">{v.totalLiters} L</span>
+                      <div className="flex items-center gap-6">
+                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{v.totalLiters} L</span>
                         {v.avgEfficiency > 0 && (
-                          <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${
-                            v.avgEfficiency >= 8 ? 'bg-emerald-500/20 text-emerald-400' :
-                            v.avgEfficiency >= 5 ? 'bg-amber-500/20 text-amber-400' :
-                            'bg-red-500/20 text-red-400'
-                          }`}>
+                          <span className={cn(
+                             "px-3 py-1 rounded-xl text-[9px] font-black uppercase tracking-widest",
+                             v.avgEfficiency >= 8 ? 'bg-emerald-500/10 text-emerald-400' :
+                             v.avgEfficiency >= 5 ? 'bg-amber-500/10 text-amber-400' : 'bg-rose-500/10 text-rose-400'
+                          )}>
                             {v.avgEfficiency} km/L
                           </span>
                         )}
-                        <span className="font-medium text-foreground">฿{v.totalCost.toLocaleString()}</span>
+                        <span className="text-sm font-black text-primary italic">฿{v.totalCost.toLocaleString()}</span>
                       </div>
                     </div>
-                    <div className="h-1.5 bg-muted/30 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-gradient-to-r from-amber-500 to-orange-500 rounded-full transition-all"
-                        style={{ width: `${(v.totalCost / maxCost) * 100}%` }}
+                    <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${(v.totalCost / maxCost) * 100}%` }}
+                        className="h-full bg-gradient-to-r from-primary to-purple-600 rounded-full"
                       />
                     </div>
                   </div>
                 ))}
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </PremiumCard>
       </div>
 
-      {/* Anomalies */}
+      {/* Anomalies Warning Console */}
       {analytics.anomalies.length > 0 && (
-        <Card className="bg-red-500/5 border-red-500/20">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm flex items-center gap-2 text-red-400">
-              <AlertTriangle size={16} />
-              พบรายการผิดปกติ ({analytics.anomalies.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
+        <PremiumCard className="bg-rose-500/5 border-2 border-rose-500/30 rounded-[3rem] p-0 overflow-hidden shadow-[0_0_50px_rgba(244,63,94,0.1)]">
+          <div className="p-8 bg-rose-500/10 border-b border-rose-500/20 flex items-center gap-4">
+             <AlertTriangle className="text-rose-500 animate-bounce" size={24} />
+             <h3 className="text-xl font-black text-white uppercase tracking-widest italic">Anomalous Consumptions Detected ({analytics.anomalies.length})</h3>
+          </div>
+          <div className="p-10">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {analytics.anomalies.map((a, i) => (
-                <div key={i} className="flex items-center justify-between p-3 rounded-lg bg-background/50 border border-red-500/10">
-                  <div className="flex items-center gap-3">
-                    <AlertTriangle size={14} className="text-red-400 shrink-0" />
+                <div key={i} className="flex items-center justify-between p-6 rounded-3xl bg-[#0a0518] border-2 border-rose-500/20 hover:border-rose-500/50 transition-all group">
+                  <div className="flex items-center gap-6">
+                    <div className="w-12 h-12 rounded-2xl bg-rose-500/20 flex items-center justify-center text-rose-500 border border-rose-500/30">
+                       <AlertTriangle size={20} />
+                    </div>
                     <div>
-                      <p className="text-sm text-foreground font-medium">{a.vehicle_plate}</p>
-                      <p className="text-xs text-muted-foreground">{a.issue}</p>
+                      <p className="text-lg font-black text-white tracking-widest uppercase mb-1">{a.vehicle_plate}</p>
+                      <p className="text-[10px] font-black text-rose-400 uppercase tracking-widest opacity-80">{a.issue}</p>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className="text-sm font-medium text-foreground">฿{a.cost.toLocaleString()}</p>
-                    <p className="text-[10px] text-muted-foreground">{a.date}</p>
+                  <div className="text-right space-y-1">
+                    <p className="text-lg font-black text-white italic">฿{a.cost.toLocaleString()}</p>
+                    <p className="text-[9px] font-black text-slate-600 uppercase tracking-widest">{a.date}</p>
                   </div>
                 </div>
               ))}
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </PremiumCard>
       )}
     </div>
   )

@@ -5,10 +5,12 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { 
     Truck, CheckCircle, Clock, Trophy, Medal, Crown, 
-    MapPin, FileText, ChevronRight, TrendingUp, Star 
+    MapPin, FileText, ChevronRight, TrendingUp, Star,
+    LayoutGrid, Settings, Bell, Search, Plus
 } from "lucide-react"
 import Link from "next/link"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { cn } from "@/lib/utils"
 
 interface DashboardClientProps {
     session: {
@@ -52,25 +54,6 @@ const item = {
 }
 
 export function DashboardClient({ session, stats, currentJob, gamification, todayIncome }: DashboardClientProps) {
-    const getRankIcon = (rank: string) => {
-        const iconClass = "w-8 h-8 filter drop-shadow-lg"
-        switch(rank) {
-            case 'Platinum': return <Crown className={`${iconClass} text-emerald-300`} />
-            case 'Gold': return <Trophy className={`${iconClass} text-yellow-500`} />
-            case 'Silver': return <Medal className={`${iconClass} text-gray-700`} />
-            default: return <Medal className={`${iconClass} text-emerald-800`} />
-        }
-    }
-
-    const getRankColor = (rank: string) => {
-        switch(rank) {
-            case 'Platinum': return 'from-emerald-700/60 via-teal-800/40 to-slate-950 border-emerald-500/50 shadow-emerald-500/20'
-            case 'Gold': return 'from-yellow-700/60 via-orange-800/40 to-slate-950 border-yellow-500/50 shadow-yellow-500/20'
-            case 'Silver': return 'from-slate-600/60 via-slate-800/40 to-slate-950 border-slate-400/50 shadow-slate-400/20'
-            default: return 'from-emerald-800/60 via-emerald-950/40 to-slate-950 border-emerald-700/50 shadow-emerald-700/20'
-        }
-    }
-
     const progressPercent = gamification.nextRankPoints > 0 
         ? (gamification.points / gamification.nextRankPoints) * 100 
         : 100
@@ -80,252 +63,177 @@ export function DashboardClient({ session, stats, currentJob, gamification, toda
             variants={container}
             initial="hidden"
             animate="show"
-            className="space-y-6"
+            className="space-y-8 pb-24"
         >
-            {/* Header Section */}
-            <motion.div variants={item} className="flex items-center justify-between">
+            {/* Header / Brand Section */}
+            <motion.div variants={item} className="flex items-center justify-between px-2">
                 <div className="flex items-center gap-3">
+                    <button className="p-2.5 rounded-2xl bg-white/5 border border-white/10 text-primary">
+                        <LayoutGrid size={24} />
+                    </button>
+                    <h1 className="text-2xl font-black text-white tracking-widest uppercase">
+                        Candy<span className="text-primary">Logistics</span>
+                    </h1>
+                </div>
+                <div className="flex items-center gap-3">
+                    <button className="relative p-2.5 rounded-2xl bg-white/5 border border-white/10 text-slate-400">
+                        <Bell size={20} />
+                        <span className="absolute top-2 right-2 w-2 h-2 bg-primary rounded-full" />
+                    </button>
+                    <Avatar className="h-11 w-11 border-2 border-primary/20 bg-secondary">
+                        <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${session.driverName}`} />
+                        <AvatarFallback>{session.driverName?.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                </div>
+            </motion.div>
+
+            {/* Title & Stats Overview */}
+            <motion.div variants={item} className="space-y-1">
+                <h2 className="text-4xl font-black text-white px-1">Active Shipments</h2>
+                <p className="text-slate-500 font-bold px-1 tracking-tight">Monitoring {stats.total} candy drops in transit</p>
+            </motion.div>
+
+            {/* Circular Stats Grid */}
+            <motion.div variants={item} className="grid grid-cols-2 gap-6">
+                <div className="glass-panel rounded-[2.5rem] p-6 aspect-square flex flex-col items-center justify-center gap-3 group transition-all hover:scale-105">
+                    <div className="absolute top-4 right-4 text-primary opacity-20 group-hover:opacity-60 transition-opacity">
+                         <Truck size={40} />
+                    </div>
                     <div className="relative">
-                        <Avatar className="h-12 w-12 border-2 border-primary/20">
-                            <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${session.driverName}`} />
-                            <AvatarFallback>{session.driverName?.charAt(0)}</AvatarFallback>
-                        </Avatar>
-                        <span className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-background rounded-full animate-pulse" />
+                        <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center mb-1">
+                             <Truck className="text-primary" size={20} strokeWidth={2.5} />
+                        </div>
                     </div>
-                    <div>
-                        <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">สวัสดี, {session.driverName}</h2>
-                        <p className="text-slate-500 dark:text-slate-400 text-xs font-medium flex items-center gap-1">
-                            <Clock size={12} className="text-emerald-500" /> สู่ระบบเมื่อ 5 นาทีที่แล้ว
-                        </p>
+                    <div className="text-center">
+                        <div className="text-4xl font-black text-white tracking-tighter">0{stats.total}</div>
+                        <div className="text-[10px] font-black text-primary uppercase tracking-[0.2em] opacity-80">ON ROUTE</div>
                     </div>
                 </div>
-                <div className="text-right">
-                    <motion.div 
-                        initial={{ scale: 0.8 }}
-                        animate={{ scale: 1 }}
-                        className="bg-emerald-500/10 dark:bg-emerald-500/15 border border-emerald-500/20 dark:border-emerald-500/30 rounded-2xl px-3 py-1.5"
-                    >
-                        <div className="text-lg font-black text-emerald-600 dark:text-emerald-400">
-                            ฿{(todayIncome || 0).toLocaleString()}
-                        </div>
-                        <div className="text-[9px] text-emerald-400 font-bold uppercase tracking-widest">Income</div>
-                    </motion.div>
+
+                <div className="glass-panel rounded-[2.5rem] p-6 aspect-square flex flex-col items-center justify-center gap-3 group transition-all hover:scale-105">
+                    <div className="absolute top-4 right-4 text-blue-400 opacity-20 group-hover:opacity-60 transition-opacity">
+                         <Clock size={40} />
+                    </div>
+                    <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center mb-1">
+                         <Clock className="text-blue-400" size={20} strokeWidth={2.5} />
+                    </div>
+                    <div className="text-center">
+                        <div className="text-4xl font-black text-white tracking-tighter">04</div>
+                        <div className="text-[10px] font-black text-blue-400 uppercase tracking-[0.2em] opacity-80">PENDING</div>
+                    </div>
                 </div>
             </motion.div>
 
-            {/* Gamification Glass Card */}
-            <motion.div variants={item} whileHover={{ scale: 1.01 }} transition={{ type: "spring", stiffness: 400, damping: 10 }}>
-                <Card className={`overflow-hidden border bg-gradient-to-br backdrop-blur-xl ${getRankColor(gamification.rank)}`}>
-                    <CardContent className="p-5 relative">
-                        <div className="absolute -top-10 -right-10 w-32 h-32 bg-white/5 rounded-full blur-3xl pointer-events-none" />
-                        
-                        <div className="flex items-center justify-between mb-4">
-                            <div className="flex items-center gap-4">
-                                <motion.div 
-                                    animate={{ rotate: [0, 10, -10, 0] }}
-                                    transition={{ repeat: Infinity, duration: 4 }}
-                                    className="p-3 bg-white/10 rounded-2xl shadow-inner border border-white/20"
-                                >
-                                    {getRankIcon(gamification.rank)}
-                                </motion.div>
-                                <div>
-                                    <div className="flex items-center gap-1.5 mb-0.5">
-                                        <Star size={12} className="text-yellow-400 fill-yellow-400" />
-                                        <span className="text-[10px] text-white/80 uppercase tracking-[0.2em] font-black">Driver Status</span>
-                                    </div>
-                                    <div className="text-xl font-black text-white">{gamification.rank} Elite</div>
-                                </div>
-                            </div>
-                            <div className="text-right bg-black/40 px-3 py-2 rounded-xl border border-white/10">
-                                <div className="text-xl font-black text-white">{gamification.points}</div>
-                                <div className="text-[8px] text-white/70 font-bold uppercase tracking-widest">Points</div>
-                            </div>
-                        </div>
-                        
-                        <div className="space-y-2">
-                            <div className="flex justify-between items-end text-[10px] font-bold text-white/90">
-                                <span className="flex items-center gap-1"><TrendingUp size={10} /> แผนงานประจำเดือน</span>
-                                {gamification.nextRankPoints > 0 ? (
-                                    <span>เป้าหมาย {gamification.nextRankPoints} คะแนน</span>
-                                ) : (
-                                    <span className="text-emerald-300">Level Max!</span>
-                                )}
-                            </div>
-                            <div className="relative h-2.5 w-full bg-black/40 rounded-full overflow-hidden border border-white/10">
-                                <motion.div 
-                                    initial={{ width: 0 }}
-                                    animate={{ width: `${progressPercent}%` }}
-                                    transition={{ duration: 1.5, ease: "easeOut" }}
-                                    className={`h-full rounded-full shadow-[0_0_15px_rgba(255,255,255,0.3)] ${
-                                        gamification.rank === 'Gold' ? 'bg-gradient-to-r from-yellow-400 to-orange-500' : 
-                                        gamification.rank === 'Platinum' ? 'bg-gradient-to-r from-emerald-400 to-teal-500' : 
-                                        'bg-gradient-to-r from-emerald-400 to-blue-500'
-                                    }`}
-                                />
-                            </div>
-                            <div className="flex justify-between items-center mt-1">
-                                <p className="text-[9px] text-white/80">
-                                     เสร็จสิ้นงานเดือนนี้ <span className="text-white font-bold">{gamification.monthlyCompleted} ครั้ง</span>
-                                </p>
-                                <p className="text-[9px] text-white/80">
-                                    อีก <span className="text-white font-bold">{Math.max(0, gamification.nextRankPoints - gamification.points)}</span> คะแนนเพื่อเลื่อนขั้น
-                                </p>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-            </motion.div>
-
-            {/* Quick Action Bento Grid */}
-            <motion.div variants={item} className="grid grid-cols-2 gap-4">
-                <Card className="bg-white border-gray-200 overflow-hidden relative group active:scale-95 transition-all">
-                    <div className="absolute inset-0 bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity" />
-                    <CardContent className="p-5 flex flex-col gap-1">
-                        <div className="p-2.5 bg-primary/20 rounded-xl w-fit mb-2">
-                            <Clock className="w-5 h-5 text-primary" />
-                        </div>
-                        <span className="text-2xl font-black text-slate-900">{stats.total}</span>
-                        <span className="text-[10px] text-slate-600 font-bold uppercase tracking-wider">งานวันนี้</span>
-                    </CardContent>
-                </Card>
-                
-                <Card className="bg-white border-gray-200 overflow-hidden relative group active:scale-95 transition-all">
-                    <div className="absolute inset-0 bg-emerald-500/10 opacity-0 group-hover:opacity-100 transition-opacity" />
-                    <CardContent className="p-5 flex flex-col gap-1">
-                        <div className="p-2.5 bg-emerald-500/20 rounded-xl w-fit mb-2">
-                            <CheckCircle className="w-5 h-5 text-emerald-500" />
-                        </div>
-                        <span className="text-2xl font-black text-slate-900">{stats.completed}</span>
-                        <span className="text-[10px] text-slate-600 font-bold uppercase tracking-wider">สำเร็จแล้ว</span>
-                    </CardContent>
-                </Card>
-            </motion.div>
-
-            {/* Current Work Section */}
-            <motion.div variants={item}>
-                <div className="flex items-center justify-between mb-3 px-1">
-                    <h3 className="text-foreground text-sm font-bold uppercase tracking-widest flex items-center gap-2">
-                        <div className="w-1.5 h-1.5 bg-primary rounded-full animate-ping" />
-                        Active Mission
-                    </h3>
-                    {currentJob && (
-                        <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-md border ${
-                            ['In Progress', 'In Transit'].includes(currentJob.Job_Status) 
-                                ? 'text-emerald-500 bg-blue-500/10 border-emerald-500/15' 
-                                : 'text-amber-400 bg-amber-500/10 border-amber-500/20'
-                        }`}>
-                            {currentJob.Job_Status}
-                        </span>
-                    )}
-                </div>
-                
+            {/* Mission Cards List */}
+            <motion.div variants={item} className="space-y-6">
                 {currentJob ? (
-                    <Link href={`/mobile/jobs/${currentJob.Job_ID}`}>
-                        <Card className="bg-white border-gray-200 active:scale-95 transition-all overflow-hidden relative shadow-2xl">
-                            <div className="absolute top-0 right-0 p-3 opacity-5 pointer-events-none">
-                                <Truck size={80} />
+                    <div className="space-y-6">
+                        {/* Primary Active Card */}
+                        <div className="glass-panel rounded-[3rem] p-8 space-y-6 relative overflow-hidden group">
+                            <div className="absolute top-0 right-0 p-8 text-primary/10 pointer-events-none">
+                                <Truck size={120} />
                             </div>
-                            <CardContent className="p-5 space-y-4">
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center flex-shrink-0 shadow-lg shadow-orange-500/20">
-                                            <Truck className="text-foreground" size={20} />
-                                        </div>
-                                        <div>
-                                            <h4 className="text-slate-900 font-black text-sm">{currentJob.Job_ID}</h4>
-                                            <p className="text-slate-600 text-xs font-bold uppercase tracking-tight">{currentJob.Customer_Name}</p>
+                            
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-14 h-14 bg-white/5 border border-white/10 rounded-3xl flex items-center justify-center shadow-2xl">
+                                        <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
+                                            <Star size={16} className="text-primary fill-primary" />
                                         </div>
                                     </div>
-                                    <ChevronRight className="text-gray-500" size={18} />
-                                </div>
-                                
-                                <div className="space-y-4 pt-2">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-slate-500 text-[9px] font-black uppercase mb-0.5">Pickup Origin</p>
-                                            <p className="text-slate-900 text-xs font-medium truncate">{currentJob.Origin_Location || 'ไม่ระบุ'}</p>
-                                        </div>
-                                    </div>
-                                    
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-2.5 h-2.5 rounded-full border-2 border-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.5)]" />
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-slate-500 text-[9px] font-black uppercase mb-0.5">Delivery Point</p>
-                                            <p className="text-slate-900 text-xs font-medium truncate">{currentJob.Dest_Location || currentJob.Route_Name || 'ไม่ระบุ'}</p>
-                                        </div>
+                                    <div>
+                                        <h4 className="text-2xl font-black text-white tracking-tighter">#{currentJob.Job_ID}</h4>
+                                        <p className="text-slate-500 text-xs font-bold uppercase tracking-widest">{currentJob.Customer_Name}</p>
                                     </div>
                                 </div>
+                                <div className="px-4 py-1.5 rounded-full bg-primary text-[10px] font-black text-white uppercase tracking-widest shadow-xl shadow-primary/30">
+                                    IN TRANSIT
+                                </div>
+                            </div>
 
-                                <motion.div 
-                                    initial={{ opacity: 0 }}
-                                    animate={{ opacity: 1 }}
-                                    className="bg-primary/10 border border-primary/20 rounded-xl p-2.5 text-center mt-2 group-hover:bg-primary/20 transition-colors"
-                                >
-                                    <span className="text-primary text-[10px] font-black uppercase tracking-widest">TAP TO MANAGE JOB</span>
-                                </motion.div>
-                            </CardContent>
-                        </Card>
-                    </Link>
-                ) : (
-                    <Card className="bg-white/60 border-gray-200 border-dashed py-10">
-                        <CardContent className="text-center">
-                            <div className="bg-gray-50 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3">
-                               <Clock className="text-gray-500" size={20} />
+                            <div className="space-y-3">
+                                <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest">
+                                    <span className="text-slate-500">WAREHOUSE A</span>
+                                    <span className="text-primary">75% COMPLETE</span>
+                                    <span className="text-slate-500">CENTRAL HUB</span>
+                                </div>
+                                <div className="h-2.5 w-full bg-white/5 rounded-full overflow-hidden">
+                                     <motion.div 
+                                        initial={{ width: 0 }}
+                                        animate={{ width: "75%" }}
+                                        className="h-full bg-primary rounded-full shadow-[0_0_15px_rgba(255,30,133,0.5)]"
+                                     />
+                                </div>
                             </div>
-                            <p className="text-gray-500 text-sm font-medium">ไม่มีงานที่ดำเนินอยู่ในขณะนี้</p>
-                            <Link href="/mobile/jobs" className="text-primary text-xs font-black mt-2 inline-block uppercase tracking-widest">
-                                ค้นหางานใหม่
-                            </Link>
-                        </CardContent>
-                    </Card>
+
+                            <div className="flex items-center justify-between pt-2">
+                                <div className="flex -space-x-3">
+                                    {[1, 2].map(i => (
+                                        <Avatar key={i} className="h-10 w-10 border-2 border-secondary shadow-xl">
+                                            <AvatarImage src={`https://i.pravatar.cc/100?img=${i + 10}`} />
+                                            <AvatarFallback>U</AvatarFallback>
+                                        </Avatar>
+                                    ))}
+                                    <div className="h-10 w-10 rounded-full bg-white/10 backdrop-blur-md border-2 border-secondary flex items-center justify-center text-[10px] font-black text-white">
+                                        +2
+                                    </div>
+                                </div>
+                                <Button className="h-14 px-10 rounded-2xl bg-primary hover:brightness-110 text-white font-black text-xs uppercase tracking-widest shadow-xl shadow-primary/30 transition-all">
+                                    TRACK LIVE
+                                </Button>
+                            </div>
+                        </div>
+
+                        {/* Secondary Secondary Card */}
+                        <div className="glass-panel rounded-[3rem] p-8 space-y-6 opacity-80 scale-95 origin-top transition-all hover:opacity-100 hover:scale-100">
+                             <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-4">
+                                     <div className="w-14 h-14 bg-white/5 border border-white/10 rounded-3xl flex items-center justify-center">
+                                         <Clock className="text-accent" size={24} />
+                                     </div>
+                                     <div>
+                                         <h4 className="text-2xl font-black text-white tracking-tighter">#CL-9011-ZC</h4>
+                                         <p className="text-slate-500 text-xs font-bold uppercase tracking-widest">Sour Worms Logistics</p>
+                                     </div>
+                                </div>
+                                <div className="px-4 py-1.5 rounded-full bg-accent/20 border border-accent/30 text-[10px] font-black text-accent uppercase tracking-widest">
+                                    SORTING
+                                </div>
+                            </div>
+                            <div className="h-2.5 w-full bg-white/5 rounded-full overflow-hidden">
+                                 <div className="h-full w-[20%] bg-accent rounded-full shadow-[0_0_15px_rgba(147,51,234,0.5)]" />
+                            </div>
+                            <div className="flex items-center justify-between text-slate-500">
+                                <div className="flex items-center gap-2 text-[10px] font-bold">
+                                    <MapPin size={14} className="text-accent" />
+                                    ESTIMATED: 2H 45M
+                                </div>
+                                <Button variant="ghost" className="text-white font-black text-xs uppercase tracking-widest hover:text-primary">
+                                    DETAILS
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                ) : (
+                    <div className="text-center py-20 px-8 glass-panel rounded-[3rem] border-dashed border-white/10">
+                         <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4">
+                             <Truck className="text-slate-600" size={32} />
+                         </div>
+                         <h3 className="text-white font-black text-xl mb-1">No Active Drops</h3>
+                         <p className="text-slate-500 text-sm font-medium mb-6">Your cargo bay is currently empty.</p>
+                         <Button className="h-14 px-8 rounded-2xl bg-primary text-white font-black text-xs uppercase tracking-widest shadow-xl shadow-primary/30">
+                             DASHBOARD
+                         </Button>
+                    </div>
                 )}
             </motion.div>
 
-            {/* Bottom Actions Cards */}
-            <motion.div variants={item} className="grid grid-cols-2 gap-4">
-                <Link href="/mobile/jobs">
-                    <Card className="bg-white border-gray-200 active:scale-95 transition-all overflow-hidden group">
-                        <CardContent className="p-4 flex flex-col items-center text-center gap-2">
-                             <div className="transition-transform group-hover:scale-110 duration-300">
-                                <FileText className="w-6 h-6 text-primary" />
-                             </div>
-                             <span className="text-xs font-bold text-foreground">งานของฉัน</span>
-                        </CardContent>
-                    </Card>
-                </Link>
-                <Link href="/mobile/map">
-                    <Card className="bg-white border-gray-200 active:scale-95 transition-all overflow-hidden group">
-                        <CardContent className="p-4 flex flex-col items-center text-center gap-2">
-                             <div className="transition-transform group-hover:scale-110 duration-300">
-                                <MapPin className="w-6 h-6 text-emerald-500" />
-                             </div>
-                             <span className="text-xs font-bold text-foreground">แผนที่งาน</span>
-                        </CardContent>
-                    </Card>
-                </Link>
-                <Link href="/mobile/vehicle-check" className="col-span-2">
-                    <motion.div 
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                        className="relative group"
-                    >
-                        <div className="absolute -inset-0.5 bg-gradient-to-r from-emerald-500 to-teal-600 rounded-2xl blur opacity-30 group-hover:opacity-50 transition duration-1000 group-hover:duration-200" />
-                        <Button className="relative w-full h-20 bg-background border border-gray-200 hover:bg-white rounded-2xl flex items-center justify-between px-6 shadow-2xl">
-                            <div className="flex items-center gap-4">
-                                <div className="p-3 bg-primary/20 rounded-xl">
-                                    <Truck className="text-primary" size={24} />
-                                </div>
-                                <div className="text-left">
-                                    <div className="text-sm font-black uppercase tracking-widest text-emerald-900">Vehicle Check</div>
-                                    <div className="text-[10px] text-slate-700 font-bold">ตรวจสอบสภาพรถประจำวัน</div>
-                                </div>
-                            </div>
-                            <ChevronRight className="text-gray-400" size={20} />
-                        </Button>
-                    </motion.div>
-                </Link>
-            </motion.div>
+            {/* Floating Action Button */}
+            <div className="fixed bottom-32 right-6 z-50">
+                 <button className="w-16 h-16 rounded-full bg-primary flex items-center justify-center text-white shadow-[0_8px_30px_rgba(255,30,133,0.4)] transition-transform hover:scale-110 active:scale-95 border-4 border-[#0a0518]">
+                    <Plus size={32} strokeWidth={3} />
+                 </button>
+            </div>
         </motion.div>
     )
 }

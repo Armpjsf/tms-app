@@ -2,13 +2,14 @@
 
 import { useState } from "react"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
-import { Card, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
+import { PremiumCard } from "@/components/ui/premium-card"
+import { PremiumButton } from "@/components/ui/premium-button"
 import { Input } from "@/components/ui/input"
-import { Shield, ArrowLeft, Key, Lock, Smartphone } from "lucide-react"
+import { Shield, ArrowLeft, Key, Lock, Smartphone, Activity, Zap, ShieldCheck, Target, Loader2 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { createClient } from "@/utils/supabase/client"
+import { cn } from "@/lib/utils"
 
 export default function SecuritySettingsPage() {
   const router = useRouter()
@@ -19,11 +20,11 @@ export default function SecuritySettingsPage() {
 
   const handleUpdatePassword = async () => {
     if (password !== confirmPassword) {
-      toast.warning("รหัสผ่านไม่ตรงกัน")
+      toast.warning("Handshake failure: Passwords do not match")
       return
     }
     if (password.length < 6) {
-      toast.warning("รหัสผ่านต้องมีความยาวอย่างน้อย 6 ตัวอักษร")
+      toast.warning("Protocol violation: Password must be at least 6 characters")
       return
     }
 
@@ -31,9 +32,9 @@ export default function SecuritySettingsPage() {
     const { error } = await supabase.auth.updateUser({ password: password })
 
     if (error) {
-      toast.error("เกิดข้อผิดพลาด: " + error.message)
+      toast.error("Handshake interrupted: " + error.message)
     } else {
-      toast.success("อัพเดทรหัสผ่านเรียบร้อยแล้ว")
+      toast.success("Security protocols recalculated successfully")
       setPassword("")
       setConfirmPassword("")
     }
@@ -42,73 +43,146 @@ export default function SecuritySettingsPage() {
 
   return (
     <DashboardLayout>
-      <div className="mb-6">
-        <Button variant="ghost" className="mb-4 pl-0 hover:bg-transparent hover:text-white" onClick={() => router.back()}>
-          <ArrowLeft className="mr-2" size={20} />
-          กลับไปตั้งค่า
-        </Button>
-        <h1 className="text-3xl font-bold text-white mb-2 flex items-center gap-3">
-          <Shield className="text-emerald-400" />
-          ความปลอดภัย
-        </h1>
-        <p className="text-gray-500">จัดการรหัสผ่านและความปลอดภัยของบัญชี</p>
-      </div>
-
-      <div className="space-y-6 max-w-2xl">
-        {/* Change Password */}
-        <Card className="bg-white/80 border-gray-200">
-          <CardContent className="p-6">
-            <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-              <Key size={20} className="text-emerald-600" />
-              เปลี่ยนรหัสผ่าน
-            </h3>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <label className="text-sm text-gray-500">รหัสผ่านใหม่</label>
-                <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-                    <Input 
-                        type="password" 
-                        className="pl-10" 
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                    />
+      <div className="space-y-12 pb-20 p-4 lg:p-10">
+        {/* Tactical Elite Header */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-10 bg-[#0a0518]/60 backdrop-blur-3xl p-10 rounded-br-[6rem] rounded-tl-[3rem] border border-white/5 shadow-2xl relative overflow-hidden group">
+            <div className="absolute top-0 right-0 w-80 h-80 bg-primary/10 blur-[120px] rounded-full -mr-40 -mt-40 pointer-events-none" />
+            
+            <div className="relative z-10 space-y-8">
+                <button onClick={() => router.back()} className="inline-flex items-center gap-2 text-slate-500 hover:text-primary transition-all font-black uppercase tracking-[0.4em] text-[10px] group/back italic">
+                    <ArrowLeft className="w-4 h-4 group-hover/back:-translate-x-1 transition-transform" /> 
+                    Command Control
+                </button>
+                <div className="flex items-center gap-6">
+                    <div className="p-4 bg-primary/20 rounded-[2.5rem] border-2 border-primary/30 shadow-[0_0_40px_rgba(255,30,133,0.2)] text-primary group-hover:scale-110 transition-all duration-500">
+                        <Shield size={42} strokeWidth={2.5} />
+                    </div>
+                    <div>
+                        <h1 className="text-5xl font-black text-white tracking-widest uppercase leading-none italic premium-text-gradient">
+                            Security Core
+                        </h1>
+                        <p className="text-[10px] font-black text-primary uppercase tracking-[0.6em] mt-2 opacity-80 italic italic">Access Handshakes & Defense Protocol Configuration</p>
+                    </div>
                 </div>
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm text-gray-500">ยืนยันรหัสผ่านใหม่</label>
-                <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-                    <Input 
-                        type="password" 
-                        className="pl-10" 
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
-                    />
-                </div>
-              </div>
-              <Button onClick={handleUpdatePassword} disabled={loading} className="w-full bg-indigo-600 hover:bg-indigo-500">
-                {loading ? "กำลังอัพเดท..." : "อัพเดทรหัสผ่าน"}
-              </Button>
             </div>
-          </CardContent>
-        </Card>
 
-        {/* 2FA (Placeholder) */}
-        <Card className="bg-white/80 border-gray-200">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-                <div>
-                    <h3 className="text-lg font-bold text-white mb-1 flex items-center gap-2">
-                        <Smartphone size={20} className="text-emerald-600" />
-                        การยืนยันตัวตน 2 ขั้นตอน (2FA)
-                    </h3>
-                    <p className="text-sm text-gray-400">เพิ่มความปลอดภัยด้วยการยืนยันผ่าน Authenticatior App</p>
+            <div className="flex flex-col items-end gap-6 relative z-10">
+                <div className="bg-white/5 border border-white/10 px-6 py-3 rounded-2xl flex items-center gap-3 backdrop-blur-md">
+                    <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_10px_rgba(16,185,129,1)]" />
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">DEFENSE_ARRAY: ACTIVE</span>
                 </div>
-                <Button variant="outline" disabled>เร็วๆ นี้</Button>
+                <div className="flex items-center gap-4 bg-primary/10 p-4 rounded-2xl border border-primary/20">
+                   <ShieldCheck className="text-primary" size={18} />
+                   <span className="text-[10px] font-black text-white uppercase tracking-[0.3em] italic">Encryption: AES-256</span>
+                </div>
             </div>
-          </CardContent>
-        </Card>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
+             {/* Key Rotation Matrix */}
+             <div className="lg:col-span-12">
+                  <PremiumCard className="bg-[#0a0518]/40 border-2 border-white/5 shadow-3xl rounded-[4rem] overflow-hidden group/security">
+                      <div className="p-20 relative overflow-hidden">
+                          <div className="absolute top-0 right-0 w-96 h-96 bg-primary/5 blur-[100px] pointer-events-none" />
+                          <div className="absolute -bottom-20 -left-20 w-80 h-80 bg-indigo-500/5 blur-[100px] pointer-events-none" />
+                          
+                          <div className="max-w-xl mx-auto space-y-12 relative z-10">
+                              <div className="flex flex-col items-center text-center space-y-6 mb-16">
+                                   <div className="w-24 h-24 rounded-[2rem] bg-primary/20 flex items-center justify-center text-primary border-2 border-primary/30 shadow-[0_0_50px_rgba(255,30,133,0.3)] group-hover/security:rotate-12 transition-transform duration-700">
+                                        <Key size={40} strokeWidth={2.5} />
+                                   </div>
+                                   <div className="space-y-2">
+                                        <h2 className="text-4xl font-black text-white tracking-[0.2em] uppercase italic">Key Rotation</h2>
+                                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.5em] italic">Recalculate Access Vector Parameters</p>
+                                   </div>
+                              </div>
+
+                              <div className="space-y-10">
+                                  <div className="space-y-4">
+                                      <Label className="text-[10px] font-black uppercase text-primary/60 tracking-[0.4em] ml-6 flex items-center gap-2">
+                                          <Lock size={12} /> NEW_ACCESS_KEY
+                                      </Label>
+                                      <Input 
+                                          type="password" 
+                                          value={password}
+                                          onChange={(e) => setPassword(e.target.value)}
+                                          className="h-16 bg-black/60 border-white/5 rounded-[1.5rem] focus:border-primary/50 transition-all text-white font-black italic tracking-widest pl-8 shadow-inner"
+                                          placeholder="••••••••••••"
+                                      />
+                                  </div>
+                                  <div className="space-y-4">
+                                      <Label className="text-[10px] font-black uppercase text-primary/60 tracking-[0.4em] ml-6 flex items-center gap-2">
+                                          <Shield size={12} /> VERIFY_KEY_PARITY
+                                      </Label>
+                                      <Input 
+                                          type="password" 
+                                          value={confirmPassword}
+                                          onChange={(e) => setConfirmPassword(e.target.value)}
+                                          className="h-16 bg-black/60 border-white/5 rounded-[1.5rem] focus:border-primary/50 transition-all text-white font-black italic tracking-widest pl-8 shadow-inner"
+                                          placeholder="••••••••••••"
+                                      />
+                                  </div>
+                                  
+                                  <div className="pt-10">
+                                    <PremiumButton 
+                                        onClick={handleUpdatePassword} 
+                                        disabled={loading} 
+                                        className="w-full h-20 rounded-[2rem] bg-primary text-white font-black italic tracking-[0.3em] shadow-[0_30px_60px_rgba(255,30,133,0.3)] border-0 text-lg gap-6 group/save"
+                                    >
+                                      {loading ? <Loader2 size={24} className="animate-spin" /> : <Zap size={24} className="group-hover/save:scale-125 transition-transform" />}
+                                      {loading ? "RECALCULATING_ENTROPY..." : "SYNC_NEW_DEFENSE_LAYER"}
+                                    </PremiumButton>
+                                  </div>
+                              </div>
+                          </div>
+                      </div>
+                  </PremiumCard>
+             </div>
+
+             {/* 2FA Matrix */}
+             <div className="lg:col-span-12">
+                  <PremiumCard className="bg-[#0a0518]/40 border-2 border-white/5 shadow-3xl rounded-[4rem] overflow-hidden group/2fa">
+                      <div className="p-10 border-b border-white/5 bg-black/40 flex items-center justify-between">
+                          <h3 className="text-xl font-black text-white tracking-widest uppercase italic flex items-center gap-3">
+                              <Smartphone size={20} className="text-indigo-400" />
+                              Multi-Factor Override
+                          </h3>
+                          <div className="px-5 py-1.5 rounded-xl bg-indigo-500/10 text-[9px] font-black text-indigo-400 uppercase tracking-[0.3em] border border-indigo-500/20 italic">
+                              STATUS: EN-ROUTE
+                          </div>
+                      </div>
+                      <div className="p-12 flex flex-col md:flex-row items-center justify-between gap-10">
+                          <div className="space-y-4 text-center md:text-left">
+                              <p className="text-xl font-black text-white uppercase tracking-widest italic">Temporal Token Authentication (2FA)</p>
+                              <p className="text-[10px] font-black text-slate-500 leading-relaxed uppercase tracking-[0.4em] italic">
+                                  Deploy a secondary hardware-backed authentication layer for mission-critical sessions.
+                              </p>
+                          </div>
+                          <PremiumButton variant="outline" disabled className="h-16 px-10 rounded-2xl border-white/10 text-slate-600 gap-3 uppercase font-black text-[10px] tracking-[0.3em] cursor-not-allowed italic">
+                              SYSTEM_ARCHIVE_LOCK
+                          </PremiumButton>
+                      </div>
+                  </PremiumCard>
+             </div>
+        </div>
+
+        {/* Global Advisory */}
+        <div className="mt-20 p-12 rounded-[3.5rem] bg-primary/5 border-2 border-primary/10 flex flex-col md:flex-row gap-10 items-center relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-80 h-full bg-gradient-to-l from-primary/5 to-transparent pointer-events-none" />
+            <div className="p-6 rounded-[2rem] bg-primary/20 text-primary border-2 border-primary/30 shadow-2xl animate-pulse">
+                <Target size={32} />
+            </div>
+            <div className="space-y-4 text-center md:text-left flex-1">
+                <p className="text-xl font-black text-primary italic uppercase tracking-widest">SECURITY_INTEGRITY_ADVISORY</p>
+                <p className="text-sm font-bold text-slate-600 leading-relaxed uppercase tracking-wider italic">
+                    Key rotation should be performed every 30 orbital cycles to maintain maximum defense parity. <br />
+                    All authentication handshakes are monitored via the central telemetry engine.
+                </p>
+            </div>
+            <PremiumButton variant="outline" className="h-14 px-10 rounded-2xl border-white/10 text-white gap-3 uppercase font-black text-[10px] tracking-[0.3em] ml-auto italic">
+                <Activity size={18} /> VIEW_DEFENSE_LOGS
+            </PremiumButton>
+        </div>
       </div>
     </DashboardLayout>
   )

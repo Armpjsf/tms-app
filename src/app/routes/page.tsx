@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
-import { Card, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
+import { PremiumCard } from "@/components/ui/premium-card"
+import { PremiumButton } from "@/components/ui/premium-button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
@@ -20,13 +20,16 @@ import {
   FileSpreadsheet,
   Ruler,
   Building2,
+  Activity,
+  Zap,
+  ShieldCheck,
+  Target
 } from "lucide-react"
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog"
 import {
   Select,
@@ -48,6 +51,7 @@ import { ExcelImport } from "@/components/ui/excel-import"
 import { LocationAutocomplete } from "@/components/location-autocomplete"
 import { useBranch } from "@/components/providers/branch-provider"
 import { toast } from "sonner"
+import { cn } from "@/lib/utils"
 
 export default function RoutesPage() {
   const { selectedBranch, branches } = useBranch()
@@ -75,7 +79,6 @@ export default function RoutesPage() {
     Branch_ID: ""
   })
 
-  // Re-fetch when branch changes globally
   const fetchData = useCallback(async () => {
     setLoading(true)
     const [routesData, locationsData] = await Promise.all([
@@ -115,7 +118,6 @@ export default function RoutesPage() {
         Dest_Lon: null,
         Map_Link_Destination: "",
         Distance_KM: null,
-        // Auto-select branch if strictly one is selected
         Branch_ID: (selectedBranch && selectedBranch !== "All") ? selectedBranch : ""
     })
     setEditingRoute(null)
@@ -140,11 +142,9 @@ export default function RoutesPage() {
     setSaving(true)
     try {
       if (editingRoute) {
-        // Update
         const result = await updateRoute(editingRoute.Route_Name, formData)
         if (!result.success) throw result.error
       } else {
-        // Create
         const result = await createRoute(formData)
         if (!result.success) throw result.error
       }
@@ -152,6 +152,7 @@ export default function RoutesPage() {
       setIsDialogOpen(false)
       resetForm()
       fetchData()
+      toast.success("บันทึกข้อมูลเส้นทางเรียบร้อยแล้ว")
     } catch {
       toast.error("เกิดข้อผิดพลาดในการบันทึก")
     } finally {
@@ -163,336 +164,352 @@ export default function RoutesPage() {
     if (confirm(`ยืนยันลบเส้นทาง "${routeName}"?`)) {
       await deleteRoute(routeName)
       fetchData()
+      toast.success("ลบข้อมูลเส้นทางเรียบร้อยแล้ว")
     }
   }
 
   return (
     <DashboardLayout>
-      {/* Header */}
-      <div className="flex flex-col gap-4 mb-6">
-      {/* Strategic Header Container */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8 mb-10 bg-slate-950 p-10 rounded-br-[5rem] rounded-tl-[3rem] border border-slate-800 shadow-2xl relative overflow-hidden group">
-        <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/10 to-transparent pointer-events-none" />
+      {/* Tactical Route Header */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-10 mb-16 bg-[#0a0518]/60 backdrop-blur-3xl p-12 rounded-[4rem] border border-white/5 shadow-2xl relative group ring-1 ring-white/5 hover:ring-primary/20 transition-all duration-700">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 blur-[100px] pointer-events-none" />
         
-        <div className="relative z-10">
-          <h1 className="text-5xl font-black text-white mb-2 tracking-tighter flex items-center gap-4">
-            <div className="p-3 bg-gradient-to-br from-indigo-500 to-blue-600 rounded-3xl shadow-2xl shadow-indigo-500/20 text-white transform group-hover:scale-110 transition-transform duration-500">
-              <Navigation size={32} />
+        <div className="relative z-10 space-y-4">
+            <div className="flex items-center gap-3">
+                <div className="p-2 bg-primary/20 rounded-xl shadow-lg">
+                    <Navigation className="text-primary" size={20} />
+                </div>
+                <h2 className="text-[10px] font-black text-primary uppercase tracking-[0.4em]">Geospatial Intelligence Matrix</h2>
             </div>
-            จัดการเส้นทาง (Routes)
-          </h1>
-          <p className="text-indigo-400 font-black ml-[4.5rem] uppercase tracking-[0.3em] text-[10px]">Geospatial Intelligence • Route Optimization • GPS Command</p>
+            <h1 className="text-6xl font-black text-white tracking-tighter flex items-center gap-5 uppercase premium-text-gradient">
+                Logistics Routes
+            </h1>
+            <p className="text-slate-500 font-bold text-sm tracking-wide opacity-80 uppercase tracking-widest leading-relaxed">
+              Tactical Route Optimization & Mapping Command Centre
+            </p>
         </div>
 
         <div className="flex flex-wrap gap-4 relative z-10">
-                <ExcelImport 
-                    trigger={
-                        <Button variant="outline" className="h-11 px-5 rounded-xl border-gray-200 bg-white/80 hover:bg-white text-gray-700 hover:text-white transition-all">
-                            <FileSpreadsheet size={16} className="mr-2" /> 
-                            นำเข้า Excel
-                        </Button>
-                    }
-                    title="นำเข้าเส้นทาง"
-                    onImport={createBulkRoutes}
-                    templateData={[
-                        { 
-                            Route_Name: "เส้นทาง A", 
-                            Origin: "จุด A", 
-                            Origin_Lat: 13.7563,
-                            Origin_Lon: 100.5018,
-                            Map_Link_Origin: "https://maps.google.com/...",
-                            Destination: "จุด B", 
-                            Dest_Lat: 13.8123,
-                            Dest_Lon: 100.5678,
-                            Map_Link_Destination: "https://maps.google.com/...",
-                            Distance_KM: 10.5, 
-                            Branch_ID: "HQ" 
-                        }
-                    ]}
-                    templateFilename="template_routes.xlsx"
+            <ExcelImport 
+                trigger={
+                    <PremiumButton variant="outline" className="h-14 px-8 rounded-2xl border-white/5 bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white transition-all">
+                        <FileSpreadsheet size={20} className="mr-3 opacity-50" /> 
+                        Spatial Import
+                    </PremiumButton>
+                }
+                title="Route Vector Import"
+                onImport={createBulkRoutes}
+                templateFilename="logispro_routes_template.xlsx"
+            />
+            <PremiumButton onClick={() => handleOpenDialog()} className="h-14 px-10 rounded-2xl shadow-xl shadow-primary/20">
+              <Plus size={24} className="mr-3" strokeWidth={3} />
+              ENLIST ROUTE
+            </PremiumButton>
+        </div>
+      </div>
+
+      {/* Navigation Command Grid */}
+      <div className="mb-12 relative group max-w-2xl">
+        <div className="absolute inset-x-0 bottom-0 h-1 bg-primary blur-3xl opacity-20 pointer-events-none" />
+        <div className="relative glass-panel rounded-3xl p-1 border-white/5">
+            <div className="flex items-center gap-4 px-6">
+                <Search className="text-primary opacity-50" size={24} />
+                <Input
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="SCAN ROUTE VECTORS & NODES..."
+                    className="bg-transparent border-none text-2xl font-black text-white px-4 h-20 placeholder:text-slate-700 tracking-tighter uppercase focus-visible:ring-0"
                 />
-                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-                <Button onClick={() => handleOpenDialog()} className="h-11 px-6 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 shadow-lg shadow-blue-500/20">
-                <Plus className="w-4 h-4 mr-2" /> เพิ่มเส้นทาง
-                </Button>
-            </DialogTrigger>
-            <DialogContent className="bg-white border-gray-200 max-w-lg">
+            </div>
+        </div>
+      </div>
+
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogContent className="bg-[#0a0518] border border-white/5 text-white max-w-3xl shadow-[0_50px_100px_rgba(0,0,0,0.5)] rounded-[4rem] p-0 overflow-hidden ring-1 ring-white/10">
+            <div className="bg-[#0c061d] p-12 text-white relative overflow-hidden border-b border-white/5">
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent pointer-events-none" />
                 <DialogHeader>
-                <DialogTitle className="text-foreground">
-                    {editingRoute ? "แก้ไขเส้นทาง" : "เพิ่มเส้นทางใหม่"}
-                </DialogTitle>
+                  <DialogTitle className="text-5xl font-black tracking-tighter flex items-center gap-6 uppercase premium-text-gradient">
+                    <div className="p-3 bg-primary/20 rounded-2xl shadow-xl ring-1 ring-primary/30">
+                        <Target size={32} className="text-primary" strokeWidth={2.5} />
+                    </div>
+                    {editingRoute ? "Refine Vector" : "Plot New Route"}
+                  </DialogTitle>
                 </DialogHeader>
-                
-                <div className="space-y-4 mt-4">
-                <div className="space-y-2">
-                    <Label className="text-gray-500">ชื่อเส้นทาง * (ไม่สามารถซ้ำได้)</Label>
-                    <Input
+            </div>
+
+            <div className="p-12 space-y-10 custom-scrollbar max-h-[70vh] overflow-y-auto">
+              {/* Route Primary Metadata */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                <div className="space-y-4">
+                  <Label className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-500 ml-2">Mission Route Name</Label>
+                  <Input
                     value={formData.Route_Name || ""}
                     onChange={(e) => updateForm("Route_Name", e.target.value)}
-                    placeholder="เช่น เส้นทาง A, คลังสินค้า B"
-                    className="bg-gray-100 border-gray-200 text-gray-900"
-                    disabled={!!editingRoute} // Disable renaming if it is PK
-                    />
+                    placeholder="E.G. SECTOR-A, GRID-X"
+                    className="h-16 bg-white/5 border-white/5 text-white font-black rounded-2xl px-8 text-sm uppercase tracking-widest focus:bg-white/10 transition-all"
+                    disabled={!!editingRoute}
+                  />
                 </div>
-
-                <div className="space-y-2">
-                    <Label className="text-gray-500 flex items-center gap-1">
-                        <Building2 className="w-3 h-3" /> สาขา (Branch)
-                    </Label>
-                    <Select 
-                        value={formData.Branch_ID || ""} 
-                        onValueChange={(value) => updateForm("Branch_ID", value)}
-                    >
-                        <SelectTrigger className="bg-gray-100 border-gray-200 text-gray-900">
-                        <SelectValue placeholder="เลือกสาขา" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-gray-100 border-gray-200 text-gray-900">
-                        {branches.map(b => (
-                            <SelectItem key={b.Branch_ID} value={b.Branch_ID}>
-                            {b.Branch_Name} ({b.Branch_ID})
-                            </SelectItem>
-                        ))}
-                        </SelectContent>
-                    </Select>
+                <div className="space-y-4">
+                  <Label className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-500 ml-2">Command Center / Branch</Label>
+                  <Select 
+                      value={formData.Branch_ID || ""} 
+                      onValueChange={(value) => updateForm("Branch_ID", value)}
+                  >
+                      <SelectTrigger className="h-16 bg-white/5 border-white/5 text-white font-black rounded-2xl px-8 text-sm uppercase tracking-widest">
+                        <SelectValue placeholder="SELECT SECTOR" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-[#0c061d] border-white/10 text-white font-black">
+                      {branches.map(b => (
+                          <SelectItem key={b.Branch_ID} value={b.Branch_ID} className="hover:bg-primary/20 focus:bg-primary/20 uppercase tracking-widest text-[10px]">
+                          {b.Branch_Name} ({b.Branch_ID})
+                          </SelectItem>
+                      ))}
+                      </SelectContent>
+                  </Select>
                 </div>
+              </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                    <Label className="text-gray-500">ต้นทาง</Label>
-                    <LocationAutocomplete
-                        value={formData.Origin || ""}
-                        onChange={(val) => updateForm("Origin", val)}
-                        locations={locations}
-                        placeholder="ระบุต้นทาง"
-                        className="bg-gray-100 border-gray-200 text-gray-900"
-                    />
+              {/* Origin Tactical Block */}
+              <div className="space-y-6">
+                <h3 className="text-xs font-black text-primary tracking-[0.3em] uppercase flex items-center gap-3">
+                    <span className="w-1.5 h-1.5 rounded-full bg-primary shadow-[0_0_8px_rgba(255,30,133,1)]" />
+                    Origin Logistics Node
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                    <div className="space-y-4">
+                        <Label className="text-[9px] font-black text-slate-600 uppercase tracking-[0.3em] ml-2">Node Alias</Label>
+                        <LocationAutocomplete
+                            value={formData.Origin || ""}
+                            onChange={(val) => updateForm("Origin", val)}
+                            locations={locations}
+                            placeholder="ENLIST ORIGIN NODAL POINT..."
+                            className="h-16 bg-white/5 border-white/5 rounded-2xl px-8 text-xs font-black uppercase tracking-widest text-white placeholder:text-slate-800"
+                        />
                     </div>
-                    <div className="space-y-2">
-                    <Label className="text-gray-500">ลิ้งค์แผนที่ต้นทาง (Google Map)</Label>
-                    <Input
-                        value={formData.Map_Link_Origin || ""}
-                        onChange={(e) => updateForm("Map_Link_Origin", e.target.value)}
-                        placeholder="https://maps.google.com/..."
-                        className="bg-gray-100 border-gray-200 text-gray-900"
-                    />
+                    <div className="space-y-4">
+                        <Label className="text-[9px] font-black text-slate-600 uppercase tracking-[0.3em] ml-2">GEO Vector Link</Label>
+                        <Input
+                            value={formData.Map_Link_Origin || ""}
+                            onChange={(e) => updateForm("Map_Link_Origin", e.target.value)}
+                            placeholder="HTTPS://MAPS.GOOGLE.COM/..."
+                            className="h-16 bg-white/5 border-white/5 rounded-2xl px-8 text-xs font-black text-white focus:bg-white/10 transition-all"
+                        />
                     </div>
                 </div>
-
-                <div className="grid grid-cols-2 gap-4 p-3 bg-blue-50/50 rounded-lg border border-blue-100">
-                    <div className="space-y-1">
-                        <Label className="text-xs text-blue-600 font-bold">ละติจูด (Lat)</Label>
+                <div className="grid grid-cols-2 gap-10 p-8 bg-primary/5 rounded-[2.5rem] border border-primary/10">
+                    <div className="space-y-3">
+                        <Label className="text-[8px] font-black text-primary uppercase tracking-[0.4em] ml-2">Lat-X Matrix</Label>
                         <Input
                             type="number"
                             step="any"
                             value={formData.Origin_Lat ?? ""}
                             onChange={(e) => updateForm("Origin_Lat", e.target.value ? parseFloat(e.target.value) : null)}
                             placeholder="13.XXXX"
-                            className="h-8 text-xs bg-white border-blue-200"
+                            className="bg-transparent border-white/10 text-white font-black text-center text-sm tracking-widest h-12"
                         />
                     </div>
-                    <div className="space-y-1">
-                        <Label className="text-xs text-blue-600 font-bold">ลองติจูด (Lon)</Label>
+                    <div className="space-y-3">
+                        <Label className="text-[8px] font-black text-primary uppercase tracking-[0.4em] ml-2">Lon-Y Matrix</Label>
                         <Input
                             type="number"
                             step="any"
                             value={formData.Origin_Lon ?? ""}
                             onChange={(e) => updateForm("Origin_Lon", e.target.value ? parseFloat(e.target.value) : null)}
                             placeholder="100.XXXX"
-                            className="h-8 text-xs bg-white border-blue-200"
+                            className="bg-transparent border-white/10 text-white font-black text-center text-sm tracking-widest h-12"
                         />
                     </div>
                 </div>
+              </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                    <Label className="text-gray-500">ปลายทาง</Label>
-                    <LocationAutocomplete
-                        value={formData.Destination || ""}
-                        onChange={(val) => updateForm("Destination", val)}
-                        locations={locations}
-                        placeholder="ระบุปลายทาง"
-                        className="bg-gray-100 border-gray-200 text-gray-900"
-                    />
+              {/* Destination Tactical Block */}
+              <div className="space-y-6">
+                <h3 className="text-xs font-black text-accent tracking-[0.3em] uppercase flex items-center gap-3">
+                    <span className="w-1.5 h-1.5 rounded-full bg-accent shadow-[0_0_8px_rgba(168,85,247,1)]" />
+                    Destination Logistics Node
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                    <div className="space-y-4">
+                        <Label className="text-[9px] font-black text-slate-600 uppercase tracking-[0.3em] ml-2">Terminus Alias</Label>
+                        <LocationAutocomplete
+                            value={formData.Destination || ""}
+                            onChange={(val) => updateForm("Destination", val)}
+                            locations={locations}
+                            placeholder="ENLIST DESTINATION TERMINUS..."
+                            className="h-16 bg-white/5 border-white/5 rounded-2xl px-8 text-xs font-black uppercase tracking-widest text-white placeholder:text-slate-800"
+                        />
                     </div>
-                    <div className="space-y-2">
-                    <Label className="text-gray-500">ลิ้งค์แผนที่ปลายทาง (Google Map)</Label>
-                    <Input
-                        value={formData.Map_Link_Destination || ""}
-                        onChange={(e) => updateForm("Map_Link_Destination", e.target.value)}
-                        placeholder="https://maps.google.com/..."
-                        className="bg-gray-100 border-gray-200 text-gray-900"
-                    />
+                    <div className="space-y-4">
+                        <Label className="text-[9px] font-black text-slate-600 uppercase tracking-[0.3em] ml-2">GEO Terminus Link</Label>
+                        <Input
+                            value={formData.Map_Link_Destination || ""}
+                            onChange={(e) => updateForm("Map_Link_Destination", e.target.value)}
+                            placeholder="HTTPS://MAPS.GOOGLE.COM/..."
+                            className="h-16 bg-white/5 border-white/5 rounded-2xl px-8 text-xs font-black text-white focus:bg-white/10 transition-all"
+                        />
                     </div>
                 </div>
-
-                <div className="grid grid-cols-2 gap-4 p-3 bg-red-50/50 rounded-lg border border-red-100">
-                    <div className="space-y-1">
-                        <Label className="text-xs text-red-600 font-bold">ละติจูด (Lat)</Label>
+                <div className="grid grid-cols-2 gap-10 p-8 bg-accent/5 rounded-[2.5rem] border border-accent/10">
+                    <div className="space-y-3">
+                        <Label className="text-[8px] font-black text-accent uppercase tracking-[0.4em] ml-2">Lat-X Matrix</Label>
                         <Input
                             type="number"
                             step="any"
                             value={formData.Dest_Lat ?? ""}
                             onChange={(e) => updateForm("Dest_Lat", e.target.value ? parseFloat(e.target.value) : null)}
                             placeholder="13.XXXX"
-                            className="h-8 text-xs bg-white border-red-200"
+                            className="bg-transparent border-white/10 text-white font-black text-center text-sm tracking-widest h-12"
                         />
                     </div>
-                    <div className="space-y-1">
-                        <Label className="text-xs text-red-600 font-bold">ลองติจูด (Lon)</Label>
+                    <div className="space-y-3">
+                        <Label className="text-[8px] font-black text-accent uppercase tracking-[0.4em] ml-2">Lon-Y Matrix</Label>
                         <Input
                             type="number"
                             step="any"
                             value={formData.Dest_Lon ?? ""}
                             onChange={(e) => updateForm("Dest_Lon", e.target.value ? parseFloat(e.target.value) : null)}
                             placeholder="100.XXXX"
-                            className="h-8 text-xs bg-white border-red-200"
+                            className="bg-transparent border-white/10 text-white font-black text-center text-sm tracking-widest h-12"
                         />
                     </div>
                 </div>
+              </div>
 
-                <div className="space-y-2">
-                    <Label className="text-gray-500 flex items-center gap-1">
-                        <Ruler className="w-3 h-3" /> ระยะทาง (กม.)
-                    </Label>
+              <div className="space-y-4">
+                  <Label className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-500 ml-2">Nodal Distance Delta (KM)</Label>
+                  <div className="glass-panel p-1 rounded-2xl border-white/5">
                     <Input
                         type="number"
                         value={formData.Distance_KM || ""}
                         onChange={(e) => updateForm("Distance_KM", parseFloat(e.target.value))}
                         placeholder="0.0"
-                        className="bg-gray-100 border-gray-200 text-gray-900"
+                        className="bg-transparent border-none text-2xl font-black text-white text-center h-16 tracking-widest"
                     />
-                </div>
+                  </div>
+              </div>
 
-                <div className="flex gap-3 pt-4">
-                    <Button onClick={handleSave} disabled={saving} className="flex-1 bg-emerald-600 hover:bg-blue-700">
-                    {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
-                    บันทึก
-                    </Button>
-                    <Button variant="outline" onClick={() => setIsDialogOpen(false)} className="flex-1 border-gray-200">
-                    <X className="w-4 h-4 mr-2" /> ยกเลิก
-                    </Button>
-                </div>
-                </div>
-            </DialogContent>
-            </Dialog>
-        </div>
-        </div>
-
-        {/* Filters Row */}
-        <div className="flex gap-4 items-center">
-            
-            <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <Input
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="ค้นหาชื่อเส้นทาง..."
-                    className="pl-10 bg-white/80 border-gray-200 text-gray-900 h-11 rounded-xl placeholder:text-gray-400"
-                />
+              <div className="flex gap-6 pt-10 border-t border-white/5 mt-12 mb-8">
+                <PremiumButton onClick={handleSave} disabled={saving} className="flex-[2] bg-primary hover:bg-primary/80 shadow-primary/20 h-20 rounded-3xl text-lg font-black tracking-widest uppercase">
+                  {saving ? <Loader2 className="w-6 h-6 mr-4 animate-spin" /> : <Save className="w-6 h-6 mr-4" strokeWidth={3} />}
+                  EXECUTE PLOT
+                </PremiumButton>
+                <PremiumButton variant="outline" onClick={() => setIsDialogOpen(false)} className="flex-1 border-white/5 h-20 rounded-3xl text-slate-500 hover:text-white hover:bg-white/5 transition-all uppercase font-black tracking-widest">
+                  Abort
+                </PremiumButton>
+              </div>
             </div>
-        </div>
-      </div>
+          </DialogContent>
+      </Dialog>
 
-      {/* Routes Grid */}
+      {/* Routes Intelligence Grid */}
       {loading ? (
-        <div className="text-gray-500 text-center py-12 flex items-center justify-center gap-2">
-            <Loader2 className="animate-spin" /> กำลังโหลดข้อมูล...
+        <div className="flex flex-col items-center justify-center py-40 glass-panel rounded-[4rem] border-white/5 group">
+             <div className="relative">
+                <Loader2 className="animate-spin text-primary opacity-40" size={80} strokeWidth={1} />
+                <Navigation className="absolute inset-0 m-auto text-primary animate-pulse" size={32} />
+             </div>
+             <p className="mt-10 text-slate-700 font-black uppercase tracking-[0.6em] text-[10px] animate-pulse">Scanning Spatial Fabric...</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
           {routes.map((route) => (
-            <Card key={route.Route_Name} className="bg-white/80 border-gray-200/80 backdrop-blur-sm hover:border-blue-500/30 transition-all shadow-xl hover:shadow-2xl hover:scale-[1.01] rounded-2xl">
-              <CardContent className="p-5">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-blue-500/10 border border-emerald-500/15 flex items-center justify-center">
-                      <MapPin className="w-5 h-5 text-emerald-500" />
+            <div key={route.Route_Name} className="p-0 overflow-hidden group border border-white/5 bg-[#0a0518]/40 backdrop-blur-2xl rounded-[3.5rem] shadow-2xl relative hover:shadow-[0_45px_100px_-20px_rgba(255,30,133,0.1)] transition-all duration-700 hover:ring-1 hover:ring-primary/30">
+              <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary to-accent opacity-0 group-hover:opacity-100 transition-all duration-700" />
+              <div className="p-10">
+                <div className="flex items-start justify-between mb-8">
+                  <div className="flex items-center gap-6">
+                    <div className="w-16 h-16 rounded-[1.5rem] bg-white/5 border border-white/5 flex items-center justify-center text-white font-bold group-hover:bg-primary transition-all duration-700 relative overflow-hidden shadow-xl">
+                      <div className="absolute inset-0 bg-gradient-to-br from-primary/30 to-transparent" />
+                      <MapPin size={28} className="relative z-10" strokeWidth={2.5} />
                     </div>
                     <div>
-                      <h3 className="font-bold text-gray-900">{route.Route_Name}</h3>
-                      {route.Distance_KM !== null && (
-                         <div className="flex items-center gap-1 text-xs text-gray-500 mt-1">
-                            <Ruler className="w-3 h-3" /> {route.Distance_KM} กม.
-                         </div>
-                      )}
-                      {route.Branch_ID && (
-                         <div className="flex items-center gap-1 text-xs text-gray-400 mt-1">
-                            <Building2 className="w-3 h-3" /> {branches.find(b => b.Branch_ID === route.Branch_ID)?.Branch_Name || route.Branch_ID}
-                         </div>
-                      )}
+                      <h3 className="text-2xl font-black text-white tracking-tighter group-hover:text-primary transition-colors line-clamp-1 duration-500 uppercase font-display">{route.Route_Name}</h3>
+                      <div className="flex items-center gap-3 mt-2">
+                          <span className="text-slate-500 font-black text-[9px] uppercase tracking-[0.4em] italic">{route.Branch_ID || "HQ-CENTER"}</span>
+                          {route.Distance_KM !== null && (
+                            <>
+                                <div className="w-1.5 h-1.5 rounded-full bg-primary/40" />
+                                <div className="flex items-center gap-2">
+                                    <Ruler size={10} className="text-primary/60" />
+                                    <span className="text-primary font-black text-[10px] uppercase tracking-widest">{route.Distance_KM} KM</span>
+                                </div>
+                            </>
+                          )}
+                      </div>
                     </div>
                   </div>
                 </div>
 
-                <div className="space-y-2 text-sm mb-4">
-                    {(route.Origin || route.Destination) && (
-                        <div className="flex flex-col gap-2 text-gray-700 bg-white/80 p-3 rounded">
-                            <div className="flex flex-col gap-1">
-                                <div className="flex items-center gap-2">
-                                    <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                                    <span className="text-xs text-gray-500">ต้นทาง:</span>
-                                </div>
-                                <div className="pl-4 flex items-center gap-2 justify-between">
-                                    <span>{route.Origin || "-"}</span>
-                                    {route.Map_Link_Origin && (
-                                        <a href={route.Map_Link_Origin} target="_blank" rel="noopener noreferrer" className="text-emerald-500 hover:text-blue-300">
-                                            <Globe size={14} />
-                                        </a>
-                                    )}
-                                </div>
-                            </div>
-                            
-                            <div className="border-t border-gray-200 my-1"></div>
-
-                            <div className="flex flex-col gap-1">
-                                <div className="flex items-center gap-2">
-                                    <span className="w-2 h-2 rounded-full bg-red-500"></span>
-                                    <span className="text-xs text-gray-500">ปลายทาง:</span>
-                                </div>
-                                <div className="pl-4 flex items-center gap-2 justify-between">
-                                    <span>{route.Destination || "-"}</span>
-                                    {route.Map_Link_Destination && (
-                                        <a href={route.Map_Link_Destination} target="_blank" rel="noopener noreferrer" className="text-emerald-500 hover:text-blue-300">
-                                            <Globe size={14} />
-                                        </a>
-                                    )}
-                                </div>
-                            </div>
+                {/* Spatial Vector Visualization */}
+                <div className="space-y-6 relative mb-8">
+                    <div className="absolute left-[7px] top-4 bottom-4 w-px bg-gradient-to-b from-primary via-white/10 to-accent opacity-40" />
+                    
+                    <div className="flex flex-col gap-1 pl-8 relative">
+                        <div className="absolute left-[-2px] top-1 w-5 h-5 bg-[#0a0518] border border-primary/40 rounded-full flex items-center justify-center">
+                            <div className="w-1.5 h-1.5 rounded-full bg-primary" />
                         </div>
-                    )}
+                        <div className="flex items-center justify-between">
+                            <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Inception Point</span>
+                            {route.Map_Link_Origin && (
+                                <a href={route.Map_Link_Origin} target="_blank" rel="noopener noreferrer" className="p-1.5 bg-white/5 rounded-lg text-primary hover:bg-primary hover:text-white transition-all">
+                                    <Globe size={12} />
+                                </a>
+                            )}
+                        </div>
+                        <p className="text-sm font-black text-slate-300 uppercase tracking-tight">{route.Origin || "GLOBAL GRID-START"}</p>
+                    </div>
+
+                    <div className="flex flex-col gap-1 pl-8 relative">
+                        <div className="absolute left-[-2px] top-1 w-5 h-5 bg-[#0a0518] border border-accent/40 rounded-full flex items-center justify-center">
+                            <div className="w-1.5 h-1.5 rounded-full bg-accent" />
+                        </div>
+                        <div className="flex items-center justify-between">
+                            <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Terminus Point</span>
+                            {route.Map_Link_Destination && (
+                                <a href={route.Map_Link_Destination} target="_blank" rel="noopener noreferrer" className="p-1.5 bg-white/5 rounded-lg text-accent hover:bg-accent hover:text-white transition-all">
+                                    <Globe size={12} />
+                                </a>
+                            )}
+                        </div>
+                        <p className="text-sm font-black text-slate-300 uppercase tracking-tight">{route.Destination || "GLOBAL GRID-END"}</p>
+                    </div>
                 </div>
 
-                <div className="flex gap-2 pt-3 border-t border-gray-200">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="flex-1 border-gray-200"
+                <div className="flex gap-4 pt-6 border-t border-white/5">
+                  <button 
+                    className="flex-1 h-14 bg-white/5 border border-white/5 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:bg-primary/20 hover:text-primary transition-all flex items-center justify-center gap-3"
                     onClick={() => handleOpenDialog(route)}
                   >
-                    <Edit className="w-4 h-4 mr-1" /> แก้ไข
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="border-gray-200 text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                    <Edit size={16} /> Refine Plot
+                  </button>
+                  <button 
+                    className="h-14 w-14 bg-white/5 border border-white/5 rounded-2xl flex items-center justify-center text-rose-800 hover:bg-rose-500 hover:text-white transition-all shadow-lg"
                     onClick={() => handleDelete(route.Route_Name)}
                   >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
+                    <Trash2 size={18} />
+                  </button>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           ))}
           
+          {/* Enhanced Empty State */}
           {routes.length === 0 && (
-            <div className="col-span-full text-center py-12">
-              <MapPin className="w-12 h-12 text-gray-500 mx-auto mb-4" />
-              <p className="text-gray-400">ไม่พบข้อมูลเส้นทาง</p>
+            <div className="col-span-full text-center py-40 glass-panel rounded-[4rem] border-dashed border-white/5 group">
+              <Activity className="w-20 h-20 text-slate-800 mx-auto mb-8 opacity-20 group-hover:scale-110 transition-transform duration-1000" />
+              <p className="text-slate-700 font-black uppercase tracking-[0.5em] text-[10px]">Registry Empty • No Route Vectors Detected</p>
             </div>
           )}
         </div>
       )}
+
+      <div className="mt-20 text-center mb-24">
+        <div className="inline-flex items-center gap-4 px-8 py-3 glass-panel rounded-full text-[9px] font-black text-slate-700 uppercase tracking-[0.6em] opacity-40 hover:opacity-100 transition-opacity">
+            <ShieldCheck size={14} className="text-primary" /> GIS Neural Grid Core v6.0 • Tactical Nodal Routing
+        </div>
+      </div>
     </DashboardLayout>
   )
 }

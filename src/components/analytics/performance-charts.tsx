@@ -10,11 +10,11 @@ import {
     ResponsiveContainer, 
     LineChart, 
     Line,
-    Legend,
-    Cell
+    Legend
 } from 'recharts'
 import { PremiumCard } from "@/components/ui/premium-card"
-import { Package, CheckCircle2, Activity, Zap } from "lucide-react"
+import { Package, CheckCircle2 } from "lucide-react"
+import { useLanguage } from "@/components/providers/language-provider"
 
 type PerformanceData = {
   date: string
@@ -25,6 +25,7 @@ type PerformanceData = {
 }
 
 export function PerformanceCharts({ data }: { data: PerformanceData[] }) {
+  const { t } = useLanguage()
   // Pre-process data for charts
   const chartData = data.map(d => ({
     ...d,
@@ -43,8 +44,8 @@ export function PerformanceCharts({ data }: { data: PerformanceData[] }) {
                     <Package size={16} />
                 </div>
                 <div>
-                    <h3 className="text-lg font-black text-white tracking-tight italic uppercase">Mission Volume</h3>
-                    <p className="text-emerald-400 text-[9px] font-bold uppercase tracking-[0.2em]">Operational Throughput Trend</p>
+                    <h3 className="text-lg font-black text-white tracking-tight italic uppercase">{t('charts.mission_volume')}</h3>
+                    <p className="text-emerald-400 text-[9px] font-bold uppercase tracking-[0.2em]">{t('charts.throughput_trend')}</p>
                 </div>
             </div>
         </div>
@@ -80,8 +81,8 @@ export function PerformanceCharts({ data }: { data: PerformanceData[] }) {
                 itemStyle={{ fontSize: '11px', fontWeight: '900', textTransform: 'uppercase' }}
               />
               <Legend verticalAlign="top" align="right" iconType="circle" wrapperStyle={{ paddingBottom: '20px', fontSize: '10px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '0.1em' }}/>
-              <Bar dataKey="onTimeCount" name="Nominal Ops" stackId="a" fill="#10b981" radius={[0, 0, 0, 0]} />
-              <Bar dataKey="lateJobs" name="Delayed" stackId="a" fill="#f59e0b" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="onTimeCount" name={t('charts.nominal_ops')} stackId="a" fill="#10b981" radius={[0, 0, 0, 0]} />
+              <Bar dataKey="lateJobs" name={t('charts.delayed')} stackId="a" fill="#f59e0b" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -96,8 +97,8 @@ export function PerformanceCharts({ data }: { data: PerformanceData[] }) {
                     <CheckCircle2 size={16} />
                 </div>
                 <div>
-                    <h3 className="text-lg font-black text-white tracking-tight italic uppercase">Reliability Index</h3>
-                    <p className="text-blue-400 text-[9px] font-bold uppercase tracking-[0.2em]">On-Time Performance Efficiency</p>
+                    <h3 className="text-lg font-black text-white tracking-tight italic uppercase">{t('charts.reliability_index')}</h3>
+                    <p className="text-blue-400 text-[9px] font-bold uppercase tracking-[0.2em]">{t('charts.on_time_efficiency')}</p>
                 </div>
             </div>
         </div>
@@ -132,7 +133,7 @@ export function PerformanceCharts({ data }: { data: PerformanceData[] }) {
                     backdropFilter: 'blur(12px)'
                 }}
                 itemStyle={{ fontSize: '11px', fontWeight: '900', textTransform: 'uppercase' }}
-                formatter={(val) => [`${Number(val).toFixed(1)}%`, 'Reliability']}
+                formatter={(val) => [`${Number(val).toFixed(1)}%`, t('charts.reliability')]}
               />
               <Line 
                 type="monotone" 

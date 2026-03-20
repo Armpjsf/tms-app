@@ -2,7 +2,7 @@
 
 import { useState, useTransition, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { ChevronLeft, ChevronRight, CalendarDays, MapPin, Truck, User, Plus } from "lucide-react"
+import { ChevronLeft, ChevronRight, CalendarDays, MapPin, Truck, User, Plus, Zap, Target } from "lucide-react"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
 import { CalendarJob, getJobsForMonth } from "./actions"
@@ -11,17 +11,18 @@ import { Driver } from "@/lib/supabase/drivers"
 import { Vehicle } from "@/lib/supabase/vehicles"
 import { Customer } from "@/lib/supabase/customers"
 import { Route } from "@/lib/supabase/routes"
+import { PremiumButton } from "@/components/ui/premium-button"
 
 const STATUS_COLORS: Record<string, string> = {
-  Draft: "bg-gray-400",
-  Pending: "bg-amber-400",
-  Confirmed: "bg-blue-400",
-  "In Progress": "bg-indigo-500",
-  Delivered: "bg-emerald-500",
-  Completed: "bg-emerald-600",
-  Finished: "bg-teal-600",
+  Draft: "bg-slate-500",
+  Pending: "bg-amber-500",
+  Confirmed: "bg-[#00f2ff]", // Cyan
+  "In Progress": "bg-[#7000ff]", // Electric Purple
+  Delivered: "bg-[#00ff88]", // Neon Green
+  Completed: "bg-[#00ff88]",
+  Finished: "bg-[#00ff88]",
   Closed: "bg-slate-600",
-  Cancelled: "bg-red-400",
+  Cancelled: "bg-primary", // Magenta for cancelled
 }
 
 const STATUS_LABELS: Record<string, string> = {
@@ -69,7 +70,6 @@ export function CalendarClient({
   const [isPending, startTransition] = useTransition()
   const [isDialogOpen, setIsDialogOpen] = useState(false)
 
-  // Sync state with props after router.refresh()
   useEffect(() => {
     setJobs(initialJobs)
   }, [initialJobs])
@@ -79,11 +79,9 @@ export function CalendarClient({
     let newYear = year
     if (newMonth < 1) { newMonth = 12; newYear-- }
     if (newMonth > 12) { newMonth = 1; newYear++ }
-    
     setMonth(newMonth)
     setYear(newYear)
     setSelectedDate(null)
-
     startTransition(async () => {
       const data = await getJobsForMonth(newYear, newMonth)
       setJobs(data)
@@ -103,7 +101,6 @@ export function CalendarClient({
     })
   }
 
-  // Group jobs by date
   const jobsByDate: Record<string, CalendarJob[]> = {}
   jobs.forEach(job => {
     const d = job.Plan_Date
@@ -111,96 +108,85 @@ export function CalendarClient({
     jobsByDate[d].push(job)
   })
 
-  // Calendar grid
   const firstDayOfMonth = new Date(year, month - 1, 1).getDay()
   const daysInMonth = new Date(year, month, 0).getDate()
-
-  const today = new Date()
-  const todayStr = formatDate(today)
-
+  const todayStr = formatDate(new Date())
   const selectedJobs = selectedDate ? (jobsByDate[selectedDate] || []) : []
-
-  // Status summary for the month
   const statusCounts: Record<string, number> = {}
-  jobs.forEach(j => {
-    statusCounts[j.Job_Status] = (statusCounts[j.Job_Status] || 0) + 1
-  })
+  jobs.forEach(j => { statusCounts[j.Job_Status] = (statusCounts[j.Job_Status] || 0) + 1 })
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="bg-slate-950 p-8 rounded-br-[4rem] rounded-tl-[2rem] border border-slate-800 shadow-2xl mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative overflow-hidden group">
-        <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/10 to-transparent pointer-events-none" />
-        <div className="relative z-10">
-          <h1 className="text-3xl font-black text-white tracking-tight flex items-center gap-3">
-            <div className="p-2.5 bg-indigo-500 rounded-2xl text-white shadow-lg shadow-indigo-500/20">
-              <CalendarDays size={28} />
+    <div className="space-y-8 pb-20">
+      {/* Tactical Header */}
+      <div className="bg-[#0a0518] p-10 rounded-br-[5rem] rounded-tl-[3rem] border border-white/5 shadow-[0_20px_60px_rgba(0,0,0,0.4)] relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 blur-[100px] rounded-full -mr-32 -mt-32 pointer-events-none" />
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 relative z-10">
+          <div>
+            <div className="flex items-center gap-4 mb-4">
+               <div className="w-1.5 h-8 bg-primary rounded-full shadow-[0_0_15px_rgba(255,30,133,1)]" />
+               <h1 className="text-4xl font-black text-white tracking-widest uppercase leading-none">Tactical Calendar</h1>
             </div>
-            ปฏิทินงานขนส่ง
-          </h1>
-          <p className="text-slate-400 font-bold uppercase tracking-widest text-[10px] mt-2">Operational Command — Monthly Overview</p>
-        </div>
-        <div className="flex items-center gap-2 relative z-10">
-          <button
-            onClick={goToToday}
-            className="px-6 py-3 bg-slate-900 text-slate-300 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-slate-800 transition-all border border-slate-800"
-          >
-            Today
-          </button>
-          <button
-            onClick={() => setIsDialogOpen(true)}
-            className="flex items-center gap-2 px-6 py-3 bg-emerald-500 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-500/20"
-          >
-            <Plus size={16} />
-            New Job
-          </button>
-        </div>
-      </div>
-
-      {/* Month stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3 mb-8">
-        {Object.entries(statusCounts).sort((a, b) => b[1] - a[1]).slice(0, 6).map(([status, count]) => (
-          <div key={status} className="flex items-center gap-3 bg-white/80 backdrop-blur-md rounded-xl px-4 py-3 border border-white/50 shadow-sm">
-            <div className={`w-3 h-3 rounded-full ${STATUS_COLORS[status] || 'bg-gray-400'} shadow-sm`} />
-            <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest leading-none">{STATUS_LABELS[status] || status}</span>
-            <span className="ml-auto text-sm font-black text-gray-900">{count}</span>
+            <p className="text-slate-500 font-black uppercase tracking-[0.4em] text-[10px]">Strategic Mission Scheduling • Q1-2024 Node</p>
           </div>
-        ))}
+          <div className="flex items-center gap-4">
+             <PremiumButton onClick={goToToday} variant="outline" className="border-white/10 hover:border-primary/50 text-slate-400 h-14 px-8 rounded-2xl">
+                CURRENT NODE
+             </PremiumButton>
+             <PremiumButton onClick={() => setIsDialogOpen(true)} className="h-14 px-8 rounded-2xl gap-3 shadow-[0_15px_30px_rgba(255,30,133,0.3)]">
+                <Plus size={20} /> INITIALIZE MISSION
+             </PremiumButton>
+          </div>
+        </div>
       </div>
 
-      {/* Calendar Card */}
-      <div className="bg-white rounded-br-[5rem] rounded-tl-[3rem] border border-white shadow-2xl overflow-hidden relative">
-        {/* Month Navigation */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-indigo-50 to-white">
-          <button onClick={() => changeMonth(-1)} className="p-2 hover:bg-indigo-100 rounded-xl transition-colors">
-            <ChevronLeft size={20} className="text-indigo-600" />
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+         {Object.entries(statusCounts).map(([status, count]) => (
+            <div key={status} className="bg-white/5 border border-white/5 p-4 rounded-3xl flex items-center justify-between group hover:border-primary/30 transition-all">
+                <div className="flex flex-col gap-1">
+                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{STATUS_LABELS[status] || status}</span>
+                    <span className="text-xl font-black text-white">{count}</span>
+                </div>
+                <div className={cn("w-3 h-10 rounded-full shadow-lg", STATUS_COLORS[status] || "bg-slate-500")} />
+            </div>
+         ))}
+      </div>
+
+      {/* Main Calendar Matrix */}
+      <div className="bg-[#0a0518] rounded-[3.5rem] border border-white/5 shadow-2xl overflow-hidden">
+        {/* Navigation Control */}
+        <div className="flex items-center justify-between px-10 py-8 bg-black/20 border-b border-white/5">
+          <button onClick={() => changeMonth(-1)} className="p-4 rounded-full bg-white/5 hover:bg-primary transition-all text-white border border-white/5">
+            <ChevronLeft size={24} />
           </button>
-          <h2 className="text-xl font-black text-gray-900">
-            {THAI_MONTHS[month]} {year + 543}
-            {isPending && <span className="ml-2 text-xs text-gray-400 font-normal animate-pulse">กำลังโหลด...</span>}
-          </h2>
-          <button onClick={() => changeMonth(1)} className="p-2 hover:bg-indigo-100 rounded-xl transition-colors">
-            <ChevronRight size={20} className="text-indigo-600" />
+          <div className="text-center">
+             <h2 className="text-3xl font-black text-white uppercase tracking-tighter">
+                {THAI_MONTHS[month]} <span className="text-primary italic italic ml-2">{year + 543}</span>
+             </h2>
+             {isPending && <div className="text-[9px] font-black text-primary uppercase tracking-widest animate-pulse mt-1">Syncing Temporal Data...</div>}
+          </div>
+          <button onClick={() => changeMonth(1)} className="p-4 rounded-full bg-white/5 hover:bg-primary transition-all text-white border border-white/5">
+            <ChevronRight size={24} />
           </button>
         </div>
 
-        {/* Day Headers */}
-        <div className="grid grid-cols-7 border-b border-gray-100">
+        {/* Day Header Matrix */}
+        <div className="grid grid-cols-7 bg-black/40 border-b border-white/5">
           {THAI_DAYS.map((day, i) => (
-            <div key={day + i} className={`text-center py-2 text-xs font-black uppercase tracking-widest ${i === 0 ? 'text-red-400' : i === 6 ? 'text-blue-400' : 'text-gray-400'}`}>
+            <div key={i} className={cn(
+              "text-center py-4 text-[11px] font-black uppercase tracking-[0.4em]",
+              i === 0 ? "text-rose-500" : i === 6 ? "text-primary/70" : "text-slate-600"
+            )}>
               {day}
             </div>
           ))}
         </div>
 
-        {/* Calendar Grid */}
+        {/* Temporal Grid */}
         <div className="grid grid-cols-7">
-          {/* Empty cells before first day */}
           {Array.from({ length: firstDayOfMonth }).map((_, i) => (
-            <div key={`empty-${i}`} className="min-h-[100px] border-b border-r border-gray-50 bg-gray-50/30" />
+            <div key={i} className="min-h-[140px] border-b border-r border-white/[0.03] bg-black/20" />
           ))}
 
-          {/* Day cells */}
           {Array.from({ length: daysInMonth }).map((_, i) => {
             const day = i + 1
             const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
@@ -212,50 +198,46 @@ export function CalendarClient({
             return (
               <motion.div
                 key={dateStr}
-                whileHover={{ scale: 0.98 }}
+                whileHover={{ backgroundColor: "rgba(255,255,255,0.02)" }}
                 onClick={() => setSelectedDate(isSelected ? null : dateStr)}
-                className={`min-h-[100px] border-b border-r border-gray-50 p-1.5 cursor-pointer transition-all
-                  ${isSelected ? 'bg-indigo-50 ring-2 ring-indigo-400 ring-inset' : 'hover:bg-gray-50'}
-                  ${isToday ? 'bg-emerald-50/50' : ''}
-                `}
+                className={cn(
+                  "min-h-[140px] border-b border-r border-white/[0.03] p-4 cursor-pointer relative group transition-all",
+                  isSelected && "bg-primary/10 ring-2 ring-primary inset-0 z-10",
+                  isToday && "bg-primary/5"
+                )}
               >
-                <div className="flex items-center justify-between mb-1">
-                  <span className={`w-7 h-7 flex items-center justify-center rounded-full text-sm font-bold
-                    ${isToday ? 'bg-emerald-500 text-white' : ''}
-                    ${dayOfWeek === 0 ? 'text-red-400' : dayOfWeek === 6 ? 'text-blue-400' : 'text-gray-700'}
-                  `}>
-                    {day}
-                  </span>
-                  {dayJobs.length > 0 && (
-                    <span className="text-[10px] font-black text-gray-500 bg-gray-100 rounded-full px-1.5 py-0.5">
-                      {dayJobs.length}
-                    </span>
-                  )}
+                <div className="flex items-center justify-between mb-4">
+                   <span className={cn(
+                     "text-lg font-black tracking-tighter w-10 h-10 flex items-center justify-center rounded-2xl",
+                     isToday ? "bg-primary text-white shadow-[0_0_20px_rgba(255,30,133,0.5)]" : 
+                     dayOfWeek === 0 ? "text-rose-500" : "text-slate-400 group-hover:text-white"
+                   )}>
+                     {day}
+                   </span>
+                   {dayJobs.length > 0 && (
+                     <div className="px-2 py-0.5 rounded-lg bg-white/5 border border-white/10 text-[9px] font-black text-primary">
+                        {dayJobs.length} OPS
+                     </div>
+                   )}
                 </div>
 
-                {/* Job indicators */}
-                <div className="space-y-1 mt-1 overflow-hidden">
-                  {dayJobs.slice(0, 3).map(job => (
-                    <div 
-                      key={job.Job_ID} 
-                      className={cn(
-                        "group/badge relative px-1.5 py-0.5 rounded-md flex items-center gap-1.5 transition-all duration-200",
-                        "border border-white/20 shadow-sm hover:shadow-md hover:scale-[1.02]",
-                        STATUS_COLORS[job.Job_Status] || 'bg-gray-400'
-                      )}
-                      title={`${job.Customer_Name || job.Job_ID} — ${STATUS_LABELS[job.Job_Status] || job.Job_Status}`}
-                    >
-                      <div className="w-1.5 h-1.5 rounded-full bg-white shrink-0 shadow-inner" />
-                      <span className="text-[9px] font-black text-white truncate leading-tight tracking-tight uppercase">
-                        {job.Customer_Name || job.Job_ID}
-                      </span>
-                    </div>
-                  ))}
-                  {dayJobs.length > 3 && (
-                    <div className="flex items-center justify-center py-0.5 bg-slate-50 rounded-md border border-slate-100 italic">
-                       <p className="text-[8px] text-slate-400 font-black uppercase tracking-tighter">+{dayJobs.length - 3} MORE JOBS</p>
-                    </div>
-                  )}
+                <div className="space-y-1.5">
+                   {dayJobs.slice(0, 3).map(job => (
+                      <div key={job.Job_ID} className={cn(
+                        "h-6 px-3 rounded-lg flex items-center gap-2 border border-white/10 shadow-sm",
+                        STATUS_COLORS[job.Job_Status] || "bg-slate-500"
+                      )}>
+                        <div className="w-1 h-3 bg-white/40 rounded-full" />
+                        <span className="text-[8px] font-black text-white uppercase truncate tracking-tighter">
+                          {job.Customer_Name || job.Job_ID}
+                        </span>
+                      </div>
+                   ))}
+                   {dayJobs.length > 3 && (
+                     <div className="text-[8px] font-black text-slate-600 uppercase tracking-widest text-center py-1">
+                        + {dayJobs.length - 3} MORE
+                     </div>
+                   )}
                 </div>
               </motion.div>
             )
@@ -263,86 +245,72 @@ export function CalendarClient({
         </div>
       </div>
 
-      {/* Selected Day Detail */}
+      {/* Selected Node Interface */}
       <AnimatePresence mode="wait">
         {selectedDate && (
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="bg-white rounded-br-[4rem] rounded-tl-[2rem] border border-white shadow-2xl overflow-hidden mt-8"
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="bg-[#0a0518] rounded-[4rem] border border-white/5 shadow-3xl overflow-hidden mt-12"
           >
-            <div className="px-8 py-6 border-b border-gray-100 bg-slate-950 flex items-center justify-between relative overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/10 to-transparent pointer-events-none" />
-              <h3 className="text-lg font-black text-white relative z-10">
-                DATE DETAILS: {new Date(selectedDate + 'T00:00:00').toLocaleDateString('th-TH', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
-              </h3>
-              <span className="text-xs font-black text-indigo-400 uppercase tracking-widest relative z-10">{selectedJobs.length} Operations Scheduled</span>
+            <div className="px-10 py-8 border-b border-white/5 bg-black/40 flex items-center justify-between relative overflow-hidden">
+               <div className="absolute top-0 left-0 w-32 h-3? bg-primary/10 blur-[60px] pointer-events-none" />
+               <div className="relative z-10 flex items-center gap-4">
+                  <Target className="text-primary" size={24} />
+                  <h3 className="text-xl font-black text-white uppercase tracking-widest">
+                    NODE: {new Date(selectedDate + 'T00:00:00').toLocaleDateString('th-TH', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+                  </h3>
+               </div>
+               <Badge className="bg-primary/20 text-primary border-primary/30 font-black text-[10px] tracking-widest px-6 h-10">
+                  {selectedJobs.length} ACTIVE MISSIONS
+               </Badge>
             </div>
 
-            {selectedJobs.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-16 text-slate-400">
-                <div className="w-16 h-16 bg-slate-900 rounded-3xl flex items-center justify-center mb-4 border border-slate-800 shadow-xl">
-                    <CalendarDays size={32} className="text-slate-600" />
-                </div>
-                <p className="font-black text-slate-500 uppercase tracking-widest text-xs">No active operations for this date</p>
-                <button 
-                  onClick={() => setIsDialogOpen(true)}
-                  className="mt-4 px-6 py-2.5 bg-indigo-500/10 text-indigo-400 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] border border-indigo-500/20 hover:bg-indigo-500/20 transition-all"
-                >
-                  + Init New Workflow
-                </button>
-              </div>
-            ) : (
-              <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {selectedJobs.map(job => (
-                  <Link key={job.Job_ID} href={`/admin/jobs/${job.Job_ID}`} className="block group/card">
-                    <motion.div 
-                      whileHover={{ y: -4 }}
-                      className="h-full bg-white rounded-3xl border border-slate-100 p-5 shadow-sm hover:shadow-xl transition-all relative overflow-hidden group-hover/card:border-indigo-200"
-                    >
-                      <div className={`absolute top-0 right-0 w-24 h-24 -mr-8 -mt-8 rounded-full opacity-5 ${STATUS_COLORS[job.Job_Status] || 'bg-gray-400'}`} />
-                      
-                      <div className="flex items-start justify-between mb-4 relative z-10">
-                        <div className={`px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest text-white shadow-sm ${STATUS_COLORS[job.Job_Status] || 'bg-gray-400'}`}>
-                          {STATUS_LABELS[job.Job_Status] || job.Job_Status}
-                        </div>
-                        <span className="text-[10px] font-black text-slate-300 group-hover/card:text-indigo-400 transition-colors">#{job.Job_ID.slice(-6)}</span>
-                      </div>
-
-                      <h4 className="text-sm font-black text-slate-900 mb-4 line-clamp-1 flex items-center gap-2">
-                        {job.Customer_Name || 'Untitled Dispatch'}
-                      </h4>
-
-                      <div className="space-y-3 relative z-10">
-                        {job.Route_Name && (
-                          <div className="flex items-center gap-3 text-[10px] font-bold text-slate-500">
-                            <div className="p-1.5 bg-slate-50 rounded-lg group-hover/card:bg-indigo-50 group-hover/card:text-indigo-500 transition-colors">
-                                <MapPin size={14} />
+            <div className="p-10">
+               {selectedJobs.length === 0 ? (
+                 <div className="py-20 flex flex-col items-center opacity-30">
+                    <Zap size={48} className="text-slate-500 mb-6" />
+                    <p className="text-xs font-black uppercase tracking-[0.5em] text-white">No active mission clusters detected</p>
+                 </div>
+               ) : (
+                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {selectedJobs.map(job => (
+                      <Link key={job.Job_ID} href={`/admin/jobs/${job.Job_ID}`}>
+                        <div className="bg-white/5 border border-white/5 rounded-[2.5rem] p-8 hover:bg-white/[0.08] transition-all group relative overflow-hidden">
+                            <div className={cn("absolute top-0 right-0 w-3 h-20 rounded-bl-3xl", STATUS_COLORS[job.Job_Status])} />
+                            
+                            <div className="flex items-center justify-between mb-6">
+                               <div className={cn("px-4 py-1 rounded-full text-[9px] font-black uppercase tracking-widest text-white shadow-lg", STATUS_COLORS[job.Job_Status])}>
+                                 {STATUS_LABELS[job.Job_Status] || job.Job_Status}
+                               </div>
+                               <span className="text-[10px] font-black text-slate-600 group-hover:text-primary transition-colors uppercase tracking-[0.2em]">{job.Job_ID.slice(-8)}</span>
                             </div>
-                            <span className="truncate">{job.Route_Name}</span>
-                          </div>
-                        )}
-                        <div className="flex items-center gap-6">
-                           {job.Driver_Name && (
-                              <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400">
-                                <User size={12} className="text-slate-300" />
-                                <span className="truncate">{job.Driver_Name}</span>
-                              </div>
-                           )}
-                           {job.Vehicle_Plate && (
-                              <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400">
-                                <Truck size={12} className="text-slate-300" />
-                                <span className="truncate">{job.Vehicle_Plate}</span>
-                              </div>
-                           )}
+
+                            <h4 className="text-lg font-black text-white uppercase tracking-tighter mb-6 truncate leading-none">
+                              {job.Customer_Name || "SECURE DISPATCH"}
+                            </h4>
+
+                            <div className="space-y-4">
+                                <div className="flex items-center gap-3 text-[10px] font-black text-slate-400">
+                                   <MapPin size={14} className="text-primary" />
+                                   <span className="truncate uppercase">{job.Route_Name || job.Dest_Location}</span>
+                                </div>
+                                <div className="flex items-center gap-6 border-t border-white/5 pt-4">
+                                   <div className="flex items-center gap-2 text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                                      <User size={12} /> {job.Driver_Name?.split(' ')[0] || "AUTO"}
+                                   </div>
+                                   <div className="flex items-center gap-2 text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                                      <Truck size={12} /> {job.Vehicle_Plate}
+                                   </div>
+                                </div>
+                            </div>
                         </div>
-                      </div>
-                    </motion.div>
-                  </Link>
-                ))}
-              </div>
-            )}
+                      </Link>
+                    ))}
+                 </div>
+               )}
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

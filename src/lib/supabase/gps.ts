@@ -160,13 +160,14 @@ export async function getDriverRouteForDate(driverId: string, date: string) {
 
 // ... (previous code)
 
-export async function getFleetGPSStatus(customerId?: string | null) {
+export async function getActiveFleetStatus(branchId?: string | null, customerId?: string | null) {
   try {
     const isAdmin = await isSuperAdmin();
     const supabase = isAdmin ? await createAdminClient() : await createClient();
 
     // 1. Get all drivers
-    const branchId = await getUserBranchId();
+    const sessionBranchId = await getUserBranchId();
+    const effectiveBranchId = branchId || sessionBranchId;
 
     let driversQuery = supabase
       .from("Master_Drivers")
@@ -188,9 +189,9 @@ export async function getFleetGPSStatus(customerId?: string | null) {
       if (activeDriverIds.length === 0) return [];
 
       driversQuery = driversQuery.in("Driver_ID", activeDriverIds);
-    } else if (branchId && branchId !== "All") {
-      driversQuery = driversQuery.eq("Branch_ID", branchId);
-    } else if (!isAdmin && !branchId) {
+    } else if (effectiveBranchId && effectiveBranchId !== "All") {
+      driversQuery = driversQuery.eq("Branch_ID", effectiveBranchId);
+    } else if (!isAdmin && !effectiveBranchId) {
       return [];
     }
 

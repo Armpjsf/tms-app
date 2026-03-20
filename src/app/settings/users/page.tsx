@@ -1,26 +1,25 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
-import { Button } from "@/components/ui/button"
+import { PremiumCard } from "@/components/ui/premium-card"
+import { PremiumButton } from "@/components/ui/premium-button"
 import { Input } from "@/components/ui/input"
-import { Card, CardContent } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Users, Plus, Edit, Trash2, Search, Loader2 } from "lucide-react"
+import { Users, Plus, Edit, Trash2, Search, Loader2, Shield, Fingerprint, Activity, Zap, FileSpreadsheet, Key, AlertCircle } from "lucide-react"
 import { createUser, updateUser, deleteUser, UserData, getCurrentUserRole, createBulkUsers, getUsers } from "@/lib/actions/user-actions"
 import { Customer } from "@/lib/supabase/customers"
 import { ExcelImport } from "@/components/ui/excel-import"
-import { FileSpreadsheet, Shield } from "lucide-react"
 import { useBranch } from "@/components/providers/branch-provider"
 import { createClient } from "@/utils/supabase/client"
 import { STANDARD_ROLES, SYSTEM_PERMISSIONS, StandardRole } from "@/types/role"
 import { getRolePermissions } from "@/lib/actions/permission-actions"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Separator } from "@/components/ui/separator"
-import { useCallback } from "react"
 import { toast } from "sonner"
+import { cn } from "@/lib/utils"
 
 export default function UserSettingsPage() {
     const { branches, isAdmin, selectedBranch } = useBranch()
@@ -35,8 +34,7 @@ export default function UserSettingsPage() {
 
     const [allRolePermissions, setAllRolePermissions] = useState<Record<string, Record<string, boolean>>>({})
     
-    // Form State
-    const [editingUser, setEditingUser] = useState<string | null>(null) // Username
+    const [editingUser, setEditingUser] = useState<string | null>(null)
     const [formData, setFormData] = useState<Partial<UserData>>({
         Username: "",
         Password: "",
@@ -52,11 +50,7 @@ export default function UserSettingsPage() {
         setLoading(true)
         try {
             const supabase = createClient()
-
-            // Fetch users via server action with administrative bypass
             const usersData = await getUsers(selectedBranch === 'All' ? undefined : selectedBranch)
-
-            // Query customers directly from browser client
             const customersQuery = supabase.from('Master_Customers').select('*').order('Customer_Name').limit(1000)
 
             const [customersResult, userInfo, rolesResult] = await Promise.all([
@@ -90,7 +84,7 @@ export default function UserSettingsPage() {
             setEditingUser(user.Username)
             setFormData({
                 Username: user.Username,
-                Password: "", // Don't show password
+                Password: "",
                 Name: user.Name,
                 Branch_ID: user.Branch_ID || "",
                 Role: (user.Role as StandardRole) || "Staff",
@@ -138,24 +132,19 @@ export default function UserSettingsPage() {
         if (!formData.Username || !formData.Name || !formData.Branch_ID || !formData.Role) {
             return toast.warning("กรุณากรอกข้อมูลให้ครบถ้วน")
         }
-
         if (!editingUser && !formData.Password) {
             return toast.warning("กรุณากำหนดรหัสผ่าน")
         }
-        
         setSaving(true)
         try {
             let result;
             if (editingUser) {
-                // Remove password if empty to prevent overwrite
                 const updateData = { ...formData }
                 if (!updateData.Password) delete updateData.Password
-
                 result = await updateUser(editingUser, updateData)
             } else {
                 result = await createUser(formData as UserData)
             }
-
             if (result.success) {
                 toast.success(editingUser ? "แก้ไขข้อมูลเรียบร้อย" : "สร้างผู้ใช้งานเรียบร้อย")
                 setIsDialogOpen(false)
@@ -184,129 +173,143 @@ export default function UserSettingsPage() {
 
     return (
         <DashboardLayout>
-            <div className="flex justify-between items-center mb-6">
-                <div>
-                    <h1 className="text-2xl font-bold text-foreground flex items-center gap-3">
-                        <Users className="text-emerald-600" />
-                        จัดการผู้ใช้งาน (User Management)
-                    </h1>
-                    <p className="text-sm text-muted-foreground mt-1">เพิ่ม ลบ แก้ไข ข้อมูลพนักงานและผู้ใช้งานระบบ</p>
-                </div>
-                <div className="flex gap-2">
-                     <ExcelImport 
-                        trigger={
-                            <Button variant="outline" className="gap-2 border-border hover:bg-muted">
-                                <FileSpreadsheet size={16} /> 
-                                นำเข้า Excel
-                            </Button>
-                        }
-                        title="นำเข้าผู้ใช้งาน"
-                        onImport={createBulkUsers}
-                        templateData={[
-                            { 
-                                Username: "user01", 
-                                Name: "นาย สมชาย ใจดี", 
-                                Branch: "สำนักงานใหญ่", 
-                                Role: "Staff", 
-                                Password: "password123",
-                                Active_Status: "Active",
-                                Customer_ID: "" // ใส่รหัสลูกค้าถ้าเป็น User ของลูกค้า
-                            },
-                            { 
-                                Username: "driver01", 
-                                Name: "นาย ขับรถ เก่ง", 
-                                Branch: "สาขา 1", 
-                                Role: "Driver",
-                                Password: "password123",
-                                Active_Status: "Active",
-                                Customer_ID: ""
+            <div className="space-y-12 pb-20 p-4 lg:p-10">
+                {/* Tactical Registry Header */}
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-10 bg-[#0a0518]/60 backdrop-blur-3xl p-10 rounded-br-[6rem] rounded-tl-[3rem] border border-white/5 shadow-2xl relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 w-80 h-80 bg-primary/10 blur-[120px] rounded-full -mr-40 -mt-40 pointer-events-none" />
+                    
+                    <div className="relative z-10 space-y-8">
+                        <div className="flex items-center gap-6">
+                            <div className="p-4 bg-primary/20 rounded-[2.5rem] border-2 border-primary/30 shadow-[0_0_40px_rgba(255,30,133,0.2)] text-primary group-hover:scale-110 transition-all duration-500">
+                                <Users size={42} strokeWidth={2.5} />
+                            </div>
+                            <div>
+                                <h1 className="text-5xl font-black text-white tracking-widest uppercase leading-none italic premium-text-gradient">
+                                    Personnel Matrix
+                                </h1>
+                                <p className="text-[10px] font-black text-primary uppercase tracking-[0.6em] mt-2 opacity-80 italic">Unified Identity & Access Configuration</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="flex flex-wrap gap-4 relative z-10">
+                        <ExcelImport 
+                            trigger={
+                                <PremiumButton variant="outline" className="h-14 px-8 rounded-2xl border-white/10 hover:border-primary/50 text-slate-400 gap-3">
+                                    <FileSpreadsheet size={20} /> SYNC_BULK_EXCEL
+                                </PremiumButton>
                             }
-                        ]}
-                        templateFilename="template_users.xlsx"
-                    />
-                    <Button onClick={() => handleOpenDialog()} className="bg-emerald-600 hover:bg-blue-700">
-                        <Plus className="w-4 h-4 mr-2" />
-                        เพิ่มผู้ใช้งาน
-                    </Button>
+                            title="Personnel Import Terminal"
+                            onImport={createBulkUsers}
+                            templateData={[{ Username: "user01", Name: "นาย สมชาย ใจดี", Branch: "สำนักงานใหญ่", Role: "Staff", Password: "password123", Active_Status: "Active", Customer_ID: "" }]}
+                            templateFilename="template_users.xlsx"
+                        />
+                        <PremiumButton onClick={() => handleOpenDialog()} className="h-14 px-8 rounded-2xl gap-3 shadow-[0_15px_30px_rgba(255,30,133,0.3)] bg-primary text-white border-0">
+                            <Plus size={20} /> INITIALIZE_NODE
+                        </PremiumButton>
+                    </div>
                 </div>
-            </div>
 
-            <div className="flex items-center space-x-2 mb-6 bg-card/50 p-2 rounded-xl border border-border">
-                <Search className="text-muted-foreground ml-2" />
-                <Input 
-                    id="search-users-input"
-                    name="search-users-input"
-                    autoComplete="off"
-                    placeholder="ค้นหาชื่อ หรือ Username..." 
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="border-none bg-transparent focus-visible:ring-0 text-foreground placeholder:text-muted-foreground"
-                />
-            </div>
+                {/* Filter Matrix */}
+                <div className="bg-[#0a0518]/40 p-8 rounded-[3rem] border border-white/5 shadow-2xl relative overflow-hidden backdrop-blur-xl">
+                    <div className="relative group w-full">
+                        <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-600 group-focus-within:text-primary transition-colors" size={24} />
+                        <Input 
+                            autoComplete="off"
+                            placeholder="SCAN_IDENTIFIER_OR_NAME..." 
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="w-full h-18 bg-[#0a0518] border-white/5 rounded-3xl pl-16 pr-8 text-sm font-black uppercase tracking-[0.2em] focus:border-primary/50 transition-all text-white placeholder:text-slate-700 italic shadow-inner"
+                        />
+                    </div>
+                </div>
 
-            <Card className="bg-card border-border shadow-sm">
-                <CardContent className="p-0">
+                {/* Registry Table */}
+                <PremiumCard className="bg-[#0a0518]/40 border-2 border-white/5 shadow-3xl rounded-[4rem] overflow-hidden group/registry">
+                    <div className="p-10 border-b border-white/5 bg-black/40 flex items-center justify-between relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 blur-[80px] pointer-events-none" />
+                        <div className="flex items-center gap-5 relative z-10">
+                            <Fingerprint size={24} className="text-primary animate-pulse" />
+                            <h2 className="text-2xl font-black text-white tracking-widest uppercase italic">Operational Personnel Registry</h2>
+                        </div>
+                        <div className="flex items-center gap-3 px-5 py-2 bg-white/5 rounded-full border border-white/10 relative z-10">
+                            <Activity size={14} className="text-primary" />
+                            <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">REALTIME_FLOW: ACTIVE</span>
+                        </div>
+                    </div>
+
                     <div className="relative w-full overflow-auto">
-                        <table className="w-full text-sm text-left">
-                            <thead className="text-xs uppercase bg-muted/50 text-muted-foreground border-b border-border font-bold">
-                                <tr>
-                                    <th className="px-6 py-4">ชื่อผู้ใช้ (Username)</th>
-                                    <th className="px-6 py-4">ชื่อ - นามสกุล</th>
-                                    <th className="px-6 py-4">สาขา</th>
-                                    <th className="px-6 py-4">บทบาท</th>
-                                    <th className="px-6 py-4">สถานะ</th>
-                                    <th className="px-6 py-4 text-right">จัดการ</th>
+                        <table className="w-full text-sm text-left border-collapse">
+                            <thead>
+                                <tr className="bg-black/20 text-[10px] font-black uppercase tracking-[0.4em] text-slate-500 border-b border-white/5">
+                                    <th className="px-10 py-8">Vector ID</th>
+                                    <th className="px-10 py-8">Personnel Identity</th>
+                                    <th className="px-10 py-8">Operational Hub</th>
+                                    <th className="px-10 py-8">Clearance Role</th>
+                                    <th className="px-10 py-8">Sync Status</th>
+                                    <th className="px-10 py-8 text-right">Access Control</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-border">
+                            <tbody className="divide-y divide-white/[0.02]">
                                 {loading ? (
-                                    <tr><td colSpan={6} className="text-center py-8 text-gray-400">Loading...</td></tr>
+                                    <tr><td colSpan={6} className="text-center py-20 opacity-30"><Loader2 className="w-8 h-8 animate-spin mx-auto text-primary" /></td></tr>
                                 ) : filteredUsers.length === 0 ? (
-                                    <tr><td colSpan={6} className="text-center py-8 text-gray-400">ไม่พบข้อมูล</td></tr>
+                                    <tr><td colSpan={6} className="text-center py-20 opacity-30 italic font-black uppercase tracking-widest text-white">Registry Void detected</td></tr>
                                 ) : (
                                     filteredUsers.map((user) => (
-                                        <tr key={user.Username} className="hover:bg-muted/30 transition-colors">
-                                            <td className="px-6 py-4 font-medium text-foreground">
-                                                {user.Username}
-                                                {user.Customer_ID && (
-                                                    <div className="text-[10px] text-emerald-600 font-normal">
-                                                        Client: {user.Master_Customers?.Customer_Name || user.Customer_ID}
-                                                    </div>
-                                                )}
+                                        <tr key={user.Username} className="group/row hover:bg-white/[0.03] transition-all duration-300">
+                                            <td className="px-10 py-8">
+                                                <div className="flex flex-col">
+                                                    <span className="text-primary font-black tracking-widest uppercase italic group-hover/row:scale-110 origin-left transition-transform inline-block">
+                                                        {user.Username}
+                                                    </span>
+                                                    {user.Customer_ID && (
+                                                        <div className="text-[9px] text-accent font-black uppercase tracking-tighter mt-1 opacity-60">
+                                                            EXT_CLIENT: {user.Master_Customers?.Customer_Name || user.Customer_ID}
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </td>
-                                            <td className="px-6 py-4 text-foreground/80">{user.Name}</td>
-                                            <td className="px-6 py-4 text-muted-foreground">
-                                                {user.Branch_ID || "-"}
+                                            <td className="px-10 py-8 font-black text-white uppercase tracking-tight italic">{user.Name}</td>
+                                            <td className="px-10 py-8 text-slate-500 font-black uppercase tracking-widest text-xs">
+                                                {user.Branch_ID || "GLOBAL_NODE"}
                                             </td>
-                                            <td className="px-6 py-4 text-gray-700">
-                                                <span className="px-2 py-1 rounded-full bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 text-xs text-center inline-block min-w-[80px]">
-                                                    {user.Role || "No Role"}
-                                                </span>
+                                            <td className="px-10 py-8">
+                                                <div className="px-4 py-1.5 rounded-xl bg-primary/10 text-primary border border-primary/20 text-[10px] font-black uppercase tracking-widest italic shadow-[0_0_15px_rgba(255,30,133,0.1)] w-fit">
+                                                    {user.Role || "NO_ROLES_ASSIGNED"}
+                                                </div>
                                             </td>
-                                            <td className="px-6 py-4">
-                                                <span className={`px-2 py-1 rounded-full text-xs ${user.Active_Status === 'Active' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'}`}>
+                                            <td className="px-10 py-8">
+                                                <div className={cn(
+                                                    "px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border w-fit italic",
+                                                    user.Active_Status === 'Active' 
+                                                        ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' 
+                                                        : 'bg-rose-500/10 text-rose-400 border-rose-500/20 animate-pulse'
+                                                )}>
                                                     {user.Active_Status}
-                                                </span>
+                                                </div>
                                             </td>
-                                             <td className="px-6 py-4 text-right space-x-2">
-                                                 <Button 
-                                                    variant="ghost" 
-                                                    size="icon" 
-                                                    onClick={() => handleOpenDialog(user)} 
-                                                    className="text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-30"
-                                                    disabled={(user.Role === "Super Admin" || user.Role === "Admin") && currentRoleId !== 1}
-                                                 >
-                                                     <Edit className="w-4 h-4" />
-                                                 </Button>
-                                                 <Button 
-                                                    variant="ghost" 
-                                                    size="icon" 
-                                                    onClick={() => handleDelete(user.Username)} 
-                                                    className="text-red-500 hover:text-red-600 hover:bg-red-500/10 disabled:opacity-30"
-                                                    disabled={(user.Role === "Super Admin" || user.Role === "Admin") && currentRoleId !== 1}
-                                                 >
-                                                     <Trash2 className="w-4 h-4" />
-                                                 </Button>
+                                             <td className="px-10 py-8 text-right">
+                                                 <div className="flex items-center justify-end gap-3 opacity-20 group-hover/row:opacity-100 transition-opacity">
+                                                     <PremiumButton 
+                                                        variant="outline" 
+                                                        size="icon" 
+                                                        onClick={() => handleOpenDialog(user)} 
+                                                        className="h-12 w-12 rounded-2xl bg-white/5 border-white/5 hover:bg-primary text-white disabled:opacity-30 transition-all shadow-lg"
+                                                        disabled={(user.Role === "Super Admin" || user.Role === "Admin") && currentRoleId !== 1}
+                                                     >
+                                                         <Edit size={18} />
+                                                     </PremiumButton>
+                                                     <PremiumButton 
+                                                        variant="outline" 
+                                                        size="icon" 
+                                                        onClick={() => handleDelete(user.Username)} 
+                                                        className="h-12 w-12 rounded-2xl bg-white/5 border-white/5 hover:bg-rose-600 text-white disabled:opacity-30 transition-all shadow-lg"
+                                                        disabled={(user.Role === "Super Admin" || user.Role === "Admin") && currentRoleId !== 1}
+                                                     >
+                                                         <Trash2 size={18} />
+                                                     </PremiumButton>
+                                                 </div>
                                              </td>
                                         </tr>
                                     ))
@@ -314,64 +317,67 @@ export default function UserSettingsPage() {
                             </tbody>
                         </table>
                     </div>
-                </CardContent>
-            </Card>
+                </PremiumCard>
+            </div>
 
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                <DialogContent className="bg-background border-border text-foreground max-w-2xl max-h-[90vh] overflow-hidden flex flex-col p-0 shadow-2xl">
-                    <DialogHeader className="p-6 border-b border-border bg-card">
-                        <DialogTitle className="flex items-center gap-2 text-slate-900 font-bold">
-                            <Shield className="w-5 h-5 text-emerald-600" />
-                            {editingUser ? "แก้ไขผู้ใช้งาน" : "สร้างผู้ใช้งานใหม่"}
+                <DialogContent className="bg-[#0a0518] border-white/10 text-white max-w-3xl max-h-[90vh] overflow-hidden flex flex-col p-0 shadow-[0_40px_100px_rgba(0,0,0,1)] rounded-[4rem] backdrop-blur-3xl relative">
+                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary via-indigo-500/50 to-accent" />
+                    
+                    <DialogHeader className="p-12 border-b border-white/5 bg-black/40">
+                        <DialogTitle className="flex items-center gap-4 text-3xl font-black italic uppercase tracking-widest premium-text-gradient">
+                            <Shield className="w-8 h-8 text-primary animate-pulse" strokeWidth={2.5} />
+                            {editingUser ? " PERSONNEL_UPDATE" : " PERSONNEL_INITIALIZE"}
                         </DialogTitle>
                     </DialogHeader>
                     
-                    <div className="flex-1 overflow-y-auto p-6 space-y-6">
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label className="text-gray-500">Username *</Label>
+                    <div className="flex-1 overflow-y-auto p-12 space-y-10 scrollbar-hide">
+                        <div className="grid grid-cols-2 gap-10">
+                            <div className="space-y-3">
+                                <Label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] ml-4">Vector Identifier (Username)</Label>
                                 <Input 
                                     value={formData.Username} 
                                     onChange={e => setFormData({...formData, Username: e.target.value})} 
                                     disabled={!!editingUser}
-                                    className="bg-gray-100 border-gray-200 disabled:opacity-50" 
+                                    className="h-16 rounded-2xl bg-black border-white/5 text-white disabled:opacity-50 font-black italic tracking-widest pl-6 shadow-inner" 
                                 />
                             </div>
-                            <div className="space-y-2">
-                                <Label className="text-gray-500">Password {editingUser && "(เว้นว่างถ้าไม่เปลี่ยน)"}</Label>
+                            <div className="space-y-3">
+                                <Label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] ml-4">Auth Sequence (Password)</Label>
                                 <Input 
                                     type="password"
                                     value={formData.Password || ""} 
                                     onChange={e => setFormData({...formData, Password: e.target.value})} 
-                                    className="bg-gray-100 border-gray-200" 
+                                    className="h-16 rounded-2xl bg-black border-white/5 text-white font-black italic tracking-widest pl-6 shadow-inner" 
+                                    placeholder={editingUser ? "BYPASS_UNLESS_REWRITING" : "DEFINE_PROTOCOL"}
                                 />
                             </div>
                         </div>
 
-                        <div className="space-y-2">
-                            <Label className="text-gray-500">ชื่อ - นามสกุล *</Label>
+                        <div className="space-y-3">
+                            <Label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] ml-4">Full Identity Name</Label>
                             <Input 
                                 value={formData.Name} 
                                 onChange={e => setFormData({...formData, Name: e.target.value})} 
-                                className="bg-gray-100 border-gray-200" 
+                                className="h-16 rounded-2xl bg-black border-white/5 text-white font-black italic tracking-widest pl-6 shadow-inner" 
                             />
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label className="text-gray-500">สาขา (Branch) *</Label>
+                        <div className="grid grid-cols-2 gap-10">
+                            <div className="space-y-3">
+                                <Label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] ml-4">Operational Hub</Label>
                                 {isAdmin ? (
                                     <Select 
                                         value={formData.Branch_ID || ""} 
                                         onValueChange={v => setFormData({...formData, Branch_ID: v})}
                                     >
-                                        <SelectTrigger className="bg-card border-border text-foreground">
-                                            <SelectValue placeholder="เลือกสาขา" />
+                                        <SelectTrigger className="h-16 rounded-2xl bg-black border-white/5 text-white font-black uppercase italic tracking-widest shadow-inner">
+                                            <SelectValue placeholder="SELECT_HUB" />
                                         </SelectTrigger>
-                                        <SelectContent className="bg-card border-border text-foreground">
+                                        <SelectContent className="bg-[#0a0518] border-white/10 text-white">
                                             {branches.map(b => (
-                                                <SelectItem key={b.Branch_ID} value={b.Branch_ID}>
-                                                    {b.Branch_Name} ({b.Branch_ID})
+                                                <SelectItem key={b.Branch_ID} value={b.Branch_ID} className="font-black italic uppercase tracking-widest">
+                                                    {b.Branch_Name}
                                                 </SelectItem>
                                             ))}
                                         </SelectContent>
@@ -380,23 +386,22 @@ export default function UserSettingsPage() {
                                     <Input 
                                         value={formData.Branch_ID || ""} 
                                         onChange={e => setFormData({...formData, Branch_ID: e.target.value})}
-                                        placeholder="เช่น สำนักงานใหญ่, สาขา 1"
-                                        className="bg-gray-100 border-gray-200 text-foreground" 
+                                        className="h-16 rounded-2xl bg-black border-white/5 text-white font-black italic tracking-widest pl-6 shadow-inner" 
                                     />
                                 )}
                             </div>
-                            <div className="space-y-2">
-                                <Label className="text-gray-500">บทบาท (Role) *</Label>
+                            <div className="space-y-3">
+                                <Label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] ml-4">Clearance Role</Label>
                                 <Select 
                                     value={formData.Role || ""} 
                                     onValueChange={handleRoleChange}
                                 >
-                                    <SelectTrigger className="bg-card border-border text-foreground">
-                                        <SelectValue placeholder="เลือกบทบาท" />
+                                    <SelectTrigger className="h-16 rounded-2xl bg-black border-white/5 text-white font-black uppercase italic tracking-widest shadow-inner">
+                                        <SelectValue placeholder="SELECT_CLEARANCE" />
                                     </SelectTrigger>
-                                    <SelectContent className="bg-card border-border text-foreground">
+                                    <SelectContent className="bg-[#0a0518] border-white/10 text-white">
                                         {STANDARD_ROLES.map(role => (
-                                            <SelectItem key={role} value={role}>
+                                            <SelectItem key={role} value={role} className="font-black italic uppercase tracking-widest">
                                                 {role}
                                             </SelectItem>
                                         ))}
@@ -405,31 +410,34 @@ export default function UserSettingsPage() {
                             </div>
                         </div>
 
-                        <Separator className="bg-gray-100" />
+                        <Separator className="bg-white/5" />
 
-                        <div className="space-y-4">
+                        <div className="space-y-6">
                             <div className="flex justify-between items-center">
-                                <Label className="text-emerald-600 font-bold uppercase text-xs">สิทธิ์การใช้งาน (Granular Permissions)</Label>
-                                <span className="text-[10px] text-muted-foreground italic">* อ้างอิงตามบทบาท และสามารถปรับเปลี่ยนเฉพาะบุคคลได้</span>
+                                <Label className="text-[10px] font-black text-primary uppercase tracking-[0.6em] italic">Access Permissions Matrix</Label>
+                                <div className="flex items-center gap-2">
+                                    <Zap size={12} className="text-primary" />
+                                    <span className="text-[8px] font-black text-slate-600 uppercase tracking-widest">Personalized Node Access</span>
+                                </div>
                             </div>
                             
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 {SYSTEM_PERMISSIONS.map((perm) => (
-                                    <div key={perm.id} className="flex items-start space-x-3 p-3 rounded-lg bg-muted/30 border border-border/50 hover:bg-muted/50 transition-colors">
+                                    <div key={perm.id} className="flex items-start space-x-4 p-5 rounded-3xl bg-black/40 border-2 border-white/5 hover:border-primary/30 transition-all group/perm">
                                         <Checkbox 
                                             id={`perm-${perm.id}`}
                                             checked={formData.Permissions?.[perm.id] || false}
                                             onCheckedChange={(checked) => toggleGranularPermission(perm.id, !!checked)}
-                                            className="mt-1"
+                                            className="mt-1 border-white/20 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
                                         />
-                                        <div className="grid gap-1.5 leading-none cursor-pointer" onClick={() => toggleGranularPermission(perm.id, !formData.Permissions?.[perm.id])}>
+                                        <div className="grid gap-2 leading-none cursor-pointer" onClick={() => toggleGranularPermission(perm.id, !formData.Permissions?.[perm.id])}>
                                             <label
                                                 htmlFor={`perm-${perm.id}`}
-                                                className="text-sm font-medium leading-none text-gray-800 peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                                className="text-xs font-black uppercase tracking-widest text-slate-300 group-hover/perm:text-white transition-colors"
                                             >
                                                 {perm.label}
                                             </label>
-                                            <p className="text-[10px] text-gray-400">
+                                            <p className="text-[9px] font-bold text-slate-600 uppercase group-hover/perm:text-slate-500 transition-colors italic">
                                                 {perm.desc}
                                             </p>
                                         </div>
@@ -439,19 +447,22 @@ export default function UserSettingsPage() {
                         </div>
 
                         {/* Customer Link (Optional) */}
-                        <div className="space-y-2 p-4 rounded-lg bg-muted/20 border border-border">
-                            <Label className="text-muted-foreground text-xs font-bold uppercase">เชื่อมโยงลูกค้า (Customer Link)</Label>
+                        <div className="space-y-3 p-8 rounded-[2.5rem] bg-indigo-500/5 border-2 border-indigo-500/10 shadow-inner group/client">
+                            <div className="flex items-center gap-3 mb-2 ml-4">
+                                <Key size={14} className="text-indigo-400 group-hover/client:rotate-45 transition-transform" />
+                                <Label className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.4em]">External Client Linkage</Label>
+                            </div>
                             <Select 
                                 value={formData.Customer_ID || "none"} 
                                 onValueChange={v => setFormData({...formData, Customer_ID: v === "none" ? null : v})}
                             >
-                                <SelectTrigger className="bg-card border-border">
-                                    <SelectValue placeholder="เชื่อมโยงกับลูกค้า (Optional)" />
+                                <SelectTrigger className="h-16 rounded-2xl bg-black/50 border-white/5 text-white font-black uppercase italic tracking-widest shadow-inner">
+                                    <SelectValue placeholder="SYNERGY_ENTITY_LINK" />
                                 </SelectTrigger>
-                                <SelectContent className="bg-card border-border">
-                                    <SelectItem value="none">-- ไม่ระบุ (พนักงานทั่วไป) --</SelectItem>
+                                <SelectContent className="bg-[#0a0518] border-white/10 text-white">
+                                    <SelectItem value="none" className="font-black italic uppercase tracking-widest text-slate-500 underline">-- REMOVE_LINKAGE --</SelectItem>
                                     {customers.map(c => (
-                                        <SelectItem key={c.Customer_ID} value={c.Customer_ID}>
+                                        <SelectItem key={c.Customer_ID} value={c.Customer_ID} className="font-black italic uppercase tracking-widest">
                                             {c.Customer_Name}
                                         </SelectItem>
                                     ))}
@@ -459,29 +470,29 @@ export default function UserSettingsPage() {
                             </Select>
                         </div>
 
-                        <div className="space-y-2 pb-4">
-                             <Label className="text-muted-foreground">สถานะการใช้งาน</Label>
+                        <div className="space-y-3">
+                             <Label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] ml-4">Deployment Status</Label>
                              <Select 
                                 value={formData.Active_Status} 
                                 onValueChange={v => setFormData({...formData, Active_Status: v})}
                             >
-                                <SelectTrigger className="bg-card border-border">
+                                <SelectTrigger className="h-16 rounded-2xl bg-black border-white/5 text-white font-black uppercase italic tracking-widest shadow-inner">
                                     <SelectValue />
                                 </SelectTrigger>
-                                <SelectContent className="bg-card border-border">
-                                    <SelectItem value="Active">ใช้งาน (Active)</SelectItem>
-                                    <SelectItem value="Inactive">ระงับ (Inactive)</SelectItem>
+                                <SelectContent className="bg-[#0a0518] border-white/10 text-white">
+                                    <SelectItem value="Active" className="text-emerald-500 font-black italic uppercase tracking-widest hover:bg-emerald-500/10">NODE_ACTIVE</SelectItem>
+                                    <SelectItem value="Inactive" className="text-rose-500 font-black italic uppercase tracking-widest hover:bg-rose-500/10">NODE_DEACTIVATED</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
                     </div>
  
-                    <DialogFooter className="p-6 border-t border-border bg-muted/20">
-                        <Button variant="outline" onClick={() => setIsDialogOpen(false)} className="border-border">ยกเลิก</Button>
-                        <Button onClick={handleSave} disabled={saving} className="bg-emerald-600 hover:bg-blue-700 min-w-[100px]">
-                            {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                            บันทึกข้อมูล
-                        </Button>
+                    <DialogFooter className="p-12 border-t border-white/5 bg-black/40 gap-6">
+                        <PremiumButton variant="outline" onClick={() => setIsDialogOpen(false)} className="h-18 px-10 rounded-[1.5rem] border-white/5 text-slate-500 hover:text-white uppercase tracking-widest text-xs font-black">ABORT_SYNC</PremiumButton>
+                        <PremiumButton onClick={handleSave} disabled={saving} className="h-18 px-12 rounded-[2rem] gap-4 shadow-[0_20px_50px_rgba(255,30,133,0.3)] min-w-[200px] text-sm tracking-[0.2em] bg-primary text-white border-0">
+                            {saving ? <Loader2 className="w-6 h-6 animate-spin" /> : <ShieldCheck className="w-6 h-6" />}
+                            EXECUTE_SYNC
+                        </PremiumButton>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>

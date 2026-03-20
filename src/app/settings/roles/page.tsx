@@ -1,15 +1,14 @@
-
 'use client'
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
+import { PremiumCard } from "@/components/ui/premium-card"
+import { PremiumButton } from "@/components/ui/premium-button"
 import { Label } from "@/components/ui/label"
 import { 
     Shield, Save, CheckCircle2, Loader2, Target, 
     FileText, Truck, Wallet, Users, Settings, Search,
-    Lock, AlertCircle
+    Lock, AlertCircle, Activity, Zap, Fingerprint, ArrowLeft
 } from "lucide-react"
 import { getRolePermissions, updateRolePermissions, RolePermission } from "@/lib/actions/permission-actions"
 import { toast } from "sonner"
@@ -20,6 +19,7 @@ import {
 } from "@/types/role"
 import { Switch } from "@/components/ui/switch"
 import { cn } from "@/lib/utils"
+import { useRouter } from "next/navigation"
 
 const CATEGORY_ICONS: Record<string, any> = {
     Executive: Target,
@@ -31,17 +31,13 @@ const CATEGORY_ICONS: Record<string, any> = {
 }
 
 export default function RolesPage() {
+    const router = useRouter()
     const [roles, setRoles] = useState<RolePermission[]>([])
     const [selectedRoleIndex, setSelectedRoleIndex] = useState(0)
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
-    const [searchTerm, setSearchParams] = useState("")
 
-    useEffect(() => {
-        loadData()
-    }, [])
-
-    const loadData = async () => {
+    const loadData = useCallback(async () => {
         setLoading(true)
         const result = await getRolePermissions()
         let fetchedData: RolePermission[] = []
@@ -66,7 +62,11 @@ export default function RolesPage() {
              
         setRoles(mergedData)
         setLoading(false)
-    }
+    }, [])
+
+    useEffect(() => {
+        loadData()
+    }, [loadData])
 
     const togglePermission = (permId: string) => {
         if (roles[selectedRoleIndex].Role === 'Super Admin') return 
@@ -75,7 +75,6 @@ export default function RolesPage() {
             const newRoles = [...prev]
             const roleToUpdate = { ...newRoles[selectedRoleIndex] }
             
-            // Ensure Permissions is an object
             const currentPerms = typeof roleToUpdate.Permissions === 'string'
                 ? JSON.parse(roleToUpdate.Permissions)
                 : { ...(roleToUpdate.Permissions || {}) }
@@ -106,8 +105,8 @@ export default function RolesPage() {
 
     if (loading) return (
         <DashboardLayout>
-            <div className="flex h-[60vh] items-center justify-center">
-                <Loader2 className="w-12 h-12 animate-spin text-emerald-600" />
+            <div className="flex h-[80vh] items-center justify-center opacity-30">
+                <Loader2 className="w-12 h-12 animate-spin text-primary" />
             </div>
         </DashboardLayout>
     )
@@ -117,122 +116,175 @@ export default function RolesPage() {
 
     return (
         <DashboardLayout>
-            <div className="flex flex-col gap-6 max-w-[1600px] mx-auto">
-                {/* Enterprise Header */}
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-950 p-8 rounded-3xl border border-slate-800 shadow-2xl relative overflow-hidden group">
-                    <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-transparent pointer-events-none" />
-                    <div className="relative z-10">
-                        <h1 className="text-4xl font-black text-white tracking-tight flex items-center gap-3">
-                            <Shield className="text-purple-500" size={32} />
-                            Security Control Center
-                        </h1>
-                        <p className="text-purple-400 font-black mt-1 uppercase tracking-widest text-[10px]">Access Matrix & Authorization Management</p>
+            <div className="space-y-12 pb-20 p-4 lg:p-10">
+                {/* Enterprise Security Header */}
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-10 bg-[#0a0518]/60 backdrop-blur-3xl p-10 rounded-br-[6rem] rounded-tl-[3rem] border border-white/5 shadow-2xl relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 w-80 h-80 bg-primary/10 blur-[120px] rounded-full -mr-40 -mt-40 pointer-events-none" />
+                    
+                    <div className="relative z-10 space-y-8">
+                        <button onClick={() => router.back()} className="inline-flex items-center gap-2 text-slate-500 hover:text-primary transition-all font-black uppercase tracking-[0.4em] text-[10px] group/back italic">
+                            <ArrowLeft className="w-4 h-4 group-hover/back:-translate-x-1 transition-transform" /> 
+                            Core Config
+                        </button>
+                        <div className="flex items-center gap-6">
+                            <div className="p-4 bg-primary/20 rounded-[2.5rem] border-2 border-primary/30 shadow-[0_0_40px_rgba(255,30,133,0.2)] text-primary group-hover:scale-110 transition-all duration-500">
+                                <Shield size={42} strokeWidth={2.5} />
+                            </div>
+                            <div>
+                                <h1 className="text-5xl font-black text-white tracking-widest uppercase leading-none italic premium-text-gradient">
+                                    Auth Matrix
+                                </h1>
+                                <p className="text-[10px] font-black text-primary uppercase tracking-[0.6em] mt-2 opacity-80 italic italic">Global Security & Clearance Infrastructure</p>
+                            </div>
+                        </div>
                     </div>
-                    <Button 
-                        onClick={handleSave} 
-                        disabled={saving || isSuperAdmin}
-                        className="bg-emerald-600 hover:bg-emerald-500 text-white font-black px-8 py-6 rounded-2xl shadow-xl transition-all active:scale-95 disabled:opacity-50 relative z-10"
-                    >
-                        {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                        Commit Access Changes
-                    </Button>
+
+                    <div className="flex flex-col items-end gap-6 relative z-10">
+                        <div className="bg-white/5 border border-white/10 px-6 py-3 rounded-2xl flex items-center gap-3 backdrop-blur-md">
+                            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_10px_rgba(16,185,129,1)]" />
+                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">PROTOCOL: ENCRYPTED_SYNC</span>
+                        </div>
+                        <PremiumButton 
+                            onClick={handleSave} 
+                            disabled={saving || isSuperAdmin}
+                            className="h-16 px-12 rounded-2xl bg-primary text-white border-0 shadow-[0_20px_50px_rgba(255,30,133,0.3)] gap-4 text-sm tracking-widest disabled:opacity-20"
+                        >
+                            {saving ? <Loader2 size={20} className="animate-spin" /> : <Fingerprint size={20} />}
+                            COMMIT_SECURITY_CHANGES
+                        </PremiumButton>
+                    </div>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-                    {/* Role Sidebar */}
-                    <div className="lg:col-span-3 space-y-2">
-                        <p className="text-slate-500 font-bold text-[10px] uppercase tracking-[0.2em] mb-4 ml-2">System Roles</p>
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
+                    {/* Role Tactical Select */}
+                    <div className="lg:col-span-3 space-y-4">
+                        <p className="text-slate-500 font-black text-[10px] uppercase tracking-[0.4em] mb-6 ml-4 italic">Security Entity</p>
                         {roles.map((role, idx) => (
                             <button
                                 key={role.Role}
                                 onClick={() => setSelectedRoleIndex(idx)}
                                 className={cn(
-                                    "w-full flex items-center justify-between p-4 rounded-2xl transition-all border group",
+                                    "w-full flex items-center justify-between p-6 rounded-3xl transition-all border-2 relative overflow-hidden group/role-btn",
                                     selectedRoleIndex === idx 
-                                    ? "bg-white border-emerald-500 shadow-lg shadow-emerald-500/5 translate-x-2" 
-                                    : "bg-white/50 border-transparent hover:bg-white hover:border-slate-200 text-slate-500"
+                                    ? "bg-primary/10 border-primary shadow-[0_0_30px_rgba(255,30,133,0.15)] translate-x-3" 
+                                    : "bg-white/5 border-transparent hover:bg-white/10 text-slate-500"
                                 )}
                             >
-                                <div className="flex items-center gap-3">
+                                <div className="flex items-center gap-4 relative z-10">
                                     <div className={cn(
-                                        "w-10 h-10 rounded-xl flex items-center justify-center transition-colors",
-                                        selectedRoleIndex === idx ? "bg-emerald-500 text-white" : "bg-slate-100 text-slate-400 group-hover:bg-slate-200"
+                                        "w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-500 shadow-xl",
+                                        selectedRoleIndex === idx 
+                                        ? "bg-primary text-white rotate-6 scale-110" 
+                                        : "bg-black/40 text-slate-600 group-hover/role-btn:text-white group-hover/role-btn:bg-primary/20"
                                     )}>
-                                        {role.Role === 'Super Admin' ? <Lock size={18} /> : <Users size={18} />}
+                                        {role.Role === 'Super Admin' ? <Lock size={22} /> : <Users size={22} />}
                                     </div>
-                                    <span className={cn("font-black text-sm uppercase tracking-tight", selectedRoleIndex === idx ? "text-slate-900" : "text-slate-700 group-hover:text-slate-900")}>
+                                    <span className={cn(
+                                        "font-black text-sm uppercase tracking-widest italic transition-colors",
+                                        selectedRoleIndex === idx ? "text-white" : "text-slate-500 group-hover/role-btn:text-slate-300"
+                                    )}>
                                         {role.Role}
                                     </span>
                                 </div>
-                                {selectedRoleIndex === idx && <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />}
+                                {selectedRoleIndex === idx && <Zap size={16} className="text-primary animate-pulse" />}
                             </button>
                         ))}
+                        
+                        <div className="mt-10 p-8 rounded-[2.5rem] bg-indigo-500/5 border border-white/5 shadow-inner">
+                             <div className="flex items-center gap-3 mb-4 text-indigo-400">
+                                <AlertCircle size={14} strokeWidth={2.5} />
+                                <span className="text-[9px] font-black uppercase tracking-[0.3em]">Integrity Check</span>
+                             </div>
+                             <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest leading-relaxed italic">
+                                ALL CLEARANCE MODIFICATIONS ARE LOGGED IN THE AUDIT TRAIL.
+                             </p>
+                        </div>
                     </div>
 
-                    {/* Permissions Matrix */}
-                    <div className="lg:col-span-9 space-y-6">
+                    {/* Permissions Tactical Matrix */}
+                    <div className="lg:col-span-9 space-y-8">
                         {isSuperAdmin ? (
-                            <div className="bg-purple-50 border-2 border-purple-100 p-8 rounded-[2.5rem] flex flex-col items-center text-center gap-4">
-                                <div className="w-20 h-20 bg-purple-500 rounded-3xl flex items-center justify-center text-white shadow-2xl shadow-purple-500/30">
-                                    <Lock size={40} />
+                            <PremiumCard className="bg-[#0a0518] border-2 border-indigo-500/30 p-20 rounded-[4rem] flex flex-col items-center text-center gap-10 relative overflow-hidden group/super">
+                                <div className="absolute inset-0 bg-indigo-500/5 pointer-events-none" />
+                                <div className="absolute top-0 right-0 w-80 h-80 bg-indigo-500/10 blur-[120px] rounded-full -mr-40 -mt-40 pointer-events-none" />
+                                
+                                <div className="w-32 h-32 bg-indigo-500/10 rounded-[3rem] flex items-center justify-center text-indigo-500 border-2 border-indigo-500/20 shadow-2xl relative z-10 group-hover/super:scale-110 transition-transform duration-700">
+                                    <Lock size={64} strokeWidth={1.5} className="animate-pulse" />
                                 </div>
-                                <div className="max-w-md">
-                                    <h3 className="text-2xl font-black text-purple-900 tracking-tight mb-2">Master Override Enabled</h3>
-                                    <p className="text-purple-600/80 font-medium text-sm leading-relaxed">
-                                        Super Admin account has hard-coded full access to all system modules. This security profile cannot be modified to ensure system stability.
+                                <div className="max-w-xl relative z-10 space-y-4">
+                                    <h3 className="text-4xl font-black text-white tracking-widest uppercase italic premium-text-gradient">MASTER_OVERRIDE_ACTIVE</h3>
+                                    <p className="text-indigo-400 font-black text-[10px] uppercase tracking-[0.6em] mb-4">Identity Level: SYSTEM_ORIGIN</p>
+                                    <p className="text-slate-500 font-bold text-sm leading-relaxed uppercase tracking-widest italic">
+                                        SUPER ADMIN ACCOUNTS POSSESS UNRESTRICTED HARD-CODED ACCESS TO ALL HYBRID NODES AND CORE KERNEL MODULES. THIS PROTOCOL IS IMMUTABLE.
                                     </p>
                                 </div>
-                            </div>
+                            </PremiumCard>
                         ) : (
-                            <div className="space-y-8">
-                                {PERMISSION_CATEGORIES.map(category => {
+                            <div className="space-y-10 pb-20">
+                                {PERMISSION_CATEGORIES.map((category, catIdx) => {
                                     const Icon = CATEGORY_ICONS[category.id] || Shield
                                     const catPerms = SYSTEM_PERMISSIONS.filter(p => p.category === category.id)
                                     
                                     return (
-                                        <div key={category.id} className="bg-white rounded-[2rem] border border-slate-100 shadow-sm overflow-hidden transition-all hover:shadow-xl hover:border-slate-200">
-                                            <div className="bg-slate-50/50 p-6 border-b border-slate-100 flex items-center justify-between">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="p-2 bg-white rounded-xl shadow-sm text-emerald-600 border border-slate-100">
-                                                        <Icon size={20} />
+                                        <motion.div 
+                                            key={category.id}
+                                            initial={{ opacity: 0, x: 20 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            transition={{ delay: catIdx * 0.1 }}
+                                            className="bg-[#0a0518]/40 rounded-[3rem] border-2 border-white/5 shadow-3xl overflow-hidden group/cat hover:border-primary/20 transition-all duration-500"
+                                        >
+                                            <div className="bg-black/40 px-10 py-8 border-b border-white/5 flex items-center justify-between relative overflow-hidden">
+                                                <div className="absolute top-0 right-0 w-64 h-full bg-primary/[0.02] pointer-events-none" />
+                                                <div className="flex items-center gap-5 relative z-10">
+                                                    <div className="p-3 bg-white/5 rounded-2xl text-primary border border-white/10 group-hover/cat:scale-110 transition-transform">
+                                                        <Icon size={24} />
                                                     </div>
-                                                    <h3 className="font-black text-slate-900 uppercase tracking-tight text-lg">{category.label}</h3>
+                                                    <h3 className="font-black text-white uppercase tracking-[0.3em] italic text-xl">{category.label}</h3>
                                                 </div>
-                                                <div className="text-[10px] font-bold text-slate-400 bg-white px-3 py-1 rounded-full border border-slate-100">
-                                                    {catPerms.length} ACCESS POINTS
+                                                <div className="text-[9px] font-black text-slate-600 bg-white/5 px-5 py-2 rounded-full border border-white/5 uppercase tracking-widest italic">
+                                                    {catPerms.length} VECTOR_POINTS
                                                 </div>
                                             </div>
-                                            <div className="p-2">
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                            <div className="p-8">
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                                     {catPerms.map(perm => (
                                                         <div 
                                                             key={perm.id}
                                                             onClick={() => togglePermission(perm.id)}
                                                             className={cn(
-                                                                "flex items-center justify-between p-4 rounded-2xl transition-all cursor-pointer border group",
+                                                                "flex items-center justify-between p-6 rounded-[2rem] transition-all cursor-pointer border-2 group/perm relative overflow-hidden",
                                                                 activeRole.Permissions?.[perm.id] 
-                                                                ? "bg-emerald-50/30 border-emerald-100 hover:border-emerald-200" 
-                                                                : "bg-transparent border-transparent hover:bg-slate-50 hover:border-slate-100"
+                                                                ? "bg-primary/5 border-primary/20 shadow-inner" 
+                                                                : "bg-transparent border-white/5 hover:border-white/10"
                                                             )}
                                                         >
-                                                            <div className="flex flex-col gap-0.5">
-                                                                <span className={cn("font-black text-sm tracking-tight", activeRole.Permissions?.[perm.id] ? "text-emerald-900" : "text-slate-900")}>
+                                                            <div className="flex flex-col gap-2 relative z-10">
+                                                                <span className={cn(
+                                                                    "font-black text-sm uppercase tracking-widest italic transition-colors",
+                                                                    activeRole.Permissions?.[perm.id] ? "text-primary shadow-[0_0_10px_rgba(255,30,133,0.3)]" : "text-slate-400 group-hover/perm:text-white"
+                                                                )}>
                                                                     {perm.label}
                                                                 </span>
-                                                                <span className={cn("text-[10px] font-bold leading-tight italic", activeRole.Permissions?.[perm.id] ? "text-emerald-700/70" : "text-slate-600")}>
+                                                                <span className={cn(
+                                                                    "text-[9px] font-black leading-tight uppercase tracking-tighter italic transition-colors",
+                                                                    activeRole.Permissions?.[perm.id] ? "text-primary/60" : "text-slate-600"
+                                                                )}>
                                                                     {perm.desc}
                                                                 </span>
                                                             </div>
                                                             <Switch 
                                                                 checked={activeRole.Permissions?.[perm.id] || false}
                                                                 onCheckedChange={() => togglePermission(perm.id)}
-                                                                className="data-[state=checked]:bg-emerald-500"
+                                                                className="data-[state=checked]:bg-primary relative z-10"
                                                             />
+                                                            {activeRole.Permissions?.[perm.id] && (
+                                                                <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-transparent opacity-30 pointer-events-none" />
+                                                            )}
                                                         </div>
                                                     ))}
                                                 </div>
                                             </div>
-                                        </div>
+                                        </motion.div>
                                     )
                                 })}
                             </div>

@@ -1,14 +1,16 @@
-'use client'
+"use client"
 
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { toast } from 'sonner'
 import { createClient } from '@/utils/supabase/client'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Send, Search, MessageSquare, Check, CheckCheck, Loader2, Image as ImageIcon } from "lucide-react"
+import { Send, Search, MessageSquare, Check, CheckCheck, Loader2, Image as ImageIcon, User, ShieldCheck, Activity } from "lucide-react"
 import { ChatMessage } from '@/lib/actions/chat-actions'
 import { uploadImageToDrive } from '@/lib/actions/upload-actions'
 import Image from 'next/image'
+import { cn } from "@/lib/utils"
+import { motion, AnimatePresence } from "framer-motion"
 
 interface Contact {
   driver_id: string
@@ -20,7 +22,7 @@ interface Contact {
 
 interface ChatWindowProps {
   initialContacts: Contact[]
-  initialDrivers: { Driver_ID: string; Driver_Name?: string }[] // Keeping any here for now as it's passed from server-side with unknown shape, or use Driver[]
+  initialDrivers: { Driver_ID: string; Driver_Name?: string }[]
   forcedDriverId?: string | null
 }
 
@@ -34,9 +36,9 @@ function formatDate(dateStr: string) {
   const yesterday = new Date(today)
   yesterday.setDate(yesterday.getDate() - 1)
   
-  if (d.toDateString() === today.toDateString()) return 'วันนี้'
-  if (d.toDateString() === yesterday.toDateString()) return 'เมื่อวาน'
-  return d.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' })
+  if (d.toDateString() === today.toDateString()) return 'TODAY'
+  if (d.toDateString() === yesterday.toDateString()) return 'YESTERDAY'
+  return d.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }).toUpperCase()
 }
 
 function groupMessagesByDate(messages: ChatMessage[]) {
@@ -68,37 +70,31 @@ export function ChatWindow({ initialContacts, initialDrivers, forcedDriverId }: 
   
   const supabase = createClient()
 
-  // Sync contacts with props when branch changes (server refresh)
   useEffect(() => {
     setContacts(initialContacts)
   }, [initialContacts])
 
-  // Forced driver ID from props
   useEffect(() => {
     if (forcedDriverId) {
       setSelectedDriverId(forcedDriverId)
     }
   }, [forcedDriverId])
 
-  // Auto-scroll to bottom
   const scrollToBottom = useCallback((behavior: ScrollBehavior = 'smooth') => {
     setTimeout(() => {
       messagesEndRef.current?.scrollIntoView({ behavior })
     }, 50)
   }, [])
 
-  // Filtered contacts with search
   const filteredContacts = useMemo(() => {
     const all = contacts.length > 0 ? contacts : initialDrivers.map(d => ({
       driver_id: d.Driver_ID,
       driver_name: d.Driver_Name || 'Unknown',
-      last_message: 'เริ่มแชทเลย',
+      last_message: 'INITIATE_CONTACT',
       unread: 0,
       updated_at: new Date().toISOString()
     }))
     
-// ... (existing imports)
-
     if (!searchQuery.trim()) return all
     const q = searchQuery.toLowerCase()
     return all.filter((c: Contact) => 
@@ -107,32 +103,25 @@ export function ChatWindow({ initialContacts, initialDrivers, forcedDriverId }: 
     )
   }, [contacts, initialDrivers, searchQuery])
 
-  // Active driver info
   const activeDriver = selectedDriverId 
     ? (contacts.find(c => c.driver_id === selectedDriverId) || initialDrivers.find(d => d.Driver_ID === selectedDriverId))
     : null
 
-  // Fetch messages
   const fetchMessages = useCallback(async (driverId: string) => {
-    // Dynamically import to avoid server-side issues or circular deps if any
     const { getChatHistory } = await import('@/lib/actions/chat-actions')
     const history = await getChatHistory(driverId)
-    
     if (history) {
       setMessages(history)
       scrollToBottom('instant')
     }
   }, [scrollToBottom])
 
-  // Send message  
   const sendMessage = useCallback(async () => {
     if (!inputMessage.trim() || !selectedDriverId || isSending) return
-    
     const messageText = inputMessage.trim()
     setInputMessage('')
     setIsSending(true)
 
-    // Optimistic update
     const optimisticMsg: ChatMessage = {
       id: Date.now(),
       sender_id: 'admin',
@@ -146,25 +135,20 @@ export function ChatWindow({ initialContacts, initialDrivers, forcedDriverId }: 
 
     const { sendChatMessage } = await import('@/lib/actions/chat-actions')
     const result = await sendChatMessage('admin', messageText, selectedDriverId)
-
     if (!result.success) {
-      // Remove optimistic message on error
       setMessages(prev => prev.filter(m => m.id !== optimisticMsg.id))
-      setInputMessage(messageText) // Restore input
+      setInputMessage(messageText)
     }
     setIsSending(false)
   }, [inputMessage, selectedDriverId, isSending, scrollToBottom])
 
-  // Handle image upload
   const handleImageUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file || !selectedDriverId) return
-    
     setUploadingImage(true)
     const formData = new FormData()
     formData.append('file', file)
     formData.append('folder', 'Chat_Images')
-    
     try {
         const uploadResult = await uploadImageToDrive(formData)
         if (uploadResult.success && uploadResult.directLink) {
@@ -172,39 +156,34 @@ export function ChatWindow({ initialContacts, initialDrivers, forcedDriverId }: 
             const { sendChatMessage } = await import('@/lib/actions/chat-actions')
             await sendChatMessage('admin', imageUrlMessage, selectedDriverId)
         } else {
-            toast.error('อัปโหลดรูปภาพไม่สำเร็จ')
+            toast.error('UPLOAD_FAILURE')
         }
     } catch {
-        toast.error('เกิดข้อผิดพลาดในการอัปโหลด')
+        toast.error('SYSTEM_ERROR')
     } finally {
         setUploadingImage(false)
         if (fileInputRef.current) fileInputRef.current.value = ''
     }
   }, [selectedDriverId])
 
-  // Mark messages as read
   const markAllAsRead = useCallback(async (driverId: string) => {
     const { markAsReadAction } = await import('@/lib/actions/chat-actions')
     await markAsReadAction(driverId)
-    
-    // Update unread count in contacts
     setContacts(prev => prev.map(c => 
       c.driver_id === driverId ? { ...c, unread: 0 } : c
     ))
   }, [])
 
-  // Update contact list on new message
   const updateContactList = useCallback((newMsg: ChatMessage) => {
     setContacts(prev => {
       const driverId = newMsg.sender_id === 'admin' ? newMsg.receiver_id : newMsg.sender_id
       const existing = prev.find(c => c.driver_id === driverId)
-      
       if (existing) {
         return prev.map(c => c.driver_id === driverId ? {
           ...c,
           last_message: newMsg.message.startsWith('[IMAGE] ') 
-            ? (newMsg.sender_id === 'admin' ? 'คุณ: 📷 ส่งรูปภาพ' : '📷 ส่งรูปภาพ')
-            : (newMsg.sender_id === 'admin' ? `คุณ: ${newMsg.message}` : newMsg.message),
+            ? (newMsg.sender_id === 'admin' ? 'SYSTEM: 📷 ARTIFACT_SENT' : '📷 ARTIFACT_RECEIVED')
+            : (newMsg.sender_id === 'admin' ? `SYSTEM: ${newMsg.message}` : newMsg.message),
           unread: (newMsg.sender_id !== 'admin' && driverId !== selectedDriverId) ? (c.unread || 0) + 1 : c.unread,
           updated_at: newMsg.created_at
         } : c).sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
@@ -212,7 +191,7 @@ export function ChatWindow({ initialContacts, initialDrivers, forcedDriverId }: 
         return [{
           driver_id: driverId,
           driver_name: newMsg.driver_name || 'Driver',
-          last_message: newMsg.message.startsWith('[IMAGE] ') ? '📷 ส่งรูปภาพ' : newMsg.message,
+          last_message: newMsg.message.startsWith('[IMAGE] ') ? '📷 ARTIFACT_RECEIVED' : newMsg.message,
           unread: newMsg.sender_id !== 'admin' ? 1 : 0,
           updated_at: newMsg.created_at
         }, ...prev]
@@ -220,161 +199,133 @@ export function ChatWindow({ initialContacts, initialDrivers, forcedDriverId }: 
     })
   }, [selectedDriverId])
 
-  // Real-time subscription
   useEffect(() => {
-    // Listen for both casings
     const channel = supabase
       .channel('chat_realtime')
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'Chat_Messages' },
-        (payload) => handleRealtimeInsert(payload)
-      )
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'chat_messages' },
-        (payload) => handleRealtimeInsert(payload)
-      )
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'Chat_Messages' }, (p) => handleRealtimeInsert(p))
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat_messages' }, (p) => handleRealtimeInsert(p))
       .subscribe()
 
-    const handleRealtimeInsert = (payload: { new: Record<string, unknown> }) => {
-      // Normalize payload keys
+    const handleRealtimeInsert = (payload: any) => {
       const raw = payload.new
       const newMsg: ChatMessage = {
-        id: (raw.id || raw.Id) as number,
-        sender_id: (raw.sender_id || raw.Sender_ID) as string,
-        receiver_id: (raw.receiver_id || raw.Receiver_ID) as string,
-        message: (raw.message || raw.Message) as string,
-        is_read: (raw.is_read || raw.Is_Read) as boolean,
-        created_at: (raw.created_at || raw.Created_At) as string
+        id: raw.id || raw.Id,
+        sender_id: raw.sender_id || raw.Sender_ID,
+        receiver_id: raw.receiver_id || raw.Receiver_ID,
+        message: raw.message || raw.Message,
+        is_read: raw.is_read || raw.Is_Read,
+        created_at: raw.created_at || raw.Created_At
       }
-
       const relevantDriverId = newMsg.sender_id === 'admin' ? newMsg.receiver_id : newMsg.sender_id
-      
       if (relevantDriverId === selectedDriverId) {
         setMessages(prev => {
-          const isDuplicate = prev.some(m => 
-            m.sender_id === newMsg.sender_id && m.message === newMsg.message && 
-            Math.abs(new Date(m.created_at).getTime() - new Date(newMsg.created_at).getTime()) < 5000
-          )
-          return isDuplicate ? prev.map(m => 
-            (m.sender_id === newMsg.sender_id && m.message === newMsg.message && m.id !== newMsg.id) ? newMsg : m
-          ) : [...prev, newMsg]
+          const isDuplicate = prev.some(m => m.sender_id === newMsg.sender_id && m.message === newMsg.message && Math.abs(new Date(m.created_at).getTime() - new Date(newMsg.created_at).getTime()) < 5000)
+          return isDuplicate ? prev.map(m => (m.sender_id === newMsg.sender_id && m.message === newMsg.message && m.id !== newMsg.id) ? newMsg : m) : [...prev, newMsg]
         })
         scrollToBottom()
-        
         if (newMsg.sender_id !== 'admin') {
           import('@/lib/actions/chat-actions').then(({ markAsReadAction }) => markAsReadAction(relevantDriverId))
-          // Play sound
           try { new Audio('/sounds/notification.mp3').play().catch(() => {}) } catch {}
         }
       } else if (newMsg.sender_id !== 'admin') {
-         // Play sound for incoming message even if not selected driver
          try { new Audio('/sounds/notification.mp3').play().catch(() => {}) } catch {}
       }
-      
       updateContactList(newMsg)
     }
-
     return () => { supabase.removeChannel(channel) }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedDriverId])
+  }, [selectedDriverId, scrollToBottom, updateContactList])
 
-  // On driver select
   useEffect(() => {
     if (selectedDriverId) {
       fetchMessages(selectedDriverId)
       markAllAsRead(selectedDriverId)
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedDriverId])
+  }, [selectedDriverId, fetchMessages, markAllAsRead])
 
-  // Polling fallback — re-fetch every 8s in case Supabase Realtime does not fire
   useEffect(() => {
     if (!selectedDriverId) return
-    const poll = setInterval(() => {
-      fetchMessages(selectedDriverId)
-    }, 8000)
+    const poll = setInterval(() => { fetchMessages(selectedDriverId) }, 8000)
     return () => clearInterval(poll)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedDriverId])
+  }, [selectedDriverId, fetchMessages])
 
-  // Message groups
   const messageGroups = useMemo(() => groupMessagesByDate(messages), [messages])
-
-  // Total unread
   const totalUnread = useMemo(() => contacts.reduce((s, c) => s + (c.unread || 0), 0), [contacts])
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-0 h-[calc(100vh-280px)] min-h-[450px] border border-gray-200 rounded-xl overflow-hidden bg-white/80 shadow-2xl">
+    <div className="grid grid-cols-1 lg:grid-cols-4 gap-0 h-[calc(100vh-280px)] min-h-[550px] border border-white/5 rounded-[3rem] overflow-hidden bg-[#0a0518] shadow-[0_50px_100px_rgba(0,0,0,0.6)] relative">
+      {/* Background Ambience */}
+      <div className="absolute inset-0 bg-gradient-to-tr from-primary/5 via-transparent to-blue-500/5 pointer-events-none" />
+      
       {/* Contacts Sidebar */}
-      <div className="lg:col-span-1 bg-white/70 border-r border-gray-200 flex flex-col">
-        {/* Sidebar Header */}
-        <div className="p-4 border-b border-gray-200">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-white font-bold text-sm">รายชื่อ</h3>
+      <div className="lg:col-span-1 bg-black/40 border-r border-white/5 flex flex-col relative z-20">
+        <div className="p-8 border-b border-white/5 space-y-6">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-black text-white uppercase tracking-[0.4em] italic leading-none">Fleet Nodes</h3>
             {totalUnread > 0 && (
-              <span className="px-2 py-0.5 rounded-full bg-blue-500 text-[10px] text-gray-800 font-medium">
-                {totalUnread} ใหม่
+              <span className="px-3 py-1 rounded-full bg-primary text-[10px] text-white font-black italic shadow-[0_0_15px_rgba(255,30,133,0.4)]">
+                {totalUnread} SIGNAL
               </span>
             )}
           </div>
-          <div className="relative">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <div className="relative group">
+            <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-primary transition-colors" />
             <Input 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="ค้นหาคนขับ..." 
-              className="bg-gray-50 border-gray-200 pl-9 h-9 text-sm" 
+              placeholder="LINK_PROTOCOL Search..." 
+              className="bg-black/60 border-2 border-white/5 pl-12 h-14 rounded-2xl text-xs font-black text-white placeholder:text-slate-600 focus:border-primary/40 transition-all font-mono" 
             />
           </div>
         </div>
 
-        {/* Contact List */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto custom-scrollbar p-2">
           {filteredContacts.length === 0 ? (
-            <div className="text-center py-8 text-gray-500 text-sm">ไม่พบผลลัพธ์</div>
+            <div className="text-center py-20 text-slate-700 font-black uppercase tracking-widest text-xs italic">Sector Void</div>
           ) : (
             filteredContacts.map((c: Contact) => {
               const id = c.driver_id
               const name = c.driver_name
               const isSelected = selectedDriverId === id
               return (
-                <div 
+                <motion.div 
                   key={id}
+                  layout
                   onClick={() => setSelectedDriverId(id)}
-                  className={`flex items-center gap-3 p-3.5 px-4 cursor-pointer transition-all border-b border-gray-200 ${
+                  className={cn(
+                    "flex items-center gap-4 p-5 rounded-[2rem] cursor-pointer transition-all border-2 mb-2 relative group",
                     isSelected 
-                      ? 'bg-emerald-600/15 border-l-2 border-l-blue-500' 
-                      : 'hover:bg-white/5 border-l-2 border-l-transparent'
-                  }`}
+                      ? 'bg-primary/10 border-primary/30 shadow-[0_15px_30px_rgba(255,30,133,0.1)]' 
+                      : 'bg-transparent border-transparent hover:bg-white/5'
+                  )}
                 >
                   <div className="relative shrink-0">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm ${
-                      isSelected ? 'bg-gradient-to-br from-blue-500 to-indigo-600' : 'bg-slate-700'
-                    }`}>
+                    <div className={cn(
+                      "w-12 h-12 rounded-2xl flex items-center justify-center text-white font-black text-sm border-2 transform group-hover:scale-110 group-hover:rotate-3 transition-all duration-500",
+                      isSelected ? 'bg-primary border-primary shadow-[0_0_20px_rgba(255,30,133,0.3)]' : 'bg-[#0a0518] border-white/10 text-slate-500'
+                    )}>
                       {name.charAt(0)}
                     </div>
+                    {(c.unread || 0) > 0 && (
+                       <span className="absolute -top-1 -right-1 w-4 h-4 bg-primary text-[8px] text-white flex items-center justify-center rounded-full font-black animate-bounce border-2 border-[#0a0518]">
+                          {c.unread}
+                       </span>
+                    )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex justify-between items-center">
-                      <p className={`font-medium text-sm truncate ${isSelected ? 'text-white' : 'text-gray-700'}`}>{name}</p>
-                      {c.updated_at && (
-                        <span className="text-[10px] text-gray-500 shrink-0 ml-2">
-                          {formatTime(c.updated_at)}
-                        </span>
-                      )}
+                    <div className="flex justify-between items-center mb-1">
+                      <p className={cn("font-black text-xs tracking-widest uppercase truncate italic", isSelected ? 'text-white' : 'text-slate-400')}>{name}</p>
+                      <span className="text-[9px] text-slate-600 font-black shrink-0 ml-2 italic">
+                        {formatTime(c.updated_at)}
+                      </span>
                     </div>
-                    <div className="flex justify-between items-center mt-0.5">
-                      <p className="text-xs text-gray-400 truncate pr-2">{c.last_message || 'เริ่มแชทเลย'}</p>
-                      {(c.unread || 0) > 0 && (
-                        <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-blue-500 text-[10px] text-gray-800 font-medium px-1 shrink-0">
-                          {c.unread}
-                        </span>
-                      )}
-                    </div>
+                    <p className="text-[10px] text-slate-500 font-black truncate pr-2 uppercase tracking-tighter opacity-60">{(c.last_message || 'NOMINAL').toUpperCase()}</p>
                   </div>
-                </div>
+                  {isSelected && (
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                       <ShieldCheck size={14} className="text-primary/50" />
+                    </div>
+                  )}
+                </motion.div>
               )
             })
           )}
@@ -382,140 +333,190 @@ export function ChatWindow({ initialContacts, initialDrivers, forcedDriverId }: 
       </div>
 
       {/* Chat Area */}
-      <div className="lg:col-span-2 bg-white/80 flex flex-col">
-        {selectedDriverId && activeDriver ? (
-          <>
-            {/* Chat Header */}
-            <div className="p-4 border-b border-gray-200 bg-white/80">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold">
-                  {(activeDriver.driver_name || activeDriver.Driver_Name || '?').charAt(0)}
-                </div>
-                <div>
-                  <h3 className="text-white font-bold text-sm">{activeDriver.driver_name || activeDriver.Driver_Name}</h3>
-                  <p className="text-[10px] text-gray-400">ID: {selectedDriverId}</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Messages */}
-            <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-4 space-y-1">
-              {messages.length === 0 ? (
-                <div className="text-center py-12 text-gray-500">
-                  <MessageSquare size={32} className="mx-auto mb-2 opacity-30" />
-                  <p className="text-sm">เริ่มสนทนากับ {activeDriver.driver_name || activeDriver.Driver_Name}</p>
-                </div>
-              ) : (
-                messageGroups.map((group, gi) => (
-                  <div key={gi}>
-                    {/* Date Separator */}
-                    <div className="flex items-center justify-center my-4">
-                      <span className="px-3 py-1 rounded-full bg-gray-100 text-[10px] text-gray-400">
-                        {formatDate(group.date)}
-                      </span>
+      <div className="lg:col-span-3 bg-black/60 flex flex-col relative z-20">
+        <AnimatePresence mode="wait">
+          {selectedDriverId && activeDriver ? (
+            <motion.div 
+              key={selectedDriverId}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="flex-1 flex flex-col h-full"
+            >
+              {/* Chat Header */}
+              <div className="p-8 border-b border-white/5 bg-black/40 backdrop-blur-xl flex items-center justify-between">
+                <div className="flex items-center gap-6">
+                  <div className="relative">
+                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center text-white font-black text-lg shadow-[0_0_20px_rgba(255,30,133,0.2)] border-2 border-white/10">
+                      {(activeDriver.driver_name || activeDriver.Driver_Name || '?').charAt(0)}
                     </div>
-                    
-                    {/* Messages in this date */}
-                    <div className="space-y-1.5">
-                      {group.messages.map((msg, mi) => {
-                        const isAdmin = msg.sender_id === 'admin'
-                        const showAvatar = !isAdmin && (mi === 0 || group.messages[mi-1]?.sender_id === 'admin')
-                        
-                        return (
-                          <div key={msg.id} className={`flex ${isAdmin ? 'justify-end' : 'justify-start'} items-end gap-2`}>
-                            {!isAdmin && (
-                              <div className="w-6 h-6 shrink-0">
-                                {showAvatar && (
-                                  <div className="w-6 h-6 rounded-full bg-slate-700 flex items-center justify-center text-[10px] text-white">
-                                    {(activeDriver.driver_name || activeDriver.Driver_Name || '?').charAt(0)}
-                                  </div>
-                                )}
-                              </div>
-                            )}
-                            <div className={`max-w-[65%] rounded-2xl py-2 px-3.5 ${
-                              isAdmin 
-                                ? 'bg-emerald-600 text-white rounded-br-sm' 
-                                : 'bg-gray-100 text-gray-800 rounded-bl-sm'
-                            }`}>
-                              {msg.message.startsWith('[IMAGE] ') ? (
-                                <div className="relative w-48 h-48 sm:w-64 sm:h-64 rounded-xl overflow-hidden mb-1 border border-black/10">
-                                    <Image src={msg.message.replace('[IMAGE] ', '')} alt="Chat image" fill className="object-cover" />
-                                </div>
-                              ) : (
-                                <p className="text-sm leading-relaxed break-words">{msg.message}</p>
-                              )}
-                              <div className={`flex items-center gap-1 mt-0.5 ${isAdmin ? 'justify-end' : ''}`}>
-                                <span className="text-[10px] opacity-50">
-                                  {formatTime(msg.created_at)}
-                                </span>
-                                {isAdmin && (
-                                  msg.is_read 
-                                    ? <CheckCheck size={12} className="opacity-70 text-cyan-300" />
-                                    : <Check size={12} className="opacity-40" />
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        )
-                      })}
+                    <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 rounded-full border-4 border-[#0a0518] shadow-[0_0_10px_rgba(16,185,129,0.4)]" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-black text-white italic tracking-[0.2em] uppercase leading-none mb-2">{activeDriver.driver_name || activeDriver.Driver_Name}</h3>
+                    <div className="flex items-center gap-3">
+                        <span className="text-[9px] font-black text-primary uppercase tracking-[0.3em] font-mono bg-primary/10 px-2 py-0.5 rounded-md border border-primary/20">TARGET_ID: {selectedDriverId}</span>
+                        <div className="w-1 h-1 rounded-full bg-slate-800" />
+                        <span className="text-[9px] font-black text-slate-600 uppercase tracking-widest italic flex items-center gap-1.5">
+                           <Activity size={10} className="text-emerald-500" /> ENCRYPTED_LINK_ESTABLISHED
+                        </span>
                     </div>
                   </div>
-                ))
-              )}
-              <div ref={messagesEndRef} />
-            </div>
-
-            {/* Message Input */}
-            <div className="p-3 border-t border-gray-200 bg-white/60">
-              <div className="flex gap-2">
-                <input 
-                    type="file" 
-                    ref={fileInputRef} 
-                    className="hidden" 
-                    accept="image/*" 
-                    onChange={handleImageUpload} 
-                />
-                <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={isSending || uploadingImage}
-                    className="text-gray-500 hover:text-emerald-600 hover:bg-emerald-50 shrink-0 h-10 w-10 p-0"
-                >
-                    {uploadingImage ? <Loader2 className="animate-spin" size={18} /> : <ImageIcon size={20} />}
-                </Button>
-                <Input 
-                  value={inputMessage}
-                  onChange={(e) => setInputMessage(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault()
-                      sendMessage()
-                    }
-                  }}
-                  placeholder="พิมพ์ข้อความ..." 
-                  className="bg-gray-50 border-gray-200/50 focus:border-blue-500/50 h-10" 
-                  disabled={isSending}
-                />
-                <Button 
-                  onClick={sendMessage} 
-                  disabled={!inputMessage.trim() || isSending}
-                  className="bg-emerald-600 hover:bg-blue-500 disabled:opacity-30 h-10 w-10 p-0 shrink-0"
-                >
-                  <Send size={16} />
-                </Button>
+                </div>
+                <div className="flex gap-4">
+                   <div className="p-3 bg-white/5 rounded-xl border border-white/10 text-slate-500 hover:text-white hover:bg-white/10 cursor-pointer transition-all">
+                      <Target size={20} />
+                   </div>
+                </div>
               </div>
-            </div>
-          </>
-        ) : (
-          <div className="flex-1 flex flex-col items-center justify-center text-gray-500">
-            <div className="w-16 h-16 rounded-full bg-gray-50 flex items-center justify-center mb-4">
-              <MessageSquare size={28} className="opacity-40" />
-            </div>
-            <p className="text-sm font-medium">เลือกคนขับเพื่อเริ่มสนทนา</p>
-            <p className="text-xs mt-1 opacity-50">{filteredContacts.length} คนขับ</p>
-          </div>
-        )}
+
+              {/* Messages */}
+              <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-10 space-y-8 custom-scrollbar">
+                {messages.length === 0 ? (
+                  <div className="text-center py-20">
+                    <MessageSquare size={48} className="mx-auto mb-4 text-white/[0.03] animate-pulse" />
+                    <p className="text-xs font-black text-slate-700 uppercase tracking-[0.4em] italic mb-1">Establish Protocol with Operator</p>
+                    <p className="text-[10px] text-slate-800 font-mono">INIT_SESSION_WAITING_FOR_DATA_PACKETS</p>
+                  </div>
+                ) : (
+                  messageGroups.map((group, gi) => (
+                    <div key={gi} className="space-y-6">
+                      <div className="flex items-center justify-center gap-4">
+                        <div className="h-px bg-white/5 flex-1" />
+                        <span className="px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-[9px] text-slate-500 font-black italic tracking-widest">
+                          {formatDate(group.date)}
+                        </span>
+                        <div className="h-px bg-white/5 flex-1" />
+                      </div>
+                      
+                      <div className="space-y-4">
+                        {group.messages.map((msg, mi) => {
+                          const isAdmin = msg.sender_id === 'admin'
+                          return (
+                            <motion.div 
+                              key={msg.id} 
+                              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                              animate={{ opacity: 1, scale: 1, y: 0 }}
+                              className={cn(
+                                "flex items-end gap-3",
+                                isAdmin ? 'flex-row-reverse' : 'flex-row'
+                              )}
+                            >
+                              <div className={cn(
+                                "max-w-[70%] space-y-2",
+                                isAdmin ? 'items-end' : 'items-start'
+                              )}>
+                                <div className={cn(
+                                  "rounded-[2rem] p-6 shadow-2xl relative group/msg transition-all duration-300",
+                                  isAdmin 
+                                    ? 'bg-primary border-2 border-primary/20 text-white rounded-br-sm' 
+                                    : 'bg-[#0a0518] border-2 border-white/5 text-slate-300 rounded-bl-sm'
+                                )}>
+                                  {msg.message.startsWith('[IMAGE] ') ? (
+                                    <div className="relative w-48 h-48 sm:w-80 sm:h-80 rounded-[1.5rem] overflow-hidden border-2 border-white/10 bg-black shadow-2xl group cursor-pointer">
+                                        <Image src={msg.message.replace('[IMAGE] ', '')} alt="Chat image" fill className="object-cover group-hover:scale-110 transition-transform duration-700" />
+                                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm">
+                                           <span className="text-[10px] font-black text-white italic tracking-widest border border-white/20 p-2 rounded-lg">PROTO_EXPAND</span>
+                                        </div>
+                                    </div>
+                                  ) : (
+                                    <p className="text-sm font-black italic tracking-tight uppercase leading-relaxed break-words">{msg.message}</p>
+                                  )}
+                                  
+                                  <div className={cn(
+                                    "flex items-center gap-2 mt-3 opacity-0 group-hover/msg:opacity-100 transition-opacity",
+                                    isAdmin ? 'justify-end' : 'justify-start'
+                                  )}>
+                                    <span className="text-[9px] font-black italic tracking-widest text-white/40">
+                                      {formatTime(msg.created_at)}
+                                    </span>
+                                    {isAdmin && (
+                                      msg.is_read 
+                                        ? <CheckCheck size={12} className="text-cyan-400" />
+                                        : <Check size={12} className="text-white/30" />
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            </motion.div>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  ))
+                )}
+                <div ref={messagesEndRef} />
+              </div>
+
+              {/* Message Input Container */}
+              <div className="p-8 border-t border-white/5 bg-black/40 backdrop-blur-2xl">
+                <div className="flex gap-4 items-center bg-[#0a0518] border-2 border-white/5 p-3 rounded-[2.5rem] shadow-3xl group-focus-within:border-primary/40 transition-all">
+                  <input 
+                      type="file" 
+                      ref={fileInputRef} 
+                      className="hidden" 
+                      accept="image/*" 
+                      onChange={handleImageUpload} 
+                  />
+                  <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={isSending || uploadingImage}
+                      className="text-slate-500 hover:text-primary hover:bg-primary/10 shrink-0 h-14 w-14 p-0 rounded-2xl transition-all"
+                  >
+                      {uploadingImage ? <Loader2 className="animate-spin" size={20} /> : <ImageIcon size={24} />}
+                  </Button>
+                  <Input 
+                    value={inputMessage}
+                    onChange={(e) => setInputMessage(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault()
+                        sendMessage()
+                      }
+                    }}
+                    placeholder="Link Data Packet to Operator..." 
+                    className="bg-transparent border-none focus-visible:ring-0 h-14 text-white text-xs font-black italic tracking-widest uppercase placeholder:text-slate-700" 
+                    disabled={isSending}
+                  />
+                  <Button 
+                    onClick={sendMessage} 
+                    disabled={!inputMessage.trim() || isSending}
+                    className="bg-primary hover:bg-primary/90 text-white shadow-[0_5px_15px_rgba(255,30,133,0.3)] h-14 w-14 p-0 shrink-0 rounded-2xl group/send"
+                  >
+                    <Send size={20} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+                  </Button>
+                </div>
+              </div>
+            </motion.div>
+          ) : (
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="flex-1 flex flex-col items-center justify-center text-center p-20 space-y-6"
+            >
+              <div className="relative">
+                 <div className="w-24 h-24 rounded-[2rem] bg-white/5 border-2 border-white/5 flex items-center justify-center mb-6 relative z-10">
+                    <MessageSquare size={40} className="text-white/10" />
+                 </div>
+                 <div className="absolute inset-x-0 -bottom-10 h-20 bg-primary/20 blur-[60px] rounded-full pointer-events-none" />
+              </div>
+              <div className="space-y-2">
+                <p className="text-xl font-black text-white italic tracking-[0.4em] uppercase">Communication Offline</p>
+                <p className="text-[10px] font-black text-slate-700 uppercase tracking-[0.2em] font-mono italic">Select active Fleet Node to synchronize data stream</p>
+              </div>
+              <div className="pt-10 flex items-center gap-4">
+                 <div className="flex items-center gap-2 text-[9px] font-black text-slate-800 uppercase tracking-widest bg-white/5 px-4 py-2 rounded-full border border-white/5">
+                    <User size={12} /> {filteredContacts.length} OPERATORS_AVAIL
+                 </div>
+                 <div className="flex items-center gap-2 text-[9px] font-black text-slate-800 uppercase tracking-widest bg-white/5 px-4 py-2 rounded-full border border-white/5">
+                    <Activity size={12} /> SECURE_ID_MAPPING
+                 </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   )

@@ -3,19 +3,21 @@
 import { PremiumCard } from "@/components/ui/premium-card"
 import { SafetyAnalytics } from "@/lib/supabase/safety-analytics"
 import { ShieldAlert, FileCheck, AlertOctagon, CheckCircle, ShieldCheck, Activity } from "lucide-react"
+import { useLanguage } from "@/components/providers/language-provider"
 
 export function SafetySection({ data }: { data: SafetyAnalytics }) {
+  const { t } = useLanguage()
   const { sos, pod } = data
 
   return (
     <div className="space-y-10">
       {/* Sub-Section Header */}
-      <div className="flex items-center gap-3">
-        <div className="p-2 bg-slate-950 rounded-xl text-rose-500 shadow-lg border border-slate-800">
-          <ShieldAlert size={18} />
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-slate-950 rounded-xl text-rose-500 shadow-lg border border-slate-800">
+            <ShieldAlert size={18} />
+          </div>
+          <h3 className="text-xl font-black text-white tracking-tight uppercase premium-text-gradient">{t('dashboard.safety_intel_registry')}</h3>
         </div>
-        <h3 className="text-xl font-black text-white tracking-tight uppercase premium-text-gradient">Safety & Intelligence Registry</h3>
-      </div>
 
       {/* KPI Bento Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -24,8 +26,8 @@ export function SafetySection({ data }: { data: SafetyAnalytics }) {
             <div className="absolute inset-0 bg-gradient-to-br from-rose-500/5 to-transparent pointer-events-none" />
             <div className="flex items-center justify-between mb-6 relative z-10">
               <div className="space-y-1">
-                <span className="text-rose-400 text-[10px] font-black uppercase tracking-[0.2em] italic">Distress Events</span>
-                <p className="text-[8px] text-slate-500 font-bold uppercase tracking-widest italic">Cumulative SOS Trigger Log</p>
+                <span className="text-rose-400 text-[10px] font-black uppercase tracking-[0.2em] italic">{t('dashboard.distress_events')}</span>
+                <p className="text-[8px] text-slate-500 font-bold uppercase tracking-widest italic">{t('dashboard.sos_trigger_log')}</p>
               </div>
               <div className="p-2 bg-rose-500/10 rounded-xl text-rose-500 shadow-lg shadow-rose-500/10">
                 <AlertOctagon size={16} />
@@ -34,7 +36,7 @@ export function SafetySection({ data }: { data: SafetyAnalytics }) {
             <div className="text-3xl font-black text-white tracking-tighter relative z-10">{sos.total}</div>
             <div className="flex items-center gap-2 mt-4 relative z-10">
                 <div className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
-                <p className="text-[10px] text-rose-400 font-black uppercase tracking-widest italic">{sos.active} ACTIVE INTERVENTIONS</p>
+                <p className="text-[10px] text-rose-400 font-black uppercase tracking-widest italic">{sos.active} {t('dashboard.active_interventions_label')}</p>
             </div>
         </PremiumCard>
 
@@ -43,8 +45,8 @@ export function SafetySection({ data }: { data: SafetyAnalytics }) {
             <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent pointer-events-none" />
             <div className="flex items-center justify-between mb-6 relative z-10">
               <div className="space-y-1">
-                <span className="text-emerald-400 text-[10px] font-black uppercase tracking-[0.2em] italic">POD INTEGRITY</span>
-                <p className="text-[8px] text-slate-500 font-bold uppercase tracking-widest italic">Strategic Compliance Index</p>
+                <span className="text-emerald-400 text-[10px] font-black uppercase tracking-[0.2em] italic">{t('dashboard.pod_integrity')}</span>
+                <p className="text-[8px] text-slate-500 font-bold uppercase tracking-widest italic">{t('dashboard.strategic_compliance_index')}</p>
               </div>
               <div className="p-2 bg-emerald-500/10 rounded-xl text-emerald-400 shadow-lg shadow-emerald-500/10">
                 <FileCheck size={16} />
@@ -63,8 +65,8 @@ export function SafetySection({ data }: { data: SafetyAnalytics }) {
             <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent pointer-events-none" />
             <div className="flex items-center justify-between mb-6 relative z-10">
               <div className="space-y-1">
-                <span className="text-blue-400 text-[10px] font-black uppercase tracking-[0.2em] italic">Mission Resolution</span>
-                <p className="text-[8px] text-slate-500 font-bold uppercase tracking-widest italic">Operational Closure Registry</p>
+                <span className="text-blue-400 text-[10px] font-black uppercase tracking-[0.2em] italic">{t('dashboard.mission_resolution')}</span>
+                <p className="text-[8px] text-slate-500 font-bold uppercase tracking-widest italic">{t('dashboard.operational_closure_registry')}</p>
               </div>
               <div className="p-2 bg-blue-500/10 rounded-xl text-blue-400 shadow-lg shadow-blue-500/10">
                 <CheckCircle size={16} />
@@ -72,7 +74,7 @@ export function SafetySection({ data }: { data: SafetyAnalytics }) {
             </div>
             <div className="text-3xl font-black text-white tracking-tighter relative z-10 italic">{pod.totalCompleted}</div>
             <div className="flex items-center gap-2 mt-4 relative z-10 opacity-50">
-                <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest italic">CUMULATIVE SUCCESS INDEX</p>
+                <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest italic">{t('dashboard.success_index')}</p>
             </div>
         </PremiumCard>
 
@@ -81,17 +83,17 @@ export function SafetySection({ data }: { data: SafetyAnalytics }) {
             <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent pointer-events-none" />
             <div className="flex items-center justify-between mb-6 relative z-10">
               <div className="space-y-1">
-                <span className="text-emerald-100 text-[10px] font-black uppercase tracking-[0.2em] italic">Security Status</span>
-                <p className="text-[8px] text-emerald-200 font-bold uppercase tracking-widest italic">Environmental Safety Thresh</p>
+                <span className="text-emerald-100 text-[10px] font-black uppercase tracking-[0.2em] italic">{t('dashboard.security_status_label')}</span>
+                <p className="text-[8px] text-emerald-200 font-bold uppercase tracking-widest italic">{t('dashboard.environmental_safety_thresh')}</p>
               </div>
               <div className="p-2 bg-white/10 rounded-xl text-white shadow-lg">
                 <ShieldCheck size={16} />
               </div>
             </div>
-            <div className="text-3xl font-black text-white tracking-tighter relative z-10 italic">NOMINAL</div>
+            <div className="text-3xl font-black text-white tracking-tighter relative z-10 italic">{t('dashboard.nominal')}</div>
             <div className="flex items-center gap-2 mt-4 relative z-10">
                 <p className="text-[9px] text-white font-black uppercase tracking-widest italic flex items-center gap-2">
-                    <Activity size={10} strokeWidth={3} /> BIOMETRIC SYNC ACTIVE
+                    <Activity size={10} strokeWidth={3} /> {t('dashboard.biometric_sync_active')}
                 </p>
             </div>
         </PremiumCard>
@@ -108,8 +110,8 @@ export function SafetySection({ data }: { data: SafetyAnalytics }) {
                   <AlertOctagon size={16} />
                 </div>
                 <div>
-                  <h3 className="text-lg font-black text-white tracking-tight italic">Incident Taxonomy</h3>
-                  <p className="text-rose-400 text-[9px] font-bold uppercase tracking-[0.2em]">Distress Category Distribution</p>
+                  <h3 className="text-lg font-black text-white tracking-tight italic">{t('dashboard.incident_taxonomy')}</h3>
+                  <p className="text-rose-400 text-[9px] font-bold uppercase tracking-[0.2em]">{t('dashboard.distress_category_distribution')}</p>
                 </div>
               </div>
            </div>
@@ -118,7 +120,7 @@ export function SafetySection({ data }: { data: SafetyAnalytics }) {
                 <div key={i} className="space-y-3 group/item">
                   <div className="flex justify-between items-end">
                      <span className="text-[11px] font-black text-slate-500 uppercase tracking-widest">{item.reason}</span>
-                     <span className="text-lg font-black text-slate-900 tracking-tighter italic shadow-sm bg-slate-50 px-3 py-1 rounded-lg group-hover/item:text-rose-600 transition-colors">{item.count} EVENTS</span>
+                     <span className="text-lg font-black text-slate-900 tracking-tighter italic shadow-sm bg-slate-50 px-3 py-1 rounded-lg group-hover/item:text-rose-600 transition-colors">{item.count} {t('dashboard.events_label')}</span>
                   </div>
                   <div className="h-2 w-full bg-slate-50 rounded-full overflow-hidden border border-slate-100 p-0.5">
                      <div 
@@ -131,7 +133,7 @@ export function SafetySection({ data }: { data: SafetyAnalytics }) {
               {sos.byReason.length === 0 && (
                 <div className="p-20 text-center">
                     <ShieldCheck size={48} strokeWidth={1} className="mx-auto mb-4 text-emerald-100" />
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">No Incident Data Recorded</p>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('dashboard.no_incident_data')}</p>
                 </div>
               )}
            </div>
@@ -146,8 +148,8 @@ export function SafetySection({ data }: { data: SafetyAnalytics }) {
                   <Activity size={16} />
                 </div>
                 <div>
-                  <h3 className="text-lg font-black text-white tracking-tight italic">Real-Time ALERT Log</h3>
-                  <p className="text-blue-400 text-[9px] font-bold uppercase tracking-[0.2em]">Live Operational Security Feed</p>
+                  <h3 className="text-lg font-black text-white tracking-tight italic">{t('dashboard.real_time_alert_log')}</h3>
+                  <p className="text-blue-400 text-[9px] font-bold uppercase tracking-[0.2em]">{t('dashboard.live_security_feed')}</p>
                 </div>
               </div>
            </div>
@@ -165,7 +167,7 @@ export function SafetySection({ data }: { data: SafetyAnalytics }) {
                                     <span className="text-[9px] font-black text-slate-400 border border-slate-200 px-2 py-0.5 rounded-full tracking-widest">{alert.vehicle}</span>
                                 </div>
                                 <div className="text-[10px] text-rose-600 font-black mt-2 bg-rose-50 px-3 py-1 rounded-lg w-fit tracking-widest italic border border-rose-100 uppercase">
-                                   ENTRY: {alert.reason}
+                                   {t('dashboard.entry_label')} {alert.reason}
                                 </div>
                             </div>
                         </div>

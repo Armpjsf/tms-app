@@ -44,87 +44,83 @@ export default function StaffLoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-6 relative overflow-hidden bg-slate-950">
+    <div className="min-h-screen flex flex-col items-center justify-center p-6 relative overflow-hidden bg-background">
       {/* Cinematic Background Image */}
       <div className="absolute inset-0 z-0">
         <Image 
           src="/images/login-bg.png" 
           alt="Transport Background" 
           fill 
-          className="object-cover opacity-40 mix-blend-overlay"
+          className="object-cover opacity-20 mix-blend-overlay"
           priority
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-slate-950/80 via-transparent to-slate-950/90" />
-        <div className="absolute inset-0 bg-gradient-to-r from-slate-950/40 via-transparent to-slate-950/40" />
+        <div className="absolute inset-0 bg-gradient-to-b from-background/90 via-transparent to-background" />
+        <div className="absolute inset-0 bg-gradient-to-r from-background/40 via-transparent to-background/40" />
       </div>
 
       {/* Glass Decor Elements */}
-      <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-emerald-500/10 rounded-full blur-[120px] -translate-y-1/2 animate-pulse" />
-      <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-blue-500/10 rounded-full blur-[120px] translate-y-1/2 animate-pulse" />
+      <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-primary/20 rounded-full blur-[120px] -translate-y-1/2 animate-pulse" />
+      <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-accent/20 rounded-full blur-[120px] translate-y-1/2 animate-pulse" />
       
       <div className="w-full max-w-5xl space-y-12 relative z-10 text-center">
         {/* Logo & Header Section */}
         <div className="space-y-6 flex flex-col items-center animate-in fade-in slide-in-from-top-4 duration-1000">
-            <div className="w-24 h-24 p-4 bg-white/10 backdrop-blur-xl rounded-3xl border border-white/20 shadow-2xl relative overflow-hidden group hover:scale-105 transition-transform duration-500">
-                <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/20 to-blue-500/20 opacity-0 group-hover:opacity-100 transition-opacity" />
-                <Image src="/logo.png" alt="LOGIS Driver Logo" width={64} height={64} className="w-full h-full object-contain relative z-10" />
-            </div>
+                        <div className="relative w-48 h-48 rounded-[3.5rem] bg-[#050110]/80 border-2 border-white/10 flex items-center justify-center shadow-2xl shadow-primary/20 overflow-hidden ring-1 ring-white/10 group-hover:scale-105 transition-transform duration-700">
+                             <Image src="/logo-tactical.png" alt="LogisPro" fill className="object-cover p-4" priority />
+                        </div>
             <div className="space-y-2">
-                <h1 className="text-6xl font-black text-white tracking-tighter drop-shadow-lg">
-                    LOGIS-PRO <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-blue-500">360</span>
+                <h1 className="text-7xl font-black text-white tracking-tighter drop-shadow-lg">
+                    Logis<span className="text-primary">Pro</span>
                 </h1>
-                <p className="text-xl text-slate-300 font-medium tracking-wide">
-                    The Ultimate Transport Management Solution
+                <p className="text-xl text-slate-400 font-medium tracking-wide">
+                    Sweet deliveries, serious logistics.
                 </p>
-                <div className="h-1 w-24 bg-gradient-to-r from-emerald-500 to-blue-500 mx-auto rounded-full mt-4 shadow-lg shadow-emerald-500/20" />
             </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-10 px-4 max-w-5xl mx-auto animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-300">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-10 px-4 max-w-4xl mx-auto animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-300">
             {/* Driver Login Option */}
             <div 
                 onClick={() => router.push('/mobile/login')}
-                className="group cursor-pointer relative overflow-hidden bg-white/[0.03] backdrop-blur-3xl border border-white/10 hover:border-emerald-500/50 rounded-[3.5rem] p-12 shadow-2xl transition-all duration-500 hover:shadow-[0_0_50px_rgba(16,185,129,0.15)] hover:-translate-y-3 text-center flex flex-col items-center gap-8"
+                className="group cursor-pointer relative overflow-hidden glass-panel rounded-[3rem] p-12 transition-all duration-500 hover:shadow-[0_20px_60px_rgba(255,30,133,0.15)] hover:-translate-y-3 text-center flex flex-col items-center gap-8"
             >
-                <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/[0.05] to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                <div className="w-24 h-24 bg-slate-950 border border-white/10 rounded-3xl flex items-center justify-center shadow-2xl group-hover:rotate-6 group-hover:bg-emerald-600 transition-all duration-700 relative overflow-hidden">
-                    <div className="absolute inset-0 bg-gradient-to-tr from-emerald-400/20 to-transparent opacity-0 group-hover:opacity-100 animate-pulse" />
-                    <Truck className="text-white w-12 h-12 relative z-10" strokeWidth={2.5} />
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/[0.05] to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="w-20 h-20 bg-slate-900 border border-white/10 rounded-3xl flex items-center justify-center shadow-2xl group-hover:rotate-6 group-hover:bg-primary transition-all duration-700">
+                    <Truck className="text-white w-10 h-10" strokeWidth={2.5} />
                 </div>
-                <div className="space-y-3 relative z-10">
+                <div className="space-y-2">
                     <h2 className="text-4xl font-black text-white tracking-tighter">DRIVER</h2>
-                    <p className="text-slate-400 text-sm font-bold uppercase tracking-[0.2em] opacity-60">Mobile Force Portal</p>
+                    <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.3em]">Fleet Portal</p>
                 </div>
-                <button className="w-full h-16 rounded-[1.5rem] bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs uppercase tracking-[0.3em] mt-4 shadow-2xl shadow-emerald-500/30 transition-all relative z-10 active:scale-95 border border-emerald-400/30">
-                    Enter Operation
+                <button className="w-full h-16 rounded-2xl bg-primary hover:brightness-110 text-white font-black text-xs uppercase tracking-[0.3em] shadow-2xl shadow-primary/20 transition-all">
+                    Start Engine
                 </button>
             </div>
 
             {/* Staff Login Option */}
             <div 
                 onClick={() => setActiveTab('staff_form')}
-                className="group cursor-pointer relative overflow-hidden bg-white/[0.03] backdrop-blur-3xl border border-white/10 hover:border-blue-500/50 rounded-[3.5rem] p-12 shadow-2xl transition-all duration-500 hover:shadow-[0_0_50px_rgba(59,130,246,0.15)] hover:-translate-y-3 text-center flex flex-col items-center gap-8"
+                className="group cursor-pointer relative overflow-hidden glass-panel rounded-[3rem] p-12 transition-all duration-500 hover:shadow-[0_20px_60px_rgba(147,51,234,0.15)] hover:-translate-y-3 text-center flex flex-col items-center gap-8"
             >
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/[0.05] to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                <div className="w-24 h-24 bg-slate-950 border border-white/10 rounded-3xl flex items-center justify-center shadow-2xl group-hover:-rotate-6 group-hover:bg-blue-600 transition-all duration-700 relative overflow-hidden">
-                    <div className="absolute inset-0 bg-gradient-to-tr from-blue-400/20 to-transparent opacity-0 group-hover:opacity-100 animate-pulse" />
-                    <Shield className="text-white w-12 h-12 relative z-10" strokeWidth={2.5} />
+                <div className="absolute inset-0 bg-gradient-to-br from-accent/[0.05] to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="w-20 h-20 bg-slate-900 border border-white/10 rounded-3xl flex items-center justify-center shadow-2xl group-hover:-rotate-6 group-hover:bg-accent transition-all duration-700">
+                    <Shield className="text-white w-10 h-10" strokeWidth={2.5} />
                 </div>
-                <div className="space-y-3 relative z-10">
+                <div className="space-y-2">
                     <h2 className="text-4xl font-black text-white tracking-tighter">ADMIN</h2>
-                    <p className="text-slate-400 text-sm font-bold uppercase tracking-[0.2em] opacity-60">Enterprise Command Center</p>
+                    <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.3em]">Command Center</p>
                 </div>
-                <button className="w-full h-16 rounded-[1.5rem] bg-slate-900 border border-white/10 hover:bg-slate-800 text-blue-400 font-black text-xs uppercase tracking-[0.3em] mt-4 shadow-2xl transition-all relative z-10 active:scale-95">
-                    Command Login
+                <button className="w-full h-16 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 text-white font-black text-xs uppercase tracking-[0.3em] shadow-2xl transition-all">
+                    Command Key
                 </button>
             </div>
         </div>
 
         {/* Staff Login Modal */}
         {activeTab === 'staff_form' && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-slate-950/60 backdrop-blur-md animate-in fade-in duration-300">
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-background/60 backdrop-blur-md animate-in fade-in duration-300">
                 <div className="bg-slate-900/90 backdrop-blur-2xl border border-white/10 rounded-[2.5rem] p-10 w-full max-w-sm shadow-[0_0_50px_rgba(0,0,0,0.5)] relative overflow-hidden">
-                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500 via-blue-500 to-indigo-500" />
+                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary via-accent to-purple-500" />
                     
                     <Button 
                         variant="ghost" 
@@ -136,31 +132,31 @@ export default function StaffLoginPage() {
                     </Button>
                     
                     <div className="text-center mb-10">
-                        <h3 className="text-3xl font-black text-white mb-2">Login เข้าสู่ระบบ</h3>
-                        <p className="text-sm text-slate-400 font-medium">ระบุบัญชีผู้ใช้สำหรับเจ้าหน้าที่จัดการ</p>
+                        <h3 className="text-3xl font-black text-white mb-2 underline decoration-primary/30 underline-offset-8">Login</h3>
+                        <p className="text-sm text-slate-400 font-medium tracking-tight">Enterprise staff authentication</p>
                     </div>
 
                     <form action={handleSubmit} className="space-y-6">
                         <div className="space-y-3 text-left">
-                            <Label htmlFor="email" className="text-slate-300 font-semibold ml-1">ชื่อผู้ใช้งาน</Label>
+                            <Label htmlFor="email" className="text-slate-400 text-[10px] font-black uppercase tracking-widest ml-1">Username / Fleet ID</Label>
                             <Input 
                                 id="email" 
                                 name="email" 
                                 type="text" 
-                                placeholder="Username" 
+                                placeholder="e.g. admin_pro_01" 
                                 required 
-                                className="h-14 rounded-2xl bg-white/5 border-white/10 text-white placeholder:text-slate-500 focus:ring-emerald-500/50" 
+                                className="h-14 rounded-2xl bg-white/5 border-white/10 text-white placeholder:text-slate-600 focus:ring-primary/50" 
                             />
                         </div>
                         <div className="space-y-3 text-left">
-                            <Label htmlFor="password" className="text-slate-300 font-semibold ml-1">รหัสผ่าน</Label>
+                            <Label htmlFor="password" className="text-slate-400 text-[10px] font-black uppercase tracking-widest ml-1">Security Key</Label>
                             <Input 
                                 id="password" 
                                 name="password" 
                                 type="password" 
                                 placeholder="••••••••" 
                                 required 
-                                className="h-14 rounded-2xl bg-white/5 border-white/10 text-white placeholder:text-slate-500 focus:ring-emerald-500/50" 
+                                className="h-14 rounded-2xl bg-white/5 border-white/10 text-white placeholder:text-slate-600 focus:ring-primary/50" 
                             />
                         </div>
                         {error && (
@@ -171,21 +167,21 @@ export default function StaffLoginPage() {
                                  error}
                             </div>
                         )}
-                        <Button type="submit" className="w-full h-14 bg-gradient-to-r from-emerald-500 to-blue-600 hover:from-emerald-600 hover:to-blue-700 text-white font-black text-lg rounded-2xl shadow-xl shadow-emerald-500/20 transition-all hover:scale-[1.02] active:scale-[0.98]" disabled={loading}>
-                            {loading ? "กำลังตรวจสอบ..." : "ยืนยันการเข้าสู่ระบบ"}
+                        <Button type="submit" className="w-full h-14 bg-primary hover:brightness-110 text-white font-black text-lg rounded-2xl shadow-xl shadow-primary/20 transition-all hover:scale-[1.02] active:scale-[0.98]" disabled={loading}>
+                            {loading ? "AUTHENTICATING..." : "CONFIRM LOGIN"}
                         </Button>
                     </form>
                 </div>
             </div>
         )}
 
-        <div className="space-y-4 animate-in fade-in duration-1000 delay-700">
-            <p className="text-sm text-slate-500 font-medium">
-                © 2024 <span className="text-slate-400">LOGIS-PRO TMS</span>. All Rights Reserved.
+        <div className="space-y-4 animate-in fade-in duration-1000 delay-700 pt-10">
+            <p className="text-[10px] text-slate-600 font-black uppercase tracking-[0.2em]">
+                © 2024 <span className="text-primary/60">LOGIS-PRO</span> COMMAND. ALL RIGHTS RESERVED.
             </p>
-            <div className="flex justify-center gap-6 text-xs text-slate-600 font-bold">
-                <a href="#" className="hover:text-emerald-400 transition-colors">นโยบายความเป็นส่วนตัว</a>
-                <a href="#" className="hover:text-emerald-400 transition-colors">เงื่อนไขการใช้งาน</a>
+            <div className="flex justify-center gap-8 text-[10px] text-slate-500 font-black uppercase tracking-widest">
+                <a href="#" className="hover:text-primary transition-colors">Privacy</a>
+                <a href="#" className="hover:text-primary transition-colors">Terms</a>
             </div>
         </div>
       </div>

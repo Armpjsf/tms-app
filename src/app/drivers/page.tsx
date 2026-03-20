@@ -2,6 +2,9 @@ import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { DriversContent } from "@/components/drivers/drivers-content"
 import { isAdmin } from "@/lib/permissions"
 import { getAllBranches, Branch } from "@/lib/supabase/branches"
+import { getAllDrivers } from "@/lib/supabase/drivers"
+import { getAllVehicles } from "@/lib/supabase/vehicles"
+import { getAllSubcontractors } from "@/lib/supabase/subcontractors"
 
 type Props = {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
@@ -16,10 +19,26 @@ export default async function DriversPage(props: Props) {
   const branchesData = isUserAdmin ? await getAllBranches() : []
   const branches: Branch[] = branchesData || []
 
+  const page = Number(searchParams.page) || 1
+  const query = (searchParams.query as string) || ''
+  
+  // Fetch drivers with pagination and search
+  const { data: drivers, count } = await getAllDrivers(page, 12, query)
+  
+  // Fetch vehicles and subcontractors for the dialogs
+  const { data: vehicles } = await getAllVehicles()
+  const subcontractors = await getAllSubcontractors()
+
   return (
     <DashboardLayout>
-      {/* @ts-expect-error - Complex server component props */}
-      <DriversContent searchParams={searchParams} branches={branches} isAdmin={isUserAdmin} />
+      <DriversContent 
+        drivers={drivers} 
+        count={count} 
+        branches={branches} 
+        vehicles={vehicles}
+        subcontractors={subcontractors}
+        branchId={searchParams.branchId as string}
+      />
     </DashboardLayout>
   )
 }

@@ -9,6 +9,9 @@ import {
   Wrench,
   Users,
   Truck,
+  Activity,
+  ShieldCheck,
+  Zap
 } from "lucide-react"
 import { getAllJobs } from "@/lib/supabase/jobs"
 import { getDriverStats } from "@/lib/supabase/drivers"
@@ -28,37 +31,66 @@ export default async function ReportsPage() {
 
   return (
     <DashboardLayout>
-      {/* Bespoke Strategic Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-8 mb-12 bg-slate-950 p-10 rounded-br-[5rem] rounded-tl-[2rem] border border-slate-800 shadow-2xl relative overflow-hidden group">
-        <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-transparent pointer-events-none" />
+      {/* Elite Tactical Reporting Header */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-10 mb-16 bg-[#0a0518]/60 backdrop-blur-3xl p-12 rounded-[4rem] border border-white/5 shadow-2xl relative group ring-1 ring-white/5 hover:ring-primary/20 transition-all duration-700">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 blur-[100px] pointer-events-none" />
         
-        <div className="relative z-10 text-left">
-          <h1 className="text-5xl font-black text-white mb-2 tracking-tighter flex items-center gap-4">
-            <div className="p-3 bg-blue-500 rounded-3xl shadow-2xl shadow-blue-500/20 text-white transform group-hover:scale-110 transition-transform duration-500">
-              <BarChart3 size={32} />
+        <div className="relative z-10 space-y-4">
+            <div className="flex items-center gap-3">
+                <div className="p-2 bg-primary/20 rounded-xl shadow-lg">
+                    <BarChart3 className="text-primary" size={20} />
+                </div>
+                <h2 className="text-[10px] font-black text-primary uppercase tracking-[0.4em]">Operations Intelligence Archive</h2>
             </div>
-            Reporting HUB
-          </h1>
-          <p className="text-blue-400 font-black ml-[4.5rem] uppercase tracking-[0.3em] text-[10px]">INTUITIVE ANALYTICS & STRATEGIC DATA EXPORT</p>
+            <h1 className="text-6xl font-black text-white tracking-tighter flex items-center gap-5 uppercase premium-text-gradient">
+                Reporting Hub
+            </h1>
+            <p className="text-slate-500 font-bold text-sm tracking-wide opacity-80 uppercase tracking-widest leading-relaxed">
+              Strategic Analytics & Tactical Data Extraction Interface
+            </p>
         </div>
 
         <div className="flex flex-wrap gap-4 relative z-10">
-          <div className="flex items-center gap-3 px-6 py-3 bg-blue-500/10 rounded-2xl border border-blue-500/20">
-            <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
-            <span className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Live Intelligence Feed</span>
+          <div className="flex items-center gap-4 bg-white/5 p-4 rounded-2xl border border-white/10 backdrop-blur-md">
+            <div className="flex items-center gap-3">
+                <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_12px_rgba(16,185,129,1)]" />
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Live Engine</span>
+            </div>
+            <div className="w-px h-6 bg-white/10" />
+            <div className="flex items-center gap-3">
+                <ShieldCheck size={14} className="text-primary" />
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">Encrypted_Export</span>
+            </div>
           </div>
         </div>
       </div>
 
       <StatsGrid columns={5} stats={[
-        { label: "งานทั้งหมด", value: jobCount || 0, icon: <Package size={20} />, color: "indigo" },
-        { label: `คนขับ (${driverStats.active} Active)`, value: driverStats.total, icon: <Users size={20} />, color: "blue" },
-        { label: `รถ (${vehicleStats.active} Active)`, value: vehicleStats.total, icon: <Truck size={20} />, color: "purple" },
-        { label: "ค่าน้ำมันวันนี้", value: `฿${fuelStats.totalAmount.toLocaleString()}`, icon: <Fuel size={20} />, color: "emerald" },
-        { label: "รอดำเนินการ", value: maintenanceStats.pending, icon: <Wrench size={20} />, color: "amber" },
+        { label: "Fleet Missions", value: jobCount || 0, icon: <Package size={20} />, color: "indigo" },
+        { label: `Elite Units (${driverStats.active})`, value: driverStats.total, icon: <Users size={20} />, color: "blue" },
+        { label: `Asset Fleet (${vehicleStats.active})`, value: vehicleStats.total, icon: <Truck size={20} />, color: "purple" },
+        { label: "Today Energy Log", value: `฿${fuelStats.totalAmount.toLocaleString()}`, icon: <Fuel size={20} />, color: "emerald" },
+        { label: "Integrity Queue", value: maintenanceStats.pending, icon: <Wrench size={20} />, color: "amber" },
       ]} />
 
-      <ReportBuilder />
+      <div className="space-y-12">
+        <div className="flex items-center gap-4 mb-2">
+            <div className="w-1.5 h-10 bg-primary rounded-full shadow-[0_0_15px_rgba(255,30,133,0.8)]" />
+            <div>
+                <h3 className="text-3xl font-black text-white tracking-tighter uppercase font-display">Strategic Report Configurator</h3>
+                <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.4em] mt-1 italic">Define Parameters for Intelligence Extraction</p>
+            </div>
+        </div>
+        <div className="glass-panel p-2 rounded-[4rem] border-white/5 bg-[#0a0518]/20 shadow-3xl">
+            <ReportBuilder />
+        </div>
+      </div>
+
+      <div className="mt-20 text-center mb-24">
+        <div className="inline-flex items-center gap-4 px-8 py-3 glass-panel rounded-full text-[9px] font-black text-slate-700 uppercase tracking-[0.6em] opacity-40 hover:opacity-100 transition-opacity">
+            <Zap size={14} className="text-primary" /> Intelligence Core v9.4 • Mission Critical Analytics
+        </div>
+      </div>
     </DashboardLayout>
   )
 }

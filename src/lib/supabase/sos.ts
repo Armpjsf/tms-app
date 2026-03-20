@@ -1,3 +1,5 @@
+"use server"
+
 import { createClient } from '@/utils/supabase/server'
 import { getUserBranchId, isSuperAdmin } from "@/lib/permissions"
 
@@ -108,5 +110,38 @@ export async function getSOSCount(): Promise<number> {
     return count || 0
   } catch {
     return 0
+  }
+}
+
+// ดึง SOS Driver IDs ที่ Active
+export async function getSOSDriverIds(): Promise<string[]> {
+  try {
+    const supabase = await createClient()
+    
+    const branchId = await getUserBranchId()
+    const isAdmin = await isSuperAdmin()
+
+    let dbQuery = supabase
+      .from('Jobs_Main')
+      .select('Driver_ID')
+      .eq('Job_Status', 'SOS')
+    
+    if (branchId && branchId !== 'All') {
+        dbQuery = dbQuery.eq('Branch_ID', branchId)
+    } else if (!isAdmin && !branchId) {
+        return []
+    }
+
+    const { data, error } = await dbQuery
+    
+    if (error) {
+      return []
+    }
+    
+    return (data || [])
+      .map(item => item.Driver_ID)
+      .filter((id): id is string => id !== null)
+  } catch {
+    return []
   }
 }

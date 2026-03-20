@@ -16,7 +16,11 @@ import {
     Banknote,
     Briefcase,
     ShieldCheck,
-    TrendingUp
+    TrendingUp,
+    Network,
+    Zap,
+    Activity,
+    Globe
 } from "lucide-react"
 import {
   Select,
@@ -140,160 +144,177 @@ export default function SubcontractorsPage() {
 
     return (
         <DashboardLayout>
-            {/* Premium Header Container */}
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-8 mb-12 bg-white p-10 rounded-[2.5rem] border border-gray-100 shadow-2xl relative overflow-hidden group">
-                <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/5 blur-3xl rounded-full -mr-20 -mt-20 pointer-events-none" />
+            {/* Tactical Partner Header */}
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-10 mb-16 bg-[#0a0518]/60 backdrop-blur-3xl p-12 rounded-[4rem] border border-white/5 shadow-2xl relative group ring-1 ring-white/5 hover:ring-primary/20 transition-all duration-700">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 blur-[100px] pointer-events-none" />
                 
-                <div className="relative z-10">
-                    <h1 className="text-5xl font-black text-gray-900 mb-2 tracking-tighter flex items-center gap-4">
-                        <div className="p-3 bg-gradient-to-br from-amber-500 to-orange-600 rounded-3xl shadow-2xl shadow-amber-500/20 text-white transform group-hover:scale-110 transition-transform duration-500">
-                            <Briefcase size={32} />
+                <div className="relative z-10 space-y-4">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-primary/20 rounded-xl shadow-lg">
+                            <Network className="text-primary" size={20} />
                         </div>
-                        Sub-Contractors
+                        <h2 className="text-[10px] font-black text-primary uppercase tracking-[0.4em]">Logistics Grid Expansion</h2>
+                    </div>
+                    <h1 className="text-6xl font-black text-white tracking-tighter flex items-center gap-5 uppercase premium-text-gradient">
+                        Network Growth
                     </h1>
-                    <p className="text-gray-700 font-bold ml-[4.5rem] uppercase tracking-[0.2em] text-[10px]">Logistics Network • Partner Management</p>
+                    <p className="text-slate-500 font-bold text-sm tracking-wide opacity-80 uppercase tracking-widest leading-relaxed">
+                      Sub-Contractor Partner Ecosystem & Financial Registry
+                    </p>
                 </div>
 
                 <div className="flex flex-wrap gap-4 relative z-10">
-                    <PremiumButton onClick={() => handleOpenDialog()} className="h-14 px-8 rounded-2xl shadow-amber-500/20">
-                        <Plus size={24} className="mr-2" />
-                        เพิ่มบริษัทรถร่วม
+                    <PremiumButton onClick={() => handleOpenDialog()} className="h-14 px-10 rounded-2xl shadow-xl shadow-primary/20">
+                        <Plus size={24} className="mr-3" strokeWidth={3} />
+                        ENLIST PARTNER
                     </PremiumButton>
                 </div>
             </div>
 
-            {/* Subcontractor Analytics Grid */}
+            {/* Partner Analytics Matrix */}
             {!loading && stats && (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-                    <PremiumCard className="p-8 group backdrop-blur-2xl border-amber-500/10">
-                        <div className="flex items-center justify-between mb-6">
-                            <div className="p-3 rounded-2xl bg-amber-500 shadow-xl shadow-amber-500/20 text-white transform group-hover:scale-110 transition-all duration-500">
-                                <Briefcase size={20} />
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+                     <div className="p-8 rounded-[3rem] border border-primary/20 backdrop-blur-3xl shadow-2xl relative overflow-hidden group transition-all hover:scale-[1.03] bg-[#0a0518]/40">
+                        <div className="flex items-center justify-between mb-8">
+                            <div className="p-4 rounded-2xl shadow-xl transition-all duration-700 group-hover:scale-110 group-hover:rotate-6 bg-primary/20 text-primary">
+                                <Briefcase size={24} strokeWidth={2.5} />
                             </div>
-                            <div className="px-3 py-1 bg-amber-50 rounded-full border border-amber-100 italic font-black text-[9px] text-amber-600 uppercase tracking-widest">Network</div>
+                            <div className="px-3 py-1 bg-white/5 rounded-full border border-white/5 text-[9px] text-primary font-black uppercase tracking-widest italic animate-pulse">GRID SCALE</div>
                         </div>
-                        <p className="text-gray-600 font-bold text-[10px] uppercase tracking-[0.2em] mb-1">Total Partners</p>
-                        <p className="text-3xl font-black text-gray-900 tracking-tighter">{list.length}</p>
-                    </PremiumCard>
+                        <p className="text-slate-500 font-black text-[10px] uppercase tracking-[0.3em] mb-2">Total Partners</p>
+                        <p className="text-4xl font-black text-white tracking-tighter leading-none">{list.length}</p>
+                    </div>
 
-                    <PremiumCard className="p-8 group backdrop-blur-2xl border-blue-500/10">
-                        <div className="flex items-center justify-between mb-6">
-                            <div className="p-3 rounded-2xl bg-blue-500 shadow-xl shadow-blue-500/20 text-white transform group-hover:scale-110 transition-all duration-500">
-                                <TrendingUp size={20} />
+                    <div className="p-8 rounded-[3rem] border border-accent/20 backdrop-blur-3xl shadow-2xl relative overflow-hidden group transition-all hover:scale-[1.03] bg-[#0a0518]/40">
+                        <div className="flex items-center justify-between mb-8">
+                            <div className="p-4 rounded-2xl shadow-xl transition-all duration-700 group-hover:scale-110 group-hover:rotate-6 bg-accent/20 text-accent">
+                                <TrendingUp size={24} strokeWidth={2.5} />
                             </div>
-                            <div className="px-3 py-1 bg-blue-50 rounded-full border border-blue-100 italic font-black text-[9px] text-blue-600 uppercase tracking-widest">Share</div>
+                            <div className="px-3 py-1 bg-white/5 rounded-full border border-white/5 text-[9px] text-accent font-black uppercase tracking-widest italic">MARKET SHARE</div>
                         </div>
-                        <p className="text-gray-600 font-bold text-[10px] uppercase tracking-[0.2em] mb-1">Subcontractor Share</p>
-                        <p className="text-3xl font-black text-gray-900 tracking-tighter">
-                            {stats.performance.find((p: { name: string }) => p.name.includes('Sub'))?.count || 0} <span className="text-sm text-gray-400 font-bold tracking-normal ml-1">Jobs</span>
+                        <p className="text-slate-500 font-black text-[10px] uppercase tracking-[0.3em] mb-2">Network Missions</p>
+                        <p className="text-4xl font-black text-white tracking-tighter leading-none">
+                            {stats.performance.find((p: { name: string }) => p.name.includes('Sub'))?.count || 0} <span className="text-sm text-slate-500 font-bold opacity-40 ml-1">NODES</span>
                         </p>
-                    </PremiumCard>
+                    </div>
 
-                    <PremiumCard className="p-8 group backdrop-blur-2xl border-emerald-500/10">
-                        <div className="flex items-center justify-between mb-6">
-                            <div className="p-3 rounded-2xl bg-emerald-500 shadow-xl shadow-emerald-500/20 text-white transform group-hover:scale-110 transition-all duration-500">
-                                <ShieldCheck size={20} />
+                    <div className="p-8 rounded-[3rem] border border-primary/10 backdrop-blur-3xl shadow-2xl relative overflow-hidden group transition-all hover:scale-[1.03] bg-[#0a0518]/40">
+                        <div className="flex items-center justify-between mb-8">
+                            <div className="p-4 rounded-2xl shadow-xl transition-all duration-700 group-hover:scale-110 group-hover:rotate-6 bg-primary/10 text-primary">
+                                <ShieldCheck size={24} strokeWidth={2.5} />
                             </div>
-                            <div className="px-3 py-1 bg-emerald-50 rounded-full border border-emerald-100 italic font-black text-[9px] text-emerald-600 uppercase tracking-widest">Quality</div>
+                            <div className="px-3 py-1 bg-white/5 rounded-full border border-white/5 text-[9px] text-slate-500 font-black uppercase tracking-widest italic">RELIABILITY</div>
                         </div>
-                        <p className="text-gray-600 font-bold text-[10px] uppercase tracking-[0.2em] mb-1">On-Time Reliability</p>
-                        <p className="text-3xl font-black text-gray-900 tracking-tighter">{stats.ops.fleet.onTimeDelivery.toFixed(1)}%</p>
-                    </PremiumCard>
+                        <p className="text-slate-500 font-black text-[10px] uppercase tracking-[0.3em] mb-2">On-Time Accuracy</p>
+                        <p className="text-4xl font-black text-white tracking-tighter leading-none">{stats.ops.fleet.onTimeDelivery.toFixed(1)}%</p>
+                    </div>
                 </div>
             )}
 
-            {/* Search Bar */}
+            {/* Tactical Search Interface */}
             <div className="mb-12 relative group max-w-2xl">
-                <div className="absolute inset-0 bg-amber-500/10 blur-2xl rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                <div className="relative bg-white/60 backdrop-blur-xl border border-white/40 p-4 rounded-3xl shadow-xl">
-                    <div className="flex items-center gap-4 px-4">
-                        <Search className="text-amber-500 animate-pulse" size={24} />
+                <div className="absolute inset-x-0 bottom-0 h-1 bg-primary blur-3xl opacity-20 pointer-events-none" />
+                <div className="relative glass-panel rounded-3xl p-1 border-white/5">
+                    <div className="flex items-center gap-4 px-6">
+                        <Search className="text-primary opacity-50" size={24} />
                         <Input
-                            placeholder="ค้นหาชื่อหรือรหัสบริษัท..." 
+                            placeholder="SCAN PARTNER REGISTRY..." 
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="bg-transparent border-none focus-visible:ring-0 text-xl font-black text-gray-900 placeholder:text-gray-500 tracking-tighter"
+                            className="bg-transparent border-none text-2xl font-black text-white px-4 h-20 placeholder:text-slate-700 tracking-tighter uppercase focus-visible:ring-0"
                         />
                     </div>
                 </div>
             </div>
 
-            <PremiumCard className="overflow-hidden p-0 border-white/40 bg-white/20 backdrop-blur-md">
-                <div className="relative w-full overflow-auto">
+            <div className="glass-panel rounded-[4rem] border-white/5 shadow-2xl overflow-hidden bg-[#0a0518]/20 relative">
+                <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent pointer-events-none" />
+                <div className="relative w-full overflow-auto custom-scrollbar">
                     <table className="w-full text-sm text-left border-collapse">
                         <thead>
-                            <tr className="bg-gray-50/50 border-b border-gray-100">
-                                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-gray-600">Identity</th>
-                                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-gray-600">Partner Details</th>
-                                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-gray-600">Payment Channel</th>
-                                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-gray-600">Status</th>
-                                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-gray-600 text-right">Actions</th>
+                            <tr className="bg-white/[0.02] border-b border-white/5">
+                                <th className="px-12 py-10 text-[9px] font-black uppercase tracking-[0.4em] text-slate-500">Node Identity</th>
+                                <th className="px-8 py-10 text-[9px] font-black uppercase tracking-[0.4em] text-slate-500">Partner Intelligence</th>
+                                <th className="px-8 py-10 text-[9px] font-black uppercase tracking-[0.4em] text-slate-500">Financial Vector</th>
+                                <th className="px-8 py-10 text-[9px] font-black uppercase tracking-[0.4em] text-slate-500">Tactical Status</th>
+                                <th className="px-12 py-10 text-[9px] font-black uppercase tracking-[0.4em] text-slate-500 text-right">Command</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-gray-50">
+                        <tbody className="divide-y divide-white/5">
                             {loading ? (
                                 <tr>
-                                    <td colSpan={5} className="text-center py-20">
-                                        <Loader2 className="w-10 h-10 text-amber-500 animate-spin mx-auto mb-4" />
-                                        <p className="text-gray-600 font-black uppercase tracking-widest text-[10px]">Synchronizing Partners...</p>
+                                    <td colSpan={5} className="text-center py-40">
+                                        <div className="relative inline-block">
+                                            <Loader2 className="w-16 h-16 text-primary animate-spin opacity-20" strokeWidth={1} />
+                                            <Activity className="absolute inset-0 m-auto text-primary animate-pulse" size={24} />
+                                        </div>
+                                        <p className="mt-8 text-slate-700 font-black uppercase tracking-[0.6em] text-[10px]">Syncing Partner Registry...</p>
                                     </td>
                                 </tr>
                             ) : filtered.length === 0 ? (
                                 <tr>
-                                    <td colSpan={5} className="text-center py-20 text-gray-700 font-black uppercase tracking-widest text-xs">
-                                        No partners found in the network
+                                    <td colSpan={5} className="text-center py-40 text-slate-700 font-black uppercase tracking-[0.5em] text-xs">
+                                        No partner nodes detected in the sector
                                     </td>
                                 </tr>
                             ) : (
                                 filtered.map((item) => (
-                                    <tr key={item.Sub_ID} className="group hover:bg-white/40 transition-all duration-300">
-                                        <td className="px-8 py-6">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-600 font-black text-xs shadow-sm group-hover:scale-110 transition-transform">
-                                                    ID
+                                    <tr key={item.Sub_ID} className="group/row hover:bg-primary/[0.03] transition-all duration-500">
+                                        <td className="px-12 py-8">
+                                            <div className="flex items-center gap-6">
+                                                <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/5 flex items-center justify-center text-primary group-hover/row:bg-primary group-hover/row:text-white transition-all duration-500 shadow-xl group-hover/row:shadow-[0_0_30px_rgba(255,30,133,0.3)] group-hover/row:-rotate-3">
+                                                    <Briefcase size={22} strokeWidth={2.5} />
                                                 </div>
-                                                <span className="font-black text-gray-900 tracking-tighter">{item.Sub_ID}</span>
+                                                <div>
+                                                    <span className="font-black text-white text-xl tracking-tighter group-hover/row:text-primary transition-colors font-display uppercase">{item.Sub_ID}</span>
+                                                    <p className="text-[8px] font-black text-slate-600 uppercase tracking-[0.3em] mt-1 italic">Registry Node</p>
+                                                </div>
                                             </div>
                                         </td>
-                                        <td className="px-8 py-6">
+                                        <td className="px-8 py-8">
                                             <div>
-                                                <div className="font-black text-gray-900 tracking-tighter group-hover:text-amber-600 transition-colors">{item.Sub_Name}</div>
-                                                <div className="flex items-center gap-1.5 mt-1 text-[10px] font-bold text-gray-500 uppercase tracking-widest">
-                                                    <ShieldCheck size={10} className="text-emerald-500" />
-                                                    Tax: {item.Tax_ID || "PENDING"}
+                                                <div className="font-black text-white text-sm tracking-tight group-hover/row:text-primary transition-colors uppercase">{item.Sub_Name}</div>
+                                                <div className="flex items-center gap-2 mt-2 text-[9px] font-black text-slate-500 uppercase tracking-widest">
+                                                    <ShieldCheck size={12} className="text-primary/60" />
+                                                    Tax: {item.Tax_ID || "ENLISTING..."}
                                                 </div>
                                             </div>
                                         </td>
-                                        <td className="px-8 py-6">
+                                        <td className="px-8 py-8">
                                             {item.Bank_Account_No ? (
-                                                <div className="flex flex-col gap-1">
-                                                    <div className="flex items-center gap-2">
-                                                        <Banknote size={14} className="text-emerald-500" />
-                                                        <span className="text-xs font-black text-gray-700">{item.Bank_Name}</span>
+                                                <div className="flex flex-col gap-2">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="p-1.5 bg-white/5 rounded-lg">
+                                                            <Banknote size={14} className="text-accent" />
+                                                        </div>
+                                                        <span className="text-xs font-black text-slate-300 uppercase tracking-wide">{item.Bank_Name}</span>
                                                     </div>
-                                                    <span className="text-[10px] font-bold text-gray-500 tracking-wider ml-6">{item.Bank_Account_No}</span>
+                                                    <span className="text-[10px] font-black text-slate-600 tracking-[0.2em] ml-10">**** **** {item.Bank_Account_No.slice(-4)}</span>
                                                 </div>
                                             ) : (
-                                                <span className="text-[10px] font-bold text-gray-300 uppercase italic">Not Specified</span>
+                                                <div className="flex items-center gap-2 text-slate-700 italic">
+                                                    <div className="w-1.5 h-1.5 rounded-full bg-slate-800" />
+                                                    <span className="text-[10px] font-black uppercase tracking-widest">Vector Pending</span>
+                                                </div>
                                             )}
                                         </td>
-                                        <td className="px-8 py-6">
+                                        <td className="px-8 py-8">
                                             <div className={cn(
-                                                "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border transition-all",
-                                                item.Active_Status === 'Active' ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' : 'bg-red-500/10 text-red-600 border-red-500/20'
+                                                "inline-flex items-center gap-2.5 px-5 py-2.5 rounded-[1.5rem] text-[9px] font-black uppercase tracking-widest border shadow-xl transition-all duration-500 group-hover/row:scale-105",
+                                                item.Active_Status === 'Active' ? 'bg-primary/10 text-primary border-primary/20' : 'bg-rose-500/10 text-rose-500 border-rose-500/20'
                                             )}>
-                                                <span className={cn("w-1 h-1 rounded-full", item.Active_Status === 'Active' ? "bg-emerald-500 animate-pulse" : "bg-red-500")} />
+                                                <span className={cn("w-1.5 h-1.5 rounded-full shadow-[0_0_10px_currentColor]", item.Active_Status === 'Active' ? "bg-current animate-pulse" : "bg-rose-500")} />
                                                 {item.Active_Status}
                                             </div>
                                         </td>
-                                        <td className="px-8 py-6 text-right">
-                                            <div className="flex justify-end gap-2 transition-opacity">
-                                                <PremiumButton variant="outline" size="sm" onClick={() => handleOpenDialog(item)} className="h-9 w-9 p-0 rounded-xl border-gray-200">
-                                                    <Edit className="w-4 h-4 text-gray-600" />
-                                                </PremiumButton>
-                                                <PremiumButton variant="outline" size="sm" onClick={() => handleDelete(item.Sub_ID)} className="h-9 w-9 p-0 rounded-xl text-red-600 border-red-200 hover:bg-red-50">
-                                                    <Trash2 className="w-4 h-4" />
-                                                </PremiumButton>
+                                        <td className="px-12 py-8 text-right">
+                                            <div className="flex justify-end gap-3 opacity-0 group-hover/row:opacity-100 transition-all duration-500 translate-x-4 group-hover/row:translate-x-0">
+                                                <button onClick={() => handleOpenDialog(item)} className="h-11 w-11 flex items-center justify-center rounded-xl bg-white/5 border border-white/5 text-slate-400 hover:bg-primary hover:text-white transition-all shadow-xl">
+                                                    <Edit size={16} />
+                                                </button>
+                                                <button onClick={() => handleDelete(item.Sub_ID)} className="h-11 w-11 flex items-center justify-center rounded-xl bg-white/5 border border-white/5 text-rose-800 hover:bg-rose-500 hover:text-white transition-all shadow-xl">
+                                                    <Trash2 size={16} />
+                                                </button>
                                             </div>
                                         </td>
                                     </tr>
@@ -302,78 +323,99 @@ export default function SubcontractorsPage() {
                         </tbody>
                     </table>
                 </div>
-            </PremiumCard>
+                <div className="p-8 border-t border-white/5 bg-white/[0.02] flex items-center justify-between">
+                    <p className="text-[9px] font-black text-slate-700 uppercase tracking-[0.4em]">Sub-Contractor Financial Matrix Node</p>
+                    <Zap size={16} className="text-primary/20" />
+                </div>
+            </div>
 
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                <DialogContent className="bg-white border-gray-200 text-gray-900 max-w-lg">
-                    <DialogHeader>
-                        <DialogTitle>{editingId ? "แก้ไขบริษัทรถร่วม" : "เพิ่มบริษัทรถร่วม"}</DialogTitle>
-                    </DialogHeader>
+                <DialogContent className="bg-[#0a0518] border border-white/5 text-white max-w-3xl shadow-[0_50px_100px_rgba(0,0,0,0.5)] rounded-[4rem] p-0 overflow-hidden ring-1 ring-white/10">
+                    <div className="bg-[#0c061d] p-12 text-white relative overflow-hidden border-b border-white/5">
+                        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent pointer-events-none" />
+                        <DialogHeader>
+                            <DialogTitle className="text-5xl font-black tracking-tighter flex items-center gap-6 uppercase premium-text-gradient">
+                                <div className="p-3 bg-primary/20 rounded-2xl shadow-xl ring-1 ring-primary/30">
+                                    <Globe size={32} className="text-primary" strokeWidth={2.5} />
+                                </div>
+                                {editingId ? "Refine Network Partner" : "Onboard Partner Node"}
+                            </DialogTitle>
+                        </DialogHeader>
+                    </div>
                     
-                    <div className="space-y-4 py-4">
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label className="text-gray-900 font-black tracking-tight">รหัสบริษัท (ID) *</Label>
+                    <div className="p-12 space-y-10 custom-scrollbar max-h-[70vh] overflow-y-auto">
+                        <div className="grid grid-cols-2 gap-10">
+                            <div className="space-y-4">
+                                <Label className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-500 ml-2">Partner Alias / ID *</Label>
                                 <Input 
                                     value={formData.Sub_ID} 
                                     onChange={e => setFormData({...formData, Sub_ID: e.target.value})} 
                                     disabled={!!editingId}
-                                    className="bg-gray-100 border-gray-200" 
+                                    placeholder="E.G. SUB-001"
+                                    className="h-16 bg-white/5 border-white/5 text-white font-black rounded-2xl px-8 text-sm uppercase tracking-widest focus:bg-white/10 transition-all"
                                 />
                             </div>
-                            <div className="space-y-2">
-                                <Label className="text-gray-900 font-black tracking-tight">เลขประจำตัวผู้เสียภาษี</Label>
+                            <div className="space-y-4">
+                                <Label className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-500 ml-2">Tax Identity Index</Label>
                                 <Input 
                                     value={formData.Tax_ID || ""} 
                                     onChange={e => setFormData({...formData, Tax_ID: e.target.value})} 
-                                    className="bg-gray-100 border-gray-200" 
+                                    placeholder="13-DIGIT VERIFIER"
+                                    className="h-16 bg-white/5 border-white/5 text-white font-black rounded-2xl px-8 text-sm uppercase tracking-widest focus:bg-white/10 transition-all font-display"
                                 />
                             </div>
                         </div>
 
-                            <div className="space-y-2">
-                                <Label className="text-gray-900 font-black tracking-tight">ชื่อบริษัทรถร่วม *</Label>
+                        <div className="space-y-4">
+                            <Label className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-500 ml-2">Full Corporate Alias *</Label>
+                            <div className="glass-panel p-1 rounded-2xl border-white/5">
                                 <Input 
                                     value={formData.Sub_Name} 
                                     onChange={e => setFormData({...formData, Sub_Name: e.target.value})} 
-                                    className="bg-gray-100 border-gray-200" 
+                                    placeholder="ENTER FULL PARTNER NOMENCLATURE..."
+                                    className="bg-transparent border-none text-2xl font-black text-white h-20 px-8 uppercase tracking-tighter"
                                 />
                             </div>
+                        </div>
 
-                            <div className="space-y-2">
-                                <Label className="text-gray-900 font-black tracking-tight">สาขา (Branch) *</Label>
-                                <Select 
-                                    value={formData.Branch_ID || ""} 
-                                    onValueChange={(v: string) => setFormData({...formData, Branch_ID: v})}
-                                >
-                                    <SelectTrigger className="bg-gray-100 border-gray-200">
-                                        <SelectValue placeholder="เลือกสาขา" />
-                                    </SelectTrigger>
-                                    <SelectContent className="bg-white border-gray-200 text-gray-900">
-                                        {branches.map(b => (
-                                            <SelectItem key={b.Branch_ID} value={b.Branch_ID}>
-                                                {b.Branch_Name} ({b.Branch_ID})
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
+                        <div className="space-y-4">
+                            <Label className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-500 ml-2">Deployment Sector / Branch *</Label>
+                            <Select 
+                                value={formData.Branch_ID || ""} 
+                                onValueChange={(v: string) => setFormData({...formData, Branch_ID: v})}
+                            >
+                                <SelectTrigger className="h-16 bg-white/5 border-white/5 text-white font-black rounded-2xl px-8 text-sm uppercase tracking-widest">
+                                    <SelectValue placeholder="SELECT OPERATIONAL BRANCH" />
+                                </SelectTrigger>
+                                <SelectContent className="bg-[#0c061d] border-white/10 text-white font-black">
+                                    {branches.map(b => (
+                                        <SelectItem key={b.Branch_ID} value={b.Branch_ID} className="hover:bg-primary/20 focus:bg-primary/20 uppercase tracking-widest text-[10px]">
+                                            {b.Branch_Name} ({b.Branch_ID})
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
 
-                        <div className="p-4 rounded-lg bg-white/80 border border-gray-200 space-y-4">
-                            <Label className="text-emerald-500 text-xs font-bold uppercase">ข้อมูลบัญชีธนาคารส่วนกลาง (Payment)</Label>
+                        <div className="p-10 rounded-[2.5rem] bg-accent/5 border border-accent/10 space-y-8 relative overflow-hidden">
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-accent/10 blur-[80px] pointer-events-none" />
+                            <h3 className="text-[10px] font-black uppercase tracking-[0.5em] text-accent flex items-center gap-3">
+                                <div className="w-1.5 h-1.5 rounded-full bg-accent shadow-[0_0_8px_rgba(168,85,247,1)]" />
+                                Financial Transaction Vector
+                            </h3>
                             
-                            <div className="space-y-2">
-                                <Label className="text-gray-900 font-black tracking-tight">ธนาคาร</Label>
+                            <div className="space-y-4">
+                                <Label className="text-[9px] font-black text-slate-500 uppercase tracking-[0.3em] ml-2">Nodal Bank Institution</Label>
                                 <Select 
                                     value={formData.Bank_Name || ""} 
                                     onValueChange={(v: string) => setFormData({...formData, Bank_Name: v})}
                                 >
-                                    <SelectTrigger className="bg-gray-100 border-gray-200">
-                                        <SelectValue placeholder="เลือกธนาคาร" />
+                                    <SelectTrigger className="h-14 bg-white/5 border-white/5 text-white font-black rounded-xl px-6 text-xs uppercase tracking-widest">
+                                        <SelectValue placeholder="SELECT BANK ENTITY" />
                                     </SelectTrigger>
-                                    <SelectContent className="bg-white border-gray-200 text-gray-900">
+                                    <SelectContent className="bg-[#0c061d] border-white/10 text-white font-black">
                                         {BANKS.map(b => (
-                                            <SelectItem key={b.value} value={b.value}>
+                                            <SelectItem key={b.value} value={b.value} className="hover:bg-accent/20 focus:bg-accent/20 uppercase tracking-widest text-[10px]">
                                                 {b.label}
                                             </SelectItem>
                                         ))}
@@ -381,36 +423,46 @@ export default function SubcontractorsPage() {
                                 </Select>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <Label className="text-gray-900 font-black tracking-tight">เลขที่บัญชี</Label>
+                            <div className="grid grid-cols-2 gap-10">
+                                <div className="space-y-4">
+                                    <Label className="text-[9px] font-black text-slate-500 uppercase tracking-[0.3em] ml-2">Nodal Index / Account No</Label>
                                     <Input 
                                         value={formData.Bank_Account_No || ""} 
                                         onChange={e => setFormData({...formData, Bank_Account_No: e.target.value})} 
-                                        className="bg-gray-100 border-gray-200" 
+                                        placeholder="000-000-0000"
+                                        className="h-14 bg-white/5 border-white/5 text-white font-black rounded-xl px-6 text-xs tracking-[0.2em]"
                                     />
                                 </div>
-                                <div className="space-y-2">
-                                    <Label className="text-gray-900 font-black tracking-tight">ชื่อบัญชี</Label>
+                                <div className="space-y-4">
+                                    <Label className="text-[9px] font-black text-slate-500 uppercase tracking-[0.3em] ml-2">Remittance Alias / Name</Label>
                                     <Input 
                                         value={formData.Bank_Account_Name || ""} 
                                         onChange={e => setFormData({...formData, Bank_Account_Name: e.target.value})} 
-                                        className="bg-gray-100 border-gray-200" 
+                                        placeholder="ACCOUNT HOLDER ALIAS"
+                                        className="h-14 bg-white/5 border-white/5 text-white font-black rounded-xl px-6 text-xs uppercase tracking-widest"
                                     />
                                 </div>
                             </div>
                         </div>
-                    </div>
 
-                    <DialogFooter>
-                        <PremiumButton variant="outline" onClick={() => setIsDialogOpen(false)} className="border-gray-200">ยกเลิก</PremiumButton>
-                        <PremiumButton onClick={handleSave} disabled={saving} className="bg-amber-600 hover:bg-orange-700 shadow-amber-500/20">
-                            {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                            บันทึก
-                        </PremiumButton>
-                    </DialogFooter>
+                        <div className="flex gap-6 pt-10 border-t border-white/5 mt-12 mb-8">
+                            <PremiumButton onClick={handleSave} disabled={saving} className="flex-[2] bg-primary hover:bg-primary/80 shadow-primary/20 h-20 rounded-3xl text-lg font-black tracking-widest uppercase">
+                                {saving ? <Loader2 className="w-6 h-6 mr-4 animate-spin" /> : <Save className="w-6 h-6 mr-4" strokeWidth={3} />}
+                                EXECUTE REGISTRY
+                            </PremiumButton>
+                            <PremiumButton variant="outline" onClick={() => setIsDialogOpen(false)} className="flex-1 border-white/5 h-20 rounded-3xl text-slate-500 hover:text-white hover:bg-white/5 transition-all uppercase font-black tracking-widest">
+                                Abort
+                            </PremiumButton>
+                        </div>
+                    </div>
                 </DialogContent>
             </Dialog>
+
+            <div className="mt-20 text-center mb-24">
+                <div className="inline-flex items-center gap-4 px-8 py-3 glass-panel rounded-full text-[9px] font-black text-slate-700 uppercase tracking-[0.6em] opacity-40 hover:opacity-100 transition-opacity">
+                    <ShieldCheck size={14} className="text-primary" /> Integrated Logistic Network v7.2 • Advanced Partner Security
+                </div>
+            </div>
         </DashboardLayout>
     )
 }

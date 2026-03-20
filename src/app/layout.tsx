@@ -1,23 +1,29 @@
 import type { Metadata } from "next";
-import { Sarabun } from "next/font/google";
+import { Outfit, Prompt } from "next/font/google";
 import "./globals.css";
 
+const outfit = Outfit({
+  variable: "--font-outfit",
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700", "800", "900"],
+  display: "swap",
+});
 
-const sarabun = Sarabun({
-  variable: "--font-sarabun",
+const prompt = Prompt({
+  variable: "--font-prompt",
   subsets: ["thai", "latin"],
   weight: ["300", "400", "500", "600", "700", "800"],
   display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "LOGIS-PRO 360",
+  title: "LOGIS-PRO 360 | COMMAND CENTRE",
   description: "Enterprise Transport Management System",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "LOGIS Driver",
+    title: "LOGIS-PRO",
   },
 };
 
@@ -27,14 +33,14 @@ export const viewport = {
   maximumScale: 1,
   userScalable: false,
   viewportFit: 'cover',
-  themeColor: '#f0fdf4',
+  themeColor: '#050110',
 }
 
 import { BranchProvider } from "@/components/providers/branch-provider";
 import { ThemeProvider } from "@/components/providers/theme-provider";
+import { LanguageProvider } from "@/components/providers/language-provider";
 import { GlobalClientComponents } from "@/components/providers/global-client-components";
 import ErrorBoundary from "@/components/error-boundary";
-// import { PerformanceMonitor } from "@/components/performance-monitor";
 
 export default function RootLayout({
   children,
@@ -42,22 +48,23 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="th" suppressHydrationWarning>
+    <html lang="th" suppressHydrationWarning tabIndex={-1}>
       <body
-        className={`${sarabun.variable} antialiased`}
+        className={`${outfit.variable} ${prompt.variable} font-sans antialiased`}
       >
         <ThemeProvider
           attribute="class"
-          defaultTheme="light"
-          forcedTheme="light"
+          defaultTheme="dark"
+          forcedTheme="dark"
           disableTransitionOnChange
         >
           <ErrorBoundary>
-            {/* <PerformanceMonitor /> */}
-            <BranchProvider>
-              {children}
-              <GlobalClientComponents />
-            </BranchProvider>
+            <LanguageProvider>
+              <BranchProvider>
+                {children}
+                <GlobalClientComponents />
+              </BranchProvider>
+            </LanguageProvider>
           </ErrorBoundary>
         </ThemeProvider>
       </body>

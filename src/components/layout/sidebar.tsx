@@ -9,14 +9,12 @@ import { cn } from "@/lib/utils"
 import {
   LayoutDashboard,
   Truck,
-  MapPin,
   FileText,
   AlertTriangle,
   MessageSquare,
   Wrench,
   Fuel,
   BarChart3,
-  Settings,
   ChevronLeft,
   Activity,
   Users,
@@ -25,19 +23,17 @@ import {
   Wallet,
   Building,
   History,
-  Coins,
-  CloudSync,
   CheckCircle2,
   Bell,
-  BookOpen,
   Bot,
 } from "lucide-react"
 
 import { SidebarProfile } from "./sidebar-profile"
 import { getUserRole } from "@/lib/permissions"
+import { useLanguage } from "@/components/providers/language-provider"
 
 interface NavItem {
-  title: string
+  titleKey: string
   href: string
   icon: React.ReactNode
   badge?: number | string
@@ -45,94 +41,78 @@ interface NavItem {
 }
 
 interface NavGroup {
-  title: string
+  titleKey: string
   items: NavItem[]
 }
 
 const navigation: NavGroup[] = [
-  // ... (existing navigation stays for Admin/Staff)
   {
-    title: "หลัก",
+    titleKey: "OPS COMMAND",
     items: [
-      { title: "Dashboard ปฏิบัติการ", href: "/dashboard", icon: <LayoutDashboard size={20} /> },
+      { titleKey: "navigation.dashboard", href: "/dashboard", icon: <LayoutDashboard size={20} /> },
     ],
   },
   {
-    title: "ปฏิบัติการ",
+    titleKey: "OPERATIONS",
     items: [
-      { title: "วางแผนงาน", href: "/planning", icon: <CalendarDays size={20} /> },
-      { title: "ปฏิทินงาน", href: "/calendar", icon: <CalendarDays size={20} /> },
-      { title: "ประวัติงาน", href: "/jobs/history", icon: <History size={20} /> },
-      { title: "Control Centre", href: "/monitoring", icon: <Activity size={20} />, badge: "Live", badgeColor: "green" },
-      { title: "จัดการ POD", href: "/pod", icon: <FileText size={20} /> },
-      { title: "SOS Alerts", href: "/sos", icon: <AlertTriangle size={20} />, badgeColor: "red" },
-      { title: "แจ้งเตือนระบบ", href: "/notifications", icon: <Bell size={20} />, badgeColor: "yellow" },
-      { title: "แชท", href: "/chat", icon: <MessageSquare size={20} />, badgeColor: "blue" },
+      { titleKey: "navigation.planning", href: "/planning", icon: <CalendarDays size={20} /> },
+      { titleKey: "navigation.calendar", href: "/calendar", icon: <CalendarDays size={20} /> },
+      { titleKey: "navigation.history", href: "/jobs/history", icon: <History size={20} /> },
+      { titleKey: "navigation.monitoring", href: "/monitoring", icon: <Activity size={20} />, badge: "Live", badgeColor: "green" },
+      { titleKey: "navigation.pod", href: "/pod", icon: <FileText size={20} /> },
+      { titleKey: "navigation.sos", href: "/sos", icon: <AlertTriangle size={20} />, badgeColor: "red" },
+      { titleKey: "navigation.notifications", href: "/notifications", icon: <Bell size={20} />, badgeColor: "yellow" },
+      { titleKey: "navigation.chat", href: "/chat", icon: <MessageSquare size={20} />, badgeColor: "blue" },
     ],
   },
   {
-    title: "กองยาน",
+    titleKey: "ASSET CONTROL",
     items: [
-      { title: "คนขับ", href: "/drivers", icon: <Users size={20} /> },
-      { title: "รถ", href: "/vehicles", icon: <Truck size={20} /> },
-      { title: "แจ้งตรวจสภาพ", href: "/admin/vehicle-checks", icon: <CheckCircle2 size={20} /> },
-      { title: "แจ้งซ่อม", href: "/maintenance", icon: <Wrench size={20} /> },
-      { title: "เติมน้ำมัน", href: "/fuel", icon: <Fuel size={20} /> },
+      { titleKey: "navigation.drivers", href: "/drivers", icon: <Users size={20} /> },
+      { titleKey: "navigation.fleet", href: "/vehicles", icon: <Truck size={20} /> },
+      { titleKey: "navigation.checks", href: "/admin/vehicle-checks", icon: <CheckCircle2 size={20} /> },
+      { titleKey: "navigation.maintenance", href: "/maintenance", icon: <Wrench size={20} /> },
+      { titleKey: "navigation.fuel", href: "/fuel", icon: <Fuel size={20} /> },
     ],
   },
   {
-    title: "ผู้บริหารและรายงาน",
+    titleKey: "INTELLIGENCE",
     items: [
-      { title: "Executive Dashboard", href: "/admin/analytics", icon: <BarChart3 size={20} />, badgeColor: "blue" },
-      { title: "รายงานรถและคนขับ", href: "/reports/fleet", icon: <Truck size={20} /> },
-      { title: "Intelligence Support", href: "/intelligence", icon: <Bot size={20} />, badgeColor: "green" },
-      { title: "ต้นทุนต่อเที่ยว", href: "/reports/cost-per-trip", icon: <Coins size={20} />, badgeColor: "yellow" },
-      { title: "ปัญหาสินค้า/เคลม", href: "/admin/damage-reports", icon: <AlertTriangle size={20} />, badgeColor: "red" },
-      { title: "ข้อเสนอแนะคนขับ", href: "/admin/user-feedback", icon: <MessageSquare size={20} /> },
-      { title: "ติดตามรายสาขา", href: "/admin/analytics/regional", icon: <MapPin size={20} /> },
-      { title: "รายงานทั่วไป", href: "/reports", icon: <BarChart3 size={20} /> },
+      { titleKey: "navigation.analytics", href: "/admin/analytics", icon: <BarChart3 size={20} />, badgeColor: "blue" },
+      { titleKey: "navigation.fleet", href: "/reports/fleet", icon: <Truck size={20} /> },
+      { titleKey: "navigation.ai", href: "/intelligence", icon: <Bot size={20} />, badgeColor: "green" },
+      { titleKey: "navigation.billing", href: "/reports", icon: <BarChart3 size={20} /> },
     ],
   },
   {
-    title: "การเงิน",
+    titleKey: "FINANCIAL",
     items: [
-      { title: "สรุปวางบิลลูกค้า", href: "/billing/customer", icon: <Receipt size={20} /> },
-      { title: "ใบกำกับภาษี", href: "/billing/invoices", icon: <FileText size={20} /> },
-      { title: "สรุปจ่ายรถ", href: "/billing/driver", icon: <Wallet size={20} /> },
+      { titleKey: "navigation.billing", href: "/billing/customer", icon: <Receipt size={20} /> },
+      { titleKey: "navigation.invoices", href: "/billing/invoices", icon: <FileText size={20} /> },
+      { titleKey: "navigation.payouts", href: "/billing/driver", icon: <Wallet size={20} /> },
     ],
   },
   {
-    title: "ช่วยเหลือ",
+    titleKey: "CORE SETTINGS",
     items: [
-      { title: "คู่มือการใช้งาน", href: "/manual", icon: <BookOpen size={20} /> },
-    ],
-  },
-  {
-    title: "ตั้งค่าระบบ",
-    items: [
-      { title: "ข้อมูลบริษัท", href: "/settings/company", icon: <Building size={20} /> },
-      { title: "จัดการลูกค้า", href: "/settings/customers", icon: <Users size={20} /> },
-      { title: "จัดการเส้นทาง", href: "/routes", icon: <MapPin size={20} /> },
-      { title: "ประเภทค่าใช้จ่าย", href: "/settings/expense-types", icon: <Coins size={20} /> },
-      { title: "ตั้งค่าระบบบัญชี", href: "/settings/accounting", icon: <CloudSync size={20} /> },
-      { title: "System Logs", href: "/admin/logs", icon: <Activity size={20} /> },
+      { titleKey: "navigation.settings", href: "/settings/company", icon: <Building size={20} /> },
     ],
   },
 ]
 
 const customerNavigation: NavGroup[] = [
     {
-      title: "ระบบสำหรับลูกค้า",
+      titleKey: "CLIENT PORTAL",
       items: [
-        { title: "ภาพรวมขนส่ง", href: "/dashboard", icon: <LayoutDashboard size={20} /> },
-        { title: "ติดตามงาน", href: "/monitoring", icon: <Activity size={20} />, badge: "Live", badgeColor: "green" },
-        { title: "ประวัติรายการ", href: "/jobs/history", icon: <History size={20} /> },
+        { titleKey: "navigation.dashboard", href: "/dashboard", icon: <LayoutDashboard size={20} /> },
+        { titleKey: "navigation.monitoring", href: "/monitoring", icon: <Activity size={20} />, badge: "Live", badgeColor: "green" },
+        { titleKey: "navigation.history", href: "/jobs/history", icon: <History size={20} /> },
       ],
     },
     {
-        title: "เอกสารและบัญชี",
+        titleKey: "DOCUMENTS",
         items: [
-            { title: "จัดการ POD", href: "/pod", icon: <FileText size={20} /> },
+            { titleKey: "navigation.pod", href: "/pod", icon: <FileText size={20} /> },
         ]
     }
 ]
@@ -153,9 +133,9 @@ const navContainer = {
   }
 }
 
-
 export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
   const pathname = usePathname()
+  const { t } = useLanguage()
   const [sidebarState, setSidebarState] = React.useState<{
     userRole: number | null
     isCustomerUser: boolean
@@ -168,43 +148,35 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
 
   React.useEffect(() => {
     async function checkRole() {
-        const role = await getUserRole()
-        
-        // Also check if customer
-        const { isCustomer } = await import("@/lib/permissions")
-        const customerFlag = await isCustomer()
-        
-        setSidebarState({
-            userRole: role || null,
-            isCustomerUser: customerFlag,
-            roleLoaded: true
-        })
+        try {
+            const role = await getUserRole()
+            const { isCustomer } = await import("@/lib/permissions")
+            const customerFlag = await isCustomer()
+            
+            setSidebarState({
+                userRole: role || null,
+                isCustomerUser: customerFlag,
+                roleLoaded: true
+            })
+        } catch {
+            setSidebarState(prev => ({ ...prev, roleLoaded: true }))
+        }
     }
     checkRole()
   }, [])
 
   const { userRole, isCustomerUser, roleLoaded } = sidebarState
-
-  // If customer, show customer-only menu
   const activeNavigation = isCustomerUser ? customerNavigation : navigation
 
   const filteredNavigation = activeNavigation.filter(group => {
     if (!roleLoaded || userRole === null) return true 
-    
-    // Customers skip internal logic
     if (isCustomerUser) return true
 
-    if (group.title === "ผู้บริหาร & รายงาน") {
-      return [1, 2].includes(userRole)
-    }
-    if (group.title === "การเงิน") {
-      return [1, 2, 4].includes(userRole)
-    }
-    if (group.title === "ตั้งค่าระบบ") {
-      return [1, 2].includes(userRole)
-    }
+    if (group.titleKey === "INTELLIGENCE") return [1, 2].includes(userRole)
+    if (group.titleKey === "FINANCIAL") return [1, 2, 4].includes(userRole)
+    if (group.titleKey === "CORE SETTINGS") return [1, 2].includes(userRole)
     
-    if (group.title === "ปฏิบัติการ" || group.title === "กองยาน") {
+    if (group.titleKey === "OPERATIONS" || group.titleKey === "ASSET CONTROL") {
         if (userRole === 4) return false
     }
 
@@ -214,149 +186,124 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
   return (
     <motion.aside
       initial={{ x: -280 }}
-      animate={{ x: 0, width: collapsed ? 80 : 280 }}
-      transition={{ duration: 0.3, ease: "easeInOut" }}
+      animate={{ x: 0, width: collapsed ? 100 : 320 }}
+      transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
       className={cn(
-        "fixed top-0 left-0 h-screen z-[1000] flex flex-col",
-        "bg-slate-950 border-r border-slate-800/50 text-slate-300 shadow-2xl transition-all duration-300"
+        "fixed top-0 left-0 h-screen z-[1000] flex flex-col font-sans",
+        "bg-[#0a0518] border-r border-white/5 text-slate-400 shadow-[20px_0_60px_rgba(0,0,0,0.4)] transition-all duration-500"
       )}
     >
-      {/* Logo */}
-      <div className="flex items-center justify-between h-20 px-4 border-b border-slate-800/50 bg-slate-900/50 backdrop-blur-md">
+      {/* Brand Signature */}
+      <div className="flex items-center justify-between h-36 px-6 border-b border-white/5 bg-[#050110]/50 backdrop-blur-3xl">
         <AnimatePresence mode="wait">
           {!collapsed && (
             <motion.div
               key="logo"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="flex items-center gap-3"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="flex items-center gap-5"
             >
-              <div className="relative">
-                <div className="absolute inset-0 bg-emerald-500 blur-lg opacity-20 rounded-full"></div>
-                <Image 
-                    src="/logo.png" 
-                    alt="LOGIS-PRO 360" 
-                    width={40}
-                    height={40}
-                    className="relative h-10 w-auto object-contain brightness-110 drop-shadow-[0_0_8px_rgba(16,185,129,0.3)]"
-                />
+              <div className="relative group/logo">
+                <div className="absolute inset-0 bg-primary/20 blur-3xl opacity-0 group-hover/logo:opacity-100 transition-all duration-700 rounded-full"></div>
+                <div className="relative w-28 h-28 flex items-center justify-center transition-all duration-500 group-hover/logo:scale-110 overflow-hidden">
+                    <Image src="/logo-tactical.png" alt="LogisPro Logo" fill className="object-contain" priority />
+                </div>
               </div>
-              <div>
-                <h1 className="text-white font-black text-lg leading-tight tracking-tight">LOGIS-PRO</h1>
-                <p className="text-[10px] text-emerald-400 font-black tracking-widest uppercase">360 Enterprise</p>
+              <div className="flex flex-col">
+                <h1 className="text-white font-black text-2xl leading-none tracking-tighter drop-shadow-[0_0_10px_rgba(255,255,255,0.3)] uppercase">LOGIS<span className="text-primary italic">PRO</span></h1>
+                <p className="text-[10px] text-primary font-black tracking-[0.4em] uppercase opacity-90 leading-tight mt-1">COMMAND<br/>CENTRE</p>
               </div>
             </motion.div>
           )}
         </AnimatePresence>
         
-        <button
-          onClick={onToggle}
-          className="p-2 rounded-xl hover:bg-slate-800 transition-colors text-slate-500 hover:text-emerald-400"
-        >
-          <ChevronLeft
-            size={20}
-            className={cn("transition-transform duration-300", collapsed && "rotate-180")}
-          />
-        </button>
+        <div className="flex flex-col gap-3 items-center">
+            <button
+              onClick={onToggle}
+              className="p-2.5 rounded-2xl bg-white/5 border border-white/10 hover:border-primary/50 text-slate-500 hover:text-primary transition-all active:scale-95 shadow-lg"
+            >
+              <ChevronLeft
+                size={20}
+                className={cn("transition-transform duration-500", collapsed && "rotate-180")}
+              />
+            </button>
+        </div>
       </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto py-6 px-3 custom-scrollbar">
+      {/* Navigation Matrix */}
+      <nav className="flex-1 overflow-y-auto pt-8 pb-4 px-4 custom-scrollbar">
         {!roleLoaded ? (
           <SidebarSkeleton collapsed={collapsed} />
         ) : (
-        <>
-        <motion.div variants={navContainer} initial="hidden" animate="show">
-        {filteredNavigation.map((group) => (
-          <div key={group.title} className="mb-6">
-            {!collapsed && (
-              <h2 className="px-4 mb-3 text-[10px] font-black uppercase tracking-widest text-slate-300/80">
-                {group.title}
-              </h2>
-            )}
-            
-            <div className="space-y-1">
-              {group.items.map((item) => {
-                const isActive = pathname === item.href
-                return (
-                  <div key={item.href}>
-                    <Link href={item.href} prefetch={true} className="block mb-2">
-                        <div
-                          className={cn(
-                               "relative flex items-center gap-3 px-4 py-3 rounded-2xl transition-all duration-300 group border shadow-sm",
-                                isActive
-                                ? "bg-emerald-600/20 text-white border-emerald-500/50 shadow-[0_4px_20px_rgba(16,185,129,0.15)]"
-                                : "bg-slate-900/80 text-slate-300 border-slate-800/50 hover:bg-slate-800 hover:border-slate-700 hover:text-white"
-                          )}
-                        >
-                          {/* Active Indicator Glow */}
+          <motion.div variants={navContainer} initial="hidden" animate="show" className="space-y-8">
+            {filteredNavigation.map((group) => (
+              <div key={group.titleKey} className="space-y-4">
+                {!collapsed && (
+                  <h2 className="px-4 text-[10px] font-black uppercase tracking-[0.4em] text-slate-500/80">
+                    {group.titleKey}
+                  </h2>
+                )}
+                
+                <div className="space-y-2">
+                  {group.items.map((item) => {
+                    const isActive = pathname === item.href
+                    return (
+                      <Link key={item.href} href={item.href} prefetch={true} className="block group">
+                        <div className={cn(
+                            "relative flex items-center gap-4 px-4 h-14 rounded-2xl transition-all duration-300 overflow-hidden",
+                             isActive
+                             ? "bg-primary/10 text-white shadow-[inset_0_0_20px_rgba(255,30,133,0.05)]"
+                             : "text-slate-500 hover:bg-white/[0.03] hover:text-slate-200"
+                        )}>
+                          {/* Active Neon Line */}
                           {isActive && (
-                              <div
-                                className="absolute left-0 top-1/2 -translate-y-1/2 h-8 w-1 bg-emerald-400 rounded-r-full shadow-[0_0_15px_rgba(52,211,153,0.8)]"
-                              />
+                            <motion.div 
+                                layoutId="active-nav"
+                                className="absolute left-0 top-3 bottom-3 w-1 bg-primary rounded-r-full shadow-[0_0_15px_rgba(255,30,133,1)]"
+                            />
                           )}
                           
-                          <span className={cn(
-                              "flex-shrink-0 transition-all duration-300",
-                               isActive ? "text-emerald-400 scale-110" : "text-slate-500 group-hover:text-emerald-400 group-hover:scale-110"
+                          <div className={cn(
+                              "flex-shrink-0 transition-transform duration-300",
+                              isActive ? "text-primary scale-110" : "group-hover:scale-110 group-hover:text-primary/70"
                           )}>
-                              {item.icon}
-                          </span>
+                             {item.icon}
+                          </div>
                           
                           {!collapsed && (
                             <span className={cn(
-                                "text-sm font-black whitespace-nowrap tracking-tight transition-colors",
-                                isActive ? "text-white" : "text-slate-300 group-hover:text-white"
+                                "text-sm font-black tracking-tight",
+                                isActive ? "text-white" : "text-slate-400 group-hover:text-slate-200"
                             )}>
-                                {item.title}
+                                {t(item.titleKey)}
                             </span>
                           )}
                           
-                          {/* Badge */}
                           {item.badge && !collapsed && (
-                              <span
-                                  className={cn(
-                                      "ml-auto px-2 py-0.5 text-[10px] font-black rounded-full",
-                                      item.badgeColor === "red" && "bg-red-500/10 text-red-500 border border-red-500/20",
-                                      item.badgeColor === "blue" && "bg-blue-500/10 text-blue-500 border border-blue-500/20",
-                                      item.badgeColor === "green" && "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20",
-                                      item.badgeColor === "yellow" && "bg-yellow-500/10 text-yellow-500 border border-yellow-500/20"
-                                  )}
-                              >
+                            <span className={cn(
+                                "ml-auto px-2 py-0.5 text-[8px] font-black rounded-lg border",
+                                item.badgeColor === "red" && "bg-red-500/10 text-red-500 border-red-500/20",
+                                item.badgeColor === "blue" && "bg-blue-500/10 text-blue-500 border-blue-500/20",
+                                item.badgeColor === "green" && "bg-primary/10 text-primary border-primary/20",
+                                item.badgeColor === "yellow" && "bg-yellow-500/10 text-yellow-500 border-yellow-500/20"
+                            )}>
                                 {item.badge}
-                              </span>
+                            </span>
                           )}
                         </div>
-                    </Link>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-        ))}
-        </motion.div>
-
-        {/* Extra Settings Link - Hidden for customers */}
-        {!isCustomerUser && (
-            <div className="pb-2">
-                <Link href="/settings">
-                    <motion.div
-                        whileHover={{ x: 4 }}
-                        className="flex items-center gap-3 px-3 py-3 rounded-xl text-slate-400 hover:text-emerald-400 hover:bg-slate-900/50 transition-all group"
-                    >
-                        <Settings size={20} className="group-hover:text-emerald-400 transition-colors" />
-                        {!collapsed && <span className="text-sm font-bold">ตั้งค่า</span>}
-                    </motion.div>
-                </Link>
-            </div>
-        )}
-        </>
+                      </Link>
+                    )
+                  })}
+                </div>
+              </div>
+            ))}
+          </motion.div>
         )}
       </nav>
 
-      {/* Bottom Profile Section */}
-      <div className="p-4 border-t border-slate-800/50 bg-slate-950/50">
+      {/* User Core */}
+      <div className="p-6 border-t border-white/5 bg-[#050110]/50">
         <SidebarProfile collapsed={collapsed} />
       </div>
     </motion.aside>
@@ -365,18 +312,18 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
 
 function SidebarSkeleton({ collapsed }: { collapsed: boolean }) {
   return (
-    <div className="space-y-6 px-2">
+    <div className="space-y-8 px-2">
       {[1, 2, 3].map((i) => (
-        <div key={i} className="space-y-3">
+        <div key={i} className="space-y-4">
           {!collapsed && (
-            <div className="h-2 w-16 bg-slate-800/50 rounded animate-pulse ml-4" />
+            <div className="h-2 w-20 bg-white/5 rounded-full animate-pulse ml-4" />
           )}
           {[1, 2].map((j) => (
             <div
               key={j}
               className={cn(
-                "h-12 bg-slate-900/50 rounded-2xl animate-pulse border border-slate-800/30",
-                collapsed ? "w-12 mx-auto" : "w-full"
+                "h-14 bg-white/[0.02] rounded-2xl animate-pulse border border-white/5",
+                collapsed ? "w-14 mx-auto" : "w-full"
               )}
             />
           ))}

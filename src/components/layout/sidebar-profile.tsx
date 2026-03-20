@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { LogOut, Loader2 } from "lucide-react"
 import { getUserProfile, UserProfile } from "@/lib/supabase/users"
 import Image from "next/image"
+import { cn } from "@/lib/utils"
 
 export function SidebarProfile({ collapsed }: { collapsed: boolean }) {
   const [profile, setProfile] = useState<UserProfile | null>(null)
@@ -24,8 +25,8 @@ export function SidebarProfile({ collapsed }: { collapsed: boolean }) {
   }, [])
 
   if (loading) return (
-    <div className={`flex items-center gap-3 p-3 rounded-xl bg-slate-900/50 border border-slate-800/50 ${collapsed ? 'justify-center' : ''}`}>
-        <Loader2 className="animate-spin text-slate-500" size={20} />
+    <div className={`flex items-center gap-4 p-4 rounded-2xl bg-white/5 border border-white/5 ${collapsed ? 'justify-center' : ''}`}>
+        <Loader2 className="animate-spin text-primary" size={20} />
     </div>
   )
 
@@ -33,33 +34,41 @@ export function SidebarProfile({ collapsed }: { collapsed: boolean }) {
     ? `${profile.First_Name || ""} ${profile.Last_Name || ""}`.trim() || profile.Username 
     : "User"
   
-  const role = profile?.Role || "Staff"
+  const role = profile?.Role || "Command Staff"
   const avatarUrl = profile?.Avatar_Url
 
   return (
-    <div className={`flex items-center gap-3 p-3 rounded-xl bg-slate-900/50 border border-slate-800/50 ${collapsed ? 'justify-center' : ''}`}>
-      <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-primary/80 to-primary/40 flex items-center justify-center text-primary-foreground shadow-lg overflow-hidden shrink-0">
-        {avatarUrl ? (
-          <Image src={avatarUrl} alt={displayName} fill className="object-cover" />
-        ) : (
-          <span className="font-bold text-lg">{(displayName || "U").charAt(0).toUpperCase()}</span>
-        )}
+    <div className={cn(
+        "flex items-center gap-4 p-4 rounded-3xl bg-white/5 border border-white/5 relative overflow-hidden group transition-all hover:bg-white/10 hover:border-primary/20",
+        collapsed ? "justify-center p-3" : ""
+    )}>
+      {/* Visual Accent */}
+      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary via-accent to-primary opacity-0 group-hover:opacity-100 transition-opacity" />
+
+      <div className="relative w-11 h-11 rounded-2xl bg-gradient-to-tr from-primary to-accent p-[2px] shadow-lg shadow-primary/10 transition-transform group-hover:scale-105 shrink-0 overflow-hidden">
+        <div className="w-full h-full rounded-[inherit] bg-[#050110] flex items-center justify-center text-white overflow-hidden relative">
+            {avatarUrl ? (
+                <Image src={avatarUrl} alt={displayName} fill className="object-cover" />
+            ) : (
+                <span className="font-black text-lg tracking-tighter">{(displayName || "U").charAt(0).toUpperCase()}</span>
+            )}
+        </div>
       </div>
       
       {!collapsed && (
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-black text-white truncate">{displayName}</p>
-          <p className="text-[10px] text-slate-400 font-black truncate uppercase tracking-widest">{role}</p>
+          <p className="text-sm font-black text-white truncate tracking-tight">{displayName}</p>
+          <p className="text-[9px] text-primary font-black truncate uppercase tracking-[0.3em] mt-0.5">{role}</p>
         </div>
       )}
 
       {!collapsed && (
         <button 
           onClick={() => window.location.href = '/api/auth/logout'}
-          className="p-2 text-slate-400 font-black hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
-          title="ออกจากระบบ"
+          className="p-2.5 text-slate-500 hover:text-rose-500 hover:bg-rose-500/10 rounded-xl transition-all active:scale-90"
+          title="Sign Out"
         >
-          <LogOut size={18} />
+          <LogOut size={18} strokeWidth={2.5} />
         </button>
       )}
     </div>

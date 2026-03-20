@@ -1,8 +1,7 @@
-"use client"
-
 import { PremiumCard } from "@/components/ui/premium-card"
-import { Building2, MapPin, TrendingUp, DollarSign, Target, Activity } from "lucide-react"
+import { Building2, MapPin, TrendingUp, Activity } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useLanguage } from "@/components/providers/language-provider"
 
 type CustomerStat = {
   name: string
@@ -25,6 +24,7 @@ export function CustomerRouteSection({
   customers: CustomerStat[]
   routes: RouteStat[] 
 }) {
+  const { t } = useLanguage()
 
   return (
     <div className="space-y-10">
@@ -33,7 +33,7 @@ export function CustomerRouteSection({
         <div className="p-2 bg-slate-950 rounded-xl text-purple-500 shadow-lg border border-slate-800">
           <MapPin size={18} />
         </div>
-        <h3 className="text-xl font-black text-white tracking-tight uppercase premium-text-gradient">Customer & Route Intelligence</h3>
+        <h3 className="text-xl font-black text-white tracking-tight uppercase premium-text-gradient">{t('dashboard.customer_route_header')}</h3>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -46,8 +46,8 @@ export function CustomerRouteSection({
                   <Building2 size={16} />
                 </div>
                 <div>
-                  <h3 className="text-lg font-black text-white tracking-tight italic uppercase">Market COMMAND</h3>
-                  <p className="text-purple-400 text-[9px] font-bold uppercase tracking-[0.2em]">Strategic Customer Yield Registry</p>
+                  <h3 className="text-lg font-black text-white tracking-tight italic uppercase">{t('dashboard.market_command')}</h3>
+                  <p className="text-purple-400 text-[9px] font-bold uppercase tracking-[0.2em]">{t('dashboard.customer_yield')}</p>
                 </div>
               </div>
            </div>
@@ -65,20 +65,20 @@ export function CustomerRouteSection({
                             <div>
                                 <div className="text-slate-900 font-black text-sm tracking-tight uppercase italic group-hover/cust:text-purple-600 transition-colors">{c.name}</div>
                                 <div className="text-[10px] text-slate-500 font-black mt-2 tracking-widest italic uppercase">
-                                    MISSION VOLUME: {c.jobCount}
+                                    {t('dashboard.mission_volume')}: {c.jobCount}
                                 </div>
                             </div>
                         </div>
                         <div className="text-right">
                              <div className="text-lg font-black text-slate-950 tracking-tighter italic">฿{c.revenue.toLocaleString()}</div>
-                             <div className="text-[9px] text-slate-400 font-black uppercase tracking-widest mt-1 italic">Aggregate Revenue</div>
+                             <div className="text-[9px] text-slate-400 font-black uppercase tracking-widest mt-1 italic">{t('dashboard.aggregate_revenue')}</div>
                         </div>
                     </div>
                 ))}
                 {customers.length === 0 && (
                      <div className="p-24 text-center">
                         <Building2 size={48} strokeWidth={1} className="mx-auto mb-4 text-slate-100" />
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">Awaiting Market Data</p>
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">{t('dashboard.awaiting_market')}</p>
                     </div>
                 )}
               </div>
@@ -94,8 +94,8 @@ export function CustomerRouteSection({
                   <TrendingUp size={16} />
                 </div>
                 <div>
-                  <h3 className="text-lg font-black text-white tracking-tight italic uppercase">Corridor Yield</h3>
-                  <p className="text-emerald-400 text-[9px] font-bold uppercase tracking-[0.2em]">Route Performance & Margin Audit</p>
+                  <h3 className="text-lg font-black text-white tracking-tight italic uppercase">{t('dashboard.corridor_yield')}</h3>
+                  <p className="text-emerald-400 text-[9px] font-bold uppercase tracking-[0.2em]">{t('dashboard.route_margin')}</p>
                 </div>
               </div>
            </div>
@@ -111,7 +111,7 @@ export function CustomerRouteSection({
                                 <div className="text-slate-900 font-black text-sm tracking-tight uppercase italic">{r.route}</div>
                                 <div className="flex items-center gap-3 mt-2">
                                     <span className="text-[10px] font-black text-slate-400 bg-slate-50 px-2 py-0.5 rounded-full border border-slate-100 tracking-widest uppercase">
-                                        {r.count} MISSIONS
+                                        {r.count} {t('dashboard.missions')}
                                     </span>
                                     <span className="text-[10px] text-slate-400 font-bold italic">COST: ฿{r.cost.toLocaleString()}</span>
                                 </div>
@@ -119,14 +119,14 @@ export function CustomerRouteSection({
                         </div>
                         <div className="text-right">
                              <div className="text-lg font-black text-emerald-600 tracking-tighter italic">+{r.margin.toFixed(1)}%</div>
-                             <div className="text-[9px] text-slate-400 font-black uppercase tracking-widest mt-1 italic">Net Margin Yield</div>
+                             <div className="text-[9px] text-slate-400 font-black uppercase tracking-widest mt-1 italic">{t('dashboard.net_margin')}</div>
                         </div>
                     </div>
                 ))}
                 {routes.length === 0 && (
                      <div className="p-24 text-center">
                         <Activity size={48} strokeWidth={1} className="mx-auto mb-4 text-slate-100" />
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">Sector Activity Nominal</p>
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">{t('dashboard.sector_nominal')}</p>
                     </div>
                 )}
               </div>

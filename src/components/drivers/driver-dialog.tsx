@@ -9,9 +9,10 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { createDriver, updateDriver, type DriverFormData } from "@/app/drivers/actions"
-import { Loader2 } from "lucide-react"
+import { Loader2, User, Phone, Key, Calendar, Building2, Car, Landmark, Save, X } from "lucide-react"
 import { Driver } from "@/lib/supabase/drivers"
 import { BANKS } from "@/lib/constants/banks"
+import { cn } from "@/lib/utils"
 
 type DriverDialogProps = {
   mode?: 'create' | 'edit'
@@ -75,26 +76,11 @@ export function DriverDialog({
         throw new Error(result.message || 'Operation failed')
       }
 
+      toast.success(mode === 'create' ? 'เพิ่มคนขับสำเร็จ' : 'แก้ไขข้อมูลสำเร็จ')
       setShow(false)
-      if (!isControlled) {
-        setFormData({
-            Driver_ID: '',
-            Driver_Name: '',
-            Mobile_No: '',
-            Password: '',
-            Vehicle_Plate: '',
-            Active_Status: 'Active',
-            Expire_Date: '',
-            Sub_ID: '',
-            Branch_ID: '',
-            Bank_Name: '',
-            Bank_Account_No: '',
-            Bank_Account_Name: ''
-        })
-      }
       router.refresh()
-    } catch {
-      toast.error('เกิดข้อผิดพลาด กรุณาลองใหม่')
+    } catch (err: any) {
+      toast.error(err.message || 'เกิดข้อผิดพลาด กรุณาลองใหม่')
     } finally {
       setLoading(false)
     }
@@ -103,134 +89,166 @@ export function DriverDialog({
   return (
     <Dialog open={show} onOpenChange={setShow}>
       {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
-      <DialogContent className="sm:max-w-[425px] bg-white border-gray-200 text-gray-900">
-        <DialogHeader>
-          <DialogTitle>{mode === 'create' ? 'เพิ่มคนขับ' : 'แก้ไขข้อมูลคนขับ'}</DialogTitle>
+      <DialogContent className="sm:max-w-xl bg-slate-900/95 backdrop-blur-2xl border-white/5 text-white p-0 rounded-[2.5rem] overflow-hidden shadow-[0_0_80px_rgba(0,0,0,0.5)]">
+        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary via-accent to-purple-500" />
+        
+        <DialogHeader className="p-8 pb-0">
+          <div className="flex items-center gap-4 mb-2">
+              <div className="w-12 h-12 rounded-2xl bg-primary/20 flex items-center justify-center">
+                  <User className="text-primary" size={24} />
+              </div>
+              <div>
+                  <DialogTitle className="text-3xl font-black tracking-tighter uppercase whitespace-nowrap">
+                      {mode === 'create' ? 'Driver Deployment' : 'Intelligence Update'}
+                  </DialogTitle>
+                  <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.3em]">System Configuration Layer</p>
+              </div>
+          </div>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4 mt-4">
-          {branches.length > 0 && (
-            <div className="space-y-2">
-                <Label htmlFor="Branch_ID" className="text-amber-600 font-bold">เลือกสาขา (Super Admin)</Label>
+
+        <form onSubmit={handleSubmit} className="p-8 pt-6 space-y-6 max-h-[80vh] overflow-y-auto custom-scrollbar">
+          {/* Section: Basic Identity */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <Label htmlFor="Driver_ID" className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Serial ID</Label>
+                <div className="relative">
+                    <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600" size={16} />
+                    <Input
+                      id="Driver_ID"
+                      value={formData.Driver_ID}
+                      onChange={(e) => setFormData({ ...formData, Driver_ID: e.target.value })}
+                      placeholder="e.g. DRV-001"
+                      required
+                      disabled={mode === 'edit'}
+                      className="h-12 pl-12 rounded-xl bg-white/5 border-white/10 text-white placeholder:text-slate-700 focus:ring-primary/40"
+                    />
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="Driver_Name" className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Full Designation</Label>
+                <Input
+                  id="Driver_Name"
+                  value={formData.Driver_Name}
+                  onChange={(e) => setFormData({ ...formData, Driver_Name: e.target.value })}
+                  placeholder="Designated Name"
+                  required
+                  className="h-12 px-6 rounded-xl bg-white/5 border-white/10 text-white placeholder:text-slate-700 focus:ring-primary/40"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="Mobile_No" className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Comm Channel</Label>
+                <div className="relative">
+                    <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600" size={16} />
+                    <Input
+                      id="Mobile_No"
+                      value={formData.Mobile_No}
+                      onChange={(e) => setFormData({ ...formData, Mobile_No: e.target.value })}
+                      placeholder="0XX-XXX-XXXX"
+                      required
+                      className="h-12 pl-12 rounded-xl bg-white/5 border-white/10 text-white placeholder:text-slate-700 focus:ring-primary/40"
+                    />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="Password" className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Security Key</Label>
+                <div className="relative">
+                    <Key className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600" size={16} />
+                    <Input
+                      id="Password"
+                      type="text"
+                      value={formData.Password}
+                      onChange={(e) => setFormData({ ...formData, Password: e.target.value })}
+                      placeholder="••••••••"
+                      required={mode === 'create'}
+                      className="h-12 pl-12 rounded-xl bg-white/5 border-white/10 text-white placeholder:text-slate-700 focus:ring-primary/40"
+                    />
+                </div>
+              </div>
+          </div>
+
+          <div className="h-px bg-white/5 mx-[-2rem]" />
+
+          {/* Section: Operational Data */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <Label htmlFor="Expire_Date" className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Licence Integrity Date</Label>
+                <div className="relative">
+                    <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600" size={16} />
+                    <Input
+                        id="Expire_Date"
+                        type="date"
+                        value={formData.Expire_Date}
+                        onChange={(e) => setFormData({ ...formData, Expire_Date: e.target.value })}
+                        className="h-12 pl-12 rounded-xl bg-white/5 border-white/10 text-white focus:ring-primary/40 invert-[0.9] dark:invert-0"
+                    />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Branch HQ</Label>
                 <Select value={formData.Branch_ID || undefined} onValueChange={(val) => setFormData({ ...formData, Branch_ID: val })}>
-                    <SelectTrigger className="w-full h-10 border-amber-200 bg-amber-50 text-gray-900">
-                        <SelectValue placeholder="-- เลือกสาขา --" />
+                    <SelectTrigger className="h-12 rounded-xl bg-white/5 border-white/10 text-white">
+                        <SelectValue placeholder="Command Center" />
                     </SelectTrigger>
-                    <SelectContent>
-                        {Array.isArray(branches) && branches.filter(b => b?.Branch_ID).map((b) => (
-                            <SelectItem key={b.Branch_ID} value={b.Branch_ID}>
-                                {b.Branch_Name} ({b.Branch_ID})
-                            </SelectItem>
+                    <SelectContent className="bg-slate-900 border-white/10 text-white">
+                        {Array.isArray(branches) && branches.map((b) => (
+                            <SelectItem key={b.Branch_ID} value={b.Branch_ID}>{b.Branch_Name}</SelectItem>
                         ))}
                     </SelectContent>
                 </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Subcontractor Origin</Label>
+                <Select value={formData.Sub_ID || "__independent__"} onValueChange={(val) => setFormData({ ...formData, Sub_ID: val === "__independent__" ? "" : val })}>
+                    <SelectTrigger className="h-12 rounded-xl bg-white/5 border-white/10 text-white">
+                        <SelectValue placeholder="Independent" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-slate-900 border-white/10 text-white">
+                        <SelectItem value="__independent__">Independent / Fleet Ops</SelectItem>
+                        {Array.isArray(subcontractors) && subcontractors.map((s) => (
+                            <SelectItem key={s.Sub_ID} value={s.Sub_ID}>{s.Sub_Name}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Asset Allocation</Label>
+                <Select value={formData.Vehicle_Plate || "__none__"} onValueChange={(val) => setFormData({ ...formData, Vehicle_Plate: val === "__none__" ? "" : val })}>
+                    <SelectTrigger className="h-12 rounded-xl bg-white/5 border-white/10 text-white">
+                        <SelectValue placeholder="No Vehicle" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-slate-900 border-white/10 text-white">
+                        <SelectItem value="__none__">No Assigned Asset</SelectItem>
+                        {Array.isArray(vehicles) && vehicles.map((v) => (
+                            <SelectItem key={v.Vehicle_Plate} value={v.Vehicle_Plate}>{v.Vehicle_Plate}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+              </div>
+          </div>
+
+          {/* Section: Financial Interface */}
+          <div className="p-6 rounded-3xl bg-white/5 border border-white/10 space-y-6">
+            <div className="flex items-center gap-3">
+                 <div className="p-2 bg-emerald-500/20 rounded-xl">
+                    <Landmark size={18} className="text-emerald-400" /> 
+                 </div>
+                 <h4 className="text-[10px] font-black text-emerald-400 uppercase tracking-[0.3em]">Compensation Channel</h4>
             </div>
-          )}
-
-          <div className="space-y-2">
-            <Label htmlFor="Driver_ID">รหัสพนักงาน (ID)</Label>
-            <Input
-              id="Driver_ID"
-              value={formData.Driver_ID}
-              onChange={(e) => setFormData({ ...formData, Driver_ID: e.target.value })}
-              placeholder="DRV-001"
-              required
-              disabled={mode === 'edit'}
-              className="bg-gray-50 border-gray-200 text-gray-900"
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="Driver_Name">ชื่อ-นามสกุล</Label>
-            <Input
-              id="Driver_Name"
-              value={formData.Driver_Name}
-              onChange={(e) => setFormData({ ...formData, Driver_Name: e.target.value })}
-              placeholder="นาย ขับรถ ดี"
-              required
-              className="bg-gray-50 border-gray-200 text-gray-900"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="Mobile_No">เบอร์โทรศัพท์</Label>
-            <Input
-              id="Mobile_No"
-              value={formData.Mobile_No}
-              onChange={(e) => setFormData({ ...formData, Mobile_No: e.target.value })}
-              placeholder="081-234-5678"
-              required
-              className="bg-gray-50 border-gray-200 text-gray-900"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="Expire_Date">วันหมดอายุใบขับขี่</Label>
-             <Input
-                id="Expire_Date"
-                type="date"
-                value={formData.Expire_Date}
-                onChange={(e) => setFormData({ ...formData, Expire_Date: e.target.value })}
-                className="bg-gray-50 border-gray-200 text-gray-900"
-             />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="Password">รหัสผ่าน (สำหรับเข้าสู่ระบบ)</Label>
-            <Input
-              id="Password"
-              type="text"
-              value={formData.Password}
-              onChange={(e) => setFormData({ ...formData, Password: e.target.value })}
-              placeholder="ตั้งรหัสผ่าน"
-              required={mode === 'create'}
-              className="bg-gray-50 border-gray-200 text-gray-900"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="Sub_ID">สังกัดบริษัทรถร่วม (Subcontractor)</Label>
-            <Select value={formData.Sub_ID || "__independent__"} onValueChange={(val) => setFormData({ ...formData, Sub_ID: val === "__independent__" ? "" : val })}>
-                <SelectTrigger className="w-full h-10 border-gray-200 bg-gray-50 text-gray-900">
-                    <SelectValue placeholder="อิสระ / รถบริษัท" />
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectItem value="__independent__">อิสระ / รถบริษัท (Independent)</SelectItem>
-                    {Array.isArray(subcontractors) && subcontractors.filter(s => s?.Sub_ID).map((s) => (
-                        <SelectItem key={s.Sub_ID} value={s.Sub_ID}>{s.Sub_Name} ({s.Sub_ID})</SelectItem>
-                    ))}
-                </SelectContent>
-            </Select>
-          </div>
-
-        <div className="space-y-2">
-            <Label htmlFor="Vehicle_Plate">รถประจำ</Label>
-            <Select value={formData.Vehicle_Plate || "__none__"} onValueChange={(val) => setFormData({ ...formData, Vehicle_Plate: val === "__none__" ? "" : val })}>
-                <SelectTrigger className="w-full h-10 border-gray-200 bg-gray-50 text-gray-900">
-                    <SelectValue placeholder="ไม่ระบุ / ไม่มีรถประจำ" />
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectItem value="__none__">ไม่ระบุ / ไม่มีรถประจำ</SelectItem>
-                    {Array.isArray(vehicles) && vehicles.filter(v => v?.Vehicle_Plate).map((v) => (
-                        <SelectItem key={v.Vehicle_Plate} value={v.Vehicle_Plate}>
-                            {v.Vehicle_Plate} {v.Brand ? `(${v.Brand})` : ''}
-                        </SelectItem>
-                    ))}
-                </SelectContent>
-            </Select>
-        </div>
-
-        {/* Bank Information Section */}
-        <div className="p-4 rounded-xl bg-emerald-50/50 border border-emerald-100 space-y-4">
-            <h3 className="text-xs font-black text-emerald-600 uppercase tracking-widest">ข้อมูลบัญชีธนาคาร (Payment Details)</h3>
             
             <div className="space-y-2">
-                <Label htmlFor="Bank_Name">เลือกธนาคาร</Label>
+                <Label className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Institution</Label>
                 <Select value={formData.Bank_Name || "__none__"} onValueChange={(val) => setFormData({ ...formData, Bank_Name: val === "__none__" ? "" : val })}>
-                    <SelectTrigger className="w-full h-10 border-emerald-200 bg-white text-gray-900">
-                        <SelectValue placeholder="-- เลือกธนาคาร --" />
+                    <SelectTrigger className="h-12 border-white/10 bg-black/20 text-white">
+                        <SelectValue placeholder="Select Institution" />
                     </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="__none__">ไม่ระบุ</SelectItem>
+                    <SelectContent className="bg-slate-900 border-white/10 text-white">
+                        <SelectItem value="__none__">Unspecified</SelectItem>
                         {BANKS.map((b) => (
                             <SelectItem key={b.value} value={b.value}>{b.label}</SelectItem>
                         ))}
@@ -238,52 +256,44 @@ export function DriverDialog({
                 </Select>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                    <Label htmlFor="Bank_Account_No">เลขที่บัญชี</Label>
+                    <Label className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Account Serial</Label>
                     <Input
-                        id="Bank_Account_No"
                         value={formData.Bank_Account_No}
                         onChange={(e) => setFormData({ ...formData, Bank_Account_No: e.target.value })}
                         placeholder="000-0-00000-0"
-                        className="bg-white border-emerald-100 text-gray-900"
+                        className="h-12 bg-black/20 border-white/10 text-white placeholder:text-slate-800"
                     />
                 </div>
                 <div className="space-y-2">
-                    <Label htmlFor="Bank_Account_Name">ชื่อบัญชี</Label>
+                    <Label className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Legal Account Name</Label>
                     <Input
-                        id="Bank_Account_Name"
                         value={formData.Bank_Account_Name}
                         onChange={(e) => setFormData({ ...formData, Bank_Account_Name: e.target.value })}
-                        placeholder="ชื่อ-นามสกุล"
-                        className="bg-white border-emerald-100 text-gray-900"
+                        placeholder="Verified Full Name"
+                        className="h-12 bg-black/20 border-white/10 text-white placeholder:text-slate-800"
                     />
                 </div>
             </div>
-        </div>
+          </div>
 
-          {mode === 'edit' && (
-             <div className="space-y-2">
-              <Label htmlFor="Active_Status">สถานะ</Label>
-              <Select value={formData.Active_Status} onValueChange={(val) => setFormData({ ...formData, Active_Status: val })}>
-                <SelectTrigger className="w-full h-10 border-gray-200 bg-gray-50 text-gray-900">
-                    <SelectValue placeholder="เลือกสถานะ" />
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectItem value="Active">Active</SelectItem>
-                    <SelectItem value="Inactive">Inactive</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-
-          <div className="flex justify-end gap-2 mt-6">
-            <Button type="button" variant="ghost" onClick={() => setShow(false)}>
-              ยกเลิก
+          <div className="flex justify-end gap-3 pt-4">
+            <Button 
+                type="button" 
+                variant="ghost" 
+                onClick={() => setShow(false)}
+                className="h-14 px-8 rounded-2xl text-slate-500 font-black uppercase tracking-widest text-[10px] hover:text-white"
+            >
+              Abort
             </Button>
-            <Button type="submit" disabled={loading} className="bg-gradient-to-r from-blue-500 to-indigo-600">
-              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {mode === 'create' ? 'เพิ่มคนขับ' : 'บันทึก'}
+            <Button 
+                type="submit" 
+                disabled={loading} 
+                className="h-14 px-12 rounded-2xl bg-primary hover:brightness-110 text-white font-black uppercase tracking-widest text-[10px] shadow-xl shadow-primary/20 gap-3"
+            >
+              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save size={18} />}
+              {mode === 'create' ? 'EXECUTE REGISTRATION' : 'SYNCHRONIZE DATA'}
             </Button>
           </div>
         </form>

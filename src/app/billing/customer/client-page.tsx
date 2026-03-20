@@ -7,6 +7,8 @@ import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { Card, CardContent } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
+import { PremiumButton } from "@/components/ui/premium-button"
+import { PremiumCard } from "@/components/ui/premium-card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
@@ -22,7 +24,12 @@ import {
   Percent,
   Loader2,
   History,
-  Eye
+  Eye,
+  Zap,
+  ShieldCheck,
+  TrendingUp,
+  Activity,
+  ArrowRight
 } from "lucide-react"
 import {
   Dialog,
@@ -98,7 +105,7 @@ export default function CustomerBillingClient({ initialJobs, companyProfile, cus
       let extra = 0
       if (job.extra_costs_json) {
           try {
-              let costs: unknown = job.extra_costs_json
+              let costs: any = job.extra_costs_json
               if (typeof costs === 'string') {
                   try { costs = JSON.parse(costs) } catch {}
               }
@@ -116,7 +123,6 @@ export default function CustomerBillingClient({ initialJobs, companyProfile, cus
   }
 
   // Calculate totals
-  // Status "Completed" or "Delivered" that are NOT yet billed
   const pendingItems = filteredData.filter(i => !i.Billing_Note_ID)
   const pendingTotal = pendingItems.reduce((sum, i) => sum + getJobTotal(i), 0)
   
@@ -153,26 +159,26 @@ export default function CustomerBillingClient({ initialJobs, companyProfile, cus
     setLoading(true)
     try {
         const today = new Date().toISOString().split('T')[0]
-        // Default Due Date = Today + 30 days
         const dueDateObj = new Date()
         dueDateObj.setDate(dueDateObj.getDate() + 30)
         const dueDate = dueDateObj.toISOString().split('T')[0]
 
         const result = await createBillingNote(
             selectedItems, 
-            selectedCustomer, // Assuming only one customer is selected/filtered
+            selectedCustomer,
             today,
             dueDate
         )
 
         if (result.success) {
             setSelectedItems([])
-            router.refresh() // Reload data to remove billed items
+            router.refresh()
+            toast.success("สร้างใบวางบิลระบุเรียบร้อย")
         } else {
             throw new Error(result.error || 'Failed to create billing note')
         }
-    } catch {
-        // Error creating billing note
+    } catch (err: any) {
+        toast.error("เกิดข้อผิดพลาด: " + err.message)
     } finally {
         setLoading(false)
     }
@@ -198,34 +204,23 @@ export default function CustomerBillingClient({ initialJobs, companyProfile, cus
 
   const [showPreview, setShowPreview] = useState(false)
 
-  // ... (previous state existing) ...
-
-  // handlePrint removed as per user request
-
-  // Preview Component (Reused for Print and Dialog)
+  // Invoice Preview Component (Refined Typography)
   const InvoicePreview = () => {
-    // If customer mode and nothing selected, show all filtered items
     const displayData = (isCustomerMode && selectedItems.length === 0) ? filteredData : selectedData
     const subtotal = displayData.reduce((sum, i) => sum + getJobTotal(i), 0)
     const withholding = Math.round(subtotal * WITHHOLDING_TAX_RATE)
     const netTotal = subtotal - withholding
 
-    // Find customer details (Case-insensitive match)
     const customerInfo = customers.find(c => 
         c.Customer_Name?.trim().toLowerCase() === selectedCustomer?.trim().toLowerCase()
     )
 
     return (
-    <div className="p-8 bg-white text-black max-w-[210mm] mx-auto min-h-[297mm] relative">
-        {/* Document Border (Optional, for visual) */}
-        <div className="absolute inset-0 border border-slate-300 pointer-events-none print:hidden"></div>
-
-        {/* Header Section */}
-        <div className="flex justify-between items-start mb-6">
-            {/* Left: Logo & Company Info */}
-            <div className="flex flex-col gap-4 max-w-[60%]">
+    <div className="p-12 bg-white text-black max-w-[210mm] mx-auto min-h-[297mm] ring-1 ring-slate-200 shadow-2xl printable-document">
+        <div className="flex justify-between items-start mb-10">
+            <div className="flex flex-col gap-6 max-w-[60%]">
                 {companyProfile?.logo_url && (
-                    <div className="relative h-24 w-48">
+                    <div className="relative h-20 w-48">
                         <Image 
                             src={companyProfile.logo_url} 
                             alt="Company Logo" 
@@ -235,97 +230,91 @@ export default function CustomerBillingClient({ initialJobs, companyProfile, cus
                         />
                     </div>
                 )}
-                <div className="text-sm">
+                <div className="space-y-1">
                     {companyProfile ? (
                         <>
-                            <h2 className="font-bold text-lg">{companyProfile.company_name}</h2>
+                            <h2 className="font-extrabold text-2xl tracking-tight">{companyProfile.company_name}</h2>
                             {companyProfile.company_name_en && (
-                                <p className="text-gray-500 font-medium">{companyProfile.company_name_en}</p>
+                                <p className="text-slate-500 font-bold text-sm uppercase tracking-wider">{companyProfile.company_name_en}</p>
                             )}
-                            <p className="mt-2 text-gray-400">{companyProfile.address}</p>
-                            <div className="flex gap-4 mt-1">
-                                <p><span className="font-semibold">Tax ID:</span> {companyProfile.tax_id}</p>
-                                {companyProfile.phone && <p><span className="font-semibold">Tel:</span> {companyProfile.phone}</p>}
+                            <p className="mt-4 text-slate-500 text-xs leading-relaxed max-w-sm">{companyProfile.address}</p>
+                            <div className="flex gap-6 mt-3 text-xs">
+                                <p><span className="font-bold">TAX ID:</span> {companyProfile.tax_id}</p>
+                                {companyProfile.phone && <p><span className="font-bold">TEL:</span> {companyProfile.phone}</p>}
                             </div>
                         </>
                     ) : (
-                        <p className="text-gray-500">Loading company info...</p>
+                        <p className="text-slate-400">Loading Profile Data...</p>
                     )}
                 </div>
             </div>
 
-            {/* Right: Document Title */}
             <div className="text-right">
-                <h1 className="text-4xl font-bold text-slate-900 tracking-wide">ใบวางบิล</h1>
-                <p className="text-gray-400 text-lg font-medium tracking-widest uppercase mt-1">Billing Note</p>
-                <div className="mt-4">
-                     <span className="px-3 py-1 bg-slate-100 rounded text-xs font-mono border border-slate-200">
-                        ORIGINAL (ต้นฉบับ)
-                     </span>
+                <h1 className="text-5xl font-black text-slate-900 tracking-tighter uppercase mb-1">Billing Note</h1>
+                <p className="text-primary font-bold text-lg tracking-[0.2em] mb-4">ใบวางบิล / รายงานสรุป</p>
+                <div className="inline-block px-4 py-1.5 bg-slate-900 text-white rounded font-black text-[10px] tracking-widest">
+                    ORIGINAL COPY (ต้นฉบับ)
                 </div>
             </div>
         </div>
 
-        <hr className="border-slate-300 mb-6" />
+        <div className="h-px bg-slate-200 mb-10" />
 
-        {/* Info Grid: Buyer & Details */}
-        <div className="grid grid-cols-2 gap-8 mb-8">
-            {/* Buyer Info */}
-            <div className="border border-slate-200 rounded p-4 bg-slate-50/50">
-                <h3 className="font-bold text-slate-800 border-b border-slate-200 pb-2 mb-2">ลูกค้า (Customer)</h3>
-                <p className="font-semibold text-lg">{selectedCustomer}</p>
+        <div className="grid grid-cols-2 gap-12 mb-12">
+            <div className="p-6 rounded-3xl bg-slate-50 border border-slate-100">
+                <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-4">Customer Entity</h3>
+                <p className="font-black text-xl text-slate-900 mb-3">{selectedCustomer}</p>
                 {customerInfo ? (
-                    <div className="text-sm text-gray-500 mt-2 space-y-1">
+                    <div className="text-xs text-slate-500 space-y-2 leading-relaxed">
                         <p>{customerInfo.Address || '-'}</p>
-                        <p><span className="font-semibold">Tax ID:</span> {customerInfo.Tax_ID || '-'}</p>
-                        {customerInfo.Phone && <p><span className="font-semibold">Tel:</span> {customerInfo.Phone}</p>}
-                        {/* Use Branch_ID if previously added to type, else omit */}
-                        {customerInfo.Branch_ID && <p><span className="font-semibold">Branch:</span> {customerInfo.Branch_ID}</p>} 
+                        <div className="grid grid-cols-1 gap-1">
+                            <p><span className="font-bold text-slate-400">Tax ID:</span> {customerInfo.Tax_ID || '-'}</p>
+                            {customerInfo.Phone && <p><span className="font-bold text-slate-400">Tel:</span> {customerInfo.Phone}</p>}
+                        </div>
                     </div>
                 ) : (
-                    <p className="text-sm text-red-400 mt-2 italic">* ไม่พบข้อมูลลูกค้าในระบบ Master</p>
+                    <p className="text-xs text-rose-500 font-bold mt-2 italic">* Identity Verification Pending</p>
                 )}
             </div>
 
-            {/* Document Details */}
-            <div className="border border-slate-200 rounded p-4">
-                 <div className="space-y-3 text-sm">
-                    <div className="flex justify-between border-b border-slate-100 pb-2">
-                        <span className="text-gray-400">เลขที่เอกสาร (No.):</span>
-                        <span className="font-mono font-bold">- (Draft)</span>
+            <div className="p-6 rounded-3xl border border-slate-100">
+                 <div className="space-y-4 text-xs font-bold">
+                    <div className="flex justify-between items-center py-2 border-b border-slate-50">
+                        <span className="text-slate-400 uppercase tracking-widest">Document Index:</span>
+                        <span className="font-black text-slate-900">- (DRAFT)</span>
                     </div>
-                    <div className="flex justify-between border-b border-slate-100 pb-2">
-                        <span className="text-gray-400">วันที่ (Date):</span>
-                        <span className="font-medium">{new Date().toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric'})}</span>
+                    <div className="flex justify-between items-center py-2 border-b border-slate-50">
+                        <span className="text-slate-400 uppercase tracking-widest">Issue Date:</span>
+                        <span className="text-slate-900">{new Date().toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric'})}</span>
                     </div>
-                    <div className="flex justify-between border-b border-slate-100 pb-2">
-                        <span className="text-gray-400">เครดิต (Credit Days):</span>
-                        <span className="font-medium">30 Days</span>
+                    <div className="flex justify-between items-center py-2 border-b border-slate-50">
+                        <span className="text-slate-400 uppercase tracking-widest">Credit Term:</span>
+                        <span className="text-primary">30 DAYS</span>
                     </div>
-                    <div className="flex justify-between">
-                        <span className="text-gray-400">ผู้ทำรายการ (Prepared By):</span>
-                        <span className="font-medium">Admin</span>
+                    <div className="flex justify-between items-center py-2">
+                        <span className="text-slate-400 uppercase tracking-widest">Vector Source:</span>
+                        <span className="text-slate-900 uppercase">LOGISPRO COMMAND</span>
                     </div>
                  </div>
             </div>
         </div>
 
-        {/* Table */}
-        <div className="mb-8">
-            <table className="w-full text-sm border-collapse">
+        <div className="mb-12">
+            <table className="w-full text-xs text-left border-collapse">
                 <thead>
-                    <tr className="bg-slate-100 text-gray-400 border-y-2 border-slate-300">
-                        <th className="py-3 px-4 text-center font-bold w-16">ลำดับ<br/><span className="text-xs font-normal">No.</span></th>
-                        <th className="py-3 px-4 text-center font-bold w-32">วันที่ขนส่ง<br/><span className="text-xs font-normal">Date</span></th>
-                        <th className="py-3 px-4 text-left font-bold">รายละเอียด (Job ID / Route)<br/><span className="text-xs font-normal">Description</span></th>
-                        <th className="py-3 px-4 text-right font-bold w-32">จำนวนเงิน<br/><span className="text-xs font-normal">Amount</span></th>
+                    <tr className="bg-slate-900 text-white">
+                        <th className="py-4 px-6 font-black uppercase tracking-widest text-[9px] w-16">No.</th>
+                        <th className="py-4 px-6 font-black uppercase tracking-widest text-[9px] w-32">Date</th>
+                        <th className="py-4 px-6 font-black uppercase tracking-widest text-[9px]">Mission Intelligence</th>
+                        <th className="py-4 px-6 font-black uppercase tracking-widest text-[9px] text-right w-40">Value (THB)</th>
                     </tr>
                 </thead>
+                <tbody className="divide-y divide-slate-100">
                 {displayData.map((job, index) => {
-                    let extraCosts: { extra_cost_name?: string; charge_cust?: string | number }[] = []
+                    let extraCosts: any[] = []
                     try {
                         if (job.extra_costs_json) {
-                            let parsed: unknown = job.extra_costs_json
+                            let parsed: any = job.extra_costs_json
                             if (typeof parsed === 'string') {
                                 try { parsed = JSON.parse(parsed) } catch {}
                             }
@@ -341,80 +330,89 @@ export default function CustomerBillingClient({ initialJobs, companyProfile, cus
                     const chargeableExtras = extraCosts.filter((c: any) => Number(c.charge_cust) > 0)
 
                     return (
-                        <tbody key={job.Job_ID} className="text-sm text-gray-400 border-b border-slate-200">
-                            {/* Main Job Row */}
-                            <tr>
-                                <td className="py-3 px-4 text-center text-gray-400 align-top">{index + 1}</td>
-                                <td className="py-3 px-4 text-center text-gray-500 align-top">
+                        <React.Fragment key={job.Job_ID}>
+                            <tr className="hover:bg-slate-50 transition-colors">
+                                <td className="py-5 px-6 font-black text-slate-400 align-top">{index + 1}</td>
+                                <td className="py-5 px-6 font-bold text-slate-600 align-top">
                                     {job.Plan_Date ? new Date(job.Plan_Date).toLocaleDateString('th-TH') : '-'}
                                 </td>
-                                <td className="py-3 px-4 align-top">
-                                    <div className="font-bold text-slate-800">ค่าขนส่ง (Job: {job.Job_ID})</div>
-                                    <div className="text-gray-400 text-xs mt-1">{job.Route_Name || '-'}</div>
+                                <td className="py-5 px-6 align-top">
+                                    <div className="font-black text-slate-900 uppercase tracking-tight">{job.Job_ID}</div>
+                                    <div className="text-[10px] text-slate-400 font-bold mt-1 uppercase tracking-widest">{job.Route_Name || '-'}</div>
+                                    <p className="text-[9px] text-slate-400 font-medium italic mt-0.5">Primary Logistics Service</p>
                                 </td>
-                                <td className="py-3 px-4 text-right font-medium text-slate-800 align-top">
+                                <td className="py-5 px-6 text-right font-black text-slate-900 align-top text-sm">
                                     {job.Price_Cust_Total?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                 </td>
                             </tr>
-
-                            {/* Extra Costs Rows */}
                             {chargeableExtras.map((extra, i) => (
-                                <tr key={`${job.Job_ID}-extra-${i}`} className="text-gray-500">
-                                    <td className="py-1 px-4"></td>
-                                    <td className="py-1 px-4 text-center"></td>
-                                    <td className="py-1 px-4">
-                                        <div className="text-sm border-l-2 border-slate-300 pl-2">
-                                            {(extra as any).type}
+                                <tr key={`${job.Job_ID}-extra-${i}`} className="bg-slate-50/20">
+                                    <td className="py-2 px-6"></td>
+                                    <td className="py-2 px-6"></td>
+                                    <td className="py-2 px-6">
+                                        <div className="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-4">
+                                            <div className="w-1.5 h-px bg-slate-300" />
+                                            {extra.type || "Ancillary Charge"}
                                         </div>
                                     </td>
-                                    <td className="py-1 px-4 text-right">
+                                    <td className="py-2 px-6 text-right font-bold text-slate-600">
                                         {Number(extra.charge_cust).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                     </td>
                                 </tr>
                             ))}
-                        </tbody>
+                        </React.Fragment>
                     )
                 })}
+                </tbody>
                 <tfoot>
                     <tr>
-                        <td colSpan={2} rowSpan={3} className="pt-4 pr-8 align-top">
-                            <div className="border border-slate-300 bg-slate-50 p-3 rounded text-xs text-gray-400">
-                                <p className="font-bold mb-1">หมายเหตุ (Remarks):</p>
-                                <p>- กรุณาตรวจสอบความถูกต้องของเอกสาร</p>
-                                <p>- ชำระเงินโดยการโอนเข้าบัญชีบริษัท</p>
+                        <td colSpan={2} rowSpan={3} className="pt-10 pr-12 align-top">
+                            <div className="p-6 rounded-3xl bg-slate-50 border border-slate-100 space-y-3">
+                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em]">Operational Remarks</p>
+                                <ul className="text-[10px] text-slate-500 font-bold space-y-1.5 leading-relaxed">
+                                    <li>- Verify document authenticity before processing.</li>
+                                    <li>- Remittance via central corporate vector only.</li>
+                                    <li>- Invoices follow a 30-day tactical settlement cycle.</li>
+                                </ul>
                             </div>
                         </td>
-                        <td className="py-2 px-4 text-right font-bold text-gray-500">รวมเป็นเงิน</td>
-                        <td className="py-2 px-4 text-right font-bold text-slate-800">{subtotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                        <td className="pt-10 pb-4 px-6 text-right font-bold text-slate-400 uppercase tracking-widest text-[10px]">Gross Operations Total</td>
+                        <td className="pt-10 pb-4 px-6 text-right font-black text-slate-900 text-lg">{subtotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
                     </tr>
                     <tr>
-                        <td className="py-2 px-4 text-right text-gray-500 text-sm">หัก ณ ที่จ่าย 1%</td>
-                        <td className="py-2 px-4 text-right text-red-500 font-medium">-{withholding.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                        <td className="py-3 px-6 text-right font-bold text-slate-400 uppercase tracking-widest text-[10px]">Withholding Index (1%)</td>
+                        <td className="py-3 px-6 text-right font-black text-rose-500 text-lg">-{withholding.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
                     </tr>
-                    <tr className="bg-slate-50 border-t-2 border-slate-300 border-b-2">
-                        <td className="py-3 px-4 text-right font-bold text-slate-900 text-lg">ยอดสุทธิ</td>
-                        <td className="py-3 px-4 text-right font-bold text-emerald-700 text-lg decoration-double underline">
+                    <tr className="bg-slate-950 text-white rounded-b-3xl">
+                        <td className="py-6 px-6 text-right font-black uppercase tracking-[0.4em] text-[10px]">Net Settlement Amount</td>
+                        <td className="py-6 px-6 text-right font-black text-primary text-3xl">
                             {netTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                            <span className="text-xs font-bold ml-2 opacity-60">THB</span>
                         </td>
                     </tr>
                 </tfoot>
             </table>
         </div>
 
-        {/* Footer Signatures */}
-        <div className="flex justify-between mt-16 text-sm text-gray-500 pb-8">
-            <div className="text-center w-1/3">
-                <div className="border-b border-slate-400 mb-2 h-8 w-3/4 mx-auto"></div>
-                <p className="font-bold">ผู้รับวางบิล</p>
-                <p className="text-xs">(Received By)</p>
-                <div className="mt-4 text-xs">วันที่ (Date): _____/_____/_______</div>
+        <div className="flex justify-between mt-24 text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">
+            <div className="text-center w-[250px] space-y-8">
+                <div className="h-px bg-slate-200" />
+                <div>
+                   <p className="text-slate-900 font-black text-xs mb-1">Entity Acceptance</p>
+                   <p>(Received By)</p>
+                </div>
             </div>
-            <div className="text-center w-1/3">
-                <div className="border-b border-slate-400 mb-2 h-8 w-3/4 mx-auto"></div>
-                <p className="font-bold">ผู้วางบิล / ผู้มีอำนาจลงนาม</p>
-                <p className="text-xs">(Authorized Signature)</p>
-                <div className="mt-4 text-xs">วันที่ (Date): _____/_____/_______</div>
+            <div className="text-center w-[250px] space-y-8">
+                <div className="h-px bg-slate-900" />
+                <div>
+                   <p className="text-slate-900 font-black text-xs mb-1">Authorized Commander</p>
+                   <p>(Authorized Signature)</p>
+                </div>
             </div>
+        </div>
+        
+        <div className="mt-20 text-center">
+            <p className="text-[8px] font-black text-slate-300 uppercase tracking-[0.8em]">LogisPro Intelligence Matrix • Financial Vector v4.0</p>
         </div>
     </div>
   )}
@@ -423,317 +421,352 @@ export default function CustomerBillingClient({ initialJobs, companyProfile, cus
     <>
     <div className="print:hidden">
     <DashboardLayout>
-      {/* Bespoke Elite Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-8 mb-12 bg-slate-950 p-10 rounded-br-[5rem] rounded-tl-[2rem] border border-slate-800 shadow-2xl relative overflow-hidden group">
-        <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 to-transparent pointer-events-none" />
+      {/* Tactical Financial Header */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-10 mb-16 bg-[#0a0518]/60 backdrop-blur-3xl p-12 rounded-[4rem] border border-white/5 shadow-2xl relative group ring-1 ring-white/5 hover:ring-primary/20 transition-all duration-700">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 blur-[100px] pointer-events-none" />
         
-        <div className="relative z-10">
-          <h1 className="text-5xl font-black text-white mb-2 tracking-tighter flex items-center gap-4">
-            <div className="p-3 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-3xl shadow-2xl shadow-emerald-500/20 text-white transform group-hover:scale-110 transition-transform duration-500">
-              <Receipt size={32} />
+        <div className="relative z-10 space-y-4">
+            <div className="flex items-center gap-3">
+                <div className="p-2 bg-primary/20 rounded-xl shadow-lg">
+                    <Receipt className="text-primary" size={20} />
+                </div>
+                <h2 className="text-[10px] font-black text-primary uppercase tracking-[0.4em]">AR COMMAND CENTRE</h2>
             </div>
-            {isCustomerMode ? "สรุปค่าขนส่ง" : "สรุปวางบิลลูกค้า"}
-          </h1>
-          <p className="text-emerald-400 font-black ml-[4.5rem] uppercase tracking-[0.3em] text-[10px]">
-            {isCustomerMode ? "LOGISTICS EXPENDITURE & BILLING SUMMARY" : "ACCOUNTS RECEIVABLE & REVENUE COMMAND"}
-          </p>
+            <h1 className="text-6xl font-black text-white tracking-tighter flex items-center gap-5 uppercase premium-text-gradient">
+                {isCustomerMode ? "Supply Hub" : "Invoice Ledger"}
+            </h1>
+            <p className="text-slate-500 font-bold text-sm tracking-wide opacity-80 uppercase tracking-widest leading-relaxed">
+              {isCustomerMode ? "Real-time logistics expenditure & billing summary" : "Accounts receivable, revenue analysis & settlement engine"}
+            </p>
         </div>
 
         <div className="flex flex-wrap gap-4 relative z-10">
-            <Button 
+            <PremiumButton 
                 variant="outline" 
-                className="h-14 px-8 rounded-2xl border-slate-800 bg-slate-900/50 hover:bg-slate-900 text-slate-300 hover:text-white gap-2 transition-all duration-300"
+                className="h-16 px-10 rounded-2xl border-white/5 bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white gap-3 transition-all duration-300 ring-1 ring-white/5"
                 onClick={() => router.push('/billing/customer/history')}
             >
-                <History className="w-5 h-5" /> {isCustomerMode ? "ประวัติค่าขนส่ง" : "ประวัติการวางบิล"}
-            </Button>
+                <History className="w-6 h-6" /> 
+                <span className="font-black uppercase tracking-widest text-[10px]">{isCustomerMode ? "PAST SHIPMENTS" : "LEDGER HISTORY"}</span>
+            </PremiumButton>
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="bg-white/80 backdrop-blur-md border border-gray-200 rounded-2xl p-6 shadow-2xl mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      {/* Intelligence Filters */}
+      <div className="glass-panel border-white/5 rounded-[3rem] p-10 mb-12 relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent pointer-events-none" />
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 relative z-10">
             {!isCustomerMode && (
-            <div className="space-y-2">
-              <Label className="text-gray-500 text-sm">ลูกค้า</Label>
+            <div className="space-y-3">
+              <Label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 ml-2">Target Entity</Label>
               <Select
                 value={selectedCustomer}
                 onValueChange={(value) => setSelectedCustomer(value === "all" ? "" : value)}
               >
-                <SelectTrigger className="w-full h-10 bg-white border-gray-200 text-gray-900">
-                  <SelectValue placeholder="เลือกลูกค้า..." />
+                <SelectTrigger className="w-full h-14 bg-white/5 border-white/5 text-white font-black rounded-2xl px-6 uppercase tracking-widest text-xs focus:ring-primary/20 transition-all">
+                  <SelectValue placeholder="LOCATE CUSTOMER..." />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">ทั้งหมด (All Customers)</SelectItem>
+                <SelectContent className="bg-[#0c061d] border-white/10 text-white font-black">
+                  <SelectItem value="all" className="hover:bg-primary/20 focus:bg-primary/20 uppercase tracking-widest text-[10px]">ALL ACCOUNTS</SelectItem>
                   {uniqueCustomerNames.map(c => (
-                    <SelectItem key={c} value={c}>{c}</SelectItem>
+                    <SelectItem key={c} value={c} className="hover:bg-primary/20 focus:bg-primary/20 uppercase tracking-widest text-[10px]">{c}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             )}
-            <div className="space-y-2">
-              <Label className="text-gray-500 text-sm flex items-center gap-1">
-                <Calendar className="w-3 h-3" /> วันที่เริ่มต้น
-              </Label>
-              <Input
-                type="date"
-                value={dateFrom}
-                onChange={(e) => setDateFrom(e.target.value)}
-                className="bg-white border-gray-200 text-gray-900"
-              />
+            <div className="space-y-3">
+              <Label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 ml-2">Mission Start</Label>
+              <div className="relative group">
+                <Calendar className="absolute left-5 top-1/2 -translate-y-1/2 text-primary opacity-50 group-hover:opacity-100 transition-opacity" size={18} />
+                <Input
+                    type="date"
+                    value={dateFrom}
+                    onChange={(e) => setDateFrom(e.target.value)}
+                    className="w-full h-14 bg-white/5 border-white/5 text-white font-black rounded-2xl pl-14 pr-6 uppercase tracking-widest text-xs focus:bg-white/10 transition-all"
+                />
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label className="text-gray-500 text-sm">วันที่สิ้นสุด</Label>
-              <Input
-                type="date"
-                value={dateTo}
-                onChange={(e) => setDateTo(e.target.value)}
-                className="bg-white border-gray-200 text-gray-900"
-              />
+            <div className="space-y-3">
+              <Label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 ml-2">Mission Termination</Label>
+              <div className="relative group">
+                <Calendar className="absolute left-5 top-1/2 -translate-y-1/2 text-primary opacity-50 group-hover:opacity-100 transition-opacity" size={18} />
+                <Input
+                    type="date"
+                    value={dateTo}
+                    onChange={(e) => setDateTo(e.target.value)}
+                    className="w-full h-14 bg-white/5 border-white/5 text-white font-black rounded-2xl pl-14 pr-6 uppercase tracking-widest text-xs focus:bg-white/10 transition-all"
+                />
+              </div>
             </div>
             {!isCustomerMode && (
             <div className="flex items-end">
-              <Button variant="outline" className="border-gray-200 w-full text-gray-700">
-                <Search className="w-4 h-4 mr-2" /> ค้นหา
-              </Button>
+              <PremiumButton variant="outline" className="border-white/5 w-full h-14 rounded-2xl gap-3">
+                <Search className="w-5 h-5" /> 
+                <span className="font-black uppercase tracking-widest text-[10px]">EXECUTE SCAN</span>
+              </PremiumButton>
             </div>
             )}
           </div>
       </div>
 
-      {/* Summary Stats */}
-      {/* ... (Existing Summary Stats Content) ... */}
-      {/* Summary Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-white/80 backdrop-blur-sm border border-amber-500/20 rounded-2xl p-4 flex items-center gap-4 shadow-xl">
-            <div className="w-12 h-12 rounded-xl bg-amber-500/20 flex items-center justify-center">
-              <Clock className="w-6 h-6 text-amber-400" />
+      {/* Financial Intelligence Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
+        <div className="p-8 rounded-[3rem] border border-primary/20 backdrop-blur-3xl shadow-2xl relative overflow-hidden group transition-all hover:scale-[1.03] bg-[#0a0518]/40">
+            <div className="flex items-center justify-between mb-8">
+                <div className="p-4 rounded-2xl shadow-xl transition-all duration-700 group-hover:scale-110 group-hover:rotate-6 bg-primary/20 text-primary">
+                    <Clock size={24} strokeWidth={2.5} />
+                </div>
+                <div className="px-3 py-1 bg-white/5 rounded-full border border-white/5 text-[9px] text-primary font-black uppercase tracking-widest italic animate-pulse">PENDING MISSION</div>
             </div>
-            <div>
-              <p className="text-2xl font-bold text-amber-400">{pendingItems.length}</p>
-              <p className="text-xs text-gray-500">{isCustomerMode ? "งานที่ยังไม่วางบิล" : "รอวางบิล"}</p>
+            <p className="text-slate-500 font-black text-[10px] uppercase tracking-[0.3em] mb-2">{isCustomerMode ? "Unbilled Missions" : "Unsettled Node"}</p>
+            <p className="text-4xl font-black text-white tracking-tighter leading-none">{pendingItems.length}</p>
+        </div>
+
+        <div className="p-8 rounded-[3rem] border border-emerald-500/20 backdrop-blur-3xl shadow-2xl relative overflow-hidden group transition-all hover:scale-[1.03] bg-[#0a0518]/40">
+            <div className="flex items-center justify-between mb-8">
+                <div className="p-4 rounded-2xl shadow-xl transition-all duration-700 group-hover:scale-110 group-hover:rotate-6 bg-emerald-500/20 text-emerald-500">
+                    <Banknote size={24} strokeWidth={2.5} />
+                </div>
+                <div className="px-3 py-1 bg-white/5 rounded-full border border-white/5 text-[9px] text-emerald-500 font-black uppercase tracking-widest italic">BASE VALUE</div>
+            </div>
+            <p className="text-slate-500 font-black text-[10px] uppercase tracking-[0.3em] mb-2">{isCustomerMode ? "Future Liability" : "Revenue Backlog"}</p>
+            <div className="flex items-baseline gap-2">
+                <span className="text-xs font-black text-slate-500 mb-1">THB</span>
+                <p className="text-4xl font-black text-white tracking-tighter leading-none">{pendingTotal.toLocaleString()}</p>
             </div>
         </div>
-        <div className="bg-white/80 backdrop-blur-sm border border-emerald-500/15 rounded-2xl p-4 flex items-center gap-4 shadow-xl">
-            <div className="w-12 h-12 rounded-xl bg-emerald-500/15 flex items-center justify-center">
-              <Banknote className="w-6 h-6 text-emerald-500" />
+
+        <div className="p-8 rounded-[3rem] border border-primary/30 backdrop-blur-3xl shadow-2xl relative overflow-hidden group transition-all hover:scale-[1.03] bg-[#0a0518]/40">
+            <div className="flex items-center justify-between mb-8">
+                <div className="p-4 rounded-2xl shadow-xl transition-all duration-700 group-hover:scale-110 group-hover:rotate-6 bg-primary text-white">
+                    <CheckCircle2 size={24} strokeWidth={2.5} />
+                </div>
+                <div className="px-3 py-1 bg-white/10 rounded-full border border-white/10 text-[9px] text-white font-black uppercase tracking-widest italic">ACTIVE VECTOR</div>
             </div>
-            <div>
-              <p className="text-2xl font-bold text-emerald-500">฿{pendingTotal.toLocaleString()}</p>
-              <p className="text-xs text-gray-500">{isCustomerMode ? "ยอดรอเรียกเก็บ" : "ยอดรอวางบิล"}</p>
-            </div>
-        </div>
-        <div className="bg-white/80 backdrop-blur-sm border border-emerald-500/20 rounded-2xl p-4 flex items-center gap-4 shadow-xl">
-            <div className="w-12 h-12 rounded-xl bg-emerald-500/20 flex items-center justify-center">
-              <CheckCircle2 className="w-6 h-6 text-emerald-400" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-emerald-400">฿{selectedSubtotal.toLocaleString()}</p>
-              <p className="text-xs text-gray-500">{isCustomerMode ? "ยอดที่ตรวจสอบ" : `ยอดที่เลือก (${selectedItems.length} รายการ)`}</p>
+            <p className="text-slate-500 font-black text-[10px] uppercase tracking-[0.3em] mb-2">{isCustomerMode ? "Audited Flow" : `Selected Context (${selectedItems.length})`}</p>
+            <div className="flex items-baseline gap-2">
+                <span className="text-xs font-black text-slate-500 mb-1">THB</span>
+                <p className="text-4xl font-black text-white tracking-tighter leading-none">{selectedSubtotal.toLocaleString()}</p>
             </div>
         </div>
-        <div className="bg-white/80 backdrop-blur-sm border border-purple-500/20 rounded-2xl p-4 flex items-center gap-4 shadow-xl">
-            <div className="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center">
-              <Percent className="w-6 h-6 text-purple-400" />
+
+        <div className="p-8 rounded-[3rem] border border-accent/20 backdrop-blur-3xl shadow-2xl relative overflow-hidden group transition-all hover:scale-[1.03] bg-[#0a0518]/40">
+            <div className="flex items-center justify-between mb-8">
+                <div className="p-4 rounded-2xl shadow-xl transition-all duration-700 group-hover:scale-110 group-hover:rotate-6 bg-accent/20 text-accent">
+                    <Percent size={24} strokeWidth={2.5} />
+                </div>
+                <div className="px-3 py-1 bg-white/5 rounded-full border border-white/5 text-[9px] text-accent font-black uppercase tracking-widest italic">WHT RATIO</div>
             </div>
-            <div>
-              <p className="text-2xl font-bold text-purple-400">฿{selectedWithholding.toLocaleString()}</p>
-              <p className="text-xs text-gray-500">หัก ณ ที่จ่าย 1%</p>
+            <p className="text-slate-500 font-black text-[10px] uppercase tracking-[0.3em] mb-2">Government Levy 1%</p>
+            <div className="flex items-baseline gap-2">
+                <span className="text-xs font-black text-slate-500 mb-1">THB</span>
+                <p className="text-4xl font-black text-white tracking-tighter leading-none">{selectedWithholding.toLocaleString()}</p>
             </div>
         </div>
       </div>
 
-      {/* Selected Summary Box - Hide for customers */}
+      {/* Selected Action Command Bar */}
       {!isCustomerMode && selectedItems.length > 0 && (
-        <Card className="bg-gradient-to-r from-emerald-500/10 to-blue-500/10 border-emerald-500/30 mb-6">
-          <CardContent className="p-4">
-            <div className="flex flex-wrap items-center justify-between gap-4">
-              <div className="flex items-center gap-6">
-                <div>
-                  <p className="text-gray-500 text-xs">ยอดรวม</p>
-                  <p className="text-gray-900 font-bold text-lg">฿{selectedSubtotal.toLocaleString()}</p>
+        <div className="mb-12 relative group animate-in fade-in slide-in-from-bottom-5">
+            <div className="absolute inset-0 bg-primary/20 blur-[80px] pointer-events-none opacity-50" />
+            <div className="relative bg-[#0a0518]/80 backdrop-blur-3xl border-2 border-primary/30 p-10 rounded-[4rem] shadow-[0_0_100px_rgba(255,30,133,0.2)] flex flex-wrap items-center justify-between gap-10">
+                <div className="flex items-center gap-12">
+                    <div className="space-y-2">
+                        <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.4em]">Aggregated Subtotal</p>
+                        <p className="text-3xl font-black text-white tracking-tighter uppercase">฿{selectedSubtotal.toLocaleString()}</p>
+                    </div>
+                    <div className="h-12 w-px bg-white/10" />
+                    <div className="space-y-2 text-rose-500">
+                        <p className="text-[9px] font-black uppercase tracking-[0.4em] opacity-60 text-slate-500">Tax Delta (1%)</p>
+                        <p className="text-3xl font-black tracking-tighter uppercase">฿{selectedWithholding.toLocaleString()}</p>
+                    </div>
+                    <div className="h-12 w-px bg-white/10" />
+                    <div className="space-y-2">
+                        <p className="text-[9px] font-black text-primary uppercase tracking-[0.4em] animate-pulse">Net Liquidity Value</p>
+                        <p className="text-5xl font-black text-primary tracking-tighter uppercase premium-text-gradient">฿{selectedNetTotal.toLocaleString()}</p>
+                    </div>
                 </div>
-                <div className="text-gray-400">-</div>
-                <div>
-                  <p className="text-gray-500 text-xs">หัก ณ ที่จ่าย 1%</p>
-                  <p className="text-red-400 font-bold text-lg">฿{selectedWithholding.toLocaleString()}</p>
+                
+                <div className="flex items-center gap-6">
+                    <button onClick={clearSelection} className="px-8 py-3 text-[10px] font-black text-slate-500 uppercase tracking-widest hover:text-white transition-colors">
+                        ABORT SELECTION
+                    </button>
+                    <PremiumButton onClick={handleCreateBilling} disabled={loading} className="h-20 px-12 rounded-[2rem] shadow-[0_20px_40px_rgba(255,30,133,0.3)] text-xl font-black tracking-widest">
+                        {loading ? <Loader2 className="w-6 h-6 mr-4 animate-spin" /> : <Zap size={24} className="mr-4" strokeWidth={3} />}
+                        GENERATE BILLING
+                    </PremiumButton>
                 </div>
-                <div className="text-gray-400">=</div>
-                <div>
-                  <p className="text-gray-500 text-xs">ยอดสุทธิ</p>
-                  <p className="text-emerald-400 font-bold text-xl">฿{selectedNetTotal.toLocaleString()}</p>
-                </div>
-              </div>
-              <Button onClick={clearSelection} variant="ghost" className="text-gray-500 hover:text-white">
-                ล้างการเลือก
-              </Button>
             </div>
-          </CardContent>
-        </Card>
+        </div>
       )}
 
-      {/* Table */}
-      <div className="bg-white/80 backdrop-blur-sm border border-gray-200 rounded-2xl shadow-2xl">
-        <div className="flex flex-row items-center justify-between p-5 pb-4">
-          <h3 className="text-gray-900 font-bold text-lg">รายการงาน</h3>
-          <div className="flex gap-2">
+      {/* Data Registry */}
+      <div className="glass-panel rounded-[4rem] border-white/5 shadow-2xl overflow-hidden bg-[#0a0518]/20 relative">
+        <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent pointer-events-none" />
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between p-12 gap-8 relative z-10">
+          <div className="space-y-2">
+            <h3 className="text-2xl font-black text-white tracking-tighter uppercase premium-text-gradient">Operational Registry</h3>
+            <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.4em]">Audit-Ready Transaction Nodes</p>
+          </div>
+          <div className="flex items-center flex-wrap gap-4">
             {!isCustomerMode && (
-              <Button variant="outline" size="sm" onClick={selectAll} className="border-gray-200 text-gray-700">
-                เลือกทั้งหมด
-              </Button>
+              <PremiumButton variant="outline" size="sm" onClick={selectAll} className="h-12 px-8 rounded-xl border-white/5 bg-white/5 text-[10px] font-black tracking-widest uppercase">
+                SELECT COMPLETE VECTOR
+              </PremiumButton>
             )}
             
             <Dialog open={showPreview} onOpenChange={setShowPreview}>
                 <DialogTrigger asChild>
-                    <Button 
-                        size="sm" 
-                        variant="outline" 
-                        className="border-gray-200 text-gray-700"
+                    <button 
                         disabled={!isCustomerMode && selectedItems.length === 0}
+                        className="h-12 px-8 rounded-xl bg-white/5 border border-white/5 text-slate-400 hover:text-white hover:bg-white/10 transition-all text-[10px] font-black tracking-widest uppercase flex items-center gap-3 disabled:opacity-30 disabled:cursor-not-allowed"
                     >
-                        <Eye className="w-4 h-4 mr-2" /> {isCustomerMode ? "ดูตัวอย่างสรุป" : "ดูตัวอย่าง"}
-                    </Button>
+                        <Eye size={16} /> {isCustomerMode ? "SCAN SUMMARY" : "PREVIEW AUDIT"}
+                    </button>
                 </DialogTrigger>
-                <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-white p-0">
-                    <DialogHeader className="p-4 border-b">
-                        <DialogTitle className="text-slate-900">ตัวอย่างใบวางบิล</DialogTitle>
-                    </DialogHeader>
-                    <div className="p-6">
-                        <InvoicePreview />
+                <DialogContent className="max-w-[210mm] max-h-[90vh] overflow-y-auto bg-white p-0 rounded-[2rem] ring-0 border-0 shadow-none">
+                    <div className="p-4 bg-slate-100 flex items-center justify-between border-b sticky top-0 z-50 print:hidden">
+                        <div className="flex items-center gap-3 text-slate-900">
+                             <ShieldCheck className="text-primary" />
+                             <span className="text-[10px] font-black uppercase tracking-widest">Digital Audit Engine • Pre-Output Verification</span>
+                        </div>
+                        <button onClick={() => setShowPreview(false)} className="p-2 hover:bg-slate-200 rounded-lg text-slate-900 transition-colors">
+                            <Activity size={18} />
+                        </button>
                     </div>
+                    <InvoicePreview />
                 </DialogContent>
             </Dialog>
 
             {!isCustomerMode && (
-              <Button 
-                  size="sm" 
-                  className="bg-emerald-600 hover:bg-emerald-700" 
-                  disabled={selectedItems.length === 0 || loading}
-                  onClick={handleCreateBilling}
-              >
-                {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FileText className="w-4 h-4 mr-2" />}
-                สร้างใบวางบิล
-              </Button>
-            )}
-
-            {/* Removed handlePrint button as per user request */}
-            
-            {!isCustomerMode && (
-              <Button 
-                  size="sm" 
-                  variant="outline" 
-                  className="border-gray-200 text-gray-700" 
+              <button 
                   disabled={selectedItems.length === 0}
                   onClick={handleExportCSV}
+                  className="h-12 px-8 rounded-xl bg-white/5 border border-white/5 text-slate-400 hover:text-white hover:bg-white/10 transition-all text-[10px] font-black tracking-widest uppercase flex items-center gap-3 disabled:opacity-30"
               >
-                <Download className="w-4 h-4 mr-2" /> Export
-              </Button>
+                <Download size={16} /> EXPORT CSV
+              </button>
             )}
           </div>
         </div>
-        <div className="px-5 pb-5">
-          {/* ... (Existing Table Content) ... */}
-           <div className="overflow-x-auto">
-            <table className="w-full">
+
+        <div className="relative w-full overflow-auto custom-scrollbar">
+            <table className="w-full text-sm text-left border-collapse">
                <thead>
-                <tr className="border-b border-gray-200">
+                <tr className="bg-white/[0.02] border-b border-white/5">
                   {!isCustomerMode && (
-                    <th className="text-left py-3 px-4 text-gray-500 font-medium text-sm">
+                    <th className="px-12 py-10 w-20">
                       <input 
                         type="checkbox" 
-                        className="rounded bg-gray-100 border-gray-200"
+                        className="w-6 h-6 rounded-lg bg-white/5 border-white/10 checked:bg-primary transition-all cursor-pointer accent-primary"
                         checked={selectedItems.length === pendingItems.length && pendingItems.length > 0}
                         onChange={selectAll}
                       />
                     </th>
                   )}
-                  <th className="text-left py-3 px-4 text-gray-500 font-medium text-sm">Job ID</th>
-                  <th className="text-left py-3 px-4 text-gray-500 font-medium text-sm">ลูกค้า</th>
-                  <th className="text-left py-3 px-4 text-gray-500 font-medium text-sm">วันที่</th>
-                  <th className="text-left py-3 px-4 text-gray-500 font-medium text-sm">เส้นทาง</th>
-                  <th className="text-right py-3 px-4 text-gray-500 font-medium text-sm">ค่าขนส่ง</th>
-                  <th className="text-right py-3 px-4 text-gray-500 font-medium text-sm">รวม</th>
-                  <th className="text-center py-3 px-4 text-gray-500 font-medium text-sm">สถานะ</th>
-                  {isCustomerMode && (
-                    <th className="text-right py-3 px-4 text-gray-500 font-medium text-sm"></th>
-                  )}
+                  <th className="px-8 py-10 text-[9px] font-black uppercase tracking-[0.4em] text-slate-500">Mission ID</th>
+                  <th className="px-8 py-10 text-[9px] font-black uppercase tracking-[0.4em] text-slate-500">Target Account</th>
+                  <th className="px-8 py-10 text-[9px] font-black uppercase tracking-[0.4em] text-slate-500 text-center">Timestamp</th>
+                  <th className="px-8 py-10 text-[9px] font-black uppercase tracking-[0.4em] text-slate-500">Vector Path</th>
+                  <th className="px-8 py-10 text-[9px] font-black uppercase tracking-[0.4em] text-slate-500 text-right">Base Vector</th>
+                  <th className="px-8 py-10 text-[9px] font-black uppercase tracking-[0.4em] text-slate-500 text-right">Net Value</th>
+                  <th className="px-12 py-10 text-[9px] font-black uppercase tracking-[0.4em] text-slate-500 text-center">Flow Status</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-white/5">
                  {filteredData.map((item) => (
-                  <tr key={item.Job_ID} className="border-b border-gray-200 hover:bg-gray-50 transition-colors group">
+                  <tr key={item.Job_ID} className="group/row hover:bg-primary/[0.03] transition-all duration-500">
                     {!isCustomerMode && (
-                      <td className="py-3 px-4">
+                      <td className="px-12 py-8">
                         <input
                           type="checkbox"
-                          className="rounded bg-gray-100 border-gray-200"
+                          className="w-6 h-6 rounded-lg bg-white/5 border-white/10 checked:bg-primary transition-all cursor-pointer accent-primary"
                           checked={selectedItems.includes(item.Job_ID)}
                           onChange={() => toggleItem(item.Job_ID)}
                         />
                       </td>
                     )}
-                    <td className="py-3 px-4 text-gray-800 font-medium">{item.Job_ID}</td>
-                    <td className="py-3 px-4 text-gray-700">
-                       <div className="flex items-center gap-2">
-                        <Building2 className="w-4 h-4 text-gray-400 group-hover:text-emerald-500 transition-colors" />
-                        {item.Customer_Name || '-'}
+                    <td className="px-8 py-8">
+                        <span className="font-black text-white text-lg tracking-tighter font-display uppercase group-hover/row:text-primary transition-colors">{item.Job_ID}</span>
+                    </td>
+                    <td className="px-8 py-8">
+                       <div className="flex items-center gap-4">
+                        <div className="p-2 bg-white/5 rounded-xl group-hover/row:bg-primary/20 transition-colors">
+                            <Building2 className="w-5 h-5 text-slate-500 group-hover/row:text-primary transition-colors" />
+                        </div>
+                        <span className="font-black text-slate-300 text-sm uppercase tracking-tight">{item.Customer_Name || '-'}</span>
                        </div>
                     </td>
-                    <td className="py-3 px-4 text-gray-500 whitespace-nowrap">
+                    <td className="px-8 py-8 text-center text-slate-500 font-bold uppercase tracking-widest text-[10px]">
                         {item.Plan_Date ? new Date(item.Plan_Date).toLocaleDateString('th-TH') : '-'}
                     </td>
-                    <td className="py-3 px-4 text-gray-700 truncate max-w-[200px]">{item.Route_Name || '-'}</td>
-                    <td className="py-3 px-4 text-right text-emerald-600 font-semibold">
-                      ฿{(item.Price_Cust_Total || 0).toLocaleString()}
+                    <td className="px-8 py-8">
+                        <p className="text-slate-300 font-bold text-[11px] uppercase tracking-tight truncate max-w-[200px]">{item.Route_Name || '-'}</p>
                     </td>
-                    <td className="py-3 px-4 text-right text-gray-900 font-bold">
-                      ฿{getJobTotal(item).toLocaleString()}
+                    <td className="px-8 py-8 text-right font-black text-slate-400 text-sm">
+                      <span className="text-[9px] mr-2">THB</span>
+                      {(item.Price_Cust_Total || 0).toLocaleString()}
                     </td>
-                    <td className="py-3 px-4 text-center">
-                      <span className={cn(
-                        "px-2.5 py-1 rounded-full text-xs font-bold",
+                    <td className="px-8 py-8 text-right">
+                        <div className="flex flex-col items-end">
+                            <span className="text-xl font-black text-white tracking-tighter group-hover/row:text-emerald-400 transition-colors bg-white/5 px-4 py-1 rounded-xl">฿{getJobTotal(item).toLocaleString()}</span>
+                            <span className="text-[8px] font-black text-slate-700 uppercase tracking-widest mt-1">Total Payload</span>
+                        </div>
+                    </td>
+                    <td className="px-12 py-8 text-center">
+                      <div className={cn(
+                        "inline-flex items-center gap-2.5 px-6 py-2.5 rounded-[1.5rem] text-[9px] font-black uppercase tracking-widest border transition-all duration-500 group-hover/row:scale-110",
                         isCustomerMode 
-                          ? "bg-emerald-500/10 text-emerald-600" 
-                          : "bg-amber-500/10 text-amber-600"
+                          ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20 shadow-[0_0_20px_rgba(16,185,129,0.1)]" 
+                          : "bg-primary/10 text-primary border-primary/20 shadow-[0_0_20px_rgba(255,30,133,0.1)]"
                       )}>
-                        {isCustomerMode ? "รอชำระเงิน" : "รายการรอดำเนินการ"}
-                      </span>
+                        <span className={cn("w-1.5 h-1.5 rounded-full shadow-[0_0_10px_currentColor]", isCustomerMode ? "bg-emerald-500 animate-pulse" : "bg-primary animate-pulse")} />
+                        {isCustomerMode ? "SETTLEMENT DUE" : "UNBILLED MISSION"}
+                      </div>
                     </td>
-                    {isCustomerMode && (
-                      <td className="py-3 px-4 text-right">
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="h-8 rounded-lg hover:bg-emerald-500/10 text-emerald-600 font-medium"
-                          onClick={() => router.push(`/admin/jobs/${item.Job_ID}`)}
-                        >
-                          <Eye className="w-4 h-4 mr-1.5" /> รายละเอียด
-                        </Button>
-                      </td>
-                    )}
                   </tr>
                 ))}
+                
                 {filteredData.length === 0 && (
                   <tr>
-                    <td colSpan={8} className="text-center py-8 text-gray-400">
-                      <div className="flex flex-col items-center gap-2">
-                         <FileText className="w-8 h-8 opacity-50" />
-                         <p>ไม่พบรายการที่ต้องวางบิล</p>
+                    <td colSpan={10} className="text-center py-40">
+                      <div className="flex flex-col items-center gap-6 opacity-30">
+                         <div className="p-8 bg-white/5 rounded-full border-2 border-white/5 animate-pulse">
+                            <FileText size={64} className="text-slate-500" strokeWidth={1} />
+                         </div>
+                         <p className="text-slate-700 font-black uppercase tracking-[0.5em] text-xs">Zero Mission Vectors Detected</p>
                       </div>
                     </td>
                   </tr>
                 )}
               </tbody>
             </table>
-          </div>
+        </div>
+        
+        <div className="p-10 border-t border-white/5 bg-white/[0.02] flex items-center justify-between">
+            <div className="flex items-center gap-6">
+                <p className="text-[9px] font-black text-slate-700 uppercase tracking-[0.6em]">Financial Matrix Node Registry v4.0</p>
+                <div className="h-4 w-px bg-white/5" />
+                <div className="flex items-center gap-2">
+                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                    <span className="text-[8px] font-black text-emerald-500 uppercase tracking-widest">ENCRYPTED</span>
+                </div>
+            </div>
+            <Zap size={18} className="text-primary opacity-20" />
+        </div>
+      </div>
+      
+      <div className="mt-20 text-center mb-24">
+        <div className="inline-flex items-center gap-4 px-8 py-3 glass-panel rounded-full text-[9px] font-black text-slate-700 uppercase tracking-[0.6em] opacity-40 hover:opacity-100 transition-opacity">
+            <ShieldCheck size={14} className="text-primary" /> LogisPro Ledger Engine • Certified Financial Accuracy
         </div>
       </div>
     </DashboardLayout>
     </div>
 
-    {/* Hidden Print Area */}
-    <div className="hidden print:block printable-content fixed inset-0 bg-white z-[9999] p-8">
+    {/* Dedicated Print Matrix */}
+    <div className="hidden print:block printable-content fixed inset-0 bg-white z-[9999] p-0 font-sans antialiased">
         <InvoicePreview />
     </div>
     </>

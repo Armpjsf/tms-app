@@ -1,11 +1,13 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
-import { ArrowLeft, MapPin, TrendingUp, TrendingDown, Building2, BarChart3, DollarSign, Briefcase } from "lucide-react"
+import { ArrowLeft, MapPin, TrendingUp, TrendingDown, Building2, BarChart3, DollarSign, Briefcase, Target, ShieldCheck, Activity, Cpu, Zap, Globe } from "lucide-react"
 import { getRegionalDeepDive } from "@/lib/supabase/analytics"
 import { isSuperAdmin } from "@/lib/permissions"
 import { MonthFilter } from "@/components/analytics/month-filter"
+import { PremiumCard } from "@/components/ui/premium-card"
+import { PremiumButton } from "@/components/ui/premium-button"
+import { cn } from "@/lib/utils"
 
 function formatCurrency(amount: number) {
   if (amount >= 1000000) return `฿${(amount / 1000000).toFixed(1)}M`
@@ -16,16 +18,22 @@ function formatCurrency(amount: number) {
 export default async function RegionalAnalyticsPage(props: { searchParams: Promise<{ [key: string]: string | undefined }> }) {
   const searchParams = await props.searchParams
   const superAdmin = await isSuperAdmin()
+  
   if (!superAdmin) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <Card className="bg-white/80 border-red-500/30 max-w-md">
-          <CardContent className="pt-6 text-center">
-            <p className="text-red-400 text-lg font-semibold">Access Denied</p>
-            <p className="text-gray-400 mt-2">This page is restricted to Super Admins only.</p>
-            <Link href="/dashboard"><Button variant="outline" className="mt-4">Back to Dashboard</Button></Link>
-          </CardContent>
-        </Card>
+      <div className="flex flex-col items-center justify-center min-h-[60vh] p-10 bg-[#050110]">
+        <PremiumCard className="bg-rose-500/10 border-rose-500/30 max-w-md p-12 text-center space-y-8 rounded-[3rem]">
+            <ShieldCheck size={64} className="mx-auto text-rose-500 animate-pulse" />
+            <div className="space-y-2">
+                <h1 className="text-3xl font-black text-white italic uppercase tracking-tighter">Access Denied</h1>
+                <p className="text-slate-500 font-black uppercase tracking-widest text-[10px] leading-relaxed italic">Strategic clearance insufficient. Terminal locked for security protocol.</p>
+            </div>
+            <Link href="/dashboard" className="block">
+                <PremiumButton variant="outline" className="w-full h-14 rounded-2xl border-white/10 text-white font-black uppercase tracking-[0.2em] italic">
+                    RETURN_SAFE_ZONE
+                </PremiumButton>
+            </Link>
+        </PremiumCard>
       </div>
     )
   }
@@ -47,176 +55,198 @@ export default async function RegionalAnalyticsPage(props: { searchParams: Promi
   const totalProfit = branches.reduce((sum, b) => sum + b.profit, 0)
 
   return (
-    <div className="space-y-8 pb-20">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 border-b border-gray-200 pb-8">
-        <div className="flex items-center gap-4">
-          <Link href="/admin/analytics">
-            <Button variant="outline" size="icon" className="border-gray-200 bg-white border-2 hover:border-slate-500 transition-colors">
-              <ArrowLeft className="h-5 w-5 text-gray-500" />
-            </Button>
-          </Link>
-          <div>
-            <h1 className="text-3xl font-extrabold text-foreground tracking-tight mb-1">
-              Regional Analytics
-            </h1>
-            <p className="text-slate-400 font-bold text-lg italic">ติดตามผลงานรายสาขา • Branch Performance Comparison</p>
+    <div className="space-y-12 pb-32 p-4 lg:p-10 bg-[#050110]">
+      {/* Tactical Header */}
+      <div className="bg-[#0a0518]/60 backdrop-blur-3xl p-10 rounded-br-[6rem] rounded-tl-[3rem] border border-white/5 shadow-2xl relative overflow-hidden group">
+        <div className="absolute top-0 right-0 w-80 h-80 bg-primary/10 blur-[120px] rounded-full -mr-40 -mt-40 pointer-events-none" />
+        
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-10 relative z-10">
+          <div className="space-y-6">
+            <Link href="/admin/analytics" className="inline-flex items-center gap-2 text-slate-500 hover:text-primary transition-all font-black uppercase tracking-[0.4em] text-[10px] group/back italic">
+              <ArrowLeft className="w-4 h-4 group-hover/back:-translate-x-1 transition-transform" /> 
+              STRATEGIC_INTELLIGENCE
+            </Link>
+            <div className="flex items-center gap-6">
+              <div className="p-4 bg-primary/20 rounded-[2.5rem] border-2 border-primary/30 shadow-[0_0_40px_rgba(255,30,133,0.2)] text-primary">
+                <Globe size={40} strokeWidth={2.5} />
+              </div>
+              <div>
+                <h1 className="text-5xl font-black text-white tracking-widest uppercase leading-none italic premium-text-gradient">Regional Intel</h1>
+                <p className="text-[10px] font-black text-primary uppercase tracking-[0.6em] mt-2 opacity-80 italic italic">Cross-Hub Performance Matrix // Global Node Analysis</p>
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center gap-4 bg-white/5 border border-white/10 p-4 rounded-3xl backdrop-blur-xl">
+            <MonthFilter />
           </div>
         </div>
-        <div className="flex items-center gap-3 bg-white/90 backdrop-blur-md border border-gray-200 p-2 rounded-xl">
-          <MonthFilter />
+      </div>
+
+      {/* Summary KPI Matrix */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+        {[
+          { label: "Active Hubs", value: branches.length, icon: Building2, color: "text-emerald-500", bg: "bg-emerald-500/10", border: "border-emerald-500/20" },
+          { label: "Global Revenue", value: formatCurrency(totalRevenue), icon: DollarSign, color: "text-primary", bg: "bg-primary/10", border: "border-primary/20" },
+          { label: "Aggregate Missions", value: totalJobs.toLocaleString(), icon: Briefcase, color: "text-blue-500", bg: "bg-blue-500/10", border: "border-blue-500/20" },
+          { label: "Retained Profit", value: formatCurrency(totalProfit), icon: BarChart3, color: "text-amber-500", bg: "bg-amber-500/10", border: "border-amber-500/20" },
+        ].map((stat, i) => (
+          <PremiumCard key={i} className={cn("p-8 group hover:scale-[1.05] transition-all duration-500 bg-[#0a0518]/60 border-2", stat.border)}>
+            <div className="flex justify-between items-start mb-6">
+                <div className={cn("p-4 rounded-2xl shadow-inner", stat.bg, stat.color)}>
+                    <stat.icon size={24} />
+                </div>
+                <div className="h-1.5 w-1.5 rounded-full bg-primary animate-ping" />
+            </div>
+            <p className="text-[10px] font-black text-slate-600 uppercase tracking-[0.4em] mb-2 italic">{stat.label}</p>
+            <p className="text-4xl font-black text-white italic tracking-tighter">{stat.value}</p>
+          </PremiumCard>
+        ))}
+      </div>
+
+      {/* Hub Ranking Matrix */}
+      <PremiumCard className="bg-[#0a0518]/40 border-2 border-white/5 shadow-3xl rounded-[4rem] overflow-hidden group/ranking">
+        <div className="p-12 border-b border-white/5 bg-black/40 flex items-center justify-between relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-80 h-full bg-primary/[0.03] blur-3xl pointer-events-none" />
+          <div className="flex items-center gap-6 relative z-10">
+            <div className="p-4 bg-white/5 rounded-2xl text-primary border border-white/10 shadow-inner group-hover/ranking:rotate-12 transition-transform duration-500">
+              <MapPin size={28} />
+            </div>
+            <div>
+              <h2 className="text-3xl font-black text-white tracking-[0.2em] uppercase italic">Hub Performance Matrix</h2>
+              <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.5em] mt-2 italic">Comparative analysis across geographical nodes</p>
+            </div>
+          </div>
+          <div className="px-6 py-2 bg-emerald-500/10 rounded-full border border-emerald-500/20 text-[9px] font-black text-emerald-500 uppercase tracking-[0.4em] italic animate-pulse">
+            SENSORS_OPTIMIZED
+          </div>
         </div>
-      </div>
 
-      {/* Summary KPIs */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="bg-gradient-to-br from-indigo-500/10 to-purple-500/10 border-emerald-500/20 backdrop-blur-sm">
-          <CardContent className="pt-5 pb-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-emerald-500/20 rounded-lg"><Building2 size={18} className="text-emerald-600" /></div>
-              <div>
-                <p className="text-xs text-white/70 font-bold uppercase tracking-widest leading-none">Active Branches</p>
-                <p className="text-2xl font-black text-white tracking-tighter mt-1">{branches.length}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="bg-gradient-to-br from-emerald-500/10 to-teal-500/10 border-emerald-500/20 backdrop-blur-sm">
-          <CardContent className="pt-5 pb-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-emerald-500/20 rounded-lg"><DollarSign size={18} className="text-emerald-400" /></div>
-              <div>
-                <p className="text-xs text-white/70 font-bold uppercase tracking-widest leading-none">Total Revenue</p>
-                <p className="text-2xl font-black text-white tracking-tighter mt-1">{formatCurrency(totalRevenue)}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="bg-gradient-to-br from-blue-500/10 to-cyan-500/10 border-emerald-500/15 backdrop-blur-sm">
-          <CardContent className="pt-5 pb-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-emerald-500/15 rounded-lg"><Briefcase size={18} className="text-emerald-500" /></div>
-              <div>
-                <p className="text-xs text-white/70 font-bold uppercase tracking-widest leading-none">Total Jobs</p>
-                <p className="text-2xl font-black text-white tracking-tighter mt-1">{totalJobs.toLocaleString()}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="bg-gradient-to-br from-amber-500/10 to-orange-500/10 border-amber-500/20 backdrop-blur-sm">
-          <CardContent className="pt-5 pb-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-amber-500/20 rounded-lg"><BarChart3 size={18} className="text-amber-400" /></div>
-              <div>
-                <p className="text-xs text-white/70 font-bold uppercase tracking-widest leading-none">Total Profit</p>
-                <p className="text-2xl font-black text-white tracking-tighter mt-1">{formatCurrency(totalProfit)}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Branch Comparison Table */}
-      <Card className="bg-white/80 backdrop-blur-sm border-gray-200 shadow-2xl">
-        <CardHeader className="border-b border-gray-200 bg-white/80">
-          <CardTitle className="text-gray-900 font-black flex items-center gap-3">
-            <MapPin className="text-emerald-700" size={18} />
-            <span>Branch Performance Ranking</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="pt-6">
-          <div className="space-y-4">
+        <div className="p-12 space-y-8">
             {branchesWithEfficiency.length === 0 ? (
-              <div className="text-center py-12 text-gray-400">
-                <Building2 size={48} className="mx-auto mb-4 opacity-30" />
-                <p className="text-lg">No branch data available for this period</p>
+              <div className="p-40 flex flex-col items-center justify-center gap-8 border-2 border-dashed border-white/5 rounded-[3rem] bg-black/20 text-center">
+                <Building2 size={80} strokeWidth={1} className="text-slate-800 opacity-20" />
+                <div className="space-y-2">
+                    <p className="text-xl font-black text-slate-700 uppercase tracking-widest">No Node Data Detected</p>
+                    <p className="text-[10px] font-black text-slate-800 uppercase tracking-[0.5em] italic">The operational landscape is quiescent for this epoch.</p>
+                </div>
               </div>
             ) : (
-              branchesWithEfficiency.map((branch, index) => {
-                const revenuePercent = (branch.revenue / maxRevenue) * 100
-                const profitMargin = branch.revenue > 0 ? ((branch.profit / branch.revenue) * 100) : 0
-                const isGrowthPositive = branch.revenueGrowth >= 0
+                <div className="grid grid-cols-1 gap-8">
+                    {branchesWithEfficiency.map((branch, index) => {
+                        const revenuePercent = (branch.revenue / maxRevenue) * 100
+                        const profitMargin = branch.revenue > 0 ? ((branch.profit / branch.revenue) * 100) : 0
+                        const isGrowthPositive = branch.revenueGrowth >= 0
 
-                return (
-                  <div
-                    key={branch.branchId}
-                    className="relative p-5 rounded-xl border border-gray-200 bg-white/60 hover:bg-gray-50 hover:border-gray-200/50 transition-all group"
-                  >
-                    {/* Rank Badge */}
-                    <div className="absolute -top-2 -left-2 z-10">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shadow-lg ${
-                        index === 0 ? 'bg-gradient-to-br from-amber-400 to-amber-600 text-black' :
-                        index === 1 ? 'bg-gradient-to-br from-slate-300 to-slate-400 text-black' :
-                        index === 2 ? 'bg-gradient-to-br from-orange-600 to-orange-800 text-white' :
-                        'bg-slate-700 text-gray-500'
-                      }`}>
-                        {index + 1}
-                      </div>
-                    </div>
+                        return (
+                        <div
+                            key={branch.branchId}
+                            className="relative group/node p-10 rounded-[3rem] border-2 border-white/5 bg-black/20 hover:bg-[#0a0518]/60 hover:border-primary/20 transition-all duration-500 overflow-hidden"
+                        >
+                            {/* Rank Designation */}
+                            <div className="absolute -top-1 -left-1 z-10">
+                                <div className={cn(
+                                    "w-14 h-14 rounded-br-3xl rounded-tl-[2.5rem] flex items-center justify-center text-xl font-black italic shadow-2xl border-b-2 border-r-2",
+                                    index === 0 ? 'bg-primary text-white border-primary/30 shadow-primary/20' :
+                                    index === 1 ? 'bg-amber-500 text-black border-amber-400/30' :
+                                    index === 2 ? 'bg-slate-300 text-black border-slate-200/30' :
+                                    'bg-white/5 text-slate-600 border-white/5'
+                                )}>
+                                    {index + 1}
+                                </div>
+                            </div>
 
-                    <div className="grid grid-cols-12 gap-4 items-center">
-                      {/* Branch Name */}
-                      <div className="col-span-3 pl-6">
-                        <h3 className="text-slate-950 font-black text-lg italic tracking-tight uppercase leading-none mb-1">{branch.branchName}</h3>
-                        <p className="text-slate-600 font-bold text-xs uppercase tracking-widest">{branch.jobsCount} jobs</p>
-                        <div className="flex items-center gap-1 mt-2">
-                            <span className="text-[9px] text-slate-700 uppercase font-black tracking-widest">Efficiency</span>
-                            <span className={`text-[10px] font-black italic ${branch.efficiency > 80 ? 'text-emerald-600' : 'text-amber-600'}`}>
-                                {branch.efficiency.toFixed(0)}%
-                            </span>
+                            <div className="grid grid-cols-1 md:grid-cols-12 gap-12 items-center relative z-10">
+                                {/* Hub Designation */}
+                                <div className="md:col-span-3 pl-10">
+                                    <h3 className="text-2xl font-black text-white tracking-widest uppercase italic group-hover/node:text-primary transition-colors leading-none mb-3">{branch.branchName}</h3>
+                                    <div className="flex items-center gap-4">
+                                        <div className="px-3 py-1 bg-white/5 rounded-lg border border-white/5 text-[9px] font-black text-slate-500 uppercase tracking-widest">
+                                            {branch.jobsCount} MISSIONS
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                                            <span className="text-[10px] font-black text-emerald-500 italic uppercase">
+                                                {branch.efficiency.toFixed(0)}% EFFICIENCY
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Yield Spectrum */}
+                                <div className="md:col-span-4 space-y-4">
+                                    <div className="flex justify-between items-end mb-2">
+                                        <span className="text-[10px] font-black text-slate-700 uppercase tracking-[0.4em] italic">Revenue Spectrum</span>
+                                        <span className="text-lg font-black text-white italic tracking-widest font-sans">
+                                            {formatCurrency(branch.revenue)}
+                                        </span>
+                                    </div>
+                                    <div className="h-4 bg-[#050110] rounded-full overflow-hidden border border-white/5 p-1">
+                                        <div
+                                            className="h-full bg-gradient-to-r from-primary via-accent to-blue-500 rounded-full transition-all duration-1000 shadow-[0_0_15px_rgba(255,30,133,0.5)]"
+                                            style={{ width: `${revenuePercent}%` }}
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Profit Matrix */}
+                                <div className="md:col-span-2 text-center p-6 bg-white/5 rounded-[2rem] border border-white/5 flex flex-col items-center justify-center">
+                                    <p className="text-[9px] font-black text-slate-600 uppercase tracking-[0.2em] mb-2 italic">Yield Return</p>
+                                    <p className={cn("text-xl font-black italic tracking-widest", branch.profit >= 0 ? 'text-emerald-500' : 'text-rose-500')}>
+                                    {formatCurrency(branch.profit)}
+                                    </p>
+                                    <div className="mt-2 px-3 py-0.5 bg-black/40 rounded-full border border-white/5 text-[8px] font-black text-slate-500 uppercase tracking-widest">
+                                    {profitMargin.toFixed(1)}% MARGIN
+                                    </div>
+                                </div>
+
+                                {/* Delta Indicator */}
+                                <div className="md:col-span-3 text-right">
+                                    <div className="flex items-center justify-end gap-4 mb-2">
+                                        <div className={cn(
+                                            "p-2 rounded-xl scale-75 md:scale-100",
+                                            isGrowthPositive ? "bg-emerald-500/20 text-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.2)]" : "bg-rose-500/20 text-rose-500"
+                                        )}>
+                                            {isGrowthPositive ? (
+                                                <TrendingUp size={20} strokeWidth={3} />
+                                            ) : (
+                                                <TrendingDown size={20} strokeWidth={3} />
+                                            )}
+                                        </div>
+                                        <span className={cn("text-4xl font-black italic tracking-tighter", isGrowthPositive ? 'text-emerald-500' : 'text-rose-500')}>
+                                            {isGrowthPositive ? '+' : ''}{branch.revenueGrowth.toFixed(1)}%
+                                        </span>
+                                    </div>
+                                    <p className="text-[10px] text-slate-700 font-black uppercase tracking-widest italic leading-none pr-2">
+                                    Δ PREV_EPOCH: {formatCurrency(branch.previousRevenue)}
+                                    </p>
+                                </div>
+                            </div>
+                            
+                            {/* Decorative Grid Lines */}
+                            <div className="absolute bottom-0 right-0 w-64 h-64 opacity-5 pointer-events-none translate-x-32 translate-y-32">
+                                <div className="w-full h-full rotate-45 border-4 border-white/20 grid grid-cols-4 grid-rows-4" />
+                            </div>
                         </div>
-                      </div>
-
-                      {/* Revenue Bar */}
-                      <div className="col-span-4">
-                        <div className="flex items-center gap-3">
-                          <div className="flex-1 h-3 bg-gray-100 rounded-full overflow-hidden">
-                            <div
-                              className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full transition-all duration-700"
-                              style={{ width: `${revenuePercent}%` }}
-                            />
-                          </div>
-                          <span className="text-gray-950 font-mono text-sm min-w-[80px] text-right font-black">
-                            {formatCurrency(branch.revenue)}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Profit */}
-                      <div className="col-span-2 text-center">
-                        <p className="text-xs text-gray-400 mb-1">Profit</p>
-                        <p className={`font-black ${branch.profit >= 0 ? 'text-emerald-700' : 'text-red-700'}`}>
-                          {formatCurrency(branch.profit)}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          {profitMargin.toFixed(1)}% margin
-                        </p>
-                      </div>
-
-                      {/* Growth */}
-                      <div className="col-span-3 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          {isGrowthPositive ? (
-                            <TrendingUp size={16} className="text-emerald-600" />
-                          ) : (
-                            <TrendingDown size={16} className="text-red-600" />
-                          )}
-                          <span className={`text-xl font-black italic tracking-tighter ${isGrowthPositive ? 'text-emerald-600' : 'text-red-700'}`}>
-                            {isGrowthPositive ? '+' : ''}{branch.revenueGrowth.toFixed(1)}%
-                          </span>
-                        </div>
-                        <p className="text-[10px] text-slate-600 font-bold mt-1 uppercase tracking-widest italic leading-none">
-                          vs prev: {formatCurrency(branch.previousRevenue)}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                )
-              })
+                        )
+                    })}
+                </div>
             )}
+        </div>
+      </PremiumCard>
+
+      {/* Strategic Advisory */}
+      <div className="py-20 border-t border-white/5 flex flex-col items-center opacity-30 hover:opacity-100 transition-opacity">
+          <div className="flex items-center gap-6 mb-4">
+              <Zap size={24} className="text-primary animate-pulse" />
+              <div className="h-px w-40 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+              <ShieldCheck size={24} className="text-emerald-500" />
           </div>
-        </CardContent>
-      </Card>
+          <p className="text-[12px] font-black text-white uppercase tracking-[0.8em] italic mb-4">Geographical Sentiment Archive // v6.0-TACTICAL</p>
+          <p className="text-[10px] font-bold text-slate-700 uppercase tracking-widest italic leading-relaxed text-center max-w-2xl px-12">
+              All regional metrics are computed via real-time node synchronization. <br />
+              Efficiency vectors include completion delta, fuel telemetry, and personnel engagement scores.
+          </p>
+      </div>
     </div>
   )
 }

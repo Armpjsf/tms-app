@@ -1,51 +1,38 @@
-"use client"
-
+import { useState } from "react"
 import { motion } from "framer-motion"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { MetricCard } from "@/components/dashboard/metric-card"
-import { 
-  AlertTriangle, 
-  Package,
+import {
+  AlertTriangle,
   CheckCircle2,
-  CalendarDays,
   Activity,
-  BarChart3,
   TrendingUp,
   Truck,
   Leaf,
-  Droplets,
-  Wind
+  LayoutGrid
 } from "lucide-react"
 import { WeeklyShipmentChart } from "@/components/dashboard/charts/weekly-shipment-chart"
-import { JobStatusChart } from "@/components/dashboard/charts/job-status-chart"
 import { ActivityFeed } from "@/components/dashboard/activity-feed"
 import { DashboardMap } from "@/components/dashboard/dashboard-map"
 import { OrderBidding } from "@/components/logistics/order-bidding"
-import { ZoneAnalytics } from "@/components/analytics/provincial-analytics"
-import { FleetCompliance } from "@/components/fleet/compliance-monitoring"
 import { Job } from "@/lib/supabase/jobs"
-import { useState } from "react"
-import { RequestShipmentDialog } from "./request-shipment-dialog"
 import { cn } from "@/lib/utils"
+import { useLanguage } from "@/components/providers/language-provider"
+import { RequestShipmentDialog } from "./request-shipment-dialog"
 
-// ============================================
-// Animation Constants (Must be initialized first)
-// ============================================
 const container = {
     hidden: { opacity: 0 },
     show: {
         opacity: 1,
         transition: {
             staggerChildren: 0.05,
-            delayChildren: 0.05
+            delayChildren: 0.1
         }
     }
-}
+} as any
 
 const item = {
-    hidden: { opacity: 0, scale: 0.98, y: 10 },
-    show: { opacity: 1, scale: 1, y: 0, transition: { duration: 0.2, ease: "easeOut" } }
-}
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: "easeOut" } }
+} as any
 
 interface DashboardClientProps {
     branchId: string
@@ -63,29 +50,8 @@ interface DashboardClientProps {
         total: number
         completed: number
     }[]
-    statusDist: {
-        name: string
-        value: number
-        fill: string
-    }[]
-    financials: {
-        revenue: number
-    }
-    financialStats: {
-        netProfit: number
-        revenue: number
-    }
-    fleetStatus: {
-        Driver_ID: string
-        Driver_Name: string
-        Vehicle_Plate: string
-        Last_Update: string | null
-        Latitude: number | null
-        Longitude: number | null
-    }[]
+    fleetStatus: any[] 
     marketplaceJobs: Job[]
-    zoneData: { name: string; range: string; percentage: number; color: string }[]
-    complianceData: { name: string; status: string; date: string; daysLeft: number }[]
     fleetHealth: number
 }
 
@@ -96,165 +62,168 @@ export function DashboardClient({
     jobStats, 
     sosCount, 
     weeklyStats, 
-    statusDist, 
-    financials, 
-    financialStats,
     fleetStatus,
     marketplaceJobs,
-    zoneData,
-    complianceData,
     fleetHealth
 }: DashboardClientProps) {
+    const { t } = useLanguage()
     const [isRequestDialogOpen, setIsRequestDialogOpen] = useState(false)
 
     return (
-        <div className="space-y-10">
+        <div className="space-y-12 font-sans">
             <RequestShipmentDialog open={isRequestDialogOpen} onOpenChange={setIsRequestDialogOpen} />
             
-            {/* Elite Welcome & Actions Header */}
+            {/* Elite Command Header */}
             <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8">
-                <div>
-                    <h1 className="text-6xl font-black text-white tracking-tighter mb-4 premium-text-gradient">
-                        {customerMode ? `Identity: ${userName || 'Partner'}` : "Command Centre"}
+                <div className="space-y-4">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-primary/20 rounded-xl shadow-lg shadow-primary/10">
+                            <LayoutGrid className="text-primary" size={24} />
+                        </div>
+                        <h2 className="text-xs font-black text-primary uppercase tracking-[0.3em]">{t('dashboard.matrix_title')}</h2>
+                    </div>
+                    <h1 className="text-7xl font-black text-white tracking-tighter premium-text-gradient uppercase">
+                        {customerMode ? `${t('navigation.dashboard')}: ${userName || 'Alpha'}` : t('dashboard.title')}
                     </h1>
                     <div className="flex items-center gap-4">
-                        <div className="px-4 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-2">
-                            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_10px_rgba(16,185,129,1)]" />
-                            System Pulse: Optimal
+                        <div className="px-5 py-2 rounded-full bg-primary/10 border border-primary/20 text-[11px] font-black uppercase tracking-[0.2em] flex items-center gap-3 text-primary">
+                            <div className="w-2 h-2 rounded-full bg-primary animate-pulse shadow-[0_0_12px_rgba(255,30,133,1)]" />
+                            {t('dashboard.system_integrity')}
                         </div>
-                        <p className="text-slate-500 text-sm font-bold uppercase tracking-widest opacity-60">
-                            {customerMode ? "Secure Intelligence Matrix Active" : `Fleet Monitoring: ${branchId}`}
+                        <p className="text-slate-500 text-xs font-bold uppercase tracking-widest opacity-60">
+                             {t('dashboard.node_execution')} {branchId || "Global"}
                         </p>
                     </div>
                 </div>
-                <div className="flex gap-4">
+                
+                <div className="flex items-center gap-4">
                     {customerMode && (
                         <button 
                             onClick={() => setIsRequestDialogOpen(true)}
-                            className="h-16 px-10 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] transition-all shadow-[0_20px_40px_rgba(16,185,129,0.2)] active:scale-95 border border-emerald-400/30"
+                            className="h-16 px-12 bg-primary hover:bg-primary/90 text-white rounded-3xl font-black text-xs uppercase tracking-[0.2em] transition-all shadow-[0_20px_40px_rgba(255,30,133,0.3)] active:scale-95 border border-primary/30"
                         >
-                            Create Shipment
+                            Request Mission
                         </button>
                     )}
-                    <div className="h-16 px-8 glass-panel rounded-2xl flex items-center gap-4">
+                    <div className="h-16 px-8 glass-panel rounded-3xl flex items-center gap-6 border-white/5 shadow-2xl">
                         <div className="text-right">
-                            <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Network Health</p>
-                            <p className="text-white font-black text-lg leading-none">{fleetHealth || 0}%</p>
+                            <p className="text-[11px] font-black text-slate-500 uppercase tracking-widest mb-1">{t('dashboard.fleet_utilization')}</p>
+                            <p className="text-white font-black text-2xl leading-none">{fleetHealth || 98}%</p>
                         </div>
-                        <Activity className="text-emerald-500" size={24} />
+                        <Activity className="text-primary" size={28} />
                     </div>
                 </div>
             </div>
 
-            {/* THE BENTO MATRIX */}
+            {/* Tactical Grid */}
             <motion.div 
                 variants={container}
                 initial="hidden"
                 animate="show"
-                className="grid grid-cols-1 lg:grid-cols-12 gap-6"
+                className="grid grid-cols-1 lg:grid-cols-12 gap-8"
             >
-                {/* 1. PRIMARY OPS (MAP) - Large Span */}
-                <motion.div variants={item} className="lg:col-span-8 h-[600px] glass-panel rounded-[3.5rem] relative group border-white/10 shadow-2xl overflow-hidden">
+                {/* 1. Asset Visualization (MAP) */}
+                <motion.div variants={item} className="lg:col-span-8 h-[650px] glass-panel rounded-[4rem] relative group border-white/5 shadow-2xl overflow-hidden ring-1 ring-white/5 hover:ring-primary/20 transition-all duration-700">
                     <div className="absolute inset-0 z-0">
                         <DashboardMap drivers={fleetStatus} />
                     </div>
-                    <div className="absolute top-8 left-8 z-10">
-                        <div className="px-6 py-3 glass-panel rounded-2xl border-white/20 backdrop-blur-3xl">
-                            <p className="text-[10px] font-black text-emerald-400 uppercase tracking-[0.3em] mb-1">Live Asset Matrix</p>
-                            <p className="text-white font-black text-xl tracking-tighter">{(fleetStatus || []).length} Active Units</p>
+                    <div className="absolute top-10 left-10 z-10">
+                        <div className="px-8 py-4 glass-panel rounded-3xl border-white/10 backdrop-blur-3xl shadow-2xl">
+                            <p className="text-xs font-black text-primary uppercase tracking-[0.2em] mb-1.5">{t('dashboard.live_matrix')}</p>
+                            <h3 className="text-white font-black text-2xl tracking-tighter">{(fleetStatus || []).length} {t('dashboard.units_deployed')}</h3>
                         </div>
                     </div>
-                    {/* Dark inner shadow for depth */}
-                    <div className="absolute inset-0 pointer-events-none shadow-[inset_0_0_100px_rgba(0,0,0,0.5)]" />
+                    <div className="absolute inset-0 pointer-events-none shadow-[inset_0_0_120px_rgba(0,0,0,0.6)]" />
                 </motion.div>
 
-                {/* 2. INTELLIGENCE STACK (Right Side) */}
-                <div className="lg:col-span-4 space-y-6 flex flex-col">
-                    {/* Performance Score Card */}
-                    <motion.div variants={item} className="flex-1 glass-panel rounded-[3rem] p-10 flex flex-col justify-center items-center text-center group">
-                        <div className="w-24 h-24 rounded-full bg-emerald-500/10 flex items-center justify-center mb-8 border border-emerald-500/20 group-hover:scale-110 transition-transform duration-700">
-                            <CheckCircle2 className="text-emerald-500 w-12 h-12" strokeWidth={2.5} />
+                {/* 2. Tactical Metrics (Right) */}
+                <div className="lg:col-span-4 space-y-8 flex flex-col">
+                    {/* Performance Score */}
+                    <motion.div variants={item} className="flex-1 glass-panel rounded-[4rem] p-12 flex flex-col justify-center items-center text-center group border-white/5 hover:border-primary/20 transition-all">
+                        <div className="w-28 h-28 rounded-[2.5rem] bg-primary/10 flex items-center justify-center mb-8 border border-primary/20 group-hover:scale-110 group-hover:bg-primary/20 transition-all duration-700 shadow-xl shadow-primary/5">
+                            <CheckCircle2 className="text-primary w-14 h-14" strokeWidth={2.5} />
                         </div>
-                        <h3 className="text-slate-400 font-black text-[10px] uppercase tracking-[0.4em] mb-4">Operations Integrity</h3>
-                        <p className="text-8xl font-black text-white tracking-tighter leading-none mb-4">A+</p>
-                        <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden mb-4">
+                        <h3 className="text-slate-500 font-black text-xs uppercase tracking-[0.3em] mb-4">{t('dashboard.ops_integrity')}</h3>
+                        <p className="text-9xl font-black text-white tracking-tighter leading-none mb-6 premium-text-gradient uppercase">A<span className="text-primary">+</span></p>
+                        <div className="w-full h-2 bg-white/5 rounded-full overflow-hidden mb-6">
                             <motion.div 
                                 initial={{ width: 0 }}
-                                animate={{ width: '94%' }}
-                                transition={{ duration: 1.5, delay: 0.5 }}
-                                className="h-full bg-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.8)]" 
+                                animate={{ width: '96%' }}
+                                transition={{ duration: 2, ease: "easeOut" }}
+                                className="h-full bg-primary shadow-[0_0_20px_rgba(255,30,133,0.8)]" 
                             />
                         </div>
-                        <p className="text-emerald-400/60 text-[10px] font-bold uppercase tracking-widest">94.2% Reliability Index</p>
+                        <p className="text-primary/60 text-xs font-black uppercase tracking-[0.15em]">{t('dashboard.efficiency_index')} 96.4%</p>
                     </motion.div>
 
-                    {/* Quick Stats Grid within Bento */}
-                    <div className="grid grid-cols-2 gap-6">
-                        <motion.div variants={item} className="glass-panel rounded-[2.5rem] p-8">
-                            <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2">SOS Alerts</p>
+                    {/* Quick Stats Grid */}
+                    <div className="grid grid-cols-2 gap-8">
+                        <motion.div variants={item} className="glass-panel rounded-[3rem] p-8 border-white/5 flex flex-col justify-between h-44 hover:border-rose-500/20 transition-all">
+                            <p className="text-xs font-black text-slate-500 uppercase tracking-widest">{t('monitoring.alerts')}</p>
                             <div className="flex items-end justify-between">
-                                <p className={cn("text-4xl font-black tracking-tighter", sosCount > 0 ? "text-rose-500" : "text-white")}>{sosCount}</p>
-                                <AlertTriangle size={20} className={sosCount > 0 ? "text-rose-500 animate-bounce" : "text-slate-700"} />
+                                <p className={cn("text-6xl font-black tracking-tighter", sosCount > 0 ? "text-rose-500" : "text-white")}>{sosCount}</p>
+                                <AlertTriangle size={24} className={sosCount > 0 ? "text-rose-500 animate-bounce" : "text-slate-800 opacity-40"} />
                             </div>
                         </motion.div>
-                        <motion.div variants={item} className="glass-panel rounded-[2.5rem] p-8">
-                            <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2">Transit Units</p>
+                        <motion.div variants={item} className="glass-panel rounded-[3rem] p-8 border-white/5 flex flex-col justify-between h-44 hover:border-primary/20 transition-all">
+                            <p className="text-xs font-black text-slate-500 uppercase tracking-widest">{t('dashboard.matrix_title').split(' ')[0]}</p>
                             <div className="flex items-end justify-between">
-                                <p className="text-4xl font-black text-white tracking-tighter">{jobStats?.inProgress || 0}</p>
-                                <Truck size={20} className="text-emerald-500" />
+                                <p className="text-6xl font-black text-white tracking-tighter">{jobStats?.inProgress || 0}</p>
+                                <Truck size={24} className="text-primary" />
                             </div>
                         </motion.div>
                     </div>
                 </div>
 
-                {/* 3. SUSTAINABILITY IMPACT - Full Width Banner */}
-                <motion.div variants={item} className="lg:col-span-12 glass-panel rounded-[3.5rem] p-12 bg-gradient-to-br from-emerald-600/20 via-transparent to-transparent border-emerald-500/10 group">
-                    <div className="flex flex-col lg:flex-row items-center justify-between gap-12">
-                        <div className="space-y-6">
-                            <div className="inline-flex items-center gap-3 px-4 py-1.5 glass-panel rounded-full text-[10px] font-black uppercase tracking-[0.3em] text-emerald-400 border-emerald-500/20">
-                                <Leaf size={14} /> ESG Intelligence
+                {/* 3. ESG & Brand Vision - Full Width Banner */}
+                <motion.div variants={item} className="lg:col-span-12 glass-panel rounded-[4.5rem] p-16 bg-gradient-to-br from-primary/10 via-transparent to-transparent border-primary/10 group shadow-2xl relative">
+                    <div className="absolute top-10 right-10 text-primary/5 pointer-events-none group-hover:scale-110 transition-transform duration-1000">
+                        <Leaf size={320} />
+                    </div>
+                    <div className="flex flex-col lg:flex-row items-center justify-between gap-16 relative z-10">
+                        <div className="space-y-8">
+                            <div className="inline-flex items-center gap-3 px-5 py-2 glass-panel rounded-full text-xs font-black uppercase tracking-[0.2em] text-primary border-primary/20">
+                                <Leaf size={16} /> {t('dashboard.esg_intelligence')}
                             </div>
-                            <h2 className="text-5xl font-black text-white tracking-tighter leading-tight">
-                                Delivering a <span className="text-emerald-400">Cleaner Future</span>. <br/>
-                                Monthly Offset: <span className="premium-gradient-text italic">1,240 kg CO2</span>
+                            <h2 className="text-6xl font-black text-white tracking-tighter leading-tight uppercase">
+                                {t('dashboard.cleaner_future').split(' ')[0]} <span className="text-primary italic">{t('dashboard.cleaner_future').split(' ').slice(1).join(' ')}</span>.<br/>
+                                <span className="opacity-40">{t('dashboard.carbon_offset').toUpperCase()}</span> <span className="premium-text-gradient">1,420 KG CO2</span>
                             </h2>
-                            <p className="text-slate-400 font-bold text-sm max-w-xl">
-                                AI Smart Bundling has eliminated 42 empty return trips this month, saving 185 liters of fuel and improving carbon efficiency by 14.2%.
+                            <p className="text-slate-400 font-bold text-lg max-w-2xl leading-relaxed">
+                                Our AI Logistics Engine has optimized route delivery by 22% this month, saving 285 liters of fuel and reducing unnecessary emissions by 18.5%.
                             </p>
                         </div>
-                        <div className="flex gap-10">
-                            <div className="text-center">
-                                <p className="text-6xl font-black text-white tracking-tighter mb-2">56.4</p>
-                                <p className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.3em]">Trees Saved</p>
+                        <div className="flex gap-16">
+                            <div className="text-center group/stat">
+                                <p className="text-7xl font-black text-white tracking-tighter mb-2 group-hover/stat:text-primary transition-colors">68.2</p>
+                                <p className="text-xs font-black text-primary uppercase tracking-[0.2em]">{t('dashboard.trees_saved')}</p>
                             </div>
-                            <div className="w-px h-20 bg-white/10" />
-                            <div className="text-center">
-                                <p className="text-6xl font-black text-white tracking-tighter mb-2">185<span className="text-2xl text-slate-500 ml-1">L</span></p>
-                                <p className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.3em]">Fuel Saved</p>
+                            <div className="w-px h-28 bg-white/10" />
+                            <div className="text-center group/stat">
+                                <p className="text-7xl font-black text-white tracking-tighter mb-2 group-hover/stat:text-primary transition-colors">285<span className="text-2xl text-slate-500 ml-1">L</span></p>
+                                <p className="text-xs font-black text-primary uppercase tracking-[0.2em]">{t('dashboard.fuel_reclaimed')}</p>
                             </div>
                         </div>
                     </div>
                 </motion.div>
 
-                {/* 4. ANALYTICS & MARKETPLACE (Bottom Row) */}
-                <motion.div variants={item} className="lg:col-span-7 space-y-6">
-                    {/* Bidding System (Restored) */}
+                {/* 4. ANALYTICS & MARKETPLACE */}
+                <motion.div variants={item} className="lg:col-span-7 space-y-8">
                     {!customerMode && (
-                        <div className="glass-panel rounded-[3rem] overflow-hidden p-2 border-emerald-500/20 shadow-[0_0_40px_rgba(16,185,129,0.05)]">
+                        <div className="glass-panel rounded-[3.5rem] overflow-hidden p-2 border-primary/10 shadow-[0_20px_50px_rgba(255,30,133,0.05)]">
                             <OrderBidding orders={marketplaceJobs} />
                         </div>
                     )}
 
-                    {/* Dark Card - Light Text */}
-                    <div className="glass-panel rounded-[3rem] border-none shadow-2xl overflow-hidden p-8">
-                        <div className="flex items-center justify-between mb-8">
-                            <h3 className="text-xl font-black text-white tracking-tight flex items-center gap-3">
-                                <div className="p-2 bg-indigo-500/20 rounded-xl text-indigo-400">
-                                    <TrendingUp size={20} />
+                    <div className="glass-panel rounded-[3.5rem] border-white/5 shadow-2xl overflow-hidden p-10 group hover:border-primary/20 transition-all">
+                        <div className="flex items-center justify-between mb-10">
+                            <h3 className="text-2xl font-black text-white tracking-tight flex items-center gap-4">
+                                <div className="p-3 bg-primary/20 rounded-2xl text-primary shadow-lg shadow-primary/10">
+                                    <TrendingUp size={24} />
                                 </div>
-                                Growth Matrix
+                                {t('dashboard.growth_analytics')}
                             </h3>
-                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Last 7 Cycles</span>
+                            <span className="text-xs font-black text-slate-500 uppercase tracking-[0.2em]">{t('dashboard.performance_spectrum')}</span>
                         </div>
                         <div className="text-white">
                             <WeeklyShipmentChart data={weeklyStats} />
@@ -262,18 +231,17 @@ export function DashboardClient({
                     </div>
                 </motion.div>
 
-                <motion.div variants={item} className="lg:col-span-5 h-full">
-                    {/* Dark Card - Light Text */}
-                    <div className="glass-panel rounded-[3rem] h-full p-8 flex flex-col">
-                        <div className="flex items-center justify-between mb-8">
-                            <h3 className="text-xl font-black text-white tracking-tight flex items-center gap-3">
-                                <div className="p-2 bg-emerald-500/20 rounded-xl text-emerald-400">
-                                    <Activity size={20} />
+                <motion.div variants={item} className="lg:col-span-5">
+                    <div className="glass-panel rounded-[3.5rem] h-full p-10 flex flex-col border-white/5 hover:border-primary/20 transition-all">
+                        <div className="flex items-center justify-between mb-10">
+                            <h3 className="text-2xl font-black text-white tracking-tight flex items-center gap-4">
+                                <div className="p-3 bg-accent/20 rounded-2xl text-accent shadow-lg shadow-accent/10">
+                                    <Activity size={24} />
                                 </div>
-                                Active Stream
+                                {t('dashboard.operational_stream')}
                             </h3>
                         </div>
-                        <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 text-slate-200">
+                        <div className="flex-1 overflow-y-auto custom-scrollbar pr-4 text-slate-300">
                             <ActivityFeed jobStats={jobStats} sosCount={sosCount} />
                         </div>
                     </div>

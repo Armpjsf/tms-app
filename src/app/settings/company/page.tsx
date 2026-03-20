@@ -1,9 +1,9 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect, useCallback } from "react"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
+import { PremiumCard } from "@/components/ui/premium-card"
+import { PremiumButton } from "@/components/ui/premium-button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
@@ -20,10 +20,19 @@ import {
   Globe,
   CreditCard,
   ImageIcon,
-  Loader2
+  Loader2,
+  ArrowLeft,
+  Activity,
+  Zap,
+  ShieldCheck,
+  Target,
+  UserCheck
 } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { cn } from "@/lib/utils"
 
 export default function CompanySettingsPage() {
+  const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [logoPreview, setLogoPreview] = useState<string | null>(null)
@@ -45,17 +54,17 @@ export default function CompanySettingsPage() {
     logo_url: ""
   })
 
-  useEffect(() => {
-    loadSettings()
-  }, [])
-
-  const loadSettings = async () => {
+  const loadSettings = useCallback(async () => {
     const profile = await getCompanyProfile()
     if (profile) {
         setFormData(prev => ({ ...prev, ...profile }))
         if (profile.logo_url) setLogoPreview(profile.logo_url)
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    loadSettings()
+  }, [loadSettings])
 
   const updateForm = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }))
@@ -65,24 +74,23 @@ export default function CompanySettingsPage() {
     const file = e.target.files?.[0]
     if (!file) return
 
-    // Preview
     const reader = new FileReader()
     reader.onloadend = () => {
       setLogoPreview(reader.result as string)
     }
     reader.readAsDataURL(file)
 
-    // Upload
     setUploading(true)
     try {
       const result = await uploadCompanyLogo(file)
       if (result.success && result.url) {
         updateForm("logo_url", result.url)
+        toast.success("Logo uplink established")
       } else {
-        toast.error("อัปโหลดไม่สำเร็จ: " + (result.error?.message || "Unknown error"))
+        toast.error("Uplink failed: " + (result.error?.message || "Unknown error"))
       }
     } catch {
-      toast.error('ไม่สามารถอัปโหลดรูปภาพได้')
+      toast.error('Signal interference during upload')
     } finally {
       setUploading(false)
     }
@@ -93,12 +101,12 @@ export default function CompanySettingsPage() {
     try {
       const result = await saveCompanyProfile(formData)
       if (result.success) {
-        toast.success("บันทึกข้อมูลสำเร็จ!")
+        toast.success("Identity vector synchronized")
       } else {
         throw result.error
       }
     } catch {
-      toast.error("เกิดข้อผิดพลาดในการบันทึก")
+      toast.error("Failed to commit profile changes")
     } finally {
       setLoading(false)
     }
@@ -106,242 +114,301 @@ export default function CompanySettingsPage() {
 
   return (
     <DashboardLayout>
-      {/* Bespoke Strategic Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-8 mb-12 bg-slate-950 p-10 rounded-br-[5rem] rounded-tl-[2rem] border border-slate-800 shadow-2xl relative overflow-hidden group">
-        <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 to-transparent pointer-events-none" />
-        
-        <div className="relative z-10 text-left">
-          <h1 className="text-5xl font-black text-white mb-2 tracking-tighter flex items-center gap-4">
-            <div className="p-3 bg-emerald-500 rounded-3xl shadow-2xl shadow-emerald-500/20 text-white transform group-hover:scale-110 transition-transform duration-500">
-              <Building size={32} />
-            </div>
-            Corporate IDENTITY
-          </h1>
-          <p className="text-emerald-400 font-black ml-[4.5rem] uppercase tracking-[0.3em] text-[10px]">ENTREPRISE PROFILE & DOCUMENTATION PARAMETERS</p>
-        </div>
-
-        <div className="flex flex-wrap gap-4 relative z-10">
-          <Button onClick={handleSave} disabled={loading} className="h-14 px-8 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-black shadow-xl shadow-emerald-600/20 transition-all active:scale-95">
-            {loading ? <Loader2 className="w-5 h-5 mr-3 animate-spin" /> : <Save className="w-5 h-5 mr-3" />}
-            Save Profile
-          </Button>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Logo Section */}
-        <Card className="bg-card border-border shadow-sm">
-          <CardHeader className="border-b border-border">
-            <CardTitle className="text-foreground flex items-center gap-2">
-              <ImageIcon className="w-5 h-5 text-emerald-500" />
-              โลโก้บริษัท
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="text-center">
-            <div 
-              className="w-48 h-48 mx-auto rounded-xl border-2 border-dashed border-border flex items-center justify-center cursor-pointer hover:border-blue-500 transition-colors bg-muted/50 overflow-hidden relative"
-              onClick={() => !uploading && fileInputRef.current?.click()}
-            >
-              {uploading && (
-                <div className="absolute inset-0 bg-background/50 flex items-center justify-center z-10 backdrop-blur-sm">
-                  <Loader2 className="w-8 h-8 text-emerald-600 animate-spin" />
+      <div className="space-y-12 pb-20 p-4 lg:p-10">
+        {/* Tactical Elite Header */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-10 bg-[#0a0518]/60 backdrop-blur-3xl p-10 rounded-br-[6rem] rounded-tl-[3rem] border border-white/5 shadow-2xl relative overflow-hidden group">
+            <div className="absolute top-0 right-0 w-80 h-80 bg-primary/10 blur-[120px] rounded-full -mr-40 -mt-40 pointer-events-none" />
+            
+            <div className="relative z-10 space-y-8">
+                <button onClick={() => router.back()} className="inline-flex items-center gap-2 text-slate-500 hover:text-primary transition-all font-black uppercase tracking-[0.4em] text-[10px] group/back italic">
+                    <ArrowLeft className="w-4 h-4 group-hover/back:-translate-x-1 transition-transform" /> 
+                    Command Control
+                </button>
+                <div className="flex items-center gap-6">
+                    <div className="p-4 bg-primary/20 rounded-[2.5rem] border-2 border-primary/30 shadow-[0_0_40px_rgba(255,30,133,0.2)] text-primary group-hover:scale-110 transition-all duration-500">
+                        <Building size={42} strokeWidth={2.5} />
+                    </div>
+                    <div>
+                        <h1 className="text-5xl font-black text-white tracking-widest uppercase leading-none italic premium-text-gradient">
+                            Corporate ID
+                        </h1>
+                        <p className="text-[10px] font-black text-primary uppercase tracking-[0.6em] mt-2 opacity-80 italic italic">Entity Profile & Legal Documentation Parameters</p>
+                    </div>
                 </div>
-              )}
-              {logoPreview ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={logoPreview} alt="Logo" className="w-full h-full object-contain p-2" />
-              ) : (
-                <div className="text-center">
-                  <Upload className="w-12 h-12 text-muted-foreground/30 mx-auto mb-2" />
-                  <p className="text-sm text-muted-foreground">คลิกเพื่ออัปโหลด</p>
-                  <p className="text-xs text-muted-foreground/50">PNG, JPG (สูงสุด 2MB)</p>
+            </div>
+
+            <div className="flex flex-col items-end gap-6 relative z-10">
+                <div className="bg-white/5 border border-white/10 px-6 py-3 rounded-2xl flex items-center gap-3 backdrop-blur-md">
+                    <div className="w-2 h-2 rounded-full bg-primary animate-pulse shadow-[0_0_10px_rgba(255,30,133,1)]" />
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">PROFILE_STATUS: VERIFIED</span>
                 </div>
-              )}
-            </div>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleLogoUpload}
-              className="hidden"
-            />
-            <p className="text-xs text-muted-foreground mt-4">
-              แนะนำ: ใช้ภาพขนาด 400x400 พิกเซล พื้นหลังโปร่งใส
-            </p>
-            {logoPreview && (
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="mt-4 border-border hover:bg-muted text-foreground"
-                onClick={() => setLogoPreview(null)}
-              >
-                ลบโลโก้
-              </Button>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Company Info */}
-        <Card className="bg-card border-border shadow-sm lg:col-span-2">
-          <CardHeader className="border-b border-border">
-            <CardTitle className="text-foreground flex items-center gap-2">
-              <FileText className="w-5 h-5 text-emerald-600" />
-              ข้อมูลทั่วไป
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label className="text-muted-foreground">ชื่อบริษัท (ไทย) *</Label>
-                <Input
-                  value={formData.company_name}
-                  onChange={(e) => updateForm("company_name", e.target.value)}
-                  placeholder="บริษัท ขนส่งดี จำกัด"
-                  className="bg-card border-border text-foreground focus:ring-blue-500"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label className="text-muted-foreground">ชื่อบริษัท (อังกฤษ)</Label>
-                <Input
-                  value={formData.company_name_en}
-                  onChange={(e) => updateForm("company_name_en", e.target.value)}
-                  placeholder="Good Transport Co., Ltd."
-                  className="bg-card border-border text-foreground focus:ring-blue-500"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label className="text-muted-foreground flex items-center gap-1">
-                  <CreditCard className="w-3 h-3" /> เลขประจำตัวผู้เสียภาษี
-                </Label>
-                <Input
-                  value={formData.tax_id}
-                  onChange={(e) => updateForm("tax_id", e.target.value)}
-                  placeholder="0123456789012"
-                  className="bg-card border-border text-foreground focus:ring-blue-500"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label className="text-muted-foreground">สาขา</Label>
-                <Input
-                  value={formData.branch}
-                  onChange={(e) => updateForm("branch", e.target.value)}
-                  placeholder="สำนักงานใหญ่"
-                  className="bg-card border-border text-foreground focus:ring-blue-500"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label className="text-muted-foreground flex items-center gap-1">
-                <MapPin className="w-3 h-3" /> ที่อยู่
-              </Label>
-              <Textarea
-                value={formData.address}
-                onChange={(e) => updateForm("address", e.target.value)}
-                placeholder="123 ถนนสุขุมวิท แขวงคลองตัน เขตคลองเตย กรุงเทพฯ 10110"
-                className="bg-card border-border text-foreground focus:ring-blue-500 min-h-[80px]"
-              />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label className="text-muted-foreground flex items-center gap-1">
-                  <Phone className="w-3 h-3" /> โทรศัพท์
-                </Label>
-                <Input
-                  value={formData.phone}
-                  onChange={(e) => updateForm("phone", e.target.value)}
-                  placeholder="02-XXX-XXXX"
-                  className="bg-card border-border text-foreground focus:ring-blue-500"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label className="text-muted-foreground">แฟกซ์</Label>
-                <Input
-                  value={formData.fax}
-                  onChange={(e) => updateForm("fax", e.target.value)}
-                  placeholder="02-XXX-XXXX"
-                  className="bg-card border-border text-foreground focus:ring-blue-500"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label className="text-muted-foreground flex items-center gap-1">
-                  <Mail className="w-3 h-3" /> อีเมล
-                </Label>
-                <Input
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => updateForm("email", e.target.value)}
-                  placeholder="info@company.com"
-                  className="bg-card border-border text-foreground focus:ring-blue-500"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label className="text-muted-foreground flex items-center gap-1">
-                <Globe className="w-3 h-3" /> เว็บไซต์
-              </Label>
-              <Input
-                value={formData.website}
-                onChange={(e) => updateForm("website", e.target.value)}
-                placeholder="https://www.company.com"
-                className="bg-card border-border text-foreground focus:ring-blue-500"
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Bank Info */}
-        <Card className="bg-card border-border shadow-sm lg:col-span-3">
-          <CardHeader className="border-b border-border">
-            <CardTitle className="text-foreground flex items-center gap-2">
-              <CreditCard className="w-5 h-5 text-indigo-500" />
-              ข้อมูลบัญชีธนาคาร (สำหรับใบเสร็จ/ใบแจ้งหนี้)
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label className="text-muted-foreground">ธนาคาร</Label>
-                <select
-                  value={formData.bank_name}
-                  onChange={(e) => updateForm("bank_name", e.target.value)}
-                  className="w-full h-10 px-3 rounded-md bg-card border border-border text-foreground focus:ring-2 focus:ring-blue-500 transition-all outline-none"
+                <PremiumButton 
+                    onClick={handleSave} 
+                    disabled={loading} 
+                    className="h-16 px-12 rounded-2xl bg-primary text-white border-0 shadow-[0_20px_50px_rgba(255,30,133,0.3)] gap-4 text-sm tracking-widest"
                 >
-                  <option value="">เลือกธนาคาร</option>
-                  <option value="กรุงเทพ">ธนาคารกรุงเทพ</option>
-                  <option value="กสิกรไทย">ธนาคารกสิกรไทย</option>
-                  <option value="ไทยพาณิชย์">ธนาคารไทยพาณิชย์</option>
-                  <option value="กรุงไทย">ธนาคารกรุงไทย</option>
-                  <option value="ทหารไทยธนชาต">ธนาคารทหารไทยธนชาต</option>
-                  <option value="กรุงศรี">ธนาคารกรุงศรีอยุธยา</option>
-                </select>
-              </div>
-              <div className="space-y-2">
-                <Label className="text-muted-foreground">ชื่อบัญชี</Label>
-                <Input
-                  value={formData.bank_account_name}
-                  onChange={(e) => updateForm("bank_account_name", e.target.value)}
-                  placeholder="บริษัท ขนส่งดี จำกัด"
-                  className="bg-card border-border text-foreground focus:ring-blue-500"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label className="text-muted-foreground">เลขที่บัญชี</Label>
-                <Input
-                  value={formData.bank_account_no}
-                  onChange={(e) => updateForm("bank_account_no", e.target.value)}
-                  placeholder="XXX-X-XXXXX-X"
-                  className="bg-card border-border text-foreground focus:ring-blue-500"
-                />
-              </div>
+                    {loading ? <Loader2 size={24} className="animate-spin" /> : <Save size={24} />}
+                    COMMIT_IDENTITY_CHANGES
+                </PremiumButton>
             </div>
-          </CardContent>
-        </Card>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+          {/* Logo Entity Card */}
+          <div className="lg:col-span-4 lg:sticky lg:top-10 h-fit">
+            <PremiumCard className="bg-[#0a0518]/40 border-2 border-white/5 shadow-3xl rounded-[4rem] overflow-hidden group/logo">
+                <div className="p-10 border-b border-white/5 bg-black/40 relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 blur-[40px] pointer-events-none" />
+                    <h3 className="text-xl font-black text-white tracking-widest uppercase italic flex items-center gap-3">
+                        <ImageIcon size={20} className="text-primary" />
+                        Visual Signature
+                    </h3>
+                </div>
+                <div className="p-10 space-y-8 flex flex-col items-center">
+                    <div 
+                        className="w-64 h-64 rounded-[3rem] border-4 border-dashed border-white/5 flex items-center justify-center cursor-pointer hover:border-primary/50 transition-all bg-black/40 overflow-hidden relative group/upload"
+                        onClick={() => !uploading && fileInputRef.current?.click()}
+                    >
+                        {uploading && (
+                            <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center z-10 backdrop-blur-md">
+                                <Loader2 className="w-10 h-10 text-primary animate-spin mb-4" />
+                                <span className="text-[8px] font-black text-primary uppercase tracking-[0.4em]">UPLOADING_BUFFER...</span>
+                            </div>
+                        )}
+                        {logoPreview ? (
+                            <img src={logoPreview} alt="Logo" className="w-full h-full object-contain p-8 group-hover/upload:scale-105 transition-transform duration-700" />
+                        ) : (
+                            <div className="text-center space-y-4">
+                                <div className="p-6 bg-white/5 rounded-full border border-white/10 text-slate-500 group-hover/upload:text-primary group-hover/upload:bg-primary/20 transition-all">
+                                    <Upload size={40} />
+                                </div>
+                                <div className="space-y-1">
+                                    <p className="text-[10px] font-black text-white uppercase tracking-widest">INITIALIZE_UPLINK</p>
+                                    <p className="text-[8px] font-bold text-slate-600 uppercase tracking-widest italic">PNG/JPG (MAX 2MB)</p>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                    <input ref={fileInputRef} type="file" accept="image/*" onChange={handleLogoUpload} className="hidden" />
+                    
+                    <div className="w-full p-6 rounded-3xl bg-white/5 border border-white/5 text-center">
+                         <p className="text-[9px] font-black text-slate-500 leading-relaxed uppercase tracking-widest italic">
+                            OPTIMAL DIMENSIONS: 400x400 PX <br />
+                            ALPHA CHANNEL (TRANSPARENT) RECOMMENDED
+                         </p>
+                    </div>
+
+                    {logoPreview && (
+                      <PremiumButton 
+                        variant="outline" 
+                        className="w-full h-14 rounded-2xl border-rose-500/20 text-rose-500 bg-rose-500/5 hover:bg-rose-600 hover:text-white transition-all text-[10px] font-black uppercase tracking-widest italic"
+                        onClick={() => setLogoPreview(null)}
+                      >
+                        PURGE_SIGNATURE
+                      </PremiumButton>
+                    )}
+                </div>
+            </PremiumCard>
+          </div>
+
+          {/* Form Details */}
+          <div className="lg:col-span-8 space-y-10">
+            {/* General Intelligence */}
+            <PremiumCard className="bg-[#0a0518]/40 border-2 border-white/5 shadow-3xl rounded-[4rem] overflow-hidden group/info">
+                <div className="p-10 border-b border-white/5 bg-black/40 flex items-center justify-between">
+                    <h3 className="text-xl font-black text-white tracking-widest uppercase italic flex items-center gap-3">
+                        <FileText size={20} className="text-primary" />
+                        Entity Parameters
+                    </h3>
+                    <div className="px-5 py-1.5 rounded-xl bg-primary/10 text-[9px] font-black text-primary uppercase tracking-[0.3em] border border-primary/20 italic">
+                        GENERAL_INTEL
+                    </div>
+                </div>
+                <div className="p-12 space-y-10">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                        <div className="space-y-4">
+                            <Label className="text-[10px] font-black uppercase text-primary/60 tracking-[0.4em] ml-6">ENTITY_NAME (TH)</Label>
+                            <Input
+                                value={formData.company_name}
+                                onChange={(e) => updateForm("company_name", e.target.value)}
+                                placeholder="บริษัท..."
+                                className="h-16 bg-black/40 border-white/5 rounded-[1.5rem] focus:border-primary/50 transition-all text-white font-black italic tracking-widest pl-8 shadow-inner"
+                            />
+                        </div>
+                        <div className="space-y-4">
+                            <Label className="text-[10px] font-black uppercase text-primary/60 tracking-[0.4em] ml-6">ENTITY_NAME (EN)</Label>
+                            <Input
+                                value={formData.company_name_en}
+                                onChange={(e) => updateForm("company_name_en", e.target.value)}
+                                placeholder="Corporate..."
+                                className="h-16 bg-black/40 border-white/5 rounded-[1.5rem] focus:border-primary/50 transition-all text-white font-black italic tracking-widest pl-8 shadow-inner"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                        <div className="space-y-4">
+                            <Label className="text-[10px] font-black uppercase text-primary/60 tracking-[0.4em] ml-6 flex items-center gap-2">
+                                <CreditCard size={12} /> TAX_IDENTIFIER
+                            </Label>
+                            <Input
+                                value={formData.tax_id}
+                                onChange={(e) => updateForm("tax_id", e.target.value)}
+                                placeholder="0XXXXXXXXXXXX"
+                                className="h-16 bg-black/40 border-white/5 rounded-[1.5rem] focus:border-primary/50 transition-all text-white font-black italic tracking-widest pl-8 shadow-inner"
+                            />
+                        </div>
+                        <div className="space-y-4">
+                            <Label className="text-[10px] font-black uppercase text-primary/60 tracking-[0.4em] ml-6">NODE_DESIGNATION (Branch)</Label>
+                            <Input
+                                value={formData.branch}
+                                onChange={(e) => updateForm("branch", e.target.value)}
+                                placeholder="HQ..."
+                                className="h-16 bg-black/40 border-white/5 rounded-[1.5rem] focus:border-primary/50 transition-all text-white font-black italic tracking-widest pl-8 shadow-inner"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="space-y-4">
+                        <Label className="text-[10px] font-black uppercase text-primary/60 tracking-[0.4em] ml-6 flex items-center gap-2">
+                            <MapPin size={12} /> GEOSPATIAL_CORE (Address)
+                        </Label>
+                        <Textarea
+                            value={formData.address}
+                            onChange={(e) => updateForm("address", e.target.value)}
+                            placeholder="Physical deployment site..."
+                            className="bg-black/40 border-white/5 rounded-[2rem] text-white font-black italic tracking-widest pl-8 p-6 shadow-inner min-h-[120px] focus:border-primary/50 transition-all resize-none"
+                        />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+                        <div className="space-y-4">
+                            <Label className="text-[10px] font-black uppercase text-primary/60 tracking-[0.4em] ml-6 flex items-center gap-2">
+                                <Phone size={12} /> VOICE_LINK
+                            </Label>
+                            <Input
+                                value={formData.phone}
+                                onChange={(e) => updateForm("phone", e.target.value)}
+                                placeholder="Phone..."
+                                className="h-16 bg-black/40 border-white/5 rounded-[1.5rem] focus:border-primary/50 transition-all text-white font-black italic tracking-widest pl-8 shadow-inner"
+                            />
+                        </div>
+                        <div className="space-y-4">
+                            <Label className="text-[10px] font-black uppercase text-primary/60 tracking-[0.4em] ml-6">FAX_LINK</Label>
+                            <Input
+                                value={formData.fax}
+                                onChange={(e) => updateForm("fax", e.target.value)}
+                                placeholder="Fax..."
+                                className="h-16 bg-black/40 border-white/5 rounded-[1.5rem] focus:border-primary/50 transition-all text-white font-black italic tracking-widest pl-8 shadow-inner"
+                            />
+                        </div>
+                        <div className="space-y-4">
+                            <Label className="text-[10px] font-black uppercase text-primary/60 tracking-[0.4em] ml-6 flex items-center gap-2">
+                                <Mail size={12} /> SIGNAL_SMTP (Email)
+                            </Label>
+                            <Input
+                                type="email"
+                                value={formData.email}
+                                onChange={(e) => updateForm("email", e.target.value)}
+                                placeholder="info@..."
+                                className="h-16 bg-black/40 border-white/5 rounded-[1.5rem] focus:border-primary/50 transition-all text-white font-black italic tracking-widest pl-8 shadow-inner"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="space-y-4">
+                        <Label className="text-[10px] font-black uppercase text-primary/60 tracking-[0.4em] ml-6 flex items-center gap-2">
+                            <Globe size={12} /> DIGITAL_DOMAIN (Website)
+                        </Label>
+                        <Input
+                            value={formData.website}
+                            onChange={(e) => updateForm("website", e.target.value)}
+                            placeholder="https://..."
+                            className="h-16 bg-black/40 border-white/5 rounded-[1.5rem] focus:border-primary/50 transition-all text-white font-black italic tracking-widest pl-8 shadow-inner"
+                        />
+                    </div>
+                </div>
+            </PremiumCard>
+
+            {/* Financial Config */}
+            <PremiumCard className="bg-[#0a0518]/40 border-2 border-white/5 shadow-3xl rounded-[4rem] overflow-hidden group/finance">
+                <div className="p-10 border-b border-white/5 bg-black/40 flex items-center justify-between">
+                    <h3 className="text-xl font-black text-white tracking-widest uppercase italic flex items-center gap-3">
+                        <CreditCard size={20} className="text-indigo-400" />
+                        Settlement Parameters
+                    </h3>
+                    <div className="px-5 py-1.5 rounded-xl bg-indigo-500/10 text-[9px] font-black text-indigo-400 uppercase tracking-[0.3em] border border-indigo-500/20 italic">
+                        FISCAL_CONFIG
+                    </div>
+                </div>
+                <div className="p-12 space-y-10">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+                        <div className="space-y-4">
+                            <Label className="text-[10px] font-black uppercase text-indigo-400/60 tracking-[0.4em] ml-6">INSTITUTION</Label>
+                            <select
+                                value={formData.bank_name}
+                                onChange={(e) => updateForm("bank_name", e.target.value)}
+                                className="w-full h-16 px-8 rounded-[1.5rem] bg-black/40 border-2 border-white/5 text-white font-black italic tracking-widest focus:border-indigo-500/50 transition-all outline-none shadow-inner"
+                            >
+                                <option value="" className="bg-black">SELECT_LINK</option>
+                                <option value="กรุงเทพ" className="bg-black text-white">BKK_BANK</option>
+                                <option value="กสิกรไทย" className="bg-black text-white">KBANK</option>
+                                <option value="ไทยพาณิชย์" className="bg-black text-white">SCB</option>
+                                <option value="กรุงไทย" className="bg-black text-white">KTB</option>
+                                <option value="ทหารไทยธนชาต" className="bg-black text-white">TTB</option>
+                                <option value="กรุงศรี" className="bg-black text-white">BAY</option>
+                            </select>
+                        </div>
+                        <div className="space-y-4">
+                            <Label className="text-[10px] font-black uppercase text-indigo-400/60 tracking-[0.4em] ml-6">ACCOUNT_NULL (Holder Name)</Label>
+                            <Input
+                                value={formData.bank_account_name}
+                                onChange={(e) => updateForm("bank_account_name", e.target.value)}
+                                placeholder="Account name..."
+                                className="h-16 bg-black/40 border-white/5 rounded-[1.5rem] focus:border-indigo-500/50 transition-all text-white font-black italic tracking-widest pl-8 shadow-inner"
+                            />
+                        </div>
+                        <div className="space-y-4">
+                            <Label className="text-[10px] font-black uppercase text-indigo-400/60 tracking-[0.4em] ml-6">ACCOUNT_VECTOR (Number)</Label>
+                            <Input
+                                value={formData.bank_account_no}
+                                onChange={(e) => updateForm("bank_account_no", e.target.value)}
+                                placeholder="XXX-X-XXXXX-X"
+                                className="h-16 bg-black/40 border-white/5 rounded-[1.5rem] focus:border-indigo-500/50 transition-all text-white font-black italic tracking-widest pl-8 shadow-inner"
+                            />
+                        </div>
+                    </div>
+                    
+                    <div className="p-8 rounded-[2.5rem] bg-indigo-500/5 border border-indigo-500/10 shadow-inner group/intel relative overflow-hidden">
+                        <div className="absolute top-0 right-0 p-4 opacity-10">
+                            <ShieldCheck size={40} className="text-indigo-400" />
+                        </div>
+                        <p className="text-[9px] font-black text-indigo-400/60 leading-relaxed uppercase tracking-widest italic relative z-10">
+                            * FISCAL DATA IS EMBEDDED IN SYSTEM-GENERATED INVOICES AND TAX DOCUMENT EMISSIONS.
+                        </p>
+                    </div>
+                </div>
+            </PremiumCard>
+          </div>
+        </div>
+
+        {/* Global Advisory */}
+        <div className="mt-20 p-12 rounded-[3.5rem] bg-primary/5 border-2 border-primary/10 flex flex-col md:flex-row gap-10 items-center relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-80 h-full bg-gradient-to-l from-primary/5 to-transparent pointer-events-none" />
+            <div className="p-6 rounded-[2rem] bg-primary/20 text-primary border-2 border-primary/30 shadow-2xl animate-pulse">
+                <Target size={32} />
+            </div>
+            <div className="space-y-4 text-center md:text-left flex-1">
+                <p className="text-xl font-black text-primary italic uppercase tracking-widest">TACTICAL IDENTITY ADVISORY</p>
+                <p className="text-sm font-bold text-slate-600 leading-relaxed uppercase tracking-wider italic">
+                    All profile parameters are utilized for legal documentation parity across the LogisPro ecosystem. <br />
+                    Ensure Tax Identifiers and Fiscal Settlement data are configured accurately for regulatory compliance.
+                </p>
+            </div>
+            <PremiumButton variant="outline" className="h-14 px-10 rounded-2xl border-white/10 text-white gap-3 uppercase font-black text-[10px] tracking-[0.3em] ml-auto italic">
+                <UserCheck size={18} /> VERIFY_IDENTITY
+            </PremiumButton>
+        </div>
       </div>
     </DashboardLayout>
   )

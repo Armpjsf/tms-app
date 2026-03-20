@@ -1,3 +1,4 @@
+"use client"
 
 import { 
   getFinancialStats, 
@@ -35,8 +36,7 @@ import { ExportAllButton } from "@/components/analytics/export-all-button"
 import { ProfitabilitySection } from "@/components/analytics/profitability-section"
 
 import { PremiumCard } from "@/components/ui/premium-card"
-import { cn } from "@/lib/utils"
-import { BarChart3, TrendingUp, Truck, ShieldAlert, Layers, Trophy, Star, Zap, Building2, Activity } from "lucide-react"
+import { BarChart3, TrendingUp, Truck, ShieldAlert, Layers, Trophy, Star, Zap, Activity } from "lucide-react"
 
 interface DriverStats {
   name: string
@@ -45,71 +45,198 @@ interface DriverStats {
   revenue: number
 }
 
-export async function DashboardContent({ 
-  startDate, 
-  endDate, 
-  branchId 
-}: { 
+import { useState, useEffect } from "react"
+import { useLanguage } from "@/components/providers/language-provider"
+
+interface DashboardContentProps {
   startDate?: string
   endDate?: string
-  branchId: string 
-}) {
-  
-  // Fetch all analytics data in parallel with filters
-  const [
-    financials, 
-    revenueTrend, 
-    topCustomers, 
-    opStats, 
-    statusDist, 
-    branchPerf, 
-    subPerf,
-    exeKPIs,
-    billing,
-    fuel,
-    maintenance,
-    safety,
-    workforce,
-    routes,
-    driverLeaderboard,
-    vehicleProfitability,
-    esgStats
-  ] = await Promise.all([
-    getFinancialStats(startDate, endDate, branchId),
-    getRevenueTrend(startDate, endDate, branchId),
-    getTopCustomers(startDate, endDate, branchId),
-    getOperationalStats(branchId, startDate, endDate),
-    getJobStatusDistribution(startDate, endDate, branchId),
-    getBranchPerformance(startDate, endDate),
-    getSubcontractorPerformance(startDate, endDate, branchId),
-    getExecutiveKPIs(startDate, endDate, branchId),
-    getBillingAnalytics(startDate, endDate, branchId),
-    getFuelAnalytics(startDate, endDate),
-    getMaintenanceSchedule(),
-    getSafetyAnalytics(startDate, endDate, branchId),
-    getWorkforceAnalytics(startDate, endDate, branchId),
-    getRouteEfficiency(startDate, endDate, branchId),
-    getDriverLeaderboard(startDate, endDate, branchId),
-    getVehicleProfitability(startDate, endDate, branchId),
-    getESGStats(startDate, endDate, branchId)
-  ])
+  branchId?: string
+  financials?: unknown
+  revenueTrend?: unknown[]
+  topCustomers?: unknown[]
+  opStats?: unknown
+  statusDist?: unknown[]
+  branchPerf?: unknown[]
+  subPerf?: unknown[]
+  exeKPIs?: unknown
+  billing?: unknown
+  fuel?: unknown
+  maintenance?: unknown
+  safety?: unknown
+  workforce?: unknown
+  routes?: unknown[]
+  driverLeaderboard?: unknown[]
+  vehicleProfitability?: unknown[]
+  esgStats?: unknown
+}
+
+export function DashboardContent({ 
+  startDate,
+  endDate,
+  branchId,
+  financials: initialFinancials,
+  revenueTrend: initialRevenueTrend,
+  topCustomers: initialTopCustomers,
+  opStats: initialOpStats,
+  statusDist: initialStatusDist,
+  branchPerf: initialBranchPerf,
+  subPerf: initialSubPerf,
+  exeKPIs: initialExeKPIs,
+  billing: initialBilling,
+  fuel: initialFuel,
+  maintenance: initialMaintenance,
+  safety: initialSafety,
+  workforce: initialWorkforce,
+  routes: initialRoutes,
+  driverLeaderboard: initialDriverLeaderboard,
+  vehicleProfitability: initialVehicleProfitability,
+  esgStats: initialEsgStats
+}: DashboardContentProps) {
+  const { t } = useLanguage()
+  const [data, setData] = useState({
+    financials: initialFinancials,
+    revenueTrend: initialRevenueTrend,
+    topCustomers: initialTopCustomers,
+    opStats: initialOpStats,
+    statusDist: initialStatusDist,
+    branchPerf: initialBranchPerf,
+    subPerf: initialSubPerf,
+    exeKPIs: initialExeKPIs,
+    billing: initialBilling,
+    fuel: initialFuel,
+    maintenance: initialMaintenance,
+    safety: initialSafety,
+    workforce: initialWorkforce,
+    routes: initialRoutes,
+    driverLeaderboard: initialDriverLeaderboard,
+    vehicleProfitability: initialVehicleProfitability,
+    esgStats: initialEsgStats,
+    loading: true
+  })
+
+  useEffect(() => {
+    async function loadStats() {
+      setData(prev => ({ ...prev, loading: true }))
+      try {
+        const [
+          financials,
+          revenueTrend,
+          topCustomers,
+          opStats,
+          statusDist,
+          branchPerf,
+          subPerf,
+          exeKPIs,
+          routes,
+          driverLeaderboard,
+          vehicleProfitability,
+          billing,
+          fuel,
+          maintenance,
+          safety,
+          workforce,
+          esgStats
+        ] = await Promise.all([
+          getFinancialStats(startDate, endDate, branchId),
+          getRevenueTrend(startDate, endDate, branchId),
+          getTopCustomers(startDate, endDate, branchId),
+          getOperationalStats(startDate, endDate, branchId),
+          getJobStatusDistribution(startDate, endDate, branchId),
+          getBranchPerformance(startDate, endDate),
+          getSubcontractorPerformance(startDate, endDate, branchId),
+          getExecutiveKPIs(startDate, endDate, branchId),
+          getRouteEfficiency(startDate, endDate, branchId),
+          getDriverLeaderboard(startDate, endDate, branchId),
+          getVehicleProfitability(startDate, endDate, branchId),
+          getBillingAnalytics(startDate, endDate, branchId),
+          getFuelAnalytics(startDate, endDate),
+          getMaintenanceSchedule(),
+          getSafetyAnalytics(startDate, endDate, branchId),
+          getWorkforceAnalytics(startDate, endDate, branchId),
+          getESGStats(startDate, endDate, branchId)
+        ])
+
+        setData({
+          financials: financials as any,
+          revenueTrend: revenueTrend as any[],
+          topCustomers: topCustomers as any[],
+          opStats: opStats as any,
+          statusDist: statusDist as any[],
+          branchPerf: branchPerf as any[],
+          subPerf: subPerf as any[],
+          exeKPIs: exeKPIs as any,
+          routes: routes as any[],
+          driverLeaderboard: driverLeaderboard as any[],
+          vehicleProfitability: vehicleProfitability as any[],
+          billing: billing as any,
+          fuel: fuel as any,
+          maintenance: maintenance as any,
+          safety: safety as any,
+          workforce: workforce as any,
+          esgStats: esgStats as any,
+          loading: false
+        })
+      } catch (error) {
+        console.error("Dashboard Intelligence Error:", error)
+        setData(prev => ({ ...prev, loading: false }))
+      }
+    }
+
+    loadStats()
+  }, [startDate, endDate, branchId])
+
+  const {
+    financials,
+    revenueTrend = [],
+    topCustomers = [],
+    opStats = { fleet: { onTimeDelivery: 0, utilization: 0, health: 0 } } as any,
+    statusDist = [],
+    branchPerf = [],
+    subPerf = [],
+    exeKPIs = {},
+    billing = {},
+    fuel = {},
+    maintenance = { overdue: [] },
+    safety = {},
+    workforce = {},
+    routes = [],
+    driverLeaderboard = [],
+    vehicleProfitability = [],
+    esgStats = {},
+    loading
+  } = data
+
+  if (loading) {
+    return (
+        <div className="space-y-12 animate-pulse">
+            <div className="h-24 bg-[#0a0518] rounded-[2rem] border border-white/5" />
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+                {[1, 2, 3, 4].map(i => (
+                    <div key={i} className="h-56 bg-[#0a0518] rounded-br-[4rem] rounded-tl-[2rem] border border-white/5" />
+                ))}
+            </div>
+            <div className="h-[600px] bg-[#0a0518] rounded-br-[6rem] rounded-tl-[3rem] border border-white/5" />
+        </div>
+    )
+  }
 
   return (
-    <div className="space-y-24">
-        {/* Intelligence Data Utility Bar */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 p-10 bg-slate-950 border border-slate-800 rounded-[3rem] shadow-2xl relative overflow-hidden group">
-            <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-transparent pointer-events-none" />
-            <div className="flex items-center gap-6 relative z-10">
-                <div className="w-14 h-14 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-2xl shadow-blue-500/40 border border-white/10 group-hover:scale-110 transition-transform duration-500">
-                    <Zap size={24} className="animate-pulse" />
+    <div className="space-y-32">
+        {/* Hub Utility Matrix */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-10 p-12 bg-[#0a0518] border-2 border-white/5 rounded-[4rem] shadow-3xl relative overflow-hidden group">
+            <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-transparent pointer-events-none" />
+            <div className="flex items-center gap-8 relative z-10">
+                <div className="w-16 h-16 bg-primary/20 rounded-[2rem] flex items-center justify-center text-primary shadow-[0_0_30px_rgba(255,30,133,0.3)] border-2 border-primary/30 group-hover:scale-110 transition-transform duration-500">
+                    <Zap size={28} strokeWidth={2.5} className="animate-pulse" />
                 </div>
                 <div>
-                    <h3 className="text-lg font-black text-white uppercase tracking-[0.2em] italic leading-tight">Tactical Intelligence Feed</h3>
-                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.3em] mt-1 italic">Fleet-wide data synchronization: ACTIVE // NOMINAL STATUS</p>
+                    <h3 className="text-xl font-black text-white uppercase tracking-[0.3em] italic italic leading-none mb-3">{t('common.tactical_cluster')}</h3>
+                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.6em] italic">{t('common.network_stable')}</p>
                 </div>
             </div>
             
-            <div className="flex items-center gap-3 relative z-10">
+            <div className="flex items-center gap-4 relative z-10">
                 <ExportAllButton 
                     data={{
                         financials,
@@ -133,81 +260,87 @@ export async function DashboardContent({
             </div>
         </div>
 
-        {/* Section 1: Financial Intelligence COMMAND */}
-        <section className="space-y-12 relative">
-          <div className="flex items-center gap-5 group/h">
-              <div className="p-4 bg-emerald-500 rounded-2xl text-white shadow-2xl shadow-emerald-500/20 group-hover/h:scale-110 transition-transform duration-500 border border-white/10">
-                  <TrendingUp size={28} />
+        {/* Section 1: Financial Intelligence HUB */}
+        <section className="space-y-16">
+          <div className="flex items-center gap-8 group/h">
+              <div className="p-5 bg-emerald-500/20 rounded-3xl text-emerald-500 shadow-[0_0_30px_rgba(16,185,129,0.2)] border-2 border-emerald-500/30 group-hover/h:scale-110 transition-transform duration-500">
+                  <TrendingUp size={36} strokeWidth={2.5} />
               </div>
-              <div>
-                  <h2 className="text-4xl font-black text-white tracking-tighter italic uppercase premium-text-gradient">Financial Intelligence</h2>
-                  <p className="text-emerald-500 text-[11px] font-black uppercase tracking-[0.4em] mt-1 italic">Commercial Vector & Revenue Growth Monitoring // TIER-1 AUDIT</p>
+              <div className="space-y-2">
+                  <h2 className="text-5xl font-black text-white tracking-widest italic uppercase">{t('common.financial_node')}</h2>
+                  <p className="text-emerald-500 text-[11px] font-black uppercase tracking-[0.6em] italic">Commercial realization & Fiscal liquidity monitoring // Q1-S1</p>
               </div>
           </div>
           
           <FinancialSummaryCards data={exeKPIs} />
           
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-              <PremiumCard className="lg:col-span-2 overflow-hidden p-0 bg-white border-none shadow-[0_30px_100px_rgba(0,0,0,0.1)] rounded-br-[5rem] rounded-tl-[3rem]">
-                  <div className="p-8 border-b border-slate-50 bg-slate-950 relative overflow-hidden flex items-center justify-between">
-                      <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 to-transparent pointer-events-none" />
-                      <div className="flex items-center gap-3 relative z-10">
-                          <div className="p-2 bg-emerald-600 rounded-xl text-white shadow-lg">
-                              <BarChart3 size={18} />
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+              <PremiumCard className="lg:col-span-2 overflow-hidden p-0 bg-[#0a0518] border-2 border-white/5 shadow-3xl rounded-br-[6rem] rounded-tl-[3rem]">
+                  <div className="p-10 border-b border-white/5 bg-black/40 relative overflow-hidden flex items-center justify-between">
+                      <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary to-transparent" />
+                      <div className="flex items-center gap-5 relative z-10">
+                          <div className="p-3 bg-primary/20 rounded-2xl text-primary border border-primary/30 shadow-[0_0_20px_rgba(255,30,133,0.2)]">
+                              <BarChart3 size={24} />
                           </div>
                           <div>
-                              <h3 className="text-xl font-black text-white tracking-tight italic uppercase">Market Yield Dynamics</h3>
-                              <p className="text-emerald-400 text-[9px] font-bold uppercase tracking-[0.2em]">Temporal performance & Gross realization Real-time Feed</p>
+                              <h3 className="text-2xl font-black text-white tracking-tighter italic uppercase">{t('common.revenue_dynamics')}</h3>
+                              <p className="text-primary text-[10px] font-black uppercase tracking-[0.4em]">Temporal realization across fleet vectors</p>
                           </div>
                       </div>
                   </div>
-                  <div className="p-10 min-h-[450px]"><RevenueTrendChart data={revenueTrend} /></div>
+                  <div className="p-12 min-h-[500px]"><RevenueTrendChart data={revenueTrend} /></div>
               </PremiumCard>
               
               <div className="flex flex-col">
-                 <PremiumCard className="overflow-hidden p-0 bg-slate-950 border-none shadow-2xl rounded-br-[4rem] rounded-tl-[21rem] group/leaderboard flex-1">
-                    <div className="p-10 border-b border-white/5 relative overflow-hidden">
-                        <div className="absolute inset-0 bg-gradient-to-br from-amber-500/10 to-transparent pointer-events-none" />
-                        <div className="flex items-center gap-4 relative z-10">
-                            <div className="p-3 bg-amber-600 rounded-2xl text-white shadow-2xl shadow-amber-500/40 border border-white/10">
-                                <Trophy size={20} />
+                 <PremiumCard className="overflow-hidden p-0 bg-[#0a0518] border-2 border-white/5 shadow-3xl rounded-br-[5rem] rounded-tl-[3rem] group/leaderboard flex-1 relative">
+                    <div className="p-12 border-b border-white/5 relative overflow-hidden bg-black/40">
+                        <div className="absolute top-0 right-0 p-8 opacity-20 group-hover/leaderboard:opacity-100 transition-opacity">
+                             <Trophy size={48} className="text-primary" />
+                        </div>
+                        <div className="flex items-center gap-5 relative z-10">
+                            <div className="p-4 bg-primary/20 rounded-3xl text-primary border-2 border-primary/30">
+                                <Star size={24} className="animate-pulse" />
                             </div>
-                            <div>
-                                <h3 className="text-xl font-black text-white tracking-tight italic uppercase">Operator ELITE</h3>
-                                <p className="text-amber-400 text-[9px] font-bold uppercase tracking-[0.2em]">Top Asset performance Registry</p>
+                            <div className="space-y-1">
+                                <h3 className="text-2xl font-black text-white tracking-tighter italic uppercase">{t('common.elite_force')}</h3>
+                                <p className="text-primary text-[10px] font-black uppercase tracking-[0.4em]">{t('dashboard.top_tier_asset')}</p>
                             </div>
                         </div>
                     </div>
-                    <div className="p-0">
-                        <div className="divide-y divide-white/5">
-                            {driverLeaderboard.slice(0, 6).map((driver: DriverStats, idx: number) => (
-                                <div key={driver.name} className="p-8 flex items-center justify-between group/driver transition-all hover:bg-white/5 border-l-4 border-transparent hover:border-amber-500">
-                                    <div className="flex items-center gap-6">
-                                        <div className="relative">
-                                            <div className="w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center text-xs font-black text-white border border-white/10 group-hover/driver:border-amber-500/50 transition-colors uppercase italic">
-                                                {driver.name.slice(0, 2)}
-                                            </div>
-                                            {idx < 3 && (
-                                                <div className="absolute -top-2 -right-2 p-1.5 bg-amber-500 rounded-full shadow-2xl border-2 border-slate-950">
-                                                    <Star size={10} className="fill-white text-white" />
-                                                </div>
-                                            )}
+                    <div className="p-2 space-y-2">
+                        {((driverLeaderboard as any[]) || []).slice(0, 6).map((driver: DriverStats, idx: number) => (
+                            <div key={driver.name} className="p-10 flex items-center justify-between group/driver transition-all hover:bg-white/5 rounded-3xl border-2 border-transparent hover:border-primary/20">
+                                <div className="flex items-center gap-8">
+                                    <div className="relative">
+                                        <div className="w-16 h-16 rounded-[2rem] bg-white/5 flex items-center justify-center text-sm font-black text-white border-2 border-white/5 group-hover/driver:border-primary/50 transition-all uppercase italic">
+                                            {driver.name?.slice(0, 2) || "???"}
                                         </div>
-                                        <div>
-                                            <div className="text-sm font-black text-white tracking-tight uppercase italic">{driver.name}</div>
-                                            <div className="text-[9px] text-slate-500 font-bold uppercase tracking-[0.2em] mt-1.5 flex items-center gap-2">
-                                                {driver.completedJobs} OPS // <span className="text-amber-400">{driver.onTimeRate.toFixed(1)}% SYNC</span>
+                                        {idx < 3 && (
+                                            <div className="absolute -top-3 -right-3 p-2 bg-primary rounded-full shadow-2xl border-4 border-[#0a0518]">
+                                                <Trophy size={12} className="text-white" />
                                             </div>
-                                        </div>
+                                        )}
                                     </div>
-                                    <div className="text-right">
-                                        <div className="text-lg font-black text-emerald-400 italic bg-emerald-500/5 px-3 py-1 rounded-xl tracking-tighter border border-emerald-500/10 shadow-sm transition-all group-hover/driver:scale-105 group-hover/driver:bg-emerald-500/10">
-                                            ฿{Math.round(driver.revenue / 1000)}K
+                                    <div className="space-y-2">
+                                        <div className="text-lg font-black text-white tracking-widest uppercase italic leading-none">{driver.name}</div>
+                                        <div className="flex items-center gap-4">
+                                           <div className="text-[10px] text-slate-500 font-black uppercase tracking-[0.4em] flex items-center gap-2">
+                                              {driver.completedJobs} OPS
+                                           </div>
+                                           <div className="h-1 w-1 rounded-full bg-slate-800" />
+                                           <div className="text-[10px] text-primary font-black uppercase tracking-[0.4em]">
+                                              {(driver.onTimeRate || 0).toFixed(1)}% SYNC
+                                           </div>
                                         </div>
                                     </div>
                                 </div>
-                            ))}
-                        </div>
+                                <div className="text-right">
+                                    <div className="text-2xl font-black text-white italic tracking-tighter bg-primary/10 px-6 py-2 rounded-2xl border-2 border-primary/20 group-hover/driver:scale-110 transition-transform">
+                                        ฿{Math.round((driver.revenue || 0) / 1000)}K
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
                     </div>
                  </PremiumCard>
               </div>
@@ -218,17 +351,15 @@ export async function DashboardContent({
           <CustomerRouteSection customers={topCustomers} routes={routes} />
         </section>
         
-        <div className="h-px bg-slate-100" />
-
-        {/* Section 2: Fleet & Operations COMMAND */}
-        <section className="space-y-12">
-           <div className="flex items-center gap-5 group/h">
-              <div className="p-4 bg-blue-600 rounded-2xl text-white shadow-2xl shadow-blue-500/20 group-hover/h:scale-110 transition-transform duration-500 border border-white/10">
-                  <Truck size={28} />
+        {/* Section 2: Fleet COMMAND */}
+        <section className="space-y-16">
+           <div className="flex items-center gap-8 group/h">
+              <div className="p-5 bg-blue-500/20 rounded-3xl text-blue-500 shadow-[0_0_30px_rgba(59,130,246,0.2)] border-2 border-blue-500/30 group-hover/h:scale-110 transition-transform duration-500">
+                  <Truck size={36} strokeWidth={2.5} />
               </div>
-              <div>
-                  <h2 className="text-4xl font-black text-white tracking-tighter italic uppercase premium-text-gradient">Fleet Command</h2>
-                  <p className="text-blue-600 text-[11px] font-black uppercase tracking-[0.4em] mt-1 italic">Operational Throughput & Asset Utilization Registry // REAL-TIME MONITOR</p>
+              <div className="space-y-2">
+                  <h2 className="text-5xl font-black text-white tracking-widest italic uppercase">{t('common.asset_tactical')}</h2>
+                  <p className="text-blue-500 text-[11px] font-black uppercase tracking-[0.6em] italic">{t('dashboard.operational_throughput')} & {t('dashboard.tier_1_monitoring')}</p>
               </div>
            </div>
            
@@ -238,89 +369,90 @@ export async function DashboardContent({
            <MaintenanceSection data={maintenance} />
         </section>
 
-        <div className="h-px bg-slate-100" />
-
-        {/* Section 3: Workforce & Safety COMMAND */}
-        <section className="space-y-12">
-           <div className="flex items-center gap-5 group/h">
-              <div className="p-4 bg-rose-600 rounded-2xl text-white shadow-2xl shadow-rose-500/20 group-hover/h:scale-110 transition-transform duration-500 border border-white/10">
-                  <ShieldAlert size={28} />
+        {/* Section 3: Safety HUB */}
+        <section className="space-y-16">
+           <div className="flex items-center gap-8 group/h">
+              <div className="p-5 bg-rose-500/20 rounded-3xl text-rose-500 shadow-[0_0_30px_rgba(244,63,94,0.2)] border-2 border-rose-500/30 group-hover/h:scale-110 transition-transform duration-500">
+                  <ShieldAlert size={36} strokeWidth={2.5} />
               </div>
-              <div>
-                  <h2 className="text-4xl font-black text-white tracking-tighter italic uppercase premium-text-gradient">Tactical Safety</h2>
-                  <p className="text-rose-600 text-[11px] font-black uppercase tracking-[0.4em] mt-1 italic">Human Capital Efficiency & Safety Protocol Audit // CRITICAL VECTORS</p>
+              <div className="space-y-2">
+                  <h2 className="text-5xl font-black text-white tracking-widest italic uppercase">{t('common.protocol_integrity')}</h2>
+                  <p className="text-rose-500 text-[11px] font-black uppercase tracking-[0.6em] italic">{t('dashboard.human_capital_efficiency')} & {t('dashboard.safety_protocol_audit')} {"//"} {t('dashboard.critical_vectors')}</p>
               </div>
            </div>
            
-           <div className="grid grid-cols-1 space-y-12">
+           <div className="grid grid-cols-1 space-y-16">
                <WorkforceSection data={workforce} />
                <SafetySection data={safety} />
                <ESGSection data={esgStats} />
            </div>
         </section>
 
-        <div className="h-px bg-slate-100" />
-
-        {/* Section 4: Sector Integrity COMMAND */}
-        <section className="space-y-12">
-          <div className="flex items-center gap-5 group/h">
-              <div className="p-4 bg-slate-950 rounded-2xl text-white shadow-2xl shadow-slate-950/20 group-hover/h:scale-110 transition-transform duration-500 border border-white/10">
-                  <Layers size={28} />
+        {/* Section 4: System Cluster COMMAND */}
+        <section className="space-y-16">
+          <div className="flex items-center gap-8 group/h">
+              <div className="p-5 bg-primary/20 rounded-3xl text-primary shadow-[0_0_30px_rgba(255,30,133,0.2)] border-2 border-primary/30 group-hover/h:scale-110 transition-transform duration-500">
+                  <Layers size={36} strokeWidth={2.5} />
               </div>
-              <div>
-                  <h2 className="text-4xl font-black text-white tracking-tighter italic uppercase premium-text-gradient">Sector Integrity</h2>
-                  <p className="text-slate-500 text-[11px] font-black uppercase tracking-[0.4em] mt-1 italic">Cross-Functional Operational Health Scorecards // AGGREGATE INDEX</p>
+              <div className="space-y-2">
+                  <h2 className="text-5xl font-black text-white tracking-widest italic uppercase">{t('common.system_cluster')}</h2>
+                  <p className="text-primary text-[11px] font-black uppercase tracking-[0.6em] italic">{t('dashboard.health_index')} {"//"} {t('dashboard.aggregate_nodes')}</p>
               </div>
           </div>
           
           <ExecutiveSectorHealth 
               sectors={[
                   {
-                      title: "Tactical Operations",
+                      title: t('dashboard.tactical_flux'),
                       icon: "layers",
                       href: "/admin/jobs",
                       metrics: [
-                          { label: "Execution Success", value: `${opStats.fleet.onTimeDelivery.toFixed(1)}%`, status: opStats.fleet.onTimeDelivery > 90 ? 'good' : 'warning' },
-                          { label: "Active Mission Pipeline", value: statusDist.reduce((a: number, b: { value: number }) => a + b.value, 0), status: 'good' }
+                          { label: t('dashboard.sync_success'), value: `${opStats.fleet.onTimeDelivery.toFixed(1)}%`, status: opStats.fleet.onTimeDelivery > 90 ? 'good' : 'warning' },
+                          { label: t('dashboard.current_pipeline'), value: statusDist.reduce((a: number, b: any) => a + b.value, 0), status: 'good' }
                       ]
                   },
                   {
-                      title: "Asset Readiness",
+                      title: t('dashboard.asset_readiness'),
                       icon: "truck",
                       href: "/admin/vehicles/dashboard",
                       metrics: [
-                          { label: "Fleet Utilization", value: `${opStats.fleet.utilization.toFixed(1)}%`, status: opStats.fleet.utilization > 70 ? 'good' : 'warning' },
+                          { label: t('dashboard.fleet_capacity'), value: `${opStats.fleet.utilization.toFixed(1)}%`, status: opStats.fleet.utilization > 70 ? 'good' : 'warning' },
                           { 
-                            label: "Technical Integrity", 
-                            value: opStats.fleet.health >= 90 ? "NOMINAL" : opStats.fleet.health >= 50 ? "DEGRADED" : "CRITICAL", 
+                            label: t('dashboard.technical_status'), 
+                            value: opStats.fleet.health >= 90 ? "OPTIMAL" : opStats.fleet.health >= 50 ? "DEGRADED" : "CRITICAL", 
                             status: opStats.fleet.health >= 90 ? 'good' : opStats.fleet.health >= 50 ? 'warning' : 'critical' 
                           }
                       ]
                   },
                   {
-                      title: "Regional Intelligence",
+                      title: t('dashboard.regional_node_index'),
                       icon: "building",
                       href: "/admin/analytics/regional",
                       metrics: [
-                          { label: "Strategic Branches", value: branchPerf.length, status: 'good' },
-                          { label: "Apex Branch", value: branchPerf[0]?.branchName || 'N/A', status: 'good' }
+                          { label: t('dashboard.active_branches'), value: branchPerf.length, status: 'good' },
+                          { label: t('dashboard.apex_vector'), value: (branchPerf[0] as any)?.branchName || 'N/A', status: 'good' }
                       ]
                   }
               ]}
           />
         </section>
 
-        {/* Strategic Footer Notice */}
-        <div className="p-12 bg-slate-50 rounded-[3rem] border border-slate-100 flex flex-col items-center text-center space-y-4">
-            <div className="p-3 bg-white rounded-2xl shadow-sm border border-slate-100">
-                <Activity size={24} className="text-slate-400" />
+        {/* Tactical Footer */}
+        <div className="p-20 bg-[#0a0518] rounded-[6rem] border-2 border-white/5 flex flex-col items-center text-center space-y-8 relative overflow-hidden group">
+            <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent pointer-events-none" />
+            <div className="p-6 bg-primary/20 rounded-[2.5rem] shadow-[0_0_40px_rgba(255,30,133,0.2)] border-2 border-primary/30 group-hover:scale-110 transition-all duration-700">
+                <Activity size={40} className="text-primary" />
             </div>
-            <div>
-                <h4 className="text-sm font-black text-slate-900 uppercase tracking-widest italic">Industrial Elite Data Engine</h4>
-                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em] mt-1.5 leading-relaxed">
-                    Aggregate Intelligence synchronized across all operational vectors. <br />
-                    Tactical data processing cycle complete.
+            <div className="space-y-4">
+                <h4 className="text-2xl font-black text-white uppercase tracking-[0.4em] italic">{t('common.intel_engine')}</h4>
+                <p className="text-xs text-slate-500 font-black uppercase tracking-[0.2em] max-w-2xl leading-relaxed">
+                    {t('dashboard.intel_sync_warning')} <br />
+                    {t('dashboard.system_cycle_complete')}
                 </p>
+            </div>
+            <div className="flex items-center gap-4 py-2 px-6 bg-white/5 rounded-full border border-white/10">
+               <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+               <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">{t('common.sync_complete')}</span>
             </div>
         </div>
     </div>

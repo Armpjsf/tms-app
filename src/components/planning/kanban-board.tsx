@@ -35,6 +35,8 @@ import {
   Package,
   MoreVertical,
   User,
+  Zap,
+  Target
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { updateJob } from "@/app/planning/actions"
@@ -62,11 +64,11 @@ interface Column {
 }
 
 const COLUMNS: Column[] = [
-  { id: "New", title: "งานใหม่", statuses: ["New", "Pending"], color: "emerald" },
-  { id: "Assigned", title: "มอบหมายแล้ว", statuses: ["Assigned", "Confirmed"], color: "blue" },
-  { id: "In Transit", title: "กำลังขนส่ง", statuses: ["In Progress", "In Transit", "Accepted", "Arrived Pickup", "Arrived Dropoff"], color: "amber" },
-  { id: "Delivered", title: "ส่งสินค้าแล้ว", statuses: ["Delivered"], color: "teal" },
-  { id: "Completed", title: "ปิดงานแล้ว", statuses: ["Completed"], color: "gray" },
+  { id: "New", title: "NEW ORDERS", statuses: ["New", "Pending"], color: "emerald" },
+  { id: "Assigned", title: "ASSIGNED", statuses: ["Assigned", "Confirmed"], color: "blue" },
+  { id: "In Transit", title: "IN TRANSIT", statuses: ["In Progress", "In Transit", "Accepted", "Arrived Pickup", "Arrived Dropoff"], color: "amber" },
+  { id: "Delivered", title: "DELIVERED", statuses: ["Delivered"], color: "teal" },
+  { id: "Completed", title: "COMPLETED", statuses: ["Completed"], color: "gray" },
 ]
 
 export function KanbanBoard({
@@ -123,18 +125,14 @@ export function KanbanBoard({
     const activeJobId = active.id as string
     const overId = over.id as string
 
-    // Find the active job
     const activeJob = jobs.find((j) => j.Job_ID === activeJobId)
     if (!activeJob) return
 
-    // If dropped over a column or a card in a column
     let newStatus: string | null = null
     
-    // If overId is a column ID
     if (COLUMNS.some(c => c.id === overId)) {
         newStatus = COLUMNS.find(c => c.id === overId)!.statuses[0]
     } else {
-        // If overId is a job ID
         const overJob = jobs.find(j => j.Job_ID === overId)
         if (overJob) {
             newStatus = overJob.Job_Status || "New"
@@ -142,19 +140,17 @@ export function KanbanBoard({
     }
 
     if (newStatus && newStatus !== activeJob.Job_Status) {
-        // Optimistic UI update
         const updatedJobs = jobs.map(j => 
             j.Job_ID === activeJobId ? { ...j, Job_Status: newStatus } : j
         )
         setJobs(updatedJobs)
 
-        // Backend update
         const res = await updateJob(activeJobId, { Job_Status: newStatus })
         if (res.success) {
-            toast.success(`อัปเดตสถานะงาน ${activeJobId} เป็น ${newStatus}`)
+            toast.success(`SYSTEM: DATA_PACKET_SYNC ${activeJobId} -> ${newStatus.toUpperCase()}`)
         } else {
-            toast.error("ไม่สามารถอัปเดตสถานะได้")
-            setJobs(initialJobs) // Rollback
+            toast.error("PROTOCOL_ERROR: SYNC_FAILURE")
+            setJobs(initialJobs)
         }
     }
   }
@@ -162,7 +158,7 @@ export function KanbanBoard({
   const activeJob = activeId ? jobs.find(j => j.Job_ID === activeId) : null
 
   return (
-    <div className="flex gap-6 h-[calc(100vh-350px)] overflow-x-auto pb-4 custom-scrollbar">
+    <div className="flex gap-8 h-[calc(100vh-380px)] overflow-x-auto pb-6 custom-scrollbar px-2">
       <DndContext
         sensors={sensors}
         collisionDetection={closestCorners}
@@ -188,24 +184,14 @@ export function KanbanBoard({
             sideEffects: defaultDropAnimationSideEffects({
                 styles: {
                     active: {
-                        opacity: '0.5',
+                        opacity: '0.3',
                     },
                 },
             }),
         }}>
           {activeJob ? (
-            <div className="w-[300px]">
-                <KanbanCard 
-                    job={activeJob} 
-                    isDragging 
-                    drivers={drivers}
-                    vehicles={vehicles}
-                    customers={customers}
-                    routes={routes}
-                    subcontractors={subcontractors}
-                    canViewPrice={canViewPrice}
-                    canDelete={canDelete}
-                />
+            <div className="w-[320px] rotate-3 scale-105 transition-transform duration-500">
+                <JobCard job={activeJob} isOverlay />
             </div>
           ) : null}
         </DragOverlay>
@@ -248,28 +234,28 @@ function KanbanColumn({
   return (
     <div 
       ref={setNodeRef}
-      className="flex flex-col w-[350px] min-w-[350px] bg-gray-50/50 rounded-[2rem] border border-gray-100 p-4"
+      className="flex flex-col w-[350px] min-w-[350px] bg-black/40 rounded-[3rem] border border-white/5 p-6 backdrop-blur-2xl relative group/col transition-all duration-700 hover:border-white/10"
     >
-      <div className="flex items-center justify-between mb-6 px-2">
-        <div className="flex items-center gap-3">
+      <div className="flex items-center justify-between mb-8 px-4">
+        <div className="flex items-center gap-4">
           <div className={cn(
-            "w-3 h-3 rounded-full shadow-lg",
-            column.color === 'emerald' ? "bg-emerald-500 shadow-emerald-500/20" :
-            column.color === 'blue' ? "bg-blue-500 shadow-blue-500/20" :
-            column.color === 'amber' ? "bg-amber-500 shadow-amber-500/20" :
-            column.color === 'teal' ? "bg-teal-500 shadow-teal-500/20" : "bg-gray-400"
+            "w-2.5 h-2.5 rounded-full shadow-[0_0_12px_currentColor] animate-pulse",
+            column.color === 'emerald' ? "text-emerald-500 bg-emerald-500" :
+            column.color === 'blue' ? "text-blue-500 bg-blue-500" :
+            column.color === 'amber' ? "text-amber-500 bg-amber-500" :
+            column.color === 'teal' ? "text-primary bg-primary" : "text-slate-700 bg-slate-700"
           )} />
-          <h3 className="text-sm font-black text-gray-900 uppercase tracking-widest">{column.title}</h3>
-          <Badge variant="secondary" className="rounded-lg bg-white border-gray-100 text-gray-500 font-bold">
+          <h3 className="text-[10px] font-black text-white uppercase tracking-[0.4em] italic leading-none">{column.title}</h3>
+          <span className="text-[10px] font-black text-slate-500 bg-white/5 px-3 py-1 rounded-full border border-white/5">
             {jobs.length}
-          </Badge>
+          </span>
         </div>
-        <button className="p-2 hover:bg-white rounded-xl transition-colors text-gray-400">
-            <MoreVertical size={16} />
+        <button className="p-2 bg-white/5 rounded-xl border border-white/5 text-slate-500 hover:text-white transition-all">
+            <Target size={14} />
         </button>
       </div>
 
-      <div className="flex-1 space-y-4 overflow-y-auto custom-scrollbar pr-1">
+      <div className="flex-1 space-y-5 overflow-y-auto custom-scrollbar pr-2 min-h-[100px]">
         <SortableContext items={jobs.map(j => j.Job_ID)} strategy={verticalListSortingStrategy}>
           {jobs.map((job) => (
             <KanbanCard 
@@ -287,8 +273,9 @@ function KanbanColumn({
         </SortableContext>
         
         {jobs.length === 0 && (
-            <div className="h-24 border-2 border-dashed border-gray-100 rounded-[1.5rem] flex items-center justify-center text-gray-300 text-xs font-bold uppercase tracking-widest">
-                Drop work here
+            <div className="h-32 border-2 border-dashed border-white/5 rounded-[2rem] flex flex-col items-center justify-center text-slate-800 space-y-2 group-hover/col:border-primary/20 transition-colors">
+                <Zap size={24} className="opacity-10" />
+                <span className="text-[9px] font-black uppercase tracking-[0.3em] opacity-40">Drop Tactical Node</span>
             </div>
         )}
       </div>
@@ -343,7 +330,7 @@ function KanbanCard({
         <div 
             ref={setNodeRef}
             style={style}
-            className="opacity-50 cursor-grabbing"
+            className="opacity-0 cursor-grabbing"
         >
             <JobCard job={job} />
         </div>
@@ -356,7 +343,7 @@ function KanbanCard({
       style={style}
       {...attributes}
       {...listeners}
-      className="cursor-grab active:cursor-grabbing group"
+      className="cursor-pointer active:cursor-grabbing group/card"
     >
         <JobDialog 
             mode="edit"
@@ -378,50 +365,63 @@ function KanbanCard({
   )
 }
 
-function JobCard({ job }: { job: Job }) {
+function JobCard({ job, isOverlay }: { job: Job; isOverlay?: boolean }) {
     return (
-        <PremiumCard className="p-5 hover:border-emerald-500/30 transition-all border-gray-100 shadow-sm hover:shadow-md group-hover:scale-[1.02]">
-            <div className="flex justify-between items-start mb-4">
-                <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">
-                    #{job.Job_ID.slice(-4)}
-                </span>
+        <PremiumCard className={cn(
+            "p-6 rounded-[2.5rem] bg-[#0a0518]/60 border-white/5 shadow-2xl transition-all duration-500 transform group-hover/card:-translate-y-1 group-hover/card:border-primary/30 relative overflow-hidden",
+            isOverlay && "border-primary/40 bg-primary/10 shadow-[0_20px_50px_rgba(255,30,133,0.3)]"
+        )}>
+            <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none group-hover/card:opacity-10 group-hover/card:scale-110 transition-all duration-700">
+                <Package size={60} />
+            </div>
+            
+            <div className="flex justify-between items-start mb-6">
+                <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/5 flex items-center justify-center text-white/40 group-hover/card:bg-primary group-hover/card:text-white transition-all duration-500">
+                        <Package size={18} strokeWidth={2.5} />
+                    </div>
+                    <div>
+                        <p className="text-[11px] font-black text-white tracking-tighter uppercase font-display leading-none group-hover/card:text-primary transition-colors">{job.Job_ID}</p>
+                        <p className="text-[8px] font-black text-slate-600 uppercase tracking-widest mt-1 italic">Mission Node</p>
+                    </div>
+                </div>
                 <Badge className={cn(
-                    "border-0 text-[9px] font-black",
-                    job.Job_Status === 'New' ? "bg-emerald-500/10 text-emerald-600" :
-                    job.Job_Status === 'In Progress' ? "bg-amber-500/10 text-amber-600" :
-                    job.Job_Status === 'Completed' ? "bg-teal-500/10 text-teal-600" : "bg-gray-100 text-gray-500"
+                    "border-0 text-[8px] font-black px-3 py-1 rounded-lg uppercase tracking-widest",
+                    job.Job_Status === 'New' || job.Job_Status === 'Pending' ? "bg-emerald-500/10 text-emerald-500" :
+                    job.Job_Status === 'In Transit' ? "bg-amber-500/10 text-amber-500" :
+                    job.Job_Status === 'Completed' ? "bg-primary/10 text-primary" : "bg-white/5 text-slate-500"
                 )}>
                     {job.Job_Status}
                 </Badge>
             </div>
 
-            <h4 className="text-sm font-black text-gray-900 mb-3 line-clamp-1 group-hover:text-emerald-600 transition-colors">
-                {job.Customer_Name || 'ลูกค้าไม่ระบุ'}
+            <h4 className="text-[13px] font-black text-white mb-4 line-clamp-1 group-hover/card:text-primary transition-colors uppercase italic tracking-tight">
+                {job.Customer_Name || 'Partner Pending'}
             </h4>
 
-            <div className="space-y-2 mb-4">
-                <div className="flex items-center gap-2 text-[10px] font-bold text-gray-500">
-                    <MapPin size={12} className="text-gray-400" />
-                    <span className="truncate">{job.Dest_Location || 'ยังไม่กำหนดจุดส่ง'}</span>
+            <div className="space-y-3 mb-6">
+                <div className="flex items-center gap-3 text-[9px] font-black text-slate-500 uppercase tracking-widest italic">
+                    <MapPin size={12} className="text-primary/40" />
+                    <span className="truncate max-w-[180px]">{job.Dest_Location || 'Grid TBD'}</span>
                 </div>
-                <div className="flex items-center gap-2 text-[10px] font-bold text-gray-500">
-                    <Truck size={12} className="text-gray-400" />
-                    <span>{job.Vehicle_Plate || '-'}</span>
-                    <span className="mx-1 opacity-30">|</span>
-                    <User size={12} className="text-gray-400" />
-                    <span className="truncate">{job.Driver_Name || 'ยังไม่มอบหมาย'}</span>
+                <div className="flex items-center gap-3 text-[9px] font-black text-slate-500 uppercase tracking-widest italic">
+                    <Truck size={12} className="text-primary/40" />
+                    <span className="group-hover/card:text-slate-300 transition-colors">{job.Vehicle_Plate || 'Asset-TBD'}</span>
+                    <span className="mx-1 opacity-20">|</span>
+                    <User size={12} className="text-primary/40" />
+                    <span className="truncate max-w-[120px] group-hover/card:text-slate-300 transition-colors">{job.Driver_Name || 'Unit-PENDING'}</span>
                 </div>
             </div>
 
-            <div className="flex items-center justify-between pt-4 border-t border-gray-50">
-                <div className="flex items-center gap-2 text-[9px] font-black text-gray-400 uppercase tracking-wider">
-                    <Calendar size={12} />
-                    {job.Plan_Date || '-'}
+            <div className="flex items-center justify-between pt-5 border-t border-white/5">
+                <div className="flex items-center gap-2 text-[8px] font-black text-slate-600 uppercase tracking-[0.2em] italic">
+                    <Calendar size={12} className="text-slate-700" />
+                    {job.Plan_Date || 'TBD'}
                 </div>
                 {job.Weight_Kg && job.Weight_Kg > 0 ? (
-                    <div className="flex items-center gap-1.5 px-2 py-0.5 bg-gray-50 rounded-lg">
-                        <Package size={10} className="text-gray-400" />
-                        <span className="text-[9px] font-black text-gray-600">{job.Weight_Kg} KG</span>
+                    <div className="flex items-center gap-1.5 px-3 py-1 bg-white/5 rounded-lg border border-white/5">
+                        <Package size={10} className="text-primary/40" />
+                        <span className="text-[8px] font-black text-white/60 tracking-widest">{job.Weight_Kg} KG</span>
                     </div>
                 ) : null}
             </div>
