@@ -82,12 +82,18 @@ export async function DriversContent({ searchParams, branches = [], isAdmin = fa
         </div>
 
         <div className="flex flex-wrap gap-4 relative z-10">
-            <span className="bg-red-500 text-white px-2 py-1 text-[10px] font-bold">START</span>
-            
-            <PremiumButton className="h-14 px-8 rounded-2xl bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/20">
-                <Plus size={24} className="mr-2" />
-                DIRECT TEST BUTTON
-            </PremiumButton>
+            <DriverDialog 
+                mode="create" 
+                vehicles={vehicles?.data || []}
+                branches={branches || []}
+                subcontractors={subcontractors || []}
+                trigger={
+                    <PremiumButton className="h-14 px-8 rounded-2xl bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/20">
+                        <Plus size={24} className="mr-2" />
+                        Register Driver
+                    </PremiumButton>
+                }
+            />
 
             <ExcelImport 
                 trigger={
@@ -107,20 +113,6 @@ export async function DriversContent({ searchParams, branches = [], isAdmin = fa
                 ]}
                 templateFilename="template_drivers.xlsx"
             />
-
-            <DriverDialog 
-                mode="create" 
-                vehicles={vehicles.data}
-                branches={branches}
-                subcontractors={subcontractors}
-                trigger={
-                    <PremiumButton className="h-14 px-8 rounded-2xl bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/20">
-                        <Plus size={24} className="mr-2" />
-                        REGISTER DIALOG
-                    </PremiumButton>
-                }
-            />
-            <span className="bg-blue-500 text-white px-2 py-1 text-[10px] font-bold">END</span>
         </div>
       </div>
 
