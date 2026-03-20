@@ -59,6 +59,9 @@ export default async function VehiclesPage(props: Props) {
             Fleet Master
           </h1>
           <p className="text-purple-400 font-black ml-[4.5rem] uppercase tracking-[0.3em] text-[10px]">Asset Management • Maintenance Command Control</p>
+          <div className="absolute top-2 right-2 text-white/5 text-[8px] uppercase tracking-tighter select-none pointer-events-none">
+            A:{String(isAdmin)} | B:{branches.length} | S:{subcontractors.length}
+          </div>
         </div>
 
         <div className="flex flex-wrap gap-4 relative z-10">

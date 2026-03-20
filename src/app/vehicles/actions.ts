@@ -1,6 +1,6 @@
 'use server'
 
-import { createClient } from '@/utils/supabase/server'
+import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { getUserBranchId, isSuperAdmin } from '@/lib/permissions'
 import { Vehicle } from "@/lib/supabase/vehicles"
@@ -23,7 +23,7 @@ export type VehicleFormData = {
 }
 
 export async function createVehicle(data: VehicleFormData) {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
   const userBranchId = await getUserBranchId()
   const isAdmin = await isSuperAdmin()
 
@@ -50,7 +50,7 @@ export async function createVehicle(data: VehicleFormData) {
     })
 
   if (error) {
-    return { success: false, message: 'Failed to create vehicle' }
+    return { success: false, message: 'Failed to create vehicle: ' + error.message }
   }
 
   revalidatePath('/vehicles')
@@ -58,7 +58,7 @@ export async function createVehicle(data: VehicleFormData) {
 }
 
 export async function createBulkVehicles(vehicles: any[]) {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
   const branchId = await getUserBranchId()
 
   // Helper to normalize keys
