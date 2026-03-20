@@ -65,6 +65,20 @@ export default async function VehiclesPage(props: Props) {
         </div>
 
         <div className="flex flex-wrap gap-4 relative z-10">
+          <div className="flex items-center gap-2 px-3 py-1 bg-red-500/10 border border-red-500/20 rounded-full h-14">
+            <span className="text-[8px] text-red-500 font-black">TEST MODE</span>
+          </div>
+          <VehicleDialog 
+              mode="create" 
+              branches={branches}
+              subcontractors={subcontractors}
+              trigger={
+                  <PremiumButton className="h-14 px-8 rounded-2xl shadow-purple-500/20">
+                      <Plus size={24} className="mr-2" />
+                      เพิ่มรถใหม่
+                  </PremiumButton>
+              }
+          />
           <ExcelImport 
               trigger={
                   <PremiumButton variant="outline" className="h-14 px-8 rounded-2xl bg-slate-900/50 border-slate-800 text-slate-300 hover:bg-slate-900">
@@ -88,36 +102,10 @@ export default async function VehiclesPage(props: Props) {
                       Tax_Expiry: "2025-12-31",
                       Insurance_Expiry: "2025-12-31",
                       Act_Expiry: "2025-12-31",
-                      Sub_ID: "" // ใส่ ID ผู้รับเหมาถ้ามี
-                  },
-                  { 
-                      Vehicle_Plate: "2กข-5678", 
-                      Vehicle_Type: "6-Wheel", 
-                      Brand: "Isuzu", 
-                      Model: "Elf", 
-                      Active_Status: "Maintenance", 
-                      Current_Mileage: 120000, 
-                      Next_Service_Mileage: 125000,
-                      Max_Weight_kg: 4500,
-                      Max_Volume_cbm: 12.0,
-                      Tax_Expiry: "2025-06-30",
-                      Insurance_Expiry: "2025-06-30",
-                      Act_Expiry: "2025-06-30",
-                      Sub_ID: "SUB-001"
+                      Sub_ID: "" 
                   }
               ]}
               templateFilename="template_vehicles.xlsx"
-          />
-          <VehicleDialog 
-              mode="create" 
-              branches={branches}
-              subcontractors={subcontractors}
-              trigger={
-                  <PremiumButton className="h-14 px-8 rounded-2xl shadow-purple-500/20">
-                      <Plus size={24} className="mr-2" />
-                      เพิ่มรถใหม่
-                  </PremiumButton>
-              }
           />
         </div>
       </div>
