@@ -40,7 +40,7 @@ export async function getAllVehiclesFromTable(): Promise<Vehicle[]> {
     
     let query = supabase.from('Master_Vehicles').select('*')
     
-    if (branchId && branchId !== 'All' && !isSuper) {
+    if (branchId && branchId !== 'All') {
         query = query.eq('Branch_ID', branchId)
     } else if (!isSuper && !isAdminUser && !branchId) {
         return []
@@ -165,7 +165,7 @@ export async function getAllVehicles(page?: number, limit?: number, query?: stri
     
     let queryBuilder = supabase.from('Master_Vehicles').select('*', { count: 'exact' })
     
-    if (branchId && branchId !== 'All' && !isSuper) {
+    if (branchId && branchId !== 'All') {
         queryBuilder = queryBuilder.eq('Branch_ID', branchId)
     } else if (!isSuper && !isAdminUser && !branchId) {
         return { data: [], count: 0 }
@@ -202,7 +202,7 @@ export async function getVehicleStats(providedBranchId?: string) {
       .from('Master_Vehicles')
       .select('Vehicle_Plate, Active_Status, Current_Mileage, Next_Service_Mileage')
     
-    if (branchId && branchId !== 'All' && !isSuper) {
+    if (branchId && branchId !== 'All') {
         query = query.eq('Branch_ID', branchId)
     } else if (!isSuper && !isAdminUser && !branchId) {
         return { total: 0, active: 0, maintenance: 0, dueSoon: 0 }
@@ -240,7 +240,7 @@ export async function getSampledVehicleUtilization(providedBranchId?: string) {
       .select('*')
       .eq('Active_Status', 'Active')
     
-    if (branchId && branchId !== 'All' && !isSuper) {
+    if (branchId && branchId !== 'All') {
         query = query.eq('Branch_ID', branchId)
     } else if (!isSuper && !isAdminUser && !branchId) {
         return null

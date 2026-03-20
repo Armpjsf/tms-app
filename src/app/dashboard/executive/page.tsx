@@ -29,6 +29,7 @@ import { toast } from "sonner"
 import { useBranch } from "@/components/providers/branch-provider"
 import { useRealtime } from "@/hooks/useRealtime"
 import { RealtimeIndicator } from "@/components/ui/realtime-indicator"
+import { AnimatedNumber } from "@/components/ui/animated-number"
 
 const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6']
 
@@ -244,18 +245,23 @@ export default function ExecutiveDashboard() {
                                             {i + 1}
                                         </div>
                                         <div>
-                                            <p className="font-black text-slate-900 uppercase tracking-tighter">{v.plate}</p>
-                                            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Net Profit: ฿{v.netProfit.toLocaleString()}</p>
+                                            <p className="font-black text-slate-950 uppercase tracking-tighter">{v.plate}</p>
+                                            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">
+                                                Net Profit: <AnimatedNumber value={v.netProfit} prefix="฿" />
+                                            </p>
                                         </div>
-                                    </div>
-                                    <div className="text-right">
-                                        <p className="text-emerald-600 font-black tracking-tighter">฿{v.revenue.toLocaleString()}</p>
+                                        </div>
+                                        <div className="text-right">
+                                        <p className="text-emerald-600 font-black tracking-tighter">
+                                            <AnimatedNumber value={v.revenue} prefix="฿" />
+                                        </p>
                                         <p className="text-[10px] text-slate-400 font-bold">REVENUE</p>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </PremiumCard>
+                                        </div>
+                                        </div>
+                                        ))}
+                                        </div>
+                                        </PremiumCard>
+
 
                     {/* Fleet Compliance & Risks */}
                     <PremiumCard className="p-6 bg-white shadow-xl border-none">
@@ -371,7 +377,11 @@ function KpiCard({ title, value, growth, unit, icon, isPercentage = false }: any
             <p className="text-slate-400 font-bold text-[10px] uppercase tracking-widest mb-1">{title}</p>
             <div className="flex items-baseline gap-2">
                 <h3 className="text-3xl font-black text-slate-900 tracking-tighter">
-                    {isPercentage ? `${value.toFixed(1)}` : `฿${value.toLocaleString()}`}
+                    {isPercentage ? (
+                        <AnimatedNumber value={value} decimals={1} suffix="%" />
+                    ) : (
+                        <AnimatedNumber value={value} prefix="฿" />
+                    )}
                 </h3>
                 <span className="text-slate-500 text-xs font-bold">{unit}</span>
             </div>

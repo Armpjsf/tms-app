@@ -51,6 +51,7 @@ export type DriverLocation = {
   lastUpdate?: string
   speed?: number
   heading?: number
+  vehiclePlate?: string
 }
 
 type LeafletMapProps = {
@@ -178,27 +179,28 @@ function MovingMarker({ driver }: { driver: DriverLocation }) {
     let animationFrame: number
     const startPos = lastPosRef.current
     const targetPos: [number, number] = [driver.lat, driver.lng]
-    const duration = 1500 // 1.5 second animation
+    const duration = 2000 // Smooth 2 second interpolation
     const startTime = performance.now()
 
-    // Calculate heading if not provided
-    if (driver.heading === undefined && (startPos[0] !== targetPos[0] || startPos[1] !== targetPos[1])) {
+    // Calculate heading/bearing more smoothly
+    if (startPos[0] !== targetPos[0] || startPos[1] !== targetPos[1]) {
         const y = Math.sin((targetPos[1] - startPos[1]) * (Math.PI / 180)) * Math.cos(targetPos[0] * (Math.PI / 180))
         const x = Math.cos(startPos[0] * (Math.PI / 180)) * Math.sin(targetPos[0] * (Math.PI / 180)) -
                   Math.sin(startPos[0] * (Math.PI / 180)) * Math.cos(targetPos[0] * (Math.PI / 180)) * Math.cos((targetPos[1] - startPos[1]) * (Math.PI / 180))
         let bearing = Math.atan2(y, x) * (180 / Math.PI)
         bearing = (bearing + 360) % 360
         setHeading(bearing)
-    } else if (driver.heading !== undefined) {
-        setHeading(driver.heading)
     }
 
     const animate = (currentTime: number) => {
       const elapsed = currentTime - startTime
       const progress = Math.min(elapsed / duration, 1)
       
-      const lat = startPos[0] + (targetPos[0] - startPos[0]) * progress
-      const lng = startPos[1] + (targetPos[1] - startPos[1]) * progress
+      // Easing function for smoother movement (easeInOutQuad)
+      const ease = progress < 0.5 ? 2 * progress * progress : 1 - Math.pow(-2 * progress + 2, 2) / 2
+      
+      const lat = startPos[0] + (targetPos[0] - startPos[0]) * ease
+      const lng = startPos[1] + (targetPos[1] - startPos[1]) * ease
       
       setCurrentPos([lat, lng])
 
@@ -214,7 +216,7 @@ function MovingMarker({ driver }: { driver: DriverLocation }) {
       cancelAnimationFrame(animationFrame)
       lastPosRef.current = targetPos
     }
-  }, [driver.lat, driver.lng, driver.heading])
+  }, [driver.lat, driver.lng])
 
   return (
     <Marker 
@@ -222,32 +224,42 @@ function MovingMarker({ driver }: { driver: DriverLocation }) {
         icon={L.divIcon({
             className: 'custom-div-icon',
             html: `
-                <div class="relative flex items-center justify-center" style="width: 50px; height: 50px;">
-                    <!-- Direction Aura / Shadow -->
-                    <div class="absolute inset-0 rounded-full bg-emerald-500/10 animate-pulse border border-emerald-500/20" 
-                         style="transform: scale(1.2) rotate(${heading}deg); transition: transform 0.5s ease-out;">
-                        <div class="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1 w-2 h-2 bg-emerald-500 rounded-full shadow-[0_0_10px_rgba(16,185,129,1)]"></div>
+                <div class="relative flex items-center justify-center" style="width: 60px; height: 60px;">
+                    <!-- Floating License Plate -->
+                    ${driver.vehiclePlate ? `
+                    <div class="absolute -top-12 left-1/2 -translate-x-1/2 whitespace-nowrap bg-slate-900/90 text-white text-[10px] font-black px-2 py-1 rounded-lg border border-white/20 shadow-2xl z-30">
+                        ${driver.vehiclePlate}
+                    </div>
+                    ` : ''}
+
+                    <!-- Motion Glow -->
+                    <div class="absolute inset-0 rounded-full bg-emerald-500/5 animate-pulse" style="transform: scale(1.5);"></div>
+                    
+                    <!-- Direction indicator (Triangle) -->
+                    <div class="absolute" style="transform: rotate(${heading}deg) translateY(-28px); transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);">
+                        <div class="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-b-[10px] border-b-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.8)]"></div>
                     </div>
 
                     <!-- Marker Body -->
-                    <div class="relative flex items-center justify-center p-2 bg-slate-950 rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.5)] border border-white/10"
-                         style="transform: rotate(${heading}deg); transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);">
+                    <div class="relative flex items-center justify-center p-2.5 bg-slate-950 rounded-2xl shadow-[0_15px_35px_rgba(0,0,0,0.6)] border border-white/20 transition-all duration-1000"
+                         style="transform: rotate(${heading}deg); border-bottom: 4px solid #10b981;">
                         
-                        <!-- SOS Pulse if active -->
-                        ${driver.status === 'SOS' ? '<div class="absolute inset-0 bg-red-500/40 rounded-xl animate-ping"></div>' : ''}
+                        <!-- SOS / Emergency Highlight -->
+                        ${driver.status === 'SOS' ? '<div class="absolute inset-[-4px] border-2 border-red-500 rounded-2xl animate-ping"></div>' : ''}
                         
-                        <!-- Premium Truck Icon -->
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="${driver.status === 'SOS' ? 'text-red-500' : 'text-emerald-400'} relative z-10">
-                            <path d="M1 14H17M1 14L2 7H14L17 14M1 14V18H3M17 14V18H15M17 14H23V18H21M17 11H21L23 14M7 18C7 19.1046 6.10457 20 5 20C3.89543 20 3 19.1046 3 18C3 16.8954 3.89543 16 5 18ZM7 18C7 16.8954 7.89543 16 9 16C10.1046 16 11 16.8954 11 18M11 18C11 19.1046 10.1046 20 9 20C7.89543 20 7 19.1046 7 18ZM19 18C19 19.1046 18.1046 20 17 20C15.8954 20 15 19.1046 15 18C15 16.8954 15.8954 16 17 16C18.1046 16 19 16.8954 19 18ZM21 18C21 19.1046 20.1046 20 19 20C17.8954 20 17 19.1046 17 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="${driver.status === 'SOS' ? 'text-red-500' : 'text-emerald-400'} relative z-10">
+                            <path d="M1 14H17M1 14L2 7H14L17 14M1 14V18H3M17 14V18H15M17 14H23V18H21M17 11H21L23 14M7 18C7 19.1046 6.10457 20 5 20C3.89543 20 3 19.1046 3 18C3 16.8954 3.89543 16 5 18ZM7 18C7 16.8954 7.89543 16 9 16C10.1046 16 11 16.8954 11 18M11 18C11 19.1046 10.1046 20 9 20C7.89543 20 7 19.1046 7 18ZM19 18C19 19.1046 18.1046 20 17 20C15.8954 20 15 19.1046 15 18C15 16.8954 15.8954 16 17 16C18.1046 16 19 16.8954 19 18ZM21 18C21 19.1046 20.1046 20 19 20C17.8954 20 17 19.1046 17 18" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
                     </div>
 
-                    <!-- Online/Status Badge -->
-                    <div class="absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 border-slate-950 ${driver.status === 'Online' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,1)]' : 'bg-slate-500'} z-20"></div>
+                    <!-- Online Status Pulse -->
+                    <div class="absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-slate-950 ${driver.status === 'Online' ? 'bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,1)]' : 'bg-slate-500'} z-20">
+                        ${driver.status === 'Online' ? '<div class="w-full h-full bg-emerald-400 rounded-full animate-ping opacity-75"></div>' : ''}
+                    </div>
                 </div>
             `,
-            iconSize: [50, 50],
-            iconAnchor: [25, 25],
+            iconSize: [60, 60],
+            iconAnchor: [30, 30],
             popupAnchor: [0, -20]
         })}
     >

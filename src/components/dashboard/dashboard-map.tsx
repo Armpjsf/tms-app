@@ -51,6 +51,7 @@ export function DashboardMap({ drivers, focusPosition, plannedRoute, routeSummar
                 lng: d.Longitude!,
                 status: sosDriverIds.includes(d.Driver_ID) ? 'SOS' : (d.Last_Update ? (new Date(d.Last_Update).getTime() > currentTime - tenMinutes ? 'Online' : 'Offline') : 'Offline'),
                 vehicle: d.Vehicle_Plate,
+                vehiclePlate: d.Vehicle_Plate,
                 speed: (d as { Speed?: number }).Speed || 0,
                 heading: (d as { Heading?: number }).Heading
             }))
