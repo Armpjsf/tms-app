@@ -4,6 +4,7 @@ import { MapContainer, TileLayer, Marker, Popup, useMap, Polyline } from 'react-
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { useEffect, useState, useRef } from 'react'
+import { ProfitabilityHeatmap, ProfitPoint } from './profitability-heatmap'
 
 // Fix for default marker icons in Next.js
 const defaultIcon = L.icon({
@@ -64,6 +65,8 @@ type LeafletMapProps = {
   routeHistory?: [number, number][]
   focusPosition?: [number, number]
   plannedRoute?: { lat: number; lng: number; name: string; type: 'start' | 'stop' | 'end' }[]
+  profitPoints?: ProfitPoint[]
+  showHeatmap?: boolean
 }
 
 function RecenterMap({ position, zoom }: { position: [number, number], zoom?: number }) {
@@ -94,7 +97,9 @@ export default function LeafletMap({
   showCurrentPosition = false,
   routeHistory = [],
   focusPosition,
-  plannedRoute = []
+  plannedRoute = [],
+  profitPoints = [],
+  showHeatmap = false
 }: LeafletMapProps) {
   const mapCenter = currentPosition || (routeHistory.length > 0 ? routeHistory[0] : (plannedRoute.length > 0 ? [plannedRoute[0].lat, plannedRoute[0].lng] : center)) as [number, number]
 
@@ -109,6 +114,10 @@ export default function LeafletMap({
         attribution='&copy; Google Maps'
         url="https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}"
       />
+
+      {showHeatmap && profitPoints.length > 0 && (
+        <ProfitabilityHeatmap data={profitPoints} />
+      )}
 
       {drivers.filter(d => isFinite(d.lat) && isFinite(d.lng)).map((driver) => (
         <MovingMarker key={driver.id} driver={driver} />

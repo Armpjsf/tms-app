@@ -44,7 +44,7 @@ export async function DriversContent({ searchParams, branches = [], isAdmin = fa
     getDriverStats(branchId),
     getAllVehicles(undefined, undefined, undefined, branchId),
     getAllSubcontractors(),
-    getDriverLeaderboard(undefined, undefined), 
+    getDriverLeaderboard(undefined, undefined, branchId), 
     getDriverComplianceStats(branchId),
     getDriverEfficiencySummary(branchId)
   ])
@@ -76,6 +76,7 @@ export async function DriversContent({ searchParams, branches = [], isAdmin = fa
               <Users size={32} />
             </div>
             Driver ELITE {isAdmin ? <span className="text-xl bg-blue-500/20 text-blue-400 border border-blue-500/30 px-3 py-1 rounded-xl align-middle ml-2 font-black">COMMAND</span> : ""}
+            <span className="text-[8px] text-white/5 ml-4 uppercase tracking-tighter">V:200320-1048</span>
           </h1>
           <p className="text-blue-400 font-black ml-[4.5rem] uppercase tracking-[0.3em] text-[10px]">Human Capital & Tactical Performance Control</p>
         </div>
@@ -87,7 +88,7 @@ export async function DriversContent({ searchParams, branches = [], isAdmin = fa
                 branches={branches}
                 subcontractors={subcontractors}
                 trigger={
-                    <PremiumButton className="h-14 px-8 rounded-2xl bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 shadow-lg shadow-blue-500/20">
+                    <PremiumButton className="h-14 px-8 rounded-2xl bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/20 transition-all duration-300 transform hover:scale-105 active:scale-95">
                         <Plus size={24} className="mr-2" />
                         Register Driver
                     </PremiumButton>

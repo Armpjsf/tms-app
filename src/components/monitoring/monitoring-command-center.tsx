@@ -34,6 +34,10 @@ import { Dialog, DialogContent } from "@/components/ui/dialog"
 import { ChatWindow } from "@/components/chat/chat-window"
 import { useRealtime } from "@/hooks/useRealtime"
 import { RealtimeIndicator } from "@/components/ui/realtime-indicator"
+import { predictJobDelay } from "@/services/ai-prediction"
+import { DelayRiskBadge } from "./delay-risk-badge"
+import { calculateSafetyScore } from "@/services/safety-scoring"
+import { SafetyScoreBadge } from "./safety-score-badge"
 
 
 export type DriverWithGPS = Driver & {
@@ -353,6 +357,14 @@ export function MonitoringCommandCenter({
         }
     }
 
+    // AI Prediction Helper
+    const getPrediction = (job: Job) => {
+        if (['Completed', 'Delivered', 'Cancelled'].includes(job.Job_Status)) return null
+        const driver = drivers.find(d => d.Driver_ID === job.Driver_ID)
+        if (!driver || !driver.Latitude || !driver.Longitude) return null
+        return predictJobDelay(job, driver.Latitude, driver.Longitude, driver.Speed || 0)
+    }
+
     const driversWithGPS = useMemo(() => {
         let base: DriverWithGPS[] = []
         if (selectedId) {
@@ -596,14 +608,23 @@ export function MonitoringCommandCenter({
                                     )}
                                 >
                                     <div className="flex items-center justify-between mb-2">
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest leading-none">
-                                                {job.Job_ID.slice(-4)}
-                                            </span>
-                                            {getJobDelayStatus(job) === 'delayed' && (
-                                                <Badge className="bg-red-500 text-white border-0 text-[8px] font-black animate-pulse py-0 h-4">
-                                                    DELAYED
-                                                </Badge>
+                                        <div className="flex flex-col gap-2">
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest leading-none">
+                                                    {job.Job_ID.slice(-4)}
+                                                </span>
+                                                {getJobDelayStatus(job) === 'delayed' && (
+                                                    <Badge className="bg-red-500 text-white border-0 text-[8px] font-black animate-pulse py-0 h-4">
+                                                        DELAYED
+                                                    </Badge>
+                                                )}
+                                            </div>
+                                            {/* AI Prediction Badge */}
+                                            {getPrediction(job) && (
+                                                <DelayRiskBadge 
+                                                    risk={getPrediction(job)!.risk} 
+                                                    reason={getPrediction(job)!.reason} 
+                                                />
                                             )}
                                         </div>
                                         <Badge className={cn(
@@ -699,6 +720,7 @@ export function MonitoringCommandCenter({
             <div className="flex-1 relative">
                 <DashboardMap 
                     drivers={driversWithGPS} 
+                    allJobs={jobs}
                     focusPosition={focusPosition} 
                     plannedRoute={plannedRoute}
                     routeSummary={routeSummary}
