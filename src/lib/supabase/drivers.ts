@@ -39,7 +39,7 @@ export async function getAllDriversFromTable(): Promise<Driver[]> {
     
     let dbQuery = supabase.from('Master_Drivers').select('*')
     
-    if (branchId && branchId !== 'All' && !isSuper) {
+    if (branchId && branchId !== 'All') {
         dbQuery = dbQuery.eq('Branch_ID', branchId)
     } else if (!isSuper && !isAdminUser && !branchId) {
         return []
@@ -227,7 +227,7 @@ export async function getDriverStats(providedBranchId?: string) {
     
     let query = supabase.from('Master_Drivers').select('*')
     
-    if (branchId && branchId !== 'All' && !isSuper) {
+    if (branchId && branchId !== 'All') {
         query = query.eq('Branch_ID', branchId)
     } else if (!isSuper && !isAdminUser && !branchId) {
         return { total: 0, active: 0, onJob: 0 }

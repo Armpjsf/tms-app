@@ -81,20 +81,18 @@ export async function DriversContent({ searchParams, branches = [], isAdmin = fa
         </div>
 
         <div className="flex flex-wrap gap-4 relative z-10">
-            {isAdmin && (
-                <DriverDialog 
-                    mode="create" 
-                    vehicles={vehicles.data}
-                    branches={branches}
-                    subcontractors={subcontractors}
-                    trigger={
-                        <PremiumButton className="h-14 px-8 rounded-2xl bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 shadow-lg shadow-blue-500/20">
-                            <Plus size={24} className="mr-2" />
-                            Register Driver
-                        </PremiumButton>
-                    }
-                />
-            )}
+            <DriverDialog 
+                mode="create" 
+                vehicles={vehicles.data}
+                branches={branches}
+                subcontractors={subcontractors}
+                trigger={
+                    <PremiumButton className="h-14 px-8 rounded-2xl bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 shadow-lg shadow-blue-500/20">
+                        <Plus size={24} className="mr-2" />
+                        Register Driver
+                    </PremiumButton>
+                }
+            />
             <ExcelImport 
                 trigger={
                     <PremiumButton variant="secondary" className="h-14 px-8 rounded-2xl">
@@ -135,13 +133,11 @@ export async function DriversContent({ searchParams, branches = [], isAdmin = fa
         </div>
       </div>
 
-      {isAdmin && (
-        <DriverPerformanceSummary 
-          leaderboard={leaderboard} 
-          compliance={compliance} 
-          efficiency={efficiency} 
-        />
-      )}
+      <DriverPerformanceSummary 
+        leaderboard={leaderboard} 
+        compliance={compliance} 
+        efficiency={efficiency} 
+      />
 
       {/* Stats Bento Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
