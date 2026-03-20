@@ -84,13 +84,13 @@ export async function DriversContent({ searchParams, branches = [], isAdmin = fa
         <div className="flex flex-wrap gap-4 relative z-10">
             <DriverDialog 
                 mode="create" 
-                vehicles={[]}
-                branches={[]}
-                subcontractors={[]}
+                vehicles={(vehicles?.data || []).slice(0, 100)}
+                branches={branches || []}
+                subcontractors={subcontractors || []}
                 trigger={
                     <PremiumButton className="h-14 px-8 rounded-2xl bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/20">
                         <Plus size={24} className="mr-2" />
-                        Register Driver (Safe Test)
+                        Register Driver
                     </PremiumButton>
                 }
             />
