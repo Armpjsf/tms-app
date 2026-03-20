@@ -197,7 +197,7 @@ export function DriverDialog({
                 </SelectTrigger>
                 <SelectContent>
                     <SelectItem value="__independent__">อิสระ / รถบริษัท (Independent)</SelectItem>
-                    {subcontractors.map((s) => (
+                    {Array.isArray(subcontractors) && subcontractors.filter(s => s?.Sub_ID).map((s) => (
                         <SelectItem key={s.Sub_ID} value={s.Sub_ID}>{s.Sub_Name} ({s.Sub_ID})</SelectItem>
                     ))}
                 </SelectContent>
@@ -212,7 +212,7 @@ export function DriverDialog({
                 </SelectTrigger>
                 <SelectContent>
                     <SelectItem value="__none__">ไม่ระบุ / ไม่มีรถประจำ</SelectItem>
-                    {vehicles.map((v) => (
+                    {Array.isArray(vehicles) && vehicles.filter(v => v?.Vehicle_Plate).map((v) => (
                         <SelectItem key={v.Vehicle_Plate} value={v.Vehicle_Plate}>
                             {v.Vehicle_Plate} {v.Brand ? `(${v.Brand})` : ''}
                         </SelectItem>
