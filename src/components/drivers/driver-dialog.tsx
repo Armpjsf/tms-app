@@ -18,7 +18,7 @@ import { BANKS } from "@/lib/constants/banks"
 type DriverDialogProps = {
   mode?: 'create' | 'edit'
   driver?: Partial<Driver>
-  vehicles?: { vehicle_plate: string; brand?: string }[]
+  vehicles?: { Vehicle_Plate: string; Brand?: string | null }[]
   subcontractors?: Subcontractor[]
   branches?: Branch[]
   trigger?: React.ReactNode
@@ -212,9 +212,9 @@ export function DriverDialog({
                 </SelectTrigger>
                 <SelectContent>
                     <SelectItem value="__none__">ไม่ระบุ / ไม่มีรถประจำ</SelectItem>
-                    {vehicles.map((v: { vehicle_plate: string; brand?: string }) => (
-                        <SelectItem key={v.vehicle_plate} value={v.vehicle_plate}>
-                            {v.vehicle_plate} {v.brand ? `(${v.brand})` : ''}
+                    {vehicles.map((v) => (
+                        <SelectItem key={v.Vehicle_Plate} value={v.Vehicle_Plate}>
+                            {v.Vehicle_Plate} {v.Brand ? `(${v.Brand})` : ''}
                         </SelectItem>
                     ))}
                 </SelectContent>
