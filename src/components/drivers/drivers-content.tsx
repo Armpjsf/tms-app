@@ -82,7 +82,13 @@ export async function DriversContent({ searchParams, branches = [], isAdmin = fa
         </div>
 
         <div className="flex flex-wrap gap-4 relative z-10">
-            <span className="text-[10px] text-white/5 uppercase">d:area-start</span>
+            <span className="bg-red-500 text-white px-2 py-1 text-[10px] font-bold">START</span>
+            
+            <PremiumButton className="h-14 px-8 rounded-2xl bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/20">
+                <Plus size={24} className="mr-2" />
+                DIRECT TEST BUTTON
+            </PremiumButton>
+
             <ExcelImport 
                 trigger={
                     <PremiumButton variant="secondary" className="h-14 px-8 rounded-2xl">
@@ -96,14 +102,7 @@ export async function DriversContent({ searchParams, branches = [], isAdmin = fa
                     { 
                         Driver_ID: "DRV-001",
                         Driver_Name: "นาย สมชาย ใจดี", 
-                        Mobile_No: "0812345678", 
-                        Password: "password123",
-                        Vehicle_Plate: "1กข-1234",
-                        Expire_Date: "2025-12-31",
-                        Sub_ID: "", 
-                        Bank_Name: "KBank",
-                        Bank_Account_No: "000-0-00000-0",
-                        Bank_Account_Name: "นาย สมชาย ใจดี"
+                        Mobile_No: "0812345678"
                     }
                 ]}
                 templateFilename="template_drivers.xlsx"
@@ -117,11 +116,11 @@ export async function DriversContent({ searchParams, branches = [], isAdmin = fa
                 trigger={
                     <PremiumButton className="h-14 px-8 rounded-2xl bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/20">
                         <Plus size={24} className="mr-2" />
-                        REGISTER DRIVER (V2)
+                        REGISTER DIALOG
                     </PremiumButton>
                 }
             />
-            <span className="text-[10px] text-white/10 uppercase">d:area-end</span>
+            <span className="bg-blue-500 text-white px-2 py-1 text-[10px] font-bold">END</span>
         </div>
       </div>
 
