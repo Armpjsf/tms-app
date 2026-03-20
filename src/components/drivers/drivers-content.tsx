@@ -72,8 +72,7 @@ export async function DriversContent({ searchParams, branches = [], isAdmin = fa
         
         <div className="relative z-10">
           <h1 className="text-5xl font-black text-white tracking-tighter flex items-center gap-3">
-            Driver ELITE <span className="text-lg font-medium px-4 py-1 rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30 uppercase tracking-widest">Command</span>
-            <span className="text-[8px] text-white/10 ml-2">V:200320-1200</span>
+            Driver ELITE <span className="text-lg font-medium px-4 py-1 rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30 uppercase tracking-widest">{isAdmin ? 'Command' : 'Base'}</span>
           </h1>
           <p className="text-blue-400 font-black ml-[4.5rem] uppercase tracking-[0.3em] text-[10px]">Human Capital & Tactical Performance Control</p>
         </div>

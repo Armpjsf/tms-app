@@ -11,16 +11,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { createDriver, updateDriver, type DriverFormData } from "@/app/drivers/actions"
 import { Loader2 } from "lucide-react"
 import { Driver } from "@/lib/supabase/drivers"
-import { Subcontractor } from "@/types/subcontractor"
-import { Branch } from "@/lib/supabase/branches"
 import { BANKS } from "@/lib/constants/banks"
 
 type DriverDialogProps = {
   mode?: 'create' | 'edit'
   driver?: Partial<Driver>
   vehicles?: { Vehicle_Plate: string; Brand?: string | null }[]
-  subcontractors?: Subcontractor[]
-  branches?: Branch[]
+  subcontractors?: { Sub_ID: string; Sub_Name: string }[]
+  branches?: { Branch_ID: string; Branch_Name: string }[]
   trigger?: React.ReactNode
   open?: boolean
   onOpenChange?: (open: boolean) => void
