@@ -168,7 +168,7 @@ export async function getActiveDrivers() {
       .select('*')
       .eq('Active_Status', 'Active')
     
-    if (branchId && branchId !== 'All' && !isSuper) {
+    if (branchId && branchId !== 'All') {
         queryBuilder = queryBuilder.eq('Branch_ID', branchId)
     } else if (!isSuper && !isAdminUser && !branchId) {
         return []
@@ -193,7 +193,7 @@ export async function getAllDrivers(page?: number, limit?: number, query?: strin
     
     let queryBuilder = supabase.from('Master_Drivers').select('*', { count: 'exact' })
     
-    if (branchId && branchId !== 'All' && !isSuper) {
+    if (branchId && branchId !== 'All') {
         queryBuilder = queryBuilder.eq('Branch_ID', branchId)
     } else if (!isSuper && !isAdminUser && !branchId) {
         return { data: [], count: 0 }
