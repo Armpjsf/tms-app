@@ -27,6 +27,8 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { toast } from "sonner"
 import { useBranch } from "@/components/providers/branch-provider"
+import { useRealtime } from "@/hooks/useRealtime"
+import { RealtimeIndicator } from "@/components/ui/realtime-indicator"
 
 const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6']
 
@@ -38,8 +40,8 @@ export default function ExecutiveDashboard() {
     const [remark, setRemark] = useState("")
     const [currentMonth] = useState(new Date().toISOString().slice(0, 7)) // YYYY-MM
 
-    const loadData = async () => {
-        setLoading(true)
+    const loadData = async (showLoading = true) => {
+        if (showLoading) setLoading(true)
         try {
             const [
                 financial, 
@@ -68,13 +70,20 @@ export default function ExecutiveDashboard() {
         } catch (e) {
             toast.error("Failed to load executive data")
         } finally {
-            setLoading(false)
+            if (showLoading) setLoading(false)
         }
     }
+
+    // เปิดระบบ Real-time: คอยฟังการเปลี่ยนแปลงใน Jobs_Main
+    useRealtime('Jobs_Main', (payload) => {
+        console.log("Real-time update received in Executive Dashboard:", payload)
+        loadData(false) // รีเฟรชข้อมูลโดยไม่ต้องขึ้น Loading บดบังหน้าจอ
+    })
 
     useEffect(() => {
         loadData()
     }, [selectedBranch])
+
 
     const handleSaveRemark = async () => {
         setSavingRemark(true)
@@ -105,11 +114,14 @@ export default function ExecutiveDashboard() {
                         </h1>
                         <p className="text-emerald-400 font-black mt-1 uppercase tracking-widest text-[10px]">Financial Intelligence & Operational Performance Control</p>
                     </div>
-                    <div className="flex items-center gap-3 bg-white/5 p-2 rounded-2xl border border-white/10 relative z-10">
-                        <Calendar className="text-emerald-500" size={18} />
-                        <span className="text-white font-bold text-sm uppercase tracking-tighter">
-                            {new Date().toLocaleDateString('th-TH', { month: 'long', year: 'numeric' })}
-                        </span>
+                    <div className="flex flex-col items-end gap-2 relative z-10">
+                        <RealtimeIndicator isLive={true} className="bg-white/10 border-white/20 text-white" />
+                        <div className="flex items-center gap-3 bg-white/5 p-2 rounded-2xl border border-white/10">
+                            <Calendar className="text-emerald-500" size={18} />
+                            <span className="text-white font-bold text-sm uppercase tracking-tighter">
+                                {new Date().toLocaleDateString('th-TH', { month: 'long', year: 'numeric' })}
+                            </span>
+                        </div>
                     </div>
                 </div>
 

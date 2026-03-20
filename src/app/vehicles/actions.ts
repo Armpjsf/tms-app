@@ -6,20 +6,20 @@ import { getUserBranchId, isSuperAdmin } from '@/lib/permissions'
 import { Vehicle } from "@/lib/supabase/vehicles"
 
 export type VehicleFormData = {
-  vehicle_plate: string
-  vehicle_type: string
-  brand: string
-  model: string
-  active_status: string
-  current_mileage?: number
-  next_service_mileage?: number
-  tax_expiry?: string
-  insurance_expiry?: string
-  act_expiry?: string
+  Vehicle_Plate: string
+  Vehicle_Type: string
+  Brand: string
+  Model: string
+  Active_Status: string
+  Current_Mileage?: number
+  Next_Service_Mileage?: number
+  Tax_Expiry?: string
+  Insurance_Expiry?: string
+  Act_Expiry?: string
   Branch_ID?: string
-  sub_id?: string
-  max_weight_kg?: number
-  max_volume_cbm?: number
+  Sub_ID?: string
+  Max_Weight_kg?: number
+  Max_Volume_cbm?: number
 }
 
 export async function createVehicle(data: VehicleFormData) {
@@ -31,22 +31,22 @@ export async function createVehicle(data: VehicleFormData) {
   
 
   const { error } = await supabase
-    .from('master_vehicles')
+    .from('Master_Vehicles')
     .insert({
-      vehicle_plate: data.vehicle_plate,
-      vehicle_type: data.vehicle_type,
-      brand: data.brand,
-      model: data.model,
-      active_status: 'Active',
-      current_mileage: data.current_mileage || 0,
-      next_service_mileage: data.next_service_mileage || 0,
-      tax_expiry: data.tax_expiry,
-      insurance_expiry: data.insurance_expiry,
-      act_expiry: data.act_expiry,
-      sub_id: data.sub_id,
-      max_weight_kg: data.max_weight_kg,
-      max_volume_cbm: data.max_volume_cbm,
-      branch_id: finalBranchId
+      Vehicle_Plate: data.Vehicle_Plate,
+      Vehicle_Type: data.Vehicle_Type,
+      Brand: data.Brand,
+      Model: data.Model,
+      Active_Status: 'Active',
+      Current_Mileage: data.Current_Mileage || 0,
+      Next_Service_Mileage: data.Next_Service_Mileage || 0,
+      Tax_Expiry: data.Tax_Expiry,
+      Insurance_Expiry: data.Insurance_Expiry,
+      Act_Expiry: data.Act_Expiry,
+      Sub_ID: data.Sub_ID,
+      Max_Weight_kg: data.Max_Weight_kg,
+      Max_Volume_cbm: data.Max_Volume_cbm,
+      Branch_ID: finalBranchId
     })
 
   if (error) {
@@ -57,12 +57,12 @@ export async function createVehicle(data: VehicleFormData) {
   return { success: true, message: 'Vehicle created successfully' }
 }
 
-export async function createBulkVehicles(vehicles: Vehicle[]) {
+export async function createBulkVehicles(vehicles: any[]) {
   const supabase = await createClient()
   const branchId = await getUserBranchId()
 
   // Helper to normalize keys
-  const normalizeData = (row: Vehicle) => {
+  const normalizeData = (row: any) => {
     const normalized: Partial<Vehicle> = {}
     
     // Helper to find value by possible keys (case-insensitive)
@@ -79,29 +79,29 @@ export async function createBulkVehicles(vehicles: Vehicle[]) {
     }
 
     // Mapping rules
-    normalized.vehicle_plate = getValue(['vehicle_plate', 'plate', 'ทะเบียน', 'ทะเบียนรถ', 'license_plate', 'licenseplate']) as string
-    normalized.vehicle_type = (getValue(['vehicle_type', 'type', 'ประเภท', 'ประเภทรถ', 'vehicletype']) as string) || '4-Wheel'
-    normalized.brand = getValue(['brand', 'make', 'ยี่ห้อ']) as string
-    normalized.model = getValue(['model', 'รุ่น']) as string
-    normalized.active_status = (getValue(['active_status', 'status', 'สถานะ']) as string) || 'Active'
-    normalized.current_mileage = (getValue(['current_mileage', 'mileage', 'เลขไมล์', 'currentmileage']) as number) || 0
-    normalized.next_service_mileage = (getValue(['next_service_mileage', 'next_service', 'เช็คระยะถัดไป', 'nextservicemileage', 'nextservice']) as number) || 0
+    normalized.Vehicle_Plate = getValue(['vehicle_plate', 'plate', 'ทะเบียน', 'ทะเบียนรถ', 'license_plate', 'licenseplate', 'Vehicle_Plate']) as string
+    normalized.Vehicle_Type = (getValue(['vehicle_type', 'type', 'ประเภท', 'ประเภทรถ', 'vehicletype', 'Vehicle_Type']) as string) || '4-Wheel'
+    normalized.Brand = getValue(['brand', 'make', 'ยี่ห้อ', 'Brand']) as string
+    normalized.Model = getValue(['model', 'รุ่น', 'Model']) as string
+    normalized.Active_Status = (getValue(['active_status', 'status', 'สถานะ', 'Active_Status']) as string) || 'Active'
+    normalized.Current_Mileage = (getValue(['current_mileage', 'mileage', 'เลขไมล์', 'currentmileage', 'Current_Mileage']) as number) || 0
+    normalized.Next_Service_Mileage = (getValue(['next_service_mileage', 'next_service', 'เช็คระยะถัดไป', 'nextservicemileage', 'nextservice', 'Next_Service_Mileage']) as number) || 0
     
     // Compliance Dates
-    normalized.tax_expiry = getValue(['tax_expiry', 'tax_date', 'ภาษี', 'วันหมดอายุภาษี']) as string
-    normalized.insurance_expiry = getValue(['insurance_expiry', 'insurance_date', 'ประกันภัย', 'วันหมดอายุประกัน']) as string
-    normalized.act_expiry = getValue(['act_expiry', 'act_date', 'พรบ', 'วันหมดอายุพรบ']) as string
+    normalized.Tax_Expiry = getValue(['tax_expiry', 'tax_date', 'ภาษี', 'วันหมดอายุภาษี', 'Tax_Expiry']) as string
+    normalized.Insurance_Expiry = getValue(['insurance_expiry', 'insurance_date', 'ประกันภัย', 'วันหมดอายุประกัน', 'Insurance_Expiry']) as string
+    normalized.Act_Expiry = getValue(['act_expiry', 'act_date', 'พรบ', 'วันหมดอายุพรบ', 'Act_Expiry']) as string
     
     // Specs
-    normalized.max_weight_kg = getValue(['max_weight_kg', 'max_weight', 'น้ำหนักบรรทุก', 'capacity_kg']) as number
-    normalized.max_volume_cbm = getValue(['max_volume_cbm', 'max_volume', 'ปริมาตรบรรทุก', 'capacity_cbm']) as number
+    normalized.Max_Weight_kg = getValue(['max_weight_kg', 'max_weight', 'น้ำหนักบรรทุก', 'capacity_kg', 'Max_Weight_kg']) as number
+    normalized.Max_Volume_cbm = getValue(['max_volume_cbm', 'max_volume', 'ปริมาตรบรรทุก', 'capacity_cbm', 'Max_Volume_cbm']) as number
     
     // Entity
-    normalized.sub_id = getValue(['sub_id', 'subcontractor_id', 'รหัสผู้รับเหมา', 'รหัสรถร่วม']) as string
+    normalized.Sub_ID = getValue(['sub_id', 'subcontractor_id', 'รหัสผู้รับเหมา', 'รหัสรถร่วม', 'Sub_ID']) as string
     
     // Keep internal fields
     const rowAsRecord = row as unknown as Record<string, unknown>
-    if (rowAsRecord.branch_id) normalized.branch_id = rowAsRecord.branch_id as string
+    if (rowAsRecord.Branch_ID) normalized.Branch_ID = rowAsRecord.Branch_ID as string
 
     return normalized
   }
@@ -110,25 +110,25 @@ export async function createBulkVehicles(vehicles: Vehicle[]) {
   const cleanData = vehicles.map(v => {
     const data = normalizeData(v)
     return {
-      vehicle_plate: data.vehicle_plate ? String(data.vehicle_plate).trim() : null,
-      vehicle_type: data.vehicle_type,
-      brand: data.brand,
-      model: data.model,
-      active_status: data.active_status,
-      current_mileage: Number(data.current_mileage) || 0,
-      next_service_mileage: Number(data.next_service_mileage) || 0,
-      tax_expiry: data.tax_expiry,
-      insurance_expiry: data.insurance_expiry,
-      act_expiry: data.act_expiry,
-      max_weight_kg: Number(data.max_weight_kg) || null,
-      max_volume_cbm: Number(data.max_volume_cbm) || null,
-      sub_id: data.sub_id || null,
-      branch_id: branchId
+      Vehicle_Plate: data.Vehicle_Plate ? String(data.Vehicle_Plate).trim() : null,
+      Vehicle_Type: data.Vehicle_Type,
+      Brand: data.Brand,
+      Model: data.Model,
+      Active_Status: data.Active_Status,
+      Current_Mileage: Number(data.Current_Mileage) || 0,
+      Next_Service_Mileage: Number(data.Next_Service_Mileage) || 0,
+      Tax_Expiry: data.Tax_Expiry,
+      Insurance_Expiry: data.Insurance_Expiry,
+      Act_Expiry: data.Act_Expiry,
+      Max_Weight_kg: Number(data.Max_Weight_kg) || null,
+      Max_Volume_cbm: Number(data.Max_Volume_cbm) || null,
+      Sub_ID: data.Sub_ID || null,
+      Branch_ID: branchId
     }
-  }).filter(v => v.vehicle_plate) // Filter out rows without active_status or vehicle_plate
+  }).filter(v => v.Vehicle_Plate) // Filter out rows without active_status or vehicle_plate
 
   // Deduplicate input data by vehicle_plate
-  const uniqueData = Array.from(new Map(cleanData.map(item => [item.vehicle_plate, item])).values())
+  const uniqueData = Array.from(new Map(cleanData.map(item => [item.Vehicle_Plate, item])).values())
 
 
   if (uniqueData.length === 0) {
@@ -137,9 +137,9 @@ export async function createBulkVehicles(vehicles: Vehicle[]) {
 
   // Use upsert to handle duplicates (update existing or insert new)
   const { error } = await supabase
-    .from('master_vehicles')
+    .from('Master_Vehicles')
     .upsert(uniqueData, { 
-      onConflict: 'vehicle_plate',
+      onConflict: 'Vehicle_Plate',
       ignoreDuplicates: false // Update if exists
     })
     .select()
@@ -158,32 +158,32 @@ export async function updateVehicle(plate: string, data: Partial<VehicleFormData
   const isAdmin = await isSuperAdmin()
 
     const updatePayload: Partial<Vehicle> = {
-        vehicle_type: data.vehicle_type,
-        brand: data.brand,
-        model: data.model,
-        active_status: data.active_status,
-        current_mileage: data.current_mileage,
-        next_service_mileage: data.next_service_mileage,
-        tax_expiry: data.tax_expiry,
-        insurance_expiry: data.insurance_expiry,
-        act_expiry: data.act_expiry,
-        sub_id: data.sub_id,
-        max_weight_kg: data.max_weight_kg,
-        max_volume_cbm: data.max_volume_cbm
+        Vehicle_Type: data.Vehicle_Type,
+        Brand: data.Brand,
+        Model: data.Model,
+        Active_Status: data.Active_Status,
+        Current_Mileage: data.Current_Mileage,
+        Next_Service_Mileage: data.Next_Service_Mileage,
+        Tax_Expiry: data.Tax_Expiry,
+        Insurance_Expiry: data.Insurance_Expiry,
+        Act_Expiry: data.Act_Expiry,
+        Sub_ID: data.Sub_ID,
+        Max_Weight_kg: data.Max_Weight_kg,
+        Max_Volume_cbm: data.Max_Volume_cbm
     }
 
     if (isAdmin && data.Branch_ID) {
-        updatePayload.branch_id = data.Branch_ID
+        updatePayload.Branch_ID = data.Branch_ID
     }
 
     let query = supabase
-      .from('master_vehicles')
+      .from('Master_Vehicles')
       .update(updatePayload)
   
-  query = query.eq('vehicle_plate', plate)
+  query = query.eq('Vehicle_Plate', plate)
 
   if (branchId && !isAdmin) {
-      query = query.eq('branch_id', branchId)
+      query = query.eq('Branch_ID', branchId)
   }
 
   const { error } = await query
@@ -202,12 +202,12 @@ export async function deleteVehicle(plate: string) {
   const isAdmin = await isSuperAdmin()
 
   let query = supabase
-    .from('master_vehicles')
+    .from('Master_Vehicles')
     .delete()
-    .eq('vehicle_plate', plate)
+    .eq('Vehicle_Plate', plate)
 
   if (branchId && !isAdmin) {
-      query = query.eq('branch_id', branchId)
+      query = query.eq('Branch_ID', branchId)
   }
 
   const { error } = await query

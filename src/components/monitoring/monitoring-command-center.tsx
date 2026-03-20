@@ -32,6 +32,9 @@ import { cn } from "@/lib/utils"
 import { createClient } from "@/utils/supabase/client"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
 import { ChatWindow } from "@/components/chat/chat-window"
+import { useRealtime } from "@/hooks/useRealtime"
+import { RealtimeIndicator } from "@/components/ui/realtime-indicator"
+
 
 export type DriverWithGPS = Driver & {
     Latitude: number | null
@@ -443,12 +446,15 @@ export function MonitoringCommandCenter({
             <div className="w-[380px] h-full bg-white border-r border-gray-100 flex flex-col z-20 shadow-2xl">
                 <div className="p-6 bg-slate-950 border-b border-emerald-500/20 relative overflow-hidden group">
                     <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 blur-3xl rounded-full -mr-16 -mt-16 pointer-events-none" />
-                    <h2 className="text-2xl font-black text-white tracking-tight flex items-center gap-3 mb-6 relative z-10">
-                        <div className="p-2 bg-emerald-500/20 rounded-xl border border-emerald-500/30 shadow-[0_0_15px_rgba(16,185,129,0.2)]">
-                            <Activity className="text-emerald-400" size={20} />
-                        </div>
-                        Control Centre
-                    </h2>
+                    <div className="flex items-center justify-between mb-6 relative z-10">
+                        <h2 className="text-2xl font-black text-white tracking-tight flex items-center gap-3">
+                            <div className="p-2 bg-emerald-500/20 rounded-xl border border-emerald-500/30 shadow-[0_0_15px_rgba(16,185,129,0.2)]">
+                                <Activity className="text-emerald-400" size={20} />
+                            </div>
+                            Control Centre
+                        </h2>
+                        <RealtimeIndicator isLive={true} className="bg-white/5 border-white/10 text-emerald-400" />
+                    </div>
                     
                     <div className="relative mb-4">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />

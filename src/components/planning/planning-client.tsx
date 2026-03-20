@@ -33,6 +33,9 @@ import { JobFormData } from "@/app/planning/actions"
 import { JobDialog } from "@/components/planning/job-dialog"
 import { CreateJobButton } from "@/components/planning/create-job-button"
 import { KanbanBoard } from "@/components/planning/kanban-board"
+import { useRouter } from "next/navigation"
+import { useRealtime } from "@/hooks/useRealtime"
+import { RealtimeIndicator } from "@/components/ui/realtime-indicator"
 
 interface PlanningClientProps {
     stats: {
@@ -83,6 +86,13 @@ export function PlanningClient({
 }: PlanningClientProps) {
     const { drivers, vehicles, customers, routes, subcontractors } = jobCreationData
     const [view, setView] = useState<'list' | 'kanban' | 'requests'>('list')
+    const router = useRouter()
+
+    // เปิดระบบ Real-time: รีเฟรชหน้าจอเมื่อข้อมูลงานเปลี่ยน
+    useRealtime('Jobs_Main', (payload) => {
+        console.log("Job Update Detected - Refreshing Planning Data...")
+        router.refresh()
+    })
 
     const filteredJobs = useMemo(() => {
         if (view === 'requests') {
@@ -90,6 +100,7 @@ export function PlanningClient({
         }
         return todayJobs.filter(j => j.Job_Status !== 'Requested').slice(0, 10)
     }, [todayJobs, requestedJobs, view])
+
 
     const requestCount = requestedJobs.length
 

@@ -17,11 +17,11 @@ export function VehicleActions({ vehicle, branches = [], subcontractors = [] }: 
   const [showEdit, setShowEdit] = useState(false)
 
   const handleDelete = async () => {
-    if (!confirm(`ยืนยันการลบรถทะเบียน ${vehicle.vehicle_plate}?`)) return
+    if (!confirm(`ยืนยันการลบรถทะเบียน ${vehicle.Vehicle_Plate}?`)) return
     
     setLoading(true)
     try {
-      await deleteVehicle(vehicle.vehicle_plate)
+      await deleteVehicle(vehicle.Vehicle_Plate)
     } catch {
       toast.error('เกิดข้อผิดพลาด กรุณาลองใหม่')
     } finally {

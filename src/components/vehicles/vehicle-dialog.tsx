@@ -54,20 +54,20 @@ export function VehicleDialog({
   }, [])
 
   const [formData, setFormData] = useState({
-    vehicle_plate: vehicle?.vehicle_plate || '',
-    vehicle_type: vehicle?.vehicle_type || '4-Wheel',
-    brand: vehicle?.brand || '',
-    model: vehicle?.model || '',
-    active_status: vehicle?.active_status || 'Active',
-    current_mileage: vehicle?.current_mileage || 0,
-    next_service_mileage: vehicle?.next_service_mileage || 0,
-    branch_id: vehicle?.branch_id || '',
-    sub_id: vehicle?.sub_id || '',
-    max_weight_kg: vehicle?.max_weight_kg || 0,
-    max_volume_cbm: vehicle?.max_volume_cbm || 0,
-    tax_expiry: vehicle?.tax_expiry || '',
-    insurance_expiry: vehicle?.insurance_expiry || '',
-    act_expiry: vehicle?.act_expiry || ''
+    Vehicle_Plate: vehicle?.Vehicle_Plate || '',
+    Vehicle_Type: vehicle?.Vehicle_Type || '4-Wheel',
+    Brand: vehicle?.Brand || '',
+    Model: vehicle?.Model || '',
+    Active_Status: vehicle?.Active_Status || 'Active',
+    Current_Mileage: vehicle?.Current_Mileage || 0,
+    Next_Service_Mileage: vehicle?.Next_Service_Mileage || 0,
+    Branch_ID: vehicle?.Branch_ID || '',
+    Sub_ID: vehicle?.Sub_ID || '',
+    Max_Weight_kg: vehicle?.Max_Weight_kg || 0,
+    Max_Volume_cbm: vehicle?.Max_Volume_cbm || 0,
+    Tax_Expiry: vehicle?.Tax_Expiry || '',
+    Insurance_Expiry: vehicle?.Insurance_Expiry || '',
+    Act_Expiry: vehicle?.Act_Expiry || ''
   })
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -78,27 +78,27 @@ export function VehicleDialog({
       if (mode === 'create') {
         await createVehicle(formData)
       } else {
-        if (!vehicle?.vehicle_plate) throw new Error("Vehicle Plate not found")
-        await updateVehicle(vehicle.vehicle_plate, formData)
+        if (!vehicle?.Vehicle_Plate) throw new Error("Vehicle Plate not found")
+        await updateVehicle(vehicle.Vehicle_Plate, formData)
       }
       setShow(false)
       if (!isControlled) {
         setFormData({
-            vehicle_plate: '',
-            vehicle_type: '4-Wheel',
-            brand: '',
-            model: '',
-            active_status: 'Active',
-            current_mileage: 0,
-            next_service_mileage: 0,
+            Vehicle_Plate: '',
+            Vehicle_Type: '4-Wheel',
+            Brand: '',
+            Model: '',
+            Active_Status: 'Active',
+            Current_Mileage: 0,
+            Next_Service_Mileage: 0,
 
-            branch_id: '',
-            sub_id: '',
-            max_weight_kg: 0,
-            max_volume_cbm: 0,
-            tax_expiry: '',
-            insurance_expiry: '',
-            act_expiry: ''
+            Branch_ID: '',
+            Sub_ID: '',
+            Max_Weight_kg: 0,
+            Max_Volume_cbm: 0,
+            Tax_Expiry: '',
+            Insurance_Expiry: '',
+            Act_Expiry: ''
         })
       }
       router.refresh()
@@ -120,7 +120,7 @@ export function VehicleDialog({
           {branches.length > 0 && (
             <div className="space-y-2">
                 <Label htmlFor="Branch_ID" className="text-amber-600 font-bold">เลือกสาขา (Super Admin)</Label>
-                <Select value={formData.branch_id || undefined} onValueChange={(val) => setFormData({ ...formData, branch_id: val })}>
+                <Select value={formData.Branch_ID || undefined} onValueChange={(val) => setFormData({ ...formData, Branch_ID: val })}>
                     <SelectTrigger className="w-full h-10 border-amber-200 bg-amber-50 text-gray-900">
                         <SelectValue placeholder="-- เลือกสาขา --" />
                     </SelectTrigger>
@@ -137,8 +137,8 @@ export function VehicleDialog({
 
           {subcontractors && subcontractors.length > 0 && (
             <div className="space-y-2">
-                <Label htmlFor="sub_id" className="text-blue-700 font-bold">รถร่วมบริการ (Subcontractor)</Label>
-                <Select value={formData.sub_id || "__company__"} onValueChange={(val) => setFormData({ ...formData, sub_id: val === "__company__" ? "" : val })}>
+                <Label htmlFor="Sub_ID" className="text-blue-700 font-bold">รถร่วมบริการ (Subcontractor)</Label>
+                <Select value={formData.Sub_ID || "__company__"} onValueChange={(val) => setFormData({ ...formData, Sub_ID: val === "__company__" ? "" : val })}>
                     <SelectTrigger className="w-full h-10 border-blue-200 bg-blue-50 text-gray-900">
                         <SelectValue placeholder="-- รถบริษัท (Company Fleet) --" />
                     </SelectTrigger>
@@ -153,11 +153,11 @@ export function VehicleDialog({
           )}
 
           <div className="space-y-2">
-            <Label htmlFor="vehicle_plate" className="text-gray-900 font-bold text-sm">ทะเบียนรถ</Label>
+            <Label htmlFor="Vehicle_Plate" className="text-gray-900 font-bold text-sm">ทะเบียนรถ</Label>
             <Input
-              id="vehicle_plate"
-              value={formData.vehicle_plate}
-              onChange={(e) => setFormData({ ...formData, vehicle_plate: e.target.value })}
+              id="Vehicle_Plate"
+              value={formData.Vehicle_Plate}
+              onChange={(e) => setFormData({ ...formData, Vehicle_Plate: e.target.value })}
               placeholder="1กข-1234"
               required
               disabled={mode === 'edit'}
@@ -167,21 +167,21 @@ export function VehicleDialog({
           
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-                <Label htmlFor="brand" className="text-gray-900 font-bold text-sm">ยี่ห้อ</Label>
+                <Label htmlFor="Brand" className="text-gray-900 font-bold text-sm">ยี่ห้อ</Label>
                 <Input
-                id="brand"
-                value={formData.brand}
-                onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
+                id="Brand"
+                value={formData.Brand}
+                onChange={(e) => setFormData({ ...formData, Brand: e.target.value })}
                 placeholder="Toyota"
                 className="bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400"
                 />
             </div>
             <div className="space-y-2">
-                <Label htmlFor="model" className="text-gray-900 font-bold text-sm">รุ่น</Label>
+                <Label htmlFor="Model" className="text-gray-900 font-bold text-sm">รุ่น</Label>
                 <Input
-                id="model"
-                value={formData.model}
-                onChange={(e) => setFormData({ ...formData, model: e.target.value })}
+                id="Model"
+                value={formData.Model}
+                onChange={(e) => setFormData({ ...formData, Model: e.target.value })}
                 placeholder="Hilux Revo"
                 className="bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400"
                 />
@@ -190,22 +190,22 @@ export function VehicleDialog({
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-                <Label htmlFor="current_mileage" className="text-gray-900 font-bold text-sm">เลขไมล์ปัจจุบัน</Label>
+                <Label htmlFor="Current_Mileage" className="text-gray-900 font-bold text-sm">เลขไมล์ปัจจุบัน</Label>
                 <Input
-                id="current_mileage"
+                id="Current_Mileage"
                 type="number"
-                value={formData.current_mileage}
-                onChange={(e) => setFormData({ ...formData, current_mileage: Number(e.target.value) })}
+                value={formData.Current_Mileage}
+                onChange={(e) => setFormData({ ...formData, Current_Mileage: Number(e.target.value) })}
                 className="bg-gray-50 border-gray-200 text-gray-900"
                 />
             </div>
             <div className="space-y-2">
-                <Label htmlFor="next_service_mileage" className="text-gray-900 font-bold text-sm">แจ้งซ่อมครั้งถัดไป</Label>
+                <Label htmlFor="Next_Service_Mileage" className="text-gray-900 font-bold text-sm">แจ้งซ่อมครั้งถัดไป</Label>
                 <Input
-                id="next_service_mileage"
+                id="Next_Service_Mileage"
                 type="number"
-                value={formData.next_service_mileage}
-                onChange={(e) => setFormData({ ...formData, next_service_mileage: Number(e.target.value) })}
+                value={formData.Next_Service_Mileage}
+                onChange={(e) => setFormData({ ...formData, Next_Service_Mileage: Number(e.target.value) })}
                 className="bg-gray-50 border-gray-200 text-gray-900"
                 />
             </div>
@@ -213,23 +213,23 @@ export function VehicleDialog({
 
           <div className="grid grid-cols-2 gap-4 border-t border-gray-200 pt-4">
              <div className="space-y-2">
-                <Label htmlFor="max_weight_kg" className="text-emerald-700 font-bold text-sm">น้ำหนักบรรทุกสูงสุด (kg)</Label>
+                <Label htmlFor="Max_Weight_kg" className="text-emerald-700 font-bold text-sm">น้ำหนักบรรทุกสูงสุด (kg)</Label>
                 <Input
-                id="max_weight_kg"
+                id="Max_Weight_kg"
                 type="number"
-                value={formData.max_weight_kg}
-                onChange={(e) => setFormData({ ...formData, max_weight_kg: Number(e.target.value) })}
+                value={formData.Max_Weight_kg}
+                onChange={(e) => setFormData({ ...formData, Max_Weight_kg: Number(e.target.value) })}
                 placeholder="e.g. 1500"
                 className="bg-emerald-50 border-emerald-200 text-emerald-900 placeholder:text-emerald-300"
                 />
             </div>
             <div className="space-y-2">
-                <Label htmlFor="max_volume_cbm" className="text-emerald-700 font-bold text-sm">ปริมาตรบรรทุกสูงสุด (CBM)</Label>
+                <Label htmlFor="Max_Volume_cbm" className="text-emerald-700 font-bold text-sm">ปริมาตรบรรทุกสูงสุด (CBM)</Label>
                 <Input
-                id="max_volume_cbm"
+                id="Max_Volume_cbm"
                 type="number"
-                value={formData.max_volume_cbm}
-                onChange={(e) => setFormData({ ...formData, max_volume_cbm: Number(e.target.value) })}
+                value={formData.Max_Volume_cbm}
+                onChange={(e) => setFormData({ ...formData, Max_Volume_cbm: Number(e.target.value) })}
                 placeholder="e.g. 2.5"
                 step="0.1"
                 className="bg-emerald-50 border-emerald-200 text-emerald-900 placeholder:text-emerald-300"
@@ -242,34 +242,34 @@ export function VehicleDialog({
             
             <div className="grid grid-cols-1 gap-3">
                 <div className="grid grid-cols-2 items-center gap-4">
-                    <Label htmlFor="tax_expiry" className="text-[11px] font-bold text-gray-700">ภาษีรถ (Tax Expiry)</Label>
+                    <Label htmlFor="Tax_Expiry" className="text-[11px] font-bold text-gray-700">ภาษีรถ (Tax Expiry)</Label>
                     <Input
-                        id="tax_expiry"
+                        id="Tax_Expiry"
                         type="date"
-                        value={formData.tax_expiry}
-                        onChange={(e) => setFormData({ ...formData, tax_expiry: e.target.value })}
+                        value={formData.Tax_Expiry}
+                        onChange={(e) => setFormData({ ...formData, Tax_Expiry: e.target.value })}
                         className="bg-gray-50 border-gray-200 h-9 text-xs text-gray-900 font-medium"
                     />
                 </div>
                 
                 <div className="grid grid-cols-2 items-center gap-4">
-                    <Label htmlFor="insurance_expiry" className="text-[11px] font-bold text-gray-700">ประกันภัย (Insurance)</Label>
+                    <Label htmlFor="Insurance_Expiry" className="text-[11px] font-bold text-gray-700">ประกันภัย (Insurance)</Label>
                     <Input
-                        id="insurance_expiry"
+                        id="Insurance_Expiry"
                         type="date"
-                        value={formData.insurance_expiry}
-                        onChange={(e) => setFormData({ ...formData, insurance_expiry: e.target.value })}
+                        value={formData.Insurance_Expiry}
+                        onChange={(e) => setFormData({ ...formData, Insurance_Expiry: e.target.value })}
                         className="bg-gray-50 border-gray-200 h-9 text-xs text-gray-900 font-medium"
                     />
                 </div>
 
                 <div className="grid grid-cols-2 items-center gap-4">
-                    <Label htmlFor="act_expiry" className="text-[11px] font-bold text-gray-700">พ.ร.บ. (ACT Expiry)</Label>
+                    <Label htmlFor="Act_Expiry" className="text-[11px] font-bold text-gray-700">พ.ร.บ. (ACT Expiry)</Label>
                     <Input
-                        id="act_expiry"
+                        id="Act_Expiry"
                         type="date"
-                        value={formData.act_expiry}
-                        onChange={(e) => setFormData({ ...formData, act_expiry: e.target.value })}
+                        value={formData.Act_Expiry}
+                        onChange={(e) => setFormData({ ...formData, Act_Expiry: e.target.value })}
                         className="bg-gray-50 border-gray-200 h-9 text-xs text-gray-900 font-medium"
                     />
                 </div>
@@ -281,8 +281,8 @@ export function VehicleDialog({
 
 
           <div className="space-y-2">
-            <Label htmlFor="vehicle_type" className="text-gray-900 font-bold text-sm">ประเภทรถ</Label>
-            <Select value={formData.vehicle_type} onValueChange={(val) => setFormData({ ...formData, vehicle_type: val })}>
+            <Label htmlFor="Vehicle_Type" className="text-gray-900 font-bold text-sm">ประเภทรถ</Label>
+            <Select value={formData.Vehicle_Type} onValueChange={(val) => setFormData({ ...formData, Vehicle_Type: val })}>
                 <SelectTrigger className="w-full h-10 border-gray-200 bg-gray-50 text-gray-900">
                     <SelectValue placeholder="เลือกประเภทรถ" />
                 </SelectTrigger>
@@ -306,8 +306,8 @@ export function VehicleDialog({
 
           {mode === 'edit' && (
              <div className="space-y-2">
-              <Label htmlFor="active_status" className="text-gray-900 font-bold text-sm">สถานะ</Label>
-              <Select value={formData.active_status} onValueChange={(val) => setFormData({ ...formData, active_status: val })}>
+              <Label htmlFor="Active_Status" className="text-gray-900 font-bold text-sm">สถานะ</Label>
+              <Select value={formData.Active_Status} onValueChange={(val) => setFormData({ ...formData, Active_Status: val })}>
                 <SelectTrigger className="w-full h-10 border-gray-200 bg-gray-50 text-gray-900">
                     <SelectValue placeholder="เลือกสถานะ" />
                 </SelectTrigger>

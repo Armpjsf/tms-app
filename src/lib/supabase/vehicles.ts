@@ -3,32 +3,32 @@
 import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { getUserBranchId, isSuperAdmin, isAdmin } from "@/lib/permissions"
 
-// Type matching actual Supabase schema (lowercase columns!)
+// Type matching actual Supabase schema (PascalCase columns!)
 export type Vehicle = {
-  vehicle_plate: string        // PK - lowercase!
-  vehicle_type: string | null
-  brand: string | null
-  model: string | null
-  year: number | null
-  color: string | null
-  engine_no: string | null
-  chassis_no: string | null
-  max_weight_kg: number | null
-  max_volume_cbm: number | null
-  tank_capacity: number | null // Added for fuel fraud detection
-  insurance_company: string | null
-  insurance_expiry: string | null
-  tax_expiry: string | null
-  act_expiry: string | null
-  current_mileage: number | null
-  last_service_date: string | null
-  next_service_mileage: number | null
-  driver_id: string | null
-  branch_id: string | null
-  active_status: string | null
-  notes: string | null
-  sub_id?: string | null
-  preferred_zone?: string | null
+  Vehicle_Plate: string        // PK
+  Vehicle_Type: string | null
+  Brand: string | null
+  Model: string | null
+  Year: number | null
+  Color: string | null
+  Engine_No: string | null
+  Chassis_No: string | null
+  Max_Weight_kg: number | null
+  Max_Volume_cbm: number | null
+  Tank_Capacity: number | null
+  Insurance_Company: string | null
+  Insurance_Expiry: string | null
+  Tax_Expiry: string | null
+  Act_Expiry: string | null
+  Current_Mileage: number | null
+  Last_Service_Date: string | null
+  Next_Service_Mileage: number | null
+  Driver_ID: string | null
+  Branch_ID: string | null
+  Active_Status: string | null
+  Notes: string | null
+  Sub_ID?: string | null
+  Preferred_Zone?: string | null
 }
 
 export async function getAllVehiclesFromTable(): Promise<Vehicle[]> {
@@ -38,10 +38,10 @@ export async function getAllVehiclesFromTable(): Promise<Vehicle[]> {
     const branchId = await getUserBranchId()
     const supabase = (isSuper || isAdminUser) ? await createAdminClient() : await createClient()
     
-    let query = supabase.from('master_vehicles').select('*')
+    let query = supabase.from('Master_Vehicles').select('*')
     
     if (branchId && branchId !== 'All' && !isSuper) {
-        query = query.eq('branch_id', branchId)
+        query = query.eq('Branch_ID', branchId)
     } else if (!isSuper && !isAdminUser && !branchId) {
         return []
     }
@@ -61,9 +61,9 @@ export async function getVehicleByPlate(plate: string): Promise<Vehicle | null> 
     const isAdminUser = await isAdmin()
     const supabase = (isSuper || isAdminUser) ? await createAdminClient() : await createClient()
     const { data, error } = await supabase
-      .from('master_vehicles')
+      .from('Master_Vehicles')
       .select('*')
-      .eq('vehicle_plate', plate)
+      .eq('Vehicle_Plate', plate)
       .single()
     
     if (error) return null
@@ -80,17 +80,17 @@ export async function createVehicle(vehicleData: Partial<Vehicle>) {
     const isAdminUser = await isAdmin()
     const supabase = (isSuper || isAdminUser) ? await createAdminClient() : await createClient()
     const { data, error } = await supabase
-      .from('master_vehicles')
+      .from('Master_Vehicles')
       .insert({
-        vehicle_plate: vehicleData.vehicle_plate,
-        vehicle_type: vehicleData.vehicle_type || '4-Wheel',
-        brand: vehicleData.brand,
-        model: vehicleData.model,
-        driver_id: vehicleData.driver_id,
-        active_status: vehicleData.active_status || 'Active',
-        sub_id: vehicleData.sub_id,
-        preferred_zone: vehicleData.preferred_zone,
-        branch_id: vehicleData.branch_id || await getUserBranchId()
+        Vehicle_Plate: vehicleData.Vehicle_Plate,
+        Vehicle_Type: vehicleData.Vehicle_Type || '4-Wheel',
+        Brand: vehicleData.Brand,
+        Model: vehicleData.Model,
+        Driver_ID: vehicleData.Driver_ID,
+        Active_Status: vehicleData.Active_Status || 'Active',
+        Sub_ID: vehicleData.Sub_ID,
+        Preferred_Zone: vehicleData.Preferred_Zone,
+        Branch_ID: vehicleData.Branch_ID || await getUserBranchId()
       })
       .select()
       .single()
@@ -111,17 +111,17 @@ export async function updateVehicle(plate: string, vehicleData: Partial<Vehicle>
     const isAdminUser = await isAdmin()
     const supabase = (isSuper || isAdminUser) ? await createAdminClient() : await createClient()
     const { data, error } = await supabase
-      .from('master_vehicles')
+      .from('Master_Vehicles')
       .update({
-        vehicle_type: vehicleData.vehicle_type,
-        brand: vehicleData.brand,
-        model: vehicleData.model,
-        driver_id: vehicleData.driver_id,
-        active_status: vehicleData.active_status,
-        sub_id: vehicleData.sub_id,
-        preferred_zone: vehicleData.preferred_zone
+        Vehicle_Type: vehicleData.Vehicle_Type,
+        Brand: vehicleData.Brand,
+        Model: vehicleData.Model,
+        Driver_ID: vehicleData.Driver_ID,
+        Active_Status: vehicleData.Active_Status,
+        Sub_ID: vehicleData.Sub_ID,
+        Preferred_Zone: vehicleData.Preferred_Zone
       })
-      .eq('vehicle_plate', plate)
+      .eq('Vehicle_Plate', plate)
       .select()
       .single()
     
@@ -141,9 +141,9 @@ export async function deleteVehicle(plate: string) {
     const isAdminUser = await isAdmin()
     const supabase = (isSuper || isAdminUser) ? await createAdminClient() : await createClient()
     const { error } = await supabase
-      .from('master_vehicles')
+      .from('Master_Vehicles')
       .delete()
-      .eq('vehicle_plate', plate)
+      .eq('Vehicle_Plate', plate)
     
     if (error) {
       return { success: false, error }
@@ -163,16 +163,16 @@ export async function getAllVehicles(page?: number, limit?: number, query?: stri
     const branchId = providedBranchId || await getUserBranchId()
     const supabase = (isSuper || isAdminUser) ? await createAdminClient() : await createClient()
     
-    let queryBuilder = supabase.from('master_vehicles').select('*', { count: 'exact' })
+    let queryBuilder = supabase.from('Master_Vehicles').select('*', { count: 'exact' })
     
     if (branchId && branchId !== 'All' && !isSuper) {
-        queryBuilder = queryBuilder.eq('branch_id', branchId)
+        queryBuilder = queryBuilder.eq('Branch_ID', branchId)
     } else if (!isSuper && !isAdminUser && !branchId) {
         return { data: [], count: 0 }
     }
     
     if (query) {
-      queryBuilder = queryBuilder.or(`vehicle_plate.ilike.%${query}%,brand.ilike.%${query}%,model.ilike.%${query}%`)
+      queryBuilder = queryBuilder.or(`Vehicle_Plate.ilike.%${query}%,Brand.ilike.%${query}%,Model.ilike.%${query}%`)
     }
     
     if (page && limit) {
@@ -199,11 +199,11 @@ export async function getVehicleStats(providedBranchId?: string) {
     const supabase = (isSuper || isAdminUser) ? await createAdminClient() : await createClient()
     
     let query = supabase
-      .from('master_vehicles')
-      .select('vehicle_plate, active_status, current_mileage, next_service_mileage')
+      .from('Master_Vehicles')
+      .select('Vehicle_Plate, Active_Status, Current_Mileage, Next_Service_Mileage')
     
     if (branchId && branchId !== 'All' && !isSuper) {
-        query = query.eq('branch_id', branchId)
+        query = query.eq('Branch_ID', branchId)
     } else if (!isSuper && !isAdminUser && !branchId) {
         return { total: 0, active: 0, maintenance: 0, dueSoon: 0 }
     }
@@ -212,12 +212,12 @@ export async function getVehicleStats(providedBranchId?: string) {
     if (error) return { total: 0, active: 0, maintenance: 0, dueSoon: 0 }
     
     const total = data?.length || 0
-    const active = data?.filter(v => v.active_status === 'Active').length || 0
-    const maintenance = data?.filter(v => v.active_status === 'Maintenance').length || 0
+    const active = data?.filter(v => v.Active_Status === 'Active').length || 0
+    const maintenance = data?.filter(v => v.Active_Status === 'Maintenance').length || 0
     
     const dueSoon = data?.filter(v => {
-      if (v.current_mileage && v.next_service_mileage) {
-        return (v.next_service_mileage - v.current_mileage) <= 1000
+      if (v.Current_Mileage && v.Next_Service_Mileage) {
+        return (v.Next_Service_Mileage - v.Current_Mileage) <= 1000
       }
       return false
     }).length || 0
@@ -236,12 +236,12 @@ export async function getSampledVehicleUtilization(providedBranchId?: string) {
     const supabase = (isSuper || isAdminUser) ? await createAdminClient() : await createClient()
 
     let query = supabase
-      .from('master_vehicles')
+      .from('Master_Vehicles')
       .select('*')
-      .eq('active_status', 'Active')
+      .eq('Active_Status', 'Active')
     
     if (branchId && branchId !== 'All' && !isSuper) {
-        query = query.eq('branch_id', branchId)
+        query = query.eq('Branch_ID', branchId)
     } else if (!isSuper && !isAdminUser && !branchId) {
         return null
     }
@@ -253,11 +253,11 @@ export async function getSampledVehicleUtilization(providedBranchId?: string) {
     if (error || !data) return null
 
     return {
-      totalCapacity: data.max_weight_kg || 15000,
-      usedCapacity: Math.round((data.max_weight_kg || 15000) * (0.65 + Math.random() * 0.25)), // Realistic 65-90% load
+      totalCapacity: data.Max_Weight_kg || 15000,
+      usedCapacity: Math.round((data.Max_Weight_kg || 15000) * (0.65 + Math.random() * 0.25)), // Realistic 65-90% load
       unit: "kg",
-      vehicleType: data.vehicle_type || "Truck",
-      plate: data.vehicle_plate
+      vehicleType: data.Vehicle_Type || "Truck",
+      plate: data.Vehicle_Plate
     }
   } catch {
     return null
