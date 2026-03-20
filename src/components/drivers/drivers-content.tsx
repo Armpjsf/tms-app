@@ -82,18 +82,7 @@ export async function DriversContent({ searchParams, branches = [], isAdmin = fa
         </div>
 
         <div className="flex flex-wrap gap-4 relative z-10">
-            <DriverDialog 
-                mode="create" 
-                vehicles={vehicles.data}
-                branches={branches}
-                subcontractors={subcontractors}
-                trigger={
-                    <PremiumButton className="h-14 px-8 rounded-2xl bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/20 transition-all duration-300 transform hover:scale-105 active:scale-95">
-                        <Plus size={24} className="mr-2" />
-                        Register Driver
-                    </PremiumButton>
-                }
-            />
+            <span className="text-[10px] text-white/5 uppercase">d:area-start</span>
             <ExcelImport 
                 trigger={
                     <PremiumButton variant="secondary" className="h-14 px-8 rounded-2xl">
@@ -111,26 +100,28 @@ export async function DriversContent({ searchParams, branches = [], isAdmin = fa
                         Password: "password123",
                         Vehicle_Plate: "1กข-1234",
                         Expire_Date: "2025-12-31",
-                        Sub_ID: "", // ใส่ ID ผู้รับเหมาถ้ามี
+                        Sub_ID: "", 
                         Bank_Name: "KBank",
                         Bank_Account_No: "000-0-00000-0",
                         Bank_Account_Name: "นาย สมชาย ใจดี"
-                    },
-                    { 
-                        Driver_ID: "DRV-002",
-                        Driver_Name: "นางสาว สมหญิง รักงาน", 
-                        Mobile_No: "0898765432", 
-                        Password: "password123",
-                        Vehicle_Plate: "",
-                        Expire_Date: "2025-06-30",
-                        Sub_ID: "", // ปล่อยว่างไว้หากไม่ใช่รถร่วม
-                        Bank_Name: "SCB",
-                        Bank_Account_No: "111-1-11111-1",
-                        Bank_Account_Name: "นางสาว สมหญิง รักงาน"
                     }
                 ]}
                 templateFilename="template_drivers.xlsx"
             />
+
+            <DriverDialog 
+                mode="create" 
+                vehicles={vehicles.data}
+                branches={branches}
+                subcontractors={subcontractors}
+                trigger={
+                    <PremiumButton className="h-14 px-8 rounded-2xl bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/20">
+                        <Plus size={24} className="mr-2" />
+                        REGISTER DRIVER (V2)
+                    </PremiumButton>
+                }
+            />
+            <span className="text-[10px] text-white/10 uppercase">d:area-end</span>
         </div>
       </div>
 
