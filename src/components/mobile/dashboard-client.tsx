@@ -8,6 +8,7 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { useLanguage } from "@/components/providers/language-provider"
 
 interface DashboardClientProps {
     session: {
@@ -51,6 +52,7 @@ const item = {
 }
 
 export function DashboardClient({ session, stats, currentJob }: DashboardClientProps) {
+    const { t } = useLanguage()
 
     return (
         <motion.div 
@@ -83,8 +85,8 @@ export function DashboardClient({ session, stats, currentJob }: DashboardClientP
 
             {/* Title & Stats Overview */}
             <motion.div variants={item} className="space-y-1">
-                <h2 className="text-4xl font-black text-white px-1 font-display uppercase tracking-tighter">งานจัดส่ง</h2>
-                <p className="text-slate-500 font-bold px-1 tracking-tight">ขณะนี้มี {stats.total} งานที่กำลังดำเนินการ</p>
+                <h2 className="text-4xl font-black text-white px-1 font-display uppercase tracking-tighter">งานวันนี้</h2>
+                <p className="text-slate-500 font-bold px-1 tracking-tight">มีงานที่ต้องจัดการ {stats.total} รายการ</p>
             </motion.div>
 
             {/* Circular Stats Grid */}
@@ -100,7 +102,7 @@ export function DashboardClient({ session, stats, currentJob }: DashboardClientP
                     </div>
                     <div className="text-center">
                         <div className="text-4xl font-black text-white tracking-tighter">{stats.total < 10 ? `0${stats.total}` : stats.total}</div>
-                        <div className="text-[10px] font-black text-primary uppercase tracking-[0.2em] opacity-80">กำลังจัดส่ง</div>
+                        <div className="text-[10px] font-black text-primary uppercase tracking-[0.2em] opacity-80">งานในมือ</div>
                     </div>
                 </div>
 
@@ -113,7 +115,7 @@ export function DashboardClient({ session, stats, currentJob }: DashboardClientP
                     </div>
                     <div className="text-center">
                         <div className="text-4xl font-black text-white tracking-tighter">04</div>
-                        <div className="text-[10px] font-black text-blue-400 uppercase tracking-[0.2em] opacity-80">งานใหม่</div>
+                        <div className="text-[10px] font-black text-blue-400 uppercase tracking-[0.2em] opacity-80">งานรอรับ</div>
                     </div>
                 </div>
             </motion.div>
@@ -141,15 +143,15 @@ export function DashboardClient({ session, stats, currentJob }: DashboardClientP
                                     </div>
                                 </div>
                                 <div className="px-4 py-1.5 rounded-full bg-primary text-[10px] font-black text-white uppercase tracking-widest shadow-xl shadow-primary/30">
-                                    กำลังเดินทาง
+                                    กำลังไปส่ง
                                 </div>
                             </div>
 
                             <div className="space-y-3">
                                 <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest">
-                                    <span className="text-slate-500">{currentJob.Origin_Location || "จุดรับสินค้า"}</span>
-                                    <span className="text-primary">ดำเนินการ 75%</span>
-                                    <span className="text-slate-500">{currentJob.Dest_Location || "จุดส่งสินค้า"}</span>
+                                    <span className="text-slate-500">{currentJob.Origin_Location || "จุดรับของ"}</span>
+                                    <span className="text-primary">ความคืบหน้า 75%</span>
+                                    <span className="text-slate-500">{currentJob.Dest_Location || "จุดส่งของ"}</span>
                                 </div>
                                 <div className="h-2.5 w-full bg-white/5 rounded-full overflow-hidden">
                                      <motion.div 
@@ -173,7 +175,7 @@ export function DashboardClient({ session, stats, currentJob }: DashboardClientP
                                     </div>
                                 </div>
                                 <Button className="h-14 px-10 rounded-2xl bg-primary hover:brightness-110 text-white font-black text-xs uppercase tracking-widest shadow-xl shadow-primary/30 transition-all">
-                                    ติดตามสถานะ
+                                    ดูรายละเอียด
                                 </Button>
                             </div>
                         </div>
@@ -191,7 +193,7 @@ export function DashboardClient({ session, stats, currentJob }: DashboardClientP
                                      </div>
                                 </div>
                                 <div className="px-4 py-1.5 rounded-full bg-accent/20 border border-accent/30 text-[10px] font-black text-accent uppercase tracking-widest">
-                                    รอรับสินค้า
+                                    รอรับของ
                                 </div>
                             </div>
                             <div className="h-2.5 w-full bg-white/5 rounded-full overflow-hidden">
@@ -200,10 +202,10 @@ export function DashboardClient({ session, stats, currentJob }: DashboardClientP
                             <div className="flex items-center justify-between text-slate-500">
                                 <div className="flex items-center gap-2 text-[10px] font-bold">
                                     <MapPin size={14} className="text-accent" />
-                                    เวลาโดยประมาณ: 2 ชม. 45 นาที
+                                    ระยะเวลา: 2 ชม. 45 นาที
                                 </div>
                                 <Button variant="ghost" className="text-white font-black text-xs uppercase tracking-widest hover:text-primary">
-                                    รายละเอียด
+                                    ข้อมูลงาน
                                 </Button>
                             </div>
                         </div>
@@ -213,11 +215,11 @@ export function DashboardClient({ session, stats, currentJob }: DashboardClientP
                          <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4">
                              <Truck className="text-slate-600" size={32} />
                          </div>
-                         <h3 className="text-white font-black text-xl mb-1">ไม่มีงานที่ดำเนินการอยู่</h3>
-                         <p className="text-slate-500 text-sm font-medium mb-6">คุณยังไม่มีงานที่ต้องจัดส่งในขณะนี้</p>
+                         <h3 className="text-white font-black text-xl mb-1">ยังไม่มีงานในขณะนี้</h3>
+                         <p className="text-slate-500 text-sm font-medium mb-6">คุณยังไม่มีรายการงานที่ได้รับมอบหมาย</p>
                          <Link href="/mobile/marketplace">
                              <Button className="h-14 px-8 rounded-2xl bg-primary text-white font-black text-xs uppercase tracking-widest shadow-xl shadow-primary/30">
-                                 หาเที่ยวงานใหม่
+                                 กดรับงานใหม่
                              </Button>
                          </Link>
                     </div>
@@ -229,7 +231,7 @@ export function DashboardClient({ session, stats, currentJob }: DashboardClientP
                  <Link href="/mobile/marketplace">
                      <button className="w-16 h-16 rounded-full bg-primary flex flex-col items-center justify-center text-white shadow-[0_8px_30px_rgba(255,30,133,0.4)] transition-transform hover:scale-110 active:scale-95 border-4 border-[#0a0518]">
                         <Gavel size={28} strokeWidth={3} />
-                        <span className="text-[7px] font-black uppercase tracking-tighter -mt-1">BID</span>
+                        <span className="text-[7px] font-black uppercase tracking-tighter -mt-1">ประมูลงาน</span>
                      </button>
                  </Link>
             </div>

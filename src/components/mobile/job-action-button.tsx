@@ -107,7 +107,7 @@ export function JobActionButton({ job }: JobActionButtonProps) {
             });
 
             if (updateRes.success) {
-                toast.success(`AI จัดเส้นทางให้ใหม่เรียบร้อย! ประหยัดเวลาไปได้ประมาณ ${result.estimatedDurationMinutes} นาที`);
+                toast.success(`AI จัดลำดับเส้นทางใหม่พื่อประหยัดเวลาไปได้ประมาณ ${result.estimatedDurationMinutes} นาที`);
                 router.refresh();
             } else {
                 toast.error("ไม่สามารถบันทึกลำดับเส้นทางใหม่ได้");
@@ -142,15 +142,15 @@ export function JobActionButton({ job }: JobActionButtonProps) {
                 case 'Assigned': 
                 case 'New':
                     label = "กดรับงาน"
-                    nextAction = "เมื่อได้รับงานนี้แล้ว ให้กดปุ่มเพื่อยืนยันการรับงาน"
+                    nextAction = "กดปุ่มเพื่อยืนยันการรับงานนี้"
                     onClick = () => handleStatusUpdate('Accepted')
                     break
                 
                 case 'Accepted':
-                    label = "ถึงจุดรับสินค้า"
+                    label = "ถึงจุดรับของ"
                     icon = <MapPin />
                     colorClass = "bg-amber-600 hover:bg-amber-700 shadow-amber-500/20"
-                    nextAction = "เมื่อเดินทางถึงสถานที่รับสินค้าแล้ว ให้กดปุ่มเพื่อแจ้งระบบ"
+                    nextAction = "เมื่อเดินทางถึงสถานที่รับของแล้ว ให้กดปุ่มเพื่อแจ้งระบบ"
                     onClick = () => handleStatusUpdate('Arrived Pickup')
                     break
 
@@ -163,10 +163,10 @@ export function JobActionButton({ job }: JobActionButtonProps) {
                     break
 
                 case 'In Transit':
-                    label = "ถึงจุดส่งสินค้า"
+                    label = "ถึงจุดส่งของ"
                     icon = <MapPin />
                     colorClass = "bg-teal-600 hover:bg-teal-700 shadow-teal-500/20"
-                    nextAction = "เมื่อเดินทางถึงสถานที่ส่งสินค้าแล้ว ให้กดปุ่มเพื่อแจ้งระบบ"
+                    nextAction = "เมื่อเดินทางถึงสถานที่ส่งของแล้ว ให้กดปุ่มเพื่อแจ้งระบบ"
                     onClick = () => handleStatusUpdate('Arrived Dropoff')
                     break
 

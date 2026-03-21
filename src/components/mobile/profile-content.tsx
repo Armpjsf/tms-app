@@ -24,19 +24,19 @@ interface ProfileContentProps {
 
 export function ProfileContent({ session, score, unreadChatCount = 0 }: ProfileContentProps) {
   const menuItems = [
-    { icon: LayoutGrid, label: "หาเที่ยวงาน (บิดงาน)", href: "/mobile/marketplace" },
-    { icon: Star, label: "ผลงานของฉัน (KPI)", href: "/mobile/kpi" },
-    { icon: Banknote, label: "สรุปรายได้", href: "/mobile/income-summary" },
+    { icon: LayoutGrid, label: "รับงานกลาง (ประมูล)", href: "/mobile/marketplace" },
+    { icon: Star, label: "คะแนนและผลงาน", href: "/mobile/kpi" },
+    { icon: Banknote, label: "รายได้และเบี้ยเลี้ยง", href: "/mobile/income-summary" },
     { icon: Fuel, label: "แจ้งเติมน้ำมัน", href: "/mobile/fuel" },
-    { icon: Wrench, label: "แจ้งซ่อมบำรุง", href: "/mobile/maintenance" },
-    { icon: ClipboardCheck, label: "เช็คสภาพรถ", href: "/mobile/vehicle-check" },
-    { icon: ShieldAlert, label: "รายงานสินค้าเสียหาย", href: "/mobile/damage-report" },
+    { icon: Wrench, label: "แจ้งซ่อม/แจ้งเสีย", href: "/mobile/maintenance" },
+    { icon: ClipboardCheck, label: "ตรวจเช็คสภาพรถ", href: "/mobile/vehicle-check" },
+    { icon: ShieldAlert, label: "แจ้งสินค้าเสียหาย", href: "/mobile/damage-report" },
     { icon: Calendar, label: "แจ้งลางาน", href: "/mobile/leave" },
     { icon: Bell, label: "การแจ้งเตือน", href: "/mobile/notifications" },
-    { icon: User, label: "ติดต่อแอดมิน", href: "/mobile/chat", badge: unreadChatCount },
+    { icon: User, label: "แชทกับแอดมิน", href: "/mobile/chat", badge: unreadChatCount },
     { icon: AlertTriangle, label: "แจ้งเหตุฉุกเฉิน (SOS)", href: "/mobile/sos" },
     { icon: BookOpen, label: "คู่มือการใช้งาน", href: "/mobile/manual" },
-    { icon: Settings, label: "ตั้งค่า", href: "/mobile/settings" },
+    { icon: Settings, label: "ตั้งค่าระบบ", href: "/mobile/settings" },
   ]
 
   const handleItemClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
@@ -75,8 +75,8 @@ export function ProfileContent({ session, score, unreadChatCount = 0 }: ProfileC
         <CardContent className="pt-6 relative z-10">
             <div className="flex justify-between items-start mb-6">
                 <div>
-                    <h2 className="text-lg font-bold text-white mb-1">คะแนนการทำงาน</h2>
-                    <p className="text-slate-500 text-xs">อัปเดตล่าสุด: วันนี้</p>
+                    <h2 className="text-lg font-bold text-white mb-1">ผลการทำงาน</h2>
+                    <p className="text-slate-500 text-xs">สรุปในรอบ 30 วันที่ผ่านมา</p>
                 </div>
                 <div className={`w-16 h-16 rounded-full flex flex-col items-center justify-center border-4 ${
                     (score?.totalScore || 0) >= 80 ? 'border-emerald-500 text-emerald-400 bg-emerald-500/10' :
@@ -89,17 +89,17 @@ export function ProfileContent({ session, score, unreadChatCount = 0 }: ProfileC
 
             <div className="grid grid-cols-3 gap-2 text-center divide-x divide-white/10">
                 <div>
-                   <span className="text-[10px] text-slate-400 uppercase tracking-wider">ตรงเวลา</span>
+                   <span className="text-[10px] text-slate-400 uppercase tracking-wider">ส่งตรงเวลา</span>
                    <p className={`text-lg font-bold mt-1 ${
                        (score?.onTimeScore || 0) >= 90 ? 'text-emerald-400' : 'text-white'
                    }`}>{score?.onTimeScore || 0}%</p>
                 </div>
                 <div>
-                   <span className="text-[10px] text-slate-400 uppercase tracking-wider">ปลอดภัย</span>
+                   <span className="text-[10px] text-slate-400 uppercase tracking-wider">ขับขี่ปลอดภัย</span>
                    <p className="text-lg font-bold mt-1 text-white">{score?.safetyScore || 0}%</p>
                 </div>
                 <div>
-                   <span className="text-[10px] text-slate-400 uppercase tracking-wider">รับงาน</span>
+                   <span className="text-[10px] text-slate-400 uppercase tracking-wider">อัตราการรับงาน</span>
                    <p className={`text-lg font-bold mt-1 ${
                        (score?.acceptanceScore || 0) >= 90 ? 'text-emerald-400' : 'text-white'
                    }`}>{score?.acceptanceScore || 0}%</p>
@@ -136,7 +136,7 @@ export function ProfileContent({ session, score, unreadChatCount = 0 }: ProfileC
       </Card>
 
       {/* Logout Button */}
-      <Link href="/login">
+      <Link href="/mobile/login">
         <Button variant="outline" className="w-full border-red-500/30 text-red-400 hover:bg-red-500/10 hover:text-red-300">
           <LogOut className="w-4 h-4 mr-2" />
           ออกจากระบบ

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { Lock, User, Truck, Shield, Fingerprint, QrCode } from "lucide-react"
+import { Lock, User, Shield, Fingerprint, QrCode } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -57,7 +57,7 @@ export default function DriverLoginPage() {
           </div>
           <div className="space-y-1">
             <h1 className="text-4xl font-black text-white tracking-tighter">Logis<span className="text-primary">Pro</span></h1>
-            <p className="text-slate-400 text-sm font-medium">Sweet deliveries, serious logistics.</p>
+            <p className="text-slate-400 text-sm font-bold">ขนส่งง่ายๆ มั่นใจทุกการจัดส่ง</p>
           </div>
         </div>
 
@@ -65,14 +65,14 @@ export default function DriverLoginPage() {
         <div className="glass-panel rounded-[2.5rem] p-8 shadow-2xl relative">
           <form action={handleSubmit} className="space-y-6">
             <div className="space-y-3">
-              <Label htmlFor="identifier" className="text-slate-400 text-[10px] font-black uppercase tracking-widest ml-1">Fleet ID / Mobile</Label>
+              <Label htmlFor="identifier" className="text-slate-400 text-[10px] font-black uppercase tracking-widest ml-1">รหัสพนักงาน / เบอร์โทรศัพท์</Label>
               <div className="relative">
                 <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 w-5 h-5 pointer-events-none" />
                 <Input 
                   id="identifier" 
                   name="identifier" 
                   type="text" 
-                  placeholder="e.g. driver_sweet_01" 
+                  placeholder="กรอกไอดี หรือ เบอร์โทร..." 
                   className="pl-12 bg-white/5 border-white/10 text-white placeholder:text-slate-600 h-14 rounded-2xl focus:ring-primary/50 transition-all"
                   required
                 />
@@ -81,8 +81,8 @@ export default function DriverLoginPage() {
 
             <div className="space-y-3">
               <div className="flex justify-between items-end ml-1">
-                <Label htmlFor="password" className="text-slate-400 text-[10px] font-black uppercase tracking-widest">Security Key</Label>
-                <button type="button" className="text-[10px] font-black text-primary/80 uppercase tracking-widest hover:text-primary">Forgot?</button>
+                <Label htmlFor="password" className="text-slate-400 text-[10px] font-black uppercase tracking-widest">รหัสผ่านปลอดภัย</Label>
+                <button type="button" className="text-[10px] font-black text-primary/80 uppercase tracking-widest hover:text-primary">ลืมรหัสผ่าน?</button>
               </div>
               <div className="relative">
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 w-5 h-5 pointer-events-none" />
@@ -108,22 +108,22 @@ export default function DriverLoginPage() {
               className="w-full h-16 text-xs font-black uppercase tracking-[0.3em] bg-primary hover:brightness-110 shadow-xl shadow-primary/20 rounded-2xl transition-all active:scale-[0.98]"
               disabled={loading}
             >
-              {loading ? "Igniting..." : "Start Engine"}
+              {loading ? "กำลังตรวจสอบ..." : "เข้าสู่ระบบ"}
             </Button>
 
             <div className="relative py-2">
               <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-white/5"></div></div>
-              <div className="relative flex justify-center text-[8px] font-black uppercase tracking-[0.4em]"><span className="bg-[#050110] px-4 text-slate-600">Connect With</span></div>
+              <div className="relative flex justify-center text-[8px] font-black uppercase tracking-[0.4em]"><span className="bg-[#050110] px-4 text-slate-600">หรือเข้าสู่ระบบด้วย</span></div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
                <button type="button" className="flex items-center justify-center gap-2 h-14 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all">
                   <Fingerprint size={16} className="text-primary" />
-                  <span className="text-[10px] font-black text-white uppercase tracking-widest pt-0.5">Biometrics</span>
+                  <span className="text-[10px] font-black text-white uppercase tracking-widest pt-0.5">สแกนนิ้ว/หน้า</span>
                </button>
                <button type="button" className="flex items-center justify-center gap-2 h-14 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all">
                   <QrCode size={16} className="text-accent" />
-                  <span className="text-[10px] font-black text-white uppercase tracking-widest pt-0.5">SSO Scan</span>
+                  <span className="text-[10px] font-black text-white uppercase tracking-widest pt-0.5">สแกนคิวอาร์</span>
                </button>
             </div>
           </form>
@@ -131,7 +131,7 @@ export default function DriverLoginPage() {
 
         <div className="text-center pt-4">
            <p className="text-[10px] text-slate-500 font-medium">
-             New to the fleet? <button onClick={() => router.push('/mobile/apply')} className="text-primary font-black uppercase tracking-widest">Apply as Driver</button>
+             หากยังไม่มีบัญชี? <button onClick={() => router.push('/mobile/apply')} className="text-primary font-black uppercase tracking-widest">ลงทะเบียนสมัครคนขับ</button>
            </p>
         </div>
 

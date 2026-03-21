@@ -21,7 +21,6 @@ import {
   CalendarDays,
   Receipt,
   Wallet,
-  Building,
   History,
   CheckCircle2,
   Bell,
@@ -48,13 +47,13 @@ interface NavGroup {
 
 const navigation: NavGroup[] = [
   {
-    titleKey: "OPS COMMAND",
+    titleKey: "nav_groups.ops_command",
     items: [
       { titleKey: "navigation.dashboard", href: "/dashboard", icon: <LayoutDashboard size={20} /> },
     ],
   },
   {
-    titleKey: "OPERATIONS",
+    titleKey: "nav_groups.operations",
     items: [
       { titleKey: "navigation.planning", href: "/planning", icon: <CalendarDays size={20} /> },
       { titleKey: "navigation.calendar", href: "/calendar", icon: <CalendarDays size={20} /> },
@@ -67,7 +66,7 @@ const navigation: NavGroup[] = [
     ],
   },
   {
-    titleKey: "ASSET CONTROL",
+    titleKey: "nav_groups.asset_control",
     items: [
       { titleKey: "navigation.drivers", href: "/drivers", icon: <Users size={20} /> },
       { titleKey: "navigation.fleet", href: "/vehicles", icon: <Truck size={20} /> },
@@ -77,7 +76,7 @@ const navigation: NavGroup[] = [
     ],
   },
   {
-    titleKey: "INTELLIGENCE",
+    titleKey: "nav_groups.intelligence",
     items: [
       { titleKey: "navigation.analytics", href: "/admin/analytics", icon: <BarChart3 size={20} />, badgeColor: "blue" },
       { titleKey: "navigation.ai", href: "/intelligence", icon: <Bot size={20} />, badgeColor: "green" },
@@ -85,7 +84,7 @@ const navigation: NavGroup[] = [
     ],
   },
   {
-    titleKey: "FINANCIAL",
+    titleKey: "nav_groups.financial",
     items: [
       { titleKey: "navigation.billing", href: "/billing/customer", icon: <Receipt size={20} /> },
       { titleKey: "navigation.invoices", href: "/billing/invoices", icon: <FileText size={20} /> },
@@ -93,7 +92,7 @@ const navigation: NavGroup[] = [
     ],
   },
   {
-    titleKey: "CORE SETTINGS",
+    titleKey: "nav_groups.settings",
     items: [
       { titleKey: "navigation.settings", href: "/settings", icon: <Settings size={20} /> },
     ],
@@ -102,7 +101,7 @@ const navigation: NavGroup[] = [
 
 const customerNavigation: NavGroup[] = [
     {
-      titleKey: "CLIENT PORTAL",
+      titleKey: "nav_groups.client_portal",
       items: [
         { titleKey: "navigation.dashboard", href: "/dashboard", icon: <LayoutDashboard size={20} /> },
         { titleKey: "navigation.monitoring", href: "/monitoring", icon: <Activity size={20} />, badge: "Live", badgeColor: "green" },
@@ -110,7 +109,7 @@ const customerNavigation: NavGroup[] = [
       ],
     },
     {
-        titleKey: "DOCUMENTS",
+        titleKey: "nav_groups.documents",
         items: [
             { titleKey: "navigation.pod", href: "/pod", icon: <FileText size={20} /> },
         ]
@@ -172,11 +171,11 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
     if (!roleLoaded || userRole === null) return true 
     if (isCustomerUser) return true
 
-    if (group.titleKey === "INTELLIGENCE") return [1, 2].includes(userRole)
-    if (group.titleKey === "FINANCIAL") return [1, 2, 4].includes(userRole)
-    if (group.titleKey === "CORE SETTINGS") return [1, 2].includes(userRole)
+    if (group.titleKey === "nav_groups.intelligence") return [1, 2].includes(userRole)
+    if (group.titleKey === "nav_groups.financial") return [1, 2, 4].includes(userRole)
+    if (group.titleKey === "nav_groups.settings") return [1, 2].includes(userRole)
     
-    if (group.titleKey === "OPERATIONS" || group.titleKey === "ASSET CONTROL") {
+    if (group.titleKey === "nav_groups.operations" || group.titleKey === "nav_groups.asset_control") {
         if (userRole === 4) return false
     }
 
@@ -241,7 +240,7 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
               <div key={group.titleKey} className="space-y-4">
                 {!collapsed && (
                   <h2 className="px-4 text-[10px] font-black uppercase tracking-[0.4em] text-slate-500/80">
-                    {group.titleKey}
+                    {t(group.titleKey)}
                   </h2>
                 )}
                 

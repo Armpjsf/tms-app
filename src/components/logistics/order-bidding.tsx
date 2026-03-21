@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -9,6 +9,7 @@ import { Activity, Clock, MapPin, ArrowRight, Truck, Database, ChevronDown, Chec
 import { Job } from "@/lib/supabase/jobs"
 import { getBidsForJob, acceptBid, JobBid } from "@/lib/actions/marketplace-actions"
 import { toast } from "sonner"
+import { useLanguage } from "@/components/providers/language-provider"
 
 interface OrderBiddingProps {
     orders?: Job[]
@@ -57,6 +58,8 @@ export function OrderBidding({ orders = [] }: OrderBiddingProps) {
         }
     }
 
+    const { t } = useLanguage()
+
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between mb-4">
@@ -64,15 +67,15 @@ export function OrderBidding({ orders = [] }: OrderBiddingProps) {
                     <div className="flex flex-col">
                         <CardTitle className="text-xl font-bold flex items-center gap-3">
                             <Activity className="text-emerald-500" />
-                            Live Logistics Marketplace
+                            {t('logistics.marketplace')}
                         </CardTitle>
                         <p className="text-xs text-gray-500 font-bold tracking-wide mt-1">
-                            Bidding System: พิจารณาข้อเสนอราคาจากพนักงานขับรถ
+                            {t('logistics.driver_bids')}: ตรวจสอบและคัดเลือกข้อเสนอจากคนขับ
                         </p>
                     </div>
                 </div>
                 <Badge variant="outline" className="bg-emerald-50 text-emerald-600 border-emerald-100 font-bold px-3 py-1">
-                    {displayOrders.length} Unassigned Jobs
+                    {displayOrders.length} {t('logistics.unassigned_jobs')}
                 </Badge>
             </div>
 
@@ -95,7 +98,7 @@ export function OrderBidding({ orders = [] }: OrderBiddingProps) {
                                             <div className="flex items-center justify-between">
                                                 <span className="text-xs font-black text-emerald-500 uppercase tracking-widest">{order.Job_ID}</span>
                                                 <div className="flex items-center gap-1 text-orange-500 font-bold text-xs">
-                                                    <Clock size={14} /> รอพิจารณา
+                                                    <Clock size={14} /> รอเสนอราคา
                                                 </div>
                                             </div>
 
@@ -121,18 +124,17 @@ export function OrderBidding({ orders = [] }: OrderBiddingProps) {
                                         <div className="flex items-center justify-between md:flex-col md:justify-center md:items-end md:w-48 gap-4 border-t md:border-t-0 md:border-l border-gray-100 pt-4 md:pt-0 pl-0 md:pl-6">
                                             <div className="text-left md:text-right">
                                                 <p className="text-[10px] uppercase tracking-wider text-gray-500 font-bold mb-1">
-                                                    ราคาตั้งต้น (Base)
+                                                    {t('logistics.base_price')}
                                                 </p>
                                                 <p className="text-lg font-black text-gray-900">
                                                     ฿{(order.Cost_Driver_Total || 0).toLocaleString()}
                                                 </p>
                                             </div>
-                                            <Button 
-                                                variant="outline" 
-                                                className={`rounded-xl font-bold text-xs gap-2 ${expandedJobId === order.Job_ID ? 'bg-gray-100' : ''}`}
+                                            <button 
+                                                className={`h-10 px-4 rounded-xl font-bold text-xs gap-2 border border-gray-200 hover:bg-gray-100 flex items-center ${expandedJobId === order.Job_ID ? 'bg-gray-100' : ''}`}
                                             >
-                                                ดูข้อเสนอ <ChevronDown size={14} className={`transition-transform ${expandedJobId === order.Job_ID ? 'rotate-180' : ''}`} />
-                                            </Button>
+                                                ดูราคาเสนอ <ChevronDown size={14} className={`transition-transform ${expandedJobId === order.Job_ID ? 'rotate-180' : ''}`} />
+                                            </button>
                                         </div>
                                     </div>
 
@@ -147,7 +149,7 @@ export function OrderBidding({ orders = [] }: OrderBiddingProps) {
                                                 <div className="p-6">
                                                     <h5 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
                                                         <Database size={16} className="text-emerald-500" />
-                                                        รายการเสนอราคาจากคนขับ
+                                                        {t('logistics.driver_bids')}
                                                     </h5>
                                                     
                                                     {loadingBids[order.Job_ID] ? (
@@ -174,7 +176,7 @@ export function OrderBidding({ orders = [] }: OrderBiddingProps) {
                                                                     </div>
                                                                     <div className="flex items-center justify-between w-full sm:w-auto gap-6 bg-gray-50 px-4 py-2 rounded-lg">
                                                                         <div className="text-right">
-                                                                            <p className="text-[10px] uppercase font-bold text-gray-500">เสนอราคา</p>
+                                                                            <p className="text-[10px] uppercase font-bold text-gray-500">ราคาที่เสนอ</p>
                                                                             <p className="text-lg font-black text-emerald-600">฿{bid.bid_amount.toLocaleString()}</p>
                                                                         </div>
                                                                         <Button 
@@ -182,8 +184,8 @@ export function OrderBidding({ orders = [] }: OrderBiddingProps) {
                                                                             disabled={processingBid === bid.bid_id}
                                                                             className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-lg shadow-emerald-500/20 px-6"
                                                                         >
-                                                                            {processingBid === bid.bid_id ? 'กำลังบันทึก...' : (
-                                                                                <span className="flex items-center gap-1.5"><CheckCircle2 size={16} /> ตกลง</span>
+                                                                            {processingBid === bid.bid_id ? 'กำลังดำเนินการ...' : (
+                                                                                <span className="flex items-center gap-1.5"><CheckCircle2 size={16} /> {t('logistics.accept_bid')}</span>
                                                                             )}
                                                                         </Button>
                                                                     </div>
@@ -208,8 +210,8 @@ export function OrderBidding({ orders = [] }: OrderBiddingProps) {
                         <div className="w-16 h-16 bg-white shadow-sm rounded-2xl flex items-center justify-center mb-4">
                             <Activity className="text-gray-400 w-8 h-8" />
                         </div>
-                        <h4 className="text-lg font-bold text-gray-900 mb-1">ยังไม่มีงานว่างรอการประมูล</h4>
-                        <p className="text-sm text-gray-500">เมื่อมีงานใหม่ที่ยังไม่ระบุคนขับ จะมาแสดงที่นี่ให้คนขับเข้ามา Bid ราคา</p>
+                        <h4 className="text-lg font-bold text-gray-900 mb-1">ไม่มีงานอยู่ระหว่างการประมูล</h4>
+                        <p className="text-sm text-gray-500">งานที่เปิดให้ประมูลและรอการตอบรับจะแสดงที่นี่</p>
                     </motion.div>
                 )}
             </div>

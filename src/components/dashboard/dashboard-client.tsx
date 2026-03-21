@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { motion } from "framer-motion"
+import { motion, Variants } from "framer-motion"
 import {
   AlertTriangle,
   CheckCircle2,
@@ -18,7 +18,7 @@ import { cn } from "@/lib/utils"
 import { useLanguage } from "@/components/providers/language-provider"
 import { RequestShipmentDialog } from "./request-shipment-dialog"
 
-const container = {
+const container: Variants = {
     hidden: { opacity: 0 },
     show: {
         opacity: 1,
@@ -27,12 +27,21 @@ const container = {
             delayChildren: 0.1
         }
     }
-} as any
+}
 
-const item = {
+const item: Variants = {
     hidden: { opacity: 0, y: 20 },
     show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: "easeOut" } }
-} as any
+}
+
+interface DriverStatus {
+    Driver_ID: string
+    Driver_Name: string
+    Vehicle_Plate: string
+    Last_Update: string | null
+    Latitude: number | null
+    Longitude: number | null
+}
 
 interface DashboardClientProps {
     branchId: string
@@ -50,7 +59,7 @@ interface DashboardClientProps {
         total: number
         completed: number
     }[]
-    fleetStatus: any[] 
+    fleetStatus: DriverStatus[] 
     marketplaceJobs: Job[]
     fleetHealth: number
 }
@@ -102,7 +111,7 @@ export function DashboardClient({
                             onClick={() => setIsRequestDialogOpen(true)}
                             className="h-16 px-12 bg-primary hover:bg-primary/90 text-white rounded-3xl font-black text-xs uppercase tracking-[0.2em] transition-all shadow-[0_20px_40px_rgba(255,30,133,0.3)] active:scale-95 border border-primary/30"
                         >
-                            Request Mission
+                            {t('navigation.request_mission')}
                         </button>
                     )}
                     <div className="h-16 px-8 glass-panel rounded-3xl flex items-center gap-6 border-white/5 shadow-2xl">
@@ -166,7 +175,7 @@ export function DashboardClient({
                             </div>
                         </motion.div>
                         <motion.div variants={item} className="glass-panel rounded-[3rem] p-8 border-white/5 flex flex-col justify-between h-44 hover:border-primary/20 transition-all">
-                            <p className="text-xs font-black text-slate-500 uppercase tracking-widest">{t('dashboard.matrix_title').split(' ')[0]}</p>
+                            <p className="text-xs font-black text-slate-500 uppercase tracking-widest">{t('navigation.planning')}</p>
                             <div className="flex items-end justify-between">
                                 <p className="text-6xl font-black text-white tracking-tighter">{jobStats?.inProgress || 0}</p>
                                 <Truck size={24} className="text-primary" />
@@ -185,12 +194,12 @@ export function DashboardClient({
                             <div className="inline-flex items-center gap-3 px-5 py-2 glass-panel rounded-full text-xs font-black uppercase tracking-[0.2em] text-primary border-primary/20">
                                 <Leaf size={16} /> {t('dashboard.esg_intelligence')}
                             </div>
-                            <h2 className="text-6xl font-black text-white tracking-tighter leading-tight uppercase">
-                                {t('dashboard.cleaner_future').split(' ')[0]} <span className="text-primary italic">{t('dashboard.cleaner_future').split(' ').slice(1).join(' ')}</span>.<br/>
-                                <span className="opacity-40">{t('dashboard.carbon_offset').toUpperCase()}</span> <span className="premium-text-gradient">1,420 KG CO2</span>
+                             <h2 className="text-6xl font-black text-white tracking-tighter leading-tight uppercase">
+                                {t('dashboard.cleaner_future')}<br/>
+                                <span className="opacity-40">{t('dashboard.carbon_offset')}</span> <span className="premium-text-gradient">1,420 KG CO2</span>
                             </h2>
                             <p className="text-slate-400 font-bold text-lg max-w-2xl leading-relaxed">
-                                Our AI Logistics Engine has optimized route delivery by 22% this month, saving 285 liters of fuel and reducing unnecessary emissions by 18.5%.
+                                {t('dashboard.esg_description')}
                             </p>
                         </div>
                         <div className="flex gap-16">
