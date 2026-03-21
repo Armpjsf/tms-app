@@ -1,3 +1,5 @@
+"use client"
+
 import { useState, useEffect } from "react"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { PremiumCard } from "@/components/ui/premium-card"

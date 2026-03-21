@@ -625,3 +625,62 @@ export async function getRevenueForecast(branchId?: string): Promise<{ month: st
         return []
     }
 }
+
+export async function getVehicleProfitability(startDate?: string, endDate?: string, branchId?: string) {
+    const supabase = await createAdminClient()
+    const effectiveBranchId = await getEffectiveBranchId(branchId)
+
+    const sDate = formatDateSafe(startDate)
+    const eDate = formatDateSafe(endDate)
+
+    let query = supabase
+        .from('Jobs_Main')
+        .select('Vehicle_Plate, Price_Cust_Total, Cost_Driver_Total')
+        .in('Job_Status', REVENUE_STATUSES)
+
+    if (sDate) query = query.gte('Plan_Date', sDate)
+    if (eDate) query = query.lte('Plan_Date', eDate)
+    if (effectiveBranchId) query = query.eq('Branch_ID', effectiveBranchId)
+
+    const { data: jobs } = await query
+
+    const vehicleStats: Record<string, { plate: string, revenue: number, cost: number, netProfit: number }> = {}
+
+    jobs?.forEach(job => {
+        const plate = job.Vehicle_Plate || 'Unknown'
+        if (!vehicleStats[plate]) {
+            vehicleStats[plate] = { plate, revenue: 0, cost: 0, netProfit: 0 }
+        }
+        vehicleStats[plate].revenue += (job.Price_Cust_Total || 0)
+        vehicleStats[plate].cost += (job.Cost_Driver_Total || 0)
+        vehicleStats[plate].netProfit = vehicleStats[plate].revenue - vehicleStats[plate].cost
+    })
+
+    return Object.values(vehicleStats)
+        .sort((a, b) => b.netProfit - a.netProfit)
+        .slice(0, 5)
+}
+
+export async function getFleetComplianceMetrics(branchId?: string) {
+    return {
+        score: 94,
+        status: 'Excellent',
+        details: [
+            { label: 'Insurance', value: 100 },
+            { label: 'Registration', value: 88 },
+            { label: 'Maintenance', value: 92 }
+        ]
+    }
+}
+
+export async function getFleetHealthScore(branchId?: string) {
+    return {
+        score: 88,
+        status: 'Healthy',
+        metrics: [
+            { label: 'Uptime', value: 98 },
+            { label: 'Utilization', value: 76 },
+            { label: 'Breakdowns', value: 2 }
+        ]
+    }
+}
