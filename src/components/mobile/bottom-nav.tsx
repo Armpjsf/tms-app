@@ -10,11 +10,10 @@ export function BottomNav() {
   if (!pathname.startsWith("/mobile")) return null
 
   const navItems = [
-    { href: "/mobile/dashboard", icon: LayoutGrid, label: "DASH" },
-    { href: "/mobile/drivers", icon: Users, label: "DRIVERS" },
-    { href: "/mobile/jobs", icon: Truck, label: "SHIPMENTS", isCenter: true },
-    { href: "/mobile/map", icon: Map, label: "MAP" },
-    { href: "/mobile/profile", icon: Activity, label: "STATS" },
+    { href: "/mobile/dashboard", icon: LayoutGrid, label: "หน้าแรก" },
+    { href: "/mobile/profile", icon: Users, label: "โปรไฟล์" },
+    { href: "/mobile/jobs", icon: Truck, label: "งานขนส่ง", isCenter: true },
+    { href: "/mobile/map", icon: Map, label: "แผนที่" },
   ]
 
   return (

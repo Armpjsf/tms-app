@@ -46,6 +46,11 @@ export const dictionaries = {
       invoices: 'ออกใบแจ้งหนี้',
       payouts: 'ทำรายการจ่ายเงิน',
       settings: 'ตั้งค่าระบบ',
+      subcontractors: 'จัดการรถร่วม',
+      roles: 'สิทธิ์การใช้งาน',
+      users: 'จัดการบัญชีผู้ใช้',
+      branches: 'จัดการสาขา',
+      vehicle_types: 'ประเภทรถขนส่ง',
       ai: 'ระบบผู้ช่วย AI',
     },
     dashboard: {
@@ -204,6 +209,11 @@ export const dictionaries = {
       invoices: 'Invoice Management',
       payouts: 'Payment Registry',
       settings: 'System Setup',
+      subcontractors: 'Subcontractors',
+      roles: 'Access & Permissions',
+      users: 'User Management',
+      branches: 'Branch Management',
+      vehicle_types: 'Vehicle Types',
       ai: 'AI Support',
     },
     dashboard: {

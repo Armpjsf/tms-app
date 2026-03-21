@@ -26,6 +26,7 @@ import {
   CheckCircle2,
   Bell,
   Bot,
+  Settings,
 } from "lucide-react"
 
 import { SidebarProfile } from "./sidebar-profile"
@@ -79,7 +80,6 @@ const navigation: NavGroup[] = [
     titleKey: "INTELLIGENCE",
     items: [
       { titleKey: "navigation.analytics", href: "/admin/analytics", icon: <BarChart3 size={20} />, badgeColor: "blue" },
-      { titleKey: "navigation.fleet", href: "/reports/fleet", icon: <Truck size={20} /> },
       { titleKey: "navigation.ai", href: "/intelligence", icon: <Bot size={20} />, badgeColor: "green" },
       { titleKey: "navigation.billing", href: "/reports", icon: <BarChart3 size={20} /> },
     ],
@@ -95,7 +95,7 @@ const navigation: NavGroup[] = [
   {
     titleKey: "CORE SETTINGS",
     items: [
-      { titleKey: "navigation.settings", href: "/settings/company", icon: <Building size={20} /> },
+      { titleKey: "navigation.settings", href: "/settings", icon: <Settings size={20} /> },
     ],
   },
 ]

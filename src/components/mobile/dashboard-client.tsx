@@ -1,16 +1,12 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { 
-    Truck, CheckCircle, Clock, Trophy, Medal, Crown, 
-    MapPin, FileText, ChevronRight, TrendingUp, Star,
-    LayoutGrid, Settings, Bell, Search, Plus
+    Truck, MapPin, 
+    LayoutGrid, Bell, Plus, Clock, Star
 } from "lucide-react"
-import Link from "next/link"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { cn } from "@/lib/utils"
 
 interface DashboardClientProps {
     session: {
@@ -53,10 +49,7 @@ const item = {
     show: { opacity: 1, y: 0 }
 }
 
-export function DashboardClient({ session, stats, currentJob, gamification, todayIncome }: DashboardClientProps) {
-    const progressPercent = gamification.nextRankPoints > 0 
-        ? (gamification.points / gamification.nextRankPoints) * 100 
-        : 100
+export function DashboardClient({ session, stats, currentJob }: DashboardClientProps) {
 
     return (
         <motion.div 
@@ -72,7 +65,7 @@ export function DashboardClient({ session, stats, currentJob, gamification, toda
                         <LayoutGrid size={24} />
                     </button>
                     <h1 className="text-2xl font-black text-white tracking-widest uppercase">
-                        Candy<span className="text-primary">Logistics</span>
+                        Logis<span className="text-primary italic">Pro</span>
                     </h1>
                 </div>
                 <div className="flex items-center gap-3">
@@ -80,17 +73,17 @@ export function DashboardClient({ session, stats, currentJob, gamification, toda
                         <Bell size={20} />
                         <span className="absolute top-2 right-2 w-2 h-2 bg-primary rounded-full" />
                     </button>
-                    <Avatar className="h-11 w-11 border-2 border-primary/20 bg-secondary">
+                    <Avatar className="h-11 w-11 border-2 border-primary/20 bg-slate-900">
                         <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${session.driverName}`} />
-                        <AvatarFallback>{session.driverName?.charAt(0)}</AvatarFallback>
+                        <AvatarFallback className="bg-slate-900 text-white">{session.driverName?.charAt(0)}</AvatarFallback>
                     </Avatar>
                 </div>
             </motion.div>
 
             {/* Title & Stats Overview */}
             <motion.div variants={item} className="space-y-1">
-                <h2 className="text-4xl font-black text-white px-1">Active Shipments</h2>
-                <p className="text-slate-500 font-bold px-1 tracking-tight">Monitoring {stats.total} candy drops in transit</p>
+                <h2 className="text-4xl font-black text-white px-1 font-display uppercase tracking-tighter">งานจัดส่ง</h2>
+                <p className="text-slate-500 font-bold px-1 tracking-tight">ขณะนี้มี {stats.total} งานที่กำลังดำเนินการ</p>
             </motion.div>
 
             {/* Circular Stats Grid */}
@@ -105,8 +98,8 @@ export function DashboardClient({ session, stats, currentJob, gamification, toda
                         </div>
                     </div>
                     <div className="text-center">
-                        <div className="text-4xl font-black text-white tracking-tighter">0{stats.total}</div>
-                        <div className="text-[10px] font-black text-primary uppercase tracking-[0.2em] opacity-80">ON ROUTE</div>
+                        <div className="text-4xl font-black text-white tracking-tighter">{stats.total < 10 ? `0${stats.total}` : stats.total}</div>
+                        <div className="text-[10px] font-black text-primary uppercase tracking-[0.2em] opacity-80">กำลังจัดส่ง</div>
                     </div>
                 </div>
 
@@ -119,7 +112,7 @@ export function DashboardClient({ session, stats, currentJob, gamification, toda
                     </div>
                     <div className="text-center">
                         <div className="text-4xl font-black text-white tracking-tighter">04</div>
-                        <div className="text-[10px] font-black text-blue-400 uppercase tracking-[0.2em] opacity-80">PENDING</div>
+                        <div className="text-[10px] font-black text-blue-400 uppercase tracking-[0.2em] opacity-80">งานใหม่</div>
                     </div>
                 </div>
             </motion.div>
@@ -147,15 +140,15 @@ export function DashboardClient({ session, stats, currentJob, gamification, toda
                                     </div>
                                 </div>
                                 <div className="px-4 py-1.5 rounded-full bg-primary text-[10px] font-black text-white uppercase tracking-widest shadow-xl shadow-primary/30">
-                                    IN TRANSIT
+                                    กำลังเดินทาง
                                 </div>
                             </div>
 
                             <div className="space-y-3">
                                 <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest">
-                                    <span className="text-slate-500">WAREHOUSE A</span>
-                                    <span className="text-primary">75% COMPLETE</span>
-                                    <span className="text-slate-500">CENTRAL HUB</span>
+                                    <span className="text-slate-500">{currentJob.Origin_Location || "จุดรับสินค้า"}</span>
+                                    <span className="text-primary">ดำเนินการ 75%</span>
+                                    <span className="text-slate-500">{currentJob.Dest_Location || "จุดส่งสินค้า"}</span>
                                 </div>
                                 <div className="h-2.5 w-full bg-white/5 rounded-full overflow-hidden">
                                      <motion.div 
@@ -179,7 +172,7 @@ export function DashboardClient({ session, stats, currentJob, gamification, toda
                                     </div>
                                 </div>
                                 <Button className="h-14 px-10 rounded-2xl bg-primary hover:brightness-110 text-white font-black text-xs uppercase tracking-widest shadow-xl shadow-primary/30 transition-all">
-                                    TRACK LIVE
+                                    ติดตามสถานะ
                                 </Button>
                             </div>
                         </div>
@@ -197,7 +190,7 @@ export function DashboardClient({ session, stats, currentJob, gamification, toda
                                      </div>
                                 </div>
                                 <div className="px-4 py-1.5 rounded-full bg-accent/20 border border-accent/30 text-[10px] font-black text-accent uppercase tracking-widest">
-                                    SORTING
+                                    รอรับสินค้า
                                 </div>
                             </div>
                             <div className="h-2.5 w-full bg-white/5 rounded-full overflow-hidden">
@@ -206,10 +199,10 @@ export function DashboardClient({ session, stats, currentJob, gamification, toda
                             <div className="flex items-center justify-between text-slate-500">
                                 <div className="flex items-center gap-2 text-[10px] font-bold">
                                     <MapPin size={14} className="text-accent" />
-                                    ESTIMATED: 2H 45M
+                                    เวลาโดยประมาณ: 2 ชม. 45 นาที
                                 </div>
                                 <Button variant="ghost" className="text-white font-black text-xs uppercase tracking-widest hover:text-primary">
-                                    DETAILS
+                                    รายละเอียด
                                 </Button>
                             </div>
                         </div>

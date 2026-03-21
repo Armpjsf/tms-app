@@ -64,7 +64,7 @@ export function ProfileContent({ session, score, unreadChatCount = 0 }: ProfileC
       </Card>
 
       {/* Performance Scorecard */}
-      <Card className="bg-white border-gray-200 mb-4 overflow-hidden">
+      <Card className="glass-panel border-white/5 mb-4 overflow-hidden">
         <div className="absolute top-0 right-0 p-2 opacity-10">
             <ClipboardCheck size={100} className="text-white transform rotate-12" />
         </div>
@@ -72,7 +72,7 @@ export function ProfileContent({ session, score, unreadChatCount = 0 }: ProfileC
             <div className="flex justify-between items-start mb-6">
                 <div>
                     <h2 className="text-lg font-bold text-white mb-1">คะแนนการทำงาน</h2>
-                    <p className="text-gray-500 text-xs">อัปเดตล่าสุด: วันนี้</p>
+                    <p className="text-slate-500 text-xs">อัปเดตล่าสุด: วันนี้</p>
                 </div>
                 <div className={`w-16 h-16 rounded-full flex flex-col items-center justify-center border-4 ${
                     (score?.totalScore || 0) >= 80 ? 'border-emerald-500 text-emerald-400 bg-emerald-500/10' :
@@ -83,21 +83,21 @@ export function ProfileContent({ session, score, unreadChatCount = 0 }: ProfileC
                 </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-2 text-center divide-x divide-slate-800">
+            <div className="grid grid-cols-3 gap-2 text-center divide-x divide-white/10">
                 <div>
-                   <span className="text-[10px] text-gray-400 uppercase tracking-wider">ตรงเวลา</span>
+                   <span className="text-[10px] text-slate-400 uppercase tracking-wider">ตรงเวลา</span>
                    <p className={`text-lg font-bold mt-1 ${
-                       (score?.onTimeScore || 0) >= 90 ? 'text-emerald-400' : 'text-gray-700'
+                       (score?.onTimeScore || 0) >= 90 ? 'text-emerald-400' : 'text-white'
                    }`}>{score?.onTimeScore || 0}%</p>
                 </div>
                 <div>
-                   <span className="text-[10px] text-gray-400 uppercase tracking-wider">ปลอดภัย</span>
-                   <p className="text-lg font-bold mt-1 text-gray-700">{score?.safetyScore || 0}%</p>
+                   <span className="text-[10px] text-slate-400 uppercase tracking-wider">ปลอดภัย</span>
+                   <p className="text-lg font-bold mt-1 text-white">{score?.safetyScore || 0}%</p>
                 </div>
                 <div>
-                   <span className="text-[10px] text-gray-400 uppercase tracking-wider">รับงาน</span>
+                   <span className="text-[10px] text-slate-400 uppercase tracking-wider">รับงาน</span>
                    <p className={`text-lg font-bold mt-1 ${
-                       (score?.acceptanceScore || 0) >= 90 ? 'text-emerald-400' : 'text-gray-700'
+                       (score?.acceptanceScore || 0) >= 90 ? 'text-emerald-400' : 'text-white'
                    }`}>{score?.acceptanceScore || 0}%</p>
                 </div>
             </div>
@@ -105,26 +105,26 @@ export function ProfileContent({ session, score, unreadChatCount = 0 }: ProfileC
       </Card>
 
       {/* Menu Items */}
-      <Card className="bg-white border-gray-200 mb-4">
+      <Card className="glass-panel border-white/5 mb-4">
         <CardContent className="py-2">
           {menuItems.map((item, index) => (
             <Link 
               key={index} 
               href={item.href}
               onClick={(e) => handleItemClick(e, item.href)}
-              className="flex items-center justify-between py-3 border-b border-gray-200 last:border-0 active:bg-gray-50 transition-colors"
+              className="flex items-center justify-between py-4 border-b border-white/5 last:border-0 active:bg-white/5 transition-colors"
             >
-              <div className="flex items-center gap-3 text-gray-700">
-                <item.icon className="w-5 h-5 text-gray-400" />
-                <span>{item.label}</span>
+              <div className="flex items-center gap-3 text-white">
+                <item.icon className="w-5 h-5 text-slate-400" />
+                <span className="font-medium">{item.label}</span>
               </div>
               <div className="flex items-center gap-2">
                 {item.badge && item.badge > 0 && (
-                  <span className="bg-emerald-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
+                  <span className="bg-primary text-white text-[10px] font-black px-2 py-0.5 rounded-full min-w-[20px] text-center shadow-lg shadow-primary/20">
                     {item.badge}
                   </span>
                 )}
-                <ChevronRight className="w-4 h-4 text-gray-500" />
+                <ChevronRight className="w-4 h-4 text-slate-600" />
               </div>
             </Link>
           ))}
