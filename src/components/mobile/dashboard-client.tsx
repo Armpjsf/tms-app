@@ -4,8 +4,9 @@ import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { 
     Truck, MapPin, 
-    LayoutGrid, Bell, Plus, Clock, Star
+    LayoutGrid, Bell, Gavel, Clock, Star
 } from "lucide-react"
+import Link from "next/link"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 interface DashboardClientProps {
@@ -212,20 +213,25 @@ export function DashboardClient({ session, stats, currentJob }: DashboardClientP
                          <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4">
                              <Truck className="text-slate-600" size={32} />
                          </div>
-                         <h3 className="text-white font-black text-xl mb-1">No Active Drops</h3>
-                         <p className="text-slate-500 text-sm font-medium mb-6">Your cargo bay is currently empty.</p>
-                         <Button className="h-14 px-8 rounded-2xl bg-primary text-white font-black text-xs uppercase tracking-widest shadow-xl shadow-primary/30">
-                             DASHBOARD
-                         </Button>
+                         <h3 className="text-white font-black text-xl mb-1">ไม่มีงานที่ดำเนินการอยู่</h3>
+                         <p className="text-slate-500 text-sm font-medium mb-6">คุณยังไม่มีงานที่ต้องจัดส่งในขณะนี้</p>
+                         <Link href="/mobile/marketplace">
+                             <Button className="h-14 px-8 rounded-2xl bg-primary text-white font-black text-xs uppercase tracking-widest shadow-xl shadow-primary/30">
+                                 หาเที่ยวงานใหม่
+                             </Button>
+                         </Link>
                     </div>
                 )}
             </motion.div>
 
-            {/* Floating Action Button */}
+            {/* Floating Action Button (Marketplace) */}
             <div className="fixed bottom-32 right-6 z-50">
-                 <button className="w-16 h-16 rounded-full bg-primary flex items-center justify-center text-white shadow-[0_8px_30px_rgba(255,30,133,0.4)] transition-transform hover:scale-110 active:scale-95 border-4 border-[#0a0518]">
-                    <Plus size={32} strokeWidth={3} />
-                 </button>
+                 <Link href="/mobile/marketplace">
+                     <button className="w-16 h-16 rounded-full bg-primary flex flex-col items-center justify-center text-white shadow-[0_8px_30px_rgba(255,30,133,0.4)] transition-transform hover:scale-110 active:scale-95 border-4 border-[#0a0518]">
+                        <Gavel size={28} strokeWidth={3} />
+                        <span className="text-[7px] font-black uppercase tracking-tighter -mt-1">BID</span>
+                     </button>
+                 </Link>
             </div>
         </motion.div>
     )

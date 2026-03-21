@@ -1,6 +1,6 @@
 "use client"
 
-import { Fuel, Wrench, ClipboardCheck, Bell, Settings, ChevronRight, LogOut, AlertTriangle, User, Banknote, BookOpen } from "lucide-react"
+import { Fuel, Wrench, ClipboardCheck, Bell, Settings, ChevronRight, LogOut, AlertTriangle, User, Banknote, BookOpen, LayoutGrid, Star, Calendar, ShieldAlert } from "lucide-react"
 import { toast } from "sonner"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -24,10 +24,14 @@ interface ProfileContentProps {
 
 export function ProfileContent({ session, score, unreadChatCount = 0 }: ProfileContentProps) {
   const menuItems = [
+    { icon: LayoutGrid, label: "หาเที่ยวงาน (บิดงาน)", href: "/mobile/marketplace" },
+    { icon: Star, label: "ผลงานของฉัน (KPI)", href: "/mobile/kpi" },
     { icon: Banknote, label: "สรุปรายได้", href: "/mobile/income-summary" },
     { icon: Fuel, label: "แจ้งเติมน้ำมัน", href: "/mobile/fuel" },
     { icon: Wrench, label: "แจ้งซ่อมบำรุง", href: "/mobile/maintenance" },
     { icon: ClipboardCheck, label: "เช็คสภาพรถ", href: "/mobile/vehicle-check" },
+    { icon: ShieldAlert, label: "รายงานสินค้าเสียหาย", href: "/mobile/damage-report" },
+    { icon: Calendar, label: "แจ้งลางาน", href: "/mobile/leave" },
     { icon: Bell, label: "การแจ้งเตือน", href: "/mobile/notifications" },
     { icon: User, label: "ติดต่อแอดมิน", href: "/mobile/chat", badge: unreadChatCount },
     { icon: AlertTriangle, label: "แจ้งเหตุฉุกเฉิน (SOS)", href: "/mobile/sos" },
