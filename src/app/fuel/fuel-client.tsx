@@ -21,6 +21,7 @@ import { PremiumCard } from "@/components/ui/premium-card"
 import { PremiumButton } from "@/components/ui/premium-button"
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
+import { useLanguage } from "@/components/providers/language-provider"
 import NextImage from "next/image"
 
 export function FuelClient({ 
@@ -33,6 +34,7 @@ export function FuelClient({
   startDate,
   endDate
 }: any) {
+  const { t } = useLanguage()
   return (
     <div className="space-y-12 pb-20">
       {/* Tactical Energy Header */}
@@ -45,8 +47,8 @@ export function FuelClient({
                   <Fuel size={40} strokeWidth={2.5} />
                </div>
                <div>
-                  <h1 className="text-5xl font-black text-white tracking-widest uppercase leading-none mb-2 italic">Energy Hub</h1>
-                  <p className="text-[10px] font-black text-primary uppercase tracking-[0.6em] opacity-80 italic italic">Resource Consumption & Propulsion Matrix // FUEL_V3</p>
+                  <h1 className="text-5xl font-black text-white tracking-widest uppercase leading-none mb-2 italic">{t('navigation.fuel')}</h1>
+                  <p className="text-[10px] font-black text-primary uppercase tracking-[0.6em] opacity-80 italic italic">{t('dashboard.subtitle')}</p>
                </div>
             </div>
           </div>
@@ -57,7 +59,7 @@ export function FuelClient({
                 trigger={
                     <PremiumButton className="h-16 px-10 rounded-2xl shadow-[0_15px_30px_rgba(255,30,133,0.3)] gap-3 bg-primary hover:bg-primary/90">
                         <Plus size={24} strokeWidth={3} />
-                        LOG REFUELING
+                        {t('request_mission')}
                     </PremiumButton>
                 }
             />
@@ -72,8 +74,8 @@ export function FuelClient({
                 <TrendingUp size={24} strokeWidth={2.5} />
             </div>
             <div>
-                <h2 className="text-3xl font-black text-white tracking-[0.2em] uppercase italic">Propulsion Intelligence</h2>
-                <p className="text-[9px] font-black text-primary uppercase tracking-[0.6em] opacity-60">Fleet Efficiency & Cost Variable Audit</p>
+                <h2 className="text-3xl font-black text-white tracking-[0.2em] uppercase italic">{t('navigation.analytics')}</h2>
+                <p className="text-[9px] font-black text-primary uppercase tracking-[0.6em] opacity-60">{t('dashboard.subtitle')}</p>
             </div>
          </div>
          <FuelAnalyticsDashboard analytics={analytics} />
@@ -85,13 +87,13 @@ export function FuelClient({
             <div className="p-3 bg-blue-500/20 rounded-2xl text-blue-500 border-2 border-blue-500/30">
                 <Activity size={20} />
             </div>
-            <h3 className="text-sm font-black text-white uppercase tracking-[0.4em] italic">Signal Registry Filter</h3>
+            <h3 className="text-sm font-black text-white uppercase tracking-[0.4em] italic">{t('common.search')}</h3>
         </div>
         
         <div className="flex flex-col lg:flex-row gap-6">
           <div className="flex-1">
               <SearchInput 
-                placeholder="Plate ID, Operator Name, OP_KEY..." 
+                placeholder={t('common.search')}
                 className="h-16 bg-[#0a0518] border-2 border-white/5 rounded-2xl text-white placeholder:text-slate-600 focus:border-primary/50 transition-all font-black"
               />
           </div>
@@ -112,7 +114,7 @@ export function FuelClient({
                 />
               </div>
               <PremiumButton type="submit" variant="secondary" className="h-16 px-10 rounded-2xl border-2 border-white/5 bg-white/5 hover:bg-white/10 text-white font-black uppercase tracking-widest italic">
-                  SYNC DATA
+                  {t('common.success')}
               </PremiumButton>
           </form>
         </div>
@@ -127,13 +129,13 @@ export function FuelClient({
                     <Hash size={24} />
                 </div>
                 <div>
-                    <h2 className="text-3xl font-black text-white tracking-widest uppercase italic leading-none mb-1">Log Registry</h2>
-                    <p className="text-primary text-[10px] font-black uppercase tracking-[0.4em] opacity-60">Historical Propulsion Feed // NODE_PERSISTENCE</p>
+                    <h2 className="text-3xl font-black text-white tracking-widest uppercase italic leading-none mb-1">{t('navigation.history')}</h2>
+                    <p className="text-primary text-[10px] font-black uppercase tracking-[0.4em] opacity-60">{t('dashboard.subtitle')}</p>
                 </div>
             </div>
             <div className="hidden lg:flex items-center gap-3 py-2 px-5 bg-white/5 rounded-full border border-white/10">
                 <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">REALTIME_SIGNAL_ACTIVE</span>
+                <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">ACTIVE</span>
             </div>
           </div>
 
@@ -141,23 +143,23 @@ export function FuelClient({
             {logs.length === 0 ? (
                 <div className="p-32 text-center space-y-6">
                     <Droplets className="w-20 h-20 text-white/5 mx-auto animate-pulse" />
-                    <p className="text-slate-500 font-black uppercase tracking-[0.4em] text-xs">No Propulsion Logs Detected in the Current Sphere</p>
+                    <p className="text-slate-500 font-black uppercase tracking-[0.4em] text-xs">{t('common.no_data')}</p>
                 </div>
             ) : (
                 <table className="w-full border-collapse">
                   <thead className="text-[10px] uppercase bg-black/60 text-slate-500 border-b border-white/5 font-black tracking-[0.3em] italic">
                     <tr>
-                      <th className="text-left p-8">TIMESTAMP // ID</th>
-                      <th className="text-left p-8">OPERATOR</th>
-                      <th className="text-left p-8">PLATE</th>
-                      <th className="text-left p-8">FACILITY // STATUS</th>
-                      <th className="text-center p-8">ARTIFACT</th>
-                      <th className="text-right p-8">VOL (L)</th>
-                      <th className="text-right p-8">UNIT P</th>
-                      <th className="text-right p-8">GROSS</th>
-                      <th className="text-right p-8">ODOMETER</th>
-                      <th className="text-right p-8">KM/L METRIC</th>
-                      <th className="p-8 w-[100px]">ACTIONS</th>
+                      <th className="text-left p-8">{t('common.date')}</th>
+                      <th className="text-left p-8">{t('navigation.drivers')}</th>
+                      <th className="text-left p-8">{t('vehicles.plate')}</th>
+                      <th className="text-left p-8">{t('common.status')}</th>
+                      <th className="text-center p-8">{t('common.loading')}</th>
+                      <th className="text-right p-8">{t('common.units')} (L)</th>
+                      <th className="text-right p-8">{t('finance.payout')} / L</th>
+                      <th className="text-right p-8">{t('finance.total_amount')}</th>
+                      <th className="text-right p-8">{t('vehicles.odometer')}</th>
+                      <th className="text-right p-8">KM/L</th>
+                      <th className="p-8 w-[100px]">{t('common.actions')}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-white/5">
@@ -184,15 +186,15 @@ export function FuelClient({
                     <td className="p-8">
                       <div className="flex flex-col gap-2">
                           <span className="text-white font-black text-xs tracking-widest uppercase">{log.Station_Name || "DEFAULT_HUB"}</span>
-                          <span className={cn(
-                             "text-[9px] px-3 py-1 rounded-full w-fit font-black uppercase tracking-widest",
-                             log.Status === 'Approved' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/20' :
-                             log.Status === 'Rejected' ? 'bg-rose-500/20 text-rose-500 border border-rose-500/20' :
-                             'bg-white/5 text-slate-500 border border-white/10'
-                          )}>
-                              {log.Status === 'Approved' ? 'SYNCHRONIZED' : 
-                               log.Status === 'Rejected' ? 'DENIED' : 'PENDING'}
-                          </span>
+                               <span className={cn(
+                                 "text-[9px] px-3 py-1 rounded-full w-fit font-black uppercase tracking-widest",
+                                 log.Status === 'Approved' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/20' :
+                                 log.Status === 'Rejected' ? 'bg-rose-500/20 text-rose-500 border border-rose-500/20' :
+                                 'bg-white/5 text-slate-500 border border-white/10'
+                              )}>
+                                  {log.Status === 'Approved' ? t('fuel.status.synchronized') : 
+                                   log.Status === 'Rejected' ? t('fuel.status.denied') : t('common.loading')}
+                              </span>
                       </div>
                     </td>
                     <td className="p-8 text-center text-center">
@@ -226,7 +228,7 @@ export function FuelClient({
                            </span>
                            {log.Capacity_Status === 'Overflow' && (
                                <span className="text-[8px] text-white bg-rose-600 px-2 py-0.5 rounded-lg font-black uppercase tracking-widest animate-pulse">
-                                   OVERFLOW ALERT
+                                   {t('fuel.alerts.overflow')}
                                </span>
                            )}
                        </div>
@@ -256,7 +258,7 @@ export function FuelClient({
                                        "text-[8px] px-2 py-0.5 rounded-lg font-black uppercase tracking-widest",
                                        log.Efficiency_Status === 'Warning' ? 'text-amber-400 bg-amber-500/10 border border-amber-500/20' : 'text-rose-500 bg-rose-500/10 border border-rose-500/20'
                                    )}>
-                                       {log.Efficiency_Status === 'Warning' ? 'Low Output' : 'Critical Drift'}
+                                       {log.Efficiency_Status === 'Warning' ? t('fuel.alerts.low_output') : t('fuel.alerts.critical_drift')}
                                    </span>
                                )}
                            </div>

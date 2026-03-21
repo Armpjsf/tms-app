@@ -1,9 +1,8 @@
-"use client"
-
-import { useState, useEffect } from "react"
+import React, { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
+import { useLanguage } from "@/components/providers/language-provider"
 import { Card, CardContent } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -29,7 +28,10 @@ import {
   ShieldCheck,
   TrendingUp,
   Activity,
-  ArrowRight
+  ArrowRight,
+  FileSearch,
+  Save,
+  Plus
 } from "lucide-react"
 import {
   Dialog,
@@ -62,6 +64,7 @@ interface CustomerBillingClientProps {
 }
 
 export default function CustomerBillingClient({ initialJobs, companyProfile, customers }: CustomerBillingClientProps) {
+  const { t } = useLanguage()
   const router = useRouter()
   const [dateFrom, setDateFrom] = useState("")
   const [dateTo, setDateTo] = useState("")
@@ -150,11 +153,11 @@ export default function CustomerBillingClient({ initialJobs, companyProfile, cus
   const handleCreateBilling = async () => {
     if (selectedItems.length === 0) return
     if (!selectedCustomer) {
-        toast.error("กรุณาเลือกลูกค้าก่อนสร้างใบวางบิล")
+        toast.error(t('billing_customer.select_customer_first'))
         return
     }
 
-    if (!confirm(`ยืนยันการสร้างใบวางบิลสำหรับ ${selectedItems.length} รายการ?`)) return
+    if (!confirm(t('billing_customer.create_billing_confirm').replace('{count}', selectedItems.length.toString()))) return
 
     setLoading(true)
     try {
@@ -173,7 +176,7 @@ export default function CustomerBillingClient({ initialJobs, companyProfile, cus
         if (result.success) {
             setSelectedItems([])
             router.refresh()
-            toast.success("สร้างใบวางบิลระบุเรียบร้อย")
+            toast.success(t('billing_customer.billing_success'))
         } else {
             throw new Error(result.error || 'Failed to create billing note')
         }
@@ -251,9 +254,9 @@ export default function CustomerBillingClient({ initialJobs, companyProfile, cus
 
             <div className="text-right">
                 <h1 className="text-5xl font-black text-slate-900 tracking-tighter uppercase mb-1">Billing Note</h1>
-                <p className="text-primary font-bold text-lg tracking-[0.2em] mb-4">ใบวางบิล / รายงานสรุป</p>
+                <p className="text-primary font-bold text-lg tracking-[0.2em] mb-4">{t('billing_customer.title_customer')} / {t('billing_customer.scan_summary')}</p>
                 <div className="inline-block px-4 py-1.5 bg-slate-900 text-white rounded font-black text-[10px] tracking-widest">
-                    ORIGINAL COPY (ต้นฉบับ)
+                    {t('common.original_copy')}
                 </div>
             </div>
         </div>
@@ -304,9 +307,9 @@ export default function CustomerBillingClient({ initialJobs, companyProfile, cus
                 <thead>
                     <tr className="bg-slate-900 text-white">
                         <th className="py-4 px-6 font-black uppercase tracking-widest text-[9px] w-16">No.</th>
-                        <th className="py-4 px-6 font-black uppercase tracking-widest text-[9px] w-32">Date</th>
-                        <th className="py-4 px-6 font-black uppercase tracking-widest text-[9px]">Mission Intelligence</th>
-                        <th className="py-4 px-6 font-black uppercase tracking-widest text-[9px] text-right w-40">Value (THB)</th>
+                        <th className="py-4 px-6 font-black uppercase tracking-widest text-[9px] w-32">{t('billing_customer.timestamp')}</th>
+                        <th className="py-4 px-6 font-black uppercase tracking-widest text-[9px]">{t('intelligence.chips.mission')}</th>
+                        <th className="py-4 px-6 font-black uppercase tracking-widest text-[9px] text-right w-40">{t('billing_customer.base_vector')} (THB)</th>
                     </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -425,7 +428,7 @@ export default function CustomerBillingClient({ initialJobs, companyProfile, cus
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-10 mb-16 bg-[#0a0518]/60 backdrop-blur-3xl p-12 rounded-[4rem] border border-white/5 shadow-2xl relative group ring-1 ring-white/5 hover:ring-primary/20 transition-all duration-700">
         <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 blur-[100px] pointer-events-none" />
         
-        <div className="relative z-10 space-y-4">
+            <div className="relative z-10 space-y-4">
             <div className="flex items-center gap-3">
                 <div className="p-2 bg-primary/20 rounded-xl shadow-lg">
                     <Receipt className="text-primary" size={20} />
@@ -433,10 +436,10 @@ export default function CustomerBillingClient({ initialJobs, companyProfile, cus
                 <h2 className="text-[10px] font-black text-primary uppercase tracking-[0.4em]">AR COMMAND CENTRE</h2>
             </div>
             <h1 className="text-6xl font-black text-white tracking-tighter flex items-center gap-5 uppercase premium-text-gradient">
-                {isCustomerMode ? "Supply Hub" : "Invoice Ledger"}
+                {isCustomerMode ? t('billing_customer.title_customer') : t('billing_customer.title_admin')}
             </h1>
             <p className="text-slate-500 font-bold text-sm tracking-wide opacity-80 uppercase tracking-widest leading-relaxed">
-              {isCustomerMode ? "Real-time logistics expenditure & billing summary" : "Accounts receivable, revenue analysis & settlement engine"}
+              {isCustomerMode ? t('billing_customer.subtitle_customer') : t('billing_customer.subtitle_admin')}
             </p>
         </div>
 
@@ -447,7 +450,7 @@ export default function CustomerBillingClient({ initialJobs, companyProfile, cus
                 onClick={() => router.push('/billing/customer/history')}
             >
                 <History className="w-6 h-6" /> 
-                <span className="font-black uppercase tracking-widest text-[10px]">{isCustomerMode ? "PAST SHIPMENTS" : "LEDGER HISTORY"}</span>
+                <span className="font-black uppercase tracking-widest text-[10px]">{isCustomerMode ? t('billing_customer.past_shipments') : t('billing_customer.ledger_history')}</span>
             </PremiumButton>
         </div>
       </div>
@@ -458,16 +461,16 @@ export default function CustomerBillingClient({ initialJobs, companyProfile, cus
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8 relative z-10">
             {!isCustomerMode && (
             <div className="space-y-3">
-              <Label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 ml-2">Target Entity</Label>
+              <Label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 ml-2">{t('billing_customer.target_account')}</Label>
               <Select
                 value={selectedCustomer}
                 onValueChange={(value) => setSelectedCustomer(value === "all" ? "" : value)}
               >
                 <SelectTrigger className="w-full h-14 bg-white/5 border-white/5 text-white font-black rounded-2xl px-6 uppercase tracking-widest text-xs focus:ring-primary/20 transition-all">
-                  <SelectValue placeholder="LOCATE CUSTOMER..." />
+                  <SelectValue placeholder={t('billing_customer.locate_customer')} />
                 </SelectTrigger>
                 <SelectContent className="bg-[#0c061d] border-white/10 text-white font-black">
-                  <SelectItem value="all" className="hover:bg-primary/20 focus:bg-primary/20 uppercase tracking-widest text-[10px]">ALL ACCOUNTS</SelectItem>
+                  <SelectItem value="all" className="hover:bg-primary/20 focus:bg-primary/20 uppercase tracking-widest text-[10px]">{t('billing_customer.all_accounts')}</SelectItem>
                   {uniqueCustomerNames.map(c => (
                     <SelectItem key={c} value={c} className="hover:bg-primary/20 focus:bg-primary/20 uppercase tracking-widest text-[10px]">{c}</SelectItem>
                   ))}
@@ -476,7 +479,7 @@ export default function CustomerBillingClient({ initialJobs, companyProfile, cus
             </div>
             )}
             <div className="space-y-3">
-              <Label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 ml-2">Mission Start</Label>
+              <Label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 ml-2">{t('billing_customer.mission_start')}</Label>
               <div className="relative group">
                 <Calendar className="absolute left-5 top-1/2 -translate-y-1/2 text-primary opacity-50 group-hover:opacity-100 transition-opacity" size={18} />
                 <Input
@@ -488,7 +491,7 @@ export default function CustomerBillingClient({ initialJobs, companyProfile, cus
               </div>
             </div>
             <div className="space-y-3">
-              <Label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 ml-2">Mission Termination</Label>
+              <Label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 ml-2">{t('billing_customer.mission_end')}</Label>
               <div className="relative group">
                 <Calendar className="absolute left-5 top-1/2 -translate-y-1/2 text-primary opacity-50 group-hover:opacity-100 transition-opacity" size={18} />
                 <Input
@@ -503,7 +506,7 @@ export default function CustomerBillingClient({ initialJobs, companyProfile, cus
             <div className="flex items-end">
               <PremiumButton variant="outline" className="border-white/5 w-full h-14 rounded-2xl gap-3">
                 <Search className="w-5 h-5" /> 
-                <span className="font-black uppercase tracking-widest text-[10px]">EXECUTE SCAN</span>
+                <span className="font-black uppercase tracking-widest text-[10px]">{t('billing_customer.execute_scan')}</span>
               </PremiumButton>
             </div>
             )}
@@ -558,7 +561,7 @@ export default function CustomerBillingClient({ initialJobs, companyProfile, cus
                 </div>
                 <div className="px-3 py-1 bg-white/5 rounded-full border border-white/5 text-[9px] text-accent font-black uppercase tracking-widest italic">WHT RATIO</div>
             </div>
-            <p className="text-slate-500 font-black text-[10px] uppercase tracking-[0.3em] mb-2">Government Levy 1%</p>
+            <p className="text-slate-500 font-black text-[10px] uppercase tracking-[0.3em] mb-2">{t('billing_customer.unbilled_missions')}</p>
             <div className="flex items-baseline gap-2">
                 <span className="text-xs font-black text-slate-500 mb-1">THB</span>
                 <p className="text-4xl font-black text-white tracking-tighter leading-none">{selectedWithholding.toLocaleString()}</p>
@@ -590,11 +593,11 @@ export default function CustomerBillingClient({ initialJobs, companyProfile, cus
                 
                 <div className="flex items-center gap-6">
                     <button onClick={clearSelection} className="px-8 py-3 text-[10px] font-black text-slate-500 uppercase tracking-widest hover:text-white transition-colors">
-                        ABORT SELECTION
+                        {t('billing_customer.abort_selection')}
                     </button>
                     <PremiumButton onClick={handleCreateBilling} disabled={loading} className="h-20 px-12 rounded-[2rem] shadow-[0_20px_40px_rgba(255,30,133,0.3)] text-xl font-black tracking-widest">
-                        {loading ? <Loader2 className="w-6 h-6 mr-4 animate-spin" /> : <Zap size={24} className="mr-4" strokeWidth={3} />}
-                        GENERATE BILLING
+                        {loading ? <Loader2 className="w-6 h-6 mr-4 animate-spin" /> : <Save size={24} className="mr-4" strokeWidth={3} />}
+                        {t('billing_customer.generate_billing')}
                     </PremiumButton>
                 </div>
             </div>
@@ -606,13 +609,13 @@ export default function CustomerBillingClient({ initialJobs, companyProfile, cus
         <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent pointer-events-none" />
         <div className="flex flex-col lg:flex-row lg:items-center justify-between p-12 gap-8 relative z-10">
           <div className="space-y-2">
-            <h3 className="text-2xl font-black text-white tracking-tighter uppercase premium-text-gradient">Operational Registry</h3>
-            <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.4em]">Audit-Ready Transaction Nodes</p>
+            <h3 className="text-2xl font-black text-white tracking-tighter uppercase premium-text-gradient">{t('billing_customer.registry_title')}</h3>
+            <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.4em]">{t('billing_customer.registry_subtitle')}</p>
           </div>
           <div className="flex items-center flex-wrap gap-4">
             {!isCustomerMode && (
               <PremiumButton variant="outline" size="sm" onClick={selectAll} className="h-12 px-8 rounded-xl border-white/5 bg-white/5 text-[10px] font-black tracking-widest uppercase">
-                SELECT COMPLETE VECTOR
+                {t('billing_customer.select_complete')}
               </PremiumButton>
             )}
             
@@ -629,7 +632,7 @@ export default function CustomerBillingClient({ initialJobs, companyProfile, cus
                     <div className="p-4 bg-slate-100 flex items-center justify-between border-b sticky top-0 z-50 print:hidden">
                         <div className="flex items-center gap-3 text-slate-900">
                              <ShieldCheck className="text-primary" />
-                             <span className="text-[10px] font-black uppercase tracking-widest">Digital Audit Engine • Pre-Output Verification</span>
+                             <span className="text-[10px] font-black uppercase tracking-widest">{t('common.protocol_integrity')} • {t('billing_customer.scan_summary')} v4.2</span>
                         </div>
                         <button onClick={() => setShowPreview(false)} className="p-2 hover:bg-slate-200 rounded-lg text-slate-900 transition-colors">
                             <Activity size={18} />
@@ -645,7 +648,7 @@ export default function CustomerBillingClient({ initialJobs, companyProfile, cus
                   onClick={handleExportCSV}
                   className="h-12 px-8 rounded-xl bg-white/5 border border-white/5 text-slate-400 hover:text-white hover:bg-white/10 transition-all text-[10px] font-black tracking-widest uppercase flex items-center gap-3 disabled:opacity-30"
               >
-                <Download size={16} /> EXPORT CSV
+                <Download size={16} /> {t('billing_customer.export_csv')}
               </button>
             )}
           </div>
@@ -665,13 +668,13 @@ export default function CustomerBillingClient({ initialJobs, companyProfile, cus
                       />
                     </th>
                   )}
-                  <th className="px-8 py-10 text-[9px] font-black uppercase tracking-[0.4em] text-slate-500">Mission ID</th>
-                  <th className="px-8 py-10 text-[9px] font-black uppercase tracking-[0.4em] text-slate-500">Target Account</th>
-                  <th className="px-8 py-10 text-[9px] font-black uppercase tracking-[0.4em] text-slate-500 text-center">Timestamp</th>
-                  <th className="px-8 py-10 text-[9px] font-black uppercase tracking-[0.4em] text-slate-500">Vector Path</th>
-                  <th className="px-8 py-10 text-[9px] font-black uppercase tracking-[0.4em] text-slate-500 text-right">Base Vector</th>
-                  <th className="px-8 py-10 text-[9px] font-black uppercase tracking-[0.4em] text-slate-500 text-right">Net Value</th>
-                  <th className="px-12 py-10 text-[9px] font-black uppercase tracking-[0.4em] text-slate-500 text-center">Flow Status</th>
+                  <th className="px-8 py-10 text-[9px] font-black uppercase tracking-[0.4em] text-slate-500">{t('billing_customer.mission_id')}</th>
+                  <th className="px-8 py-10 text-[9px] font-black uppercase tracking-[0.4em] text-slate-500">{t('billing_customer.target_account')}</th>
+                  <th className="px-8 py-10 text-[9px] font-black uppercase tracking-[0.4em] text-slate-500 text-center">{t('billing_customer.timestamp')}</th>
+                  <th className="px-8 py-10 text-[9px] font-black uppercase tracking-[0.4em] text-slate-500">{t('billing_customer.vector_path')}</th>
+                  <th className="px-8 py-10 text-[9px] font-black uppercase tracking-[0.4em] text-slate-500 text-right">{t('billing_customer.base_vector')}</th>
+                  <th className="px-8 py-10 text-[9px] font-black uppercase tracking-[0.4em] text-slate-500 text-right">{t('billing_customer.net_value')}</th>
+                  <th className="px-12 py-10 text-[9px] font-black uppercase tracking-[0.4em] text-slate-500 text-center">{t('billing_customer.flow_status')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
@@ -722,7 +725,7 @@ export default function CustomerBillingClient({ initialJobs, companyProfile, cus
                           : "bg-primary/10 text-primary border-primary/20 shadow-[0_0_20px_rgba(255,30,133,0.1)]"
                       )}>
                         <span className={cn("w-1.5 h-1.5 rounded-full shadow-[0_0_10px_currentColor]", isCustomerMode ? "bg-emerald-500 animate-pulse" : "bg-primary animate-pulse")} />
-                        {isCustomerMode ? "SETTLEMENT DUE" : "UNBILLED MISSION"}
+                        {isCustomerMode ? t('billing_customer.settlement_due') : t('billing_customer.unbilled_mission')}
                       </div>
                     </td>
                   </tr>
@@ -733,10 +736,10 @@ export default function CustomerBillingClient({ initialJobs, companyProfile, cus
                     <td colSpan={10} className="text-center py-40">
                       <div className="flex flex-col items-center gap-6 opacity-30">
                          <div className="p-8 bg-white/5 rounded-full border-2 border-white/5 animate-pulse">
-                            <FileText size={64} className="text-slate-500" strokeWidth={1} />
-                         </div>
-                         <p className="text-slate-700 font-black uppercase tracking-[0.5em] text-xs">Zero Mission Vectors Detected</p>
-                      </div>
+                                <FileSearch size={64} className="text-slate-500" strokeWidth={1} />
+                             </div>
+                             <p className="text-slate-700 font-black uppercase tracking-[0.5em] text-xs">{t('billing_customer.zero_missions')}</p>
+                          </div>
                     </td>
                   </tr>
                 )}

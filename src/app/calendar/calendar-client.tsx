@@ -13,6 +13,8 @@ import { Customer } from "@/lib/supabase/customers"
 import { Route } from "@/lib/supabase/routes"
 import { PremiumButton } from "@/components/ui/premium-button"
 
+import { useLanguage } from "@/components/providers/language-provider"
+
 const STATUS_COLORS: Record<string, string> = {
   Draft: "bg-slate-500",
   Pending: "bg-amber-500",
@@ -25,33 +27,14 @@ const STATUS_COLORS: Record<string, string> = {
   Cancelled: "bg-primary", // Magenta for cancelled
 }
 
-const STATUS_LABELS: Record<string, string> = {
-  Draft: "ร่าง",
-  Pending: "รอดำเนินการ",
-  Confirmed: "ยืนยันแล้ว",
-  "In Progress": "กำลังดำเนินการ",
-  Delivered: "ส่งแล้ว",
-  Completed: "เสร็จสิ้น",
-  Finished: "จบงาน",
-  Closed: "ปิดงาน",
-  Cancelled: "ยกเลิก",
-}
-
-const THAI_MONTHS = [
-  "", "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน",
-  "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"
-]
-
-const THAI_DAYS = ["อา", "จ", "อ", "พ", "พฤ", "ศ", "ส"]
-
 interface Props {
   initialJobs: CalendarJob[]
   initialYear: number
   initialMonth: number
-  drivers: Driver[]
-  vehicles: Vehicle[]
-  customers: Customer[]
-  routes: Route[]
+  drivers: any[]
+  vehicles: any[]
+  customers: any[]
+  routes: any[]
 }
 
 export function CalendarClient({ 
@@ -63,12 +46,40 @@ export function CalendarClient({
   customers,
   routes
 }: Props) {
+  const { t, language } = useLanguage()
   const [year, setYear] = useState(initialYear)
   const [month, setMonth] = useState(initialMonth)
   const [jobs, setJobs] = useState<CalendarJob[]>(initialJobs)
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
   const [isDialogOpen, setIsDialogOpen] = useState(false)
+
+  const STATUS_LABELS: Record<string, string> = {
+    Draft: t('common.pending'),
+    Pending: t('common.pending'),
+    Confirmed: t('common.success'),
+    "In Progress": t('common.loading'),
+    Delivered: t('common.success'),
+    Completed: t('common.success'),
+    Finished: t('common.success'),
+    Closed: t('common.success'),
+    Cancelled: t('common.error'),
+  }
+
+  const THAI_MONTHS = [
+    "", "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน",
+    "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"
+  ]
+  const EN_MONTHS = [
+    "", "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
+  ]
+
+  const THAI_DAYS = ["อา", "จ", "อ", "พ", "พฤ", "ศ", "ส"]
+  const EN_DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+
+  const months = language === 'th' ? THAI_MONTHS : EN_MONTHS
+  const days = language === 'th' ? THAI_DAYS : EN_DAYS
 
   useEffect(() => {
     setJobs(initialJobs)
@@ -124,16 +135,16 @@ export function CalendarClient({
           <div>
             <div className="flex items-center gap-4 mb-4">
                <div className="w-1.5 h-8 bg-primary rounded-full shadow-[0_0_15px_rgba(255,30,133,1)]" />
-               <h1 className="text-4xl font-black text-white tracking-widest uppercase leading-none">Tactical Calendar</h1>
+               <h1 className="text-4xl font-black text-white tracking-widest uppercase leading-none">{t('navigation.calendar')}</h1>
             </div>
-            <p className="text-slate-500 font-black uppercase tracking-[0.4em] text-[10px]">Strategic Mission Scheduling • Q1-2024 Node</p>
+            <p className="text-slate-500 font-black uppercase tracking-[0.4em] text-[10px]">{t('dashboard.subtitle')}</p>
           </div>
           <div className="flex items-center gap-4">
              <PremiumButton onClick={goToToday} variant="outline" className="border-white/10 hover:border-primary/50 text-slate-400 h-14 px-8 rounded-2xl">
-                CURRENT NODE
+                {t('common.search')}
              </PremiumButton>
              <PremiumButton onClick={() => setIsDialogOpen(true)} className="h-14 px-8 rounded-2xl gap-3 shadow-[0_15px_30px_rgba(255,30,133,0.3)]">
-                <Plus size={20} /> INITIALIZE MISSION
+                <Plus size={20} /> {t('request_mission')}
              </PremiumButton>
           </div>
         </div>
@@ -160,9 +171,9 @@ export function CalendarClient({
           </button>
           <div className="text-center">
              <h2 className="text-3xl font-black text-white uppercase tracking-tighter">
-                {THAI_MONTHS[month]} <span className="text-primary italic italic ml-2">{year + 543}</span>
+                {months[month]} <span className="text-primary italic italic ml-2">{language === 'th' ? year + 543 : year}</span>
              </h2>
-             {isPending && <div className="text-[9px] font-black text-primary uppercase tracking-widest animate-pulse mt-1">Syncing Temporal Data...</div>}
+             {isPending && <div className="text-[9px] font-black text-primary uppercase tracking-widest animate-pulse mt-1">{t('calendar.syncing')}</div>}
           </div>
           <button onClick={() => changeMonth(1)} className="p-4 rounded-full bg-white/5 hover:bg-primary transition-all text-white border border-white/5">
             <ChevronRight size={24} />
@@ -171,7 +182,7 @@ export function CalendarClient({
 
         {/* Day Header Matrix */}
         <div className="grid grid-cols-7 bg-black/40 border-b border-white/5">
-          {THAI_DAYS.map((day, i) => (
+          {days.map((day, i) => (
             <div key={i} className={cn(
               "text-center py-4 text-[11px] font-black uppercase tracking-[0.4em]",
               i === 0 ? "text-rose-500" : i === 6 ? "text-primary/70" : "text-slate-600"
@@ -216,7 +227,7 @@ export function CalendarClient({
                    </span>
                    {dayJobs.length > 0 && (
                      <div className="px-2 py-0.5 rounded-lg bg-white/5 border border-white/10 text-[9px] font-black text-primary">
-                        {dayJobs.length} OPS
+                        {dayJobs.length} {t('calendar.ops')}
                      </div>
                    )}
                 </div>
@@ -235,7 +246,7 @@ export function CalendarClient({
                    ))}
                    {dayJobs.length > 3 && (
                      <div className="text-[8px] font-black text-slate-600 uppercase tracking-widest text-center py-1">
-                        + {dayJobs.length - 3} MORE
+                        + {dayJobs.length - 3} {t('calendar.more')}
                      </div>
                    )}
                 </div>
@@ -259,19 +270,19 @@ export function CalendarClient({
                <div className="relative z-10 flex items-center gap-4">
                   <Target className="text-primary" size={24} />
                   <h3 className="text-xl font-black text-white uppercase tracking-widest">
-                    NODE: {new Date(selectedDate + 'T00:00:00').toLocaleDateString('th-TH', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+                    {t('calendar.node_selected') || 'NODE'}: {new Date(selectedDate + 'T00:00:00').toLocaleDateString(language === 'th' ? 'th-TH' : 'en-US', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
                   </h3>
                </div>
-               <Badge className="bg-primary/20 text-primary border-primary/30 font-black text-[10px] tracking-widest px-6 h-10">
-                  {selectedJobs.length} ACTIVE MISSIONS
-               </Badge>
+               <div className="bg-primary/20 text-primary border-primary/30 font-black text-[10px] tracking-widest px-6 h-10 flex items-center rounded-full border">
+                  {selectedJobs.length} {t('navigation.monitoring')}
+               </div>
             </div>
 
             <div className="p-10">
                {selectedJobs.length === 0 ? (
                  <div className="py-20 flex flex-col items-center opacity-30">
                     <Zap size={48} className="text-slate-500 mb-6" />
-                    <p className="text-xs font-black uppercase tracking-[0.5em] text-white">No active mission clusters detected</p>
+                    <p className="text-xs font-black uppercase tracking-[0.5em] text-white">{t('calendar.no_missions')}</p>
                  </div>
                ) : (
                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -288,7 +299,7 @@ export function CalendarClient({
                             </div>
 
                             <h4 className="text-lg font-black text-white uppercase tracking-tighter mb-6 truncate leading-none">
-                              {job.Customer_Name || "SECURE DISPATCH"}
+                              {job.Customer_Name || t('common.loading')}
                             </h4>
 
                             <div className="space-y-4">
@@ -298,8 +309,8 @@ export function CalendarClient({
                                 </div>
                                 <div className="flex items-center gap-6 border-t border-white/5 pt-4">
                                    <div className="flex items-center gap-2 text-[10px] font-black text-slate-500 uppercase tracking-widest">
-                                      <User size={12} /> {job.Driver_Name?.split(' ')[0] || "AUTO"}
-                                   </div>
+                                      <User size={12} /> {job.Driver_Name?.split(' ')[0] || t('common.auto')}
+                                    </div>
                                    <div className="flex items-center gap-2 text-[10px] font-black text-slate-500 uppercase tracking-widest">
                                       <Truck size={12} /> {job.Vehicle_Plate}
                                    </div>

@@ -29,6 +29,7 @@ export type Vehicle = {
   Notes: string | null
   Sub_ID?: string | null
   Preferred_Zone?: string | null
+  Primary_Driver_Name?: string | null
 }
 
 export async function getAllVehiclesFromTable(): Promise<Vehicle[]> {
@@ -163,7 +164,12 @@ export async function getAllVehicles(page?: number, limit?: number, query?: stri
     const branchId = providedBranchId || await getUserBranchId()
     const supabase = (isSuper || isAdminUser) ? await createAdminClient() : await createClient()
     
-    let queryBuilder = supabase.from('Master_Vehicles').select('*', { count: 'exact' })
+    let queryBuilder = supabase.from('Master_Vehicles').select(`
+      *,
+      Primary_Driver:Master_Drivers!Master_Vehicles_Driver_ID_fkey (
+        Full_Name
+      )
+    `, { count: 'exact' })
     
     if (branchId && branchId !== 'All') {
         queryBuilder = queryBuilder.eq('Branch_ID', branchId)
@@ -184,7 +190,13 @@ export async function getAllVehicles(page?: number, limit?: number, query?: stri
     const { data, error, count } = await queryBuilder
     if (error) return { data: [], count: 0 }
     
-    return { data: data || [], count: count || 0 }
+    // Map joined driver name to the flat field
+    const mappedData = (data || []).map((v: any) => ({
+      ...v,
+      Primary_Driver_Name: v.Primary_Driver?.Full_Name
+    }))
+    
+    return { data: mappedData, count: count || 0 }
   } catch {
     return { data: [], count: 0 }
   }

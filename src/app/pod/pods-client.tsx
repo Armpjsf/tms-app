@@ -16,6 +16,7 @@ import {
 } from "lucide-react"
 import { getAllPODs, getPODStats } from "@/lib/supabase/pod"
 import { PODExport } from "@/components/pod/pod-export"
+import { useLanguage } from "@/components/providers/language-provider"
 import Link from "next/link"
 import NextImage from "next/image"
 import { cn } from "@/lib/utils"
@@ -25,20 +26,16 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 
-// Separate standard client component if data fetching is done via actions
-// But for now I'll just reskin the page content assuming it's a client page or I'll make it one
-// Wait, the previous file was a Server Component (no "use client").
-// I'll make it a Client Component for better UX and animations.
-
 export default function PODPage({ pods, stats, searchParams }: any) {
+  const { t } = useLanguage()
   const [filterQuery, setFilterQuery] = useState('')
   
   const statusConfig: Record<string, { label: string; color: string; glow: string; icon: React.ReactNode }> = {
-    Delivered: { label: "ส่งแล้ว", color: "text-emerald-400 bg-emerald-500/10", glow: "shadow-[0_0_15px_rgba(16,185,129,0.3)]", icon: <CheckCircle2 size={12} /> },
-    Complete: { label: "เสร็จสิ้น", color: "text-emerald-400 bg-emerald-500/10", glow: "shadow-[0_0_15px_rgba(16,185,129,0.3)]", icon: <CheckCircle2 size={12} /> },
-    "In Transit": { label: "กำลังส่ง", color: "text-primary bg-primary/10", glow: "shadow-[0_0_15px_rgba(255,30,133,0.3)]", icon: <Clock size={12} /> },
-    "Picked Up": { label: "รับแล้ว", color: "text-primary/80 bg-primary/5", glow: "shadow-none", icon: <Clock size={12} /> },
-    Failed: { label: "ล้มเหลว", color: "text-rose-400 bg-rose-500/10", glow: "shadow-[0_0_15px_rgba(244,63,94,0.3)]", icon: <AlertCircle size={12} /> },
+    Delivered: { label: t('common.success'), color: "text-emerald-400 bg-emerald-500/10", glow: "shadow-[0_0_15px_rgba(16,185,129,0.3)]", icon: <CheckCircle2 size={12} /> },
+    Complete: { label: t('common.success'), color: "text-emerald-400 bg-emerald-500/10", glow: "shadow-[0_0_15px_rgba(16,185,129,0.3)]", icon: <CheckCircle2 size={12} /> },
+    "In Transit": { label: t('common.loading'), color: "text-primary bg-primary/10", glow: "shadow-[0_0_15px_rgba(255,30,133,0.3)]", icon: <Clock size={12} /> },
+    "Picked Up": { label: t('common.pending'), color: "text-primary/80 bg-primary/5", glow: "shadow-none", icon: <Clock size={12} /> },
+    Failed: { label: t('common.error'), color: "text-rose-400 bg-rose-500/10", glow: "shadow-[0_0_15px_rgba(244,63,94,0.3)]", icon: <AlertCircle size={12} /> },
   }
 
   return (
@@ -53,8 +50,8 @@ export default function PODPage({ pods, stats, searchParams }: any) {
                   <FileText size={40} strokeWidth={2.5} />
                </div>
                <div>
-                  <h1 className="text-5xl font-black text-white tracking-widest uppercase leading-none mb-2">Digital POD</h1>
-                  <p className="text-[10px] font-black text-primary uppercase tracking-[0.6em] opacity-80 italic">Secure Proof of Delivery Matrix</p>
+                  <h1 className="text-5xl font-black text-white tracking-widest uppercase leading-none mb-2">{t('navigation.pod')}</h1>
+                  <p className="text-[10px] font-black text-primary uppercase tracking-[0.6em] opacity-80 italic">{t('dashboard.subtitle')}</p>
                </div>
             </div>
           </div>
@@ -68,7 +65,7 @@ export default function PODPage({ pods, stats, searchParams }: any) {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
         <PremiumCard className="p-8 group hover:border-primary/50 transition-all duration-500 border-white/5 bg-white/5">
            <div className="flex justify-between items-start mb-4">
-              <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Total Missions</span>
+              <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{t('navigation.reports')}</span>
               <FileText className="text-primary opacity-20 group-hover:opacity-100 transition-opacity" size={20} />
            </div>
            <p className="text-5xl font-black text-white italic tracking-tighter mb-2">{stats.total}</p>
@@ -77,7 +74,7 @@ export default function PODPage({ pods, stats, searchParams }: any) {
 
         <PremiumCard className="p-8 group hover:border-emerald-500/50 transition-all duration-500 border-white/5 bg-white/5 shadow-[inset_0_0_30px_rgba(16,185,129,0.02)]">
            <div className="flex justify-between items-start mb-4">
-              <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Successful Sync</span>
+              <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{t('common.success')}</span>
               <CheckCircle2 className="text-emerald-400 opacity-20 group-hover:opacity-100 transition-opacity" size={20} />
            </div>
            <p className="text-5xl font-black text-emerald-400 italic tracking-tighter mb-2">{stats.complete}</p>
@@ -86,24 +83,24 @@ export default function PODPage({ pods, stats, searchParams }: any) {
 
         <PremiumCard className="p-8 group hover:border-primary/50 transition-all duration-500 border-white/5 bg-white/5">
            <div className="flex justify-between items-start mb-4">
-              <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Photo Intel</span>
+              <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{t('common.loading')}</span>
               <ImageIcon className="text-primary opacity-20 group-hover:opacity-100 transition-opacity" size={20} />
            </div>
            <div className="flex items-end gap-3">
               <p className="text-5xl font-black text-white italic tracking-tighter mb-2">{stats.withPhoto}</p>
-              <span className="text-[10px] font-black text-primary mb-4 uppercase">Verified</span>
+              <span className="text-[10px] font-black text-primary mb-4 uppercase">{t('common.success')}</span>
            </div>
            <div className="h-1 w-12 bg-primary/50 rounded-full" />
         </PremiumCard>
 
         <PremiumCard className="p-8 group hover:border-primary/50 transition-all duration-500 border-white/5 bg-white/5">
            <div className="flex justify-between items-start mb-4">
-              <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Signal Auth</span>
+              <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{t('navigation.monitoring')}</span>
               <PenTool className="text-primary opacity-20 group-hover:opacity-100 transition-opacity" size={20} />
            </div>
            <div className="flex items-end gap-3">
               <p className="text-5xl font-black text-white italic tracking-tighter mb-2">{stats.withSignature}</p>
-              <span className="text-[10px] font-black text-primary mb-4 uppercase">Signed</span>
+              <span className="text-[10px] font-black text-primary mb-4 uppercase">{t('common.success')}</span>
            </div>
            <div className="h-1 w-12 bg-primary/50 rounded-full" />
         </PremiumCard>
@@ -114,19 +111,19 @@ export default function PODPage({ pods, stats, searchParams }: any) {
         <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent pointer-events-none" />
         <form className="grid grid-cols-1 md:grid-cols-4 gap-8 items-end relative z-10">
           <div className="md:col-span-1 space-y-3">
-             <Label className="text-[10px] font-black text-primary uppercase tracking-[0.4em] ml-4">Vector Search</Label>
+             <Label className="text-[10px] font-black text-primary uppercase tracking-[0.4em] ml-4">{t('common.search')}</Label>
              <div className="relative group">
                 <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-500 transition-colors group-hover:text-primary" size={18} />
                 <Input 
-                  name="q"
-                  placeholder="JOB ID, CLIENT, OPERATOR..." 
-                  className="pl-14 h-16 bg-white/5 border-white/5 text-white font-black uppercase tracking-widest rounded-2xl focus:bg-white/10 transition-all border-2 focus:border-primary/30" 
-                  defaultValue={searchParams.q as string || ''}
+                   name="q"
+                   placeholder={t('common.search')} 
+                   className="pl-14 h-16 bg-white/5 border-white/5 text-white font-black uppercase tracking-widest rounded-2xl focus:bg-white/10 transition-all border-2 focus:border-primary/30" 
+                   defaultValue={searchParams.q as string || ''}
                 />
              </div>
           </div>
           <div className="space-y-3">
-             <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-4">Temporal Start</Label>
+             <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-4">{t('common.date')}</Label>
              <Input 
                 type="date" 
                 name="from" 
@@ -135,7 +132,7 @@ export default function PODPage({ pods, stats, searchParams }: any) {
              />
           </div>
           <div className="space-y-3">
-             <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-4">Temporal End</Label>
+             <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-4">{t('common.date')}</Label>
              <Input 
                 type="date" 
                 name="to" 
@@ -144,7 +141,7 @@ export default function PODPage({ pods, stats, searchParams }: any) {
              />
           </div>
           <PremiumButton type="submit" className="h-16 rounded-2xl gap-3 shadow-[0_15px_30px_rgba(255,30,133,0.3)]">
-             <Filter size={20} /> EXECUTE FILTER
+             <Filter size={20} /> {t('common.search')}
           </PremiumButton>
         </form>
       </div>
@@ -155,13 +152,13 @@ export default function PODPage({ pods, stats, searchParams }: any) {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-white/5 bg-white/[0.02]">
-                <th className="p-8 text-[11px] font-black text-slate-500 uppercase tracking-[0.4em]">Mission ID</th>
-                <th className="p-8 text-[11px] font-black text-slate-500 uppercase tracking-[0.4em]">Temporal Node</th>
-                <th className="p-8 text-[11px] font-black text-slate-500 uppercase tracking-[0.4em]">Client Entity</th>
-                <th className="p-8 text-[11px] font-black text-slate-500 uppercase tracking-[0.4em]">Operator</th>
-                <th className="p-8 text-[11px] font-black text-slate-500 uppercase tracking-[0.4em] text-center">Intel Visuals</th>
-                <th className="p-8 text-[11px] font-black text-slate-500 uppercase tracking-[0.4em]">Status Vector</th>
-                <th className="p-8 text-right text-[11px] font-black text-slate-500 uppercase tracking-[0.4em]">Access</th>
+                <th className="p-8 text-[11px] font-black text-slate-500 uppercase tracking-[0.4em]">{t('common.actions')} ID</th>
+                <th className="p-8 text-[11px] font-black text-slate-500 uppercase tracking-[0.4em]">{t('common.date')}</th>
+                <th className="p-8 text-[11px] font-black text-slate-500 uppercase tracking-[0.4em]">{t('navigation.reports')}</th>
+                <th className="p-8 text-[11px] font-black text-slate-500 uppercase tracking-[0.4em]">{t('navigation.drivers')}</th>
+                <th className="p-8 text-[11px] font-black text-slate-500 uppercase tracking-[0.4em] text-center">{t('common.loading')}</th>
+                <th className="p-8 text-[11px] font-black text-slate-500 uppercase tracking-[0.4em]">{t('common.status')}</th>
+                <th className="p-8 text-right text-[11px] font-black text-slate-500 uppercase tracking-[0.4em]">{t('common.actions')}</th>
               </tr>
             </thead>
             <tbody>
@@ -179,12 +176,12 @@ export default function PODPage({ pods, stats, searchParams }: any) {
                        <span className="text-xs font-black text-white uppercase tracking-tight">
                           {pod.Plan_Date ? new Date(pod.Plan_Date).toLocaleDateString('th-TH') : "N/A"}
                        </span>
-                       <span className="text-[9px] font-black text-slate-600 uppercase">Synchronized</span>
+                       <span className="text-[9px] font-black text-slate-600 uppercase">{t('pod.synchronized')}</span>
                     </div>
                   </td>
                   <td className="p-8">
                      <span className="text-sm font-black text-white uppercase tracking-tighter truncate max-w-[200px] block font-sans">
-                        {pod.Customer_Name || "SECURE_ENTITY"}
+                        {pod.Customer_Name || t('common.loading')}
                      </span>
                   </td>
                   <td className="p-8">
@@ -192,7 +189,7 @@ export default function PODPage({ pods, stats, searchParams }: any) {
                         <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-[10px] font-black text-primary border border-primary/30">
                            {pod.Driver_Name?.slice(0,1) || "A"}
                         </div>
-                        <span className="text-xs font-black text-slate-400 uppercase tracking-widest">{pod.Driver_Name || "AUTO_OP"}</span>
+                        <span className="text-xs font-black text-slate-400 uppercase tracking-widest">{pod.Driver_Name || t('common.auto')}</span>
                      </div>
                   </td>
                   <td className="p-8">
@@ -202,7 +199,7 @@ export default function PODPage({ pods, stats, searchParams }: any) {
                               <div className="w-14 h-14 rounded-2xl border-2 border-white/10 overflow-hidden bg-black shadow-lg relative transition-all group-hover/visual:scale-125 group-hover/visual:rotate-3 z-10 group-hover/visual:border-primary">
                                  <NextImage 
                                     src={pod.Photo_Proof_Url.split(',')[0]} 
-                                    alt="Visual" 
+                                    alt={t('pod.visual_proof')} 
                                     fill 
                                     className="object-cover opacity-80 group-hover/visual:opacity-100 transition-opacity" 
                                  />
@@ -217,7 +214,7 @@ export default function PODPage({ pods, stats, searchParams }: any) {
                               <div className="w-16 h-12 rounded-xl border-2 border-white/10 overflow-hidden bg-white shadow-lg relative transition-all group-hover/sig:scale-125 group-hover/sig:-rotate-3 z-10 group-hover/sig:border-primary">
                                  <NextImage 
                                     src={pod.Signature_Url} 
-                                    alt="Auth" 
+                                    alt={t('pod.auth_sig')} 
                                     fill 
                                     className="object-contain p-1" 
                                  />
@@ -256,7 +253,7 @@ export default function PODPage({ pods, stats, searchParams }: any) {
         {pods.length === 0 && (
           <div className="py-32 text-center opacity-30">
              <FileText size={64} className="mx-auto mb-6 text-slate-500" />
-             <p className="text-xs font-black uppercase tracking-[0.6em] text-white">Repository sequence empty</p>
+             <p className="text-xs font-black uppercase tracking-[0.6em] text-white">{t('common.pending')}</p>
           </div>
         )}
       </div>

@@ -1,19 +1,21 @@
-"use client"
-
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { PremiumCard } from "@/components/ui/premium-card"
 import { PremiumButton } from "@/components/ui/premium-button"
 import { Input } from "@/components/ui/input"
 import { Send, Bot, User, Loader2, Zap, ShieldCheck, Activity, Target } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useLanguage } from "@/components/providers/language-provider"
 
 export default function ChatPage() {
-    const [messages, setMessages] = useState<{role: 'bot'|'user', content: string}[]>([
-        { role: 'bot', content: 'INTELLIGENCE PROTOCOL INITIATED. ผมคือระบบ AI วิเคราะห์ข้อมูลอัจฉริยะของ LOGISPRO พร้อมสนับสนุนภารกิจของคุณแล้วครับ วันนี้ต้องการให้ผมเจาะลึกข้อมูลส่วนไหนเป็นพิเศษไหม?' }
-    ])
+    const { t } = useLanguage()
+    const [messages, setMessages] = useState<{role: 'bot'|'user', content: string}[]>([])
     const [input, setInput] = useState("")
     const [loading, setLoading] = useState(false)
+
+    useEffect(() => {
+        setMessages([{ role: 'bot', content: t('intelligence.initial_message') }])
+    }, [t])
 
     const handleSend = async (overrideMsg?: string) => {
         const messageToSend = overrideMsg || input
@@ -31,9 +33,9 @@ export default function ChatPage() {
                 headers: { 'Content-Type': 'application/json' }
             })
             const data = await res.json()
-            setMessages(prev => [...prev, { role: 'bot', content: data.response || "PROTOCOL_ERROR: ไม่สามารถประมวลผลคำสั่งนี้ได้ กรุณาระบุคำสั่งใหม่" }])
+            setMessages(prev => [...prev, { role: 'bot', content: data.response || t('intelligence.error_protocol') }])
         } catch {
-            setMessages(prev => [...prev, { role: 'bot', content: "SYSTEM_OFFLINE: ตรวจพบข้อผิดพลาดในการเชื่อมต่อกับ Neural Grid" }])
+            setMessages(prev => [...prev, { role: 'bot', content: t('intelligence.system_offline') }])
         } finally {
             setLoading(false)
         }
@@ -51,18 +53,18 @@ export default function ChatPage() {
                             <div className="p-2 bg-primary/20 rounded-xl shadow-lg">
                                 <Bot className="text-primary" size={20} />
                             </div>
-                            <h2 className="text-[10px] font-black text-primary uppercase tracking-[0.4em]">Neural Intelligence Core v9.4</h2>
+                            <h2 className="text-[10px] font-black text-primary uppercase tracking-[0.4em]">{t('intelligence.neural_core')}</h2>
                         </div>
                         <h1 className="text-5xl font-black text-white tracking-tighter flex items-center gap-5 uppercase premium-text-gradient">
-                            Tactical Assistant
+                            {t('intelligence.title')}
                         </h1>
-                        <p className="text-slate-500 font-bold text-sm tracking-wide opacity-80 uppercase tracking-widest italic">AI-Driven Operational Decision Support</p>
+                        <p className="text-slate-500 font-bold text-sm tracking-wide opacity-80 uppercase tracking-widest italic">{t('intelligence.subtitle')}</p>
                     </div>
 
                     <div className="flex items-center gap-4 bg-white/5 p-4 rounded-2xl border border-white/10 backdrop-blur-md relative z-10">
                         <div className="flex items-center gap-3">
                             <div className="w-2 h-2 rounded-full bg-primary animate-pulse shadow-[0_0_12px_rgba(255,30,133,1)]" />
-                            <span className="text-[10px] font-black text-primary uppercase tracking-widest leading-none">AI CORE ACTIVE</span>
+                            <span className="text-[10px] font-black text-primary uppercase tracking-widest leading-none">{t('intelligence.core_active')}</span>
                         </div>
                     </div>
                 </div>
@@ -75,11 +77,11 @@ export default function ChatPage() {
                         <div className="px-10 py-4 bg-white/[0.02] border-b border-white/5 flex items-center justify-between">
                             <div className="flex items-center gap-4">
                                 <Activity size={12} className="text-primary animate-pulse" />
-                                <span className="text-[8px] font-black text-slate-500 uppercase tracking-[0.4em]">UPLINK_STABLE • LATENCY: 24MS</span>
+                                <span className="text-[8px] font-black text-slate-500 uppercase tracking-[0.4em]">{t('intelligence.uplink_stable')}</span>
                             </div>
                             <div className="flex items-center gap-2">
                                 <ShieldCheck size={12} className="text-emerald-500" />
-                                <span className="text-[8px] font-black text-emerald-500/60 uppercase tracking-[0.3em]">SECURE_GRID_PROTOCOL</span>
+                                <span className="text-[8px] font-black text-emerald-500/60 uppercase tracking-[0.3em]">{t('intelligence.secure_grid')}</span>
                             </div>
                         </div>
 
@@ -87,12 +89,12 @@ export default function ChatPage() {
                             {messages.length === 1 && (
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-12">
                                     {[
-                                        { label: '💰 FINANCIAL SUMMARY', query: 'ขอดูสรุปรายได้และกำไรของสาขาหน่อย', icon: Activity },
-                                        { label: '🛠️ INTEGRITY LOGS', query: 'มีรถคันไหนต้องซ่อมหรือเช็คระยะบ้างไหม', icon: ShieldCheck },
-                                        { label: '🚨 TACTICAL ALERTS', query: 'วันนี้มีรายงาน SOS หรืออุบัติเหตุไหม', icon: Zap },
-                                        { label: '🍃 ESG METRICS', query: 'เราลด CO2 ไปได้เท่าไหร่แล้ว', icon: Target },
-                                        { label: '🏆 UNIT PERFORMANCE', query: 'ใครคือพนักงานขับรถที่ดีที่สุด 3 อันดับแรก', icon: Bot },
-                                        { label: '🚛 MISSION STATUS', query: 'สรุปการส่งงานวันนี้เป็นยังไงบ้าง', icon: User },
+                                        { label: t('intelligence.chips.financial'), query: t('intelligence.queries.financial'), icon: Activity },
+                                        { label: t('intelligence.chips.integrity'), query: t('intelligence.queries.integrity'), icon: ShieldCheck },
+                                        { label: t('intelligence.chips.alerts'), query: t('intelligence.queries.alerts'), icon: Zap },
+                                        { label: t('intelligence.chips.esg'), query: t('intelligence.queries.esg'), icon: Target },
+                                        { label: t('intelligence.chips.performance'), query: t('intelligence.queries.performance'), icon: Bot },
+                                        { label: t('intelligence.chips.mission'), query: t('intelligence.queries.mission'), icon: User },
                                     ].map((chip, i) => (
                                         <button 
                                             key={i}
@@ -134,7 +136,7 @@ export default function ChatPage() {
                                             "absolute bottom-[-20px] text-[8px] font-black opacity-20 uppercase tracking-[0.2em] italic",
                                             msg.role === 'user' ? 'right-0' : 'left-0'
                                         )}>
-                                            {msg.role === 'user' ? 'MISSION_COMMAND' : 'NEURAL_UNIT'}
+                                            {msg.role === 'user' ? t('common.elite_force') : t('common.intel_engine')}
                                         </div>
                                     </div>
                                 </div>
@@ -149,7 +151,7 @@ export default function ChatPage() {
                                             <Loader2 className="w-6 h-6 animate-spin text-primary" strokeWidth={3} />
                                             <div className="absolute inset-0 blur-md bg-primary/20 animate-pulse" />
                                         </div>
-                                        <span className="text-[10px] font-black uppercase tracking-[0.5em] text-primary italic">Processing Intelligence Data...</span>
+                                        <span className="text-[10px] font-black uppercase tracking-[0.5em] text-primary italic">{t('intelligence.processing')}</span>
                                     </div>
                                 </div>
                             )}
@@ -164,7 +166,7 @@ export default function ChatPage() {
                                         value={input}
                                         onChange={(e) => setInput(e.target.value)}
                                         onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                                        placeholder="INPUT ANALYTICS COMMAND OR QUERY..."
+                                        placeholder={t('intelligence.placeholder')}
                                         className="h-full rounded-2xl bg-[#0a0518] border-white/5 text-white placeholder:text-slate-700 pl-10 pr-20 focus-visible:ring-primary/40 focus:border-primary/50 transition-all text-sm font-black uppercase tracking-widest shadow-inner italic"
                                     />
                                     <div className="absolute right-6 top-1/2 -translate-y-1/2 flex items-center gap-2 pointer-events-none opacity-20">
@@ -186,7 +188,7 @@ export default function ChatPage() {
 
                 <div className="text-center opacity-40">
                     <p className="inline-flex items-center gap-3 px-6 py-2 bg-white/5 rounded-full border border-white/5 text-[9px] font-black text-slate-700 uppercase tracking-[0.6em]">
-                        <Zap size={14} className="text-primary" /> LOGISPRO AI UNIT • DEPLOYMENT STABLE
+                        <Zap size={14} className="text-primary" /> {t('intelligence.unit_stable')}
                     </p>
                 </div>
             </div>

@@ -123,10 +123,10 @@ export async function getAllFuelLogs(
 
     // Fetch Vehicles to get Tank Capacity
     const { data: vehicles } = await supabase
-        .from('master_vehicles')
-        .select('vehicle_plate, tank_capacity')
+        .from('Master_Vehicles')
+        .select('Vehicle_Plate, Tank_Capacity')
     
-    const vehicleMap = new Map(vehicles?.map(v => [v.vehicle_plate, v.tank_capacity]) || [])
+    const vehicleMap = new Map(vehicles?.map(v => [v.Vehicle_Plate, v.Tank_Capacity]) || [])
 
     // Enrich logs with Driver Name, Efficiency, and alerts
     const enrichedLogs = await Promise.all(logs?.map(async (log) => {

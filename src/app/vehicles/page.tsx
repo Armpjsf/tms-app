@@ -15,8 +15,8 @@ import {
     Wrench, 
     AlertTriangle 
 } from "lucide-react"
-import { getVehicles } from "@/lib/supabase/vehicles"
-import { Vehicle } from "@/types/database"
+import { getAllVehicles } from "@/lib/supabase/vehicles"
+import type { Vehicle } from "@/lib/supabase/vehicles"
 import { Badge } from "@/components/ui/badge"
 import { VehicleActions } from "@/components/vehicles/vehicle-actions"
 import { useBranch } from "@/components/providers/branch-provider"
@@ -32,8 +32,8 @@ export default function VehiclesPage() {
   useEffect(() => {
     async function loadVehicles() {
       setLoading(true)
-      const data = await getVehicles(selectedBranch)
-      setVehicles(data)
+      const data = await getAllVehicles(1, 100, "", selectedBranch)
+      setVehicles(data.data || [])
       setLoading(false)
     }
     loadVehicles()
@@ -106,7 +106,7 @@ export default function VehiclesPage() {
                 </div>
             ) : (
                 filteredVehicles.map((vehicle) => (
-                    <div key={vehicle.Vehicle_ID} className="group relative bg-slate-950/40 backdrop-blur-xl border border-white/5 rounded-[2.5rem] p-8 hover:border-primary/30 transition-all duration-500 shadow-xl overflow-hidden">
+                    <div key={vehicle.Vehicle_Plate} className="group relative bg-slate-950/40 backdrop-blur-xl border border-white/5 rounded-[2.5rem] p-8 hover:border-primary/30 transition-all duration-500 shadow-xl overflow-hidden">
                         <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-20 transition-opacity">
                             <Truck size={80} className="text-primary" />
                         </div>
@@ -114,7 +114,7 @@ export default function VehiclesPage() {
                         <div className="flex justify-between items-start relative z-10 mb-6">
                             <div>
                                 <Badge className="bg-primary/10 text-primary border-primary/20 mb-3 px-3 py-1 rounded-lg font-black text-[10px] uppercase tracking-widest">
-                                    {vehicle.Vehicle_Type}
+                                    {vehicle.Vehicle_Type || "-"}
                                 </Badge>
                                 <h3 className="text-2xl font-black text-white tracking-tighter uppercase">{vehicle.Vehicle_Plate}</h3>
                             </div>
@@ -126,12 +126,10 @@ export default function VehiclesPage() {
                                 <span className="text-slate-500 font-bold uppercase tracking-widest text-[10px]">{t('vehicles.driver')}</span>
                                 <span className="text-white font-black">{vehicle.Primary_Driver_Name || "-"}</span>
                             </div>
-                            <div className="flex items-center justify-between text-sm">
                                 <span className="text-slate-500 font-bold uppercase tracking-widest text-[10px]">{t('vehicles.mileage')}</span>
                                 <span className="text-primary font-black italic tracking-tighter">
-                                    {(vehicle as any).Odometer?.toLocaleString() || "0"} KM
+                                    {vehicle.Current_Mileage?.toLocaleString() || "0"} KM
                                 </span>
-                            </div>
                         </div>
 
                         <div className="mt-8 pt-6 border-t border-white/5 flex gap-3">

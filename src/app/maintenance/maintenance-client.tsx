@@ -8,7 +8,6 @@ import {
   Filter,
   CheckCircle2,
   Loader2,
-  TrendingUp,
   Activity,
   ArrowRight,
   ShieldAlert,
@@ -24,7 +23,29 @@ import { PremiumButton } from "@/components/ui/premium-button"
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
 import Image from "next/image"
-import { motion } from "framer-motion"
+import { useLanguage } from "@/components/providers/language-provider"
+import type { RepairTicket } from "@/lib/supabase/maintenance"
+import type { Driver } from "@/lib/supabase/drivers"
+import type { Vehicle } from "@/lib/supabase/vehicles"
+import type { MaintenanceScheduleData } from "@/lib/supabase/maintenance-schedule"
+
+interface MaintenanceClientProps {
+  tickets: RepairTicket[]
+  count: number
+  stats: {
+    total: number
+    pending: number
+    inProgress: number
+    completed: number
+  }
+  drivers: Driver[]
+  vehicles: Vehicle[]
+  schedule: MaintenanceScheduleData
+  limit: number
+  startDate: string
+  endDate: string
+  status: string
+}
 
 export function MaintenanceClient({ 
   tickets, 
@@ -37,7 +58,9 @@ export function MaintenanceClient({
   startDate,
   endDate,
   status
-}: any) {
+}: MaintenanceClientProps) {
+  const { t } = useLanguage()
+
   return (
     <div className="space-y-12 pb-20">
       {/* Tactical Maintenance Header */}
@@ -50,8 +73,10 @@ export function MaintenanceClient({
                   <Wrench size={40} strokeWidth={2.5} />
                </div>
                <div>
-                  <h1 className="text-5xl font-black text-white tracking-widest uppercase leading-none mb-2 italic">Integrity Hub</h1>
-                  <p className="text-[10px] font-black text-amber-500 uppercase tracking-[0.6em] opacity-80 italic italic">Fleet Technical Readiness & Repair Protocol // Maint_V2</p>
+                  <h1 className="text-5xl font-black text-white tracking-widest uppercase leading-none mb-2 italic">
+                    {t('maintenance.title')}
+                  </h1>
+                  <p className="text-[10px] font-black text-amber-500 uppercase tracking-[0.6em] opacity-80 italic">{t('dashboard.subtitle')}</p>
                </div>
             </div>
           </div>
@@ -62,7 +87,7 @@ export function MaintenanceClient({
                 trigger={
                     <PremiumButton className="h-16 px-10 rounded-2xl shadow-[0_15px_30px_rgba(245,158,11,0.2)] gap-3 bg-amber-600 hover:bg-amber-500 text-white font-black italic tracking-widest">
                         <Plus size={24} strokeWidth={3} />
-                        ISSUE TICKET
+                        {t('maintenance.issue_ticket')}
                     </PremiumButton>
                 }
             />
@@ -73,10 +98,10 @@ export function MaintenanceClient({
       {/* KPI Stats Matrix */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
         {[
-          { label: "Total Request Log", value: stats.total, icon: Wrench, color: "amber" },
-          { label: "Pending Approval", value: stats.pending, icon: AlertTriangle, color: "rose" },
-          { label: "Active Maintenance", value: stats.inProgress, icon: Loader2, color: "blue" },
-          { label: "Service Complete", value: stats.completed, icon: CheckCircle2, color: "emerald" },
+          { label: t('maintenance.stats.total'), value: stats.total, icon: Wrench, color: "amber" },
+          { label: t('maintenance.stats.pending'), value: stats.pending, icon: AlertTriangle, color: "rose" },
+          { label: t('maintenance.stats.active'), value: stats.inProgress, icon: Loader2, color: "blue" },
+          { label: t('maintenance.stats.complete'), value: stats.completed, icon: CheckCircle2, color: "emerald" },
         ].map((stat, idx) => (
           <PremiumCard key={idx} className="bg-[#0a0518] border-2 border-white/5 p-8 relative overflow-hidden group hover:border-white/20 transition-all">
             <div className="flex items-center justify-between mb-8">
@@ -91,14 +116,14 @@ export function MaintenanceClient({
                 </div>
                 <div className="flex items-center gap-2 px-3 py-1 bg-white/5 rounded-full border border-white/10">
                     <Activity size={14} className="text-slate-500" />
-                    <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest italic">Node Status</span>
+                    <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest italic">{t('maintenance.node_status')}</span>
                 </div>
             </div>
             <div className="relative z-10">
-                <p className="text-slate-500 font-black text-[10px] uppercase tracking-[0.4em] mb-2 mb-2">{stat.label}</p>
+                <p className="text-slate-500 font-black text-[10px] uppercase tracking-[0.4em] mb-2">{stat.label}</p>
                 <div className="flex items-end gap-3">
                    <p className="text-5xl font-black text-white italic tracking-tighter leading-none">{stat.value}</p>
-                   <span className="text-[10px] font-black text-slate-700 uppercase mb-1">Items</span>
+                   <span className="text-[10px] font-black text-slate-700 uppercase mb-1">{t('common.units')}</span>
                 </div>
             </div>
             <div className="absolute -right-6 -bottom-6 text-8xl font-black text-white/[0.02] pointer-events-none italic select-none">
@@ -114,13 +139,13 @@ export function MaintenanceClient({
             <div className="p-3 bg-white/5 rounded-2xl text-slate-500">
                 <Filter size={20} />
             </div>
-            <h3 className="text-sm font-black text-white uppercase tracking-[0.4em] italic leading-none">Maintenance Filter HUB</h3>
+            <h3 className="text-sm font-black text-white uppercase tracking-[0.4em] italic leading-none">{t('maintenance.filter_hub')}</h3>
         </div>
         
         <div className="flex flex-col xl:flex-row gap-6">
           <div className="flex-1">
               <SearchInput 
-                placeholder="Ticket ID, Plate Number, Issue Tag..." 
+                placeholder={t('common.search')} 
                 className="h-16 bg-black/60 border-white/5 rounded-2xl text-white font-black"
               />
           </div>
@@ -143,15 +168,15 @@ export function MaintenanceClient({
               <select 
                   name="status" 
                   defaultValue={status}
-                  className="h-16 min-w-[180px] rounded-2xl border border-white/5 bg-black/60 px-6 text-xs font-black text-white uppercase tracking-widest focus:outline-none focus:ring-2 focus:ring-amber-500 shadow-xl"
+                  className="h-16 min-w-[180px] rounded-2xl border border-white/5 bg-black/60 px-6 text-xs font-black text-white uppercase tracking-widest focus:outline-none focus:ring-2 focus:ring-amber-500 shadow-xl outline-none"
               >
-                  <option value="">ALL STATUS</option>
-                  <option value="Pending">PENDING</option>
-                  <option value="In Progress">ACTIVE</option>
-                  <option value="Completed">COMPLETE</option>
+                  <option value="">{t('common.all')}</option>
+                  <option value="Pending">{t('maintenance.stats.pending')}</option>
+                  <option value="In Progress">{t('maintenance.stats.active')}</option>
+                  <option value="Completed">{t('maintenance.stats.complete')}</option>
               </select>
-              <PremiumButton type="submit" variant="secondary" className="h-16 px-10 rounded-2xl border-white/5 bg-white/10 hover:bg-white/20 text-white font-black uppercase tracking-widest italic">
-                  REFRESH REGISTRY
+              <PremiumButton type="submit" variant="secondary" className="h-16 px-10 rounded-2xl border-white/5 bg-white/10 hover:bg-white/20 text-white font-black uppercase tracking-widest italic outline-none">
+                  {t('maintenance.refresh')}
               </PremiumButton>
           </form>
         </div>
@@ -162,9 +187,9 @@ export function MaintenanceClient({
         {tickets.length === 0 ? (
           <div className="col-span-full text-center py-32 bg-[#0a0518]/50 rounded-[4rem] border-2 border-dashed border-white/5">
              <ShieldAlert className="w-20 h-20 text-white/5 mx-auto mb-6 animate-pulse" />
-             <p className="text-slate-500 font-black uppercase tracking-[0.4em] text-xs">No active technical issues detected in the sector</p>
+             <p className="text-slate-500 font-black uppercase tracking-[0.4em] text-xs">{t('common.no_data')}</p>
           </div>
-        ) : tickets.map((ticket: any) => (
+        ) : tickets.map((ticket: RepairTicket) => (
           <PremiumCard key={ticket.Ticket_ID} className="bg-[#0a0518] p-0 overflow-hidden group border-2 border-white/5 rounded-br-[4rem] rounded-tl-[2rem] shadow-3xl relative hover:border-amber-500/30 transition-all duration-500">
             <div className="absolute top-6 right-6 z-20">
                  <MaintenanceActions 
@@ -185,7 +210,7 @@ export function MaintenanceClient({
                 <div className="space-y-2">
                   <h3 className="text-3xl font-black text-white italic tracking-widest uppercase leading-none">{ticket.Vehicle_Plate || "VOID_ID"}</h3>
                   <div className="flex flex-wrap items-center gap-3">
-                      <span className="text-[9px] font-black text-slate-500 font-mono tracking-widest uppercase italic bg-white/5 px-2 py-0.5 rounded-lg border border-white/5">OP_ID: {ticket.Ticket_ID}</span>
+                      <span className="text-[9px] font-black text-slate-500 font-mono tracking-widest uppercase italic bg-white/5 px-2 py-0.5 rounded-lg border border-white/5">ID: {ticket.Ticket_ID}</span>
                       <span className="text-[9px] font-black text-amber-500/80 uppercase tracking-widest bg-amber-500/10 px-2 py-0.5 rounded-lg border border-amber-500/10">{ticket.Issue_Type}</span>
                   </div>
                 </div>
@@ -194,7 +219,7 @@ export function MaintenanceClient({
               <div className="flex items-center justify-between">
                  <div className="flex items-center gap-3">
                     <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em]">Technical Status</span>
+                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em]">{t('common.status')}</span>
                  </div>
                  <span className={cn(
                     "px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all duration-500 shadow-2xl",
@@ -203,7 +228,9 @@ export function MaintenanceClient({
                     ticket.Status === 'Rejected' ? 'bg-rose-500/20 text-rose-500 border-rose-500/30 shadow-rose-500/10' :
                     'bg-amber-500/20 text-amber-500 border-amber-500/30 shadow-amber-500/10'
                  )}>
-                    {ticket.Status?.toUpperCase() || "PENDING"}
+                    {ticket.Status === 'Completed' ? t('maintenance.stats.complete') : 
+                     ticket.Status === 'In Progress' ? t('maintenance.stats.active') :
+                     ticket.Status === 'Pending' ? t('maintenance.stats.pending') : ticket.Status?.toUpperCase()}
                  </span>
               </div>
 
@@ -232,7 +259,7 @@ export function MaintenanceClient({
                  <div className="relative">
                     <p className="text-sm text-slate-400 font-black italic uppercase leading-relaxed bg-white/5 p-8 rounded-[2.5rem] border-2 border-white/5 relative overflow-hidden group-hover:bg-white/10 transition-all duration-500 min-h-[120px]">
                         <span className="absolute -top-3 -left-2 text-6xl text-white/5 font-black leading-none select-none tracking-tighter italic">ISSUE</span>
-                        <span className="relative z-10">{ticket.Description || "NO_DESCRIPTION_PROVIDED_BY_OPERATOR"}</span>
+                        <span className="relative z-10">{ticket.Description || t('common.no_data')}</span>
                     </p>
                  </div>
 
@@ -241,7 +268,9 @@ export function MaintenanceClient({
                        <div className="p-2 bg-white/5 rounded-xl border border-white/10">
                          <Clock size={16} className="text-slate-500" />
                        </div>
-                       <span className="font-black uppercase tracking-[0.2em] text-[10px] text-slate-500">{ticket.Date_Report ? new Date(ticket.Date_Report).toLocaleDateString('th-TH') : "VOID_DATE"}</span>
+                       <span className="font-black uppercase tracking-[0.2em] text-[10px] text-slate-500">
+                        {ticket.Date_Report ? new Date(ticket.Date_Report).toLocaleDateString(t('common.loading') === 'กำลังประมวลผล...' ? 'th-TH' : 'en-US') : "VOID_DATE"}
+                       </span>
                     </div>
                     {ticket.Cost_Total && ticket.Cost_Total > 0 ? (
                         <div className="bg-emerald-500/10 px-5 py-3 rounded-2xl border-2 border-emerald-500/20 shadow-xl group-hover:scale-110 transition-transform">
@@ -249,7 +278,7 @@ export function MaintenanceClient({
                         </div>
                     ) : (
                         <div className="flex items-center gap-3 font-black text-slate-800 uppercase tracking-[0.4em] text-[9px] italic">
-                           Fiscal Variable TBD
+                           {t('maintenance.cost_tbd')}
                         </div>
                     )}
                  </div>
@@ -270,8 +299,8 @@ export function MaintenanceClient({
                 <Zap size={24} strokeWidth={2.5} />
             </div>
             <div>
-                <h2 className="text-3xl font-black text-white tracking-[0.2em] uppercase italic">Workflow Pulse</h2>
-                <p className="text-[9px] font-black text-primary uppercase tracking-[0.6em] opacity-60">Technical Execution & Scheduling Matrix</p>
+                <h2 className="text-3xl font-black text-white tracking-[0.2em] uppercase italic">{t('maintenance.workflow_pulse')}</h2>
+                <p className="text-[9px] font-black text-primary uppercase tracking-[0.6em] opacity-60">{t('maintenance.workflow_matrix')}</p>
             </div>
          </div>
          <MaintenanceScheduleDashboard schedule={schedule} />
@@ -284,15 +313,15 @@ export function MaintenanceClient({
               <Wrench size={32} className="text-amber-500" />
           </div>
           <div className="space-y-3">
-              <h4 className="text-xl font-black text-white uppercase tracking-[0.4em] italic">LogisPro Readiness Engine</h4>
+              <h4 className="text-xl font-black text-white uppercase tracking-[0.4em] italic">{t('maintenance.readiness_engine')}</h4>
               <p className="text-[10px] text-slate-600 font-black uppercase tracking-[0.2em] max-w-2xl leading-relaxed">
-                  Total Asset Integrity synchronized with global maintenance scheduling. <br />
-                  Operational capability verified. Technical drift corrected.
+                  {t('maintenance.integrity_desc')} <br />
+                  {t('maintenance.capability_verified')}
               </p>
           </div>
           <div className="px-5 py-2 bg-white/5 rounded-full border border-white/10 flex items-center gap-3">
              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-             <span className="text-[8px] font-black text-slate-600 uppercase tracking-widest">SYSTEM_INTEGRITY_INDEX: 0.988</span>
+             <span className="text-[8px] font-black text-slate-600 uppercase tracking-widest">{t('maintenance.integrity_index')}: 0.988</span>
           </div>
       </div>
     </div>

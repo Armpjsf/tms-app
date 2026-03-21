@@ -22,20 +22,20 @@ export async function getAdminAlerts(): Promise<AdminAlert[]> {
   // 1. Vehicle document expiry alerts (tax, insurance, ACT)
   try {
     let vQuery = supabase
-      .from('master_vehicles')
-      .select('vehicle_plate, tax_expiry, insurance_expiry, act_expiry, active_status')
-      .eq('active_status', 'Active')
+      .from('Master_Vehicles')
+      .select('Vehicle_Plate, Tax_Expiry, Insurance_Expiry, Act_Expiry, Active_Status')
+      .eq('Active_Status', 'Active')
 
     if (branchId && branchId !== 'All') {
-      vQuery = vQuery.eq('branch_id', branchId)
+      vQuery = vQuery.eq('Branch_ID', branchId)
     }
 
     const { data: vehicles } = await vQuery
     vehicles?.forEach(v => {
       const checks = [
-        { field: v.tax_expiry, label: 'ภาษีรถ (Tax)', type: 'tax' },
-        { field: v.insurance_expiry, label: 'ประกันภัย (Insurance)', type: 'insurance' },
-        { field: v.act_expiry, label: 'พ.ร.บ. (ACT)', type: 'act' },
+        { field: v.Tax_Expiry, label: 'ภาษีรถ (Tax)', type: 'tax' },
+        { field: v.Insurance_Expiry, label: 'ประกันภัย (Insurance)', type: 'insurance' },
+        { field: v.Act_Expiry, label: 'พ.ร.บ. (ACT)', type: 'act' },
       ]
       checks.forEach(c => {
         if (!c.field) return

@@ -80,13 +80,13 @@ const navigation: NavGroup[] = [
     items: [
       { titleKey: "navigation.analytics", href: "/admin/analytics", icon: <BarChart3 size={20} />, badgeColor: "blue" },
       { titleKey: "navigation.ai", href: "/intelligence", icon: <Bot size={20} />, badgeColor: "green" },
-      { titleKey: "navigation.billing", href: "/reports", icon: <BarChart3 size={20} /> },
+      { titleKey: "navigation.reports", href: "/reports", icon: <BarChart3 size={20} /> },
     ],
   },
   {
     titleKey: "nav_groups.financial",
     items: [
-      { titleKey: "navigation.billing", href: "/billing/customer", icon: <Receipt size={20} /> },
+      { titleKey: "navigation.billing_customer", href: "/billing/customer", icon: <Receipt size={20} /> },
       { titleKey: "navigation.invoices", href: "/billing/invoices", icon: <FileText size={20} /> },
       { titleKey: "navigation.payouts", href: "/billing/driver", icon: <Wallet size={20} /> },
     ],

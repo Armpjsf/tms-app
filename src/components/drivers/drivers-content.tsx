@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge"
 import { DriverDialog } from "./driver-dialog"
 import { Pagination } from "@/components/ui/pagination"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { useLanguage } from "@/components/providers/language-provider"
 
 type DriversContentProps = {
   drivers: Driver[]
@@ -26,22 +27,23 @@ type DriversContentProps = {
 }
 
 export function DriversContent({ drivers, count, branches, vehicles = [], subcontractors = [], userId, branchId }: DriversContentProps) {
+  const { t } = useLanguage()
   const [isAdmin] = useState(true)
   const [deletingId, setDeletingId] = useState<string | null>(null)
 
   const handleDelete = async (id: string, name: string) => {
-    if (!confirm(`Are you sure you want to decommission driver: ${name}?`)) return
+    if (!confirm(t('common.error'))) return
     
     setDeletingId(id)
     try {
       const result = await deleteDriver(id)
       if (result.success) {
-        toast.success(`Driver ${name} decommissioned successfully`)
+        toast.success(t('common.success'))
       } else {
         toast.error(result.message)
       }
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : "Tactical deletion failed")
+      toast.error(err instanceof Error ? err.message : t('common.error'))
     } finally {
       setDeletingId(null)
     }
@@ -65,10 +67,10 @@ export function DriversContent({ drivers, count, branches, vehicles = [], subcon
                 {isAdmin ? "COMMAND CENTER" : "BASE OPERATIONS"}
               </Badge>
           </div>
-          <h1 className="text-6xl font-black text-white tracking-tighter">
-            Driver<span className="text-primary font-black italic">ELITE</span>
+          <h1 className="text-6xl font-black text-white tracking-tighter uppercase">
+            {t('navigation.drivers')}<span className="text-primary font-black italic">ELITE</span>
           </h1>
-          <p className="text-slate-500 font-bold uppercase tracking-[0.4em] text-xs">Human Capital & Tactical Performance Control</p>
+          <p className="text-slate-500 font-bold uppercase tracking-[0.4em] text-xs">{t('dashboard.subtitle')}</p>
         </div>
       </div>
 
@@ -79,7 +81,7 @@ export function DriversContent({ drivers, count, branches, vehicles = [], subcon
                 <div className="p-2 bg-primary/10 rounded-xl">
                     <Zap size={20} className="text-primary" />
                 </div>
-                <h4 className="text-white font-black text-xs uppercase tracking-widest">Performance Matrix</h4>
+                <h4 className="text-white font-black text-xs uppercase tracking-widest">{t('navigation.monitoring')} Matrix</h4>
              </div>
              <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest">Analytics Layer Offline</p>
         </PremiumCard>
@@ -88,7 +90,7 @@ export function DriversContent({ drivers, count, branches, vehicles = [], subcon
                 <div className="p-2 bg-accent/10 rounded-xl">
                     <ShieldCheck size={20} className="text-accent" />
                 </div>
-                <h4 className="text-white font-black text-xs uppercase tracking-widest">Compliance Status</h4>
+                <h4 className="text-white font-black text-xs uppercase tracking-widest">{t('navigation.monitoring')} Status</h4>
              </div>
              <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest">Scanning Protocols Deferred</p>
         </PremiumCard>
@@ -110,7 +112,7 @@ export function DriversContent({ drivers, count, branches, vehicles = [], subcon
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
                 <input 
                     type="text" 
-                    placeholder="Search by name, ID, or plate..." 
+                    placeholder={t('common.search')}
                     className="w-full h-14 pl-12 pr-6 rounded-2xl bg-white/5 border border-white/10 text-white placeholder:text-slate-700 focus:ring-primary/40 focus:border-primary/40 transition-all font-medium text-sm outline-none"
                 />
             </div>
@@ -122,7 +124,7 @@ export function DriversContent({ drivers, count, branches, vehicles = [], subcon
         <div className="flex items-center gap-4 w-full md:w-auto">
             <PremiumButton variant="outline" className="h-14 px-8 rounded-2xl border-white/10 hover:bg-white/5 text-slate-300 text-[10px] font-black uppercase tracking-widest gap-2">
                 <Download size={16} />
-                Fleet Import
+                {t('common.success')}
             </PremiumButton>
             <DriverDialog 
                 mode="create"
@@ -132,7 +134,7 @@ export function DriversContent({ drivers, count, branches, vehicles = [], subcon
                 trigger={
                     <PremiumButton className="h-14 px-10 rounded-2xl bg-primary hover:brightness-110 text-white text-[10px] font-black uppercase tracking-widest gap-3 shadow-[0_10px_30px_rgba(255,30,133,0.3)]">
                         <Plus size={20} strokeWidth={3} />
-                        Register Driver
+                        {t('common.success')}
                     </PremiumButton>
                 }
             />
@@ -154,7 +156,7 @@ export function DriversContent({ drivers, count, branches, vehicles = [], subcon
                     <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-emerald-500 border-4 border-[#0a0518] rounded-full" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-black text-white tracking-tight group-hover:text-primary transition-colors line-clamp-1">{driver.Driver_Name || "UNNAMED"}</h3>
+                    <h3 className="text-xl font-black text-white tracking-tight group-hover:text-primary transition-colors line-clamp-1">{driver.Driver_Name || t('common.loading')}</h3>
                     <div className="flex items-center gap-2 mt-1">
                         <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">ID: {driver.Driver_ID}</span>
                         <div className="w-1 h-1 rounded-full bg-slate-700" />
@@ -176,7 +178,7 @@ export function DriversContent({ drivers, count, branches, vehicles = [], subcon
                         }
                     />
                     <button 
-                        onClick={() => handleDelete(driver.Driver_ID, driver.Driver_Name)}
+                        onClick={() => handleDelete(driver.Driver_ID, driver.Driver_Name || '')}
                         disabled={deletingId === driver.Driver_ID}
                         className="p-3 rounded-2xl bg-white/5 border border-white/10 text-slate-400 hover:text-red-400 transition-all hover:bg-red-400/10 disabled:opacity-50"
                     >
@@ -187,14 +189,14 @@ export function DriversContent({ drivers, count, branches, vehicles = [], subcon
 
               <div className="grid grid-cols-2 gap-4">
                   <div className="p-4 bg-white/[0.03] rounded-2xl border border-white/5 group-hover:bg-white/5 transition-colors">
-                      <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1.5">Asset Control</p>
+                      <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1.5">{t('navigation.vehicles')}</p>
                       <div className="flex items-center gap-2">
                         <Truck size={14} className="text-primary" />
-                        <span className="text-xs font-black text-slate-200">{driver.Vehicle_Plate || "UNASSIGNED"}</span>
+                        <span className="text-xs font-black text-slate-200">{driver.Vehicle_Plate || t('common.pending')}</span>
                       </div>
                   </div>
                   <div className="p-4 bg-white/[0.03] rounded-2xl border border-white/5 group-hover:bg-white/5 transition-colors">
-                      <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1.5">Communication</p>
+                      <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1.5">{t('navigation.chat')}</p>
                       <div className="flex items-center gap-2">
                         <Phone size={14} className="text-primary" />
                         <span className="text-xs font-black text-slate-200">{driver.Mobile_No || "-"}</span>

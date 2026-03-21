@@ -5,6 +5,8 @@ import Link from "next/link"
 import { PremiumCard } from "@/components/ui/premium-card"
 import { cn } from "@/lib/utils"
 import { motion } from "framer-motion"
+import { useLanguage } from "@/components/providers/language-provider"
+import { PremiumButton } from "@/components/ui/premium-button"
 
 const SEVERITY_STYLES = {
   critical: {
@@ -12,21 +14,21 @@ const SEVERITY_STYLES = {
     text: "text-rose-500",
     glow: "shadow-[0_0_20px_rgba(244,63,94,0.2)]",
     dot: "bg-rose-500 animate-pulse",
-    label: "CRITICAL"
+    labelKey: "notifications.critical"
   },
   warning: {
     bg: "bg-amber-500/10 border-amber-500/30",
     text: "text-amber-500",
     glow: "shadow-[0_0_20px_rgba(245,158,11,0.2)]",
     dot: "bg-amber-500 animate-pulse",
-    label: "WARNING"
+    labelKey: "notifications.warning"
   },
   info: {
     bg: "bg-blue-500/10 border-blue-500/30",
     text: "text-blue-500",
     glow: "shadow-[0_0_20px_rgba(59,130,246,0.2)]",
     dot: "bg-blue-500",
-    label: "PROTOCOL"
+    labelKey: "notifications.protocol"
   },
 }
 
@@ -37,18 +39,19 @@ const TYPE_ICONS = {
 }
 
 const TYPE_LABELS = {
-  expiry: "Asset Compliance Decay",
-  inspection_fail: "Technical Audit Failure",
-  maintenance: "Pending Lifecycle Service",
+  expiry: "notifications.compliance_decay",
+  inspection_fail: "notifications.audit_failure",
+  maintenance: "notifications.lifecycle_service",
 }
 
-export function NotificationsClient({ alerts }: any) {
-  const criticalCount = alerts.filter((a: any) => a.severity === 'critical').length
-  const warningCount = alerts.filter((a: any) => a.severity === 'warning').length
-  const infoCount = alerts.filter((a: any) => a.severity === 'info').length
+export function NotificationsClient({ alerts = [] }: any) {
+  const { t } = useLanguage()
+  const criticalCount = alerts?.filter((a: any) => a.severity === 'critical').length || 0
+  const warningCount = alerts?.filter((a: any) => a.severity === 'warning').length || 0
+  const infoCount = alerts?.filter((a: any) => a.severity === 'info').length || 0
 
   const grouped: Record<string, any[]> = {}
-  alerts.forEach((a: any) => {
+  alerts?.forEach((a: any) => {
     if (!grouped[a.type]) grouped[a.type] = []
     grouped[a.type].push(a)
   })
@@ -64,22 +67,22 @@ export function NotificationsClient({ alerts }: any) {
                 <div className="p-2 bg-white/5 rounded-full group-hover/back:-translate-x-1 transition-transform">
                    <ArrowLeft size={14} />
                 </div>
-                TERMINAL_HOME
+                {t('common.back')}
             </Link>
             <div className="flex items-center gap-6">
                <div className="p-4 bg-primary/20 rounded-[2rem] border-2 border-primary/30 shadow-[0_0_40px_rgba(255,30,133,0.3)] text-primary group-hover:scale-110 transition-all duration-500">
                   <Bell size={40} strokeWidth={2.5} className="animate-pulse" />
                </div>
                <div>
-                  <h1 className="text-5xl font-black text-white tracking-widest uppercase leading-none mb-2 italic">Alert Engine</h1>
-                  <p className="text-[10px] font-black text-primary uppercase tracking-[0.6em] opacity-80 italic italic">Strategic Monitoring & Operational Intelligence Registry</p>
+                  <h1 className="text-5xl font-black text-white tracking-widest uppercase leading-none mb-2 italic">{t('navigation.notifications')}</h1>
+                  <p className="text-[10px] font-black text-primary uppercase tracking-[0.6em] opacity-80 italic italic">{t('dashboard.subtitle')}</p>
                </div>
             </div>
           </div>
           <div className="flex items-center gap-4 bg-rose-500/10 p-5 rounded-3xl border border-rose-500/20 backdrop-blur-3xl shadow-[0_0_30px_rgba(244,63,94,0.1)]">
              <div className="flex flex-col items-end">
-                <span className="text-[9px] font-black text-rose-400 uppercase tracking-widest leading-none">Status Level</span>
-                <span className="text-sm font-black text-white uppercase tracking-widest italic">{criticalCount > 0 ? 'CRITICAL_INTERFERENCE' : 'NOMINAL_STATE'}</span>
+                <span className="text-[9px] font-black text-rose-400 uppercase tracking-widest leading-none">{t('notifications.status')}</span>
+                <span className="text-sm font-black text-white uppercase tracking-widest italic">{criticalCount > 0 ? t('common.error') : t('dashboard.system_integrity')}</span>
              </div>
              <div className={cn(
                 "w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-lg border-2",
@@ -94,9 +97,9 @@ export function NotificationsClient({ alerts }: any) {
       {/* Summary Matrix */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
         {[
-          { label: "Critical Breaches", count: criticalCount, icon: AlertTriangle, color: "rose" },
-          { label: "System Warnings", count: warningCount, icon: Bell, color: "amber" },
-          { label: "Operational Info", count: infoCount, icon: Zap, color: "blue" },
+          { label: t('navigation.sos'), count: criticalCount, icon: AlertTriangle, color: "rose" },
+          { label: t('navigation.notifications'), count: warningCount, icon: Bell, color: "amber" },
+          { label: t('navigation.monitoring'), count: infoCount, icon: Zap, color: "blue" },
         ].map((stat, idx) => (
           <PremiumCard key={idx} className={cn(
              "bg-[#0a0518] p-8 relative overflow-hidden group border-2 transition-all duration-500",
@@ -116,10 +119,10 @@ export function NotificationsClient({ alerts }: any) {
               <div className="space-y-1">
                 <p className="text-4xl font-black text-white italic tracking-tighter">{stat.count}</p>
                 <p className={cn(
-                   "text-[9px] font-black uppercase tracking-[0.4em] leading-none",
-                   stat.color === 'rose' ? 'text-rose-500' : 
-                   stat.color === 'amber' ? 'text-amber-500' : 
-                   'text-blue-500'
+                    "text-[9px] font-black uppercase tracking-[0.4em] leading-none",
+                    stat.color === 'rose' ? 'text-rose-500' : 
+                    stat.color === 'amber' ? 'text-amber-500' : 
+                    'text-blue-500'
                 )}>{stat.label}</p>
               </div>
             </div>
@@ -129,14 +132,14 @@ export function NotificationsClient({ alerts }: any) {
 
       {/* Alert Groups */}
       <div className="space-y-10">
-        {alerts.length === 0 ? (
+        {!alerts || alerts.length === 0 ? (
           <PremiumCard className="bg-[#0a0518]/50 p-24 text-center border-2 border-dashed border-white/5 rounded-[4rem]">
               <div className="relative inline-block mb-8">
                 <Bell size={64} className="text-white/5" />
                 <div className="absolute inset-0 bg-emerald-500/10 blur-[40px] rounded-full" />
               </div>
-              <h3 className="text-2xl font-black text-white italic tracking-[0.3em] uppercase mb-3">Void Space Detected</h3>
-              <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.6em]">System state: ABSOLUTELY NOMINAL // ALL PROTOCOLS VERIFIED</p>
+              <h3 className="text-2xl font-black text-white italic tracking-[0.3em] uppercase mb-3">{t('dashboard.system_integrity')}</h3>
+              <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.6em]">{t('common.no_data')}</p>
           </PremiumCard>
         ) : (
           Object.entries(grouped).map(([type, typeAlerts]) => {
@@ -157,12 +160,12 @@ export function NotificationsClient({ alerts }: any) {
                     </div>
                     <div>
                        <h2 className="text-xl font-black text-white tracking-widest uppercase italic">{TYPE_LABELS[type as keyof typeof TYPE_LABELS] || type}</h2>
-                       <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.4em]">Cluster ID: {type.toUpperCase()}</p>
+                       <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.4em]">NODE: {type.toUpperCase()}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3 py-2 px-5 bg-white/5 rounded-full border border-white/10">
                       <Target size={14} className="text-slate-700" />
-                      <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">{typeAlerts.length} NODES</span>
+                      <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">{typeAlerts.length} {t('common.units')}</span>
                   </div>
                 </div>
                 
@@ -180,7 +183,7 @@ export function NotificationsClient({ alerts }: any) {
                           <div className="flex flex-wrap items-center gap-4">
                             <span className="text-xl font-black text-white tracking-widest uppercase italic group-hover/item:text-primary transition-colors">{alert.title}</span>
                             <div className={cn("px-4 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest border border-transparent italic", style.bg, style.text, style.glow)}>
-                              {style.label}
+                              {t(style.labelKey)}
                             </div>
                           </div>
                           
@@ -191,14 +194,14 @@ export function NotificationsClient({ alerts }: any) {
                                <div className="p-2 bg-white/5 rounded-xl border border-white/10 text-slate-400 group-hover/item:text-primary transition-colors">
                                   <Truck size={14} />
                                </div>
-                               <span className="text-xs font-black text-white uppercase tracking-widest bg-white/5 px-4 py-1.5 rounded-xl border border-white/5 italic">Vector Plate: {alert.meta.plate}</span>
+                               <span className="text-xs font-black text-white uppercase tracking-widest bg-white/5 px-4 py-1.5 rounded-xl border border-white/5 italic">{t('vehicles.plate')}: {alert.meta.plate}</span>
                             </div>
                           )}
                         </div>
 
                         <div className="hidden lg:block">
                            <PremiumButton variant="secondary" className="bg-white/5 border-white/5 hover:bg-white/10 text-white font-black uppercase tracking-widest text-[10px] h-12 rounded-2xl">
-                               VIEW TELEMETRY
+                               {t('common.loading')}
                            </PremiumButton>
                         </div>
                       </div>
@@ -219,15 +222,14 @@ export function NotificationsClient({ alerts }: any) {
                   <Activity size={32} className="text-primary" />
               </div>
               <div className="text-center md:text-left">
-                  <h4 className="text-2xl font-black text-white uppercase tracking-[0.4em] italic mb-1">Signal Protocol Sync</h4>
+                  <h4 className="text-2xl font-black text-white uppercase tracking-[0.4em] italic mb-1">{t('dashboard.subtitle')}</h4>
                   <p className="text-[10px] text-slate-600 font-black uppercase tracking-[0.2em] leading-relaxed">
-                      All tactical intercepts are synchronized across the global operational matrix. <br />
-                      Real-time alert persistence is currently ACTIVE.
+                      {t('dashboard.subtitle')}
                   </p>
               </div>
           </div>
           <PremiumButton className="h-16 px-12 rounded-2xl bg-white/5 hover:bg-white/10 text-white border-white/10 font-black uppercase tracking-widest italic group-hover:scale-110 transition-transform">
-             CLEAR CACHE
+             SYNC
           </PremiumButton>
       </div>
     </div>

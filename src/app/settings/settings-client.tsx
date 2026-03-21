@@ -160,7 +160,7 @@ export default function SettingsPage() {
 
                  <div className="flex flex-wrap items-center justify-center lg:justify-start gap-10">
                     <div className="flex flex-col gap-2">
-                       <span className="text-[9px] font-black text-slate-600 uppercase tracking-widest leading-none">Access Level</span>
+                       <span className="text-[9px] font-black text-slate-600 uppercase tracking-widest leading-none">{t('settings.auth_level')}</span>
                        <span className="px-5 py-2 bg-white/5 rounded-2xl border border-white/10 text-xs font-black text-primary uppercase tracking-widest shadow-xl">{profile?.Role || "STAFF_OPERATOR"}</span>
                     </div>
                     <div className="w-px h-12 bg-white/5 hidden lg:block" />
@@ -238,7 +238,7 @@ export default function SettingsPage() {
 
       {/* Quick Core Protocols */}
       <div className="mt-12">
-        <h3 className="text-xs font-black text-slate-500 uppercase tracking-[0.8em] mb-8 ml-8">Core Protocols</h3>
+        <h3 className="text-xs font-black text-slate-500 uppercase tracking-[0.8em] mb-8 ml-8">{t('settings.core_protocols')}</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <PremiumCard 
               onClick={() => handleNavigate("/settings/backup")}
@@ -247,7 +247,7 @@ export default function SettingsPage() {
                <div className="p-5 bg-primary/10 rounded-[2rem] text-primary group-hover/action:scale-110 transition-transform">
                   <Database size={32} />
                </div>
-               <span className="text-sm font-black text-white uppercase tracking-[0.4em]">Backup Node</span>
+               <span className="text-sm font-black text-white uppercase tracking-[0.4em]">{t('settings.backup_node')}</span>
             </PremiumCard>
 
             <PremiumCard 
@@ -257,7 +257,7 @@ export default function SettingsPage() {
                <div className="p-5 bg-emerald-500/10 rounded-[2rem] text-emerald-500 group-hover/action:scale-110 transition-transform">
                   <Globe size={32} />
                </div>
-               <span className="text-sm font-black text-white uppercase tracking-[0.4em]">API Signal</span>
+               <span className="text-sm font-black text-white uppercase tracking-[0.4em]">{t('settings.api_signal')}</span>
             </PremiumCard>
 
             <PremiumCard 
@@ -267,7 +267,7 @@ export default function SettingsPage() {
                <div className="p-5 bg-rose-500/10 rounded-[2rem] text-rose-500 group-hover/action:scale-110 transition-transform">
                   <LogOut size={32} />
                </div>
-               <span className="text-sm font-black text-white uppercase tracking-[0.4em]">Terminate</span>
+               <span className="text-sm font-black text-white uppercase tracking-[0.4em]">{t('settings.terminate')}</span>
             </PremiumCard>
         </div>
       </div>
