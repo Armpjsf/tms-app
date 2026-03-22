@@ -703,45 +703,60 @@ export async function getExecutiveDashboardUnified(branchId?: string) {
     const sDatePrev = formatDateSafe(prevStart)!
     const eDatePrev = formatDateSafe(prevEnd)!
 
-    // 1. Fetch all jobs for both periods
-    let currentQuery = supabase
-        .from('Jobs_Main')
-        .select('Plan_Date, Price_Cust_Total, Cost_Driver_Total, Price_Cust_Extra, Cost_Driver_Extra, Job_Status, Vehicle_Plate, Actual_Delivery_Time')
-        .gte('Plan_Date', sDateCurrent)
-        .lte('Plan_Date', eDateCurrent)
+    // 1. Kick off ALL independent queries in parallel
+    const queries: Promise<any>[] = [
+        // Current Jobs
+        (() => {
+            let q = supabase.from('Jobs_Main').select('Plan_Date, Price_Cust_Total, Cost_Driver_Total, Price_Cust_Extra, Cost_Driver_Extra, Job_Status, Vehicle_Plate, Actual_Delivery_Time').gte('Plan_Date', sDateCurrent).lte('Plan_Date', eDateCurrent)
+            if (customerId) q = q.eq('Customer_ID', customerId)
+            else if (effectiveBranchId) q = q.eq('Branch_ID', effectiveBranchId)
+            return q
+        })(),
+        // Previous Jobs
+        (() => {
+            let q = supabase.from('Jobs_Main').select('Price_Cust_Total, Cost_Driver_Total, Job_Status').gte('Plan_Date', sDatePrev).lte('Plan_Date', eDatePrev).in('Job_Status', REVENUE_STATUSES)
+            if (customerId) q = q.eq('Customer_ID', customerId)
+            else if (effectiveBranchId) q = q.eq('Branch_ID', effectiveBranchId)
+            return q
+        })(),
+        // Branch Plates (if needed)
+        effectiveBranchId ? getBranchPlates(effectiveBranchId) : Promise.resolve([]),
+        // Fuel Logs (Current Month)
+        (() => {
+            let q = supabase.from('Fuel_Logs').select('Price_Total, Vehicle_Plate').gte('Date_Time', `${sDateCurrent}T00:00:00`).lte('Date_Time', `${eDateCurrent}T23:59:59`)
+            if (effectiveBranchId && !customerId) {
+                // We'll filter this in-memory if we have a branch, or just fetch all for the branch if Branch_ID is on Fuel_Logs
+                // But Fuel_Logs usually has Branch_ID too in this schema
+                q = q.eq('Branch_ID', effectiveBranchId)
+            }
+            return q
+        })(),
+        // Repair Tickets (Current Month)
+        (() => {
+            let q = supabase.from('Repair_Tickets').select('Cost_Total, Vehicle_Plate').gte('Date_Report', `${sDateCurrent}T00:00:00`).lte('Date_Report', `${eDateCurrent}T23:59:59`).neq('Status', 'Cancelled')
+            if (effectiveBranchId && !customerId) {
+                q = q.eq('Branch_ID', effectiveBranchId)
+            }
+            return q
+        })()
+    ]
 
-    let prevQuery = supabase
-        .from('Jobs_Main')
-        .select('Price_Cust_Total, Cost_Driver_Total, Job_Status')
-        .gte('Plan_Date', sDatePrev)
-        .lte('Plan_Date', eDatePrev)
-        .in('Job_Status', REVENUE_STATUSES)
+    const [currentRes, prevRes, branchPlates, fuelRes, mainRes] = await Promise.all(queries)
+    
+    const currentJobs = currentRes.data || []
+    const prevJobs = prevRes.data || []
+    const fuelLogs = fuelRes.data || []
+    const maintTickets = mainRes.data || []
 
-    if (customerId) {
-        currentQuery = currentQuery.eq('Customer_ID', customerId)
-        prevQuery = prevQuery.eq('Customer_ID', customerId)
-    } else if (effectiveBranchId) {
-        currentQuery = currentQuery.eq('Branch_ID', effectiveBranchId)
-        prevQuery = prevQuery.eq('Branch_ID', effectiveBranchId)
-    }
-
-    const [currentJobsRes, prevJobsRes] = await Promise.all([currentQuery, prevQuery])
-    const currentJobs = currentJobsRes.data || []
-    const prevJobs = prevJobsRes.data || []
-
-    // 2. Aggregate Data in Single Pass (Current month)
+    // 2. Aggregate Current Month Data
     const financial = { revenue: 0, driverCost: 0, secondaryCosts: 0 }
     const dailyTrend: Record<string, any> = {}
     const vehicleProfits: Record<string, any> = {}
     const statusCounts: Record<string, number> = {}
 
-    currentJobs.forEach(job => {
-        const isRevenueJob = REVENUE_STATUSES.includes(job.Job_Status)
-        
-        // Status Distribution
+    currentJobs.forEach((job: any) => {
         statusCounts[job.Job_Status] = (statusCounts[job.Job_Status] || 0) + 1
-
-        if (isRevenueJob) {
+        if (REVENUE_STATUSES.includes(job.Job_Status)) {
             const rev = Number(job.Price_Cust_Total) || 0
             const cost = Number(job.Cost_Driver_Total) || 0
             const extra = (Number(job.Price_Cust_Extra) || 0) + (Number(job.Cost_Driver_Extra) || 0)
@@ -750,7 +765,6 @@ export async function getExecutiveDashboardUnified(branchId?: string) {
             financial.driverCost += cost
             financial.secondaryCosts += extra
 
-            // Trend
             const date = job.Plan_Date as string
             if (!dailyTrend[date]) dailyTrend[date] = { date, revenue: 0, cost: 0, jobCount: 0, onTimeCount: 0 }
             dailyTrend[date].revenue += rev
@@ -759,7 +773,6 @@ export async function getExecutiveDashboardUnified(branchId?: string) {
             if (job.Actual_Delivery_Time && job.Actual_Delivery_Time.split('T')[0] === date) dailyTrend[date].onTimeCount++
             else if (!job.Actual_Delivery_Time) dailyTrend[date].onTimeCount++
 
-            // Vehicle Profit
             const plate = job.Vehicle_Plate || 'Unknown'
             if (!vehicleProfits[plate]) vehicleProfits[plate] = { plate, revenue: 0, netProfit: 0 }
             vehicleProfits[plate].revenue += rev
@@ -767,45 +780,27 @@ export async function getExecutiveDashboardUnified(branchId?: string) {
         }
     })
 
-    // 3. Aggregate Previous Data
+    // 3. Aggregate Costs
+    const fuelCost = fuelLogs.reduce((sum: number, l: any) => sum + (l.Price_Total || 0), 0)
+    const maintenanceCost = maintTickets.reduce((sum: number, t: any) => sum + (t.Cost_Total || 0), 0)
+
+    // 4. Aggregate Previous Month Data
     const prevFinancial = { revenue: 0, netProfit: 0 }
-    prevJobs.forEach(job => {
+    prevJobs.forEach((job: any) => {
         const rev = Number(job.Price_Cust_Total) || 0
         const cost = Number(job.Cost_Driver_Total) || 0
         prevFinancial.revenue += rev
         prevFinancial.netProfit += (rev - cost)
     })
 
-    // 4. Fetch External Costs (Fuel & Maintenance)
-    let fuelCost = 0
-    let maintenanceCost = 0
-
-    if (!customerId) {
-        let activePlates: string[] = []
-        if (effectiveBranchId) activePlates = await getBranchPlates(effectiveBranchId)
-
-        let fuelQuery = supabase.from('Fuel_Logs').select('Price_Total').gte('Date_Time', `${sDateCurrent}T00:00:00`).lte('Date_Time', `${eDateCurrent}T23:59:59`)
-        let maintQuery = supabase.from('Repair_Tickets').select('Cost_Total').gte('Date_Report', `${sDateCurrent}T00:00:00`).lte('Date_Report', `${eDateCurrent}T23:59:59`).neq('Status', 'Cancelled')
-
-        if (effectiveBranchId) {
-            const plateFilter = activePlates.length > 0 ? activePlates : ['NO_MATCH']
-            fuelQuery = fuelQuery.in('Vehicle_Plate', plateFilter)
-            maintQuery = maintQuery.in('Vehicle_Plate', plateFilter)
-        }
-
-        const [fuelRes, maintRes] = await Promise.all([fuelQuery, maintQuery])
-        fuelCost = fuelRes.data?.reduce((sum, l) => sum + (l.Price_Total || 0), 0) || 0
-        maintenanceCost = maintRes.data?.reduce((sum, t) => sum + (t.Cost_Total || 0), 0) || 0
-    }
-
-    // 5. Final Calculation
+    // 5. Final Calculations
     const totalCost = financial.driverCost + financial.secondaryCosts + fuelCost + maintenanceCost
     const netProfit = financial.revenue - totalCost
     const margin = financial.revenue > 0 ? (netProfit / financial.revenue) * 100 : 0
-    const prevNetProfitTotal = prevFinancial.netProfit - (fuelCost * 0.9) // Approximation for prev month costs
+    const prevNetProfitTotal = prevFinancial.netProfit - (fuelCost * 0.9) // Still approximation for prev month
     
     const calculateGrowth = (curr: number, prev: number) => {
-        if (prev === 0) return curr > 0 ? 100 : 0
+        if (prev <= 0) return curr > 0 ? 100 : 0
         return ((curr - prev) / prev) * 100
     }
 
@@ -816,14 +811,14 @@ export async function getExecutiveDashboardUnified(branchId?: string) {
             netProfit,
             profitMargin: margin
         },
-        trend: Object.values(dailyTrend).sort((a, b: any) => a.date.localeCompare(b.date)),
+        trend: Object.values(dailyTrend).sort((a: any, b: any) => a.date.localeCompare(b.date)),
         kpi: {
             revenue: { current: financial.revenue, previous: prevFinancial.revenue, growth: calculateGrowth(financial.revenue, prevFinancial.revenue), target: 250000, attainment: (financial.revenue / 250000) * 100 },
-            profit: { current: netProfit, previous: prevNetProfitTotal, growth: calculateGrowth(netProfit, prevNetProfitTotal > 0 ? prevNetProfitTotal : 1) },
+            profit: { current: netProfit, previous: prevNetProfitTotal, growth: calculateGrowth(netProfit, prevNetProfitTotal) },
             margin: { current: margin, previous: 0, growth: 0, target: 15 },
-            jobs: { current: Object.values(dailyTrend).reduce((sum, d: any) => sum + d.jobCount, 0), growth: 5 }
+            jobs: { current: currentJobs.length, growth: 5 }
         },
-        vehicles: Object.values(vehicleProfits).sort((a, b: any) => b.netProfit - a.netProfit).slice(0, 5),
+        vehicles: Object.values(vehicleProfits).sort((a: any, b: any) => b.netProfit - a.netProfit).slice(0, 5),
         statusDist: Object.entries(statusCounts).map(([name, value]) => ({ name, value }))
     }
 }
