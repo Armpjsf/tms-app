@@ -57,6 +57,7 @@ const settingsSections = [
     icon: Database,
     items: [
       { labelKey: "settings.items.accounting", descKey: "settings.items.accounting_desc", path: "/settings/accounting" },
+      { labelKey: "settings.items.expense_types", descKey: "settings.items.expense_types_desc", path: "/settings/expense-types" },
     ]
   },
   {

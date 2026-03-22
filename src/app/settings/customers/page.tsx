@@ -36,6 +36,7 @@ import {
 import { ExcelImport } from "@/components/ui/excel-import"
 import { createBulkCustomers, getAllCustomers, createCustomer, updateCustomer, deleteCustomer } from "@/lib/supabase/customers"
 import { getExecutiveKPIs } from "@/lib/supabase/analytics"
+import { useLanguage } from "@/components/providers/language-provider"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
 import { Customer } from "@/lib/supabase/customers"
@@ -47,6 +48,7 @@ interface ExecutiveKPIs {
 }
 
 export default function CustomersSettingsPage() {
+  const { t } = useLanguage()
   const [customers, setCustomers] = useState<Customer[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
@@ -149,26 +151,26 @@ export default function CustomersSettingsPage() {
                 <h2 className="text-[10px] font-black text-primary uppercase tracking-[0.4em]">Strategic Partner Ecosystem</h2>
             </div>
             <h1 className="text-6xl font-black text-white tracking-tighter flex items-center gap-5 uppercase premium-text-gradient">
-                Client Network
+                {t('settings_pages.customers.title')}
             </h1>
-            <p className="text-slate-500 font-bold text-sm tracking-wide opacity-80 uppercase tracking-widest">Global Customer Relationship Management Console</p>
+            <p className="text-slate-500 font-bold text-sm tracking-wide opacity-80 uppercase tracking-widest">{t('settings_pages.customers.subtitle')}</p>
         </div>
 
         <div className="flex flex-wrap gap-4 relative z-10">
             <ExcelImport 
                 trigger={
-                    <PremiumButton variant="outline" className="h-14 px-8 rounded-2xl border-white/5 bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white transition-all">
+                    <PremiumButton variant="outline" className="h-14 px-8 rounded-2xl border-white/5 bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white transition-all" >
                         <FileSpreadsheet size={20} className="mr-3 opacity-50" /> 
-                        Batch Onboarding
+                        {t('settings_pages.customers.bulk_import')}
                     </PremiumButton>
                 }
-                title="Strategic Partner Import"
+                title={t('settings_pages.customers.import_title')}
                 onImport={createBulkCustomers}
                 templateFilename="logispro_client_template.xlsx"
             />
             <PremiumButton onClick={() => handleOpenDialog()} className="h-14 px-10 rounded-2xl shadow-xl shadow-primary/20">
               <Plus size={24} className="mr-3" strokeWidth={3} />
-              ENLIST PARTNER
+              {t('settings_pages.customers.add_customer')}
             </PremiumButton>
         </div>
       </div>
@@ -177,9 +179,9 @@ export default function CustomersSettingsPage() {
       {!loading && kpis && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
             {[
-                { label: "Partner Asset Count", value: customers.length, icon: Building2, color: "text-primary", bg: "bg-primary/20", border: "border-primary/20", trend: `+${kpis?.revenue?.growth?.toFixed(1) || '0.0'}%` },
-                { label: "Strategic Yield", value: `฿${kpis?.revenue?.current?.toLocaleString() || '0'}`, icon: CreditCard, color: "text-accent", bg: "bg-accent/20", border: "border-accent/20", trend: "High Performance" },
-                { label: "Ecosystem Margin", value: `${kpis?.margin?.current?.toFixed(1) || '0.0'}%`, icon: TrendingUp, color: "text-primary", bg: "bg-primary/10", border: "border-primary/10", trend: "OPTIMIZED" },
+                { label: t('settings_pages.customers.stats.count'), value: customers.length, icon: Building2, color: "text-primary", bg: "bg-primary/20", border: "border-primary/20", trend: `+${kpis?.revenue?.growth?.toFixed(1) || '0.0'}%` },
+                { label: t('settings_pages.customers.stats.yield'), value: `฿${kpis?.revenue?.current?.toLocaleString() || '0'}`, icon: CreditCard, color: "text-accent", bg: "bg-accent/20", border: "border-accent/20", trend: "High Performance" },
+                { label: t('settings_pages.customers.stats.margin'), value: `${kpis?.margin?.current?.toFixed(1) || '0.0'}%`, icon: TrendingUp, color: "text-primary", bg: "bg-primary/10", border: "border-primary/10", trend: "OPTIMIZED" },
             ].map((stat, idx) => (
               <div key={idx} className={cn(
                   "p-8 rounded-[3rem] border backdrop-blur-3xl shadow-2xl relative overflow-hidden group transition-all hover:scale-[1.03] bg-[#0a0518]/40",
@@ -214,7 +216,7 @@ export default function CustomersSettingsPage() {
                 <Input
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="SCAN STRATEGIC PARTNERS..."
+                    placeholder={t('settings_pages.customers.search_placeholder')}
                     className="bg-transparent border-none text-2xl font-black text-white px-4 h-20 placeholder:text-slate-700 tracking-tighter uppercase focus-visible:ring-0"
                 />
             </div>
@@ -230,19 +232,19 @@ export default function CustomersSettingsPage() {
                     <div className="p-3 bg-primary/20 rounded-2xl shadow-xl ring-1 ring-primary/30">
                         <Building2 size={32} className="text-primary" strokeWidth={2.5} />
                     </div>
-                    {editingCustomer ? "Refine Strategy" : "Deploy Partner"}
+                    {editingCustomer ? t('settings_pages.customers.dialog.title_edit') : t('settings_pages.customers.dialog.title_add')}
                   </DialogTitle>
                 </DialogHeader>
             </div>
 
             <div className="p-12 space-y-10 custom-scrollbar max-h-[70vh] overflow-y-auto">
               <div className="space-y-4">
-                <Label className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-500 ml-2">Legal Identity / Corporate Alias</Label>
+                <Label className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-500 ml-2">{t('settings_pages.customers.dialog.name')}</Label>
                 <div className="glass-panel p-1 rounded-2xl border-white/5">
                     <Input
                     value={formData.Customer_Name}
                     onChange={(e) => updateForm("Customer_Name", e.target.value)}
-                    placeholder="ENTER FULL LEGAL NOMENCLATURE..."
+                    placeholder={t('settings_pages.customers.dialog.name_placeholder')}
                     className="bg-transparent border-none text-2xl font-black tracking-tighter rounded-xl h-20 px-8 focus:bg-white/5 transition-all text-white placeholder:text-slate-800"
                     />
                 </div>
@@ -250,7 +252,7 @@ export default function CustomersSettingsPage() {
 
               <div className="grid grid-cols-2 gap-10">
                 <div className="space-y-4">
-                  <Label className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-500 ml-2">Secure Link / Phone</Label>
+                  <Label className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-500 ml-2">{t('settings_pages.customers.dialog.phone')}</Label>
                   <Input
                     value={formData.Phone || ""}
                     onChange={(e) => updateForm("Phone", e.target.value)}
@@ -259,7 +261,7 @@ export default function CustomersSettingsPage() {
                   />
                 </div>
                 <div className="space-y-4">
-                  <Label className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-500 ml-2">Digital Vector / Email</Label>
+                  <Label className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-500 ml-2">{t('settings_pages.customers.dialog.email')}</Label>
                   <Input
                     value={formData.Email || ""}
                     onChange={(e) => updateForm("Email", e.target.value)}
@@ -270,7 +272,7 @@ export default function CustomersSettingsPage() {
               </div>
 
               <div className="space-y-4">
-                <Label className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-500 ml-2">Strategic Deployment Address</Label>
+                <Label className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-500 ml-2">{t('settings_pages.customers.dialog.address')}</Label>
                 <Textarea
                   value={formData.Address || ""}
                   onChange={(e) => updateForm("Address", e.target.value)}
@@ -281,7 +283,7 @@ export default function CustomersSettingsPage() {
 
               <div className="grid grid-cols-2 gap-10">
                 <div className="space-y-4">
-                  <Label className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-500 ml-2">Partner Registry ID</Label>
+                  <Label className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-500 ml-2">{t('settings_pages.customers.dialog.branch')}</Label>
                   <Input
                     value={formData.Customer_ID || ""}
                     onChange={(e) => updateForm("Customer_ID", e.target.value)}
@@ -291,7 +293,7 @@ export default function CustomersSettingsPage() {
                   />
                 </div>
                  <div className="space-y-4">
-                  <Label className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-500 ml-2">Tax Identity Index</Label>
+                  <Label className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-500 ml-2">{t('settings_pages.customers.dialog.tax_id')}</Label>
                   <Input
                     value={formData.Tax_ID || ""}
                     onChange={(e) => updateForm("Tax_ID", e.target.value)}
@@ -304,7 +306,7 @@ export default function CustomersSettingsPage() {
               <div className="space-y-4">
                 <Label className="text-[10px] font-black uppercase tracking-[0.4em] text-primary ml-2 flex items-center gap-3">
                     <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                    INTELLIGENCE BOT BINDING ID
+                    {t('settings_pages.customers.dialog.line_id')}
                 </Label>
                 <div className="glass-panel p-1 rounded-2xl border-primary/20 bg-primary/5">
                     <Input
@@ -319,10 +321,10 @@ export default function CustomersSettingsPage() {
               <div className="flex gap-6 pt-10 border-t border-white/5 mt-12 mb-8">
                 <PremiumButton onClick={handleSave} disabled={saving} className="flex-[2] bg-primary hover:bg-primary/80 shadow-primary/20 h-20 rounded-3xl text-lg font-black tracking-widest">
                   {saving ? <Loader2 className="w-6 h-6 mr-4 animate-spin" /> : <Save className="w-6 h-6 mr-4" strokeWidth={3} />}
-                  FINALIZE REGISTRY
+                  {t('settings_pages.customers.dialog.execute')}
                 </PremiumButton>
                 <PremiumButton variant="outline" onClick={() => setIsDialogOpen(false)} className="flex-1 border-white/5 h-20 rounded-3xl text-slate-500 hover:text-white hover:bg-white/5 transition-all uppercase font-black tracking-widest">
-                  Cancel
+                  {t('settings_pages.customers.dialog.abort')}
                 </PremiumButton>
               </div>
             </div>
@@ -335,7 +337,7 @@ export default function CustomersSettingsPage() {
                 <Loader2 className="animate-spin text-primary opacity-40" size={80} strokeWidth={1} />
                 <Activity className="absolute inset-0 m-auto text-primary animate-pulse" size={32} />
              </div>
-             <p className="mt-10 text-slate-700 font-black uppercase tracking-[0.6em] text-[10px] animate-pulse">Syncing Ecosystem Matrix...</p>
+             <p className="mt-10 text-slate-700 font-black uppercase tracking-[0.6em] text-[10px] animate-pulse">{t('settings_pages.customers.status.syncing')}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
@@ -354,7 +356,7 @@ export default function CustomersSettingsPage() {
                       <div className="flex items-center gap-3 mt-2">
                           <span className="text-slate-500 font-black text-[9px] uppercase tracking-[0.3em]">{customer.Customer_ID}</span>
                           <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse shadow-[0_0_10px_rgba(255,30,133,1)]" />
-                          <span className="text-primary font-black text-[9px] uppercase tracking-[0.4em] italic opacity-70">STRATEGIC</span>
+                          <span className="text-primary font-black text-[9px] uppercase tracking-[0.4em] italic opacity-70">{t('settings_pages.customers.status.strategic')}</span>
                       </div>
                     </div>
                   </div>
@@ -381,8 +383,8 @@ export default function CustomersSettingsPage() {
                             <ShieldCheck size={18} strokeWidth={2.5} />
                         </div>
                         <div>
-                            <p className="text-[8px] font-black text-slate-600 uppercase tracking-[0.3em] mb-1">Entity Index</p>
-                            <p className="text-sm font-black text-slate-300 tracking-tight">{customer.Tax_ID || "UNVERIFIED"}</p>
+                            <p className="text-[8px] font-black text-slate-600 uppercase tracking-[0.3em] mb-1">{t('settings_pages.customers.dialog.tax_id')}</p>
+                            <p className="text-sm font-black text-slate-300 tracking-tight">{customer.Tax_ID || t('settings_pages.customers.status.unverified')}</p>
                         </div>
                   </div>
 
@@ -391,15 +393,15 @@ export default function CustomersSettingsPage() {
                         <div className="absolute top-0 right-0 w-12 h-12 bg-accent/5 blur-2xl rounded-full" />
                         <div className="flex items-center gap-2 mb-3">
                             <Phone size={14} className="text-accent" />
-                            <span className="text-[8px] font-black text-slate-600 uppercase tracking-widest leading-none">Hotline</span>
+                            <span className="text-[8px] font-black text-slate-600 uppercase tracking-widest leading-none">{t('settings_pages.customers.dialog.phone')}</span>
                         </div>
-                        <p className="text-[11px] font-black text-slate-300 truncate tracking-widest">{customer.Phone || "OFFLINE"}</p>
+                        <p className="text-[11px] font-black text-slate-300 truncate tracking-widest">{customer.Phone || t('settings_pages.customers.status.offline')}</p>
                     </div>
                     <div className="p-6 bg-white/[0.02] rounded-3xl border border-white/5 group-hover:bg-white/[0.04] transition-all duration-700 relative overflow-hidden">
                         <div className="absolute top-0 right-0 w-12 h-12 bg-primary/5 blur-2xl rounded-full" />
                         <div className="flex items-center gap-2 mb-3">
                             <MapPin size={14} className="text-primary" />
-                            <span className="text-[8px] font-black text-slate-600 uppercase tracking-widest leading-none">Operational</span>
+                            <span className="text-[8px] font-black text-slate-600 uppercase tracking-widest leading-none">{t('settings_pages.customers.dialog.branch')}</span>
                         </div>
                         <p className="text-[11px] font-black text-slate-300 truncate tracking-widest">{customer.Branch_ID || "Global"}</p>
                     </div>
@@ -417,7 +419,7 @@ export default function CustomersSettingsPage() {
                 </div>
                 <div className="flex items-center gap-2 px-4 py-2 bg-primary/20 text-primary rounded-2xl shadow-lg shadow-primary/5 ring-1 ring-primary/30">
                     <Zap size={14} className="animate-pulse" />
-                    <span className="text-[9px] font-black tracking-[0.2em]">CONNECTED</span>
+                    <span className="text-[9px] font-black tracking-[0.2em]">{t('settings_pages.customers.status.connected')}</span>
                 </div>
               </div>
             </div>
@@ -427,7 +429,7 @@ export default function CustomersSettingsPage() {
           {customers.length === 0 && (
             <div className="col-span-full text-center py-40 glass-panel rounded-[4rem] border-dashed border-white/5 group">
               <Activity className="w-20 h-20 text-slate-800 mx-auto mb-8 opacity-20 group-hover:scale-110 transition-transform duration-1000" />
-              <p className="text-slate-700 font-black uppercase tracking-[0.5em] text-[10px]">Registry Empty • No Intelligence Data Found</p>
+              <p className="text-slate-700 font-black uppercase tracking-[0.5em] text-[10px]">{t('settings_pages.customers.status.empty')}</p>
             </div>
           )}
         </div>
@@ -435,7 +437,7 @@ export default function CustomersSettingsPage() {
 
       <div className="mt-20 text-center mb-24">
         <div className="inline-flex items-center gap-4 px-8 py-3 glass-panel rounded-full text-[9px] font-black text-slate-700 uppercase tracking-[0.6em] opacity-40 hover:opacity-100 transition-opacity">
-            <Activity size={14} className="text-primary" /> Tactical CRM Core v5.1 • Unified Ecosystem
+            <Activity size={14} className="text-primary" /> {t('settings_pages.customers.status.footer')}
         </div>
       </div>
     </DashboardLayout>

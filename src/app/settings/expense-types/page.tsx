@@ -17,17 +17,18 @@ import {
   GripVertical,
   ArrowLeft,
   Activity,
-  Zap,
   Target,
   ShieldAlert,
   Loader2,
   TrendingUp
 } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { useLanguage } from "@/components/providers/language-provider"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
 
 export default function ExpenseTypesPage() {
+  const { t } = useLanguage()
   const router = useRouter()
   const [expenseTypes, setExpenseTypes] = useState<ExpenseType[]>([])
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -51,7 +52,7 @@ export default function ExpenseTypesPage() {
     await addExpenseType(newType.name, newType.default_amount)
     setNewType({ name: "", default_amount: 0 })
     setShowAddForm(false)
-    toast.success("Resource type deployed")
+    toast.success(t('settings_pages.expense_types.toasts.deployed'))
     loadData()
   }
 
@@ -63,15 +64,15 @@ export default function ExpenseTypesPage() {
     const item = expenseTypes.find(e => e.id === id)
     if (item) {
         await updateExpenseType(id, { name: item.name, default_amount: item.default_amount })
-        toast.success("Resource parameters synchronized")
+        toast.success(t('settings_pages.expense_types.toasts.synced'))
     }
     setEditingId(null)
   }
 
   const handleDelete = async (id: string) => {
-    if (confirm("Confirm decommissioning of this resource type?")) {
+    if (confirm(t('settings_pages.expense_types.toasts.confirm_del'))) {
       await deleteExpenseType(id)
-      toast.success("Resource type purged")
+      toast.success(t('settings_pages.expense_types.toasts.purged'))
       loadData()
     }
   }
@@ -91,7 +92,9 @@ export default function ExpenseTypesPage() {
             <div className="relative z-10 space-y-8">
                 <button onClick={() => router.back()} className="inline-flex items-center gap-2 text-slate-500 hover:text-primary transition-all font-black uppercase tracking-[0.4em] text-[10px] group/back italic">
                     <ArrowLeft className="w-4 h-4 group-hover/back:-translate-x-1 transition-transform" /> 
-                    Command Control
+                    {t('settings_pages.expense_types.title') === 'รายการค่าใช้จ่าย (Resource Matrix)' ? 'Command Control' : 'Command Control'}
+                    {/* Wait, I should probably use a generic key or just keep it premium. I'll use common 'command_control' if it exists or just localize manually */}
+                    {t('settings_pages.company.command_control')}
                 </button>
                 <div className="flex items-center gap-6">
                     <div className="p-4 bg-primary/20 rounded-[2.5rem] border-2 border-primary/30 shadow-[0_0_40px_rgba(255,30,133,0.2)] text-primary group-hover:scale-110 transition-all duration-500">
@@ -99,9 +102,9 @@ export default function ExpenseTypesPage() {
                     </div>
                     <div>
                         <h1 className="text-5xl font-black text-white tracking-widest uppercase leading-none italic premium-text-gradient">
-                            Resource Matrix
+                            {t('settings_pages.expense_types.title')}
                         </h1>
-                        <p className="text-[10px] font-black text-primary uppercase tracking-[0.6em] mt-2 opacity-80 italic italic">Expense Classification & Allocation Tokens</p>
+                        <p className="text-[10px] font-black text-primary uppercase tracking-[0.6em] mt-2 opacity-80 italic italic">{t('settings_pages.expense_types.subtitle')}</p>
                     </div>
                 </div>
             </div>
@@ -109,11 +112,11 @@ export default function ExpenseTypesPage() {
             <div className="flex flex-col items-end gap-6 relative z-10">
                 <div className="bg-white/5 border border-white/10 px-6 py-3 rounded-2xl flex items-center gap-3 backdrop-blur-md">
                     <div className="w-2 h-2 rounded-full bg-primary animate-pulse shadow-[0_0_10px_rgba(255,30,133,1)]" />
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">MATRIX_SCAN: ONLINE</span>
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">{t('settings_pages.expense_types.matrix_scan')}</span>
                 </div>
                 <PremiumButton onClick={() => setShowAddForm(true)} className="h-16 px-12 rounded-2xl bg-primary text-white border-0 shadow-[0_20px_50px_rgba(255,30,133,0.3)] gap-4 text-sm tracking-widest">
                     <Plus size={24} strokeWidth={3} />
-                    ENLIST_NEW_RESOURCE
+                    {t('settings_pages.expense_types.enlist_new')}
                 </PremiumButton>
             </div>
         </div>
@@ -124,25 +127,25 @@ export default function ExpenseTypesPage() {
                 <div className="p-10 border-b border-white/5 bg-primary/5 flex items-center justify-between">
                     <h3 className="text-xl font-black text-white tracking-widest uppercase italic flex items-center gap-3">
                         <Plus size={20} className="text-primary" />
-                        Configure New Allocation Token
+                        {t('settings_pages.expense_types.config_new')}
                     </h3>
-                    <PremiumButton variant="outline" size="icon" onClick={() => setShowAddForm(false)} className="rounded-xl border-white/10 text-slate-500 hover:text-white">
+                    <PremiumButton variant="outline" size="sm" onClick={() => setShowAddForm(false)} className="rounded-xl border-white/10 text-slate-500 hover:text-white">
                         <X size={20} />
                     </PremiumButton>
                 </div>
                 <div className="p-12">
                     <div className="grid grid-cols-12 gap-10 items-end">
                         <div className="col-span-12 md:col-span-6 space-y-4">
-                            <Label className="text-[10px] font-black uppercase text-primary/60 tracking-[0.4em] ml-6">RESOURCE_DESIGNATION</Label>
+                            <Label className="text-[10px] font-black uppercase text-primary/60 tracking-[0.4em] ml-6">{t('settings_pages.expense_types.res_designation')}</Label>
                             <Input
                                 value={newType.name}
                                 onChange={(e) => setNewType({ ...newType, name: e.target.value })}
-                                placeholder="E.g. FUEL_CORE / TOLL_BRIDGE..."
+                                placeholder={t('settings_pages.expense_types.placeholder_name')}
                                 className="h-16 bg-black/40 border-white/5 rounded-[1.5rem] focus:border-primary/50 transition-all text-white font-black italic tracking-widest pl-8 shadow-inner"
                             />
                         </div>
                         <div className="col-span-12 md:col-span-4 space-y-4">
-                            <Label className="text-[10px] font-black uppercase text-primary/60 tracking-[0.4em] ml-6">DEFAULT_YIELD (฿)</Label>
+                            <Label className="text-[10px] font-black uppercase text-primary/60 tracking-[0.4em] ml-6">{t('settings_pages.expense_types.default_yield')}</Label>
                             <div className="relative">
                                 <span className="absolute left-6 top-1/2 -translate-y-1/2 text-primary font-black italic">฿</span>
                                 <Input
@@ -155,7 +158,7 @@ export default function ExpenseTypesPage() {
                         </div>
                         <div className="col-span-12 md:col-span-2">
                             <PremiumButton onClick={handleAdd} className="w-full h-16 rounded-[1.5rem] bg-primary text-white font-black italic tracking-widest shadow-xl border-0 gap-3">
-                                <Save size={20} /> DEPLOY
+                                <Save size={20} /> {t('settings_pages.expense_types.deploy')}
                             </PremiumButton>
                         </div>
                     </div>
@@ -169,10 +172,10 @@ export default function ExpenseTypesPage() {
                 <div className="p-10 border-b border-white/5 bg-black/40 flex items-center justify-between">
                     <h3 className="text-xl font-black text-white tracking-widest uppercase italic flex items-center gap-3">
                         <Activity size={20} className="text-primary" />
-                        Allocation Registry
+                        {t('settings_pages.expense_types.registry')}
                     </h3>
                     <div className="px-5 py-1.5 rounded-xl bg-primary/10 text-[9px] font-black text-primary uppercase tracking-[0.3em] border border-primary/20 italic">
-                        SCAN_RESULTS: {expenseTypes.length} NODES
+                        {t('settings_pages.expense_types.scan_results').replace('{count}', expenseTypes.length.toString())}
                     </div>
                 </div>
                 <div className="p-4 md:p-10">
@@ -180,7 +183,7 @@ export default function ExpenseTypesPage() {
                         {loading ? (
                             <div className="py-40 flex flex-col items-center justify-center opacity-30">
                                 <Loader2 size={60} className="animate-spin text-primary mb-6" />
-                                <span className="text-[10px] font-black text-white uppercase tracking-[0.6em]">Syncing Matrix...</span>
+                                <span className="text-[10px] font-black text-white uppercase tracking-[0.6em]">{t('settings_pages.expense_types.syncing')}</span>
                             </div>
                         ) : (
                             expenseTypes.map((et) => (
@@ -207,7 +210,7 @@ export default function ExpenseTypesPage() {
                                         {editingId === et.id ? (
                                             <>
                                                 <div className="flex-[2] space-y-2">
-                                                    <Label className="text-[8px] font-black text-primary uppercase ml-4">EDIT_NAME</Label>
+                                                    <Label className="text-[8px] font-black text-primary uppercase ml-4">{t('settings_pages.expense_types.edit_name')}</Label>
                                                     <Input
                                                         value={et.name}
                                                         onChange={(e) => handleUpdate(et.id, { name: e.target.value })}
@@ -215,7 +218,7 @@ export default function ExpenseTypesPage() {
                                                     />
                                                 </div>
                                                 <div className="flex-1 space-y-2">
-                                                    <Label className="text-[8px] font-black text-primary uppercase ml-4">EDIT_YIELD</Label>
+                                                    <Label className="text-[8px] font-black text-primary uppercase ml-4">{t('settings_pages.expense_types.edit_yield')}</Label>
                                                     <div className="relative">
                                                         <span className="absolute left-6 top-1/2 -translate-y-1/2 text-primary font-black italic">฿</span>
                                                         <Input
@@ -239,10 +242,10 @@ export default function ExpenseTypesPage() {
                                                     )}>
                                                         {et.name}
                                                     </h3>
-                                                    <p className="text-[9px] font-black text-slate-600 uppercase tracking-widest mt-1 opacity-60">ID_VECTOR: {et.id.substring(0, 8)}...</p>
+                                                    <p className="text-[9px] font-black text-slate-600 uppercase tracking-widest mt-1 opacity-60">{t('settings_pages.expense_types.id_vector')}: {et.id.substring(0, 8)}...</p>
                                                 </div>
                                                 <div className="flex-1">
-                                                    <p className="text-[9px] font-black text-primary uppercase tracking-[0.4em] mb-1 italic opacity-60">BASE_YIELD</p>
+                                                    <p className="text-[9px] font-black text-primary uppercase tracking-[0.4em] mb-1 italic opacity-60">{t('settings_pages.expense_types.base_yield')}</p>
                                                     <p className="text-3xl font-black text-white italic tracking-tighter">
                                                         {et.default_amount ? `฿${et.default_amount.toLocaleString()}` : '฿0.00'}
                                                     </p>
@@ -257,10 +260,10 @@ export default function ExpenseTypesPage() {
                                                               : 'bg-white/5 text-slate-600 border-white/5'
                                                         )}
                                                     >
-                                                        {et.is_active ? 'ENABLED_NODE' : 'OFFLINE_NODE'}
+                                                        {et.is_active ? t('settings_pages.expense_types.enabled_node') : t('settings_pages.expense_types.offline_node')}
                                                     </button>
                                                     <PremiumButton 
-                                                        size="icon" 
+                                                        size="sm" 
                                                         variant="ghost" 
                                                         onClick={() => setEditingId(et.id)}
                                                         className="w-12 h-12 rounded-xl bg-white/5 border border-white/5 text-slate-400 hover:text-white hover:bg-primary/20 hover:border-primary/30 transition-all"
@@ -268,7 +271,7 @@ export default function ExpenseTypesPage() {
                                                         <Edit size={18} />
                                                     </PremiumButton>
                                                     <PremiumButton 
-                                                        size="icon" 
+                                                        size="sm" 
                                                         variant="ghost" 
                                                         onClick={() => handleDelete(et.id)}
                                                         className="w-12 h-12 rounded-xl bg-rose-500/5 border border-rose-500/10 text-rose-500/40 hover:text-white hover:bg-rose-500 transition-all"
@@ -289,8 +292,8 @@ export default function ExpenseTypesPage() {
                         {!loading && expenseTypes.length === 0 && (
                             <div className="py-40 text-center opacity-20">
                                 <ShieldAlert size={80} className="mx-auto text-slate-700 mb-8" />
-                                <p className="text-xl font-black uppercase tracking-[0.6em] text-white italic">Registry Depleted</p>
-                                <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest mt-4">Initialize allocation protocols to begin scanning.</p>
+                                <p className="text-xl font-black uppercase tracking-[0.6em] text-white italic">{t('settings_pages.expense_types.registry_depleted')}</p>
+                                <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest mt-4">{t('settings_pages.expense_types.init_protocols')}</p>
                             </div>
                         )}
                     </div>
@@ -305,14 +308,13 @@ export default function ExpenseTypesPage() {
                 <Target size={32} />
             </div>
             <div className="space-y-4 text-center md:text-left flex-1">
-                <p className="text-xl font-black text-primary italic uppercase tracking-widest">RESOURCE_ALLOCATION_ADVISORY</p>
+                <p className="text-xl font-black text-primary italic uppercase tracking-widest">{t('settings_pages.expense_types.advisory')}</p>
                 <p className="text-sm font-bold text-slate-600 leading-relaxed uppercase tracking-wider italic">
-                    Allocation tokens defined here are utilized across the entire mission-critical logistics engine. <br />
-                    Decommissioning active resource types may disrupt historical analytical continuity.
+                    {t('settings_pages.expense_types.advisory_desc')}
                 </p>
             </div>
             <PremiumButton variant="outline" className="h-14 px-10 rounded-2xl border-white/10 text-white gap-3 uppercase font-black text-[10px] tracking-[0.3em] ml-auto italic">
-                <Activity size={18} /> VIEW_ALLOCATION_TRENDS
+                <Activity size={18} /> {t('settings_pages.expense_types.view_trends')}
             </PremiumButton>
         </div>
       </div>

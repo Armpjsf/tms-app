@@ -7,6 +7,7 @@ import { PremiumButton } from "@/components/ui/premium-button"
 import { Switch } from "@/components/ui/switch"
 import { Bell, ArrowLeft, Save, ShieldAlert, Zap, Activity, MessageSquare, Mail, Loader2, Target } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { useLanguage } from "@/components/providers/language-provider"
 import { getSetting, saveSetting } from "@/lib/supabase/system_settings"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
@@ -26,6 +27,7 @@ const DEFAULT_SETTINGS: NotificationSettings = {
 }
 
 export default function NotificationSettingsPage() {
+  const { t } = useLanguage()
   const router = useRouter()
   const [settings, setSettings] = useState<NotificationSettings>(DEFAULT_SETTINGS)
   const [loading, setLoading] = useState(true)
@@ -45,7 +47,7 @@ export default function NotificationSettingsPage() {
     setSaving(true)
     await saveSetting('notification_settings', settings, 'Admin Notification Preferences')
     setSaving(false)
-    toast.success("Alert protocols synchronized")
+    toast.success(t('settings_pages.notifications.toasts.synced'))
   }
 
   return (
@@ -58,7 +60,7 @@ export default function NotificationSettingsPage() {
             <div className="relative z-10 space-y-8">
                 <button onClick={() => router.back()} className="inline-flex items-center gap-2 text-slate-500 hover:text-primary transition-all font-black uppercase tracking-[0.4em] text-[10px] group/back italic">
                     <ArrowLeft className="w-4 h-4 group-hover/back:-translate-x-1 transition-transform" /> 
-                    Command Control
+                    {t('settings_pages.company.command_control')}
                 </button>
                 <div className="flex items-center gap-6">
                     <div className="p-4 bg-primary/20 rounded-[2.5rem] border-2 border-primary/30 shadow-[0_0_40px_rgba(255,30,133,0.2)] text-primary group-hover:scale-110 transition-all duration-500">
@@ -66,9 +68,9 @@ export default function NotificationSettingsPage() {
                     </div>
                     <div>
                         <h1 className="text-5xl font-black text-white tracking-widest uppercase leading-none italic premium-text-gradient">
-                            Alert Engine
+                            {t('settings_pages.notifications.title')}
                         </h1>
-                        <p className="text-[10px] font-black text-primary uppercase tracking-[0.6em] mt-2 opacity-80 italic italic">Signal Routing & Operational Cue Preferences</p>
+                        <p className="text-[10px] font-black text-primary uppercase tracking-[0.6em] mt-2 opacity-80 italic italic">{t('settings_pages.notifications.subtitle')}</p>
                     </div>
                 </div>
             </div>
@@ -76,7 +78,7 @@ export default function NotificationSettingsPage() {
             <div className="flex flex-col items-end gap-6 relative z-10">
                 <div className="bg-white/5 border border-white/10 px-6 py-3 rounded-2xl flex items-center gap-3 backdrop-blur-md">
                     <div className="w-2 h-2 rounded-full bg-primary animate-pulse shadow-[0_0_10px_rgba(255,30,133,1)]" />
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">MONITOR_STATUS: ACTIVE</span>
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">{t('settings_pages.notifications.monitor_status')}</span>
                 </div>
                 <div className="flex items-center gap-4 bg-primary/10 p-4 rounded-2xl border border-primary/20">
                    <Target className="text-primary" size={18} />
@@ -107,34 +109,34 @@ export default function NotificationSettingsPage() {
                                   {[
                                     { 
                                         id: 'push_enabled', 
-                                        label: 'Push Intercepts', 
-                                        desc: 'Real-time high-parity signals for browser and mobile nodes.', 
+                                        label: t('settings_pages.notifications.push_label'), 
+                                        desc: t('settings_pages.notifications.push_desc'), 
                                         icon: MessageSquare, 
                                         color: 'text-primary' 
                                     },
                                     { 
                                         id: 'email_enabled', 
-                                        label: 'Email Transmission', 
-                                        desc: 'Asynchronous operational updates via standard SMTP gateway.', 
+                                        label: t('settings_pages.notifications.email_label'), 
+                                        desc: t('settings_pages.notifications.email_desc'), 
                                         icon: Mail, 
                                         color: 'text-indigo-400' 
                                     },
                                     { 
                                         id: 'sos_alert_enabled', 
-                                        label: 'SOS Priority Hub', 
-                                        desc: 'CRITICAL: Immediate visual/audio override on field distress signals.', 
+                                        label: t('settings_pages.notifications.sos_label'), 
+                                        desc: t('settings_pages.notifications.sos_desc'), 
                                         icon: ShieldAlert, 
                                         color: 'text-rose-500',
                                         isCritical: true
                                     },
                                     { 
                                         id: 'daily_report_email', 
-                                        label: 'Temporal Summary', 
-                                        desc: 'Automated 08:00 UTC mission summary emission.', 
+                                        label: t('settings_pages.notifications.temporal_label'), 
+                                        desc: t('settings_pages.notifications.temporal_desc'), 
                                         icon: Activity, 
                                         color: 'text-emerald-400' 
                                     },
-                                  ].map((pref, i) => (
+                                  ].map((pref) => (
                                     <div key={pref.id} className={cn(
                                         "flex items-center justify-between p-8 rounded-[2.5rem] border-2 transition-all duration-500 group/pref relative overflow-hidden",
                                         settings[pref.id as keyof NotificationSettings] 
@@ -178,10 +180,10 @@ export default function NotificationSettingsPage() {
                                     onClick={handleSave} 
                                     disabled={loading || saving} 
                                     className="w-full h-20 rounded-[2rem] bg-primary text-white font-black italic tracking-[0.3em] shadow-[0_30px_60px_rgba(255,30,133,0.3)] border-0 text-lg gap-6 group/save"
-                                >
-                                  {saving ? <Loader2 size={24} className="animate-spin" /> : <Save size={24} className="group-hover/save:scale-125 transition-transform" />}
-                                  {saving ? "SYNCHRONIZING_PROTOCOLS..." : "COMMIT_CONFIG_TO_MATRIX"}
-                                </PremiumButton>
+                                  >
+                                    {saving ? <Loader2 size={24} className="animate-spin" /> : <Save size={24} className="group-hover/save:scale-125 transition-transform" />}
+                                    {saving ? t('settings_pages.notifications.syncing') : t('settings_pages.notifications.commit_config')}
+                                  </PremiumButton>
                               </div>
                           </div>
                       </div>
@@ -196,14 +198,13 @@ export default function NotificationSettingsPage() {
                 <ShieldAlert size={32} />
             </div>
             <div className="space-y-4 text-center md:text-left flex-1">
-                <p className="text-xl font-black text-primary italic uppercase tracking-widest">SIGNAL_INTEGRITY_ADVISORY</p>
+                <p className="text-xl font-black text-primary italic uppercase tracking-widest">{t('settings_pages.notifications.advisory')}</p>
                 <p className="text-sm font-bold text-slate-600 leading-relaxed uppercase tracking-wider italic">
-                    Emergency override protocols (SOS) are routed via high-priority priority-alpha nodes. Disabling these may lead to tactical blindspots in field coverage. <br />
-                    All alert emission logs are archived for 90 orbital cycles for administrative audit.
+                    {t('settings_pages.notifications.advisory_desc')}
                 </p>
             </div>
             <PremiumButton variant="outline" className="h-14 px-10 rounded-2xl border-white/10 text-white gap-3 uppercase font-black text-[10px] tracking-[0.3em] ml-auto italic">
-                <Activity size={18} /> VIEW_EVENT_STREAM
+                <Activity size={18} /> {t('settings_pages.notifications.view_stream')}
             </PremiumButton>
         </div>
       </div>

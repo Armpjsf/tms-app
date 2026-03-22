@@ -15,11 +15,9 @@ import {
     Truck, 
     Activity, 
     Zap, 
-    ShieldCheck, 
     Target,
     Settings2,
     Database,
-    X,
     Save
 } from "lucide-react"
 import { 
@@ -32,8 +30,10 @@ import { getVehicleTypes, createVehicleType, updateVehicleType, deleteVehicleTyp
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
+import { useLanguage } from "@/components/providers/language-provider"
 
 export default function VehicleTypesPage() {
+  const { t } = useLanguage()
   const router = useRouter()
   const [types, setTypes] = useState<VehicleType[]>([])
   const [loading, setLoading] = useState(true)
@@ -79,45 +79,45 @@ export default function VehicleTypesPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!formData.type_name.trim()) return toast.warning("Protocol violation: Designation required")
+    if (!formData.type_name.trim()) return toast.warning(t('settings_pages.vehicle_types.toasts.required'))
     
     setIsSubmitting(true)
     try {
       if (currentType) {
         const res = await updateVehicleType(currentType.type_id, formData)
         if (res.success) {
-          toast.success("Asset template synchronized")
+          toast.success(t('settings_pages.vehicle_types.toasts.sync_success'))
           setIsDialogOpen(false)
           fetchTypes()
         } else {
-            toast.error("Handshake failed: " + res.message)
+            toast.error(t('settings_pages.vehicle_types.toasts.handshake_failed') + res.message)
         }
       } else {
         const res = await createVehicleType(formData)
         if (res.success) {
-            toast.success("New asset class deployed")
+            toast.success(t('settings_pages.vehicle_types.toasts.deploy_success'))
             setIsDialogOpen(false)
             fetchTypes()
         } else {
-            toast.error("Handshake failed: " + res.message)
+            toast.error(t('settings_pages.vehicle_types.toasts.handshake_failed') + res.message)
         }
       }
     } catch {
-        toast.error("Transmission error during commit")
+        toast.error(t('settings_pages.vehicle_types.toasts.transmission_error'))
     } finally {
       setIsSubmitting(false)
     }
   }
 
   const handleDelete = async (id: number) => {
-    if (!confirm("Confirm decommissioning of this asset class?")) return
+    if (!confirm(t('settings_pages.vehicle_types.toasts.confirm_delete'))) return
 
     const res = await deleteVehicleType(id)
     if (res.success) {
-        toast.success("Asset class purged from registry")
+        toast.success(t('settings_pages.vehicle_types.toasts.delete_success'))
         fetchTypes()
     } else {
-        toast.error("Handshake failed: " + res.message)
+        toast.error(t('settings_pages.vehicle_types.toasts.handshake_failed') + res.message)
     }
   }
 
@@ -131,7 +131,7 @@ export default function VehicleTypesPage() {
             <div className="relative z-10 space-y-8">
                 <button onClick={() => router.back()} className="inline-flex items-center gap-2 text-slate-500 hover:text-primary transition-all font-black uppercase tracking-[0.4em] text-[10px] group/back italic">
                     <ArrowLeft className="w-4 h-4 group-hover/back:-translate-x-1 transition-transform" /> 
-                    Command Control
+                    {t('settings_pages.vehicle_types.ui.command_control')}
                 </button>
                 <div className="flex items-center gap-6">
                     <div className="p-4 bg-primary/20 rounded-[2.5rem] border-2 border-primary/30 shadow-[0_0_40px_rgba(255,30,133,0.2)] text-primary group-hover:scale-110 transition-all duration-500">
@@ -139,9 +139,9 @@ export default function VehicleTypesPage() {
                     </div>
                     <div>
                         <h1 className="text-5xl font-black text-white tracking-widest uppercase leading-none italic premium-text-gradient">
-                            Fleet Nexus
+                            {t('settings_pages.vehicle_types.title')}
                         </h1>
-                        <p className="text-[10px] font-black text-primary uppercase tracking-[0.6em] mt-2 opacity-80 italic">Asset Class & Vehicle Specification Registry</p>
+                        <p className="text-[10px] font-black text-primary uppercase tracking-[0.6em] mt-2 opacity-80 italic">{t('settings_pages.vehicle_types.subtitle')}</p>
                     </div>
                 </div>
             </div>
@@ -153,7 +153,7 @@ export default function VehicleTypesPage() {
                 </div>
                 <PremiumButton onClick={handleOpenCreate} className="h-16 px-12 rounded-2xl bg-primary text-white border-0 shadow-[0_20px_50px_rgba(255,30,133,0.3)] gap-4 text-sm tracking-widest">
                     <Plus size={24} strokeWidth={3} />
-                    ENLIST_ASSET_CLASS
+                    {t('settings_pages.vehicle_types.add_type')}
                 </PremiumButton>
             </div>
         </div>
@@ -164,10 +164,10 @@ export default function VehicleTypesPage() {
                 <div className="p-10 border-b border-white/5 bg-black/40 flex items-center justify-between">
                     <h3 className="text-xl font-black text-white tracking-widest uppercase italic flex items-center gap-3">
                         <Database size={20} className="text-primary" />
-                        Specification Nodes
+                        {t('settings_pages.vehicle_types.specification_nodes')}
                     </h3>
                     <div className="px-5 py-1.5 rounded-xl bg-primary/10 text-[9px] font-black text-primary uppercase tracking-[0.3em] border border-primary/20 italic">
-                        TOTAL_CLASSES: {types.length}
+                        {t('settings_pages.vehicle_types.total_classes')}: {types.length}
                     </div>
                 </div>
 
@@ -175,10 +175,10 @@ export default function VehicleTypesPage() {
                     <table className="w-full text-left border-collapse">
                         <thead>
                             <tr className="bg-white/[0.02] border-b border-white/5">
-                                <th className="px-12 py-8 text-[9px] font-black uppercase tracking-[0.4em] text-slate-500 italic">Asset Designation</th>
-                                <th className="px-8 py-8 text-[9px] font-black uppercase tracking-[0.4em] text-slate-500 italic">Operational Parameters</th>
-                                <th className="px-8 py-8 text-[9px] font-black uppercase tracking-[0.4em] text-slate-500 italic">Status</th>
-                                <th className="px-12 py-8 text-[9px] font-black uppercase tracking-[0.4em] text-slate-500 text-right italic">Command</th>
+                                <th className="px-12 py-8 text-[9px] font-black uppercase tracking-[0.4em] text-slate-500 italic">{t('settings_pages.vehicle_types.table.designation')}</th>
+                                <th className="px-8 py-8 text-[9px] font-black uppercase tracking-[0.4em] text-slate-500 italic">{t('settings_pages.vehicle_types.table.parameters')}</th>
+                                <th className="px-8 py-8 text-[9px] font-black uppercase tracking-[0.4em] text-slate-500 italic">{t('settings_pages.vehicle_types.table.status')}</th>
+                                <th className="px-12 py-8 text-[9px] font-black uppercase tracking-[0.4em] text-slate-500 text-right italic">{t('settings_pages.vehicle_types.table.command')}</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-white/5">
@@ -189,13 +189,13 @@ export default function VehicleTypesPage() {
                                             <Loader2 className="w-16 h-16 text-primary animate-spin opacity-20" strokeWidth={1} />
                                             <Activity className="absolute inset-0 m-auto text-primary animate-pulse" size={24} />
                                         </div>
-                                        <p className="mt-8 text-slate-700 font-black uppercase tracking-[0.6em] text-[10px]">Syncing Fleet Matrix...</p>
+                                        <p className="mt-8 text-slate-700 font-black uppercase tracking-[0.6em] text-[10px]">{t('settings_pages.vehicle_types.loading')}</p>
                                     </td>
                                 </tr>
                             ) : types.length === 0 ? (
                                 <tr>
                                     <td colSpan={4} className="text-center py-40 text-slate-700 font-black uppercase tracking-[0.5em] text-xs">
-                                        No asset classes detected in the registry
+                                        {t('settings_pages.vehicle_types.empty')}
                                     </td>
                                 </tr>
                             ) : (
@@ -258,14 +258,13 @@ export default function VehicleTypesPage() {
                 <Target size={32} />
             </div>
             <div className="space-y-4 text-center md:text-left flex-1">
-                <p className="text-xl font-black text-primary italic uppercase tracking-widest">ASSET_SPECIFICATION_ADVISORY</p>
+                <p className="text-xl font-black text-primary italic uppercase tracking-widest">{t('settings_pages.vehicle_types.ui.advisory_title')}</p>
                 <p className="text-sm font-bold text-slate-600 leading-relaxed uppercase tracking-wider italic">
-                    Asset class definitions impact load optimization and routing geometry. <br />
-                    Decommissioning classes with active missions may result in grid sync failures.
+                    {t('settings_pages.vehicle_types.ui.advisory_desc')}
                 </p>
             </div>
             <PremiumButton variant="outline" className="h-14 px-10 rounded-2xl border-white/10 text-white gap-3 uppercase font-black text-[10px] tracking-[0.3em] ml-auto italic">
-                <Activity size={18} /> VIEW_FLEET_CAPACITY
+                <Activity size={18} /> {t('settings_pages.vehicle_types.ui.view_capacity')}
             </PremiumButton>
         </div>
 
@@ -279,42 +278,42 @@ export default function VehicleTypesPage() {
                             <div className="p-3 bg-primary/20 rounded-2xl shadow-xl ring-1 ring-primary/30">
                                 <Settings2 size={32} className="text-primary" strokeWidth={2.5} />
                             </div>
-                            {currentType ? 'Refine Asset' : 'Deploy Asset'}
+                            {currentType ? t('settings_pages.vehicle_types.dialog.title_edit') : t('settings_pages.vehicle_types.dialog.title_add')}
                         </DialogTitle>
                     </DialogHeader>
                 </div>
                 
                 <form onSubmit={handleSubmit} className="p-12 space-y-10">
                     <div className="space-y-4">
-                        <Label className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-500 ml-4">Asset Designation *</Label>
+                        <Label className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-500 ml-4">{t('settings_pages.vehicle_types.dialog.name')} *</Label>
                         <Input 
                             value={formData.type_name}
                             onChange={(e) => setFormData({...formData, type_name: e.target.value})}
-                            placeholder="E.G. 4-WHEEL_CORE / 6-WHEEL_HEAVY..."
+                            placeholder={t('settings_pages.vehicle_types.ui.name_placeholder')}
                             className="h-16 bg-white/5 border-white/5 text-white font-black rounded-2xl px-8 text-sm uppercase tracking-widest focus:bg-white/10 transition-all italic"
                             required
                         />
                     </div>
                     <div className="space-y-4">
-                        <Label className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-500 ml-4">Operational Parameters</Label>
+                        <Label className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-500 ml-4">{t('settings_pages.vehicle_types.dialog.desc')}</Label>
                         <Input 
                             value={formData.description}
                             onChange={(e) => setFormData({...formData, description: e.target.value})}
-                            placeholder="LOAD_CAPACITY / AXLE_SPEC..."
+                            placeholder={t('settings_pages.vehicle_types.ui.desc_placeholder')}
                             className="h-16 bg-white/5 border-white/5 text-white font-black rounded-2xl px-8 text-sm uppercase tracking-widest focus:bg-white/10 transition-all italic"
                         />
                     </div>
                     
                     {currentType && (
                         <div className="space-y-4">
-                            <Label className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-500 ml-4">Registry Status</Label>
+                            <Label className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-500 ml-4">{t('settings_pages.vehicle_types.ui.registry_status')}</Label>
                             <select 
                                 value={formData.active_status}
                                 onChange={(e) => setFormData({...formData, active_status: e.target.value})}
                                 className="w-full h-16 bg-white/5 border-2 border-white/5 rounded-2xl px-8 text-sm font-black uppercase tracking-widest text-white focus:border-primary/50 transition-all outline-none italic"
                             >
-                                <option value="Active" className="bg-[#0c061d]">ACTIVE_NODE</option>
-                                <option value="Inactive" className="bg-[#0c061d]">OFFLINE_NODE</option>
+                                <option value="Active" className="bg-[#0c061d]">{t('settings_pages.vehicle_types.ui.active_node')}</option>
+                                <option value="Inactive" className="bg-[#0c061d]">{t('settings_pages.vehicle_types.ui.offline_node')}</option>
                             </select>
                         </div>
                     )}
@@ -322,10 +321,10 @@ export default function VehicleTypesPage() {
                     <div className="flex gap-6 pt-10 border-t border-white/5 mt-12 mb-4">
                         <PremiumButton type="submit" disabled={isSubmitting} className="flex-[2] bg-primary hover:bg-primary/80 shadow-primary/20 h-20 rounded-3xl text-lg font-black tracking-widest uppercase italic">
                             {isSubmitting ? <Loader2 className="w-6 h-6 mr-4 animate-spin" /> : <Save className="w-6 h-6 mr-4" strokeWidth={3} />}
-                            FINALIZE_SPEC
+                            {t('settings_pages.vehicle_types.ui.finalize')}
                         </PremiumButton>
                         <PremiumButton type="button" variant="outline" onClick={() => setIsDialogOpen(false)} className="flex-1 border-white/5 h-20 rounded-3xl text-slate-500 hover:text-white hover:bg-white/5 transition-all uppercase font-black tracking-widest italic">
-                            Abort
+                            {t('settings_pages.vehicle_types.ui.abort')}
                         </PremiumButton>
                     </div>
                 </form>

@@ -20,7 +20,8 @@ import {
     Network,
     Zap,
     Activity,
-    Globe
+    Globe,
+    Save
 } from "lucide-react"
 import {
   Select,
@@ -34,12 +35,14 @@ import { createSubcontractor, updateSubcontractor, deleteSubcontractor } from "@
 import { getSubcontractorPerformance, getOperationalStats } from "@/lib/supabase/analytics"
 import { Subcontractor } from "@/types/subcontractor"
 import { useBranch } from "@/components/providers/branch-provider"
+import { useLanguage } from "@/components/providers/language-provider"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
 import { BANKS } from "@/lib/constants/banks"
 
 export default function SubcontractorsPage() {
     const { selectedBranch, branches } = useBranch()
+    const { t } = useLanguage()
     const [list, setList] = useState<Subcontractor[]>([])
     const [loading, setLoading] = useState(true)
     const [isDialogOpen, setIsDialogOpen] = useState(false)
@@ -153,20 +156,20 @@ export default function SubcontractorsPage() {
                         <div className="p-2 bg-primary/20 rounded-xl shadow-lg">
                             <Network className="text-primary" size={20} />
                         </div>
-                        <h2 className="text-[10px] font-black text-primary uppercase tracking-[0.4em]">Logistics Grid Expansion</h2>
+                        <h2 className="text-[10px] font-black text-primary uppercase tracking-[0.4em]">{t('settings_pages.subcontractors.subtitle')}</h2>
                     </div>
                     <h1 className="text-6xl font-black text-white tracking-tighter flex items-center gap-5 uppercase premium-text-gradient">
-                        Network Growth
+                        {t('settings_pages.subcontractors.title')}
                     </h1>
                     <p className="text-slate-500 font-bold text-sm tracking-wide opacity-80 uppercase tracking-widest leading-relaxed">
-                      Sub-Contractor Partner Ecosystem & Financial Registry
+                      {t('settings.items.partners_desc')}
                     </p>
                 </div>
 
                 <div className="flex flex-wrap gap-4 relative z-10">
                     <PremiumButton onClick={() => handleOpenDialog()} className="h-14 px-10 rounded-2xl shadow-xl shadow-primary/20">
                         <Plus size={24} className="mr-3" strokeWidth={3} />
-                        ENLIST PARTNER
+                        {t('settings_pages.subcontractors.add_partner')}
                     </PremiumButton>
                 </div>
             </div>
@@ -181,7 +184,7 @@ export default function SubcontractorsPage() {
                             </div>
                             <div className="px-3 py-1 bg-white/5 rounded-full border border-white/5 text-[9px] text-primary font-black uppercase tracking-widest italic animate-pulse">GRID SCALE</div>
                         </div>
-                        <p className="text-slate-500 font-black text-[10px] uppercase tracking-[0.3em] mb-2">Total Partners</p>
+                        <p className="text-slate-500 font-black text-[10px] uppercase tracking-[0.3em] mb-2">{t('settings_pages.subcontractors.stats.total_partners')}</p>
                         <p className="text-4xl font-black text-white tracking-tighter leading-none">{list.length}</p>
                     </div>
 
@@ -192,7 +195,7 @@ export default function SubcontractorsPage() {
                             </div>
                             <div className="px-3 py-1 bg-white/5 rounded-full border border-white/5 text-[9px] text-accent font-black uppercase tracking-widest italic">MARKET SHARE</div>
                         </div>
-                        <p className="text-slate-500 font-black text-[10px] uppercase tracking-[0.3em] mb-2">Network Missions</p>
+                        <p className="text-slate-500 font-black text-[10px] uppercase tracking-[0.3em] mb-2">{t('settings_pages.subcontractors.stats.network_missions')}</p>
                         <p className="text-4xl font-black text-white tracking-tighter leading-none">
                             {stats.performance.find((p: { name: string }) => p.name.includes('Sub'))?.count || 0} <span className="text-sm text-slate-500 font-bold opacity-40 ml-1">NODES</span>
                         </p>
@@ -205,7 +208,7 @@ export default function SubcontractorsPage() {
                             </div>
                             <div className="px-3 py-1 bg-white/5 rounded-full border border-white/5 text-[9px] text-slate-500 font-black uppercase tracking-widest italic">RELIABILITY</div>
                         </div>
-                        <p className="text-slate-500 font-black text-[10px] uppercase tracking-[0.3em] mb-2">On-Time Accuracy</p>
+                        <p className="text-slate-500 font-black text-[10px] uppercase tracking-[0.3em] mb-2">{t('settings_pages.subcontractors.stats.on_time')}</p>
                         <p className="text-4xl font-black text-white tracking-tighter leading-none">{stats.ops.fleet.onTimeDelivery.toFixed(1)}%</p>
                     </div>
                 </div>
@@ -218,7 +221,7 @@ export default function SubcontractorsPage() {
                     <div className="flex items-center gap-4 px-6">
                         <Search className="text-primary opacity-50" size={24} />
                         <Input
-                            placeholder="SCAN PARTNER REGISTRY..." 
+                            placeholder={t('settings_pages.subcontractors.search_placeholder')}
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             className="bg-transparent border-none text-2xl font-black text-white px-4 h-20 placeholder:text-slate-700 tracking-tighter uppercase focus-visible:ring-0"
@@ -233,11 +236,11 @@ export default function SubcontractorsPage() {
                     <table className="w-full text-sm text-left border-collapse">
                         <thead>
                             <tr className="bg-white/[0.02] border-b border-white/5">
-                                <th className="px-12 py-10 text-[9px] font-black uppercase tracking-[0.4em] text-slate-500">Node Identity</th>
-                                <th className="px-8 py-10 text-[9px] font-black uppercase tracking-[0.4em] text-slate-500">Partner Intelligence</th>
-                                <th className="px-8 py-10 text-[9px] font-black uppercase tracking-[0.4em] text-slate-500">Financial Vector</th>
-                                <th className="px-8 py-10 text-[9px] font-black uppercase tracking-[0.4em] text-slate-500">Tactical Status</th>
-                                <th className="px-12 py-10 text-[9px] font-black uppercase tracking-[0.4em] text-slate-500 text-right">Command</th>
+                                <th className="px-12 py-10 text-[9px] font-black uppercase tracking-[0.4em] text-slate-500">{t('settings_pages.subcontractors.table.identity')}</th>
+                                <th className="px-8 py-10 text-[9px] font-black uppercase tracking-[0.4em] text-slate-500">{t('settings_pages.subcontractors.table.intelligence')}</th>
+                                <th className="px-8 py-10 text-[9px] font-black uppercase tracking-[0.4em] text-slate-500">{t('settings_pages.subcontractors.table.financial')}</th>
+                                <th className="px-8 py-10 text-[9px] font-black uppercase tracking-[0.4em] text-slate-500">{t('settings_pages.subcontractors.table.status')}</th>
+                                <th className="px-12 py-10 text-[9px] font-black uppercase tracking-[0.4em] text-slate-500 text-right">{t('settings_pages.subcontractors.table.command')}</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-white/5">
@@ -338,7 +341,7 @@ export default function SubcontractorsPage() {
                                 <div className="p-3 bg-primary/20 rounded-2xl shadow-xl ring-1 ring-primary/30">
                                     <Globe size={32} className="text-primary" strokeWidth={2.5} />
                                 </div>
-                                {editingId ? "Refine Network Partner" : "Onboard Partner Node"}
+                                {editingId ? t('settings_pages.subcontractors.dialog.title_edit') : t('settings_pages.subcontractors.dialog.title_add')}
                             </DialogTitle>
                         </DialogHeader>
                     </div>
@@ -346,7 +349,7 @@ export default function SubcontractorsPage() {
                     <div className="p-12 space-y-10 custom-scrollbar max-h-[70vh] overflow-y-auto">
                         <div className="grid grid-cols-2 gap-10">
                             <div className="space-y-4">
-                                <Label className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-500 ml-2">Partner Alias / ID *</Label>
+                                <Label className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-500 ml-2">{t('settings_pages.subcontractors.dialog.alias_id')}</Label>
                                 <Input 
                                     value={formData.Sub_ID} 
                                     onChange={e => setFormData({...formData, Sub_ID: e.target.value})} 
@@ -356,7 +359,7 @@ export default function SubcontractorsPage() {
                                 />
                             </div>
                             <div className="space-y-4">
-                                <Label className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-500 ml-2">Tax Identity Index</Label>
+                                <Label className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-500 ml-2">{t('settings_pages.subcontractors.dialog.tax_id')}</Label>
                                 <Input 
                                     value={formData.Tax_ID || ""} 
                                     onChange={e => setFormData({...formData, Tax_ID: e.target.value})} 
@@ -367,7 +370,7 @@ export default function SubcontractorsPage() {
                         </div>
 
                         <div className="space-y-4">
-                            <Label className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-500 ml-2">Full Corporate Alias *</Label>
+                            <Label className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-500 ml-2">{t('settings_pages.subcontractors.dialog.corporate_name')}</Label>
                             <div className="glass-panel p-1 rounded-2xl border-white/5">
                                 <Input 
                                     value={formData.Sub_Name} 
@@ -379,7 +382,7 @@ export default function SubcontractorsPage() {
                         </div>
 
                         <div className="space-y-4">
-                            <Label className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-500 ml-2">Deployment Sector / Branch *</Label>
+                            <Label className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-500 ml-2">{t('settings_pages.subcontractors.dialog.branch')}</Label>
                             <Select 
                                 value={formData.Branch_ID || ""} 
                                 onValueChange={(v: string) => setFormData({...formData, Branch_ID: v})}
@@ -401,11 +404,11 @@ export default function SubcontractorsPage() {
                             <div className="absolute top-0 right-0 w-32 h-32 bg-accent/10 blur-[80px] pointer-events-none" />
                             <h3 className="text-[10px] font-black uppercase tracking-[0.5em] text-accent flex items-center gap-3">
                                 <div className="w-1.5 h-1.5 rounded-full bg-accent shadow-[0_0_8px_rgba(168,85,247,1)]" />
-                                Financial Transaction Vector
+                                {t('settings_pages.subcontractors.dialog.financial_header')}
                             </h3>
                             
                             <div className="space-y-4">
-                                <Label className="text-[9px] font-black text-slate-500 uppercase tracking-[0.3em] ml-2">Nodal Bank Institution</Label>
+                                <Label className="text-[9px] font-black text-slate-500 uppercase tracking-[0.3em] ml-2">{t('settings_pages.subcontractors.dialog.bank_name')}</Label>
                                 <Select 
                                     value={formData.Bank_Name || ""} 
                                     onValueChange={(v: string) => setFormData({...formData, Bank_Name: v})}
@@ -425,7 +428,7 @@ export default function SubcontractorsPage() {
 
                             <div className="grid grid-cols-2 gap-10">
                                 <div className="space-y-4">
-                                    <Label className="text-[9px] font-black text-slate-500 uppercase tracking-[0.3em] ml-2">Nodal Index / Account No</Label>
+                                    <Label className="text-[9px] font-black text-slate-500 uppercase tracking-[0.3em] ml-2">{t('settings_pages.subcontractors.dialog.bank_account')}</Label>
                                     <Input 
                                         value={formData.Bank_Account_No || ""} 
                                         onChange={e => setFormData({...formData, Bank_Account_No: e.target.value})} 
@@ -434,7 +437,7 @@ export default function SubcontractorsPage() {
                                     />
                                 </div>
                                 <div className="space-y-4">
-                                    <Label className="text-[9px] font-black text-slate-500 uppercase tracking-[0.3em] ml-2">Remittance Alias / Name</Label>
+                                    <Label className="text-[9px] font-black text-slate-500 uppercase tracking-[0.3em] ml-2">{t('settings_pages.subcontractors.dialog.bank_holder')}</Label>
                                     <Input 
                                         value={formData.Bank_Account_Name || ""} 
                                         onChange={e => setFormData({...formData, Bank_Account_Name: e.target.value})} 
@@ -448,10 +451,10 @@ export default function SubcontractorsPage() {
                         <div className="flex gap-6 pt-10 border-t border-white/5 mt-12 mb-8">
                             <PremiumButton onClick={handleSave} disabled={saving} className="flex-[2] bg-primary hover:bg-primary/80 shadow-primary/20 h-20 rounded-3xl text-lg font-black tracking-widest uppercase">
                                 {saving ? <Loader2 className="w-6 h-6 mr-4 animate-spin" /> : <Save className="w-6 h-6 mr-4" strokeWidth={3} />}
-                                EXECUTE REGISTRY
+                                {t('settings_pages.subcontractors.dialog.execute')}
                             </PremiumButton>
                             <PremiumButton variant="outline" onClick={() => setIsDialogOpen(false)} className="flex-1 border-white/5 h-20 rounded-3xl text-slate-500 hover:text-white hover:bg-white/5 transition-all uppercase font-black tracking-widest">
-                                Abort
+                                {t('settings_pages.subcontractors.dialog.abort')}
                             </PremiumButton>
                         </div>
                     </div>

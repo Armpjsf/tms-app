@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Users, Plus, Edit, Trash2, Search, Loader2, Shield, Fingerprint, Activity, Zap, FileSpreadsheet, Key, AlertCircle } from "lucide-react"
+import { Users, Plus, Edit, Trash2, Search, Loader2, Shield, Fingerprint, Activity, Zap, FileSpreadsheet, Key, AlertCircle, ShieldCheck } from "lucide-react"
 import { createUser, updateUser, deleteUser, UserData, getCurrentUserRole, createBulkUsers, getUsers } from "@/lib/actions/user-actions"
 import { Customer } from "@/lib/supabase/customers"
 import { ExcelImport } from "@/components/ui/excel-import"
@@ -19,10 +19,12 @@ import { getRolePermissions } from "@/lib/actions/permission-actions"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Separator } from "@/components/ui/separator"
 import { toast } from "sonner"
+import { useLanguage } from "@/components/providers/language-provider"
 import { cn } from "@/lib/utils"
 
 export default function UserSettingsPage() {
     const { branches, isAdmin, selectedBranch } = useBranch()
+    const { t } = useLanguage()
     const [userList, setUserList] = useState<(UserData & { Master_Customers?: { Customer_Name: string } | null })[]>([])
     const [customers, setCustomers] = useState<Customer[]>([])
     const [currentRoleId, setCurrentRoleId] = useState<number | null>(null)
@@ -185,9 +187,9 @@ export default function UserSettingsPage() {
                             </div>
                             <div>
                                 <h1 className="text-5xl font-black text-white tracking-widest uppercase leading-none italic premium-text-gradient">
-                                    Personnel Matrix
+                                    {t('settings_pages.users.title')}
                                 </h1>
-                                <p className="text-[10px] font-black text-primary uppercase tracking-[0.6em] mt-2 opacity-80 italic">Unified Identity & Access Configuration</p>
+                                <p className="text-[10px] font-black text-primary uppercase tracking-[0.6em] mt-2 opacity-80 italic">{t('settings_pages.users.subtitle')}</p>
                             </div>
                         </div>
                     </div>
@@ -196,16 +198,16 @@ export default function UserSettingsPage() {
                         <ExcelImport 
                             trigger={
                                 <PremiumButton variant="outline" className="h-14 px-8 rounded-2xl border-white/10 hover:border-primary/50 text-slate-400 gap-3">
-                                    <FileSpreadsheet size={20} /> SYNC_BULK_EXCEL
+                                    <FileSpreadsheet size={20} /> {t('settings_pages.users.bulk_import')}
                                 </PremiumButton>
                             }
-                            title="Personnel Import Terminal"
+                            title={t('settings_pages.users.import_title')}
                             onImport={createBulkUsers}
                             templateData={[{ Username: "user01", Name: "นาย สมชาย ใจดี", Branch: "สำนักงานใหญ่", Role: "Staff", Password: "password123", Active_Status: "Active", Customer_ID: "" }]}
                             templateFilename="template_users.xlsx"
                         />
                         <PremiumButton onClick={() => handleOpenDialog()} className="h-14 px-8 rounded-2xl gap-3 shadow-[0_15px_30px_rgba(255,30,133,0.3)] bg-primary text-white border-0">
-                            <Plus size={20} /> INITIALIZE_NODE
+                            <Plus size={20} /> {t('settings_pages.users.add_user')}
                         </PremiumButton>
                     </div>
                 </div>
@@ -216,7 +218,7 @@ export default function UserSettingsPage() {
                         <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-600 group-focus-within:text-primary transition-colors" size={24} />
                         <Input 
                             autoComplete="off"
-                            placeholder="SCAN_IDENTIFIER_OR_NAME..." 
+                            placeholder={t('settings_pages.users.search_placeholder')}
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             className="w-full h-18 bg-[#0a0518] border-white/5 rounded-3xl pl-16 pr-8 text-sm font-black uppercase tracking-[0.2em] focus:border-primary/50 transition-all text-white placeholder:text-slate-700 italic shadow-inner"
@@ -230,7 +232,7 @@ export default function UserSettingsPage() {
                         <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 blur-[80px] pointer-events-none" />
                         <div className="flex items-center gap-5 relative z-10">
                             <Fingerprint size={24} className="text-primary animate-pulse" />
-                            <h2 className="text-2xl font-black text-white tracking-widest uppercase italic">Operational Personnel Registry</h2>
+                            <h2 className="text-2xl font-black text-white tracking-widest uppercase italic">{t('settings_pages.users.registry_title')}</h2>
                         </div>
                         <div className="flex items-center gap-3 px-5 py-2 bg-white/5 rounded-full border border-white/10 relative z-10">
                             <Activity size={14} className="text-primary" />
@@ -242,12 +244,12 @@ export default function UserSettingsPage() {
                         <table className="w-full text-sm text-left border-collapse">
                             <thead>
                                 <tr className="bg-black/20 text-[10px] font-black uppercase tracking-[0.4em] text-slate-500 border-b border-white/5">
-                                    <th className="px-10 py-8">Vector ID</th>
-                                    <th className="px-10 py-8">Personnel Identity</th>
-                                    <th className="px-10 py-8">Operational Hub</th>
-                                    <th className="px-10 py-8">Clearance Role</th>
-                                    <th className="px-10 py-8">Sync Status</th>
-                                    <th className="px-10 py-8 text-right">Access Control</th>
+                                    <th className="px-10 py-8">{t('settings_pages.users.table.vector_id')}</th>
+                                    <th className="px-10 py-8">{t('settings_pages.users.table.identity')}</th>
+                                    <th className="px-10 py-8">{t('settings_pages.users.table.hub')}</th>
+                                    <th className="px-10 py-8">{t('settings_pages.users.table.role')}</th>
+                                    <th className="px-10 py-8">{t('settings_pages.users.table.status')}</th>
+                                    <th className="px-10 py-8 text-right">{t('settings_pages.users.table.actions')}</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-white/[0.02]">
@@ -327,14 +329,14 @@ export default function UserSettingsPage() {
                     <DialogHeader className="p-12 border-b border-white/5 bg-black/40">
                         <DialogTitle className="flex items-center gap-4 text-3xl font-black italic uppercase tracking-widest premium-text-gradient">
                             <Shield className="w-8 h-8 text-primary animate-pulse" strokeWidth={2.5} />
-                            {editingUser ? " PERSONNEL_UPDATE" : " PERSONNEL_INITIALIZE"}
+                            {editingUser ? t('settings_pages.users.dialog.title_edit') : t('settings_pages.users.dialog.title_add')}
                         </DialogTitle>
                     </DialogHeader>
                     
                     <div className="flex-1 overflow-y-auto p-12 space-y-10 scrollbar-hide">
                         <div className="grid grid-cols-2 gap-10">
-                            <div className="space-y-3">
-                                <Label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] ml-4">Vector Identifier (Username)</Label>
+                             <div className="space-y-3">
+                                <Label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] ml-4">{t('settings_pages.users.dialog.username')}</Label>
                                 <Input 
                                     value={formData.Username} 
                                     onChange={e => setFormData({...formData, Username: e.target.value})} 
@@ -343,19 +345,19 @@ export default function UserSettingsPage() {
                                 />
                             </div>
                             <div className="space-y-3">
-                                <Label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] ml-4">Auth Sequence (Password)</Label>
+                                <Label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] ml-4">{t('settings_pages.users.dialog.password')}</Label>
                                 <Input 
                                     type="password"
                                     value={formData.Password || ""} 
                                     onChange={e => setFormData({...formData, Password: e.target.value})} 
                                     className="h-16 rounded-2xl bg-black border-white/5 text-white font-black italic tracking-widest pl-6 shadow-inner" 
-                                    placeholder={editingUser ? "BYPASS_UNLESS_REWRITING" : "DEFINE_PROTOCOL"}
+                                    placeholder={editingUser ? t('settings_pages.users.dialog.password_placeholder_edit') : t('settings_pages.users.dialog.password_placeholder_add')}
                                 />
                             </div>
                         </div>
 
                         <div className="space-y-3">
-                            <Label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] ml-4">Full Identity Name</Label>
+                            <Label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] ml-4">{t('settings_pages.users.dialog.full_name')}</Label>
                             <Input 
                                 value={formData.Name} 
                                 onChange={e => setFormData({...formData, Name: e.target.value})} 
@@ -365,14 +367,14 @@ export default function UserSettingsPage() {
 
                         <div className="grid grid-cols-2 gap-10">
                             <div className="space-y-3">
-                                <Label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] ml-4">Operational Hub</Label>
+                                <Label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] ml-4">{t('settings_pages.users.dialog.branch')}</Label>
                                 {isAdmin ? (
                                     <Select 
                                         value={formData.Branch_ID || ""} 
                                         onValueChange={v => setFormData({...formData, Branch_ID: v})}
                                     >
                                         <SelectTrigger className="h-16 rounded-2xl bg-black border-white/5 text-white font-black uppercase italic tracking-widest shadow-inner">
-                                            <SelectValue placeholder="SELECT_HUB" />
+                                            <SelectValue placeholder={t('settings_pages.users.dialog.select_hub')} />
                                         </SelectTrigger>
                                         <SelectContent className="bg-[#0a0518] border-white/10 text-white">
                                             {branches.map(b => (
@@ -391,13 +393,13 @@ export default function UserSettingsPage() {
                                 )}
                             </div>
                             <div className="space-y-3">
-                                <Label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] ml-4">Clearance Role</Label>
+                                <Label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] ml-4">{t('settings_pages.users.dialog.role')}</Label>
                                 <Select 
                                     value={formData.Role || ""} 
                                     onValueChange={handleRoleChange}
                                 >
                                     <SelectTrigger className="h-16 rounded-2xl bg-black border-white/5 text-white font-black uppercase italic tracking-widest shadow-inner">
-                                        <SelectValue placeholder="SELECT_CLEARANCE" />
+                                        <SelectValue placeholder={t('settings_pages.users.dialog.select_role')} />
                                     </SelectTrigger>
                                     <SelectContent className="bg-[#0a0518] border-white/10 text-white">
                                         {STANDARD_ROLES.map(role => (
@@ -488,10 +490,10 @@ export default function UserSettingsPage() {
                     </div>
  
                     <DialogFooter className="p-12 border-t border-white/5 bg-black/40 gap-6">
-                        <PremiumButton variant="outline" onClick={() => setIsDialogOpen(false)} className="h-18 px-10 rounded-[1.5rem] border-white/5 text-slate-500 hover:text-white uppercase tracking-widest text-xs font-black">ABORT_SYNC</PremiumButton>
+                        <PremiumButton variant="outline" onClick={() => setIsDialogOpen(false)} className="h-18 px-10 rounded-[1.5rem] border-white/5 text-slate-500 hover:text-white uppercase tracking-widest text-xs font-black">{t('settings_pages.users.dialog.abort')}</PremiumButton>
                         <PremiumButton onClick={handleSave} disabled={saving} className="h-18 px-12 rounded-[2rem] gap-4 shadow-[0_20px_50px_rgba(255,30,133,0.3)] min-w-[200px] text-sm tracking-[0.2em] bg-primary text-white border-0">
                             {saving ? <Loader2 className="w-6 h-6 animate-spin" /> : <ShieldCheck className="w-6 h-6" />}
-                            EXECUTE_SYNC
+                            {t('settings_pages.users.dialog.execute')}
                         </PremiumButton>
                     </DialogFooter>
                 </DialogContent>

@@ -4,12 +4,12 @@ import { useState, useEffect, useCallback } from "react"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { PremiumCard } from "@/components/ui/premium-card"
 import { PremiumButton } from "@/components/ui/premium-button"
-import { Label } from "@/components/ui/label"
 import { 
-    Shield, Save, CheckCircle2, Loader2, Target, 
-    FileText, Truck, Wallet, Users, Settings, Search,
-    Lock, AlertCircle, Activity, Zap, Fingerprint, ArrowLeft
+    Shield, Loader2, Target, 
+    FileText, Truck, Wallet, Users, Settings,
+    Lock, AlertCircle, Zap, Fingerprint, ArrowLeft
 } from "lucide-react"
+import { motion } from "framer-motion"
 import { getRolePermissions, updateRolePermissions, RolePermission } from "@/lib/actions/permission-actions"
 import { toast } from "sonner"
 import { 
@@ -20,8 +20,10 @@ import {
 import { Switch } from "@/components/ui/switch"
 import { cn } from "@/lib/utils"
 import { useRouter } from "next/navigation"
+import { useLanguage } from "@/components/providers/language-provider"
+import { LucideIcon } from "lucide-react"
 
-const CATEGORY_ICONS: Record<string, any> = {
+const CATEGORY_ICONS: Record<string, LucideIcon> = {
     Executive: Target,
     Operations: FileText,
     Fleet: Truck,
@@ -31,6 +33,7 @@ const CATEGORY_ICONS: Record<string, any> = {
 }
 
 export default function RolesPage() {
+    const { t } = useLanguage()
     const router = useRouter()
     const [roles, setRoles] = useState<RolePermission[]>([])
     const [selectedRoleIndex, setSelectedRoleIndex] = useState(0)
@@ -94,10 +97,10 @@ export default function RolesPage() {
         setSaving(true)
         try {
             const result = await updateRolePermissions(role.Role, role.Permissions)
-            if (result.success) toast.success(`Updated security matrix for ${role.Role}`)
-            else toast.error(result.error || "Failed to save")
+            if (result.success) toast.success(t('settings_pages.roles.toasts.success') + role.Role)
+            else toast.error(result.error || t('settings_pages.roles.toasts.save_failed'))
         } catch {
-            toast.error("An error occurred")
+            toast.error(t('settings_pages.roles.toasts.error'))
         } finally {
             setSaving(false)
         }
@@ -124,7 +127,7 @@ export default function RolesPage() {
                     <div className="relative z-10 space-y-8">
                         <button onClick={() => router.back()} className="inline-flex items-center gap-2 text-slate-500 hover:text-primary transition-all font-black uppercase tracking-[0.4em] text-[10px] group/back italic">
                             <ArrowLeft className="w-4 h-4 group-hover/back:-translate-x-1 transition-transform" /> 
-                            Core Config
+                            {t('settings_pages.roles.config_back')}
                         </button>
                         <div className="flex items-center gap-6">
                             <div className="p-4 bg-primary/20 rounded-[2.5rem] border-2 border-primary/30 shadow-[0_0_40px_rgba(255,30,133,0.2)] text-primary group-hover:scale-110 transition-all duration-500">
@@ -132,9 +135,9 @@ export default function RolesPage() {
                             </div>
                             <div>
                                 <h1 className="text-5xl font-black text-white tracking-widest uppercase leading-none italic premium-text-gradient">
-                                    Auth Matrix
+                                    {t('settings_pages.roles.title')}
                                 </h1>
-                                <p className="text-[10px] font-black text-primary uppercase tracking-[0.6em] mt-2 opacity-80 italic italic">Global Security & Clearance Infrastructure</p>
+                                <p className="text-[10px] font-black text-primary uppercase tracking-[0.6em] mt-2 opacity-80 italic italic">{t('settings_pages.roles.subtitle')}</p>
                             </div>
                         </div>
                     </div>
@@ -142,7 +145,7 @@ export default function RolesPage() {
                     <div className="flex flex-col items-end gap-6 relative z-10">
                         <div className="bg-white/5 border border-white/10 px-6 py-3 rounded-2xl flex items-center gap-3 backdrop-blur-md">
                             <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_10px_rgba(16,185,129,1)]" />
-                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">PROTOCOL: ENCRYPTED_SYNC</span>
+                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">{t('settings_pages.roles.protocol_sync')}</span>
                         </div>
                         <PremiumButton 
                             onClick={handleSave} 
@@ -150,7 +153,7 @@ export default function RolesPage() {
                             className="h-16 px-12 rounded-2xl bg-primary text-white border-0 shadow-[0_20px_50px_rgba(255,30,133,0.3)] gap-4 text-sm tracking-widest disabled:opacity-20"
                         >
                             {saving ? <Loader2 size={20} className="animate-spin" /> : <Fingerprint size={20} />}
-                            COMMIT_SECURITY_CHANGES
+                            {t('settings_pages.roles.commit_changes')}
                         </PremiumButton>
                     </div>
                 </div>
@@ -158,7 +161,7 @@ export default function RolesPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
                     {/* Role Tactical Select */}
                     <div className="lg:col-span-3 space-y-4">
-                        <p className="text-slate-500 font-black text-[10px] uppercase tracking-[0.4em] mb-6 ml-4 italic">Security Entity</p>
+                        <p className="text-slate-500 font-black text-[10px] uppercase tracking-[0.4em] mb-6 ml-4 italic">{t('settings_pages.roles.entity_label')}</p>
                         {roles.map((role, idx) => (
                             <button
                                 key={role.Role}
@@ -193,10 +196,10 @@ export default function RolesPage() {
                         <div className="mt-10 p-8 rounded-[2.5rem] bg-indigo-500/5 border border-white/5 shadow-inner">
                              <div className="flex items-center gap-3 mb-4 text-indigo-400">
                                 <AlertCircle size={14} strokeWidth={2.5} />
-                                <span className="text-[9px] font-black uppercase tracking-[0.3em]">Integrity Check</span>
+                                <span className="text-[9px] font-black uppercase tracking-[0.3em]">{t('settings_pages.roles.integrity_check')}</span>
                              </div>
                              <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest leading-relaxed italic">
-                                ALL CLEARANCE MODIFICATIONS ARE LOGGED IN THE AUDIT TRAIL.
+                                {t('settings_pages.roles.audit_log_warn')}
                              </p>
                         </div>
                     </div>
@@ -212,10 +215,10 @@ export default function RolesPage() {
                                     <Lock size={64} strokeWidth={1.5} className="animate-pulse" />
                                 </div>
                                 <div className="max-w-xl relative z-10 space-y-4">
-                                    <h3 className="text-4xl font-black text-white tracking-widest uppercase italic premium-text-gradient">MASTER_OVERRIDE_ACTIVE</h3>
-                                    <p className="text-indigo-400 font-black text-[10px] uppercase tracking-[0.6em] mb-4">Identity Level: SYSTEM_ORIGIN</p>
+                                    <h3 className="text-4xl font-black text-white tracking-widest uppercase italic premium-text-gradient">{t('settings_pages.roles.master_override')}</h3>
+                                    <p className="text-indigo-400 font-black text-[10px] uppercase tracking-[0.6em] mb-4">{t('settings_pages.roles.identity_level')}</p>
                                     <p className="text-slate-500 font-bold text-sm leading-relaxed uppercase tracking-widest italic">
-                                        SUPER ADMIN ACCOUNTS POSSESS UNRESTRICTED HARD-CODED ACCESS TO ALL HYBRID NODES AND CORE KERNEL MODULES. THIS PROTOCOL IS IMMUTABLE.
+                                        {t('settings_pages.roles.super_admin_desc')}
                                     </p>
                                 </div>
                             </PremiumCard>
@@ -239,10 +242,10 @@ export default function RolesPage() {
                                                     <div className="p-3 bg-white/5 rounded-2xl text-primary border border-white/10 group-hover/cat:scale-110 transition-transform">
                                                         <Icon size={24} />
                                                     </div>
-                                                    <h3 className="font-black text-white uppercase tracking-[0.3em] italic text-xl">{category.label}</h3>
+                                                    <h3 className="font-black text-white uppercase tracking-[0.3em] italic text-xl">{t(`settings_pages.roles.categories.${category.id}` as any)}</h3>
                                                 </div>
                                                 <div className="text-[9px] font-black text-slate-600 bg-white/5 px-5 py-2 rounded-full border border-white/5 uppercase tracking-widest italic">
-                                                    {catPerms.length} VECTOR_POINTS
+                                                    {catPerms.length} {t('settings_pages.roles.vector_points')}
                                                 </div>
                                             </div>
                                             <div className="p-8">

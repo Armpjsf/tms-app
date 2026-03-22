@@ -22,16 +22,15 @@ import {
   ImageIcon,
   Loader2,
   ArrowLeft,
-  Activity,
-  Zap,
   ShieldCheck,
   Target,
   UserCheck
 } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { cn } from "@/lib/utils"
+import { useLanguage } from "@/components/providers/language-provider"
 
 export default function CompanySettingsPage() {
+  const { t } = useLanguage()
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [uploading, setUploading] = useState(false)
@@ -42,7 +41,7 @@ export default function CompanySettingsPage() {
     company_name: "",
     company_name_en: "",
     tax_id: "",
-    branch: "สำนักงานใหญ่",
+    branch: t('settings_pages.branches.hub_matrix.main_hub'),
     address: "",
     phone: "",
     fax: "",
@@ -85,12 +84,12 @@ export default function CompanySettingsPage() {
       const result = await uploadCompanyLogo(file)
       if (result.success && result.url) {
         updateForm("logo_url", result.url)
-        toast.success("Logo uplink established")
+        toast.success(t('settings_pages.company.toasts.logo_success'))
       } else {
-        toast.error("Uplink failed: " + (result.error?.message || "Unknown error"))
+        toast.error(t('settings_pages.company.toasts.logo_failed') + (result.error?.message || "Unknown error"))
       }
     } catch {
-      toast.error('Signal interference during upload')
+      toast.error(t('settings_pages.company.toasts.upload_error'))
     } finally {
       setUploading(false)
     }
@@ -101,12 +100,12 @@ export default function CompanySettingsPage() {
     try {
       const result = await saveCompanyProfile(formData)
       if (result.success) {
-        toast.success("Identity vector synchronized")
+        toast.success(t('settings_pages.company.toasts.save_success'))
       } else {
         throw result.error
       }
     } catch {
-      toast.error("Failed to commit profile changes")
+      toast.error(t('settings_pages.company.toasts.save_failed'))
     } finally {
       setLoading(false)
     }
@@ -122,7 +121,7 @@ export default function CompanySettingsPage() {
             <div className="relative z-10 space-y-8">
                 <button onClick={() => router.back()} className="inline-flex items-center gap-2 text-slate-500 hover:text-primary transition-all font-black uppercase tracking-[0.4em] text-[10px] group/back italic">
                     <ArrowLeft className="w-4 h-4 group-hover/back:-translate-x-1 transition-transform" /> 
-                    Command Control
+                    {t('settings_pages.company.command_control')}
                 </button>
                 <div className="flex items-center gap-6">
                     <div className="p-4 bg-primary/20 rounded-[2.5rem] border-2 border-primary/30 shadow-[0_0_40px_rgba(255,30,133,0.2)] text-primary group-hover:scale-110 transition-all duration-500">
@@ -130,9 +129,9 @@ export default function CompanySettingsPage() {
                     </div>
                     <div>
                         <h1 className="text-5xl font-black text-white tracking-widest uppercase leading-none italic premium-text-gradient">
-                            Corporate ID
+                            {t('settings_pages.company.title')}
                         </h1>
-                        <p className="text-[10px] font-black text-primary uppercase tracking-[0.6em] mt-2 opacity-80 italic italic">Entity Profile & Legal Documentation Parameters</p>
+                        <p className="text-[10px] font-black text-primary uppercase tracking-[0.6em] mt-2 opacity-80 italic italic">{t('settings_pages.company.subtitle')}</p>
                     </div>
                 </div>
             </div>
@@ -140,7 +139,7 @@ export default function CompanySettingsPage() {
             <div className="flex flex-col items-end gap-6 relative z-10">
                 <div className="bg-white/5 border border-white/10 px-6 py-3 rounded-2xl flex items-center gap-3 backdrop-blur-md">
                     <div className="w-2 h-2 rounded-full bg-primary animate-pulse shadow-[0_0_10px_rgba(255,30,133,1)]" />
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">PROFILE_STATUS: VERIFIED</span>
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">{t('settings_pages.company.profile_status')}</span>
                 </div>
                 <PremiumButton 
                     onClick={handleSave} 
@@ -148,7 +147,7 @@ export default function CompanySettingsPage() {
                     className="h-16 px-12 rounded-2xl bg-primary text-white border-0 shadow-[0_20px_50px_rgba(255,30,133,0.3)] gap-4 text-sm tracking-widest"
                 >
                     {loading ? <Loader2 size={24} className="animate-spin" /> : <Save size={24} />}
-                    COMMIT_IDENTITY_CHANGES
+                    {t('settings_pages.company.commit_changes')}
                 </PremiumButton>
             </div>
         </div>
@@ -161,7 +160,7 @@ export default function CompanySettingsPage() {
                     <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 blur-[40px] pointer-events-none" />
                     <h3 className="text-xl font-black text-white tracking-widest uppercase italic flex items-center gap-3">
                         <ImageIcon size={20} className="text-primary" />
-                        Visual Signature
+                        {t('settings_pages.company.visual_signature')}
                     </h3>
                 </div>
                 <div className="p-10 space-y-8 flex flex-col items-center">
@@ -172,7 +171,7 @@ export default function CompanySettingsPage() {
                         {uploading && (
                             <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center z-10 backdrop-blur-md">
                                 <Loader2 className="w-10 h-10 text-primary animate-spin mb-4" />
-                                <span className="text-[8px] font-black text-primary uppercase tracking-[0.4em]">UPLOADING_BUFFER...</span>
+                                <span className="text-[8px] font-black text-primary uppercase tracking-[0.4em]">{t('settings_pages.company.uploading')}</span>
                             </div>
                         )}
                         {logoPreview ? (
@@ -183,7 +182,7 @@ export default function CompanySettingsPage() {
                                     <Upload size={40} />
                                 </div>
                                 <div className="space-y-1">
-                                    <p className="text-[10px] font-black text-white uppercase tracking-widest">INITIALIZE_UPLINK</p>
+                                    <p className="text-[10px] font-black text-white uppercase tracking-widest">{t('settings_pages.company.init_uplink')}</p>
                                     <p className="text-[8px] font-bold text-slate-600 uppercase tracking-widest italic">PNG/JPG (MAX 2MB)</p>
                                 </div>
                             </div>
@@ -193,8 +192,8 @@ export default function CompanySettingsPage() {
                     
                     <div className="w-full p-6 rounded-3xl bg-white/5 border border-white/5 text-center">
                          <p className="text-[9px] font-black text-slate-500 leading-relaxed uppercase tracking-widest italic">
-                            OPTIMAL DIMENSIONS: 400x400 PX <br />
-                            ALPHA CHANNEL (TRANSPARENT) RECOMMENDED
+                            {t('settings_pages.company.optimal_dims')} <br />
+                            {t('settings_pages.company.alpha_channel')}
                          </p>
                     </div>
 
@@ -204,7 +203,7 @@ export default function CompanySettingsPage() {
                         className="w-full h-14 rounded-2xl border-rose-500/20 text-rose-500 bg-rose-500/5 hover:bg-rose-600 hover:text-white transition-all text-[10px] font-black uppercase tracking-widest italic"
                         onClick={() => setLogoPreview(null)}
                       >
-                        PURGE_SIGNATURE
+                        {t('settings_pages.company.purge_signature')}
                       </PremiumButton>
                     )}
                 </div>
@@ -218,29 +217,29 @@ export default function CompanySettingsPage() {
                 <div className="p-10 border-b border-white/5 bg-black/40 flex items-center justify-between">
                     <h3 className="text-xl font-black text-white tracking-widest uppercase italic flex items-center gap-3">
                         <FileText size={20} className="text-primary" />
-                        Entity Parameters
+                        {t('settings_pages.company.entity_params')}
                     </h3>
                     <div className="px-5 py-1.5 rounded-xl bg-primary/10 text-[9px] font-black text-primary uppercase tracking-[0.3em] border border-primary/20 italic">
-                        GENERAL_INTEL
+                        {t('settings_pages.company.general_intel')}
                     </div>
                 </div>
                 <div className="p-12 space-y-10">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                         <div className="space-y-4">
-                            <Label className="text-[10px] font-black uppercase text-primary/60 tracking-[0.4em] ml-6">ENTITY_NAME (TH)</Label>
+                            <Label className="text-[10px] font-black uppercase text-primary/60 tracking-[0.4em] ml-6">{t('settings_pages.company.entity_name_th')}</Label>
                             <Input
                                 value={formData.company_name}
                                 onChange={(e) => updateForm("company_name", e.target.value)}
-                                placeholder="บริษัท..."
+                                placeholder={t('settings_pages.company.placeholders.company_name_th')}
                                 className="h-16 bg-black/40 border-white/5 rounded-[1.5rem] focus:border-primary/50 transition-all text-white font-black italic tracking-widest pl-8 shadow-inner"
                             />
                         </div>
                         <div className="space-y-4">
-                            <Label className="text-[10px] font-black uppercase text-primary/60 tracking-[0.4em] ml-6">ENTITY_NAME (EN)</Label>
+                            <Label className="text-[10px] font-black uppercase text-primary/60 tracking-[0.4em] ml-6">{t('settings_pages.company.entity_name_en')}</Label>
                             <Input
                                 value={formData.company_name_en}
                                 onChange={(e) => updateForm("company_name_en", e.target.value)}
-                                placeholder="Corporate..."
+                                placeholder={t('settings_pages.company.placeholders.company_name_en')}
                                 className="h-16 bg-black/40 border-white/5 rounded-[1.5rem] focus:border-primary/50 transition-all text-white font-black italic tracking-widest pl-8 shadow-inner"
                             />
                         </div>
@@ -249,21 +248,21 @@ export default function CompanySettingsPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                         <div className="space-y-4">
                             <Label className="text-[10px] font-black uppercase text-primary/60 tracking-[0.4em] ml-6 flex items-center gap-2">
-                                <CreditCard size={12} /> TAX_IDENTIFIER
+                                <CreditCard size={12} /> {t('settings_pages.company.tax_id')}
                             </Label>
                             <Input
                                 value={formData.tax_id}
                                 onChange={(e) => updateForm("tax_id", e.target.value)}
-                                placeholder="0XXXXXXXXXXXX"
+                                placeholder={t('settings_pages.company.placeholders.tax_id')}
                                 className="h-16 bg-black/40 border-white/5 rounded-[1.5rem] focus:border-primary/50 transition-all text-white font-black italic tracking-widest pl-8 shadow-inner"
                             />
                         </div>
                         <div className="space-y-4">
-                            <Label className="text-[10px] font-black uppercase text-primary/60 tracking-[0.4em] ml-6">NODE_DESIGNATION (Branch)</Label>
+                            <Label className="text-[10px] font-black uppercase text-primary/60 tracking-[0.4em] ml-6">{t('settings_pages.company.node_designation')}</Label>
                             <Input
                                 value={formData.branch}
                                 onChange={(e) => updateForm("branch", e.target.value)}
-                                placeholder="HQ..."
+                                placeholder={t('settings_pages.company.placeholders.branch')}
                                 className="h-16 bg-black/40 border-white/5 rounded-[1.5rem] focus:border-primary/50 transition-all text-white font-black italic tracking-widest pl-8 shadow-inner"
                             />
                         </div>
@@ -271,12 +270,12 @@ export default function CompanySettingsPage() {
 
                     <div className="space-y-4">
                         <Label className="text-[10px] font-black uppercase text-primary/60 tracking-[0.4em] ml-6 flex items-center gap-2">
-                            <MapPin size={12} /> GEOSPATIAL_CORE (Address)
+                            <MapPin size={12} /> {t('settings_pages.company.geospatial_core')}
                         </Label>
                         <Textarea
                             value={formData.address}
                             onChange={(e) => updateForm("address", e.target.value)}
-                            placeholder="Physical deployment site..."
+                            placeholder={t('settings_pages.company.placeholders.address')}
                             className="bg-black/40 border-white/5 rounded-[2rem] text-white font-black italic tracking-widest pl-8 p-6 shadow-inner min-h-[120px] focus:border-primary/50 transition-all resize-none"
                         />
                     </div>
@@ -284,27 +283,27 @@ export default function CompanySettingsPage() {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
                         <div className="space-y-4">
                             <Label className="text-[10px] font-black uppercase text-primary/60 tracking-[0.4em] ml-6 flex items-center gap-2">
-                                <Phone size={12} /> VOICE_LINK
+                                <Phone size={12} /> {t('settings_pages.company.voice_link')}
                             </Label>
                             <Input
                                 value={formData.phone}
                                 onChange={(e) => updateForm("phone", e.target.value)}
-                                placeholder="Phone..."
+                                placeholder={t('settings_pages.company.placeholders.phone')}
                                 className="h-16 bg-black/40 border-white/5 rounded-[1.5rem] focus:border-primary/50 transition-all text-white font-black italic tracking-widest pl-8 shadow-inner"
                             />
                         </div>
                         <div className="space-y-4">
-                            <Label className="text-[10px] font-black uppercase text-primary/60 tracking-[0.4em] ml-6">FAX_LINK</Label>
+                            <Label className="text-[10px] font-black uppercase text-primary/60 tracking-[0.4em] ml-6">{t('settings_pages.company.fax_link')}</Label>
                             <Input
                                 value={formData.fax}
                                 onChange={(e) => updateForm("fax", e.target.value)}
-                                placeholder="Fax..."
+                                placeholder={t('settings_pages.company.placeholders.fax')}
                                 className="h-16 bg-black/40 border-white/5 rounded-[1.5rem] focus:border-primary/50 transition-all text-white font-black italic tracking-widest pl-8 shadow-inner"
                             />
                         </div>
                         <div className="space-y-4">
                             <Label className="text-[10px] font-black uppercase text-primary/60 tracking-[0.4em] ml-6 flex items-center gap-2">
-                                <Mail size={12} /> SIGNAL_SMTP (Email)
+                                <Mail size={12} /> {t('settings_pages.company.signal_smtp')}
                             </Label>
                             <Input
                                 type="email"
@@ -318,7 +317,7 @@ export default function CompanySettingsPage() {
 
                     <div className="space-y-4">
                         <Label className="text-[10px] font-black uppercase text-primary/60 tracking-[0.4em] ml-6 flex items-center gap-2">
-                            <Globe size={12} /> DIGITAL_DOMAIN (Website)
+                            <Globe size={12} /> {t('settings_pages.company.digital_domain')}
                         </Label>
                         <Input
                             value={formData.website}
@@ -335,45 +334,45 @@ export default function CompanySettingsPage() {
                 <div className="p-10 border-b border-white/5 bg-black/40 flex items-center justify-between">
                     <h3 className="text-xl font-black text-white tracking-widest uppercase italic flex items-center gap-3">
                         <CreditCard size={20} className="text-indigo-400" />
-                        Settlement Parameters
+                        {t('settings_pages.company.settlement_params')}
                     </h3>
                     <div className="px-5 py-1.5 rounded-xl bg-indigo-500/10 text-[9px] font-black text-indigo-400 uppercase tracking-[0.3em] border border-indigo-500/20 italic">
-                        FISCAL_CONFIG
+                        {t('settings_pages.company.fiscal_config')}
                     </div>
                 </div>
                 <div className="p-12 space-y-10">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
                         <div className="space-y-4">
-                            <Label className="text-[10px] font-black uppercase text-indigo-400/60 tracking-[0.4em] ml-6">INSTITUTION</Label>
+                            <Label className="text-[10px] font-black uppercase text-indigo-400/60 tracking-[0.4em] ml-6">{t('settings_pages.company.institution')}</Label>
                             <select
                                 value={formData.bank_name}
                                 onChange={(e) => updateForm("bank_name", e.target.value)}
                                 className="w-full h-16 px-8 rounded-[1.5rem] bg-black/40 border-2 border-white/5 text-white font-black italic tracking-widest focus:border-indigo-500/50 transition-all outline-none shadow-inner"
                             >
-                                <option value="" className="bg-black">SELECT_LINK</option>
-                                <option value="กรุงเทพ" className="bg-black text-white">BKK_BANK</option>
-                                <option value="กสิกรไทย" className="bg-black text-white">KBANK</option>
-                                <option value="ไทยพาณิชย์" className="bg-black text-white">SCB</option>
-                                <option value="กรุงไทย" className="bg-black text-white">KTB</option>
-                                <option value="ทหารไทยธนชาต" className="bg-black text-white">TTB</option>
-                                <option value="กรุงศรี" className="bg-black text-white">BAY</option>
+                                <option value="" className="bg-black">{t('settings_pages.company.select_link')}</option>
+                                <option value="กรุงเทพ" className="bg-black text-white">{t('settings_pages.company.banks.bkk')}</option>
+                                <option value="กสิกรไทย" className="bg-black text-white">{t('settings_pages.company.banks.kbank')}</option>
+                                <option value="ไทยพาณิชย์" className="bg-black text-white">{t('settings_pages.company.banks.scb')}</option>
+                                <option value="กรุงไทย" className="bg-black text-white">{t('settings_pages.company.banks.ktb')}</option>
+                                <option value="ทหารไทยธนชาต" className="bg-black text-white">{t('settings_pages.company.banks.ttb')}</option>
+                                <option value="กรุงศรี" className="bg-black text-white">{t('settings_pages.company.banks.bay')}</option>
                             </select>
                         </div>
                         <div className="space-y-4">
-                            <Label className="text-[10px] font-black uppercase text-indigo-400/60 tracking-[0.4em] ml-6">ACCOUNT_NULL (Holder Name)</Label>
+                            <Label className="text-[10px] font-black uppercase text-indigo-400/60 tracking-[0.4em] ml-6">{t('settings_pages.company.account_holder')}</Label>
                             <Input
                                 value={formData.bank_account_name}
                                 onChange={(e) => updateForm("bank_account_name", e.target.value)}
-                                placeholder="Account name..."
+                                placeholder={t('settings_pages.company.placeholders.account_holder')}
                                 className="h-16 bg-black/40 border-white/5 rounded-[1.5rem] focus:border-indigo-500/50 transition-all text-white font-black italic tracking-widest pl-8 shadow-inner"
                             />
                         </div>
                         <div className="space-y-4">
-                            <Label className="text-[10px] font-black uppercase text-indigo-400/60 tracking-[0.4em] ml-6">ACCOUNT_VECTOR (Number)</Label>
+                            <Label className="text-[10px] font-black uppercase text-indigo-400/60 tracking-[0.4em] ml-6">{t('settings_pages.company.account_number')}</Label>
                             <Input
                                 value={formData.bank_account_no}
                                 onChange={(e) => updateForm("bank_account_no", e.target.value)}
-                                placeholder="XXX-X-XXXXX-X"
+                                placeholder={t('settings_pages.company.placeholders.account_number')}
                                 className="h-16 bg-black/40 border-white/5 rounded-[1.5rem] focus:border-indigo-500/50 transition-all text-white font-black italic tracking-widest pl-8 shadow-inner"
                             />
                         </div>
@@ -384,7 +383,7 @@ export default function CompanySettingsPage() {
                             <ShieldCheck size={40} className="text-indigo-400" />
                         </div>
                         <p className="text-[9px] font-black text-indigo-400/60 leading-relaxed uppercase tracking-widest italic relative z-10">
-                            * FISCAL DATA IS EMBEDDED IN SYSTEM-GENERATED INVOICES AND TAX DOCUMENT EMISSIONS.
+                            {t('settings_pages.company.fiscal_warn')}
                         </p>
                     </div>
                 </div>
@@ -399,14 +398,13 @@ export default function CompanySettingsPage() {
                 <Target size={32} />
             </div>
             <div className="space-y-4 text-center md:text-left flex-1">
-                <p className="text-xl font-black text-primary italic uppercase tracking-widest">TACTICAL IDENTITY ADVISORY</p>
+                <p className="text-xl font-black text-primary italic uppercase tracking-widest">{t('settings_pages.company.tactical_advisory')}</p>
                 <p className="text-sm font-bold text-slate-600 leading-relaxed uppercase tracking-wider italic">
-                    All profile parameters are utilized for legal documentation parity across the LogisPro ecosystem. <br />
-                    Ensure Tax Identifiers and Fiscal Settlement data are configured accurately for regulatory compliance.
+                    {t('settings_pages.company.advisory_desc')}
                 </p>
             </div>
             <PremiumButton variant="outline" className="h-14 px-10 rounded-2xl border-white/10 text-white gap-3 uppercase font-black text-[10px] tracking-[0.3em] ml-auto italic">
-                <UserCheck size={18} /> VERIFY_IDENTITY
+                <UserCheck size={18} /> {t('settings_pages.company.verify_identity')}
             </PremiumButton>
         </div>
       </div>
