@@ -169,11 +169,11 @@ export async function getActiveFleetStatus(branchId?: string | null, customerId?
     const sessionBranchId = await getUserBranchId();
     const effectiveBranchId = branchId || sessionBranchId;
 
+    // 1. Get all drivers with their current location from Master_Drivers
     let driversQuery = supabase
       .from("Master_Drivers")
-      .select("Driver_ID, Driver_Name, Vehicle_Plate, Mobile_No");
+      .select("Driver_ID, Driver_Name, Vehicle_Plate, Mobile_No, Current_Lat, Current_Lon, Last_Seen");
 
-    // If customer, we only want drivers assigned to THEIR active jobs
     if (customerId) {
       // Find Driver_IDs from Jobs_Main for this customer
       const { data: activeJobs } = await supabase
@@ -201,32 +201,16 @@ export async function getActiveFleetStatus(branchId?: string | null, customerId?
       return [];
     }
 
-    // 2. Fetch latest log for EACH driver efficiently (Parallel)
-    // This avoids fetching 1000s of logs and prevents "Failed to fetch" due to payload size
-    const driversWithLocation = await Promise.all(
-      drivers.map(async (driver) => {
-        const { data: logs } = await supabase
-          .from("gps_logs")
-          .select("*")
-          .eq("driver_id", driver.Driver_ID)
-          .order("timestamp", { ascending: false })
-          .limit(1);
-
-        const log = logs?.[0];
-
-        return {
-          Driver_ID: driver.Driver_ID,
-          Driver_Name: driver.Driver_Name || "Unknown",
-          Vehicle_Plate: driver.Vehicle_Plate || "-",
-          Mobile_No: driver.Mobile_No || "",
-          Last_Update: log?.timestamp || log?.Timestamp || null,
-          Latitude: log?.latitude || log?.Latitude || null,
-          Longitude: log?.longitude || log?.Longitude || null,
-        };
-      }),
-    );
-
-    return driversWithLocation;
+    // 2. Format the data to match expected return type
+    return drivers.map(driver => ({
+      Driver_ID: driver.Driver_ID,
+      Driver_Name: driver.Driver_Name || "Unknown",
+      Vehicle_Plate: driver.Vehicle_Plate || "-",
+      Mobile_No: driver.Mobile_No || "",
+      Last_Update: driver.Last_Seen || null,
+      Latitude: driver.Current_Lat || null,
+      Longitude: driver.Current_Lon || null,
+    }));
   } catch {
     return [];
   }

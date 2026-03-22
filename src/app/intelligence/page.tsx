@@ -163,7 +163,7 @@ export default function ChatPage() {
                         <div className="p-10 bg-white/[0.02] border-t border-white/5">
                             <div className="flex gap-6 relative max-w-4xl mx-auto">
                                 <div className="flex-1 relative group h-20">
-                                    <div className="absolute inset-0 bg-primary/5 rounded-3xl blur-2xl opacity-0 group-focus-within:opacity-100 transition-opacity" />
+                                    <div className="absolute inset-0 bg-primary/5 rounded-3xl blur-2xl opacity-0 group-focus-within:opacity-100 transition-opacity pointer-events-none" />
                                     <Input 
                                         value={input}
                                         onChange={(e) => setInput(e.target.value)}

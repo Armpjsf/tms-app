@@ -14,6 +14,7 @@ import { PodReport } from "@/components/mobile/pod-report"
 import { Job } from "@/lib/supabase/jobs"
 import html2canvas from "html2canvas"
 import { analyzePODImage, AIAnalysisResult } from "@/lib/utils/ai-verification"
+import { saveJobOffline, blobToB64 } from "@/lib/utils/offline-storage"
 
 export default function JobCompletePage() {
   const router = useRouter()
@@ -51,7 +52,7 @@ export default function JobCompletePage() {
       try {
           const result = await analyzePODImage(file)
           setVerificationResult(result)
-      } catch (error) {
+      } catch (_error) {
           // AI Verification failed silently
       } finally {
           setVerifying(false)
@@ -102,7 +103,7 @@ export default function JobCompletePage() {
                     return new Promise<Blob | null>(resolve => 
                         canvas.toBlob(resolve, 'image/jpeg', 0.8)
                     )
-                } catch (err) {
+                } catch (_err) {
                     if (retryCount < 1) return captureReport(retryCount + 1)
                     return null
                 }
@@ -116,7 +117,7 @@ export default function JobCompletePage() {
                 } else {
                     // Report too small or empty
                 }
-            } catch (err) {
+            } catch (_err) {
                 // Report generation failed
             }
         }
@@ -147,10 +148,34 @@ export default function JobCompletePage() {
         const isNetworkError = !navigator.onLine || error instanceof TypeError || (error instanceof Error && error.message.includes('fetch'))
         
         if (isNetworkError) {
-          // Note: offlineData seems undefined in original code, I should fix that or keep original behavior
-          // saveJobOffline(params.id, offlineData, 'POD')
-          setCompleted(true) 
-          toast.success("บันทึกข้อมูลแล้ว (โหมดออฟไลน์) จะส่งให้อัตโนมัติเมื่อมีสัญญาณ")
+          try {
+            // Prepare data for offline storage (convert Blobs to Base64)
+            const photoB64s = await Promise.all(photos.map(p => blobToB64(p)))
+            const sigB64 = signature ? await blobToB64(signature) : null
+            
+            // Capture report if possible (as Base64)
+            let reportB64 = null
+            if (reportRef.current && job) {
+                try {
+                    const canvas = await html2canvas(reportRef.current!, { scale: 2, useCORS: true })
+                    reportB64 = canvas.toDataURL('image/jpeg', 0.8)
+                } catch { /* Fail silently */ }
+            }
+
+            const offlineData = {
+                photos: photoB64s,
+                signature: sigB64,
+                pod_report: reportB64,
+                photo_count: photos.length,
+                actualCompletionTime: new Date().toISOString()
+            }
+
+            saveJobOffline(params.id, offlineData, 'POD')
+            setCompleted(true) 
+            toast.success("บันทึกข้อมูลแล้ว (โหมดออฟไลน์) จะส่งให้อัตโนมัติเมื่อมีสัญญาณ")
+          } catch (offlineErr) {
+            toast.error("ไม่สามารถบันทึกข้อมูลออฟไลน์ได้: " + String(offlineErr))
+          }
         } else {
             const errorMessage = error instanceof Error ? error.message : String(error)
             toast.error(`Error: ${errorMessage}`)

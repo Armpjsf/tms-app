@@ -11,9 +11,9 @@ export function BottomNav() {
 
   const navItems = [
     { href: "/mobile/dashboard", icon: LayoutGrid, label: "หน้าแรก" },
-    { href: "/mobile/profile", icon: Users, label: "โปรไฟล์" },
     { href: "/mobile/jobs", icon: Truck, label: "งานขนส่ง", isCenter: true },
     { href: "/mobile/map", icon: Map, label: "แผนที่" },
+    { href: "/mobile/profile", icon: Users, label: "โปรไฟล์" },
   ]
 
   return (

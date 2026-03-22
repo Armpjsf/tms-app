@@ -4,6 +4,7 @@ import * as React from "react"
 import { motion } from "framer-motion"
 import { Sidebar } from "./sidebar"
 import { Header } from "./header"
+import { GlobalAIAssistant } from "@/components/chat/global-ai-assistant"
 import { cn } from "@/lib/utils"
 import { usePathname } from "next/navigation"
 import Image from "next/image"
@@ -119,6 +120,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             </div>
           </div>
       </motion.main>
+      <GlobalAIAssistant />
     </div>
   )
 }

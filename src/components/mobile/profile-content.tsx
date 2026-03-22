@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { logoutDriver } from "@/lib/actions/auth-actions"
 
 interface ProfileContentProps {
   session: {
@@ -45,6 +46,10 @@ export function ProfileContent({ session, score, unreadChatCount = 0 }: ProfileC
       e.preventDefault()
       toast.info("ฟีเจอร์นี้กำลังอยู่ในระหว่างการพัฒนาครับ")
     }
+  }
+
+  const handleLogout = async () => {
+    await logoutDriver()
   }
 
   return (
@@ -136,12 +141,16 @@ export function ProfileContent({ session, score, unreadChatCount = 0 }: ProfileC
       </Card>
 
       {/* Logout Button */}
-      <Link href="/mobile/login">
-        <Button variant="outline" className="w-full border-red-500/30 text-red-400 hover:bg-red-500/10 hover:text-red-300">
+      <div className="pb-8">
+        <Button 
+          variant="outline" 
+          onClick={handleLogout}
+          className="w-full border-red-500/30 text-red-400 hover:bg-red-500/10 hover:text-red-300"
+        >
           <LogOut className="w-4 h-4 mr-2" />
           ออกจากระบบ
         </Button>
-      </Link>
+      </div>
     </>
   )
 }

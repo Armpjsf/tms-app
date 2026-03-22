@@ -2,9 +2,10 @@
 
 import { useEffect, useRef, useState } from "react"
 import { saveGPSLog } from "@/lib/supabase/gps"
+import { updateDriverLocation } from "@/lib/actions/location-actions"
 
-const UPDATE_INTERVAL = 300000 // Update every 5 minutes (300,000 ms)
-const MIN_DISTANCE = 0.0005 // Approx 50-70 meters difference to trigger update
+const UPDATE_INTERVAL = 60000 // Update every 1 minute (60,000 ms)
+const MIN_DISTANCE = 0.0002 // Approx 20-30 meters difference to trigger update
 
 export function LocationTracker({ driverId }: { driverId?: string }) {
   const [status, setStatus] = useState<"idle" | "tracking" | "error">("idle")
@@ -44,14 +45,16 @@ export function LocationTracker({ driverId }: { driverId?: string }) {
                 lastUpdateRef.current = now
                 lastPosRef.current = { lat: latitude, lng: longitude }
 
-                // Send to Server
-                await saveGPSLog({
+                // 1. Log to History (gps_logs)
+                saveGPSLog({
                     driverId: driverId,
                     lat: latitude,
                     lng: longitude,
                     speed: speed || 0,
-                    // battery: we can't easily get battery in web without experimental API
-                })
+                }).catch(() => {/* Silent fail for history */})
+
+                // 2. Update Current Location (Master_Drivers) for real-time dashboard
+                updateDriverLocation(driverId, latitude, longitude).catch(() => {/* Silent fail for real-time */})
             }
         },
         () => {

@@ -3,10 +3,12 @@ import { redirect } from "next/navigation"
 import { MobileHeader } from "@/components/mobile/mobile-header"
 import { getDriverDashboardStats } from "@/lib/supabase/jobs"
 import { DashboardClient } from "@/components/mobile/dashboard-client"
+import { Suspense } from "react"
+import DashboardLoading from "./loading"
 
 export const dynamic = 'force-dynamic'
 
-export default async function MobileDashboard() {
+async function DashboardContent() {
   const session = await getDriverSession()
   if (!session) redirect("/mobile/login")
 
@@ -17,7 +19,18 @@ export default async function MobileDashboard() {
       currentJob: null 
   }
 
+  return (
+    <DashboardClient 
+      session={session}
+      stats={stats}
+      currentJob={currentJob}
+      gamification={gamification}
+      todayIncome={todayIncome}
+    />
+  )
+}
 
+export default function MobileDashboard() {
   return (
     <div className="relative min-h-screen bg-transparent pb-24 pt-16 px-4 overflow-hidden">
       {/* Animated Background Mesh */}
@@ -30,13 +43,9 @@ export default async function MobileDashboard() {
       <MobileHeader title="TMS Elite" />
       
       <div className="relative z-10">
-          <DashboardClient 
-            session={session}
-            stats={stats}
-            currentJob={currentJob}
-            gamification={gamification}
-            todayIncome={todayIncome}
-          />
+        <Suspense fallback={<DashboardLoading />}>
+          <DashboardContent />
+        </Suspense>
       </div>
     </div>
   )

@@ -21,11 +21,17 @@ const notifyQueueChange = () => {
 export const saveJobOffline = (jobId: string, data: Record<string, unknown>, type: 'POD' | 'PICKUP' = 'POD') => {
     if (typeof window === 'undefined') return
     
+    // Add current time as the actual completion time
+    const enrichedData = {
+        ...data,
+        actualCompletionTime: new Date().toISOString()
+    }
+
     const offlineJobs: OfflineJob[] = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]')
     offlineJobs.push({
         id: crypto.randomUUID(),
         jobId,
-        data,
+        data: enrichedData,
         timestamp: Date.now(),
         type
     })
@@ -35,7 +41,11 @@ export const saveJobOffline = (jobId: string, data: Record<string, unknown>, typ
 
 export const getOfflineJobs = (): OfflineJob[] => {
     if (typeof window === 'undefined') return []
-    return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]')
+    try {
+        return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]')
+    } catch {
+        return []
+    }
 }
 
 export const removeOfflineJob = (id: string) => {
@@ -72,8 +82,8 @@ export const syncOfflineJobs = async () => {
                     formData.append('pod_report', b64ToBlob(value), 'report.jpg')
                 } else if (key === 'pickup_report' && typeof value === 'string') {
                     formData.append('pickup_report', b64ToBlob(value), 'report.jpg')
-                } else {
-                    formData.append(key, value as string)
+                } else if (value !== null && value !== undefined) {
+                    formData.append(key, String(value))
                 }
             })
 
@@ -84,14 +94,25 @@ export const syncOfflineJobs = async () => {
             if (result.success) {
                 removeOfflineJob(job.id)
             }
-        } catch {
+        } catch (_error) {
             // Failed to sync
         }
     }
 }
 
-// Helper to convert base64 to Blob
+// Helpers
+export function blobToB64(blob: Blob): Promise<string> {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onloadend = () => resolve(reader.result as string)
+        reader.onerror = reject
+        reader.readAsDataURL(blob)
+    })
+}
+
 function b64ToBlob(b64Data: string, contentType = 'image/jpeg') {
+    if (!b64Data.includes(',')) return new Blob([], { type: contentType })
+    
     const byteCharacters = atob(b64Data.split(',')[1])
     const byteArrays = []
     

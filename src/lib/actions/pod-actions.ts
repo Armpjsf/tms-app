@@ -84,7 +84,8 @@ export async function submitJobPOD(jobId: string, formData: FormData) {
 
     if (!signatureUrl) throw new Error("Signature upload failed")
 
-    const now = new Date()
+    const clientTimestamp = formData.get("actualCompletionTime") as string
+    const now = clientTimestamp ? new Date(clientTimestamp) : new Date()
     const nowIso = now.toISOString()
     const timeString = now.toTimeString().split(' ')[0] 
     
@@ -188,7 +189,8 @@ export async function submitJobPickup(jobId: string, formData: FormData) {
       uploadWarning = `อัปโหลดหลักฐานไม่สำเร็จ: ${errMsg}`
     }
 
-    const now = new Date()
+    const clientTimestamp = formData.get("actualCompletionTime") as string
+    const now = clientTimestamp ? new Date(clientTimestamp) : new Date()
     const timeString = now.toTimeString().split(' ')[0] 
     
     const updatePayload: Record<string, unknown> = {

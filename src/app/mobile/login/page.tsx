@@ -52,7 +52,7 @@ export default function DriverLoginPage() {
       <div className="w-full max-w-sm space-y-8 relative z-10">
         {/* Header Section */}
         <div className="text-center space-y-4">
-          <div className="w-32 h-32 bg-[#050110]/80 border border-white/10 rounded-[3rem] overflow-hidden relative shadow-2xl shadow-primary/20 p-2">
+          <div className="w-32 h-32 mx-auto bg-[#050110]/80 border border-white/10 rounded-[3rem] overflow-hidden relative shadow-2xl shadow-primary/20 p-2">
              <Image src="/logo-tactical.png" alt="LogisPro Logo" fill className="object-cover" />
           </div>
           <div className="space-y-1">

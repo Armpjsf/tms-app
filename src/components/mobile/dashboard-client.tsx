@@ -4,7 +4,7 @@ import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { 
     Truck, MapPin, 
-    LayoutGrid, Bell, Gavel, Clock, Star
+    LayoutGrid, Bell, Gavel, Clock, Star, Banknote
 } from "lucide-react"
 import Link from "next/link"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -108,14 +108,16 @@ export function DashboardClient({ session, stats, currentJob }: DashboardClientP
 
                 <div className="glass-panel rounded-[2.5rem] p-6 aspect-square flex flex-col items-center justify-center gap-3 group transition-all hover:scale-105">
                     <div className="absolute top-4 right-4 text-blue-400 opacity-20 group-hover:opacity-60 transition-opacity">
-                         <Clock size={40} />
+                         <Banknote size={40} />
                     </div>
                     <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center mb-1">
-                         <Clock className="text-blue-400" size={20} strokeWidth={2.5} />
+                         <Banknote className="text-blue-400" size={20} strokeWidth={2.5} />
                     </div>
                     <div className="text-center">
-                        <div className="text-4xl font-black text-white tracking-tighter">04</div>
-                        <div className="text-[10px] font-black text-blue-400 uppercase tracking-[0.2em] opacity-80">งานรอรับ</div>
+                        <div className="text-3xl font-black text-white tracking-tighter">
+                            {todayIncome.toLocaleString()}
+                        </div>
+                        <div className="text-[10px] font-black text-blue-400 uppercase tracking-[0.2em] opacity-80">รายได้วันนี้</div>
                     </div>
                 </div>
             </motion.div>
