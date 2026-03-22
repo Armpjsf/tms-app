@@ -3,7 +3,7 @@
 import { 
   getFinancialStats, 
   getRevenueTrend, 
-  getTopCustomers, 
+  getTopCustomers,
   getOperationalStats,
   getJobStatusDistribution,
   getBranchPerformance,
@@ -45,180 +45,143 @@ interface DriverStats {
   revenue: number
 }
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useLanguage } from "@/components/providers/language-provider"
 
 interface DashboardContentProps {
   startDate?: string
   endDate?: string
   branchId?: string
-  financials?: unknown
-  revenueTrend?: unknown[]
-  topCustomers?: unknown[]
-  opStats?: unknown
-  statusDist?: unknown[]
-  branchPerf?: unknown[]
-  subPerf?: unknown[]
-  exeKPIs?: unknown
-  billing?: unknown
-  fuel?: unknown
-  maintenance?: unknown
-  safety?: unknown
-  workforce?: unknown
-  routes?: unknown[]
-  driverLeaderboard?: unknown[]
-  vehicleProfitability?: unknown[]
-  esgStats?: unknown
+}
+
+// Split state into two priority layers
+interface PriorityData {
+  financials: unknown
+  revenueTrend: unknown[]
+  exeKPIs: unknown
+  opStats: unknown
+  statusDist: unknown[]
+  driverLeaderboard: unknown[]
+  vehicleProfitability: unknown[]
+  branchPerf: unknown[]
+}
+
+interface SecondaryData {
+  topCustomers: unknown[]
+  subPerf: unknown[]
+  routes: unknown[]
+  billing: unknown
+  fuel: unknown
+  maintenance: unknown
+  safety: unknown
+  workforce: unknown
+  esgStats: unknown
 }
 
 export function DashboardContent({ 
   startDate,
   endDate,
   branchId,
-  financials: initialFinancials,
-  revenueTrend: initialRevenueTrend,
-  topCustomers: initialTopCustomers,
-  opStats: initialOpStats,
-  statusDist: initialStatusDist,
-  branchPerf: initialBranchPerf,
-  subPerf: initialSubPerf,
-  exeKPIs: initialExeKPIs,
-  billing: initialBilling,
-  fuel: initialFuel,
-  maintenance: initialMaintenance,
-  safety: initialSafety,
-  workforce: initialWorkforce,
-  routes: initialRoutes,
-  driverLeaderboard: initialDriverLeaderboard,
-  vehicleProfitability: initialVehicleProfitability,
-  esgStats: initialEsgStats
 }: DashboardContentProps) {
   const { t } = useLanguage()
-  const [data, setData] = useState({
-    financials: initialFinancials,
-    revenueTrend: initialRevenueTrend,
-    topCustomers: initialTopCustomers,
-    opStats: initialOpStats,
-    statusDist: initialStatusDist,
-    branchPerf: initialBranchPerf,
-    subPerf: initialSubPerf,
-    exeKPIs: initialExeKPIs,
-    billing: initialBilling,
-    fuel: initialFuel,
-    maintenance: initialMaintenance,
-    safety: initialSafety,
-    workforce: initialWorkforce,
-    routes: initialRoutes,
-    driverLeaderboard: initialDriverLeaderboard,
-    vehicleProfitability: initialVehicleProfitability,
-    esgStats: initialEsgStats,
-    loading: true
-  })
+
+  const [priority, setPriority] = useState<PriorityData | null>(null)
+  const [secondary, setSecondary] = useState<SecondaryData | null>(null)
+  const [loadingPrimary, setLoadingPrimary] = useState(true)
+  const [loadingSecondary, setLoadingSecondary] = useState(true)
+
+  const loadData = useCallback(async () => {
+    setLoadingPrimary(true)
+    setLoadingSecondary(true)
+    setPriority(null)
+    setSecondary(null)
+
+    // === PRIORITY GROUP 1: Critical above-the-fold data ===
+    // These 3 query groups are the most important — fetch in parallel
+    const [financials, revenueTrend, exeKPIs, opStats, statusDist, driverLeaderboard, vehicleProfitability, branchPerf] = await Promise.all([
+      getFinancialStats(startDate, endDate, branchId),
+      getRevenueTrend(startDate, endDate, branchId),
+      getExecutiveKPIs(startDate, endDate, branchId),
+      getOperationalStats(branchId, startDate, endDate),
+      getJobStatusDistribution(startDate, endDate, branchId),
+      getDriverLeaderboard(startDate, endDate, branchId),
+      getVehicleProfitability(startDate, endDate, branchId),
+      getBranchPerformance(startDate, endDate),
+    ])
+
+    setPriority({ financials, revenueTrend, exeKPIs, opStats, statusDist, driverLeaderboard, vehicleProfitability, branchPerf })
+    setLoadingPrimary(false)
+
+    // === PRIORITY GROUP 2: Below-the-fold secondary data ===
+    // Loads after primary is rendered — users see content faster
+    const [topCustomers, subPerf, routes, billing, fuel, maintenance, safety, workforce, esgStats] = await Promise.all([
+      getTopCustomers(startDate, endDate, branchId),
+      getSubcontractorPerformance(startDate, endDate, branchId),
+      getRouteEfficiency(startDate, endDate, branchId),
+      getBillingAnalytics(startDate, endDate, branchId),
+      getFuelAnalytics(startDate, endDate),
+      getMaintenanceSchedule(),
+      getSafetyAnalytics(startDate, endDate, branchId),
+      getWorkforceAnalytics(startDate, endDate, branchId),
+      getESGStats(startDate, endDate, branchId),
+    ])
+
+    setSecondary({ topCustomers, subPerf, routes, billing, fuel, maintenance, safety, workforce, esgStats })
+    setLoadingSecondary(false)
+  }, [startDate, endDate, branchId])
 
   useEffect(() => {
-    async function loadStats() {
-      setData(prev => ({ ...prev, loading: true }))
-      try {
-        const [
-          financials,
-          revenueTrend,
-          topCustomers,
-          opStats,
-          statusDist,
-          branchPerf,
-          subPerf,
-          exeKPIs,
-          routes,
-          driverLeaderboard,
-          vehicleProfitability,
-          billing,
-          fuel,
-          maintenance,
-          safety,
-          workforce,
-          esgStats
-        ] = await Promise.all([
-          getFinancialStats(startDate, endDate, branchId),
-          getRevenueTrend(startDate, endDate, branchId),
-          getTopCustomers(startDate, endDate, branchId),
-          getOperationalStats(startDate, endDate, branchId),
-          getJobStatusDistribution(startDate, endDate, branchId),
-          getBranchPerformance(startDate, endDate),
-          getSubcontractorPerformance(startDate, endDate, branchId),
-          getExecutiveKPIs(startDate, endDate, branchId),
-          getRouteEfficiency(startDate, endDate, branchId),
-          getDriverLeaderboard(startDate, endDate, branchId),
-          getVehicleProfitability(startDate, endDate, branchId),
-          getBillingAnalytics(startDate, endDate, branchId),
-          getFuelAnalytics(startDate, endDate),
-          getMaintenanceSchedule(),
-          getSafetyAnalytics(startDate, endDate, branchId),
-          getWorkforceAnalytics(startDate, endDate, branchId),
-          getESGStats(startDate, endDate, branchId)
-        ])
+    loadData()
+  }, [loadData])
 
-        setData({
-          financials: financials as any,
-          revenueTrend: revenueTrend as any[],
-          topCustomers: topCustomers as any[],
-          opStats: opStats as any,
-          statusDist: statusDist as any[],
-          branchPerf: branchPerf as any[],
-          subPerf: subPerf as any[],
-          exeKPIs: exeKPIs as any,
-          routes: routes as any[],
-          driverLeaderboard: driverLeaderboard as any[],
-          vehicleProfitability: vehicleProfitability as any[],
-          billing: billing as any,
-          fuel: fuel as any,
-          maintenance: maintenance as any,
-          safety: safety as any,
-          workforce: workforce as any,
-          esgStats: esgStats as any,
-          loading: false
-        })
-      } catch (error) {
-        console.error("Dashboard Intelligence Error:", error)
-        setData(prev => ({ ...prev, loading: false }))
-      }
-    }
-
-    loadStats()
-  }, [startDate, endDate, branchId])
+  // Primary skeleton while initial load
+  if (loadingPrimary) {
+    return (
+      <div className="space-y-12 animate-pulse">
+        <div className="h-24 bg-[#0a0518] rounded-[2rem] border border-white/5" />
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+          {[1, 2, 3, 4].map(i => (
+            <div key={i} className="h-56 bg-[#0a0518] rounded-br-[4rem] rounded-tl-[2rem] border border-white/5" />
+          ))}
+        </div>
+        <div className="h-[600px] bg-[#0a0518] rounded-br-[6rem] rounded-tl-[3rem] border border-white/5" />
+      </div>
+    )
+  }
 
   const {
     financials,
     revenueTrend = [],
-    topCustomers = [],
+    exeKPIs = {},
     opStats = { fleet: { onTimeDelivery: 0, utilization: 0, health: 0 } } as any,
     statusDist = [],
+    driverLeaderboard = [],
+    vehicleProfitability = [],
     branchPerf = [],
+  } = priority!
+
+  const {
+    topCustomers = [],
     subPerf = [],
-    exeKPIs = {},
+    routes = [],
     billing = {},
     fuel = {},
     maintenance = { overdue: [] },
     safety = {},
     workforce = {},
-    routes = [],
-    driverLeaderboard = [],
-    vehicleProfitability = [],
     esgStats = {},
-    loading
-  } = data
+  } = secondary ?? {}
 
-  if (loading) {
-    return (
-        <div className="space-y-12 animate-pulse">
-            <div className="h-24 bg-[#0a0518] rounded-[2rem] border border-white/5" />
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-                {[1, 2, 3, 4].map(i => (
-                    <div key={i} className="h-56 bg-[#0a0518] rounded-br-[4rem] rounded-tl-[2rem] border border-white/5" />
-                ))}
-            </div>
-            <div className="h-[600px] bg-[#0a0518] rounded-br-[6rem] rounded-tl-[3rem] border border-white/5" />
-        </div>
-    )
+  // Skeleton for secondary sections while they load
+  const SectionSkeleton = () => (
+    <div className="h-96 bg-[#0a0518] rounded-br-[4rem] rounded-tl-[2rem] border border-white/5 animate-pulse" />
+  )
+
+  const allData = {
+    financials, revenueTrend, topCustomers, statusDist,
+    branchPerf, subPerf, billing, fuel, maintenance,
+    safety, workforce, routes, driverLeaderboard, vehicleProfitability,
+    esgStats, opStats
   }
 
   return (
@@ -231,32 +194,13 @@ export function DashboardContent({
                     <Zap size={28} strokeWidth={2.5} className="animate-pulse" />
                 </div>
                 <div>
-                    <h3 className="text-xl font-black text-white uppercase tracking-[0.3em] italic italic leading-none mb-3">{t('common.tactical_cluster')}</h3>
+                    <h3 className="text-xl font-black text-white uppercase tracking-[0.3em] italic leading-none mb-3">{t('common.tactical_cluster')}</h3>
                     <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.6em] italic">{t('common.network_stable')}</p>
                 </div>
             </div>
             
             <div className="flex items-center gap-4 relative z-10">
-                <ExportAllButton 
-                    data={{
-                        financials,
-                        revenueTrend,
-                        topCustomers,
-                        statusDist,
-                        branchPerf,
-                        subPerf,
-                        billing,
-                        fuel,
-                        maintenance,
-                        safety,
-                        workforce,
-                        routes,
-                        driverLeaderboard,
-                        vehicleProfitability,
-                        esgStats,
-                        opStats
-                    }} 
-                />
+                <ExportAllButton data={allData} />
             </div>
         </div>
 
@@ -268,7 +212,7 @@ export function DashboardContent({
               </div>
               <div className="space-y-2">
                   <h2 className="text-5xl font-black text-white tracking-widest italic uppercase">{t('common.financial_node')}</h2>
-                  <p className="text-emerald-500 text-[11px] font-black uppercase tracking-[0.6em] italic">Commercial realization & Fiscal liquidity monitoring // Q1-S1</p>
+                  <p className="text-emerald-500 text-[11px] font-black uppercase tracking-[0.6em] italic">Commercial realization &amp; Fiscal liquidity monitoring // Q1-S1</p>
               </div>
           </div>
           
@@ -347,8 +291,8 @@ export function DashboardContent({
           </div>
           
           <PerformanceCharts data={revenueTrend} />
-          <BillingSection data={billing} />
-          <CustomerRouteSection customers={topCustomers} routes={routes} />
+          {loadingSecondary ? <SectionSkeleton /> : <BillingSection data={billing} />}
+          {loadingSecondary ? <SectionSkeleton /> : <CustomerRouteSection customers={topCustomers} routes={routes} />}
         </section>
         
         {/* Section 2: Fleet COMMAND */}
@@ -359,14 +303,14 @@ export function DashboardContent({
               </div>
               <div className="space-y-2">
                   <h2 className="text-5xl font-black text-white tracking-widest italic uppercase">{t('common.asset_tactical')}</h2>
-                  <p className="text-blue-500 text-[11px] font-black uppercase tracking-[0.6em] italic">{t('dashboard.operational_throughput')} & {t('dashboard.tier_1_monitoring')}</p>
+                  <p className="text-blue-500 text-[11px] font-black uppercase tracking-[0.6em] italic">{t('dashboard.operational_throughput')} &amp; {t('dashboard.tier_1_monitoring')}</p>
               </div>
            </div>
            
-           <FuelSection data={fuel} />
+           {loadingSecondary ? <SectionSkeleton /> : <FuelSection data={fuel} />}
            <ProfitabilitySection data={vehicleProfitability} financials={financials} />
            <EfficiencyCharts data={revenueTrend} />
-           <MaintenanceSection data={maintenance} />
+           {loadingSecondary ? <SectionSkeleton /> : <MaintenanceSection data={maintenance} />}
         </section>
 
         {/* Section 3: Safety HUB */}
@@ -377,14 +321,18 @@ export function DashboardContent({
               </div>
               <div className="space-y-2">
                   <h2 className="text-5xl font-black text-white tracking-widest italic uppercase">{t('common.protocol_integrity')}</h2>
-                  <p className="text-rose-500 text-[11px] font-black uppercase tracking-[0.6em] italic">{t('dashboard.human_capital_efficiency')} & {t('dashboard.safety_protocol_audit')} {"//"} {t('dashboard.critical_vectors')}</p>
+                  <p className="text-rose-500 text-[11px] font-black uppercase tracking-[0.6em] italic">{t('dashboard.human_capital_efficiency')} &amp; {t('dashboard.safety_protocol_audit')} {"//"} {t('dashboard.critical_vectors')}</p>
               </div>
            </div>
            
            <div className="grid grid-cols-1 space-y-16">
-               <WorkforceSection data={workforce} />
-               <SafetySection data={safety} />
-               <ESGSection data={esgStats} />
+               {loadingSecondary ? <><SectionSkeleton /><SectionSkeleton /></> : (
+                 <>
+                   <WorkforceSection data={workforce} />
+                   <SafetySection data={safety} />
+                   <ESGSection data={esgStats} />
+                 </>
+               )}
            </div>
         </section>
 
@@ -407,7 +355,7 @@ export function DashboardContent({
                       icon: "layers",
                       href: "/admin/jobs",
                       metrics: [
-                          { label: t('dashboard.sync_success'), value: `${opStats.fleet.onTimeDelivery.toFixed(1)}%`, status: opStats.fleet.onTimeDelivery > 90 ? 'good' : 'warning' },
+                          { label: t('dashboard.sync_success'), value: `${(opStats as any).fleet.onTimeDelivery.toFixed(1)}%`, status: (opStats as any).fleet.onTimeDelivery > 90 ? 'good' : 'warning' },
                           { label: t('dashboard.current_pipeline'), value: statusDist.reduce((a: number, b: any) => a + b.value, 0), status: 'good' }
                       ]
                   },
@@ -416,11 +364,11 @@ export function DashboardContent({
                       icon: "truck",
                       href: "/admin/vehicles/dashboard",
                       metrics: [
-                          { label: t('dashboard.fleet_capacity'), value: `${opStats.fleet.utilization.toFixed(1)}%`, status: opStats.fleet.utilization > 70 ? 'good' : 'warning' },
+                          { label: t('dashboard.fleet_capacity'), value: `${(opStats as any).fleet.utilization.toFixed(1)}%`, status: (opStats as any).fleet.utilization > 70 ? 'good' : 'warning' },
                           { 
                             label: t('dashboard.technical_status'), 
-                            value: opStats.fleet.health >= 90 ? "OPTIMAL" : opStats.fleet.health >= 50 ? "DEGRADED" : "CRITICAL", 
-                            status: opStats.fleet.health >= 90 ? 'good' : opStats.fleet.health >= 50 ? 'warning' : 'critical' 
+                            value: (opStats as any).fleet.health >= 90 ? "OPTIMAL" : (opStats as any).fleet.health >= 50 ? "DEGRADED" : "CRITICAL", 
+                            status: (opStats as any).fleet.health >= 90 ? 'good' : (opStats as any).fleet.health >= 50 ? 'warning' : 'critical' 
                           }
                       ]
                   },

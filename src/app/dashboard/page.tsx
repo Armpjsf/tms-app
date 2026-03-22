@@ -2,12 +2,10 @@
 
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { DashboardClient } from "@/components/dashboard/dashboard-client"
-import { getFinancialStats, getRevenueTrend, getExecutiveKPIs } from "@/lib/supabase/financial-analytics"
-import { getActiveFleetStatus } from "@/lib/supabase/gps"
-import { getTodayJobs, getTodayJobStats } from "@/lib/supabase/jobs"
+import { getExecutiveDashboardUnified } from "@/lib/supabase/financial-analytics"
 import { getSOSDriverIds } from "@/lib/supabase/sos"
 import { isCustomer, getCustomerId } from "@/lib/permissions"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { useBranch } from "@/components/providers/branch-provider"
 import { useLanguage } from "@/components/providers/language-provider"
 
@@ -17,28 +15,25 @@ export default function DashboardPage() {
   const [data, setData] = useState<any | null>(null)
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    async function loadData() {
-      setLoading(true)
-      try {
-        const [financial, trend, kpis, fleet, jobs, sosIds, stats, customerMode, custId] = await Promise.all([
-          getFinancialStats(undefined, undefined, selectedBranch),
-          getRevenueTrend(undefined, undefined, selectedBranch),
-          getExecutiveKPIs(undefined, undefined, selectedBranch),
-          getActiveFleetStatus(selectedBranch),
-          getTodayJobs(selectedBranch),
-          getSOSDriverIds(),
-          getTodayJobStats(selectedBranch),
-          isCustomer(),
-          getCustomerId()
-        ])
-        setData({ financial, trend, kpis, fleet, jobs, sosIds, stats, customerMode, custId })
-      } finally {
-        setLoading(false)
-      }
+  const loadData = useCallback(async () => {
+    setLoading(true)
+    try {
+      // Two parallel fetches instead of nine separate ones
+      const [unified, sosIds, customerMode, custId] = await Promise.all([
+        getExecutiveDashboardUnified(selectedBranch === 'All' ? undefined : selectedBranch),
+        getSOSDriverIds(),
+        isCustomer(),
+        getCustomerId()
+      ])
+      setData({ unified, sosIds, customerMode, custId })
+    } finally {
+      setLoading(false)
     }
-    loadData()
   }, [selectedBranch])
+
+  useEffect(() => {
+    loadData()
+  }, [loadData])
 
   if (loading || !data) return (
     <DashboardLayout>
@@ -48,18 +43,29 @@ export default function DashboardPage() {
     </DashboardLayout>
   )
 
+  const { unified, sosIds, customerMode, custId } = data
+
+  // Map unified data to DashboardClient props
+  const jobStats = {
+    total: unified.kpi?.jobs?.current ?? 0,
+    active: unified.statusDist?.find((s: any) => s.name === 'In Progress')?.value ?? 0,
+    completed: unified.statusDist?.find((s: any) => ['Completed', 'Delivered', 'Finished', 'Closed'].includes(s.name))
+                  ? unified.statusDist.filter((s: any) => ['Completed', 'Delivered', 'Finished', 'Closed'].includes(s.name)).reduce((a: number, b: any) => a + b.value, 0)
+                  : 0
+  }
+
   return (
     <DashboardLayout>
       <DashboardClient 
         branchId={selectedBranch}
-        customerMode={data.customerMode}
-        userName={data.custId as string} // Using custId as placeholder for name if not available
-        jobStats={data.stats}
-        sosCount={data.sosIds.length}
-        weeklyStats={data.trend}
-        fleetStatus={data.fleet}
-        marketplaceJobs={data.jobs.filter((j: any) => j.Job_Status === 'New' && !j.Driver_ID)}
-        fleetHealth={data.kpis?.margin?.current ? Math.round(data.kpis.margin.current + 80) : 98}
+        customerMode={customerMode}
+        userName={custId as string}
+        jobStats={jobStats}
+        sosCount={sosIds.length}
+        weeklyStats={unified.trend ?? []}
+        fleetStatus={[]}
+        marketplaceJobs={[]}
+        fleetHealth={unified.kpi?.margin?.current ? Math.round(unified.kpi.margin.current + 80) : 98}
       />
     </DashboardLayout>
   )

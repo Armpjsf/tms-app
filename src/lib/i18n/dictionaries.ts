@@ -63,7 +63,7 @@ export const dictionaries = {
       checks: 'ตรวจสภาพรถ',
       maintenance: 'บันทึกซ่อมบำรุง',
       fuel: 'จัดการน้ำมัน',
-      analytics: 'วิเคราะห์ข้อมูลรถ',
+      analytics: 'ศูนย์วิเคราะห์ข้อมูล',
       reports: 'สรุปรายงานรวม',
       billing_customer: 'วางบิลลูกค้า',
       billing_provider: 'วางบิลคู่ค้า',
