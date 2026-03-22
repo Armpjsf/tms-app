@@ -45,25 +45,25 @@ export default function ChatPage() {
 
     return (
         <DashboardLayout>
-            <div className="max-w-5xl mx-auto h-[calc(100vh-140px)] flex flex-col gap-8 pb-8">
+            <div className="max-w-5xl mx-auto h-[calc(100vh-100px)] lg:h-[calc(100vh-140px)] flex flex-col gap-4 lg:gap-8 pb-4 lg:pb-8">
                 {/* Tactical Intelligence Header */}
-                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-10 bg-[#0a0518]/60 backdrop-blur-3xl p-10 rounded-[3.5rem] border border-white/5 shadow-2xl relative group ring-1 ring-white/5 hover:ring-primary/20 transition-all duration-700">
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 lg:gap-10 bg-[#0a0518]/60 backdrop-blur-3xl p-6 lg:p-10 rounded-2xl lg:rounded-[3.5rem] border border-white/5 shadow-2xl relative group ring-1 ring-white/5 hover:ring-primary/20 transition-all duration-700">
                     <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 blur-[100px] pointer-events-none" />
                     
-                    <div className="relative z-10 space-y-4">
+                    <div className="relative z-10 space-y-3 lg:space-y-4">
                         <div className="flex items-center gap-3">
                             <div className="p-2 bg-primary/20 rounded-xl shadow-lg">
                                 <Bot className="text-primary" size={20} />
                             </div>
                             <h2 className="text-[10px] font-black text-primary uppercase tracking-[0.4em]">{t('intelligence.neural_core')}</h2>
                         </div>
-                        <h1 className="text-5xl font-black text-white tracking-tighter flex items-center gap-5 uppercase premium-text-gradient">
+                        <h1 className="text-3xl lg:text-5xl font-black text-white tracking-tighter flex items-center gap-5 uppercase premium-text-gradient">
                             {t('intelligence.title')}
                         </h1>
-                        <p className="text-slate-500 font-bold text-sm tracking-wide opacity-80 uppercase tracking-widest italic">{t('intelligence.subtitle')}</p>
+                        <p className="text-slate-500 font-bold text-xs lg:text-sm tracking-wide opacity-80 uppercase tracking-widest italic">{t('intelligence.subtitle')}</p>
                     </div>
 
-                    <div className="flex items-center gap-4 bg-white/5 p-4 rounded-2xl border border-white/10 backdrop-blur-md relative z-10">
+                    <div className="flex items-center gap-4 bg-white/5 p-3 lg:p-4 rounded-xl lg:rounded-2xl border border-white/10 backdrop-blur-md relative z-10 w-fit">
                         <div className="flex items-center gap-3">
                             <div className="w-2 h-2 rounded-full bg-primary animate-pulse shadow-[0_0_12px_rgba(255,30,133,1)]" />
                             <span className="text-[10px] font-black text-primary uppercase tracking-widest leading-none">{t('intelligence.core_active')}</span>
@@ -72,11 +72,11 @@ export default function ChatPage() {
                 </div>
 
                 <div className="flex-1 flex flex-col gap-6 overflow-hidden">
-                    <PremiumCard className="flex-1 flex flex-col bg-[#0a0518]/40 backdrop-blur-3xl border border-white/5 shadow-3xl rounded-[3.5rem] overflow-hidden relative group/chat">
+                    <PremiumCard className="flex-1 flex flex-col bg-[#0a0518]/40 backdrop-blur-3xl border border-white/5 shadow-3xl rounded-2xl lg:rounded-[3.5rem] overflow-hidden relative group/chat">
                         <div className="absolute inset-0 bg-gradient-to-b from-primary/[0.02] to-transparent pointer-events-none" />
                         
                         {/* Status Bar */}
-                        <div className="px-10 py-4 bg-white/[0.02] border-b border-white/5 flex items-center justify-between">
+                        <div className="px-6 lg:px-10 py-3 lg:py-4 bg-white/[0.02] border-b border-white/5 flex items-center justify-between">
                             <div className="flex items-center gap-4">
                                 <Activity size={12} className="text-primary animate-pulse" />
                                 <span className="text-[8px] font-black text-slate-500 uppercase tracking-[0.4em]">{t('intelligence.uplink_stable')}</span>
@@ -87,9 +87,9 @@ export default function ChatPage() {
                             </div>
                         </div>
 
-                        <div className="flex-1 overflow-y-auto space-y-8 p-10 custom-scrollbar pr-4">
+                        <div className="flex-1 overflow-y-auto space-y-6 lg:space-y-8 p-6 lg:p-10 custom-scrollbar pr-4">
                             {messages.length === 1 && (
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-12">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 lg:gap-4 mb-8 lg:mb-12">
                                     {[
                                         { label: t('intelligence.chips.financial'), query: t('intelligence.queries.financial'), icon: Activity },
                                         { label: t('intelligence.chips.integrity'), query: t('intelligence.queries.integrity'), icon: ShieldCheck },
@@ -101,12 +101,12 @@ export default function ChatPage() {
                                         <button 
                                             key={i}
                                             onClick={() => handleSend(chip.query)}
-                                            className="p-6 bg-white/[0.03] border border-white/5 rounded-[2rem] text-left hover:bg-primary/10 hover:border-primary/30 transition-all group/chip flex items-center gap-4 shadow-xl"
+                                            className="p-4 lg:p-6 bg-white/[0.03] border border-white/5 rounded-xl lg:rounded-[2rem] text-left hover:bg-primary/10 hover:border-primary/30 transition-all group/chip flex items-center gap-4 shadow-xl"
                                         >
-                                            <div className="p-3 bg-white/5 rounded-xl text-slate-500 group-hover/chip:text-primary transition-colors border border-white/5 group-hover/chip:scale-110 duration-500">
-                                                <chip.icon size={18} strokeWidth={2.5} />
+                                            <div className="p-2 lg:p-3 bg-white/5 rounded-lg lg:rounded-xl text-slate-500 group-hover/chip:text-primary transition-colors border border-white/5 group-hover/chip:scale-110 duration-500">
+                                                <chip.icon size={16} strokeWidth={2.5} className="lg:w-[18px] lg:h-[18px]" />
                                             </div>
-                                            <p className="text-[10px] font-black text-slate-400 group-hover/chip:text-white uppercase tracking-widest transition-colors leading-tight italic">{chip.label}</p>
+                                            <p className="text-[9px] lg:text-[10px] font-black text-slate-400 group-hover/chip:text-white uppercase tracking-widest transition-colors leading-tight italic">{chip.label}</p>
                                         </button>
                                     ))}
                                 </div>
@@ -114,28 +114,28 @@ export default function ChatPage() {
 
                             {messages.map((msg, i) => (
                                 <div key={i} className={cn(
-                                    "flex items-end gap-5",
+                                    "flex items-end gap-3 lg:gap-5",
                                     msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'
                                 )}>
                                     <div className={cn(
-                                        "w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 border shadow-2xl shadow-black/40",
+                                        "w-10 h-10 lg:w-12 lg:h-12 rounded-xl lg:rounded-2xl flex items-center justify-center shrink-0 border shadow-2xl shadow-black/40",
                                         msg.role === 'user' 
                                             ? 'bg-primary border-primary/20 text-white' 
                                             : 'bg-white/5 border-white/10 text-primary'
                                     )}>
-                                        {msg.role === 'user' ? <User size={20} strokeWidth={2.5} /> : <Bot size={20} strokeWidth={2.5} />}
+                                        {msg.role === 'user' ? <User size={18} strokeWidth={2.5} className="lg:w-5 lg:h-5" /> : <Bot size={18} strokeWidth={2.5} className="lg:w-5 lg:h-5" />}
                                     </div>
                                     <div className={cn(
-                                        "max-w-[75%] p-8 rounded-[2.5rem] relative group/msg transition-all duration-300 shadow-3xl",
+                                        "max-w-[85%] lg:max-w-[75%] p-5 lg:p-8 rounded-xl lg:rounded-[2.5rem] relative group/msg transition-all duration-300 shadow-3xl",
                                         msg.role === 'user' 
                                         ? 'bg-primary text-white rounded-br-none shadow-primary/10' 
                                         : 'bg-white/[0.03] text-slate-300 border border-white/5 rounded-bl-none'
                                     )}>
-                                        <div className="text-[13px] font-black leading-relaxed whitespace-pre-wrap uppercase tracking-tight italic">
+                                        <div className="text-[12px] lg:text-[13px] font-black leading-relaxed whitespace-pre-wrap uppercase tracking-tight italic">
                                             {msg.content}
                                         </div>
                                         <div className={cn(
-                                            "absolute bottom-[-20px] text-[8px] font-black opacity-20 uppercase tracking-[0.2em] italic",
+                                            "absolute bottom-[-16px] lg:bottom-[-20px] text-[7px] lg:text-[8px] font-black opacity-20 uppercase tracking-[0.2em] italic",
                                             msg.role === 'user' ? 'right-0' : 'left-0'
                                         )}>
                                             {msg.role === 'user' ? t('common.elite_force') : t('common.intel_engine')}
@@ -144,44 +144,44 @@ export default function ChatPage() {
                                 </div>
                             ))}
                             {loading && (
-                                <div className="flex justify-start items-end gap-5">
-                                    <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-primary animate-pulse">
-                                        <Bot size={20} strokeWidth={2.5} />
+                                <div className="flex justify-start items-end gap-3 lg:gap-5">
+                                    <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-xl lg:rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-primary animate-pulse">
+                                        <Bot size={18} strokeWidth={2.5} className="lg:w-5 lg:h-5" />
                                     </div>
-                                    <div className="bg-white/[0.01] border border-white/5 p-8 rounded-[2.5rem] rounded-bl-none flex gap-4 items-center shadow-2xl relative">
+                                    <div className="bg-white/[0.01] border border-white/5 p-5 lg:p-8 rounded-xl lg:rounded-[2.5rem] rounded-bl-none flex gap-3 lg:gap-4 items-center shadow-2xl relative">
                                         <div className="relative">
-                                            <Loader2 className="w-6 h-6 animate-spin text-primary" strokeWidth={3} />
+                                            <Loader2 className="w-5 h-5 lg:w-6 lg:h-6 animate-spin text-primary" strokeWidth={3} />
                                             <div className="absolute inset-0 blur-md bg-primary/20 animate-pulse" />
                                         </div>
-                                        <span className="text-[10px] font-black uppercase tracking-[0.5em] text-primary italic">{t('intelligence.processing')}</span>
+                                        <span className="text-[9px] lg:text-[10px] font-black uppercase tracking-[0.5em] text-primary italic">{t('intelligence.processing')}</span>
                                     </div>
                                 </div>
                             )}
                         </div>
 
                         {/* Tactical Input Area */}
-                        <div className="p-10 bg-white/[0.02] border-t border-white/5">
-                            <div className="flex gap-6 relative max-w-4xl mx-auto">
-                                <div className="flex-1 relative group h-20">
-                                    <div className="absolute inset-0 bg-primary/5 rounded-3xl blur-2xl opacity-0 group-focus-within:opacity-100 transition-opacity pointer-events-none" />
+                        <div className="p-6 lg:p-10 bg-white/[0.02] border-t border-white/5">
+                            <div className="flex gap-4 lg:gap-6 relative max-w-4xl mx-auto items-center">
+                                <div className="flex-1 relative group h-14 lg:h-20">
+                                    <div className="absolute inset-0 bg-primary/5 rounded-2xl lg:rounded-3xl blur-2xl opacity-0 group-focus-within:opacity-100 transition-opacity pointer-events-none" />
                                     <Input 
                                         value={input}
                                         onChange={(e) => setInput(e.target.value)}
                                         onKeyDown={(e) => e.key === 'Enter' && handleSend()}
                                         placeholder={t('intelligence.placeholder')}
-                                        className="h-full rounded-2xl bg-[#0a0518] border-white/5 text-white placeholder:text-slate-700 pl-10 pr-20 focus-visible:ring-primary/40 focus:border-primary/50 transition-all text-sm font-black uppercase tracking-widest shadow-inner italic"
+                                        className="h-full rounded-xl lg:rounded-2xl bg-[#0a0518] border-white/5 text-white placeholder:text-slate-700 pl-6 lg:pl-10 pr-16 lg:pr-20 focus-visible:ring-primary/40 focus:border-primary/50 transition-all text-[11px] lg:text-sm font-black uppercase tracking-widest shadow-inner italic"
                                     />
-                                    <div className="absolute right-6 top-1/2 -translate-y-1/2 flex items-center gap-2 pointer-events-none opacity-20">
-                                        <span className="text-[9px] font-black">ENT</span>
-                                        <div className="w-1 h-3 bg-white/50" />
+                                    <div className="absolute right-4 lg:right-6 top-1/2 -translate-y-1/2 flex items-center gap-2 pointer-events-none opacity-20">
+                                        <span className="text-[7px] lg:text-[9px] font-black hidden sm:block">ENT</span>
+                                        <div className="w-0.5 h-2 lg:w-1 lg:h-3 bg-white/50 hidden sm:block" />
                                     </div>
                                 </div>
                                 <PremiumButton 
                                     onClick={() => handleSend()}
                                     disabled={loading || !input.trim()}
-                                    className="h-20 w-20 rounded-2xl bg-primary hover:bg-primary/80 text-white shadow-xl shadow-primary/20 transition-all hover:scale-110 active:scale-95 flex items-center justify-center"
+                                    className="h-14 w-14 lg:h-20 lg:w-20 rounded-xl lg:rounded-2xl bg-primary hover:bg-primary/80 text-white shadow-xl shadow-primary/20 transition-all hover:scale-110 active:scale-95 flex items-center justify-center shrink-0"
                                 >
-                                    <Send size={24} strokeWidth={3} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+                                    <Send size={20} strokeWidth={3} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform lg:w-6 lg:h-6" />
                                 </PremiumButton>
                             </div>
                         </div>

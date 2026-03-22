@@ -50,7 +50,7 @@ export function GlobalAIAssistant() {
     }
 
     return (
-        <div className="fixed bottom-10 right-10 z-[1001] pointer-events-none">
+        <div className="fixed bottom-4 right-4 lg:bottom-10 lg:right-10 z-[1001] pointer-events-none">
             <div className="pointer-events-auto flex flex-col items-end">
                 <AnimatePresence>
                     {isOpen && (
@@ -60,48 +60,48 @@ export function GlobalAIAssistant() {
                                 opacity: 1, 
                                 scale: 1, 
                                 y: 0,
-                                height: isMinimized ? '80px' : '600px',
-                                width: isMinimized ? '300px' : '450px'
+                                height: isMinimized ? '80px' : (typeof window !== 'undefined' && window.innerWidth < 1024 ? '500px' : '600px'),
+                                width: isMinimized ? (typeof window !== 'undefined' && window.innerWidth < 640 ? '240px' : '300px') : (typeof window !== 'undefined' && window.innerWidth < 640 ? 'calc(100vw - 32px)' : '450px')
                             }}
                             exit={{ opacity: 0, scale: 0.9, y: 20 }}
                             className={cn(
-                                "mb-6 bg-[#0a0518]/95 backdrop-blur-3xl border border-white/10 rounded-[2.5rem] shadow-[0_50px_100px_rgba(0,0,0,0.6)] flex flex-col overflow-hidden ring-1 ring-white/5",
+                                "mb-4 lg:mb-6 bg-[#0a0518]/95 backdrop-blur-3xl border border-white/10 rounded-2xl lg:rounded-[2.5rem] shadow-[0_50px_100px_rgba(0,0,0,0.6)] flex flex-col overflow-hidden ring-1 ring-white/5",
                                 isMinimized && "rounded-full"
                             )}
                         >
                             {/* Header */}
-                            <div className="p-6 bg-white/[0.03] border-b border-white/5 flex items-center justify-between shrink-0">
-                                <div className="flex items-center gap-4">
+                            <div className="p-4 lg:p-6 bg-white/[0.03] border-b border-white/5 flex items-center justify-between shrink-0">
+                                <div className="flex items-center gap-3 lg:gap-4">
                                     <div className="relative">
-                                        <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center border border-primary/30 text-primary animate-pulse">
-                                            <Bot size={20} strokeWidth={2.5} />
+                                        <div className="w-8 h-8 lg:w-10 lg:h-10 rounded-lg lg:rounded-xl bg-primary/20 flex items-center justify-center border border-primary/30 text-primary animate-pulse">
+                                            <Bot size={16} strokeWidth={2.5} className="lg:w-5 lg:h-5" />
                                         </div>
-                                        <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-emerald-500 rounded-full border-2 border-[#0a0518]" />
+                                        <div className="absolute -bottom-1 -right-1 w-2.5 h-2.5 lg:w-3 lg:h-3 bg-emerald-500 rounded-full border-2 border-[#0a0518]" />
                                     </div>
                                     <div>
-                                        <h3 className="text-sm font-black text-white italic tracking-widest uppercase">Tactical AI</h3>
+                                        <h3 className="text-xs lg:text-sm font-black text-white italic tracking-widest uppercase">Tactical AI</h3>
                                         <div className="flex items-center gap-2">
-                                            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500/60" />
-                                            <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Neural Link Est.</span>
+                                            <div className="w-1 h-1 lg:w-1.5 lg:h-1.5 rounded-full bg-emerald-500/60" />
+                                            <span className="text-[7px] lg:text-[8px] font-black text-slate-500 uppercase tracking-widest">Neural Link Est.</span>
                                         </div>
                                     </div>
                                 </div>
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-1 lg:gap-2">
                                     <Button 
                                         variant="ghost" 
                                         size="icon" 
-                                        className="h-8 w-8 text-slate-500 hover:text-white"
+                                        className="h-7 w-7 lg:h-8 lg:w-8 text-slate-500 hover:text-white"
                                         onClick={() => setIsMinimized(!isMinimized)}
                                     >
-                                        {isMinimized ? <Maximize2 size={14} /> : <Minimize2 size={14} />}
+                                        {isMinimized ? <Maximize2 size={12} className="lg:w-[14px] lg:h-[14px]" /> : <Minimize2 size={12} className="lg:w-[14px] lg:h-[14px]" />}
                                     </Button>
                                     <Button 
                                         variant="ghost" 
                                         size="icon" 
-                                        className="h-8 w-8 text-slate-500 hover:text-rose-500"
+                                        className="h-7 w-7 lg:h-8 lg:w-8 text-slate-500 hover:text-rose-500"
                                         onClick={() => setIsOpen(false)}
                                     >
-                                        <X size={16} />
+                                        <X size={14} className="lg:w-4 lg:h-4" />
                                     </Button>
                                 </div>
                             </div>
@@ -111,21 +111,21 @@ export function GlobalAIAssistant() {
                                     {/* Messages Area */}
                                     <div 
                                         ref={scrollRef}
-                                        className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar bg-gradient-to-b from-transparent to-primary/[0.02]"
+                                        className="flex-1 overflow-y-auto p-4 lg:p-6 space-y-4 lg:space-y-6 custom-scrollbar bg-gradient-to-b from-transparent to-primary/[0.02]"
                                     >
                                         {messages.map((msg, i) => (
                                             <div key={i} className={cn(
-                                                "flex items-end gap-3",
+                                                "flex items-end gap-2 lg:gap-3",
                                                 msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'
                                             )}>
                                                 <div className={cn(
-                                                    "w-8 h-8 rounded-lg flex items-center justify-center shrink-0 text-[10px] border shadow-lg",
+                                                    "w-7 h-7 lg:w-8 lg:h-8 rounded-lg flex items-center justify-center shrink-0 text-[9px] lg:text-[10px] border shadow-lg",
                                                     msg.role === 'user' ? 'bg-primary border-primary/20 text-white' : 'bg-white/5 border-white/10 text-primary'
                                                 )}>
-                                                    {msg.role === 'user' ? 'U' : <Bot size={14} />}
+                                                    {msg.role === 'user' ? 'U' : <Bot size={12} className="lg:w-[14px] lg:h-[14px]" />}
                                                 </div>
                                                 <div className={cn(
-                                                    "max-w-[80%] p-4 rounded-2xl text-[12px] font-bold leading-relaxed whitespace-pre-wrap uppercase tracking-tight italic",
+                                                    "max-w-[85%] lg:max-w-[80%] p-3 lg:p-4 rounded-xl lg:rounded-2xl text-[11px] lg:text-[12px] font-bold leading-relaxed whitespace-pre-wrap uppercase tracking-tight italic",
                                                     msg.role === 'user' ? 'bg-primary text-white rounded-br-none' : 'bg-white/5 text-slate-300 border border-white/5 rounded-bl-none'
                                                 )}>
                                                     {msg.content}
@@ -133,34 +133,34 @@ export function GlobalAIAssistant() {
                                             </div>
                                         ))}
                                         {loading && (
-                                            <div className="flex items-end gap-3">
-                                                <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-primary animate-pulse">
-                                                    <Bot size={14} />
+                                            <div className="flex items-end gap-2 lg:gap-3">
+                                                <div className="w-7 h-7 lg:w-8 lg:h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-primary animate-pulse">
+                                                    <Bot size={12} className="lg:w-[14px] lg:h-[14px]" />
                                                 </div>
-                                                <div className="bg-white/[0.02] border border-white/5 p-4 rounded-2xl rounded-bl-none flex gap-3 items-center">
-                                                    <Loader2 className="w-3 h-3 animate-spin text-primary" />
-                                                    <span className="text-[9px] font-black uppercase tracking-[0.3em] text-primary italic">Syncing Neural Core...</span>
+                                                <div className="bg-white/[0.02] border border-white/5 p-3 lg:p-4 rounded-xl lg:rounded-2xl rounded-bl-none flex gap-2 lg:gap-3 items-center">
+                                                    <Loader2 className="w-2.5 h-2.5 lg:w-3 lg:h-3 animate-spin text-primary" />
+                                                    <span className="text-[8px] lg:text-[9px] font-black uppercase tracking-[0.3em] text-primary italic">Syncing Neural Core...</span>
                                                 </div>
                                             </div>
                                         )}
                                     </div>
 
                                     {/* Input Area */}
-                                    <div className="p-6 bg-white/[0.02] border-t border-white/5">
-                                        <div className="flex gap-3 relative">
+                                    <div className="p-4 lg:p-6 bg-white/[0.02] border-t border-white/5">
+                                        <div className="flex gap-2 lg:gap-3 relative">
                                             <Input 
                                                 value={input}
                                                 onChange={(e) => setInput(e.target.value)}
                                                 onKeyDown={(e) => e.key === 'Enter' && handleSend()}
                                                 placeholder="Ask Commander..." 
-                                                className="flex-1 bg-[#050110] border-white/5 text-white placeholder:text-slate-700 h-12 rounded-xl text-[10px] font-black uppercase tracking-widest italic pl-4"
+                                                className="flex-1 bg-[#050110] border-white/5 text-white placeholder:text-slate-700 h-10 lg:h-12 rounded-lg lg:rounded-xl text-[9px] lg:text-[10px] font-black uppercase tracking-widest italic pl-3 lg:pl-4"
                                             />
                                             <Button 
                                                 onClick={handleSend}
                                                 disabled={loading || !input.trim()}
-                                                className="w-12 h-12 rounded-xl bg-primary hover:bg-primary/80 text-white"
+                                                className="w-10 h-10 lg:w-12 lg:h-12 rounded-lg lg:rounded-xl bg-primary hover:bg-primary/80 text-white shrink-0"
                                             >
-                                                <Send size={16} />
+                                                <Send size={14} className="lg:w-4 lg:h-4" />
                                             </Button>
                                         </div>
                                     </div>
@@ -177,10 +177,10 @@ export function GlobalAIAssistant() {
                         onClick={() => setIsOpen(true)}
                         whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.9 }}
-                        className="w-20 h-20 rounded-[2rem] bg-primary text-white shadow-[0_20px_40px_rgba(255,30,133,0.4)] flex items-center justify-center relative group overflow-hidden border-2 border-white/20"
+                        className="w-16 h-16 lg:w-20 lg:h-20 rounded-2xl lg:rounded-[2rem] bg-primary text-white shadow-[0_20px_40px_rgba(255,30,133,0.4)] flex items-center justify-center relative group overflow-hidden border-2 border-white/20"
                     >
                         <div className="absolute inset-0 bg-gradient-to-tr from-white/20 to-transparent pointer-events-none" />
-                        <Bot size={32} strokeWidth={2.5} className="group-hover:rotate-12 transition-transform duration-500" />
+                        <Bot size={24} strokeWidth={2.5} className="group-hover:rotate-12 transition-transform duration-500 lg:w-8 lg:h-8" />
                         
                         {/* Glow Effect */}
                         <div className="absolute inset-0 bg-white/10 blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />

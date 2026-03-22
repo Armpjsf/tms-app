@@ -1,12 +1,14 @@
 "use client"
 
-import { Fuel, Wrench, ClipboardCheck, Bell, Settings, ChevronRight, LogOut, AlertTriangle, User, Banknote, BookOpen, LayoutGrid, Star, Calendar, ShieldAlert } from "lucide-react"
+import { useState } from "react"
+import { Fuel, Wrench, ClipboardCheck, Bell, Settings, ChevronRight, LogOut, AlertTriangle, User, Banknote, BookOpen, LayoutGrid, Star, Calendar, ShieldAlert, Fingerprint } from "lucide-react"
 import { toast } from "sonner"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { logoutDriver } from "@/lib/actions/auth-actions"
+import { registerBiometrics } from "@/lib/webauthn-client"
 
 interface ProfileContentProps {
   session: {
@@ -24,7 +26,31 @@ interface ProfileContentProps {
 }
 
 export function ProfileContent({ session, score, unreadChatCount = 0 }: ProfileContentProps) {
+  const [registering, setRegistering] = useState(false)
+
+  const handleRegisterBiometrics = async () => {
+    try {
+      setRegistering(true)
+      const result = await registerBiometrics()
+      if (result.success) {
+        toast.success("ลงทะเบียนสแกนนิ้ว/หน้าสำเร็จแล้ว!")
+      } else {
+        toast.error("การลงทะเบียนขัดข้อง กรุณาลองใหม่อีกครั้ง")
+      }
+    } catch (error: any) {
+      console.error(error)
+      if (error.message?.includes('not found')) {
+         toast.error("ระบบฐานข้อมูลยังไม่รองรับ Biometrics (กรุณาแจ้ง Admin ติดตั้ง Table)")
+      } else {
+         toast.error(error.message || "เกิดข้อผิดพลาดในการลงทะเบียน")
+      }
+    } finally {
+      setRegistering(false)
+    }
+  }
+
   const menuItems = [
+    { icon: Fingerprint, label: "ลงทะเบียนสแกนนิ้ว/หน้า", action: handleRegisterBiometrics, color: 'text-primary' },
     { icon: LayoutGrid, label: "รับงานกลาง (ประมูล)", href: "/mobile/marketplace" },
     { icon: Star, label: "คะแนนและผลงาน", href: "/mobile/kpi" },
     { icon: Banknote, label: "รายได้และเบี้ยเลี้ยง", href: "/mobile/income-summary" },
@@ -41,7 +67,6 @@ export function ProfileContent({ session, score, unreadChatCount = 0 }: ProfileC
   ]
 
   const handleItemClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
-    // If we have any remaining placeholders
     if (href === "#") {
       e.preventDefault()
       toast.info("ฟีเจอร์นี้กำลังอยู่ในระหว่างการพัฒนาครับ")
@@ -54,7 +79,6 @@ export function ProfileContent({ session, score, unreadChatCount = 0 }: ProfileC
 
   return (
     <>
-      {/* Profile Header */}
       <Card className="bg-gradient-to-br from-blue-600 to-indigo-700 border-0 mb-4">
         <CardContent className="pt-6 pb-6">
           <div className="flex items-center gap-4">
@@ -72,7 +96,6 @@ export function ProfileContent({ session, score, unreadChatCount = 0 }: ProfileC
         </CardContent>
       </Card>
 
-      {/* Performance Scorecard */}
       <Card className="glass-panel border-white/5 mb-4 overflow-hidden">
         <div className="absolute top-0 right-0 p-2 opacity-10">
             <ClipboardCheck size={100} className="text-white transform rotate-12" />
@@ -113,34 +136,52 @@ export function ProfileContent({ session, score, unreadChatCount = 0 }: ProfileC
         </CardContent>
       </Card>
 
-      {/* Menu Items */}
       <Card className="glass-panel border-white/5 mb-4">
         <CardContent className="py-2">
-          {menuItems.map((item, index) => (
-            <Link 
-              key={index} 
-              href={item.href}
-              onClick={(e) => handleItemClick(e, item.href)}
-              className="flex items-center justify-between py-4 border-b border-white/5 last:border-0 active:bg-white/5 transition-colors"
-            >
-              <div className="flex items-center gap-3 text-white">
-                <item.icon className="w-5 h-5 text-slate-400" />
-                <span className="font-medium">{item.label}</span>
+          {menuItems.map((item, index) => {
+            const Content = (
+              <div className="flex items-center justify-between py-4 border-b border-white/5 last:border-0 active:bg-white/5 transition-colors w-full text-left">
+                <div className="flex items-center gap-3 text-white">
+                  <item.icon className={`w-5 h-5 ${item.color || 'text-slate-400'}`} />
+                  <span className="font-medium">{item.label}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  {item.badge && item.badge > 0 && (
+                    <span className="bg-primary text-white text-[10px] font-black px-2 py-0.5 rounded-full min-w-[20px] text-center shadow-lg shadow-primary/20">
+                      {item.badge}
+                    </span>
+                  )}
+                  <ChevronRight className="w-4 h-4 text-slate-600" />
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                {item.badge && item.badge > 0 && (
-                  <span className="bg-primary text-white text-[10px] font-black px-2 py-0.5 rounded-full min-w-[20px] text-center shadow-lg shadow-primary/20">
-                    {item.badge}
-                  </span>
-                )}
-                <ChevronRight className="w-4 h-4 text-slate-600" />
-              </div>
-            </Link>
-          ))}
+            )
+
+            if (item.action) {
+              return (
+                <button 
+                  key={index} 
+                  onClick={item.action}
+                  disabled={registering}
+                  className="w-full disabled:opacity-50"
+                >
+                  {Content}
+                </button>
+              )
+            }
+
+            return (
+              <Link 
+                key={index} 
+                href={item.href || "#"}
+                onClick={(e) => handleItemClick(e, item.href || "#")}
+              >
+                {Content}
+              </Link>
+            )
+          })}
         </CardContent>
       </Card>
 
-      {/* Logout Button */}
       <div className="pb-8">
         <Button 
           variant="outline" 
