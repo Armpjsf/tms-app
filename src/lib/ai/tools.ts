@@ -3,83 +3,20 @@ import { getDriverById, getAllDriversFromTable } from "@/lib/supabase/drivers"
 import { getVehicleByPlate, getAllVehiclesFromTable } from "@/lib/supabase/vehicles"
 import { getFinancialStats } from "@/lib/supabase/financial-analytics"
 import { getOperationalStats } from "@/lib/supabase/fleet-analytics"
+import { getAllCustomers } from "@/lib/supabase/customers"
+import { getDamageReports } from "@/lib/supabase/damage-reports"
+import { getDriverLeaves } from "@/lib/supabase/driver-leaves"
+import { getAllRepairTickets, getRepairTicketStats, getPendingRepairTickets } from "@/lib/supabase/maintenance"
+import { getFuelAnalytics } from "@/lib/supabase/fuel-analytics"
+import { getFleetHealthAlerts } from "@/lib/supabase/fleet-health"
+import { getWorkforceAnalytics } from "@/lib/supabase/workforce-analytics"
 
 /**
- * Gemini Tool Definitions (Declaration)
- */
-export const aiToolsDeclaration = [
-  {
-    name: "search_jobs",
-    description: "Search for transport jobs/orders by ID, customer name, or status. Returns a list of matching jobs.",
-    parameters: {
-      type: "OBJECT",
-      properties: {
-        query: { type: "STRING", description: "Search keyword (ID, customer name, route, etc.)" },
-        status: { type: "STRING", description: "Filter by status (e.g., Pending, In Progress, Delivered, Canceled)" }
-      }
-    }
-  },
-  {
-    name: "get_job_details",
-    description: "Get full details of a specific transport job including addresses, costs, and proof of delivery.",
-    parameters: {
-      type: "OBJECT",
-      properties: {
-        jobId: { type: "STRING", description: "The unique Job ID (e.g., JOB-12345678)" }
-      },
-      required: ["jobId"]
-    }
-  },
-  {
-    name: "get_today_summary",
-    description: "Get an operational summary of today's activities including total jobs, completed jobs, and active vehicles.",
-    parameters: {
-      type: "OBJECT",
-      properties: {
-        branchId: { type: "STRING", description: "Optional branch ID to filter the summary." }
-      }
-    }
-  },
-  {
-    name: "get_driver_info",
-    description: "Retrieve information about a driver by name or ID. Includes license plate, mobile number, and active status.",
-    parameters: {
-      type: "OBJECT",
-      properties: {
-        nameOrId: { type: "STRING", description: "Driver's name or Driver ID" }
-      },
-      required: ["nameOrId"]
-    }
-  },
-  {
-    name: "get_vehicle_info",
-    description: "Get details of a vehicle by its license plate. Includes brand, model, and current mileage.",
-    parameters: {
-      type: "OBJECT",
-      properties: {
-        plate: { type: "STRING", description: "Vehicle license plate" }
-      },
-      required: ["plate"]
-    }
-  },
-  {
-    name: "get_financial_summary",
-    description: "Get financial statistics including total income, expenses, and net profit for a branch or all branches.",
-    parameters: {
-      type: "OBJECT",
-      properties: {
-        branchId: { type: "STRING", description: "Optional branch ID" }
-      }
-    }
-  }
-]
-
-/**
- * Tool Executor Functions
+ * Tool Executors - all system data accessible to the AI
  */
 export const aiToolExecutors: Record<string, Function> = {
+  // ---- JOBS ----
   search_jobs: async (args: { query?: string, status?: string }) => {
-    // We use getAllJobs with search
     const results = await getAllJobs(1, 20, args.query || '', args.status)
     return results.map(j => ({
         id: j.Job_ID,
@@ -104,15 +41,14 @@ export const aiToolExecutors: Record<string, Function> = {
     return {
         stats: stats?.fleet || {},
         todayJobCount: todayJobs.length,
-        jobs: todayJobs.slice(0, 5).map(j => ({ id: j.Job_ID, customer: j.Customer_Name, status: j.Job_Status }))
+        jobs: todayJobs.slice(0, 5).map(j => ({ id: j.Job_ID, customer: j.Customer_Name, status: j.Job_Status, driver: j.Driver_Name }))
     }
   },
 
+  // ---- DRIVERS ----
   get_driver_info: async (args: { nameOrId: string }) => {
-    // Try by ID first
     let driver = await getDriverById(args.nameOrId)
     if (!driver) {
-        // Try searching all
         const all = await getAllDriversFromTable()
         driver = all.find(d => 
             d.Driver_Name?.toLowerCase().includes(args.nameOrId.toLowerCase()) || 
@@ -122,11 +58,37 @@ export const aiToolExecutors: Record<string, Function> = {
     return driver || { error: "Driver not found" }
   },
 
+  get_all_drivers: async () => {
+    const drivers = await getAllDriversFromTable()
+    return drivers.map(d => ({
+        id: d.Driver_ID,
+        name: d.Driver_Name,
+        phone: d.Mobile_No,
+        plate: d.Vehicle_Plate,
+        status: d.Status,
+        branch: d.Branch_ID
+    }))
+  },
+
+  // ---- VEHICLES ----
   get_vehicle_info: async (args: { plate: string }) => {
     const vehicle = await getVehicleByPlate(args.plate)
     return vehicle || { error: "Vehicle not found" }
   },
 
+  get_all_vehicles: async () => {
+    const vehicles = await getAllVehiclesFromTable()
+    return vehicles.map(v => ({
+        plate: v.Vehicle_Plate,
+        brand: v.Brand,
+        model: v.Model,
+        type: v.Vehicle_Type,
+        status: v.Status,
+        mileage: v.Current_Mileage
+    }))
+  },
+
+  // ---- FINANCIAL ----
   get_financial_summary: async (args: { branchId?: string }) => {
     const stats = await getFinancialStats(undefined, undefined, args.branchId)
     return {
@@ -135,5 +97,100 @@ export const aiToolExecutors: Record<string, Function> = {
         netProfit: stats.netProfit,
         margin: stats.profitMargin
     }
-  }
+  },
+
+  // ---- CUSTOMERS ----
+  get_customers: async (args: { query?: string }) => {
+    const customers = await getAllCustomers(1, 20, args.query || '')
+    return customers.map((c: any) => ({
+        id: c.Customer_ID,
+        name: c.Customer_Name,
+        contact: c.Contact_Person,
+        phone: c.Phone_No,
+        branch: c.Branch_ID
+    }))
+  },
+
+  // ---- MAINTENANCE / REPAIR ----
+  get_maintenance_stats: async () => {
+    const stats = await getRepairTicketStats()
+    return stats
+  },
+
+  get_pending_repairs: async () => {
+    const tickets = await getPendingRepairTickets()
+    return tickets.map((t: any) => ({
+        id: t.Ticket_ID,
+        vehicle: t.Vehicle_Plate,
+        problem: t.Problem_Description,
+        status: t.Status,
+        reportedAt: t.Reported_At
+    }))
+  },
+
+  get_all_repairs: async (args: { plate?: string, status?: string }) => {
+    const tickets = await getAllRepairTickets(1, 30, args.plate, args.status)
+    return tickets.map((t: any) => ({
+        id: t.Ticket_ID,
+        vehicle: t.Vehicle_Plate,
+        problem: t.Problem_Description,
+        status: t.Status,
+        driver: t.Driver_Name,
+        reportedAt: t.Reported_At
+    }))
+  },
+
+  // ---- FUEL ----
+  get_fuel_analytics: async () => {
+    const fuel = await getFuelAnalytics()
+    return {
+        totalFuelCost: fuel.totalFuelCost,
+        totalLiters: fuel.totalLiters,
+        avgPerTrip: fuel.avgFuelPerTrip,
+        recentRecords: fuel.records?.slice(0, 5)
+    }
+  },
+
+  // ---- FLEET HEALTH ----
+  get_fleet_health: async () => {
+    const alerts = await getFleetHealthAlerts()
+    return alerts.map((a: any) => ({
+        vehicle: a.Vehicle_Plate,
+        alert: a.Alert_Type,
+        severity: a.Severity,
+        message: a.Message
+    }))
+  },
+
+  // ---- DRIVER LEAVES ----
+  get_driver_leaves: async (args: { month?: number, year?: number }) => {
+    const leaves = await getDriverLeaves(args.month, args.year)
+    return leaves.map((l: any) => ({
+        driver: l.Driver_Name,
+        type: l.Leave_Type,
+        from: l.Date_From,
+        to: l.Date_To,
+        status: l.Status,
+        reason: l.Reason
+    }))
+  },
+
+  // ---- DAMAGE REPORTS ----
+  get_damage_reports: async () => {
+    const reports = await getDamageReports()
+    return reports.map((r: any) => ({
+        id: r.Report_ID,
+        driver: r.Driver_Name,
+        jobId: r.Job_ID,
+        description: r.Description,
+        status: r.Status,
+        amount: r.Estimated_Cost
+    }))
+  },
+
+  // ---- WORKFORCE ----
+  get_workforce_analytics: async () => {
+    const analytics = await getWorkforceAnalytics()
+    return analytics
+  },
 }
