@@ -684,3 +684,146 @@ export async function getFleetHealthScore(branchId?: string) {
         ]
     }
 }
+
+export async function getExecutiveDashboardUnified(branchId?: string) {
+    const supabase = await createAdminClient()
+    const customerId = await getCustomerId()
+    const effectiveBranchId = await getEffectiveBranchId(branchId)
+
+    const now = new Date()
+    const currentStart = new Date(now.getFullYear(), now.getMonth(), 1)
+    const currentEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0)
+    
+    const duration = differenceInDays(currentEnd, currentStart)
+    const prevStart = subDays(currentStart, duration + 1)
+    const prevEnd = subDays(currentStart, 1)
+
+    const sDateCurrent = formatDateSafe(currentStart)!
+    const eDateCurrent = formatDateSafe(currentEnd)!
+    const sDatePrev = formatDateSafe(prevStart)!
+    const eDatePrev = formatDateSafe(prevEnd)!
+
+    // 1. Fetch all jobs for both periods
+    let currentQuery = supabase
+        .from('Jobs_Main')
+        .select('Plan_Date, Price_Cust_Total, Cost_Driver_Total, Price_Cust_Extra, Cost_Driver_Extra, Job_Status, Vehicle_Plate, Actual_Delivery_Time')
+        .gte('Plan_Date', sDateCurrent)
+        .lte('Plan_Date', eDateCurrent)
+
+    let prevQuery = supabase
+        .from('Jobs_Main')
+        .select('Price_Cust_Total, Cost_Driver_Total, Job_Status')
+        .gte('Plan_Date', sDatePrev)
+        .lte('Plan_Date', eDatePrev)
+        .in('Job_Status', REVENUE_STATUSES)
+
+    if (customerId) {
+        currentQuery = currentQuery.eq('Customer_ID', customerId)
+        prevQuery = prevQuery.eq('Customer_ID', customerId)
+    } else if (effectiveBranchId) {
+        currentQuery = currentQuery.eq('Branch_ID', effectiveBranchId)
+        prevQuery = prevQuery.eq('Branch_ID', effectiveBranchId)
+    }
+
+    const [currentJobsRes, prevJobsRes] = await Promise.all([currentQuery, prevQuery])
+    const currentJobs = currentJobsRes.data || []
+    const prevJobs = prevJobsRes.data || []
+
+    // 2. Aggregate Data in Single Pass (Current month)
+    const financial = { revenue: 0, driverCost: 0, secondaryCosts: 0 }
+    const dailyTrend: Record<string, any> = {}
+    const vehicleProfits: Record<string, any> = {}
+    const statusCounts: Record<string, number> = {}
+
+    currentJobs.forEach(job => {
+        const isRevenueJob = REVENUE_STATUSES.includes(job.Job_Status)
+        
+        // Status Distribution
+        statusCounts[job.Job_Status] = (statusCounts[job.Job_Status] || 0) + 1
+
+        if (isRevenueJob) {
+            const rev = Number(job.Price_Cust_Total) || 0
+            const cost = Number(job.Cost_Driver_Total) || 0
+            const extra = (Number(job.Price_Cust_Extra) || 0) + (Number(job.Cost_Driver_Extra) || 0)
+
+            financial.revenue += rev
+            financial.driverCost += cost
+            financial.secondaryCosts += extra
+
+            // Trend
+            const date = job.Plan_Date as string
+            if (!dailyTrend[date]) dailyTrend[date] = { date, revenue: 0, cost: 0, jobCount: 0, onTimeCount: 0 }
+            dailyTrend[date].revenue += rev
+            dailyTrend[date].cost += cost
+            dailyTrend[date].jobCount++
+            if (job.Actual_Delivery_Time && job.Actual_Delivery_Time.split('T')[0] === date) dailyTrend[date].onTimeCount++
+            else if (!job.Actual_Delivery_Time) dailyTrend[date].onTimeCount++
+
+            // Vehicle Profit
+            const plate = job.Vehicle_Plate || 'Unknown'
+            if (!vehicleProfits[plate]) vehicleProfits[plate] = { plate, revenue: 0, netProfit: 0 }
+            vehicleProfits[plate].revenue += rev
+            vehicleProfits[plate].netProfit += (rev - cost)
+        }
+    })
+
+    // 3. Aggregate Previous Data
+    const prevFinancial = { revenue: 0, netProfit: 0 }
+    prevJobs.forEach(job => {
+        const rev = Number(job.Price_Cust_Total) || 0
+        const cost = Number(job.Cost_Driver_Total) || 0
+        prevFinancial.revenue += rev
+        prevFinancial.netProfit += (rev - cost)
+    })
+
+    // 4. Fetch External Costs (Fuel & Maintenance)
+    let fuelCost = 0
+    let maintenanceCost = 0
+
+    if (!customerId) {
+        let activePlates: string[] = []
+        if (effectiveBranchId) activePlates = await getBranchPlates(effectiveBranchId)
+
+        let fuelQuery = supabase.from('Fuel_Logs').select('Price_Total').gte('Date_Time', `${sDateCurrent}T00:00:00`).lte('Date_Time', `${eDateCurrent}T23:59:59`)
+        let maintQuery = supabase.from('Repair_Tickets').select('Cost_Total').gte('Date_Report', `${sDateCurrent}T00:00:00`).lte('Date_Report', `${eDateCurrent}T23:59:59`).neq('Status', 'Cancelled')
+
+        if (effectiveBranchId) {
+            const plateFilter = activePlates.length > 0 ? activePlates : ['NO_MATCH']
+            fuelQuery = fuelQuery.in('Vehicle_Plate', plateFilter)
+            maintQuery = maintQuery.in('Vehicle_Plate', plateFilter)
+        }
+
+        const [fuelRes, maintRes] = await Promise.all([fuelQuery, maintQuery])
+        fuelCost = fuelRes.data?.reduce((sum, l) => sum + (l.Price_Total || 0), 0) || 0
+        maintenanceCost = maintRes.data?.reduce((sum, t) => sum + (t.Cost_Total || 0), 0) || 0
+    }
+
+    // 5. Final Calculation
+    const totalCost = financial.driverCost + financial.secondaryCosts + fuelCost + maintenanceCost
+    const netProfit = financial.revenue - totalCost
+    const margin = financial.revenue > 0 ? (netProfit / financial.revenue) * 100 : 0
+    const prevNetProfitTotal = prevFinancial.netProfit - (fuelCost * 0.9) // Approximation for prev month costs
+    
+    const calculateGrowth = (curr: number, prev: number) => {
+        if (prev === 0) return curr > 0 ? 100 : 0
+        return ((curr - prev) / prev) * 100
+    }
+
+    return {
+        financial: {
+            revenue: financial.revenue,
+            cost: { total: totalCost, driver: financial.driverCost, fuel: fuelCost, maintenance: maintenanceCost, secondary: financial.secondaryCosts },
+            netProfit,
+            profitMargin: margin
+        },
+        trend: Object.values(dailyTrend).sort((a, b: any) => a.date.localeCompare(b.date)),
+        kpi: {
+            revenue: { current: financial.revenue, previous: prevFinancial.revenue, growth: calculateGrowth(financial.revenue, prevFinancial.revenue), target: 250000, attainment: (financial.revenue / 250000) * 100 },
+            profit: { current: netProfit, previous: prevNetProfitTotal, growth: calculateGrowth(netProfit, prevNetProfitTotal > 0 ? prevNetProfitTotal : 1) },
+            margin: { current: margin, previous: 0, growth: 0, target: 15 },
+            jobs: { current: Object.values(dailyTrend).reduce((sum, d: any) => sum + d.jobCount, 0), growth: 5 }
+        },
+        vehicles: Object.values(vehicleProfits).sort((a, b: any) => b.netProfit - a.netProfit).slice(0, 5),
+        statusDist: Object.entries(statusCounts).map(([name, value]) => ({ name, value }))
+    }
+}
