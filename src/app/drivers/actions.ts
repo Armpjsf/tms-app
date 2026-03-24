@@ -1,6 +1,6 @@
 'use server'
 
-import { createClient, createAdminClient } from '@/utils/supabase/server'
+import { createAdminClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { getUserBranchId, isSuperAdmin, isAdmin } from '@/lib/permissions'
 
@@ -19,7 +19,7 @@ export type DriverFormData = {
 }
 
 export async function createDriver(data: DriverFormData) {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
   const userBranchId = await getUserBranchId()
   const isAdmin = await isSuperAdmin()
 
@@ -143,7 +143,7 @@ export async function createBulkDrivers(drivers: Partial<DriverFormData>[]) {
 }
 
 export async function updateDriver(driverId: string, data: Partial<DriverFormData>) {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
   const branchId = await getUserBranchId()
   const isAdmin = await isSuperAdmin()
 
@@ -191,7 +191,7 @@ export async function updateDriver(driverId: string, data: Partial<DriverFormDat
 }
 
 export async function deleteDriver(driverId: string) {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
   const branchId = await getUserBranchId()
   const isAdmin = await isSuperAdmin()
 

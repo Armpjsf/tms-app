@@ -1,6 +1,6 @@
 'use server'
 
-import { createClient, createAdminClient } from '@/utils/supabase/server'
+import { createAdminClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { getUserBranchId, isSuperAdmin } from '@/lib/permissions'
 import { Vehicle } from "@/lib/supabase/vehicles"
@@ -57,12 +57,12 @@ export async function createVehicle(data: VehicleFormData) {
   return { success: true, message: 'Vehicle created successfully' }
 }
 
-export async function createBulkVehicles(vehicles: any[]) {
+export async function createBulkVehicles(vehicles: Record<string, unknown>[]) {
   const supabase = createAdminClient()
   const branchId = await getUserBranchId()
 
   // Helper to normalize keys
-  const normalizeData = (row: any) => {
+  const normalizeData = (row: Record<string, unknown>) => {
     const normalized: Partial<Vehicle> = {}
     
     // Helper to find value by possible keys (case-insensitive)
@@ -153,7 +153,7 @@ export async function createBulkVehicles(vehicles: any[]) {
 }
 
 export async function updateVehicle(plate: string, data: Partial<VehicleFormData>) {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
   const branchId = await getUserBranchId()
   const isAdmin = await isSuperAdmin()
 
@@ -197,7 +197,7 @@ export async function updateVehicle(plate: string, data: Partial<VehicleFormData
 }
 
 export async function deleteVehicle(plate: string) {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
   const branchId = await getUserBranchId()
   const isAdmin = await isSuperAdmin()
 
