@@ -99,13 +99,13 @@ export function ActivityFeed({ jobStats, sosCount }: ActivityFeedProps) {
                 <Icon size={20} strokeWidth={2.5} />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-black text-white truncate tracking-tight uppercase">{activity.label}</p>
+                <p className="text-xl font-black text-white truncate tracking-tight uppercase">{activity.label}</p>
                 <div className="flex items-center gap-2 mt-1">
-                    <span className={cn("text-[9px] font-black uppercase tracking-[0.2em]", activity.color)}>
+                    <span className={cn("text-base font-bold font-black uppercase tracking-[0.2em]", activity.color)}>
                         {activity.time}
                     </span>
                     <div className="w-1 h-1 rounded-full bg-slate-700" />
-                    <span className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em]">CYCLE REFRESHED</span>
+                    <span className="text-base font-bold font-black text-slate-500 uppercase tracking-[0.2em]">CYCLE REFRESHED</span>
                 </div>
               </div>
             </motion.div>
@@ -114,9 +114,10 @@ export function ActivityFeed({ jobStats, sosCount }: ActivityFeedProps) {
       ) : (
         <div className="p-12 text-center glass-panel rounded-[3rem] border-dashed border-white/5">
           <Activity className="w-12 h-12 text-slate-800 mx-auto mb-4 opacity-20" />
-          <p className="text-[10px] font-black text-slate-600 uppercase tracking-[0.3em]">Operational Silence</p>
+          <p className="text-base font-bold font-black text-slate-600 uppercase tracking-[0.3em]">Operational Silence</p>
         </div>
       )}
     </motion.div>
   )
 }
+

@@ -33,9 +33,9 @@ export function BranchFilter({ isSuperAdmin }: { isSuperAdmin: boolean }) {
 
   return (
     <div className="flex items-center gap-2">
-      <span className="text-sm text-gray-500">Branch:</span>
+      <span className="text-xl text-gray-500">Branch:</span>
       <Select value={currentBranch} onValueChange={handleValueChange}>
-        <SelectTrigger className="w-[120px] h-8 text-xs bg-white border-gray-200">
+        <SelectTrigger className="w-[120px] h-8 text-lg font-bold bg-white border-gray-200">
           <SelectValue placeholder="Select Branch" />
         </SelectTrigger>
         <SelectContent>
@@ -47,3 +47,4 @@ export function BranchFilter({ isSuperAdmin }: { isSuperAdmin: boolean }) {
     </div>
   )
 }
+

@@ -102,7 +102,7 @@ export function DashboardClient({ session, stats, currentJob }: DashboardClientP
                     </div>
                     <div className="text-center">
                         <div className="text-4xl font-black text-white tracking-tighter">{stats.total < 10 ? `0${stats.total}` : stats.total}</div>
-                        <div className="text-[10px] font-black text-primary uppercase tracking-[0.2em] opacity-80">งานในมือ</div>
+                        <div className="text-base font-bold font-black text-primary uppercase tracking-[0.2em] opacity-80">งานในมือ</div>
                     </div>
                 </div>
 
@@ -117,7 +117,7 @@ export function DashboardClient({ session, stats, currentJob }: DashboardClientP
                         <div className="text-3xl font-black text-white tracking-tighter">
                             {todayIncome.toLocaleString()}
                         </div>
-                        <div className="text-[10px] font-black text-blue-400 uppercase tracking-[0.2em] opacity-80">รายได้วันนี้</div>
+                        <div className="text-base font-bold font-black text-blue-400 uppercase tracking-[0.2em] opacity-80">รายได้วันนี้</div>
                     </div>
                 </div>
             </motion.div>
@@ -141,16 +141,16 @@ export function DashboardClient({ session, stats, currentJob }: DashboardClientP
                                     </div>
                                     <div>
                                         <h4 className="text-2xl font-black text-white tracking-tighter">#{currentJob.Job_ID}</h4>
-                                        <p className="text-slate-500 text-xs font-bold uppercase tracking-widest">{currentJob.Customer_Name}</p>
+                                        <p className="text-slate-500 text-lg font-bold font-bold uppercase tracking-widest">{currentJob.Customer_Name}</p>
                                     </div>
                                 </div>
-                                <div className="px-4 py-1.5 rounded-full bg-primary text-[10px] font-black text-white uppercase tracking-widest shadow-xl shadow-primary/30">
+                                <div className="px-4 py-1.5 rounded-full bg-primary text-base font-bold font-black text-white uppercase tracking-widest shadow-xl shadow-primary/30">
                                     กำลังไปส่ง
                                 </div>
                             </div>
 
                             <div className="space-y-3">
-                                <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest">
+                                <div className="flex justify-between items-center text-base font-bold font-black uppercase tracking-widest">
                                     <span className="text-slate-500">{currentJob.Origin_Location || "จุดรับของ"}</span>
                                     <span className="text-primary">ความคืบหน้า 75%</span>
                                     <span className="text-slate-500">{currentJob.Dest_Location || "จุดส่งของ"}</span>
@@ -172,11 +172,11 @@ export function DashboardClient({ session, stats, currentJob }: DashboardClientP
                                             <AvatarFallback>U</AvatarFallback>
                                         </Avatar>
                                     ))}
-                                    <div className="h-10 w-10 rounded-full bg-white/10 backdrop-blur-md border-2 border-secondary flex items-center justify-center text-[10px] font-black text-white">
+                                    <div className="h-10 w-10 rounded-full bg-white/10 backdrop-blur-md border-2 border-secondary flex items-center justify-center text-base font-bold font-black text-white">
                                         +2
                                     </div>
                                 </div>
-                                <Button className="h-14 px-10 rounded-2xl bg-primary hover:brightness-110 text-white font-black text-xs uppercase tracking-widest shadow-xl shadow-primary/30 transition-all">
+                                <Button className="h-14 px-10 rounded-2xl bg-primary hover:brightness-110 text-white font-black text-lg font-bold uppercase tracking-widest shadow-xl shadow-primary/30 transition-all">
                                     ดูรายละเอียด
                                 </Button>
                             </div>
@@ -191,10 +191,10 @@ export function DashboardClient({ session, stats, currentJob }: DashboardClientP
                                      </div>
                                      <div>
                                          <h4 className="text-2xl font-black text-white tracking-tighter">#CL-9011-ZC</h4>
-                                         <p className="text-slate-500 text-xs font-bold uppercase tracking-widest">Sour Worms Logistics</p>
+                                         <p className="text-slate-500 text-lg font-bold font-bold uppercase tracking-widest">Sour Worms Logistics</p>
                                      </div>
                                 </div>
-                                <div className="px-4 py-1.5 rounded-full bg-accent/20 border border-accent/30 text-[10px] font-black text-accent uppercase tracking-widest">
+                                <div className="px-4 py-1.5 rounded-full bg-accent/20 border border-accent/30 text-base font-bold font-black text-accent uppercase tracking-widest">
                                     รอรับของ
                                 </div>
                             </div>
@@ -202,11 +202,11 @@ export function DashboardClient({ session, stats, currentJob }: DashboardClientP
                                  <div className="h-full w-[20%] bg-accent rounded-full shadow-[0_0_15px_rgba(147,51,234,0.5)]" />
                             </div>
                             <div className="flex items-center justify-between text-slate-500">
-                                <div className="flex items-center gap-2 text-[10px] font-bold">
+                                <div className="flex items-center gap-2 text-base font-bold font-bold">
                                     <MapPin size={14} className="text-accent" />
                                     ระยะเวลา: 2 ชม. 45 นาที
                                 </div>
-                                <Button variant="ghost" className="text-white font-black text-xs uppercase tracking-widest hover:text-primary">
+                                <Button variant="ghost" className="text-white font-black text-lg font-bold uppercase tracking-widest hover:text-primary">
                                     ข้อมูลงาน
                                 </Button>
                             </div>
@@ -218,9 +218,9 @@ export function DashboardClient({ session, stats, currentJob }: DashboardClientP
                              <Truck className="text-slate-600" size={32} />
                          </div>
                          <h3 className="text-white font-black text-xl mb-1">ยังไม่มีงานในขณะนี้</h3>
-                         <p className="text-slate-500 text-sm font-medium mb-6">คุณยังไม่มีรายการงานที่ได้รับมอบหมาย</p>
+                         <p className="text-slate-500 text-xl font-medium mb-6">คุณยังไม่มีรายการงานที่ได้รับมอบหมาย</p>
                          <Link href="/mobile/marketplace">
-                             <Button className="h-14 px-8 rounded-2xl bg-primary text-white font-black text-xs uppercase tracking-widest shadow-xl shadow-primary/30">
+                             <Button className="h-14 px-8 rounded-2xl bg-primary text-white font-black text-lg font-bold uppercase tracking-widest shadow-xl shadow-primary/30">
                                  กดรับงานใหม่
                              </Button>
                          </Link>
@@ -240,3 +240,4 @@ export function DashboardClient({ session, stats, currentJob }: DashboardClientP
         </motion.div>
     )
 }
+

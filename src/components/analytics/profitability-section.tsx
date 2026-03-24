@@ -1,6 +1,7 @@
 "use client"
 
 import { PremiumCard } from "@/components/ui/premium-card"
+import { useLanguage } from "@/components/providers/language-provider"
 import { 
   BarChart, 
   Bar, 
@@ -13,7 +14,7 @@ import {
   PieChart,
   Pie
 } from 'recharts'
-import { Coins, TrendingUp, Truck, Activity, Target, Zap } from "lucide-react"
+import { Coins, TrendingUp, Truck, Activity, Zap } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 type VehicleProfitData = {
@@ -40,13 +41,14 @@ type Props = {
 }
 
 export function ProfitabilitySection({ data = [], financials }: Props) {
+    const { t } = useLanguage()
     // Sort by profit for the chart
     const topPerformers = [...data].sort((a, b) => b.netProfit - a.netProfit).slice(0, 5)
     
     const costBreakdownData = [
-        { name: 'Driver Payout', value: financials.cost.driver, color: '#10b981' },
-        { name: 'Fuel Intelligence', value: financials.cost.fuel, color: '#3b82f6' },
-        { name: 'Technical Maint.', value: financials.cost.maintenance, color: '#f59e0b' }
+        { name: t('common.driver_payout'), value: financials.cost.driver, color: '#10b981' },
+        { name: t('dashboard.fuel_intelligence') || 'Fuel Intelligence', value: financials.cost.fuel, color: '#3b82f6' },
+        { name: t('common.technical_maint'), value: financials.cost.maintenance, color: '#f59e0b' }
     ]
 
     return (
@@ -57,8 +59,8 @@ export function ProfitabilitySection({ data = [], financials }: Props) {
                     <TrendingUp size={24} strokeWidth={2.5} />
                 </div>
                 <div className="space-y-1">
-                    <h3 className="text-3xl font-black text-white tracking-widest uppercase italic premium-text-gradient">Operational Profitability Matrix</h3>
-                    <p className="text-[11px] font-black text-emerald-500 uppercase tracking-[0.4em] italic opacity-60">Strategic Fleet realization audit // COLD_STORAGE_01</p>
+                    <h3 className="text-3xl font-black text-white tracking-widest uppercase italic premium-text-gradient">{t('analytics.profitability_matrix')}</h3>
+                    <p className="text-base font-bold font-black text-emerald-500 uppercase tracking-[0.4em] italic opacity-60">{t('analytics.fleet_audit')}</p>
                 </div>
             </div>
 
@@ -72,8 +74,8 @@ export function ProfitabilitySection({ data = [], financials }: Props) {
                                 <Truck size={22} />
                             </div>
                             <div>
-                                <h3 className="text-xl font-black text-white tracking-tighter italic uppercase">Asset Yield COMMAND</h3>
-                                <p className="text-emerald-500 text-[10px] font-black uppercase tracking-[0.4em]">Net Profit Analysis per Operational Unit</p>
+                                <h3 className="text-xl font-black text-white tracking-tighter italic uppercase">{t('analytics.asset_yield_command')}</h3>
+                                <p className="text-emerald-500 text-base font-bold font-black uppercase tracking-[0.4em]">{t('analytics.net_profit_analysis')}</p>
                             </div>
                         </div>
                     </div>
@@ -94,7 +96,7 @@ export function ProfitabilitySection({ data = [], financials }: Props) {
                                         padding: '20px'
                                     }}
                                     itemStyle={{ fontSize: '11px', fontWeight: '900', textTransform: 'uppercase', color: '#fff' }}
-                                    formatter={(value: number) => [`฿${Number(value).toLocaleString()}`, 'Net Yield']}
+                                    formatter={(value: any) => [`฿${Number(value || 0).toLocaleString()}`, t('common.net_margin')]}
                                 />
                                 <Bar dataKey="netProfit" radius={[0, 8, 8, 0]} barSize={32}>
                                     {topPerformers.map((entry, index) => (
@@ -115,8 +117,8 @@ export function ProfitabilitySection({ data = [], financials }: Props) {
                                 <Coins size={22} />
                             </div>
                             <div>
-                                <h3 className="text-xl font-black text-white tracking-tighter italic uppercase">Cost Composition</h3>
-                                <p className="text-indigo-500 text-[10px] font-black uppercase tracking-[0.4em]">Regional expenditure Allocation</p>
+                                <h3 className="text-xl font-black text-white tracking-tighter italic uppercase">{t('analytics.cost_composition')}</h3>
+                                <p className="text-indigo-500 text-base font-bold font-black uppercase tracking-[0.4em]">{t('analytics.regional_expenditure')}</p>
                             </div>
                         </div>
                     </div>
@@ -141,12 +143,12 @@ export function ProfitabilitySection({ data = [], financials }: Props) {
                                     <Tooltip 
                                         contentStyle={{ backgroundColor: 'rgba(2, 6, 23, 0.95)', border: '2px solid rgba(255,255,255,0.1)', borderRadius: '24px', backdropFilter: 'blur(12px)' }}
                                         itemStyle={{ fontSize: '11px', fontWeight: '900', textTransform: 'uppercase', color: '#fff' }}
-                                        formatter={(value: number) => [`฿${Number(value).toLocaleString()}`, 'Expenditure']}
+                                        formatter={(value: number | string) => [`฿${Number(value || 0).toLocaleString()}`, t('settings.items.accounting')]}
                                     />
                                 </PieChart>
                             </ResponsiveContainer>
                             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                                <span className="text-[11px] font-black text-slate-500 uppercase tracking-[0.2em] leading-none mb-1">Total OpEx</span>
+                                <span className="text-base font-bold font-black text-slate-500 uppercase tracking-[0.2em] leading-none mb-1">TOTAL OpEx</span>
                                 <span className="text-3xl font-black text-white tracking-tighter italic">
                                     ฿{(financials.cost.total / 1000).toFixed(0)}K
                                 </span>
@@ -158,9 +160,9 @@ export function ProfitabilitySection({ data = [], financials }: Props) {
                                 <div key={item.name} className="flex items-center justify-between p-5 bg-white/[0.03] rounded-2xl border border-white/5 hover:border-white/10 transition-all">
                                     <div className="flex items-center gap-4">
                                         <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color, boxShadow: `0 0 15px ${item.color}50` }} />
-                                        <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest italic">{item.name}</span>
+                                        <span className="text-base font-bold font-black text-slate-400 uppercase tracking-widest italic">{item.name}</span>
                                     </div>
-                                    <span className="text-sm font-black text-white italic">
+                                    <span className="text-xl font-black text-white italic">
                                         {financials.cost.total > 0 ? ((item.value / financials.cost.total) * 100).toFixed(1) : 0}%
                                     </span>
                                 </div>
@@ -178,26 +180,26 @@ export function ProfitabilitySection({ data = [], financials }: Props) {
                                 <Activity size={22} />
                             </div>
                             <div>
-                                <h4 className="text-2xl font-black text-white tracking-tighter italic uppercase underline decoration-primary/30 underline-offset-8">Vehicle Performance Ledger</h4>
-                                <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.4em] mt-2">Detailed Asset Yield & Expenditure Audit // LOGIS_TERMINAL_01</p>
+                                <h4 className="text-2xl font-black text-white tracking-tighter italic uppercase underline decoration-primary/30 underline-offset-8">{t('analytics.performance_ledger')}</h4>
+                                <p className="text-slate-500 text-base font-bold font-black uppercase tracking-[0.4em] mt-2">{t('analytics.detailed_audit')}</p>
                             </div>
                         </div>
                         <div className="hidden md:flex items-center gap-4 bg-white/5 px-6 py-3 rounded-2xl border border-white/10 backdrop-blur-md">
                             <Zap size={14} className="text-primary animate-pulse" />
-                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Live Data Uplink</span>
+                            <span className="text-base font-bold font-black text-slate-400 uppercase tracking-[0.2em]">{t('analytics.live_uplink')}</span>
                         </div>
                     </div>
                     <div className="p-0 overflow-x-auto custom-scrollbar">
                         <table className="w-full text-left border-collapse">
                             <thead>
                                 <tr className="border-b-2 border-white/5 bg-white/[0.02]">
-                                    <th className="p-10 text-[12px] font-black text-slate-500 uppercase tracking-[0.1em] italic">Asset ID</th>
-                                    <th className="p-10 text-[12px] font-black text-slate-500 uppercase tracking-[0.1em] italic text-right">Revenue Yield</th>
-                                    <th className="p-10 text-[12px] font-black text-slate-500 uppercase tracking-[0.1em] italic text-right">Driver Payout</th>
-                                    <th className="p-10 text-[12px] font-black text-slate-500 uppercase tracking-[0.1em] italic text-right">Fuel Expenditure</th>
-                                    <th className="p-10 text-[12px] font-black text-slate-500 uppercase tracking-[0.1em] italic text-right">Technical Maint.</th>
-                                    <th className="p-10 text-[12px] font-black text-white uppercase tracking-[0.1em] italic text-right">Net Margin</th>
-                                    <th className="p-10 text-[12px] font-black text-slate-500 uppercase tracking-[0.1em] italic text-center">Efficiency Rating</th>
+                                    <th className="p-10 text-[12px] font-black text-slate-500 uppercase tracking-[0.1em] italic">{t('common.asset_id')}</th>
+                                    <th className="p-10 text-[12px] font-black text-slate-500 uppercase tracking-[0.1em] italic text-right">{t('common.revenue_yield')}</th>
+                                    <th className="p-10 text-[12px] font-black text-slate-500 uppercase tracking-[0.1em] italic text-right">{t('common.driver_payout')}</th>
+                                    <th className="p-10 text-[12px] font-black text-slate-500 uppercase tracking-[0.1em] italic text-right">{t('common.fuel_expenditure')}</th>
+                                    <th className="p-10 text-[12px] font-black text-slate-500 uppercase tracking-[0.1em] italic text-right">{t('common.technical_maint')}</th>
+                                    <th className="p-10 text-[12px] font-black text-white uppercase tracking-[0.1em] italic text-right">{t('common.net_margin')}</th>
+                                    <th className="p-10 text-[12px] font-black text-slate-500 uppercase tracking-[0.1em] italic text-center">{t('common.efficiency_rating')}</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-white/5">
@@ -205,9 +207,9 @@ export function ProfitabilitySection({ data = [], financials }: Props) {
                                     <tr key={item.plate} className="group/row hover:bg-white/[0.04] transition-all border-l-4 border-transparent hover:border-primary/50">
                                         <td className="p-10 font-black text-white text-lg tracking-tighter uppercase italic group-hover/row:translate-x-2 transition-transform duration-500">{item.plate}</td>
                                         <td className="p-10 text-right font-black text-primary text-xl tracking-tighter italic">฿{item.revenue.toLocaleString()}</td>
-                                        <td className="p-10 text-right font-black text-slate-400 text-sm italic">฿{item.driverCost.toLocaleString()}</td>
-                                        <td className="p-10 text-right font-black text-slate-400 text-sm italic">฿{item.fuelCost.toLocaleString()}</td>
-                                        <td className="p-10 text-right font-black text-slate-400 text-sm italic">฿{item.maintenanceCost.toLocaleString()}</td>
+                                        <td className="p-10 text-right font-black text-slate-400 text-xl italic">฿{item.driverCost.toLocaleString()}</td>
+                                        <td className="p-10 text-right font-black text-slate-400 text-xl italic">฿{item.fuelCost.toLocaleString()}</td>
+                                        <td className="p-10 text-right font-black text-slate-400 text-xl italic">฿{item.maintenanceCost.toLocaleString()}</td>
                                         <td className={cn(
                                             "p-10 text-right font-black text-2xl tracking-tighter italic",
                                             item.netProfit > 0 ? 'text-emerald-500' : 'text-rose-500'
@@ -216,14 +218,14 @@ export function ProfitabilitySection({ data = [], financials }: Props) {
                                         </td>
                                         <td className="p-10 text-center">
                                             <div className={cn(
-                                                "inline-block px-6 py-2.5 rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] italic border transition-all duration-500",
+                                                "inline-block px-6 py-2.5 rounded-2xl text-base font-bold font-black uppercase tracking-[0.2em] italic border transition-all duration-500",
                                                 item.revenue > 0 && (item.netProfit / item.revenue) > 0.2 
                                                     ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/30' 
                                                     : item.revenue > 0 && (item.netProfit / item.revenue) > 0.1 
                                                         ? 'bg-blue-500/10 text-blue-500 border-blue-500/30' 
                                                         : 'bg-rose-500/10 text-rose-500 border-rose-500/30 animate-pulse'
                                             )}>
-                                                {item.revenue > 0 ? ((item.netProfit / item.revenue) * 100).toFixed(1) : 0}% YIELD
+                                                {item.revenue > 0 ? ((item.netProfit / item.revenue) * 100).toFixed(1) : 0}% {t('common.yield')}
                                             </div>
                                         </td>
                                     </tr>
@@ -236,3 +238,4 @@ export function ProfitabilitySection({ data = [], financials }: Props) {
         </div>
     )
 }
+

@@ -37,7 +37,7 @@ export function CustomerCancelButton({ jobId, jobStatus }: { jobId: string, jobS
         variant="outline" 
         onClick={handleCancel}
         disabled={loading}
-        className="h-9 px-4 text-xs font-bold text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300 rounded-xl"
+        className="h-9 px-4 text-lg font-bold font-bold text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300 rounded-xl"
       >
         <Ban size={14} className="mr-1.5" />
         {loading ? "กำลังยกเลิก..." : "ยกเลิกคำขอ"}
@@ -45,3 +45,4 @@ export function CustomerCancelButton({ jobId, jobStatus }: { jobId: string, jobS
     </div>
   )
 }
+

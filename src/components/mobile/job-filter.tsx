@@ -58,7 +58,7 @@ export function MobileJobFilter() {
           <Filter size={14} />
           ตัวกรอง
           {activeFilterCount > 0 && (
-              <span className="flex items-center justify-center w-5 h-5 ml-1 text-[10px] font-bold text-white bg-emerald-600 rounded-full">
+              <span className="flex items-center justify-center w-5 h-5 ml-1 text-base font-bold font-bold text-white bg-emerald-600 rounded-full">
                   {activeFilterCount}
               </span>
           )}
@@ -69,7 +69,7 @@ export function MobileJobFilter() {
           <SheetTitle className="text-white flex justify-between items-center">
             <span>ตัวกรองงาน</span>
             {activeFilterCount > 0 && (
-                <Button variant="ghost" size="sm" onClick={handleClear} className="h-8 text-xs text-gray-500 hover:text-white">
+                <Button variant="ghost" size="sm" onClick={handleClear} className="h-8 text-lg font-bold text-gray-500 hover:text-white">
                     ล้างค่า
                 </Button>
             )}
@@ -100,7 +100,7 @@ export function MobileJobFilter() {
                         <button
                             key={s}
                             onClick={() => setStatus(s)}
-                            className={`px-4 py-2 rounded-full text-sm border transition-colors ${
+                            className={`px-4 py-2 rounded-full text-xl border transition-colors ${
                                 status === s 
                                     ? 'bg-emerald-600 border-blue-600 text-white' 
                                     : 'bg-transparent border-gray-200 text-gray-500 hover:border-slate-500'
@@ -122,3 +122,4 @@ export function MobileJobFilter() {
     </Sheet>
   )
 }
+

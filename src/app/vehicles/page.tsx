@@ -56,7 +56,7 @@ export default function VehiclesPage() {
                     <div className="p-2 bg-primary/20 rounded-xl border border-primary/30">
                         <Truck className="text-primary" size={20} />
                     </div>
-                    <span className="text-primary font-bold uppercase tracking-[0.3em] text-[10px]">{t('navigation.fleet')}</span>
+                    <span className="text-primary font-bold uppercase tracking-[0.3em] text-base font-bold">{t('navigation.fleet')}</span>
                 </div>
                 <h1 className="text-4xl font-black text-white tracking-tight flex items-center gap-3 italic">
                     {t('vehicles.title')}
@@ -65,7 +65,7 @@ export default function VehiclesPage() {
 
             <div className="relative z-10">
                 <VehicleDialog trigger={
-                    <button className="flex items-center gap-2 bg-white text-slate-900 px-8 py-4 rounded-2xl font-black text-sm hover:bg-primary hover:text-white transition-all shadow-xl active:scale-95 group/btn">
+                    <button className="flex items-center gap-2 bg-white text-slate-900 px-8 py-4 rounded-2xl font-black text-xl hover:bg-primary hover:text-white transition-all shadow-xl active:scale-95 group/btn">
                         <Plus size={20} className="group-hover/btn:rotate-90 transition-transform duration-300" />
                         {t('vehicles.add_vehicle')}
                     </button>
@@ -80,13 +80,13 @@ export default function VehiclesPage() {
                 <input 
                     type="text" 
                     placeholder={t('common.search')}
-                    className="w-full bg-white/5 border border-white/5 rounded-2xl py-4 pl-12 pr-4 text-sm focus:outline-none focus:border-primary/50 focus:bg-white/10 transition-all placeholder:text-slate-600 font-bold"
+                    className="w-full bg-white/5 border border-white/5 rounded-2xl py-4 pl-12 pr-4 text-xl focus:outline-none focus:border-primary/50 focus:bg-white/10 transition-all placeholder:text-slate-600 font-bold"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                 />
             </div>
             <div className="flex gap-3">
-                <button className="flex items-center gap-2 px-6 py-4 bg-white/5 border border-white/5 rounded-2xl text-slate-400 hover:text-white hover:bg-white/10 transition-all font-bold text-xs uppercase tracking-widest">
+                <button className="flex items-center gap-2 px-6 py-4 bg-white/5 border border-white/5 rounded-2xl text-slate-400 hover:text-white hover:bg-white/10 transition-all font-bold text-lg font-bold uppercase tracking-widest">
                     <Filter size={16} />
                     {t('common.filter')}
                 </button>
@@ -113,7 +113,7 @@ export default function VehiclesPage() {
                         
                         <div className="flex justify-between items-start relative z-10 mb-6">
                             <div>
-                                <Badge className="bg-primary/10 text-primary border-primary/20 mb-3 px-3 py-1 rounded-lg font-black text-[10px] uppercase tracking-widest">
+                                <Badge className="bg-primary/10 text-primary border-primary/20 mb-3 px-3 py-1 rounded-lg font-black text-base font-bold uppercase tracking-widest">
                                     {vehicle.Vehicle_Type || "-"}
                                 </Badge>
                                 <h3 className="text-2xl font-black text-white tracking-tighter uppercase">{vehicle.Vehicle_Plate}</h3>
@@ -122,22 +122,22 @@ export default function VehiclesPage() {
                         </div>
 
                         <div className="space-y-4 relative z-10">
-                            <div className="flex items-center justify-between text-sm border-b border-white/5 pb-4">
-                                <span className="text-slate-500 font-bold uppercase tracking-widest text-[10px]">{t('vehicles.driver')}</span>
+                            <div className="flex items-center justify-between text-xl border-b border-white/5 pb-4">
+                                <span className="text-slate-500 font-bold uppercase tracking-widest text-base font-bold">{t('vehicles.driver')}</span>
                                 <span className="text-white font-black">{vehicle.Primary_Driver_Name || "-"}</span>
                             </div>
-                                <span className="text-slate-500 font-bold uppercase tracking-widest text-[10px]">{t('vehicles.mileage')}</span>
+                                <span className="text-slate-500 font-bold uppercase tracking-widest text-base font-bold">{t('vehicles.mileage')}</span>
                                 <span className="text-primary font-black italic tracking-tighter">
                                     {vehicle.Current_Mileage?.toLocaleString() || "0"} KM
                                 </span>
                         </div>
 
                         <div className="mt-8 pt-6 border-t border-white/5 flex gap-3">
-                            <button className="flex-1 flex items-center justify-center gap-2 py-3 bg-white/5 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:bg-primary/20 hover:text-primary transition-all">
+                            <button className="flex-1 flex items-center justify-center gap-2 py-3 bg-white/5 rounded-xl text-base font-bold font-black uppercase tracking-widest text-slate-400 hover:bg-primary/20 hover:text-primary transition-all">
                                 <Wrench size={14} />
                                 {t('navigation.maintenance')}
                             </button>
-                            <button className="flex-1 flex items-center justify-center gap-2 py-3 bg-white/5 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:bg-emerald-500/20 hover:text-emerald-400 transition-all">
+                            <button className="flex-1 flex items-center justify-center gap-2 py-3 bg-white/5 rounded-xl text-base font-bold font-black uppercase tracking-widest text-slate-400 hover:bg-emerald-500/20 hover:text-emerald-400 transition-all">
                                 <ShieldCheck size={14} />
                                 {t('navigation.checks')}
                             </button>
@@ -150,3 +150,4 @@ export default function VehiclesPage() {
     </DashboardLayout>
   )
 }
+

@@ -57,8 +57,8 @@ export function SidebarProfile({ collapsed }: { collapsed: boolean }) {
       
       {!collapsed && (
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-black text-white truncate tracking-tight">{displayName}</p>
-          <p className="text-[9px] text-primary font-black truncate uppercase tracking-[0.3em] mt-0.5">{role}</p>
+          <p className="text-xl font-black text-white truncate tracking-tight">{displayName}</p>
+          <p className="text-base font-bold text-primary font-black truncate uppercase tracking-[0.3em] mt-0.5">{role}</p>
         </div>
       )}
 
@@ -74,3 +74,4 @@ export function SidebarProfile({ collapsed }: { collapsed: boolean }) {
     </div>
   )
 }
+

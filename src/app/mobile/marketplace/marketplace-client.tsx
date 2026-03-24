@@ -76,7 +76,7 @@ export function MarketplaceClient({ initialJobs, driverId, driverName }: Marketp
                 <div className="flex items-center justify-between">
                     <div>
                         <h2 className="font-bold text-gray-900 text-lg">Unassigned Jobs</h2>
-                        <p className="text-xs text-gray-500">งานที่พร้อมให้คุณรับ</p>
+                        <p className="text-lg font-bold text-gray-500">งานที่พร้อมให้คุณรับ</p>
                     </div>
                     <Badge variant="outline" className="bg-emerald-50 text-emerald-600 border-none">
                         {jobs.length} งานใหม่
@@ -93,7 +93,7 @@ export function MarketplaceClient({ initialJobs, driverId, driverName }: Marketp
                             <Activity className="text-gray-300 w-8 h-8" />
                         </div>
                         <h4 className="text-lg font-bold text-gray-900 mb-1">ยังไม่มีงานในช่วงนี้</h4>
-                        <p className="text-sm text-gray-500">ขณะนี้ไม่มีงานใหม่ที่เปิดรับประมูล เมื่อมีงานเข้ามาจะแสดงที่หน้านี้อัตโนมัติ</p>
+                        <p className="text-xl text-gray-500">ขณะนี้ไม่มีงานใหม่ที่เปิดรับประมูล เมื่อมีงานเข้ามาจะแสดงที่หน้านี้อัตโนมัติ</p>
                     </motion.div>
                 ) : (
                     <div className="space-y-4">
@@ -110,7 +110,7 @@ export function MarketplaceClient({ initialJobs, driverId, driverName }: Marketp
                                             {/* Header */}
                                             <div className="flex justify-between items-start mb-3">
                                                 <div>
-                                                    <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">{job.Job_ID}</span>
+                                                    <span className="text-base font-bold font-black text-emerald-500 uppercase tracking-widest">{job.Job_ID}</span>
                                                     <h3 className="font-bold text-gray-900 text-base">{job.Route_Name || 'ไม่ระบุเส้นทาง'}</h3>
                                                 </div>
                                             </div>
@@ -119,14 +119,14 @@ export function MarketplaceClient({ initialJobs, driverId, driverName }: Marketp
                                             <div className="flex items-center gap-2 bg-gray-50 p-3 rounded-xl mb-4">
                                                 <MapPin size={14} className="text-emerald-500 shrink-0" />
                                                 <div className="flex-1 flex flex-col min-w-0">
-                                                    <span className="text-xs font-bold text-gray-900 truncate">{job.Origin_Location}</span>
+                                                    <span className="text-lg font-bold font-bold text-gray-900 truncate">{job.Origin_Location}</span>
                                                     <div className="h-4 border-l-2 border-dashed border-gray-300 ml-1.5 my-1" />
-                                                    <span className="text-xs font-bold text-gray-900 truncate">{job.Dest_Location}</span>
+                                                    <span className="text-lg font-bold font-bold text-gray-900 truncate">{job.Dest_Location}</span>
                                                 </div>
                                             </div>
 
                                             {/* Details */}
-                                            <div className="flex justify-between items-center bg-white rounded-xl mb-4 text-xs font-medium border border-gray-100 p-2">
+                                            <div className="flex justify-between items-center bg-white rounded-xl mb-4 text-lg font-bold font-medium border border-gray-100 p-2">
                                                 <div className="flex items-center gap-1.5 text-gray-600">
                                                     <Clock size={14} className="text-orange-500"/>
                                                     <span>{job.Plan_Date ? new Date(job.Plan_Date).toLocaleDateString('th-TH') : 'ไม่ระบุวัน'}</span>
@@ -149,7 +149,7 @@ export function MarketplaceClient({ initialJobs, driverId, driverName }: Marketp
                                                     className="bg-emerald-500/5 border border-emerald-500/20 rounded-xl p-3 space-y-3"
                                                 >
                                                     <div>
-                                                        <label className="text-[10px] uppercase font-bold text-gray-500 tracking-wider">เสนอราคาของคุณ (บาท)</label>
+                                                        <label className="text-base font-bold uppercase font-bold text-gray-500 tracking-wider">เสนอราคาของคุณ (บาท)</label>
                                                         <div className="relative mt-1">
                                                             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-bold">฿</span>
                                                             <Input 
@@ -183,7 +183,7 @@ export function MarketplaceClient({ initialJobs, driverId, driverName }: Marketp
                                             ) : (
                                                 <Button 
                                                     onClick={() => handleBidClick(job.Job_ID)}
-                                                    className="w-full bg-black hover:bg-gray-800 text-white rounded-xl font-bold shadow-md shadow-black/10 active:scale-95 transition-all text-sm h-11"
+                                                    className="w-full bg-black hover:bg-gray-800 text-white rounded-xl font-bold shadow-md shadow-black/10 active:scale-95 transition-all text-xl h-11"
                                                 >
                                                     เสนอราคารับงานนี้
                                                 </Button>
@@ -201,3 +201,4 @@ export function MarketplaceClient({ initialJobs, driverId, driverName }: Marketp
         </div>
     )
 }
+

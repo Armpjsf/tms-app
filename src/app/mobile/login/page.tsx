@@ -110,7 +110,7 @@ export default function DriverLoginPage() {
           </div>
           <div className="space-y-1">
             <h1 className="text-4xl font-black text-white tracking-tighter">Logis<span className="text-primary">Pro</span></h1>
-            <p className="text-slate-400 text-sm font-bold">ขนส่งง่ายๆ มั่นใจทุกการจัดส่ง</p>
+            <p className="text-slate-400 text-xl font-bold">ขนส่งง่ายๆ มั่นใจทุกการจัดส่ง</p>
           </div>
         </div>
 
@@ -118,7 +118,7 @@ export default function DriverLoginPage() {
         <div className="glass-panel rounded-[2.5rem] p-8 shadow-2xl relative">
           <form action={handleSubmit} className="space-y-6">
             <div className="space-y-3">
-              <Label htmlFor="identifier" className="text-slate-400 text-[10px] font-black uppercase tracking-widest ml-1">รหัสพนักงาน / เบอร์โทรศัพท์</Label>
+              <Label htmlFor="identifier" className="text-slate-400 text-base font-bold font-black uppercase tracking-widest ml-1">รหัสพนักงาน / เบอร์โทรศัพท์</Label>
               <div className="relative">
                 <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 w-5 h-5 pointer-events-none" />
                 <Input 
@@ -136,11 +136,11 @@ export default function DriverLoginPage() {
 
             <div className="space-y-3">
               <div className="flex justify-between items-end ml-1">
-                <Label htmlFor="password" className="text-slate-400 text-[10px] font-black uppercase tracking-widest">รหัสผ่านปลอดภัย</Label>
+                <Label htmlFor="password" className="text-slate-400 text-base font-bold font-black uppercase tracking-widest">รหัสผ่านปลอดภัย</Label>
                 <button 
                   type="button" 
                   onClick={() => setIsForgotOpen(true)}
-                  className="text-[10px] font-black text-primary/80 uppercase tracking-widest hover:text-primary"
+                  className="text-base font-bold font-black text-primary/80 uppercase tracking-widest hover:text-primary"
                 >
                   ลืมรหัสผ่าน?
                 </button>
@@ -159,14 +159,14 @@ export default function DriverLoginPage() {
             </div>
 
             {error && (
-              <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-400 text-xs text-center font-bold animate-shake">
+              <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-400 text-lg font-bold text-center font-bold animate-shake">
                 {error}
               </div>
             )}
 
             <Button 
               type="submit" 
-              className="w-full h-16 text-xs font-black uppercase tracking-[0.3em] bg-primary hover:brightness-110 shadow-xl shadow-primary/20 rounded-2xl transition-all active:scale-[0.98]"
+              className="w-full h-16 text-lg font-bold font-black uppercase tracking-[0.3em] bg-primary hover:brightness-110 shadow-xl shadow-primary/20 rounded-2xl transition-all active:scale-[0.98]"
               disabled={loading}
             >
               {loading ? "กำลังตรวจสอบ..." : "เข้าสู่ระบบ"}
@@ -174,7 +174,7 @@ export default function DriverLoginPage() {
 
             <div className="relative py-2">
               <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-white/5"></div></div>
-              <div className="relative flex justify-center text-[8px] font-black uppercase tracking-[0.4em]"><span className="bg-[#050110] px-4 text-slate-600">หรือเข้าสู่ระบบด้วย</span></div>
+              <div className="relative flex justify-center text-base font-bold font-black uppercase tracking-[0.4em]"><span className="bg-[#050110] px-4 text-slate-600">หรือเข้าสู่ระบบด้วย</span></div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -185,7 +185,7 @@ export default function DriverLoginPage() {
                  className="flex items-center justify-center gap-2 h-14 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all disabled:opacity-50"
                >
                   <Fingerprint size={16} className="text-primary" />
-                  <span className="text-[10px] font-black text-white uppercase tracking-widest pt-0.5">สแกนนิ้ว/หน้า</span>
+                  <span className="text-base font-bold font-black text-white uppercase tracking-widest pt-0.5">สแกนนิ้ว/หน้า</span>
                </button>
                <button 
                  type="button" 
@@ -194,14 +194,14 @@ export default function DriverLoginPage() {
                  className="flex items-center justify-center gap-2 h-14 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all disabled:opacity-50"
                >
                   <QrCode size={16} className="text-accent" />
-                  <span className="text-[10px] font-black text-white uppercase tracking-widest pt-0.5">สแกนคิวอาร์</span>
+                  <span className="text-base font-bold font-black text-white uppercase tracking-widest pt-0.5">สแกนคิวอาร์</span>
                </button>
             </div>
           </form>
         </div>
 
         <div className="text-center pt-4">
-           <p className="text-[10px] text-slate-500 font-medium">
+           <p className="text-base font-bold text-slate-500 font-medium">
              หากยังไม่มีบัญชี? <button onClick={() => router.push('/mobile/apply')} className="text-primary font-black uppercase tracking-widest">ลงทะเบียนสมัครคนขับ</button>
            </p>
         </div>
@@ -221,7 +221,7 @@ export default function DriverLoginPage() {
               <Lock size={32} />
             </div>
             <DialogTitle className="text-2xl font-black text-white text-center uppercase tracking-tighter italic">ลืมรหัสผ่าน?</DialogTitle>
-            <DialogDescription className="text-slate-400 text-center font-bold text-xs uppercase tracking-widest leading-relaxed">
+            <DialogDescription className="text-slate-400 text-center font-bold text-lg font-bold uppercase tracking-widest leading-relaxed">
               กรุณาจัดเตรียม &quot;รหัสพนักงาน&quot; และติดต่อหัวหน้าสายงาน หรือ ฝ่ายบุคคลประจำสาขาของท่านเพื่อดำเนินการรีเซ็ตรหัสผ่านใหม่
             </DialogDescription>
           </DialogHeader>
@@ -232,8 +232,8 @@ export default function DriverLoginPage() {
                 <Phone size={20} />
               </div>
               <div className="flex flex-col">
-                <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">สาขาของท่าน</span>
-                <span className="text-xs font-black text-white uppercase tracking-tight italic">ติดต่อสาขาโดยตรง</span>
+                <span className="text-base font-bold font-black text-slate-500 uppercase tracking-widest">สาขาของท่าน</span>
+                <span className="text-lg font-bold font-black text-white uppercase tracking-tight italic">ติดต่อสาขาโดยตรง</span>
               </div>
             </div>
             
@@ -242,15 +242,15 @@ export default function DriverLoginPage() {
                 <Headphones size={20} />
               </div>
               <div className="flex flex-col">
-                <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">ฝ่ายสนับสนุนส่วนกลาง</span>
-                <span className="text-xs font-black text-white uppercase tracking-tight italic">โทร. 02-XXX-XXXX</span>
+                <span className="text-base font-bold font-black text-slate-500 uppercase tracking-widest">ฝ่ายสนับสนุนส่วนกลาง</span>
+                <span className="text-lg font-bold font-black text-white uppercase tracking-tight italic">โทร. 02-XXX-XXXX</span>
               </div>
             </div>
           </div>
 
           <Button 
             onClick={() => setIsForgotOpen(false)}
-            className="w-full h-14 mt-8 bg-white/5 hover:bg-white/10 text-white rounded-2xl font-black uppercase tracking-widest text-[10px] border border-white/10"
+            className="w-full h-14 mt-8 bg-white/5 hover:bg-white/10 text-white rounded-2xl font-black uppercase tracking-widest text-base font-bold border border-white/10"
           >
             เข้าใจแล้ว
           </Button>
@@ -266,3 +266,4 @@ export default function DriverLoginPage() {
     </div>
   )
 }
+

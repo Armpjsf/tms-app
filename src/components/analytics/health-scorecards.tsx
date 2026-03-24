@@ -65,17 +65,17 @@ export function ExecutiveSectorHealth({ sectors }: { sectors: SectorHealth[] }) 
                         <Icon size={20} />
                     </div>
                     <div>
-                        <h4 className="text-[11px] font-black text-white uppercase tracking-[0.3em] italic leading-none">{sector.title}</h4>
-                        <p className="text-[8px] text-slate-500 font-bold uppercase tracking-widest mt-1">{t('dashboard.sector_integrity')}</p>
+                        <h4 className="text-base font-bold font-black text-white uppercase tracking-[0.3em] italic leading-none">{sector.title}</h4>
+                        <p className="text-base font-bold text-slate-500 font-bold uppercase tracking-widest mt-1">{t('dashboard.sector_integrity')}</p>
                     </div>
                 </div>
                 <div className="relative z-10">
                     {isOptimal ? (
-                        <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-black text-[9px] uppercase tracking-tighter italic">
+                        <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-black text-base font-bold uppercase tracking-tighter italic">
                             <CheckCircle2 size={10} strokeWidth={3} /> {t('dashboard.status_optimal')}
                         </div>
                     ) : (
-                        <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 font-black text-[9px] uppercase tracking-tighter italic animate-pulse">
+                        <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 font-black text-base font-bold uppercase tracking-tighter italic animate-pulse">
                             <Activity size={10} strokeWidth={3} /> {t('dashboard.status_attention')}
                         </div>
                     )}
@@ -87,12 +87,12 @@ export function ExecutiveSectorHealth({ sectors }: { sectors: SectorHealth[] }) 
                 {sector.metrics.map((m) => (
                   <div key={m.label} className="p-5 bg-white/5 rounded-2xl border border-white/5 group-hover:border-white/10 transition-all">
                     <div className="flex items-center justify-between mb-3">
-                        <p className="text-[9px] text-slate-500 font-black uppercase tracking-widest leading-none">{m.label}</p>
+                        <p className="text-base font-bold text-slate-500 font-black uppercase tracking-widest leading-none">{m.label}</p>
                         <div className={cn("w-1.5 h-1.5 rounded-full shadow-[0_0_8px_rgba(0,0,0,0.5)]", getStatusColor(m.status))} />
                     </div>
                     <div className="flex items-center gap-2">
                        <span className="text-3xl font-black text-white tracking-tighter italic leading-none">{m.value}</span>
-                       <span className={cn("text-[9px] font-black border px-2 py-0.5 rounded-lg uppercase tracking-tighter italic", getStatusText(m.status))}>
+                       <span className={cn("text-base font-bold font-black border px-2 py-0.5 rounded-lg uppercase tracking-tighter italic", getStatusText(m.status))}>
                           {m.status.toUpperCase()}
                        </span>
                     </div>
@@ -101,7 +101,7 @@ export function ExecutiveSectorHealth({ sectors }: { sectors: SectorHealth[] }) 
               </div>
               
               <Link href={sector.href} className="block group/link">
-                <button className="w-full h-12 rounded-2xl bg-slate-900 border border-slate-800 text-white font-black text-[10px] uppercase tracking-[0.2em] italic flex items-center justify-between px-6 group-hover/link:bg-white group-hover/link:text-black transition-all duration-500 overflow-hidden relative">
+                <button className="w-full h-12 rounded-2xl bg-slate-900 border border-slate-800 text-white font-black text-base font-bold uppercase tracking-[0.2em] italic flex items-center justify-between px-6 group-hover/link:bg-white group-hover/link:text-black transition-all duration-500 overflow-hidden relative">
                     <span className="relative z-10">{t('dashboard.access_sector')}</span>
                     <ChevronRight size={14} className="relative z-10 group-hover/link:translate-x-1 transition-transform" />
                 </button>
@@ -112,3 +112,4 @@ export function ExecutiveSectorHealth({ sectors }: { sectors: SectorHealth[] }) 
     </div>
   )
 }
+

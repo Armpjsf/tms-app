@@ -146,12 +146,12 @@ export default function CustomersSettingsPage() {
                 <div className="p-2 bg-primary/20 rounded-xl shadow-lg">
                     <Users className="text-primary" size={20} />
                 </div>
-                <h2 className="text-[11px] font-black text-primary uppercase tracking-[0.1em]">Strategic Partner Ecosystem</h2>
+                <h2 className="text-base font-bold font-black text-primary uppercase tracking-[0.1em]">Strategic Partner Ecosystem</h2>
             </div>
             <h1 className="text-6xl font-black text-white tracking-tighter flex items-center gap-5 uppercase premium-text-gradient">
                 {t('settings_pages.customers.title')}
             </h1>
-            <p className="text-slate-500 font-bold text-sm tracking-wide opacity-80 uppercase tracking-widest leading-relaxed">{t('settings_pages.customers.subtitle')}</p>
+            <p className="text-slate-500 font-bold text-xl tracking-wide opacity-80 uppercase tracking-widest leading-relaxed">{t('settings_pages.customers.subtitle')}</p>
         </div>
 
         <div className="flex flex-wrap gap-4 relative z-10">
@@ -193,11 +193,11 @@ export default function CustomersSettingsPage() {
                             <stat.icon size={24} strokeWidth={2.5} />
                         </div>
                         <div className="flex items-center gap-1.5 px-3 py-1 bg-white/5 rounded-full border border-white/5">
-                             <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest italic">{stat.trend}</span>
+                             <span className="text-base font-bold font-black text-slate-500 uppercase tracking-widest italic">{stat.trend}</span>
                         </div>
                     </div>
                     <div className="relative z-10">
-                        <p className="text-slate-500 font-black text-[11px] uppercase tracking-[0.1em] mb-2">{stat.label}</p>
+                        <p className="text-slate-500 font-black text-base font-bold uppercase tracking-[0.1em] mb-2">{stat.label}</p>
                         <p className="text-4xl font-black text-white tracking-tighter leading-none">{stat.value}</p>
                     </div>
                 </div>
@@ -237,7 +237,7 @@ export default function CustomersSettingsPage() {
 
             <div className="p-12 space-y-10 custom-scrollbar max-h-[70vh] overflow-y-auto">
               <div className="space-y-4">
-                <Label className="text-[11px] font-black uppercase tracking-[0.1em] text-slate-500 ml-2">{t('settings_pages.customers.dialog.name')}</Label>
+                <Label className="text-base font-bold font-black uppercase tracking-[0.1em] text-slate-500 ml-2">{t('settings_pages.customers.dialog.name')}</Label>
                 <div className="glass-panel p-1 rounded-2xl border-white/5">
                     <Input
                     value={formData.Customer_Name}
@@ -250,59 +250,59 @@ export default function CustomersSettingsPage() {
 
               <div className="grid grid-cols-2 gap-10">
                 <div className="space-y-4">
-                  <Label className="text-[11px] font-black uppercase tracking-[0.1em] text-slate-500 ml-2">{t('settings_pages.customers.dialog.phone')}</Label>
+                  <Label className="text-base font-bold font-black uppercase tracking-[0.1em] text-slate-500 ml-2">{t('settings_pages.customers.dialog.phone')}</Label>
                   <Input
                     value={formData.Phone || ""}
                     onChange={(e) => updateForm("Phone", e.target.value)}
                     placeholder="+66 XXX-XXXX"
-                    className="bg-white/5 border-white/5 rounded-2xl h-16 font-black px-8 text-white focus:ring-primary/40 focus:bg-white/10 transition-all uppercase tracking-widest text-sm"
+                    className="bg-white/5 border-white/5 rounded-2xl h-16 font-black px-8 text-white focus:ring-primary/40 focus:bg-white/10 transition-all uppercase tracking-widest text-xl"
                   />
                 </div>
                 <div className="space-y-4">
-                  <Label className="text-[11px] font-black uppercase tracking-[0.1em] text-slate-500 ml-2">{t('settings_pages.customers.dialog.email')}</Label>
+                  <Label className="text-base font-bold font-black uppercase tracking-[0.1em] text-slate-500 ml-2">{t('settings_pages.customers.dialog.email')}</Label>
                   <Input
                     value={formData.Email || ""}
                     onChange={(e) => updateForm("Email", e.target.value)}
                     placeholder="partner@logispro.matrix"
-                    className="bg-white/5 border-white/5 rounded-2xl h-16 font-black px-8 text-white focus:ring-primary/40 focus:bg-white/10 transition-all uppercase tracking-widest text-sm"
+                    className="bg-white/5 border-white/5 rounded-2xl h-16 font-black px-8 text-white focus:ring-primary/40 focus:bg-white/10 transition-all uppercase tracking-widest text-xl"
                   />
                 </div>
               </div>
 
               <div className="space-y-4">
-                <Label className="text-[11px] font-black uppercase tracking-[0.1em] text-slate-500 ml-2">{t('settings_pages.customers.dialog.address')}</Label>
+                <Label className="text-base font-bold font-black uppercase tracking-[0.1em] text-slate-500 ml-2">{t('settings_pages.customers.dialog.address')}</Label>
                 <Textarea
                   value={formData.Address || ""}
                   onChange={(e) => updateForm("Address", e.target.value)}
                   placeholder="SPECIFY FULL OPERATIONAL COORDINATES..."
-                  className="bg-white/5 border-white/5 rounded-[2rem] min-h-[140px] font-bold p-8 text-white focus:ring-primary/40 focus:bg-white/10 transition-all uppercase tracking-wide leading-relaxed text-sm placeholder:text-slate-800"
+                  className="bg-white/5 border-white/5 rounded-[2rem] min-h-[140px] font-bold p-8 text-white focus:ring-primary/40 focus:bg-white/10 transition-all uppercase tracking-wide leading-relaxed text-xl placeholder:text-slate-800"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-10">
                 <div className="space-y-4">
-                  <Label className="text-[11px] font-black uppercase tracking-[0.1em] text-slate-500 ml-2">{t('settings_pages.customers.dialog.branch')}</Label>
+                  <Label className="text-base font-bold font-black uppercase tracking-[0.1em] text-slate-500 ml-2">{t('settings_pages.customers.dialog.branch')}</Label>
                   <Input
                     value={formData.Customer_ID || ""}
                     onChange={(e) => updateForm("Customer_ID", e.target.value)}
                     placeholder="SYSTEM GENERATED"
-                    className="bg-white/5 border-white/5 rounded-2xl h-16 font-black px-8 text-white focus:ring-primary/40 focus:bg-white/10 transition-all uppercase tracking-widest text-sm"
+                    className="bg-white/5 border-white/5 rounded-2xl h-16 font-black px-8 text-white focus:ring-primary/40 focus:bg-white/10 transition-all uppercase tracking-widest text-xl"
                     disabled={!!editingCustomer}
                   />
                 </div>
                  <div className="space-y-4">
-                   <Label className="text-[11px] font-black uppercase tracking-[0.1em] text-slate-500 ml-2">{t('settings_pages.customers.dialog.tax_id')}</Label>
+                   <Label className="text-base font-bold font-black uppercase tracking-[0.1em] text-slate-500 ml-2">{t('settings_pages.customers.dialog.tax_id')}</Label>
                   <Input
                     value={formData.Tax_ID || ""}
                     onChange={(e) => updateForm("Tax_ID", e.target.value)}
                     placeholder="13-DIGIT VERIFIER"
-                    className="bg-white/5 border-white/5 rounded-2xl h-16 font-black px-8 text-white focus:ring-primary/40 focus:bg-white/10 transition-all uppercase tracking-widest text-sm"
+                    className="bg-white/5 border-white/5 rounded-2xl h-16 font-black px-8 text-white focus:ring-primary/40 focus:bg-white/10 transition-all uppercase tracking-widest text-xl"
                   />
                 </div>
               </div>
 
               <div className="space-y-4">
-                <Label className="text-[11px] font-black uppercase tracking-[0.1em] text-primary ml-2 flex items-center gap-3">
+                <Label className="text-base font-bold font-black uppercase tracking-[0.1em] text-primary ml-2 flex items-center gap-3">
                     <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
                     {t('settings_pages.customers.dialog.line_id')}
                 </Label>
@@ -335,7 +335,7 @@ export default function CustomersSettingsPage() {
                 <Loader2 className="animate-spin text-primary opacity-40" size={80} strokeWidth={1} />
                 <Activity className="absolute inset-0 m-auto text-primary animate-pulse" size={32} />
              </div>
-             <p className="mt-10 text-slate-700 font-black uppercase tracking-[0.6em] text-[10px] animate-pulse">{t('settings_pages.customers.status.syncing')}</p>
+             <p className="mt-10 text-slate-700 font-black uppercase tracking-[0.6em] text-base font-bold animate-pulse">{t('settings_pages.customers.status.syncing')}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
@@ -352,9 +352,9 @@ export default function CustomersSettingsPage() {
                     <div>
                       <h3 className="text-2xl font-black text-white tracking-tighter group-hover:text-primary transition-colors line-clamp-1 duration-500 uppercase font-display">{customer.Customer_Name}</h3>
                       <div className="flex items-center gap-3 mt-2">
-                          <span className="text-slate-500 font-black text-[9px] uppercase tracking-[0.3em]">{customer.Customer_ID}</span>
+                          <span className="text-slate-500 font-black text-base font-bold uppercase tracking-[0.3em]">{customer.Customer_ID}</span>
                           <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse shadow-[0_0_10px_rgba(255,30,133,1)]" />
-                          <span className="text-primary font-black text-[9px] uppercase tracking-[0.4em] italic opacity-70">{t('settings_pages.customers.status.strategic')}</span>
+                          <span className="text-primary font-black text-base font-bold uppercase tracking-[0.4em] italic opacity-70">{t('settings_pages.customers.status.strategic')}</span>
                       </div>
                     </div>
                   </div>
@@ -381,8 +381,8 @@ export default function CustomersSettingsPage() {
                             <ShieldCheck size={18} strokeWidth={2.5} />
                         </div>
                         <div>
-                            <p className="text-[8px] font-black text-slate-600 uppercase tracking-[0.3em] mb-1">{t('settings_pages.customers.dialog.tax_id')}</p>
-                            <p className="text-sm font-black text-slate-300 tracking-tight">{customer.Tax_ID || t('settings_pages.customers.status.unverified')}</p>
+                            <p className="text-base font-bold font-black text-slate-600 uppercase tracking-[0.3em] mb-1">{t('settings_pages.customers.dialog.tax_id')}</p>
+                            <p className="text-xl font-black text-slate-300 tracking-tight">{customer.Tax_ID || t('settings_pages.customers.status.unverified')}</p>
                         </div>
                   </div>
 
@@ -391,17 +391,17 @@ export default function CustomersSettingsPage() {
                         <div className="absolute top-0 right-0 w-12 h-12 bg-accent/5 blur-2xl rounded-full" />
                         <div className="flex items-center gap-2 mb-3">
                             <Phone size={14} className="text-accent" />
-                            <span className="text-[8px] font-black text-slate-600 uppercase tracking-widest leading-none">{t('settings_pages.customers.dialog.phone')}</span>
+                            <span className="text-base font-bold font-black text-slate-600 uppercase tracking-widest leading-none">{t('settings_pages.customers.dialog.phone')}</span>
                         </div>
-                        <p className="text-[11px] font-black text-slate-300 truncate tracking-widest">{customer.Phone || t('settings_pages.customers.status.offline')}</p>
+                        <p className="text-base font-bold font-black text-slate-300 truncate tracking-widest">{customer.Phone || t('settings_pages.customers.status.offline')}</p>
                     </div>
                     <div className="p-6 bg-white/[0.02] rounded-3xl border border-white/5 group-hover:bg-white/[0.04] transition-all duration-700 relative overflow-hidden">
                         <div className="absolute top-0 right-0 w-12 h-12 bg-primary/5 blur-2xl rounded-full" />
                         <div className="flex items-center gap-2 mb-3">
                             <MapPin size={14} className="text-primary" />
-                            <span className="text-[8px] font-black text-slate-600 uppercase tracking-widest leading-none">{t('settings_pages.customers.dialog.branch')}</span>
+                            <span className="text-base font-bold font-black text-slate-600 uppercase tracking-widest leading-none">{t('settings_pages.customers.dialog.branch')}</span>
                         </div>
-                        <p className="text-[11px] font-black text-slate-300 truncate tracking-widest">{customer.Branch_ID || "Global"}</p>
+                        <p className="text-base font-bold font-black text-slate-300 truncate tracking-widest">{customer.Branch_ID || "Global"}</p>
                     </div>
                   </div>
                 </div>
@@ -413,11 +413,11 @@ export default function CustomersSettingsPage() {
                     <div className="p-2 bg-white/5 rounded-xl border border-white/5">
                         <Mail size={12} className="text-slate-600 group-hover:text-primary transition-colors" />
                     </div>
-                    <span className="text-[9px] font-black text-slate-600 uppercase tracking-widest truncate max-w-[160px] italic group-hover:text-slate-400 transition-colors">{customer.Email || "registry-pending@logispro.io"}</span>
+                    <span className="text-base font-bold font-black text-slate-600 uppercase tracking-widest truncate max-w-[160px] italic group-hover:text-slate-400 transition-colors">{customer.Email || "registry-pending@logispro.io"}</span>
                 </div>
                 <div className="flex items-center gap-2 px-4 py-2 bg-primary/20 text-primary rounded-2xl shadow-lg shadow-primary/5 ring-1 ring-primary/30">
                     <Zap size={14} className="animate-pulse" />
-                    <span className="text-[9px] font-black tracking-[0.2em]">{t('settings_pages.customers.status.connected')}</span>
+                    <span className="text-base font-bold font-black tracking-[0.2em]">{t('settings_pages.customers.status.connected')}</span>
                 </div>
               </div>
             </div>
@@ -427,17 +427,18 @@ export default function CustomersSettingsPage() {
           {customers.length === 0 && (
             <div className="col-span-full text-center py-40 glass-panel rounded-[4rem] border-dashed border-white/5 group">
               <Activity className="w-20 h-20 text-slate-800 mx-auto mb-8 opacity-20 group-hover:scale-110 transition-transform duration-1000" />
-              <p className="text-slate-700 font-black uppercase tracking-[0.5em] text-[10px]">{t('settings_pages.customers.status.empty')}</p>
+              <p className="text-slate-700 font-black uppercase tracking-[0.5em] text-base font-bold">{t('settings_pages.customers.status.empty')}</p>
             </div>
           )}
         </div>
       )}
 
       <div className="mt-20 text-center mb-24">
-        <div className="inline-flex items-center gap-4 px-8 py-3 glass-panel rounded-full text-[9px] font-black text-slate-700 uppercase tracking-[0.6em] opacity-40 hover:opacity-100 transition-opacity">
+        <div className="inline-flex items-center gap-4 px-8 py-3 glass-panel rounded-full text-base font-bold font-black text-slate-700 uppercase tracking-[0.6em] opacity-40 hover:opacity-100 transition-opacity">
             <Activity size={14} className="text-primary" /> {t('settings_pages.customers.status.footer')}
         </div>
       </div>
     </DashboardLayout>
   )
 }
+

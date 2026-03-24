@@ -245,8 +245,8 @@ function KanbanColumn({
             column.color === 'amber' ? "text-amber-500 bg-amber-500" :
             column.color === 'teal' ? "text-primary bg-primary" : "text-slate-700 bg-slate-700"
           )} />
-          <h3 className="text-[10px] font-black text-white uppercase tracking-[0.4em] italic leading-none">{column.title}</h3>
-          <span className="text-[10px] font-black text-slate-500 bg-white/5 px-3 py-1 rounded-full border border-white/5">
+          <h3 className="text-base font-bold font-black text-white uppercase tracking-[0.4em] italic leading-none">{column.title}</h3>
+          <span className="text-base font-bold font-black text-slate-500 bg-white/5 px-3 py-1 rounded-full border border-white/5">
             {jobs.length}
           </span>
         </div>
@@ -275,7 +275,7 @@ function KanbanColumn({
         {jobs.length === 0 && (
             <div className="h-32 border-2 border-dashed border-white/5 rounded-[2rem] flex flex-col items-center justify-center text-slate-800 space-y-2 group-hover/col:border-primary/20 transition-colors">
                 <Zap size={24} className="opacity-10" />
-                <span className="text-[9px] font-black uppercase tracking-[0.3em] opacity-40">Drop Tactical Node</span>
+                <span className="text-base font-bold font-black uppercase tracking-[0.3em] opacity-40">Drop Tactical Node</span>
             </div>
         )}
       </div>
@@ -381,12 +381,12 @@ function JobCard({ job, isOverlay }: { job: Job; isOverlay?: boolean }) {
                         <Package size={18} strokeWidth={2.5} />
                     </div>
                     <div>
-                        <p className="text-[11px] font-black text-white tracking-tighter uppercase font-display leading-none group-hover/card:text-primary transition-colors">{job.Job_ID}</p>
-                        <p className="text-[8px] font-black text-slate-600 uppercase tracking-widest mt-1 italic">Mission Node</p>
+                        <p className="text-base font-bold font-black text-white tracking-tighter uppercase font-display leading-none group-hover/card:text-primary transition-colors">{job.Job_ID}</p>
+                        <p className="text-base font-bold font-black text-slate-600 uppercase tracking-widest mt-1 italic">Mission Node</p>
                     </div>
                 </div>
                 <Badge className={cn(
-                    "border-0 text-[8px] font-black px-3 py-1 rounded-lg uppercase tracking-widest",
+                    "border-0 text-base font-bold font-black px-3 py-1 rounded-lg uppercase tracking-widest",
                     job.Job_Status === 'New' || job.Job_Status === 'Pending' ? "bg-emerald-500/10 text-emerald-500" :
                     job.Job_Status === 'In Transit' ? "bg-amber-500/10 text-amber-500" :
                     job.Job_Status === 'Completed' ? "bg-primary/10 text-primary" : "bg-white/5 text-slate-500"
@@ -400,11 +400,11 @@ function JobCard({ job, isOverlay }: { job: Job; isOverlay?: boolean }) {
             </h4>
 
             <div className="space-y-3 mb-6">
-                <div className="flex items-center gap-3 text-[9px] font-black text-slate-500 uppercase tracking-widest italic">
+                <div className="flex items-center gap-3 text-base font-bold font-black text-slate-500 uppercase tracking-widest italic">
                     <MapPin size={12} className="text-primary/40" />
                     <span className="truncate max-w-[180px]">{job.Dest_Location || 'Grid TBD'}</span>
                 </div>
-                <div className="flex items-center gap-3 text-[9px] font-black text-slate-500 uppercase tracking-widest italic">
+                <div className="flex items-center gap-3 text-base font-bold font-black text-slate-500 uppercase tracking-widest italic">
                     <Truck size={12} className="text-primary/40" />
                     <span className="group-hover/card:text-slate-300 transition-colors">{job.Vehicle_Plate || 'Asset-TBD'}</span>
                     <span className="mx-1 opacity-20">|</span>
@@ -414,17 +414,18 @@ function JobCard({ job, isOverlay }: { job: Job; isOverlay?: boolean }) {
             </div>
 
             <div className="flex items-center justify-between pt-5 border-t border-white/5">
-                <div className="flex items-center gap-2 text-[8px] font-black text-slate-600 uppercase tracking-[0.2em] italic">
+                <div className="flex items-center gap-2 text-base font-bold font-black text-slate-600 uppercase tracking-[0.2em] italic">
                     <Calendar size={12} className="text-slate-700" />
                     {job.Plan_Date || 'TBD'}
                 </div>
                 {job.Weight_Kg && job.Weight_Kg > 0 ? (
                     <div className="flex items-center gap-1.5 px-3 py-1 bg-white/5 rounded-lg border border-white/5">
                         <Package size={10} className="text-primary/40" />
-                        <span className="text-[8px] font-black text-white/60 tracking-widest">{job.Weight_Kg} KG</span>
+                        <span className="text-base font-bold font-black text-white/60 tracking-widest">{job.Weight_Kg} KG</span>
                     </div>
                 ) : null}
             </div>
         </PremiumCard>
     )
 }
+

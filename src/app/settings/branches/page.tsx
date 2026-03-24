@@ -146,7 +146,7 @@ export default function BranchSettingsPage() {
             <div className="absolute top-0 right-0 w-80 h-80 bg-primary/10 blur-[120px] rounded-full -mr-40 -mt-40 pointer-events-none" />
             
             <div className="relative z-10 space-y-8">
-                <button onClick={() => router.back()} className="inline-flex items-center gap-2 text-slate-500 hover:text-primary transition-all font-black uppercase tracking-[0.1em] text-[11px] group/back italic">
+                <button onClick={() => router.back()} className="inline-flex items-center gap-2 text-slate-500 hover:text-primary transition-all font-black uppercase tracking-[0.1em] text-base font-bold group/back italic">
                     <ArrowLeft className="w-4 h-4 group-hover/back:-translate-x-1 transition-transform" /> 
                     Command Control
                 </button>
@@ -158,7 +158,7 @@ export default function BranchSettingsPage() {
                         <h1 className="text-5xl font-black text-white tracking-widest uppercase leading-none italic premium-text-gradient">
                             {t('settings_pages.branches.title')}
                         </h1>
-                        <p className="text-[11px] font-black text-primary uppercase tracking-[0.2em] mt-2 opacity-80 italic">{t('settings_pages.branches.subtitle')}</p>
+                        <p className="text-base font-bold font-black text-primary uppercase tracking-[0.2em] mt-2 opacity-80 italic">{t('settings_pages.branches.subtitle')}</p>
                     </div>
                 </div>
             </div>
@@ -166,11 +166,11 @@ export default function BranchSettingsPage() {
             <div className="flex flex-col items-end gap-6 relative z-10">
                 <div className="bg-white/5 border border-white/10 px-6 py-3 rounded-2xl flex items-center gap-3 backdrop-blur-md">
                     <div className="w-2 h-2 rounded-full bg-primary animate-pulse shadow-[0_0_10px_rgba(255,30,133,1)]" />
-                    <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest italic">Signal Protocol: SECURE</span>
+                    <span className="text-base font-bold font-black text-slate-400 uppercase tracking-widest italic">Signal Protocol: SECURE</span>
                 </div>
                 <PremiumButton 
                     onClick={() => setIsCreateDialogOpen(true)}
-                    className="h-16 px-10 rounded-2xl bg-primary text-white border-0 shadow-[0_20px_50px_rgba(255,30,133,0.3)] gap-4 text-sm tracking-widest"
+                    className="h-16 px-10 rounded-2xl bg-primary text-white border-0 shadow-[0_20px_50px_rgba(255,30,133,0.3)] gap-4 text-xl tracking-widest"
                 >
                     <Plus size={20} /> {t('settings_pages.branches.add_branch')}
                 </PremiumButton>
@@ -180,7 +180,7 @@ export default function BranchSettingsPage() {
         {loading && branches.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-40 gap-6 opacity-30">
             <Loader2 className="w-12 h-12 animate-spin text-primary" />
-            <p className="text-sm font-black text-white uppercase tracking-[0.8em] animate-pulse">{t('settings_pages.branches.loading')}</p>
+            <p className="text-xl font-black text-white uppercase tracking-[0.8em] animate-pulse">{t('settings_pages.branches.loading')}</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-12">
@@ -202,7 +202,7 @@ export default function BranchSettingsPage() {
                         <div>
                           <h3 className="text-3xl font-black text-white tracking-widest uppercase italic group-hover/branch:text-primary transition-colors">{branch.Branch_Name}</h3>
                           <div className="flex items-center gap-3 mt-2">
-                             <div className="px-5 py-1.5 rounded-xl bg-white/5 text-[11px] font-black text-primary uppercase tracking-[0.1em] border border-primary/20 shadow-lg italic">
+                             <div className="px-5 py-1.5 rounded-xl bg-white/5 text-base font-bold font-black text-primary uppercase tracking-[0.1em] border border-primary/20 shadow-lg italic">
                                NODE_ID: {branch.Branch_ID}
                              </div>
                              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,1)]" />
@@ -211,7 +211,7 @@ export default function BranchSettingsPage() {
                       </div>
                       <div className="flex items-center gap-4 relative z-10">
                         {savingId === branch.Branch_ID ? (
-                          <div className="flex items-center gap-3 px-8 text-primary font-black uppercase text-[10px] tracking-widest italic animate-pulse">
+                          <div className="flex items-center gap-3 px-8 text-primary font-black uppercase text-base font-bold tracking-widest italic animate-pulse">
                             <Loader2 size={16} className="animate-spin" />
                             {t('settings_pages.branches.syncing')}
                           </div>
@@ -249,7 +249,7 @@ export default function BranchSettingsPage() {
                           
                           <div className="space-y-8">
                              <div className="space-y-4">
-                                <Label className="text-[11px] font-black uppercase text-primary/60 tracking-[0.1em] ml-6">{t('settings_pages.branches.hub_designation')}</Label>
+                                <Label className="text-base font-bold font-black uppercase text-primary/60 tracking-[0.1em] ml-6">{t('settings_pages.branches.hub_designation')}</Label>
                                 <Input 
                                   value={editState[branch.Branch_ID]?.Branch_Name || ""}
                                   onChange={(e) => handleInputChange(branch.Branch_ID, 'Branch_Name', e.target.value)}
@@ -257,7 +257,7 @@ export default function BranchSettingsPage() {
                                 />
                              </div>
                              <div className="space-y-4">
-                                <Label className="text-[11px] font-black uppercase text-primary/60 tracking-[0.1em] ml-6">{t('settings_pages.branches.coordinates')}</Label>
+                                <Label className="text-base font-bold font-black uppercase text-primary/60 tracking-[0.1em] ml-6">{t('settings_pages.branches.coordinates')}</Label>
                                 <Input 
                                   value={editState[branch.Branch_ID]?.Address || ""}
                                   onChange={(e) => handleInputChange(branch.Branch_ID, 'Address', e.target.value)}
@@ -266,7 +266,7 @@ export default function BranchSettingsPage() {
                                 />
                              </div>
                              <div className="space-y-4">
-                                <Label className="text-[11px] font-black uppercase text-primary/60 tracking-[0.1em] ml-6">{t('settings_pages.branches.comm_link')}</Label>
+                                <Label className="text-base font-bold font-black uppercase text-primary/60 tracking-[0.1em] ml-6">{t('settings_pages.branches.comm_link')}</Label>
                                 <Input 
                                   value={editState[branch.Branch_ID]?.Phone || ""}
                                   onChange={(e) => handleInputChange(branch.Branch_ID, 'Phone', e.target.value)}
@@ -288,7 +288,7 @@ export default function BranchSettingsPage() {
 
                           <div className="space-y-8">
                              <div className="space-y-4">
-                                <Label className="text-[11px] font-black uppercase text-emerald-500/60 tracking-[0.1em] ml-6">{t('settings_pages.branches.sender_gateway')}</Label>
+                                <Label className="text-base font-bold font-black uppercase text-emerald-500/60 tracking-[0.1em] ml-6">{t('settings_pages.branches.sender_gateway')}</Label>
                                 <Input 
                                   value={editState[branch.Branch_ID]?.Email || ""}
                                   onChange={(e) => handleInputChange(branch.Branch_ID, 'Email', e.target.value)}
@@ -297,7 +297,7 @@ export default function BranchSettingsPage() {
                                 />
                              </div>
                              <div className="space-y-4">
-                                <Label className="text-[11px] font-black uppercase text-emerald-500/60 tracking-[0.1em] ml-6">{t('settings_pages.branches.auth_sender')}</Label>
+                                <Label className="text-base font-bold font-black uppercase text-emerald-500/60 tracking-[0.1em] ml-6">{t('settings_pages.branches.auth_sender')}</Label>
                                 <Input 
                                   value={editState[branch.Branch_ID]?.Sender_Name || ""}
                                   onChange={(e) => handleInputChange(branch.Branch_ID, 'Sender_Name', e.target.value)}
@@ -311,7 +311,7 @@ export default function BranchSettingsPage() {
                             <div className="absolute top-0 right-0 p-4 opacity-20">
                                 <ShieldCheck size={40} className="text-emerald-500" />
                             </div>
-                            <p className="text-xs font-black text-emerald-500/60 leading-relaxed uppercase tracking-widest italic relative z-10">
+                            <p className="text-lg font-bold font-black text-emerald-500/60 leading-relaxed uppercase tracking-widest italic relative z-10">
                               * THIS HUB CONFIGURATION OVERRIDES GLOBAL PROTOCOLS FOR AUTOMATED INTELLIGENCE REPORTS AND DIGITAL POD EMISSIONS.
                             </p>
                           </div>
@@ -345,12 +345,12 @@ export default function BranchSettingsPage() {
           </div>
           <div className="space-y-4 text-center md:text-left">
             <p className="text-xl font-black text-primary italic uppercase tracking-widest">TACTICAL HUB ADVISORY</p>
-            <p className="text-sm font-bold text-slate-500 leading-relaxed uppercase tracking-wider italic">
+            <p className="text-xl font-bold text-slate-500 leading-relaxed uppercase tracking-wider italic">
               Branch-specific signal overrides allow for granular client targeting. If a node is unconfigured, the system resorts to Global Command protocols for document emission. <br />
               Ensure all node identifiers (IDs) are unique to prevent signal interference.
             </p>
           </div>
-          <PremiumButton variant="outline" className="h-14 px-10 rounded-2xl border-white/10 text-white gap-3 uppercase font-black text-[10px] tracking-[0.3em] ml-auto italic">
+          <PremiumButton variant="outline" className="h-14 px-10 rounded-2xl border-white/10 text-white gap-3 uppercase font-black text-base font-bold tracking-[0.3em] ml-auto italic">
             <Target size={18} /> SYNC_ALL_NODES
           </PremiumButton>
         </motion.div>
@@ -376,7 +376,7 @@ export default function BranchSettingsPage() {
             <div className="grid gap-10">
               <div className="grid grid-cols-2 gap-10">
                 <div className="space-y-3">
-                  <Label className="text-[10px] font-black uppercase text-slate-600 tracking-[0.4em] ml-4">NODE_ID (Unique)</Label>
+                  <Label className="text-base font-bold font-black uppercase text-slate-600 tracking-[0.4em] ml-4">NODE_ID (Unique)</Label>
                   <Input 
                     value={newBranch.Branch_ID || ""}
                     onChange={(e) => setNewBranch(prev => ({ ...prev, Branch_ID: e.target.value }))}
@@ -385,7 +385,7 @@ export default function BranchSettingsPage() {
                   />
                 </div>
                 <div className="space-y-3">
-                  <Label className="text-[10px] font-black uppercase text-slate-600 tracking-[0.4em] ml-4">NODE_DESIGNATION</Label>
+                  <Label className="text-base font-bold font-black uppercase text-slate-600 tracking-[0.4em] ml-4">NODE_DESIGNATION</Label>
                   <Input 
                     value={newBranch.Branch_Name || ""}
                     onChange={(e) => setNewBranch(prev => ({ ...prev, Branch_Name: e.target.value }))}
@@ -396,7 +396,7 @@ export default function BranchSettingsPage() {
               </div>
 
               <div className="space-y-3">
-                <Label className="text-[10px] font-black uppercase text-slate-600 tracking-[0.4em] ml-4">GEOSPATIAL_NULL</Label>
+                <Label className="text-base font-bold font-black uppercase text-slate-600 tracking-[0.4em] ml-4">GEOSPATIAL_NULL</Label>
                 <Input 
                   value={newBranch.Address || ""}
                   onChange={(e) => setNewBranch(prev => ({ ...prev, Address: e.target.value }))}
@@ -406,7 +406,7 @@ export default function BranchSettingsPage() {
               </div>
 
               <div className="space-y-3">
-                <Label className="text-[10px] font-black uppercase text-slate-600 tracking-[0.4em] ml-4">VOICE_UPLINK</Label>
+                <Label className="text-base font-bold font-black uppercase text-slate-600 tracking-[0.4em] ml-4">VOICE_UPLINK</Label>
                 <Input 
                   value={newBranch.Phone || ""}
                   onChange={(e) => setNewBranch(prev => ({ ...prev, Phone: e.target.value }))}
@@ -438,3 +438,4 @@ export default function BranchSettingsPage() {
     </DashboardLayout>
   )
 }
+

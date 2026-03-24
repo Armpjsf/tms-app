@@ -53,10 +53,11 @@ export default async function JobHistoryPage(props: Props) {
       />
       
       <div className="mt-12 text-center mb-20">
-        <div className="inline-flex items-center gap-3 px-6 py-2 glass-panel rounded-full text-[9px] font-black text-slate-600 uppercase tracking-[0.5em] opacity-40">
+        <div className="inline-flex items-center gap-3 px-6 py-2 glass-panel rounded-full text-base font-bold font-black text-slate-600 uppercase tracking-[0.5em] opacity-40">
             <ShieldCheck size={14} /> Encrypted Tactical Ledger Node v4.2
         </div>
       </div>
     </DashboardLayout>
   )
 }
+

@@ -161,11 +161,11 @@ export default function CustomerBillingHistory() {
   const getStatusBadge = (status: string) => {
     switch(status) {
         case 'Paid':
-            return <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20 px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest">ชำระแล้ว</Badge>
+            return <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20 px-3 py-1 rounded-full text-lg font-bold font-black uppercase tracking-widest">ชำระแล้ว</Badge>
         case 'Pending':
-            return <Badge className="bg-amber-500/10 text-amber-400 border-amber-500/20 px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest">รอดำเนินการ</Badge>
+            return <Badge className="bg-amber-500/10 text-amber-400 border-amber-500/20 px-3 py-1 rounded-full text-lg font-bold font-black uppercase tracking-widest">รอดำเนินการ</Badge>
         default:
-            return <Badge className="bg-blue-500/10 text-blue-400 border-blue-500/20 px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest">{status}</Badge>
+            return <Badge className="bg-blue-500/10 text-blue-400 border-blue-500/20 px-3 py-1 rounded-full text-lg font-bold font-black uppercase tracking-widest">{status}</Badge>
     }
   }
 
@@ -177,7 +177,7 @@ export default function CustomerBillingHistory() {
            initial={{ opacity: 0, x: -20 }}
            animate={{ opacity: 1, x: 0 }}
         >
-          <button onClick={() => router.back()} className="flex items-center gap-2 text-gray-500 hover:text-emerald-600 transition-colors mb-3 text-sm font-bold">
+          <button onClick={() => router.back()} className="flex items-center gap-2 text-gray-500 hover:text-emerald-600 transition-colors mb-3 text-xl font-bold">
             <ArrowLeft className="w-4 h-4" /> ย้อนกลับ
           </button>
           <h1 className="text-4xl font-black text-slate-100 tracking-tighter flex items-center gap-4">
@@ -186,7 +186,7 @@ export default function CustomerBillingHistory() {
             </span>
             ประวัติการวางบิล
           </h1>
-          <p className="text-slate-400 font-bold mt-2 ml-16 uppercase tracking-widest text-xs">Customer Billing Intelligence</p>
+          <p className="text-slate-400 font-bold mt-2 ml-16 uppercase tracking-widest text-lg font-bold">Customer Billing Intelligence</p>
         </motion.div>
 
         <div className="flex items-center gap-3">
@@ -222,7 +222,7 @@ export default function CustomerBillingHistory() {
               <PopoverContent className="w-80 p-6 bg-slate-900 border-white/10 rounded-3xl shadow-2xl" align="end">
                 <div className="space-y-6">
                   <div className="flex items-center justify-between">
-                    <h4 className="font-black text-slate-100 uppercase tracking-widest text-xs">ตัวกรองข้อมูล</h4>
+                    <h4 className="font-black text-slate-100 uppercase tracking-widest text-lg font-bold">ตัวกรองข้อมูล</h4>
                     {(dateFrom || dateTo || statusFilter !== 'all') && (
                         <button 
                             onClick={() => {
@@ -230,7 +230,7 @@ export default function CustomerBillingHistory() {
                                 setDateTo("")
                                 setStatusFilter("all")
                             }}
-                            className="text-[10px] font-bold text-rose-400 hover:text-rose-300 transition-colors uppercase"
+                            className="text-base font-bold font-bold text-rose-400 hover:text-rose-300 transition-colors uppercase"
                         >
                             ล้างทั้งหมด
                         </button>
@@ -239,7 +239,7 @@ export default function CustomerBillingHistory() {
 
                   <div className="space-y-4">
                     <div className="space-y-2">
-                        <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">สถานะ</Label>
+                        <Label className="text-base font-bold font-black text-slate-500 uppercase tracking-widest px-1">สถานะ</Label>
                         <Select value={statusFilter} onValueChange={setStatusFilter}>
                             <SelectTrigger className="bg-white/5 border-white/10 rounded-xl h-12 font-bold text-slate-200">
                                 <SelectValue placeholder="เลือกสถานะ" />
@@ -254,7 +254,7 @@ export default function CustomerBillingHistory() {
 
                     <div className="grid grid-cols-2 gap-3">
                         <div className="space-y-2">
-                            <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">ตั้งแต่วันที่</Label>
+                            <Label className="text-base font-bold font-black text-slate-500 uppercase tracking-widest px-1">ตั้งแต่วันที่</Label>
                             <Input 
                                 type="date" 
                                 value={dateFrom} 
@@ -263,7 +263,7 @@ export default function CustomerBillingHistory() {
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">ถึงวันที่</Label>
+                            <Label className="text-base font-bold font-black text-slate-500 uppercase tracking-widest px-1">ถึงวันที่</Label>
                             <Input 
                                 type="date" 
                                 value={dateTo} 
@@ -290,12 +290,12 @@ export default function CustomerBillingHistory() {
             <Table>
               <TableHeader className="bg-white/5">
                 <TableRow className="border-white/10 hover:bg-transparent">
-                  <TableHead className="font-black text-slate-200 uppercase tracking-widest text-xs py-6 pl-8">เลขที่เอกสาร</TableHead>
-                  <TableHead className="font-black text-slate-300 uppercase tracking-widest text-xs py-6">วันที่เอกสาร</TableHead>
-                  <TableHead className="font-black text-slate-300 uppercase tracking-widest text-xs py-6">ลูกค้า</TableHead>
-                  <TableHead className="font-black text-slate-300 uppercase tracking-widest text-xs py-6 text-right">จำนวนเงินรวม</TableHead>
-                  <TableHead className="font-black text-slate-300 uppercase tracking-widest text-xs py-6 text-center">สถานะ</TableHead>
-                  <TableHead className="font-black text-slate-300 uppercase tracking-widest text-xs py-6 text-right pr-8">จัดการ</TableHead>
+                  <TableHead className="font-black text-slate-200 uppercase tracking-widest text-lg font-bold py-6 pl-8">เลขที่เอกสาร</TableHead>
+                  <TableHead className="font-black text-slate-300 uppercase tracking-widest text-lg font-bold py-6">วันที่เอกสาร</TableHead>
+                  <TableHead className="font-black text-slate-300 uppercase tracking-widest text-lg font-bold py-6">ลูกค้า</TableHead>
+                  <TableHead className="font-black text-slate-300 uppercase tracking-widest text-lg font-bold py-6 text-right">จำนวนเงินรวม</TableHead>
+                  <TableHead className="font-black text-slate-300 uppercase tracking-widest text-lg font-bold py-6 text-center">สถานะ</TableHead>
+                  <TableHead className="font-black text-slate-300 uppercase tracking-widest text-lg font-bold py-6 text-right pr-8">จัดการ</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -401,3 +401,4 @@ export default function CustomerBillingHistory() {
     </DashboardLayout>
   )
 }
+

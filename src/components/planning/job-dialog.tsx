@@ -598,7 +598,7 @@ export function JobDialog({
               key={tab.id}
               type="button"
               onClick={() => setActiveTab(tab.id)}
-              className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-black transition-colors ${
+              className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md text-xl font-black transition-colors ${
                 activeTab === tab.id 
                   ? 'bg-emerald-600 text-white shadow-lg' 
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
@@ -623,7 +623,7 @@ export function JobDialog({
                     placeholder="ปล่อยว่างเพื่อ gen อัตโนมัติ"
                     className="bg-background border-input"
                   />
-                  <p className="text-[10px] text-muted-foreground italic">เว้นว่างไว้หากต้องการให้ระบบรันเลขให้</p>
+                  <p className="text-base font-bold text-muted-foreground italic">เว้นว่างไว้หากต้องการให้ระบบรันเลขให้</p>
                   <Button
                     type="button"
                     variant="outline"
@@ -719,7 +719,7 @@ export function JobDialog({
                         ))}
                       </SelectContent>
                     </Select>
-                    <p className="text-[10px] text-muted-foreground mt-1">
+                    <p className="text-base font-bold text-muted-foreground mt-1">
                       หากไม่เลือก จะใช้สาขาที่ท่านกำลังเลือกอยู่ที่แถบด้านบน (Header)
                     </p>
                 </div>
@@ -812,7 +812,7 @@ export function JobDialog({
                     <div className="space-y-3">
                         <div className="flex items-center justify-between">
                         <Label className="text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
-                            <MapPin className="w-4 h-4" /> จุดต้นทาง <span className="text-muted-foreground text-xs">({originLocations.length})</span>
+                            <MapPin className="w-4 h-4" /> จุดต้นทาง <span className="text-muted-foreground text-lg font-bold">({originLocations.length})</span>
                         </Label>
                         <Button type="button" size="sm" variant="outline" onClick={addOrigin} className="border-emerald-500/50 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 hover:text-emerald-700 dark:hover:text-emerald-300">
                             <Plus className="w-4 h-4 mr-1" /> เพิ่มจุด
@@ -837,7 +837,7 @@ export function JobDialog({
                                             placeholder="Lat"
                                             value={origin.lat}
                                             onChange={(e) => updateOrigin(index, 'lat', e.target.value)}
-                                            className="bg-background border-input text-xs"
+                                            className="bg-background border-input text-lg font-bold"
                                         />
                                     </div>
                                     <div className="col-span-5">
@@ -845,7 +845,7 @@ export function JobDialog({
                                             placeholder="Lng"
                                             value={origin.lng}
                                             onChange={(e) => updateOrigin(index, 'lng', e.target.value)}
-                                            className="bg-background border-input text-xs"
+                                            className="bg-background border-input text-lg font-bold"
                                         />
                                     </div>
                                     <div className="col-span-2">
@@ -869,7 +869,7 @@ export function JobDialog({
                                     variant="ghost"
                                     onClick={() => removeOrigin(index)}
                                     disabled={origins.length === 1}
-                                    className="text-destructive hover:text-destructive hover:bg-destructive/10 h-6 text-xs"
+                                    className="text-destructive hover:text-destructive hover:bg-destructive/10 h-6 text-lg font-bold"
                                 >
                                     ลบ
                                 </Button>
@@ -882,7 +882,7 @@ export function JobDialog({
                     <div className="space-y-3">
                         <div className="flex items-center justify-between">
                         <Label className="text-indigo-600 dark:text-emerald-600 flex items-center gap-2">
-                            <MapPin className="w-4 h-4" /> จุดปลายทาง <span className="text-muted-foreground text-xs">({destinationLocations.length})</span>
+                            <MapPin className="w-4 h-4" /> จุดปลายทาง <span className="text-muted-foreground text-lg font-bold">({destinationLocations.length})</span>
                         </Label>
                         <Button type="button" size="sm" variant="outline" onClick={addDestination} className="border-indigo-500/50 text-indigo-600 dark:text-emerald-600 hover:bg-emerald-500/10 hover:text-indigo-700 dark:hover:text-emerald-500">
                             <Plus className="w-4 h-4 mr-1" /> เพิ่มจุด
@@ -907,7 +907,7 @@ export function JobDialog({
                                             placeholder="Lat"
                                             value={dest.lat}
                                             onChange={(e) => updateDestination(index, 'lat', e.target.value)}
-                                            className="bg-background border-input text-xs"
+                                            className="bg-background border-input text-lg font-bold"
                                         />
                                     </div>
                                     <div className="col-span-5">
@@ -915,7 +915,7 @@ export function JobDialog({
                                             placeholder="Lng"
                                             value={dest.lng}
                                             onChange={(e) => updateDestination(index, 'lng', e.target.value)}
-                                            className="bg-background border-input text-xs"
+                                            className="bg-background border-input text-lg font-bold"
                                         />
                                     </div>
                                     <div className="col-span-2">
@@ -939,7 +939,7 @@ export function JobDialog({
                                     variant="ghost"
                                     onClick={() => removeDestination(index)}
                                     disabled={destinations.length === 1}
-                                    className="text-destructive hover:text-destructive hover:bg-destructive/10 h-6 text-xs"
+                                    className="text-destructive hover:text-destructive hover:bg-destructive/10 h-6 text-lg font-bold"
                                 >
                                     ลบ
                                 </Button>
@@ -998,22 +998,22 @@ export function JobDialog({
                             {/* Nearby Job Bundling Suggestions */}
                             {nearbyJobs.length > 0 && (
                                 <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                                    <h4 className="text-xs font-bold text-blue-700 flex items-center gap-2 mb-2">
+                                    <h4 className="text-lg font-bold font-bold text-blue-700 flex items-center gap-2 mb-2">
                                         <LinkIcon className="w-3 h-3" /> แนะนำ: ยุบรวมงาน (Job Bundling)
                                     </h4>
-                                    <p className="text-[10px] text-blue-600 mb-2">พบงานที่อยู่ใกล้เคียงกัน สามารถส่งพร้อมกันได้:</p>
+                                    <p className="text-base font-bold text-blue-600 mb-2">พบงานที่อยู่ใกล้เคียงกัน สามารถส่งพร้อมกันได้:</p>
                                     <div className="space-y-2">
                                         {nearbyJobs.slice(0, 2).map((nj) => (
                                             <div key={nj.Job_ID} className="flex items-center justify-between bg-white p-2 rounded border border-blue-100 shadow-sm">
                                                 <div>
-                                                    <p className="text-[10px] font-bold text-slate-900">{nj.Job_ID}</p>
-                                                    <p className="text-[9px] text-slate-500">{nj.Customer_Name}</p>
+                                                    <p className="text-base font-bold font-bold text-slate-900">{nj.Job_ID}</p>
+                                                    <p className="text-base font-bold text-slate-500">{nj.Customer_Name}</p>
                                                 </div>
                                                 <Button 
                                                     type="button" 
                                                     size="sm" 
                                                     variant="ghost" 
-                                                    className="h-7 text-[10px] text-blue-600 hover:bg-blue-50 font-bold"
+                                                    className="h-7 text-base font-bold text-blue-600 hover:bg-blue-50 font-bold"
                                                     onClick={() => {
                                                         toast.info(`กรุณามอบหมายงาน ${nj.Job_ID} ให้คนขับคนเดียวกันแยกต่างหาก`)
                                                         // Future: actually add to bulk create list
@@ -1031,7 +1031,7 @@ export function JobDialog({
                                 <div className="absolute inset-0 flex items-center">
                                     <span className="w-full border-t border-border" />
                                 </div>
-                                <div className="relative flex justify-center text-xs uppercase">
+                                <div className="relative flex justify-center text-lg font-bold uppercase">
                                     <span className="bg-muted px-2 text-muted-foreground">หรือเลือกแบบกำหนดเอง (Manual Selection)</span>
                                 </div>
                             </div>
@@ -1048,7 +1048,7 @@ export function JobDialog({
                                 size="sm"
                                 variant="ghost"
                                 onClick={() => removeAssignment(index)}
-                                className="text-red-400 hover:text-red-300 hover:bg-red-500/10 h-6 px-2 text-xs"
+                                className="text-red-400 hover:text-red-300 hover:bg-red-500/10 h-6 px-2 text-lg font-bold"
                             >
                                 <X className="w-3 h-3 mr-1" /> ลบ
                             </Button>
@@ -1057,13 +1057,13 @@ export function JobDialog({
 
                     <div className="grid grid-cols-2 gap-4 mb-4">
                         <div className="space-y-2">
-                        <Label className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <Label className="flex items-center gap-1 text-lg font-bold text-muted-foreground">
                             <Truck className="w-3 h-3" /> ประเภทรถ
                         </Label>
                         <select
                             value={assignment.Vehicle_Type}
                             onChange={(e) => updateAssignment(index, 'Vehicle_Type', e.target.value)}
-                            className="w-full h-10 px-3 rounded-md bg-background border border-input text-foreground text-sm"
+                            className="w-full h-10 px-3 rounded-md bg-background border border-input text-foreground text-xl"
                         >
                             <option value="">ทั้งหมด (ไม่ระบุ)</option>
                             {/* Unique Vehicle Types from Data */}
@@ -1073,7 +1073,7 @@ export function JobDialog({
                         </select>
                         </div>
                         <div className="space-y-2">
-                        <Label className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <Label className="flex items-center gap-1 text-lg font-bold text-muted-foreground">
                             <Truck className="w-3 h-3" /> ทะเบียนรถ
                         </Label>
                         <VehicleAutocomplete
@@ -1112,20 +1112,20 @@ export function JobDialog({
                                 }
                             }}
                             placeholder="พิมพ์ทะเบียนรถ..."
-                            className="bg-background border-input text-sm"
+                            className="bg-background border-input text-xl"
                         />
                         </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4 mb-4">
                         <div className="space-y-2">
-                            <Label className="flex items-center gap-1 text-xs text-muted-foreground">
+                            <Label className="flex items-center gap-1 text-lg font-bold text-muted-foreground">
                                 <Building2 className="w-3 h-3" /> บริษัทรถร่วม (Carrier)
                             </Label>
                             <select
                                 value={assignment.Sub_ID || ""}
                                 onChange={(e) => updateAssignment(index, 'Sub_ID', e.target.value)}
-                                className="w-full h-10 px-3 rounded-md bg-background border border-input text-foreground text-sm"
+                                className="w-full h-10 px-3 rounded-md bg-background border border-input text-foreground text-xl"
                             >
                                 <option value="">ไม่ได้ระบุ (Internal)</option>
                                 {subcontractors.map((sub) => (
@@ -1134,7 +1134,7 @@ export function JobDialog({
                             </select>
                         </div>
                         <div className="space-y-2">
-                            <Label className="flex items-center gap-1 text-xs text-gray-500">
+                            <Label className="flex items-center gap-1 text-lg font-bold text-gray-500">
                                 <User className="w-3 h-3" /> คนขับ
                             </Label>
                             <DriverAutocomplete
@@ -1172,32 +1172,32 @@ export function JobDialog({
                                         }))
                                     }
                                 }}
-                                className="bg-background border-input text-sm"
+                                className="bg-background border-input text-xl"
                             />
                         </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-1">
-                            <Label className="text-[10px] text-muted-foreground flex items-center gap-1">
+                            <Label className="text-base font-bold text-muted-foreground flex items-center gap-1">
                                 <Banknote className="w-3 h-3" /> ค่าจ้างรถ (บาท)
                             </Label>
                             <Input
                                 type="number"
                                 value={assignment.Cost_Driver_Total}
                                 onChange={(e) => updateAssignment(index, 'Cost_Driver_Total', Number(e.target.value))}
-                                className="h-8 text-xs bg-background border-input"
+                                className="h-8 text-lg font-bold bg-background border-input"
                             />
                         </div>
                         <div className="space-y-1">
-                            <Label className="text-[10px] text-muted-foreground flex items-center gap-1">
+                            <Label className="text-base font-bold text-muted-foreground flex items-center gap-1">
                                 <Banknote className="w-3 h-3" /> ราคาลูกค้า (บาท)
                             </Label>
                             <Input
                                 type="number"
                                 value={assignment.Price_Cust_Total}
                                 onChange={(e) => updateAssignment(index, 'Price_Cust_Total', Number(e.target.value))}
-                                className="h-8 text-xs bg-background border-input"
+                                className="h-8 text-lg font-bold bg-background border-input"
                             />
                         </div>
                     </div>
@@ -1210,7 +1210,7 @@ export function JobDialog({
                             ) : (
                                 <EyeOff className="w-4 h-4 text-gray-700 font-bold" />
                             )}
-                            <span className="text-sm font-medium">โชว์ค่าเที่ยวให้คนขับเห็น</span>
+                            <span className="text-xl font-medium">โชว์ค่าเที่ยวให้คนขับเห็น</span>
                         </div>
                         <label className="relative inline-flex items-center cursor-pointer">
                             <input 
@@ -1256,8 +1256,8 @@ export function JobDialog({
                                     <div className="flex items-start gap-2 p-2 rounded bg-amber-500/10 border border-amber-500/20 mb-2">
                                         <div className="min-w-[4px] h-full bg-amber-500 rounded-full" />
                                         <div>
-                                            <p className="text-xs font-bold text-amber-600 dark:text-amber-400">Zone Mismatch</p>
-                                            <p className="text-[10px] text-muted-foreground">
+                                            <p className="text-lg font-bold font-bold text-amber-600 dark:text-amber-400">Zone Mismatch</p>
+                                            <p className="text-base font-bold text-muted-foreground">
                                                 งานโซน: <span className="text-foreground">{ZONES.find(z => z.id === jobZone)?.name || jobZone}</span> <br/>
                                                 รถประจำโซน: <span className="text-foreground">{ZONES.find(z => z.id === vehicleZone)?.name || vehicleZone}</span>
                                             </p>
@@ -1267,9 +1267,9 @@ export function JobDialog({
 
                                 {(maxWeight > 0 || maxVolume > 0) && (
                                     <div className="flex items-center gap-2 mb-1">
-                                        <span className="text-xs font-semibold text-muted-foreground">ตรวจสอบการบรรทุก (Capacity)</span>
+                                        <span className="text-lg font-bold font-semibold text-muted-foreground">ตรวจสอบการบรรทุก (Capacity)</span>
                                         {(isOverweight || isOverVolume) && (
-                                            <span className="text-[10px] bg-red-500/20 text-red-700 font-black px-1.5 py-0.5 rounded-full font-bold animate-pulse">
+                                            <span className="text-base font-bold bg-red-500/20 text-red-700 font-black px-1.5 py-0.5 rounded-full font-bold animate-pulse">
                                                 OVERLOAD
                                             </span>
                                         )}
@@ -1278,7 +1278,7 @@ export function JobDialog({
                                 
                                 {maxWeight > 0 && (
                                     <div className="space-y-1">
-                                        <div className="flex justify-between text-[10px]">
+                                        <div className="flex justify-between text-base font-bold">
                                             <span className={isOverweight ? "text-red-700 font-black" : "text-muted-foreground"}>
                                                 น้ำหนัก: {jobWeight.toLocaleString()} / {maxWeight.toLocaleString()} kg
                                             </span>
@@ -1297,7 +1297,7 @@ export function JobDialog({
 
                                 {maxVolume > 0 && (
                                     <div className="space-y-1">
-                                        <div className="flex justify-between text-[10px]">
+                                        <div className="flex justify-between text-base font-bold">
                                             <span className={isOverVolume ? "text-red-700 font-black" : "text-muted-foreground"}>
                                                 ปริมาตร: {jobVolume.toLocaleString()} / {maxVolume.toLocaleString()} m³
                                             </span>
@@ -1368,17 +1368,17 @@ export function JobDialog({
                 {extraCosts.map((cost, index) => (
                   <div key={index} className="grid grid-cols-12 gap-2 p-3 bg-muted/30 rounded-lg items-end">
                     <div className="col-span-4 space-y-1">
-                        <Label className="text-xs text-muted-foreground">รายการ</Label>
+                        <Label className="text-lg font-bold text-muted-foreground">รายการ</Label>
                         <select
                             value={cost.type}
                             onChange={(e) => updateExtraCost(index, 'type', e.target.value)}
-                            className="w-full h-9 px-2 rounded-md bg-background border border-input text-foreground text-sm"
+                            className="w-full h-9 px-2 rounded-md bg-background border border-input text-foreground text-xl"
                         >
                             {EXPENSE_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
                         </select>
                     </div>
                     <div className="col-span-3 space-y-1">
-                        <Label className="text-xs text-muted-foreground">จ่ายรถ</Label>
+                        <Label className="text-lg font-bold text-muted-foreground">จ่ายรถ</Label>
                         <Input
                             type="number"
                             value={cost.cost_driver}
@@ -1387,7 +1387,7 @@ export function JobDialog({
                         />
                     </div>
                      <div className="col-span-3 space-y-1">
-                        <Label className="text-xs text-muted-foreground">เก็บลูกค้า</Label>
+                        <Label className="text-lg font-bold text-muted-foreground">เก็บลูกค้า</Label>
                         <Input
                             type="number"
                             value={cost.charge_cust}
@@ -1409,7 +1409,7 @@ export function JobDialog({
                   </div>
                 ))}
 
-                <div className="p-3 bg-muted rounded-lg flex justify-between items-center text-sm">
+                <div className="p-3 bg-muted rounded-lg flex justify-between items-center text-xl">
                     <span className="text-muted-foreground font-medium">รวมกำไรเบื้องต้น</span>
                     <span className="font-bold text-emerald-700">
                         {(
@@ -1460,3 +1460,4 @@ export function JobDialog({
     </Dialog>
   )
 }
+

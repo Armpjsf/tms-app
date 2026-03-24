@@ -26,7 +26,7 @@ export default async function RegionalAnalyticsPage(props: { searchParams: Promi
             <ShieldCheck size={64} className="mx-auto text-rose-500 animate-pulse" />
             <div className="space-y-2">
                 <h1 className="text-3xl font-black text-white italic uppercase tracking-tighter">Access Denied</h1>
-                <p className="text-slate-500 font-black uppercase tracking-widest text-[10px] leading-relaxed italic">Strategic clearance insufficient. Terminal locked for security protocol.</p>
+                <p className="text-slate-500 font-black uppercase tracking-widest text-base font-bold leading-relaxed italic">Strategic clearance insufficient. Terminal locked for security protocol.</p>
             </div>
             <Link href="/dashboard" className="block">
                 <PremiumButton variant="outline" className="w-full h-14 rounded-2xl border-white/10 text-white font-black uppercase tracking-[0.2em] italic">
@@ -62,7 +62,7 @@ export default async function RegionalAnalyticsPage(props: { searchParams: Promi
         
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-10 relative z-10">
           <div className="space-y-6">
-            <Link href="/admin/analytics" className="inline-flex items-center gap-2 text-slate-500 hover:text-primary transition-all font-black uppercase tracking-[0.4em] text-[10px] group/back italic">
+            <Link href="/admin/analytics" className="inline-flex items-center gap-2 text-slate-500 hover:text-primary transition-all font-black uppercase tracking-[0.4em] text-base font-bold group/back italic">
               <ArrowLeft className="w-4 h-4 group-hover/back:-translate-x-1 transition-transform" /> 
               STRATEGIC_INTELLIGENCE
             </Link>
@@ -72,7 +72,7 @@ export default async function RegionalAnalyticsPage(props: { searchParams: Promi
               </div>
               <div>
                 <h1 className="text-5xl font-black text-white tracking-widest uppercase leading-none italic premium-text-gradient">Regional Intel</h1>
-                <p className="text-[10px] font-black text-primary uppercase tracking-[0.6em] mt-2 opacity-80 italic italic">Cross-Hub Performance Matrix // Global Node Analysis</p>
+                <p className="text-base font-bold font-black text-primary uppercase tracking-[0.6em] mt-2 opacity-80 italic italic">Cross-Hub Performance Matrix // Global Node Analysis</p>
               </div>
             </div>
           </div>
@@ -97,7 +97,7 @@ export default async function RegionalAnalyticsPage(props: { searchParams: Promi
                 </div>
                 <div className="h-1.5 w-1.5 rounded-full bg-primary animate-ping" />
             </div>
-            <p className="text-[10px] font-black text-slate-600 uppercase tracking-[0.4em] mb-2 italic">{stat.label}</p>
+            <p className="text-base font-bold font-black text-slate-600 uppercase tracking-[0.4em] mb-2 italic">{stat.label}</p>
             <p className="text-4xl font-black text-white italic tracking-tighter">{stat.value}</p>
           </PremiumCard>
         ))}
@@ -113,10 +113,10 @@ export default async function RegionalAnalyticsPage(props: { searchParams: Promi
             </div>
             <div>
               <h2 className="text-3xl font-black text-white tracking-[0.2em] uppercase italic">Hub Performance Matrix</h2>
-              <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.5em] mt-2 italic">Comparative analysis across geographical nodes</p>
+              <p className="text-base font-bold font-black text-slate-500 uppercase tracking-[0.5em] mt-2 italic">Comparative analysis across geographical nodes</p>
             </div>
           </div>
-          <div className="px-6 py-2 bg-emerald-500/10 rounded-full border border-emerald-500/20 text-[9px] font-black text-emerald-500 uppercase tracking-[0.4em] italic animate-pulse">
+          <div className="px-6 py-2 bg-emerald-500/10 rounded-full border border-emerald-500/20 text-base font-bold font-black text-emerald-500 uppercase tracking-[0.4em] italic animate-pulse">
             SENSORS_OPTIMIZED
           </div>
         </div>
@@ -127,7 +127,7 @@ export default async function RegionalAnalyticsPage(props: { searchParams: Promi
                 <Building2 size={80} strokeWidth={1} className="text-slate-800 opacity-20" />
                 <div className="space-y-2">
                     <p className="text-xl font-black text-slate-700 uppercase tracking-widest">No Node Data Detected</p>
-                    <p className="text-[10px] font-black text-slate-800 uppercase tracking-[0.5em] italic">The operational landscape is quiescent for this epoch.</p>
+                    <p className="text-base font-bold font-black text-slate-800 uppercase tracking-[0.5em] italic">The operational landscape is quiescent for this epoch.</p>
                 </div>
               </div>
             ) : (
@@ -160,12 +160,12 @@ export default async function RegionalAnalyticsPage(props: { searchParams: Promi
                                 <div className="md:col-span-3 pl-10">
                                     <h3 className="text-2xl font-black text-white tracking-widest uppercase italic group-hover/node:text-primary transition-colors leading-none mb-3">{branch.branchName}</h3>
                                     <div className="flex items-center gap-4">
-                                        <div className="px-3 py-1 bg-white/5 rounded-lg border border-white/5 text-[9px] font-black text-slate-500 uppercase tracking-widest">
+                                        <div className="px-3 py-1 bg-white/5 rounded-lg border border-white/5 text-base font-bold font-black text-slate-500 uppercase tracking-widest">
                                             {branch.jobsCount} MISSIONS
                                         </div>
                                         <div className="flex items-center gap-2">
                                             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                                            <span className="text-[10px] font-black text-emerald-500 italic uppercase">
+                                            <span className="text-base font-bold font-black text-emerald-500 italic uppercase">
                                                 {branch.efficiency.toFixed(0)}% EFFICIENCY
                                             </span>
                                         </div>
@@ -175,7 +175,7 @@ export default async function RegionalAnalyticsPage(props: { searchParams: Promi
                                 {/* Yield Spectrum */}
                                 <div className="md:col-span-4 space-y-4">
                                     <div className="flex justify-between items-end mb-2">
-                                        <span className="text-[10px] font-black text-slate-700 uppercase tracking-[0.4em] italic">Revenue Spectrum</span>
+                                        <span className="text-base font-bold font-black text-slate-700 uppercase tracking-[0.4em] italic">Revenue Spectrum</span>
                                         <span className="text-lg font-black text-white italic tracking-widest font-sans">
                                             {formatCurrency(branch.revenue)}
                                         </span>
@@ -190,11 +190,11 @@ export default async function RegionalAnalyticsPage(props: { searchParams: Promi
 
                                 {/* Profit Matrix */}
                                 <div className="md:col-span-2 text-center p-6 bg-white/5 rounded-[2rem] border border-white/5 flex flex-col items-center justify-center">
-                                    <p className="text-[9px] font-black text-slate-600 uppercase tracking-[0.2em] mb-2 italic">Yield Return</p>
+                                    <p className="text-base font-bold font-black text-slate-600 uppercase tracking-[0.2em] mb-2 italic">Yield Return</p>
                                     <p className={cn("text-xl font-black italic tracking-widest", branch.profit >= 0 ? 'text-emerald-500' : 'text-rose-500')}>
                                     {formatCurrency(branch.profit)}
                                     </p>
-                                    <div className="mt-2 px-3 py-0.5 bg-black/40 rounded-full border border-white/5 text-[8px] font-black text-slate-500 uppercase tracking-widest">
+                                    <div className="mt-2 px-3 py-0.5 bg-black/40 rounded-full border border-white/5 text-base font-bold font-black text-slate-500 uppercase tracking-widest">
                                     {profitMargin.toFixed(1)}% MARGIN
                                     </div>
                                 </div>
@@ -216,7 +216,7 @@ export default async function RegionalAnalyticsPage(props: { searchParams: Promi
                                             {isGrowthPositive ? '+' : ''}{branch.revenueGrowth.toFixed(1)}%
                                         </span>
                                     </div>
-                                    <p className="text-[10px] text-slate-700 font-black uppercase tracking-widest italic leading-none pr-2">
+                                    <p className="text-base font-bold text-slate-700 font-black uppercase tracking-widest italic leading-none pr-2">
                                     Δ PREV_EPOCH: {formatCurrency(branch.previousRevenue)}
                                     </p>
                                 </div>
@@ -242,7 +242,7 @@ export default async function RegionalAnalyticsPage(props: { searchParams: Promi
               <ShieldCheck size={24} className="text-emerald-500" />
           </div>
           <p className="text-[12px] font-black text-white uppercase tracking-[0.8em] italic mb-4">Geographical Sentiment Archive // v6.0-TACTICAL</p>
-          <p className="text-[10px] font-bold text-slate-700 uppercase tracking-widest italic leading-relaxed text-center max-w-2xl px-12">
+          <p className="text-base font-bold font-bold text-slate-700 uppercase tracking-widest italic leading-relaxed text-center max-w-2xl px-12">
               All regional metrics are computed via real-time node synchronization. <br />
               Efficiency vectors include completion delta, fuel telemetry, and personnel engagement scores.
           </p>
@@ -250,3 +250,4 @@ export default async function RegionalAnalyticsPage(props: { searchParams: Promi
     </div>
   )
 }
+

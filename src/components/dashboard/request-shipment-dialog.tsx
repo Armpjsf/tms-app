@@ -79,7 +79,7 @@ export function RequestShipmentDialog({ open, onOpenChange }: RequestShipmentDia
                                 <CheckCircle2 className="text-white w-10 h-10" />
                             </div>
                             <h3 className="text-2xl font-black text-gray-900 mb-2 tracking-tighter">ส่งคำขอสำเร็จ!</h3>
-                            <p className="text-gray-500 font-bold uppercase tracking-widest text-[10px]">เราได้รับข้อมูลของคุณแล้ว แอดมินจะรีบดำเนินการให้โดยเร็วที่สุด</p>
+                            <p className="text-gray-500 font-bold uppercase tracking-widest text-base font-bold">เราได้รับข้อมูลของคุณแล้ว แอดมินจะรีบดำเนินการให้โดยเร็วที่สุด</p>
                         </motion.div>
                     ) : (
                         <motion.div
@@ -94,7 +94,7 @@ export function RequestShipmentDialog({ open, onOpenChange }: RequestShipmentDia
                                     </div>
                                     <DialogTitle className="text-2xl font-black tracking-tighter text-gray-900">ขอนัดคิวงานใหม่</DialogTitle>
                                 </div>
-                                <DialogDescription className="text-gray-500 font-bold uppercase tracking-widest text-[10px]">
+                                <DialogDescription className="text-gray-500 font-bold uppercase tracking-widest text-base font-bold">
                                     Request New Shipment
                                 </DialogDescription>
                             </DialogHeader>
@@ -102,7 +102,7 @@ export function RequestShipmentDialog({ open, onOpenChange }: RequestShipmentDia
                             <form onSubmit={handleSubmit} className="p-8 pt-0 space-y-6">
                                 <div className="grid grid-cols-1 gap-6">
                                     <div className="space-y-2">
-                                        <Label className="text-[10px] font-black uppercase tracking-widest text-gray-400 flex items-center gap-2">
+                                        <Label className="text-base font-bold font-black uppercase tracking-widest text-gray-400 flex items-center gap-2">
                                             <Calendar size={14} className="text-emerald-500" /> วันที่ต้องการให้รถเข้า
                                         </Label>
                                         <Input 
@@ -116,7 +116,7 @@ export function RequestShipmentDialog({ open, onOpenChange }: RequestShipmentDia
 
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="space-y-2">
-                                            <Label className="text-[10px] font-black uppercase tracking-widest text-gray-400 flex items-center gap-2">
+                                            <Label className="text-base font-bold font-black uppercase tracking-widest text-gray-400 flex items-center gap-2">
                                                 <MapPin size={14} className="text-emerald-500" /> สถานที่รับของ
                                             </Label>
                                             <Input 
@@ -128,7 +128,7 @@ export function RequestShipmentDialog({ open, onOpenChange }: RequestShipmentDia
                                             />
                                         </div>
                                         <div className="space-y-2">
-                                            <Label className="text-[10px] font-black uppercase tracking-widest text-gray-400 flex items-center gap-2">
+                                            <Label className="text-base font-bold font-black uppercase tracking-widest text-gray-400 flex items-center gap-2">
                                                 <MapPin size={14} className="text-amber-500" /> สถานที่ส่งของ
                                             </Label>
                                             <Input 
@@ -142,7 +142,7 @@ export function RequestShipmentDialog({ open, onOpenChange }: RequestShipmentDia
                                     </div>
 
                                     <div className="space-y-2">
-                                        <Label className="text-[10px] font-black uppercase tracking-widest text-gray-400 flex items-center gap-2">
+                                        <Label className="text-base font-bold font-black uppercase tracking-widest text-gray-400 flex items-center gap-2">
                                             <Package size={14} className="text-blue-500" /> ประเภทสินค้า / น้ำหนัก
                                         </Label>
                                         <Input 
@@ -155,7 +155,7 @@ export function RequestShipmentDialog({ open, onOpenChange }: RequestShipmentDia
                                     </div>
 
                                     <div className="space-y-2">
-                                        <Label className="text-[10px] font-black uppercase tracking-widest text-gray-400 flex items-center gap-2">
+                                        <Label className="text-base font-bold font-black uppercase tracking-widest text-gray-400 flex items-center gap-2">
                                             <StickyNote size={14} className="text-purple-500" /> หมายเหตุเพิ่มเติม
                                         </Label>
                                         <Textarea 
@@ -190,3 +190,4 @@ export function RequestShipmentDialog({ open, onOpenChange }: RequestShipmentDia
         </Dialog>
     )
 }
+

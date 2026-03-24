@@ -27,7 +27,7 @@ export function IntelligenceClient({
         
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-10 relative z-10">
           <div className="space-y-6">
-            <Link href="/admin/analytics" className="inline-flex items-center gap-2 text-slate-500 hover:text-purple-400 transition-all font-black uppercase tracking-[0.4em] text-[10px] group/back italic">
+            <Link href="/admin/analytics" className="inline-flex items-center gap-2 text-slate-500 hover:text-purple-400 transition-all font-black uppercase tracking-[0.4em] text-base font-bold group/back italic">
               <ArrowLeft className="w-4 h-4 group-hover/back:-translate-x-1 transition-transform" /> 
               STRATEGIC_INTELLIGENCE
             </Link>
@@ -37,7 +37,7 @@ export function IntelligenceClient({
               </div>
               <div>
                 <h1 className="text-5xl font-black text-white tracking-widest uppercase leading-none italic premium-text-gradient">Neural Advisory</h1>
-                <p className="text-[10px] font-black text-purple-400 uppercase tracking-[0.6em] mt-2 opacity-80 italic">AI-Powered Predictive Analytics & Risk Assessment {branchId && branchId !== 'All' ? `// ${branchId}` : ''}</p>
+                <p className="text-base font-bold font-black text-purple-400 uppercase tracking-[0.6em] mt-2 opacity-80 italic">AI-Powered Predictive Analytics & Risk Assessment {branchId && branchId !== 'All' ? `// ${branchId}` : ''}</p>
               </div>
             </div>
           </div>
@@ -58,7 +58,7 @@ export function IntelligenceClient({
                       </div>
                       <div>
                           <h2 className="text-3xl font-black text-white tracking-widest uppercase italic leading-none">Fleet Health Matrix</h2>
-                          <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] mt-2 italic">Predictive maintenance synchronization & wear analytics</p>
+                          <p className="text-base font-bold font-black text-slate-500 uppercase tracking-[0.4em] mt-2 italic">Predictive maintenance synchronization & wear analytics</p>
                       </div>
                       <div className="h-px flex-1 bg-gradient-to-r from-white/10 to-transparent" />
                   </div>
@@ -78,7 +78,7 @@ export function IntelligenceClient({
                       </div>
                       <div>
                           <h2 className="text-3xl font-black text-white tracking-widest uppercase italic leading-none">Route Threat Assessment</h2>
-                          <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] mt-2 italic">Operational risk profiling & anomaly detection</p>
+                          <p className="text-base font-bold font-black text-slate-500 uppercase tracking-[0.4em] mt-2 italic">Operational risk profiling & anomaly detection</p>
                       </div>
                       <div className="h-px flex-1 bg-gradient-to-r from-white/10 to-transparent" />
                   </div>
@@ -98,7 +98,7 @@ export function IntelligenceClient({
               <BrainCircuit size={28} className="text-primary animate-pulse" />
           </div>
           <p className="text-[12px] font-black text-white uppercase tracking-[0.8em] italic mb-6">Neural Advisory Core // v10.4-TACTICAL</p>
-          <p className="text-[10px] font-bold text-slate-700 uppercase tracking-[0.5em] italic leading-relaxed text-center max-w-3xl px-12">
+          <p className="text-base font-bold font-bold text-slate-700 uppercase tracking-[0.5em] italic leading-relaxed text-center max-w-3xl px-12">
               All intelligence vectors are generated via asynchronous neural processing. <br />
               Risk scores are derived from historical telemetry, environmental sensors, and node efficiency deltas.
           </p>
@@ -116,3 +116,4 @@ export function IntelligenceClient({
     </div>
   )
 }
+

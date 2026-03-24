@@ -56,26 +56,26 @@ interface DashboardContentProps {
 
 // Split state into two priority layers
 interface PriorityData {
-  financials: unknown
-  revenueTrend: unknown[]
-  exeKPIs: unknown
-  opStats: unknown
-  statusDist: unknown[]
-  driverLeaderboard: unknown[]
-  vehicleProfitability: unknown[]
-  branchPerf: unknown[]
+  financials: any
+  revenueTrend: any[]
+  exeKPIs: any
+  opStats: any
+  statusDist: any[]
+  driverLeaderboard: any[]
+  vehicleProfitability: any[]
+  branchPerf: any[]
 }
 
 interface SecondaryData {
-  topCustomers: unknown[]
-  subPerf: unknown[]
-  routes: unknown[]
-  billing: unknown
-  fuel: unknown
-  maintenance: unknown
-  safety: unknown
-  workforce: unknown
-  esgStats: unknown
+  topCustomers: any[]
+  subPerf: any[]
+  routes: any[]
+  billing: any
+  fuel: any
+  maintenance: any
+  safety: any
+  workforce: any
+  esgStats: any
 }
 
 export function DashboardContent({ 
@@ -172,11 +172,6 @@ export function DashboardContent({
     esgStats = {},
   } = secondary ?? {}
 
-  // Skeleton for secondary sections while they load
-  const SectionSkeleton = () => (
-    <div className="h-96 bg-[#0a0518] rounded-br-[4rem] rounded-tl-[2rem] border border-white/5 animate-pulse" />
-  )
-
   const allData = {
     financials, revenueTrend, topCustomers, statusDist,
     branchPerf, subPerf, billing, fuel, maintenance,
@@ -195,7 +190,7 @@ export function DashboardContent({
                 </div>
                 <div>
                     <h3 className="text-xl font-black text-white uppercase tracking-[0.3em] italic leading-none mb-3">{t('common.tactical_cluster')}</h3>
-                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.6em] italic">{t('common.network_stable')}</p>
+                    <p className="text-base font-bold font-black text-slate-500 uppercase tracking-[0.6em] italic">{t('common.network_stable')}</p>
                 </div>
             </div>
             
@@ -212,7 +207,7 @@ export function DashboardContent({
               </div>
               <div className="space-y-2">
                   <h2 className="text-5xl font-black text-white tracking-widest italic uppercase">{t('common.financial_node')}</h2>
-                  <p className="text-emerald-500 text-[11px] font-black uppercase tracking-[0.6em] italic">Commercial realization &amp; Fiscal liquidity monitoring // Q1-S1</p>
+                  <p className="text-emerald-500 text-base font-bold font-black uppercase tracking-[0.6em] italic">{t('analytics.commercial_monitoring')}</p>
               </div>
           </div>
           
@@ -228,7 +223,7 @@ export function DashboardContent({
                           </div>
                           <div>
                               <h3 className="text-2xl font-black text-white tracking-tighter italic uppercase">{t('common.revenue_dynamics')}</h3>
-                              <p className="text-primary text-[10px] font-black uppercase tracking-[0.4em]">Temporal realization across fleet vectors</p>
+                              <p className="text-primary text-base font-bold font-black uppercase tracking-[0.4em]">{t('analytics.temporal_realization')}</p>
                           </div>
                       </div>
                   </div>
@@ -247,7 +242,7 @@ export function DashboardContent({
                             </div>
                             <div className="space-y-1">
                                 <h3 className="text-2xl font-black text-white tracking-tighter italic uppercase">{t('common.elite_force')}</h3>
-                                <p className="text-primary text-[10px] font-black uppercase tracking-[0.4em]">{t('dashboard.top_tier_asset')}</p>
+                                <p className="text-primary text-base font-bold font-black uppercase tracking-[0.4em]">{t('dashboard.top_tier_asset')}</p>
                             </div>
                         </div>
                     </div>
@@ -256,7 +251,7 @@ export function DashboardContent({
                             <div key={driver.name} className="p-10 flex items-center justify-between group/driver transition-all hover:bg-white/5 rounded-3xl border-2 border-transparent hover:border-primary/20">
                                 <div className="flex items-center gap-8">
                                     <div className="relative">
-                                        <div className="w-16 h-16 rounded-[2rem] bg-white/5 flex items-center justify-center text-sm font-black text-white border-2 border-white/5 group-hover/driver:border-primary/50 transition-all uppercase italic">
+                                        <div className="w-16 h-16 rounded-[2rem] bg-white/5 flex items-center justify-center text-xl font-black text-white border-2 border-white/5 group-hover/driver:border-primary/50 transition-all uppercase italic">
                                             {driver.name?.slice(0, 2) || "???"}
                                         </div>
                                         {idx < 3 && (
@@ -268,12 +263,12 @@ export function DashboardContent({
                                     <div className="space-y-2">
                                         <div className="text-lg font-black text-white tracking-widest uppercase italic leading-none">{driver.name}</div>
                                         <div className="flex items-center gap-4">
-                                           <div className="text-[10px] text-slate-500 font-black uppercase tracking-[0.4em] flex items-center gap-2">
-                                              {driver.completedJobs} OPS
+                                           <div className="text-base font-bold text-slate-500 font-black uppercase tracking-[0.4em] flex items-center gap-2">
+                                              {driver.completedJobs} {t('dashboard.ops_label')}
                                            </div>
                                            <div className="h-1 w-1 rounded-full bg-slate-800" />
-                                           <div className="text-[10px] text-primary font-black uppercase tracking-[0.4em]">
-                                              {(driver.onTimeRate || 0).toFixed(1)}% SYNC
+                                           <div className="text-base font-bold text-primary font-black uppercase tracking-[0.4em]">
+                                              {(driver.onTimeRate || 0).toFixed(1)}% {t('dashboard.sync_label')}
                                            </div>
                                         </div>
                                     </div>
@@ -303,7 +298,7 @@ export function DashboardContent({
               </div>
               <div className="space-y-2">
                   <h2 className="text-5xl font-black text-white tracking-widest italic uppercase">{t('common.asset_tactical')}</h2>
-                  <p className="text-blue-500 text-[11px] font-black uppercase tracking-[0.6em] italic">{t('dashboard.operational_throughput')} &amp; {t('dashboard.tier_1_monitoring')}</p>
+                  <p className="text-blue-500 text-base font-bold font-black uppercase tracking-[0.6em] italic">{t('dashboard.operational_throughput')} &amp; {t('dashboard.tier_1_monitoring')}</p>
               </div>
            </div>
            
@@ -321,7 +316,7 @@ export function DashboardContent({
               </div>
               <div className="space-y-2">
                   <h2 className="text-5xl font-black text-white tracking-widest italic uppercase">{t('common.protocol_integrity')}</h2>
-                  <p className="text-rose-500 text-[11px] font-black uppercase tracking-[0.6em] italic">{t('dashboard.human_capital_efficiency')} &amp; {t('dashboard.safety_protocol_audit')} {"//"} {t('dashboard.critical_vectors')}</p>
+                  <p className="text-rose-500 text-base font-bold font-black uppercase tracking-[0.6em] italic">{t('dashboard.human_capital_efficiency')} &amp; {t('dashboard.safety_protocol_audit')} {"//"} {t('dashboard.critical_vectors')}</p>
               </div>
            </div>
            
@@ -344,7 +339,7 @@ export function DashboardContent({
               </div>
               <div className="space-y-2">
                   <h2 className="text-5xl font-black text-white tracking-widest italic uppercase">{t('common.system_cluster')}</h2>
-                  <p className="text-primary text-[11px] font-black uppercase tracking-[0.6em] italic">{t('dashboard.health_index')} {"//"} {t('dashboard.aggregate_nodes')}</p>
+                  <p className="text-primary text-base font-bold font-black uppercase tracking-[0.6em] italic">{t('dashboard.health_index')} {"//"} {t('dashboard.aggregate_nodes')}</p>
               </div>
           </div>
           
@@ -367,7 +362,7 @@ export function DashboardContent({
                           { label: t('dashboard.fleet_capacity'), value: `${(opStats as any).fleet.utilization.toFixed(1)}%`, status: (opStats as any).fleet.utilization > 70 ? 'good' : 'warning' },
                           { 
                             label: t('dashboard.technical_status'), 
-                            value: (opStats as any).fleet.health >= 90 ? "OPTIMAL" : (opStats as any).fleet.health >= 50 ? "DEGRADED" : "CRITICAL", 
+                            value: (opStats as any).fleet.health >= 90 ? t('dashboard.status_optimal') : (opStats as any).fleet.health >= 50 ? t('dashboard.status_degraded') : t('dashboard.status_critical'), 
                             status: (opStats as any).fleet.health >= 90 ? 'good' : (opStats as any).fleet.health >= 50 ? 'warning' : 'critical' 
                           }
                       ]
@@ -393,16 +388,21 @@ export function DashboardContent({
             </div>
             <div className="space-y-4">
                 <h4 className="text-2xl font-black text-white uppercase tracking-[0.4em] italic">{t('common.intel_engine')}</h4>
-                <p className="text-xs text-slate-500 font-black uppercase tracking-[0.2em] max-w-2xl leading-relaxed">
+                <p className="text-lg font-bold text-slate-500 font-black uppercase tracking-[0.2em] max-w-2xl leading-relaxed">
                     {t('dashboard.intel_sync_warning')} <br />
                     {t('dashboard.system_cycle_complete')}
                 </p>
             </div>
             <div className="flex items-center gap-4 py-2 px-6 bg-white/5 rounded-full border border-white/10">
                <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-               <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">{t('common.sync_complete')}</span>
+               <span className="text-base font-bold font-black text-slate-500 uppercase tracking-widest">{t('common.sync_complete')}</span>
             </div>
         </div>
     </div>
   )
 }
+
+const SectionSkeleton = () => (
+    <div className="h-96 bg-[#0a0518] rounded-br-[4rem] rounded-tl-[2rem] border border-white/5 animate-pulse" />
+)
+

@@ -58,7 +58,7 @@ export default function NotificationSettingsPage() {
             <div className="absolute top-0 right-0 w-80 h-80 bg-primary/10 blur-[120px] rounded-full -mr-40 -mt-40 pointer-events-none" />
             
             <div className="relative z-10 space-y-8">
-                <button onClick={() => router.back()} className="inline-flex items-center gap-2 text-slate-500 hover:text-primary transition-all font-black uppercase tracking-[0.4em] text-[10px] group/back italic">
+                <button onClick={() => router.back()} className="inline-flex items-center gap-2 text-slate-500 hover:text-primary transition-all font-black uppercase tracking-[0.4em] text-base font-bold group/back italic">
                     <ArrowLeft className="w-4 h-4 group-hover/back:-translate-x-1 transition-transform" /> 
                     {t('settings_pages.company.command_control')}
                 </button>
@@ -70,7 +70,7 @@ export default function NotificationSettingsPage() {
                         <h1 className="text-5xl font-black text-white tracking-widest uppercase leading-none italic premium-text-gradient">
                             {t('settings_pages.notifications.title')}
                         </h1>
-                        <p className="text-[10px] font-black text-primary uppercase tracking-[0.6em] mt-2 opacity-80 italic italic">{t('settings_pages.notifications.subtitle')}</p>
+                        <p className="text-base font-bold font-black text-primary uppercase tracking-[0.6em] mt-2 opacity-80 italic italic">{t('settings_pages.notifications.subtitle')}</p>
                     </div>
                 </div>
             </div>
@@ -78,11 +78,11 @@ export default function NotificationSettingsPage() {
             <div className="flex flex-col items-end gap-6 relative z-10">
                 <div className="bg-white/5 border border-white/10 px-6 py-3 rounded-2xl flex items-center gap-3 backdrop-blur-md">
                     <div className="w-2 h-2 rounded-full bg-primary animate-pulse shadow-[0_0_10px_rgba(255,30,133,1)]" />
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">{t('settings_pages.notifications.monitor_status')}</span>
+                    <span className="text-base font-bold font-black text-slate-400 uppercase tracking-widest italic">{t('settings_pages.notifications.monitor_status')}</span>
                 </div>
                 <div className="flex items-center gap-4 bg-primary/10 p-4 rounded-2xl border border-primary/20">
                    <Target className="text-primary" size={18} />
-                   <span className="text-[10px] font-black text-white uppercase tracking-[0.3em] italic">Precision Signal Targeting</span>
+                   <span className="text-base font-bold font-black text-white uppercase tracking-[0.3em] italic">Precision Signal Targeting</span>
                 </div>
             </div>
         </div>
@@ -102,7 +102,7 @@ export default function NotificationSettingsPage() {
                                         </div>
                                         <h2 className="text-3xl font-black text-white tracking-widest uppercase italic border-b-2 border-primary/20 pb-2">Protocol Routing Control</h2>
                                    </div>
-                                   <p className="text-sm font-bold text-slate-500 uppercase tracking-widest italic ml-16">Configure how the mission-critical signal stream is distributed across your hardware array.</p>
+                                   <p className="text-xl font-bold text-slate-500 uppercase tracking-widest italic ml-16">Configure how the mission-critical signal stream is distributed across your hardware array.</p>
                               </div>
 
                               <div className="space-y-6">
@@ -156,9 +156,9 @@ export default function NotificationSettingsPage() {
                                                     settings[pref.id as keyof NotificationSettings] ? "text-white" : "text-slate-600"
                                                 )}>
                                                     {pref.label}
-                                                    {pref.isCritical && <span className="ml-4 text-[9px] font-black text-rose-500 bg-rose-500/10 px-3 py-1 rounded-lg border border-rose-500/20">PRIORITY_ALPHA</span>}
+                                                    {pref.isCritical && <span className="ml-4 text-base font-bold font-black text-rose-500 bg-rose-500/10 px-3 py-1 rounded-lg border border-rose-500/20">PRIORITY_ALPHA</span>}
                                                 </h3>
-                                                <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest leading-relaxed italic border-l-2 border-white/5 pl-4">
+                                                <p className="text-base font-bold font-black text-slate-600 uppercase tracking-widest leading-relaxed italic border-l-2 border-white/5 pl-4">
                                                     {pref.desc}
                                                 </p>
                                             </div>
@@ -199,11 +199,11 @@ export default function NotificationSettingsPage() {
             </div>
             <div className="space-y-4 text-center md:text-left flex-1">
                 <p className="text-xl font-black text-primary italic uppercase tracking-widest">{t('settings_pages.notifications.advisory')}</p>
-                <p className="text-sm font-bold text-slate-600 leading-relaxed uppercase tracking-wider italic">
+                <p className="text-xl font-bold text-slate-600 leading-relaxed uppercase tracking-wider italic">
                     {t('settings_pages.notifications.advisory_desc')}
                 </p>
             </div>
-            <PremiumButton variant="outline" className="h-14 px-10 rounded-2xl border-white/10 text-white gap-3 uppercase font-black text-[10px] tracking-[0.3em] ml-auto italic">
+            <PremiumButton variant="outline" className="h-14 px-10 rounded-2xl border-white/10 text-white gap-3 uppercase font-black text-base font-bold tracking-[0.3em] ml-auto italic">
                 <Activity size={18} /> {t('settings_pages.notifications.view_stream')}
             </PremiumButton>
         </div>
@@ -211,3 +211,4 @@ export default function NotificationSettingsPage() {
     </DashboardLayout>
   )
 }
+

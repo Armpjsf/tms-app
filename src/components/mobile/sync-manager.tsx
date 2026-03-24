@@ -74,10 +74,10 @@ export function SyncManager() {
                     )}
                     
                     <div className="flex flex-col">
-                        <span className="text-xs font-bold uppercase tracking-wider opacity-70">
+                        <span className="text-lg font-bold font-bold uppercase tracking-wider opacity-70">
                             {showSuccess ? 'Synced' : 'Offline Sync'}
                         </span>
-                        <span className="text-sm font-medium">
+                        <span className="text-xl font-medium">
                             {showSuccess ? 'ข้อมูลถูกส่งแล้ว' : 
                              isSyncing ? `กำลังส่งข้อมูล (${pendingCount})...` : 
                              `ค้างส่ง ${pendingCount} รายการ`}
@@ -88,14 +88,14 @@ export function SyncManager() {
                 {!showSuccess && !isSyncing && navigator.onLine && (
                     <button 
                         onClick={handleSync}
-                        className="bg-emerald-600 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-blue-700 transition-colors"
+                        className="bg-emerald-600 px-3 py-1.5 rounded-lg text-lg font-bold font-bold hover:bg-blue-700 transition-colors"
                     >
                         ส่งตอนนี้
                     </button>
                 )}
 
                 {!showSuccess && !navigator.onLine && (
-                    <div className="flex items-center gap-1 text-[10px] text-gray-400">
+                    <div className="flex items-center gap-1 text-base font-bold text-gray-400">
                         <AlertCircle size={10} />
                         รอสัญญาณ
                     </div>
@@ -104,3 +104,4 @@ export function SyncManager() {
         </div>
     )
 }
+

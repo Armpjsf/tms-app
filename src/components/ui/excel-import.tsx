@@ -182,7 +182,7 @@ export function ExcelImport({
                       </div>
                       <div className="text-center">
                         <p className="font-bold text-white tracking-tight">{file.name}</p>
-                        <p className="text-xs text-slate-400 mt-1">
+                        <p className="text-lg font-bold text-slate-400 mt-1">
                           {previewData.length > 0 ? `พบข้อมูล ${previewData.length} รายการ พร้อมนำเข้า` : "กำลังอ่านไฟล์..."}
                         </p>
                       </div>
@@ -199,7 +199,7 @@ export function ExcelImport({
                       </div>
                       <div className="text-center">
                         <p className="font-bold text-slate-300">คลิกเพื่อเลือกไฟล์ หรือลากไฟล์มาวางที่นี่</p>
-                        <p className="text-xs text-slate-500 mt-1 uppercase tracking-widest font-black">รองรับไฟล์ .XLSX, .XLS</p>
+                        <p className="text-lg font-bold text-slate-500 mt-1 uppercase tracking-widest font-black">รองรับไฟล์ .XLSX, .XLS</p>
                       </div>
                     </motion.div>
                   )}
@@ -212,11 +212,11 @@ export function ExcelImport({
                 <motion.div 
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: "auto" }}
-                  className="bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-2xl flex items-start gap-3 text-sm"
+                  className="bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-2xl flex items-start gap-3 text-xl"
                 >
                   <AlertCircle className="h-5 w-5 shrink-0" />
                   <div>
-                    <p className="font-black uppercase tracking-wider text-[10px]">Import Error</p>
+                    <p className="font-black uppercase tracking-wider text-base font-bold">Import Error</p>
                     <p className="font-medium mt-1">{error}</p>
                   </div>
                 </motion.div>
@@ -226,7 +226,7 @@ export function ExcelImport({
             {previewData.length > 0 && !error && (
                <div className="bg-white/5 rounded-2xl border border-white/5 overflow-hidden">
                   <div className="max-h-[160px] overflow-auto">
-                    <table className="w-full text-[11px] text-left border-collapse">
+                    <table className="w-full text-base font-bold text-left border-collapse">
                         <thead className="bg-white/10 text-slate-300 sticky top-0 backdrop-blur-md">
                             <tr>
                                 {Object.keys(previewData[0]).slice(0, 4).map(key => (
@@ -248,7 +248,7 @@ export function ExcelImport({
                     </table>
                   </div>
                   {previewData.length > 3 && (
-                      <div className="p-2 text-[10px] text-center text-slate-500 bg-white/[0.02] border-t border-white/5 font-bold uppercase tracking-tighter">
+                      <div className="p-2 text-base font-bold text-center text-slate-500 bg-white/[0.02] border-t border-white/5 font-bold uppercase tracking-tighter">
                           ... and {previewData.length - 3} more items
                       </div>
                   )}
@@ -277,3 +277,4 @@ export function ExcelImport({
     </Dialog>
   )
 }
+

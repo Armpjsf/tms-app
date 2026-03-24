@@ -231,14 +231,14 @@ export default function JobCompletePage() {
                     {verifying ? (
                         <div className="flex items-center gap-3 text-purple-400 animate-pulse">
                             <ScanLine className="animate-spin-slow" size={20} />
-                            <span className="text-sm">กำลังตรวจสอบคุณภาพรูปภาพ (AI)...</span>
+                            <span className="text-xl">กำลังตรวจสอบคุณภาพรูปภาพ (AI)...</span>
                         </div>
                     ) : verificationResult ? (
                         <div>
                              <div className="flex items-center justify-between mb-2">
                                 <div className="flex items-center gap-2">
                                     <BrainCircuit size={16} className={verificationResult.isValid ? "text-emerald-400" : "text-amber-400"} />
-                                    <span className={`text-sm font-bold ${verificationResult.isValid ? "text-emerald-400" : "text-amber-400"}`}>
+                                    <span className={`text-xl font-bold ${verificationResult.isValid ? "text-emerald-400" : "text-amber-400"}`}>
                                         AI Score: {verificationResult.score}/100
                                     </span>
                                 </div>
@@ -248,12 +248,12 @@ export default function JobCompletePage() {
                              {!verificationResult.isValid && (
                                 <div className="space-y-1">
                                     {verificationResult.issues.map((issue, i) => (
-                                        <div key={i} className="flex items-center gap-2 text-xs text-red-400">
+                                        <div key={i} className="flex items-center gap-2 text-lg font-bold text-red-400">
                                             <AlertTriangle size={12} />
                                             {issue}
                                         </div>
                                     ))}
-                                    <p className="text-xs text-slate-500 mt-1 pl-5">แนะนำให้ถ่ายใหม่อีกครั้งเพื่อความชัดเจน</p>
+                                    <p className="text-lg font-bold text-slate-500 mt-1 pl-5">แนะนำให้ถ่ายใหม่อีกครั้งเพื่อความชัดเจน</p>
                                 </div>
                              )}
                         </div>
@@ -283,10 +283,10 @@ export default function JobCompletePage() {
             {/* Validation Feedback */}
             <div className="text-center space-y-1">
                 {photos.length === 0 && (
-                    <p className="text-xs text-red-400 animate-pulse">* กรุณาถ่ายรูปสินค้าอย่างน้อย 1 รูป</p>
+                    <p className="text-lg font-bold text-red-400 animate-pulse">* กรุณาถ่ายรูปสินค้าอย่างน้อย 1 รูป</p>
                 )}
                 {!signature && (
-                    <p className="text-xs text-red-400 animate-pulse">* กรุณาลงลายเซ็นผู้รับ</p>
+                    <p className="text-lg font-bold text-red-400 animate-pulse">* กรุณาลงลายเซ็นผู้รับ</p>
                 )}
             </div>
         </div>

@@ -189,7 +189,7 @@ export default function UserSettingsPage() {
                                 <h1 className="text-5xl font-black text-white tracking-widest uppercase leading-none italic premium-text-gradient">
                                     {t('settings_pages.users.title')}
                                 </h1>
-                                <p className="text-[11px] font-black text-primary uppercase tracking-[0.2em] mt-2 opacity-80 italic">{t('settings_pages.users.subtitle')}</p>
+                                <p className="text-base font-bold font-black text-primary uppercase tracking-[0.2em] mt-2 opacity-80 italic">{t('settings_pages.users.subtitle')}</p>
                             </div>
                         </div>
                     </div>
@@ -221,7 +221,7 @@ export default function UserSettingsPage() {
                             placeholder={t('settings_pages.users.search_placeholder')}
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full h-18 bg-[#0a0518] border-white/5 rounded-3xl pl-16 pr-8 text-sm font-black uppercase tracking-[0.2em] focus:border-primary/50 transition-all text-white placeholder:text-slate-700 italic shadow-inner"
+                            className="w-full h-18 bg-[#0a0518] border-white/5 rounded-3xl pl-16 pr-8 text-xl font-black uppercase tracking-[0.2em] focus:border-primary/50 transition-all text-white placeholder:text-slate-700 italic shadow-inner"
                         />
                     </div>
                 </div>
@@ -236,12 +236,12 @@ export default function UserSettingsPage() {
                         </div>
                         <div className="flex items-center gap-3 px-5 py-2 bg-white/5 rounded-full border border-white/10 relative z-10">
                             <Activity size={14} className="text-primary" />
-                            <span className="text-[11px] font-black text-slate-500 uppercase tracking-widest">REALTIME_FLOW: ACTIVE</span>
+                            <span className="text-base font-bold font-black text-slate-500 uppercase tracking-widest">REALTIME_FLOW: ACTIVE</span>
                         </div>
                     </div>
 
                     <div className="relative w-full overflow-auto">
-                        <table className="w-full text-sm text-left border-collapse">
+                        <table className="w-full text-xl text-left border-collapse">
                             <thead>
                                 <tr className="bg-black/20 text-[12px] font-black uppercase tracking-[0.1em] text-slate-500 border-b border-white/5">
                                     <th className="px-10 py-8">{t('settings_pages.users.table.vector_id')}</th>
@@ -266,24 +266,24 @@ export default function UserSettingsPage() {
                                                         {user.Username}
                                                     </span>
                                                     {user.Customer_ID && (
-                                                        <div className="text-[9px] text-accent font-black uppercase tracking-tighter mt-1 opacity-60">
+                                                        <div className="text-base font-bold text-accent font-black uppercase tracking-tighter mt-1 opacity-60">
                                                             EXT_CLIENT: {user.Master_Customers?.Customer_Name || user.Customer_ID}
                                                         </div>
                                                     )}
                                                 </div>
                                             </td>
                                             <td className="px-10 py-8 font-black text-white uppercase tracking-tight italic">{user.Name}</td>
-                                            <td className="px-10 py-8 text-slate-500 font-black uppercase tracking-widest text-xs">
+                                            <td className="px-10 py-8 text-slate-500 font-black uppercase tracking-widest text-lg font-bold">
                                                 {user.Branch_ID || "GLOBAL_NODE"}
                                             </td>
                                             <td className="px-10 py-8">
-                                                <div className="px-4 py-1.5 rounded-xl bg-primary/10 text-primary border border-primary/20 text-[10px] font-black uppercase tracking-widest italic shadow-[0_0_15px_rgba(255,30,133,0.1)] w-fit">
+                                                <div className="px-4 py-1.5 rounded-xl bg-primary/10 text-primary border border-primary/20 text-base font-bold font-black uppercase tracking-widest italic shadow-[0_0_15px_rgba(255,30,133,0.1)] w-fit">
                                                     {user.Role || "NO_ROLES_ASSIGNED"}
                                                 </div>
                                             </td>
                                             <td className="px-10 py-8">
                                                 <div className={cn(
-                                                    "px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border w-fit italic",
+                                                    "px-3 py-1 rounded-full text-base font-bold font-black uppercase tracking-widest border w-fit italic",
                                                     user.Active_Status === 'Active' 
                                                         ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' 
                                                         : 'bg-rose-500/10 text-rose-400 border-rose-500/20 animate-pulse'
@@ -336,7 +336,7 @@ export default function UserSettingsPage() {
                     <div className="flex-1 overflow-y-auto p-12 space-y-10 scrollbar-hide">
                         <div className="grid grid-cols-2 gap-10">
                              <div className="space-y-3">
-                                <Label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] ml-4">{t('settings_pages.users.dialog.username')}</Label>
+                                <Label className="text-base font-bold font-black text-slate-500 uppercase tracking-[0.4em] ml-4">{t('settings_pages.users.dialog.username')}</Label>
                                 <Input 
                                     value={formData.Username} 
                                     onChange={e => setFormData({...formData, Username: e.target.value})} 
@@ -345,7 +345,7 @@ export default function UserSettingsPage() {
                                 />
                             </div>
                             <div className="space-y-3">
-                                <Label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] ml-4">{t('settings_pages.users.dialog.password')}</Label>
+                                <Label className="text-base font-bold font-black text-slate-500 uppercase tracking-[0.4em] ml-4">{t('settings_pages.users.dialog.password')}</Label>
                                 <Input 
                                     type="password"
                                     value={formData.Password || ""} 
@@ -357,7 +357,7 @@ export default function UserSettingsPage() {
                         </div>
 
                         <div className="space-y-3">
-                            <Label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] ml-4">{t('settings_pages.users.dialog.full_name')}</Label>
+                            <Label className="text-base font-bold font-black text-slate-500 uppercase tracking-[0.4em] ml-4">{t('settings_pages.users.dialog.full_name')}</Label>
                             <Input 
                                 value={formData.Name} 
                                 onChange={e => setFormData({...formData, Name: e.target.value})} 
@@ -367,7 +367,7 @@ export default function UserSettingsPage() {
 
                         <div className="grid grid-cols-2 gap-10">
                             <div className="space-y-3">
-                                <Label className="text-[11px] font-black text-slate-500 uppercase tracking-[0.1em] ml-4">{t('settings_pages.users.dialog.branch')}</Label>
+                                <Label className="text-base font-bold font-black text-slate-500 uppercase tracking-[0.1em] ml-4">{t('settings_pages.users.dialog.branch')}</Label>
                                 {isAdmin ? (
                                     <Select 
                                         value={formData.Branch_ID || ""} 
@@ -393,7 +393,7 @@ export default function UserSettingsPage() {
                                 )}
                             </div>
                             <div className="space-y-3">
-                                <Label className="text-[11px] font-black text-slate-500 uppercase tracking-[0.1em] ml-4">{t('settings_pages.users.dialog.role')}</Label>
+                                <Label className="text-base font-bold font-black text-slate-500 uppercase tracking-[0.1em] ml-4">{t('settings_pages.users.dialog.role')}</Label>
                                 <Select 
                                     value={formData.Role || ""} 
                                     onValueChange={handleRoleChange}
@@ -416,10 +416,10 @@ export default function UserSettingsPage() {
 
                         <div className="space-y-6">
                             <div className="flex justify-between items-center">
-                                <Label className="text-[11px] font-black text-primary uppercase tracking-[0.2em] italic">Access Permissions Matrix</Label>
+                                <Label className="text-base font-bold font-black text-primary uppercase tracking-[0.2em] italic">Access Permissions Matrix</Label>
                                 <div className="flex items-center gap-2">
                                     <Zap size={12} className="text-primary" />
-                                    <span className="text-[8px] font-black text-slate-600 uppercase tracking-widest">Personalized Node Access</span>
+                                    <span className="text-base font-bold font-black text-slate-600 uppercase tracking-widest">Personalized Node Access</span>
                                 </div>
                             </div>
                             
@@ -435,11 +435,11 @@ export default function UserSettingsPage() {
                                         <div className="grid gap-2 leading-none cursor-pointer" onClick={() => toggleGranularPermission(perm.id, !formData.Permissions?.[perm.id])}>
                                             <label
                                                 htmlFor={`perm-${perm.id}`}
-                                                className="text-xs font-black uppercase tracking-widest text-slate-300 group-hover/perm:text-white transition-colors"
+                                                className="text-lg font-bold font-black uppercase tracking-widest text-slate-300 group-hover/perm:text-white transition-colors"
                                             >
                                                 {perm.label}
                                             </label>
-                                            <p className="text-[9px] font-bold text-slate-600 uppercase group-hover/perm:text-slate-500 transition-colors italic">
+                                            <p className="text-base font-bold font-bold text-slate-600 uppercase group-hover/perm:text-slate-500 transition-colors italic">
                                                 {perm.desc}
                                             </p>
                                         </div>
@@ -452,7 +452,7 @@ export default function UserSettingsPage() {
                         <div className="space-y-3 p-8 rounded-[2.5rem] bg-indigo-500/5 border-2 border-indigo-500/10 shadow-inner group/client">
                             <div className="flex items-center gap-3 mb-2 ml-4">
                                 <Key size={14} className="text-indigo-400 group-hover/client:rotate-45 transition-transform" />
-                                <Label className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.4em]">External Client Linkage</Label>
+                                <Label className="text-base font-bold font-black text-indigo-400 uppercase tracking-[0.4em]">External Client Linkage</Label>
                             </div>
                             <Select 
                                 value={formData.Customer_ID || "none"} 
@@ -473,7 +473,7 @@ export default function UserSettingsPage() {
                         </div>
 
                         <div className="space-y-3">
-                             <Label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] ml-4">Deployment Status</Label>
+                             <Label className="text-base font-bold font-black text-slate-500 uppercase tracking-[0.4em] ml-4">Deployment Status</Label>
                              <Select 
                                 value={formData.Active_Status} 
                                 onValueChange={v => setFormData({...formData, Active_Status: v})}
@@ -490,8 +490,8 @@ export default function UserSettingsPage() {
                     </div>
  
                     <DialogFooter className="p-12 border-t border-white/5 bg-black/40 gap-6">
-                        <PremiumButton variant="outline" onClick={() => setIsDialogOpen(false)} className="h-18 px-10 rounded-[1.5rem] border-white/5 text-slate-500 hover:text-white uppercase tracking-widest text-xs font-black">{t('settings_pages.users.dialog.abort')}</PremiumButton>
-                        <PremiumButton onClick={handleSave} disabled={saving} className="h-18 px-12 rounded-[2rem] gap-4 shadow-[0_20px_50px_rgba(255,30,133,0.3)] min-w-[200px] text-sm tracking-[0.2em] bg-primary text-white border-0">
+                        <PremiumButton variant="outline" onClick={() => setIsDialogOpen(false)} className="h-18 px-10 rounded-[1.5rem] border-white/5 text-slate-500 hover:text-white uppercase tracking-widest text-lg font-bold font-black">{t('settings_pages.users.dialog.abort')}</PremiumButton>
+                        <PremiumButton onClick={handleSave} disabled={saving} className="h-18 px-12 rounded-[2rem] gap-4 shadow-[0_20px_50px_rgba(255,30,133,0.3)] min-w-[200px] text-xl tracking-[0.2em] bg-primary text-white border-0">
                             {saving ? <Loader2 className="w-6 h-6 animate-spin" /> : <ShieldCheck className="w-6 h-6" />}
                             {t('settings_pages.users.dialog.execute')}
                         </PremiumButton>
@@ -501,3 +501,4 @@ export default function UserSettingsPage() {
         </DashboardLayout>
     )
 }
+

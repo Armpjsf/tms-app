@@ -201,7 +201,7 @@ export function JobActionButton({ job }: JobActionButtonProps) {
                         </Button>
                     )}
 
-                    <p className="text-[11px] text-gray-500 italic text-center px-4">
+                    <p className="text-base font-bold text-gray-500 italic text-center px-4">
                         {nextAction}
                     </p>
                     <Button 
@@ -227,3 +227,4 @@ export function JobActionButton({ job }: JobActionButtonProps) {
     </div>
   )
 }
+

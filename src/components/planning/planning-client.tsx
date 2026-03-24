@@ -112,7 +112,7 @@ export function PlanningClient({
                     </h1>
                     <div className="flex items-center gap-3 mt-2">
                         <RealtimeIndicator isLive={true} className="bg-white/5 border-white/10" />
-                        <p className="text-slate-500 font-bold uppercase tracking-[0.3em] text-[10px]">
+                        <p className="text-slate-500 font-bold uppercase tracking-[0.3em] text-base font-bold">
                             Tactical Mission Orchestration
                         </p>
                     </div>
@@ -123,7 +123,7 @@ export function PlanningClient({
                         <button
                             onClick={() => setView('list')}
                             className={cn(
-                                "flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition-all",
+                                "flex items-center gap-2 px-4 py-2 rounded-xl text-lg font-bold font-black transition-all",
                                 view === 'list' ? "bg-primary text-white shadow-lg" : "text-slate-500 hover:text-slate-300"
                             )}
                         >
@@ -133,7 +133,7 @@ export function PlanningClient({
                         <button
                             onClick={() => setView('kanban')}
                             className={cn(
-                                "flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition-all",
+                                "flex items-center gap-2 px-4 py-2 rounded-xl text-lg font-bold font-black transition-all",
                                 view === 'kanban' ? "bg-primary text-white shadow-lg" : "text-slate-500 hover:text-slate-300"
                             )}
                         >
@@ -143,14 +143,14 @@ export function PlanningClient({
                         <button
                             onClick={() => setView('requests')}
                             className={cn(
-                                "flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition-all relative",
+                                "flex items-center gap-2 px-4 py-2 rounded-xl text-lg font-bold font-black transition-all relative",
                                 view === 'requests' ? "bg-primary text-white shadow-lg" : "text-slate-500 hover:text-slate-300"
                             )}
                         >
                             <Inbox size={14} />
                             {t('planning.requests')}
                             {requestCount > 0 && (
-                                <span className="absolute -top-1 -right-1 w-4 h-4 bg-rose-500 text-[8px] flex items-center justify-center rounded-full border-2 border-[#050110]">
+                                <span className="absolute -top-1 -right-1 w-4 h-4 bg-rose-500 text-base font-bold flex items-center justify-center rounded-full border-2 border-[#050110]">
                                     {requestCount}
                                 </span>
                             )}
@@ -166,7 +166,7 @@ export function PlanningClient({
                                 routes={routes}
                                 subcontractors={subcontractors}
                                 trigger={
-                                    <button className="flex items-center gap-2 bg-white text-slate-900 px-6 py-3 rounded-2xl font-black text-sm hover:bg-primary hover:text-white transition-all shadow-xl active:scale-95 group">
+                                    <button className="flex items-center gap-2 bg-white text-slate-900 px-6 py-3 rounded-2xl font-black text-xl hover:bg-primary hover:text-white transition-all shadow-xl active:scale-95 group">
                                         <Plus size={18} className="group-hover:rotate-90 transition-transform duration-300" />
                                         {t('planning.new_job')}
                                     </button>
@@ -252,10 +252,10 @@ function StatCard({ label, value, icon, color }: { label: string, value: number,
                 {icon}
             </div>
             <div className="relative z-10">
-                <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] mb-2">{label}</p>
+                <p className="text-base font-bold font-black text-slate-500 uppercase tracking-[0.3em] mb-2">{label}</p>
                 <div className="flex items-baseline gap-2">
                     <span className="text-4xl font-black text-white tracking-tighter italic">{value}</span>
-                    <span className="text-slate-600 text-[10px] font-bold uppercase tracking-widest">Units</span>
+                    <span className="text-slate-600 text-base font-bold font-bold uppercase tracking-widest">Units</span>
                 </div>
             </div>
             <div className={cn("absolute bottom-0 left-0 h-1 w-0 group-hover:w-full transition-all duration-700", 
@@ -266,3 +266,4 @@ function StatCard({ label, value, icon, color }: { label: string, value: number,
         </motion.div>
     )
 }
+

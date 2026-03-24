@@ -31,7 +31,7 @@ export function PODDialog({ open, onOpenChange, job }: PODDialogProps) {
         <div className="space-y-6">
           {/* Photos Grid */}
           <div>
-            <h3 className="text-sm font-medium text-muted-foreground mb-3">รูปภาพสินค้า / สถานที่ส่ง ({photos.length})</h3>
+            <h3 className="text-xl font-medium text-muted-foreground mb-3">รูปภาพสินค้า / สถานที่ส่ง ({photos.length})</h3>
             {photos.length > 0 ? (
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {photos.map((url: string, index: number) => (
@@ -61,7 +61,7 @@ export function PODDialog({ open, onOpenChange, job }: PODDialogProps) {
 
           {/* Signature */}
           <div>
-             <h3 className="text-sm font-medium text-muted-foreground mb-3">ลายเซ็นผู้รับ</h3>
+             <h3 className="text-xl font-medium text-muted-foreground mb-3">ลายเซ็นผู้รับ</h3>
              {signature ? (
                <div className="relative h-40 w-full md:w-80 border border-border rounded-lg bg-white/5 mx-auto md:mx-0">
                   <Image 
@@ -79,7 +79,7 @@ export function PODDialog({ open, onOpenChange, job }: PODDialogProps) {
           </div>
 
           {/* Metadata */}
-          <div className="grid grid-cols-2 gap-4 p-4 bg-muted/50 rounded-lg text-sm">
+          <div className="grid grid-cols-2 gap-4 p-4 bg-muted/50 rounded-lg text-xl">
              <div>
                 <p className="text-muted-foreground">ผู้ส่ง (Driver)</p>
                 <p className="text-foreground font-medium">{job.Driver_Name || '-'}</p>
@@ -96,7 +96,7 @@ export function PODDialog({ open, onOpenChange, job }: PODDialogProps) {
              </div>
              <div>
                 <p className="text-muted-foreground">สถานะ</p>
-                <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${
+                <span className={`inline-block px-2 py-0.5 rounded text-lg font-bold font-medium ${
                     job.Job_Status === 'Completed' || job.Job_Status === 'Delivered' 
                     ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400' 
                     : 'bg-muted text-muted-foreground'
@@ -116,3 +116,4 @@ export function PODDialog({ open, onOpenChange, job }: PODDialogProps) {
     </Dialog>
   )
 }
+

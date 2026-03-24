@@ -89,17 +89,17 @@ export function DashboardClient({
                         <div className="p-2 bg-primary/20 rounded-xl shadow-lg shadow-primary/10">
                             <LayoutGrid className="text-primary" size={24} />
                         </div>
-                        <h2 className="text-xs font-black text-primary uppercase tracking-[0.3em]">{t('dashboard.matrix_title')}</h2>
+                        <h2 className="text-lg font-bold font-black text-primary uppercase tracking-[0.3em]">{t('dashboard.matrix_title')}</h2>
                     </div>
                     <h1 className="text-7xl font-black text-white tracking-tighter premium-text-gradient uppercase">
                         {customerMode ? `${t('navigation.dashboard')}: ${userName || 'Alpha'}` : t('dashboard.title')}
                     </h1>
                     <div className="flex items-center gap-4">
-                        <div className="px-5 py-2 rounded-full bg-primary/10 border border-primary/20 text-[11px] font-black uppercase tracking-[0.2em] flex items-center gap-3 text-primary">
+                        <div className="px-5 py-2 rounded-full bg-primary/10 border border-primary/20 text-base font-bold font-black uppercase tracking-[0.2em] flex items-center gap-3 text-primary">
                             <div className="w-2 h-2 rounded-full bg-primary animate-pulse shadow-[0_0_12px_rgba(255,30,133,1)]" />
                             {t('dashboard.system_integrity')}
                         </div>
-                        <p className="text-slate-500 text-xs font-bold uppercase tracking-widest opacity-60">
+                        <p className="text-slate-500 text-lg font-bold font-bold uppercase tracking-widest opacity-60">
                              {t('dashboard.node_execution')} {branchId || "Global"}
                         </p>
                     </div>
@@ -109,14 +109,14 @@ export function DashboardClient({
                     {customerMode && (
                         <button 
                             onClick={() => setIsRequestDialogOpen(true)}
-                            className="h-16 px-12 bg-primary hover:bg-primary/90 text-white rounded-3xl font-black text-xs uppercase tracking-[0.2em] transition-all shadow-[0_20px_40px_rgba(255,30,133,0.3)] active:scale-95 border border-primary/30"
+                            className="h-16 px-12 bg-primary hover:bg-primary/90 text-white rounded-3xl font-black text-lg font-bold uppercase tracking-[0.2em] transition-all shadow-[0_20px_40px_rgba(255,30,133,0.3)] active:scale-95 border border-primary/30"
                         >
                             {t('navigation.request_mission')}
                         </button>
                     )}
                     <div className="h-16 px-8 glass-panel rounded-3xl flex items-center gap-6 border-white/5 shadow-2xl">
                         <div className="text-right">
-                            <p className="text-[11px] font-black text-slate-500 uppercase tracking-widest mb-1">{t('dashboard.fleet_utilization')}</p>
+                            <p className="text-base font-bold font-black text-slate-500 uppercase tracking-widest mb-1">{t('dashboard.fleet_utilization')}</p>
                             <p className="text-white font-black text-2xl leading-none">{fleetHealth || 98}%</p>
                         </div>
                         <Activity className="text-primary" size={28} />
@@ -138,7 +138,7 @@ export function DashboardClient({
                     </div>
                     <div className="absolute top-10 left-10 z-10">
                         <div className="px-8 py-4 glass-panel rounded-3xl border-white/10 backdrop-blur-3xl shadow-2xl">
-                            <p className="text-xs font-black text-primary uppercase tracking-[0.2em] mb-1.5">{t('dashboard.live_matrix')}</p>
+                            <p className="text-lg font-bold font-black text-primary uppercase tracking-[0.2em] mb-1.5">{t('dashboard.live_matrix')}</p>
                             <h3 className="text-white font-black text-2xl tracking-tighter">{(fleetStatus || []).length} {t('dashboard.units_deployed')}</h3>
                         </div>
                     </div>
@@ -152,7 +152,7 @@ export function DashboardClient({
                         <div className="w-28 h-28 rounded-[2.5rem] bg-primary/10 flex items-center justify-center mb-8 border border-primary/20 group-hover:scale-110 group-hover:bg-primary/20 transition-all duration-700 shadow-xl shadow-primary/5">
                             <CheckCircle2 className="text-primary w-14 h-14" strokeWidth={2.5} />
                         </div>
-                        <h3 className="text-slate-500 font-black text-xs uppercase tracking-[0.3em] mb-4">{t('dashboard.ops_integrity')}</h3>
+                        <h3 className="text-slate-500 font-black text-lg font-bold uppercase tracking-[0.3em] mb-4">{t('dashboard.ops_integrity')}</h3>
                         <p className="text-9xl font-black text-white tracking-tighter leading-none mb-6 premium-text-gradient uppercase">A<span className="text-primary">+</span></p>
                         <div className="w-full h-2 bg-white/5 rounded-full overflow-hidden mb-6">
                             <motion.div 
@@ -162,20 +162,20 @@ export function DashboardClient({
                                 className="h-full bg-primary shadow-[0_0_20px_rgba(255,30,133,0.8)]" 
                             />
                         </div>
-                        <p className="text-primary/60 text-xs font-black uppercase tracking-[0.15em]">{t('dashboard.efficiency_index')} 96.4%</p>
+                        <p className="text-primary/60 text-lg font-bold font-black uppercase tracking-[0.15em]">{t('dashboard.efficiency_index')} 96.4%</p>
                     </motion.div>
 
                     {/* Quick Stats Grid */}
                     <div className="grid grid-cols-2 gap-8">
                         <motion.div variants={item} className="glass-panel rounded-[3rem] p-8 border-white/5 flex flex-col justify-between h-44 hover:border-rose-500/20 transition-all">
-                            <p className="text-xs font-black text-slate-500 uppercase tracking-widest">{t('monitoring.alerts')}</p>
+                            <p className="text-lg font-bold font-black text-slate-500 uppercase tracking-widest">{t('monitoring.alerts')}</p>
                             <div className="flex items-end justify-between">
                                 <p className={cn("text-6xl font-black tracking-tighter", sosCount > 0 ? "text-rose-500" : "text-white")}>{sosCount}</p>
                                 <AlertTriangle size={24} className={sosCount > 0 ? "text-rose-500 animate-bounce" : "text-slate-800 opacity-40"} />
                             </div>
                         </motion.div>
                         <motion.div variants={item} className="glass-panel rounded-[3rem] p-8 border-white/5 flex flex-col justify-between h-44 hover:border-primary/20 transition-all">
-                            <p className="text-xs font-black text-slate-500 uppercase tracking-widest">{t('navigation.planning')}</p>
+                            <p className="text-lg font-bold font-black text-slate-500 uppercase tracking-widest">{t('navigation.planning')}</p>
                             <div className="flex items-end justify-between">
                                 <p className="text-6xl font-black text-white tracking-tighter">{jobStats?.inProgress || 0}</p>
                                 <Truck size={24} className="text-primary" />
@@ -191,7 +191,7 @@ export function DashboardClient({
                     </div>
                     <div className="flex flex-col lg:flex-row items-center justify-between gap-16 relative z-10">
                         <div className="space-y-8">
-                            <div className="inline-flex items-center gap-3 px-5 py-2 glass-panel rounded-full text-xs font-black uppercase tracking-[0.2em] text-primary border-primary/20">
+                            <div className="inline-flex items-center gap-3 px-5 py-2 glass-panel rounded-full text-lg font-bold font-black uppercase tracking-[0.2em] text-primary border-primary/20">
                                 <Leaf size={16} /> {t('dashboard.esg_intelligence')}
                             </div>
                              <h2 className="text-6xl font-black text-white tracking-tighter leading-tight uppercase">
@@ -205,12 +205,12 @@ export function DashboardClient({
                         <div className="flex gap-16">
                             <div className="text-center group/stat">
                                 <p className="text-7xl font-black text-white tracking-tighter mb-2 group-hover/stat:text-primary transition-colors">68.2</p>
-                                <p className="text-xs font-black text-primary uppercase tracking-[0.2em]">{t('dashboard.trees_saved')}</p>
+                                <p className="text-lg font-bold font-black text-primary uppercase tracking-[0.2em]">{t('dashboard.trees_saved')}</p>
                             </div>
                             <div className="w-px h-28 bg-white/10" />
                             <div className="text-center group/stat">
                                 <p className="text-7xl font-black text-white tracking-tighter mb-2 group-hover/stat:text-primary transition-colors">285<span className="text-2xl text-slate-500 ml-1">L</span></p>
-                                <p className="text-xs font-black text-primary uppercase tracking-[0.2em]">{t('dashboard.fuel_reclaimed')}</p>
+                                <p className="text-lg font-bold font-black text-primary uppercase tracking-[0.2em]">{t('dashboard.fuel_reclaimed')}</p>
                             </div>
                         </div>
                     </div>
@@ -232,7 +232,7 @@ export function DashboardClient({
                                 </div>
                                 {t('dashboard.growth_analytics')}
                             </h3>
-                            <span className="text-xs font-black text-slate-500 uppercase tracking-[0.2em]">{t('dashboard.performance_spectrum')}</span>
+                            <span className="text-lg font-bold font-black text-slate-500 uppercase tracking-[0.2em]">{t('dashboard.performance_spectrum')}</span>
                         </div>
                         <div className="text-white">
                             <WeeklyShipmentChart data={weeklyStats} />
@@ -259,3 +259,4 @@ export function DashboardClient({
         </div>
     )
 }
+

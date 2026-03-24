@@ -121,7 +121,7 @@ export default function LeafletMap({
       {showCurrentPosition && currentPosition && (
         <Marker position={currentPosition}>
           <Popup>
-              <div className="text-sm">
+              <div className="text-xl">
                 <p className="font-bold">Your Location</p>
                 <p className="text-gray-600">{currentPosition[0].toFixed(6)}, {currentPosition[1].toFixed(6)}</p>
               </div>
@@ -162,8 +162,8 @@ export default function LeafletMap({
                     icon={p.type === 'start' ? greenIcon : (p.type === 'end' ? redIcon : goldIcon)}
                 >
                     <Popup>
-                        <div className="text-sm">
-                            <p className="font-bold uppercase tracking-tighter text-xs text-gray-400">{p.type} point</p>
+                        <div className="text-xl">
+                            <p className="font-bold uppercase tracking-tighter text-lg font-bold text-gray-400">{p.type} point</p>
                             <p className="font-black">{p.name}</p>
                         </div>
                     </Popup>
@@ -223,7 +223,7 @@ function MovingMarker({ driver }: { driver: DriverLocation }) {
             html: `
                 <div class="relative flex items-center justify-center" style="width: 60px; height: 60px;">
                     <!-- Floating License Plate -->
-                    <div class="absolute -top-10 left-1/2 -translate-x-1/2 whitespace-nowrap bg-slate-900/90 text-white text-[10px] font-black px-2 py-0.5 rounded-lg border border-white/20 shadow-2xl z-30 pointer-events-none">
+                    <div class="absolute -top-10 left-1/2 -translate-x-1/2 whitespace-nowrap bg-slate-900/90 text-white text-base font-bold font-black px-2 py-0.5 rounded-lg border border-white/20 shadow-2xl z-30 pointer-events-none">
                         ${driver.vehiclePlate || 'N/A'}
                     </div>
 
@@ -297,7 +297,7 @@ function DriverPopup({ driver }: { driver: DriverLocation }) {
   }, [driver.lat, driver.lng])
 
   return (
-    <div className="text-sm min-w-[200px]">
+    <div className="text-xl min-w-[200px]">
       <p className="font-bold text-base mb-1">{driver.name}</p>
       <div className="space-y-1">
         <div className="flex items-center gap-2 text-gray-600">
@@ -306,12 +306,13 @@ function DriverPopup({ driver }: { driver: DriverLocation }) {
         </div>
         <div className="flex items-center gap-2 text-gray-600">
             <MapPin size={14} className="text-red-500" />
-            <p className="text-xs leading-relaxed">
+            <p className="text-lg font-bold leading-relaxed">
                 {address}
             </p>
         </div>
-        {driver.lastUpdate && <p className="text-gray-400 text-[10px] mt-1 text-right">Updated: {driver.lastUpdate}</p>}
+        {driver.lastUpdate && <p className="text-gray-400 text-base font-bold mt-1 text-right">Updated: {driver.lastUpdate}</p>}
       </div>
     </div>
   )
 }
+

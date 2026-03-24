@@ -160,7 +160,7 @@ export function MonitoringCommandCenter({
                         <input 
                             type="text" 
                             placeholder={t('common.search')}
-                            className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-sm focus:outline-none focus:border-primary/50 focus:bg-white/10 transition-all placeholder:text-slate-600 font-bold"
+                            className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-xl focus:outline-none focus:border-primary/50 focus:bg-white/10 transition-all placeholder:text-slate-600 font-bold"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                         />
@@ -186,8 +186,8 @@ export function MonitoringCommandCenter({
                                             <div className={cn("absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-[#050110]", driver.status === 'Online' ? "bg-emerald-500" : "bg-slate-500")} />
                                         </div>
                                         <div>
-                                            <p className="text-sm font-black text-white">{driver.Driver_Name}</p>
-                                            <p className="text-xs font-bold text-slate-500 uppercase tracking-tighter">{driver.Vehicle_Plate}</p>
+                                            <p className="text-xl font-black text-white">{driver.Driver_Name}</p>
+                                            <p className="text-lg font-bold font-bold text-slate-500 uppercase tracking-tighter">{driver.Vehicle_Plate}</p>
                                         </div>
                                     </div>
                                     <SafetyScoreBadge metrics={calculateSafetyScore(driver)} />
@@ -215,14 +215,15 @@ function FilterButton({ active, onClick, label, count, color = "primary" }: any)
         <button 
             onClick={onClick}
             className={cn(
-                "px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-[0.15em] whitespace-nowrap transition-all border flex items-center gap-2",
+                "px-5 py-2.5 rounded-xl text-lg font-bold font-black uppercase tracking-[0.15em] whitespace-nowrap transition-all border flex items-center gap-2",
                 active 
                     ? `bg-${color}-500 text-white border-${color}-400 shadow-lg shadow-${color}-500/20 scale-105` 
                     : "bg-white/5 border-white/5 text-slate-500 hover:text-slate-300"
             )}
         >
             {label}
-            {count > 0 && <span className="px-1.5 py-0.5 bg-white text-rose-500 rounded-md text-[10px]">{count}</span>}
+            {count > 0 && <span className="px-1.5 py-0.5 bg-white text-rose-500 rounded-md text-base font-bold">{count}</span>}
         </button>
     )
 }
+

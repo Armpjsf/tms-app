@@ -35,19 +35,19 @@ function ServiceCard({ service }: { service: ScheduledService }) {
         </div>
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <span className="font-medium text-sm text-foreground">{service.vehicle_plate}</span>
-            <span className="text-[10px] text-muted-foreground">{service.vehicle_type}</span>
+            <span className="font-medium text-xl text-foreground">{service.vehicle_plate}</span>
+            <span className="text-base font-bold text-muted-foreground">{service.vehicle_type}</span>
           </div>
-          <p className="text-xs text-muted-foreground truncate">{service.service_type}</p>
+          <p className="text-lg font-bold text-muted-foreground truncate">{service.service_type}</p>
         </div>
       </div>
       <div className="text-right shrink-0">
-        <span className={`text-xs font-medium ${config.text}`}>
+        <span className={`text-lg font-bold font-medium ${config.text}`}>
           {service.days_until <= 0 
             ? `${Math.abs(service.days_until)} วันที่แล้ว` 
             : `${service.days_until} วัน`}
         </span>
-        <p className="text-[10px] text-muted-foreground">{service.due_date}</p>
+        <p className="text-base font-bold text-muted-foreground">{service.due_date}</p>
       </div>
     </div>
   )
@@ -64,17 +64,17 @@ export function MaintenanceScheduleDashboard({ schedule }: { schedule: Maintenan
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-2">
               <Wrench size={16} className="text-emerald-500" />
-              <span className="text-xs text-muted-foreground">ซ่อมอยู่</span>
+              <span className="text-lg font-bold text-muted-foreground">ซ่อมอยู่</span>
             </div>
             <p className="text-2xl font-bold text-foreground">{schedule.activeRepairs}</p>
-            <p className="text-[10px] text-muted-foreground mt-1">รายการ</p>
+            <p className="text-base font-bold text-muted-foreground mt-1">รายการ</p>
           </CardContent>
         </Card>
         <Card className="bg-card/50 border-border">
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-2">
               <CheckCircle2 size={16} className="text-emerald-400" />
-              <span className="text-xs text-muted-foreground">เสร็จเดือนนี้</span>
+              <span className="text-lg font-bold text-muted-foreground">เสร็จเดือนนี้</span>
             </div>
             <p className="text-2xl font-bold text-foreground">{schedule.completedThisMonth}</p>
           </CardContent>
@@ -83,7 +83,7 @@ export function MaintenanceScheduleDashboard({ schedule }: { schedule: Maintenan
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-2">
               <DollarSign size={16} className="text-amber-400" />
-              <span className="text-xs text-muted-foreground">ค่าซ่อมเดือนนี้</span>
+              <span className="text-lg font-bold text-muted-foreground">ค่าซ่อมเดือนนี้</span>
             </div>
             <p className="text-2xl font-bold text-foreground">฿{schedule.totalCostThisMonth.toLocaleString()}</p>
           </CardContent>
@@ -92,11 +92,11 @@ export function MaintenanceScheduleDashboard({ schedule }: { schedule: Maintenan
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-2">
               <Clock size={16} className="text-purple-400" />
-              <span className="text-xs text-muted-foreground">นัดหมายรออยู่</span>
+              <span className="text-lg font-bold text-muted-foreground">นัดหมายรออยู่</span>
             </div>
             <p className="text-2xl font-bold text-foreground">{totalScheduled}</p>
             {schedule.overdue.length > 0 && (
-              <p className="text-[10px] text-red-400 mt-1">⚠️ {schedule.overdue.length} เกินกำหนด</p>
+              <p className="text-base font-bold text-red-400 mt-1">⚠️ {schedule.overdue.length} เกินกำหนด</p>
             )}
           </CardContent>
         </Card>
@@ -106,7 +106,7 @@ export function MaintenanceScheduleDashboard({ schedule }: { schedule: Maintenan
         {/* Schedule Timeline */}
         <Card className="bg-card/50 border-border">
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm flex items-center gap-2 text-foreground">
+            <CardTitle className="text-xl flex items-center gap-2 text-foreground">
               <Calendar size={16} className="text-primary" />
               กำหนดการซ่อมบำรุง
             </CardTitle>
@@ -117,7 +117,7 @@ export function MaintenanceScheduleDashboard({ schedule }: { schedule: Maintenan
               <div>
                 <div className="flex items-center gap-2 mb-2">
                   <AlertTriangle size={12} className="text-red-400" />
-                  <span className="text-xs font-medium text-red-400">เกินกำหนด ({schedule.overdue.length})</span>
+                  <span className="text-lg font-bold font-medium text-red-400">เกินกำหนด ({schedule.overdue.length})</span>
                 </div>
                 <div className="space-y-2">
                   {schedule.overdue.map((s, i) => <ServiceCard key={`o-${i}`} service={s} />)}
@@ -130,7 +130,7 @@ export function MaintenanceScheduleDashboard({ schedule }: { schedule: Maintenan
               <div>
                 <div className="flex items-center gap-2 mb-2">
                   <Clock size={12} className="text-amber-400" />
-                  <span className="text-xs font-medium text-amber-400">ภายใน 7 วัน ({schedule.dueSoon.length})</span>
+                  <span className="text-lg font-bold font-medium text-amber-400">ภายใน 7 วัน ({schedule.dueSoon.length})</span>
                 </div>
                 <div className="space-y-2">
                   {schedule.dueSoon.map((s, i) => <ServiceCard key={`d-${i}`} service={s} />)}
@@ -143,7 +143,7 @@ export function MaintenanceScheduleDashboard({ schedule }: { schedule: Maintenan
               <div>
                 <div className="flex items-center gap-2 mb-2">
                   <Calendar size={12} className="text-emerald-500" />
-                  <span className="text-xs font-medium text-emerald-500">ภายใน 30 วัน ({schedule.upcoming.length})</span>
+                  <span className="text-lg font-bold font-medium text-emerald-500">ภายใน 30 วัน ({schedule.upcoming.length})</span>
                 </div>
                 <div className="space-y-2">
                   {schedule.upcoming.map((s, i) => <ServiceCard key={`u-${i}`} service={s} />)}
@@ -154,7 +154,7 @@ export function MaintenanceScheduleDashboard({ schedule }: { schedule: Maintenan
             {totalScheduled === 0 && (
               <div className="text-center py-8 text-muted-foreground">
                 <CheckCircle2 size={32} className="mx-auto mb-2 opacity-30" />
-                <p className="text-sm">ไม่มีกำหนดการในช่วง 30 วันข้างหน้า</p>
+                <p className="text-xl">ไม่มีกำหนดการในช่วง 30 วันข้างหน้า</p>
               </div>
             )}
           </CardContent>
@@ -163,36 +163,36 @@ export function MaintenanceScheduleDashboard({ schedule }: { schedule: Maintenan
         {/* Vehicle Health */}
         <Card className="bg-card/50 border-border">
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm flex items-center gap-2 text-foreground">
+            <CardTitle className="text-xl flex items-center gap-2 text-foreground">
               <Wrench size={16} className="text-amber-400" />
               สุขภาพรถ (Top 10 ซ่อมมากที่สุด)
             </CardTitle>
           </CardHeader>
           <CardContent>
             {schedule.vehicleHealthSummary.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-8">ไม่มีข้อมูล</p>
+              <p className="text-xl text-muted-foreground text-center py-8">ไม่มีข้อมูล</p>
             ) : (
               <div className="space-y-3">
                 {schedule.vehicleHealthSummary.map((v, i) => (
                   <div key={v.vehicle_plate} className="flex items-center justify-between p-3 rounded-lg bg-background/50 border border-border">
                     <div className="flex items-center gap-3">
-                      <span className="w-6 h-6 rounded-full bg-muted/50 flex items-center justify-center text-[10px] text-muted-foreground font-medium">
+                      <span className="w-6 h-6 rounded-full bg-muted/50 flex items-center justify-center text-base font-bold text-muted-foreground font-medium">
                         {i + 1}
                       </span>
                       <div>
-                        <p className="text-sm font-medium text-foreground">{v.vehicle_plate}</p>
+                        <p className="text-xl font-medium text-foreground">{v.vehicle_plate}</p>
                         {v.lastRepair && (
-                          <p className="text-[10px] text-muted-foreground">ซ่อมล่าสุด: {v.lastRepair.slice(0, 10)}</p>
+                          <p className="text-base font-bold text-muted-foreground">ซ่อมล่าสุด: {v.lastRepair.slice(0, 10)}</p>
                         )}
                       </div>
                     </div>
                     <div className="flex items-center gap-3 text-right">
                       {v.openTickets > 0 && (
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-500/20 text-amber-400">
+                        <span className="px-2 py-0.5 rounded-full text-base font-bold font-medium bg-amber-500/20 text-amber-400">
                           {v.openTickets} เปิดอยู่
                         </span>
                       )}
-                      <span className="text-sm font-medium text-foreground">฿{v.totalCost.toLocaleString()}</span>
+                      <span className="text-xl font-medium text-foreground">฿{v.totalCost.toLocaleString()}</span>
                     </div>
                   </div>
                 ))}
@@ -204,3 +204,4 @@ export function MaintenanceScheduleDashboard({ schedule }: { schedule: Maintenan
     </div>
   )
 }
+

@@ -70,7 +70,7 @@ export function PremiumCardTitle({ children, className, icon, dark = false }: { 
         </div>
       )}
       <h3 className={cn(
-        "text-xl font-black tracking-tight", 
+        "text-3xl font-black tracking-tight", // Scaled up from text-2xl to text-3xl
         dark ? "text-slate-100" : "text-white",
         className
       )}>

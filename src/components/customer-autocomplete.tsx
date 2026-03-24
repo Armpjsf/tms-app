@@ -102,7 +102,7 @@ export function CustomerAutocomplete({
       {open && (
         <div className="absolute z-50 w-full mt-1 bg-gray-100 border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
           {filteredCustomers.length === 0 ? (
-            <div className="p-2 text-sm text-gray-700 font-bold text-center">
+            <div className="p-2 text-xl text-gray-700 font-bold text-center">
                ไม่พบลูกค้าที่ตรงกัน (ใช้ชื่อนี้เป็นลูกค้าใหม่)
             </div>
           ) : (
@@ -111,7 +111,7 @@ export function CustomerAutocomplete({
                 <li
                   key={`${customer.Customer_Name}-${index}`}
                   className={cn(
-                    "px-3 py-2 text-sm text-gray-800 cursor-pointer hover:bg-slate-700 flex items-center justify-between",
+                    "px-3 py-2 text-xl text-gray-800 cursor-pointer hover:bg-slate-700 flex items-center justify-between",
                     value === customer.Customer_Name && "bg-slate-700 font-medium text-white"
                   )}
                   onClick={() => handleSelect(customer)}
@@ -129,3 +129,4 @@ export function CustomerAutocomplete({
     </div>
   )
 }
+

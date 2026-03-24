@@ -196,7 +196,7 @@ export function FuelDialog({
                         }
                     }}
                     disabled={loading}
-                    className="text-xs flex items-center gap-1"
+                    className="text-lg font-bold flex items-center gap-1"
                 >
                     {loading ? <Loader2 className="w-3 h-3 animate-spin"/> : <span className="text-emerald-400">⚡</span>}
                     สแกนใบเสร็จ
@@ -320,3 +320,4 @@ export function FuelDialog({
     </Dialog>
   )
 }
+

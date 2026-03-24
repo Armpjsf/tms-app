@@ -86,7 +86,7 @@ export default function AdminProfilePage() {
   return (
     <DashboardLayout>
       <div className="max-w-4xl mx-auto space-y-10 pb-20">
-        <Link href="/settings" className="inline-flex items-center gap-2 text-slate-500 hover:text-primary transition-all font-black uppercase tracking-[0.3em] text-[10px] group italic">
+        <Link href="/settings" className="inline-flex items-center gap-2 text-slate-500 hover:text-primary transition-all font-black uppercase tracking-[0.3em] text-base font-bold group italic">
             <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
             {t('settings_pages.profile.return_config')}
         </Link>
@@ -110,19 +110,19 @@ export default function AdminProfilePage() {
                 <div className="space-y-3">
                     <div className="flex items-center gap-3">
                         <Activity className="text-primary animate-pulse" size={16} />
-                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em]">{t('settings_pages.profile.identity_node')}</span>
+                        <span className="text-base font-bold font-black text-slate-500 uppercase tracking-[0.4em]">{t('settings_pages.profile.identity_node')}</span>
                     </div>
                     <h1 className="text-5xl font-black text-white tracking-tighter uppercase premium-text-gradient italic">
                         {t('settings_pages.profile.title')}
                     </h1>
-                    <p className="text-slate-500 font-bold text-sm tracking-wide opacity-80 uppercase tracking-widest italic leading-none">{t('settings_pages.profile.subtitle')}</p>
+                    <p className="text-slate-500 font-bold text-xl tracking-wide opacity-80 uppercase tracking-widest italic leading-none">{t('settings_pages.profile.subtitle')}</p>
                 </div>
             </div>
 
             <div className="flex items-center gap-4 bg-white/5 p-4 rounded-2xl border border-white/10 backdrop-blur-md relative z-10">
                 <div className="flex flex-col items-end">
-                    <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">{t('settings_pages.profile.clearance_level')}</span>
-                    <span className="text-xs font-black text-primary uppercase tracking-tighter">{formData.Role || 'OPERATOR_ALPHA'}</span>
+                    <span className="text-base font-bold font-black text-slate-500 uppercase tracking-widest">{t('settings_pages.profile.clearance_level')}</span>
+                    <span className="text-lg font-bold font-black text-primary uppercase tracking-tighter">{formData.Role || 'OPERATOR_ALPHA'}</span>
                 </div>
                 <div className="p-3 bg-primary/20 rounded-xl">
                     <ShieldCheck className="text-primary" size={20} />
@@ -135,32 +135,32 @@ export default function AdminProfilePage() {
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-10 relative z-10">
                 <div className="space-y-3">
-                    <Label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] mb-2 block ml-4">{t('settings_pages.profile.first_name')}</Label>
+                    <Label className="text-base font-bold font-black text-slate-500 uppercase tracking-[0.4em] mb-2 block ml-4">{t('settings_pages.profile.first_name')}</Label>
                     <Input 
                         value={formData.First_Name || ""}
                         onChange={(e) => setFormData({...formData, First_Name: e.target.value})}
-                        className="h-16 rounded-2xl bg-[#0a0518] border-white/5 text-white placeholder:text-slate-700 px-8 focus-visible:ring-primary/40 focus:border-primary/50 transition-all text-sm font-black uppercase tracking-widest shadow-inner italic"
+                        className="h-16 rounded-2xl bg-[#0a0518] border-white/5 text-white placeholder:text-slate-700 px-8 focus-visible:ring-primary/40 focus:border-primary/50 transition-all text-xl font-black uppercase tracking-widest shadow-inner italic"
                         placeholder="FIRST_NAME"
                     />
                 </div>
                 <div className="space-y-3">
-                    <Label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] mb-2 block ml-4">{t('settings_pages.profile.last_name')}</Label>
+                    <Label className="text-base font-bold font-black text-slate-500 uppercase tracking-[0.4em] mb-2 block ml-4">{t('settings_pages.profile.last_name')}</Label>
                     <Input 
                         value={formData.Last_Name || ""}
                         onChange={(e) => setFormData({...formData, Last_Name: e.target.value})}
-                        className="h-16 rounded-2xl bg-[#0a0518] border-white/5 text-white placeholder:text-slate-700 px-8 focus-visible:ring-primary/40 focus:border-primary/50 transition-all text-sm font-black uppercase tracking-widest shadow-inner italic"
+                        className="h-16 rounded-2xl bg-[#0a0518] border-white/5 text-white placeholder:text-slate-700 px-8 focus-visible:ring-primary/40 focus:border-primary/50 transition-all text-xl font-black uppercase tracking-widest shadow-inner italic"
                         placeholder="LAST_NAME"
                     />
                 </div>
             </div>
 
             <div className="mt-10 space-y-3 relative z-10">
-                <Label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] mb-2 block ml-4">{t('settings_pages.profile.email')}</Label>
+                <Label className="text-base font-bold font-black text-slate-500 uppercase tracking-[0.4em] mb-2 block ml-4">{t('settings_pages.profile.email')}</Label>
                 <div className="relative group/input">
                     <Input 
                         value={formData.Email || ""}
                         onChange={(e) => setFormData({...formData, Email: e.target.value})}
-                        className="h-16 rounded-2xl bg-[#0a0518] border-white/5 text-white placeholder:text-slate-700 px-8 focus-visible:ring-primary/40 focus:border-primary/50 transition-all text-sm font-black uppercase tracking-widest shadow-inner italic"
+                        className="h-16 rounded-2xl bg-[#0a0518] border-white/5 text-white placeholder:text-slate-700 px-8 focus-visible:ring-primary/40 focus:border-primary/50 transition-all text-xl font-black uppercase tracking-widest shadow-inner italic"
                         placeholder="EMAIL_ADDRESS"
                     />
                     <div className="absolute right-6 top-1/2 -translate-y-1/2 flex items-center gap-2 pointer-events-none opacity-20">
@@ -171,19 +171,19 @@ export default function AdminProfilePage() {
 
             <div className="mt-10 grid grid-cols-1 md:grid-cols-2 gap-10 relative z-10">
                 <div className="space-y-3 opacity-50">
-                    <Label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] mb-2 block ml-4">{t('settings_pages.profile.username')}</Label>
+                    <Label className="text-base font-bold font-black text-slate-500 uppercase tracking-[0.4em] mb-2 block ml-4">{t('settings_pages.profile.username')}</Label>
                     <Input 
                         value={formData.Username || ""}
                         disabled
-                        className="h-16 rounded-2xl bg-black/40 border-white/5 text-slate-500 px-8 cursor-not-allowed text-sm font-black uppercase tracking-widest italic"
+                        className="h-16 rounded-2xl bg-black/40 border-white/5 text-slate-500 px-8 cursor-not-allowed text-xl font-black uppercase tracking-widest italic"
                     />
                 </div>
                 <div className="space-y-3 opacity-50">
-                    <Label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] mb-2 block ml-4">{t('settings_pages.profile.assigned_clearance')}</Label>
+                    <Label className="text-base font-bold font-black text-slate-500 uppercase tracking-[0.4em] mb-2 block ml-4">{t('settings_pages.profile.assigned_clearance')}</Label>
                     <Input 
                         value={formData.Role || "Node Operator"}
                         disabled
-                        className="h-16 rounded-2xl bg-black/40 border-white/5 text-slate-500 px-8 cursor-not-allowed text-sm font-black uppercase tracking-widest italic"
+                        className="h-16 rounded-2xl bg-black/40 border-white/5 text-slate-500 px-8 cursor-not-allowed text-xl font-black uppercase tracking-widest italic"
                     />
                 </div>
             </div>
@@ -201,7 +201,7 @@ export default function AdminProfilePage() {
         </PremiumCard>
 
         <div className="text-center opacity-40 py-10">
-            <p className="inline-flex items-center gap-3 px-6 py-2 bg-white/5 rounded-full border border-white/5 text-[9px] font-black text-slate-700 uppercase tracking-[0.6em]">
+            <p className="inline-flex items-center gap-3 px-6 py-2 bg-white/5 rounded-full border border-white/5 text-base font-bold font-black text-slate-700 uppercase tracking-[0.6em]">
                 {t('settings_pages.profile.session_active')}
             </p>
         </div>
@@ -209,3 +209,4 @@ export default function AdminProfilePage() {
     </DashboardLayout>
   )
 }
+

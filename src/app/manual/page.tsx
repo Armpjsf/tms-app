@@ -118,7 +118,7 @@ export default function SmartManual() {
                                 </h1>
                                 <div className="inline-flex items-center gap-3 bg-white/5 border border-white/10 px-6 py-2 rounded-full backdrop-blur-md">
                                     <Zap className="text-primary animate-pulse" size={18} />
-                                    <span className="text-slate-400 text-[10px] font-black uppercase tracking-[0.4em]">Protocol v9.4 Stable</span>
+                                    <span className="text-slate-400 text-base font-bold font-black uppercase tracking-[0.4em]">Protocol v9.4 Stable</span>
                                 </div>
                             </div>
                             <p className="text-slate-500 text-xl max-w-3xl font-bold leading-relaxed uppercase tracking-tight italic">
@@ -152,7 +152,7 @@ export default function SmartManual() {
                                 {section.items.map((item, i) => (
                                     <div key={i} className="flex items-start gap-3 group/item">
                                         <div className="mt-2 w-1.5 h-1.5 rounded-full bg-primary/20 group-hover/item:bg-primary transition-colors shadow-[0_0_8px_rgba(255,30,133,0)] group-hover/item:shadow-[0_0_8px_rgba(255,30,133,1)]" />
-                                        <span className="text-[10px] text-slate-500 group-hover/item:text-slate-300 transition-colors font-black uppercase tracking-widest leading-none italic">
+                                        <span className="text-base font-bold text-slate-500 group-hover/item:text-slate-300 transition-colors font-black uppercase tracking-widest leading-none italic">
                                             {item}
                                         </span>
                                     </div>
@@ -173,7 +173,7 @@ export default function SmartManual() {
                             <div className="w-2 h-16 bg-primary rounded-full shadow-[0_0_20px_rgba(255,30,133,0.8)]" />
                             <div className="space-y-2">
                                 <h2 className="text-6xl font-black text-white tracking-tighter uppercase italic">Operational Launchpad</h2>
-                                <p className="text-primary text-sm font-black uppercase tracking-[0.5em] italic">3 Phases to Absolute Grid Control</p>
+                                <p className="text-primary text-xl font-black uppercase tracking-[0.5em] italic">3 Phases to Absolute Grid Control</p>
                             </div>
                         </div>
 
@@ -189,7 +189,7 @@ export default function SmartManual() {
                                     </div>
                                     <div className="space-y-3">
                                         <h4 className="text-xl font-black text-white uppercase tracking-tight group-hover/step:text-primary transition-colors italic">{item.title}</h4>
-                                        <p className="text-slate-500 text-xs font-black uppercase tracking-widest leading-relaxed opacity-80">{item.desc}</p>
+                                        <p className="text-slate-500 text-lg font-bold font-black uppercase tracking-widest leading-relaxed opacity-80">{item.desc}</p>
                                     </div>
                                 </div>
                             ))}
@@ -202,7 +202,7 @@ export default function SmartManual() {
                             </div>
                             <div className="space-y-3 flex-1 text-center md:text-left">
                                 <p className="font-black text-white text-xl tracking-tighter uppercase italic">Neural Command Recommendation</p>
-                                <p className="text-slate-500 text-sm font-bold leading-relaxed uppercase tracking-tight italic">
+                                <p className="text-slate-500 text-xl font-bold leading-relaxed uppercase tracking-tight italic">
                                     หากต้องการข้อมูลวิเคราะห์ประมวลผลด่วน ลองใช้ระบบ <span className="text-primary font-black">Tactical Assistant</span> เพียงพิมพ์คำรหัสหรือคำสั่งที่คุณต้องการ ระบบจะดึงฐานพิกัดข้อมูลมาตอบคุณทันที
                                 </p>
                             </div>
@@ -212,7 +212,7 @@ export default function SmartManual() {
 
                 {/* Final Tactical Signature */}
                 <div className="flex flex-col items-center gap-10 py-12">
-                    <div className="flex items-center gap-6 text-slate-700 font-black uppercase tracking-[0.8em] text-[10px] opacity-30 group-hover:opacity-100 transition-opacity">
+                    <div className="flex items-center gap-6 text-slate-700 font-black uppercase tracking-[0.8em] text-base font-bold opacity-30 group-hover:opacity-100 transition-opacity">
                         <div className="w-16 h-px bg-slate-800" />
                         LOGISPRO INTEL ECOSYSTEM
                         <div className="w-16 h-px bg-slate-800" />
@@ -222,3 +222,4 @@ export default function SmartManual() {
         </DashboardLayout>
     )
 }
+

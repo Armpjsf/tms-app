@@ -50,7 +50,7 @@ export default async function MobileKPIPage() {
                   style={{ width: `${progressToNext}%` }}
                 />
               </div>
-              <p className="text-sm text-gray-700 mt-2 font-black">อีก {kpi.nextRankPoints - kpi.points} แต้ม ถึงระดับถัดไป</p>
+              <p className="text-xl text-gray-700 mt-2 font-black">อีก {kpi.nextRankPoints - kpi.points} แต้ม ถึงระดับถัดไป</p>
             </div>
           )}
         </div>
@@ -104,8 +104,8 @@ export default async function MobileKPIPage() {
                 className={`text-center rounded-2xl p-3 ${ach.earned ? 'bg-emerald-50 border border-emerald-300 shadow-sm' : 'bg-gray-100 border border-gray-200 opacity-60'}`}
               >
                 <p className="text-3xl mb-1">{ach.icon}</p>
-                <p className="text-sm font-black text-gray-900 leading-tight">{ach.title}</p>
-                <p className="text-xs font-bold text-gray-600 mt-1">{ach.desc}</p>
+                <p className="text-xl font-black text-gray-900 leading-tight">{ach.title}</p>
+                <p className="text-lg font-bold font-bold text-gray-600 mt-1">{ach.desc}</p>
               </div>
             ))}
           </div>
@@ -115,3 +115,4 @@ export default async function MobileKPIPage() {
     </div>
   )
 }
+

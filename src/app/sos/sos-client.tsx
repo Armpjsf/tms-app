@@ -36,7 +36,7 @@ export default function SOSPage({ alerts, activeCount }: any) {
                </div>
                <div>
                   <h1 className="text-5xl font-black text-white tracking-widest uppercase leading-none mb-2">{t('navigation.sos')}</h1>
-                  <p className="text-[10px] font-black text-rose-500 uppercase tracking-[0.6em] opacity-80 italic italic">{t('dashboard.subtitle')}</p>
+                  <p className="text-base font-bold font-black text-rose-500 uppercase tracking-[0.6em] opacity-80 italic italic">{t('dashboard.subtitle')}</p>
                </div>
             </div>
           </div>
@@ -56,7 +56,7 @@ export default function SOSPage({ alerts, activeCount }: any) {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
          <PremiumCard className="p-8 bg-rose-500/5 border-rose-500/20 hover:border-rose-500/40 transition-all shadow-[inset_0_0_30px_rgba(244,63,94,0.05)]">
             <div className="flex justify-between items-start mb-4">
-               <span className="text-[10px] font-black text-rose-400 uppercase tracking-widest">{t('monitoring.alerts')}</span>
+               <span className="text-base font-bold font-black text-rose-400 uppercase tracking-widest">{t('monitoring.alerts')}</span>
                <Activity className="text-rose-500 opacity-30" size={24} />
             </div>
             <p className="text-6xl font-black text-white italic tracking-tighter mb-2">{activeCount}</p>
@@ -65,7 +65,7 @@ export default function SOSPage({ alerts, activeCount }: any) {
 
          <PremiumCard className="p-8 bg-amber-500/5 border-amber-500/20 hover:border-amber-500/40 transition-all">
             <div className="flex justify-between items-start mb-4">
-               <span className="text-[10px] font-black text-amber-400 uppercase tracking-widest">{t('planning.stats_pending')}</span>
+               <span className="text-base font-bold font-black text-amber-400 uppercase tracking-widest">{t('planning.stats_pending')}</span>
                <AlertTriangle className="text-amber-500 opacity-30" size={24} />
             </div>
             <p className="text-6xl font-black text-white italic tracking-tighter mb-2">
@@ -76,7 +76,7 @@ export default function SOSPage({ alerts, activeCount }: any) {
 
          <PremiumCard className="p-8 bg-white/5 border-white/5 hover:border-white/10 transition-all">
             <div className="flex justify-between items-start mb-4">
-               <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{t('planning.stats_delivered')}</span>
+               <span className="text-base font-bold font-black text-slate-500 uppercase tracking-widest">{t('planning.stats_delivered')}</span>
                <CheckCircle2 className="text-emerald-500 opacity-30" size={24} />
             </div>
             <p className="text-6xl font-black text-white italic tracking-tighter mb-2">{alerts.length}</p>
@@ -90,7 +90,7 @@ export default function SOSPage({ alerts, activeCount }: any) {
           <div className="col-span-full py-40 text-center opacity-20">
             <Zap size={80} className="mx-auto text-emerald-500 mb-8 animate-pulse" />
             <h3 className="text-2xl font-black text-white uppercase tracking-[0.8em]">{t('dashboard.system_integrity')}</h3>
-            <p className="text-xs font-black text-emerald-400 uppercase tracking-[0.4em] mt-4">{t('common.success')}</p>
+            <p className="text-lg font-bold font-black text-emerald-400 uppercase tracking-[0.4em] mt-4">{t('common.success')}</p>
           </div>
         ) : alerts.map((alert: any) => (
           <motion.div 
@@ -113,8 +113,8 @@ export default function SOSPage({ alerts, activeCount }: any) {
 
             <div className="flex items-start justify-between mb-8">
                <div className="space-y-1">
-                  <span className="text-[10px] font-black text-rose-500 uppercase tracking-[0.4em]">{t('sos.sig_analysis')}</span>
-                  <p className="text-xs font-black text-slate-500 uppercase tracking-widest">#{alert.Job_ID}</p>
+                  <span className="text-base font-bold font-black text-rose-500 uppercase tracking-[0.4em]">{t('sos.sig_analysis')}</span>
+                  <p className="text-lg font-bold font-black text-slate-500 uppercase tracking-widest">#{alert.Job_ID}</p>
                </div>
                <div className={cn(
                   "p-4 rounded-2xl",
@@ -133,19 +133,19 @@ export default function SOSPage({ alerts, activeCount }: any) {
                   <div className="p-2 bg-white/5 rounded-lg group-hover/item:bg-primary transition-colors">
                      <User size={16} className="text-slate-400 group-hover/item:text-white" />
                   </div>
-                  <span className="text-xs font-black text-white uppercase tracking-widest">{alert.Driver_Name || t('common.no_data')}</span>
+                  <span className="text-lg font-bold font-black text-white uppercase tracking-widest">{alert.Driver_Name || t('common.no_data')}</span>
                </div>
                <div className="flex items-center gap-4 group/item">
                   <div className="p-2 bg-white/5 rounded-lg group-hover/item:bg-primary transition-colors">
                      <Truck size={16} className="text-slate-400 group-hover/item:text-white" />
                   </div>
-                  <span className="text-xs font-black text-slate-400 uppercase tracking-widest border-b border-white/10">{alert.Vehicle_Plate || t('common.no_data')}</span>
+                  <span className="text-lg font-bold font-black text-slate-400 uppercase tracking-widest border-b border-white/10">{alert.Vehicle_Plate || t('common.no_data')}</span>
                </div>
                <div className="flex items-center gap-4 group/item">
                   <div className="p-2 bg-white/5 rounded-lg group-hover/item:bg-primary transition-colors">
                      <MapPin size={16} className="text-slate-400 group-hover/item:text-white" />
                   </div>
-                  <span className="text-xs font-black text-slate-400 uppercase tracking-tight truncate">{alert.Route_Name || "N/A"}</span>
+                  <span className="text-lg font-bold font-black text-slate-400 uppercase tracking-tight truncate">{alert.Route_Name || "N/A"}</span>
                </div>
             </div>
 
@@ -154,8 +154,8 @@ export default function SOSPage({ alerts, activeCount }: any) {
                   <div className="absolute top-0 right-0 p-2 opacity-10 group-hover/reason:opacity-100 transition-opacity">
                      <ShieldAlert size={20} className="text-rose-500" />
                   </div>
-                  <p className="text-[10px] font-black text-rose-500 uppercase tracking-widest mb-2">{t('common.error')}</p>
-                  <p className="text-xs font-black text-white uppercase leading-relaxed font-sans">{alert.Failed_Reason}</p>
+                  <p className="text-base font-bold font-black text-rose-500 uppercase tracking-widest mb-2">{t('common.error')}</p>
+                  <p className="text-lg font-bold font-black text-white uppercase leading-relaxed font-sans">{alert.Failed_Reason}</p>
                </div>
             )}
 
@@ -193,3 +193,4 @@ function Target({ className }: { className?: string }) {
     </svg>
   )
 }
+

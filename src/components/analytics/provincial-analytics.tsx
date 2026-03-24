@@ -24,12 +24,12 @@ export function ZoneAnalytics({ data = [] }: { data?: { name: string; range: str
                         <MapPin className="text-emerald-500" />
                         Zone Mileage
                     </CardTitle>
-                    <div className="flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full text-[10px] font-black uppercase tracking-widest border border-emerald-100">
+                    <div className="flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full text-base font-bold font-black uppercase tracking-widest border border-emerald-100">
                         <TrendingUp size={12} />
                         Active tracking
                     </div>
                 </div>
-                <p className="text-gray-500 font-bold text-xs mt-1">สรุปการวิ่งรถแยกตามโซน (Zone Compliance Reporting)</p>
+                <p className="text-gray-500 font-bold text-lg font-bold mt-1">สรุปการวิ่งรถแยกตามโซน (Zone Compliance Reporting)</p>
             </CardHeader>
             <CardContent className="p-8 space-y-6">
                 {zoneData.map((item, idx) => (
@@ -40,7 +40,7 @@ export function ZoneAnalytics({ data = [] }: { data?: { name: string; range: str
                         transition={{ delay: idx * 0.1 }}
                         className="space-y-2"
                     >
-                        <div className="flex items-center justify-between text-sm">
+                        <div className="flex items-center justify-between text-xl">
                             <span className="font-black text-gray-900">{item.name}</span>
                             <span className="font-bold text-gray-700">{item.range}</span>
                         </div>
@@ -57,7 +57,7 @@ export function ZoneAnalytics({ data = [] }: { data?: { name: string; range: str
                 
                 <div className="mt-8 p-4 bg-blue-50/50 rounded-2xl border border-blue-100 flex items-start gap-3">
                     <Info className="text-blue-500 shrink-0 mt-0.5" size={16} />
-                    <p className="text-[10px] font-bold text-blue-700 leading-relaxed uppercase tracking-wide">
+                    <p className="text-base font-bold font-bold text-blue-700 leading-relaxed uppercase tracking-wide">
                         Data integrated with Zone Mapping to verify regional border crossings.
                     </p>
                 </div>
@@ -69,3 +69,4 @@ export function ZoneAnalytics({ data = [] }: { data?: { name: string; range: str
 function cn(...inputs: (string | undefined | null | boolean)[]) {
     return inputs.filter(Boolean).join(' ')
 }
+

@@ -119,7 +119,7 @@ export default function JobPickupPage() {
                 </div>
                 <div>
                     <h2 className="font-bold">ยืนยันการรับสินค้า</h2>
-                    <p className="text-sm text-slate-400">ถ่ายรูปสินค้าเพื่อยืนยันสภาพก่อนขนส่ง</p>
+                    <p className="text-xl text-slate-400">ถ่ายรูปสินค้าเพื่อยืนยันสภาพก่อนขนส่ง</p>
                 </div>
              </div>
 

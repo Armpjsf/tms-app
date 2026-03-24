@@ -107,7 +107,7 @@ export default function ExecutiveDashboard() {
             <DashboardLayout>
                 <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
                     <div className="w-16 h-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
-                    <p className="text-primary animate-pulse font-black uppercase tracking-[0.3em] text-xs">
+                    <p className="text-primary animate-pulse font-black uppercase tracking-[0.3em] text-lg font-bold">
                         {t('common.loading')}
                     </p>
                 </div>
@@ -127,13 +127,13 @@ export default function ExecutiveDashboard() {
                             <Target className="text-primary" size={32} />
                             {t('dashboard.title')}
                         </h1>
-                        <p className="text-primary/80 font-bold mt-1 uppercase tracking-widest text-[10px]">{t('dashboard.subtitle')}</p>
+                        <p className="text-primary/80 font-bold mt-1 uppercase tracking-widest text-base font-bold">{t('dashboard.subtitle')}</p>
                     </div>
                     <div className="flex flex-col items-end gap-2 relative z-10">
                         <RealtimeIndicator isLive={true} className="bg-white/5 border-white/10 text-white" />
                         <div className="flex items-center gap-3 bg-white/5 p-2 px-4 rounded-2xl border border-white/10">
                             <Calendar className="text-primary" size={18} />
-                            <span className="text-white font-black text-sm uppercase tracking-tighter">
+                            <span className="text-white font-black text-xl uppercase tracking-tighter">
                                 {new Date().toLocaleDateString('th-TH', { month: 'long', year: 'numeric' })}
                             </span>
                         </div>
@@ -217,7 +217,7 @@ export default function ExecutiveDashboard() {
                                         </div>
                                         <div>
                                             <p className="font-black text-white uppercase tracking-tighter">{v.plate}</p>
-                                            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">
+                                            <p className="text-base font-bold text-slate-500 font-bold uppercase tracking-widest">
                                                 {t('dashboard.profit')}: <AnimatedNumber value={v.netProfit} prefix="฿" />
                                             </p>
                                         </div>
@@ -226,7 +226,7 @@ export default function ExecutiveDashboard() {
                                         <p className="text-primary font-black tracking-tighter">
                                             <AnimatedNumber value={v.revenue} prefix="฿" />
                                         </p>
-                                        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">{t('dashboard.revenue')}</p>
+                                        <p className="text-base font-bold text-slate-500 font-bold uppercase tracking-widest">{t('dashboard.revenue')}</p>
                                     </div>
                                 </div>
                             ))}
@@ -245,7 +245,7 @@ function KpiCard({ title, value, unit, icon, growth, isPercentage = false }: any
             <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
                 {icon}
             </div>
-            <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-4">{title}</p>
+            <p className="text-base font-bold font-black text-slate-500 uppercase tracking-[0.2em] mb-4">{title}</p>
             <div className="flex items-baseline gap-2">
                 <h3 className="text-3xl font-black text-white tracking-tighter">
                     {isPercentage ? (
@@ -254,11 +254,11 @@ function KpiCard({ title, value, unit, icon, growth, isPercentage = false }: any
                         <AnimatedNumber value={value} prefix="฿" />
                     )}
                 </h3>
-                <span className="text-slate-500 text-[10px] font-black uppercase">{unit}</span>
+                <span className="text-slate-500 text-base font-bold font-black uppercase">{unit}</span>
             </div>
             {growth !== undefined && (
                 <div className={cn(
-                    "flex items-center mt-4 text-[10px] font-black px-2 py-1 rounded-lg w-fit",
+                    "flex items-center mt-4 text-base font-bold font-black px-2 py-1 rounded-lg w-fit",
                     growth >= 0 ? "text-emerald-400 bg-emerald-500/10" : "text-rose-400 bg-rose-500/10"
                 )}>
                     {growth >= 0 ? <ArrowUpRight size={12} className="mr-1" /> : <ArrowDownRight size={12} className="mr-1" />}
@@ -273,3 +273,4 @@ function KpiCard({ title, value, unit, icon, growth, isPercentage = false }: any
 function cn(...inputs: any[]) {
     return inputs.filter(Boolean).join(' ')
 }
+

@@ -75,7 +75,7 @@ export function MobileLeaveClient({ driverId, driverName, initialLeaves }: Props
           >
             <CalendarDays size={32} className="mx-auto mb-2" />
             <p className="text-xl font-black">แจ้งลา</p>
-            <p className="text-sm opacity-80 mt-1">กดเพื่อสร้างใบลาใหม่</p>
+            <p className="text-xl opacity-80 mt-1">กดเพื่อสร้างใบลาใหม่</p>
           </button>
         ) : (
           <div className="bg-white rounded-2xl border border-gray-200 p-5 space-y-5 shadow-sm">
@@ -102,7 +102,7 @@ export function MobileLeaveClient({ driverId, driverName, initialLeaves }: Props
             {/* Dates — LARGE */}
             <div className="grid grid-cols-2 gap-3 mt-4">
               <div>
-                <p className="text-sm font-black text-gray-700 mb-1">วันที่เริ่ม</p>
+                <p className="text-xl font-black text-gray-700 mb-1">วันที่เริ่ม</p>
                 <input
                   type="date"
                   value={startDate}
@@ -111,7 +111,7 @@ export function MobileLeaveClient({ driverId, driverName, initialLeaves }: Props
                 />
               </div>
               <div>
-                <p className="text-sm font-black text-gray-700 mb-1">ถึงวันที่</p>
+                <p className="text-xl font-black text-gray-700 mb-1">ถึงวันที่</p>
                 <input
                   type="date"
                   value={endDate}
@@ -179,13 +179,13 @@ export function MobileLeaveClient({ driverId, driverName, initialLeaves }: Props
                     </div>
                     <div className="flex-1">
                       <p className="font-black text-gray-900 text-lg">{leave.Leave_Type}</p>
-                      <p className="text-sm font-bold text-gray-600">
+                      <p className="text-xl font-bold text-gray-600">
                         {startD.toLocaleDateString('th-TH', { day: 'numeric', month: 'short' })}
                         {days > 1 ? ` — ${endD.toLocaleDateString('th-TH', { day: 'numeric', month: 'short' })}` : ''}
                         {' '}({days} วัน)
                       </p>
                     </div>
-                    <span className={`px-3 py-1.5 rounded-lg text-sm font-black
+                    <span className={`px-3 py-1.5 rounded-lg text-xl font-black
                       ${leave.Status === 'Approved' ? 'bg-emerald-100 text-emerald-800' : ''}
                       ${leave.Status === 'Rejected' ? 'bg-red-100 text-red-800' : ''}
                       ${leave.Status === 'Pending' ? 'bg-amber-100 text-amber-800' : ''}
@@ -202,3 +202,4 @@ export function MobileLeaveClient({ driverId, driverName, initialLeaves }: Props
     </div>
   )
 }
+

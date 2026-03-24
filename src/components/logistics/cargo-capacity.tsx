@@ -105,7 +105,7 @@ export function CargoCapacity({ stats }: CargoCapacityProps) {
                                 <span className="text-5xl font-black text-gray-900 drop-shadow-[0_0_15px_rgba(255,255,255,0.8)]">
                                     {Math.round(percentage)}%
                                 </span>
-                                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-700 bg-white/80 px-2 py-0.5 rounded-full border border-emerald-100 italic">
+                                <span className="text-base font-bold font-black uppercase tracking-[0.3em] text-emerald-700 bg-white/80 px-2 py-0.5 rounded-full border border-emerald-100 italic">
                                     LOAD FACTOR
                                 </span>
                             </motion.div>
@@ -114,21 +114,21 @@ export function CargoCapacity({ stats }: CargoCapacityProps) {
 
                     <div className="grid grid-cols-2 gap-4 lg:gap-8 w-full">
                         <div className="space-y-1">
-                            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest flex items-center gap-1">
+                            <p className="text-base font-bold font-bold text-gray-500 uppercase tracking-widest flex items-center gap-1">
                                 <Weight size={10} />
                                 Occupied
                             </p>
                             <p className="text-xl lg:text-2xl font-black text-gray-900 leading-none">
-                                {displayStats.usedCapacity.toLocaleString()} <span className="text-xs font-bold text-gray-600">{displayStats.unit}</span>
+                                {displayStats.usedCapacity.toLocaleString()} <span className="text-lg font-bold font-bold text-gray-600">{displayStats.unit}</span>
                             </p>
                         </div>
                         <div className="space-y-1 border-l border-gray-100 pl-4 lg:pl-8">
-                            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest flex items-center gap-1">
+                            <p className="text-base font-bold font-bold text-gray-500 uppercase tracking-widest flex items-center gap-1">
                                 <Maximize2 size={10} />
                                 Capacity
                             </p>
                             <p className="text-xl lg:text-2xl font-black text-gray-900 leading-none">
-                                {displayStats.totalCapacity.toLocaleString()} <span className="text-xs font-bold text-gray-600">{displayStats.unit}</span>
+                                {displayStats.totalCapacity.toLocaleString()} <span className="text-lg font-bold font-bold text-gray-600">{displayStats.unit}</span>
                             </p>
                         </div>
                     </div>
@@ -139,8 +139,8 @@ export function CargoCapacity({ stats }: CargoCapacityProps) {
                                 <Truck size={20} />
                             </div>
                             <div>
-                                <p className="text-[10px] font-black text-emerald-600 uppercase tracking-[0.2em]">{displayStats.plate}</p>
-                                <p className="text-sm font-bold text-gray-900">{displayStats.vehicleType}</p>
+                                <p className="text-base font-bold font-black text-emerald-600 uppercase tracking-[0.2em]">{displayStats.plate}</p>
+                                <p className="text-xl font-bold text-gray-900">{displayStats.vehicleType}</p>
                             </div>
                         </div>
                         <Badge className="bg-emerald-500 text-white border-0 font-black">ACTIVE</Badge>
@@ -148,7 +148,8 @@ export function CargoCapacity({ stats }: CargoCapacityProps) {
                 </div>
             </div>
             
-            <p className="text-[10px] text-center text-gray-500 font-bold">Data synced with IoT weight sensors every 60 seconds</p>
+            <p className="text-base font-bold text-center text-gray-500 font-bold">Data synced with IoT weight sensors every 60 seconds</p>
         </div>
     )
 }
+

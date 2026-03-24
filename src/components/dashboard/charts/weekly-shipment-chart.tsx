@@ -11,7 +11,7 @@ type WeeklyStats = {
 export function WeeklyShipmentChart({ data }: { data: WeeklyStats[] }) {
   if (!data || data.length === 0) {
     return (
-        <div className="h-[350px] flex items-center justify-center text-slate-700 font-black uppercase tracking-[0.2em] text-xs">
+        <div className="h-[350px] flex items-center justify-center text-slate-700 font-black uppercase tracking-[0.2em] text-lg font-bold">
             Data Matrix Offline
         </div>
     )
@@ -85,3 +85,4 @@ export function WeeklyShipmentChart({ data }: { data: WeeklyStats[] }) {
     </div>
   )
 }
+

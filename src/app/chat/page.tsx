@@ -28,18 +28,18 @@ export default async function ChatPage() {
                             </div>
                             <div>
                                 <h1 className="text-4xl font-black text-white tracking-widest uppercase leading-none mb-2 italic">Comm Channel</h1>
-                                <p className="text-[10px] font-black text-blue-400 uppercase tracking-[0.6em] opacity-80 italic italic">Secure Fleet Messaging & Data Packet Liaison // COMM_V4</p>
+                                <p className="text-base font-bold font-black text-blue-400 uppercase tracking-[0.6em] opacity-80 italic italic">Secure Fleet Messaging & Data Packet Liaison // COMM_V4</p>
                             </div>
                         </div>
                         <div className="flex items-center gap-4 bg-white/5 p-4 rounded-2xl border border-white/10 backdrop-blur-md">
                             <div className="flex items-center gap-3">
                                 <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Signal: Active</span>
+                                <span className="text-base font-bold font-black text-slate-400 uppercase tracking-widest">Signal: Active</span>
                             </div>
                             <div className="w-px h-6 bg-white/10" />
                             <div className="flex items-center gap-3">
                                 <ShieldCheck size={14} className="text-blue-500" />
-                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Secure_Link</span>
+                                <span className="text-base font-bold font-black text-slate-400 uppercase tracking-widest">Secure_Link</span>
                             </div>
                         </div>
                     </div>
@@ -55,3 +55,4 @@ export default async function ChatPage() {
         </DashboardLayout>
     )
 }
+

@@ -45,7 +45,7 @@ export function RequestPreviewDialog({
                 <DialogTitle className="text-2xl font-black tracking-tighter text-gray-900">
                   รายละเอียดคำขอรถ
                 </DialogTitle>
-                <p className="text-[10px] font-black text-orange-600 uppercase tracking-[0.2em]">
+                <p className="text-base font-bold font-black text-orange-600 uppercase tracking-[0.2em]">
                   Shipment Request Details
                 </p>
               </div>
@@ -60,11 +60,11 @@ export function RequestPreviewDialog({
           {/* Main Info Grid */}
           <div className="grid grid-cols-2 gap-8">
             <div className="space-y-1">
-              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Job ID</p>
+              <p className="text-base font-bold font-black text-gray-400 uppercase tracking-widest">Job ID</p>
               <p className="text-lg font-bold text-gray-900">{job.Job_ID}</p>
             </div>
             <div className="space-y-1">
-              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">วันที่ต้องการรถ</p>
+              <p className="text-base font-bold font-black text-gray-400 uppercase tracking-widest">วันที่ต้องการรถ</p>
               <div className="flex items-center gap-2 text-gray-900 font-bold">
                 <Calendar size={16} className="text-orange-500" />
                 <span>{job.Plan_Date ? new Date(job.Plan_Date).toLocaleDateString('th-TH', { 
@@ -83,7 +83,7 @@ export function RequestPreviewDialog({
                 <Building2 size={20} />
               </div>
               <div>
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">ข้อมูลลูกค้า</p>
+                <p className="text-base font-bold font-black text-gray-400 uppercase tracking-widest">ข้อมูลลูกค้า</p>
                 <p className="font-bold text-gray-900">{job.Customer_Name || "ไม่ระบุชื่อลูกค้า"}</p>
               </div>
             </div>
@@ -91,7 +91,7 @@ export function RequestPreviewDialog({
 
           {/* Location Timeline */}
           <div className="space-y-4">
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">เส้นทางขนส่ง</p>
+            <p className="text-base font-bold font-black text-gray-400 uppercase tracking-widest">เส้นทางขนส่ง</p>
             <div className="relative pl-8 space-y-8">
               {/* Vertical line connector */}
               <div className="absolute left-[11px] top-3 bottom-3 w-0.5 bg-dashed bg-gradient-to-b from-orange-500 to-emerald-500 opacity-20" />
@@ -102,7 +102,7 @@ export function RequestPreviewDialog({
                   <div className="w-2 h-2 rounded-full bg-orange-500" />
                 </div>
                 <div>
-                  <p className="text-[10px] font-black text-orange-600 uppercase tracking-widest mb-1">จุดรับสินค้า (Pickup)</p>
+                  <p className="text-base font-bold font-black text-orange-600 uppercase tracking-widest mb-1">จุดรับสินค้า (Pickup)</p>
                   <p className="font-bold text-gray-900 leading-relaxed">
                     {job.Origin_Location || "ไม่ได้ระบุสถานที่รับ"}
                   </p>
@@ -115,7 +115,7 @@ export function RequestPreviewDialog({
                   <div className="w-2 h-2 rounded-full bg-emerald-500" />
                 </div>
                 <div>
-                  <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-1">จุดส่งสินค้า (Delivery)</p>
+                  <p className="text-base font-bold font-black text-emerald-600 uppercase tracking-widest mb-1">จุดส่งสินค้า (Delivery)</p>
                   <p className="font-bold text-gray-900 leading-relaxed">
                     {job.Dest_Location || "ไม่ได้ระบุสถานที่ส่ง"}
                   </p>
@@ -127,7 +127,7 @@ export function RequestPreviewDialog({
           {/* Additional Info */}
           <div className="grid grid-cols-2 gap-8">
             <div className="space-y-2">
-              <div className="flex items-center gap-2 text-[10px] font-black text-gray-400 uppercase tracking-widest">
+              <div className="flex items-center gap-2 text-base font-bold font-black text-gray-400 uppercase tracking-widest">
                 <Package size={14} className="text-gray-400" />
                 ประเภทสินค้า
               </div>
@@ -137,8 +137,8 @@ export function RequestPreviewDialog({
 
           {/* Notes */}
           <div className="space-y-2 pt-4 border-t border-gray-50">
-             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">หมายเหตุจากลูกค้า (Notes)</p>
-             <div className="p-4 bg-yellow-50 rounded-2xl text-sm font-medium text-gray-700 leading-relaxed border border-yellow-100 italic">
+             <p className="text-base font-bold font-black text-gray-400 uppercase tracking-widest">หมายเหตุจากลูกค้า (Notes)</p>
+             <div className="p-4 bg-yellow-50 rounded-2xl text-xl font-medium text-gray-700 leading-relaxed border border-yellow-100 italic">
                 &quot;{job.Notes || "ไม่มีหมายเหตุเพิ่มเติม"}&quot;
              </div>
           </div>
@@ -148,7 +148,7 @@ export function RequestPreviewDialog({
           <Button 
             variant="ghost" 
             onClick={() => onOpenChange(false)}
-            className="text-gray-500 font-bold uppercase tracking-widest text-[10px]"
+            className="text-gray-500 font-bold uppercase tracking-widest text-base font-bold"
           >
             ย้อนกลับ
           </Button>
@@ -160,3 +160,4 @@ export function RequestPreviewDialog({
     </Dialog>
   )
 }
+

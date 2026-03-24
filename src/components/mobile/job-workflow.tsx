@@ -59,7 +59,7 @@ export function JobWorkflow({ currentStatus, className }: JobWorkflowProps) {
                 <StepIcon size={20} className={isActive ? "animate-bounce" : ""} />
               </div>
               <p className={cn(
-                "mt-3 text-[8px] font-black text-center uppercase tracking-widest transition-colors duration-500",
+                "mt-3 text-base font-bold font-black text-center uppercase tracking-widest transition-colors duration-500",
                 isCompleted || isActive ? "text-white" : "text-slate-700"
               )}>
                 {step.label}
@@ -76,8 +76,8 @@ export function JobWorkflow({ currentStatus, className }: JobWorkflowProps) {
              <Clock className="text-primary animate-spin-slow" size={18} />
           </div>
           <div className="space-y-1">
-            <p className="text-[10px] font-black text-primary uppercase tracking-[0.3em]">Current Protocol:</p>
-            <p className="text-xs text-slate-300 font-bold leading-relaxed">
+            <p className="text-base font-bold font-black text-primary uppercase tracking-[0.3em]">Current Protocol:</p>
+            <p className="text-lg font-bold text-slate-300 font-bold leading-relaxed">
                {currentIndex === -1 ? 'New mission detected. Tap "ACCEPT MISSION" to engage deployment protocols.' : 
                 currentIndex === 0 ? 'Asset transit initiated. Proceed to ORIGIN point and secure the payload.' :
                 currentIndex === 1 ? 'Payload reached. Verify cargo integrity, document assets, and clear for transit.' :
@@ -90,3 +90,4 @@ export function JobWorkflow({ currentStatus, className }: JobWorkflowProps) {
     </div>
   )
 }
+

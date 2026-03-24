@@ -27,7 +27,7 @@ export function HistoryStatusFilter({ initialValue }: { initialValue: string }) 
 
   return (
     <div className="space-y-2">
-      <label className="text-muted-foreground text-sm flex items-center gap-1">
+      <label className="text-muted-foreground text-xl flex items-center gap-1">
         <Filter className="w-3 h-3" /> สถานะ
       </label>
       <Select defaultValue={initialValue || "all"} onValueChange={handleStatusChange}>
@@ -80,3 +80,4 @@ export function HistoryStatusFilter({ initialValue }: { initialValue: string }) 
     </div>
   )
 }
+

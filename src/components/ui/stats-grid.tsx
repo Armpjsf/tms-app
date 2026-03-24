@@ -65,7 +65,7 @@ export function StatsGrid({ stats, columns = 4 }: StatsGridProps) {
                         </div>
 
                         <div className="relative z-10">
-                            <p className="text-slate-500 font-black text-[10px] uppercase tracking-[0.3em] mb-2">{stat.label}</p>
+                            <p className="text-slate-500 font-black text-base font-bold uppercase tracking-[0.3em] mb-2">{stat.label}</p>
                             <p className={cn("text-4xl font-black tracking-tighter leading-none", colors.text)}>
                                 {typeof stat.value === 'number' ? stat.value.toLocaleString() : stat.value}
                             </p>
@@ -80,3 +80,4 @@ export function StatsGrid({ stats, columns = 4 }: StatsGridProps) {
         </div>
     )
 }
+

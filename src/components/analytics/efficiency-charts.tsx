@@ -42,7 +42,7 @@ export function EfficiencyCharts({ data }: { data: { date: string; revenue: numb
              </div>
              <div>
                <h3 className="text-lg font-black text-white tracking-tight italic uppercase">{t('charts.yield_optimization')}</h3>
-               <p className="text-blue-400 text-[9px] font-bold uppercase tracking-[0.2em]">{t('dashboard.operational_throughput')}</p>
+               <p className="text-blue-400 text-base font-bold font-bold uppercase tracking-[0.2em]">{t('dashboard.operational_throughput')}</p>
              </div>
            </div>
         </div>
@@ -88,18 +88,18 @@ export function EfficiencyCharts({ data }: { data: { date: string; revenue: numb
                     const data = payload[0].payload;
                     return (
                       <div className="bg-slate-950 p-6 border border-slate-800 rounded-2xl shadow-2xl">
-                        <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-2 italic">{data.name}</p>
+                        <p className="text-base font-bold font-black text-blue-400 uppercase tracking-widest mb-2 italic">{data.name}</p>
                         <div className="space-y-4">
                             <div className="flex justify-between gap-8">
-                                <span className="text-slate-500 text-[10px] font-bold uppercase">{t('charts.unit_cost')}</span>
+                                <span className="text-slate-500 text-base font-bold font-bold uppercase">{t('charts.unit_cost')}</span>
                                 <span className="text-white font-black italic">฿{data.costPerJob.toLocaleString()}</span>
                             </div>
                             <div className="flex justify-between gap-8">
-                                <span className="text-slate-500 text-[10px] font-bold uppercase">{t('charts.unit_revenue')}</span>
+                                <span className="text-slate-500 text-base font-bold font-bold uppercase">{t('charts.unit_revenue')}</span>
                                 <span className="text-white font-black italic">฿{data.revenuePerJob.toLocaleString()}</span>
                             </div>
                             <div className="pt-2 border-t border-slate-800 flex justify-between gap-8">
-                                <span className="text-emerald-400 text-[10px] font-black uppercase">{t('charts.margin_yield')}</span>
+                                <span className="text-emerald-400 text-base font-bold font-black uppercase">{t('charts.margin_yield')}</span>
                                 <span className="text-emerald-400 font-black italic">+{((data.revenuePerJob - data.costPerJob) / data.revenuePerJob * 100).toFixed(1)}%</span>
                             </div>
                         </div>
@@ -131,8 +131,8 @@ export function EfficiencyCharts({ data }: { data: { date: string; revenue: numb
             <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-transparent pointer-events-none" />
             <div className="flex items-center justify-between mb-8 relative z-10">
               <div className="space-y-1">
-                <span className="text-emerald-400 text-[10px] font-black uppercase tracking-[0.2em] italic">{t('charts.yield_index')}</span>
-                <p className="text-[8px] text-slate-500 font-bold uppercase tracking-widest italic">{t('dashboard.temporal_revenue')}</p>
+                <span className="text-emerald-400 text-base font-bold font-black uppercase tracking-[0.2em] italic">{t('charts.yield_index')}</span>
+                <p className="text-base font-bold text-slate-500 font-bold uppercase tracking-widest italic">{t('charts.temporal_revenue')}</p>
               </div>
               <div className="p-3 bg-emerald-500/10 rounded-2xl text-emerald-400 shadow-xl shadow-emerald-500/10">
                 <Target size={24} />
@@ -142,23 +142,23 @@ export function EfficiencyCharts({ data }: { data: { date: string; revenue: numb
             <div className="space-y-8 relative z-10">
                 <div>
                    <div className="text-5xl font-black text-white tracking-tighter italic">{avgMargin.toFixed(1)}%</div>
-                   <p className="text-[10px] text-emerald-400 font-black uppercase tracking-widest mt-2">{t('charts.margin_yield')}</p>
+                   <p className="text-base font-bold text-emerald-400 font-black uppercase tracking-widest mt-2">{t('charts.margin_yield')}</p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4 pt-6 border-t border-slate-900">
                     <div>
-                        <p className="text-[9px] text-slate-500 font-black uppercase tracking-widest mb-1">{t('charts.volatility')}</p>
-                        <p className="text-sm font-black text-white italic">{t('charts.low_stable')}</p>
+                        <p className="text-base font-bold text-slate-500 font-black uppercase tracking-widest mb-1">{t('charts.volatility')}</p>
+                        <p className="text-xl font-black text-white italic">{t('charts.low_stable')}</p>
                     </div>
                     <div>
-                        <p className="text-[9px] text-slate-500 font-black uppercase tracking-widest mb-1">{t('charts.optimization')}</p>
-                        <p className="text-sm font-black text-emerald-400 italic">{t('charts.peak')}</p>
+                        <p className="text-base font-bold text-slate-500 font-black uppercase tracking-widest mb-1">{t('charts.optimization')}</p>
+                        <p className="text-xl font-black text-emerald-400 italic">{t('charts.peak')}</p>
                     </div>
                 </div>
 
                 <div className="bg-slate-900/50 p-6 rounded-2xl border border-slate-800">
-                    <p className="text-[10px] text-slate-400 font-bold leading-relaxed italic">
-                        &quot;Operational cost mapping indicates a strong correlation between route density and mission yield. Current optimization threshold is within Tier-1 benchmarks.&quot;
+                    <p className="text-base font-bold text-slate-400 font-bold leading-relaxed italic">
+                        {t('analytics.operational_cost_mapping')}
                     </p>
                 </div>
             </div>
@@ -170,13 +170,14 @@ export function EfficiencyCharts({ data }: { data: { date: string; revenue: numb
                 <div className="p-2 bg-white/10 rounded-xl text-white">
                     <TrendingUp size={16} />
                 </div>
-                <div className="text-sm font-black text-white tracking-tight italic uppercase">{t('charts.recommendation')}</div>
+                <div className="text-xl font-black text-white tracking-tight italic uppercase">{t('charts.recommendation')}</div>
             </div>
-            <p className="text-[10px] text-indigo-100 font-bold mt-4 relative z-10 italic leading-tight">
-                ANALYTIC: REDIRECT ASSETS TO HIGH-YIELD CORRIDORS DURING PEAK DEMAND TO MAXIMIZE REGIONAL MARGIN THRESHOLDS.
+            <p className="text-base font-bold text-indigo-100 font-bold mt-4 relative z-10 italic leading-tight">
+                {t('analytics.strategic_recommendation')}
             </p>
         </PremiumCard>
       </div>
     </div>
   )
 }
+

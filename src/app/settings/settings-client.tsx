@@ -38,6 +38,7 @@ const settingsSections = [
     icon: Building,
     items: [
         { labelKey: "settings.items.company", descKey: "settings.items.company_desc", path: "/settings/company" },
+        { labelKey: "settings.items.customers", descKey: "settings.items.customers_desc", path: "/settings/customers" },
         { labelKey: "settings.items.rbac", descKey: "settings.items.rbac_desc", path: "/settings/roles" },
         { labelKey: "settings.items.operators", descKey: "settings.items.operators_desc", path: "/settings/users" },
         { labelKey: "settings.items.branches", descKey: "settings.items.branches_desc", path: "/settings/branches" },
@@ -108,14 +109,14 @@ export default function SettingsPage() {
                </div>
                <div>
                   <h1 className="text-5xl font-black text-white tracking-widest uppercase leading-none mb-2">{t('settings.title')}</h1>
-                  <p className="text-[10px] font-black text-primary uppercase tracking-[0.6em] opacity-80 italic">{t('settings.subtitle')}</p>
+                  <p className="text-base font-bold font-black text-primary uppercase tracking-[0.6em] opacity-80 italic">{t('settings.subtitle')}</p>
                </div>
             </div>
           </div>
           <div className="flex items-center gap-4 bg-white/5 p-4 rounded-3xl border border-white/5 backdrop-blur-3xl">
              <div className="flex flex-col items-end">
-                <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">{t('settings.auth_level')}</span>
-                <span className="text-xs font-black text-primary uppercase tracking-tighter">SECURE_ADMIN_V2</span>
+                <span className="text-base font-bold font-black text-slate-500 uppercase tracking-widest">{t('settings.auth_level')}</span>
+                <span className="text-lg font-bold font-black text-primary uppercase tracking-tighter">SECURE_ADMIN_V2</span>
              </div>
              <div className="w-12 h-12 rounded-2xl bg-primary/20 flex items-center justify-center text-primary shadow-lg border border-primary/30">
                 <Fingerprint size={24} />
@@ -153,21 +154,21 @@ export default function SettingsPage() {
                          {profile ? `${profile.First_Name || ""} ${profile.Last_Name || ""}`.trim() || profile.Username : "OPERATOR_ALPHA"}
                        </h2>
                        <div className="px-4 py-1 bg-primary/10 rounded-full border-2 border-primary/30">
-                          <span className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">IDENTIFIED</span>
+                          <span className="text-base font-bold font-black text-primary uppercase tracking-[0.2em]">IDENTIFIED</span>
                        </div>
                     </div>
-                    <p className="text-slate-500 font-black tracking-[0.4em] text-xs uppercase leading-none opacity-80">{profile?.Email || "SECURE_CHANNEL_PENDING"}</p>
+                    <p className="text-slate-500 font-black tracking-[0.4em] text-lg font-bold uppercase leading-none opacity-80">{profile?.Email || "SECURE_CHANNEL_PENDING"}</p>
                  </div>
 
                  <div className="flex flex-wrap items-center justify-center lg:justify-start gap-10">
                     <div className="flex flex-col gap-2">
-                       <span className="text-[9px] font-black text-slate-600 uppercase tracking-widest leading-none">{t('settings.auth_level')}</span>
-                       <span className="px-5 py-2 bg-white/5 rounded-2xl border border-white/10 text-xs font-black text-primary uppercase tracking-widest shadow-xl">{profile?.Role || "STAFF_OPERATOR"}</span>
+                       <span className="text-base font-bold font-black text-slate-600 uppercase tracking-widest leading-none">{t('settings.auth_level')}</span>
+                       <span className="px-5 py-2 bg-white/5 rounded-2xl border border-white/10 text-lg font-bold font-black text-primary uppercase tracking-widest shadow-xl">{profile?.Role || "STAFF_OPERATOR"}</span>
                     </div>
                     <div className="w-px h-12 bg-white/5 hidden lg:block" />
                     <div className="flex flex-col gap-2">
-                       <span className="text-[9px] font-black text-slate-600 uppercase tracking-widest leading-none">Temporal ID</span>
-                       <span className="text-sm font-black text-white uppercase italic tracking-tighter">@{profile?.Username || "node_unbound"}</span>
+                       <span className="text-base font-bold font-black text-slate-600 uppercase tracking-widest leading-none">Temporal ID</span>
+                       <span className="text-xl font-black text-white uppercase italic tracking-tighter">@{profile?.Username || "node_unbound"}</span>
                     </div>
                  </div>
               </div>
@@ -206,7 +207,7 @@ export default function SettingsPage() {
           >
             <PremiumCard className="bg-[#0a0518] border-2 border-white/5 h-full hover:border-primary/50 transition-all duration-500 rounded-br-[4rem] rounded-tl-[2rem] shadow-3xl overflow-hidden group/section p-0">
               <div className="bg-black/40 border-b border-white/5 p-8 flex items-center justify-between">
-                <h3 className="flex items-center gap-4 text-sm font-black text-white uppercase tracking-[0.4em]">
+                <h3 className="flex items-center gap-4 text-xl font-black text-white uppercase tracking-[0.4em]">
                   <div className="p-3 bg-white/5 rounded-2xl text-slate-400 group-hover/section:bg-primary group-hover/section:text-white transition-all duration-300">
                     <section.icon size={20} />
                   </div>
@@ -214,7 +215,7 @@ export default function SettingsPage() {
                 </h3>
                     <div className="flex items-center gap-3">
                         <Activity className="text-slate-800 group-hover/section:text-primary transition-colors duration-500" size={16} />
-                        <span className="text-[11px] font-black text-slate-500 uppercase tracking-[0.1em]">{t('settings.auth_level')}</span>
+                        <span className="text-base font-bold font-black text-slate-500 uppercase tracking-[0.1em]">{t('settings.auth_level')}</span>
                     </div>
                  </div>
                  <div className="p-4 space-y-2">
@@ -227,7 +228,7 @@ export default function SettingsPage() {
                      >
                        <div className="space-y-1">
                          <p className="font-black text-base tracking-widest text-white uppercase italic">{t(item.labelKey)}</p>
-                         <p className="text-[11px] uppercase font-black text-slate-500 tracking-[0.1em] group-hover/item:text-primary transition-colors">{t(item.descKey)}</p>
+                         <p className="text-base font-bold uppercase font-black text-slate-500 tracking-[0.1em] group-hover/item:text-primary transition-colors">{t(item.descKey)}</p>
                        </div>
                        <div className="p-3 rounded-full bg-white/5 group-hover/item:bg-primary/20 transition-all">
                           <ChevronRight className="text-slate-500 group-hover/item:text-primary transition-colors" size={20} />
@@ -242,7 +243,7 @@ export default function SettingsPage() {
    
          {/* Quick Core Protocols */}
          <div className="mt-12">
-           <h3 className="text-[11px] font-black text-slate-500 uppercase tracking-[0.4em] mb-8 ml-8">{t('settings.core_protocols')}</h3>
+           <h3 className="text-base font-bold font-black text-slate-500 uppercase tracking-[0.4em] mb-8 ml-8">{t('settings.core_protocols')}</h3>
            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                <PremiumCard 
                  onClick={() => handleNavigate("/settings/backup")}
@@ -251,7 +252,7 @@ export default function SettingsPage() {
                   <div className="p-5 bg-primary/10 rounded-[2rem] text-primary group-hover/action:scale-110 transition-transform">
                      <Database size={32} />
                   </div>
-                  <span className="text-sm font-black text-white uppercase tracking-[0.2em]">{t('settings.backup_node')}</span>
+                  <span className="text-xl font-black text-white uppercase tracking-[0.2em]">{t('settings.backup_node')}</span>
                </PremiumCard>
    
                <PremiumCard 
@@ -261,7 +262,7 @@ export default function SettingsPage() {
                   <div className="p-5 bg-emerald-500/10 rounded-[2rem] text-emerald-500 group-hover/action:scale-110 transition-transform">
                      <Globe size={32} />
                   </div>
-                  <span className="text-sm font-black text-white uppercase tracking-[0.2em]">{t('settings.api_signal')}</span>
+                  <span className="text-xl font-black text-white uppercase tracking-[0.2em]">{t('settings.api_signal')}</span>
                </PremiumCard>
    
                <PremiumCard 
@@ -271,7 +272,7 @@ export default function SettingsPage() {
                   <div className="p-5 bg-rose-500/10 rounded-[2rem] text-rose-500 group-hover/action:scale-110 transition-transform">
                      <LogOut size={32} />
                   </div>
-                  <span className="text-sm font-black text-white uppercase tracking-[0.2em]">{t('settings.terminate')}</span>
+                  <span className="text-xl font-black text-white uppercase tracking-[0.2em]">{t('settings.terminate')}</span>
                </PremiumCard>
            </div>
          </div>
@@ -279,11 +280,12 @@ export default function SettingsPage() {
          <div className="mt-20 py-10 border-t border-white/5 flex flex-col items-center opacity-30 group/version">
             <div className="flex items-center gap-4 mb-2">
                <Cpu size={16} className="text-slate-500 group-hover/version:text-primary transition-colors" />
-               <p className="text-[11px] font-black text-white uppercase tracking-[0.4em]">LogisPro Terminal v3.2.0-STABLE</p>
+               <p className="text-base font-bold font-black text-white uppercase tracking-[0.4em]">LogisPro Terminal v3.2.0-STABLE</p>
             </div>
-            <p className="text-[9px] font-black text-slate-600 tracking-widest">ENCRYPTED OPERATION // SECURE ENDPOINT</p>
+            <p className="text-base font-bold font-black text-slate-600 tracking-widest">ENCRYPTED OPERATION // SECURE ENDPOINT</p>
          </div>
     </div>
   )
 }
+
 

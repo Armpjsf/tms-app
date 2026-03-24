@@ -260,9 +260,9 @@ export function ChatWindow({ initialContacts, initialDrivers, forcedDriverId }: 
       <div className="lg:col-span-1 bg-black/40 border-r border-white/5 flex flex-col relative z-20">
         <div className="p-8 border-b border-white/5 space-y-6">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-black text-white uppercase tracking-[0.4em] italic leading-none">Fleet Nodes</h3>
+            <h3 className="text-xl font-black text-white uppercase tracking-[0.4em] italic leading-none">Fleet Nodes</h3>
             {totalUnread > 0 && (
-              <span className="px-3 py-1 rounded-full bg-primary text-[10px] text-white font-black italic shadow-[0_0_15px_rgba(255,30,133,0.4)]">
+              <span className="px-3 py-1 rounded-full bg-primary text-base font-bold text-white font-black italic shadow-[0_0_15px_rgba(255,30,133,0.4)]">
                 {totalUnread} SIGNAL
               </span>
             )}
@@ -273,14 +273,14 @@ export function ChatWindow({ initialContacts, initialDrivers, forcedDriverId }: 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="LINK_PROTOCOL Search..." 
-              className="bg-black/60 border-2 border-white/5 pl-12 h-14 rounded-2xl text-xs font-black text-white placeholder:text-slate-600 focus:border-primary/40 transition-all font-mono" 
+              className="bg-black/60 border-2 border-white/5 pl-12 h-14 rounded-2xl text-lg font-bold font-black text-white placeholder:text-slate-600 focus:border-primary/40 transition-all font-mono" 
             />
           </div>
         </div>
 
         <div className="flex-1 overflow-y-auto custom-scrollbar p-2">
           {filteredContacts.length === 0 ? (
-            <div className="text-center py-20 text-slate-700 font-black uppercase tracking-widest text-xs italic">Sector Void</div>
+            <div className="text-center py-20 text-slate-700 font-black uppercase tracking-widest text-lg font-bold italic">Sector Void</div>
           ) : (
             filteredContacts.map((c: Contact) => {
               const id = c.driver_id
@@ -300,25 +300,25 @@ export function ChatWindow({ initialContacts, initialDrivers, forcedDriverId }: 
                 >
                   <div className="relative shrink-0">
                     <div className={cn(
-                      "w-12 h-12 rounded-2xl flex items-center justify-center text-white font-black text-sm border-2 transform group-hover:scale-110 group-hover:rotate-3 transition-all duration-500",
+                      "w-12 h-12 rounded-2xl flex items-center justify-center text-white font-black text-xl border-2 transform group-hover:scale-110 group-hover:rotate-3 transition-all duration-500",
                       isSelected ? 'bg-primary border-primary shadow-[0_0_20px_rgba(255,30,133,0.3)]' : 'bg-[#0a0518] border-white/10 text-slate-500'
                     )}>
                       {name.charAt(0)}
                     </div>
                     {(c.unread || 0) > 0 && (
-                       <span className="absolute -top-1 -right-1 w-4 h-4 bg-primary text-[8px] text-white flex items-center justify-center rounded-full font-black animate-bounce border-2 border-[#0a0518]">
+                       <span className="absolute -top-1 -right-1 w-4 h-4 bg-primary text-base font-bold text-white flex items-center justify-center rounded-full font-black animate-bounce border-2 border-[#0a0518]">
                           {c.unread}
                        </span>
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-center mb-1">
-                      <p className={cn("font-black text-xs tracking-widest uppercase truncate italic", isSelected ? 'text-white' : 'text-slate-400')}>{name}</p>
-                      <span className="text-[9px] text-slate-600 font-black shrink-0 ml-2 italic">
+                      <p className={cn("font-black text-lg font-bold tracking-widest uppercase truncate italic", isSelected ? 'text-white' : 'text-slate-400')}>{name}</p>
+                      <span className="text-base font-bold text-slate-600 font-black shrink-0 ml-2 italic">
                         {formatTime(c.updated_at)}
                       </span>
                     </div>
-                    <p className="text-[10px] text-slate-500 font-black truncate pr-2 uppercase tracking-tighter opacity-60">{(c.last_message || 'NOMINAL').toUpperCase()}</p>
+                    <p className="text-base font-bold text-slate-500 font-black truncate pr-2 uppercase tracking-tighter opacity-60">{(c.last_message || 'NOMINAL').toUpperCase()}</p>
                   </div>
                   {isSelected && (
                     <div className="absolute right-4 top-1/2 -translate-y-1/2">
@@ -355,9 +355,9 @@ export function ChatWindow({ initialContacts, initialDrivers, forcedDriverId }: 
                   <div>
                     <h3 className="text-xl font-black text-white italic tracking-[0.2em] uppercase leading-none mb-2">{activeDriver.driver_name || activeDriver.Driver_Name}</h3>
                     <div className="flex items-center gap-3">
-                        <span className="text-[9px] font-black text-primary uppercase tracking-[0.3em] font-mono bg-primary/10 px-2 py-0.5 rounded-md border border-primary/20">TARGET_ID: {selectedDriverId}</span>
+                        <span className="text-base font-bold font-black text-primary uppercase tracking-[0.3em] font-mono bg-primary/10 px-2 py-0.5 rounded-md border border-primary/20">TARGET_ID: {selectedDriverId}</span>
                         <div className="w-1 h-1 rounded-full bg-slate-800" />
-                        <span className="text-[9px] font-black text-slate-600 uppercase tracking-widest italic flex items-center gap-1.5">
+                        <span className="text-base font-bold font-black text-slate-600 uppercase tracking-widest italic flex items-center gap-1.5">
                            <Activity size={10} className="text-emerald-500" /> ENCRYPTED_LINK_ESTABLISHED
                         </span>
                     </div>
@@ -375,15 +375,15 @@ export function ChatWindow({ initialContacts, initialDrivers, forcedDriverId }: 
                 {messages.length === 0 ? (
                   <div className="text-center py-20">
                     <MessageSquare size={48} className="mx-auto mb-4 text-white/[0.03] animate-pulse" />
-                    <p className="text-xs font-black text-slate-700 uppercase tracking-[0.4em] italic mb-1">Establish Protocol with Operator</p>
-                    <p className="text-[10px] text-slate-800 font-mono">INIT_SESSION_WAITING_FOR_DATA_PACKETS</p>
+                    <p className="text-lg font-bold font-black text-slate-700 uppercase tracking-[0.4em] italic mb-1">Establish Protocol with Operator</p>
+                    <p className="text-base font-bold text-slate-800 font-mono">INIT_SESSION_WAITING_FOR_DATA_PACKETS</p>
                   </div>
                 ) : (
                   messageGroups.map((group, gi) => (
                     <div key={gi} className="space-y-6">
                       <div className="flex items-center justify-center gap-4">
                         <div className="h-px bg-white/5 flex-1" />
-                        <span className="px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-[9px] text-slate-500 font-black italic tracking-widest">
+                        <span className="px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-base font-bold text-slate-500 font-black italic tracking-widest">
                           {formatDate(group.date)}
                         </span>
                         <div className="h-px bg-white/5 flex-1" />
@@ -416,18 +416,18 @@ export function ChatWindow({ initialContacts, initialDrivers, forcedDriverId }: 
                                     <div className="relative w-48 h-48 sm:w-80 sm:h-80 rounded-[1.5rem] overflow-hidden border-2 border-white/10 bg-black shadow-2xl group cursor-pointer">
                                         <Image src={msg.message.replace('[IMAGE] ', '')} alt="Chat image" fill className="object-cover group-hover:scale-110 transition-transform duration-700" />
                                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm">
-                                           <span className="text-[10px] font-black text-white italic tracking-widest border border-white/20 p-2 rounded-lg">PROTO_EXPAND</span>
+                                           <span className="text-base font-bold font-black text-white italic tracking-widest border border-white/20 p-2 rounded-lg">PROTO_EXPAND</span>
                                         </div>
                                     </div>
                                   ) : (
-                                    <p className="text-sm font-black italic tracking-tight uppercase leading-relaxed break-words">{msg.message}</p>
+                                    <p className="text-xl font-black italic tracking-tight uppercase leading-relaxed break-words">{msg.message}</p>
                                   )}
                                   
                                   <div className={cn(
                                     "flex items-center gap-2 mt-3 opacity-0 group-hover/msg:opacity-100 transition-opacity",
                                     isAdmin ? 'justify-end' : 'justify-start'
                                   )}>
-                                    <span className="text-[9px] font-black italic tracking-widest text-white/40">
+                                    <span className="text-base font-bold font-black italic tracking-widest text-white/40">
                                       {formatTime(msg.created_at)}
                                     </span>
                                     {isAdmin && (
@@ -477,7 +477,7 @@ export function ChatWindow({ initialContacts, initialDrivers, forcedDriverId }: 
                       }
                     }}
                     placeholder="Link Data Packet to Operator..." 
-                    className="bg-transparent border-none focus-visible:ring-0 h-14 text-white text-xs font-black italic tracking-widest uppercase placeholder:text-slate-700" 
+                    className="bg-transparent border-none focus-visible:ring-0 h-14 text-white text-lg font-bold font-black italic tracking-widest uppercase placeholder:text-slate-700" 
                     disabled={isSending}
                   />
                   <Button 
@@ -504,13 +504,13 @@ export function ChatWindow({ initialContacts, initialDrivers, forcedDriverId }: 
               </div>
               <div className="space-y-2">
                 <p className="text-xl font-black text-white italic tracking-[0.4em] uppercase">Communication Offline</p>
-                <p className="text-[10px] font-black text-slate-700 uppercase tracking-[0.2em] font-mono italic">Select active Fleet Node to synchronize data stream</p>
+                <p className="text-base font-bold font-black text-slate-700 uppercase tracking-[0.2em] font-mono italic">Select active Fleet Node to synchronize data stream</p>
               </div>
               <div className="pt-10 flex items-center gap-4">
-                 <div className="flex items-center gap-2 text-[9px] font-black text-slate-800 uppercase tracking-widest bg-white/5 px-4 py-2 rounded-full border border-white/5">
+                 <div className="flex items-center gap-2 text-base font-bold font-black text-slate-800 uppercase tracking-widest bg-white/5 px-4 py-2 rounded-full border border-white/5">
                     <User size={12} /> {filteredContacts.length} OPERATORS_AVAIL
                  </div>
-                 <div className="flex items-center gap-2 text-[9px] font-black text-slate-800 uppercase tracking-widest bg-white/5 px-4 py-2 rounded-full border border-white/5">
+                 <div className="flex items-center gap-2 text-base font-bold font-black text-slate-800 uppercase tracking-widest bg-white/5 px-4 py-2 rounded-full border border-white/5">
                     <Activity size={12} /> SECURE_ID_MAPPING
                  </div>
               </div>
@@ -521,3 +521,4 @@ export function ChatWindow({ initialContacts, initialDrivers, forcedDriverId }: 
     </div>
   )
 }
+

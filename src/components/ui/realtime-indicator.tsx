@@ -15,9 +15,10 @@ export function RealtimeIndicator({ isLive, className }: RealtimeIndicatorProps)
         "w-2 h-2 rounded-full",
         isLive ? "bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.6)]" : "bg-slate-300"
       )} />
-      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+      <span className="text-base font-bold font-bold uppercase tracking-wider text-slate-500">
         {isLive ? "System Live" : "Offline"}
       </span>
     </div>
   );
 }
+

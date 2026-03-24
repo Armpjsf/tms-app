@@ -39,13 +39,14 @@ export function DelayRiskBadge({ risk, reason, className }: DelayRiskBadgeProps)
 
   return (
     <div className={cn("flex flex-col gap-1", className)}>
-      <div className={cn("flex items-center gap-1.5 px-2 py-0.5 rounded-full border text-[10px] font-black uppercase tracking-widest w-fit", color)}>
+      <div className={cn("flex items-center gap-1.5 px-2 py-0.5 rounded-full border text-base font-bold font-black uppercase tracking-widest w-fit", color)}>
         {icon}
         {label}
       </div>
       {reason && risk !== 'low' && (
-        <span className="text-[9px] font-bold text-gray-400 ml-1 italic">{reason}</span>
+        <span className="text-base font-bold font-bold text-gray-400 ml-1 italic">{reason}</span>
       )}
     </div>
   );
 }
+

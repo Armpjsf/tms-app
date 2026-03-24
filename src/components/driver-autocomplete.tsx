@@ -108,7 +108,7 @@ export function DriverAutocomplete({
       {open && (
         <div className="absolute z-50 w-full mt-1 bg-gray-100 border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
           {filteredDrivers.length === 0 ? (
-            <div className="p-2 text-sm text-gray-700 font-bold text-center">
+            <div className="p-2 text-xl text-gray-700 font-bold text-center">
                ไม่พบข้อมูล
             </div>
           ) : (
@@ -119,7 +119,7 @@ export function DriverAutocomplete({
                   onClick={() => handleSelect(driver)}
                   type="button"
                   className={cn(
-                    "w-full text-left px-3 py-2 text-sm cursor-pointer hover:bg-slate-700 flex items-center justify-between text-gray-800",
+                    "w-full text-left px-3 py-2 text-xl cursor-pointer hover:bg-slate-700 flex items-center justify-between text-gray-800",
                     value === driver.Driver_ID && "bg-slate-700 font-medium text-white"
                   )}
                 >
@@ -139,3 +139,4 @@ export function DriverAutocomplete({
     </div>
   )
 }
+

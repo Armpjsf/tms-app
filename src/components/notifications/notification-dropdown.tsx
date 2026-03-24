@@ -133,7 +133,7 @@ export function NotificationDropdown() {
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               exit={{ scale: 0 }}
-              className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] flex items-center justify-center text-[10px] font-bold bg-red-500 text-white rounded-full px-1 shadow-lg shadow-red-500/30"
+              className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] flex items-center justify-center text-base font-bold font-bold bg-red-500 text-white rounded-full px-1 shadow-lg shadow-red-500/30"
             >
               {unreadCount > 9 ? '9+' : unreadCount}
             </motion.span>
@@ -155,9 +155,9 @@ export function NotificationDropdown() {
             <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-muted/30">
               <div className="flex items-center gap-2">
                 <Bell size={16} className="text-primary" />
-                <h3 className="text-sm font-semibold text-foreground">การแจ้งเตือน</h3>
+                <h3 className="text-xl font-semibold text-foreground">การแจ้งเตือน</h3>
                 {unreadCount > 0 && (
-                  <span className="px-1.5 py-0.5 text-[10px] font-bold bg-red-500/20 text-red-400 rounded-full">
+                  <span className="px-1.5 py-0.5 text-base font-bold font-bold bg-red-500/20 text-red-400 rounded-full">
                     {unreadCount} ใหม่
                   </span>
                 )}
@@ -165,7 +165,7 @@ export function NotificationDropdown() {
               {visibleNotifications.length > 0 && (
                 <button
                   onClick={handleDismissAll}
-                  className="text-xs text-gray-700 font-black hover:text-red-600 transition-colors"
+                  className="text-lg font-bold text-gray-700 font-black hover:text-red-600 transition-colors"
                 >
                   ล้างทั้งหมด
                 </button>
@@ -181,7 +181,7 @@ export function NotificationDropdown() {
               ) : visibleNotifications.length === 0 ? (
                 <div className="py-12 text-center">
                   <Bell size={32} className="mx-auto text-muted-foreground/30 mb-3" />
-                  <p className="text-sm text-muted-foreground">ไม่มีการแจ้งเตือน</p>
+                  <p className="text-xl text-muted-foreground">ไม่มีการแจ้งเตือน</p>
                 </div>
               ) : (
                 <div className="divide-y divide-border/50">
@@ -224,7 +224,7 @@ export function NotificationDropdown() {
               <Link
                 href="/settings/notifications"
                 onClick={() => setOpen(false)}
-                className="flex items-center justify-center gap-1 text-xs text-gray-700 font-black hover:text-emerald-600 transition-colors py-1"
+                className="flex items-center justify-center gap-1 text-lg font-bold text-gray-700 font-black hover:text-emerald-600 transition-colors py-1"
               >
                 ตั้งค่าการแจ้งเตือน <ExternalLink size={10} />
               </Link>
@@ -243,13 +243,13 @@ function NotificationItem({ notification }: { notification: Notification }) {
         {typeIcons[notification.type]}
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-foreground leading-tight">
+        <p className="text-xl font-medium text-foreground leading-tight">
           {notification.title}
         </p>
-        <p className="text-xs text-gray-800 font-bold mt-0.5 line-clamp-2">
+        <p className="text-lg font-bold text-gray-800 font-bold mt-0.5 line-clamp-2">
           {notification.message}
         </p>
-        <p className="text-[10px] text-gray-600 font-black mt-1">
+        <p className="text-base font-bold text-gray-600 font-black mt-1">
           {timeAgo(notification.timestamp)}
         </p>
       </div>
@@ -261,3 +261,4 @@ function NotificationItem({ notification }: { notification: Notification }) {
     </div>
   )
 }
+

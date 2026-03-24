@@ -50,8 +50,8 @@ export function PWAInstallHint() {
                 <PlusSquare className="text-primary-foreground w-6 h-6" />
               </div>
               <div className="flex-1">
-                <h3 className="text-foreground font-bold text-sm">ติดตั้งแอป LOGIS Driver</h3>
-                <p className="text-muted-foreground text-xs">ติดตั้งลงบนหน้าจอหลักเพื่อการใช้งานที่รวดเร็ว</p>
+                <h3 className="text-foreground font-bold text-xl">ติดตั้งแอป LOGIS Driver</h3>
+                <p className="text-muted-foreground text-lg font-bold">ติดตั้งลงบนหน้าจอหลักเพื่อการใช้งานที่รวดเร็ว</p>
               </div>
             </div>
             <Button variant="ghost" size="icon" onClick={dismiss} className="text-muted-foreground h-8 w-8">
@@ -59,13 +59,13 @@ export function PWAInstallHint() {
             </Button>
           </div>
 
-          <div className="bg-muted/50 rounded-xl p-3 text-xs text-muted-foreground space-y-2">
+          <div className="bg-muted/50 rounded-xl p-3 text-lg font-bold text-muted-foreground space-y-2">
             <div className="flex items-center gap-2">
-              <span className="w-5 h-5 flex items-center justify-center bg-primary/10 rounded text-primary text-[10px] font-bold">1</span>
+              <span className="w-5 h-5 flex items-center justify-center bg-primary/10 rounded text-primary text-base font-bold font-bold">1</span>
               <span>กดปุ่ม <Share className="inline w-3 h-3 text-primary" /> (แชร์) ด้านล่างของ Safari</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="w-5 h-5 flex items-center justify-center bg-primary/10 rounded text-primary text-[10px] font-bold">2</span>
+              <span className="w-5 h-5 flex items-center justify-center bg-primary/10 rounded text-primary text-base font-bold font-bold">2</span>
               <span>เลื่อนลงมาแล้วกด <span className="text-foreground font-semibold">&quot;เพิ่มลงในหน้าจอโฮม&quot;</span></span>
             </div>
           </div>
@@ -74,3 +74,4 @@ export function PWAInstallHint() {
     </AnimatePresence>
   )
 }
+

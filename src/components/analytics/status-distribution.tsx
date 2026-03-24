@@ -31,7 +31,7 @@ export function StatusDistribution({ data }: { data: StatusItem[] }) {
                 const percentage = total > 0 ? (item.value / total) * 100 : 0;
                 return (
                     <div key={item.name} className="space-y-1">
-                        <div className="flex justify-between text-xs transition-colors">
+                        <div className="flex justify-between text-lg font-bold transition-colors">
                             <span className="text-gray-700 font-black">{item.name}</span>
                             <span className="text-gray-900 font-black">{item.value} <span className="text-gray-550 font-bold">({percentage.toFixed(1)}%)</span></span>
                         </div>
@@ -45,9 +45,10 @@ export function StatusDistribution({ data }: { data: StatusItem[] }) {
                 );
             })}
             <div className="pt-2 border-t border-gray-200 flex justify-between items-center transition-colors">
-                <span className="text-xs text-gray-700 font-black">งานทั้งหมด (Total Jobs)</span>
-                <span className="text-sm font-black text-gray-950">{total} รายการ</span>
+                <span className="text-lg font-bold text-gray-700 font-black">งานทั้งหมด (Total Jobs)</span>
+                <span className="text-xl font-black text-gray-950">{total} รายการ</span>
             </div>
         </div>
     );
 }
+

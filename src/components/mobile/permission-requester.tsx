@@ -199,7 +199,7 @@ export function PermissionRequester({ driverId }: Props) {
                         <X size={18} />
                     </button>
                 </div>
-                <p className="text-sm text-gray-600 mb-4 leading-relaxed font-bold">
+                <p className="text-xl text-gray-600 mb-4 leading-relaxed font-bold">
                     เพื่อให้คุณไม่พลาดงานใหม่ ระบบจะแจ้งเตือนทันทีที่มีงานเข้า
                 </p>
                 <div className="flex gap-3">
@@ -225,3 +225,4 @@ export function PermissionRequester({ driverId }: Props) {
     </div>
   )
 }
+

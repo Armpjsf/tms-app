@@ -55,18 +55,18 @@ export default function ChatPage() {
                             <div className="p-2 bg-primary/20 rounded-xl shadow-lg">
                                 <Bot className="text-primary" size={20} />
                             </div>
-                            <h2 className="text-[10px] font-black text-primary uppercase tracking-[0.4em]">{t('intelligence.neural_core')}</h2>
+                            <h2 className="text-base font-bold font-black text-primary uppercase tracking-[0.4em]">{t('intelligence.neural_core')}</h2>
                         </div>
                         <h1 className="text-3xl lg:text-5xl font-black text-white tracking-tighter flex items-center gap-5 uppercase premium-text-gradient">
                             {t('intelligence.title')}
                         </h1>
-                        <p className="text-slate-500 font-bold text-xs lg:text-sm tracking-wide opacity-80 uppercase tracking-widest italic">{t('intelligence.subtitle')}</p>
+                        <p className="text-slate-500 font-bold text-lg font-bold lg:text-xl tracking-wide opacity-80 uppercase tracking-widest italic">{t('intelligence.subtitle')}</p>
                     </div>
 
                     <div className="flex items-center gap-4 bg-white/5 p-3 lg:p-4 rounded-xl lg:rounded-2xl border border-white/10 backdrop-blur-md relative z-10 w-fit">
                         <div className="flex items-center gap-3">
                             <div className="w-2 h-2 rounded-full bg-primary animate-pulse shadow-[0_0_12px_rgba(255,30,133,1)]" />
-                            <span className="text-[10px] font-black text-primary uppercase tracking-widest leading-none">{t('intelligence.core_active')}</span>
+                            <span className="text-base font-bold font-black text-primary uppercase tracking-widest leading-none">{t('intelligence.core_active')}</span>
                         </div>
                     </div>
                 </div>
@@ -79,11 +79,11 @@ export default function ChatPage() {
                         <div className="px-6 lg:px-10 py-3 lg:py-4 bg-white/[0.02] border-b border-white/5 flex items-center justify-between">
                             <div className="flex items-center gap-4">
                                 <Activity size={12} className="text-primary animate-pulse" />
-                                <span className="text-[8px] font-black text-slate-500 uppercase tracking-[0.4em]">{t('intelligence.uplink_stable')}</span>
+                                <span className="text-base font-bold font-black text-slate-500 uppercase tracking-[0.4em]">{t('intelligence.uplink_stable')}</span>
                             </div>
                             <div className="flex items-center gap-2">
                                 <ShieldCheck size={12} className="text-emerald-500" />
-                                <span className="text-[8px] font-black text-emerald-500/60 uppercase tracking-[0.3em]">{t('intelligence.secure_grid')}</span>
+                                <span className="text-base font-bold font-black text-emerald-500/60 uppercase tracking-[0.3em]">{t('intelligence.secure_grid')}</span>
                             </div>
                         </div>
 
@@ -106,7 +106,7 @@ export default function ChatPage() {
                                             <div className="p-2 lg:p-3 bg-white/5 rounded-lg lg:rounded-xl text-slate-500 group-hover/chip:text-primary transition-colors border border-white/5 group-hover/chip:scale-110 duration-500">
                                                 <chip.icon size={16} strokeWidth={2.5} className="lg:w-[18px] lg:h-[18px]" />
                                             </div>
-                                            <p className="text-[9px] lg:text-[10px] font-black text-slate-400 group-hover/chip:text-white uppercase tracking-widest transition-colors leading-tight italic">{chip.label}</p>
+                                            <p className="text-base font-bold lg:text-base font-bold font-black text-slate-400 group-hover/chip:text-white uppercase tracking-widest transition-colors leading-tight italic">{chip.label}</p>
                                         </button>
                                     ))}
                                 </div>
@@ -135,7 +135,7 @@ export default function ChatPage() {
                                             {msg.content}
                                         </div>
                                         <div className={cn(
-                                            "absolute bottom-[-16px] lg:bottom-[-20px] text-[7px] lg:text-[8px] font-black opacity-20 uppercase tracking-[0.2em] italic",
+                                            "absolute bottom-[-16px] lg:bottom-[-20px] text-[7px] lg:text-base font-bold font-black opacity-20 uppercase tracking-[0.2em] italic",
                                             msg.role === 'user' ? 'right-0' : 'left-0'
                                         )}>
                                             {msg.role === 'user' ? t('common.elite_force') : t('common.intel_engine')}
@@ -153,7 +153,7 @@ export default function ChatPage() {
                                             <Loader2 className="w-5 h-5 lg:w-6 lg:h-6 animate-spin text-primary" strokeWidth={3} />
                                             <div className="absolute inset-0 blur-md bg-primary/20 animate-pulse" />
                                         </div>
-                                        <span className="text-[9px] lg:text-[10px] font-black uppercase tracking-[0.5em] text-primary italic">{t('intelligence.processing')}</span>
+                                        <span className="text-base font-bold lg:text-base font-bold font-black uppercase tracking-[0.5em] text-primary italic">{t('intelligence.processing')}</span>
                                     </div>
                                 </div>
                             )}
@@ -169,10 +169,10 @@ export default function ChatPage() {
                                         onChange={(e) => setInput(e.target.value)}
                                         onKeyDown={(e) => e.key === 'Enter' && handleSend()}
                                         placeholder={t('intelligence.placeholder')}
-                                        className="h-full rounded-xl lg:rounded-2xl bg-[#0a0518] border-white/5 text-white placeholder:text-slate-700 pl-6 lg:pl-10 pr-16 lg:pr-20 focus-visible:ring-primary/40 focus:border-primary/50 transition-all text-[11px] lg:text-sm font-black uppercase tracking-widest shadow-inner italic"
+                                        className="h-full rounded-xl lg:rounded-2xl bg-[#0a0518] border-white/5 text-white placeholder:text-slate-700 pl-6 lg:pl-10 pr-16 lg:pr-20 focus-visible:ring-primary/40 focus:border-primary/50 transition-all text-base font-bold lg:text-xl font-black uppercase tracking-widest shadow-inner italic"
                                     />
                                     <div className="absolute right-4 lg:right-6 top-1/2 -translate-y-1/2 flex items-center gap-2 pointer-events-none opacity-20">
-                                        <span className="text-[7px] lg:text-[9px] font-black hidden sm:block">ENT</span>
+                                        <span className="text-[7px] lg:text-base font-bold font-black hidden sm:block">ENT</span>
                                         <div className="w-0.5 h-2 lg:w-1 lg:h-3 bg-white/50 hidden sm:block" />
                                     </div>
                                 </div>
@@ -189,7 +189,7 @@ export default function ChatPage() {
                 </div>
 
                 <div className="text-center opacity-40">
-                    <p className="inline-flex items-center gap-3 px-6 py-2 bg-white/5 rounded-full border border-white/5 text-[9px] font-black text-slate-700 uppercase tracking-[0.6em]">
+                    <p className="inline-flex items-center gap-3 px-6 py-2 bg-white/5 rounded-full border border-white/5 text-base font-bold font-black text-slate-700 uppercase tracking-[0.6em]">
                         <Zap size={14} className="text-primary" /> {t('intelligence.unit_stable')}
                     </p>
                 </div>
@@ -197,3 +197,4 @@ export default function ChatPage() {
         </DashboardLayout>
     )
 }
+

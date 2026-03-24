@@ -11,6 +11,7 @@ export function MonthFilter() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [isPending, startTransition] = useTransition()
+  const { t } = useLanguage()
   
   const currentYear = new Date().getFullYear()
   const currentMonth = new Date().getMonth() + 1
@@ -20,18 +21,18 @@ export function MonthFilter() {
   const month = parseInt(searchParams.get("month") || currentMonth.toString())
 
   const months = [
-    { value: 1, label: "มกราคม" },
-    { value: 2, label: "กุมภาพันธ์" },
-    { value: 3, label: "มีนาคม" },
-    { value: 4, label: "เมษายน" },
-    { value: 5, label: "พฤษภาคม" },
-    { value: 6, label: "มิถุนายน" },
-    { value: 7, label: "กรกฎาคม" },
-    { value: 8, label: "สิงหาคม" },
-    { value: 9, label: "กันยายน" },
-    { value: 10, label: "ตุลาคม" },
-    { value: 11, label: "พฤศจิกายน" },
-    { value: 12, label: "ธันวาคม" },
+    { value: 1, label: t('months.jan') },
+    { value: 2, label: t('months.feb') },
+    { value: 3, label: t('months.mar') },
+    { value: 4, label: t('months.apr') },
+    { value: 5, label: t('months.may') },
+    { value: 6, label: t('months.jun') },
+    { value: 7, label: t('months.jul') },
+    { value: 8, label: t('months.aug') },
+    { value: 9, label: t('months.sep') },
+    { value: 10, label: t('months.oct') },
+    { value: 11, label: t('months.nov') },
+    { value: 12, label: t('months.dec') },
   ]
 
   const years = [
@@ -127,7 +128,7 @@ export function MonthFilter() {
                       variant={month === m.value ? "secondary" : "ghost"}
                       size="sm"
                       onClick={() => updateFilter(m.value, year)}
-                      className={cn("w-full text-xs", month === m.value ? "bg-slate-700 text-white" : "text-gray-500 hover:text-gray-900 hover:bg-gray-100")}
+                      className={cn("w-full text-lg font-bold", month === m.value ? "bg-slate-700 text-white" : "text-gray-500 hover:text-gray-900 hover:bg-gray-100")}
                     >
                       {m.label}
                     </Button>
@@ -149,3 +150,4 @@ export function MonthFilter() {
     </div>
   )
 }
+

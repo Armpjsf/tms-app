@@ -29,16 +29,22 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // For all other routes, update the Supabase session
-  const response = await updateSession(request)
-
-  // Protect Admin/Dashboard routes (all routes except /api, /mobile, /login, /track, and public assets)
+  // Protect Admin/Dashboard routes
   const isApiRoute = pathname.startsWith('/api')
   const isLoginPage = pathname.startsWith('/login')
   const isPublicTrack = pathname.startsWith('/track')
   const isMobile = pathname.startsWith('/mobile')
+  const isStaticFile = pathname.includes('.') // Simple check for assets
+
+  // Only update Supabase session for login or public routes if needed, 
+  // but for main app we rely on our custom session to avoid excessive network calls
+  let response = NextResponse.next()
   
-  if (!isApiRoute && !isMobile && !isLoginPage && !isPublicTrack && pathname !== '/favicon.ico') {
+  if (isLoginPage || isApiRoute) {
+    response = await updateSession(request)
+  }
+
+  if (!isApiRoute && !isMobile && !isLoginPage && !isPublicTrack && !isStaticFile && pathname !== '/') {
     const sessionCookie = request.cookies.get('session')
     const driverSession = request.cookies.get('driver_session')
 
@@ -47,14 +53,11 @@ export async function middleware(request: NextRequest) {
       const userAgent = request.headers.get('user-agent') || ''
       const isDeviceMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent)
       
-      // If mobile, check if they already have a driver session
       if (isDeviceMobile && !pathname.startsWith('/mobile/login')) {
-        // If they have a driver session, redirect to mobile jobs, NOT login
         if (driverSession) {
           return NextResponse.redirect(new URL('/mobile/jobs', request.url))
         }
 
-        // Only redirect to mobile login if they are NOT trying to access admin login with bypass
         const searchParams = request.nextUrl.searchParams
         if (searchParams.get('type') !== 'staff') {
           return NextResponse.redirect(new URL('/mobile/login', request.url))
@@ -65,18 +68,16 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(loginUrl)
     }
 
-    // Role-based Access Control (RBAC)
+    // Role-based Access Control (RBAC) via Local JWT Decryption (FAST)
     const payload = await decrypt(sessionCookie.value)
     
     if (!payload) {
-      console.error('Middleware: Session decryption failed or expired')
       const loginUrl = new URL('/login?error=session_invalid', request.url)
-      const response = NextResponse.redirect(loginUrl)
-      response.cookies.delete('session')
-      return response
+      const redirectResponse = NextResponse.redirect(loginUrl)
+      redirectResponse.cookies.delete('session')
+      return redirectResponse
     }
 
-    // Role-based Access Control (RBAC)
     const roleId = Number(payload.roleId)
     const restrictions = [
       { path: '/settings', allowed: [1, 2] },
@@ -87,9 +88,8 @@ export async function middleware(request: NextRequest) {
 
     for (const rule of restrictions) {
       if (pathname.startsWith(rule.path)) {
-        // Special Exception: Allow customers to access their specific billing page
         if (rule.path === '/billing' && pathname.startsWith('/billing/customer') && payload.customerId) {
-            continue; // Bypass the role restriction for this specific path
+            continue;
         }
         
         if (!rule.allowed.includes(roleId)) {

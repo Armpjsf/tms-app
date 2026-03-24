@@ -61,7 +61,7 @@ export default function SecuritySettingsPage() {
             <div className="absolute top-0 right-0 w-80 h-80 bg-primary/10 blur-[120px] rounded-full -mr-40 -mt-40 pointer-events-none" />
             
             <div className="relative z-10 space-y-8">
-                <button onClick={() => router.back()} className="inline-flex items-center gap-2 text-slate-500 hover:text-primary transition-all font-black uppercase tracking-[0.1em] text-[11px] group/back italic">
+                <button onClick={() => router.back()} className="inline-flex items-center gap-2 text-slate-500 hover:text-primary transition-all font-black uppercase tracking-[0.1em] text-base font-bold group/back italic">
                     <ArrowLeft className="w-4 h-4 group-hover/back:-translate-x-1 transition-transform" /> 
                     {t('common.back')}
                 </button>
@@ -73,7 +73,7 @@ export default function SecuritySettingsPage() {
                         <h1 className="text-5xl font-black text-white tracking-widest uppercase leading-none italic premium-text-gradient">
                             {t('settings.items.security')}
                         </h1>
-                        <p className="text-[11px] font-black text-primary uppercase tracking-[0.2em] mt-2 opacity-80 italic">{t('settings.items.security_desc')}</p>
+                        <p className="text-base font-bold font-black text-primary uppercase tracking-[0.2em] mt-2 opacity-80 italic">{t('settings.items.security_desc')}</p>
                     </div>
                 </div>
             </div>
@@ -81,11 +81,11 @@ export default function SecuritySettingsPage() {
             <div className="flex flex-col items-end gap-6 relative z-10">
                 <div className="bg-white/5 border border-white/10 px-6 py-3 rounded-2xl flex items-center gap-3 backdrop-blur-md">
                     <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_10px_rgba(16,185,129,1)]" />
-                    <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest italic">DEFENSE_ARRAY: ACTIVE</span>
+                    <span className="text-base font-bold font-black text-slate-400 uppercase tracking-widest italic">DEFENSE_ARRAY: ACTIVE</span>
                 </div>
                 <div className="flex items-center gap-4 bg-primary/10 p-4 rounded-2xl border border-primary/20">
                    <ShieldCheck className="text-primary" size={18} />
-                   <span className="text-[11px] font-black text-white uppercase tracking-[0.1em] italic">Encryption: AES-256</span>
+                   <span className="text-base font-bold font-black text-white uppercase tracking-[0.1em] italic">Encryption: AES-256</span>
                 </div>
             </div>
         </div>
@@ -105,13 +105,13 @@ export default function SecuritySettingsPage() {
                                    </div>
                                    <div className="space-y-2">
                                         <h2 className="text-4xl font-black text-white tracking-[0.2em] uppercase italic">Key Rotation</h2>
-                                        <p className="text-[11px] font-black text-slate-500 uppercase tracking-[0.2em] italic">Recalculate Access Vector Parameters</p>
+                                        <p className="text-base font-bold font-black text-slate-500 uppercase tracking-[0.2em] italic">Recalculate Access Vector Parameters</p>
                                    </div>
                               </div>
 
                               <div className="space-y-10">
                                   <div className="space-y-4">
-                                      <Label className="text-[11px] font-black uppercase text-primary/60 tracking-[0.1em] ml-6 flex items-center gap-2">
+                                      <Label className="text-base font-bold font-black uppercase text-primary/60 tracking-[0.1em] ml-6 flex items-center gap-2">
                                           <Lock size={12} /> NEW_ACCESS_KEY
                                       </Label>
                                       <Input 
@@ -123,7 +123,7 @@ export default function SecuritySettingsPage() {
                                       />
                                   </div>
                                   <div className="space-y-4">
-                                      <Label className="text-[11px] font-black uppercase text-primary/60 tracking-[0.1em] ml-6 flex items-center gap-2">
+                                      <Label className="text-base font-bold font-black uppercase text-primary/60 tracking-[0.1em] ml-6 flex items-center gap-2">
                                           <Shield size={12} /> VERIFY_KEY_PARITY
                                       </Label>
                                       <Input 
@@ -159,18 +159,18 @@ export default function SecuritySettingsPage() {
                               <Smartphone size={20} className="text-indigo-400" />
                               Multi-Factor Override
                           </h3>
-                          <div className="px-5 py-1.5 rounded-xl bg-indigo-500/10 text-[11px] font-black text-indigo-400 uppercase tracking-[0.1em] border border-indigo-500/20 italic">
+                          <div className="px-5 py-1.5 rounded-xl bg-indigo-500/10 text-base font-bold font-black text-indigo-400 uppercase tracking-[0.1em] border border-indigo-500/20 italic">
                               STATUS: EN-ROUTE
                           </div>
                       </div>
                       <div className="p-12 flex flex-col md:flex-row items-center justify-between gap-10">
                           <div className="space-y-4 text-center md:text-left">
                               <p className="text-xl font-black text-white uppercase tracking-widest italic">Temporal Token Authentication (2FA)</p>
-                              <p className="text-[11px] font-black text-slate-500 leading-relaxed uppercase tracking-[0.2em] italic">
+                              <p className="text-base font-bold font-black text-slate-500 leading-relaxed uppercase tracking-[0.2em] italic">
                                   Deploy a secondary hardware-backed authentication layer for mission-critical sessions.
                               </p>
                           </div>
-                          <PremiumButton variant="outline" disabled className="h-16 px-10 rounded-2xl border-white/10 text-slate-600 gap-3 uppercase font-black text-[11px] tracking-[0.1em] cursor-not-allowed italic">
+                          <PremiumButton variant="outline" disabled className="h-16 px-10 rounded-2xl border-white/10 text-slate-600 gap-3 uppercase font-black text-base font-bold tracking-[0.1em] cursor-not-allowed italic">
                               SYSTEM_ARCHIVE_LOCK
                           </PremiumButton>
                       </div>
@@ -186,12 +186,12 @@ export default function SecuritySettingsPage() {
             </div>
             <div className="space-y-4 text-center md:text-left flex-1">
                 <p className="text-xl font-black text-primary italic uppercase tracking-widest">SECURITY_INTEGRITY_ADVISORY</p>
-                <p className="text-sm font-bold text-slate-600 leading-relaxed uppercase tracking-wider italic">
+                <p className="text-xl font-bold text-slate-600 leading-relaxed uppercase tracking-wider italic">
                     Key rotation should be performed every 30 orbital cycles to maintain maximum defense parity. <br />
                     All authentication handshakes are monitored via the central telemetry engine.
                 </p>
             </div>
-            <PremiumButton variant="outline" className="h-14 px-10 rounded-2xl border-white/10 text-white gap-3 uppercase font-black text-[11px] tracking-[0.1em] ml-auto italic">
+            <PremiumButton variant="outline" className="h-14 px-10 rounded-2xl border-white/10 text-white gap-3 uppercase font-black text-base font-bold tracking-[0.1em] ml-auto italic">
                 <Activity size={18} /> VIEW_DEFENSE_LOGS
             </PremiumButton>
         </div>
@@ -199,3 +199,4 @@ export default function SecuritySettingsPage() {
     </DashboardLayout>
   )
 }
+

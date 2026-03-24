@@ -96,7 +96,7 @@ export function AiSuggestionCard({ jobData, onSelect }: AiSuggestionCardProps) {
         <div className="p-6 text-center rounded-2xl bg-slate-800/50 border border-slate-700/50">
           <AlertCircle className="w-10 h-10 text-amber-400 mx-auto mb-3" />
           <p className="text-white font-bold">ไม่พบคนขับที่พร้อม</p>
-          <p className="text-gray-400 text-sm mt-1">ลองเปลี่ยนวันที่หรือกดค้นหาใหม่</p>
+          <p className="text-gray-400 text-xl mt-1">ลองเปลี่ยนวันที่หรือกดค้นหาใหม่</p>
           <Button variant="outline" size="sm" onClick={handleSearch} className="mt-3 border-slate-600">
             ค้นหาอีกครั้ง
           </Button>
@@ -109,7 +109,7 @@ export function AiSuggestionCard({ jobData, onSelect }: AiSuggestionCardProps) {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-violet-400" />
-              <span className="text-sm font-bold text-violet-300 uppercase tracking-wider">
+              <span className="text-xl font-bold text-violet-300 uppercase tracking-wider">
                 AI Recommendations
               </span>
             </div>
@@ -118,7 +118,7 @@ export function AiSuggestionCard({ jobData, onSelect }: AiSuggestionCardProps) {
               variant="ghost" 
               size="sm" 
               onClick={handleSearch} 
-              className="text-gray-400 hover:text-white text-xs"
+              className="text-gray-400 hover:text-white text-lg font-bold"
             >
               รีเฟรช
             </Button>
@@ -145,15 +145,15 @@ export function AiSuggestionCard({ jobData, onSelect }: AiSuggestionCardProps) {
 
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <p className="text-white font-bold text-sm truncate">{driver.Driver_Name}</p>
+                        <p className="text-white font-bold text-xl truncate">{driver.Driver_Name}</p>
                         {index === 0 && (
-                          <span className="px-2 py-0.5 text-[10px] rounded-full bg-amber-500/20 text-amber-300 font-bold uppercase tracking-wide">
+                          <span className="px-2 py-0.5 text-base font-bold rounded-full bg-amber-500/20 text-amber-300 font-bold uppercase tracking-wide">
                             Best Match
                           </span>
                         )}
                       </div>
 
-                      <div className="flex items-center gap-3 mt-1.5 text-[11px] text-gray-400">
+                      <div className="flex items-center gap-3 mt-1.5 text-base font-bold text-gray-400">
                         <span className="flex items-center gap-1">
                           <Truck className="w-3 h-3" /> {driver.Vehicle_Plate}
                         </span>
@@ -182,7 +182,7 @@ export function AiSuggestionCard({ jobData, onSelect }: AiSuggestionCardProps) {
                     <p className={`text-2xl font-black ${getScoreColor(driver.match_score)}`}>
                       {driver.match_score}
                     </p>
-                    <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest">MATCH</p>
+                    <p className="text-base font-bold text-gray-400 font-bold uppercase tracking-widest">MATCH</p>
                   </div>
                 </div>
 
@@ -191,7 +191,7 @@ export function AiSuggestionCard({ jobData, onSelect }: AiSuggestionCardProps) {
                   <Button
                     type="button"
                     size="sm"
-                    className="w-full bg-white/10 hover:bg-white/20 text-white font-bold text-xs"
+                    className="w-full bg-white/10 hover:bg-white/20 text-white font-bold text-lg font-bold"
                     onClick={(e) => {
                       e.stopPropagation()
                       onSelect(driver)
@@ -215,8 +215,9 @@ function ScorePill({ score, icon }: { label: string, score: number, icon: React.
                 score >= 50 ? 'text-amber-400 bg-amber-500/10' :
                 'text-red-400 bg-red-500/10'
   return (
-    <span className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[9px] font-bold ${color}`}>
+    <span className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-base font-bold font-bold ${color}`}>
       {icon} {score}
     </span>
   )
 }
+

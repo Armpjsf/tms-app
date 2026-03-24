@@ -62,10 +62,10 @@ export function AdminVerificationDialog({ job, open, onOpenChange }: AdminVerifi
 
         <div className="p-8 space-y-6">
           <div className="space-y-2">
-            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Internal Verification Note</label>
+            <label className="text-base font-bold font-black text-slate-500 uppercase tracking-widest ml-1">Internal Verification Note</label>
             <Textarea 
               placeholder="Enter reasons for rejection or approval notes..."
-              className="min-h-[120px] rounded-2xl bg-gray-50 border-gray-100 focus:bg-white transition-all text-sm font-medium p-4 resize-none"
+              className="min-h-[120px] rounded-2xl bg-gray-50 border-gray-100 focus:bg-white transition-all text-xl font-medium p-4 resize-none"
               value={note}
               onChange={(e) => setNote(e.target.value)}
             />
@@ -92,7 +92,7 @@ export function AdminVerificationDialog({ job, open, onOpenChange }: AdminVerifi
           </div>
         </div>
 
-        <div className="p-4 bg-gray-50 border-t border-gray-100 flex items-center justify-center gap-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">
+        <div className="p-4 bg-gray-50 border-t border-gray-100 flex items-center justify-center gap-4 text-base font-bold font-black text-slate-500 uppercase tracking-widest">
             <div className="flex items-center gap-1.5">
                 <AlertCircle size={12} className="text-emerald-600" /> This will be logged permanently for audit
             </div>
@@ -101,3 +101,4 @@ export function AdminVerificationDialog({ job, open, onOpenChange }: AdminVerifi
     </Dialog>
   )
 }
+

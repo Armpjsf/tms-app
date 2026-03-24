@@ -14,7 +14,7 @@ export default function MobileManualPage() {
              <BookOpen size={32} />
           </div>
           <h2 className="text-xl font-black text-gray-900 mb-1">ยินดีต้อนรับ</h2>
-          <p className="text-sm text-gray-600 font-medium">นี่คือคู่มือฉบับย่อสำหรับการใช้งานแอปพลิเคชันสำหรับคนขับรถ</p>
+          <p className="text-xl text-gray-600 font-medium">นี่คือคู่มือฉบับย่อสำหรับการใช้งานแอปพลิเคชันสำหรับคนขับรถ</p>
         </div>
 
         {/* Section: How to pick up jobs */}
@@ -27,7 +27,7 @@ export default function MobileManualPage() {
             </div>
             <div>
               <p className="text-base font-black text-gray-900">1. ดูงานวันนี้</p>
-              <p className="text-sm text-gray-600 mt-1">กดเมนู <span className="font-bold text-gray-900">&quot;งานปัจจุบัน&quot;</span> หรือ <span className="font-bold text-gray-900">&quot;กระดานงาน&quot;</span> เพื่อดูรายละเอียดจุดรับ-ส่งสินค้า</p>
+              <p className="text-xl text-gray-600 mt-1">กดเมนู <span className="font-bold text-gray-900">&quot;งานปัจจุบัน&quot;</span> หรือ <span className="font-bold text-gray-900">&quot;กระดานงาน&quot;</span> เพื่อดูรายละเอียดจุดรับ-ส่งสินค้า</p>
             </div>
           </div>
 
@@ -37,7 +37,7 @@ export default function MobileManualPage() {
             </div>
             <div>
               <p className="text-base font-black text-gray-900">2. เช็ครถก่อนวิ่ง</p>
-              <p className="text-sm text-gray-600 mt-1">ไปที่ตั้งค่า แล้วกดเมนู <span className="font-bold text-gray-900">&quot;เช็คสภาพรถ&quot;</span> เพื่อถ่ายรูปรถและยางเพื่อความปลอดภัย</p>
+              <p className="text-xl text-gray-600 mt-1">ไปที่ตั้งค่า แล้วกดเมนู <span className="font-bold text-gray-900">&quot;เช็คสภาพรถ&quot;</span> เพื่อถ่ายรูปรถและยางเพื่อความปลอดภัย</p>
             </div>
           </div>
 
@@ -47,7 +47,7 @@ export default function MobileManualPage() {
             </div>
             <div>
               <p className="text-base font-black text-gray-900">3. ปิดงานและถ่ายรูป</p>
-              <p className="text-sm text-gray-600 mt-1">เมื่อส่งของเสร็จ กดเข้าไปในงาน แจ้งปิดงานและ <span className="font-bold text-gray-900">ถ่ายรูปบิลล์/ลายเซ็น</span> ของลูกค้า</p>
+              <p className="text-xl text-gray-600 mt-1">เมื่อส่งของเสร็จ กดเข้าไปในงาน แจ้งปิดงานและ <span className="font-bold text-gray-900">ถ่ายรูปบิลล์/ลายเซ็น</span> ของลูกค้า</p>
             </div>
           </div>
 
@@ -57,3 +57,4 @@ export default function MobileManualPage() {
     </div>
   )
 }
+

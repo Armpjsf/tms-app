@@ -39,15 +39,16 @@ export function SafetyScoreBadge({ metrics, className }: SafetyScoreBadgeProps) 
   return (
     <div className={cn("flex items-center gap-2", className)}>
       <div className={cn(
-        "flex items-center gap-1.5 px-2 py-0.5 rounded-lg border text-[10px] font-black uppercase tracking-tighter",
+        "flex items-center gap-1.5 px-2 py-0.5 rounded-lg border text-base font-bold font-black uppercase tracking-tighter",
         color
       )}>
         {icon}
         {metrics.score} pts
       </div>
       {metrics.status === 'excellent' && (
-        <span className="text-[8px] font-black text-emerald-500 animate-pulse">TOP TIER</span>
+        <span className="text-base font-bold font-black text-emerald-500 animate-pulse">TOP TIER</span>
       )}
     </div>
   );
 }
+

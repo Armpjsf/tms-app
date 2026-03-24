@@ -32,7 +32,7 @@ export default async function JobDetailPage(props: Props) {
                 <Info size={40} className="text-slate-700" />
             </div>
             <p className="text-lg font-bold">ไม่พบข้อมูลงาน</p>
-            <button className="text-primary font-black uppercase tracking-widest text-xs">กลับหน้าหลัก</button>
+            <button className="text-primary font-black uppercase tracking-widest text-lg font-bold">กลับหน้าหลัก</button>
         </div>
     )
   }
@@ -52,8 +52,8 @@ export default async function JobDetailPage(props: Props) {
                 <div className="w-12 h-12 rounded-full bg-emerald-500/20 flex items-center justify-center">
                     <CheckCircle className="animate-in zoom-in duration-300" />
                 </div>
-                <div className="text-sm">
-                    <p className="font-black uppercase tracking-widest text-xs">
+                <div className="text-xl">
+                    <p className="font-black uppercase tracking-widest text-lg font-bold">
                         {success === 'pickup' ? 'Product Secured!' : 'Mission Completed!'}
                     </p>
                     <p className="opacity-80 font-bold">Data synchronized with fleet command.</p>
@@ -85,7 +85,7 @@ export default async function JobDetailPage(props: Props) {
                     <Truck className="text-primary" size={32} />
                 </div>
                 <div>
-                    <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-1">Current Status</p>
+                    <p className="text-slate-500 text-base font-bold font-black uppercase tracking-widest mb-1">Current Status</p>
                     <div className="flex items-center gap-2">
                          <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
                          <span className="text-2xl font-black text-white tracking-tighter uppercase">{job.Job_Status}</span>
@@ -109,11 +109,11 @@ export default async function JobDetailPage(props: Props) {
                             <User className="text-primary" size={24} />
                         </div>
                         <div>
-                            <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-0.5">Primary Target</p>
+                            <p className="text-slate-500 text-base font-bold font-black uppercase tracking-widest mb-0.5">Primary Target</p>
                             <h3 className="text-2xl font-black text-white tracking-tighter leading-none">{job.Customer_Name}</h3>
                         </div>
                     </div>
-                    <Badge variant="outline" className="border-white/10 text-slate-500 px-3 py-1 rounded-xl font-bold uppercase text-[9px]">ID: {job.Customer_ID}</Badge>
+                    <Badge variant="outline" className="border-white/10 text-slate-500 px-3 py-1 rounded-xl font-bold uppercase text-base font-bold">ID: {job.Customer_ID}</Badge>
                 </div>
                 
                 <div className="space-y-6">
@@ -122,7 +122,7 @@ export default async function JobDetailPage(props: Props) {
                             <MapPin size={20} />
                         </div>
                         <div className="flex-1">
-                            <p className="text-slate-500 text-[9px] font-black uppercase tracking-widest mb-1">Destination</p>
+                            <p className="text-slate-500 text-base font-bold font-black uppercase tracking-widest mb-1">Destination</p>
                             <p className="text-white text-[13px] font-black leading-relaxed">{job.Dest_Location || job.Route_Name}</p>
                         </div>
                      </div>
@@ -132,10 +132,10 @@ export default async function JobDetailPage(props: Props) {
                         </div>
                         <div className="flex-1 flex justify-between items-center">
                             <div>
-                                <p className="text-slate-500 text-[9px] font-black uppercase tracking-widest mb-1">Contact Protocol</p>
+                                <p className="text-slate-500 text-base font-bold font-black uppercase tracking-widest mb-1">Contact Protocol</p>
                                 <p className="text-emerald-400 text-[13px] font-black uppercase tracking-widest">Secured Line Active</p>
                             </div>
-                            <button className="px-4 py-2 bg-emerald-500/20 rounded-xl text-emerald-400 font-black text-[10px] uppercase tracking-widest hover:bg-emerald-500/30 transition-all">CALL</button>
+                            <button className="px-4 py-2 bg-emerald-500/20 rounded-xl text-emerald-400 font-black text-base font-bold uppercase tracking-widest hover:bg-emerald-500/30 transition-all">CALL</button>
                         </div>
                      </div>
                 </div>
@@ -147,23 +147,23 @@ export default async function JobDetailPage(props: Props) {
                      <div className="p-2 bg-primary/20 rounded-xl">
                         <Package size={20} className="text-primary" /> 
                      </div>
-                     <h4 className="text-white font-black text-xs uppercase tracking-[0.2em]">Payload Configuration</h4>
+                     <h4 className="text-white font-black text-lg font-bold uppercase tracking-[0.2em]">Payload Configuration</h4>
                 </div>
                 
                 <div className="grid grid-cols-2 gap-4">
                      <div className="p-5 bg-white/5 rounded-2xl border border-white/10 flex flex-col items-center justify-center text-center">
-                         <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-2">Mass (KG)</p>
+                         <p className="text-base font-bold font-black text-slate-500 uppercase tracking-widest mb-2">Mass (KG)</p>
                          <h5 className="text-2xl font-black text-white tracking-tighter">{job.Weight_Kg?.toLocaleString() || '0.0'}</h5>
                      </div>
                      <div className="p-5 bg-white/5 rounded-2xl border border-white/10 flex flex-col items-center justify-center text-center">
-                         <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-2">Volume (CBM)</p>
+                         <p className="text-base font-bold font-black text-slate-500 uppercase tracking-widest mb-2">Volume (CBM)</p>
                          <h5 className="text-2xl font-black text-accent tracking-tighter">{job.Volume_Cbm || '0.0'}</h5>
                      </div>
                 </div>
 
                 <div className="p-5 bg-white/5 rounded-2xl border border-white/10">
-                     <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-3">Tactical Briefing / Notes</p>
-                     <p className="text-slate-300 text-xs font-bold leading-relaxed">{job.Notes || "No specific instructions from command center."}</p>
+                     <p className="text-base font-bold font-black text-slate-500 uppercase tracking-widest mb-3">Tactical Briefing / Notes</p>
+                     <p className="text-slate-300 text-lg font-bold font-bold leading-relaxed">{job.Notes || "No specific instructions from command center."}</p>
                 </div>
             </div>
 
@@ -178,14 +178,14 @@ export default async function JobDetailPage(props: Props) {
                     <div className="relative z-10 space-y-4">
                         <div className="flex items-center gap-3">
                             <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                            <h4 className="text-white font-black text-[10px] uppercase tracking-[0.3em]">Estimated Revenue</h4>
+                            <h4 className="text-white font-black text-base font-bold uppercase tracking-[0.3em]">Estimated Revenue</h4>
                         </div>
                         <div className="flex items-end gap-2">
                              <span className="text-5xl font-black text-white tracking-tighter leading-none">฿{(job.Cost_Driver_Total || 0).toLocaleString()}</span>
-                             <span className="text-primary font-black text-[10px] uppercase tracking-widest mb-1.5">FIXED RATE</span>
+                             <span className="text-primary font-black text-base font-bold uppercase tracking-widest mb-1.5">FIXED RATE</span>
                         </div>
                         <div className="pt-2">
-                             <button className="w-full h-12 rounded-xl bg-white/5 border border-white/10 text-slate-400 text-[10px] font-black uppercase tracking-widest hover:text-white hover:bg-white/10 transition-all">
+                             <button className="w-full h-12 rounded-xl bg-white/5 border border-white/10 text-slate-400 text-base font-bold font-black uppercase tracking-widest hover:text-white hover:bg-white/10 transition-all">
                                  View Detailed Ledger
                              </button>
                         </div>

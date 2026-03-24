@@ -38,7 +38,7 @@ export function ESGSection({ data }: { data: ESGStats }) {
                      <div className="text-5xl font-black text-white tracking-tighter italic">
                         {data.co2SavedKg.toLocaleString()}<span className="text-xl ml-2 text-slate-500">kg</span>
                      </div>
-                     <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-3 flex items-center gap-2">
+                     <p className="text-base font-bold text-slate-500 font-bold uppercase tracking-widest mt-3 flex items-center gap-2">
                         <TrendingDown size={14} className="text-emerald-500" /> {t('dashboard.emission_reduction_aggregate')}
                      </p>
                 </div>
@@ -46,7 +46,7 @@ export function ESGSection({ data }: { data: ESGStats }) {
                      <div className="text-5xl font-black text-emerald-500 tracking-tighter italic">
                         {data.treesSaved.toLocaleString()}
                      </div>
-                     <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-3 flex items-center gap-2">
+                     <p className="text-base font-bold text-slate-500 font-bold uppercase tracking-widest mt-3 flex items-center gap-2">
                         <TreePine size={14} className="text-emerald-500" /> {t('dashboard.tree_equivalence_index')}
                      </p>
                 </div>
@@ -54,8 +54,8 @@ export function ESGSection({ data }: { data: ESGStats }) {
 
             <div className="mt-10 pt-8 border-t border-white/5 relative z-10">
                 <div className="flex items-center justify-between mb-4">
-                    <span className="text-[10px] text-slate-400 font-black uppercase tracking-widest italic">{t('dashboard.optimization_efficiency')}</span>
-                    <span className="text-emerald-400 text-sm font-black italic">+{data.efficiencyRate}% {t('dashboard.target_sync')}</span>
+                    <span className="text-base font-bold text-slate-400 font-black uppercase tracking-widest italic">{t('dashboard.optimization_efficiency')}</span>
+                    <span className="text-emerald-400 text-xl font-black italic">+{data.efficiencyRate}% {t('dashboard.target_sync')}</span>
                 </div>
                 <div className="h-2 w-full bg-slate-900 rounded-full overflow-hidden border border-white/5 p-0.5">
                     <div className="h-full bg-gradient-to-r from-emerald-600 to-emerald-400 rounded-full" style={{ width: `${data.efficiencyRate}%` }} />
@@ -71,12 +71,12 @@ export function ESGSection({ data }: { data: ESGStats }) {
                         <Activity size={18} />
                     </div>
                     <div>
-                        <h4 className="text-sm font-black text-slate-900 uppercase tracking-tight italic">{t('dashboard.saved_distance')}</h4>
-                        <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">{t('dashboard.fleet_optimization')}</p>
+                        <h4 className="text-xl font-black text-slate-900 uppercase tracking-tight italic">{t('dashboard.saved_distance')}</h4>
+                        <p className="text-base font-bold text-slate-400 font-bold uppercase tracking-widest">{t('dashboard.fleet_optimization')}</p>
                     </div>
                 </div>
                 <div className="text-3xl font-black text-slate-950 tracking-tighter italic">
-                    {data.totalSavedKm.toLocaleString()}<span className="text-sm ml-1 text-slate-400">km</span>
+                    {data.totalSavedKm.toLocaleString()}<span className="text-xl ml-1 text-slate-400">km</span>
                 </div>
              </PremiumCard>
 
@@ -86,8 +86,8 @@ export function ESGSection({ data }: { data: ESGStats }) {
                         <Leaf size={18} />
                     </div>
                     <div>
-                        <h4 className="text-sm font-black text-white uppercase tracking-tight italic">{t('dashboard.green_protocol')}</h4>
-                        <p className="text-[9px] text-emerald-500 font-bold uppercase tracking-widest">{t('dashboard.esg_compliance_registry')}</p>
+                        <h4 className="text-xl font-black text-white uppercase tracking-tight italic">{t('dashboard.green_protocol')}</h4>
+                        <p className="text-base font-bold text-emerald-500 font-bold uppercase tracking-widest">{t('dashboard.esg_compliance_registry')}</p>
                     </div>
                 </div>
                 <div className="text-3xl font-black text-white tracking-tighter italic">
@@ -97,8 +97,8 @@ export function ESGSection({ data }: { data: ESGStats }) {
 
              <PremiumCard className="md:col-span-2 bg-white border-none shadow-[0_30px_100px_rgba(0,0,0,0.05)] p-8 rounded-br-[4rem] rounded-tl-[2rem] flex items-center justify-between">
                 <div className="space-y-1">
-                    <h4 className="text-xs font-black text-slate-900 uppercase tracking-widest italic">{t('dashboard.industrial_esg_rating')}</h4>
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{t('dashboard.structural_sustainability_index')}</p>
+                    <h4 className="text-lg font-bold font-black text-slate-900 uppercase tracking-widest italic">{t('dashboard.industrial_esg_rating')}</h4>
+                    <p className="text-base font-bold text-slate-400 font-bold uppercase tracking-wider">{t('dashboard.structural_sustainability_index')}</p>
                 </div>
                 <div className="flex items-center gap-2">
                     {[1,2,3,4,5].map(i => (
@@ -115,3 +115,4 @@ export function ESGSection({ data }: { data: ESGStats }) {
     </div>
   )
 }
+

@@ -26,10 +26,11 @@ export function ExportCardWrapper({ data, filename, children }: ExportCardWrappe
                     onClick={handleExport}
                 >
                     <Download className="h-4 w-4 mr-2" />
-                    <span className="text-xs">Export</span>
+                    <span className="text-lg font-bold">Export</span>
                 </Button>
             </div>
             {children}
         </div>
     );
 }
+

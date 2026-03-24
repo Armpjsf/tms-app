@@ -96,7 +96,7 @@ export function MobileDamageClient({ driverId, driverName, initialReports, recen
           >
             <AlertOctagon size={32} className="mx-auto mb-2" />
             <p className="text-xl font-black">ส่งรายงานปัญหา</p>
-            <p className="text-sm opacity-80 mt-1">อุบัติเหตุ, สินค้าชำรุด หรือสูญหาย</p>
+            <p className="text-xl opacity-80 mt-1">อุบัติเหตุ, สินค้าชำรุด หรือสูญหาย</p>
           </button>
         ) : (
           <div className="bg-white rounded-2xl border border-gray-200 p-5 space-y-5 shadow-sm">
@@ -153,7 +153,7 @@ export function MobileDamageClient({ driverId, driverName, initialReports, recen
               <p className="text-base font-black text-gray-700 mb-1">ถ่ายรูปปัญหา (หลักฐาน)</p>
               <div className="w-full h-24 border-2 border-dashed border-gray-400 rounded-xl flex flex-col items-center justify-center text-gray-600 bg-gray-50">
                 <Upload size={28} className="mb-2" />
-                <p className="text-sm font-black">แตะเพื่อถ่ายรูป</p>
+                <p className="text-xl font-black">แตะเพื่อถ่ายรูป</p>
               </div>
             </div>
 
@@ -208,7 +208,7 @@ export function MobileDamageClient({ driverId, driverName, initialReports, recen
                     <div className="flex justify-between items-start">
                       <div className="flex items-center gap-2">
                         <span className="font-black text-gray-900 text-base">{report.Reason_Category}</span>
-                        <span className={`px-2 py-1 rounded-full text-xs font-black
+                        <span className={`px-2 py-1 rounded-full text-lg font-bold font-black
                           ${isResolved ? 'bg-emerald-100 text-emerald-800' : ''}
                           ${isRejected ? 'bg-red-100 text-red-800' : ''}
                           ${(!isResolved && !isRejected) ? 'bg-amber-100 text-amber-800' : ''}
@@ -216,12 +216,12 @@ export function MobileDamageClient({ driverId, driverName, initialReports, recen
                           {isResolved ? 'ปิดแล้ว' : isRejected ? 'ยกเลิก' : 'รอตรวจสอบ'}
                         </span>
                       </div>
-                      <span className="text-sm font-bold text-gray-500">
+                      <span className="text-xl font-bold text-gray-500">
                         {new Date(report.Created_At).toLocaleDateString('th-TH')}
                       </span>
                     </div>
                     
-                    <div className="bg-gray-100 rounded-lg p-3 flex items-center gap-2 text-sm">
+                    <div className="bg-gray-100 rounded-lg p-3 flex items-center gap-2 text-xl">
                        <FileText size={16} className="text-gray-500" /> 
                        <span className="font-mono font-bold text-gray-800 truncate">{report.Job_ID}</span>
                     </div>
@@ -237,3 +237,4 @@ export function MobileDamageClient({ driverId, driverName, initialReports, recen
     </div>
   )
 }
+

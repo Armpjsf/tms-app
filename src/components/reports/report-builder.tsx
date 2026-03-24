@@ -196,7 +196,7 @@ function StatusBadge({ status }: { status: string }) {
     'in_progress': 'bg-emerald-500/15 text-emerald-700 font-bold',
   }
   return (
-    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${styles[status] || 'bg-slate-500/20 text-gray-500'}`}>
+    <span className={`px-2 py-0.5 rounded-full text-lg font-bold font-medium ${styles[status] || 'bg-slate-500/20 text-gray-500'}`}>
       {status}
     </span>
   )
@@ -293,7 +293,7 @@ export function ReportBuilder() {
               }`}
             >
               <Icon size={20} className={isActive ? 'text-blue-400' : 'text-slate-300'} />
-              <p className={`mt-2 text-sm font-black ${isActive ? 'text-white' : 'text-slate-100'}`}>
+              <p className={`mt-2 text-xl font-black ${isActive ? 'text-white' : 'text-slate-100'}`}>
                 {rt.label}
               </p>
               {isActive && (
@@ -330,7 +330,7 @@ export function ReportBuilder() {
                   {activeReport.hasDate && (
                     <>
                       <div className="space-y-1.5">
-                        <Label className="text-xs text-slate-300 font-black">จากวันที่</Label>
+                        <Label className="text-lg font-bold text-slate-300 font-black">จากวันที่</Label>
                         <Input
                           type="date"
                           value={dateFrom}
@@ -339,7 +339,7 @@ export function ReportBuilder() {
                         />
                       </div>
                       <div className="space-y-1.5">
-                        <Label className="text-xs text-slate-300 font-black">ถึงวันที่</Label>
+                        <Label className="text-lg font-bold text-slate-300 font-black">ถึงวันที่</Label>
                         <Input
                           type="date"
                           value={dateTo}
@@ -353,7 +353,7 @@ export function ReportBuilder() {
                   {/* Status */}
                   {activeReport.hasStatus && statusOptions[selectedType] && (
                     <div className="space-y-1.5">
-                      <Label className="text-xs text-slate-300 font-black">สถานะ</Label>
+                      <Label className="text-lg font-bold text-slate-300 font-black">สถานะ</Label>
                       <Select value={status} onValueChange={setStatus}>
                         <SelectTrigger className="bg-background border-input">
                           <SelectValue />
@@ -396,7 +396,7 @@ export function ReportBuilder() {
                       <button
                         key={preset.label}
                         onClick={() => { setDateFrom(preset.from); setDateTo(preset.to) }}
-                        className="px-3 py-1 text-xs rounded-full bg-muted/50 hover:bg-muted text-gray-700 font-bold hover:text-foreground transition-colors border border-border"
+                        className="px-3 py-1 text-lg font-bold rounded-full bg-muted/50 hover:bg-muted text-gray-700 font-bold hover:text-foreground transition-colors border border-border"
                       >
                         {preset.label}
                       </button>
@@ -435,7 +435,7 @@ export function ReportBuilder() {
                           placeholder="ค้นหาในผลลัพธ์..."
                           value={searchTerm}
                           onChange={(e) => setSearchTerm(e.target.value)}
-                          className="pl-8 h-9 w-48 bg-background text-sm border-slate-800"
+                          className="pl-8 h-9 w-48 bg-background text-xl border-slate-800"
                         />
                         {searchTerm && (
                           <button onClick={() => setSearchTerm('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-foreground">
@@ -449,7 +449,7 @@ export function ReportBuilder() {
                           variant="ghost"
                           size="sm"
                           onClick={() => exportToExcel(filteredData, columns, activeReport.label)}
-                          className="h-8 px-2 text-xs gap-1.5 hover:bg-emerald-500/10 hover:text-emerald-400"
+                          className="h-8 px-2 text-lg font-bold gap-1.5 hover:bg-emerald-500/10 hover:text-emerald-400"
                         >
                           <FileSpreadsheet size={14} />
                           Excel
@@ -458,7 +458,7 @@ export function ReportBuilder() {
                           variant="ghost"
                           size="sm"
                           onClick={() => exportToCSV(filteredData, columns, activeReport.label)}
-                          className="h-8 px-2 text-xs gap-1.5 hover:bg-blue-500/10 hover:text-emerald-500"
+                          className="h-8 px-2 text-lg font-bold gap-1.5 hover:bg-blue-500/10 hover:text-emerald-500"
                         >
                           <Download size={14} />
                           CSV
@@ -467,7 +467,7 @@ export function ReportBuilder() {
                           variant="ghost"
                           size="sm"
                           onClick={() => exportToPDF('report-to-pdf', activeReport.label)}
-                          className="h-8 px-2 text-xs gap-1.5 hover:bg-rose-500/10 hover:text-rose-400"
+                          className="h-8 px-2 text-lg font-bold gap-1.5 hover:bg-rose-500/10 hover:text-rose-400"
                         >
                           <Download size={14} />
                           PDF
@@ -481,19 +481,19 @@ export function ReportBuilder() {
                     <div className="py-16 text-center text-slate-400 font-bold">
                       <BarChart3 size={40} className="mx-auto mb-3 opacity-30" />
                       <p className="text-slate-200">ไม่พบข้อมูล</p>
-                      <p className="text-xs mt-1 text-slate-500">ลองปรับเงื่อนไขการค้นหา</p>
+                      <p className="text-lg font-bold mt-1 text-slate-500">ลองปรับเงื่อนไขการค้นหา</p>
                     </div>
                   ) : (
                     <div className="overflow-x-auto">
-                      <table className="w-full text-sm">
+                      <table className="w-full text-xl">
                         <thead>
                           <tr className="border-b border-white/10 bg-white/5">
-                            <th className="px-4 py-3 text-left text-xs font-black text-slate-400 w-10">#</th>
+                            <th className="px-4 py-3 text-left text-lg font-bold font-black text-slate-400 w-10">#</th>
                             {columns.map(col => (
                               <th
                                 key={col}
                                 onClick={() => handleSort(col)}
-                                className="px-4 py-3 text-left text-xs font-black text-slate-200 cursor-pointer hover:text-white transition-colors group"
+                                className="px-4 py-3 text-left text-lg font-bold font-black text-slate-200 cursor-pointer hover:text-white transition-colors group"
                               >
                                 <span className="flex items-center gap-1">
                                   {columnLabels[col] || (col.startsWith('Extra_') ? col.replace('Extra_', '') : col)}
@@ -506,7 +506,7 @@ export function ReportBuilder() {
                         <tbody className="divide-y divide-border/50">
                           {filteredData.slice(0, 500).map((row: any, i) => (
                             <tr key={i} className="hover:bg-muted/20 transition-colors">
-                              <td className="px-4 py-2.5 text-xs text-slate-400">{i + 1}</td>
+                              <td className="px-4 py-2.5 text-lg font-bold text-slate-400">{i + 1}</td>
                               {columns.map(col => (
                                 <td key={col} className="px-4 py-2.5 text-slate-200">
                                   {(col === 'Status' || col === 'status' || col === 'Job_Status' || col === 'priority') && row[col] ? (
@@ -523,7 +523,7 @@ export function ReportBuilder() {
                         </tbody>
                         <tfoot className="border-t-2 border-border bg-muted/40 font-bold">
                             <tr>
-                                <td className="px-4 py-3 text-xs text-gray-700 font-black">รวม</td>
+                                <td className="px-4 py-3 text-lg font-bold text-gray-700 font-black">รวม</td>
                                 {columns.map(col => {
                                     const isNumeric = col.toLowerCase().includes('cost') || col === 'amount' || col === 'Price_Cust_Total' || col.startsWith('Extra_') || col === 'Liters';
                                     if (!isNumeric) return <td key={col} className="px-4 py-3"></td>;
@@ -540,7 +540,7 @@ export function ReportBuilder() {
                       </table>
                       {filteredData.length > 500 && (
                         <div className="px-4 py-3 border-t border-border bg-muted/20 text-center">
-                          <p className="text-xs text-gray-700 font-bold">
+                          <p className="text-lg font-bold text-gray-700 font-bold">
                             แสดง 500 จาก {filteredData.length.toLocaleString()} รายการ — ดาวน์โหลด CSV เพื่อดูทั้งหมด
                           </p>
                         </div>
@@ -556,3 +556,4 @@ export function ReportBuilder() {
     </div>
   )
 }
+

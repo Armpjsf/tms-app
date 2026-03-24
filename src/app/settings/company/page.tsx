@@ -119,7 +119,7 @@ export default function CompanySettingsPage() {
             <div className="absolute top-0 right-0 w-80 h-80 bg-primary/10 blur-[120px] rounded-full -mr-40 -mt-40 pointer-events-none" />
             
             <div className="relative z-10 space-y-8">
-                <button onClick={() => router.back()} className="inline-flex items-center gap-2 text-slate-500 hover:text-primary transition-all font-black uppercase tracking-[0.4em] text-[10px] group/back italic">
+                <button onClick={() => router.back()} className="inline-flex items-center gap-2 text-slate-500 hover:text-primary transition-all font-black uppercase tracking-[0.4em] text-base font-bold group/back italic">
                     <ArrowLeft className="w-4 h-4 group-hover/back:-translate-x-1 transition-transform" /> 
                     {t('settings_pages.company.command_control')}
                 </button>
@@ -131,7 +131,7 @@ export default function CompanySettingsPage() {
                         <h1 className="text-5xl font-black text-white tracking-widest uppercase leading-none italic premium-text-gradient">
                             {t('settings_pages.company.title')}
                         </h1>
-                        <p className="text-[10px] font-black text-primary uppercase tracking-[0.6em] mt-2 opacity-80 italic italic">{t('settings_pages.company.subtitle')}</p>
+                        <p className="text-base font-bold font-black text-primary uppercase tracking-[0.6em] mt-2 opacity-80 italic italic">{t('settings_pages.company.subtitle')}</p>
                     </div>
                 </div>
             </div>
@@ -139,12 +139,12 @@ export default function CompanySettingsPage() {
             <div className="flex flex-col items-end gap-6 relative z-10">
                 <div className="bg-white/5 border border-white/10 px-6 py-3 rounded-2xl flex items-center gap-3 backdrop-blur-md">
                     <div className="w-2 h-2 rounded-full bg-primary animate-pulse shadow-[0_0_10px_rgba(255,30,133,1)]" />
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">{t('settings_pages.company.profile_status')}</span>
+                    <span className="text-base font-bold font-black text-slate-400 uppercase tracking-widest italic">{t('settings_pages.company.profile_status')}</span>
                 </div>
                 <PremiumButton 
                     onClick={handleSave} 
                     disabled={loading} 
-                    className="h-16 px-12 rounded-2xl bg-primary text-white border-0 shadow-[0_20px_50px_rgba(255,30,133,0.3)] gap-4 text-sm tracking-widest"
+                    className="h-16 px-12 rounded-2xl bg-primary text-white border-0 shadow-[0_20px_50px_rgba(255,30,133,0.3)] gap-4 text-xl tracking-widest"
                 >
                     {loading ? <Loader2 size={24} className="animate-spin" /> : <Save size={24} />}
                     {t('settings_pages.company.commit_changes')}
@@ -171,7 +171,7 @@ export default function CompanySettingsPage() {
                         {uploading && (
                             <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center z-10 backdrop-blur-md">
                                 <Loader2 className="w-10 h-10 text-primary animate-spin mb-4" />
-                                <span className="text-[8px] font-black text-primary uppercase tracking-[0.4em]">{t('settings_pages.company.uploading')}</span>
+                                <span className="text-base font-bold font-black text-primary uppercase tracking-[0.4em]">{t('settings_pages.company.uploading')}</span>
                             </div>
                         )}
                         {logoPreview ? (
@@ -182,8 +182,8 @@ export default function CompanySettingsPage() {
                                     <Upload size={40} />
                                 </div>
                                 <div className="space-y-1">
-                                    <p className="text-[10px] font-black text-white uppercase tracking-widest">{t('settings_pages.company.init_uplink')}</p>
-                                    <p className="text-[8px] font-bold text-slate-600 uppercase tracking-widest italic">PNG/JPG (MAX 2MB)</p>
+                                    <p className="text-base font-bold font-black text-white uppercase tracking-widest">{t('settings_pages.company.init_uplink')}</p>
+                                    <p className="text-base font-bold font-bold text-slate-600 uppercase tracking-widest italic">PNG/JPG (MAX 2MB)</p>
                                 </div>
                             </div>
                         )}
@@ -191,7 +191,7 @@ export default function CompanySettingsPage() {
                     <input ref={fileInputRef} type="file" accept="image/*" onChange={handleLogoUpload} className="hidden" />
                     
                     <div className="w-full p-6 rounded-3xl bg-white/5 border border-white/5 text-center">
-                         <p className="text-[9px] font-black text-slate-500 leading-relaxed uppercase tracking-widest italic">
+                         <p className="text-base font-bold font-black text-slate-500 leading-relaxed uppercase tracking-widest italic">
                             {t('settings_pages.company.optimal_dims')} <br />
                             {t('settings_pages.company.alpha_channel')}
                          </p>
@@ -200,7 +200,7 @@ export default function CompanySettingsPage() {
                     {logoPreview && (
                       <PremiumButton 
                         variant="outline" 
-                        className="w-full h-14 rounded-2xl border-rose-500/20 text-rose-500 bg-rose-500/5 hover:bg-rose-600 hover:text-white transition-all text-[10px] font-black uppercase tracking-widest italic"
+                        className="w-full h-14 rounded-2xl border-rose-500/20 text-rose-500 bg-rose-500/5 hover:bg-rose-600 hover:text-white transition-all text-base font-bold font-black uppercase tracking-widest italic"
                         onClick={() => setLogoPreview(null)}
                       >
                         {t('settings_pages.company.purge_signature')}
@@ -219,14 +219,14 @@ export default function CompanySettingsPage() {
                         <FileText size={20} className="text-primary" />
                         {t('settings_pages.company.entity_params')}
                     </h3>
-                    <div className="px-5 py-1.5 rounded-xl bg-primary/10 text-[9px] font-black text-primary uppercase tracking-[0.3em] border border-primary/20 italic">
+                    <div className="px-5 py-1.5 rounded-xl bg-primary/10 text-base font-bold font-black text-primary uppercase tracking-[0.3em] border border-primary/20 italic">
                         {t('settings_pages.company.general_intel')}
                     </div>
                 </div>
                 <div className="p-12 space-y-10">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                         <div className="space-y-4">
-                            <Label className="text-[10px] font-black uppercase text-primary/60 tracking-[0.4em] ml-6">{t('settings_pages.company.entity_name_th')}</Label>
+                            <Label className="text-base font-bold font-black uppercase text-primary/60 tracking-[0.4em] ml-6">{t('settings_pages.company.entity_name_th')}</Label>
                             <Input
                                 value={formData.company_name}
                                 onChange={(e) => updateForm("company_name", e.target.value)}
@@ -235,7 +235,7 @@ export default function CompanySettingsPage() {
                             />
                         </div>
                         <div className="space-y-4">
-                            <Label className="text-[10px] font-black uppercase text-primary/60 tracking-[0.4em] ml-6">{t('settings_pages.company.entity_name_en')}</Label>
+                            <Label className="text-base font-bold font-black uppercase text-primary/60 tracking-[0.4em] ml-6">{t('settings_pages.company.entity_name_en')}</Label>
                             <Input
                                 value={formData.company_name_en}
                                 onChange={(e) => updateForm("company_name_en", e.target.value)}
@@ -247,7 +247,7 @@ export default function CompanySettingsPage() {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                         <div className="space-y-4">
-                            <Label className="text-[10px] font-black uppercase text-primary/60 tracking-[0.4em] ml-6 flex items-center gap-2">
+                            <Label className="text-base font-bold font-black uppercase text-primary/60 tracking-[0.4em] ml-6 flex items-center gap-2">
                                 <CreditCard size={12} /> {t('settings_pages.company.tax_id')}
                             </Label>
                             <Input
@@ -258,7 +258,7 @@ export default function CompanySettingsPage() {
                             />
                         </div>
                         <div className="space-y-4">
-                            <Label className="text-[10px] font-black uppercase text-primary/60 tracking-[0.4em] ml-6">{t('settings_pages.company.node_designation')}</Label>
+                            <Label className="text-base font-bold font-black uppercase text-primary/60 tracking-[0.4em] ml-6">{t('settings_pages.company.node_designation')}</Label>
                             <Input
                                 value={formData.branch}
                                 onChange={(e) => updateForm("branch", e.target.value)}
@@ -269,7 +269,7 @@ export default function CompanySettingsPage() {
                     </div>
 
                     <div className="space-y-4">
-                        <Label className="text-[10px] font-black uppercase text-primary/60 tracking-[0.4em] ml-6 flex items-center gap-2">
+                        <Label className="text-base font-bold font-black uppercase text-primary/60 tracking-[0.4em] ml-6 flex items-center gap-2">
                             <MapPin size={12} /> {t('settings_pages.company.geospatial_core')}
                         </Label>
                         <Textarea
@@ -282,7 +282,7 @@ export default function CompanySettingsPage() {
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
                         <div className="space-y-4">
-                            <Label className="text-[10px] font-black uppercase text-primary/60 tracking-[0.4em] ml-6 flex items-center gap-2">
+                            <Label className="text-base font-bold font-black uppercase text-primary/60 tracking-[0.4em] ml-6 flex items-center gap-2">
                                 <Phone size={12} /> {t('settings_pages.company.voice_link')}
                             </Label>
                             <Input
@@ -293,7 +293,7 @@ export default function CompanySettingsPage() {
                             />
                         </div>
                         <div className="space-y-4">
-                            <Label className="text-[10px] font-black uppercase text-primary/60 tracking-[0.4em] ml-6">{t('settings_pages.company.fax_link')}</Label>
+                            <Label className="text-base font-bold font-black uppercase text-primary/60 tracking-[0.4em] ml-6">{t('settings_pages.company.fax_link')}</Label>
                             <Input
                                 value={formData.fax}
                                 onChange={(e) => updateForm("fax", e.target.value)}
@@ -302,7 +302,7 @@ export default function CompanySettingsPage() {
                             />
                         </div>
                         <div className="space-y-4">
-                            <Label className="text-[10px] font-black uppercase text-primary/60 tracking-[0.4em] ml-6 flex items-center gap-2">
+                            <Label className="text-base font-bold font-black uppercase text-primary/60 tracking-[0.4em] ml-6 flex items-center gap-2">
                                 <Mail size={12} /> {t('settings_pages.company.signal_smtp')}
                             </Label>
                             <Input
@@ -316,7 +316,7 @@ export default function CompanySettingsPage() {
                     </div>
 
                     <div className="space-y-4">
-                        <Label className="text-[10px] font-black uppercase text-primary/60 tracking-[0.4em] ml-6 flex items-center gap-2">
+                        <Label className="text-base font-bold font-black uppercase text-primary/60 tracking-[0.4em] ml-6 flex items-center gap-2">
                             <Globe size={12} /> {t('settings_pages.company.digital_domain')}
                         </Label>
                         <Input
@@ -336,14 +336,14 @@ export default function CompanySettingsPage() {
                         <CreditCard size={20} className="text-indigo-400" />
                         {t('settings_pages.company.settlement_params')}
                     </h3>
-                    <div className="px-5 py-1.5 rounded-xl bg-indigo-500/10 text-[9px] font-black text-indigo-400 uppercase tracking-[0.3em] border border-indigo-500/20 italic">
+                    <div className="px-5 py-1.5 rounded-xl bg-indigo-500/10 text-base font-bold font-black text-indigo-400 uppercase tracking-[0.3em] border border-indigo-500/20 italic">
                         {t('settings_pages.company.fiscal_config')}
                     </div>
                 </div>
                 <div className="p-12 space-y-10">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
                         <div className="space-y-4">
-                            <Label className="text-[10px] font-black uppercase text-indigo-400/60 tracking-[0.4em] ml-6">{t('settings_pages.company.institution')}</Label>
+                            <Label className="text-base font-bold font-black uppercase text-indigo-400/60 tracking-[0.4em] ml-6">{t('settings_pages.company.institution')}</Label>
                             <select
                                 value={formData.bank_name}
                                 onChange={(e) => updateForm("bank_name", e.target.value)}
@@ -359,7 +359,7 @@ export default function CompanySettingsPage() {
                             </select>
                         </div>
                         <div className="space-y-4">
-                            <Label className="text-[10px] font-black uppercase text-indigo-400/60 tracking-[0.4em] ml-6">{t('settings_pages.company.account_holder')}</Label>
+                            <Label className="text-base font-bold font-black uppercase text-indigo-400/60 tracking-[0.4em] ml-6">{t('settings_pages.company.account_holder')}</Label>
                             <Input
                                 value={formData.bank_account_name}
                                 onChange={(e) => updateForm("bank_account_name", e.target.value)}
@@ -368,7 +368,7 @@ export default function CompanySettingsPage() {
                             />
                         </div>
                         <div className="space-y-4">
-                            <Label className="text-[10px] font-black uppercase text-indigo-400/60 tracking-[0.4em] ml-6">{t('settings_pages.company.account_number')}</Label>
+                            <Label className="text-base font-bold font-black uppercase text-indigo-400/60 tracking-[0.4em] ml-6">{t('settings_pages.company.account_number')}</Label>
                             <Input
                                 value={formData.bank_account_no}
                                 onChange={(e) => updateForm("bank_account_no", e.target.value)}
@@ -382,7 +382,7 @@ export default function CompanySettingsPage() {
                         <div className="absolute top-0 right-0 p-4 opacity-10">
                             <ShieldCheck size={40} className="text-indigo-400" />
                         </div>
-                        <p className="text-[9px] font-black text-indigo-400/60 leading-relaxed uppercase tracking-widest italic relative z-10">
+                        <p className="text-base font-bold font-black text-indigo-400/60 leading-relaxed uppercase tracking-widest italic relative z-10">
                             {t('settings_pages.company.fiscal_warn')}
                         </p>
                     </div>
@@ -399,11 +399,11 @@ export default function CompanySettingsPage() {
             </div>
             <div className="space-y-4 text-center md:text-left flex-1">
                 <p className="text-xl font-black text-primary italic uppercase tracking-widest">{t('settings_pages.company.tactical_advisory')}</p>
-                <p className="text-sm font-bold text-slate-600 leading-relaxed uppercase tracking-wider italic">
+                <p className="text-xl font-bold text-slate-600 leading-relaxed uppercase tracking-wider italic">
                     {t('settings_pages.company.advisory_desc')}
                 </p>
             </div>
-            <PremiumButton variant="outline" className="h-14 px-10 rounded-2xl border-white/10 text-white gap-3 uppercase font-black text-[10px] tracking-[0.3em] ml-auto italic">
+            <PremiumButton variant="outline" className="h-14 px-10 rounded-2xl border-white/10 text-white gap-3 uppercase font-black text-base font-bold tracking-[0.3em] ml-auto italic">
                 <UserCheck size={18} /> {t('settings_pages.company.verify_identity')}
             </PremiumButton>
         </div>
@@ -411,3 +411,4 @@ export default function CompanySettingsPage() {
     </DashboardLayout>
   )
 }
+

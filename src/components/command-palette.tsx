@@ -195,10 +195,10 @@ export function CommandPalette() {
               onChange={(e) => handleQueryChange(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="ค้นหางาน, ลูกค้า, คนขับ... หรือเลือกเมนู"
-              className="flex-1 bg-transparent text-white placeholder:text-gray-500 outline-none text-sm"
+              className="flex-1 bg-transparent text-white placeholder:text-gray-500 outline-none text-xl"
             />
             {loading && <Loader2 className="w-4 h-4 text-gray-400 animate-spin flex-shrink-0" />}
-            <kbd className="hidden md:flex items-center gap-1 px-2 py-1 text-[10px] font-bold text-gray-500 bg-slate-800 rounded-lg border border-slate-700">
+            <kbd className="hidden md:flex items-center gap-1 px-2 py-1 text-base font-bold font-bold text-gray-500 bg-slate-800 rounded-lg border border-slate-700">
               ESC
             </kbd>
           </div>
@@ -208,7 +208,7 @@ export function CommandPalette() {
             {/* Quick Actions (when no query) */}
             {query.length < 2 && (
               <div>
-                <p className="px-3 py-2 text-[10px] font-black text-gray-500 uppercase tracking-widest">
+                <p className="px-3 py-2 text-base font-bold font-black text-gray-500 uppercase tracking-widest">
                   Quick Actions
                 </p>
                 {QUICK_ACTIONS.map((action, i) => {
@@ -224,7 +224,7 @@ export function CommandPalette() {
                       <div className="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center flex-shrink-0">
                         <Icon className="w-4 h-4 text-gray-400" />
                       </div>
-                      <span className="text-sm font-medium flex-1">{action.title}</span>
+                      <span className="text-xl font-medium flex-1">{action.title}</span>
                       <ArrowRight className="w-3 h-3 text-gray-600" />
                     </button>
                   )
@@ -235,7 +235,7 @@ export function CommandPalette() {
             {/* Search Results */}
             {query.length >= 2 && results.length > 0 && (
               <div>
-                <p className="px-3 py-2 text-[10px] font-black text-gray-500 uppercase tracking-widest">
+                <p className="px-3 py-2 text-base font-bold font-black text-gray-500 uppercase tracking-widest">
                   ผลลัพธ์ ({results.length})
                 </p>
                 {results.map((result, i) => {
@@ -253,10 +253,10 @@ export function CommandPalette() {
                         <Icon className="w-4 h-4" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-bold truncate">{result.title}</p>
-                        <p className="text-[11px] text-gray-500 truncate">{result.subtitle}</p>
+                        <p className="text-xl font-bold truncate">{result.title}</p>
+                        <p className="text-base font-bold text-gray-500 truncate">{result.subtitle}</p>
                       </div>
-                      <span className={`text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${colorClass}`}>
+                      <span className={`text-base font-bold font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${colorClass}`}>
                         {TYPE_LABELS[result.type] || result.type}
                       </span>
                     </button>
@@ -269,13 +269,13 @@ export function CommandPalette() {
             {query.length >= 2 && !loading && results.length === 0 && (
               <div className="p-8 text-center">
                 <Search className="w-8 h-8 text-gray-600 mx-auto mb-2" />
-                <p className="text-gray-400 text-sm">ไม่พบผลลัพธ์สำหรับ &quot;{query}&quot;</p>
+                <p className="text-gray-400 text-xl">ไม่พบผลลัพธ์สำหรับ &quot;{query}&quot;</p>
               </div>
             )}
           </div>
 
           {/* Footer */}
-          <div className="px-4 py-2 border-t border-slate-700/50 flex items-center justify-between text-[10px] text-gray-500">
+          <div className="px-4 py-2 border-t border-slate-700/50 flex items-center justify-between text-base font-bold text-gray-500">
             <div className="flex items-center gap-3">
               <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 bg-slate-800 rounded font-bold">↑↓</kbd> เลือก</span>
               <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 bg-slate-800 rounded font-bold">Enter</kbd> เปิด</span>
@@ -290,3 +290,4 @@ export function CommandPalette() {
     </>
   )
 }
+

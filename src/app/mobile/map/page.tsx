@@ -85,7 +85,7 @@ export default function MobileMapPage() {
       {/* Current Location Card */}
       <Card className="bg-white border-gray-200">
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm text-gray-500 flex items-center gap-2">
+          <CardTitle className="text-xl text-gray-500 flex items-center gap-2">
             <MapPin className="w-4 h-4 text-emerald-500" />
             Current Location
           </CardTitle>
@@ -94,7 +94,7 @@ export default function MobileMapPage() {
           {currentPosition ? (
             <>
               <p className="text-gray-800 font-medium">ตำแหน่งปัจจุบัน</p>
-              <p className="text-xs text-gray-400 mt-1">
+              <p className="text-lg font-bold text-gray-400 mt-1">
                 Lat: {currentPosition[0].toFixed(6)}, Lng: {currentPosition[1].toFixed(6)}
               </p>
             </>
@@ -119,16 +119,17 @@ export default function MobileMapPage() {
       {/* Next Destination */}
       <Card className="bg-white border-gray-200">
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm text-gray-500 flex items-center gap-2">
+          <CardTitle className="text-xl text-gray-500 flex items-center gap-2">
             <Navigation className="w-4 h-4 text-emerald-400" />
             Next Destination
           </CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-gray-800 font-medium">ไม่มีงานวันนี้</p>
-          <p className="text-xs text-gray-400 mt-1">รอรับงานจากระบบ</p>
+          <p className="text-lg font-bold text-gray-400 mt-1">รอรับงานจากระบบ</p>
         </CardContent>
       </Card>
     </div>
   )
 }
+

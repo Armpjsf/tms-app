@@ -137,20 +137,20 @@ export function OrderTimeline({ currentStatus, planDate, createdAt, className }:
                 <div className="flex items-center gap-3">
                   <div>
                     <p className={cn(
-                      "text-sm font-black transition-colors",
+                      "text-xl font-black transition-colors",
                       isCompleted ? "text-slate-900" : "text-slate-400"
                     )}>
                       {step.label}
                     </p>
                     <p className={cn(
-                      "text-[10px] font-black uppercase tracking-wider",
+                      "text-base font-bold font-black uppercase tracking-wider",
                       isCompleted ? "text-slate-500" : "text-slate-400"
                     )}>
                       {step.labelEn}
                     </p>
                   </div>
                   {isActive && step.showBadge && (
-                    <span className="px-2 py-0.5 bg-orange-500/20 text-orange-400 text-[9px] font-bold rounded-full border border-orange-500/30 animate-pulse">
+                    <span className="px-2 py-0.5 bg-orange-500/20 text-orange-400 text-base font-bold font-bold rounded-full border border-orange-500/30 animate-pulse">
                       LIVE
                     </span>
                   )}
@@ -160,7 +160,7 @@ export function OrderTimeline({ currentStatus, planDate, createdAt, className }:
                 <div className="flex items-center gap-2 mt-1">
                   <Clock size={10} className={isCompleted ? "text-gray-400" : "text-gray-400"} />
                   <span className={cn(
-                    "text-[10px]",
+                    "text-base font-bold",
                     isCompleted ? "text-gray-400" : "text-gray-400"
                   )}>
                     {index === 0 && createdAt 
@@ -176,7 +176,7 @@ export function OrderTimeline({ currentStatus, planDate, createdAt, className }:
 
                 {/* Description */}
                 <p className={cn(
-                  "text-[11px] mt-1 font-medium",
+                  "text-base font-bold mt-1 font-medium",
                   isCompleted ? "text-slate-500" : "text-slate-400"
                 )}>
                   {step.description}
@@ -189,3 +189,4 @@ export function OrderTimeline({ currentStatus, planDate, createdAt, className }:
     </div>
   )
 }
+

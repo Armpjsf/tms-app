@@ -47,16 +47,16 @@ export function SubcontractorPerformance({ data }: { data: SubPerItem[] }) {
                     <div key={item.name} className="p-3 bg-gray-50 rounded-lg border border-gray-200/50">
                         <div className="flex items-center gap-2 mb-1">
                             <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }}></div>
-                            <span className="text-sm font-black text-gray-900">{item.name}</span>
+                            <span className="text-xl font-black text-gray-900">{item.name}</span>
                         </div>
                         <div className="grid grid-cols-2 gap-2 mt-2">
                             <div>
-                                <p className="text-[10px] text-gray-400 uppercase">รายรับ (Revenue)</p>
-                                <p className="text-sm font-bold text-gray-800">{formatCurrency(item.revenue)}</p>
+                                <p className="text-base font-bold text-gray-400 uppercase">รายรับ (Revenue)</p>
+                                <p className="text-xl font-bold text-gray-800">{formatCurrency(item.revenue)}</p>
                             </div>
                             <div>
-                                <p className="text-[10px] text-gray-400 uppercase">จำนวนงาน (Jobs)</p>
-                                <p className="text-sm font-bold text-gray-800">{item.count} งาน</p>
+                                <p className="text-base font-bold text-gray-400 uppercase">จำนวนงาน (Jobs)</p>
+                                <p className="text-xl font-bold text-gray-800">{item.count} งาน</p>
                             </div>
                         </div>
                     </div>
@@ -65,3 +65,4 @@ export function SubcontractorPerformance({ data }: { data: SubPerItem[] }) {
         </div>
     );
 }
+

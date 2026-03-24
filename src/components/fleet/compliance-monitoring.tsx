@@ -23,11 +23,11 @@ export function FleetCompliance({ data = [] }: { data?: { name: string; status: 
                         <ShieldCheck className="text-blue-600" />
                         Fleet Compliance
                     </CardTitle>
-                    <div className="flex items-center gap-1.5 px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-[10px] font-black uppercase tracking-widest border border-blue-100">
+                    <div className="flex items-center gap-1.5 px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-base font-bold font-black uppercase tracking-widest border border-blue-100">
                         Risk Monitoring
                     </div>
                 </div>
-                <p className="text-gray-500 font-bold text-xs mt-1">การติดตามใบอนุญาตและเอกสารสำคัญ (Executive Risk View)</p>
+                <p className="text-gray-500 font-bold text-lg font-bold mt-1">การติดตามใบอนุญาตและเอกสารสำคัญ (Executive Risk View)</p>
             </CardHeader>
             <CardContent className="p-8">
                 <div className="grid grid-cols-1 gap-4">
@@ -50,19 +50,19 @@ export function FleetCompliance({ data = [] }: { data?: { name: string; status: 
                                      <CheckCircle2 size={18} />}
                                 </div>
                                 <div>
-                                    <p className="text-sm font-black text-gray-900 leading-tight">{item.name}</p>
-                                    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mt-0.5">Expires: {item.date}</p>
+                                    <p className="text-xl font-black text-gray-900 leading-tight">{item.name}</p>
+                                    <p className="text-base font-bold font-bold text-gray-500 uppercase tracking-wider mt-0.5">Expires: {item.date}</p>
                                 </div>
                             </div>
                             <div className="text-right">
-                                <p className={`text-xs font-black ${
+                                <p className={`text-lg font-bold font-black ${
                                     item.status === 'expiredSoon' ? 'text-red-600' :
                                     item.status === 'expiring' ? 'text-amber-600' :
                                     'text-emerald-600'
                                 }`}>
                                     {item.daysLeft} DAYS
                                 </p>
-                                <p className="text-[8px] font-black text-gray-400 uppercase tracking-tighter">Remaining</p>
+                                <p className="text-base font-bold font-black text-gray-400 uppercase tracking-tighter">Remaining</p>
                             </div>
                         </motion.div>
                     ))}
@@ -71,3 +71,4 @@ export function FleetCompliance({ data = [] }: { data?: { name: string; status: 
         </Card>
     )
 }
+

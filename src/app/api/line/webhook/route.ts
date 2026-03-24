@@ -147,7 +147,8 @@ export async function POST(req: NextRequest) {
 
                     if (adminUser && (adminUser.Role_ID <= 2 || adminUser.Role === 'Executive' || adminUser.Role === 'Super Admin')) {
                         if (phone === id || phone.toUpperCase() === 'ADMIN') {
-                            await supabase.from('Master_Users').update({ Line_User_ID: userId }).eq('Username', id)
+                            // FIX: Use adminUser.Username instead of the uppercase 'id' for the record match
+                            await supabase.from('Master_Users').update({ Line_User_ID: userId }).eq('Username', adminUser.Username)
                             const isSuper = adminUser.Role_ID === 1 || adminUser.Role === 'Super Admin' || adminUser.Role === 'Executive'
                             const welcomeMsg = isSuper
                                 ? `ยินดีต้อนรับท่านผู้บริหาร! คุณ ${adminUser.Name} ผูกบัญชีสำเร็จแล้ว\n\nตอนนี้ท่านสามารถถาม AI ได้ทุกอย่างเลยครับ เช่น "กำไรเดือนนี้เท่าไหร่?"`
@@ -200,7 +201,7 @@ export async function POST(req: NextRequest) {
                     }
                 }
 
-                // 5. CUSTOMER GUARD
+                // 5. COMMAND GUARD
                 if (!boundCustomer && !boundDriver && !boundAdmin) {
                     if (['SUMMARY', 'สรุป', 'BILLING', 'วางบิล', 'งาน', 'WORK'].includes(text)) {
                         await replyToUser(replyToken, 'คุณยังไม่ได้ผูกบัญชีครับ\nพิมพ์ BIND [รหัส] [เบอร์โทร] เพื่อเริ่มต้นใช้งาน')
@@ -210,7 +211,7 @@ export async function POST(req: NextRequest) {
 
                 // 6. SUMMARY
                 if (text.startsWith('SUMMARY') || text.startsWith('สรุป')) {
-                    if (!boundCustomer) continue
+                    if (!boundCustomer && !boundAdmin) continue
 
                     let dateDisplay = 'วันนี้'
                     const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' })
@@ -253,12 +254,19 @@ export async function POST(req: NextRequest) {
                     }
 
                     let query = supabase.from('Jobs_Main').select('Job_Status')
-                        .or(`Customer_ID.eq."${boundCustomer.Customer_ID}",Customer_Name.ilike."%${boundCustomer.Customer_Name.trim()}%"`)
+                    
+                    if (boundCustomer) {
+                        query = query.or(`Customer_ID.eq."${boundCustomer.Customer_ID}",Customer_Name.ilike."%${boundCustomer.Customer_Name.trim()}%"`)
+                    } else if (boundAdmin?.Branch_ID) {
+                        query = query.eq('Branch_ID', boundAdmin.Branch_ID)
+                    }
+
                     query = startDate === endDate ? query.eq('Plan_Date', startDate) : query.gte('Plan_Date', startDate).lt('Plan_Date', endDate)
 
                     const { data: jobs, error: summaryError } = await query
                     if (summaryError || !jobs || jobs.length === 0) {
-                        await replyToUser(replyToken, `คุณ ${boundCustomer.Customer_Name}\nช่วงเวลา ${dateDisplay} ยังไม่มีรายการในระบบครับ`)
+                        const name = boundCustomer?.Customer_Name || boundAdmin?.Name || 'ผู้ใช้'
+                        await replyToUser(replyToken, `คุณ ${name}\nช่วงเวลา ${dateDisplay} ยังไม่มีรายการในระบบครับ`)
                         continue
                     }
 
@@ -270,7 +278,7 @@ export async function POST(req: NextRequest) {
 
                 // 7. BILLING
                 if (text === 'BILLING' || text === 'วางบิล') {
-                    if (!boundCustomer) continue
+                    if (!boundCustomer && !boundAdmin) continue
                     const { data: bills } = await supabase.from('Billing_Notes')
                         .select('Billing_Note_ID, Billing_Date, Total_Amount, Status')
                         .eq('Customer_Name', boundCustomer.Customer_Name)

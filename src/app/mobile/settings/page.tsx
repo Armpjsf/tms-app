@@ -40,7 +40,7 @@ export default function MobileSettingsPage() {
       
       <div className="space-y-6">
         <div className="space-y-4">
-            <h3 className="text-gray-500 text-sm font-medium uppercase tracking-wider ml-1">ทั่วไป</h3>
+            <h3 className="text-gray-500 text-xl font-medium uppercase tracking-wider ml-1">ทั่วไป</h3>
             <Card className="bg-white border-gray-200">
                 <CardContent className="p-0 divide-y divide-slate-800">
                     <div className="flex items-center justify-between p-4">
@@ -61,14 +61,14 @@ export default function MobileSettingsPage() {
                             <Globe className="text-gray-500" size={20} />
                             <span className="text-gray-800">เปลี่ยนภาษา</span>
                         </div>
-                        <span className="text-gray-400 text-sm font-medium uppercase">{language === "th" ? "ไทย" : "English"}</span>
+                        <span className="text-gray-400 text-xl font-medium uppercase">{language === "th" ? "ไทย" : "English"}</span>
                     </div>
                 </CardContent>
             </Card>
         </div>
 
         <div className="space-y-4">
-            <h3 className="text-gray-500 text-sm font-medium uppercase tracking-wider ml-1">ข้อมูล & ความปลอดภัย</h3>
+            <h3 className="text-gray-500 text-xl font-medium uppercase tracking-wider ml-1">ข้อมูล & ความปลอดภัย</h3>
             <Card className="bg-white border-gray-200">
                 <CardContent className="p-0 divide-y divide-slate-800">
                     <div className="flex items-center justify-between p-4">
@@ -82,7 +82,7 @@ export default function MobileSettingsPage() {
                             <Smartphone className="text-gray-500" size={20} />
                             <span className="text-gray-800">เวอร์ชันแอปพลิเคชัน</span>
                         </div>
-                        <span className="text-gray-400 text-sm">v1.0.26</span>
+                        <span className="text-gray-400 text-xl">v1.0.26</span>
                     </div>
                 </CardContent>
             </Card>
@@ -103,3 +103,4 @@ export default function MobileSettingsPage() {
     </div>
   )
 }
+

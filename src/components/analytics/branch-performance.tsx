@@ -50,9 +50,10 @@ export function BranchPerformance({ data }: { data: BranchPerformanceItem[] }) {
                     ))}
                 </TableBody>
             </Table>
-            <p className="text-[10px] text-gray-500 mt-4 italic">
+            <p className="text-base font-bold text-gray-500 mt-4 italic">
                 *กำไรเบื้องต้น คำนวณจาก รายรับ - ค่าขนส่ง (ไม่รวมค่าน้ำมันและค่าซ่อมบำรุง)
             </p>
         </div>
     )
 }
+

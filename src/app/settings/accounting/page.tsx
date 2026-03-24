@@ -104,7 +104,7 @@ export default function AccountingSettingsPage() {
             <div className="absolute top-0 right-0 w-80 h-80 bg-primary/10 blur-[120px] rounded-full -mr-40 -mt-40 pointer-events-none" />
             
             <div className="relative z-10 space-y-8">
-                <button onClick={() => router.back()} className="inline-flex items-center gap-2 text-slate-500 hover:text-primary transition-all font-black uppercase tracking-[0.1em] text-[11px] group/back italic">
+                <button onClick={() => router.back()} className="inline-flex items-center gap-2 text-slate-500 hover:text-primary transition-all font-black uppercase tracking-[0.1em] text-base font-bold group/back italic">
                     <ArrowLeft className="w-4 h-4 group-hover/back:-translate-x-1 transition-transform" /> 
                     Command Control
                 </button>
@@ -116,7 +116,7 @@ export default function AccountingSettingsPage() {
                         <h1 className="text-5xl font-black text-white tracking-widest uppercase leading-none italic premium-text-gradient">
                             Fiscal Interlink
                         </h1>
-                        <p className="text-[11px] font-black text-primary uppercase tracking-[0.2em] mt-2 opacity-80 italic">Akaunting Cloud Integration & Settlement Protocol</p>
+                        <p className="text-base font-bold font-black text-primary uppercase tracking-[0.2em] mt-2 opacity-80 italic">Akaunting Cloud Integration & Settlement Protocol</p>
                     </div>
                 </div>
             </div>
@@ -127,7 +127,7 @@ export default function AccountingSettingsPage() {
                         "w-2 h-2 rounded-full animate-pulse shadow-[0_0_10px_rgba(16,185,129,1)]",
                         status === 'connected' ? "bg-emerald-500" : status === 'failed' ? "bg-rose-500" : "bg-primary"
                     )} />
-                    <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest italic">
+                    <span className="text-base font-bold font-black text-slate-400 uppercase tracking-widest italic">
                         UPLINK_STATUS: {status === 'connected' ? 'ESTABLISHED' : status === 'failed' ? 'INTERRUPTED' : 'STANDBY'}
                     </span>
                 </div>
@@ -135,7 +135,7 @@ export default function AccountingSettingsPage() {
                     <PremiumButton 
                         onClick={handleSaveSettings} 
                         disabled={saving}
-                        className="h-16 px-12 rounded-2xl bg-primary text-white border-0 shadow-[0_20px_50px_rgba(255,30,133,0.3)] gap-4 text-sm tracking-widest"
+                        className="h-16 px-12 rounded-2xl bg-primary text-white border-0 shadow-[0_20px_50px_rgba(255,30,133,0.3)] gap-4 text-xl tracking-widest"
                     >
                         {saving ? <Loader2 size={24} className="animate-spin" /> : <Save size={24} />}
                         COMMIT_FISCAL_PROTOCOLS
@@ -153,13 +153,13 @@ export default function AccountingSettingsPage() {
                             <Key size={20} className="text-primary" />
                             Access Geometry
                         </h3>
-                        <div className="px-5 py-1.5 rounded-xl bg-primary/10 text-[11px] font-black text-primary uppercase tracking-[0.1em] border border-primary/20 italic">
+                        <div className="px-5 py-1.5 rounded-xl bg-primary/10 text-base font-bold font-black text-primary uppercase tracking-[0.1em] border border-primary/20 italic">
                             CREDENTIALS
                         </div>
                     </div>
                     <div className="p-12 space-y-10">
                         <div className="space-y-4">
-                            <Label className="text-[11px] font-black uppercase text-primary/60 tracking-[0.1em] ml-6 flex items-center gap-2">
+                            <Label className="text-base font-bold font-black uppercase text-primary/60 tracking-[0.1em] ml-6 flex items-center gap-2">
                                 <Cpu size={12} /> AKAUNTING_API_VECTOR
                             </Label>
                             <Input 
@@ -170,11 +170,11 @@ export default function AccountingSettingsPage() {
                                 className="h-16 bg-black/40 border-white/5 rounded-[1.5rem] focus:border-primary/50 transition-all text-white font-black italic tracking-widest pl-8 shadow-inner"
                                 disabled={!canManage}
                             />
-                            <p className="text-[10px] font-black text-slate-600 uppercase tracking-[0.1em] italic ml-8">// LOCATE IN USER_PROFILE &gt; API_TOKEN WITHIN THE CLOUD NODE</p>
+                            <p className="text-base font-bold font-black text-slate-600 uppercase tracking-[0.1em] italic ml-8">// LOCATE IN USER_PROFILE &gt; API_TOKEN WITHIN THE CLOUD NODE</p>
                         </div>
 
                         <div className="space-y-4">
-                            <Label className="text-[11px] font-black uppercase text-primary/60 tracking-[0.1em] ml-6">AUTHORIZED_EMAIL_NULL</Label>
+                            <Label className="text-base font-bold font-black uppercase text-primary/60 tracking-[0.1em] ml-6">AUTHORIZED_EMAIL_NULL</Label>
                             <Input 
                                 type="email"
                                 placeholder="operator@..."
@@ -186,7 +186,7 @@ export default function AccountingSettingsPage() {
                         </div>
                         
                         <div className="space-y-4">
-                            <Label className="text-[11px] font-black uppercase text-primary/60 tracking-[0.1em] ml-6 flex items-center gap-2">
+                            <Label className="text-base font-bold font-black uppercase text-primary/60 tracking-[0.1em] ml-6 flex items-center gap-2">
                                  <Building2 size={12} /> ENTITY_IDENTIFIER (Company ID)
                             </Label>
                             <Input 
@@ -216,7 +216,7 @@ export default function AccountingSettingsPage() {
                                     </div>
                                     <div>
                                         <p className="text-lg font-black text-white uppercase tracking-widest italic">Akaunting Cloud</p>
-                                        <p className="text-[11px] font-black text-emerald-500 uppercase tracking-[0.1em] italic mt-1">SYNC_PROTOCOL: ACTIVE</p>
+                                        <p className="text-base font-bold font-black text-emerald-500 uppercase tracking-[0.1em] italic mt-1">SYNC_PROTOCOL: ACTIVE</p>
                                     </div>
                                 </div>
                                 <div className="absolute top-0 right-0 w-32 h-full bg-primary/[0.03] pointer-events-none" />
@@ -225,12 +225,12 @@ export default function AccountingSettingsPage() {
                             <div className="flex flex-col gap-6">
                                 <div className="flex items-center justify-center gap-6">
                                     {status === 'connected' && (
-                                        <div className="flex items-center gap-3 text-[11px] font-black text-emerald-500 bg-emerald-500/10 px-8 py-3 rounded-2xl border border-emerald-500/20 shadow-2xl animate-pulse italic uppercase tracking-widest">
+                                        <div className="flex items-center gap-3 text-base font-bold font-black text-emerald-500 bg-emerald-500/10 px-8 py-3 rounded-2xl border border-emerald-500/20 shadow-2xl animate-pulse italic uppercase tracking-widest">
                                             <CheckCircle2 size={16} /> SIGNAL_ESTABLISHED
                                         </div>
                                     )}
                                     {status === 'failed' && (
-                                        <div className="flex items-center gap-3 text-[11px] font-black text-rose-500 bg-rose-500/10 px-8 py-3 rounded-2xl border border-rose-500/20 shadow-2xl animate-bounce italic uppercase tracking-widest">
+                                        <div className="flex items-center gap-3 text-base font-bold font-black text-rose-500 bg-rose-500/10 px-8 py-3 rounded-2xl border border-rose-500/20 shadow-2xl animate-bounce italic uppercase tracking-widest">
                                             <XCircle size={16} /> SIGNAL_COLLAPSED
                                         </div>
                                     )}
@@ -238,7 +238,7 @@ export default function AccountingSettingsPage() {
                                 
                                 <PremiumButton 
                                     variant="outline" 
-                                    className="h-16 w-full rounded-2xl gap-4 bg-white/5 border-white/5 hover:bg-white/10 hover:border-primary/30 transition-all text-white font-black italic uppercase text-[11px] tracking-widest"
+                                    className="h-16 w-full rounded-2xl gap-4 bg-white/5 border-white/5 hover:bg-white/10 hover:border-primary/30 transition-all text-white font-black italic uppercase text-base font-bold tracking-widest"
                                     onClick={handleCheckConnection}
                                     disabled={checking || !apiKey}
                                 >
@@ -253,8 +253,8 @@ export default function AccountingSettingsPage() {
                                 <div className="absolute top-0 right-0 p-4 opacity-10">
                                     <Activity className="text-rose-500" size={32} />
                                 </div>
-                                <p className="text-[11px] font-black text-rose-500 uppercase tracking-[0.1em] mb-3 italic">DEEP_ERROR_TELEMETRY:</p>
-                                <p className="text-xs text-rose-400 font-mono italic leading-relaxed uppercase tracking-widest bg-black/40 p-4 rounded-xl border border-rose-500/5 select-all">
+                                <p className="text-base font-bold font-black text-rose-500 uppercase tracking-[0.1em] mb-3 italic">DEEP_ERROR_TELEMETRY:</p>
+                                <p className="text-lg font-bold text-rose-400 font-mono italic leading-relaxed uppercase tracking-widest bg-black/40 p-4 rounded-xl border border-rose-500/5 select-all">
                                     &gt; {errorMsg}
                                 </p>
                             </div>
@@ -262,12 +262,12 @@ export default function AccountingSettingsPage() {
 
                         <div className="grid grid-cols-1 gap-6 pt-6">
                             <div className="p-8 bg-emerald-500/5 rounded-3xl border-2 border-emerald-500/10 flex flex-col gap-2">
-                                <p className="text-[11px] font-black text-emerald-500 uppercase tracking-widest italic opacity-60">Invoicing Matrix (Customer)</p>
-                                <p className="text-sm font-black text-white italic uppercase tracking-widest leading-none">BILLING_NOTE_INTERFACING</p>
+                                <p className="text-base font-bold font-black text-emerald-500 uppercase tracking-widest italic opacity-60">Invoicing Matrix (Customer)</p>
+                                <p className="text-xl font-black text-white italic uppercase tracking-widest leading-none">BILLING_NOTE_INTERFACING</p>
                             </div>
                             <div className="p-8 bg-indigo-500/5 rounded-3xl border-2 border-indigo-500/10 flex flex-col gap-2">
-                                <p className="text-[11px] font-black text-indigo-400 uppercase tracking-widest italic opacity-60">Settlement Matrix (Operator)</p>
-                                <p className="text-sm font-black text-white italic uppercase tracking-widest leading-none">DRIVER_PAYOUT_INTERFACING</p>
+                                <p className="text-base font-bold font-black text-indigo-400 uppercase tracking-widest italic opacity-60">Settlement Matrix (Operator)</p>
+                                <p className="text-xl font-black text-white italic uppercase tracking-widest leading-none">DRIVER_PAYOUT_INTERFACING</p>
                             </div>
                         </div>
                     </div>
@@ -283,12 +283,12 @@ export default function AccountingSettingsPage() {
             </div>
             <div className="space-y-4 text-center md:text-left flex-1">
                 <p className="text-xl font-black text-indigo-400 italic uppercase tracking-[0.1em]">FISCAL_SYNCHRONIZATION_ADVISORY</p>
-                <p className="text-sm font-bold text-slate-600 leading-relaxed uppercase tracking-wider italic">
+                <p className="text-xl font-bold text-slate-600 leading-relaxed uppercase tracking-wider italic">
                     All document emissions within the TMS trigger an automated relay to the Akaunting Cloud node. <br />
                     Ensure the API Vector has 'Write' permissions for Invoices, Bills, and Customer entities to prevent relay collision.
                 </p>
             </div>
-            <PremiumButton variant="outline" className="h-14 px-10 rounded-2xl border-white/10 text-white gap-3 uppercase font-black text-[11px] tracking-[0.1em] ml-auto italic">
+            <PremiumButton variant="outline" className="h-14 px-10 rounded-2xl border-white/10 text-white gap-3 uppercase font-black text-base font-bold tracking-[0.1em] ml-auto italic">
                 <Activity size={18} /> EVENT_LOG_UPLINK
             </PremiumButton>
         </div>
@@ -296,3 +296,4 @@ export default function AccountingSettingsPage() {
     </DashboardLayout>
   )
 }
+

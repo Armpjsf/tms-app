@@ -76,7 +76,7 @@ export function MaintenanceClient({
                   <h1 className="text-5xl font-black text-white tracking-widest uppercase leading-none mb-2 italic">
                     {t('maintenance.title')}
                   </h1>
-                  <p className="text-[10px] font-black text-amber-500 uppercase tracking-[0.6em] opacity-80 italic">{t('dashboard.subtitle')}</p>
+                  <p className="text-base font-bold font-black text-amber-500 uppercase tracking-[0.6em] opacity-80 italic">{t('dashboard.subtitle')}</p>
                </div>
             </div>
           </div>
@@ -116,14 +116,14 @@ export function MaintenanceClient({
                 </div>
                 <div className="flex items-center gap-2 px-3 py-1 bg-white/5 rounded-full border border-white/10">
                     <Activity size={14} className="text-slate-500" />
-                    <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest italic">{t('maintenance.node_status')}</span>
+                    <span className="text-base font-bold font-black text-slate-500 uppercase tracking-widest italic">{t('maintenance.node_status')}</span>
                 </div>
             </div>
             <div className="relative z-10">
-                <p className="text-slate-500 font-black text-[10px] uppercase tracking-[0.4em] mb-2">{stat.label}</p>
+                <p className="text-slate-500 font-black text-base font-bold uppercase tracking-[0.4em] mb-2">{stat.label}</p>
                 <div className="flex items-end gap-3">
                    <p className="text-5xl font-black text-white italic tracking-tighter leading-none">{stat.value}</p>
-                   <span className="text-[10px] font-black text-slate-700 uppercase mb-1">{t('common.units')}</span>
+                   <span className="text-base font-bold font-black text-slate-700 uppercase mb-1">{t('common.units')}</span>
                 </div>
             </div>
             <div className="absolute -right-6 -bottom-6 text-8xl font-black text-white/[0.02] pointer-events-none italic select-none">
@@ -139,7 +139,7 @@ export function MaintenanceClient({
             <div className="p-3 bg-white/5 rounded-2xl text-slate-500">
                 <Filter size={20} />
             </div>
-            <h3 className="text-sm font-black text-white uppercase tracking-[0.4em] italic leading-none">{t('maintenance.filter_hub')}</h3>
+            <h3 className="text-xl font-black text-white uppercase tracking-[0.4em] italic leading-none">{t('maintenance.filter_hub')}</h3>
         </div>
         
         <div className="flex flex-col xl:flex-row gap-6">
@@ -155,20 +155,20 @@ export function MaintenanceClient({
                     type="date" 
                     name="startDate"
                     defaultValue={startDate}
-                    className="h-12 bg-transparent border-none text-white focus:ring-0 uppercase font-black text-xs"
+                    className="h-12 bg-transparent border-none text-white focus:ring-0 uppercase font-black text-lg font-bold"
                 />
                 <ArrowRight size={16} className="text-slate-700" />
                 <Input 
                     type="date" 
                     name="endDate"
                     defaultValue={endDate}
-                    className="h-12 bg-transparent border-none text-white focus:ring-0 uppercase font-black text-xs"
+                    className="h-12 bg-transparent border-none text-white focus:ring-0 uppercase font-black text-lg font-bold"
                 />
               </div>
               <select 
                   name="status" 
                   defaultValue={status}
-                  className="h-16 min-w-[180px] rounded-2xl border border-white/5 bg-black/60 px-6 text-xs font-black text-white uppercase tracking-widest focus:outline-none focus:ring-2 focus:ring-amber-500 shadow-xl outline-none"
+                  className="h-16 min-w-[180px] rounded-2xl border border-white/5 bg-black/60 px-6 text-lg font-bold font-black text-white uppercase tracking-widest focus:outline-none focus:ring-2 focus:ring-amber-500 shadow-xl outline-none"
               >
                   <option value="">{t('common.all')}</option>
                   <option value="Pending">{t('maintenance.stats.pending')}</option>
@@ -187,7 +187,7 @@ export function MaintenanceClient({
         {tickets.length === 0 ? (
           <div className="col-span-full text-center py-32 bg-[#0a0518]/50 rounded-[4rem] border-2 border-dashed border-white/5">
              <ShieldAlert className="w-20 h-20 text-white/5 mx-auto mb-6 animate-pulse" />
-             <p className="text-slate-500 font-black uppercase tracking-[0.4em] text-xs">{t('common.no_data')}</p>
+             <p className="text-slate-500 font-black uppercase tracking-[0.4em] text-lg font-bold">{t('common.no_data')}</p>
           </div>
         ) : tickets.map((ticket: RepairTicket) => (
           <PremiumCard key={ticket.Ticket_ID} className="bg-[#0a0518] p-0 overflow-hidden group border-2 border-white/5 rounded-br-[4rem] rounded-tl-[2rem] shadow-3xl relative hover:border-amber-500/30 transition-all duration-500">
@@ -210,8 +210,8 @@ export function MaintenanceClient({
                 <div className="space-y-2">
                   <h3 className="text-3xl font-black text-white italic tracking-widest uppercase leading-none">{ticket.Vehicle_Plate || "VOID_ID"}</h3>
                   <div className="flex flex-wrap items-center gap-3">
-                      <span className="text-[9px] font-black text-slate-500 font-mono tracking-widest uppercase italic bg-white/5 px-2 py-0.5 rounded-lg border border-white/5">ID: {ticket.Ticket_ID}</span>
-                      <span className="text-[9px] font-black text-amber-500/80 uppercase tracking-widest bg-amber-500/10 px-2 py-0.5 rounded-lg border border-amber-500/10">{ticket.Issue_Type}</span>
+                      <span className="text-base font-bold font-black text-slate-500 font-mono tracking-widest uppercase italic bg-white/5 px-2 py-0.5 rounded-lg border border-white/5">ID: {ticket.Ticket_ID}</span>
+                      <span className="text-base font-bold font-black text-amber-500/80 uppercase tracking-widest bg-amber-500/10 px-2 py-0.5 rounded-lg border border-amber-500/10">{ticket.Issue_Type}</span>
                   </div>
                 </div>
               </div>
@@ -219,10 +219,10 @@ export function MaintenanceClient({
               <div className="flex items-center justify-between">
                  <div className="flex items-center gap-3">
                     <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em]">{t('common.status')}</span>
+                    <span className="text-base font-bold font-black text-slate-400 uppercase tracking-[0.3em]">{t('common.status')}</span>
                  </div>
                  <span className={cn(
-                    "px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all duration-500 shadow-2xl",
+                    "px-4 py-1.5 rounded-xl text-base font-bold font-black uppercase tracking-widest border transition-all duration-500 shadow-2xl",
                     ticket.Status === 'Completed' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30 shadow-emerald-500/10' :
                     ticket.Status === 'In Progress' ? 'bg-blue-500/20 text-blue-400 border-blue-500/30 shadow-blue-500/10' :
                     ticket.Status === 'Rejected' ? 'bg-rose-500/20 text-rose-500 border-rose-500/30 shadow-rose-500/10' :
@@ -257,18 +257,18 @@ export function MaintenanceClient({
                     </div>
                  )}
                  <div className="relative">
-                    <p className="text-sm text-slate-400 font-black italic uppercase leading-relaxed bg-white/5 p-8 rounded-[2.5rem] border-2 border-white/5 relative overflow-hidden group-hover:bg-white/10 transition-all duration-500 min-h-[120px]">
+                    <p className="text-xl text-slate-400 font-black italic uppercase leading-relaxed bg-white/5 p-8 rounded-[2.5rem] border-2 border-white/5 relative overflow-hidden group-hover:bg-white/10 transition-all duration-500 min-h-[120px]">
                         <span className="absolute -top-3 -left-2 text-6xl text-white/5 font-black leading-none select-none tracking-tighter italic">ISSUE</span>
                         <span className="relative z-10">{ticket.Description || t('common.no_data')}</span>
                     </p>
                  </div>
 
-                 <div className="flex items-center justify-between text-xs pt-6 border-t border-white/5">
+                 <div className="flex items-center justify-between text-lg font-bold pt-6 border-t border-white/5">
                     <div className="flex items-center gap-3">
                        <div className="p-2 bg-white/5 rounded-xl border border-white/10">
                          <Clock size={16} className="text-slate-500" />
                        </div>
-                       <span className="font-black uppercase tracking-[0.2em] text-[10px] text-slate-500">
+                       <span className="font-black uppercase tracking-[0.2em] text-base font-bold text-slate-500">
                         {ticket.Date_Report ? new Date(ticket.Date_Report).toLocaleDateString(t('common.loading') === 'กำลังประมวลผล...' ? 'th-TH' : 'en-US') : "VOID_DATE"}
                        </span>
                     </div>
@@ -277,7 +277,7 @@ export function MaintenanceClient({
                             <span className="text-emerald-400 font-black text-2xl tracking-tighter italic leading-none">฿{ticket.Cost_Total.toLocaleString()}</span>
                         </div>
                     ) : (
-                        <div className="flex items-center gap-3 font-black text-slate-800 uppercase tracking-[0.4em] text-[9px] italic">
+                        <div className="flex items-center gap-3 font-black text-slate-800 uppercase tracking-[0.4em] text-base font-bold italic">
                            {t('maintenance.cost_tbd')}
                         </div>
                     )}
@@ -300,7 +300,7 @@ export function MaintenanceClient({
             </div>
             <div>
                 <h2 className="text-3xl font-black text-white tracking-[0.2em] uppercase italic">{t('maintenance.workflow_pulse')}</h2>
-                <p className="text-[9px] font-black text-primary uppercase tracking-[0.6em] opacity-60">{t('maintenance.workflow_matrix')}</p>
+                <p className="text-base font-bold font-black text-primary uppercase tracking-[0.6em] opacity-60">{t('maintenance.workflow_matrix')}</p>
             </div>
          </div>
          <MaintenanceScheduleDashboard schedule={schedule} />
@@ -314,16 +314,17 @@ export function MaintenanceClient({
           </div>
           <div className="space-y-3">
               <h4 className="text-xl font-black text-white uppercase tracking-[0.4em] italic">{t('maintenance.readiness_engine')}</h4>
-              <p className="text-[10px] text-slate-600 font-black uppercase tracking-[0.2em] max-w-2xl leading-relaxed">
+              <p className="text-base font-bold text-slate-600 font-black uppercase tracking-[0.2em] max-w-2xl leading-relaxed">
                   {t('maintenance.integrity_desc')} <br />
                   {t('maintenance.capability_verified')}
               </p>
           </div>
           <div className="px-5 py-2 bg-white/5 rounded-full border border-white/10 flex items-center gap-3">
              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-             <span className="text-[8px] font-black text-slate-600 uppercase tracking-widest">{t('maintenance.integrity_index')}: 0.988</span>
+             <span className="text-base font-bold font-black text-slate-600 uppercase tracking-widest">{t('maintenance.integrity_index')}: 0.988</span>
           </div>
       </div>
     </div>
   )
 }
+

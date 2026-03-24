@@ -1,3 +1,7 @@
+"use client"
+
+import React, { useState } from "react"
+import { useRouter } from "next/navigation"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { useLanguage } from "@/components/providers/language-provider"
 import { Card, CardContent } from "@/components/ui/card"
@@ -54,6 +58,7 @@ import { toast } from "sonner"
 
 const WITHHOLDING_TAX_RATE = 0.01 // 1%
 import { exportToCSV } from "@/lib/utils/export"
+import { PaymentVoucher } from "@/components/billing/driver/PaymentVoucher"
 
 interface ExtraCost {
     cost_driver: string | number
@@ -109,8 +114,13 @@ export default function DriverPaymentClient({ initialJobs, drivers, companyProfi
         if (selectedEntityId && driver?.Sub_ID !== selectedEntityId) return false
     }
 
-    if (dateFrom && item.Plan_Date && item.Plan_Date < dateFrom) return false
-    if (dateTo && item.Plan_Date && item.Plan_Date > dateTo) return false
+    // Date filtering with string comparison (Safe for YYYY-MM-DD)
+    if (dateFrom && item.Plan_Date) {
+        if (item.Plan_Date < dateFrom) return false
+    }
+    if (dateTo && item.Plan_Date) {
+        if (item.Plan_Date > dateTo) return false
+    }
     return true
   })
 
@@ -263,8 +273,8 @@ export default function DriverPaymentClient({ initialJobs, drivers, companyProfi
   // Payment Preview Component
   const PaymentPreview = () => {
     const entityInfo = paymentModel === 'individual' 
-        ? drivers.find(d => d.Driver_Name === selectedEntityId)
-        : subcontractors.find(s => s.Sub_ID === selectedEntityId)
+        ? drivers.find(d => d.Driver_Name === selectedEntityId) as any
+        : subcontractors.find(s => s.Sub_ID === selectedEntityId) as any
     
     const entityName = paymentModel === 'individual'
         ? selectedEntityId
@@ -273,198 +283,17 @@ export default function DriverPaymentClient({ initialJobs, drivers, companyProfi
     const today = new Date().toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric'})
 
     return (
-    <div className="p-12 bg-white text-black max-w-[210mm] mx-auto min-h-[297mm] ring-1 ring-slate-200 shadow-2xl printable-document">
-        <div className="flex justify-between items-start mb-10">
-            <div className="flex flex-col gap-6 max-w-[60%]">
-                {companyProfile?.logo_url && (
-                    <div className="relative h-20 w-48">
-                        <img 
-                            src={companyProfile.logo_url} 
-                            alt="Company Logo" 
-                            className="h-full w-auto object-contain object-left" 
-                        />
-                    </div>
-                )}
-                <div className="space-y-1">
-                    {companyProfile ? (
-                        <>
-                            <h2 className="font-extrabold text-2xl tracking-tight">{companyProfile.company_name}</h2>
-                            {companyProfile.company_name_en && (
-                                <p className="text-slate-500 font-bold text-sm uppercase tracking-wider">{companyProfile.company_name_en}</p>
-                            )}
-                            <p className="mt-4 text-slate-500 text-xs leading-relaxed max-w-sm">{companyProfile.address}</p>
-                            <div className="flex gap-6 mt-3 text-xs">
-                                <p><span className="font-bold">TAX ID:</span> {companyProfile.tax_id}</p>
-                            </div>
-                        </>
-                    ) : (
-                        <p className="text-slate-400">Loading Profile Data...</p>
-                    )}
-                </div>
-            </div>
-
-            <div className="text-right">
-                <h1 className="text-5xl font-black text-slate-900 tracking-tighter uppercase mb-1">Payment Voucher</h1>
-                <p className="text-primary font-bold text-lg tracking-[0.2em] mb-4">ใบสำคัญจ่าย / สรุปเที่ยววิ่ง</p>
-                <div className="inline-block px-4 py-1.5 bg-slate-900 text-white rounded font-black text-[10px] tracking-widest">
-                    {t('common.original_copy')}
-                </div>
-            </div>
-        </div>
-
-        <div className="h-px bg-slate-200 mb-10" />
-
-        <div className="grid grid-cols-2 gap-12 mb-12">
-            <div className="p-6 rounded-3xl bg-slate-50 border border-slate-100">
-                <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-4">{t('billing_driver.payout_recipient')}</h3>
-                <p className="font-black text-xl text-slate-900 mb-3">{entityName}</p>
-                {entityInfo ? (
-                     <div className="text-xs text-slate-500 space-y-2 leading-relaxed">
-                        {entityInfo.Bank_Name && entityInfo.Bank_Account_No ? (
-                            <>
-                                <p><span className="font-bold text-slate-400">BANK:</span> {entityInfo.Bank_Name}</p>
-                                <p><span className="font-bold text-slate-400">ACCOUNT:</span> {entityInfo.Bank_Account_No} <span className="text-[10px] opacity-60 italic">({entityInfo.Bank_Account_Name})</span></p>
-                            </>
-                        ) : (
-                            <p className="text-primary font-bold mt-2 italic">* Financial Vector Path Pending</p>
-                        )}
-                     </div>
-                ) : (
-                    <p className="text-xs text-rose-500 font-bold mt-2 italic">* Recipient Identification Failure</p>
-                )}
-            </div>
-
-            <div className="p-6 rounded-3xl border border-slate-100">
-                 <div className="space-y-4 text-xs font-bold">
-                    <div className="flex justify-between items-center py-2 border-b border-slate-50">
-                        <span className="text-slate-400 uppercase tracking-widest">Voucher Index:</span>
-                        <span className="font-black text-slate-900">- (DRAFT)</span>
-                    </div>
-                    <div className="flex justify-between items-center py-2 border-b border-slate-50">
-                        <span className="text-slate-400 uppercase tracking-widest">Execution Date:</span>
-                        <span className="text-slate-900">{today}</span>
-                    </div>
-                    <div className="flex justify-between items-center py-2">
-                        <span className="text-slate-400 uppercase tracking-widest">{t('billing_driver.payout_logic')}:</span>
-                        <span className="text-primary uppercase tracking-widest">BANK TRANSFER</span>
-                    </div>
-                 </div>
-            </div>
-        </div>
-
-        <div className="mb-12">
-            <table className="w-full text-xs text-left border-collapse">
-                <thead>
-                    <tr className="bg-slate-900 text-white">
-                        <th className="py-4 px-6 font-black uppercase tracking-widest text-[9px] w-16">No.</th>
-                        <th className="py-4 px-6 font-black uppercase tracking-widest text-[9px]">{t('billing_driver.mission_hub')}</th>
-                        <th className="py-4 px-6 font-black uppercase tracking-widest text-[9px] w-32">{t('billing_customer.timestamp')}</th>
-                        <th className="py-4 px-6 font-black uppercase tracking-widest text-[9px] text-right w-40">{t('billing_driver.base_payout')} (THB)</th>
-                    </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                    {selectedData.map((item, index) => {
-                        let extraCosts: any[] = []
-                        try {
-                            if (item.extra_costs_json) {
-                                let parsed: any = item.extra_costs_json
-                                if (typeof parsed === 'string') {
-                                    try { parsed = JSON.parse(parsed) } catch {}
-                                }
-                                if (typeof parsed === 'string') {
-                                    try { parsed = JSON.parse(parsed) } catch {}
-                                }
-                                if (Array.isArray(parsed)) {
-                                    extraCosts = parsed.filter(c => (Number(c.cost_driver) || 0) > 0)
-                                }
-                            }
-                        } catch {}
-
-                        return (
-                            <React.Fragment key={item.Job_ID}>
-                                <tr className="hover:bg-slate-50 transition-colors">
-                                    <td className="py-5 px-6 font-black text-slate-400 align-top">{index + 1}</td>
-                                    <td className="py-5 px-6 align-top">
-                                        <div className="font-black text-slate-900 uppercase tracking-tight">Mission {item.Job_ID}</div>
-                                        <div className="text-[10px] text-slate-400 font-bold mt-1 uppercase tracking-widest">{item.Route_Name || '-'}</div>
-                                    </td>
-                                    <td className="py-5 px-6 font-bold text-slate-600 align-top">
-                                        {item.Plan_Date ? new Date(item.Plan_Date).toLocaleDateString('th-TH') : '-'}
-                                    </td>
-                                    <td className="py-5 px-6 text-right font-black text-slate-900 align-top text-sm">
-                                        {(item.Cost_Driver_Total || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                    </td>
-                                </tr>
-                                {extraCosts.map((extra, i) => (
-                                    <tr key={`${item.Job_ID}-extra-${i}`} className="bg-slate-50/20">
-                                        <td className="py-2 px-6"></td>
-                                        <td className="py-2 px-6">
-                                            <div className="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-4">
-                                                <div className="w-1.5 h-px bg-slate-300" />
-                                                {extra.type || "Ancillary Cost"}
-                                            </div>
-                                        </td>
-                                        <td className="py-2 px-6 text-center text-slate-300">-</td>
-                                        <td className="py-2 px-6 text-right font-bold text-slate-600">
-                                            {Number(extra.cost_driver).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                        </td>
-                                    </tr>
-                                ))}
-                            </React.Fragment>
-                        )
-                    })}
-                </tbody>
-                <tfoot>
-                     <tr>
-                        <td colSpan={2} rowSpan={3} className="pt-10 pr-12 align-top">
-                            <div className="p-6 rounded-3xl bg-slate-50 border border-slate-100 space-y-3">
-                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em]">结算说明 (Settlement Notes)</p>
-                                <ul className="text-[10px] text-slate-500 font-bold space-y-1.5 leading-relaxed">
-                                    <li>- Value includes all primary operational and ancillary logistics costs.</li>
-                                    <li>- Payout processed via registered financial vector channel.</li>
-                                    <li>- Certified as accurate by LogisPro Matrix Audit v4.2</li>
-                                </ul>
-                            </div>
-                        </td>
-                        <td className="pt-10 pb-4 px-6 text-right font-bold text-slate-400 uppercase tracking-widest text-[10px]">{t('billing_driver.gross_operations')}</td>
-                        <td className="pt-10 pb-4 px-6 text-right font-black text-slate-900 text-lg">{selectedSubtotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-                    </tr>
-                    <tr>
-                        <td className="py-3 px-6 text-right font-bold text-slate-400 uppercase tracking-widest text-[10px]">{t('billing_driver.recipient_wht')}</td>
-                        <td className="py-3 px-6 text-right font-black text-rose-500 text-lg">-{selectedWithholding.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-                    </tr>
-                    <tr className="bg-slate-950 text-white rounded-b-3xl">
-                        <td className="py-6 px-6 text-right font-black uppercase tracking-[0.4em] text-[10px]">{t('billing_driver.net_disbursement_value')}</td>
-                        <td className="py-6 px-6 text-right font-black text-indigo-400 text-3xl">
-                            {selectedNetTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                            <span className="text-xs font-bold ml-2 opacity-60">THB</span>
-                        </td>
-                    </tr>
-                </tfoot>
-            </table>
-        </div>
-
-        <div className="flex justify-between mt-24 text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">
-            <div className="text-center w-[250px] space-y-8">
-                <div className="h-px bg-slate-200" />
-                <div>
-                   <p className="text-slate-900 font-black text-xs mb-1">{t('billing_driver.payee_acknowledgment')}</p>
-                   <p>(Recipient Signature)</p>
-                </div>
-            </div>
-            <div className="text-center w-[250px] space-y-8">
-                <div className="h-px bg-slate-900" />
-                <div>
-                   <p className="text-slate-900 font-black text-xs mb-1">{t('billing_driver.central_payer')}</p>
-                   <p>(Authorized Payer Signature)</p>
-                </div>
-            </div>
-        </div>
-        
-        <div className="mt-20 text-center">
-            <p className="text-[8px] font-black text-slate-300 uppercase tracking-[0.8em]">LogisPro Intelligence Matrix • Payout Protocol v5.1</p>
-        </div>
-    </div>
+        <PaymentVoucher 
+            companyProfile={companyProfile}
+            entityName={entityName}
+            entityInfo={entityInfo}
+            today={today}
+            selectedData={selectedData}
+            selectedSubtotal={selectedSubtotal}
+            selectedWithholding={selectedWithholding}
+            selectedNetTotal={selectedNetTotal}
+            t={t}
+        />
     )
   }
 
@@ -481,12 +310,12 @@ export default function DriverPaymentClient({ initialJobs, drivers, companyProfi
                 <div className="p-2 bg-indigo-500/20 rounded-xl shadow-lg">
                     <Wallet className="text-indigo-400" size={20} />
                 </div>
-                <h2 className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.4em]">AP COMMAND CENTRE</h2>
+                <h2 className="text-base font-bold font-black text-indigo-400 uppercase tracking-[0.4em]">AP COMMAND CENTRE</h2>
             </div>
             <h1 className="text-6xl font-black text-white tracking-tighter flex items-center gap-5 uppercase premium-text-gradient">
                 {t('billing_driver.title')}
             </h1>
-            <p className="text-slate-500 font-bold text-sm tracking-wide opacity-80 uppercase tracking-widest leading-relaxed">
+            <p className="text-slate-500 font-bold text-xl tracking-wide opacity-80 uppercase tracking-widest leading-relaxed">
               {t('billing_driver.subtitle')}
             </p>
         </div>
@@ -498,7 +327,7 @@ export default function DriverPaymentClient({ initialJobs, drivers, companyProfi
                 onClick={() => router.push('/billing/driver/history')}
             >
                 <History className="w-6 h-6" /> 
-                <span className="font-black uppercase tracking-widest text-[10px]">{t('billing_driver.payment_history')}</span>
+                <span className="font-black uppercase tracking-widest text-base font-bold">{t('billing_driver.payment_history')}</span>
             </PremiumButton>
         </div>
       </div>
@@ -508,7 +337,7 @@ export default function DriverPaymentClient({ initialJobs, drivers, companyProfi
           <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/5 to-transparent pointer-events-none" />
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8 relative z-10 items-end">
             <div className="space-y-3">
-              <Label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 ml-2">{t('billing_driver.settlement_mode')}</Label>
+              <Label className="text-base font-bold font-black uppercase tracking-[0.3em] text-slate-500 ml-2">{t('billing_driver.settlement_mode')}</Label>
               <Select
                 value={paymentModel}
                 onValueChange={(value) => {
@@ -516,33 +345,33 @@ export default function DriverPaymentClient({ initialJobs, drivers, companyProfi
                     setSelectedEntityId("")
                 }}
               >
-                <SelectTrigger className="w-full h-14 bg-white/5 border-white/5 text-white font-black rounded-2xl px-6 uppercase tracking-widest text-xs focus:ring-indigo-500/20 transition-all">
+                <SelectTrigger className="w-full h-14 bg-white/5 border-white/5 text-white font-black rounded-2xl px-6 uppercase tracking-widest text-lg font-bold focus:ring-indigo-500/20 transition-all">
                   <SelectValue placeholder={t('billing_driver.settlement_mode').toUpperCase() + "..."} />
                 </SelectTrigger>
                 <SelectContent className="bg-[#0c061d] border-white/10 text-white font-black">
-                  <SelectItem value="individual" className="hover:bg-indigo-500/20 focus:bg-indigo-500/20 uppercase tracking-widest text-[10px]">{t('billing_driver.individual_nodes')}</SelectItem>
-                  <SelectItem value="subcontractor" className="hover:bg-indigo-500/20 focus:bg-indigo-500/20 uppercase tracking-widest text-[10px]">{t('billing_driver.partner_cluster')}</SelectItem>
+                  <SelectItem value="individual" className="hover:bg-indigo-500/20 focus:bg-indigo-500/20 uppercase tracking-widest text-base font-bold">{t('billing_driver.individual_nodes')}</SelectItem>
+                  <SelectItem value="subcontractor" className="hover:bg-indigo-500/20 focus:bg-indigo-500/20 uppercase tracking-widest text-base font-bold">{t('billing_driver.partner_cluster')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-3">
-              <Label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 ml-2">{paymentModel === 'individual' ? t('billing_driver.target_driver') : t('billing_driver.target_partner')}</Label>
+              <Label className="text-base font-bold font-black uppercase tracking-[0.3em] text-slate-500 ml-2">{paymentModel === 'individual' ? t('billing_driver.target_driver') : t('billing_driver.target_partner')}</Label>
               <Select
                 value={selectedEntityId || "all"}
                 onValueChange={(value) => setSelectedEntityId(value === "all" ? "" : value)}
               >
-                <SelectTrigger className="w-full h-14 bg-white/5 border-white/5 text-white font-black rounded-2xl px-6 uppercase tracking-widest text-xs focus:ring-indigo-500/20 transition-all">
+                <SelectTrigger className="w-full h-14 bg-white/5 border-white/5 text-white font-black rounded-2xl px-6 uppercase tracking-widest text-lg font-bold focus:ring-indigo-500/20 transition-all">
                   <SelectValue placeholder={t('billing_driver.locate_recipient')} />
                 </SelectTrigger>
                 <SelectContent className="bg-[#0c061d] border-white/10 text-white font-black">
-                  <SelectItem value="all" className="hover:bg-indigo-500/20 focus:bg-indigo-500/20 uppercase tracking-widest text-[10px]">{t('billing_driver.all_sectors')}</SelectItem>
+                  <SelectItem value="all" className="hover:bg-indigo-500/20 focus:bg-indigo-500/20 uppercase tracking-widest text-base font-bold">{t('billing_driver.all_sectors')}</SelectItem>
                   {paymentModel === 'individual' ? (
                       drivers.map(d => (
-                          <SelectItem key={d.Driver_Name || ""} value={d.Driver_Name || ""} className="hover:bg-indigo-500/20 focus:bg-indigo-500/20 uppercase tracking-widest text-[10px]">{d.Driver_Name}</SelectItem>
+                          <SelectItem key={d.Driver_Name || ""} value={d.Driver_Name || ""} className="hover:bg-indigo-500/20 focus:bg-indigo-500/20 uppercase tracking-widest text-base font-bold">{d.Driver_Name}</SelectItem>
                       ))
                   ) : (
                       subcontractors.map(s => (
-                          <SelectItem key={s.Sub_ID} value={s.Sub_ID} className="hover:bg-indigo-500/20 focus:bg-indigo-500/20 uppercase tracking-widest text-[10px]">{s.Sub_Name}</SelectItem>
+                          <SelectItem key={s.Sub_ID} value={s.Sub_ID} className="hover:bg-indigo-500/20 focus:bg-indigo-500/20 uppercase tracking-widest text-base font-bold">{s.Sub_Name}</SelectItem>
                       ))
                   )}
                 </SelectContent>
@@ -551,21 +380,21 @@ export default function DriverPaymentClient({ initialJobs, drivers, companyProfi
             <div className="space-y-3 md:col-span-1">
                 <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-3">
-                        <Label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 ml-2">Vector Start</Label>
+                        <Label className="text-base font-bold font-black uppercase tracking-[0.3em] text-slate-500 ml-2">Vector Start</Label>
                         <Input
                             type="date"
                             value={dateFrom}
                             onChange={(e) => setDateFrom(e.target.value)}
-                            className="w-full h-14 bg-white/5 border-white/5 text-white font-black rounded-2xl px-6 uppercase tracking-widest text-xs focus:bg-white/10 transition-all"
+                            className="w-full h-14 bg-white/5 border-white/5 text-white font-black rounded-2xl px-6 uppercase tracking-widest text-lg font-bold focus:bg-white/10 transition-all"
                         />
                     </div>
                     <div className="space-y-3">
-                        <Label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 ml-2">Vector End</Label>
+                        <Label className="text-base font-bold font-black uppercase tracking-[0.3em] text-slate-500 ml-2">Vector End</Label>
                         <Input
                             type="date"
                             value={dateTo}
                             onChange={(e) => setDateTo(e.target.value)}
-                            className="w-full h-14 bg-white/5 border-white/5 text-white font-black rounded-2xl px-6 uppercase tracking-widest text-xs focus:bg-white/10 transition-all"
+                            className="w-full h-14 bg-white/5 border-white/5 text-white font-black rounded-2xl px-6 uppercase tracking-widest text-lg font-bold focus:bg-white/10 transition-all"
                         />
                     </div>
                 </div>
@@ -573,7 +402,7 @@ export default function DriverPaymentClient({ initialJobs, drivers, companyProfi
             <div>
               <PremiumButton variant="outline" className="border-white/5 w-full h-14 rounded-2xl gap-3">
                 <Search className="w-5 h-5" /> 
-                <span className="font-black uppercase tracking-widest text-[10px]">{t('billing_driver.execute_query')}</span>
+                <span className="font-black uppercase tracking-widest text-base font-bold">{t('billing_driver.execute_query')}</span>
               </PremiumButton>
             </div>
           </div>
@@ -586,9 +415,9 @@ export default function DriverPaymentClient({ initialJobs, drivers, companyProfi
                 <div className="p-4 rounded-2xl shadow-xl transition-all duration-700 group-hover:scale-110 group-hover:rotate-6 bg-primary/20 text-primary">
                     <Clock size={24} strokeWidth={2.5} />
                 </div>
-                <div className="px-3 py-1 bg-white/5 rounded-full border border-white/5 text-[9px] text-primary font-black uppercase tracking-widest italic animate-pulse">PENDING PAYOUT</div>
+                <div className="px-3 py-1 bg-white/5 rounded-full border border-white/5 text-base font-bold text-primary font-black uppercase tracking-widest italic animate-pulse">PENDING PAYOUT</div>
             </div>
-            <p className="text-slate-500 font-black text-[10px] uppercase tracking-[0.3em] mb-2">Awaiting Settlement</p>
+            <p className="text-slate-500 font-black text-base font-bold uppercase tracking-[0.3em] mb-2">Awaiting Settlement</p>
             <p className="text-4xl font-black text-white tracking-tighter leading-none">{pendingItems.length}</p>
         </div>
 
@@ -597,11 +426,11 @@ export default function DriverPaymentClient({ initialJobs, drivers, companyProfi
                 <div className="p-4 rounded-2xl shadow-xl transition-all duration-700 group-hover:scale-110 group-hover:rotate-6 bg-indigo-500/20 text-indigo-400">
                     <Banknote size={24} strokeWidth={2.5} />
                 </div>
-                <div className="px-3 py-1 bg-white/5 rounded-full border border-white/5 text-[9px] text-indigo-400 font-black uppercase tracking-widest italic">VALUATION</div>
+                <div className="px-3 py-1 bg-white/5 rounded-full border border-white/5 text-base font-bold text-indigo-400 font-black uppercase tracking-widest italic">VALUATION</div>
             </div>
-            <p className="text-slate-500 font-black text-[10px] uppercase tracking-[0.3em] mb-2">{t('billing_driver.total_liability')}</p>
+            <p className="text-slate-500 font-black text-base font-bold uppercase tracking-[0.3em] mb-2">{t('billing_driver.total_liability')}</p>
             <div className="flex items-baseline gap-2">
-                <span className="text-xs font-black text-slate-500 mb-1">THB</span>
+                <span className="text-lg font-bold font-black text-slate-500 mb-1">THB</span>
                 <p className="text-4xl font-black text-white tracking-tighter leading-none">{pendingTotal.toLocaleString()}</p>
             </div>
         </div>
@@ -611,11 +440,11 @@ export default function DriverPaymentClient({ initialJobs, drivers, companyProfi
                 <div className="p-4 rounded-2xl shadow-xl transition-all duration-700 group-hover:scale-110 group-hover:rotate-6 bg-primary text-white">
                     <CheckCircle2 size={24} strokeWidth={2.5} />
                 </div>
-                <div className="px-3 py-1 bg-white/10 rounded-full border border-white/10 text-[9px] text-white font-black uppercase tracking-widest italic">{t('billing_driver.active_target')}</div>
+                <div className="px-3 py-1 bg-white/10 rounded-full border border-white/10 text-base font-bold text-white font-black uppercase tracking-widest italic">{t('billing_driver.active_target')}</div>
             </div>
-            <p className="text-slate-500 font-black text-[10px] uppercase tracking-[0.3em] mb-2">{t('billing_driver.selected_delta')} ({selectedItems.length})</p>
+            <p className="text-slate-500 font-black text-base font-bold uppercase tracking-[0.3em] mb-2">{t('billing_driver.selected_delta')} ({selectedItems.length})</p>
             <div className="flex items-baseline gap-2">
-                <span className="text-xs font-black text-slate-500 mb-1">THB</span>
+                <span className="text-lg font-bold font-black text-slate-500 mb-1">THB</span>
                 <p className="text-4xl font-black text-white tracking-tighter leading-none">{selectedSubtotal.toLocaleString()}</p>
             </div>
         </div>
@@ -625,11 +454,11 @@ export default function DriverPaymentClient({ initialJobs, drivers, companyProfi
                 <div className="p-4 rounded-2xl shadow-xl transition-all duration-700 group-hover:scale-110 group-hover:rotate-6 bg-rose-500/20 text-rose-500">
                     <Percent size={24} strokeWidth={2.5} />
                 </div>
-                <div className="px-3 py-1 bg-white/5 rounded-full border border-white/5 text-[9px] text-rose-500 font-black uppercase tracking-widest italic">{t('billing_driver.levy_deduction')}</div>
+                <div className="px-3 py-1 bg-white/5 rounded-full border border-white/5 text-base font-bold text-rose-500 font-black uppercase tracking-widest italic">{t('billing_driver.levy_deduction')}</div>
             </div>
-            <p className="text-slate-500 font-black text-[10px] uppercase tracking-[0.3em] mb-2">{t('billing_driver.wht_offset')}</p>
+            <p className="text-slate-500 font-black text-base font-bold uppercase tracking-[0.3em] mb-2">{t('billing_driver.wht_offset')}</p>
             <div className="flex items-baseline gap-2">
-                <span className="text-xs font-black text-slate-500 mb-1">THB</span>
+                <span className="text-lg font-bold font-black text-slate-500 mb-1">THB</span>
                 <p className="text-4xl font-black text-white tracking-tighter leading-none">{selectedWithholding.toLocaleString()}</p>
             </div>
         </div>
@@ -642,23 +471,23 @@ export default function DriverPaymentClient({ initialJobs, drivers, companyProfi
             <div className="relative bg-[#0a0518]/80 backdrop-blur-3xl border-2 border-primary/30 p-10 rounded-[4rem] shadow-[0_0_100px_rgba(255,30,133,0.2)] flex flex-wrap items-center justify-between gap-10">
                 <div className="flex items-center gap-12">
                      <div className="space-y-2">
-                        <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.4em]">{t('billing_driver.settlement_base')}</p>
+                        <p className="text-base font-bold font-black text-slate-500 uppercase tracking-[0.4em]">{t('billing_driver.settlement_base')}</p>
                         <p className="text-3xl font-black text-white tracking-tighter">฿{selectedSubtotal.toLocaleString()}</p>
                     </div>
                     <div className="h-12 w-px bg-white/10" />
                     <div className="space-y-2 text-rose-500">
-                        <p className="text-[9px] font-black uppercase tracking-[0.4em] opacity-60 text-slate-500">{t('billing_driver.tax_delta')}</p>
+                        <p className="text-base font-bold font-black uppercase tracking-[0.4em] opacity-60 text-slate-500">{t('billing_driver.tax_delta')}</p>
                         <p className="text-3xl font-black tracking-tighter">-฿{selectedWithholding.toLocaleString()}</p>
                     </div>
                     <div className="h-12 w-px bg-white/10" />
                     <div className="space-y-2">
-                        <p className="text-[9px] font-black text-primary uppercase tracking-[0.4em] animate-pulse">{t('billing_driver.net_disbursement')}</p>
+                        <p className="text-base font-bold font-black text-primary uppercase tracking-[0.4em] animate-pulse">{t('billing_driver.net_disbursement')}</p>
                         <p className="text-5xl font-black text-primary tracking-tighter premium-text-gradient">฿{selectedNetTotal.toLocaleString()}</p>
                     </div>
                 </div>
                 
                 <div className="flex items-center gap-6">
-                    <button onClick={clearSelection} className="px-8 py-3 text-[10px] font-black text-slate-500 uppercase tracking-widest hover:text-white transition-colors">
+                    <button onClick={clearSelection} className="px-8 py-3 text-base font-bold font-black text-slate-500 uppercase tracking-widest hover:text-white transition-colors">
                         {t('billing_driver.abort_payout')}
                     </button>
                     <PremiumButton onClick={handleCreatePayment} disabled={loading} className="h-20 px-12 rounded-[2rem] shadow-[0_20px_40px_rgba(255,30,133,0.3)] text-xl font-black tracking-widest">
@@ -676,10 +505,10 @@ export default function DriverPaymentClient({ initialJobs, drivers, companyProfi
         <div className="flex flex-col lg:flex-row lg:items-center justify-between p-12 gap-8 relative z-10">
           <div className="space-y-2">
             <h3 className="text-2xl font-black text-white tracking-tighter uppercase premium-text-gradient">{t('billing_driver.ledger_title')}</h3>
-            <p className="text-[11px] font-black text-slate-500 uppercase tracking-[0.1em]">{t('billing_driver.registry_subtitle')}</p>
+            <p className="text-base font-bold font-black text-slate-500 uppercase tracking-[0.1em]">{t('billing_driver.registry_subtitle')}</p>
           </div>
           <div className="flex items-center flex-wrap gap-4">
-            <PremiumButton variant="outline" size="sm" onClick={selectAll} className="h-12 px-8 rounded-xl border-white/5 bg-white/5 text-[10px] font-black tracking-widest uppercase">
+            <PremiumButton variant="outline" size="sm" onClick={selectAll} className="h-12 px-8 rounded-xl border-white/5 bg-white/5 text-base font-bold font-black tracking-widest uppercase">
                 {t('billing_driver.select_all_nodes')}
             </PremiumButton>
             
@@ -687,7 +516,7 @@ export default function DriverPaymentClient({ initialJobs, drivers, companyProfi
                 <DialogTrigger asChild>
                     <button 
                         disabled={selectedItems.length === 0}
-                        className="h-12 px-8 rounded-xl bg-white/5 border border-white/5 text-slate-400 hover:text-white hover:bg-white/10 transition-all font-black tracking-widest uppercase text-[10px] flex items-center gap-3 disabled:opacity-30 disabled:cursor-not-allowed"
+                        className="h-12 px-8 rounded-xl bg-white/5 border border-white/5 text-slate-400 hover:text-white hover:bg-white/10 transition-all font-black tracking-widest uppercase text-base font-bold flex items-center gap-3 disabled:opacity-30 disabled:cursor-not-allowed"
                     >
                         <Eye size={16} /> {t('billing_driver.preview_voucher')}
                     </button>
@@ -696,7 +525,7 @@ export default function DriverPaymentClient({ initialJobs, drivers, companyProfi
                     <div className="p-4 bg-slate-100 flex items-center justify-between border-b sticky top-0 z-50 print:hidden text-slate-900">
                         <div className="flex items-center gap-3">
                              <ShieldCheck className="text-primary" />
-                             <span className="text-[10px] font-black uppercase tracking-widest">Digital Audit • Payout Verification v5.1</span>
+                             <span className="text-base font-bold font-black uppercase tracking-widest">Digital Audit • Payout Verification v5.1</span>
                         </div>
                         <button onClick={() => setShowPreview(false)} className="p-2 hover:bg-slate-200 rounded-lg transition-colors">
                             <Activity size={18} />
@@ -709,14 +538,14 @@ export default function DriverPaymentClient({ initialJobs, drivers, companyProfi
             <button 
                 onClick={handleExportSCB}
                 disabled={selectedItems.length === 0 || loading}
-                className="h-12 px-8 rounded-xl bg-primary/20 border border-primary/20 text-primary hover:bg-primary hover:text-white transition-all font-black tracking-widest uppercase text-[10px] flex items-center gap-3 disabled:opacity-30"
+                className="h-12 px-8 rounded-xl bg-primary/20 border border-primary/20 text-primary hover:bg-primary hover:text-white transition-all font-black tracking-widest uppercase text-base font-bold flex items-center gap-3 disabled:opacity-30"
             >
               <FileDown size={16} /> EXPORT SCB BULK
             </button>
             <button 
                 onClick={handleExportCSV}
                 disabled={selectedItems.length === 0}
-                className="h-12 px-8 rounded-xl bg-white/5 border border-white/5 text-slate-400 hover:text-white hover:bg-white/10 transition-all font-black tracking-widest uppercase text-[10px] flex items-center gap-3 disabled:opacity-30"
+                className="h-12 px-8 rounded-xl bg-white/5 border border-white/5 text-slate-400 hover:text-white hover:bg-white/10 transition-all font-black tracking-widest uppercase text-base font-bold flex items-center gap-3 disabled:opacity-30"
             >
               <Download size={16} /> EXPORT CSV
             </button>
@@ -724,7 +553,7 @@ export default function DriverPaymentClient({ initialJobs, drivers, companyProfi
         </div>
 
         <div className="relative w-full overflow-auto custom-scrollbar">
-            <table className="w-full text-sm text-left border-collapse">
+            <table className="w-full text-xl text-left border-collapse">
               <thead>
                 <tr className="bg-white/[0.02] border-b border-white/5">
                   <th className="px-12 py-10 w-20">
@@ -763,30 +592,30 @@ export default function DriverPaymentClient({ initialJobs, drivers, companyProfi
                         <div className="p-2 bg-white/5 rounded-xl group-hover/row:bg-primary/20 transition-colors">
                             <User className="w-5 h-5 text-slate-500 group-hover/row:text-primary transition-colors" />
                         </div>
-                        <span className="font-black text-slate-300 text-sm uppercase tracking-tight">{item.Driver_Name || '-'}</span>
+                        <span className="font-black text-slate-300 text-xl uppercase tracking-tight">{item.Driver_Name || '-'}</span>
                       </div>
                     </td>
                     <td className="px-8 py-8">
                       <div className="flex items-center gap-4">
                         <Truck className="w-4 h-4 text-slate-600 group-hover/row:text-primary transition-colors" />
-                        <span className="text-slate-500 font-black text-[11px] uppercase tracking-[0.2em]">{item.Vehicle_Plate || '-'}</span>
+                        <span className="text-slate-500 font-black text-base font-bold uppercase tracking-[0.2em]">{item.Vehicle_Plate || '-'}</span>
                       </div>
                     </td>
-                    <td className="px-8 py-8 text-center text-slate-500 font-bold uppercase tracking-widest text-[10px]">
+                    <td className="px-8 py-8 text-center text-slate-500 font-bold uppercase tracking-widest text-base font-bold">
                         {item.Plan_Date ? new Date(item.Plan_Date).toLocaleDateString('th-TH') : '-'}
                     </td>
-                    <td className="px-8 py-8 text-right font-black text-slate-400 text-sm">
-                      <span className="text-[9px] mr-2">THB</span>
+                    <td className="px-8 py-8 text-right font-black text-slate-400 text-xl">
+                      <span className="text-base font-bold mr-2">THB</span>
                       {(item.Cost_Driver_Total || 0).toLocaleString()}
                     </td>
                     <td className="px-8 py-8 text-right">
                         <div className="flex flex-col items-end">
                             <span className="text-xl font-black text-white tracking-tighter group-hover/row:text-indigo-400 transition-colors bg-white/5 px-4 py-1 rounded-xl">฿{getJobTotal(item).toLocaleString()}</span>
-                            <span className="text-[8px] font-black text-slate-700 uppercase tracking-widest mt-1">Net Flow</span>
+                            <span className="text-base font-bold font-black text-slate-700 uppercase tracking-widest mt-1">Net Flow</span>
                         </div>
                     </td>
                     <td className="px-12 py-8 text-center">
-                      <div className="inline-flex items-center gap-2.5 px-6 py-2.5 rounded-[1.5rem] bg-primary/10 text-primary border border-primary/20 text-[9px] font-black uppercase tracking-widest shadow-[0_0_20px_rgba(255,30,133,0.1)] group-hover/row:scale-110 transition-all duration-500">
+                      <div className="inline-flex items-center gap-2.5 px-6 py-2.5 rounded-[1.5rem] bg-primary/10 text-primary border border-primary/20 text-base font-bold font-black uppercase tracking-widest shadow-[0_0_20px_rgba(255,30,133,0.1)] group-hover/row:scale-110 transition-all duration-500">
                         <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
                         {t('billing_driver.awaiting_cashflow')}
                       </div>
@@ -801,7 +630,7 @@ export default function DriverPaymentClient({ initialJobs, drivers, companyProfi
                          <div className="p-8 bg-white/5 rounded-full border-2 border-white/5 animate-pulse">
                             <Wallet size={64} className="text-slate-500" strokeWidth={1} />
                          </div>
-                         <p className="text-slate-700 font-black uppercase tracking-[0.5em] text-xs">Zero Payout Vectors Detected</p>
+                         <p className="text-slate-700 font-black uppercase tracking-[0.5em] text-lg font-bold">Zero Payout Vectors Detected</p>
                       </div>
                     </td>
                   </tr>
@@ -812,11 +641,11 @@ export default function DriverPaymentClient({ initialJobs, drivers, companyProfi
 
         <div className="p-10 border-t border-white/5 bg-white/[0.02] flex items-center justify-between">
             <div className="flex items-center gap-6">
-                <p className="text-[9px] font-black text-slate-700 uppercase tracking-[0.6em]">Driver Payout Matrix Node Registry v5.1</p>
+                <p className="text-base font-bold font-black text-slate-700 uppercase tracking-[0.6em]">Driver Payout Matrix Node Registry v5.1</p>
                 <div className="h-4 w-px bg-white/5" />
                 <div className="flex items-center gap-2">
                     <div className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
-                    <span className="text-[8px] font-black text-indigo-500 uppercase tracking-widest">SECURE SETTLEMENT</span>
+                    <span className="text-base font-bold font-black text-indigo-500 uppercase tracking-widest">SECURE SETTLEMENT</span>
                 </div>
             </div>
             <Zap size={18} className="text-primary opacity-20" />
@@ -824,7 +653,7 @@ export default function DriverPaymentClient({ initialJobs, drivers, companyProfi
       </div>
 
       <div className="mt-20 text-center mb-24">
-        <div className="inline-flex items-center gap-4 px-8 py-3 glass-panel rounded-full text-[9px] font-black text-slate-700 uppercase tracking-[0.6em] opacity-40 hover:opacity-100 transition-opacity">
+        <div className="inline-flex items-center gap-4 px-8 py-3 glass-panel rounded-full text-base font-bold font-black text-slate-700 uppercase tracking-[0.6em] opacity-40 hover:opacity-100 transition-opacity">
             <ShieldCheck size={14} className="text-primary" /> LogisPro Settlement Engine • Certified Disbursement Accuracy
         </div>
       </div>
@@ -838,3 +667,4 @@ export default function DriverPaymentClient({ initialJobs, drivers, companyProfi
     </>
   )
 }
+

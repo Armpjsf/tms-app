@@ -40,7 +40,7 @@ export default function ScanPage() {
           
           <div>
             <h1 className="text-xl font-bold text-white mb-2">Barcode / QR Scanner</h1>
-            <p className="text-gray-500 text-sm">
+            <p className="text-gray-500 text-xl">
               สแกน Barcode หรือ QR Code เพื่อค้นหางานหรือยืนยันการส่งสินค้า
             </p>
           </div>
@@ -74,3 +74,4 @@ export default function ScanPage() {
     </div>
   )
 }
+

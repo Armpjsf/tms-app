@@ -121,11 +121,11 @@ export function ActiveTripTimeline({ job }: ActiveTripTimelineProps) {
                         <Activity className="text-emerald-500" size={20} />
                         Job Status
                     </h3>
-                    <p className="text-gray-800 font-bold text-xs uppercase tracking-widest">Job ID: {job.Job_ID}</p>
+                    <p className="text-gray-800 font-bold text-lg font-bold uppercase tracking-widest">Job ID: {job.Job_ID}</p>
                 </div>
                 <div className="bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100 flex items-center gap-2">
                     <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
-                    <span className="text-[10px] font-black text-emerald-700 uppercase">Live Tracking</span>
+                    <span className="text-base font-bold font-black text-emerald-700 uppercase">Live Tracking</span>
                 </div>
             </div>
 
@@ -155,13 +155,13 @@ export function ActiveTripTimeline({ job }: ActiveTripTimelineProps) {
                         <div className="flex-1 pt-1">
                             <div className="flex items-center justify-between mb-1">
                                 <h4 className={cn(
-                                    "text-sm font-black tracking-tight",
+                                    "text-xl font-black tracking-tight",
                                     step.status === 'upcoming' ? "text-gray-400" : "text-gray-900"
                                 )}>
                                     {step.title}
                                 </h4>
                                 <span className={cn(
-                                    "text-[10px] font-bold uppercase tracking-tighter",
+                                    "text-base font-bold font-bold uppercase tracking-tighter",
                                     step.status === 'completed' ? "text-emerald-600" :
                                     step.status === 'current' ? "text-amber-600 font-black animate-pulse" :
                                     "text-gray-400"
@@ -170,14 +170,14 @@ export function ActiveTripTimeline({ job }: ActiveTripTimelineProps) {
                                 </span>
                             </div>
                             <p className={cn(
-                                "text-xs font-medium leading-relaxed",
+                                "text-lg font-bold font-medium leading-relaxed",
                                 step.status === 'upcoming' ? "text-gray-300" : "text-gray-600"
                             )}>
                                 {step.description}
                             </p>
                             
                             {step.tag && (
-                                <div className="mt-2 inline-flex items-center gap-1.5 px-2 py-0.5 bg-red-50 text-red-600 rounded-full text-[9px] font-black uppercase tracking-wider border border-red-100">
+                                <div className="mt-2 inline-flex items-center gap-1.5 px-2 py-0.5 bg-red-50 text-red-600 rounded-full text-base font-bold font-black uppercase tracking-wider border border-red-100">
                                     <Clock size={10} />
                                     {step.tag}
                                 </div>
@@ -187,9 +187,10 @@ export function ActiveTripTimeline({ job }: ActiveTripTimelineProps) {
                 ))}
             </div>
 
-            <button className="w-full mt-4 py-3 bg-gray-50 hover:bg-gray-100 rounded-2xl text-[10px] font-black text-gray-700 uppercase tracking-widest transition-colors border border-gray-100">
+            <button className="w-full mt-4 py-3 bg-gray-50 hover:bg-gray-100 rounded-2xl text-base font-bold font-black text-gray-700 uppercase tracking-widest transition-colors border border-gray-100">
                 View All details
             </button>
         </div>
     )
 }
+

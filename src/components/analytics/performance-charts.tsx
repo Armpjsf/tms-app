@@ -45,7 +45,7 @@ export function PerformanceCharts({ data }: { data: PerformanceData[] }) {
                 </div>
                 <div>
                     <h3 className="text-lg font-black text-white tracking-tight italic uppercase">{t('charts.mission_volume')}</h3>
-                    <p className="text-emerald-400 text-[9px] font-bold uppercase tracking-[0.2em]">{t('charts.throughput_trend')}</p>
+                    <p className="text-emerald-400 text-base font-bold font-bold uppercase tracking-[0.2em]">{t('charts.throughput_trend')}</p>
                 </div>
             </div>
         </div>
@@ -98,7 +98,7 @@ export function PerformanceCharts({ data }: { data: PerformanceData[] }) {
                 </div>
                 <div>
                     <h3 className="text-lg font-black text-white tracking-tight italic uppercase">{t('charts.reliability_index')}</h3>
-                    <p className="text-blue-400 text-[9px] font-bold uppercase tracking-[0.2em]">{t('charts.on_time_efficiency')}</p>
+                    <p className="text-blue-400 text-base font-bold font-bold uppercase tracking-[0.2em]">{t('charts.on_time_efficiency')}</p>
                 </div>
             </div>
         </div>
@@ -150,3 +150,4 @@ export function PerformanceCharts({ data }: { data: PerformanceData[] }) {
     </div>
   )
 }
+

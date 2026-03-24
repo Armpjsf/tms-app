@@ -93,7 +93,7 @@ export default function MobileSOSPage() {
                     <Phone size={24} />
                     <span>ติดต่อแอดมิน / หัวหน้างาน</span>
                 </div>
-                <span className="text-xs font-normal opacity-80">
+                <span className="text-lg font-bold font-normal opacity-80">
                     {profile?.phone || "02-123-4567"}
                 </span>
             </Button>
@@ -106,7 +106,7 @@ export default function MobileSOSPage() {
                     <AlertTriangle size={24} />
                     <span>แจ้งเหตุด่วน (ตำรวจ)</span>
                 </div>
-                <span className="text-xs font-normal opacity-80">191</span>
+                <span className="text-lg font-bold font-normal opacity-80">191</span>
             </Button>
 
             <Button 
@@ -117,7 +117,7 @@ export default function MobileSOSPage() {
                     <Ambulance size={24} />
                     <span>เรียกรถพยาบาล</span>
                 </div>
-                <span className="text-xs font-normal opacity-80">1669</span>
+                <span className="text-lg font-bold font-normal opacity-80">1669</span>
             </Button>
             
              <Button 
@@ -143,17 +143,17 @@ export default function MobileSOSPage() {
                     )}
                 </div>
                 
-                <p className="text-gray-500 text-sm break-words">
+                <p className="text-gray-500 text-xl break-words">
                     {loading ? "กำลังระบุตำแหน่ง..." : address}
                 </p>
                 
                 {location && (
-                     <p className="text-xs text-gray-400 mt-1 font-mono">
+                     <p className="text-lg font-bold text-gray-400 mt-1 font-mono">
                         {location.lat.toFixed(6)}, {location.lng.toFixed(6)}
                     </p>
                 )}
 
-                <p className="text-[10px] text-gray-500 mt-2">
+                <p className="text-base font-bold text-gray-500 mt-2">
                     *พิกัดจะถูกส่งให้แอดมินอัตโนมัติเมื่อกดโทรออก
                 </p>
             </CardContent>
@@ -162,3 +162,4 @@ export default function MobileSOSPage() {
     </div>
   )
 }
+

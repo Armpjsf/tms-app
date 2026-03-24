@@ -353,7 +353,7 @@ export interface DriverPayment {
     Updated_At: string
 }
 
-export async function getDriverPayments() {
+export async function getDriverPayments(filters?: { dateFrom?: string, dateTo?: string, status?: string }) {
     try {
         const admin = await isAdmin()
         const supabase = admin ? await createAdminClient() : await createClient()
@@ -368,6 +368,10 @@ export async function getDriverPayments() {
         } else if (!admin && !branchId) {
             return []
         }
+
+        if (filters?.dateFrom) query = query.gte('Payment_Date', filters.dateFrom)
+        if (filters?.dateTo) query = query.lte('Payment_Date', filters.dateTo)
+        if (filters?.status && filters.status !== 'all') query = query.eq('Status', filters.status)
 
         const { data, error } = await query
             .order('Created_At', { ascending: false })

@@ -101,7 +101,7 @@ export function DriverDialog({
                   <DialogTitle className="text-3xl font-black tracking-tighter uppercase whitespace-nowrap">
                       {mode === 'create' ? 'Driver Deployment' : 'Intelligence Update'}
                   </DialogTitle>
-                  <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.3em]">System Configuration Layer</p>
+                  <p className="text-slate-500 text-base font-bold font-black uppercase tracking-[0.3em]">System Configuration Layer</p>
               </div>
           </div>
         </DialogHeader>
@@ -110,7 +110,7 @@ export function DriverDialog({
           {/* Section: Basic Identity */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <Label htmlFor="Driver_ID" className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Serial ID</Label>
+                <Label htmlFor="Driver_ID" className="text-base font-bold font-black uppercase tracking-widest text-slate-500 ml-1">Serial ID</Label>
                 <div className="relative">
                     <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600" size={16} />
                     <Input
@@ -126,7 +126,7 @@ export function DriverDialog({
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="Driver_Name" className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Full Designation</Label>
+                <Label htmlFor="Driver_Name" className="text-base font-bold font-black uppercase tracking-widest text-slate-500 ml-1">Full Designation</Label>
                 <Input
                   id="Driver_Name"
                   value={formData.Driver_Name}
@@ -138,7 +138,7 @@ export function DriverDialog({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="Mobile_No" className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Comm Channel</Label>
+                <Label htmlFor="Mobile_No" className="text-base font-bold font-black uppercase tracking-widest text-slate-500 ml-1">Comm Channel</Label>
                 <div className="relative">
                     <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600" size={16} />
                     <Input
@@ -153,7 +153,7 @@ export function DriverDialog({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="Password" className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Security Key</Label>
+                <Label htmlFor="Password" className="text-base font-bold font-black uppercase tracking-widest text-slate-500 ml-1">Security Key</Label>
                 <div className="relative">
                     <Key className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600" size={16} />
                     <Input
@@ -174,7 +174,7 @@ export function DriverDialog({
           {/* Section: Operational Data */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <Label htmlFor="Expire_Date" className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Licence Integrity Date</Label>
+                <Label htmlFor="Expire_Date" className="text-base font-bold font-black uppercase tracking-widest text-slate-500 ml-1">Licence Integrity Date</Label>
                 <div className="relative">
                     <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600" size={16} />
                     <Input
@@ -188,7 +188,7 @@ export function DriverDialog({
               </div>
 
               <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Branch HQ</Label>
+                <Label className="text-base font-bold font-black uppercase tracking-widest text-slate-500 ml-1">Branch HQ</Label>
                 <Select value={formData.Branch_ID || undefined} onValueChange={(val) => setFormData({ ...formData, Branch_ID: val })}>
                     <SelectTrigger className="h-12 rounded-xl bg-white/5 border-white/10 text-white">
                         <SelectValue placeholder="Command Center" />
@@ -202,7 +202,7 @@ export function DriverDialog({
               </div>
 
               <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Subcontractor Origin</Label>
+                <Label className="text-base font-bold font-black uppercase tracking-widest text-slate-500 ml-1">Subcontractor Origin</Label>
                 <Select value={formData.Sub_ID || "__independent__"} onValueChange={(val) => setFormData({ ...formData, Sub_ID: val === "__independent__" ? "" : val })}>
                     <SelectTrigger className="h-12 rounded-xl bg-white/5 border-white/10 text-white">
                         <SelectValue placeholder="Independent" />
@@ -217,7 +217,7 @@ export function DriverDialog({
               </div>
 
               <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Asset Allocation</Label>
+                <Label className="text-base font-bold font-black uppercase tracking-widest text-slate-500 ml-1">Asset Allocation</Label>
                 <Select value={formData.Vehicle_Plate || "__none__"} onValueChange={(val) => setFormData({ ...formData, Vehicle_Plate: val === "__none__" ? "" : val })}>
                     <SelectTrigger className="h-12 rounded-xl bg-white/5 border-white/10 text-white">
                         <SelectValue placeholder="No Vehicle" />
@@ -238,11 +238,11 @@ export function DriverDialog({
                  <div className="p-2 bg-emerald-500/20 rounded-xl">
                     <Landmark size={18} className="text-emerald-400" /> 
                  </div>
-                 <h4 className="text-[10px] font-black text-emerald-400 uppercase tracking-[0.3em]">Compensation Channel</h4>
+                 <h4 className="text-base font-bold font-black text-emerald-400 uppercase tracking-[0.3em]">Compensation Channel</h4>
             </div>
             
             <div className="space-y-2">
-                <Label className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Institution</Label>
+                <Label className="text-base font-bold font-black text-slate-500 uppercase tracking-widest">Institution</Label>
                 <Select value={formData.Bank_Name || "__none__"} onValueChange={(val) => setFormData({ ...formData, Bank_Name: val === "__none__" ? "" : val })}>
                     <SelectTrigger className="h-12 border-white/10 bg-black/20 text-white">
                         <SelectValue placeholder="Select Institution" />
@@ -258,7 +258,7 @@ export function DriverDialog({
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                    <Label className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Account Serial</Label>
+                    <Label className="text-base font-bold font-black text-slate-500 uppercase tracking-widest">Account Serial</Label>
                     <Input
                         value={formData.Bank_Account_No}
                         onChange={(e) => setFormData({ ...formData, Bank_Account_No: e.target.value })}
@@ -267,7 +267,7 @@ export function DriverDialog({
                     />
                 </div>
                 <div className="space-y-2">
-                    <Label className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Legal Account Name</Label>
+                    <Label className="text-base font-bold font-black text-slate-500 uppercase tracking-widest">Legal Account Name</Label>
                     <Input
                         value={formData.Bank_Account_Name}
                         onChange={(e) => setFormData({ ...formData, Bank_Account_Name: e.target.value })}
@@ -283,14 +283,14 @@ export function DriverDialog({
                 type="button" 
                 variant="ghost" 
                 onClick={() => setShow(false)}
-                className="h-14 px-8 rounded-2xl text-slate-500 font-black uppercase tracking-widest text-[10px] hover:text-white"
+                className="h-14 px-8 rounded-2xl text-slate-500 font-black uppercase tracking-widest text-base font-bold hover:text-white"
             >
               Abort
             </Button>
             <Button 
                 type="submit" 
                 disabled={loading} 
-                className="h-14 px-12 rounded-2xl bg-primary hover:brightness-110 text-white font-black uppercase tracking-widest text-[10px] shadow-xl shadow-primary/20 gap-3"
+                className="h-14 px-12 rounded-2xl bg-primary hover:brightness-110 text-white font-black uppercase tracking-widest text-base font-bold shadow-xl shadow-primary/20 gap-3"
             >
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save size={18} />}
               {mode === 'create' ? 'EXECUTE REGISTRATION' : 'SYNCHRONIZE DATA'}
@@ -301,3 +301,4 @@ export function DriverDialog({
     </Dialog>
   )
 }
+

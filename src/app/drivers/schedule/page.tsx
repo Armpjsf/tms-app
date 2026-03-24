@@ -27,7 +27,7 @@ export default async function DriverSchedulePage() {
       <div className="space-y-6">
         {/* Header */}
         <div>
-          <Link href="/drivers" className="flex items-center gap-2 text-gray-500 hover:text-emerald-600 transition-colors mb-3 text-sm font-bold">
+          <Link href="/drivers" className="flex items-center gap-2 text-gray-500 hover:text-emerald-600 transition-colors mb-3 text-xl font-bold">
             <ArrowLeft className="w-4 h-4" /> ย้อนกลับ
           </Link>
           <h1 className="text-3xl font-black text-gray-900 tracking-tight flex items-center gap-3">
@@ -36,14 +36,14 @@ export default async function DriverSchedulePage() {
             </div>
             ตารางเวร / ใบลาคนขับ
           </h1>
-          <p className="text-gray-500 font-medium mt-1 text-sm">จัดการใบลาคนขับ — อนุมัติ / ปฏิเสธ</p>
+          <p className="text-gray-500 font-medium mt-1 text-xl">จัดการใบลาคนขับ — อนุมัติ / ปฏิเสธ</p>
         </div>
 
         {/* Summary */}
         {pendingCount > 0 && (
           <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-center gap-3">
             <Clock size={20} className="text-amber-600" />
-            <p className="text-sm font-bold text-amber-700">มี {pendingCount} ใบลารออนุมัติ</p>
+            <p className="text-xl font-bold text-amber-700">มี {pendingCount} ใบลารออนุมัติ</p>
           </div>
         )}
 
@@ -57,7 +57,7 @@ export default async function DriverSchedulePage() {
             <div className="p-12 text-center text-gray-400">
               <CalendarDays size={48} strokeWidth={1.5} className="mx-auto mb-4" />
               <p className="font-bold text-lg">ไม่มีใบลาในเดือนนี้</p>
-              <p className="text-sm mt-1">คนขับสามารถแจ้งลาจากแอปมือถือได้</p>
+              <p className="text-xl mt-1">คนขับสามารถแจ้งลาจากแอปมือถือได้</p>
             </div>
           ) : (
             <div className="divide-y divide-gray-50">
@@ -80,20 +80,20 @@ export default async function DriverSchedulePage() {
                         <span className="flex items-center gap-1.5 font-bold text-gray-900">
                           <User size={14} /> {leave.Driver_Name || leave.Driver_ID}
                         </span>
-                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-black border ${leaveStyle}`}>
+                        <span className={`px-2 py-0.5 rounded-full text-base font-bold font-black border ${leaveStyle}`}>
                           {leave.Leave_Type}
                         </span>
-                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${statusStyle.bg} ${statusStyle.text}`}>
+                        <span className={`px-2 py-0.5 rounded-full text-base font-bold font-black ${statusStyle.bg} ${statusStyle.text}`}>
                           {statusStyle.label}
                         </span>
                       </div>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-lg font-bold text-gray-500">
                         📅 {startDate.toLocaleDateString('th-TH', { day: 'numeric', month: 'short' })}
                         {days > 1 ? ` — ${endDate.toLocaleDateString('th-TH', { day: 'numeric', month: 'short' })}` : ''}
                         {' '}({days} วัน)
                       </p>
                       {leave.Reason && (
-                        <p className="text-xs text-gray-400 mt-0.5">💬 {leave.Reason}</p>
+                        <p className="text-lg font-bold text-gray-400 mt-0.5">💬 {leave.Reason}</p>
                       )}
                     </div>
                   </div>
@@ -106,3 +106,4 @@ export default async function DriverSchedulePage() {
     </DashboardLayout>
   )
 }
+

@@ -40,9 +40,9 @@ export default async function TrackingPage(props: { params: Promise<{ jobId: str
         </div>
         <div className="space-y-3">
             <h1 className="text-4xl font-black text-white tracking-tighter uppercase italic">Target Not Found</h1>
-            <p className="text-slate-500 max-w-xs font-bold uppercase tracking-widest text-xs leading-relaxed italic">ไม่พบข้อมูลงานขนส่งในระบบ Neural Grid กรุณาตรวจสอบ ID หรือลองใหม่อีกครั้ง</p>
+            <p className="text-slate-500 max-w-xs font-bold uppercase tracking-widest text-lg font-bold leading-relaxed italic">ไม่พบข้อมูลงานขนส่งในระบบ Neural Grid กรุณาตรวจสอบ ID หรือลองใหม่อีกครั้ง</p>
         </div>
-        <Link href="/" className="px-10 py-4 bg-white/5 rounded-2xl border border-white/10 text-primary font-black uppercase tracking-[0.3em] text-[10px] hover:bg-primary hover:text-white transition-all shadow-xl">
+        <Link href="/" className="px-10 py-4 bg-white/5 rounded-2xl border border-white/10 text-primary font-black uppercase tracking-[0.3em] text-base font-bold hover:bg-primary hover:text-white transition-all shadow-xl">
             Return to Command Center
         </Link>
       </div>
@@ -79,7 +79,7 @@ export default async function TrackingPage(props: { params: Promise<{ jobId: str
                 <div className="p-12 md:p-16 space-y-10 relative z-10">
                     <div className="flex flex-col md:flex-row justify-between items-start gap-8">
                         <div className="space-y-4">
-                            <div className="flex items-center gap-4 text-primary font-black text-[10px] uppercase tracking-[0.5em] italic">
+                            <div className="flex items-center gap-4 text-primary font-black text-base font-bold uppercase tracking-[0.5em] italic">
                                 <div className="w-2.5 h-2.5 rounded-full bg-primary animate-pulse shadow-[0_0_15px_rgba(255,30,133,1)]" />
                                 <span>Tactical Vector Tracking</span>
                             </div>
@@ -87,7 +87,7 @@ export default async function TrackingPage(props: { params: Promise<{ jobId: str
                         </div>
                         <div className="flex flex-col items-end gap-3">
                             <Badge className={cn(
-                                "px-8 py-3 rounded-2xl text-[11px] font-black uppercase tracking-[0.3em] border shadow-2xl transition-all duration-700 italic",
+                                "px-8 py-3 rounded-2xl text-base font-bold font-black uppercase tracking-[0.3em] border shadow-2xl transition-all duration-700 italic",
                                 currentStepIndex === 4 
                                 ? 'bg-primary/20 text-primary border-primary/30 shadow-primary/10' 
                                 : 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30'
@@ -126,7 +126,7 @@ export default async function TrackingPage(props: { params: Promise<{ jobId: str
                                             <span className="relative z-10">{step.icon}</span>
                                         </div>
                                         <span className={cn(
-                                            "text-[9px] mt-4 font-black transition-colors uppercase tracking-[0.2em] italic",
+                                            "text-base font-bold mt-4 font-black transition-colors uppercase tracking-[0.2em] italic",
                                             isCompleted ? 'text-primary opacity-60' : 'text-slate-800'
                                         )}>
                                             {step.label}
@@ -143,11 +143,11 @@ export default async function TrackingPage(props: { params: Promise<{ jobId: str
             {job.lastLocation && (
                 <div className="bg-[#0c061d]/40 border border-white/5 overflow-hidden shadow-3xl rounded-[4rem] group hover:border-primary/20 transition-all duration-700">
                     <div className="px-10 py-6 border-b border-white/5 flex justify-between items-center bg-white/[0.02]">
-                        <div className="flex items-center gap-4 text-white font-black text-xs uppercase tracking-[0.2em] italic">
+                        <div className="flex items-center gap-4 text-white font-black text-lg font-bold uppercase tracking-[0.2em] italic">
                             <Target size={18} className="text-primary animate-pulse" strokeWidth={3} />
                             <span>Spatial Vector Fix</span>
                         </div>
-                        <div className="text-[10px] font-black text-slate-600 uppercase tracking-widest italic flex items-center gap-3">
+                        <div className="text-base font-bold font-black text-slate-600 uppercase tracking-widest italic flex items-center gap-3">
                             <Activity size={12} className="text-primary" />
                             SYNC_TIME: {new Date(job.lastLocation.timestamp).toLocaleTimeString('en-US', { hour12: false })}
                         </div>
@@ -178,11 +178,11 @@ export default async function TrackingPage(props: { params: Promise<{ jobId: str
 
                         <div className="grid grid-cols-2 gap-8">
                             <div className="bg-white/[0.03] p-6 rounded-3xl border border-white/5 hover:bg-white/[0.06] transition-all duration-500">
-                                <p className="text-[9px] uppercase font-black text-slate-600 mb-2 tracking-widest italic">Asset Descriptor</p>
+                                <p className="text-base font-bold uppercase font-black text-slate-600 mb-2 tracking-widest italic">Asset Descriptor</p>
                                 <p className="text-lg font-black text-white italic tracking-tight">{job.vehiclePlate.toUpperCase()}</p>
                             </div>
                             <div className="bg-white/[0.03] p-6 rounded-3xl border border-white/5 hover:bg-white/[0.06] transition-all duration-500">
-                                <p className="text-[9px] uppercase font-black text-slate-600 mb-2 tracking-widest italic">Mission Specialist</p>
+                                <p className="text-base font-bold uppercase font-black text-slate-600 mb-2 tracking-widest italic">Mission Specialist</p>
                                 <p className="text-lg font-black text-white italic tracking-tight">{job.driverName?.toUpperCase() || 'UNASSIGNED'}</p>
                             </div>
                         </div>
@@ -191,14 +191,14 @@ export default async function TrackingPage(props: { params: Promise<{ jobId: str
                             <div className="flex gap-6 p-8 bg-indigo-500/5 rounded-[2.5rem] border border-indigo-500/10 hover:bg-indigo-500/10 transition-all group/item">
                                 <div className="mt-1"><div className="w-4 h-4 rounded-full bg-indigo-500 ring-4 ring-indigo-500/20 group-hover/item:animate-pulse" /></div>
                                 <div>
-                                    <p className="text-[9px] uppercase font-black text-slate-500 mb-2 tracking-widest italic">Origin Node (Inception)</p>
-                                    <p className="text-sm text-slate-300 font-bold uppercase tracking-tight">{job.origin}</p>
+                                    <p className="text-base font-bold uppercase font-black text-slate-500 mb-2 tracking-widest italic">Origin Node (Inception)</p>
+                                    <p className="text-xl text-slate-300 font-bold uppercase tracking-tight">{job.origin}</p>
                                 </div>
                             </div>
                             <div className="flex gap-6 p-8 bg-primary/5 rounded-[2.5rem] border border-primary/10 hover:bg-primary/10 transition-all group/item">
                                 <div className="mt-1"><MapPin size={20} className="text-primary group-hover/item:animate-bounce" strokeWidth={3} /></div>
                                 <div>
-                                    <p className="text-[9px] uppercase font-black text-slate-500 mb-2 tracking-widest italic">Destination Node (Terminus)</p>
+                                    <p className="text-base font-bold uppercase font-black text-slate-500 mb-2 tracking-widest italic">Destination Node (Terminus)</p>
                                     <p className="text-lg text-white font-black uppercase tracking-tight italic">{job.destination}</p>
                                 </div>
                             </div>
@@ -219,7 +219,7 @@ export default async function TrackingPage(props: { params: Promise<{ jobId: str
                             <div className="space-y-12">
                                 {job.pickupPhotos.length > 0 && (
                                     <div className="space-y-6">
-                                        <p className="text-[10px] font-black text-slate-600 px-2 uppercase tracking-[0.3em] italic">Inception Point Data (Pickup)</p>
+                                        <p className="text-base font-bold font-black text-slate-600 px-2 uppercase tracking-[0.3em] italic">Inception Point Data (Pickup)</p>
                                         <div className="grid grid-cols-2 gap-6">
                                             {job.pickupPhotos.map((url, i) => (
                                                 <div key={i} className="aspect-video relative rounded-[2rem] overflow-hidden border border-white/5 bg-black/40 shadow-inner group/photo cursor-pointer">
@@ -235,7 +235,7 @@ export default async function TrackingPage(props: { params: Promise<{ jobId: str
 
                                 {job.podPhotos.length > 0 && (
                                     <div className="space-y-6">
-                                        <p className="text-[10px] font-black text-slate-600 px-2 uppercase tracking-[0.3em] italic">Terminus Point Data (POD)</p>
+                                        <p className="text-base font-bold font-black text-slate-600 px-2 uppercase tracking-[0.3em] italic">Terminus Point Data (POD)</p>
                                         <div className="grid grid-cols-2 gap-6">
                                             {job.podPhotos.map((url, i) => (
                                                 <div key={i} className="aspect-video relative rounded-[2rem] overflow-hidden border border-white/5 bg-black/40 shadow-inner group/photo cursor-pointer">
@@ -253,7 +253,7 @@ export default async function TrackingPage(props: { params: Promise<{ jobId: str
                                     <div className="grid grid-cols-2 gap-8 pt-4">
                                         {job.pickupSignature && (
                                             <div className="space-y-4">
-                                                <p className="text-[9px] uppercase font-black text-slate-700 text-center tracking-widest italic">Inception Identifier</p>
+                                                <p className="text-base font-bold uppercase font-black text-slate-700 text-center tracking-widest italic">Inception Identifier</p>
                                                 <div className="h-28 bg-white/[0.9] rounded-[1.5rem] overflow-hidden relative border border-white/10 group-hover:bg-white transition-colors duration-500">
                                                     <Image src={job.pickupSignature} alt="Pickup Sig" fill className="object-contain p-6" />
                                                 </div>
@@ -261,7 +261,7 @@ export default async function TrackingPage(props: { params: Promise<{ jobId: str
                                         )}
                                         {job.signature && (
                                             <div className="space-y-4">
-                                                <p className="text-[9px] uppercase font-black text-slate-700 text-center tracking-widest italic">Terminus Identifier</p>
+                                                <p className="text-base font-bold uppercase font-black text-slate-700 text-center tracking-widest italic">Terminus Identifier</p>
                                                 <div className="h-28 bg-white/[0.9] rounded-[1.5rem] overflow-hidden relative border border-white/10 group-hover:bg-white transition-colors duration-500">
                                                     <Image src={job.signature} alt="POD Sig" fill className="object-contain p-6" />
                                                 </div>
@@ -288,7 +288,7 @@ export default async function TrackingPage(props: { params: Promise<{ jobId: str
                     <Zap size={14} className="text-primary" />
                     <div className="w-12 h-px bg-slate-800" />
                 </div>
-                <p className="text-[10px] text-slate-700 font-black uppercase tracking-[0.6em] italic">
+                <p className="text-base font-bold text-slate-700 font-black uppercase tracking-[0.6em] italic">
                     © 2026 LOGISPRO ELITE • SPATIAL INTELLIGENCE GRID
                 </p>
             </div>

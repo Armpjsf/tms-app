@@ -18,6 +18,7 @@ import {
   ChevronLeft,
   Activity,
   Users,
+  Building,
   CalendarDays,
   Receipt,
   Wallet,
@@ -69,6 +70,7 @@ const navigation: NavGroup[] = [
     titleKey: "nav_groups.asset_control",
     items: [
       { titleKey: "navigation.drivers", href: "/drivers", icon: <Users size={20} /> },
+      { titleKey: "navigation.customers", href: "/settings/customers", icon: <Building size={20} /> },
       { titleKey: "navigation.fleet", href: "/vehicles", icon: <Truck size={20} /> },
       { titleKey: "navigation.checks", href: "/admin/vehicle-checks", icon: <CheckCircle2 size={20} /> },
       { titleKey: "navigation.maintenance", href: "/maintenance", icon: <Wrench size={20} /> },
@@ -211,7 +213,7 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
               </div>
               <div className="flex flex-col">
                 <h1 className="text-white font-black text-2xl leading-none tracking-tighter drop-shadow-[0_0_10px_rgba(255,255,255,0.3)] uppercase">LOGIS<span className="text-primary italic">PRO</span></h1>
-                <p className="text-[10px] text-primary font-black tracking-[0.4em] uppercase opacity-90 leading-tight mt-1">COMMAND<br/>CENTRE</p>
+                <p className="text-base font-bold text-primary font-black tracking-[0.4em] uppercase opacity-90 leading-tight mt-1">COMMAND<br/>CENTRE</p>
               </div>
             </motion.div>
           )}
@@ -239,7 +241,7 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
             {filteredNavigation.map((group) => (
               <div key={group.titleKey} className="space-y-4">
                 {!collapsed && (
-                  <h2 className="px-4 text-[10px] font-black uppercase tracking-[0.4em] text-slate-500/80">
+                  <h2 className="px-4 text-base font-bold font-black uppercase tracking-[0.4em] text-slate-500/80">
                     {t(group.titleKey)}
                   </h2>
                 )}
@@ -272,7 +274,7 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
                           
                           {!collapsed && (
                             <span className={cn(
-                                "text-sm font-black tracking-tight",
+                                "text-xl font-black tracking-tight",
                                 isActive ? "text-white" : "text-slate-400 group-hover:text-slate-200"
                             )}>
                                 {t(item.titleKey)}
@@ -281,7 +283,7 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
                           
                           {item.badge && !collapsed && (
                             <span className={cn(
-                                "ml-auto px-2 py-0.5 text-[8px] font-black rounded-lg border",
+                                "ml-auto px-2 py-0.5 text-base font-bold font-black rounded-lg border",
                                 item.badgeColor === "red" && "bg-red-500/10 text-red-500 border-red-500/20",
                                 item.badgeColor === "blue" && "bg-blue-500/10 text-blue-500 border-blue-500/20",
                                 item.badgeColor === "green" && "bg-primary/10 text-primary border-primary/20",
@@ -331,3 +333,4 @@ function SidebarSkeleton({ collapsed }: { collapsed: boolean }) {
     </div>
   )
 }
+

@@ -99,7 +99,7 @@ export function CameraInput({ onImagesChange, maxImages = 5 }: Props) {
                     className="aspect-video rounded-xl border-2 border-dashed border-gray-200 bg-white/80 flex flex-col items-center justify-center gap-2 text-gray-400 hover:text-gray-700 hover:border-slate-500 transition-colors active:bg-gray-100"
                 >
                     <Plus size={24} />
-                    <span className="text-xs">เพิ่มรูป</span>
+                    <span className="text-lg font-bold">เพิ่มรูป</span>
                 </button>
             )}
         </div>
@@ -115,9 +115,10 @@ export function CameraInput({ onImagesChange, maxImages = 5 }: Props) {
           <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center">
             <Camera size={24} />
           </div>
-          <span className="text-sm font-medium">ถ่ายรูปสินค้า ({files.length}/{maxImages})</span>
+          <span className="text-xl font-medium">ถ่ายรูปสินค้า ({files.length}/{maxImages})</span>
         </button>
       )}
     </div>
   )
 }
+

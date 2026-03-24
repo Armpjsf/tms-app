@@ -72,7 +72,7 @@ export default async function DamageReportsPage() {
             <div className="absolute top-0 right-0 w-80 h-80 bg-rose-500/10 blur-[120px] rounded-full -mr-40 -mt-40 pointer-events-none" />
             
             <div className="relative z-10 space-y-8">
-                <Link href="/reports" className="inline-flex items-center gap-2 text-slate-500 hover:text-rose-500 transition-all font-black uppercase tracking-[0.4em] text-[10px] group/back italic">
+                <Link href="/reports" className="inline-flex items-center gap-2 text-slate-500 hover:text-rose-500 transition-all font-black uppercase tracking-[0.4em] text-base font-bold group/back italic">
                     <ArrowLeft className="w-4 h-4 group-hover/back:-translate-x-1 transition-transform" /> 
                     Reporting Center
                 </Link>
@@ -84,7 +84,7 @@ export default async function DamageReportsPage() {
                         <h1 className="text-5xl font-black text-white tracking-widest uppercase leading-none italic premium-text-gradient">
                             Damage Intel
                         </h1>
-                        <p className="text-[10px] font-black text-rose-500 uppercase tracking-[0.6em] mt-2 opacity-80 italic italic">Asset Integrity & Logistical Fault Management</p>
+                        <p className="text-base font-bold font-black text-rose-500 uppercase tracking-[0.6em] mt-2 opacity-80 italic italic">Asset Integrity & Logistical Fault Management</p>
                     </div>
                 </div>
             </div>
@@ -92,11 +92,11 @@ export default async function DamageReportsPage() {
             <div className="flex flex-col items-end gap-4 relative z-10">
                 <div className="bg-rose-500/10 border border-rose-500/20 px-8 py-4 rounded-2xl flex items-center gap-4 backdrop-blur-md">
                     <div className="w-3 h-3 rounded-full bg-rose-500 animate-ping shadow-[0_0_15px_rgba(244,63,94,1)]" />
-                    <span className="text-sm font-black text-rose-500 uppercase tracking-widest italic">{pendingCount} CRITICAL INCIDENTS DETECTED</span>
+                    <span className="text-xl font-black text-rose-500 uppercase tracking-widest italic">{pendingCount} CRITICAL INCIDENTS DETECTED</span>
                 </div>
                 <div className="flex items-center gap-4 bg-white/5 p-4 rounded-2xl border border-white/10">
                    <ShieldAlert className="text-rose-500" size={18} />
-                   <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">Threat Intelligence: ACTIVE</span>
+                   <span className="text-base font-bold font-black text-slate-400 uppercase tracking-[0.3em]">Threat Intelligence: ACTIVE</span>
                 </div>
             </div>
         </div>
@@ -110,7 +110,7 @@ export default async function DamageReportsPage() {
             ].map((stat, i) => (
                <PremiumCard key={i} className="p-8 group hover:border-rose-500/40 transition-all duration-500 border-white/5 bg-[#0a0518]/40 backdrop-blur-xl">
                    <div className="flex justify-between items-start mb-4">
-                      <span className={cn("text-[10px] font-black uppercase tracking-widest", stat.color === 'rose' ? 'text-rose-500' : 'text-slate-500')}>{stat.label}</span>
+                      <span className={cn("text-base font-bold font-black uppercase tracking-widest", stat.color === 'rose' ? 'text-rose-500' : 'text-slate-500')}>{stat.label}</span>
                       <stat.icon className="text-rose-500 opacity-20 group-hover:opacity-100 transition-opacity" size={20} />
                    </div>
                    <p className="text-4xl font-black text-white italic tracking-tighter mb-2">{stat.value}</p>
@@ -129,7 +129,7 @@ export default async function DamageReportsPage() {
                 </div>
                 <div>
                     <h2 className="text-3xl font-black text-white tracking-[0.2em] uppercase italic">Incident Registry</h2>
-                    <p className="text-[10px] font-black text-rose-500/60 uppercase tracking-[0.5em] mt-2 italic italic">Zero-parity fault stream telemetry</p>
+                    <p className="text-base font-bold font-black text-rose-500/60 uppercase tracking-[0.5em] mt-2 italic italic">Zero-parity fault stream telemetry</p>
                 </div>
             </div>
 
@@ -137,7 +137,7 @@ export default async function DamageReportsPage() {
               <Search size={22} className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-600 group-focus-within/search:text-rose-500 transition-colors" />
               <input 
                 placeholder="SCAN_PROTOCOL_OR_ASSET..." 
-                className="w-full h-18 bg-[#0a0518] border-white/5 rounded-3xl pl-16 pr-8 text-xs font-black uppercase tracking-[0.2em] focus:border-rose-500/50 transition-all text-white placeholder:text-slate-700 italic shadow-inner"
+                className="w-full h-18 bg-[#0a0518] border-white/5 rounded-3xl pl-16 pr-8 text-lg font-bold font-black uppercase tracking-[0.2em] focus:border-rose-500/50 transition-all text-white placeholder:text-slate-700 italic shadow-inner"
               />
             </div>
           </div>
@@ -146,7 +146,7 @@ export default async function DamageReportsPage() {
             {reports.length === 0 ? (
               <div className="p-40 text-center opacity-20">
                 <AlertOctagon size={80} strokeWidth={1} className="mx-auto mb-8 text-rose-500 animate-pulse" />
-                <p className="text-sm font-black text-white uppercase tracking-[0.8em]">All Channels Clear // No Intercepts</p>
+                <p className="text-xl font-black text-white uppercase tracking-[0.8em]">All Channels Clear // No Intercepts</p>
               </div>
             ) : (
               reports.map((report) => {
@@ -174,15 +174,15 @@ export default async function DamageReportsPage() {
                             ID: {report.Job_ID}
                           </span>
                         </Link>
-                        <div className={cn("px-5 py-2 rounded-full text-[10px] font-black border uppercase tracking-widest italic", categoryStyle)}>
+                        <div className={cn("px-5 py-2 rounded-full text-base font-bold font-black border uppercase tracking-widest italic", categoryStyle)}>
                           {report.Reason_Category}
                         </div>
-                        <div className={cn("px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-[0.2em] shadow-lg italic", statusStyle.bg, statusStyle.text)}>
+                        <div className={cn("px-6 py-2 rounded-full text-base font-bold font-black uppercase tracking-[0.2em] shadow-lg italic", statusStyle.bg, statusStyle.text)}>
                           {statusStyle.label}
                         </div>
                         <div className="flex items-center gap-3 ml-auto opacity-40 group-hover/row:opacity-100 transition-opacity">
                              <Clock size={16} className="text-slate-500" />
-                             <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest italic">
+                             <span className="text-base font-bold font-black text-slate-500 uppercase tracking-widest italic">
                                TS: {date.toLocaleDateString('th-TH')} {date.toLocaleTimeString('th-TH')}
                              </span>
                         </div>
@@ -194,7 +194,7 @@ export default async function DamageReportsPage() {
                                      <User size={18} strokeWidth={2.5} />
                                 </div>
                                 <div className="flex flex-col">
-                                     <span className="text-[9px] font-black text-slate-600 uppercase tracking-[0.4em] mb-1">Signal Source</span>
+                                     <span className="text-base font-bold font-black text-slate-600 uppercase tracking-[0.4em] mb-1">Signal Source</span>
                                      <span className="text-base font-black text-white tracking-widest uppercase italic">{report.Driver_Name || "OP_ALPHA"}</span>
                                 </div>
                            </div>
@@ -203,7 +203,7 @@ export default async function DamageReportsPage() {
                                      <Truck size={18} strokeWidth={2.5} />
                                 </div>
                                 <div className="flex flex-col">
-                                     <span className="text-[9px] font-black text-slate-600 uppercase tracking-[0.4em] mb-1">Asset Entity</span>
+                                     <span className="text-base font-bold font-black text-slate-600 uppercase tracking-[0.4em] mb-1">Asset Entity</span>
                                      <span className="text-base font-black text-white tracking-widest uppercase italic font-sans">{report.Vehicle_Plate || "FIELD_UNIT"}</span>
                                 </div>
                            </div>
@@ -212,7 +212,7 @@ export default async function DamageReportsPage() {
                       <div className="bg-black/40 p-10 rounded-[2.5rem] border border-white/5 shadow-inner relative group/intel">
                            <div className="absolute top-4 right-6 flex items-center gap-3 opacity-20 group-hover/intel:opacity-100 transition-opacity">
                                 <FileText size={14} className="text-rose-500" />
-                                <span className="text-[9px] font-black text-slate-700 uppercase tracking-[0.5em]">Intel Narrative</span>
+                                <span className="text-base font-bold font-black text-slate-700 uppercase tracking-[0.5em]">Intel Narrative</span>
                            </div>
                            <p className="text-base font-bold text-slate-400 leading-relaxed italic border-l-4 border-rose-500/20 pl-8 group-hover/intel:text-white transition-colors duration-500">
                                 {report.Description || 'Registry transmission incomplete // No narrative provided.'}
@@ -222,12 +222,12 @@ export default async function DamageReportsPage() {
 
                     <div className="lg:w-72 flex flex-col items-center lg:items-end justify-between gap-10 lg:pl-12 lg:border-l border-white/5">
                          <div className="text-right">
-                              <span className="text-[10px] font-black text-slate-600 uppercase tracking-[0.5em] block mb-2">INCIDENT_TS</span>
+                              <span className="text-base font-bold font-black text-slate-600 uppercase tracking-[0.5em] block mb-2">INCIDENT_TS</span>
                               <span className="text-lg font-black text-white tracking-widest uppercase italic bg-rose-500/5 px-6 py-2 rounded-2xl border border-rose-500/10 block w-fit ml-auto">
                                 {new Date(report.Incident_Date).toLocaleDateString('th-TH')}
                               </span>
                          </div>
-                         <PremiumButton className="w-full h-18 rounded-3xl gap-4 shadow-[0_20px_50px_rgba(244,63,94,0.3)] group-hover/row:scale-105 transition-all text-sm tracking-widest bg-rose-600 hover:bg-rose-700 border-0">
+                         <PremiumButton className="w-full h-18 rounded-3xl gap-4 shadow-[0_20px_50px_rgba(244,63,94,0.3)] group-hover/row:scale-105 transition-all text-xl tracking-widest bg-rose-600 hover:bg-rose-700 border-0">
                               <Target size={20} /> ANALYZE VECTOR
                          </PremiumButton>
                     </div>
@@ -241,3 +241,4 @@ export default async function DamageReportsPage() {
     </DashboardLayout>
   )
 }
+

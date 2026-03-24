@@ -91,14 +91,14 @@ export function QRScannerModal({ isOpen, onOpenChange, onScanSuccess }: QRScanne
           {!isStarted && !error && (
             <div className="absolute inset-0 flex flex-col items-center justify-center space-y-4">
                <RefreshCw size={32} className="text-primary animate-spin" />
-               <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">กำลังเริ่มต้นกล้อง...</p>
+               <p className="text-base font-bold font-bold text-slate-500 uppercase tracking-widest">กำลังเริ่มต้นกล้อง...</p>
             </div>
           )}
 
           {error && (
             <div className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center space-y-4">
                <Camera size={40} className="text-red-500 opacity-50" />
-               <p className="text-xs font-bold text-red-400 leading-relaxed">{error}</p>
+               <p className="text-lg font-bold font-bold text-red-400 leading-relaxed">{error}</p>
                <Button variant="outline" size="sm" onClick={() => window.location.reload()} className="border-white/10 text-white">
                  ลองใหม่อีกครั้ง
                </Button>
@@ -112,13 +112,13 @@ export function QRScannerModal({ isOpen, onOpenChange, onScanSuccess }: QRScanne
           </div>
         </div>
 
-        <p className="text-center text-slate-500 text-[10px] font-bold uppercase tracking-widest mt-6">
+        <p className="text-center text-slate-500 text-base font-bold font-bold uppercase tracking-widest mt-6">
           วางรหัสคิวอาร์ให้อยู่ในกรอบเพื่อสแกน
         </p>
 
         <Button 
           onClick={() => onOpenChange(false)}
-          className="w-full h-14 mt-6 bg-white/5 hover:bg-white/10 text-white rounded-2xl font-black uppercase tracking-widest text-[10px] border border-white/10"
+          className="w-full h-14 mt-6 bg-white/5 hover:bg-white/10 text-white rounded-2xl font-black uppercase tracking-widest text-base font-bold border border-white/10"
         >
           ยกเลิก
         </Button>
@@ -126,3 +126,4 @@ export function QRScannerModal({ isOpen, onOpenChange, onScanSuccess }: QRScanne
     </Dialog>
   )
 }
+

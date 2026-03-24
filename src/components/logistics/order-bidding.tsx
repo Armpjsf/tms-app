@@ -69,7 +69,7 @@ export function OrderBidding({ orders = [] }: OrderBiddingProps) {
                             <Activity className="text-emerald-500" />
                             {t('logistics.marketplace')}
                         </CardTitle>
-                        <p className="text-xs text-gray-500 font-bold tracking-wide mt-1">
+                        <p className="text-lg font-bold text-gray-500 font-bold tracking-wide mt-1">
                             {t('logistics.driver_bids')}: ตรวจสอบและคัดเลือกข้อเสนอจากคนขับ
                         </p>
                     </div>
@@ -96,8 +96,8 @@ export function OrderBidding({ orders = [] }: OrderBiddingProps) {
                                     >
                                         <div className="flex-1 space-y-4">
                                             <div className="flex items-center justify-between">
-                                                <span className="text-xs font-black text-emerald-500 uppercase tracking-widest">{order.Job_ID}</span>
-                                                <div className="flex items-center gap-1 text-orange-500 font-bold text-xs">
+                                                <span className="text-lg font-bold font-black text-emerald-500 uppercase tracking-widest">{order.Job_ID}</span>
+                                                <div className="flex items-center gap-1 text-orange-500 font-bold text-lg font-bold">
                                                     <Clock size={14} /> รอเสนอราคา
                                                 </div>
                                             </div>
@@ -106,7 +106,7 @@ export function OrderBidding({ orders = [] }: OrderBiddingProps) {
                                                 <h4 className="text-lg font-bold text-gray-900 leading-tight">
                                                     {order.Route_Name || 'ไม่ระบุเส้นทาง'}
                                                 </h4>
-                                                <div className="flex items-center gap-2 text-gray-700 text-sm font-medium bg-gray-100/50 p-2 rounded-lg inline-flex">
+                                                <div className="flex items-center gap-2 text-gray-700 text-xl font-medium bg-gray-100/50 p-2 rounded-lg inline-flex">
                                                     <MapPin size={14} className="text-emerald-500" />
                                                     {order.Origin_Location}
                                                     <ArrowRight size={12} className="text-gray-400" />
@@ -115,7 +115,7 @@ export function OrderBidding({ orders = [] }: OrderBiddingProps) {
                                             </div>
 
                                             <div className="flex items-center gap-4">
-                                                <div className="flex items-center gap-1.5 text-gray-500 text-xs font-bold">
+                                                <div className="flex items-center gap-1.5 text-gray-500 text-lg font-bold font-bold">
                                                     <Truck size={14} /> {order.Vehicle_Type || 'ไม่ระบุ'}
                                                 </div>
                                             </div>
@@ -123,7 +123,7 @@ export function OrderBidding({ orders = [] }: OrderBiddingProps) {
 
                                         <div className="flex items-center justify-between md:flex-col md:justify-center md:items-end md:w-48 gap-4 border-t md:border-t-0 md:border-l border-gray-100 pt-4 md:pt-0 pl-0 md:pl-6">
                                             <div className="text-left md:text-right">
-                                                <p className="text-[10px] uppercase tracking-wider text-gray-500 font-bold mb-1">
+                                                <p className="text-base font-bold uppercase tracking-wider text-gray-500 font-bold mb-1">
                                                     {t('logistics.base_price')}
                                                 </p>
                                                 <p className="text-lg font-black text-gray-900">
@@ -131,7 +131,7 @@ export function OrderBidding({ orders = [] }: OrderBiddingProps) {
                                                 </p>
                                             </div>
                                             <button 
-                                                className={`h-10 px-4 rounded-xl font-bold text-xs gap-2 border border-gray-200 hover:bg-gray-100 flex items-center ${expandedJobId === order.Job_ID ? 'bg-gray-100' : ''}`}
+                                                className={`h-10 px-4 rounded-xl font-bold text-lg font-bold gap-2 border border-gray-200 hover:bg-gray-100 flex items-center ${expandedJobId === order.Job_ID ? 'bg-gray-100' : ''}`}
                                             >
                                                 ดูราคาเสนอ <ChevronDown size={14} className={`transition-transform ${expandedJobId === order.Job_ID ? 'rotate-180' : ''}`} />
                                             </button>
@@ -153,7 +153,7 @@ export function OrderBidding({ orders = [] }: OrderBiddingProps) {
                                                     </h5>
                                                     
                                                     {loadingBids[order.Job_ID] ? (
-                                                        <div className="text-center py-8 text-gray-400 text-sm flex items-center justify-center gap-2">
+                                                        <div className="text-center py-8 text-gray-400 text-xl flex items-center justify-center gap-2">
                                                             <div className="w-4 h-4 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
                                                             กำลังโหลดข้อมูล...
                                                         </div>
@@ -171,12 +171,12 @@ export function OrderBidding({ orders = [] }: OrderBiddingProps) {
                                                                         </div>
                                                                         <div>
                                                                             <p className="font-bold text-gray-900">{bid.driver_name}</p>
-                                                                            <p className="text-xs text-gray-500">เสนอเมื่อ {new Date(bid.created_at).toLocaleString('th-TH')}</p>
+                                                                            <p className="text-lg font-bold text-gray-500">เสนอเมื่อ {new Date(bid.created_at).toLocaleString('th-TH')}</p>
                                                                         </div>
                                                                     </div>
                                                                     <div className="flex items-center justify-between w-full sm:w-auto gap-6 bg-gray-50 px-4 py-2 rounded-lg">
                                                                         <div className="text-right">
-                                                                            <p className="text-[10px] uppercase font-bold text-gray-500">ราคาที่เสนอ</p>
+                                                                            <p className="text-base font-bold uppercase font-bold text-gray-500">ราคาที่เสนอ</p>
                                                                             <p className="text-lg font-black text-emerald-600">฿{bid.bid_amount.toLocaleString()}</p>
                                                                         </div>
                                                                         <Button 
@@ -211,10 +211,11 @@ export function OrderBidding({ orders = [] }: OrderBiddingProps) {
                             <Activity className="text-gray-400 w-8 h-8" />
                         </div>
                         <h4 className="text-lg font-bold text-gray-900 mb-1">ไม่มีงานอยู่ระหว่างการประมูล</h4>
-                        <p className="text-sm text-gray-500">งานที่เปิดให้ประมูลและรอการตอบรับจะแสดงที่นี่</p>
+                        <p className="text-xl text-gray-500">งานที่เปิดให้ประมูลและรอการตอบรับจะแสดงที่นี่</p>
                     </motion.div>
                 )}
             </div>
         </div>
     )
 }
+

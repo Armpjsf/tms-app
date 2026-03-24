@@ -293,9 +293,9 @@ export async function getDriverJobs(
   options: { startDate?: string, endDate?: string, status?: string } = {}
 ): Promise<Job[]> {
   try {
-    const isAdmin = await isSuperAdmin()
-    const branchId = await getUserBranchId()
-    const supabase = isAdmin ? await createAdminClient() : await createClient()
+    // USE admin client for driver-specific queries to bypass RLS 
+    // since drivers use custom cookie auth, not Supabase Auth
+    const supabase = createAdminClient()
     
     let query = supabase
       .from('Jobs_Main')
@@ -340,13 +340,13 @@ export async function getDriverJobs(
 // ดึงรายละเอียดงาน By ID
 export async function getJobById(jobId: string): Promise<Job | null> {
     try {
+        const driverSession = await getDriverSession()
         const isAdmin = await isSuperAdmin()
         const branchId = await getUserBranchId()
         const customerId = await getCustomerId()
-        const supabase = isAdmin ? await createAdminClient() : await createClient()
         
-        // For driver-specific checks, we look at the session first
-        const driverSession = await getDriverSession()
+        // Use admin client if it's a driver or super admin
+        const supabase = (isAdmin || driverSession) ? createAdminClient() : await createClient()
 
         let query = supabase
             .from('Jobs_Main')
@@ -672,8 +672,8 @@ export async function getJobsForBilling(startDate?: string, endDate?: string): P
 // ดึงข้อมูล Dashboard สำหรับ Driver (Mobile)
 export async function getDriverDashboardStats(driverId: string) {
   try {
-    const isAdmin = await isSuperAdmin()
-    const supabase = isAdmin ? await createAdminClient() : await createClient()
+    // Use admin client to bypass RLS as drivers use custom session
+    const supabase = createAdminClient()
     const today = new Date().toISOString().split('T')[0]
     
     // 1. Get ALL jobs for this driver (not just today) that are not cancelled

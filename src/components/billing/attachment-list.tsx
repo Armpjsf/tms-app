@@ -115,8 +115,8 @@ export function AttachmentList({ billingNoteId, readonly = false }: AttachmentLi
                                         <FileText className="w-5 h-5" />
                                     </div>
                                     <div className="truncate">
-                                        <p className="text-sm font-medium text-white truncate max-w-[200px] md:max-w-md">{file.File_Name}</p>
-                                        <p className="text-xs text-gray-500">{new Date(file.Uploaded_At).toLocaleString('th-TH')}</p>
+                                        <p className="text-xl font-medium text-white truncate max-w-[200px] md:max-w-md">{file.File_Name}</p>
+                                        <p className="text-lg font-bold text-gray-500">{new Date(file.Uploaded_At).toLocaleString('th-TH')}</p>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2">
@@ -137,3 +137,4 @@ export function AttachmentList({ billingNoteId, readonly = false }: AttachmentLi
         </Card>
     )
 }
+

@@ -48,12 +48,12 @@ export default function InvoicesClient({ initialInvoices, query }: InvoicesClien
                 <div className="p-2 bg-primary/20 rounded-xl shadow-lg">
                     <FileText className="text-primary" size={20} />
                 </div>
-                <h2 className="text-[10px] font-black text-primary uppercase tracking-[0.4em]">FINANCIAL PROTOCOL</h2>
+                <h2 className="text-base font-bold font-black text-primary uppercase tracking-[0.4em]">FINANCIAL PROTOCOL</h2>
             </div>
             <h1 className="text-6xl font-black text-white tracking-tighter flex items-center gap-5 uppercase premium-text-gradient">
                 {t('invoices.title')}
             </h1>
-            <p className="text-slate-500 font-bold text-sm tracking-wide opacity-80 uppercase tracking-widest leading-relaxed">
+            <p className="text-slate-500 font-bold text-xl tracking-wide opacity-80 uppercase tracking-widest leading-relaxed">
               Tax compliance, automated invoicing & fiscal documentation vault
             </p>
         </div>
@@ -73,12 +73,12 @@ export default function InvoicesClient({ initialInvoices, query }: InvoicesClien
           <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent pointer-events-none" />
           <div className="flex items-end justify-between gap-8 relative z-10">
             <div className="flex-1 max-w-2xl space-y-3">
-              <Label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 ml-2">Search Invoice Matrix</Label>
+              <Label className="text-base font-bold font-black uppercase tracking-[0.3em] text-slate-500 ml-2">Search Invoice Matrix</Label>
               <div className="relative group/search">
                 <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-500 group-hover/search:text-primary transition-colors duration-300" size={20} />
                 <Input
                     placeholder="SCAN BY INVOICE ID, ENTITY OR FISCAL CODE..."
-                    className="w-full h-16 bg-white/5 border-white/5 text-white font-black rounded-2xl pl-16 pr-6 uppercase tracking-widest text-sm focus:bg-white/10 transition-all border-2 focus:border-primary/30"
+                    className="w-full h-16 bg-white/5 border-white/5 text-white font-black rounded-2xl pl-16 pr-6 uppercase tracking-widest text-xl focus:bg-white/10 transition-all border-2 focus:border-primary/30"
                     defaultValue={query}
                 />
               </div>
@@ -86,7 +86,7 @@ export default function InvoicesClient({ initialInvoices, query }: InvoicesClien
             
             <PremiumButton variant="outline" className="h-16 px-10 rounded-2xl border-white/5 bg-white/5 gap-4">
                 <Activity className="w-5 h-5" />
-                <span className="font-black uppercase tracking-widest text-[10px]">EXECUTE RECONCILIATION</span>
+                <span className="font-black uppercase tracking-widest text-base font-bold">EXECUTE RECONCILIATION</span>
             </PremiumButton>
           </div>
       </div>
@@ -98,11 +98,11 @@ export default function InvoicesClient({ initialInvoices, query }: InvoicesClien
         <div className="flex flex-col lg:flex-row lg:items-center justify-between p-12 gap-8 relative z-10">
           <div className="space-y-2">
             <h3 className="text-2xl font-black text-white tracking-tighter uppercase premium-text-gradient">Tax Compliance Ledger</h3>
-            <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.4em]">Official Fiscal Node Repository</p>
+            <p className="text-base font-bold font-black text-slate-500 uppercase tracking-[0.4em]">Official Fiscal Node Repository</p>
           </div>
           
           <div className="flex items-center gap-4">
-              <div className="px-5 py-2 rounded-full bg-white/5 border border-white/5 text-[9px] font-black text-emerald-500 uppercase tracking-widest flex items-center gap-2">
+              <div className="px-5 py-2 rounded-full bg-white/5 border border-white/5 text-base font-bold font-black text-emerald-500 uppercase tracking-widest flex items-center gap-2">
                   <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                   REAL-TIME SYNC ACTIVE
               </div>
@@ -110,15 +110,15 @@ export default function InvoicesClient({ initialInvoices, query }: InvoicesClien
         </div>
 
         <div className="relative w-full overflow-auto custom-scrollbar">
-            <table className="w-full text-sm text-left border-collapse">
+            <table className="w-full text-xl text-left border-collapse">
               <thead>
                 <tr className="bg-white/[0.02] border-b border-white/5">
-                  <th className="px-12 py-10 text-[9px] font-black uppercase tracking-[0.4em] text-slate-500">Invoice Identity</th>
-                  <th className="px-8 py-10 text-[9px] font-black uppercase tracking-[0.4em] text-slate-500">Commercial Entity</th>
-                  <th className="px-8 py-10 text-[9px] font-black uppercase tracking-[0.4em] text-slate-500 text-center">Issue Vector</th>
-                  <th className="px-8 py-10 text-[9px] font-black uppercase tracking-[0.4em] text-slate-500 text-center">Settlement Due</th>
-                  <th className="px-8 py-10 text-[9px] font-black uppercase tracking-[0.4em] text-slate-500 text-right">Net Value</th>
-                  <th className="px-12 py-10 text-[9px] font-black uppercase tracking-[0.4em] text-slate-500 text-center">Protocol Status</th>
+                  <th className="px-12 py-10 text-base font-bold font-black uppercase tracking-[0.4em] text-slate-500">Invoice Identity</th>
+                  <th className="px-8 py-10 text-base font-bold font-black uppercase tracking-[0.4em] text-slate-500">Commercial Entity</th>
+                  <th className="px-8 py-10 text-base font-bold font-black uppercase tracking-[0.4em] text-slate-500 text-center">Issue Vector</th>
+                  <th className="px-8 py-10 text-base font-bold font-black uppercase tracking-[0.4em] text-slate-500 text-center">Settlement Due</th>
+                  <th className="px-8 py-10 text-base font-bold font-black uppercase tracking-[0.4em] text-slate-500 text-right">Net Value</th>
+                  <th className="px-12 py-10 text-base font-bold font-black uppercase tracking-[0.4em] text-slate-500 text-center">Protocol Status</th>
                   <th className="px-12 py-10 w-20"></th>
                 </tr>
               </thead>
@@ -130,7 +130,7 @@ export default function InvoicesClient({ initialInvoices, query }: InvoicesClien
                              <div className="p-8 bg-white/5 rounded-full border-2 border-white/5 animate-pulse">
                                 <FileText size={64} className="text-slate-500" strokeWidth={1} />
                              </div>
-                             <p className="text-slate-700 font-black uppercase tracking-[0.5em] text-xs">Zero Fiscal Records Detected</p>
+                             <p className="text-slate-700 font-black uppercase tracking-[0.5em] text-lg font-bold">Zero Fiscal Records Detected</p>
                           </div>
                         </td>
                     </tr>
@@ -141,31 +141,31 @@ export default function InvoicesClient({ initialInvoices, query }: InvoicesClien
                             <div className="flex flex-col gap-1">
                                 <span className="font-black text-white text-xl tracking-tighter group-hover/row:text-primary transition-colors font-display uppercase">{inv.Invoice_ID}</span>
                                 {inv.Tax_Invoice_ID && (
-                                    <span className="text-[9px] text-slate-600 font-black uppercase tracking-[0.2em]">FISCAL: {inv.Tax_Invoice_ID}</span>
+                                    <span className="text-base font-bold text-slate-600 font-black uppercase tracking-[0.2em]">FISCAL: {inv.Tax_Invoice_ID}</span>
                                 )}
                             </div>
                         </td>
                         <td className="px-8 py-10">
                            <div className="flex flex-col gap-1">
-                               <span className="font-black text-slate-300 text-sm uppercase tracking-tight">{inv.Customer_Name}</span>
-                               <span className="text-[8px] text-slate-600 font-bold uppercase tracking-widest italic group-hover/row:text-slate-500">Verified Corporate Account</span>
+                               <span className="font-black text-slate-300 text-xl uppercase tracking-tight">{inv.Customer_Name}</span>
+                               <span className="text-base font-bold text-slate-600 font-bold uppercase tracking-widest italic group-hover/row:text-slate-500">Verified Corporate Account</span>
                            </div>
                         </td>
-                        <td className="px-8 py-10 text-center text-slate-500 font-bold uppercase tracking-widest text-[10px]">
+                        <td className="px-8 py-10 text-center text-slate-500 font-bold uppercase tracking-widest text-base font-bold">
                             {inv.Issue_Date ? new Date(inv.Issue_Date).toLocaleDateString(t('common.document_index') === 'ดัชนีเอกสาร' ? 'th-TH' : 'en-US') : '-'}
                         </td>
-                        <td className="px-8 py-10 text-center text-slate-500 font-bold uppercase tracking-widest text-[10px]">
+                        <td className="px-8 py-10 text-center text-slate-500 font-bold uppercase tracking-widest text-base font-bold">
                             {inv.Due_Date ? new Date(inv.Due_Date).toLocaleDateString(t('common.document_index') === 'ดัชนีเอกสาร' ? 'th-TH' : 'en-US') : '-'}
                         </td>
                         <td className="px-8 py-10 text-right">
                              <div className="flex flex-col items-end">
                                 <span className="text-2xl font-black text-white tracking-tighter group-hover/row:text-primary transition-colors bg-white/5 px-5 py-2 rounded-2xl">฿{Number(inv.Grand_Total || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
-                                <span className="text-[8px] font-black text-slate-700 uppercase tracking-widest mt-2">Net Settlement</span>
+                                <span className="text-base font-bold font-black text-slate-700 uppercase tracking-widest mt-2">Net Settlement</span>
                             </div>
                         </td>
                         <td className="px-12 py-10 text-center">
                             <div className={cn(
-                                "inline-flex items-center gap-2.5 px-6 py-3 rounded-[1.5rem] text-[9px] font-black uppercase tracking-widest border transition-all duration-500 group-hover/row:scale-110",
+                                "inline-flex items-center gap-2.5 px-6 py-3 rounded-[1.5rem] text-base font-bold font-black uppercase tracking-widest border transition-all duration-500 group-hover/row:scale-110",
                                 inv.Status === 'Paid' 
                                     ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20 shadow-[0_0_20px_rgba(16,185,129,0.1)]" 
                                     : inv.Status === 'Overdue'
@@ -187,21 +187,21 @@ export default function InvoicesClient({ initialInvoices, query }: InvoicesClien
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="bg-[#0c061d] border-white/10 text-white min-w-[200px] p-2 rounded-2xl shadow-2xl ring-1 ring-white/10">
-                              <DropdownMenuLabel className="text-[9px] font-black text-slate-500 uppercase tracking-widest px-4 py-3">Vector Command</DropdownMenuLabel>
+                              <DropdownMenuLabel className="text-base font-bold font-black text-slate-500 uppercase tracking-widest px-4 py-3">Vector Command</DropdownMenuLabel>
                               <DropdownMenuItem className="focus:bg-primary/20 focus:text-white cursor-pointer rounded-xl px-4 py-3 gap-3 transition-colors">
                                 <FileCheck className="h-4 w-4 text-primary" /> 
-                                <span className="text-[10px] font-black uppercase tracking-widest">Audit Analytics</span>
+                                <span className="text-base font-bold font-black uppercase tracking-widest">Audit Analytics</span>
                               </DropdownMenuItem>
                               <DropdownMenuItem className="focus:bg-primary/20 focus:text-white cursor-pointer rounded-xl px-4 py-3 gap-3 transition-colors" asChild>
                                 <Link href={`/billing/print/${inv.Invoice_ID}`} target="_blank" className="flex items-center">
                                   <Download className="h-4 w-4 text-primary" /> 
-                                  <span className="text-[10px] font-black uppercase tracking-widest">{t('invoices.print')}</span>
+                                  <span className="text-base font-bold font-black uppercase tracking-widest">{t('invoices.print')}</span>
                                 </Link>
                               </DropdownMenuItem>
                               <div className="h-px bg-white/5 my-2 mx-2" />
                               <DropdownMenuItem className="focus:bg-rose-500/20 focus:text-rose-500 cursor-pointer rounded-xl px-4 py-3 gap-3 transition-colors">
                                 <Zap className="h-4 w-4" /> 
-                                <span className="text-[10px] font-black uppercase tracking-widest">Abort Record</span>
+                                <span className="text-base font-bold font-black uppercase tracking-widest">Abort Record</span>
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
@@ -215,11 +215,11 @@ export default function InvoicesClient({ initialInvoices, query }: InvoicesClien
 
         <div className="p-10 border-t border-white/5 bg-white/[0.02] flex items-center justify-between">
             <div className="flex items-center gap-6">
-                <p className="text-[9px] font-black text-slate-700 uppercase tracking-[0.6em]">Invoice Engine Cluster v4.0</p>
+                <p className="text-base font-bold font-black text-slate-700 uppercase tracking-[0.6em]">Invoice Engine Cluster v4.0</p>
                 <div className="h-4 w-px bg-white/5" />
                 <div className="flex items-center gap-2">
                     <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                    <span className="text-[8px] font-black text-primary uppercase tracking-widest">ENCRYPTED VAULT</span>
+                    <span className="text-base font-bold font-black text-primary uppercase tracking-widest">ENCRYPTED VAULT</span>
                 </div>
             </div>
             <ShieldCheck size={18} className="text-primary opacity-20" />
@@ -227,10 +227,11 @@ export default function InvoicesClient({ initialInvoices, query }: InvoicesClien
       </div>
 
       <div className="mt-20 text-center mb-24">
-        <div className="inline-flex items-center gap-4 px-8 py-3 glass-panel rounded-full text-[9px] font-black text-slate-700 uppercase tracking-[0.6em] opacity-40 hover:opacity-100 transition-opacity">
+        <div className="inline-flex items-center gap-4 px-8 py-3 glass-panel rounded-full text-base font-bold font-black text-slate-700 uppercase tracking-[0.6em] opacity-40 hover:opacity-100 transition-opacity">
             <Zap size={14} className="text-primary" /> LogisPro Fiscal Engine • Matrix Synchronization v4.2
         </div>
       </div>
     </DashboardLayout>
   )
 }
+

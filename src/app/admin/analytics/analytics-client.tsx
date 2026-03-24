@@ -22,7 +22,7 @@ export function AnalyticsClient({ overdueCount, isSuperAdmin }: AnalyticsClientP
         </div>
         <div className="space-y-2">
           <h1 className="text-4xl font-black text-white uppercase tracking-tighter">{t('analytics.access_unauthorized')}</h1>
-          <p className="text-slate-500 font-black uppercase tracking-widest text-xs">
+          <p className="text-slate-500 font-black uppercase tracking-widest text-lg font-bold">
             {t('analytics.insufficient_credentials')}
           </p>
         </div>
@@ -46,11 +46,11 @@ export function AnalyticsClient({ overdueCount, isSuperAdmin }: AnalyticsClientP
             </div>
             <div>
               <p className="text-2xl font-black text-white tracking-tighter uppercase leading-none">{t('analytics.critical_divergence')}: {overdueCount} {t('common.units')}</p>
-              <p className="text-rose-500 font-black text-[10px] uppercase tracking-[0.4em] mt-3 italic">{t('analytics.structural_intervention')}</p>
+              <p className="text-rose-500 font-black text-base font-bold uppercase tracking-[0.4em] mt-3 italic">{t('analytics.structural_intervention')}</p>
             </div>
           </div>
           <Link href="/maintenance" className="relative z-10">
-            <PremiumButton className="bg-rose-600 hover:bg-rose-700 text-white border-0 h-16 px-10 rounded-2xl text-xs font-black uppercase tracking-widest shadow-[0_15px_30px_rgba(244,63,94,0.3)]">
+            <PremiumButton className="bg-rose-600 hover:bg-rose-700 text-white border-0 h-16 px-10 rounded-2xl text-lg font-bold font-black uppercase tracking-widest shadow-[0_15px_30px_rgba(244,63,94,0.3)]">
               {t('analytics.initiate_recovery')}
             </PremiumButton>
           </Link>
@@ -67,7 +67,7 @@ export function AnalyticsClient({ overdueCount, isSuperAdmin }: AnalyticsClientP
               <div className="p-2 bg-primary/10 rounded-lg group-hover/back:bg-primary transition-colors">
                 <ArrowLeft className="w-4 h-4" />
               </div>
-              <span className="text-[10px] font-black uppercase tracking-[0.4em]">{t('common.back')}</span>
+              <span className="text-base font-bold font-black uppercase tracking-[0.4em]">{t('common.back')}</span>
             </Link>
             <div className="flex items-center gap-6 mb-4">
               <div className="p-4 bg-primary/20 rounded-[2rem] border-2 border-primary/30 shadow-[0_0_40px_rgba(255,30,133,0.2)] text-primary">
@@ -75,7 +75,7 @@ export function AnalyticsClient({ overdueCount, isSuperAdmin }: AnalyticsClientP
               </div>
               <div>
                 <h1 className="text-5xl font-black text-white tracking-widest uppercase leading-none mb-2">{t('navigation.analytics')}</h1>
-                <p className="text-[10px] font-black text-primary uppercase tracking-[0.6em] opacity-80 italic">{t('analytics.registry_subtitle')}</p>
+                <p className="text-base font-bold font-black text-primary uppercase tracking-[0.6em] opacity-80 italic">{t('analytics.registry_subtitle')}</p>
               </div>
             </div>
           </div>
@@ -86,7 +86,7 @@ export function AnalyticsClient({ overdueCount, isSuperAdmin }: AnalyticsClientP
             </div>
             <div className="px-8 py-5 bg-primary/10 rounded-3xl border-2 border-primary/20 flex items-center gap-4">
               <div className="w-3 h-3 rounded-full bg-primary animate-ping" />
-              <span className="text-[10px] font-black text-primary uppercase tracking-[0.4em]">{t('analytics.live_feed')}</span>
+              <span className="text-base font-bold font-black text-primary uppercase tracking-[0.4em]">{t('analytics.live_feed')}</span>
             </div>
           </div>
         </div>
@@ -94,3 +94,4 @@ export function AnalyticsClient({ overdueCount, isSuperAdmin }: AnalyticsClientP
     </div>
   )
 }
+

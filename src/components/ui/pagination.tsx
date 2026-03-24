@@ -26,7 +26,7 @@ export function Pagination({ totalItems, limit = 50 }: PaginationProps) {
   if (totalPages <= 1) return null
 
   return (
-    <div className="flex items-center justify-between mt-4 text-xs font-medium text-slate-500">
+    <div className="flex items-center justify-between mt-4 text-lg font-bold font-medium text-slate-500">
       <div>
         แสดง {Math.min((currentPage - 1) * limit + 1, totalItems)} ถึง {Math.min(currentPage * limit, totalItems)} จาก {totalItems} รายการ
       </div>
@@ -62,3 +62,4 @@ export function Pagination({ totalItems, limit = 50 }: PaginationProps) {
     </div>
   )
 }
+

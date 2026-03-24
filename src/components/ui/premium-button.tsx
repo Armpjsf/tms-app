@@ -31,11 +31,11 @@ export function PremiumButton({
   }
 
   const sizes = {
-    sm: "px-4 py-2 text-xs",
-    md: "px-6 py-3 text-sm",
-    lg: "px-8 py-4 text-base",
-    xl: "px-10 py-5 text-lg",
-    icon: "h-14 w-14 p-0",
+    sm: "px-4 py-2 text-xl",
+    md: "px-6 py-3 text-base",
+    lg: "px-8 py-4 text-lg",
+    xl: "px-10 py-5 text-xl",
+    icon: "h-16 w-16 p-0",
   }
 
   return (
@@ -62,3 +62,4 @@ export function PremiumButton({
     </motion.button>
   )
 }
+

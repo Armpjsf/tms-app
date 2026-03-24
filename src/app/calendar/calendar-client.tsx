@@ -137,7 +137,7 @@ export function CalendarClient({
                <div className="w-1.5 h-8 bg-primary rounded-full shadow-[0_0_15px_rgba(255,30,133,1)]" />
                <h1 className="text-4xl font-black text-white tracking-widest uppercase leading-none">{t('navigation.calendar')}</h1>
             </div>
-            <p className="text-slate-500 font-black uppercase tracking-[0.4em] text-[10px]">{t('dashboard.subtitle')}</p>
+            <p className="text-slate-500 font-black uppercase tracking-[0.4em] text-base font-bold">{t('dashboard.subtitle')}</p>
           </div>
           <div className="flex items-center gap-4">
              <PremiumButton onClick={goToToday} variant="outline" className="border-white/10 hover:border-primary/50 text-slate-400 h-14 px-8 rounded-2xl">
@@ -154,7 +154,7 @@ export function CalendarClient({
          {Object.entries(statusCounts).map(([status, count]) => (
             <div key={status} className="bg-white/5 border border-white/5 p-4 rounded-3xl flex items-center justify-between group hover:border-primary/30 transition-all">
                 <div className="flex flex-col gap-1">
-                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{STATUS_LABELS[status] || status}</span>
+                    <span className="text-base font-bold font-black text-slate-500 uppercase tracking-widest">{STATUS_LABELS[status] || status}</span>
                     <span className="text-xl font-black text-white">{count}</span>
                 </div>
                 <div className={cn("w-3 h-10 rounded-full shadow-lg", STATUS_COLORS[status] || "bg-slate-500")} />
@@ -173,7 +173,7 @@ export function CalendarClient({
              <h2 className="text-3xl font-black text-white uppercase tracking-tighter">
                 {months[month]} <span className="text-primary italic italic ml-2">{language === 'th' ? year + 543 : year}</span>
              </h2>
-             {isPending && <div className="text-[9px] font-black text-primary uppercase tracking-widest animate-pulse mt-1">{t('calendar.syncing')}</div>}
+             {isPending && <div className="text-base font-bold font-black text-primary uppercase tracking-widest animate-pulse mt-1">{t('calendar.syncing')}</div>}
           </div>
           <button onClick={() => changeMonth(1)} className="p-4 rounded-full bg-white/5 hover:bg-primary transition-all text-white border border-white/5">
             <ChevronRight size={24} />
@@ -184,7 +184,7 @@ export function CalendarClient({
         <div className="grid grid-cols-7 bg-black/40 border-b border-white/5">
           {days.map((day, i) => (
             <div key={i} className={cn(
-              "text-center py-4 text-[11px] font-black uppercase tracking-[0.4em]",
+              "text-center py-4 text-base font-bold font-black uppercase tracking-[0.4em]",
               i === 0 ? "text-rose-500" : i === 6 ? "text-primary/70" : "text-slate-600"
             )}>
               {day}
@@ -226,7 +226,7 @@ export function CalendarClient({
                      {day}
                    </span>
                    {dayJobs.length > 0 && (
-                     <div className="px-2 py-0.5 rounded-lg bg-white/5 border border-white/10 text-[9px] font-black text-primary">
+                     <div className="px-2 py-0.5 rounded-lg bg-white/5 border border-white/10 text-base font-bold font-black text-primary">
                         {dayJobs.length} {t('calendar.ops')}
                      </div>
                    )}
@@ -239,13 +239,13 @@ export function CalendarClient({
                         STATUS_COLORS[job.Job_Status] || "bg-slate-500"
                       )}>
                         <div className="w-1 h-3 bg-white/40 rounded-full" />
-                        <span className="text-[8px] font-black text-white uppercase truncate tracking-tighter">
+                        <span className="text-base font-bold font-black text-white uppercase truncate tracking-tighter">
                           {job.Customer_Name || job.Job_ID}
                         </span>
                       </div>
                    ))}
                    {dayJobs.length > 3 && (
-                     <div className="text-[8px] font-black text-slate-600 uppercase tracking-widest text-center py-1">
+                     <div className="text-base font-bold font-black text-slate-600 uppercase tracking-widest text-center py-1">
                         + {dayJobs.length - 3} {t('calendar.more')}
                      </div>
                    )}
@@ -273,7 +273,7 @@ export function CalendarClient({
                     {t('calendar.node_selected') || 'NODE'}: {new Date(selectedDate + 'T00:00:00').toLocaleDateString(language === 'th' ? 'th-TH' : 'en-US', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
                   </h3>
                </div>
-               <div className="bg-primary/20 text-primary border-primary/30 font-black text-[10px] tracking-widest px-6 h-10 flex items-center rounded-full border">
+               <div className="bg-primary/20 text-primary border-primary/30 font-black text-base font-bold tracking-widest px-6 h-10 flex items-center rounded-full border">
                   {selectedJobs.length} {t('navigation.monitoring')}
                </div>
             </div>
@@ -282,7 +282,7 @@ export function CalendarClient({
                {selectedJobs.length === 0 ? (
                  <div className="py-20 flex flex-col items-center opacity-30">
                     <Zap size={48} className="text-slate-500 mb-6" />
-                    <p className="text-xs font-black uppercase tracking-[0.5em] text-white">{t('calendar.no_missions')}</p>
+                    <p className="text-lg font-bold font-black uppercase tracking-[0.5em] text-white">{t('calendar.no_missions')}</p>
                  </div>
                ) : (
                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -292,10 +292,10 @@ export function CalendarClient({
                             <div className={cn("absolute top-0 right-0 w-3 h-20 rounded-bl-3xl", STATUS_COLORS[job.Job_Status])} />
                             
                             <div className="flex items-center justify-between mb-6">
-                               <div className={cn("px-4 py-1 rounded-full text-[9px] font-black uppercase tracking-widest text-white shadow-lg", STATUS_COLORS[job.Job_Status])}>
+                               <div className={cn("px-4 py-1 rounded-full text-base font-bold font-black uppercase tracking-widest text-white shadow-lg", STATUS_COLORS[job.Job_Status])}>
                                  {STATUS_LABELS[job.Job_Status] || job.Job_Status}
                                </div>
-                               <span className="text-[10px] font-black text-slate-600 group-hover:text-primary transition-colors uppercase tracking-[0.2em]">{job.Job_ID.slice(-8)}</span>
+                               <span className="text-base font-bold font-black text-slate-600 group-hover:text-primary transition-colors uppercase tracking-[0.2em]">{job.Job_ID.slice(-8)}</span>
                             </div>
 
                             <h4 className="text-lg font-black text-white uppercase tracking-tighter mb-6 truncate leading-none">
@@ -303,15 +303,15 @@ export function CalendarClient({
                             </h4>
 
                             <div className="space-y-4">
-                                <div className="flex items-center gap-3 text-[10px] font-black text-slate-400">
+                                <div className="flex items-center gap-3 text-base font-bold font-black text-slate-400">
                                    <MapPin size={14} className="text-primary" />
                                    <span className="truncate uppercase">{job.Route_Name || job.Dest_Location}</span>
                                 </div>
                                 <div className="flex items-center gap-6 border-t border-white/5 pt-4">
-                                   <div className="flex items-center gap-2 text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                                   <div className="flex items-center gap-2 text-base font-bold font-black text-slate-500 uppercase tracking-widest">
                                       <User size={12} /> {job.Driver_Name?.split(' ')[0] || t('common.auto')}
                                     </div>
-                                   <div className="flex items-center gap-2 text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                                   <div className="flex items-center gap-2 text-base font-bold font-black text-slate-500 uppercase tracking-widest">
                                       <Truck size={12} /> {job.Vehicle_Plate}
                                    </div>
                                 </div>
@@ -343,3 +343,4 @@ export function CalendarClient({
 function formatDate(d: Date) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
+

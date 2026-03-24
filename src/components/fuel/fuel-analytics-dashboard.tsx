@@ -28,17 +28,17 @@ export function FuelAnalyticsDashboard({ analytics }: { analytics: FuelAnalytics
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-6">
         <PremiumCard className="bg-[#0a0518] border-2 border-white/5 p-8 relative overflow-hidden group">
            <div className="flex items-center justify-between mb-4">
-              <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">Total Volume</span>
+              <span className="text-base font-bold font-black text-slate-500 uppercase tracking-widest leading-none">Total Volume</span>
               <Droplets size={18} className="text-primary opacity-30 group-hover:opacity-100 transition-opacity" />
            </div>
            <p className="text-4xl font-black text-white italic tracking-tighter mb-1">{analytics.totalLiters.toLocaleString()} L</p>
-           <p className="text-[10px] text-primary font-black uppercase tracking-[0.2em]">{analytics.totalLogs} SYNC NODES</p>
+           <p className="text-base font-bold text-primary font-black uppercase tracking-[0.2em]">{analytics.totalLogs} SYNC NODES</p>
            <div className="absolute bottom-0 left-0 h-1 bg-primary w-12 rounded-full" />
         </PremiumCard>
 
         <PremiumCard className="bg-[#0a0518] border-2 border-white/5 p-8 relative overflow-hidden group">
            <div className="flex items-center justify-between mb-4">
-              <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">Net Expenditure</span>
+              <span className="text-base font-bold font-black text-slate-500 uppercase tracking-widest leading-none">Net Expenditure</span>
               <DollarSign size={18} className="text-primary/80 opacity-30 group-hover:opacity-100 transition-opacity" />
            </div>
            <p className="text-4xl font-black text-white italic tracking-tighter">฿{analytics.totalCost.toLocaleString()}</p>
@@ -47,7 +47,7 @@ export function FuelAnalyticsDashboard({ analytics }: { analytics: FuelAnalytics
 
         <PremiumCard className="bg-[#0a0518] border-2 border-white/5 p-8 relative overflow-hidden group">
            <div className="flex items-center justify-between mb-4">
-              <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">Unit Valuation</span>
+              <span className="text-base font-bold font-black text-slate-500 uppercase tracking-widest leading-none">Unit Valuation</span>
               <Fuel size={18} className="text-blue-400 opacity-30 group-hover:opacity-100 transition-opacity" />
            </div>
            <p className="text-4xl font-black text-white italic tracking-tighter">฿{analytics.avgCostPerLiter.toFixed(2)}</p>
@@ -56,13 +56,13 @@ export function FuelAnalyticsDashboard({ analytics }: { analytics: FuelAnalytics
 
         <PremiumCard className="bg-[#0a0518] border-2 border-white/5 p-8 relative overflow-hidden group">
            <div className="flex items-center justify-between mb-4">
-              <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">Fleet Efficiency</span>
+              <span className="text-base font-bold font-black text-slate-500 uppercase tracking-widest leading-none">Fleet Efficiency</span>
               <Gauge size={18} className="text-blue-400 opacity-30 group-hover:opacity-100 transition-opacity" />
            </div>
            <p className="text-4xl font-black text-white italic tracking-tighter leading-none">{analytics.avgKmPerLiter || 'SECURE'}</p>
            <div className="mt-2">
               <span className={cn(
-                 "text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-widest",
+                 "text-base font-bold font-black px-3 py-1 rounded-full uppercase tracking-widest",
                  analytics.avgKmPerLiter >= 8 ? 'bg-emerald-500/10 text-emerald-400' : 
                  analytics.avgKmPerLiter >= 5 ? 'bg-amber-500/10 text-amber-400' : 
                  analytics.avgKmPerLiter > 0 ? 'bg-rose-500/10 text-rose-500' : 'bg-white/5 text-slate-600'
@@ -74,11 +74,11 @@ export function FuelAnalyticsDashboard({ analytics }: { analytics: FuelAnalytics
 
         <PremiumCard className="bg-[#0a0518]/50 border-2 border-rose-500/20 p-8 shadow-[0_0_30px_rgba(244,63,94,0.1)] relative overflow-hidden group">
            <div className="flex items-center justify-between mb-4">
-              <span className="text-[10px] font-black text-rose-500 uppercase tracking-widest leading-none">Anomalies</span>
+              <span className="text-base font-bold font-black text-rose-500 uppercase tracking-widest leading-none">Anomalies</span>
               <AlertTriangle size={18} className="text-rose-500 animate-pulse" />
            </div>
            <p className="text-4xl font-black text-rose-500 italic tracking-tighter">{analytics.anomalies.length}</p>
-           <p className="text-[10px] font-black uppercase text-rose-700 tracking-[0.2em] mt-1">Divergent Signals</p>
+           <p className="text-base font-bold font-black uppercase text-rose-700 tracking-[0.2em] mt-1">Divergent Signals</p>
         </PremiumCard>
       </div>
 
@@ -86,7 +86,7 @@ export function FuelAnalyticsDashboard({ analytics }: { analytics: FuelAnalytics
         {/* Temporal Trends */}
         <PremiumCard className="bg-[#0a0518] border-2 border-white/5 p-0 overflow-hidden rounded-[3rem]">
           <div className="p-8 border-b border-white/5 bg-black/40 flex items-center justify-between">
-             <h3 className="text-sm font-black text-white uppercase tracking-[0.4em] flex items-center gap-4">
+             <h3 className="text-xl font-black text-white uppercase tracking-[0.4em] flex items-center gap-4">
                 <BarChart3 className="text-primary" size={18} />
                 Temporal Drift
              </h3>
@@ -94,7 +94,7 @@ export function FuelAnalyticsDashboard({ analytics }: { analytics: FuelAnalytics
           </div>
           <div className="p-10 space-y-6">
             {analytics.monthlyTrends.length === 0 ? (
-              <p className="text-xs font-black text-slate-500 text-center py-12 uppercase tracking-widest">No temporal data detected</p>
+              <p className="text-lg font-bold font-black text-slate-500 text-center py-12 uppercase tracking-widest">No temporal data detected</p>
             ) : (
               <div className="space-y-6">
                 {analytics.monthlyTrends.map((month, i) => {
@@ -103,13 +103,13 @@ export function FuelAnalyticsDashboard({ analytics }: { analytics: FuelAnalytics
                   return (
                     <div key={month.month} className="space-y-3">
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-black text-slate-400 uppercase tracking-widest">{month.month}</span>
+                        <span className="text-lg font-bold font-black text-slate-400 uppercase tracking-widest">{month.month}</span>
                         <div className="flex items-center gap-6">
-                          <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest">{month.totalLiters.toLocaleString()} L</span>
-                          <span className="text-sm font-black text-white italic">฿{month.totalCost.toLocaleString()}</span>
+                          <span className="text-base font-bold font-black text-slate-600 uppercase tracking-widest">{month.totalLiters.toLocaleString()} L</span>
+                          <span className="text-xl font-black text-white italic">฿{month.totalCost.toLocaleString()}</span>
                           {prev && (
                             <div className={cn(
-                               "px-2 py-1 rounded-lg text-[9px] font-black flex items-center gap-1",
+                               "px-2 py-1 rounded-lg text-base font-bold font-black flex items-center gap-1",
                                change > 0 ? 'bg-rose-500/10 text-rose-500' : 'bg-emerald-500/10 text-emerald-400'
                             )}>
                               {change > 0 ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
@@ -136,7 +136,7 @@ export function FuelAnalyticsDashboard({ analytics }: { analytics: FuelAnalytics
         {/* Asset Yield Ranking */}
         <PremiumCard className="bg-[#0a0518] border-2 border-white/5 p-0 overflow-hidden rounded-[3rem]">
           <div className="p-8 border-b border-white/5 bg-black/40 flex items-center justify-between">
-             <h3 className="text-sm font-black text-white uppercase tracking-[0.4em] flex items-center gap-4">
+             <h3 className="text-xl font-black text-white uppercase tracking-[0.4em] flex items-center gap-4">
                 <Fuel className="text-primary" size={18} />
                 Asset Consumption Hierarchy
              </h3>
@@ -144,30 +144,30 @@ export function FuelAnalyticsDashboard({ analytics }: { analytics: FuelAnalytics
           </div>
           <div className="p-10 space-y-4">
             {analytics.vehicleBreakdown.length === 0 ? (
-              <p className="text-xs font-black text-slate-500 text-center py-12 uppercase tracking-widest">No Asset data clusters found</p>
+              <p className="text-lg font-bold font-black text-slate-500 text-center py-12 uppercase tracking-widest">No Asset data clusters found</p>
             ) : (
               <div className="space-y-5">
                 {analytics.vehicleBreakdown.slice(0, 10).map((v, i) => (
                   <div key={v.vehicle_plate} className="group">
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-4">
-                        <span className="w-8 h-8 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-[10px] text-primary font-black">
+                        <span className="w-8 h-8 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-base font-bold text-primary font-black">
                           0{i + 1}
                         </span>
-                        <span className="text-sm font-black text-white tracking-widest uppercase">{v.vehicle_plate}</span>
+                        <span className="text-xl font-black text-white tracking-widest uppercase">{v.vehicle_plate}</span>
                       </div>
                       <div className="flex items-center gap-6">
-                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{v.totalLiters} L</span>
+                        <span className="text-base font-bold font-black text-slate-500 uppercase tracking-widest">{v.totalLiters} L</span>
                         {v.avgEfficiency > 0 && (
                           <span className={cn(
-                             "px-3 py-1 rounded-xl text-[9px] font-black uppercase tracking-widest",
+                             "px-3 py-1 rounded-xl text-base font-bold font-black uppercase tracking-widest",
                              v.avgEfficiency >= 8 ? 'bg-emerald-500/10 text-emerald-400' :
                              v.avgEfficiency >= 5 ? 'bg-amber-500/10 text-amber-400' : 'bg-rose-500/10 text-rose-400'
                           )}>
                             {v.avgEfficiency} km/L
                           </span>
                         )}
-                        <span className="text-sm font-black text-primary italic">฿{v.totalCost.toLocaleString()}</span>
+                        <span className="text-xl font-black text-primary italic">฿{v.totalCost.toLocaleString()}</span>
                       </div>
                     </div>
                     <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
@@ -202,12 +202,12 @@ export function FuelAnalyticsDashboard({ analytics }: { analytics: FuelAnalytics
                     </div>
                     <div>
                       <p className="text-lg font-black text-white tracking-widest uppercase mb-1">{a.vehicle_plate}</p>
-                      <p className="text-[10px] font-black text-rose-400 uppercase tracking-widest opacity-80">{a.issue}</p>
+                      <p className="text-base font-bold font-black text-rose-400 uppercase tracking-widest opacity-80">{a.issue}</p>
                     </div>
                   </div>
                   <div className="text-right space-y-1">
                     <p className="text-lg font-black text-white italic">฿{a.cost.toLocaleString()}</p>
-                    <p className="text-[9px] font-black text-slate-600 uppercase tracking-widest">{a.date}</p>
+                    <p className="text-base font-bold font-black text-slate-600 uppercase tracking-widest">{a.date}</p>
                   </div>
                 </div>
               ))}
@@ -218,3 +218,4 @@ export function FuelAnalyticsDashboard({ analytics }: { analytics: FuelAnalytics
     </div>
   )
 }
+

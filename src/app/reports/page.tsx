@@ -40,12 +40,12 @@ export default async function ReportsPage() {
                 <div className="p-2 bg-primary/20 rounded-xl shadow-lg">
                     <BarChart3 className="text-primary" size={20} />
                 </div>
-                <h2 className="text-[10px] font-black text-primary uppercase tracking-[0.4em]">Operations Intelligence Archive</h2>
+                <h2 className="text-base font-bold font-black text-primary uppercase tracking-[0.4em]">Operations Intelligence Archive</h2>
             </div>
             <h1 className="text-6xl font-black text-white tracking-tighter flex items-center gap-5 uppercase premium-text-gradient">
                 Reporting Hub
             </h1>
-            <p className="text-slate-500 font-bold text-sm tracking-wide opacity-80 uppercase tracking-widest leading-relaxed">
+            <p className="text-slate-500 font-bold text-xl tracking-wide opacity-80 uppercase tracking-widest leading-relaxed">
               Strategic Analytics & Tactical Data Extraction Interface
             </p>
         </div>
@@ -54,12 +54,12 @@ export default async function ReportsPage() {
           <div className="flex items-center gap-4 bg-white/5 p-4 rounded-2xl border border-white/10 backdrop-blur-md">
             <div className="flex items-center gap-3">
                 <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_12px_rgba(16,185,129,1)]" />
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Live Engine</span>
+                <span className="text-base font-bold font-black text-slate-400 uppercase tracking-widest">Live Engine</span>
             </div>
             <div className="w-px h-6 bg-white/10" />
             <div className="flex items-center gap-3">
                 <ShieldCheck size={14} className="text-primary" />
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">Encrypted_Export</span>
+                <span className="text-base font-bold font-black text-slate-400 uppercase tracking-widest italic">Encrypted_Export</span>
             </div>
           </div>
         </div>
@@ -78,7 +78,7 @@ export default async function ReportsPage() {
             <div className="w-1.5 h-10 bg-primary rounded-full shadow-[0_0_15px_rgba(255,30,133,0.8)]" />
             <div>
                 <h3 className="text-3xl font-black text-white tracking-tighter uppercase font-display">Strategic Report Configurator</h3>
-                <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.4em] mt-1 italic">Define Parameters for Intelligence Extraction</p>
+                <p className="text-slate-500 text-base font-bold font-black uppercase tracking-[0.4em] mt-1 italic">Define Parameters for Intelligence Extraction</p>
             </div>
         </div>
         <div className="glass-panel p-2 rounded-[4rem] border-white/5 bg-[#0a0518]/20 shadow-3xl">
@@ -87,10 +87,11 @@ export default async function ReportsPage() {
       </div>
 
       <div className="mt-20 text-center mb-24">
-        <div className="inline-flex items-center gap-4 px-8 py-3 glass-panel rounded-full text-[9px] font-black text-slate-700 uppercase tracking-[0.6em] opacity-40 hover:opacity-100 transition-opacity">
+        <div className="inline-flex items-center gap-4 px-8 py-3 glass-panel rounded-full text-base font-bold font-black text-slate-700 uppercase tracking-[0.6em] opacity-40 hover:opacity-100 transition-opacity">
             <Zap size={14} className="text-primary" /> Intelligence Core v9.4 • Mission Critical Analytics
         </div>
       </div>
     </DashboardLayout>
   )
 }
+

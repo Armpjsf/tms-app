@@ -29,8 +29,8 @@ export const MapOverlay = memo(function MapOverlay({ route }: MapOverlayProps) {
                         <Navigation className="text-white w-5 h-5" />
                     </div>
                     <div>
-                        <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest leading-none mb-1">Active Route</p>
-                        <h4 className="text-sm font-black text-gray-900 leading-none">
+                        <p className="text-base font-bold font-black text-emerald-600 uppercase tracking-widest leading-none mb-1">Active Route</p>
+                        <h4 className="text-xl font-black text-gray-900 leading-none">
                             {route.start} ➔ {route.end}
                         </h4>
                     </div>
@@ -41,16 +41,16 @@ export const MapOverlay = memo(function MapOverlay({ route }: MapOverlayProps) {
                 <div className="flex items-center gap-4">
                     <div className="text-right">
                         {route.eta && (
-                            <div className="flex items-center gap-1 justify-end text-emerald-700 font-black text-sm mb-0.5">
+                            <div className="flex items-center gap-1 justify-end text-emerald-700 font-black text-xl mb-0.5">
                                 <Clock size={12} />
                                 ETA: {route.eta}
                             </div>
                         )}
                         {route.distance && (
-                            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-tighter">{route.distance} Remaining</p>
+                            <p className="text-base font-bold font-bold text-gray-500 uppercase tracking-tighter">{route.distance} Remaining</p>
                         )}
                         {!route.eta && !route.distance && (
-                            <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">Optimized</p>
+                            <p className="text-base font-bold font-bold text-emerald-600 uppercase tracking-widest">Optimized</p>
                         )}
                     </div>
                 </div>
@@ -65,7 +65,7 @@ export const MapOverlay = memo(function MapOverlay({ route }: MapOverlayProps) {
                     className="absolute -bottom-12 left-1/2 -translate-x-1/2 bg-gray-900 text-white px-3 py-1.5 rounded-full flex items-center gap-2 shadow-xl border border-white/10"
                 >
                     <MapPin size={10} className="text-emerald-400" />
-                    <span className="text-[9px] font-black uppercase tracking-widest italic truncate max-w-[200px]">
+                    <span className="text-base font-bold font-black uppercase tracking-widest italic truncate max-w-[200px]">
                         Target: {route.target}
                     </span>
                 </motion.div>
@@ -73,3 +73,4 @@ export const MapOverlay = memo(function MapOverlay({ route }: MapOverlayProps) {
         </div>
     )
 })
+

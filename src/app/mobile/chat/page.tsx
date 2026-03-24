@@ -204,7 +204,7 @@ export default function MobileChatPage() {
             <div className="flex-1 flex flex-col items-center justify-center text-gray-400 opacity-50 mt-10">
                 <MessageSquare size={48} className="mb-2" />
                 <p>ยังไม่มีข้อความ</p>
-                <p className="text-xs">พิมพ์ข้อความเพื่อเริ่มการสนทนา</p>
+                <p className="text-lg font-bold">พิมพ์ข้อความเพื่อเริ่มการสนทนา</p>
             </div>
         ) : (
             <div className="space-y-4 pb-4">
@@ -219,7 +219,7 @@ export default function MobileChatPage() {
                                 {isMe ? <User size={16} className="text-foreground" /> : <Bot size={16} className="text-emerald-500" />}
                             </div>
                             
-                            <div className={`max-w-[75%] p-3 rounded-2xl text-sm ${
+                            <div className={`max-w-[75%] p-3 rounded-2xl text-xl ${
                                 isMe 
                                     ? "bg-indigo-600 text-white rounded-tr-none" 
                                     : "bg-gray-100 text-gray-800 rounded-tl-none border border-gray-200"
@@ -231,7 +231,7 @@ export default function MobileChatPage() {
                                 ) : (
                                     <p className="break-words">{msg.message}</p>
                                 )}
-                                <p className={`text-[10px] mt-1 text-right ${isMe ? "text-indigo-200" : "text-gray-400"}`}>
+                                <p className={`text-base font-bold mt-1 text-right ${isMe ? "text-indigo-200" : "text-gray-400"}`}>
                                     {new Date(msg.created_at).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })}
                                 </p>
                             </div>
@@ -307,3 +307,4 @@ export default function MobileChatPage() {
     </div>
   )
 }
+

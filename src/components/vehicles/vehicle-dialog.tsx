@@ -153,7 +153,7 @@ export function VehicleDialog({
           )}
 
           <div className="space-y-2">
-            <Label htmlFor="Vehicle_Plate" className="text-gray-900 font-bold text-sm">ทะเบียนรถ</Label>
+            <Label htmlFor="Vehicle_Plate" className="text-gray-900 font-bold text-xl">ทะเบียนรถ</Label>
             <Input
               id="Vehicle_Plate"
               value={formData.Vehicle_Plate}
@@ -167,7 +167,7 @@ export function VehicleDialog({
           
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-                <Label htmlFor="Brand" className="text-gray-900 font-bold text-sm">ยี่ห้อ</Label>
+                <Label htmlFor="Brand" className="text-gray-900 font-bold text-xl">ยี่ห้อ</Label>
                 <Input
                 id="Brand"
                 value={formData.Brand}
@@ -177,7 +177,7 @@ export function VehicleDialog({
                 />
             </div>
             <div className="space-y-2">
-                <Label htmlFor="Model" className="text-gray-900 font-bold text-sm">รุ่น</Label>
+                <Label htmlFor="Model" className="text-gray-900 font-bold text-xl">รุ่น</Label>
                 <Input
                 id="Model"
                 value={formData.Model}
@@ -190,7 +190,7 @@ export function VehicleDialog({
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-                <Label htmlFor="Current_Mileage" className="text-gray-900 font-bold text-sm">เลขไมล์ปัจจุบัน</Label>
+                <Label htmlFor="Current_Mileage" className="text-gray-900 font-bold text-xl">เลขไมล์ปัจจุบัน</Label>
                 <Input
                 id="Current_Mileage"
                 type="number"
@@ -200,7 +200,7 @@ export function VehicleDialog({
                 />
             </div>
             <div className="space-y-2">
-                <Label htmlFor="Next_Service_Mileage" className="text-gray-900 font-bold text-sm">แจ้งซ่อมครั้งถัดไป</Label>
+                <Label htmlFor="Next_Service_Mileage" className="text-gray-900 font-bold text-xl">แจ้งซ่อมครั้งถัดไป</Label>
                 <Input
                 id="Next_Service_Mileage"
                 type="number"
@@ -213,7 +213,7 @@ export function VehicleDialog({
 
           <div className="grid grid-cols-2 gap-4 border-t border-gray-200 pt-4">
              <div className="space-y-2">
-                <Label htmlFor="Max_Weight_kg" className="text-emerald-700 font-bold text-sm">น้ำหนักบรรทุกสูงสุด (kg)</Label>
+                <Label htmlFor="Max_Weight_kg" className="text-emerald-700 font-bold text-xl">น้ำหนักบรรทุกสูงสุด (kg)</Label>
                 <Input
                 id="Max_Weight_kg"
                 type="number"
@@ -224,7 +224,7 @@ export function VehicleDialog({
                 />
             </div>
             <div className="space-y-2">
-                <Label htmlFor="Max_Volume_cbm" className="text-emerald-700 font-bold text-sm">ปริมาตรบรรทุกสูงสุด (CBM)</Label>
+                <Label htmlFor="Max_Volume_cbm" className="text-emerald-700 font-bold text-xl">ปริมาตรบรรทุกสูงสุด (CBM)</Label>
                 <Input
                 id="Max_Volume_cbm"
                 type="number"
@@ -238,39 +238,39 @@ export function VehicleDialog({
           </div>
 
           <div className="space-y-3 border-t border-gray-200 pt-4">
-            <Label className="text-blue-700 font-black block mb-1 uppercase tracking-tight text-sm">เอกสารสำคัญ (Compliance)</Label>
+            <Label className="text-blue-700 font-black block mb-1 uppercase tracking-tight text-xl">เอกสารสำคัญ (Compliance)</Label>
             
             <div className="grid grid-cols-1 gap-3">
                 <div className="grid grid-cols-2 items-center gap-4">
-                    <Label htmlFor="Tax_Expiry" className="text-[11px] font-bold text-gray-700">ภาษีรถ (Tax Expiry)</Label>
+                    <Label htmlFor="Tax_Expiry" className="text-base font-bold font-bold text-gray-700">ภาษีรถ (Tax Expiry)</Label>
                     <Input
                         id="Tax_Expiry"
                         type="date"
                         value={formData.Tax_Expiry}
                         onChange={(e) => setFormData({ ...formData, Tax_Expiry: e.target.value })}
-                        className="bg-gray-50 border-gray-200 h-9 text-xs text-gray-900 font-medium"
+                        className="bg-gray-50 border-gray-200 h-9 text-lg font-bold text-gray-900 font-medium"
                     />
                 </div>
                 
                 <div className="grid grid-cols-2 items-center gap-4">
-                    <Label htmlFor="Insurance_Expiry" className="text-[11px] font-bold text-gray-700">ประกันภัย (Insurance)</Label>
+                    <Label htmlFor="Insurance_Expiry" className="text-base font-bold font-bold text-gray-700">ประกันภัย (Insurance)</Label>
                     <Input
                         id="Insurance_Expiry"
                         type="date"
                         value={formData.Insurance_Expiry}
                         onChange={(e) => setFormData({ ...formData, Insurance_Expiry: e.target.value })}
-                        className="bg-gray-50 border-gray-200 h-9 text-xs text-gray-900 font-medium"
+                        className="bg-gray-50 border-gray-200 h-9 text-lg font-bold text-gray-900 font-medium"
                     />
                 </div>
 
                 <div className="grid grid-cols-2 items-center gap-4">
-                    <Label htmlFor="Act_Expiry" className="text-[11px] font-bold text-gray-700">พ.ร.บ. (ACT Expiry)</Label>
+                    <Label htmlFor="Act_Expiry" className="text-base font-bold font-bold text-gray-700">พ.ร.บ. (ACT Expiry)</Label>
                     <Input
                         id="Act_Expiry"
                         type="date"
                         value={formData.Act_Expiry}
                         onChange={(e) => setFormData({ ...formData, Act_Expiry: e.target.value })}
-                        className="bg-gray-50 border-gray-200 h-9 text-xs text-gray-900 font-medium"
+                        className="bg-gray-50 border-gray-200 h-9 text-lg font-bold text-gray-900 font-medium"
                     />
                 </div>
             </div>
@@ -281,7 +281,7 @@ export function VehicleDialog({
 
 
           <div className="space-y-2">
-            <Label htmlFor="Vehicle_Type" className="text-gray-900 font-bold text-sm">ประเภทรถ</Label>
+            <Label htmlFor="Vehicle_Type" className="text-gray-900 font-bold text-xl">ประเภทรถ</Label>
             <Select value={formData.Vehicle_Type} onValueChange={(val) => setFormData({ ...formData, Vehicle_Type: val })}>
                 <SelectTrigger className="w-full h-10 border-gray-200 bg-gray-50 text-gray-900">
                     <SelectValue placeholder="เลือกประเภทรถ" />
@@ -306,7 +306,7 @@ export function VehicleDialog({
 
           {mode === 'edit' && (
              <div className="space-y-2">
-              <Label htmlFor="Active_Status" className="text-gray-900 font-bold text-sm">สถานะ</Label>
+              <Label htmlFor="Active_Status" className="text-gray-900 font-bold text-xl">สถานะ</Label>
               <Select value={formData.Active_Status} onValueChange={(val) => setFormData({ ...formData, Active_Status: val })}>
                 <SelectTrigger className="w-full h-10 border-gray-200 bg-gray-50 text-gray-900">
                     <SelectValue placeholder="เลือกสถานะ" />
@@ -334,3 +334,4 @@ export function VehicleDialog({
     </Dialog>
   )
 }
+

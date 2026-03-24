@@ -79,7 +79,7 @@ export default async function LogsPage({
           
           <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-12">
               <div className="space-y-6">
-                <LinkNext href="/dashboard" className="inline-flex items-center gap-2 text-slate-500 hover:text-white transition-all font-black uppercase tracking-[0.4em] text-[10px] group/back italic">
+                <LinkNext href="/dashboard" className="inline-flex items-center gap-2 text-slate-500 hover:text-white transition-all font-black uppercase tracking-[0.4em] text-base font-bold group/back italic">
                     <ArrowLeft className="w-4 h-4 group-hover/back:-translate-x-1 transition-transform" /> 
                     Command Central
                 </LinkNext>
@@ -89,7 +89,7 @@ export default async function LogsPage({
                     </div>
                     <div>
                       <h1 className="text-5xl font-black text-white tracking-widest uppercase leading-none italic premium-text-gradient">Audit Registry</h1>
-                      <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.6em] mt-2 opacity-80 italic">Registry of all logistical & administrative transmissions // SECURE_AUDIT</p>
+                      <p className="text-base font-bold font-black text-slate-500 uppercase tracking-[0.6em] mt-2 opacity-80 italic">Registry of all logistical & administrative transmissions // SECURE_AUDIT</p>
                     </div>
                 </div>
               </div>
@@ -97,7 +97,7 @@ export default async function LogsPage({
               <div className="flex flex-col items-end gap-3 self-end lg:self-center relative z-10">
                 <div className="bg-white/5 border border-white/5 px-6 py-3 rounded-2xl flex items-center gap-3 backdrop-blur-md">
                     <Activity className="text-slate-400" size={16} />
-                    <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest italic">Live Audit Feed: ACTIVE</span>
+                    <span className="text-base font-bold font-black text-slate-500 uppercase tracking-widest italic">Live Audit Feed: ACTIVE</span>
                 </div>
               </div>
           </div>
@@ -113,7 +113,7 @@ export default async function LogsPage({
               </div>
               <div>
                 <h2 className="text-3xl font-black text-white tracking-[0.2em] uppercase italic">System Transmissions</h2>
-                <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.5em] mt-2 italic">100_LATEST_PACKETS_SYNCED</p>
+                <p className="text-base font-bold font-black text-slate-500 uppercase tracking-[0.5em] mt-2 italic">100_LATEST_PACKETS_SYNCED</p>
               </div>
           </div>
 
@@ -121,7 +121,7 @@ export default async function LogsPage({
             <Search size={22} className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-600 group-focus-within/search:text-white transition-colors" />
             <input 
               placeholder="SCAN_OPERATOR_OR_NODE..." 
-              className="w-full h-18 bg-[#0a0518] border-white/5 rounded-3xl pl-16 pr-8 text-xs font-black uppercase tracking-[0.2em] focus:border-white/20 transition-all text-white placeholder:text-slate-700 italic shadow-inner"
+              className="w-full h-18 bg-[#0a0518] border-white/5 rounded-3xl pl-16 pr-8 text-lg font-bold font-black uppercase tracking-[0.2em] focus:border-white/20 transition-all text-white placeholder:text-slate-700 italic shadow-inner"
             />
           </div>
         </div>
@@ -130,12 +130,12 @@ export default async function LogsPage({
           <Table>
             <TableHeader>
               <TableRow className="bg-black/40 border-b border-white/5 hover:bg-black/40">
-                <TableHead className="p-10 text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] italic">Temporal Token</TableHead>
-                <TableHead className="p-10 text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] italic">Operator Entity</TableHead>
-                <TableHead className="p-10 text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] italic">Source Node</TableHead>
-                <TableHead className="p-10 text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] italic">Module Logic</TableHead>
-                <TableHead className="p-10 text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] italic">Transmission Type</TableHead>
-                <TableHead className="p-10 text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] italic">Intel Narrative</TableHead>
+                <TableHead className="p-10 text-base font-bold font-black text-slate-500 uppercase tracking-[0.4em] italic">Temporal Token</TableHead>
+                <TableHead className="p-10 text-base font-bold font-black text-slate-500 uppercase tracking-[0.4em] italic">Operator Entity</TableHead>
+                <TableHead className="p-10 text-base font-bold font-black text-slate-500 uppercase tracking-[0.4em] italic">Source Node</TableHead>
+                <TableHead className="p-10 text-base font-bold font-black text-slate-500 uppercase tracking-[0.4em] italic">Module Logic</TableHead>
+                <TableHead className="p-10 text-base font-bold font-black text-slate-500 uppercase tracking-[0.4em] italic">Transmission Type</TableHead>
+                <TableHead className="p-10 text-base font-bold font-black text-slate-500 uppercase tracking-[0.4em] italic">Intel Narrative</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody className="divide-y divide-white/[0.02]">
@@ -143,7 +143,7 @@ export default async function LogsPage({
                 <TableRow className="hover:bg-transparent">
                   <TableCell colSpan={6} className="p-40 text-center opacity-20">
                     <ShieldCheck size={80} strokeWidth={1} className="mx-auto mb-8 text-slate-500 animate-pulse" />
-                    <p className="text-sm font-black text-white uppercase tracking-[0.8em]">Registry Quiescent // No Packets Detected</p>
+                    <p className="text-xl font-black text-white uppercase tracking-[0.8em]">Registry Quiescent // No Packets Detected</p>
                   </TableCell>
                 </TableRow>
               ) : (
@@ -155,10 +155,10 @@ export default async function LogsPage({
                     <TableRow key={log.id} className="group/row hover:bg-white/[0.02] transition-colors border-0">
                       <TableCell className="p-10">
                         <div className="flex flex-col">
-                          <span className="text-white font-black tracking-tight text-sm uppercase italic group-hover/row:text-primary transition-colors">
+                          <span className="text-white font-black tracking-tight text-xl uppercase italic group-hover/row:text-primary transition-colors">
                             {format(date, 'dd MMM yyyy', { locale: th })}
                           </span>
-                          <span className="text-[10px] text-slate-600 font-black uppercase tracking-widest mt-1">
+                          <span className="text-base font-bold text-slate-600 font-black uppercase tracking-widest mt-1">
                             {format(date, 'HH:mm:ss')}
                           </span>
                         </div>
@@ -166,29 +166,29 @@ export default async function LogsPage({
                       <TableCell className="p-10">
                         <div className="flex items-center gap-4">
                           <div className="w-10 h-10 rounded-2xl bg-white/5 flex items-center justify-center text-primary group-hover/row:scale-110 group-hover/row:bg-primary/20 transition-all duration-500 shadow-inner border border-white/5">
-                            <span className="font-black italic text-xs">{(log.user_name || "A").charAt(0)}</span>
+                            <span className="font-black italic text-lg font-bold">{(log.user_name || "A").charAt(0)}</span>
                           </div>
                           <div className="flex flex-col">
-                            <span className="font-black text-white text-sm tracking-widest uppercase italic">{log.user_name}</span>
-                            <span className="text-[9px] text-slate-600 font-black uppercase tracking-widest">{log.role}</span>
+                            <span className="font-black text-white text-xl tracking-widest uppercase italic">{log.user_name}</span>
+                            <span className="text-base font-bold text-slate-600 font-black uppercase tracking-widest">{log.role}</span>
                           </div>
                         </div>
                       </TableCell>
                       <TableCell className="p-10">
-                        <div className="px-4 py-1.5 bg-white/5 rounded-xl border border-white/5 text-[10px] font-black text-slate-400 uppercase tracking-widest italic w-fit">
+                        <div className="px-4 py-1.5 bg-white/5 rounded-xl border border-white/5 text-base font-bold font-black text-slate-400 uppercase tracking-widest italic w-fit">
                           {log.branch_id || 'GLOBAL_ROOT'}
                         </div>
                       </TableCell>
-                      <TableCell className="p-10 font-black text-emerald-500 text-[10px] uppercase tracking-widest italic">{getModuleLabel(log.module)}</TableCell>
+                      <TableCell className="p-10 font-black text-emerald-500 text-base font-bold uppercase tracking-widest italic">{getModuleLabel(log.module)}</TableCell>
                       <TableCell className="p-10">
-                        <div className={cn("px-5 py-2 rounded-full text-[10px] font-black border uppercase tracking-widest italic shadow-lg transition-transform group-hover/row:translate-x-2", actionStyle.bg, actionStyle.text, actionStyle.border)}>
+                        <div className={cn("px-5 py-2 rounded-full text-base font-bold font-black border uppercase tracking-widest italic shadow-lg transition-transform group-hover/row:translate-x-2", actionStyle.bg, actionStyle.text, actionStyle.border)}>
                           {actionStyle.label}
                         </div>
                       </TableCell>
                       <TableCell className="p-10 max-w-[300px]">
                         <div className="flex items-center gap-3">
-                           {log.target_id && <span className="text-primary font-black text-[10px] uppercase italic bg-primary/10 px-2 py-0.5 rounded-md">[{log.target_id}]</span>}
-                           <span className="truncate text-[11px] font-bold text-slate-500 group-hover/row:text-slate-300 transition-colors italic" title={JSON.stringify(log.details)}>
+                           {log.target_id && <span className="text-primary font-black text-base font-bold uppercase italic bg-primary/10 px-2 py-0.5 rounded-md">[{log.target_id}]</span>}
+                           <span className="truncate text-base font-bold font-bold text-slate-500 group-hover/row:text-slate-300 transition-colors italic" title={JSON.stringify(log.details)}>
                               {JSON.stringify(log.details)}
                            </span>
                         </div>
@@ -210,15 +210,16 @@ export default async function LogsPage({
           </div>
           <div className="space-y-4 text-center md:text-left flex-1">
               <p className="text-xl font-black text-white italic uppercase tracking-widest">REGISTRY_INTEGRITY_ADVISORY</p>
-              <p className="text-sm font-bold text-slate-500 leading-relaxed uppercase tracking-wider italic">
+              <p className="text-xl font-bold text-slate-500 leading-relaxed uppercase tracking-wider italic">
                   Audit streams are persistent and immutable. All field operations are logged with zero-latency synchronization. <br />
                   Strategic deletions or unauthorized access attempts are flagged for immediate counter-intelligence review.
               </p>
           </div>
-          <PremiumButton variant="outline" className="h-14 px-10 rounded-2xl border-white/10 text-white gap-3 uppercase font-black text-[10px] tracking-[0.3em] ml-auto italic">
+          <PremiumButton variant="outline" className="h-14 px-10 rounded-2xl border-white/10 text-white gap-3 uppercase font-black text-base font-bold tracking-[0.3em] ml-auto italic">
               <Target size={18} /> FULL_SYNC_REGISTRY
           </PremiumButton>
       </div>
     </div>
   )
 }
+

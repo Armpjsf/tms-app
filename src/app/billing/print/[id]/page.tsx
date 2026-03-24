@@ -66,51 +66,51 @@ export default async function BillingPrintPage(props: Props) {
                                 style={{ display: 'block' }}
                             />
                         ) : company?.company_name ? (
-                             <div className="h-14 w-14 bg-slate-100 flex items-center justify-center rounded text-[8px] text-slate-400">NO LOGO</div>
+                             <div className="h-14 w-14 bg-slate-100 flex items-center justify-center rounded text-base font-bold text-slate-400">NO LOGO</div>
                         ) : null}
                         <div>
                             <h1 className="text-2xl font-black text-slate-900 tracking-tight leading-none">ใบวางบิล</h1>
-                            <p className="text-[10px] text-slate-500 font-bold tracking-[0.2em]">BILLING NOTE</p>
+                            <p className="text-base font-bold text-slate-500 font-bold tracking-[0.2em]">BILLING NOTE</p>
                         </div>
                     </div>
                     <div className="text-right">
                         <div className="bg-slate-900 text-white px-3 py-0.5 rounded text-lg font-bold inline-block">
                             # {note.Billing_Note_ID}
                         </div>
-                        <div className="text-[10px] font-bold text-slate-600 mt-0.5">วันที่: {new Date(note.Billing_Date).toLocaleDateString('th-TH')}</div>
+                        <div className="text-base font-bold font-bold text-slate-600 mt-0.5">วันที่: {new Date(note.Billing_Date).toLocaleDateString('th-TH')}</div>
                     </div>
                 </div>
 
                 {/* Addresses - Compact */}
                 <div className="grid grid-cols-2 gap-4 mb-4">
                     <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
-                        <h3 className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">ผู้วางบิล (Bill From)</h3>
+                        <h3 className="text-base font-bold font-black text-slate-400 uppercase tracking-widest mb-1.5">ผู้วางบิล (Bill From)</h3>
                         {company ? (
-                            <div className="text-[11px] text-slate-700 leading-tight">
+                            <div className="text-base font-bold text-slate-700 leading-tight">
                                 <p className="font-bold text-slate-900">{company.company_name}</p>
-                                <p className="text-[10px] text-slate-500 line-clamp-2">{company.address}</p>
+                                <p className="text-base font-bold text-slate-500 line-clamp-2">{company.address}</p>
                                 <div className="pt-1 flex gap-2">
-                                    <span className="text-[9px] font-bold"><span className="text-slate-400">TAX:</span> {company.tax_id}</span>
-                                    {company.phone && <span className="text-[9px] font-bold"><span className="text-slate-400">TEL:</span> {company.phone}</span>}
+                                    <span className="text-base font-bold font-bold"><span className="text-slate-400">TAX:</span> {company.tax_id}</span>
+                                    {company.phone && <span className="text-base font-bold font-bold"><span className="text-slate-400">TEL:</span> {company.phone}</span>}
                                 </div>
                             </div>
                         ) : (
-                            <p className="text-[10px] text-red-500">(กรุณาตั้งค่าข้อมูลบริษัท)</p>
+                            <p className="text-base font-bold text-red-500">(กรุณาตั้งค่าข้อมูลบริษัท)</p>
                         )}
                     </div>
                     <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
-                        <h3 className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">ลูกค้า (Bill To)</h3>
-                        <div className="text-[11px] text-slate-700 leading-tight">
+                        <h3 className="text-base font-bold font-black text-slate-400 uppercase tracking-widest mb-1.5">ลูกค้า (Bill To)</h3>
+                        <div className="text-base font-bold text-slate-700 leading-tight">
                             <p className="font-bold text-slate-900">{note.Customer_Name}</p>
                             {note.Customer_Address ? (
                                 <>
-                                    <p className="text-[10px] text-slate-500 line-clamp-1">{note.Customer_Address}</p>
-                                    <div className="pt-1 font-bold text-[9px]">
+                                    <p className="text-base font-bold text-slate-500 line-clamp-1">{note.Customer_Address}</p>
+                                    <div className="pt-1 font-bold text-base font-bold">
                                         <span className="text-slate-400">TAX ID:</span> {note.Customer_Tax_ID || '-'}
                                     </div>
                                 </>
                             ) : (
-                                <span className="text-red-400 text-[10px] italic">ไม่พบที่อยู่ลูกค้า</span>
+                                <span className="text-red-400 text-base font-bold italic">ไม่พบที่อยู่ลูกค้า</span>
                             )}
                         </div>
                     </div>
@@ -119,7 +119,7 @@ export default async function BillingPrintPage(props: Props) {
                 {/* Table - Very Compact */}
                 <table className="w-full mb-4 border-collapse">
                     <thead>
-                        <tr className="bg-slate-900 text-white text-[9px] uppercase font-black tracking-widest">
+                        <tr className="bg-slate-900 text-white text-base font-bold uppercase font-black tracking-widest">
                             <th className="py-1.5 px-3 text-left rounded-l">No.</th>
                             <th className="py-1.5 px-3 text-center">Date</th>
                             <th className="py-1.5 px-3 text-left">Description</th>
@@ -146,7 +146,7 @@ export default async function BillingPrintPage(props: Props) {
                             const chargeableExtras = extraCosts.filter(c => (c.charge_cust ?? 0) > 0)
 
                             return (
-                                <tbody key={job.Job_ID} className="text-[11px] text-slate-700">
+                                <tbody key={job.Job_ID} className="text-base font-bold text-slate-700">
                                     <tr className="border-b border-slate-50">
                                         <td className="py-1.5 px-3 align-top font-bold text-slate-400">{index + 1}</td>
                                         <td className="py-1.5 px-3 text-center align-top whitespace-nowrap">
@@ -154,15 +154,15 @@ export default async function BillingPrintPage(props: Props) {
                                         </td>
                                         <td className="py-1.5 px-3">
                                             <div className="font-bold text-slate-900">ค่าขนส่ง (Job: {job.Job_ID})</div>
-                                            <div className="text-slate-500 text-[10px]">{job.Route_Name}</div>
+                                            <div className="text-slate-500 text-base font-bold">{job.Route_Name}</div>
                                         </td>
                                         <td className="py-1.5 px-3 text-right align-top font-black">{job.Price_Cust_Total?.toLocaleString()}</td>
                                     </tr>
                                     {chargeableExtras.map((extra, i) => (
                                         <tr key={`${job.Job_ID}-extra-${i}`} className="text-slate-500 bg-slate-50/20 border-b border-slate-50/50">
                                             <td className="py-1 px-3" colSpan={2}></td>
-                                            <td className="py-1 px-3 text-[10px]">↳ {extra.type}</td>
-                                            <td className="py-1 px-3 text-right text-[10px] font-bold">{Number(extra.charge_cust).toLocaleString()}</td>
+                                            <td className="py-1 px-3 text-base font-bold">↳ {extra.type}</td>
+                                            <td className="py-1 px-3 text-right text-base font-bold font-bold">{Number(extra.charge_cust).toLocaleString()}</td>
                                         </tr>
                                     ))}
                                 </tbody>
@@ -173,27 +173,27 @@ export default async function BillingPrintPage(props: Props) {
                 {/* Totals and Remarks - Side by Side */}
                 <div className="flex justify-between items-start gap-8 mb-4 break-inside-avoid">
                     <div className="flex-1 bg-slate-50 p-3 rounded-xl border border-slate-100 max-w-xs">
-                        <h4 className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">หมายเหตุ (Remarks)</h4>
-                        <div className="text-[9px] text-slate-500 leading-tight space-y-0.5">
+                        <h4 className="text-base font-bold font-black text-slate-400 uppercase tracking-widest mb-1">หมายเหตุ (Remarks)</h4>
+                        <div className="text-base font-bold text-slate-500 leading-tight space-y-0.5">
                             <p>• ชำระเงินโดยการโอนเข้าบัญชีบริษัท</p>
                             <p className="font-bold text-slate-700 mt-1">ธนาคารกสิกรไทย: 123-4-56789-0</p>
-                            <p className="text-[8px]">ชื่อ: บจก. ดีดี ออร์แกนไนซ์ แอนด์ ทรานสปอร์ต</p>
+                            <p className="text-base font-bold">ชื่อ: บจก. ดีดี ออร์แกนไนซ์ แอนด์ ทรานสปอร์ต</p>
                         </div>
                     </div>
 
                     <div className="w-56 space-y-1">
-                        <div className="flex justify-between text-[10px] font-bold text-slate-500">
+                        <div className="flex justify-between text-base font-bold font-bold text-slate-500">
                             <span>SUBTOTAL</span>
                             <span className="text-slate-900">{subtotal.toLocaleString()}</span>
                         </div>
-                        <div className="flex justify-between text-[10px] font-bold text-slate-500">
+                        <div className="flex justify-between text-base font-bold font-bold text-slate-500">
                             <span>VAT 7%</span>
                             <span className="text-slate-900">{vat.toLocaleString()}</span>
                         </div>
                         <div className="flex justify-between items-end font-black text-xl text-slate-900 border-t-2 border-slate-900 pt-2 mt-1">
-                            <span className="text-[8px] text-slate-400">TOTAL</span>
+                            <span className="text-base font-bold text-slate-400">TOTAL</span>
                             <div className="border-b-2 border-double border-slate-900">
-                                <span className="text-xs font-bold mr-1 text-slate-400">฿</span>
+                                <span className="text-lg font-bold font-bold mr-1 text-slate-400">฿</span>
                                 {total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                             </div>
                         </div>
@@ -204,13 +204,13 @@ export default async function BillingPrintPage(props: Props) {
                 <div className="grid grid-cols-2 gap-8 mt-6 page-break-avoid">
                     <div className="text-center">
                         <div className="h-10 border-b border-dashed border-slate-300 mb-1"></div>
-                        <p className="text-[8px] font-black text-slate-300 uppercase tracking-widest">Authorized Signature</p>
-                        <p className="text-[10px] text-slate-800 font-bold">ผู้วางบิล</p>
+                        <p className="text-base font-bold font-black text-slate-300 uppercase tracking-widest">Authorized Signature</p>
+                        <p className="text-base font-bold text-slate-800 font-bold">ผู้วางบิล</p>
                     </div>
                     <div className="text-center">
                         <div className="h-10 border-b border-dashed border-slate-300 mb-1"></div>
-                        <p className="text-[8px] font-black text-slate-300 uppercase tracking-widest">Receiver Signature</p>
-                        <p className="text-[10px] text-slate-800 font-bold">ผู้รับวางบิล</p>
+                        <p className="text-base font-bold font-black text-slate-300 uppercase tracking-widest">Receiver Signature</p>
+                        <p className="text-base font-bold text-slate-800 font-bold">ผู้รับวางบิล</p>
                     </div>
                 </div>
             </div>

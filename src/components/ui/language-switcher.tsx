@@ -13,7 +13,7 @@ export function LanguageSwitcher({ className }: { className?: string }) {
       <button
         onClick={() => setLanguage('th')}
         className={cn(
-          "px-3 py-1.5 rounded-lg text-[10px] font-black transition-all",
+          "px-3 py-1.5 rounded-lg text-base font-bold font-black transition-all",
           language === 'th' 
             ? "bg-primary text-white shadow-[0_0_15px_rgba(255,30,133,0.3)]" 
             : "text-slate-500 hover:text-slate-300"
@@ -24,7 +24,7 @@ export function LanguageSwitcher({ className }: { className?: string }) {
       <button
         onClick={() => setLanguage('en')}
         className={cn(
-          "px-3 py-1.5 rounded-lg text-[10px] font-black transition-all",
+          "px-3 py-1.5 rounded-lg text-base font-bold font-black transition-all",
           language === 'en' 
             ? "bg-primary text-white shadow-[0_0_15px_rgba(255,30,133,0.3)]" 
             : "text-slate-500 hover:text-slate-300"
@@ -35,3 +35,4 @@ export function LanguageSwitcher({ className }: { className?: string }) {
     </div>
   );
 }
+

@@ -63,7 +63,7 @@ export function NotificationsClient({ alerts = [] }: any) {
         <div className="absolute top-0 right-0 w-80 h-80 bg-rose-500/5 blur-[120px] rounded-full -mr-40 -mt-40 pointer-events-none" />
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-10 relative z-10">
           <div>
-            <Link href="/dashboard" className="flex items-center gap-2 text-slate-500 hover:text-primary transition-all mb-8 text-[10px] font-black uppercase tracking-[0.4em] group/back">
+            <Link href="/dashboard" className="flex items-center gap-2 text-slate-500 hover:text-primary transition-all mb-8 text-base font-bold font-black uppercase tracking-[0.4em] group/back">
                 <div className="p-2 bg-white/5 rounded-full group-hover/back:-translate-x-1 transition-transform">
                    <ArrowLeft size={14} />
                 </div>
@@ -75,14 +75,14 @@ export function NotificationsClient({ alerts = [] }: any) {
                </div>
                <div>
                   <h1 className="text-5xl font-black text-white tracking-widest uppercase leading-none mb-2 italic">{t('navigation.notifications')}</h1>
-                  <p className="text-[10px] font-black text-primary uppercase tracking-[0.6em] opacity-80 italic italic">{t('dashboard.subtitle')}</p>
+                  <p className="text-base font-bold font-black text-primary uppercase tracking-[0.6em] opacity-80 italic italic">{t('dashboard.subtitle')}</p>
                </div>
             </div>
           </div>
           <div className="flex items-center gap-4 bg-rose-500/10 p-5 rounded-3xl border border-rose-500/20 backdrop-blur-3xl shadow-[0_0_30px_rgba(244,63,94,0.1)]">
              <div className="flex flex-col items-end">
-                <span className="text-[9px] font-black text-rose-400 uppercase tracking-widest leading-none">{t('notifications.status')}</span>
-                <span className="text-sm font-black text-white uppercase tracking-widest italic">{criticalCount > 0 ? t('common.error') : t('dashboard.system_integrity')}</span>
+                <span className="text-base font-bold font-black text-rose-400 uppercase tracking-widest leading-none">{t('notifications.status')}</span>
+                <span className="text-xl font-black text-white uppercase tracking-widest italic">{criticalCount > 0 ? t('common.error') : t('dashboard.system_integrity')}</span>
              </div>
              <div className={cn(
                 "w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-lg border-2",
@@ -119,7 +119,7 @@ export function NotificationsClient({ alerts = [] }: any) {
               <div className="space-y-1">
                 <p className="text-4xl font-black text-white italic tracking-tighter">{stat.count}</p>
                 <p className={cn(
-                    "text-[9px] font-black uppercase tracking-[0.4em] leading-none",
+                    "text-base font-bold font-black uppercase tracking-[0.4em] leading-none",
                     stat.color === 'rose' ? 'text-rose-500' : 
                     stat.color === 'amber' ? 'text-amber-500' : 
                     'text-blue-500'
@@ -139,7 +139,7 @@ export function NotificationsClient({ alerts = [] }: any) {
                 <div className="absolute inset-0 bg-emerald-500/10 blur-[40px] rounded-full" />
               </div>
               <h3 className="text-2xl font-black text-white italic tracking-[0.3em] uppercase mb-3">{t('dashboard.system_integrity')}</h3>
-              <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.6em]">{t('common.no_data')}</p>
+              <p className="text-base font-bold font-black text-slate-500 uppercase tracking-[0.6em]">{t('common.no_data')}</p>
           </PremiumCard>
         ) : (
           Object.entries(grouped).map(([type, typeAlerts]) => {
@@ -160,12 +160,12 @@ export function NotificationsClient({ alerts = [] }: any) {
                     </div>
                     <div>
                        <h2 className="text-xl font-black text-white tracking-widest uppercase italic">{TYPE_LABELS[type as keyof typeof TYPE_LABELS] || type}</h2>
-                       <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.4em]">NODE: {type.toUpperCase()}</p>
+                       <p className="text-base font-bold font-black text-slate-500 uppercase tracking-[0.4em]">NODE: {type.toUpperCase()}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3 py-2 px-5 bg-white/5 rounded-full border border-white/10">
                       <Target size={14} className="text-slate-700" />
-                      <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">{typeAlerts.length} {t('common.units')}</span>
+                      <span className="text-base font-bold font-black text-slate-500 uppercase tracking-widest">{typeAlerts.length} {t('common.units')}</span>
                   </div>
                 </div>
                 
@@ -182,25 +182,25 @@ export function NotificationsClient({ alerts = [] }: any) {
                         <div className="flex-1 space-y-3">
                           <div className="flex flex-wrap items-center gap-4">
                             <span className="text-xl font-black text-white tracking-widest uppercase italic group-hover/item:text-primary transition-colors">{alert.title}</span>
-                            <div className={cn("px-4 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest border border-transparent italic", style.bg, style.text, style.glow)}>
+                            <div className={cn("px-4 py-1.5 rounded-xl text-base font-bold font-black uppercase tracking-widest border border-transparent italic", style.bg, style.text, style.glow)}>
                               {t(style.labelKey)}
                             </div>
                           </div>
                           
-                          <p className="text-sm font-black text-slate-500 leading-relaxed max-w-3xl uppercase tracking-tighter">{alert.description}</p>
+                          <p className="text-xl font-black text-slate-500 leading-relaxed max-w-3xl uppercase tracking-tighter">{alert.description}</p>
                           
                           {alert.meta?.plate && (
                             <div className="flex items-center gap-3 pt-2">
                                <div className="p-2 bg-white/5 rounded-xl border border-white/10 text-slate-400 group-hover/item:text-primary transition-colors">
                                   <Truck size={14} />
                                </div>
-                               <span className="text-xs font-black text-white uppercase tracking-widest bg-white/5 px-4 py-1.5 rounded-xl border border-white/5 italic">{t('vehicles.plate')}: {alert.meta.plate}</span>
+                               <span className="text-lg font-bold font-black text-white uppercase tracking-widest bg-white/5 px-4 py-1.5 rounded-xl border border-white/5 italic">{t('vehicles.plate')}: {alert.meta.plate}</span>
                             </div>
                           )}
                         </div>
 
                         <div className="hidden lg:block">
-                           <PremiumButton variant="secondary" className="bg-white/5 border-white/5 hover:bg-white/10 text-white font-black uppercase tracking-widest text-[10px] h-12 rounded-2xl">
+                           <PremiumButton variant="secondary" className="bg-white/5 border-white/5 hover:bg-white/10 text-white font-black uppercase tracking-widest text-base font-bold h-12 rounded-2xl">
                                {t('common.loading')}
                            </PremiumButton>
                         </div>
@@ -223,7 +223,7 @@ export function NotificationsClient({ alerts = [] }: any) {
               </div>
               <div className="text-center md:text-left">
                   <h4 className="text-2xl font-black text-white uppercase tracking-[0.4em] italic mb-1">{t('dashboard.subtitle')}</h4>
-                  <p className="text-[10px] text-slate-600 font-black uppercase tracking-[0.2em] leading-relaxed">
+                  <p className="text-base font-bold text-slate-600 font-black uppercase tracking-[0.2em] leading-relaxed">
                       {t('dashboard.subtitle')}
                   </p>
               </div>
@@ -235,3 +235,4 @@ export function NotificationsClient({ alerts = [] }: any) {
     </div>
   )
 }
+

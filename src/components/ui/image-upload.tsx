@@ -94,9 +94,10 @@ export function ImageUpload({
           ) : (
              <ImagePlus className="h-6 w-6" />
           )}
-          <span className="text-xs">รูปภาพ</span>
+          <span className="text-lg font-bold">รูปภาพ</span>
         </Button>
       )}
     </div>
   )
 }
+

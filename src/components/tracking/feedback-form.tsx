@@ -53,7 +53,7 @@ export function FeedbackForm({ jobId }: FeedbackFormProps) {
         </div>
         <div>
             <h3 className="text-xl font-bold text-white">ส่งคำแนะนำเรียบร้อย</h3>
-            <p className="text-emerald-400 text-sm">ขอบคุณที่เลือกใช้บริการของเราครับ</p>
+            <p className="text-emerald-400 text-xl">ขอบคุณที่เลือกใช้บริการของเราครับ</p>
         </div>
       </motion.div>
     )
@@ -123,3 +123,4 @@ export function FeedbackForm({ jobId }: FeedbackFormProps) {
     </section>
   )
 }
+

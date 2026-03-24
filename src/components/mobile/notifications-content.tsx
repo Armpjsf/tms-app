@@ -77,11 +77,11 @@ export function NotificationsContent({ notifications: initialNotifications, driv
       {/* Header with mark all read */}
       {unreadCount > 0 && (
         <div className="flex justify-between items-center">
-          <span className="text-sm text-gray-500">ยังไม่อ่าน {unreadCount} รายการ</span>
+          <span className="text-xl text-gray-500">ยังไม่อ่าน {unreadCount} รายการ</span>
           <Button 
             variant="ghost" 
             size="sm" 
-            className="text-emerald-500 hover:text-blue-300 h-7 text-xs"
+            className="text-emerald-500 hover:text-blue-300 h-7 text-lg font-bold"
             onClick={handleMarkAllRead}
           >
             <CheckCheck size={14} className="mr-1" />
@@ -120,8 +120,8 @@ export function NotificationsContent({ notifications: initialNotifications, driv
                   <h4 className={`font-medium ${notif.Is_Read ? 'text-gray-700' : 'text-white'}`}>
                     {notif.Title}
                   </h4>
-                  <p className="text-sm text-gray-500 mt-1">{notif.Message}</p>
-                  <p className="text-xs text-gray-400 mt-2">{formatTime(notif.Created_At)}</p>
+                  <p className="text-xl text-gray-500 mt-1">{notif.Message}</p>
+                  <p className="text-lg font-bold text-gray-400 mt-2">{formatTime(notif.Created_At)}</p>
                 </div>
                 {!notif.Is_Read && (
                   <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0" />
@@ -134,3 +134,4 @@ export function NotificationsContent({ notifications: initialNotifications, driv
     </div>
   )
 }
+

@@ -30,11 +30,11 @@ export function RouteStrip({ origin, destination, destinations, distanceKm, stat
       {/* Distance / ETA Status */}
       <div className="flex items-center gap-2 mb-6 px-1">
         <Navigation size={14} className={isCompleted ? "text-emerald-400" : "text-primary"} />
-        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
+        <span className="text-base font-bold font-black uppercase tracking-[0.2em] text-slate-500">
           Mission Path Tracking
         </span>
         {distanceKm && (
-            <span className="text-xs font-black text-primary ml-auto flex items-center gap-1.5">
+            <span className="text-lg font-bold font-black text-primary ml-auto flex items-center gap-1.5">
                 {distanceKm} KM <span className="opacity-40 tracking-tighter">REMAINING</span>
             </span>
         )}
@@ -94,15 +94,15 @@ export function RouteStrip({ origin, destination, destinations, distanceKm, stat
       {/* Location Labels */}
       <div className="grid grid-cols-2 gap-8">
         <div className="space-y-1">
-          <p className="text-[9px] font-black uppercase tracking-[0.2em] text-primary">Origin</p>
-          <p className="text-[11px] text-white font-bold leading-tight line-clamp-2">
+          <p className="text-base font-bold font-black uppercase tracking-[0.2em] text-primary">Origin</p>
+          <p className="text-base font-bold text-white font-bold leading-tight line-clamp-2">
             {origin || 'WAREHOUSE BASE'}
           </p>
         </div>
 
         <div className="space-y-1 text-right">
-          <p className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-500">Destination</p>
-          <p className="text-[11px] text-white font-bold leading-tight line-clamp-2">
+          <p className="text-base font-bold font-black uppercase tracking-[0.2em] text-slate-500">Destination</p>
+          <p className="text-base font-bold text-white font-bold leading-tight line-clamp-2">
             {destination || (isMultiStop ? destinations[destinations.length - 1].name : 'TACTICAL DROP')}
           </p>
         </div>
@@ -110,3 +110,4 @@ export function RouteStrip({ origin, destination, destinations, distanceKm, stat
     </div>
   )
 }
+

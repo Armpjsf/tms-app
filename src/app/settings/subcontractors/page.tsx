@@ -155,12 +155,12 @@ export default function SubcontractorsPage() {
                         <div className="p-2 bg-primary/20 rounded-xl shadow-lg">
                             <Network className="text-primary" size={20} />
                         </div>
-                        <h2 className="text-[11px] font-black text-primary uppercase tracking-[0.1em]">{t('settings_pages.subcontractors.subtitle')}</h2>
+                        <h2 className="text-base font-bold font-black text-primary uppercase tracking-[0.1em]">{t('settings_pages.subcontractors.subtitle')}</h2>
                     </div>
                     <h1 className="text-6xl font-black text-white tracking-tighter flex items-center gap-5 uppercase premium-text-gradient">
                         {t('settings_pages.subcontractors.title')}
                     </h1>
-                    <p className="text-slate-500 font-bold text-sm tracking-wide opacity-80 uppercase tracking-[0.1em] leading-relaxed">
+                    <p className="text-slate-500 font-bold text-xl tracking-wide opacity-80 uppercase tracking-[0.1em] leading-relaxed">
                       {t('settings.items.partners_desc')}
                     </p>
                 </div>
@@ -181,9 +181,9 @@ export default function SubcontractorsPage() {
                             <div className="p-4 rounded-2xl shadow-xl transition-all duration-700 group-hover:scale-110 group-hover:rotate-6 bg-primary/20 text-primary">
                                 <Briefcase size={24} strokeWidth={2.5} />
                             </div>
-                            <div className="px-3 py-1 bg-white/5 rounded-full border border-white/5 text-[11px] text-primary font-black uppercase tracking-[0.1em] italic animate-pulse">GRID SCALE</div>
+                            <div className="px-3 py-1 bg-white/5 rounded-full border border-white/5 text-base font-bold text-primary font-black uppercase tracking-[0.1em] italic animate-pulse">GRID SCALE</div>
                         </div>
-                        <p className="text-slate-500 font-black text-[11px] uppercase tracking-[0.1em] mb-2">{t('settings_pages.subcontractors.stats.total_partners')}</p>
+                        <p className="text-slate-500 font-black text-base font-bold uppercase tracking-[0.1em] mb-2">{t('settings_pages.subcontractors.stats.total_partners')}</p>
                         <p className="text-4xl font-black text-white tracking-tighter leading-none">{list.length}</p>
                     </div>
 
@@ -192,11 +192,11 @@ export default function SubcontractorsPage() {
                             <div className="p-4 rounded-2xl shadow-xl transition-all duration-700 group-hover:scale-110 group-hover:rotate-6 bg-accent/20 text-accent">
                                 <TrendingUp size={24} strokeWidth={2.5} />
                             </div>
-                            <div className="px-3 py-1 bg-white/5 rounded-full border border-white/5 text-[11px] text-accent font-black uppercase tracking-[0.1em] italic">MARKET SHARE</div>
+                            <div className="px-3 py-1 bg-white/5 rounded-full border border-white/5 text-base font-bold text-accent font-black uppercase tracking-[0.1em] italic">MARKET SHARE</div>
                         </div>
-                        <p className="text-slate-500 font-black text-[11px] uppercase tracking-[0.1em] mb-2">{t('settings_pages.subcontractors.stats.network_missions')}</p>
+                        <p className="text-slate-500 font-black text-base font-bold uppercase tracking-[0.1em] mb-2">{t('settings_pages.subcontractors.stats.network_missions')}</p>
                         <p className="text-4xl font-black text-white tracking-tighter leading-none">
-                            {stats.performance.find((p: { name: string }) => p.name.includes('Sub'))?.count || 0} <span className="text-sm text-slate-500 font-bold opacity-40 ml-1">NODES</span>
+                            {stats.performance.find((p: { name: string }) => p.name.includes('Sub'))?.count || 0} <span className="text-xl text-slate-500 font-bold opacity-40 ml-1">NODES</span>
                         </p>
                     </div>
 
@@ -205,9 +205,9 @@ export default function SubcontractorsPage() {
                             <div className="p-4 rounded-2xl shadow-xl transition-all duration-700 group-hover:scale-110 group-hover:rotate-6 bg-primary/10 text-primary">
                                 <ShieldCheck size={24} strokeWidth={2.5} />
                             </div>
-                            <div className="px-3 py-1 bg-white/5 rounded-full border border-white/5 text-[11px] text-slate-500 font-black uppercase tracking-[0.1em] italic">RELIABILITY</div>
+                            <div className="px-3 py-1 bg-white/5 rounded-full border border-white/5 text-base font-bold text-slate-500 font-black uppercase tracking-[0.1em] italic">RELIABILITY</div>
                         </div>
-                        <p className="text-slate-500 font-black text-[11px] uppercase tracking-[0.1em] mb-2">{t('settings_pages.subcontractors.stats.on_time')}</p>
+                        <p className="text-slate-500 font-black text-base font-bold uppercase tracking-[0.1em] mb-2">{t('settings_pages.subcontractors.stats.on_time')}</p>
                         <p className="text-4xl font-black text-white tracking-tighter leading-none">{stats.ops.fleet.onTimeDelivery.toFixed(1)}%</p>
                     </div>
                 </div>
@@ -232,7 +232,7 @@ export default function SubcontractorsPage() {
             <div className="glass-panel rounded-[4rem] border-white/5 shadow-2xl overflow-hidden bg-[#0a0518]/20 relative">
                 <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent pointer-events-none" />
                 <div className="relative w-full overflow-auto custom-scrollbar">
-                    <table className="w-full text-sm text-left border-collapse">
+                    <table className="w-full text-xl text-left border-collapse">
                         <thead>
                             <tr className="bg-white/[0.02] border-b border-white/5">
                                 <th className="px-12 py-10 text-[12px] font-black uppercase tracking-[0.1em] text-slate-500">{t('settings_pages.subcontractors.table.identity')}</th>
@@ -250,12 +250,12 @@ export default function SubcontractorsPage() {
                                             <Loader2 className="w-16 h-16 text-primary animate-spin opacity-20" strokeWidth={1} />
                                             <Activity className="absolute inset-0 m-auto text-primary animate-pulse" size={24} />
                                         </div>
-                                        <p className="mt-8 text-slate-700 font-black uppercase tracking-[0.2em] text-[11px]">Syncing Partner Registry...</p>
+                                        <p className="mt-8 text-slate-700 font-black uppercase tracking-[0.2em] text-base font-bold">Syncing Partner Registry...</p>
                                     </td>
                                 </tr>
                             ) : filtered.length === 0 ? (
                                 <tr>
-                                    <td colSpan={5} className="text-center py-40 text-slate-700 font-black uppercase tracking-[0.5em] text-xs">
+                                    <td colSpan={5} className="text-center py-40 text-slate-700 font-black uppercase tracking-[0.5em] text-lg font-bold">
                                         No partner nodes detected in the sector
                                     </td>
                                 </tr>
@@ -269,14 +269,14 @@ export default function SubcontractorsPage() {
                                                 </div>
                                                 <div>
                                                     <span className="font-black text-white text-xl tracking-tighter group-hover/row:text-primary transition-colors font-display uppercase">{item.Sub_ID}</span>
-                                                    <p className="text-[10px] font-black text-slate-600 uppercase tracking-[0.1em] mt-1 italic">Registry Node</p>
+                                                    <p className="text-base font-bold font-black text-slate-600 uppercase tracking-[0.1em] mt-1 italic">Registry Node</p>
                                                 </div>
                                             </div>
                                         </td>
                                         <td className="px-8 py-8">
                                             <div>
-                                                <div className="font-black text-white text-sm tracking-tight group-hover/row:text-primary transition-colors uppercase">{item.Sub_Name}</div>
-                                                <div className="flex items-center gap-2 mt-2 text-[11px] font-black text-slate-500 uppercase tracking-[0.1em]">
+                                                <div className="font-black text-white text-xl tracking-tight group-hover/row:text-primary transition-colors uppercase">{item.Sub_Name}</div>
+                                                <div className="flex items-center gap-2 mt-2 text-base font-bold font-black text-slate-500 uppercase tracking-[0.1em]">
                                                     <ShieldCheck size={12} className="text-primary/60" />
                                                     Tax: {item.Tax_ID || "ENLISTING..."}
                                                 </div>
@@ -289,20 +289,20 @@ export default function SubcontractorsPage() {
                                                         <div className="p-1.5 bg-white/5 rounded-lg">
                                                             <Banknote size={14} className="text-accent" />
                                                         </div>
-                                                        <span className="text-xs font-black text-slate-300 uppercase tracking-wide">{item.Bank_Name}</span>
+                                                        <span className="text-lg font-bold font-black text-slate-300 uppercase tracking-wide">{item.Bank_Name}</span>
                                                     </div>
-                                                    <span className="text-[11px] font-black text-slate-600 tracking-[0.1em] ml-10">**** **** {item.Bank_Account_No.slice(-4)}</span>
+                                                    <span className="text-base font-bold font-black text-slate-600 tracking-[0.1em] ml-10">**** **** {item.Bank_Account_No.slice(-4)}</span>
                                                 </div>
                                             ) : (
                                                 <div className="flex items-center gap-2 text-slate-700 italic">
                                                     <div className="w-1.5 h-1.5 rounded-full bg-slate-800" />
-                                                    <span className="text-[11px] font-black uppercase tracking-[0.1em]">Vector Pending</span>
+                                                    <span className="text-base font-bold font-black uppercase tracking-[0.1em]">Vector Pending</span>
                                                 </div>
                                             )}
                                         </td>
                                         <td className="px-8 py-8">
                                             <div className={cn(
-                                                "inline-flex items-center gap-2.5 px-5 py-2.5 rounded-[1.5rem] text-[11px] font-black uppercase tracking-widest border shadow-xl transition-all duration-500 group-hover/row:scale-105",
+                                                "inline-flex items-center gap-2.5 px-5 py-2.5 rounded-[1.5rem] text-base font-bold font-black uppercase tracking-widest border shadow-xl transition-all duration-500 group-hover/row:scale-105",
                                                 item.Active_Status === 'Active' ? 'bg-primary/10 text-primary border-primary/20' : 'bg-rose-500/10 text-rose-500 border-rose-500/20'
                                             )}>
                                                 <span className={cn("w-1.5 h-1.5 rounded-full shadow-[0_0_10px_currentColor]", item.Active_Status === 'Active' ? "bg-current animate-pulse" : "bg-rose-500")} />
@@ -326,7 +326,7 @@ export default function SubcontractorsPage() {
                     </table>
                 </div>
                 <div className="p-8 border-t border-white/5 bg-white/[0.02] flex items-center justify-between">
-                    <p className="text-[11px] font-black text-slate-700 uppercase tracking-[0.1em]">Sub-Contractor Financial Matrix Node</p>
+                    <p className="text-base font-bold font-black text-slate-700 uppercase tracking-[0.1em]">Sub-Contractor Financial Matrix Node</p>
                     <Zap size={16} className="text-primary/20" />
                 </div>
             </div>
@@ -348,28 +348,28 @@ export default function SubcontractorsPage() {
                     <div className="p-12 space-y-10 custom-scrollbar max-h-[70vh] overflow-y-auto">
                         <div className="grid grid-cols-2 gap-10">
                             <div className="space-y-4">
-                                <Label className="text-[11px] font-black uppercase tracking-[0.1em] text-slate-500 ml-2">{t('settings_pages.subcontractors.dialog.alias_id')}</Label>
+                                <Label className="text-base font-bold font-black uppercase tracking-[0.1em] text-slate-500 ml-2">{t('settings_pages.subcontractors.dialog.alias_id')}</Label>
                                 <Input 
                                     value={formData.Sub_ID} 
                                     onChange={e => setFormData({...formData, Sub_ID: e.target.value})} 
                                     disabled={!!editingId}
                                     placeholder="E.G. SUB-001"
-                                    className="h-16 bg-white/5 border-white/5 text-white font-black rounded-2xl px-8 text-sm uppercase tracking-widest focus:bg-white/10 transition-all"
+                                    className="h-16 bg-white/5 border-white/5 text-white font-black rounded-2xl px-8 text-xl uppercase tracking-widest focus:bg-white/10 transition-all"
                                 />
                             </div>
                             <div className="space-y-4">
-                                <Label className="text-[11px] font-black uppercase tracking-[0.1em] text-slate-500 ml-2">{t('settings_pages.subcontractors.dialog.tax_id')}</Label>
+                                <Label className="text-base font-bold font-black uppercase tracking-[0.1em] text-slate-500 ml-2">{t('settings_pages.subcontractors.dialog.tax_id')}</Label>
                                 <Input 
                                     value={formData.Tax_ID || ""} 
                                     onChange={e => setFormData({...formData, Tax_ID: e.target.value})} 
                                     placeholder="13-DIGIT VERIFIER"
-                                    className="h-16 bg-white/5 border-white/5 text-white font-black rounded-2xl px-8 text-sm uppercase tracking-widest focus:bg-white/10 transition-all font-display"
+                                    className="h-16 bg-white/5 border-white/5 text-white font-black rounded-2xl px-8 text-xl uppercase tracking-widest focus:bg-white/10 transition-all font-display"
                                 />
                             </div>
                         </div>
 
                         <div className="space-y-4">
-                            <Label className="text-[11px] font-black uppercase tracking-[0.1em] text-slate-500 ml-2">{t('settings_pages.subcontractors.dialog.corporate_name')}</Label>
+                            <Label className="text-base font-bold font-black uppercase tracking-[0.1em] text-slate-500 ml-2">{t('settings_pages.subcontractors.dialog.corporate_name')}</Label>
                             <div className="glass-panel p-1 rounded-2xl border-white/5">
                                 <Input 
                                     value={formData.Sub_Name} 
@@ -381,17 +381,17 @@ export default function SubcontractorsPage() {
                         </div>
 
                         <div className="space-y-4">
-                            <Label className="text-[11px] font-black uppercase tracking-[0.1em] text-slate-500 ml-2">{t('settings_pages.subcontractors.dialog.branch')}</Label>
+                            <Label className="text-base font-bold font-black uppercase tracking-[0.1em] text-slate-500 ml-2">{t('settings_pages.subcontractors.dialog.branch')}</Label>
                             <Select 
                                 value={formData.Branch_ID || ""} 
                                 onValueChange={(v: string) => setFormData({...formData, Branch_ID: v})}
                             >
-                                <SelectTrigger className="h-16 bg-white/5 border-white/5 text-white font-black rounded-2xl px-8 text-sm uppercase tracking-widest">
+                                <SelectTrigger className="h-16 bg-white/5 border-white/5 text-white font-black rounded-2xl px-8 text-xl uppercase tracking-widest">
                                     <SelectValue placeholder="SELECT OPERATIONAL BRANCH" />
                                 </SelectTrigger>
                                 <SelectContent className="bg-[#0c061d] border-white/10 text-white font-black">
                                     {branches.map(b => (
-                                        <SelectItem key={b.Branch_ID} value={b.Branch_ID} className="hover:bg-primary/20 focus:bg-primary/20 uppercase tracking-widest text-[11px]">
+                                        <SelectItem key={b.Branch_ID} value={b.Branch_ID} className="hover:bg-primary/20 focus:bg-primary/20 uppercase tracking-widest text-base font-bold">
                                             {b.Branch_Name} ({b.Branch_ID})
                                         </SelectItem>
                                     ))}
@@ -401,23 +401,23 @@ export default function SubcontractorsPage() {
 
                         <div className="p-10 rounded-[2.5rem] bg-accent/5 border border-accent/10 space-y-8 relative overflow-hidden">
                             <div className="absolute top-0 right-0 w-32 h-32 bg-accent/10 blur-[80px] pointer-events-none" />
-                            <h3 className="text-[10px] font-black uppercase tracking-[0.5em] text-accent flex items-center gap-3">
+                            <h3 className="text-base font-bold font-black uppercase tracking-[0.5em] text-accent flex items-center gap-3">
                                 <div className="w-1.5 h-1.5 rounded-full bg-accent shadow-[0_0_8px_rgba(168,85,247,1)]" />
                                 {t('settings_pages.subcontractors.dialog.financial_header')}
                             </h3>
                             
                             <div className="space-y-4">
-                                <Label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.1em] ml-2">{t('settings_pages.subcontractors.dialog.bank_name')}</Label>
+                                <Label className="text-base font-bold font-black text-slate-500 uppercase tracking-[0.1em] ml-2">{t('settings_pages.subcontractors.dialog.bank_name')}</Label>
                                 <Select 
                                     value={formData.Bank_Name || ""} 
                                     onValueChange={(v: string) => setFormData({...formData, Bank_Name: v})}
                                 >
-                                    <SelectTrigger className="h-14 bg-white/5 border-white/5 text-white font-black rounded-xl px-6 text-xs uppercase tracking-widest">
+                                    <SelectTrigger className="h-14 bg-white/5 border-white/5 text-white font-black rounded-xl px-6 text-lg font-bold uppercase tracking-widest">
                                         <SelectValue placeholder="SELECT BANK ENTITY" />
                                     </SelectTrigger>
                                     <SelectContent className="bg-[#0c061d] border-white/10 text-white font-black">
                                         {BANKS.map(b => (
-                                            <SelectItem key={b.value} value={b.value} className="hover:bg-accent/20 focus:bg-accent/20 uppercase tracking-widest text-[11px]">
+                                            <SelectItem key={b.value} value={b.value} className="hover:bg-accent/20 focus:bg-accent/20 uppercase tracking-widest text-base font-bold">
                                                 {b.label}
                                             </SelectItem>
                                         ))}
@@ -427,21 +427,21 @@ export default function SubcontractorsPage() {
 
                             <div className="grid grid-cols-2 gap-10">
                                 <div className="space-y-4">
-                                    <Label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.1em] ml-2">{t('settings_pages.subcontractors.dialog.bank_account')}</Label>
+                                    <Label className="text-base font-bold font-black text-slate-500 uppercase tracking-[0.1em] ml-2">{t('settings_pages.subcontractors.dialog.bank_account')}</Label>
                                     <Input 
                                         value={formData.Bank_Account_No || ""} 
                                         onChange={e => setFormData({...formData, Bank_Account_No: e.target.value})} 
                                         placeholder="000-000-0000"
-                                        className="h-14 bg-white/5 border-white/5 text-white font-black rounded-xl px-6 text-xs tracking-[0.2em]"
+                                        className="h-14 bg-white/5 border-white/5 text-white font-black rounded-xl px-6 text-lg font-bold tracking-[0.2em]"
                                     />
                                 </div>
                                 <div className="space-y-4">
-                                    <Label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.1em] ml-2">{t('settings_pages.subcontractors.dialog.bank_holder')}</Label>
+                                    <Label className="text-base font-bold font-black text-slate-500 uppercase tracking-[0.1em] ml-2">{t('settings_pages.subcontractors.dialog.bank_holder')}</Label>
                                     <Input 
                                         value={formData.Bank_Account_Name || ""} 
                                         onChange={e => setFormData({...formData, Bank_Account_Name: e.target.value})} 
                                         placeholder="ACCOUNT HOLDER ALIAS"
-                                        className="h-14 bg-white/5 border-white/5 text-white font-black rounded-xl px-6 text-xs uppercase tracking-widest"
+                                        className="h-14 bg-white/5 border-white/5 text-white font-black rounded-xl px-6 text-lg font-bold uppercase tracking-widest"
                                     />
                                 </div>
                             </div>
@@ -461,10 +461,11 @@ export default function SubcontractorsPage() {
             </Dialog>
 
             <div className="mt-20 text-center mb-24">
-                <div className="inline-flex items-center gap-4 px-8 py-3 glass-panel rounded-full text-[11px] font-black text-slate-700 uppercase tracking-[0.1em] opacity-40 hover:opacity-100 transition-opacity">
+                <div className="inline-flex items-center gap-4 px-8 py-3 glass-panel rounded-full text-base font-bold font-black text-slate-700 uppercase tracking-[0.1em] opacity-40 hover:opacity-100 transition-opacity">
                     <ShieldCheck size={14} className="text-primary" /> Integrated Logistic Network v7.2 • Advanced Partner Security
                 </div>
             </div>
         </DashboardLayout>
     )
 }
+

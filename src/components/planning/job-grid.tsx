@@ -13,6 +13,7 @@ import { Package, ArrowRight, Plus } from "lucide-react"
 import Link from "next/link"
 import { PremiumButton } from "@/components/ui/premium-button"
 import { JobDialog } from "@/components/planning/job-dialog"
+import { useLanguage } from "@/components/providers/language-provider"
 
 interface JobGridProps {
     jobs: Job[]
@@ -39,16 +40,18 @@ export function JobGrid({
     view = 'list',
     canCreate = true
 }: JobGridProps) {
+    const { t } = useLanguage()
+    
     return (
-        <PremiumCard className="p-0 overflow-hidden shadow-[0_30px_100px_rgba(0,0,0,0.1)] border-none bg-white rounded-br-[5rem] rounded-tl-[3rem]">
+        <PremiumCard dark={true} className="p-0 overflow-hidden shadow-[0_30px_100px_rgba(0,0,0,0.1)] border-none rounded-br-[5rem] rounded-tl-[3rem]">
             <PremiumCardHeader className="p-8 border-b border-slate-50 bg-slate-950 relative overflow-hidden flex flex-row items-center justify-between">
                 <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 to-transparent pointer-events-none" />
                 <PremiumCardTitle icon={<Package className="text-emerald-400" />} className="text-white relative z-10 flex-1">
-                   {view === 'requests' ? "ASSET REQUESTS" : "LIVE MONITORING FEED"}
+                   {view === 'requests' ? t('jobs.head_requests') : t('jobs.head_live_feed')}
                 </PremiumCardTitle>
                 <Link href="/jobs/history" className="relative z-10">
-                    <PremiumButton variant="ghost" size="sm" className="text-[10px] tracking-[0.2em] text-slate-400 hover:text-white hover:bg-white/5">
-                        ARCHIVE DATA <ArrowRight className="w-4 h-4 ml-2" />
+                    <PremiumButton variant="ghost" size="sm" className="text-base tracking-[0.2em] text-slate-400 hover:text-white hover:bg-white/5">
+                        ARCHIVE DATA <ArrowRight className="w-5 h-5 ml-2" />
                     </PremiumButton>
                 </Link>
             </PremiumCardHeader>
@@ -58,7 +61,7 @@ export function JobGrid({
                         <div className="bg-white w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-6 border border-gray-200 shadow-inner">
                             <Package className="w-10 h-10 text-gray-400" />
                         </div>
-                        <p className="text-gray-500 font-bold mb-6">
+                        <p className="text-xl text-gray-500 font-bold mb-6">
                             {view === 'requests' ? "ไม่มีคำขอใหม่จากลูกค้า" : "ยังไม่มีงานที่วางแผนไว้สำหรับวันนี้"}
                         </p>
                         <div className="flex justify-center gap-3">
@@ -71,8 +74,8 @@ export function JobGrid({
                                     subcontractors={subcontractors}
                                     trigger={
                                         canCreate ? (
-                                            <PremiumButton className="h-14 px-10 rounded-2xl">
-                                                <Plus size={24} className="mr-2" />
+                                            <PremiumButton className="h-16 px-12 rounded-2xl text-lg">
+                                                <Plus size={28} className="mr-2" />
                                                 เริ่มแผนงานแรก
                                             </PremiumButton>
                                         ) : <></>
@@ -82,13 +85,12 @@ export function JobGrid({
                         </div>
                     </div>
                 ) : (
-                    <div className="divide-y divide-gray-50 bg-white/50">
+                    <div className="divide-y divide-white/5 bg-transparent">
                         {jobs.map((job) => (
                             <motion.div 
                                 key={job.Job_ID}
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
-                                whileHover={{ backgroundColor: 'rgba(16, 185, 129, 0.05)' }}
                                 className="transition-colors"
                             >
                                 <RecentJobItem 
@@ -107,8 +109,8 @@ export function JobGrid({
                 )}
                 
                 {jobs.length > 0 && (
-                    <div className="p-6 bg-gray-50/30 text-center border-t border-gray-50">
-                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em]">
+                    <div className="p-8 bg-gray-50/30 text-center border-t border-gray-50">
+                        <p className="text-base font-black text-slate-500 uppercase tracking-[0.3em] mt-2 group-hover:text-slate-400 transition-colors">
                             Logistics Intelligence Engine • Today&apos;s Activity
                         </p>
                     </div>

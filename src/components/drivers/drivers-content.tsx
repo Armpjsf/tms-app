@@ -63,14 +63,14 @@ export function DriversContent({ drivers, count, branches, vehicles = [], subcon
               <div className="p-3 bg-primary rounded-2xl shadow-lg shadow-primary/20">
                   <Users className="text-white" size={24} />
               </div>
-              <Badge className="bg-primary/20 text-primary border-primary/30 py-1 px-4 text-[10px] font-black tracking-widest uppercase">
+              <Badge className="bg-primary/20 text-primary border-primary/30 py-1 px-4 text-base font-bold font-black tracking-widest uppercase">
                 {isAdmin ? "COMMAND CENTER" : "BASE OPERATIONS"}
               </Badge>
           </div>
           <h1 className="text-6xl font-black text-white tracking-tighter uppercase">
             {t('navigation.drivers')}<span className="text-primary font-black italic">ELITE</span>
           </h1>
-          <p className="text-slate-500 font-bold uppercase tracking-[0.4em] text-xs">{t('dashboard.subtitle')}</p>
+          <p className="text-slate-500 font-bold uppercase tracking-[0.4em] text-lg font-bold">{t('dashboard.subtitle')}</p>
         </div>
       </div>
 
@@ -81,27 +81,27 @@ export function DriversContent({ drivers, count, branches, vehicles = [], subcon
                 <div className="p-2 bg-primary/10 rounded-xl">
                     <Zap size={20} className="text-primary" />
                 </div>
-                <h4 className="text-white font-black text-xs uppercase tracking-widest">{t('navigation.monitoring')} Matrix</h4>
+                <h4 className="text-white font-black text-lg font-bold uppercase tracking-widest">{t('navigation.monitoring')} Matrix</h4>
              </div>
-             <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest">Analytics Layer Offline</p>
+             <p className="text-slate-500 text-base font-bold font-black uppercase tracking-widest">Analytics Layer Offline</p>
         </PremiumCard>
         <PremiumCard className="glass-panel p-8 rounded-[3rem] border-white/5 opacity-50">
              <div className="flex items-center gap-4 mb-4">
                 <div className="p-2 bg-accent/10 rounded-xl">
                     <ShieldCheck size={20} className="text-accent" />
                 </div>
-                <h4 className="text-white font-black text-xs uppercase tracking-widest">{t('navigation.monitoring')} Status</h4>
+                <h4 className="text-white font-black text-lg font-bold uppercase tracking-widest">{t('navigation.monitoring')} Status</h4>
              </div>
-             <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest">Scanning Protocols Deferred</p>
+             <p className="text-slate-500 text-base font-bold font-black uppercase tracking-widest">Scanning Protocols Deferred</p>
         </PremiumCard>
         <PremiumCard className="glass-panel p-8 rounded-[3rem] border-white/5 opacity-50">
              <div className="flex items-center gap-4 mb-4">
                 <div className="p-2 bg-blue-500/10 rounded-xl">
                     <Award size={20} className="text-blue-400" />
                 </div>
-                <h4 className="text-white font-black text-xs uppercase tracking-widest">Merit System</h4>
+                <h4 className="text-white font-black text-lg font-bold uppercase tracking-widest">Merit System</h4>
              </div>
-             <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest">Database Sync Required</p>
+             <p className="text-slate-500 text-base font-bold font-black uppercase tracking-widest">Database Sync Required</p>
         </PremiumCard>
       </div>
 
@@ -113,7 +113,7 @@ export function DriversContent({ drivers, count, branches, vehicles = [], subcon
                 <input 
                     type="text" 
                     placeholder={t('common.search')}
-                    className="w-full h-14 pl-12 pr-6 rounded-2xl bg-white/5 border border-white/10 text-white placeholder:text-slate-700 focus:ring-primary/40 focus:border-primary/40 transition-all font-medium text-sm outline-none"
+                    className="w-full h-14 pl-12 pr-6 rounded-2xl bg-white/5 border border-white/10 text-white placeholder:text-slate-700 focus:ring-primary/40 focus:border-primary/40 transition-all font-medium text-xl outline-none"
                 />
             </div>
             <button className="p-4 rounded-2xl bg-white/5 border border-white/10 text-slate-400 hover:text-primary transition-colors">
@@ -122,7 +122,7 @@ export function DriversContent({ drivers, count, branches, vehicles = [], subcon
         </div>
 
         <div className="flex items-center gap-4 w-full md:w-auto">
-            <PremiumButton variant="outline" className="h-14 px-8 rounded-2xl border-white/10 hover:bg-white/5 text-slate-300 text-[10px] font-black uppercase tracking-widest gap-2">
+            <PremiumButton variant="outline" className="h-14 px-8 rounded-2xl border-white/10 hover:bg-white/5 text-slate-300 text-base font-bold font-black uppercase tracking-widest gap-2">
                 <Download size={16} />
                 {t('common.success')}
             </PremiumButton>
@@ -132,7 +132,7 @@ export function DriversContent({ drivers, count, branches, vehicles = [], subcon
                 branches={branches}
                 subcontractors={subcontractors}
                 trigger={
-                    <PremiumButton className="h-14 px-10 rounded-2xl bg-primary hover:brightness-110 text-white text-[10px] font-black uppercase tracking-widest gap-3 shadow-[0_10px_30px_rgba(255,30,133,0.3)]">
+                    <PremiumButton className="h-14 px-10 rounded-2xl bg-primary hover:brightness-110 text-white text-base font-bold font-black uppercase tracking-widest gap-3 shadow-[0_10px_30px_rgba(255,30,133,0.3)]">
                         <Plus size={20} strokeWidth={3} />
                         {t('common.success')}
                     </PremiumButton>
@@ -158,9 +158,9 @@ export function DriversContent({ drivers, count, branches, vehicles = [], subcon
                   <div>
                     <h3 className="text-xl font-black text-white tracking-tight group-hover:text-primary transition-colors line-clamp-1">{driver.Driver_Name || t('common.loading')}</h3>
                     <div className="flex items-center gap-2 mt-1">
-                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">ID: {driver.Driver_ID}</span>
+                        <span className="text-base font-bold font-black text-slate-500 uppercase tracking-widest">ID: {driver.Driver_ID}</span>
                         <div className="w-1 h-1 rounded-full bg-slate-700" />
-                        <span className="text-primary font-black text-[9px] uppercase tracking-widest">ACTIVE ELITE</span>
+                        <span className="text-primary font-black text-base font-bold uppercase tracking-widest">ACTIVE ELITE</span>
                     </div>
                   </div>
                 </div>
@@ -189,17 +189,17 @@ export function DriversContent({ drivers, count, branches, vehicles = [], subcon
 
               <div className="grid grid-cols-2 gap-4">
                   <div className="p-4 bg-white/[0.03] rounded-2xl border border-white/5 group-hover:bg-white/5 transition-colors">
-                      <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1.5">{t('navigation.vehicles')}</p>
+                      <p className="text-base font-bold font-black text-slate-500 uppercase tracking-widest mb-1.5">{t('navigation.vehicles')}</p>
                       <div className="flex items-center gap-2">
                         <Truck size={14} className="text-primary" />
-                        <span className="text-xs font-black text-slate-200">{driver.Vehicle_Plate || t('common.pending')}</span>
+                        <span className="text-lg font-bold font-black text-slate-200">{driver.Vehicle_Plate || t('common.pending')}</span>
                       </div>
                   </div>
                   <div className="p-4 bg-white/[0.03] rounded-2xl border border-white/5 group-hover:bg-white/5 transition-colors">
-                      <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1.5">{t('navigation.chat')}</p>
+                      <p className="text-base font-bold font-black text-slate-500 uppercase tracking-widest mb-1.5">{t('navigation.chat')}</p>
                       <div className="flex items-center gap-2">
                         <Phone size={14} className="text-primary" />
-                        <span className="text-xs font-black text-slate-200">{driver.Mobile_No || "-"}</span>
+                        <span className="text-lg font-bold font-black text-slate-200">{driver.Mobile_No || "-"}</span>
                       </div>
                   </div>
               </div>
@@ -212,7 +212,7 @@ export function DriversContent({ drivers, count, branches, vehicles = [], subcon
                         { icon: Award, color: "text-blue-400" }
                     ].map((m, i) => <m.icon key={i} size={16} className={m.color} />)}
                 </div>
-                <PremiumButton variant="ghost" size="sm" className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-primary transition-all">
+                <PremiumButton variant="ghost" size="sm" className="text-base font-bold font-black uppercase tracking-widest text-slate-400 hover:text-primary transition-all">
                   Performance DNA
                 </PremiumButton>
               </div>
@@ -225,3 +225,4 @@ export function DriversContent({ drivers, count, branches, vehicles = [], subcon
     </div>
   )
 }
+

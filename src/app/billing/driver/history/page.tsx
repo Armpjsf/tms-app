@@ -36,27 +36,34 @@ export default function DriverPaymentHistory() {
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [isAdmin, setIsAdmin] = useState(false)
-  const [processingId, setProcessingId] = useState<string | null>(null)
+  const [statusFilter, setStatusFilter] = useState("all")
+  const [dateFrom, setDateFrom] = useState("")
+  const [dateTo, setDateTo] = useState("")
 
-  useEffect(() => {
-    loadData()
-    checkAdmin()
-  }, [])
-
-  const checkAdmin = async () => {
-    const adminStatus = await isSuperAdmin()
-    setIsAdmin(adminStatus)
-  }
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
-        const data = await getDriverPayments()
+        setLoading(true)
+        const data = await getDriverPayments({
+            dateFrom: dateFrom || undefined,
+            dateTo: dateTo || undefined,
+            status: statusFilter
+        })
         setPayments(data)
     } catch {
         toast.error("โหลดข้อมูลไม่สำเร็จ")
     } finally {
         setLoading(false)
     }
+  }, [dateFrom, dateTo, statusFilter])
+
+  useEffect(() => {
+    loadData()
+    checkAdmin()
+  }, [loadData])
+
+  const checkAdmin = async () => {
+    const adminStatus = await isSuperAdmin()
+    setIsAdmin(adminStatus)
   }
 
   const handleSyncToAccounting = async (id: string) => {
@@ -163,11 +170,11 @@ export default function DriverPaymentHistory() {
   const getStatusBadge = (status: string) => {
     switch(status) {
         case 'Paid':
-            return <span className="px-2 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">จ่ายเงินแล้ว</span>
+            return <span className="px-2 py-1 rounded-full text-lg font-bold font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">จ่ายเงินแล้ว</span>
         case 'Pending':
-            return <span className="px-2 py-1 rounded-full text-xs font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20">รอดำเนินการ</span>
+            return <span className="px-2 py-1 rounded-full text-lg font-bold font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20">รอดำเนินการ</span>
         default:
-            return <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-500/10 text-emerald-500 border border-emerald-500/15">{status}</span>
+            return <span className="px-2 py-1 rounded-full text-lg font-bold font-medium bg-blue-500/10 text-emerald-500 border border-emerald-500/15">{status}</span>
     }
   }
 
@@ -182,7 +189,7 @@ export default function DriverPaymentHistory() {
             </span>
             ประวัติการจ่ายเงินคนขับ
           </h1>
-          <div className="text-sm font-bold text-slate-500 mt-3 uppercase tracking-widest flex items-center gap-2">
+          <div className="text-xl font-bold text-slate-500 mt-3 uppercase tracking-widest flex items-center gap-2">
               <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
               รายการใบสรุปจ่ายที่สร้างแล้วทั้งหมด
           </div>
@@ -199,16 +206,46 @@ export default function DriverPaymentHistory() {
       {/* Filters */}
       <PremiumCard dark className="mb-8 border-white/5">
         <div className="p-6">
-            <div className="flex gap-4">
+            <div className="flex flex-col md:flex-row gap-6">
                 <div className="relative flex-1 group">
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 group-focus-within:text-emerald-400 transition-colors" />
                     <input 
                         type="text" 
                         placeholder="ค้นหาเลขที่เอกสาร หรือ ชื่อคนขับ..." 
-                        className="w-full h-14 pl-12 pr-6 rounded-2xl bg-white/10 border border-white/10 text-slate-100 font-bold placeholder:text-slate-500 focus:outline-none focus:border-emerald-500/50 focus:ring-4 focus:ring-emerald-500/10 transition-all shadow-inner"
+                        className="w-full h-14 pl-12 pr-6 rounded-2xl bg-white/10 border border-white/10 text-slate-100 font-black placeholder:text-slate-500 focus:outline-none focus:border-emerald-500/50 focus:ring-4 focus:ring-emerald-500/10 transition-all shadow-inner"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
+                </div>
+                <div className="w-full md:w-48">
+                    <Select value={statusFilter} onValueChange={setStatusFilter}>
+                        <SelectTrigger className="h-14 bg-white/10 border-white/10 text-white font-black rounded-2xl px-6">
+                            <SelectValue placeholder="สถานะ" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-slate-900 border-white/10 text-white font-black">
+                            <SelectItem value="all" className="hover:bg-emerald-500/20 focus:bg-emerald-500/20 uppercase tracking-widest text-[10px]">ทั้งหมด</SelectItem>
+                            <SelectItem value="Pending" className="hover:bg-emerald-500/20 focus:bg-emerald-500/20 uppercase tracking-widest text-[10px]">รอดำเนินการ</SelectItem>
+                            <SelectItem value="Paid" className="hover:bg-emerald-500/20 focus:bg-emerald-500/20 uppercase tracking-widest text-[10px]">ชำระแล้ว</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+                <div className="flex gap-4">
+                    <div className="space-y-1">
+                        <input
+                            type="date"
+                            value={dateFrom}
+                            onChange={(e) => setDateFrom(e.target.value)}
+                            className="h-14 bg-white/10 border-white/10 text-white font-black rounded-2xl px-6 focus:bg-white/20 transition-all"
+                        />
+                    </div>
+                    <div className="space-y-1">
+                        <input
+                            type="date"
+                            value={dateTo}
+                            onChange={(e) => setDateTo(e.target.value)}
+                            className="h-14 bg-white/10 border-white/10 text-white font-black rounded-2xl px-6 focus:bg-white/20 transition-all"
+                        />
+                    </div>
                 </div>
             </div>
         </div>
@@ -227,12 +264,12 @@ export default function DriverPaymentHistory() {
             <Table>
               <TableHeader className="bg-white/5">
                 <TableRow className="border-white/5 hover:bg-transparent">
-                  <TableHead className="py-6 px-8 text-slate-200 font-black uppercase tracking-widest text-[10px]">เลขที่เอกสาร</TableHead>
-                  <TableHead className="py-6 px-4 text-slate-300 font-black uppercase tracking-widest text-[10px]">วันที่ทำรายการ</TableHead>
-                  <TableHead className="py-6 px-4 text-slate-300 font-black uppercase tracking-widest text-[10px]">คนขับ</TableHead>
-                  <TableHead className="py-6 px-4 text-right text-slate-300 font-black uppercase tracking-widest text-[10px]">ยอดเงิน</TableHead>
-                  <TableHead className="py-6 px-4 text-center text-slate-300 font-black uppercase tracking-widest text-[10px]">สถานะ</TableHead>
-                  <TableHead className="py-6 px-8 text-right text-slate-300 font-black uppercase tracking-widest text-[10px]">จัดการ</TableHead>
+                  <TableHead className="py-6 px-8 text-slate-200 font-black uppercase tracking-widest text-base font-bold">เลขที่เอกสาร</TableHead>
+                  <TableHead className="py-6 px-4 text-slate-300 font-black uppercase tracking-widest text-base font-bold">วันที่ทำรายการ</TableHead>
+                  <TableHead className="py-6 px-4 text-slate-300 font-black uppercase tracking-widest text-base font-bold">คนขับ</TableHead>
+                  <TableHead className="py-6 px-4 text-right text-slate-300 font-black uppercase tracking-widest text-base font-bold">ยอดเงิน</TableHead>
+                  <TableHead className="py-6 px-4 text-center text-slate-300 font-black uppercase tracking-widest text-base font-bold">สถานะ</TableHead>
+                  <TableHead className="py-6 px-8 text-right text-slate-300 font-black uppercase tracking-widest text-base font-bold">จัดการ</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -241,13 +278,13 @@ export default function DriverPaymentHistory() {
                         <TableCell colSpan={6} className="text-center py-12">
                             <div className="flex flex-col items-center justify-center gap-3 text-slate-500">
                                 <Loader2 className="w-8 h-8 animate-spin text-emerald-500" />
-                                <span className="font-bold uppercase tracking-tighter text-xs">กำลังโหลดข้อมูล...</span>
+                                <span className="font-bold uppercase tracking-tighter text-lg font-bold">กำลังโหลดข้อมูล...</span>
                             </div>
                         </TableCell>
                     </TableRow>
                 ) : filteredPayments.length === 0 ? (
                     <TableRow className="border-white/5">
-                        <TableCell colSpan={6} className="text-center py-12 text-slate-500 font-bold uppercase tracking-widest text-xs">ไม่พบข้อมูลใบสรุปจ่าย</TableCell>
+                        <TableCell colSpan={6} className="text-center py-12 text-slate-500 font-bold uppercase tracking-widest text-lg font-bold">ไม่พบข้อมูลใบสรุปจ่าย</TableCell>
                     </TableRow>
                 ) : (
                     filteredPayments.map((item) => (
@@ -262,7 +299,7 @@ export default function DriverPaymentHistory() {
                         <TableCell className="py-5 px-4 text-slate-100 font-black tracking-tight">{item.Driver_Name}</TableCell>
                         <TableCell className="py-5 px-4 text-right">
                             <span className="text-slate-100 font-black text-lg tracking-tighter">
-                                <span className="text-slate-500 text-xs mr-1">฿</span>
+                                <span className="text-slate-500 text-lg font-bold mr-1">฿</span>
                                 {item.Total_Amount.toLocaleString()}
                             </span>
                         </TableCell>
@@ -340,3 +377,4 @@ export default function DriverPaymentHistory() {
     </DashboardLayout>
   )
 }
+

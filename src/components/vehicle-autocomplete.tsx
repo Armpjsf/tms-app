@@ -99,7 +99,7 @@ export function VehicleAutocomplete({
       {open && (
         <div className="absolute z-50 w-full mt-1 bg-gray-100 border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
           {filteredVehicles.length === 0 ? (
-            <div className="p-2 text-sm text-gray-700 font-bold text-center">
+            <div className="p-2 text-xl text-gray-700 font-bold text-center">
                ไม่พบข้อมูล
             </div>
           ) : (
@@ -110,14 +110,14 @@ export function VehicleAutocomplete({
                   onClick={() => handleSelect(vehicle)}
                   type="button"
                   className={cn(
-                    "w-full text-left px-3 py-2 text-sm cursor-pointer hover:bg-slate-700 flex items-center justify-between text-gray-800",
+                    "w-full text-left px-3 py-2 text-xl cursor-pointer hover:bg-slate-700 flex items-center justify-between text-gray-800",
                     value === vehicle.vehicle_plate && "bg-slate-700 font-medium text-white"
                   )}
                 >
                   <div className="flex items-center gap-2">
                     <Truck size={14} className="text-emerald-600" />
                     <span>{vehicle.vehicle_plate}</span>
-                    <span className="text-xs text-gray-700 font-black">({vehicle.vehicle_type})</span>
+                    <span className="text-lg font-bold text-gray-700 font-black">({vehicle.vehicle_type})</span>
                   </div>
                   {value === vehicle.vehicle_plate && (
                     <Check className="w-4 h-4 text-emerald-500" />
@@ -131,3 +131,4 @@ export function VehicleAutocomplete({
     </div>
   )
 }
+

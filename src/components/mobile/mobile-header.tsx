@@ -41,7 +41,7 @@ export function MobileHeader({ title, showBack, rightElement }: Props) {
             <h1 className="font-black text-white text-xl tracking-tighter uppercase leading-none">{title}</h1>
             <span 
                 onClick={clearCache}
-                className="text-[8px] text-primary font-black cursor-pointer hover:opacity-80 transition-opacity uppercase tracking-widest mt-1"
+                className="text-base font-bold text-primary font-black cursor-pointer hover:opacity-80 transition-opacity uppercase tracking-widest mt-1"
             >
                 LOGIS-PRO v1.2.0
             </span>
@@ -60,3 +60,4 @@ export function MobileHeader({ title, showBack, rightElement }: Props) {
     </header>
   )
 }
+

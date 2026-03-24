@@ -45,7 +45,7 @@ export function Header({ sidebarCollapsed = false }: HeaderProps) {
                             <div className="p-2 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors">
                                 <Building2 className="w-4 h-4 text-primary shrink-0" />
                             </div>
-                            <span className="truncate font-black text-white text-xs uppercase tracking-widest">
+                            <span className="truncate font-black text-white text-lg font-bold uppercase tracking-widest">
                                 {selectedBranch === 'All' ? 'ALL BRANCHES' : branches.find(b => b.Branch_ID === selectedBranch)?.Branch_Name || selectedBranch}
                             </span>
                             </div>
@@ -68,8 +68,8 @@ export function Header({ sidebarCollapsed = false }: HeaderProps) {
           onClick={() => window.dispatchEvent(new CustomEvent('toggle-command-palette'))}
         >
           <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-primary group-hover:scale-110 transition-transform" size={20} strokeWidth={2.5} />
-          <div className="w-96 h-14 pl-14 pr-6 rounded-2xl bg-white/5 border border-white/5 text-slate-400 flex items-center text-xs font-black uppercase tracking-[0.2em] hover:bg-white/[0.08] hover:border-primary/30 transition-all shadow-inner group-hover:text-slate-200">
-             Quick Cmd... <span className="ml-auto text-[9px] bg-slate-900 px-3 py-1.5 rounded-xl border border-white/10 text-slate-500 font-black">Ctrl + K</span>
+          <div className="w-96 h-14 pl-14 pr-6 rounded-2xl bg-white/5 border border-white/5 text-slate-400 flex items-center text-lg font-bold font-black uppercase tracking-[0.2em] hover:bg-white/[0.08] hover:border-primary/30 transition-all shadow-inner group-hover:text-slate-200">
+             Quick Cmd... <span className="ml-auto text-base font-bold bg-slate-900 px-3 py-1.5 rounded-xl border border-white/10 text-slate-500 font-black">Ctrl + K</span>
           </div>
         </div>
       </div>
@@ -85,3 +85,4 @@ export function Header({ sidebarCollapsed = false }: HeaderProps) {
     </header>
   )
 }
+

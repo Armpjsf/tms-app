@@ -77,7 +77,7 @@ const CardDescription = React.forwardRef<HTMLParagraphElement, CardSubProps>(
   ({ className, children }, ref) => (
     <p
       ref={ref}
-      className={cn("text-sm text-slate-400 font-medium tracking-wide", className)}
+      className={cn("text-xl text-slate-400 font-medium tracking-wide", className)}
     >
       {children}
     </p>
@@ -107,3 +107,4 @@ const CardFooter = React.forwardRef<HTMLDivElement, CardSubProps>(
 CardFooter.displayName = "CardFooter"
 
 export { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent }
+

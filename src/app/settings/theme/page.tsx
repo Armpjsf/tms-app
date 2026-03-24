@@ -48,7 +48,7 @@ export default function ThemeSettingsPage() {
             <div className="absolute top-0 right-0 w-80 h-80 bg-primary/10 blur-[120px] rounded-full -mr-40 -mt-40 pointer-events-none" />
             
             <div className="relative z-10 space-y-8">
-                <button onClick={() => router.back()} className="inline-flex items-center gap-2 text-slate-500 hover:text-primary transition-all font-black uppercase tracking-[0.4em] text-[10px] group/back italic">
+                <button onClick={() => router.back()} className="inline-flex items-center gap-2 text-slate-500 hover:text-primary transition-all font-black uppercase tracking-[0.4em] text-base font-bold group/back italic">
                     <ArrowLeft className="w-4 h-4 group-hover/back:-translate-x-1 transition-transform" /> 
                     Command Control
                 </button>
@@ -60,7 +60,7 @@ export default function ThemeSettingsPage() {
                         <h1 className="text-5xl font-black text-white tracking-widest uppercase leading-none italic premium-text-gradient">
                             Aesthetic Core
                         </h1>
-                        <p className="text-[10px] font-black text-primary uppercase tracking-[0.6em] mt-2 opacity-80 italic">UI Geometry & Visual Synthesis Parameters</p>
+                        <p className="text-base font-bold font-black text-primary uppercase tracking-[0.6em] mt-2 opacity-80 italic">UI Geometry & Visual Synthesis Parameters</p>
                     </div>
                 </div>
             </div>
@@ -68,11 +68,11 @@ export default function ThemeSettingsPage() {
             <div className="flex flex-col items-end gap-6 relative z-10">
                 <div className="bg-white/5 border border-white/10 px-6 py-3 rounded-2xl flex items-center gap-3 backdrop-blur-md">
                     <div className="w-2 h-2 rounded-full bg-primary animate-pulse shadow-[0_0_10px_rgba(255,30,133,1)]" />
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">VISUAL_ENGINE: STABLE</span>
+                    <span className="text-base font-bold font-black text-slate-400 uppercase tracking-widest italic">VISUAL_ENGINE: STABLE</span>
                 </div>
                 <div className="flex items-center gap-4 bg-primary/10 p-4 rounded-2xl border border-primary/20">
                    <Cpu className="text-primary" size={18} />
-                   <span className="text-[10px] font-black text-white uppercase tracking-[0.3em] italic">Rendering: GPU_ACCEL</span>
+                   <span className="text-base font-bold font-black text-white uppercase tracking-[0.3em] italic">Rendering: GPU_ACCEL</span>
                 </div>
             </div>
         </div>
@@ -100,12 +100,12 @@ export default function ThemeSettingsPage() {
                     )}>
                         Solar Flux
                     </h3>
-                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] leading-loose italic">
+                    <p className="text-base font-bold font-black text-slate-500 uppercase tracking-[0.4em] leading-loose italic">
                         High-luminance interface for outdoor operations and standard visibility.
                     </p>
                 </div>
                 {theme === 'light' && (
-                    <div className="px-5 py-1.5 rounded-full bg-primary/20 text-primary text-[8px] font-black uppercase tracking-widest border border-primary/30 animate-pulse italic">
+                    <div className="px-5 py-1.5 rounded-full bg-primary/20 text-primary text-base font-bold font-black uppercase tracking-widest border border-primary/30 animate-pulse italic">
                         PROTOCOL_ACTIVE
                     </div>
                 )}
@@ -137,12 +137,12 @@ export default function ThemeSettingsPage() {
                     )}>
                         Trench Protocol
                     </h3>
-                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] leading-loose italic">
+                    <p className="text-base font-bold font-black text-slate-500 uppercase tracking-[0.4em] leading-loose italic">
                         Low-luminance aesthetic for command center focus and energy efficiency.
                     </p>
                 </div>
                 {theme === 'dark' && (
-                    <div className="px-5 py-1.5 rounded-full bg-primary/20 text-primary text-[8px] font-black uppercase tracking-widest border border-primary/30 animate-pulse italic">
+                    <div className="px-5 py-1.5 rounded-full bg-primary/20 text-primary text-base font-bold font-black uppercase tracking-widest border border-primary/30 animate-pulse italic">
                         PROTOCOL_ACTIVE
                     </div>
                 )}
@@ -174,12 +174,12 @@ export default function ThemeSettingsPage() {
                     )}>
                         Neural Link
                     </h3>
-                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] leading-loose italic">
+                    <p className="text-base font-bold font-black text-slate-500 uppercase tracking-[0.4em] leading-loose italic">
                         Synchronize aesthetic synthesis with host OS environmental parameters.
                     </p>
                 </div>
                 {theme === 'system' && (
-                    <div className="px-5 py-1.5 rounded-full bg-primary/20 text-primary text-[8px] font-black uppercase tracking-widest border border-primary/30 animate-pulse italic">
+                    <div className="px-5 py-1.5 rounded-full bg-primary/20 text-primary text-base font-bold font-black uppercase tracking-widest border border-primary/30 animate-pulse italic">
                         PROTOCOL_ACTIVE
                     </div>
                 )}
@@ -198,12 +198,12 @@ export default function ThemeSettingsPage() {
             </div>
             <div className="space-y-4 text-center md:text-left flex-1">
                 <p className="text-xl font-black text-indigo-400 italic uppercase tracking-widest">VISUAL_ENGINE_INTEGRITY</p>
-                <p className="text-sm font-bold text-slate-600 leading-relaxed uppercase tracking-wider italic">
+                <p className="text-xl font-bold text-slate-600 leading-relaxed uppercase tracking-wider italic">
                     All UI geometry is rendered using high-fidelity tactical shading. <br />
                     Switching protocols will trigger a global state recalculation for optimal performance.
                 </p>
             </div>
-            <PremiumButton variant="outline" className="h-14 px-10 rounded-2xl border-white/10 text-white gap-3 uppercase font-black text-[10px] tracking-[0.3em] ml-auto italic">
+            <PremiumButton variant="outline" className="h-14 px-10 rounded-2xl border-white/10 text-white gap-3 uppercase font-black text-base font-bold tracking-[0.3em] ml-auto italic">
                 <Activity size={18} /> CALIBRATE_RENDERER
             </PremiumButton>
         </div>
@@ -211,3 +211,4 @@ export default function ThemeSettingsPage() {
     </DashboardLayout>
   )
 }
+

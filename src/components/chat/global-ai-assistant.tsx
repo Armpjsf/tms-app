@@ -79,10 +79,10 @@ export function GlobalAIAssistant() {
                                         <div className="absolute -bottom-1 -right-1 w-2.5 h-2.5 lg:w-3 lg:h-3 bg-emerald-500 rounded-full border-2 border-[#0a0518]" />
                                     </div>
                                     <div>
-                                        <h3 className="text-xs lg:text-sm font-black text-white italic tracking-widest uppercase">Tactical AI</h3>
+                                        <h3 className="text-lg font-bold lg:text-xl font-black text-white italic tracking-widest uppercase">Tactical AI</h3>
                                         <div className="flex items-center gap-2">
                                             <div className="w-1 h-1 lg:w-1.5 lg:h-1.5 rounded-full bg-emerald-500/60" />
-                                            <span className="text-[7px] lg:text-[8px] font-black text-slate-500 uppercase tracking-widest">Neural Link Est.</span>
+                                            <span className="text-[7px] lg:text-base font-bold font-black text-slate-500 uppercase tracking-widest">Neural Link Est.</span>
                                         </div>
                                     </div>
                                 </div>
@@ -119,13 +119,13 @@ export function GlobalAIAssistant() {
                                                 msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'
                                             )}>
                                                 <div className={cn(
-                                                    "w-7 h-7 lg:w-8 lg:h-8 rounded-lg flex items-center justify-center shrink-0 text-[9px] lg:text-[10px] border shadow-lg",
+                                                    "w-7 h-7 lg:w-8 lg:h-8 rounded-lg flex items-center justify-center shrink-0 text-base font-bold lg:text-base font-bold border shadow-lg",
                                                     msg.role === 'user' ? 'bg-primary border-primary/20 text-white' : 'bg-white/5 border-white/10 text-primary'
                                                 )}>
                                                     {msg.role === 'user' ? 'U' : <Bot size={12} className="lg:w-[14px] lg:h-[14px]" />}
                                                 </div>
                                                 <div className={cn(
-                                                    "max-w-[85%] lg:max-w-[80%] p-3 lg:p-4 rounded-xl lg:rounded-2xl text-[11px] lg:text-[12px] font-bold leading-relaxed whitespace-pre-wrap uppercase tracking-tight italic",
+                                                    "max-w-[85%] lg:max-w-[80%] p-3 lg:p-4 rounded-xl lg:rounded-2xl text-base font-bold lg:text-[12px] font-bold leading-relaxed whitespace-pre-wrap uppercase tracking-tight italic",
                                                     msg.role === 'user' ? 'bg-primary text-white rounded-br-none' : 'bg-white/5 text-slate-300 border border-white/5 rounded-bl-none'
                                                 )}>
                                                     {msg.content}
@@ -139,7 +139,7 @@ export function GlobalAIAssistant() {
                                                 </div>
                                                 <div className="bg-white/[0.02] border border-white/5 p-3 lg:p-4 rounded-xl lg:rounded-2xl rounded-bl-none flex gap-2 lg:gap-3 items-center">
                                                     <Loader2 className="w-2.5 h-2.5 lg:w-3 lg:h-3 animate-spin text-primary" />
-                                                    <span className="text-[8px] lg:text-[9px] font-black uppercase tracking-[0.3em] text-primary italic">Syncing Neural Core...</span>
+                                                    <span className="text-base font-bold lg:text-base font-bold font-black uppercase tracking-[0.3em] text-primary italic">Syncing Neural Core...</span>
                                                 </div>
                                             </div>
                                         )}
@@ -153,7 +153,7 @@ export function GlobalAIAssistant() {
                                                 onChange={(e) => setInput(e.target.value)}
                                                 onKeyDown={(e) => e.key === 'Enter' && handleSend()}
                                                 placeholder="Ask Commander..." 
-                                                className="flex-1 bg-[#050110] border-white/5 text-white placeholder:text-slate-700 h-10 lg:h-12 rounded-lg lg:rounded-xl text-[9px] lg:text-[10px] font-black uppercase tracking-widest italic pl-3 lg:pl-4"
+                                                className="flex-1 bg-[#050110] border-white/5 text-white placeholder:text-slate-700 h-10 lg:h-12 rounded-lg lg:rounded-xl text-base font-bold lg:text-base font-bold font-black uppercase tracking-widest italic pl-3 lg:pl-4"
                                             />
                                             <Button 
                                                 onClick={handleSend}
@@ -190,3 +190,4 @@ export function GlobalAIAssistant() {
         </div>
     )
 }
+

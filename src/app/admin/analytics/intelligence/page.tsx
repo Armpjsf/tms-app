@@ -20,7 +20,7 @@ export default async function IntelligencePage(props: { searchParams: Promise<{ 
             <ShieldCheck size={64} className="mx-auto text-rose-500 animate-pulse" />
             <div className="space-y-2">
                 <h1 className="text-3xl font-black text-white italic uppercase tracking-tighter">Access Denied</h1>
-                <p className="text-slate-500 font-black uppercase tracking-widest text-[10px] leading-relaxed italic">Strategic clearance insufficient. Terminal locked for security protocol.</p>
+                <p className="text-slate-500 font-black uppercase tracking-widest text-base font-bold leading-relaxed italic">Strategic clearance insufficient. Terminal locked for security protocol.</p>
             </div>
             <Link href="/dashboard" className="block">
                 <PremiumButton variant="outline" className="w-full h-14 rounded-2xl border-white/10 text-white font-black uppercase tracking-[0.2em] italic">
@@ -47,3 +47,4 @@ export default async function IntelligencePage(props: { searchParams: Promise<{ 
     />
   )
 }
+

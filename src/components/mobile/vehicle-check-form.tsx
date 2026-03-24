@@ -247,7 +247,7 @@ export function MobileVehicleCheckForm({ driverId, driverName, defaultVehiclePla
             {loading ? (
                 <div className="flex flex-col items-center">
                     <Loader2 className="animate-spin mb-1" />
-                    <span className="text-[10px] font-normal opacity-80">{submitStatus}</span>
+                    <span className="text-base font-bold font-normal opacity-80">{submitStatus}</span>
                 </div>
             ) : "บันทึกการตรวจสอบ"}
         </Button>
@@ -255,3 +255,4 @@ export function MobileVehicleCheckForm({ driverId, driverName, defaultVehiclePla
 
   )
 }
+

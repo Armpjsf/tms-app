@@ -8,7 +8,7 @@ export default function GlobalLoading() {
     <DashboardLayout>
       <div className="h-[calc(100vh-100px)] flex flex-col items-center justify-center text-gray-400">
         <Loader2 className="w-10 h-10 animate-spin text-emerald-600 mb-4" />
-        <p className="text-sm animate-pulse">กำลังโหลด...</p>
+        <p className="text-xl animate-pulse">กำลังโหลด...</p>
         
         {/* Optional: Generic page skeleton */}
         <div className="w-full max-w-4xl mt-10 opacity-20">
@@ -26,3 +26,4 @@ export default function GlobalLoading() {
     </DashboardLayout>
   )
 }
+

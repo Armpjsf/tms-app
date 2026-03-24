@@ -85,7 +85,7 @@ export function LocationAutocomplete({
       {open && (
         <div className="absolute z-[9999] w-full mt-1 bg-gray-100 border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
           {filteredLocations.length === 0 ? (
-            <div className="px-3 py-2 text-sm text-gray-700 font-bold text-center">
+            <div className="px-3 py-2 text-xl text-gray-700 font-bold text-center">
                 ไม่พบข้อมูล
             </div>
           ) : (
@@ -95,7 +95,7 @@ export function LocationAutocomplete({
                     key={index}
                     onClick={() => handleSelect(loc)}
                     className={cn(
-                        "w-full text-left px-3 py-2 text-sm hover:bg-slate-700 flex items-center justify-between transition-colors",
+                        "w-full text-left px-3 py-2 text-xl hover:bg-slate-700 flex items-center justify-between transition-colors",
                          value === loc ? "text-white bg-slate-700" : "text-gray-800"
                     )}
                     type="button"
@@ -113,3 +113,4 @@ export function LocationAutocomplete({
     </div>
   )
 }
+

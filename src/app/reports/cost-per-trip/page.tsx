@@ -20,7 +20,7 @@ export default async function CostPerTripPage() {
           <div className="absolute inset-0 bg-gradient-to-r from-violet-500/10 to-transparent pointer-events-none" />
           
           <div className="relative z-10 text-left">
-            <Link href="/reports" className="flex items-center gap-2 text-violet-400 hover:text-white transition-colors mb-6 text-[10px] font-black uppercase tracking-[0.2em] w-fit">
+            <Link href="/reports" className="flex items-center gap-2 text-violet-400 hover:text-white transition-colors mb-6 text-base font-bold font-black uppercase tracking-[0.2em] w-fit">
               <ArrowLeft className="w-4 h-4" /> Reports Hub
             </Link>
             <h1 className="text-5xl font-black text-white mb-2 tracking-tighter flex items-center gap-4">
@@ -29,13 +29,13 @@ export default async function CostPerTripPage() {
               </div>
               Trip PERFORMANCE
             </h1>
-            <p className="text-violet-400 font-black ml-[4.5rem] uppercase tracking-[0.3em] text-[10px]">Cost Efficiency & Profitability Analysis (Last 30 Days)</p>
+            <p className="text-violet-400 font-black ml-[4.5rem] uppercase tracking-[0.3em] text-base font-bold">Cost Efficiency & Profitability Analysis (Last 30 Days)</p>
           </div>
 
           <div className="flex flex-wrap gap-4 relative z-10">
             <div className="flex items-center gap-3 px-6 py-3 bg-violet-500/10 rounded-2xl border border-violet-500/20">
               <div className="w-2 h-2 rounded-full bg-violet-500 animate-pulse" />
-              <span className="text-[10px] font-black text-violet-400 uppercase tracking-widest">Live Financial Audit</span>
+              <span className="text-base font-bold font-black text-violet-400 uppercase tracking-widest">Live Financial Audit</span>
             </div>
           </div>
         </div>
@@ -43,23 +43,23 @@ export default async function CostPerTripPage() {
         {/* Summary Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">จำนวนเที่ยว</p>
+            <p className="text-base font-bold font-black text-gray-400 uppercase tracking-widest mb-1">จำนวนเที่ยว</p>
             <p className="text-3xl font-black text-gray-900">{summary.totalTrips}</p>
           </div>
           <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">รายได้รวม</p>
+            <p className="text-base font-bold font-black text-gray-400 uppercase tracking-widest mb-1">รายได้รวม</p>
             <p className="text-2xl font-black text-blue-600">฿{formatMoney(summary.totalRevenue)}</p>
           </div>
           <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">ต้นทุนรวม</p>
+            <p className="text-base font-bold font-black text-gray-400 uppercase tracking-widest mb-1">ต้นทุนรวม</p>
             <p className="text-2xl font-black text-red-500">฿{formatMoney(summary.totalCost)}</p>
           </div>
           <div className={`rounded-2xl border p-5 shadow-sm ${summary.totalProfit >= 0 ? 'bg-emerald-50 border-emerald-100' : 'bg-red-50 border-red-100'}`}>
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">กำไรรวม</p>
+            <p className="text-base font-bold font-black text-gray-400 uppercase tracking-widest mb-1">กำไรรวม</p>
             <p className={`text-2xl font-black ${summary.totalProfit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
               ฿{formatMoney(summary.totalProfit)}
             </p>
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-lg font-bold text-gray-500 mt-1">
               เฉลี่ย ฿{formatMoney(summary.avgProfitPerTrip)}/เที่ยว ({Math.round(summary.avgProfitPct)}%)
             </p>
           </div>
@@ -78,9 +78,9 @@ export default async function CostPerTripPage() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+              <table className="w-full text-xl">
                 <thead>
-                  <tr className="bg-gray-50/80 text-xs text-gray-500 uppercase tracking-wider">
+                  <tr className="bg-gray-50/80 text-lg font-bold text-gray-500 uppercase tracking-wider">
                     <th className="text-left px-4 py-3 font-black">วันที่</th>
                     <th className="text-left px-4 py-3 font-black">ลูกค้า</th>
                     <th className="text-left px-4 py-3 font-black">เส้นทาง</th>
@@ -96,19 +96,19 @@ export default async function CostPerTripPage() {
                 <tbody className="divide-y divide-gray-50">
                   {trips.map(trip => (
                     <tr key={trip.Job_ID} className="hover:bg-gray-50/50 transition-colors">
-                      <td className="px-4 py-3 whitespace-nowrap text-xs text-gray-500">
+                      <td className="px-4 py-3 whitespace-nowrap text-lg font-bold text-gray-500">
                         {trip.Plan_Date ? new Date(trip.Plan_Date + 'T00:00:00').toLocaleDateString('th-TH', { day: 'numeric', month: 'short' }) : '-'}
                       </td>
                       <td className="px-4 py-3 font-medium text-gray-900 max-w-[150px] truncate">
                         {trip.Customer_Name || '-'}
                       </td>
                       <td className="px-4 py-3">
-                        <span className="flex items-center gap-1 text-xs text-gray-500">
+                        <span className="flex items-center gap-1 text-lg font-bold text-gray-500">
                           <MapPin size={12} /> {trip.Route_Name || '-'}
                         </span>
                       </td>
                       <td className="px-4 py-3">
-                        <div className="text-xs">
+                        <div className="text-lg font-bold">
                           <span className="flex items-center gap-1 text-gray-600">
                             <User size={10} /> {trip.Driver_Name || '-'}
                           </span>
@@ -143,7 +143,7 @@ export default async function CostPerTripPage() {
                             ฿{formatMoney(trip.profit)}
                           </span>
                         </div>
-                        <p className="text-[10px] text-gray-400">{trip.profit_pct}%</p>
+                        <p className="text-base font-bold text-gray-400">{trip.profit_pct}%</p>
                       </td>
                     </tr>
                   ))}
@@ -156,3 +156,4 @@ export default async function CostPerTripPage() {
     </DashboardLayout>
   )
 }
+

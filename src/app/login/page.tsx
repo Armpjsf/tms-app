@@ -90,9 +90,9 @@ export default function StaffLoginPage() {
                 </div>
                 <div className="space-y-2">
                     <h2 className="text-4xl font-black text-white tracking-tighter">DRIVER</h2>
-                    <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.3em]">Fleet Portal</p>
+                    <p className="text-slate-500 text-base font-bold font-black uppercase tracking-[0.3em]">Fleet Portal</p>
                 </div>
-                <button className="w-full h-16 rounded-2xl bg-primary hover:brightness-110 text-white font-black text-xs uppercase tracking-[0.3em] shadow-2xl shadow-primary/20 transition-all">
+                <button className="w-full h-16 rounded-2xl bg-primary hover:brightness-110 text-white font-black text-lg font-bold uppercase tracking-[0.3em] shadow-2xl shadow-primary/20 transition-all">
                     Start Engine
                 </button>
             </div>
@@ -108,9 +108,9 @@ export default function StaffLoginPage() {
                 </div>
                 <div className="space-y-2">
                     <h2 className="text-4xl font-black text-white tracking-tighter">ADMIN</h2>
-                    <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.3em]">Command Center</p>
+                    <p className="text-slate-500 text-base font-bold font-black uppercase tracking-[0.3em]">Command Center</p>
                 </div>
-                <button className="w-full h-16 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 text-white font-black text-xs uppercase tracking-[0.3em] shadow-2xl transition-all">
+                <button className="w-full h-16 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 text-white font-black text-lg font-bold uppercase tracking-[0.3em] shadow-2xl transition-all">
                     Command Key
                 </button>
             </div>
@@ -133,12 +133,12 @@ export default function StaffLoginPage() {
                     
                     <div className="text-center mb-10">
                         <h3 className="text-3xl font-black text-white mb-2 underline decoration-primary/30 underline-offset-8">Login</h3>
-                        <p className="text-sm text-slate-400 font-medium tracking-tight">Enterprise staff authentication</p>
+                        <p className="text-xl text-slate-400 font-medium tracking-tight">Enterprise staff authentication</p>
                     </div>
 
                     <form action={handleSubmit} className="space-y-6">
                         <div className="space-y-3 text-left">
-                            <Label htmlFor="email" className="text-slate-400 text-[10px] font-black uppercase tracking-widest ml-1">Username / Fleet ID</Label>
+                            <Label htmlFor="email" className="text-slate-400 text-base font-bold font-black uppercase tracking-widest ml-1">Username / Fleet ID</Label>
                             <Input 
                                 id="email" 
                                 name="email" 
@@ -149,7 +149,7 @@ export default function StaffLoginPage() {
                             />
                         </div>
                         <div className="space-y-3 text-left">
-                            <Label htmlFor="password" className="text-slate-400 text-[10px] font-black uppercase tracking-widest ml-1">Security Key</Label>
+                            <Label htmlFor="password" className="text-slate-400 text-base font-bold font-black uppercase tracking-widest ml-1">Security Key</Label>
                             <Input 
                                 id="password" 
                                 name="password" 
@@ -160,7 +160,7 @@ export default function StaffLoginPage() {
                             />
                         </div>
                         {error && (
-                            <div className="p-4 bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-bold rounded-xl animate-shake">
+                            <div className="p-4 bg-red-500/10 border border-red-500/20 text-red-400 text-lg font-bold font-bold rounded-xl animate-shake">
                                 {error === 'Invalid credentials' ? 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง' : 
                                  error === 'session_missing' ? 'กรุณาเข้าสู่ระบบก่อนใช้งาน' :
                                  error === 'session_invalid' ? 'เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่' : 
@@ -176,10 +176,10 @@ export default function StaffLoginPage() {
         )}
 
         <div className="space-y-4 animate-in fade-in duration-1000 delay-700 pt-10">
-            <p className="text-[10px] text-slate-600 font-black uppercase tracking-[0.2em]">
+            <p className="text-base font-bold text-slate-600 font-black uppercase tracking-[0.2em]">
                 © 2024 <span className="text-primary/60">LOGIS-PRO</span> COMMAND. ALL RIGHTS RESERVED.
             </p>
-            <div className="flex justify-center gap-8 text-[10px] text-slate-500 font-black uppercase tracking-widest">
+            <div className="flex justify-center gap-8 text-base font-bold text-slate-500 font-black uppercase tracking-widest">
                 <a href="#" className="hover:text-primary transition-colors">Privacy</a>
                 <a href="#" className="hover:text-primary transition-colors">Terms</a>
             </div>
@@ -188,3 +188,4 @@ export default function StaffLoginPage() {
     </div>
   )
 }
+

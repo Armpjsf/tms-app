@@ -89,12 +89,12 @@ export function HistoryClient({
                 <div className="p-2 bg-primary/20 rounded-xl shadow-lg">
                     <History className="text-primary" size={20} />
                 </div>
-                <h2 className="text-[10px] font-black text-primary uppercase tracking-[0.4em]">{t('navigation.reports')} {t('history.intel_archives')}</h2>
+                <h2 className="text-base font-bold font-black text-primary uppercase tracking-[0.4em]">{t('navigation.reports')} {t('history.intel_archives')}</h2>
             </div>
             <h1 className="text-6xl font-black text-white tracking-tighter flex items-center gap-5 uppercase premium-text-gradient">
                 {customerMode ? t('navigation.reports') : t('navigation.history')}
             </h1>
-            <p className="text-slate-500 font-bold text-sm tracking-wide opacity-80 uppercase tracking-widest leading-relaxed">
+            <p className="text-slate-500 font-bold text-xl tracking-wide opacity-80 uppercase tracking-widest leading-relaxed">
               {customerMode ? t('history.fleet_matrix') : t('dashboard.subtitle')}
             </p>
         </div>
@@ -142,7 +142,7 @@ export function HistoryClient({
                     </div>
                 </div>
                 <div className="relative z-10">
-                    <p className="text-slate-500 font-black text-[10px] uppercase tracking-[0.3em] mb-2">{stat.label}</p>
+                    <p className="text-slate-500 font-black text-base font-bold uppercase tracking-[0.3em] mb-2">{stat.label}</p>
                     <p className="text-4xl font-black text-white tracking-tighter leading-none">{stat.value}</p>
                 </div>
           </div>
@@ -160,36 +160,36 @@ export function HistoryClient({
                 </div>
                 <div>
                     <h2 className="text-2xl font-black text-white tracking-tight uppercase">{t('navigation.reports')} {t('history.archive_filtering')}</h2>
-                    <p className="text-primary text-[9px] font-black uppercase tracking-[0.3em] mt-1 opacity-70">{t('history.metadata_search')}</p>
+                    <p className="text-primary text-base font-bold font-black uppercase tracking-[0.3em] mt-1 opacity-70">{t('history.metadata_search')}</p>
                 </div>
             </div>
 
             <form className="grid grid-cols-1 md:grid-cols-12 gap-8 relative z-10">
                 <div className="md:col-span-12 lg:col-span-5">
                     <div className="glass-panel rounded-2xl p-0.5 border-white/5">
-                        <SearchInput placeholder={t('common.search')} className="bg-transparent border-none text-white h-16 px-8 text-xs font-black tracking-widest uppercase placeholder:text-slate-700" />
+                        <SearchInput placeholder={t('common.search')} className="bg-transparent border-none text-white h-16 px-8 text-lg font-bold font-black tracking-widest uppercase placeholder:text-slate-700" />
                     </div>
                 </div>
                 <div className="md:col-span-4 lg:col-span-2 space-y-3">
-                    <Label className="text-[9px] font-black text-slate-500 uppercase tracking-[0.3em] ml-2">{t('common.date')}</Label>
+                    <Label className="text-base font-bold font-black text-slate-500 uppercase tracking-[0.3em] ml-2">{t('common.date')}</Label>
                     <Input
                         type="date"
                         defaultValue={dateFrom}
                         name="from"
-                        className="h-16 bg-white/5 border-white/5 text-white font-black rounded-2xl shadow-inner focus:ring-primary/40 transition-all px-8 text-xs uppercase tracking-widest"
+                        className="h-16 bg-white/5 border-white/5 text-white font-black rounded-2xl shadow-inner focus:ring-primary/40 transition-all px-8 text-lg font-bold uppercase tracking-widest"
                     />
                 </div>
                 <div className="md:col-span-4 lg:col-span-2 space-y-3">
-                    <Label className="text-[9px] font-black text-slate-500 uppercase tracking-[0.3em] ml-2">{t('common.date')}</Label>
+                    <Label className="text-base font-bold font-black text-slate-500 uppercase tracking-[0.3em] ml-2">{t('common.date')}</Label>
                     <Input
                         type="date"
                         defaultValue={dateTo}
                         name="to"
-                        className="h-16 bg-white/5 border-white/5 text-white font-black rounded-2xl shadow-inner focus:ring-primary/40 transition-all px-8 text-xs uppercase tracking-widest"
+                        className="h-16 bg-white/5 border-white/5 text-white font-black rounded-2xl shadow-inner focus:ring-primary/40 transition-all px-8 text-lg font-bold uppercase tracking-widest"
                     />
                 </div>
                 <div className="md:col-span-4 lg:col-span-3 space-y-3">
-                    <Label className="text-[9px] font-black text-slate-500 uppercase tracking-[0.3em] ml-2">{t('navigation.settings')}</Label>
+                    <Label className="text-base font-bold font-black text-slate-500 uppercase tracking-[0.3em] ml-2">{t('navigation.settings')}</Label>
                     <HistoryStatusFilter initialValue={status} />
                 </div>
                 <button type="submit" className="hidden" /> 
@@ -202,7 +202,7 @@ export function HistoryClient({
                 <div className="w-1.5 h-10 bg-primary rounded-full shadow-[0_0_15px_rgba(255,30,133,0.8)]" />
                 <div>
                     <h3 className="text-3xl font-black text-white tracking-tighter uppercase">{t('navigation.monitoring')} Log</h3>
-                    <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.4em] mt-1">{t('history.profiles_found').replace('{count}', count.toString())} • {t('history.historical_node')}</p>
+                    <p className="text-slate-500 text-base font-bold font-black uppercase tracking-[0.4em] mt-1">{t('history.profiles_found').replace('{count}', count.toString())} • {t('history.historical_node')}</p>
                 </div>
             </div>
             <Zap size={24} className="text-primary/20 opacity-50" />
@@ -223,14 +223,14 @@ export function HistoryClient({
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-white/5 bg-white/[0.02]">
-                    <th className="text-left py-8 px-12 text-[9px] font-black text-slate-500 uppercase tracking-[0.3em]">{t('common.action')} ID</th>
-                    <th className="text-left py-8 px-6 text-[9px] font-black text-slate-500 uppercase tracking-[0.3em]">{t('navigation.reports')}</th>
-                    <th className="text-left py-8 px-6 text-[9px] font-black text-slate-500 uppercase tracking-[0.3em]">{t('navigation.vehicles')}</th>
-                    <th className="text-center py-8 px-6 text-[9px] font-black text-slate-500 uppercase tracking-[0.3em]">{t('navigation.monitoring')}</th>
-                    <th className="text-center py-8 px-6 text-[9px] font-black text-slate-500 uppercase tracking-[0.3em]">{t('navigation.pod')}</th>
-                    {canViewPrice && <th className="text-right py-8 px-6 text-[9px] font-black text-primary uppercase tracking-[0.3em]">Matrix</th>}
-                    <th className="text-left py-8 px-6 text-[9px] font-black text-slate-500 uppercase tracking-[0.3em]">{t('common.status')}</th>
-                    <th className="text-right py-8 px-12 text-[9px] font-black text-slate-500 uppercase tracking-[0.3em]">{t('common.action')}</th>
+                    <th className="text-left py-8 px-12 text-base font-bold font-black text-slate-500 uppercase tracking-[0.3em]">{t('common.action')} ID</th>
+                    <th className="text-left py-8 px-6 text-base font-bold font-black text-slate-500 uppercase tracking-[0.3em]">{t('navigation.reports')}</th>
+                    <th className="text-left py-8 px-6 text-base font-bold font-black text-slate-500 uppercase tracking-[0.3em]">{t('navigation.vehicles')}</th>
+                    <th className="text-center py-8 px-6 text-base font-bold font-black text-slate-500 uppercase tracking-[0.3em]">{t('navigation.monitoring')}</th>
+                    <th className="text-center py-8 px-6 text-base font-bold font-black text-slate-500 uppercase tracking-[0.3em]">{t('navigation.pod')}</th>
+                    {canViewPrice && <th className="text-right py-8 px-6 text-base font-bold font-black text-primary uppercase tracking-[0.3em]">Matrix</th>}
+                    <th className="text-left py-8 px-6 text-base font-bold font-black text-slate-500 uppercase tracking-[0.3em]">{t('common.status')}</th>
+                    <th className="text-right py-8 px-12 text-base font-bold font-black text-slate-500 uppercase tracking-[0.3em]">{t('common.action')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
@@ -248,15 +248,15 @@ export function HistoryClient({
                                 <p className="text-white font-black text-xl tracking-tighter group-hover/row:text-primary transition-colors font-display uppercase">{job.Job_ID}</p>
                                 <div className="flex items-center gap-2 mt-2">
                                     <Clock size={12} className="text-slate-600" />
-                                    <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">{job.Plan_Date || t('common.pending')}</p>
+                                    <p className="text-base font-bold font-black text-slate-500 uppercase tracking-widest">{job.Plan_Date || t('common.pending')}</p>
                                 </div>
                             </div>
                         </div>
                       </td>
                       <td className="py-10 px-6">
                          <div className="flex flex-col gap-2">
-                            <p className="text-white font-black text-sm tracking-tight uppercase group-hover/row:text-primary transition-colors">{job.Customer_Name || "-"}</p>
-                            <div className="flex items-center gap-2 text-[9px] font-black text-slate-500 uppercase tracking-widest">
+                            <p className="text-white font-black text-xl tracking-tight uppercase group-hover/row:text-primary transition-colors">{job.Customer_Name || "-"}</p>
+                            <div className="flex items-center gap-2 text-base font-bold font-black text-slate-500 uppercase tracking-widest">
                                 <MapPin size={12} className="text-primary/60" />
                                 <span className="line-clamp-1">{job.Route_Name || "DIRECT VECTOR"}</span>
                             </div>
@@ -268,16 +268,16 @@ export function HistoryClient({
                                 <div className="p-2 bg-white/5 rounded-xl text-slate-400 group-hover/row:text-primary transition-colors">
                                     <Truck size={14} strokeWidth={2.5} />
                                 </div>
-                                <p className="text-white font-black text-sm tracking-tight uppercase">{job.Vehicle_Plate || "-"}</p>
+                                <p className="text-white font-black text-xl tracking-tight uppercase">{job.Vehicle_Plate || "-"}</p>
                             </div>
-                            <p className="text-[9px] font-black text-slate-600 uppercase tracking-[0.2em] pl-1">{job.Driver_Name || t('common.pending')}</p>
+                            <p className="text-base font-bold font-black text-slate-600 uppercase tracking-[0.2em] pl-1">{job.Driver_Name || t('common.pending')}</p>
                         </div>
                       </td>
                       <td className="py-10 px-6">
                         <div className="flex flex-col items-center gap-2 min-w-[120px]">
                            {job.Verification_Status ? (
                                <Badge className={cn(
-                                   "rounded-[1.25rem] px-4 py-1.5 font-black text-[9px] border-none shadow-lg tracking-widest uppercase",
+                                   "rounded-[1.25rem] px-4 py-1.5 font-black text-base font-bold border-none shadow-lg tracking-widest uppercase",
                                    job.Verification_Status === 'Verified' ? "bg-primary text-white shadow-primary/20" :
                                    job.Verification_Status === 'Rejected' ? "bg-rose-500 text-white shadow-rose-500/20" : "bg-accent text-white shadow-accent/20"
                                )}>
@@ -286,11 +286,11 @@ export function HistoryClient({
                            ) : (
                                <div className="flex items-center gap-2">
                                 <span className="w-1 h-1 rounded-full bg-slate-700 animate-ping" />
-                                <span className="text-[9px] font-black text-slate-700 uppercase tracking-[0.3em] italic">{t('common.pending')} Integrity</span>
+                                <span className="text-base font-bold font-black text-slate-700 uppercase tracking-[0.3em] italic">{t('common.pending')} Integrity</span>
                                </div>
                            )}
                            {job.Verified_At && (
-                               <p className="text-[8px] font-black text-slate-600 uppercase tracking-widest truncate w-32 text-center">
+                               <p className="text-base font-bold font-black text-slate-600 uppercase tracking-widest truncate w-32 text-center">
                                    {t('history.agent')} {job.Verified_By?.split('@')[0]}
                                </p>
                            )}
@@ -339,7 +339,7 @@ export function HistoryClient({
                                             ? job.Price_Cust_Total.toLocaleString() 
                                             : (Number(job.Price_Cust_Total) || 0).toLocaleString()}
                                     </span>
-                                    <span className="text-[8px] font-black text-primary tracking-[0.2em] uppercase">{t('financial.credit') || 'CREDIT'}</span>
+                                    <span className="text-base font-bold font-black text-primary tracking-[0.2em] uppercase">{t('financial.credit') || 'CREDIT'}</span>
                                 </div>
                                 <div className="pr-4 flex items-center gap-2">
                                     <span className="text-[12px] font-black text-slate-500 tracking-tighter">
@@ -347,14 +347,14 @@ export function HistoryClient({
                                             ? job.Cost_Driver_Total.toLocaleString() 
                                             : (Number(job.Cost_Driver_Total) || 0).toLocaleString()}
                                     </span>
-                                    <span className="text-[8px] font-black text-slate-600 uppercase tracking-widest italic">{t('financial.debit') || 'DEBIT'}</span>
+                                    <span className="text-base font-bold font-black text-slate-600 uppercase tracking-widest italic">{t('financial.debit') || 'DEBIT'}</span>
                                 </div>
                             </div>
                         </td>
                       )}
                       <td className="py-10 px-6">
                         <span className={cn(
-                            "inline-flex items-center gap-2.5 px-5 py-2.5 rounded-[1.5rem] text-[10px] font-black uppercase tracking-widest border shadow-xl transition-all duration-500 group-hover/row:scale-105",
+                            "inline-flex items-center gap-2.5 px-5 py-2.5 rounded-[1.5rem] text-base font-bold font-black uppercase tracking-widest border shadow-xl transition-all duration-500 group-hover/row:scale-105",
                             statusConfig[job.Job_Status]?.color || 'bg-white/5 text-slate-500 border-white/10'
                         )}>
                           <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse shadow-[0_0_10px_currentColor]" />
@@ -394,3 +394,4 @@ export function HistoryClient({
     </>
   )
 }
+

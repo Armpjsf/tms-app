@@ -24,7 +24,7 @@ export function CustomerRanking({ data }: { data: CustomerStat[] }) {
              </div>
              <div>
                 <p className="font-black text-gray-900">{customer.name}</p>
-                <p className="text-xs text-gray-700 font-bold">{customer.jobCount} งาน</p>
+                <p className="text-lg font-bold text-gray-700 font-bold">{customer.jobCount} งาน</p>
              </div>
           </div>
           <div className="text-right">
@@ -43,3 +43,4 @@ export function CustomerRanking({ data }: { data: CustomerStat[] }) {
     </div>
   )
 }
+

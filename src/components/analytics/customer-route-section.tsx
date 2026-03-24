@@ -47,7 +47,7 @@ export function CustomerRouteSection({
                 </div>
                 <div>
                   <h3 className="text-lg font-black text-white tracking-tight italic uppercase">{t('dashboard.market_command')}</h3>
-                  <p className="text-purple-400 text-[9px] font-bold uppercase tracking-[0.2em]">{t('dashboard.customer_yield')}</p>
+                  <p className="text-purple-400 text-base font-bold font-bold uppercase tracking-[0.2em]">{t('dashboard.customer_yield')}</p>
                 </div>
               </div>
            </div>
@@ -63,22 +63,22 @@ export function CustomerRouteSection({
                                 #{i + 1}
                             </div>
                             <div>
-                                <div className="text-slate-900 font-black text-sm tracking-tight uppercase italic group-hover/cust:text-purple-600 transition-colors">{c.name}</div>
-                                <div className="text-[10px] text-slate-500 font-black mt-2 tracking-widest italic uppercase">
+                                <div className="text-slate-900 font-black text-xl tracking-tight uppercase italic group-hover/cust:text-purple-600 transition-colors">{c.name}</div>
+                                <div className="text-base font-bold text-slate-500 font-black mt-2 tracking-widest italic uppercase">
                                     {t('dashboard.mission_volume')}: {c.jobCount}
                                 </div>
                             </div>
                         </div>
                         <div className="text-right">
                              <div className="text-lg font-black text-slate-950 tracking-tighter italic">฿{c.revenue.toLocaleString()}</div>
-                             <div className="text-[9px] text-slate-400 font-black uppercase tracking-widest mt-1 italic">{t('dashboard.aggregate_revenue')}</div>
+                             <div className="text-base font-bold text-slate-400 font-black uppercase tracking-widest mt-1 italic">{t('dashboard.aggregate_revenue')}</div>
                         </div>
                     </div>
                 ))}
                 {customers.length === 0 && (
                      <div className="p-24 text-center">
                         <Building2 size={48} strokeWidth={1} className="mx-auto mb-4 text-slate-100" />
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">{t('dashboard.awaiting_market')}</p>
+                        <p className="text-base font-bold font-black text-slate-400 uppercase tracking-widest italic">{t('dashboard.awaiting_market')}</p>
                     </div>
                 )}
               </div>
@@ -95,7 +95,7 @@ export function CustomerRouteSection({
                 </div>
                 <div>
                   <h3 className="text-lg font-black text-white tracking-tight italic uppercase">{t('dashboard.corridor_yield')}</h3>
-                  <p className="text-emerald-400 text-[9px] font-bold uppercase tracking-[0.2em]">{t('dashboard.route_margin')}</p>
+                  <p className="text-emerald-400 text-base font-bold font-bold uppercase tracking-[0.2em]">{t('dashboard.route_margin')}</p>
                 </div>
               </div>
            </div>
@@ -108,25 +108,25 @@ export function CustomerRouteSection({
                                 {r.route.slice(0, 2)}
                             </div>
                             <div>
-                                <div className="text-slate-900 font-black text-sm tracking-tight uppercase italic">{r.route}</div>
+                                <div className="text-slate-900 font-black text-xl tracking-tight uppercase italic">{r.route}</div>
                                 <div className="flex items-center gap-3 mt-2">
-                                    <span className="text-[10px] font-black text-slate-400 bg-slate-50 px-2 py-0.5 rounded-full border border-slate-100 tracking-widest uppercase">
+                                    <span className="text-base font-bold font-black text-slate-400 bg-slate-50 px-2 py-0.5 rounded-full border border-slate-100 tracking-widest uppercase">
                                         {r.count} {t('dashboard.missions')}
                                     </span>
-                                    <span className="text-[10px] text-slate-400 font-bold italic">COST: ฿{r.cost.toLocaleString()}</span>
+                                    <span className="text-base font-bold text-slate-400 font-bold italic">COST: ฿{r.cost.toLocaleString()}</span>
                                 </div>
                             </div>
                         </div>
                         <div className="text-right">
                              <div className="text-lg font-black text-emerald-600 tracking-tighter italic">+{r.margin.toFixed(1)}%</div>
-                             <div className="text-[9px] text-slate-400 font-black uppercase tracking-widest mt-1 italic">{t('dashboard.net_margin')}</div>
+                             <div className="text-base font-bold text-slate-400 font-black uppercase tracking-widest mt-1 italic">{t('dashboard.net_margin')}</div>
                         </div>
                     </div>
                 ))}
                 {routes.length === 0 && (
                      <div className="p-24 text-center">
                         <Activity size={48} strokeWidth={1} className="mx-auto mb-4 text-slate-100" />
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">{t('dashboard.sector_nominal')}</p>
+                        <p className="text-base font-bold font-black text-slate-400 uppercase tracking-widest italic">{t('dashboard.sector_nominal')}</p>
                     </div>
                 )}
               </div>
@@ -136,3 +136,4 @@ export function CustomerRouteSection({
     </div>
   )
 }
+

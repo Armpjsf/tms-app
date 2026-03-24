@@ -22,10 +22,10 @@ export function RoutePerformance({ data }: { data: RouteStats[] }) {
       <Table>
         <TableHeader className="bg-white/80">
           <TableRow className="border-gray-200 hover:bg-transparent">
-            <TableHead className="text-gray-500 font-bold uppercase tracking-wider text-[10px]">เส้นทาง (Route)</TableHead>
-            <TableHead className="text-gray-500 font-bold uppercase tracking-wider text-[10px] text-center">จำนวนงาน</TableHead>
-            <TableHead className="text-gray-500 font-bold uppercase tracking-wider text-[10px]">รายรับ</TableHead>
-            <TableHead className="text-gray-500 font-bold uppercase tracking-wider text-[10px] text-right">Margin (%)</TableHead>
+            <TableHead className="text-gray-500 font-bold uppercase tracking-wider text-base font-bold">เส้นทาง (Route)</TableHead>
+            <TableHead className="text-gray-500 font-bold uppercase tracking-wider text-base font-bold text-center">จำนวนงาน</TableHead>
+            <TableHead className="text-gray-500 font-bold uppercase tracking-wider text-base font-bold">รายรับ</TableHead>
+            <TableHead className="text-gray-500 font-bold uppercase tracking-wider text-base font-bold text-right">Margin (%)</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -68,3 +68,4 @@ export function RoutePerformance({ data }: { data: RouteStats[] }) {
     </div>
   )
 }
+

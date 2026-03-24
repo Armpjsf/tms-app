@@ -57,7 +57,7 @@ function StepIndicator({ steps, currentStep }: { steps: string[], currentStep: n
         <div key={index} className="flex items-center flex-1 last:flex-none">
           <div className="flex flex-col items-center gap-3 relative z-10 group">
             <div className={cn(
-                "w-12 h-12 rounded-2xl flex items-center justify-center text-sm font-black transition-all duration-500 border-2",
+                "w-12 h-12 rounded-2xl flex items-center justify-center text-xl font-black transition-all duration-500 border-2",
                 index < currentStep 
                     ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40 shadow-[0_0_20px_rgba(16,185,129,0.3)]' 
                     : index === currentStep 
@@ -67,7 +67,7 @@ function StepIndicator({ steps, currentStep }: { steps: string[], currentStep: n
               {index < currentStep ? <CheckCircle2 className="w-6 h-6" /> : index + 1}
             </div>
             <span className={cn(
-                "text-[10px] uppercase font-black tracking-[0.2em] italic hidden md:block transition-colors duration-500",
+                "text-base font-bold uppercase font-black tracking-[0.2em] italic hidden md:block transition-colors duration-500",
                 index <= currentStep ? 'text-white' : 'text-slate-700'
             )}>
               {step}
@@ -228,7 +228,7 @@ export default function CreateJobPage() {
             <div className="absolute top-0 right-0 w-80 h-80 bg-primary/10 blur-[120px] rounded-full -mr-40 -mt-40 pointer-events-none" />
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-10 relative z-10">
                 <div className="space-y-6">
-                    <Link href="/planning" className="inline-flex items-center gap-2 text-slate-500 hover:text-primary transition-all font-black uppercase tracking-[0.4em] text-[10px] group/back italic">
+                    <Link href="/planning" className="inline-flex items-center gap-2 text-slate-500 hover:text-primary transition-all font-black uppercase tracking-[0.4em] text-base font-bold group/back italic">
                         <ArrowLeft className="w-4 h-4 group-hover/back:-translate-x-1 transition-transform" /> 
                         HUB_PLANNING
                     </Link>
@@ -238,16 +238,16 @@ export default function CreateJobPage() {
                         </div>
                         <div>
                             <h1 className="text-5xl font-black text-white tracking-widest uppercase leading-none italic premium-text-gradient">Mission Control</h1>
-                            <p className="text-[10px] font-black text-primary uppercase tracking-[0.6em] mt-2 opacity-80 italic italic">Initialize New Logistical Vector // Tier-0 Ops</p>
+                            <p className="text-base font-bold font-black text-primary uppercase tracking-[0.6em] mt-2 opacity-80 italic italic">Initialize New Logistical Vector // Tier-0 Ops</p>
                         </div>
                     </div>
                 </div>
                 <div className="flex flex-col items-end gap-3 self-end lg:self-center">
                     <div className="bg-white/5 border border-white/5 px-6 py-3 rounded-2xl flex items-center gap-3">
                         <Cpu className="text-primary" size={16} />
-                        <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest italic">PROCESS_CORE: ONLINE</span>
+                        <span className="text-base font-bold font-black text-slate-500 uppercase tracking-widest italic">PROCESS_CORE: ONLINE</span>
                     </div>
-                    <div className="text-[10px] font-black text-slate-700 uppercase tracking-[0.4em] italic">v2.4.0-STABLE_UPLINK</div>
+                    <div className="text-base font-bold font-black text-slate-700 uppercase tracking-[0.4em] italic">v2.4.0-STABLE_UPLINK</div>
                 </div>
             </div>
         </div>
@@ -275,23 +275,23 @@ export default function CreateJobPage() {
                                     </div>
                                     <div>
                                         <h2 className="text-3xl font-black text-white italic uppercase tracking-[0.2em]">Mission Intel</h2>
-                                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] mt-1 italic">Define core logistical parameters</p>
+                                        <p className="text-base font-bold font-black text-slate-500 uppercase tracking-[0.4em] mt-1 italic">Define core logistical parameters</p>
                                     </div>
                                 </div>
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                                     <div className="space-y-3 group">
-                                        <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-4 group-focus-within:text-primary transition-colors italic">Mission Identifier</Label>
+                                        <Label className="text-base font-bold font-black text-slate-500 uppercase tracking-widest ml-4 group-focus-within:text-primary transition-colors italic">Mission Identifier</Label>
                                         <Input 
                                             value={formData.Job_ID}
                                             onChange={(e) => updateForm('Job_ID', e.target.value)}
-                                            className="h-16 bg-[#050110]/50 border-white/5 rounded-3xl px-8 text-sm font-black text-white hover:border-white/10 focus:border-primary/50 transition-all shadow-inner uppercase tracking-widest italic"
+                                            className="h-16 bg-[#050110]/50 border-white/5 rounded-3xl px-8 text-xl font-black text-white hover:border-white/10 focus:border-primary/50 transition-all shadow-inner uppercase tracking-widest italic"
                                         />
                                     </div>
                                     <div className="space-y-3">
-                                        <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-4 italic">Operational Priority</Label>
+                                        <Label className="text-base font-bold font-black text-slate-500 uppercase tracking-widest ml-4 italic">Operational Priority</Label>
                                         <Select value={formData.Priority} onValueChange={(val) => updateForm('Priority', val)}>
-                                            <SelectTrigger className="h-16 bg-[#050110]/50 border-white/5 rounded-3xl px-8 text-sm font-black text-white hover:border-white/10 focus:border-primary/50 transition-all shadow-inner uppercase tracking-widest italic">
+                                            <SelectTrigger className="h-16 bg-[#050110]/50 border-white/5 rounded-3xl px-8 text-xl font-black text-white hover:border-white/10 focus:border-primary/50 transition-all shadow-inner uppercase tracking-widest italic">
                                                 <SelectValue placeholder="Select Status" />
                                             </SelectTrigger>
                                             <SelectContent className="bg-[#0a0518] border-white/10 rounded-2xl">
@@ -302,41 +302,41 @@ export default function CreateJobPage() {
                                         </Select>
                                     </div>
                                     <div className="space-y-3">
-                                        <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-4 flex items-center gap-2 italic">
+                                        <Label className="text-base font-bold font-black text-slate-500 uppercase tracking-widest ml-4 flex items-center gap-2 italic">
                                             <Calendar className="w-3 h-3" /> Temporal Date
                                         </Label>
                                         <Input 
                                             type="date"
                                             value={formData.Plan_Date}
                                             onChange={(e) => updateForm('Plan_Date', e.target.value)}
-                                            className="h-16 bg-[#050110]/50 border-white/5 rounded-3xl px-8 text-sm font-black text-white hover:border-white/10 focus:border-primary/50 transition-all shadow-inner italic"
+                                            className="h-16 bg-[#050110]/50 border-white/5 rounded-3xl px-8 text-xl font-black text-white hover:border-white/10 focus:border-primary/50 transition-all shadow-inner italic"
                                         />
                                     </div>
                                     <div className="space-y-3">
-                                        <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-4 flex items-center gap-2 italic">
+                                        <Label className="text-base font-bold font-black text-slate-500 uppercase tracking-widest ml-4 flex items-center gap-2 italic">
                                             <Clock className="w-3 h-3" /> Mission Sync Time
                                         </Label>
                                         <Input 
                                             type="time"
                                             value={formData.Plan_Time}
                                             onChange={(e) => updateForm('Plan_Time', e.target.value)}
-                                            className="h-16 bg-[#050110]/50 border-white/5 rounded-3xl px-8 text-sm font-black text-white hover:border-white/10 focus:border-primary/50 transition-all shadow-inner italic"
+                                            className="h-16 bg-[#050110]/50 border-white/5 rounded-3xl px-8 text-xl font-black text-white hover:border-white/10 focus:border-primary/50 transition-all shadow-inner italic"
                                         />
                                     </div>
                                 </div>
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                                     <div className="space-y-3">
-                                        <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-4 italic">Cargo Classification</Label>
+                                        <Label className="text-base font-bold font-black text-slate-500 uppercase tracking-widest ml-4 italic">Cargo Classification</Label>
                                         <Input 
                                             placeholder="DRY_GOODS, FRAGILE_V3, COLD_CHAIN..."
                                             value={formData.Cargo_Type}
                                             onChange={(e) => updateForm('Cargo_Type', e.target.value)}
-                                            className="h-16 bg-[#050110]/50 border-white/5 rounded-3xl px-8 text-sm font-black text-white hover:border-white/10 focus:border-primary/50 transition-all shadow-inner uppercase tracking-widest italic"
+                                            className="h-16 bg-[#050110]/50 border-white/5 rounded-3xl px-8 text-xl font-black text-white hover:border-white/10 focus:border-primary/50 transition-all shadow-inner uppercase tracking-widest italic"
                                         />
                                     </div>
                                     <div className="space-y-3 text-right">
-                                        <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mr-4 italic text-right block">Mass Index (KG)</Label>
+                                        <Label className="text-base font-bold font-black text-slate-500 uppercase tracking-widest mr-4 italic text-right block">Mass Index (KG)</Label>
                                         <Input 
                                             type="number"
                                             placeholder="0.00"
@@ -358,13 +358,13 @@ export default function CreateJobPage() {
                                     </div>
                                     <div>
                                         <h2 className="text-3xl font-black text-white italic uppercase tracking-[0.2em]">External Nodes</h2>
-                                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] mt-1 italic">Identify target entity & transit route</p>
+                                        <p className="text-base font-bold font-black text-slate-500 uppercase tracking-[0.4em] mt-1 italic">Identify target entity & transit route</p>
                                     </div>
                                 </div>
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                                     <div className="space-y-3">
-                                        <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-4 flex items-center gap-2 italic">
+                                        <Label className="text-base font-bold font-black text-slate-500 uppercase tracking-widest ml-4 flex items-center gap-2 italic">
                                             <Building2 className="w-3 h-3" /> Entity Registry
                                         </Label>
                                         <div className="relative group/cust">
@@ -377,27 +377,27 @@ export default function CreateJobPage() {
                                         </div>
                                     </div>
                                     <div className="space-y-3">
-                                        <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-4 flex items-center gap-2 italic">
+                                        <Label className="text-base font-bold font-black text-slate-500 uppercase tracking-widest ml-4 flex items-center gap-2 italic">
                                             <Phone className="w-3 h-3" /> Secure Comms Link
                                         </Label>
                                         <Input 
                                             placeholder="+66 8X-XXX-XXXX"
                                             value={formData.Customer_Phone}
                                             onChange={(e) => updateForm('Customer_Phone', e.target.value)}
-                                            className="h-16 bg-[#050110]/50 border-white/5 rounded-3xl px-8 text-sm font-black text-white hover:border-white/10 focus:border-primary/50 transition-all shadow-inner uppercase tracking-widest font-sans italic"
+                                            className="h-16 bg-[#050110]/50 border-white/5 rounded-3xl px-8 text-xl font-black text-white hover:border-white/10 focus:border-primary/50 transition-all shadow-inner uppercase tracking-widest font-sans italic"
                                         />
                                     </div>
                                 </div>
 
                                 <div className="space-y-3">
-                                    <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-4 flex items-center gap-2 italic">
+                                    <Label className="text-base font-bold font-black text-slate-500 uppercase tracking-widest ml-4 flex items-center gap-2 italic">
                                         <MapPin className="w-3 h-3" /> Registry Address Node
                                     </Label>
                                     <Textarea 
                                         placeholder="Full geographic coordinates & physical address..."
                                         value={formData.Customer_Address}
                                         onChange={(e) => updateForm('Customer_Address', e.target.value)}
-                                        className="bg-[#050110]/50 border-white/5 rounded-3xl p-8 text-sm font-black text-white hover:border-white/10 focus:border-primary/50 transition-all shadow-inner uppercase tracking-widest italic min-h-[120px]"
+                                        className="bg-[#050110]/50 border-white/5 rounded-3xl p-8 text-xl font-black text-white hover:border-white/10 focus:border-primary/50 transition-all shadow-inner uppercase tracking-widest italic min-h-[120px]"
                                     />
                                 </div>
 
@@ -406,7 +406,7 @@ export default function CreateJobPage() {
                                         <Label className="text-xl font-black text-emerald-400 uppercase tracking-widest flex items-center gap-3 italic">
                                             <Navigation className="w-6 h-6 animate-pulse" /> Global Route Master
                                         </Label>
-                                        <div className="px-4 py-1.5 bg-emerald-500/10 rounded-full border border-emerald-500/20 text-[8px] font-black text-emerald-500 uppercase tracking-[0.4em] italic">SYNCED_GPS_CORE</div>
+                                        <div className="px-4 py-1.5 bg-emerald-500/10 rounded-full border border-emerald-500/20 text-base font-bold font-black text-emerald-500 uppercase tracking-[0.4em] italic">SYNCED_GPS_CORE</div>
                                     </div>
                                     
                                     <Select value={formData.Route_Name} onValueChange={handleRouteSelect}>
@@ -418,7 +418,7 @@ export default function CreateJobPage() {
                                                 <SelectItem key={r.Route_Name} value={r.Route_Name} className="text-slate-300 focus:bg-emerald-500/20 focus:text-emerald-400 p-4">
                                                     <div className="flex flex-col">
                                                         <span className="font-black italic tracking-widest">{r.Route_Name}</span>
-                                                        <span className="text-[9px] text-slate-500">{r.Origin} → {r.Destination}</span>
+                                                        <span className="text-base font-bold text-slate-500">{r.Origin} → {r.Destination}</span>
                                                     </div>
                                                 </SelectItem>
                                             ))}
@@ -427,29 +427,29 @@ export default function CreateJobPage() {
 
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                                         <div className="space-y-4">
-                                            <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-4 italic">Origin Source</Label>
+                                            <Label className="text-base font-bold font-black text-slate-500 uppercase tracking-widest ml-4 italic">Origin Source</Label>
                                             <Input 
                                                 placeholder="START_NODE..."
                                                 value={formData.Origin_Location}
                                                 onChange={(e) => updateForm('Origin_Location', e.target.value)}
-                                                className="h-16 bg-[#050110]/50 border-white/5 rounded-3xl px-8 text-sm font-black text-white italic shadow-inner uppercase tracking-widest"
+                                                className="h-16 bg-[#050110]/50 border-white/5 rounded-3xl px-8 text-xl font-black text-white italic shadow-inner uppercase tracking-widest"
                                             />
                                             {formData.Pickup_Lat && (
-                                                <div className="inline-flex items-center gap-3 px-4 py-1.5 bg-emerald-500/10 rounded-xl border border-emerald-500/20 text-[9px] font-black text-emerald-500 uppercase italic">
+                                                <div className="inline-flex items-center gap-3 px-4 py-1.5 bg-emerald-500/10 rounded-xl border border-emerald-500/20 text-base font-bold font-black text-emerald-500 uppercase italic">
                                                     <Target className="w-3 h-3" /> LAT_LONG_SYNC: {formData.Pickup_Lat}, {formData.Pickup_Lon}
                                                 </div>
                                             )}
                                         </div>
                                         <div className="space-y-4">
-                                            <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-4 italic">Target Destination</Label>
+                                            <Label className="text-base font-bold font-black text-slate-500 uppercase tracking-widest ml-4 italic">Target Destination</Label>
                                             <Input 
                                                 placeholder="END_NODE..."
                                                 value={formData.Dest_Location}
                                                 onChange={(e) => updateForm('Dest_Location', e.target.value)}
-                                                className="h-16 bg-[#050110]/50 border-white/5 rounded-3xl px-8 text-sm font-black text-white italic shadow-inner uppercase tracking-widest"
+                                                className="h-16 bg-[#050110]/50 border-white/5 rounded-3xl px-8 text-xl font-black text-white italic shadow-inner uppercase tracking-widest"
                                             />
                                             {formData.Delivery_Lat && (
-                                                <div className="inline-flex items-center gap-3 px-4 py-1.5 bg-rose-500/10 rounded-xl border border-rose-500/20 text-[9px] font-black text-rose-500 uppercase italic ml-auto">
+                                                <div className="inline-flex items-center gap-3 px-4 py-1.5 bg-rose-500/10 rounded-xl border border-rose-500/20 text-base font-bold font-black text-rose-500 uppercase italic ml-auto">
                                                     <Target className="w-3 h-3" /> DEST_VECTOR_LOCK: {formData.Delivery_Lat}, {formData.Delivery_Lon}
                                                 </div>
                                             )}
@@ -464,12 +464,12 @@ export default function CreateJobPage() {
                                                     <Navigation size={28} />
                                                 </div>
                                                 <div>
-                                                    <span className="text-[10px] font-black text-slate-600 uppercase tracking-[0.4em] italic mb-1 block">Projected Displacement</span>
+                                                    <span className="text-base font-bold font-black text-slate-600 uppercase tracking-[0.4em] italic mb-1 block">Projected Displacement</span>
                                                     <h3 className="text-4xl font-black text-white italic tracking-widest uppercase">Linear Vector Metrics</h3>
                                                 </div>
                                             </div>
                                             <div className="text-right relative z-10">
-                                                <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest block mb-2">GPS_DELTA: NOMINAL</span>
+                                                <span className="text-base font-bold font-black text-emerald-600 uppercase tracking-widest block mb-2">GPS_DELTA: NOMINAL</span>
                                                 <span className="text-6xl font-black text-emerald-500 italic drop-shadow-[0_0_20px_rgba(16,185,129,0.3)]">{formData.Est_Distance_KM} <span className="text-2xl ml-[-15px]">KM</span></span>
                                             </div>
                                         </div>
@@ -487,14 +487,14 @@ export default function CreateJobPage() {
                                     </div>
                                     <div>
                                         <h2 className="text-3xl font-black text-white italic uppercase tracking-[0.2em]">Asset Matrix</h2>
-                                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] mt-1 italic">Deploy operator & high-fidelity asset</p>
+                                        <p className="text-base font-bold font-black text-slate-500 uppercase tracking-[0.4em] mt-1 italic">Deploy operator & high-fidelity asset</p>
                                     </div>
                                 </div>
 
                                 <div className="space-y-6">
                                     <div className="flex items-center gap-3 px-6 py-2 bg-primary px-4 py-1 bg-primary/10 rounded-full border border-primary/30 w-fit mb-4">
                                         <Sparkles size={14} className="text-primary animate-pulse" />
-                                        <span className="text-[9px] font-black text-primary uppercase tracking-[0.6em] italic">Cognitive Optimization Engine</span>
+                                        <span className="text-base font-bold font-black text-primary uppercase tracking-[0.6em] italic">Cognitive Optimization Engine</span>
                                     </div>
                                     <AiSuggestionCard
                                         jobData={{
@@ -516,14 +516,14 @@ export default function CreateJobPage() {
 
                                 <div className="relative py-10 flex flex-col items-center">
                                     <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-px bg-white/5" />
-                                    <span className="relative z-10 px-8 bg-[#0a0518] text-[9px] font-black text-slate-700 uppercase tracking-[0.6em] italic">Manual Override Protocol</span>
+                                    <span className="relative z-10 px-8 bg-[#0a0518] text-base font-bold font-black text-slate-700 uppercase tracking-[0.6em] italic">Manual Override Protocol</span>
                                 </div>
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                                     <div className="space-y-3 group">
-                                        <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-4 italic">Operator Designation</Label>
+                                        <Label className="text-base font-bold font-black text-slate-500 uppercase tracking-widest ml-4 italic">Operator Designation</Label>
                                         <Select value={formData.Driver_ID} onValueChange={handleDriverChange}>
-                                            <SelectTrigger className="h-18 bg-[#050110]/50 border-white/5 rounded-3xl px-8 text-sm font-black text-white hover:border-white/10 transition-all shadow-inner uppercase tracking-widest italic group-focus-within:border-primary/50">
+                                            <SelectTrigger className="h-18 bg-[#050110]/50 border-white/5 rounded-3xl px-8 text-xl font-black text-white hover:border-white/10 transition-all shadow-inner uppercase tracking-widest italic group-focus-within:border-primary/50">
                                                 <SelectValue placeholder="SELECT_OPERATOR..." />
                                             </SelectTrigger>
                                             <SelectContent className="bg-[#0a0518] border-white/10 rounded-3xl">
@@ -531,7 +531,7 @@ export default function CreateJobPage() {
                                                     <SelectItem key={d.Driver_ID} value={d.Driver_ID} className="p-4 focus:bg-primary/20 text-slate-300">
                                                         <div className="flex flex-col">
                                                             <span className="font-black italic uppercase tracking-widest">{d.Driver_Name}</span>
-                                                            <span className="text-[9px] text-slate-600">ID: {d.Driver_ID} // {d.Mobile_No}</span>
+                                                            <span className="text-base font-bold text-slate-600">ID: {d.Driver_ID} // {d.Mobile_No}</span>
                                                         </div>
                                                     </SelectItem>
                                                 ))}
@@ -539,9 +539,9 @@ export default function CreateJobPage() {
                                         </Select>
                                     </div>
                                     <div className="space-y-3 group">
-                                        <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-4 italic">Asset Signature</Label>
+                                        <Label className="text-base font-bold font-black text-slate-500 uppercase tracking-widest ml-4 italic">Asset Signature</Label>
                                         <Select value={formData.Vehicle_Plate} onValueChange={(val) => updateForm('Vehicle_Plate', val)}>
-                                            <SelectTrigger className="h-18 bg-[#050110]/50 border-white/5 rounded-3xl px-8 text-sm font-black text-white hover:border-white/10 transition-all shadow-inner uppercase tracking-widest italic group-focus-within:border-primary/50">
+                                            <SelectTrigger className="h-18 bg-[#050110]/50 border-white/5 rounded-3xl px-8 text-xl font-black text-white hover:border-white/10 transition-all shadow-inner uppercase tracking-widest italic group-focus-within:border-primary/50">
                                                 <SelectValue placeholder="SELECT_ASSET_PLATE..." />
                                             </SelectTrigger>
                                             <SelectContent className="bg-[#0a0518] border-white/10 rounded-3xl">
@@ -549,7 +549,7 @@ export default function CreateJobPage() {
                                                     <SelectItem key={v.vehicle_plate} value={v.vehicle_plate} className="p-4 focus:bg-primary/20 text-slate-300">
                                                         <div className="flex flex-col font-sans">
                                                             <span className="font-black italic tracking-widest">{v.vehicle_plate}</span>
-                                                            <span className="text-[9px] text-slate-600">SPEC: {v.vehicle_type} // OPTIMIZED</span>
+                                                            <span className="text-base font-bold text-slate-600">SPEC: {v.vehicle_type} // OPTIMIZED</span>
                                                         </div>
                                                     </SelectItem>
                                                 ))}
@@ -560,7 +560,7 @@ export default function CreateJobPage() {
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                                     <div className="space-y-3 group">
-                                        <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-4 flex items-center gap-2 italic">
+                                        <Label className="text-base font-bold font-black text-slate-500 uppercase tracking-widest ml-4 flex items-center gap-2 italic">
                                             <FileText className="w-3 h-3 text-rose-500" /> Operator Yield (THB)
                                         </Label>
                                         <Input 
@@ -571,7 +571,7 @@ export default function CreateJobPage() {
                                         />
                                     </div>
                                     <div className="space-y-3 group text-right">
-                                        <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mr-4 flex items-center gap-2 justify-end italic">
+                                        <Label className="text-base font-bold font-black text-slate-500 uppercase tracking-widest mr-4 flex items-center gap-2 justify-end italic">
                                             <FileText className="w-3 h-3 text-emerald-500" /> Entity Ledger (THB)
                                         </Label>
                                         <Input 
@@ -593,7 +593,7 @@ export default function CreateJobPage() {
                                             <Label className="text-xl font-black text-white italic uppercase tracking-widest cursor-pointer" htmlFor="show-price">
                                                 Visual Transparency
                                             </Label>
-                                            <p className="text-[10px] font-black text-slate-600 uppercase tracking-[0.4em] mt-1">Reveal yield metrics to operator node</p>
+                                            <p className="text-base font-bold font-black text-slate-600 uppercase tracking-[0.4em] mt-1">Reveal yield metrics to operator node</p>
                                         </div>
                                     </div>
                                     <Switch 
@@ -605,14 +605,14 @@ export default function CreateJobPage() {
                                 </div>
 
                                 <div className="space-y-3 group">
-                                    <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-4 flex items-center gap-2 italic">
+                                    <Label className="text-base font-bold font-black text-slate-500 uppercase tracking-widest ml-4 flex items-center gap-2 italic">
                                         <FileText className="w-3 h-3" /> Tactical Intel Briefing
                                     </Label>
                                     <Textarea 
                                         placeholder="Extra operational intel, safety protocols, routing nuances..."
                                         value={formData.Notes}
                                         onChange={(e) => updateForm('Notes', e.target.value)}
-                                        className="bg-[#050110]/50 border-white/5 rounded-[3rem] p-10 text-sm font-black text-white hover:border-white/10 transition-all shadow-inner uppercase tracking-widest italic min-h-[150px]"
+                                        className="bg-[#050110]/50 border-white/5 rounded-[3rem] p-10 text-xl font-black text-white hover:border-white/10 transition-all shadow-inner uppercase tracking-widest italic min-h-[150px]"
                                     />
                                 </div>
                             </div>
@@ -627,45 +627,45 @@ export default function CreateJobPage() {
                                     </div>
                                     <div>
                                         <h2 className="text-3xl font-black text-white italic uppercase tracking-[0.2em]">Sync Registry</h2>
-                                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] mt-1 italic">Review & broadcast mission state</p>
+                                        <p className="text-base font-bold font-black text-slate-500 uppercase tracking-[0.4em] mt-1 italic">Review & broadcast mission state</p>
                                     </div>
                                 </div>
 
                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
                                     <PremiumCard className="p-10 bg-white/5 border-white/10 rounded-[3rem] group/card relative overflow-hidden">
                                         <div className="absolute top-0 right-0 p-6 opacity-10"><Package size={40} /></div>
-                                        <span className="text-[9px] font-black text-primary uppercase tracking-[0.6em] italic mb-6 block">MISSION_TELEMETRY</span>
+                                        <span className="text-base font-bold font-black text-primary uppercase tracking-[0.6em] italic mb-6 block">MISSION_TELEMETRY</span>
                                         <div className="space-y-6">
                                             <div className="flex justify-between items-center border-b border-white/5 pb-4">
-                                                <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest italic">Identifier</span>
+                                                <span className="text-base font-bold font-black text-slate-600 uppercase tracking-widest italic">Identifier</span>
                                                 <span className="text-xl font-black text-white italic tracking-[0.2em]">{formData.Job_ID}</span>
                                             </div>
                                             <div className="flex justify-between items-center border-b border-white/5 pb-4">
-                                                <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest italic">Temporal Stamping</span>
-                                                <span className="text-sm font-black text-slate-300 italic tracking-widest uppercase text-right">{formData.Plan_Date} @ {formData.Plan_Time}</span>
+                                                <span className="text-base font-bold font-black text-slate-600 uppercase tracking-widest italic">Temporal Stamping</span>
+                                                <span className="text-xl font-black text-slate-300 italic tracking-widest uppercase text-right">{formData.Plan_Date} @ {formData.Plan_Time}</span>
                                             </div>
                                             <div className="flex justify-between items-center">
-                                                <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest italic">Payload Specs</span>
-                                                <span className="text-sm font-black text-primary italic tracking-widest uppercase text-right">{formData.Cargo_Type || 'UNCLASSIFIED'} // {formData.Weight || '0'} KG</span>
+                                                <span className="text-base font-bold font-black text-slate-600 uppercase tracking-widest italic">Payload Specs</span>
+                                                <span className="text-xl font-black text-primary italic tracking-widest uppercase text-right">{formData.Cargo_Type || 'UNCLASSIFIED'} // {formData.Weight || '0'} KG</span>
                                             </div>
                                         </div>
                                     </PremiumCard>
 
                                     <PremiumCard className="p-10 bg-white/5 border-white/10 rounded-[3rem] group/card relative overflow-hidden">
                                         <div className="absolute top-0 right-0 p-6 opacity-10"><MapPin size={40} /></div>
-                                        <span className="text-[9px] font-black text-emerald-500 uppercase tracking-[0.6em] italic mb-6 block">ENTITY_DESTINATION</span>
+                                        <span className="text-base font-bold font-black text-emerald-500 uppercase tracking-[0.6em] italic mb-6 block">ENTITY_DESTINATION</span>
                                         <div className="space-y-6">
                                             <div className="flex justify-between items-center border-b border-white/5 pb-4">
-                                                <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest italic">Target Node</span>
+                                                <span className="text-base font-bold font-black text-slate-600 uppercase tracking-widest italic">Target Node</span>
                                                 <span className="text-xl font-black text-white italic tracking-[0.1em] uppercase text-right leading-none max-w-[200px]">{formData.Customer_Name || 'VOID_ENTITY'}</span>
                                             </div>
                                             <div className="flex justify-between items-center border-b border-white/5 pb-4">
-                                                <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest italic">Link Status</span>
-                                                <span className="text-sm font-black text-slate-300 italic tracking-widest uppercase font-sans">{formData.Customer_Phone || 'SIGNAL_LOST'}</span>
+                                                <span className="text-base font-bold font-black text-slate-600 uppercase tracking-widest italic">Link Status</span>
+                                                <span className="text-xl font-black text-slate-300 italic tracking-widest uppercase font-sans">{formData.Customer_Phone || 'SIGNAL_LOST'}</span>
                                             </div>
                                             <div className="flex justify-between items-center">
-                                                <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest italic">Transit Vector</span>
-                                                <span className="text-[10px] font-black text-emerald-500 italic tracking-[0.3em] uppercase text-right">{formData.Origin_Location} → {formData.Dest_Location}</span>
+                                                <span className="text-base font-bold font-black text-slate-600 uppercase tracking-widest italic">Transit Vector</span>
+                                                <span className="text-base font-bold font-black text-emerald-500 italic tracking-[0.3em] uppercase text-right">{formData.Origin_Location} → {formData.Dest_Location}</span>
                                             </div>
                                         </div>
                                     </PremiumCard>
@@ -674,14 +674,14 @@ export default function CreateJobPage() {
                                         <div className="absolute top-0 right-0 p-8 opacity-10 animate-pulse"><Target size={60} /></div>
                                         <div className="flex flex-col md:flex-row md:items-center justify-between gap-12">
                                             <div className="space-y-2">
-                                                <span className="text-[9px] font-black text-slate-600 uppercase tracking-[0.8em] italic block mb-4">DEPLOYMENT_SIGNALS</span>
+                                                <span className="text-base font-bold font-black text-slate-600 uppercase tracking-[0.8em] italic block mb-4">DEPLOYMENT_SIGNALS</span>
                                                 <div className="flex flex-col gap-6">
                                                     <div className="flex items-center gap-4">
                                                         <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-primary italic font-black shadow-inner">
                                                            {formData.Driver_Name?.charAt(0) || '?'}
                                                         </div>
                                                         <div>
-                                                            <span className="text-[9px] font-black text-slate-700 uppercase tracking-widest block italic mb-1">Assigned Operator</span>
+                                                            <span className="text-base font-bold font-black text-slate-700 uppercase tracking-widest block italic mb-1">Assigned Operator</span>
                                                             <span className="text-xl font-black text-white italic tracking-widest uppercase">{formData.Driver_Name || 'SELECTION_PENDING'}</span>
                                                         </div>
                                                     </div>
@@ -690,7 +690,7 @@ export default function CreateJobPage() {
                                                             <Truck size={24} />
                                                         </div>
                                                         <div>
-                                                            <span className="text-[9px] font-black text-slate-700 uppercase tracking-widest block italic mb-1">Asset Allocation</span>
+                                                            <span className="text-base font-bold font-black text-slate-700 uppercase tracking-widest block italic mb-1">Asset Allocation</span>
                                                             <span className="text-xl font-black text-white italic tracking-widest uppercase font-sans">{formData.Vehicle_Plate || 'ASSET_NULL'}</span>
                                                         </div>
                                                     </div>
@@ -698,9 +698,9 @@ export default function CreateJobPage() {
                                             </div>
                                             <div className="bg-black/60 p-10 rounded-[3rem] border border-white/5 flex flex-col items-center justify-center min-w-[280px] shadow-2xl relative">
                                                 <div className="absolute inset-0 bg-primary/5 blur-3xl" />
-                                                <span className="text-[10px] font-black text-slate-700 uppercase tracking-[0.5em] italic mb-6 relative z-10">INITIAL_VELOCITY</span>
+                                                <span className="text-base font-bold font-black text-slate-700 uppercase tracking-[0.5em] italic mb-6 relative z-10">INITIAL_VELOCITY</span>
                                                 <div className="flex flex-col items-center gap-2 relative z-10">
-                                                    <span className="text-xs font-black text-primary uppercase tracking-[0.4em] italic mb-2">READY_FOR_LIFT_OFF</span>
+                                                    <span className="text-lg font-bold font-black text-primary uppercase tracking-[0.4em] italic mb-2">READY_FOR_LIFT_OFF</span>
                                                     <div className="h-1.5 w-40 bg-white/5 rounded-full overflow-hidden border border-white/5">
                                                         <motion.div 
                                                             className="h-full bg-primary shadow-[0_0_15px_rgba(255,30,133,1)]"
@@ -732,7 +732,7 @@ export default function CreateJobPage() {
                             {currentStep < steps.length - 1 ? (
                                 <PremiumButton 
                                     onClick={nextStep} 
-                                    className="h-20 px-16 rounded-[2.5rem] bg-primary text-white font-black uppercase tracking-[0.2em] gap-5 shadow-[0_20px_50px_rgba(255,30,133,0.3)] hover:scale-105 transition-all text-sm w-full md:w-auto italic"
+                                    className="h-20 px-16 rounded-[2.5rem] bg-primary text-white font-black uppercase tracking-[0.2em] gap-5 shadow-[0_20px_50px_rgba(255,30,133,0.3)] hover:scale-105 transition-all text-xl w-full md:w-auto italic"
                                 >
                                     PROCEED_NODE <ChevronRight className="w-6 h-6" />
                                 </PremiumButton>
@@ -762,7 +762,7 @@ export default function CreateJobPage() {
                 <ShieldCheck size={20} className="text-slate-500" />
                 <span className="text-[12px] font-black text-white uppercase tracking-[0.8em] italic">Mission Registry Protocol // SECURE_TERM</span>
             </div>
-            <p className="text-[10px] font-bold text-slate-700 uppercase tracking-widest italic leading-relaxed text-center">
+            <p className="text-base font-bold font-bold text-slate-700 uppercase tracking-widest italic leading-relaxed text-center">
                 All transmissions are encrypted via Tier-0 AES-256 routing. <br />
                 System logs are updated in real-time across all global nodes.
             </p>
@@ -770,3 +770,4 @@ export default function CreateJobPage() {
     </div>
   )
 }
+
