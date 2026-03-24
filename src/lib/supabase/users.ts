@@ -57,7 +57,7 @@ export async function updateUserProfile(data: Partial<UserProfile>) {
     const session = await getSession()
     if (!session || !session.userId) return { success: false, error: 'Not authenticated' }
 
-    const supabase = await createClient()
+    const supabase = createAdminClient()
 
     const updatePayload: any = {
         First_Name: data.First_Name,
@@ -77,6 +77,10 @@ export async function updateUserProfile(data: Partial<UserProfile>) {
 
     if (error) {
       return { success: false, error: error.message }
+    }
+
+    if (count === 0) {
+      return { success: false, error: 'User record not found or no changes applied' }
     }
 
     revalidatePath('/settings/profile')

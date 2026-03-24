@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
-import { PremiumCard } from "@/components/ui/premium-card"
 import { PremiumButton } from "@/components/ui/premium-button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -19,7 +18,6 @@ import {
     Mail,
     MapPin,
     Save,
-    X,
     CreditCard,
     TrendingUp,
     Zap,
@@ -148,12 +146,12 @@ export default function CustomersSettingsPage() {
                 <div className="p-2 bg-primary/20 rounded-xl shadow-lg">
                     <Users className="text-primary" size={20} />
                 </div>
-                <h2 className="text-[10px] font-black text-primary uppercase tracking-[0.4em]">Strategic Partner Ecosystem</h2>
+                <h2 className="text-[11px] font-black text-primary uppercase tracking-[0.1em]">Strategic Partner Ecosystem</h2>
             </div>
             <h1 className="text-6xl font-black text-white tracking-tighter flex items-center gap-5 uppercase premium-text-gradient">
                 {t('settings_pages.customers.title')}
             </h1>
-            <p className="text-slate-500 font-bold text-sm tracking-wide opacity-80 uppercase tracking-widest">{t('settings_pages.customers.subtitle')}</p>
+            <p className="text-slate-500 font-bold text-sm tracking-wide opacity-80 uppercase tracking-widest leading-relaxed">{t('settings_pages.customers.subtitle')}</p>
         </div>
 
         <div className="flex flex-wrap gap-4 relative z-10">
@@ -199,7 +197,7 @@ export default function CustomersSettingsPage() {
                         </div>
                     </div>
                     <div className="relative z-10">
-                        <p className="text-slate-500 font-black text-[10px] uppercase tracking-[0.3em] mb-2">{stat.label}</p>
+                        <p className="text-slate-500 font-black text-[11px] uppercase tracking-[0.1em] mb-2">{stat.label}</p>
                         <p className="text-4xl font-black text-white tracking-tighter leading-none">{stat.value}</p>
                     </div>
                 </div>
@@ -239,7 +237,7 @@ export default function CustomersSettingsPage() {
 
             <div className="p-12 space-y-10 custom-scrollbar max-h-[70vh] overflow-y-auto">
               <div className="space-y-4">
-                <Label className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-500 ml-2">{t('settings_pages.customers.dialog.name')}</Label>
+                <Label className="text-[11px] font-black uppercase tracking-[0.1em] text-slate-500 ml-2">{t('settings_pages.customers.dialog.name')}</Label>
                 <div className="glass-panel p-1 rounded-2xl border-white/5">
                     <Input
                     value={formData.Customer_Name}
@@ -252,7 +250,7 @@ export default function CustomersSettingsPage() {
 
               <div className="grid grid-cols-2 gap-10">
                 <div className="space-y-4">
-                  <Label className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-500 ml-2">{t('settings_pages.customers.dialog.phone')}</Label>
+                  <Label className="text-[11px] font-black uppercase tracking-[0.1em] text-slate-500 ml-2">{t('settings_pages.customers.dialog.phone')}</Label>
                   <Input
                     value={formData.Phone || ""}
                     onChange={(e) => updateForm("Phone", e.target.value)}
@@ -261,7 +259,7 @@ export default function CustomersSettingsPage() {
                   />
                 </div>
                 <div className="space-y-4">
-                  <Label className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-500 ml-2">{t('settings_pages.customers.dialog.email')}</Label>
+                  <Label className="text-[11px] font-black uppercase tracking-[0.1em] text-slate-500 ml-2">{t('settings_pages.customers.dialog.email')}</Label>
                   <Input
                     value={formData.Email || ""}
                     onChange={(e) => updateForm("Email", e.target.value)}
@@ -272,7 +270,7 @@ export default function CustomersSettingsPage() {
               </div>
 
               <div className="space-y-4">
-                <Label className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-500 ml-2">{t('settings_pages.customers.dialog.address')}</Label>
+                <Label className="text-[11px] font-black uppercase tracking-[0.1em] text-slate-500 ml-2">{t('settings_pages.customers.dialog.address')}</Label>
                 <Textarea
                   value={formData.Address || ""}
                   onChange={(e) => updateForm("Address", e.target.value)}
@@ -283,7 +281,7 @@ export default function CustomersSettingsPage() {
 
               <div className="grid grid-cols-2 gap-10">
                 <div className="space-y-4">
-                  <Label className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-500 ml-2">{t('settings_pages.customers.dialog.branch')}</Label>
+                  <Label className="text-[11px] font-black uppercase tracking-[0.1em] text-slate-500 ml-2">{t('settings_pages.customers.dialog.branch')}</Label>
                   <Input
                     value={formData.Customer_ID || ""}
                     onChange={(e) => updateForm("Customer_ID", e.target.value)}
@@ -293,7 +291,7 @@ export default function CustomersSettingsPage() {
                   />
                 </div>
                  <div className="space-y-4">
-                  <Label className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-500 ml-2">{t('settings_pages.customers.dialog.tax_id')}</Label>
+                   <Label className="text-[11px] font-black uppercase tracking-[0.1em] text-slate-500 ml-2">{t('settings_pages.customers.dialog.tax_id')}</Label>
                   <Input
                     value={formData.Tax_ID || ""}
                     onChange={(e) => updateForm("Tax_ID", e.target.value)}
@@ -304,7 +302,7 @@ export default function CustomersSettingsPage() {
               </div>
 
               <div className="space-y-4">
-                <Label className="text-[10px] font-black uppercase tracking-[0.4em] text-primary ml-2 flex items-center gap-3">
+                <Label className="text-[11px] font-black uppercase tracking-[0.1em] text-primary ml-2 flex items-center gap-3">
                     <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
                     {t('settings_pages.customers.dialog.line_id')}
                 </Label>

@@ -189,7 +189,7 @@ export default function UserSettingsPage() {
                                 <h1 className="text-5xl font-black text-white tracking-widest uppercase leading-none italic premium-text-gradient">
                                     {t('settings_pages.users.title')}
                                 </h1>
-                                <p className="text-[10px] font-black text-primary uppercase tracking-[0.6em] mt-2 opacity-80 italic">{t('settings_pages.users.subtitle')}</p>
+                                <p className="text-[11px] font-black text-primary uppercase tracking-[0.2em] mt-2 opacity-80 italic">{t('settings_pages.users.subtitle')}</p>
                             </div>
                         </div>
                     </div>
@@ -236,14 +236,14 @@ export default function UserSettingsPage() {
                         </div>
                         <div className="flex items-center gap-3 px-5 py-2 bg-white/5 rounded-full border border-white/10 relative z-10">
                             <Activity size={14} className="text-primary" />
-                            <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">REALTIME_FLOW: ACTIVE</span>
+                            <span className="text-[11px] font-black text-slate-500 uppercase tracking-widest">REALTIME_FLOW: ACTIVE</span>
                         </div>
                     </div>
 
                     <div className="relative w-full overflow-auto">
                         <table className="w-full text-sm text-left border-collapse">
                             <thead>
-                                <tr className="bg-black/20 text-[10px] font-black uppercase tracking-[0.4em] text-slate-500 border-b border-white/5">
+                                <tr className="bg-black/20 text-[12px] font-black uppercase tracking-[0.1em] text-slate-500 border-b border-white/5">
                                     <th className="px-10 py-8">{t('settings_pages.users.table.vector_id')}</th>
                                     <th className="px-10 py-8">{t('settings_pages.users.table.identity')}</th>
                                     <th className="px-10 py-8">{t('settings_pages.users.table.hub')}</th>
@@ -367,7 +367,7 @@ export default function UserSettingsPage() {
 
                         <div className="grid grid-cols-2 gap-10">
                             <div className="space-y-3">
-                                <Label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] ml-4">{t('settings_pages.users.dialog.branch')}</Label>
+                                <Label className="text-[11px] font-black text-slate-500 uppercase tracking-[0.1em] ml-4">{t('settings_pages.users.dialog.branch')}</Label>
                                 {isAdmin ? (
                                     <Select 
                                         value={formData.Branch_ID || ""} 
@@ -393,7 +393,7 @@ export default function UserSettingsPage() {
                                 )}
                             </div>
                             <div className="space-y-3">
-                                <Label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] ml-4">{t('settings_pages.users.dialog.role')}</Label>
+                                <Label className="text-[11px] font-black text-slate-500 uppercase tracking-[0.1em] ml-4">{t('settings_pages.users.dialog.role')}</Label>
                                 <Select 
                                     value={formData.Role || ""} 
                                     onValueChange={handleRoleChange}
@@ -416,7 +416,7 @@ export default function UserSettingsPage() {
 
                         <div className="space-y-6">
                             <div className="flex justify-between items-center">
-                                <Label className="text-[10px] font-black text-primary uppercase tracking-[0.6em] italic">Access Permissions Matrix</Label>
+                                <Label className="text-[11px] font-black text-primary uppercase tracking-[0.2em] italic">Access Permissions Matrix</Label>
                                 <div className="flex items-center gap-2">
                                     <Zap size={12} className="text-primary" />
                                     <span className="text-[8px] font-black text-slate-600 uppercase tracking-widest">Personalized Node Access</span>

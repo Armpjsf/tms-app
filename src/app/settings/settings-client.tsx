@@ -71,7 +71,7 @@ const settingsSections = [
     titleKey: "settings.sections.security",
     icon: Shield,
     items: [
-      { labelKey: "settings.items.vault", descKey: "settings.items.vault_desc", path: "/settings/security" },
+      { labelKey: "settings.items.vault", descKey: "settings.items.vault_desc", path: "/settings/backup" },
     ]
   },
 ]
@@ -212,74 +212,77 @@ export default function SettingsPage() {
                   </div>
                   {t(section.titleKey)}
                 </h3>
-                <Activity size={18} className="text-slate-800 group-hover/section:text-primary transition-colors duration-500" />
-              </div>
-              <div className="p-4 space-y-2">
-                {filteredItems.map((item) => (
-                  <motion.div
-                    key={item.labelKey}
-                    whileHover={{ x: 10, backgroundColor: 'rgba(255,255,255,0.03)' }}
-                    className="flex items-center justify-between p-6 rounded-3xl cursor-pointer transition-all group/item border-2 border-transparent hover:border-white/5"
-                    onClick={() => handleNavigate(item.path)}
-                  >
-                    <div className="space-y-1">
-                      <p className="font-black text-base tracking-widest text-white uppercase italic">{t(item.labelKey)}</p>
-                      <p className="text-[10px] uppercase font-black text-slate-500 tracking-[0.2em] group-hover/item:text-primary transition-colors">{t(item.descKey)}</p>
+                    <div className="flex items-center gap-3">
+                        <Activity className="text-slate-800 group-hover/section:text-primary transition-colors duration-500" size={16} />
+                        <span className="text-[11px] font-black text-slate-500 uppercase tracking-[0.1em]">{t('settings.auth_level')}</span>
                     </div>
-                    <div className="p-3 rounded-full bg-white/5 group-hover/item:bg-primary/20 transition-all">
-                       <ChevronRight className="text-slate-500 group-hover/item:text-primary transition-colors" size={20} />
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            </PremiumCard>
-          </motion.div>
-        )})}
-      </div>
-
-      {/* Quick Core Protocols */}
-      <div className="mt-12">
-        <h3 className="text-xs font-black text-slate-500 uppercase tracking-[0.8em] mb-8 ml-8">{t('settings.core_protocols')}</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <PremiumCard 
-              onClick={() => handleNavigate("/settings/backup")}
-              className="group/action hover:border-primary/50 cursor-pointer overflow-hidden p-8 flex flex-col items-center text-center gap-4 bg-white/5 border-white/5"
-            >
-               <div className="p-5 bg-primary/10 rounded-[2rem] text-primary group-hover/action:scale-110 transition-transform">
-                  <Database size={32} />
-               </div>
-               <span className="text-sm font-black text-white uppercase tracking-[0.4em]">{t('settings.backup_node')}</span>
-            </PremiumCard>
-
-            <PremiumCard 
-              onClick={() => handleNavigate("/settings/api")}
-              className="group/action hover:border-emerald-500/50 cursor-pointer overflow-hidden p-8 flex flex-col items-center text-center gap-4 bg-white/5 border-white/5"
-            >
-               <div className="p-5 bg-emerald-500/10 rounded-[2rem] text-emerald-500 group-hover/action:scale-110 transition-transform">
-                  <Globe size={32} />
-               </div>
-               <span className="text-sm font-black text-white uppercase tracking-[0.4em]">{t('settings.api_signal')}</span>
-            </PremiumCard>
-
-            <PremiumCard 
-              onClick={() => window.location.href = "/api/auth/logout"}
-              className="group/action hover:border-rose-500/50 cursor-pointer overflow-hidden p-8 flex flex-col items-center text-center gap-4 bg-white/5 border-white/5"
-            >
-               <div className="p-5 bg-rose-500/10 rounded-[2rem] text-rose-500 group-hover/action:scale-110 transition-transform">
-                  <LogOut size={32} />
-               </div>
-               <span className="text-sm font-black text-white uppercase tracking-[0.4em]">{t('settings.terminate')}</span>
-            </PremiumCard>
-        </div>
-      </div>
-
-      <div className="mt-20 py-10 border-t border-white/5 flex flex-col items-center opacity-30 group/version">
-         <div className="flex items-center gap-4 mb-2">
-            <Cpu size={16} className="text-slate-500 group-hover/version:text-primary transition-colors" />
-            <p className="text-[10px] font-black text-white uppercase tracking-[0.6em]">LogisPro Terminal v3.2.0-STABLE</p>
+                 </div>
+                 <div className="p-4 space-y-2">
+                   {filteredItems.map((item) => (
+                     <motion.div
+                       key={item.labelKey}
+                       whileHover={{ x: 10, backgroundColor: 'rgba(255,255,255,0.03)' }}
+                       className="flex items-center justify-between p-6 rounded-3xl cursor-pointer transition-all group/item border-2 border-transparent hover:border-white/5"
+                       onClick={() => handleNavigate(item.path)}
+                     >
+                       <div className="space-y-1">
+                         <p className="font-black text-base tracking-widest text-white uppercase italic">{t(item.labelKey)}</p>
+                         <p className="text-[11px] uppercase font-black text-slate-500 tracking-[0.1em] group-hover/item:text-primary transition-colors">{t(item.descKey)}</p>
+                       </div>
+                       <div className="p-3 rounded-full bg-white/5 group-hover/item:bg-primary/20 transition-all">
+                          <ChevronRight className="text-slate-500 group-hover/item:text-primary transition-colors" size={20} />
+                       </div>
+                     </motion.div>
+                   ))}
+                 </div>
+               </PremiumCard>
+             </motion.div>
+           )})}
          </div>
-         <p className="text-[8px] font-black text-slate-600 tracking-widest">ENCRYPTED OPERATION // SECURE ENDPOINT</p>
-      </div>
+   
+         {/* Quick Core Protocols */}
+         <div className="mt-12">
+           <h3 className="text-[11px] font-black text-slate-500 uppercase tracking-[0.4em] mb-8 ml-8">{t('settings.core_protocols')}</h3>
+           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+               <PremiumCard 
+                 onClick={() => handleNavigate("/settings/backup")}
+                 className="group/action hover:border-primary/50 cursor-pointer overflow-hidden p-8 flex flex-col items-center text-center gap-4 bg-white/5 border-white/5"
+               >
+                  <div className="p-5 bg-primary/10 rounded-[2rem] text-primary group-hover/action:scale-110 transition-transform">
+                     <Database size={32} />
+                  </div>
+                  <span className="text-sm font-black text-white uppercase tracking-[0.2em]">{t('settings.backup_node')}</span>
+               </PremiumCard>
+   
+               <PremiumCard 
+                 onClick={() => handleNavigate("/settings/api")}
+                 className="group/action hover:border-emerald-500/50 cursor-pointer overflow-hidden p-8 flex flex-col items-center text-center gap-4 bg-white/5 border-white/5"
+               >
+                  <div className="p-5 bg-emerald-500/10 rounded-[2rem] text-emerald-500 group-hover/action:scale-110 transition-transform">
+                     <Globe size={32} />
+                  </div>
+                  <span className="text-sm font-black text-white uppercase tracking-[0.2em]">{t('settings.api_signal')}</span>
+               </PremiumCard>
+   
+               <PremiumCard 
+                 onClick={() => window.location.href = "/api/auth/logout"}
+                 className="group/action hover:border-rose-500/50 cursor-pointer overflow-hidden p-8 flex flex-col items-center text-center gap-4 bg-white/5 border-white/5"
+               >
+                  <div className="p-5 bg-rose-500/10 rounded-[2rem] text-rose-500 group-hover/action:scale-110 transition-transform">
+                     <LogOut size={32} />
+                  </div>
+                  <span className="text-sm font-black text-white uppercase tracking-[0.2em]">{t('settings.terminate')}</span>
+               </PremiumCard>
+           </div>
+         </div>
+   
+         <div className="mt-20 py-10 border-t border-white/5 flex flex-col items-center opacity-30 group/version">
+            <div className="flex items-center gap-4 mb-2">
+               <Cpu size={16} className="text-slate-500 group-hover/version:text-primary transition-colors" />
+               <p className="text-[11px] font-black text-white uppercase tracking-[0.4em]">LogisPro Terminal v3.2.0-STABLE</p>
+            </div>
+            <p className="text-[9px] font-black text-slate-600 tracking-widest">ENCRYPTED OPERATION // SECURE ENDPOINT</p>
+         </div>
     </div>
   )
 }

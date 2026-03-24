@@ -8,7 +8,7 @@ import { Loader2 } from "lucide-react"
 interface PremiumButtonProps extends HTMLMotionProps<"button"> {
   children: React.ReactNode
   variant?: "primary" | "secondary" | "outline" | "ghost" | "danger"
-  size?: "sm" | "md" | "lg" | "xl"
+  size?: "sm" | "md" | "lg" | "xl" | "icon"
   loading?: boolean
 }
 
@@ -35,6 +35,7 @@ export function PremiumButton({
     md: "px-6 py-3 text-sm",
     lg: "px-8 py-4 text-base",
     xl: "px-10 py-5 text-lg",
+    icon: "h-14 w-14 p-0",
   }
 
   return (

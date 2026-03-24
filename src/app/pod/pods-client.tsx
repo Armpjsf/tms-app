@@ -152,13 +152,13 @@ export default function PODPage({ pods, stats, searchParams }: any) {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-white/5 bg-white/[0.02]">
-                <th className="p-8 text-[11px] font-black text-slate-500 uppercase tracking-[0.4em]">{t('common.actions')} ID</th>
-                <th className="p-8 text-[11px] font-black text-slate-500 uppercase tracking-[0.4em]">{t('common.date')}</th>
-                <th className="p-8 text-[11px] font-black text-slate-500 uppercase tracking-[0.4em]">{t('navigation.reports')}</th>
-                <th className="p-8 text-[11px] font-black text-slate-500 uppercase tracking-[0.4em]">{t('navigation.drivers')}</th>
-                <th className="p-8 text-[11px] font-black text-slate-500 uppercase tracking-[0.4em] text-center">{t('common.loading')}</th>
-                <th className="p-8 text-[11px] font-black text-slate-500 uppercase tracking-[0.4em]">{t('common.status')}</th>
-                <th className="p-8 text-right text-[11px] font-black text-slate-500 uppercase tracking-[0.4em]">{t('common.actions')}</th>
+                <th className="p-8 text-[12px] font-black text-slate-500 uppercase tracking-[0.1em]">{t('common.actions')} ID</th>
+                <th className="p-8 text-[12px] font-black text-slate-500 uppercase tracking-[0.1em]">{t('common.date')}</th>
+                <th className="p-8 text-[12px] font-black text-slate-500 uppercase tracking-[0.1em]">{t('navigation.reports')}</th>
+                <th className="p-8 text-[12px] font-black text-slate-500 uppercase tracking-[0.1em]">{t('navigation.drivers')}</th>
+                <th className="p-8 text-[12px] font-black text-slate-500 uppercase tracking-[0.1em] text-center">{t('common.loading')}</th>
+                <th className="p-8 text-[12px] font-black text-slate-500 uppercase tracking-[0.1em]">{t('common.status')}</th>
+                <th className="p-8 text-right text-[12px] font-black text-slate-500 uppercase tracking-[0.1em]">{t('common.actions')}</th>
               </tr>
             </thead>
             <tbody>

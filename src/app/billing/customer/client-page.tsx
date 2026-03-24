@@ -612,7 +612,7 @@ export default function CustomerBillingClient({ initialJobs, companyProfile, cus
         <div className="flex flex-col lg:flex-row lg:items-center justify-between p-12 gap-8 relative z-10">
           <div className="space-y-2">
             <h3 className="text-2xl font-black text-white tracking-tighter uppercase premium-text-gradient">{t('billing_customer.registry_title')}</h3>
-            <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.4em]">{t('billing_customer.registry_subtitle')}</p>
+            <p className="text-[11px] font-black text-slate-500 uppercase tracking-[0.1em]">{t('billing_customer.registry_subtitle')}</p>
           </div>
           <div className="flex items-center flex-wrap gap-4">
             {!isCustomerMode && (
@@ -670,13 +670,13 @@ export default function CustomerBillingClient({ initialJobs, companyProfile, cus
                       />
                     </th>
                   )}
-                  <th className="px-8 py-10 text-[9px] font-black uppercase tracking-[0.4em] text-slate-500">{t('billing_customer.mission_id')}</th>
-                  <th className="px-8 py-10 text-[9px] font-black uppercase tracking-[0.4em] text-slate-500">{t('billing_customer.target_account')}</th>
-                  <th className="px-8 py-10 text-[9px] font-black uppercase tracking-[0.4em] text-slate-500 text-center">{t('billing_customer.timestamp')}</th>
-                  <th className="px-8 py-10 text-[9px] font-black uppercase tracking-[0.4em] text-slate-500">{t('billing_customer.vector_path')}</th>
-                  <th className="px-8 py-10 text-[9px] font-black uppercase tracking-[0.4em] text-slate-500 text-right">{t('billing_customer.base_vector')}</th>
-                  <th className="px-8 py-10 text-[9px] font-black uppercase tracking-[0.4em] text-slate-500 text-right">{t('billing_customer.net_value')}</th>
-                  <th className="px-12 py-10 text-[9px] font-black uppercase tracking-[0.4em] text-slate-500 text-center">{t('billing_customer.flow_status')}</th>
+                  <th className="px-8 py-10 text-[12px] font-black uppercase tracking-[0.1em] text-slate-500">{t('billing_customer.mission_id')}</th>
+                  <th className="px-8 py-10 text-[12px] font-black uppercase tracking-[0.1em] text-slate-500">{t('billing_customer.target_account')}</th>
+                  <th className="px-8 py-10 text-[12px] font-black uppercase tracking-[0.1em] text-slate-500 text-center">{t('billing_customer.timestamp')}</th>
+                  <th className="px-8 py-10 text-[12px] font-black uppercase tracking-[0.1em] text-slate-500">{t('billing_customer.vector_path')}</th>
+                  <th className="px-8 py-10 text-[12px] font-black uppercase tracking-[0.1em] text-slate-500 text-right">{t('billing_customer.base_vector')}</th>
+                  <th className="px-8 py-10 text-[12px] font-black uppercase tracking-[0.1em] text-slate-500 text-right">{t('billing_customer.net_value')}</th>
+                  <th className="px-12 py-10 text-[12px] font-black uppercase tracking-[0.1em] text-slate-500 text-center">{t('billing_customer.flow_status')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">

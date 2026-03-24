@@ -90,7 +90,7 @@ export default function ExpenseTypesPage() {
             <div className="absolute top-0 right-0 w-80 h-80 bg-primary/10 blur-[120px] rounded-full -mr-40 -mt-40 pointer-events-none" />
             
             <div className="relative z-10 space-y-8">
-                <button onClick={() => router.back()} className="inline-flex items-center gap-2 text-slate-500 hover:text-primary transition-all font-black uppercase tracking-[0.4em] text-[10px] group/back italic">
+                <button onClick={() => router.back()} className="inline-flex items-center gap-2 text-slate-500 hover:text-primary transition-all font-black uppercase tracking-[0.1em] text-[11px] group/back italic">
                     <ArrowLeft className="w-4 h-4 group-hover/back:-translate-x-1 transition-transform" /> 
                     {t('settings_pages.expense_types.title') === 'รายการค่าใช้จ่าย (Resource Matrix)' ? 'Command Control' : 'Command Control'}
                     {/* Wait, I should probably use a generic key or just keep it premium. I'll use common 'command_control' if it exists or just localize manually */}
@@ -104,7 +104,7 @@ export default function ExpenseTypesPage() {
                         <h1 className="text-5xl font-black text-white tracking-widest uppercase leading-none italic premium-text-gradient">
                             {t('settings_pages.expense_types.title')}
                         </h1>
-                        <p className="text-[10px] font-black text-primary uppercase tracking-[0.6em] mt-2 opacity-80 italic italic">{t('settings_pages.expense_types.subtitle')}</p>
+                        <p className="text-[11px] font-black text-primary uppercase tracking-[0.2em] mt-2 opacity-80 italic">{t('settings_pages.expense_types.subtitle')}</p>
                     </div>
                 </div>
             </div>
@@ -112,7 +112,7 @@ export default function ExpenseTypesPage() {
             <div className="flex flex-col items-end gap-6 relative z-10">
                 <div className="bg-white/5 border border-white/10 px-6 py-3 rounded-2xl flex items-center gap-3 backdrop-blur-md">
                     <div className="w-2 h-2 rounded-full bg-primary animate-pulse shadow-[0_0_10px_rgba(255,30,133,1)]" />
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">{t('settings_pages.expense_types.matrix_scan')}</span>
+                    <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest italic">{t('settings_pages.expense_types.matrix_scan')}</span>
                 </div>
                 <PremiumButton onClick={() => setShowAddForm(true)} className="h-16 px-12 rounded-2xl bg-primary text-white border-0 shadow-[0_20px_50px_rgba(255,30,133,0.3)] gap-4 text-sm tracking-widest">
                     <Plus size={24} strokeWidth={3} />
@@ -136,7 +136,7 @@ export default function ExpenseTypesPage() {
                 <div className="p-12">
                     <div className="grid grid-cols-12 gap-10 items-end">
                         <div className="col-span-12 md:col-span-6 space-y-4">
-                            <Label className="text-[10px] font-black uppercase text-primary/60 tracking-[0.4em] ml-6">{t('settings_pages.expense_types.res_designation')}</Label>
+                            <Label className="text-[11px] font-black uppercase text-primary/60 tracking-[0.1em] ml-6">{t('settings_pages.expense_types.res_designation')}</Label>
                             <Input
                                 value={newType.name}
                                 onChange={(e) => setNewType({ ...newType, name: e.target.value })}
@@ -145,7 +145,7 @@ export default function ExpenseTypesPage() {
                             />
                         </div>
                         <div className="col-span-12 md:col-span-4 space-y-4">
-                            <Label className="text-[10px] font-black uppercase text-primary/60 tracking-[0.4em] ml-6">{t('settings_pages.expense_types.default_yield')}</Label>
+                            <Label className="text-[11px] font-black uppercase text-primary/60 tracking-[0.1em] ml-6">{t('settings_pages.expense_types.default_yield')}</Label>
                             <div className="relative">
                                 <span className="absolute left-6 top-1/2 -translate-y-1/2 text-primary font-black italic">฿</span>
                                 <Input
@@ -174,7 +174,7 @@ export default function ExpenseTypesPage() {
                         <Activity size={20} className="text-primary" />
                         {t('settings_pages.expense_types.registry')}
                     </h3>
-                    <div className="px-5 py-1.5 rounded-xl bg-primary/10 text-[9px] font-black text-primary uppercase tracking-[0.3em] border border-primary/20 italic">
+                    <div className="px-5 py-1.5 rounded-xl bg-primary/10 text-[11px] font-black text-primary uppercase tracking-[0.1em] border border-primary/20 italic">
                         {t('settings_pages.expense_types.scan_results').replace('{count}', expenseTypes.length.toString())}
                     </div>
                 </div>
@@ -210,7 +210,7 @@ export default function ExpenseTypesPage() {
                                         {editingId === et.id ? (
                                             <>
                                                 <div className="flex-[2] space-y-2">
-                                                    <Label className="text-[8px] font-black text-primary uppercase ml-4">{t('settings_pages.expense_types.edit_name')}</Label>
+                                                    <Label className="text-[10px] font-black text-primary uppercase ml-4">{t('settings_pages.expense_types.edit_name')}</Label>
                                                     <Input
                                                         value={et.name}
                                                         onChange={(e) => handleUpdate(et.id, { name: e.target.value })}
@@ -218,7 +218,7 @@ export default function ExpenseTypesPage() {
                                                     />
                                                 </div>
                                                 <div className="flex-1 space-y-2">
-                                                    <Label className="text-[8px] font-black text-primary uppercase ml-4">{t('settings_pages.expense_types.edit_yield')}</Label>
+                                                    <Label className="text-[10px] font-black text-primary uppercase ml-4">{t('settings_pages.expense_types.edit_yield')}</Label>
                                                     <div className="relative">
                                                         <span className="absolute left-6 top-1/2 -translate-y-1/2 text-primary font-black italic">฿</span>
                                                         <Input
@@ -242,10 +242,10 @@ export default function ExpenseTypesPage() {
                                                     )}>
                                                         {et.name}
                                                     </h3>
-                                                    <p className="text-[9px] font-black text-slate-600 uppercase tracking-widest mt-1 opacity-60">{t('settings_pages.expense_types.id_vector')}: {et.id.substring(0, 8)}...</p>
+                                                    <p className="text-[11px] font-black text-slate-600 uppercase tracking-widest mt-1 opacity-60">{t('settings_pages.expense_types.id_vector')}: {et.id.substring(0, 8)}...</p>
                                                 </div>
                                                 <div className="flex-1">
-                                                    <p className="text-[9px] font-black text-primary uppercase tracking-[0.4em] mb-1 italic opacity-60">{t('settings_pages.expense_types.base_yield')}</p>
+                                                    <p className="text-[11px] font-black text-primary uppercase tracking-[0.1em] mb-1 italic opacity-60">{t('settings_pages.expense_types.base_yield')}</p>
                                                     <p className="text-3xl font-black text-white italic tracking-tighter">
                                                         {et.default_amount ? `฿${et.default_amount.toLocaleString()}` : '฿0.00'}
                                                     </p>
@@ -254,7 +254,7 @@ export default function ExpenseTypesPage() {
                                                     <button
                                                         onClick={() => handleToggleActive(et.id, et.is_active)}
                                                         className={cn(
-                                                            "px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all italic border-2 shadow-2xl",
+                                                            "px-5 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all italic border-2 shadow-2xl",
                                                             et.is_active 
                                                               ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 shadow-emerald-500/5' 
                                                               : 'bg-white/5 text-slate-600 border-white/5'
