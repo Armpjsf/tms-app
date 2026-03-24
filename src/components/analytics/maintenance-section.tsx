@@ -112,8 +112,8 @@ export function MaintenanceSection({ data }: { data: MaintenanceScheduleData }) 
       {/* Maintenance Intelligence Elite Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Compliance Alerts Registry */}
-        <PremiumCard className="bg-white border-none shadow-[0_30px_100px_rgba(0,0,0,0.1)] p-0 overflow-hidden rounded-br-[5rem] rounded-tl-[3rem]">
-           <div className="p-8 border-b border-slate-50 bg-slate-950 relative overflow-hidden flex items-center justify-between">
+        <PremiumCard className="bg-white/5 border border-white/10 shadow-2xl p-0 overflow-hidden rounded-br-[5rem] rounded-tl-[3rem]">
+           <div className="p-8 border-b border-white/5 bg-slate-950 relative overflow-hidden flex items-center justify-between">
               <div className="absolute inset-0 bg-gradient-to-r from-amber-500/10 to-transparent pointer-events-none" />
               <div className="flex items-center gap-3 relative z-10">
                 <div className="p-2 bg-amber-600 rounded-xl text-white shadow-lg shadow-amber-500/20">
@@ -126,9 +126,9 @@ export function MaintenanceSection({ data }: { data: MaintenanceScheduleData }) 
               </div>
            </div>
            <div className="p-0">
-              <div className="divide-y divide-slate-50">
+              <div className="divide-y divide-white/5">
                 {[...overdue, ...dueSoon.slice(0, 5)].map((item, i) => (
-                    <div key={`${item.vehicle_plate}-${item.service_type}-${i}`} className="p-8 flex items-center justify-between group/alert hover:bg-slate-50 transition-all border-l-4 border-transparent hover:border-amber-500">
+                    <div key={`${item.vehicle_plate}-${item.service_type}-${i}`} className="p-8 flex items-center justify-between group/alert hover:bg-white/5 transition-all border-l-4 border-transparent hover:border-amber-500">
                         <div className="flex items-center gap-6">
                             <div className={cn(
                                 "w-14 h-14 rounded-2xl border flex items-center justify-center text-[12px] font-black shadow-xl italic group-hover/alert:scale-110 transition-transform duration-500 uppercase",
@@ -138,10 +138,10 @@ export function MaintenanceSection({ data }: { data: MaintenanceScheduleData }) 
                             </div>
                             <div>
                                 <div className="flex items-center gap-3">
-                                    <span className="text-slate-900 font-black text-xl tracking-tight uppercase italic">{item.vehicle_plate}</span>
-                                    <span className="text-base font-bold font-black text-slate-600 border border-slate-200 px-2 py-0.5 rounded-full tracking-widest">{item.vehicle_type}</span>
+                                    <span className="text-white font-black text-xl tracking-tight uppercase italic">{item.vehicle_plate}</span>
+                                    <span className="text-base font-bold font-black text-slate-400 border border-white/10 px-2 py-0.5 rounded-full tracking-widest">{item.vehicle_type}</span>
                                 </div>
-                                <div className="text-base font-bold text-amber-600 font-black mt-2 bg-amber-50 px-3 py-1 rounded-lg w-fit tracking-widest italic border border-amber-100 uppercase">
+                                <div className="text-base font-bold text-amber-400 font-black mt-2 bg-amber-500/10 px-3 py-1 rounded-lg w-fit tracking-widest italic border border-amber-500/20 uppercase">
                                    {t('dashboard.service_prefix')} {item.service_type}
                                 </div>
                             </div>
@@ -149,11 +149,11 @@ export function MaintenanceSection({ data }: { data: MaintenanceScheduleData }) 
                         <div className="text-right">
                              <div className={cn(
                                 "text-base font-bold font-black tracking-widest uppercase mb-1",
-                                item.status === 'overdue' ? 'text-red-600' : 'text-amber-600'
+                                item.status === 'overdue' ? 'text-red-400' : 'text-amber-400'
                              )}>
                                  {item.status === 'overdue' ? t('dashboard.strict_breach') : `${item.days_until} ${t('common.days')} ${t('common.remaining')}`}
                              </div>
-                             <div className="text-base font-bold text-slate-400 font-black bg-slate-50 px-2 py-0.5 rounded-full border border-slate-100 uppercase italic">
+                             <div className="text-base font-bold text-slate-400 font-black bg-white/5 px-2 py-0.5 rounded-full border border-white/10 uppercase italic">
                                 {new Date(item.due_date).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}
                              </div>
                         </div>
@@ -170,7 +170,7 @@ export function MaintenanceSection({ data }: { data: MaintenanceScheduleData }) 
         </PremiumCard>
 
         {/* Fleet Health Breakdown Registry */}
-        <PremiumCard className="bg-white border-none shadow-[0_30px_100px_rgba(0,0,0,0.1)] p-0 overflow-hidden rounded-br-[5rem] rounded-tl-[3rem]">
+        <PremiumCard className="bg-white/5 border border-white/10 shadow-2xl p-0 overflow-hidden rounded-br-[5rem] rounded-tl-[3rem]">
            <div className="p-8 border-b border-slate-50 bg-slate-950 relative overflow-hidden flex items-center justify-between">
               <div className="absolute inset-0 bg-gradient-to-r from-rose-500/10 to-transparent pointer-events-none" />
               <div className="flex items-center gap-3 relative z-10">
@@ -184,25 +184,25 @@ export function MaintenanceSection({ data }: { data: MaintenanceScheduleData }) 
               </div>
            </div>
            <div className="p-0">
-              <div className="divide-y divide-slate-50">
+              <div className="divide-y divide-white/5">
                 {vehicleHealthSummary.slice(0, 6).map((v) => (
-                    <div key={v.vehicle_plate} className="p-8 flex items-center justify-between group/v hover:bg-slate-50 transition-all border-l-4 border-transparent hover:border-rose-500">
+                    <div key={v.vehicle_plate} className="p-8 flex items-center justify-between group/v hover:bg-white/5 transition-all border-l-4 border-transparent hover:border-rose-500">
                         <div className="flex items-center gap-6">
                             <div className="w-14 h-14 rounded-2xl bg-slate-950 border border-slate-800 flex items-center justify-center text-[12px] font-black text-white shadow-xl italic group-hover/v:scale-110 transition-transform duration-500 uppercase">
                                 {v.vehicle_plate.slice(0, 2)}
                             </div>
                             <div>
-                                <div className="text-slate-900 font-black text-lg tracking-tighter group-hover/v:text-rose-600 transition-colors uppercase italic">{v.vehicle_plate}</div>
+                                <div className="text-white font-black text-lg tracking-tighter group-hover/v:text-rose-400 transition-colors uppercase italic">{v.vehicle_plate}</div>
                                 <div className="flex items-center gap-2 mt-2">
-                                    <span className="text-base font-bold text-rose-500 font-black uppercase tracking-widest italic bg-rose-50 px-2 py-0.5 rounded-full border border-rose-100">
+                                    <span className="text-base font-bold text-rose-400 font-black uppercase tracking-widest italic bg-rose-500/10 px-2 py-0.5 rounded-full border border-rose-500/20">
                                        {v.openTickets} {t('dashboard.active_tickets')}
                                     </span>
                                 </div>
                             </div>
                         </div>
                         <div className="text-right">
-                             <div className="text-2xl font-black text-slate-950 tracking-tighter italic">฿{v.totalCost.toLocaleString()}</div>
-                             <div className="text-base font-bold text-slate-400 font-black mt-1 uppercase tracking-widest italic bg-slate-50 px-2 py-0.5 rounded-full border border-slate-100 w-fit ml-auto">
+                             <div className="text-2xl font-black text-white tracking-tighter italic">฿{v.totalCost.toLocaleString()}</div>
+                             <div className="text-base font-bold text-slate-400 font-black mt-1 uppercase tracking-widest italic bg-white/5 px-2 py-0.5 rounded-full border border-white/10 w-fit ml-auto">
                                 {t('maintenance.cumulative_cost')}
                              </div>
                         </div>

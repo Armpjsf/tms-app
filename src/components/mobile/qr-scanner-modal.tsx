@@ -1,8 +1,8 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { Html5QrcodeScanner, Html5Qrcode } from "html5-qrcode"
-import { QrCode, X, Camera, RefreshCw } from "lucide-react"
+import { Html5Qrcode } from "html5-qrcode"
+import { QrCode, Camera, RefreshCw } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -21,12 +21,25 @@ export function QRScannerModal({ isOpen, onOpenChange, onScanSuccess }: QRScanne
   const scannerRef = useRef<Html5Qrcode | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [isStarted, setIsStarted] = useState(false)
+  const propsRef = useRef({ onScanSuccess, onOpenChange })
+
+  // Keep props ref updated
+  useEffect(() => {
+    propsRef.current = { onScanSuccess, onOpenChange }
+  }, [onScanSuccess, onOpenChange])
 
   useEffect(() => {
+    let timer: NodeJS.Timeout
+
     if (isOpen && !isStarted) {
       const startScanner = async () => {
         try {
-          const html5QrCode = new Html5Qrcode("qr-reader")
+          if (!document.getElementById("qr-reader")) return
+
+          // Prevent double start
+          if (isStarted) return
+
+          const html5QrCode = new Html5Qrcode("qr-reader", { verbose: false })
           scannerRef.current = html5QrCode
           
           await html5QrCode.start(
@@ -36,35 +49,56 @@ export function QRScannerModal({ isOpen, onOpenChange, onScanSuccess }: QRScanne
               qrbox: { width: 250, height: 250 },
             },
             (decodedText) => {
-              onScanSuccess(decodedText)
-              stopScanner()
-              onOpenChange(false)
+              propsRef.current.onScanSuccess(decodedText)
+              if (scannerRef.current) {
+                scannerRef.current.stop().then(() => {
+                    scannerRef.current = null
+                    setIsStarted(false)
+                    propsRef.current.onOpenChange(false)
+                }).catch(e => console.error("Stop Error:", e))
+              }
             },
-            (errorMessage) => {
-              // Ignore failure to scan in preview
-            }
+            () => {} 
           )
           setIsStarted(true)
-        } catch (err: any) {
+          setError(null)
+        } catch (err: unknown) {
           console.error("Scanner Error:", err)
-          setError("ไม่สามารถเปิดกล้องได้ กรุณาตรวจสอบสิทธิ์การเข้าถึง")
+          const errorMsg = err instanceof Error ? err.message : String(err)
+          
+          if (errorMsg.includes("NotAllowedError") || errorMsg.includes("Permission denied")) {
+            setError("คุณปฏิเสธการเข้าถึงกล้อง หรือเบราว์เซอร์บล็อกการเข้าถึง (ต้องใช้งานผ่าน HTTPS เท่านั้น)")
+          } else if (errorMsg.includes("NotFoundError")) {
+            setError("ไม่พบกล้องในอุปกรณ์นี้")
+          } else if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
+            setError("กล้องต้องใช้งานผ่านการเชื่อมต่อที่ปลอดภัย (HTTPS) เท่านั้น")
+          } else {
+            setError("ไม่สามารถเริ่มการสแกนได้: " + errorMsg)
+          }
+          setIsStarted(false)
         }
       }
 
-      // Small delay to ensure DOM is ready
-      const timer = setTimeout(startScanner, 100)
-      return () => clearTimeout(timer)
+      // 800ms delay to ensure full DOM and Browser Readiness
+      timer = setTimeout(startScanner, 800)
     }
 
-    if (!isOpen && isStarted) {
-      stopScanner()
+    return () => {
+      if (timer) clearTimeout(timer)
+      if (scannerRef.current && isStarted) {
+        scannerRef.current.stop().then(() => {
+            scannerRef.current = null
+            setIsStarted(false)
+        }).catch(err => console.error("Cleanup Error:", err))
+      }
     }
-  }, [isOpen])
+  }, [isOpen, isStarted])
 
   const stopScanner = async () => {
-    if (scannerRef.current && isStarted) {
+    if (scannerRef.current) {
       try {
         await scannerRef.current.stop()
+        scannerRef.current = null
         setIsStarted(false)
       } catch (err) {
         console.error("Stop Error:", err)
@@ -98,8 +132,17 @@ export function QRScannerModal({ isOpen, onOpenChange, onScanSuccess }: QRScanne
           {error && (
             <div className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center space-y-4">
                <Camera size={40} className="text-red-500 opacity-50" />
-               <p className="text-lg font-bold font-bold text-red-400 leading-relaxed">{error}</p>
-               <Button variant="outline" size="sm" onClick={() => window.location.reload()} className="border-white/10 text-white">
+               <p className="text-lg font-black text-red-400 leading-relaxed">{error}</p>
+               <div className="text-sm text-slate-500 space-y-2 pt-2 border-t border-white/5 w-full">
+                  <p>1. ตรวจสอบว่าไม่ได้ใช้กล้องในแอปอื่น</p>
+                  <p>2. กดสัญลักษณ์ล็อค (🔒) ที่แถบบนเบราว์เซอร์</p>
+                  <p>3. เลือก Permissions -&gt; Camera -&gt; Allow</p>
+               </div>
+               <Button 
+                 variant="outline" 
+                 onClick={() => { setError(null); onOpenChange(false); }}
+                 className="mt-4 border-white/10 text-white rounded-xl"
+               >
                  ลองใหม่อีกครั้ง
                </Button>
             </div>

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { User, Shield, X, Truck } from "lucide-react"
+import { Shield, X, Truck } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -45,17 +45,17 @@ export default function StaffLoginPage() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-6 relative overflow-hidden bg-background">
-      {/* Cinematic Background Image */}
+      {/* Cinematic Background Image & Gradients */}
       <div className="absolute inset-0 z-0">
         <Image 
           src="/images/login-bg.png" 
-          alt="Transport Background" 
+          alt="Background" 
           fill 
-          className="object-cover opacity-20 mix-blend-overlay"
-          priority
+          className="object-cover opacity-30 mix-blend-overlay"
+          priority 
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-background/90 via-transparent to-background" />
-        <div className="absolute inset-0 bg-gradient-to-r from-background/40 via-transparent to-background/40" />
+        <div className="absolute inset-0 bg-gradient-to-b from-background/95 via-transparent to-background" />
+        <div className="absolute inset-0 bg-gradient-to-r from-background/50 via-transparent to-background/50" />
       </div>
 
       {/* Glass Decor Elements */}

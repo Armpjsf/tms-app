@@ -5,12 +5,7 @@ import { Check, ChevronsUpDown, User } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
 
-interface Driver {
-  Driver_ID: string
-  Driver_Name: string | null
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  [key: string]: any
-}
+import { Driver } from "@/lib/supabase/drivers"
 
 interface DriverAutocompleteProps {
   value?: string // Driver_ID

@@ -13,6 +13,7 @@ export type UserProfile = {
   Branch_ID: string | null
   Name?: string | null
   Avatar_Url?: string | null
+  Line_User_ID?: string | null
 }
 
 // Get current user profile

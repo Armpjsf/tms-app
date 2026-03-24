@@ -65,17 +65,17 @@ export function ESGSection({ data }: { data: ESGStats }) {
 
         {/* Small Detail Cards */}
         <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-8">
-             <PremiumCard className="bg-white border-none shadow-[0_30px_100px_rgba(0,0,0,0.05)] p-8 rounded-br-[3rem] rounded-tl-[1.5rem] group hover:scale-[1.02] transition-transform duration-500">
+             <PremiumCard className="bg-white/5 border border-white/10 shadow-2xl p-8 rounded-br-[3rem] rounded-tl-[1.5rem] group hover:scale-[1.02] transition-transform duration-500">
                 <div className="flex items-center gap-4 mb-6">
-                    <div className="p-2 bg-slate-950 rounded-xl text-blue-500 shadow-lg">
+                    <div className="p-2 bg-slate-950 rounded-xl text-blue-400 shadow-lg border border-white/5">
                         <Activity size={18} />
                     </div>
                     <div>
-                        <h4 className="text-xl font-black text-slate-900 uppercase tracking-tight italic">{t('dashboard.saved_distance')}</h4>
+                        <h4 className="text-xl font-black text-white uppercase tracking-tight italic">{t('dashboard.saved_distance')}</h4>
                         <p className="text-base font-bold text-slate-400 font-bold uppercase tracking-widest">{t('dashboard.fleet_optimization')}</p>
                     </div>
                 </div>
-                <div className="text-3xl font-black text-slate-950 tracking-tighter italic">
+                <div className="text-3xl font-black text-white tracking-tighter italic">
                     {data.totalSavedKm.toLocaleString()}<span className="text-xl ml-1 text-slate-400">km</span>
                 </div>
              </PremiumCard>
@@ -95,19 +95,19 @@ export function ESGSection({ data }: { data: ESGStats }) {
                 </div>
              </PremiumCard>
 
-             <PremiumCard className="md:col-span-2 bg-white border-none shadow-[0_30px_100px_rgba(0,0,0,0.05)] p-8 rounded-br-[4rem] rounded-tl-[2rem] flex items-center justify-between">
+             <PremiumCard className="md:col-span-2 bg-white/5 border border-white/10 shadow-2xl p-8 rounded-br-[4rem] rounded-tl-[2rem] flex items-center justify-between">
                 <div className="space-y-1">
-                    <h4 className="text-lg font-bold font-black text-slate-900 uppercase tracking-widest italic">{t('dashboard.industrial_esg_rating')}</h4>
+                    <h4 className="text-lg font-bold font-black text-white uppercase tracking-widest italic">{t('dashboard.industrial_esg_rating')}</h4>
                     <p className="text-base font-bold text-slate-400 font-bold uppercase tracking-wider">{t('dashboard.structural_sustainability_index')}</p>
                 </div>
                 <div className="flex items-center gap-2">
                     {[1,2,3,4,5].map(i => (
                         <div key={i} className={cn(
-                            "w-4 h-6 rounded-sm bg-slate-100",
-                            i <= 4 ? "bg-emerald-500 shadow-sm" : ""
+                            "w-4 h-6 rounded-sm bg-white/5",
+                            i <= 4 ? "bg-emerald-500 shadow-sm shadow-emerald-500/50" : ""
                         )} />
                     ))}
-                    <span className="ml-3 text-2xl font-black text-slate-950 italic">A+</span>
+                    <span className="ml-3 text-2xl font-black text-white italic">A+</span>
                 </div>
              </PremiumCard>
         </div>

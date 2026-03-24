@@ -193,4 +193,58 @@ export const aiToolExecutors: Record<string, Function> = {
     const analytics = await getWorkforceAnalytics()
     return analytics
   },
+
+  create_job: async (args: { 
+    customerName: string, 
+    planDate?: string, 
+    routeName?: string, 
+    price?: number, 
+    notes?: string, 
+    vehicleType?: string 
+  }) => {
+    const result = await createJob({
+        Customer_Name: args.customerName,
+        Plan_Date: args.planDate || new Date().toISOString().split('T')[0],
+        Route_Name: args.routeName,
+        Price_Cust_Total: args.price,
+        Notes: args.notes,
+        Vehicle_Type: args.vehicleType
+    })
+    return result
+  },
+
+  create_fuel_log: async (args: {
+    plate: string,
+    liters: number,
+    price: number,
+    odometer?: number,
+    station?: string
+  }) => {
+    const supabase = createAdminClient()
+    const { data, error } = await supabase.from('Fuel_Logs').insert({
+        Vehicle_Plate: args.plate,
+        Liters: args.liters,
+        Price_Total: args.price,
+        Odometer: args.odometer,
+        Station_Name: args.station,
+        Date_Time: new Date().toISOString()
+    }).select().single()
+    return error ? { success: false, error: error.message } : { success: true, data }
+  },
+
+  create_damage_report: async (args: {
+    jobId: string,
+    description: string,
+    estimatedCost?: number
+  }) => {
+    const supabase = createAdminClient()
+    const { data, error } = await supabase.from('Damage_Reports').insert({
+        Job_ID: args.jobId,
+        Description: args.description,
+        Estimated_Cost: args.estimatedCost,
+        Status: 'Pending',
+        Created_At: new Date().toISOString()
+    }).select().single()
+    return error ? { success: false, error: error.message } : { success: true, data }
+  },
 }

@@ -20,6 +20,7 @@ type ExecutiveKPIs = {
 }
 
 const GrowthIndicator = ({ value, isPoints = false }: { value: number, isPoints?: boolean }) => {
+  const { t } = useLanguage()
   const isPositive = value >= 0
   return (
     <div className={cn(
@@ -35,8 +36,14 @@ const GrowthIndicator = ({ value, isPoints = false }: { value: number, isPoints?
 export function FinancialSummaryCards({ data }: { data: ExecutiveKPIs }) {
   const { t } = useLanguage()
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB', maximumFractionDigits: 0 }).format(amount)
+    return new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB', maximumFractionDigits: 0 }).format(amount || 0)
   }
+
+  if (!data) return null;
+
+  const revenue = data.revenue || { current: 0, growth: 0 }
+  const profit = data.profit || { current: 0, previous: 0, growth: 0 }
+  const margin = data.margin || { current: 0, growth: 0, target: 0 }
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -54,22 +61,22 @@ export function FinancialSummaryCards({ data }: { data: ExecutiveKPIs }) {
         </div>
         <div className="p-10">
           <div className="flex flex-col gap-4">
-            <div className="text-5xl font-black text-white tracking-widest italic">{formatCurrency(data.revenue.current)}</div>
+            <div className="text-5xl font-black text-white tracking-widest italic">{formatCurrency(revenue.current)}</div>
             <div className="flex items-center justify-between mt-2">
-                <GrowthIndicator value={data.revenue.growth} />
+                <GrowthIndicator value={revenue.growth} />
                 <span className="text-base font-bold font-black text-slate-600 uppercase tracking-[0.4em] italic border-l-2 border-white/5 pl-4">{t('common.sync_active')}</span>
             </div>
           </div>
-          {data.revenue.target && (
+          {revenue.target && (
             <div className="mt-10 space-y-3">
               <div className="flex justify-between text-base font-bold uppercase tracking-[0.4em] text-slate-500 font-black italic">
                 <span>{t('dashboard.mission_threshold')}</span>
-                <span className="text-primary">{data.revenue.attainment?.toFixed(0)}%</span>
+                <span className="text-primary">{revenue.attainment?.toFixed(0)}%</span>
               </div>
               <div className="w-full bg-white/5 rounded-full h-2 overflow-hidden border border-white/10 p-0.5">
                 <div 
                     className="bg-gradient-to-r from-primary to-purple-600 h-full rounded-full shadow-[0_0_15px_rgba(255,30,133,0.5)]" 
-                    style={{ width: `${Math.min(data.revenue.attainment || 0, 100)}%` }} 
+                    style={{ width: `${Math.min(revenue.attainment || 0, 100)}%` }} 
                 />
               </div>
             </div>
@@ -91,13 +98,13 @@ export function FinancialSummaryCards({ data }: { data: ExecutiveKPIs }) {
         </div>
         <div className="p-10">
           <div className="flex flex-col gap-4">
-            <div className={cn("text-5xl font-black tracking-widest italic", data.profit.current >= 0 ? 'text-white' : 'text-rose-500')}>
-              {formatCurrency(data.profit.current)}
+            <div className={cn("text-5xl font-black tracking-widest italic", profit.current >= 0 ? 'text-white' : 'text-rose-500')}>
+              {formatCurrency(profit.current)}
             </div>
             <div className="flex items-center justify-between mt-2">
-                <GrowthIndicator value={data.profit.growth} />
+                <GrowthIndicator value={profit.growth} />
                 <p className="text-base font-bold text-slate-600 font-black uppercase tracking-[0.2em] italic border-l-2 border-white/5 pl-4">
-                   {t('common.v_node_label')} {formatCurrency(data.profit.previous)}
+                   {t('common.v_node_label')} {formatCurrency(profit.previous)}
                 </p>
             </div>
           </div>
@@ -118,12 +125,12 @@ export function FinancialSummaryCards({ data }: { data: ExecutiveKPIs }) {
         </div>
         <div className="p-10">
           <div className="flex flex-col gap-4">
-            <div className="text-5xl font-black text-white tracking-widest italic">{data.margin.current.toFixed(1)}%</div>
+            <div className="text-5xl font-black text-white tracking-widest italic">{(margin.current || 0).toFixed(1)}%</div>
             <div className="flex items-center justify-between mt-2">
-                <GrowthIndicator value={data.margin.growth} isPoints />
+                <GrowthIndicator value={margin.growth} isPoints />
                 <div className="flex items-center gap-3 border-l-2 border-white/5 pl-4">
                     <Target size={12} className="text-blue-400" />
-                    <span className="text-base font-bold text-slate-600 font-black uppercase tracking-widest italic">{t('common.target_label')} {data.margin.target}%</span>
+                    <span className="text-base font-bold text-slate-600 font-black uppercase tracking-widest italic">{t('common.target_label')} {margin.target}%</span>
                 </div>
             </div>
           </div>

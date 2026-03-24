@@ -5,12 +5,7 @@ import { Check, ChevronsUpDown, Truck } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
 
-interface Vehicle {
-  vehicle_plate: string
-  vehicle_type: string | null
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  [key: string]: any
-}
+import { Vehicle } from "@/lib/supabase/vehicles"
 
 interface VehicleAutocompleteProps {
   value?: string
@@ -40,7 +35,7 @@ export function VehicleAutocomplete({
     query === ""
       ? vehicles
       : vehicles.filter((v) =>
-          v.vehicle_plate.toLowerCase().includes(query.toLowerCase())
+          (v.Vehicle_Plate || "").toLowerCase().includes(query.toLowerCase())
         )
 
   useEffect(() => {
@@ -67,9 +62,9 @@ export function VehicleAutocomplete({
   }, [value])
 
   const handleSelect = (vehicle: Vehicle) => {
-    onChange(vehicle.vehicle_plate)
+    onChange(vehicle.Vehicle_Plate)
     onSelect(vehicle)
-    setQuery(vehicle.vehicle_plate)
+    setQuery(vehicle.Vehicle_Plate)
     setOpen(false)
   }
 
@@ -106,20 +101,20 @@ export function VehicleAutocomplete({
             <div className="py-1">
               {filteredVehicles.map((vehicle, index) => (
                 <button
-                  key={`${vehicle.vehicle_plate}-${index}`}
+                  key={`${vehicle.Vehicle_Plate}-${index}`}
                   onClick={() => handleSelect(vehicle)}
                   type="button"
                   className={cn(
                     "w-full text-left px-3 py-2 text-xl cursor-pointer hover:bg-slate-700 flex items-center justify-between text-gray-800",
-                    value === vehicle.vehicle_plate && "bg-slate-700 font-medium text-white"
+                    value === vehicle.Vehicle_Plate && "bg-slate-700 font-medium text-white"
                   )}
                 >
                   <div className="flex items-center gap-2">
                     <Truck size={14} className="text-emerald-600" />
-                    <span>{vehicle.vehicle_plate}</span>
-                    <span className="text-lg font-bold text-gray-700 font-black">({vehicle.vehicle_type})</span>
+                    <span>{vehicle.Vehicle_Plate}</span>
+                    <span className="text-lg font-bold text-gray-700 font-black">({vehicle.Vehicle_Type})</span>
                   </div>
-                  {value === vehicle.vehicle_plate && (
+                  {value === vehicle.Vehicle_Plate && (
                     <Check className="w-4 h-4 text-emerald-500" />
                   )}
                 </button>

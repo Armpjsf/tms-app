@@ -63,17 +63,17 @@ export function JobHistoryActions({ job, drivers, vehicles, customers, routes, c
   const isFinished = ['Delivered', 'Completed', 'Complete', 'Picked Up', 'In Transit'].includes(job.Job_Status || '')
 
   return (
-    <div className="flex items-center justify-end gap-1">
+    <div className="flex items-center justify-end gap-2 flex-wrap max-w-[160px] md:max-w-none">
       {/* 1. View Summary / Report Button - The Unified Entry Point */}
       {isFinished && (
           <Button
             variant="ghost"
             size="sm"
-            className="h-8 w-8 p-0 text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 hover:bg-emerald-500/10"
+            className="h-10 w-10 p-0 text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 hover:bg-emerald-500/10 border border-emerald-500/20 bg-emerald-500/5"
             onClick={() => setShowSummary(true)}
             title="ดูสรุปงานและใบรายงาน"
           >
-            <FileText className="h-4 w-4" aria-hidden="true" />
+            <FileText className="h-5 w-5" aria-hidden="true" />
           </Button>
       )}
 
@@ -81,11 +81,11 @@ export function JobHistoryActions({ job, drivers, vehicles, customers, routes, c
       <Button
         variant="ghost"
         size="sm"
-        className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
+        className="h-10 w-10 p-0 text-slate-400 hover:text-white hover:bg-white/10 border border-white/10 bg-white/5"
         onClick={() => setOpen(true)}
         title="ดูรายละเอียด/แก้ไข"
       >
-        <ExternalLink className="h-4 w-4" />
+        <ExternalLink className="h-5 w-5" />
       </Button>
 
       {/* 2.5. Admin Verification Button */}
@@ -94,14 +94,14 @@ export function JobHistoryActions({ job, drivers, vehicles, customers, routes, c
             variant="ghost"
             size="sm"
             className={cn(
-                "h-8 w-8 p-0 hover:bg-black/5 transition-all outline-none border-none",
-                job.Verification_Status === 'Verified' ? "text-emerald-500" : 
-                job.Verification_Status === 'Rejected' ? "text-red-500" : "text-amber-500"
+                "h-10 w-10 p-0 transition-all outline-none border bg-white/5",
+                job.Verification_Status === 'Verified' ? "text-emerald-500 border-emerald-500/30 hover:bg-emerald-500/10" : 
+                job.Verification_Status === 'Rejected' ? "text-red-500 border-red-500/30 hover:bg-red-500/10" : "text-amber-500 border-amber-500/30 hover:bg-amber-500/10"
             )}
             onClick={() => setShowVerify(true)}
             title="ตรวจสอบและอนุมัติรายงาน"
           >
-            <ShieldCheck className="h-4 w-4" />
+            <ShieldCheck className="h-5 w-5" />
           </Button>
       )}
 
@@ -110,12 +110,12 @@ export function JobHistoryActions({ job, drivers, vehicles, customers, routes, c
       <Button
         variant="ghost"
         size="sm"
-        className="h-8 w-8 p-0 text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 hover:bg-emerald-500/10"
+        className="h-10 w-10 p-0 text-primary hover:text-primary hover:bg-primary/10 border border-primary/20 bg-primary/5"
         onClick={handleSyncToAccounting}
         disabled={syncing}
         title="ส่งเข้าบัญชี"
       >
-        <Banknote className={`h-4 w-4 ${syncing ? 'animate-pulse' : ''}`} />
+        <Banknote className={`h-5 w-5 ${syncing ? 'animate-pulse' : ''}`} />
       </Button>
       )}
 

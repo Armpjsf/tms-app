@@ -51,7 +51,7 @@ const item = {
     show: { opacity: 1, y: 0 }
 }
 
-export function DashboardClient({ session, stats, currentJob }: DashboardClientProps) {
+export function DashboardClient({ session, stats, currentJob, gamification, todayIncome }: DashboardClientProps) {
     const { t } = useLanguage()
 
     return (

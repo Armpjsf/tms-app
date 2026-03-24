@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation"
 import { useTransition } from "react"
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from "lucide-react"
+import { useLanguage } from "@/components/providers/language-provider"
 import { Button } from "@/components/ui/button"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { cn } from "@/lib/utils"

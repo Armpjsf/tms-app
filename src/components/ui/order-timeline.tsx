@@ -138,13 +138,13 @@ export function OrderTimeline({ currentStatus, planDate, createdAt, className }:
                   <div>
                     <p className={cn(
                       "text-xl font-black transition-colors",
-                      isCompleted ? "text-slate-900" : "text-slate-400"
+                      isCompleted ? "text-white" : "text-slate-500"
                     )}>
                       {step.label}
                     </p>
                     <p className={cn(
                       "text-base font-bold font-black uppercase tracking-wider",
-                      isCompleted ? "text-slate-500" : "text-slate-400"
+                      isCompleted ? "text-slate-400" : "text-slate-500"
                     )}>
                       {step.labelEn}
                     </p>
@@ -177,7 +177,7 @@ export function OrderTimeline({ currentStatus, planDate, createdAt, className }:
                 {/* Description */}
                 <p className={cn(
                   "text-base font-bold mt-1 font-medium",
-                  isCompleted ? "text-slate-500" : "text-slate-400"
+                  isCompleted ? "text-slate-400" : "text-slate-500"
                 )}>
                   {step.description}
                 </p>

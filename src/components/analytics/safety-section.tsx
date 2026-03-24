@@ -102,8 +102,8 @@ export function SafetySection({ data }: { data: SafetyAnalytics }) {
       {/* Safety Intelligence Elite Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* SOS Breakdown Elite */}
-        <PremiumCard className="bg-white border-none shadow-[0_30px_100px_rgba(0,0,0,0.1)] p-0 overflow-hidden rounded-br-[5rem] rounded-tl-[3rem]">
-           <div className="p-8 border-b border-slate-50 bg-slate-950 relative overflow-hidden flex items-center justify-between">
+        <PremiumCard className="bg-white/5 border border-white/10 shadow-2xl p-0 overflow-hidden rounded-br-[5rem] rounded-tl-[3rem]">
+           <div className="p-8 border-b border-white/5 bg-slate-950 relative overflow-hidden flex items-center justify-between">
               <div className="absolute inset-0 bg-gradient-to-r from-rose-500/10 to-transparent pointer-events-none" />
               <div className="flex items-center gap-3 relative z-10">
                 <div className="p-2 bg-rose-600 rounded-xl text-white shadow-lg shadow-rose-500/20">
@@ -119,10 +119,10 @@ export function SafetySection({ data }: { data: SafetyAnalytics }) {
               {sos.byReason.slice(0, 6).map((item, i) => (
                 <div key={i} className="space-y-3 group/item">
                   <div className="flex justify-between items-end">
-                     <span className="text-base font-bold font-black text-slate-500 uppercase tracking-widest">{item.reason}</span>
-                     <span className="text-lg font-black text-slate-900 tracking-tighter italic shadow-sm bg-slate-50 px-3 py-1 rounded-lg group-hover/item:text-rose-600 transition-colors">{item.count} {t('dashboard.events_label')}</span>
+                     <span className="text-base font-bold font-black text-slate-400 uppercase tracking-widest">{item.reason}</span>
+                     <span className="text-lg font-black text-white tracking-tighter italic shadow-sm bg-white/5 px-3 py-1 rounded-lg group-hover/item:text-rose-400 transition-colors">{item.count} {t('dashboard.events_label')}</span>
                   </div>
-                  <div className="h-2 w-full bg-slate-50 rounded-full overflow-hidden border border-slate-100 p-0.5">
+                  <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden border border-white/10 p-0.5">
                      <div 
                         className="h-full bg-gradient-to-r from-rose-600 to-rose-400 rounded-full transition-all duration-700 shadow-sm"
                         style={{ width: `${(item.count / Math.max(sos.total, 1)) * 100}%` }}
@@ -140,8 +140,8 @@ export function SafetySection({ data }: { data: SafetyAnalytics }) {
         </PremiumCard>
 
         {/* Recent Incidents Activity Log */}
-        <PremiumCard className="bg-white border-none shadow-[0_30px_100px_rgba(0,0,0,0.1)] p-0 overflow-hidden rounded-br-[5rem] rounded-tl-[3rem]">
-           <div className="p-8 border-b border-slate-50 bg-slate-950 relative overflow-hidden flex items-center justify-between">
+        <PremiumCard className="bg-white/5 border border-white/10 shadow-2xl p-0 overflow-hidden rounded-br-[5rem] rounded-tl-[3rem]">
+           <div className="p-8 border-b border-white/5 bg-slate-950 relative overflow-hidden flex items-center justify-between">
               <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-transparent pointer-events-none" />
               <div className="flex items-center gap-3 relative z-10">
                 <div className="p-2 bg-blue-600 rounded-xl text-white shadow-lg">
@@ -154,28 +154,28 @@ export function SafetySection({ data }: { data: SafetyAnalytics }) {
               </div>
            </div>
            <div className="p-0">
-              <div className="divide-y divide-slate-50">
+              <div className="divide-y divide-white/5">
                 {sos.recentAlerts.map((alert) => (
-                    <div key={alert.id} className="p-8 flex items-center justify-between group/alert hover:bg-slate-50 transition-all border-l-4 border-transparent hover:border-blue-500">
+                    <div key={alert.id} className="p-8 flex items-center justify-between group/alert hover:bg-white/5 transition-all border-l-4 border-transparent hover:border-blue-500">
                         <div className="flex items-center gap-6">
                             <div className="w-14 h-14 rounded-2xl bg-slate-950 border border-slate-800 flex items-center justify-center text-[12px] font-black text-white shadow-xl italic group-hover/alert:scale-110 transition-transform duration-500 uppercase">
                                 {alert.vehicle.slice(0, 2)}
                             </div>
                             <div>
                                 <div className="flex items-center gap-3">
-                                    <span className="text-slate-900 font-black text-xl tracking-tight uppercase italic">{alert.driver}</span>
-                                    <span className="text-base font-bold font-black text-slate-400 border border-slate-200 px-2 py-0.5 rounded-full tracking-widest">{alert.vehicle}</span>
+                                    <span className="text-white font-black text-xl tracking-tight uppercase italic">{alert.driver}</span>
+                                    <span className="text-base font-bold font-black text-slate-400 border border-white/10 px-2 py-0.5 rounded-full tracking-widest">{alert.vehicle}</span>
                                 </div>
-                                <div className="text-base font-bold text-rose-600 font-black mt-2 bg-rose-50 px-3 py-1 rounded-lg w-fit tracking-widest italic border border-rose-100 uppercase">
+                                <div className="text-base font-bold text-rose-400 font-black mt-2 bg-rose-500/10 px-3 py-1 rounded-lg w-fit tracking-widest italic border border-rose-500/20 uppercase">
                                    {t('dashboard.entry_label')} {alert.reason}
                                 </div>
                             </div>
                         </div>
                         <div className="text-right">
-                            <div className="text-base font-bold text-slate-900 font-black tracking-widest uppercase">
+                            <div className="text-base font-bold text-white font-black tracking-widest uppercase">
                                 {new Date(alert.time).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}
                             </div>
-                            <div className="text-base font-bold text-blue-500 font-black mt-1 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100 uppercase italic">
+                            <div className="text-base font-bold text-blue-400 font-black mt-1 bg-blue-500/10 px-2 py-0.5 rounded-full border border-blue-500/20 uppercase italic">
                                 {new Date(alert.time).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
                             </div>
                         </div>

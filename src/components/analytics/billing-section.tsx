@@ -102,8 +102,11 @@ export function BillingSection({ data }: { data: BillingAnalytics }) {
             </div>
             <div className="text-3xl font-black text-white tracking-tighter relative z-10 animate-pulse">฿{accountsReceivable.aging['90+'].toLocaleString()}</div>
             <div className="flex items-center gap-2 mt-4 relative z-10">
-                <p className="text-base font-bold text-white font-black uppercase tracking-widest italic flex items-center gap-2">
-                    <Clock size={10} strokeWidth={3} /> {t('billing.recovery_required')}
+                    <p className={cn(
+                      "text-base font-bold font-black uppercase tracking-widest italic flex items-center gap-2",
+                      "text-white"
+                    )}>
+<Clock size={10} strokeWidth={3} /> {t('billing.recovery_required')}
                 </p>
             </div>
         </PremiumCard>
@@ -112,8 +115,8 @@ export function BillingSection({ data }: { data: BillingAnalytics }) {
       {/* Charts & Lists Elite Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* AR Aging Timeline */}
-        <PremiumCard className="bg-white border-none shadow-[0_30px_100px_rgba(0,0,0,0.1)] p-0 overflow-hidden rounded-br-[5rem] rounded-tl-[3rem]">
-           <div className="p-8 border-b border-slate-50 bg-slate-950 relative overflow-hidden flex items-center justify-between">
+        <PremiumCard className="bg-white/5 border border-white/10 shadow-2xl p-0 overflow-hidden rounded-br-[5rem] rounded-tl-[3rem]">
+           <div className="p-8 border-b border-white/5 bg-slate-950 relative overflow-hidden flex items-center justify-between">
               <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-transparent pointer-events-none" />
               <div className="flex items-center gap-3 relative z-10">
                 <div className="p-2 bg-blue-600 rounded-xl text-white">
@@ -129,10 +132,10 @@ export function BillingSection({ data }: { data: BillingAnalytics }) {
               {Object.entries(accountsReceivable.aging).map(([range, amount]) => (
                 <div key={range} className="space-y-3">
                   <div className="flex justify-between items-end">
-                     <span className="text-base font-bold font-black text-slate-500 uppercase tracking-widest">{range} {t('billing.days_exposure')}</span>
-                     <span className="text-lg font-black text-slate-900 tracking-tighter italic shadow-sm bg-slate-50 px-3 py-1 rounded-lg">฿{amount.toLocaleString()}</span>
+                     <span className="text-base font-bold font-black text-slate-400 uppercase tracking-widest">{range} {t('billing.days_exposure')}</span>
+                     <span className="text-lg font-black text-white tracking-tighter italic shadow-sm bg-white/5 px-3 py-1 rounded-lg">฿{amount.toLocaleString()}</span>
                   </div>
-                  <div className="h-2 w-full bg-slate-50 rounded-full overflow-hidden border border-slate-100 p-0.5">
+                  <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden border border-white/10 p-0.5">
                      <div 
                         className={cn(
                             "h-full rounded-full transition-all duration-700 shadow-sm",
@@ -141,7 +144,7 @@ export function BillingSection({ data }: { data: BillingAnalytics }) {
                             range === '31-60' ? 'bg-gradient-to-r from-amber-400 to-yellow-300' : 
                             'bg-gradient-to-r from-blue-600 to-blue-400'
                         )}
-                        style={{ width: `${(amount / (maxAging as any)) * 100}%` }}
+                        style={{ width: `${(amount / (maxAging as number)) * 100}%` }}
                      />
                   </div>
                 </div>
@@ -150,8 +153,8 @@ export function BillingSection({ data }: { data: BillingAnalytics }) {
         </PremiumCard>
 
         {/* Recent Strategic Unpaid */}
-        <PremiumCard className="bg-white border-none shadow-[0_30px_100px_rgba(0,0,0,0.1)] p-0 overflow-hidden rounded-br-[5rem] rounded-tl-[3rem]">
-           <div className="p-8 border-b border-slate-50 bg-slate-950 relative overflow-hidden flex items-center justify-between">
+        <PremiumCard className="bg-white/5 border border-white/10 shadow-2xl p-0 overflow-hidden rounded-br-[5rem] rounded-tl-[3rem]">
+           <div className="p-8 border-b border-white/5 bg-slate-950 relative overflow-hidden flex items-center justify-between">
               <div className="absolute inset-0 bg-gradient-to-r from-rose-500/10 to-transparent pointer-events-none" />
               <div className="flex items-center gap-3 relative z-10">
                 <div className="p-2 bg-rose-600 rounded-xl text-white shadow-lg shadow-rose-500/20">
@@ -164,7 +167,7 @@ export function BillingSection({ data }: { data: BillingAnalytics }) {
               </div>
            </div>
            <div className="p-0">
-              <div className="divide-y divide-slate-50">
+              <div className="divide-y divide-white/5">
                 {accountsReceivable.recentUnpaid.length === 0 ? (
                     <div className="p-20 text-center">
                         <ShieldCheck size={48} strokeWidth={1} className="mx-auto mb-4 text-emerald-100" />
@@ -172,15 +175,15 @@ export function BillingSection({ data }: { data: BillingAnalytics }) {
                     </div>
                 ) : (
                     accountsReceivable.recentUnpaid.map((inv) => (
-                        <div key={inv.id} className="p-8 flex items-center justify-between group/inv hover:bg-slate-50 transition-all border-l-4 border-transparent hover:border-rose-500">
+                        <div key={inv.id} className="p-8 flex items-center justify-between group/inv hover:bg-white/5 transition-all border-l-4 border-transparent hover:border-rose-500">
                             <div>
-                                <div className="text-slate-900 font-black text-xl tracking-tight group-hover/inv:text-rose-600 transition-colors uppercase">{inv.customer}</div>
-                                <div className="text-base font-bold text-rose-500 font-black mt-2 bg-rose-50 px-2 py-1 rounded-md w-fit tracking-widest italic border border-rose-100 uppercase">
+                                <div className="text-white font-black text-xl tracking-tight group-hover/inv:text-rose-400 transition-colors uppercase">{inv.customer}</div>
+                                <div className="text-base font-bold text-rose-400 font-black mt-2 bg-rose-500/10 px-2 py-1 rounded-md w-fit tracking-widest italic border border-rose-500/20 uppercase">
                                    {t('billing.exposure_relative')}: {inv.daysOverdue} Days
                                 </div>
                             </div>
                             <div className="text-right">
-                                <div className="text-xl font-black text-slate-900 tracking-tighter">฿{inv.amount.toLocaleString()}</div>
+                                <div className="text-xl font-black text-white tracking-tighter">฿{inv.amount.toLocaleString()}</div>
                                 <div className="text-base font-bold text-slate-400 font-black mt-1 uppercase tracking-widest italic">ENTITY_ID: {inv.id}</div>
                             </div>
                         </div>

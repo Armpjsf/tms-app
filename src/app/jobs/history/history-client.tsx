@@ -230,7 +230,7 @@ export function HistoryClient({
                     <th className="text-center py-8 px-6 text-base font-bold font-black text-slate-500 uppercase tracking-[0.3em]">{t('navigation.pod')}</th>
                     {canViewPrice && <th className="text-right py-8 px-6 text-base font-bold font-black text-primary uppercase tracking-[0.3em]">Matrix</th>}
                     <th className="text-left py-8 px-6 text-base font-bold font-black text-slate-500 uppercase tracking-[0.3em]">{t('common.status')}</th>
-                    <th className="text-right py-8 px-12 text-base font-bold font-black text-slate-500 uppercase tracking-[0.3em]">{t('common.action')}</th>
+                    <th className="text-right py-8 px-6 text-base font-bold font-black text-slate-500 uppercase tracking-[0.3em]">{t('common.action')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
@@ -361,9 +361,9 @@ export function HistoryClient({
                           {statusConfig[job.Job_Status]?.label || job.Job_Status}
                         </span>
                       </td>
-                      <td className="py-10 px-12 text-right">
+                      <td className="py-10 px-6 text-right">
                           {!customerMode && (
-                              <div className="flex justify-end opacity-0 group-hover/row:opacity-100 transition-all duration-500 translate-x-4 group-hover/row:translate-x-0">
+                              <div className="flex justify-end transition-all duration-500">
                                 <JobHistoryActions 
                                     job={job}
                                     drivers={drivers}

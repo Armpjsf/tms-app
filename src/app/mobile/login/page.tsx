@@ -30,7 +30,9 @@ export default function DriverLoginPage() {
   const urlError = searchParams.get("error")
 
   useEffect(() => {
-    if (urlError) {
+    if (!urlError) return
+
+    const timer = setTimeout(() => {
       if (urlError === 'session_missing') {
         setError("กรุณาเข้าสู่ระบบก่อนใช้งาน")
       } else if (urlError === 'session_invalid') {
@@ -38,7 +40,8 @@ export default function DriverLoginPage() {
       } else {
         setError(urlError)
       }
-    }
+    }, 0)
+    return () => clearTimeout(timer)
   }, [urlError])
 
   async function handleSubmit(formData: FormData) {
@@ -57,7 +60,7 @@ export default function DriverLoginPage() {
 
   async function handleBiometricLogin() {
     if (!identifier) {
-      setError("กรุณากรอกรหัสพนักงานหรือเบอร์โทรก่อนสแกน")
+      setError("กรุณากรอก 'รหัสพนักงาน' หรือ 'เบอร์โทรศัพท์' ก่อนสแกนนิ้ว/หน้า")
       return
     }
 
@@ -71,9 +74,9 @@ export default function DriverLoginPage() {
         setError("การยืนยันตัวตนขัดข้อง")
         setLoading(false)
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err)
-      setError(err.message || "เกิดข้อผิดพลาดในการสแกน")
+      setError(err instanceof Error ? err.message : "เกิดข้อผิดพลาดในการสแกน")
       setLoading(false)
     }
   }
@@ -89,7 +92,7 @@ export default function DriverLoginPage() {
         setError(result.error || "รหัส QR ไม่ถูกต้อง")
         setLoading(false)
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err)
       setError("เกิดข้อผิดพลาดในการเข้าสู่ระบบด้วย QR")
       setLoading(false)
@@ -98,7 +101,17 @@ export default function DriverLoginPage() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6 relative overflow-hidden">
-      {/* Premium Background Decor */}
+      {/* Premium Background Image & Decor */}
+      <div className="absolute inset-0 z-0">
+        <Image 
+          src="/images/login-bg.png" 
+          alt="Background" 
+          fill 
+          className="object-cover opacity-20"
+          priority 
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-background/95 via-transparent to-background" />
+      </div>
       <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-primary/20 rounded-full blur-[120px] -translate-y-1/2 animate-pulse" />
       <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-accent/10 rounded-full blur-[120px] translate-y-1/2 animate-pulse" />
       

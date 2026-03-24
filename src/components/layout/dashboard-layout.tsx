@@ -6,35 +6,14 @@ import { Sidebar } from "./sidebar"
 import { Header } from "./header"
 import { GlobalAIAssistant } from "@/components/chat/global-ai-assistant"
 import { cn } from "@/lib/utils"
-import { usePathname } from "next/navigation"
-import Image from "next/image"
 
 interface DashboardLayoutProps {
   children: React.ReactNode
 }
 
-const ROUTE_BACKGROUNDS: Record<string, string> = {
-  "/planning": "/images/backgrounds/planning-bg.png",
-  "/calendar": "/images/backgrounds/calendar-bg.png",
-  "/sos": "/images/backgrounds/sos-bg.png",
-  "/notifications": "/images/backgrounds/notifications-bg.png",
-  "/chat": "/images/backgrounds/chat-bg.png",
-  "/vehicles": "/images/backgrounds/vehicles-bg.png",
-  "/admin/vehicle-checks": "/images/backgrounds/inspection-bg.png",
-  "/maintenance": "/images/backgrounds/maintenance-bg.png",
-  "/fuel": "/images/backgrounds/fuel-bg.png",
-  "/billing/customer": "/images/backgrounds/billing-bg.png",
-  "/billing/invoices": "/images/backgrounds/invoice-bg.png",
-  "/billing/driver": "/images/backgrounds/payment-bg.png",
-  "/admin/analytics": "/images/backgrounds/executive-bg.png",
-  "/jobs/history": "/images/backgrounds/planning-bg.png", // Using planning as fallback for history
-  "/reports/fleet": "/images/backgrounds/vehicles-bg.png",  // Using vehicles as fallback for fleet report
-}
-
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = React.useState(false)
   const [isMounted, setIsMounted] = React.useState(false)
-  const pathname = usePathname()
 
   // Load state on mount
   React.useEffect(() => {
@@ -51,28 +30,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     localStorage.setItem("sidebar_collapsed", String(newState))
   }
 
-  const bgImage = ROUTE_BACKGROUNDS[pathname]
-
   return (
     <div className="min-h-screen bg-[#050110] text-foreground transition-colors duration-300 selection:bg-primary/30 font-sans">
       {/* Elite Background Infrastructure */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
-        {/* Dynamic Contextual Background */}
-        {bgImage && (
-          <div className="absolute inset-0 transition-opacity duration-1000">
-            <Image 
-              src={bgImage} 
-              alt="Context Background" 
-              fill 
-              className="object-cover opacity-[0.05] saturate-[1.2] contrast-[1.1] scale-105 blur-[8px]"
-              priority
-            />
-            {/* Multi-layered Dark Overlays for depth */}
-            <div className="absolute inset-0 bg-[#050110]/80" />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#050110] via-transparent to-[#050110]/20" />
-          </div>
-        )}
-
         {/* Elite Ambient Glows - MAGENTA THEME */}
         <div className="absolute top-[-10%] left-[-5%] w-[60%] h-[60%] bg-primary/10 rounded-full blur-[120px] animate-pulse pointer-events-none" />
         <div className="absolute bottom-[-10%] right-[-5%] w-[50%] h-[50%] bg-accent/10 rounded-full blur-[100px] animate-pulse delay-700 pointer-events-none" />

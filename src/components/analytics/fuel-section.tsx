@@ -117,8 +117,8 @@ export function FuelSection({ data }: { data: FuelAnalytics }) {
       {/* Fuel Intelligence Elite Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Fuel Dynamics Trend */}
-        <PremiumCard className="bg-white border-none shadow-[0_30px_100px_rgba(0,0,0,0.1)] p-0 overflow-hidden rounded-br-[5rem] rounded-tl-[3rem]">
-           <div className="p-8 border-b border-slate-50 bg-slate-950 relative overflow-hidden flex items-center justify-between">
+        <PremiumCard className="bg-white/5 border border-white/10 shadow-2xl p-0 overflow-hidden rounded-br-[5rem] rounded-tl-[3rem]">
+           <div className="p-8 border-b border-white/5 bg-slate-950 relative overflow-hidden flex items-center justify-between">
               <div className="absolute inset-0 bg-gradient-to-r from-orange-500/10 to-transparent pointer-events-none" />
               <div className="flex items-center gap-3 relative z-10">
                 <div className="p-2 bg-orange-600 rounded-xl text-white shadow-lg shadow-orange-500/20">
@@ -139,7 +139,7 @@ export function FuelSection({ data }: { data: FuelAnalytics }) {
 
                 {monthlyTrends.map((m) => (
                     <div key={m.month} className="flex-1 flex flex-col items-center gap-4 group relative z-10">
-                        <div className="w-full bg-slate-50 rounded-2xl relative flex items-end justify-center group-hover:bg-slate-100 transition-all duration-500 p-1" style={{ height: '100%' }}>
+                        <div className="w-full bg-white/5 rounded-2xl relative flex items-end justify-center group-hover:bg-white/10 transition-all duration-500 p-1" style={{ height: '100%' }}>
                             <div 
                                 className="w-full bg-gradient-to-t from-orange-600 to-orange-400 hover:from-orange-500 hover:to-orange-300 transition-all duration-500 rounded-xl relative shadow-lg shadow-orange-500/10 group-hover:shadow-orange-500/30"
                                 style={{ height: `${(m.totalCost / maxTrendCost) * 100}%` }}
@@ -163,8 +163,8 @@ export function FuelSection({ data }: { data: FuelAnalytics }) {
         </PremiumCard>
 
         {/* Elite Asset Consumption Registry */}
-        <PremiumCard className="bg-white border-none shadow-[0_30px_100px_rgba(0,0,0,0.1)] p-0 overflow-hidden rounded-br-[5rem] rounded-tl-[3rem]">
-           <div className="p-8 border-b border-slate-50 bg-slate-950 relative overflow-hidden flex items-center justify-between">
+        <PremiumCard className="bg-white/5 border border-white/10 shadow-2xl p-0 overflow-hidden rounded-br-[5rem] rounded-tl-[3rem]">
+           <div className="p-8 border-b border-white/5 bg-slate-950 relative overflow-hidden flex items-center justify-between">
               <div className="absolute inset-0 bg-gradient-to-r from-yellow-500/10 to-transparent pointer-events-none" />
               <div className="flex items-center gap-3 relative z-10">
                 <div className="p-2 bg-yellow-600 rounded-xl text-white shadow-lg shadow-yellow-500/20">
@@ -177,25 +177,25 @@ export function FuelSection({ data }: { data: FuelAnalytics }) {
               </div>
            </div>
            <div className="p-0">
-              <div className="divide-y divide-slate-50">
+              <div className="divide-y divide-white/5">
                 {vehicleBreakdown.slice(0, 6).map((v) => (
-                    <div key={v.vehicle_plate} className="p-8 flex items-center justify-between group/v hover:bg-slate-100/50 transition-all border-l-4 border-transparent hover:border-orange-500">
+                    <div key={v.vehicle_plate} className="p-8 flex items-center justify-between group/v hover:bg-white/5 transition-all border-l-4 border-transparent hover:border-orange-500">
                         <div className="flex items-center gap-6">
                             <div className="w-14 h-14 rounded-2xl bg-slate-950 border border-slate-800 flex items-center justify-center text-[12px] font-black text-white shadow-xl italic group-hover/v:scale-110 transition-transform duration-500">
                                 {v.vehicle_plate.slice(0, 2)}
                             </div>
                             <div>
-                                <div className="text-slate-900 font-black text-lg tracking-tighter group-hover/v:text-orange-600 transition-colors uppercase italic">{v.vehicle_plate}</div>
+                                <div className="text-white font-black text-lg tracking-tighter group-hover/v:text-orange-400 transition-colors uppercase italic">{v.vehicle_plate}</div>
                                 <div className="flex items-center gap-2 mt-2">
-                                    <span className="text-base font-bold text-slate-400 font-black uppercase tracking-widest italic bg-slate-100 px-2 py-0.5 rounded-full border border-slate-200">
+                                    <span className="text-base font-bold text-slate-400 font-black uppercase tracking-widest italic bg-white/5 px-2 py-0.5 rounded-full border border-white/10">
                                        {v.logCount} {t('fuel.transactions')}
                                     </span>
                                 </div>
                             </div>
                         </div>
                         <div className="text-right">
-                             <div className="text-2xl font-black text-slate-950 tracking-tighter italic">฿{v.totalCost.toLocaleString()}</div>
-                             <div className="text-base font-bold text-emerald-600 font-black mt-1 uppercase tracking-widest italic bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100 w-fit ml-auto">
+                             <div className="text-2xl font-black text-white tracking-tighter italic">฿{v.totalCost.toLocaleString()}</div>
+                             <div className="text-base font-bold text-emerald-400 font-black mt-1 uppercase tracking-widest italic bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20 w-fit ml-auto">
                                 {t('dashboard.efficiency_prefix')} {v.avgEfficiency.toFixed(1)} KM/L
                              </div>
                         </div>

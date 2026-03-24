@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/utils/supabase/server'
 
-import { replyToUser, verifyLineSignature } from '@/lib/integrations/line'
+import { replyToUser, verifyLineSignature, getMessageContent, pushToUser } from '@/lib/integrations/line'
 import { aiToolExecutors } from '@/lib/ai/tools'
 import { GoogleGenerativeAI } from '@google/generative-ai'
 
@@ -14,9 +14,41 @@ const GEMINI_MODELS = [
 ]
 
 /**
- * Build Admin AI system prompt with live data
+ * Call Gemini with Multimodal support (Audio/Image)
  */
-async function buildAdminAIContext(branchId?: string): Promise<string> {
+async function callGeminiMultimodal(systemPrompt: string, prompt: string, mimeType: string, data: Buffer): Promise<string | null> {
+    const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY
+    if (!apiKey) return null
+    const genAI = new GoogleGenerativeAI(apiKey)
+    
+    // Use models that support multimodal
+    const MULTIMODAL_MODELS = ["gemini-2.0-flash-exp", "gemini-1.5-flash"]
+    
+    for (const modelName of MULTIMODAL_MODELS) {
+        try {
+            const model = genAI.getGenerativeModel({ model: modelName })
+            const result = await model.generateContent([
+                systemPrompt,
+                {
+                    inlineData: {
+                        mimeType,
+                        data: data.toString('base64')
+                    }
+                },
+                prompt
+            ])
+            return result.response.text()
+        } catch (err) {
+            console.error(`Gemini Multimodal (${modelName}) failed:`, err)
+        }
+    }
+    return null
+}
+
+/**
+ * Build Admin AI system prompt with rich data (similar to main web chat)
+ */
+async function buildAdminAIContext(branchId?: string, userName: string = 'Admin'): Promise<string> {
     const results = await Promise.allSettled([
         aiToolExecutors.get_today_summary({ branchId }),
         aiToolExecutors.get_financial_summary({ branchId }),
@@ -28,47 +60,177 @@ async function buildAdminAIContext(branchId?: string): Promise<string> {
         aiToolExecutors.get_fleet_health(),
         aiToolExecutors.get_damage_reports(),
         aiToolExecutors.get_driver_leaves({}),
+        aiToolExecutors.get_workforce_analytics(),
     ])
 
     const safe = (r: PromiseSettledResult<any>) => r.status === 'fulfilled' ? r.value : null
-    const [todaySummary, financial, allDrivers, allVehicles, maintStats, pendingRepairs, fuel, fleetHealth, damage, leaves] = results
+    const [
+        todaySummary, 
+        financial, 
+        allDrivers, 
+        allVehicles, 
+        maintStats, 
+        pendingRepairs, 
+        fuel, 
+        fleetHealth, 
+        damage, 
+        leaves,
+        workforce
+    ] = results
+
     const today = safe(todaySummary), fin = safe(financial)
     const drivers = safe(allDrivers) as any[], vehicles = safe(allVehicles) as any[]
     const repairs = safe(pendingRepairs) as any[], fuelData = safe(fuel)
-    const health = safe(fleetHealth) as any[], damageData = safe(damage) as any[], leavesData = safe(leaves) as any[]
+    const health = safe(fleetHealth) as any[], damageData = safe(damage) as any[]
+    const leavesData = safe(leaves) as any[], workforceData = safe(workforce)
 
     const now = new Date().toLocaleDateString('th-TH', {
         weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
     })
 
-    return [
-        `คุณคือ "LogisPro AI Admin" ผู้ช่วยอัจฉริยะระบบ TMS เวลา: ${now}`,
-        `งานวันนี้: ${today?.todayJobCount ?? 0} รายการ | กำลังวิ่ง: ${today?.stats?.active ?? 0} | เสร็จ: ${today?.stats?.completed ?? 0}`,
-        `รายได้: ${fin?.revenue?.toLocaleString() ?? 0} บาท | กำไร: ${fin?.netProfit?.toLocaleString() ?? 0} บาท | Margin: ${fin?.margin?.toFixed(1) ?? 0}%`,
-        `คนขับ: ${drivers?.length ?? 0} คน (Active: ${drivers?.filter((d: any) => d.status === 'Active').length ?? 0})`,
-        `รถ: ${vehicles?.length ?? 0} คัน (Active: ${vehicles?.filter((v: any) => v.status === 'Active').length ?? 0})`,
-        `รอซ่อม: ${repairs?.length ?? 0} รายการ`,
-        `ค่าน้ำมัน: ${fuelData?.totalFuelCost?.toLocaleString() ?? 0} บาท | ${fuelData?.totalLiters?.toFixed(0) ?? 0} ลิตร`,
-        `Fleet Alert: ${health?.length ?? 0} รายการ`,
-        `สินค้าเสียหาย: ${damageData?.length ?? 0} รายการ (รอตรวจ: ${damageData?.filter((d: any) => d.status === 'Pending').length ?? 0})`,
-        `การลา: ${leavesData?.length ?? 0} รายการ (รออนุมัติ: ${leavesData?.filter((l: any) => l.status === 'Pending').length ?? 0})`,
-        `กรุณาตอบเป็นภาษาไทย กระชับ ไม่เกิน 5 บรรทัด เหมาะกับการอ่านใน LINE`,
-    ].join('\n')
+    return `
+คุณคือ "LogisPro AI Admin" ผู้ช่วยอัจฉริยะระบบ TMS
+เวลาปัจจุบัน: ${now} | ผู้ใช้งาน: ${userName} | สาขา: ${branchId || 'ทุกสาขา'}
+
+═══════════════════════════════════════════════════════
+📦 ข้อมูลงานวันนี้
+- งานทั้งหมด: ${today?.todayJobCount ?? 0} รายการ
+- กำลังวิ่ง: ${today?.stats?.active ?? 0} | เสร็จ: ${today?.stats?.completed ?? 0} | รอ: ${today?.stats?.pending ?? 0}
+- งานล่าสุด: ${JSON.stringify(today?.jobs ?? [])}
+
+💰 ข้อมูลการเงิน
+- รายได้: ฿${fin?.revenue?.toLocaleString() ?? 0}
+- กำไรสุทธิ: ฿${fin?.netProfit?.toLocaleString() ?? 0} (Margin: ${fin?.margin?.toFixed(1) ?? 0}%)
+
+👨‍✈️ พนักงานขับรถ
+- ทั้งหมด: ${drivers?.length ?? 0} คน (Active: ${drivers?.filter((d: any) => d.status === 'Active').length ?? 0})
+- ตัวอย่าง: ${drivers?.slice(0, 5).map((d: any) => d.name).join(', ')}
+
+🚛 ยานพาหนะ
+- ทั้งหมด: ${vehicles?.length ?? 0} คัน (Active: ${vehicles?.filter((v: any) => v.status === 'Active').length ?? 0})
+- ทะเบียน: ${vehicles?.slice(0, 5).map((v: any) => v.plate).join(', ')}
+
+🔧 การซ่อมบำรุง & สุขภาพรถ
+- รอซ่อม: ${repairs?.length ?? 0} รายการ
+- Fleet Alert: ${health?.length ?? 0} รายการ (${health?.slice(0, 2).map((h: any) => `${h.vehicle}:${h.alert}`).join(', ')})
+
+⛽ น้ำมัน & อื่นๆ
+- ค่าน้ำมัน: ฿${fuelData?.totalFuelCost?.toLocaleString() ?? 0} (${fuelData?.totalLiters?.toFixed(0) ?? 0} ลิตร)
+- สินค้าเสียหาย: ${damageData?.length ?? 0} รายการ
+- การลา: ${leavesData?.length ?? 0} รายการ (รออนุมัติ: ${leavesData?.filter((l: any) => l.status === 'Pending').length ?? 0})
+
+📊 Workforce Analytics: ${JSON.stringify(workforceData ?? {})}
+
+═══════════════════════════════════════════════════════
+📌 คำแนะนำการตอบ
+- ตอบเป็นภาษาไทยอย่างมืออาชีพ กระชับ แต่ครบถ้วน
+- หากเป็นผู้บริหาร (Executive) ให้เน้นข้อมูลเชิงสรุปและการวิเคราะห์
+- หากเป็นพนักงานขับรถ ให้เน้นข้อมูลที่เกี่ยวข้องกับการปฏิบัติงาน
+- ตอบให้น่าอ่าน ใช้ Emoji ประกอบได้ตามความเหมาะสม
+`.trim()
 }
 
 /**
- * Call Gemini with fallback chain
+ * Call Gemini with Tool support
  */
 async function callGemini(systemPrompt: string, userMessage: string): Promise<string | null> {
     const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY
     if (!apiKey) return null
     const genAI = new GoogleGenerativeAI(apiKey)
+    
+    // Define tools for Gemini
+    const tools = [
+        {
+            functionDeclarations: [
+                {
+                    name: "create_job",
+                    description: "สร้างงานขนส่งใหม่ในระบบ",
+                    parameters: {
+                        type: "OBJECT",
+                        properties: {
+                            customerName: { type: "STRING", description: "ชื่อลูกค้า" },
+                            planDate: { type: "STRING", description: "วันที่วางแผน (YYYY-MM-DD)" },
+                            routeName: { type: "STRING", description: "ชื่อเส้นทาง" },
+                            price: { type: "NUMBER", description: "ราคาค่าขนส่ง" },
+                            notes: { type: "STRING", description: "หมายเหตุเพิ่มเติม" }
+                        },
+                        required: ["customerName"]
+                    }
+                },
+                {
+                    name: "create_fuel_log",
+                    description: "บันทึกข้อมูลการเติมน้ำมัน",
+                    parameters: {
+                        type: "OBJECT",
+                        properties: {
+                            plate: { type: "STRING", description: "ทะเบียนรถ" },
+                            liters: { type: "NUMBER", description: "จำนวนลิตร" },
+                            price: { type: "NUMBER", description: "ราคารวม" },
+                            odometer: { type: "NUMBER", description: "เลขไมล์" },
+                            station: { type: "STRING", description: "ชื่อปั๊ม" }
+                        },
+                        required: ["plate", "liters", "price"]
+                    }
+                },
+                {
+                    name: "create_damage_report",
+                    description: "บันทึกการแจ้งสินค้าเสียหาย",
+                    parameters: {
+                        type: "OBJECT",
+                        properties: {
+                            jobId: { type: "STRING", description: "หมายเลขงาน" },
+                            description: { type: "STRING", description: "รายละเอียดความเสียหาย" },
+                            estimatedCost: { type: "NUMBER", description: "ประเมินค่าเสียหาย" }
+                        },
+                        required: ["jobId", "description"]
+                    }
+                }
+            ]
+        }
+    ]
+
     for (const modelName of GEMINI_MODELS) {
         try {
-            const model = genAI.getGenerativeModel({ model: modelName })
-            const result = await model.generateContent([systemPrompt, `คำถาม: ${userMessage}`])
-            return result.response.text()
+            const model = genAI.getGenerativeModel({ 
+                model: modelName,
+                tools: tools as any
+            })
+
+            const chat = model.startChat({
+                history: [
+                    { role: 'user', parts: [{ text: systemPrompt }] },
+                    { role: 'model', parts: [{ text: "รับทราบครับ ผมพร้อมช่วยเหลือในฐานะ LogisPro AI Admin แล้วครับ" }] }
+                ]
+            })
+
+            const result = await chat.sendMessage(`คำถาม/คำสั่งจากผู้ใช้: ${userMessage}`)
+            const response = result.response
+            const parts = response.candidates?.[0].content.parts || []
+            
+            // Handle Tool Calls
+            let foundTool = false
+            for (const part of parts) {
+                if (part.functionCall) {
+                    foundTool = true
+                    const { name, args } = part.functionCall
+                    console.log(`[AI Tool Call] Executing: ${name}`, args)
+                    
+                    if (aiToolExecutors[name]) {
+                        const toolResult = await aiToolExecutors[name](args)
+                        const finalResult = await chat.sendMessage([{
+                            functionResponse: {
+                                name,
+                                response: { content: toolResult }
+                            }
+                        }])
+                        return finalResult.response.text()
+                    }
+                }
+            }
+
+            return response.text()
         } catch (err: any) {
+            console.error(`Gemini (${modelName}) failed:`, err)
             if (!err.message?.includes('404')) break
         }
     }
@@ -93,11 +255,26 @@ export async function POST(req: NextRequest) {
         const supabase = createAdminClient()
 
         for (const event of events) {
+            const replyToken = event.replyToken
+            const userId = event.source.userId
+            if (!replyToken || !userId) continue
+
+            // 0. FETCH IDENTITIES
+            const [{ data: boundCustomer }, { data: boundDriver }, { data: boundAdmin }] = await Promise.all([
+                supabase.from('Master_Customers').select('Customer_ID, Customer_Name').eq('Line_User_ID', userId).maybeSingle(),
+                supabase.from('Master_Drivers').select('Driver_ID, Driver_Name, Vehicle_Plate').eq('Line_User_ID', userId).maybeSingle(),
+                supabase.from('Master_Users').select('Username, Name, Role, Role_ID, Branch_ID').eq('Line_User_ID', userId).maybeSingle()
+            ])
+
+            const userName = boundAdmin?.Name || boundDriver?.Driver_Name || boundCustomer?.Customer_Name || 'ผู้ใช้'
+            const branchId = boundAdmin?.Branch_ID || undefined
+
+            // ----------------------------------------------------------------
+            // CASE A: TEXT MESSAGE
+            // ----------------------------------------------------------------
             if (event.type === 'message' && event.message.type === 'text') {
                 const rawText = event.message.text.trim()
                 const text = rawText.toUpperCase()
-                const replyToken = event.replyToken
-                const userId = event.source.userId
 
                 // 1. HELP / MENU
                 if (text === 'HELP' || text === 'MENU' || text === 'เมนู' || text === 'ช่วยเหลือ') {
@@ -109,6 +286,7 @@ export async function POST(req: NextRequest) {
                         '🔹 "สรุป" / "สรุป 03/2569" - สรุปงาน',
                         '🔹 "วางบิล" - ดูประวัติใบวางบิล',
                         '🔹 "BIND [รหัส] [เบอร์โทร]" - ผูกบัญชี',
+                        '🔹 ส่ง "เสียง" หรือ "รูปใบเสร็จ" ให้ AI ช่วยคีย์ได้! 🎙️📸',
                         '🔹 หรือถามอะไรก็ได้เลย! เช่น "งานวันนี้กี่งาน?" 🧠',
                     ].join('\n'))
                     continue
@@ -147,31 +325,17 @@ export async function POST(req: NextRequest) {
 
                     if (adminUser && (adminUser.Role_ID <= 2 || adminUser.Role === 'Executive' || adminUser.Role === 'Super Admin')) {
                         if (phone === id || phone.toUpperCase() === 'ADMIN') {
-                            // FIX: Use adminUser.Username instead of the uppercase 'id' for the record match
                             await supabase.from('Master_Users').update({ Line_User_ID: userId }).eq('Username', adminUser.Username)
-                            const isSuper = adminUser.Role_ID === 1 || adminUser.Role === 'Super Admin' || adminUser.Role === 'Executive'
-                            const welcomeMsg = isSuper
-                                ? `ยินดีต้อนรับท่านผู้บริหาร! คุณ ${adminUser.Name} ผูกบัญชีสำเร็จแล้ว\n\nตอนนี้ท่านสามารถถาม AI ได้ทุกอย่างเลยครับ เช่น "กำไรเดือนนี้เท่าไหร่?"`
-                                : `ยินดีต้อนรับคุณ ${adminUser.Name} (Admin)! ผูกบัญชีสำเร็จแล้ว\n\nถาม AI ได้เลยครับ หรือเช็คงานด้วย JOB-[เลขงาน]`
+                            const welcomeMsg = `ยินดีต้อนรับคุณ ${adminUser.Name} ผูกบัญชีสำเร็จแล้ว!`
                             await replyToUser(replyToken, welcomeMsg)
                             continue
                         }
                     }
-
                     await replyToUser(replyToken, 'ไม่พบข้อมูลในระบบ หรือข้อมูลยืนยันไม่ถูกต้อง')
                     continue
                 }
 
-                // 3. FETCH IDENTITIES
-                const [{ data: boundCustomer }, { data: boundDriver }, { data: boundAdmin }] = await Promise.all([
-                    supabase.from('Master_Customers').select('Customer_ID, Customer_Name').eq('Line_User_ID', userId).maybeSingle(),
-                    supabase.from('Master_Drivers').select('Driver_ID, Driver_Name, Vehicle_Plate').eq('Line_User_ID', userId).maybeSingle(),
-                    supabase.from('Master_Users').select('Username, Name, Role, Role_ID, Branch_ID').eq('Line_User_ID', userId).maybeSingle()
-                ])
-
-                const isExecutive = boundAdmin && (boundAdmin.Role_ID === 1 || boundAdmin.Role === 'Executive' || boundAdmin.Role === 'Super Admin')
-
-                // 4. DRIVER WORK COMMANDS
+                // 3. LOGIC FOR BOUND USERS
                 if (boundDriver) {
                     if (text === 'WORK' || text === 'งาน') {
                         const { data: jobs } = await supabase.from('Jobs_Main')
@@ -189,180 +353,96 @@ export async function POST(req: NextRequest) {
                         }
                         continue
                     }
-
                     if (text.includes(' START') || text.includes(' เริ่ม')) {
                         const jobId = text.split(' ')[0]
-                        const { error } = await supabase.from('Jobs_Main')
-                            .update({ Job_Status: 'In Progress' })
-                            .eq('Job_ID', jobId)
-                            .eq('Driver_ID', boundDriver.Driver_ID)
+                        const { error } = await supabase.from('Jobs_Main').update({ Job_Status: 'In Progress' }).eq('Job_ID', jobId).eq('Driver_ID', boundDriver.Driver_ID)
                         await replyToUser(replyToken, error ? `ไม่สามารถเริ่มงานได้: ${error.message}` : `เริ่มงาน ${jobId} เรียบร้อย! ขอให้เดินทางปลอดภัยครับ`)
                         continue
                     }
                 }
 
-                // 5. COMMAND GUARD
-                if (!boundCustomer && !boundDriver && !boundAdmin) {
-                    if (['SUMMARY', 'สรุป', 'BILLING', 'วางบิล', 'งาน', 'WORK'].includes(text)) {
-                        await replyToUser(replyToken, 'คุณยังไม่ได้ผูกบัญชีครับ\nพิมพ์ BIND [รหัส] [เบอร์โทร] เพื่อเริ่มต้นใช้งาน')
-                        continue
-                    }
-                }
-
-                // 6. SUMMARY
-                if (text.startsWith('SUMMARY') || text.startsWith('สรุป')) {
-                    if (!boundCustomer && !boundAdmin) continue
-
-                    let dateDisplay = 'วันนี้'
-                    const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' })
-                    let startDate = todayStr, endDate = todayStr
-
-                    const normalizeYear = (y: string) => {
-                        let year = parseInt(y)
-                        if (year > 2500) year -= 543
-                        return year.toString()
-                    }
-
-                    const yearMatch = text.match(/\b(20\d{2}|25\d{2})\b/)
-                    const monthYearMatch = text.match(/(\d{2})\/(\d{2,4})/) || text.match(/(\d{2,4})\/(\d{2})/)
-                    const fullDateMatch = text.match(/(\d{2})\/(\d{2})\/(\d{2,4})/) || text.match(/(\d{2,4})\/(\d{2})\/(\d{2})/)
-
-                    if (fullDateMatch) {
-                        if (fullDateMatch[1].length >= 3) {
-                            const [, y, m, d] = fullDateMatch
-                            startDate = endDate = `${normalizeYear(y)}-${m}-${d}`
-                            dateDisplay = `${d}/${m}/${y}`
-                        } else {
-                            const [, d, m, y] = fullDateMatch
-                            startDate = endDate = `${normalizeYear(y)}-${m}-${d}`
-                            dateDisplay = fullDateMatch[0]
-                        }
-                    } else if (monthYearMatch) {
-                        let y, m
-                        if (monthYearMatch[1].length >= 3) { [, y, m] = monthYearMatch } else { [, m, y] = monthYearMatch }
-                        const adYear = normalizeYear(y)
-                        startDate = `${adYear}-${m}-01`
-                        const nm = parseInt(m) === 12 ? 1 : parseInt(m) + 1
-                        const ny = parseInt(m) === 12 ? parseInt(adYear) + 1 : adYear
-                        endDate = `${ny}-${nm.toString().padStart(2, '0')}-01`
-                        dateDisplay = `เดือน ${m}/${y}`
-                    } else if (yearMatch) {
-                        const adYear = normalizeYear(yearMatch[1])
-                        startDate = `${adYear}-01-01`
-                        endDate = `${parseInt(adYear) + 1}-01-01`
-                        dateDisplay = `ปี ${yearMatch[1]}`
-                    }
-
-                    let query = supabase.from('Jobs_Main').select('Job_Status')
-                    
-                    if (boundCustomer) {
-                        query = query.or(`Customer_ID.eq."${boundCustomer.Customer_ID}",Customer_Name.ilike."%${boundCustomer.Customer_Name.trim()}%"`)
-                    } else if (boundAdmin?.Branch_ID) {
-                        query = query.eq('Branch_ID', boundAdmin.Branch_ID)
-                    }
-
-                    query = startDate === endDate ? query.eq('Plan_Date', startDate) : query.gte('Plan_Date', startDate).lt('Plan_Date', endDate)
-
-                    const { data: jobs, error: summaryError } = await query
-                    if (summaryError || !jobs || jobs.length === 0) {
-                        const name = boundCustomer?.Customer_Name || boundAdmin?.Name || 'ผู้ใช้'
-                        await replyToUser(replyToken, `คุณ ${name}\nช่วงเวลา ${dateDisplay} ยังไม่มีรายการในระบบครับ`)
-                        continue
-                    }
-
-                    const total = jobs.length
-                    const done = jobs.filter(j => ['delivered', 'completed', 'success', 'สำเร็จ'].includes((j.Job_Status || '').toLowerCase())).length
-                    await replyToUser(replyToken, `สรุปงาน (${dateDisplay})\nคุณ ${boundCustomer.Customer_Name}\n\nทั้งหมด: ${total} รายการ\nสำเร็จแล้ว: ${done}\nรอดำเนินการ: ${total - done}`)
-                    continue
-                }
-
-                // 7. BILLING
-                if (text === 'BILLING' || text === 'วางบิล') {
-                    if (!boundCustomer && !boundAdmin) continue
-                    const { data: bills } = await supabase.from('Billing_Notes')
-                        .select('Billing_Note_ID, Billing_Date, Total_Amount, Status')
-                        .eq('Customer_Name', boundCustomer.Customer_Name)
-                        .order('Created_At', { ascending: false }).limit(5)
-
-                    if (!bills || bills.length === 0) {
-                        await replyToUser(replyToken, 'ยังไม่มีประวัติการวางบิลในระบบครับ')
-                        continue
-                    }
-
-                    const lines = [`ประวัติการวางบิล 5 รายการล่าสุด\nคุณ ${boundCustomer.Customer_Name}\n`]
-                    bills.forEach(b => lines.push(`${b.Billing_Note_ID}\nวันที่: ${new Date(b.Billing_Date).toLocaleDateString('th-TH')}\nยอด: ${b.Total_Amount?.toLocaleString()} บาท\nสถานะ: ${b.Status === 'Paid' ? 'ชำระแล้ว' : 'รอดำเนินการ'}`))
-                    await replyToUser(replyToken, lines.join('\n\n'))
-                    continue
-                }
-
-                // 8. JOB TRACKING
                 if (text.startsWith('JOB-')) {
-                    const { data: jobList, error: queryError } = await supabase
-                        .from('Jobs_Main').select('*').ilike('Job_ID', text.trim()).limit(1)
-                    const job = jobList?.[0]
-
-                    if (queryError || !job) {
-                        await replyToUser(replyToken, `ไม่พบข้อมูลงานหมายเลข: ${text}`)
+                    const { data: job } = await supabase.from('Jobs_Main').select('*').ilike('Job_ID', text.trim()).maybeSingle()
+                    if (job) {
+                        await replyToUser(replyToken, `งาน: ${job.Job_ID}\nลูกค้า: ${job.Customer_Name}\nสถานะ: ${job.Job_Status}`)
                         continue
                     }
-
-                    const isAuthorized = boundAdmin || (boundCustomer && (
-                        job.Customer_ID === boundCustomer.Customer_ID ||
-                        job.Customer_Name?.toLowerCase().includes(boundCustomer.Customer_Name.toLowerCase())
-                    ))
-                    if (!isAuthorized) {
-                        await replyToUser(replyToken, 'คุณไม่มีสิทธิ์ดูข้อมูลหมายเลขนี้ครับ')
-                        continue
-                    }
-
-                    let extra = ''
-                    if (job.Driver_ID) {
-                        const { data: driverInfo } = await supabase.from('Master_Drivers')
-                            .select('Mobile_No').eq('Driver_ID', job.Driver_ID).maybeSingle()
-                        if (driverInfo?.Mobile_No) extra += `\nติดต่อคนขับ (${job.Driver_Name}): ${driverInfo.Mobile_No}`
-                        if (job.Job_Status === 'In Progress' || job.Job_Status === 'In Transit') {
-                            const { data: gps } = await supabase.from('GPS_Logs')
-                                .select('Latitude, Longitude').eq('Driver_ID', job.Driver_ID)
-                                .order('Timestamp', { ascending: false }).limit(1).maybeSingle()
-                            if (gps) extra += `\nพิกัดปัจจุบัน: https://maps.google.com/?q=${gps.Latitude},${gps.Longitude}`
-                        }
-                    }
-
-                    await replyToUser(replyToken, [
-                        `งาน: ${job.Job_ID}`,
-                        `ลูกค้า: ${job.Customer_Name}`,
-                        `สถานะ: ${job.Job_Status}`,
-                        `อัปเดต: ${new Date(job.Updated_At || job.Created_At).toLocaleString('th-TH')}${extra}`
-                    ].join('\n'))
-                    continue
                 }
 
-                // ================================================================
-                // 9. AI FALLBACK - Free text questions for Admin & Driver
-                // ================================================================
-                if (boundAdmin || boundDriver) {
-                    try {
-                        const branchId = boundAdmin?.Branch_ID || undefined
-                        const userName = boundAdmin?.Name || boundDriver?.Driver_Name || 'ผู้ใช้'
-                        const systemPrompt = await buildAdminAIContext(branchId)
-                        const aiResponse = await callGemini(systemPrompt, rawText)
-
-                        if (aiResponse) {
-                            await replyToUser(replyToken, `AI Admin (${userName}):\n${aiResponse}`)
-                        } else {
-                            await replyToUser(replyToken, 'ระบบ AI ขัดข้องชั่วคราว กรุณาพิมพ์ "เมนู" เพื่อดูคำสั่งที่รองรับครับ')
-                        }
-                    } catch (aiErr) {
-                        console.error('LINE AI error:', aiErr)
-                        await replyToUser(replyToken, 'เกิดข้อผิดพลาดใน AI กรุณาลองใหม่อีกครั้งครับ')
+                // AI FALLBACK FOR TEXT (FOR ALL BOUND USERS)
+                if (boundAdmin || boundDriver || boundCustomer) {
+                    const systemPrompt = await buildAdminAIContext(branchId, userName)
+                    const aiResponse = await callGemini(systemPrompt, rawText)
+                    if (aiResponse) {
+                        await replyToUser(replyToken, aiResponse)
+                    } else {
+                        await replyToUser(replyToken, 'ขออภัยครับ AI ไม่สามารถตอบคำถามนี้ได้ในขณะนี้')
                     }
                     continue
                 }
+            }
 
-                // Unbound user
-                if (!boundCustomer && !boundDriver && !boundAdmin) {
-                    await replyToUser(replyToken, 'สวัสดีครับ! ยังไม่ได้ผูกบัญชี\nพิมพ์ BIND [รหัส] [เบอร์โทร] หรือพิมพ์ "เมนู" เพื่อดูวิธีใช้งานครับ')
+            // ----------------------------------------------------------------
+            // CASE B: AUDIO MESSAGE (Voice to Action)
+            // ----------------------------------------------------------------
+            if (event.type === 'message' && event.message.type === 'audio') {
+                if (!boundAdmin && !boundDriver) {
+                    await replyToUser(replyToken, 'ขออภัยครับ ฟีเจอร์สั่งงานด้วยเสียงเปิดให้เฉพาะแอดมินและคนขับครับ')
+                    continue
                 }
+
+                try {
+                    const audioBuffer = await getMessageContent(event.message.id)
+                    const systemContext = await buildAdminAIContext(branchId, userName)
+                    const systemPrompt = `
+${systemContext}
+คุณได้รับข้อความเสียงจากผู้ใช้ ให้ทำดังนี้:
+1. แปลความหมายจากเสียงเป็นข้อความ
+2. หากผู้ใช้สั่ง "สร้างงาน" ให้ใช้เครื่องมือ create_job
+3. หากผู้ใช้บอกข้อมูล "เติมน้ำมัน" ให้ใช้เครื่องมือ create_fuel_log
+4. ตอบกลับผู้ใช้ว่าคุณได้ทำอะไรไปบ้าง
+`.trim()
+                    
+                    const aiResponse = await callGeminiMultimodal(systemPrompt, "วิเคราะห์เสียงนี้", "audio/x-m4a", audioBuffer)
+                    if (aiResponse) {
+                        await replyToUser(replyToken, aiResponse)
+                    } else {
+                        await replyToUser(replyToken, 'AI ไม่สามารถสรุปคำสั่งเสียงได้ครับ')
+                    }
+                } catch (err) {
+                    console.error('Audio processing error:', err)
+                    await replyToUser(replyToken, 'เกิดข้อผิดพลาดในการประมวลผลเสียง')
+                }
+                continue
+            }
+
+            // ----------------------------------------------------------------
+            // CASE C: IMAGE MESSAGE (Photo Analysis)
+            // ----------------------------------------------------------------
+            if (event.type === 'message' && event.message.type === 'image') {
+                if (!boundAdmin && !boundDriver) continue
+
+                try {
+                    const imageBuffer = await getMessageContent(event.message.id)
+                    const systemContext = await buildAdminAIContext(branchId, userName)
+                    const systemPrompt = `${systemContext}\nวิเคราะห์รูปภาพที่ได้รับ (เช่น ใบเสร็จน้ำมัน, รูปสินค้าเสียหาย) และสรุปข้อมูลสำคัญ`.trim()
+
+                    const aiResponse = await callGeminiMultimodal(systemPrompt, "วิเคราะห์รูปภาพนี้", "image/jpeg", imageBuffer)
+                    if (aiResponse) {
+                        await replyToUser(replyToken, aiResponse)
+                    } else {
+                        await replyToUser(replyToken, 'AI ไม่สามารถวิเคราะห์รูปภาพนี้ได้ครับ')
+                    }
+                } catch (err) {
+                    console.error('Image processing error:', err)
+                    await replyToUser(replyToken, 'เกิดข้อผิดพลาดในการประมวลผลรูปภาพ')
+                }
+                continue
+            }
+
+            // Unbound user fallback
+            if (!boundCustomer && !boundDriver && !boundAdmin) {
+                await replyToUser(replyToken, 'กรุณาพิมพ์ BIND [รหัส] [เบอร์โทร] เพื่อเริ่มต้นใช้งานครับ')
             }
         }
 

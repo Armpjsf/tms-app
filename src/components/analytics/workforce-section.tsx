@@ -110,8 +110,8 @@ export function WorkforceSection({ data }: { data: WorkforceAnalytics }) {
       {/* Workforce Insight Elite Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Top Performers Elite */}
-        <PremiumCard className="bg-white border-none shadow-[0_30px_100px_rgba(0,0,0,0.1)] p-0 overflow-hidden rounded-br-[5rem] rounded-tl-[3rem]">
-           <div className="p-8 border-b border-slate-50 bg-slate-950 relative overflow-hidden flex items-center justify-between">
+        <PremiumCard className="bg-white/5 border border-white/10 shadow-2xl p-0 overflow-hidden rounded-br-[5rem] rounded-tl-[3rem]">
+           <div className="p-8 border-b border-white/5 bg-slate-950 relative overflow-hidden flex items-center justify-between">
               <div className="absolute inset-0 bg-gradient-to-r from-amber-500/10 to-transparent pointer-events-none" />
               <div className="flex items-center gap-3 relative z-10">
                 <div className="p-2 bg-amber-600 rounded-xl text-white shadow-lg">
@@ -124,9 +124,9 @@ export function WorkforceSection({ data }: { data: WorkforceAnalytics }) {
               </div>
            </div>
            <div className="p-0">
-              <div className="divide-y divide-slate-50">
+              <div className="divide-y divide-white/5">
                 {topPerformers.map((d, i) => (
-                    <div key={i} className="p-8 flex items-center justify-between group/perf hover:bg-slate-50 transition-all border-l-4 border-transparent hover:border-amber-500">
+                    <div key={i} className="p-8 flex items-center justify-between group/perf hover:bg-white/5 transition-all border-l-4 border-transparent hover:border-amber-500">
                         <div className="flex items-center gap-6">
                             <div className={cn(
                                 "w-14 h-14 rounded-2xl flex items-center justify-center text-[12px] font-black shadow-xl italic transition-transform duration-500",
@@ -136,20 +136,20 @@ export function WorkforceSection({ data }: { data: WorkforceAnalytics }) {
                             </div>
                             <div>
                                 <div className="flex items-center gap-3">
-                                    <span className="text-slate-900 font-black text-xl tracking-tight uppercase italic">{d.name}</span>
-                                     <span className="text-base font-bold font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full tracking-widest">
+                                    <span className="text-white font-black text-xl tracking-tight uppercase italic">{d.name}</span>
+                                     <span className="text-base font-bold font-black text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full tracking-widest">
                                          {d.successRate.toFixed(0)}% {t('common.sync')}
                                      </span>
                                 </div>
-                                <div className="text-base font-bold text-slate-500 font-black mt-2 tracking-widest italic uppercase">
+                                <div className="text-base font-bold text-slate-400 font-black mt-2 tracking-widest italic uppercase">
                                     {t('dashboard.missions_completed_prefix')} {d.jobCount}
                                 </div>
                             </div>
                         </div>
-                        <div className="text-right">
-                             <div className="text-lg font-black text-slate-950 tracking-tighter italic">฿{d.revenue.toLocaleString()}</div>
-                             <div className="text-base font-bold text-slate-400 font-black uppercase tracking-widest mt-1 italic">{t('dashboard.gross_yield')}</div>
-                        </div>
+                         <div className="text-right">
+                              <div className="text-lg font-black text-white tracking-tighter italic">฿{d.revenue.toLocaleString()}</div>
+                              <div className="text-base font-bold text-slate-400 font-black uppercase tracking-widest mt-1 italic">{t('dashboard.gross_yield')}</div>
+                         </div>
                     </div>
                 ))}
                 {topPerformers.length === 0 && (
@@ -163,8 +163,8 @@ export function WorkforceSection({ data }: { data: WorkforceAnalytics }) {
         </PremiumCard>
 
         {/* Compliance Alerts Registry */}
-        <PremiumCard className="bg-white border-none shadow-[0_30px_100px_rgba(0,0,0,0.1)] p-0 overflow-hidden rounded-br-[5rem] rounded-tl-[3rem]">
-           <div className="p-8 border-b border-slate-50 bg-slate-950 relative overflow-hidden flex items-center justify-between">
+        <PremiumCard className="bg-white/5 border border-white/10 shadow-2xl p-0 overflow-hidden rounded-br-[5rem] rounded-tl-[3rem]">
+           <div className="p-8 border-b border-white/5 bg-slate-950 relative overflow-hidden flex items-center justify-between">
               <div className="absolute inset-0 bg-gradient-to-r from-rose-500/10 to-transparent pointer-events-none" />
               <div className="flex items-center gap-3 relative z-10">
                 <div className="p-2 bg-rose-600 rounded-xl text-white shadow-lg">
@@ -177,30 +177,30 @@ export function WorkforceSection({ data }: { data: WorkforceAnalytics }) {
               </div>
            </div>
            <div className="p-0">
-              <div className="divide-y divide-slate-50">
+              <div className="divide-y divide-white/5">
                 {driversWithIssues.map((d) => (
-                    <div key={d.id} className="p-8 flex items-center justify-between group/risk hover:bg-slate-50 transition-all border-l-4 border-transparent hover:border-rose-500">
+                    <div key={d.id} className="p-8 flex items-center justify-between group/risk hover:bg-white/5 transition-all border-l-4 border-transparent hover:border-rose-500">
                         <div className="flex items-center gap-6">
                             <div className="w-14 h-14 rounded-2xl bg-slate-950 text-white flex items-center justify-center text-[12px] font-black shadow-xl italic uppercase">
                                 {d.name.slice(0, 2)}
                             </div>
                             <div>
-                                <div className="text-slate-900 font-black text-xl tracking-tight uppercase italic">{d.name}</div>
+                                <div className="text-white font-black text-xl tracking-tight uppercase italic">{d.name}</div>
                                 <div className={cn(
                                     "text-base font-bold font-black mt-2 bg-opacity-10 px-3 py-1 rounded-lg w-fit tracking-widest italic border uppercase",
-                                    d.issue === 'ใบขับขี่หมดอายุ' ? "text-rose-600 bg-rose-600 border-rose-100" : "text-amber-600 bg-amber-600 border-amber-100"
+                                    d.issue === 'ใบขับขี่หมดอายุ' ? "text-rose-400 bg-rose-500/10 border-rose-500/20" : "text-amber-400 bg-amber-500/10 border-amber-500/20"
                                 )}>
                                     {t('dashboard.breach_label')} {d.issue}
                                 </div>
                             </div>
                         </div>
                         <div className="text-right">
-                             <div className={cn(
-                                 "text-xl font-black tracking-widest uppercase",
-                                 d.issue === 'ใบขับขี่หมดอายุ' ? "text-rose-600" : "text-amber-500"
-                             )}>
-                                {d.issue === 'ใบขับขี่หมดอายุ' ? `${t('common.expired')} ${d.daysAuth}D` : `${t('common.expiry')}: ${d.daysAuth}D`}
-                             </div>
+                              <div className={cn(
+                                  "text-xl font-black tracking-widest uppercase",
+                                  d.issue === 'ใบขับขี่หมดอายุ' ? "text-rose-400" : "text-amber-400"
+                              )}>
+                                 {d.issue === 'ใบขับขี่หมดอายุ' ? `${t('common.expired')} ${d.daysAuth}D` : `${t('common.expiry')}: ${d.daysAuth}D`}
+                              </div>
                              <div className="text-base font-bold text-slate-400 font-black uppercase tracking-widest mt-1 italic">{t('dashboard.immediate_rectification_reqd')}</div>
                         </div>
                     </div>

@@ -640,7 +640,7 @@ export default function CustomerBillingClient({ initialJobs, companyProfile, cus
                     <div className="p-4 bg-slate-100 flex items-center justify-between border-b sticky top-0 z-50 print:hidden">
                         <div className="flex items-center gap-3 text-slate-900">
                              <ShieldCheck className="text-primary" />
-                             <span className="text-base font-bold font-black uppercase tracking-widest">{t('common.protocol_integrity')} • {t('billing_customer.scan_summary')} v4.2</span>
+                             <DialogTitle className="text-base font-bold font-black uppercase tracking-widest">{t('common.protocol_integrity')} • {t('billing_customer.scan_summary')} v4.2</DialogTitle>
                         </div>
                         <button onClick={() => setShowPreview(false)} className="p-2 hover:bg-slate-200 rounded-lg text-slate-900 transition-colors">
                             <Activity size={18} />

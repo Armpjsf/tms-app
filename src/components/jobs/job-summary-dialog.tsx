@@ -106,8 +106,8 @@ export function JobSummaryDialog({ open, onOpenChange, job }: JobSummaryDialogPr
           <div className="sticky top-0 z-10 bg-white/90 backdrop-blur-md p-6 border-b border-gray-200 flex justify-between items-start no-print">
             <div>
               <div className="flex items-center gap-3 mb-1">
-                <div className="bg-emerald-500/20 p-2 rounded-lg">
-                  <ClipboardList className="text-emerald-600" size={20} />
+            <div className="bg-emerald-500/10 p-2 rounded-lg">
+                  <ClipboardList className="text-emerald-400" size={20} />
                 </div>
                 <div>
                   <h2 className="text-lg font-bold font-bold text-emerald-600 uppercase tracking-widest flex items-center gap-2">
@@ -115,7 +115,7 @@ export function JobSummaryDialog({ open, onOpenChange, job }: JobSummaryDialogPr
                     <span className="h-1 w-1 rounded-full bg-indigo-400/50"></span>
                   </h2>
                   <div className="flex items-center gap-3">
-                    <h1 className="text-2xl font-black text-slate-950 tracking-tight">
+                    <h1 className="text-2xl font-black text-white tracking-tight">
                       {job.Job_ID}
                     </h1>
                     <span className={cn(
@@ -140,8 +140,8 @@ export function JobSummaryDialog({ open, onOpenChange, job }: JobSummaryDialogPr
             {/* Timeline + Info Grid — side by side */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Left: Vertical Order Timeline (Dribbble-inspired) */}
-              <div className="lg:col-span-1 bg-white rounded-2xl border border-gray-200 p-5 no-print shadow-sm">
-                <div className="flex items-center gap-2 mb-4 text-slate-900">
+              <div className="lg:col-span-1 bg-white/5 rounded-2xl border border-white/10 p-5 no-print shadow-sm">
+                <div className="flex items-center gap-2 mb-4 text-white">
                   <div className="w-1.5 h-6 bg-indigo-500 rounded-full" />
                   <h3 className="font-black text-xl uppercase tracking-wider">Order Timeline</h3>
                 </div>
@@ -156,48 +156,48 @@ export function JobSummaryDialog({ open, onOpenChange, job }: JobSummaryDialogPr
               <div className="lg:col-span-2">
 
                 <section className="space-y-4">
-                    <div className="flex items-center gap-2 text-slate-950 font-black border-l-4 border-indigo-500 pl-3 uppercase tracking-wider text-xl">
-                        <User size={18} className="text-emerald-600" />
+                    <div className="flex items-center gap-2 text-white font-black border-l-4 border-indigo-500 pl-3 uppercase tracking-wider text-xl">
+                        <User size={18} className="text-emerald-400" />
                         <span>ข้อมูลทั่วไป</span>
                     </div>
-                    <div className="bg-white rounded-xl p-4 border border-gray-200 grid grid-cols-2 gap-y-4 shadow-sm">
+                    <div className="bg-white/5 rounded-xl p-4 border border-white/10 grid grid-cols-2 gap-y-4 shadow-sm">
                         <div>
-                            <p className="text-base font-bold uppercase text-slate-600 font-bold mb-1">ลูกค้า (Customer)</p>
-                            <p className="text-xl font-bold text-slate-900">{job.Customer_Name || '-'}</p>
+                            <p className="text-base font-bold uppercase text-slate-400 font-bold mb-1">ลูกค้า (Customer)</p>
+                            <p className="text-xl font-bold text-slate-100">{job.Customer_Name || '-'}</p>
                         </div>
                         <div>
-                            <p className="text-base font-bold uppercase text-slate-600 font-bold mb-1">เส้นทาง (Route)</p>
-                            <p className="text-xl font-bold text-slate-900">{job.Route_Name || '-'}</p>
+                            <p className="text-base font-bold uppercase text-slate-400 font-bold mb-1">เส้นทาง (Route)</p>
+                            <p className="text-xl font-bold text-slate-100">{job.Route_Name || '-'}</p>
                         </div>
                         <div>
-                            <p className="text-base font-bold uppercase text-slate-600 font-bold mb-1">ทะเบียนรถ (Vehicle)</p>
-                            <p className="text-xl font-bold text-slate-900">{job.Vehicle_Plate || '-'}</p>
+                            <p className="text-base font-bold uppercase text-slate-400 font-bold mb-1">ทะเบียนรถ (Vehicle)</p>
+                            <p className="text-xl font-bold text-slate-100">{job.Vehicle_Plate || '-'}</p>
                         </div>
                         <div>
-                            <p className="text-base font-bold uppercase text-slate-600 font-bold mb-1">คนขับ (Driver)</p>
-                            <p className="text-xl font-bold text-slate-900">{job.Driver_Name || job.Driver_ID || '-'}</p>
+                            <p className="text-base font-bold uppercase text-slate-400 font-bold mb-1">คนขับ (Driver)</p>
+                            <p className="text-xl font-bold text-slate-100">{job.Driver_Name || job.Driver_ID || '-'}</p>
                         </div>
                     </div>
                 </section>
 
                 <section className="space-y-4">
-                    <div className="flex items-center gap-2 text-slate-950 font-black border-l-4 border-emerald-500 pl-3 uppercase tracking-wider text-xl">
+                    <div className="flex items-center gap-2 text-white font-black border-l-4 border-emerald-500 pl-3 uppercase tracking-wider text-xl">
                         <MapPin size={18} className="text-emerald-400" />
                         <span>สถานที่และเวลา</span>
                     </div>
-                    <div className="bg-white rounded-xl p-4 border border-gray-200 space-y-4 shadow-sm">
+                    <div className="bg-white/5 rounded-xl p-4 border border-white/10 space-y-4 shadow-sm">
                         <div className="flex gap-3">
                             <div className="mt-1"><div className="w-2 h-2 rounded-full bg-indigo-500 ring-4 ring-indigo-500/20" /></div>
                             <div>
-                                <p className="text-base font-bold uppercase text-slate-600 font-bold">ต้นทาง (Origin)</p>
-                                <p className="text-lg font-bold text-slate-700 font-medium">{job.Origin_Location || job.Location_Origin_Name || '-'}</p>
+                                <p className="text-base font-bold uppercase text-slate-400 font-bold">ต้นทาง (Origin)</p>
+                                <p className="text-lg font-bold text-slate-200 font-medium">{job.Origin_Location || job.Location_Origin_Name || '-'}</p>
                             </div>
                         </div>
                         <div className="flex gap-3">
                             <div className="mt-1"><MapPin size={14} className="text-emerald-500" /></div>
                             <div>
-                                <p className="text-base font-bold uppercase text-slate-600 font-bold">ปลายทาง (Destination)</p>
-                                <p className="text-lg font-bold text-slate-900 font-bold">{job.Dest_Location || job.Location_Destination_Name || '-'}</p>
+                                <p className="text-base font-bold uppercase text-slate-400 font-bold">ปลายทาง (Destination)</p>
+                                <p className="text-lg font-bold text-slate-100 font-bold">{job.Dest_Location || job.Location_Destination_Name || '-'}</p>
                             </div>
                         </div>
                     </div>
@@ -207,11 +207,11 @@ export function JobSummaryDialog({ open, onOpenChange, job }: JobSummaryDialogPr
 
             {/* GPS Map Section */}
             <section className="space-y-4 no-print">
-              <h3 className="text-xl font-black text-slate-950 flex items-center gap-2 uppercase tracking-wider">
-                <MapPin size={16} className="text-emerald-600" />
+              <h3 className="text-xl font-black text-white flex items-center gap-2 uppercase tracking-wider">
+                <MapPin size={16} className="text-emerald-400" />
                 ตำแหน่งล่าสุด
               </h3>
-              <div className="h-[250px] rounded-2xl overflow-hidden border border-gray-200 bg-white shadow-inner relative">
+              <div className="h-[250px] rounded-2xl overflow-hidden border border-white/10 bg-white shadow-inner relative">
                 {(job.Tracking_LAT && job.Tracking_LNG) || gpsPoints.length > 0 || latestLocation ? (
                   <LeafletMap 
                     routeHistory={gpsPoints as [number, number][]}
@@ -231,8 +231,8 @@ export function JobSummaryDialog({ open, onOpenChange, job }: JobSummaryDialogPr
               {/* Pickup Info */}
               <section className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-xl font-black text-slate-950 flex items-center gap-2 border-l-4 border-indigo-500 pl-3 uppercase tracking-wider">
-                    <Package size={16} className="text-emerald-600" />
+                  <h3 className="text-xl font-black text-white flex items-center gap-2 border-l-4 border-indigo-500 pl-3 uppercase tracking-wider">
+                    <Package size={16} className="text-emerald-400" />
                     จุดรับสินค้า (Pickup Info)
                   </h3>
                   <span className="text-base font-bold text-gray-400 font-bold uppercase no-print">{pickupPhotos.length} รูป</span>
@@ -254,9 +254,9 @@ export function JobSummaryDialog({ open, onOpenChange, job }: JobSummaryDialogPr
                   ))}
                 </div>
 
-                <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-                  <p className="text-base font-bold font-black text-slate-600 uppercase tracking-widest mb-3">ลายเซ็น ณ จุดรับ</p>
-                  <div className="h-24 flex items-center justify-center border border-dashed border-gray-200 rounded-lg relative overflow-hidden bg-white/5">
+                <div className="rounded-xl border border-white/10 bg-white/5 p-4 shadow-sm">
+                  <p className="text-base font-bold font-black text-slate-400 uppercase tracking-widest mb-3">ลายเซ็น ณ จุดรับ</p>
+                  <div className="h-24 flex items-center justify-center border border-dashed border-white/10 rounded-lg relative overflow-hidden bg-white/5">
                     {job.Signature_Pickup_Url || job.Pickup_Signature_Url ? (
                       <Image 
                         src={job.Signature_Pickup_Url || job.Pickup_Signature_Url} 
@@ -274,7 +274,7 @@ export function JobSummaryDialog({ open, onOpenChange, job }: JobSummaryDialogPr
               {/* POD Info */}
               <section className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-xl font-black text-slate-950 flex items-center gap-2 border-l-4 border-emerald-500 pl-3 uppercase tracking-wider">
+                  <h3 className="text-xl font-black text-white flex items-center gap-2 border-l-4 border-emerald-500 pl-3 uppercase tracking-wider">
                     <CheckCircle2 size={16} className="text-emerald-400" />
                     การส่งสินค้า (POD Info)
                   </h3>
@@ -309,9 +309,9 @@ export function JobSummaryDialog({ open, onOpenChange, job }: JobSummaryDialogPr
                   })}
                 </div>
 
-                <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-                   <p className="text-base font-bold font-black text-slate-600 uppercase tracking-widest mb-3">ลายเซ็นผู้รับสินค้า</p>
-                  <div className="h-24 flex items-center justify-center border border-dashed border-gray-200 rounded-lg relative overflow-hidden bg-white/5">
+                <div className="rounded-xl border border-white/10 bg-white/5 p-4 shadow-sm">
+                   <p className="text-base font-bold font-black text-slate-400 uppercase tracking-widest mb-3">ลายเซ็นผู้รับสินค้า</p>
+                  <div className="h-24 flex items-center justify-center border border-dashed border-white/10 rounded-lg relative overflow-hidden bg-white/5">
                     {job.Signature_Proof_Url || job.Signature_Url ? (
                       <Image 
                         src={job.Signature_Proof_Url || job.Signature_Url} 
