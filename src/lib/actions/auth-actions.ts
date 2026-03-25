@@ -137,9 +137,14 @@ export async function logoutDriver() {
 }
 
 export async function getDriverSession() {
-  const cookieStore = await cookies()
-  const session = cookieStore.get("driver_session")
-  return session ? JSON.parse(session.value) : null
+  try {
+    const cookieStore = await cookies()
+    const session = cookieStore.get("driver_session")
+    return session ? JSON.parse(session.value) : null
+  } catch (error) {
+    console.error("Session Parse Error:", error)
+    return null
+  }
 }
 
 export async function loginWithQRToken(token: string) {

@@ -2,6 +2,7 @@
 
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { useLanguage } from "@/components/providers/language-provider"
 import { Button } from "@/components/ui/button"
 import { Image as ImageIcon, ExternalLink } from "lucide-react"
 import Image from "next/image"
@@ -13,6 +14,7 @@ type PODDialogProps = {
 }
 
 export function PODDialog({ open, onOpenChange, job }: PODDialogProps) {
+  const { t } = useLanguage()
 
 
   const photos = (job.Photo_Proof_Url || (job as any).photo_proof_url || "").split(',').filter(Boolean)
@@ -24,14 +26,14 @@ export function PODDialog({ open, onOpenChange, job }: PODDialogProps) {
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <ImageIcon className="w-5 h-5 text-primary" />
-            หลักฐานการส่งสินค้า (POD) - {job.Job_ID}
+            {t('reports.title_pod')} - {job.Job_ID}
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-6">
           {/* Photos Grid */}
           <div>
-            <h3 className="text-xl font-medium text-muted-foreground mb-3">รูปภาพสินค้า / สถานที่ส่ง ({photos.length})</h3>
+            <h3 className="text-xl font-medium text-muted-foreground mb-3">{t('reports.pod_info')} ({photos.length})</h3>
             {photos.length > 0 ? (
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {photos.map((url: string, index: number) => (
@@ -54,14 +56,14 @@ export function PODDialog({ open, onOpenChange, job }: PODDialogProps) {
               </div>
             ) : (
               <div className="text-center py-8 bg-muted/50 rounded-lg border border-dashed border-border text-muted-foreground">
-                ไม่มีรูปภาพ
+                {t('reports.no_photos')}
               </div>
             )}
           </div>
 
           {/* Signature */}
           <div>
-             <h3 className="text-xl font-medium text-muted-foreground mb-3">ลายเซ็นผู้รับ</h3>
+             <h3 className="text-xl font-medium text-muted-foreground mb-3">{t('reports.dropoff_signature')}</h3>
              {signature ? (
                <div className="relative h-40 w-full md:w-80 border border-border rounded-lg bg-white/5 mx-auto md:mx-0">
                   <Image 
@@ -73,7 +75,7 @@ export function PODDialog({ open, onOpenChange, job }: PODDialogProps) {
                </div>
              ) : (
                 <div className="text-center py-8 bg-muted/50 rounded-lg border border-dashed border-border text-muted-foreground w-full md:w-80">
-                  ไม่มีลายเซ็น
+                  {t('reports.no_signature')}
                 </div>
              )}
           </div>
@@ -81,21 +83,21 @@ export function PODDialog({ open, onOpenChange, job }: PODDialogProps) {
           {/* Metadata */}
           <div className="grid grid-cols-2 gap-4 p-4 bg-muted/50 rounded-lg text-xl">
              <div>
-                <p className="text-muted-foreground">ผู้ส่ง (Driver)</p>
+                <p className="text-muted-foreground">{t('jobs.dialog.driver')}</p>
                 <p className="text-foreground font-medium">{job.Driver_Name || '-'}</p>
              </div>
              <div>
-                <p className="text-muted-foreground">ทะเบียนรถ</p>
+                <p className="text-muted-foreground">{t('jobs.dialog.vehicle')}</p>
                 <p className="text-foreground font-medium">{job.Vehicle_Plate || '-'}</p>
              </div>
              <div>
-                <p className="text-muted-foreground">เวลาส่ง (Delivery Date)</p>
+                <p className="text-muted-foreground">{t('reports.delivery_date')}</p>
                 <p className="text-foreground font-medium">
                     {job.Delivery_Date ? new Date(job.Delivery_Date).toLocaleString('th-TH') : '-'}
                 </p>
              </div>
              <div>
-                <p className="text-muted-foreground">สถานะ</p>
+                <p className="text-muted-foreground">{t('common.status')}</p>
                 <span className={`inline-block px-2 py-0.5 rounded text-lg font-bold font-medium ${
                     job.Job_Status === 'Completed' || job.Job_Status === 'Delivered' 
                     ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400' 
@@ -108,7 +110,7 @@ export function PODDialog({ open, onOpenChange, job }: PODDialogProps) {
           
           <div className="flex justify-end pt-4 border-t border-border">
             <Button variant="secondary" onClick={() => onOpenChange(false)}>
-                ปิดหน้าต่าง
+                {t('reports.close_btn')}
             </Button>
           </div>
         </div>

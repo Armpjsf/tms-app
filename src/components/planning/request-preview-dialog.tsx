@@ -10,6 +10,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { PremiumButton } from "@/components/ui/premium-button"
 import { Badge } from "@/components/ui/badge"
+import { useLanguage } from "@/components/providers/language-provider"
 import { 
   Package, 
   Calendar, 
@@ -32,6 +33,7 @@ export function RequestPreviewDialog({
   onOpenChange,
   onPlan
 }: RequestPreviewDialogProps) {
+  const { t } = useLanguage()
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px] p-0 overflow-hidden border-none shadow-2xl">
@@ -43,10 +45,10 @@ export function RequestPreviewDialog({
               </div>
               <div>
                 <DialogTitle className="text-2xl font-black tracking-tighter text-gray-900">
-                  รายละเอียดคำขอรถ
+                  {t('shipment.title_preview')}
                 </DialogTitle>
                 <p className="text-base font-bold font-black text-orange-600 uppercase tracking-[0.2em]">
-                  Shipment Request Details
+                  {t('shipment.subtitle_preview')}
                 </p>
               </div>
             </div>
@@ -71,7 +73,7 @@ export function RequestPreviewDialog({
                   year: 'numeric', 
                   month: 'long', 
                   day: 'numeric' 
-                }) : "ไม่ได้ระบุ"}</span>
+                }) : t('common.no_data')}</span>
               </div>
             </div>
           </div>
@@ -83,15 +85,15 @@ export function RequestPreviewDialog({
                 <Building2 size={20} />
               </div>
               <div>
-                <p className="text-base font-bold font-black text-gray-400 uppercase tracking-widest">ข้อมูลลูกค้า</p>
-                <p className="font-bold text-gray-900">{job.Customer_Name || "ไม่ระบุชื่อลูกค้า"}</p>
+                <p className="text-base font-bold font-black text-gray-400 uppercase tracking-widest">{t('jobs.dialog.customer')}</p>
+                <p className="font-bold text-gray-900">{job.Customer_Name || t('common.no_data')}</p>
               </div>
             </div>
           </div>
 
           {/* Location Timeline */}
           <div className="space-y-4">
-            <p className="text-base font-bold font-black text-gray-400 uppercase tracking-widest">เส้นทางขนส่ง</p>
+            <p className="text-base font-bold font-black text-gray-400 uppercase tracking-widest">{t('jobs.dialog.route')}</p>
             <div className="relative pl-8 space-y-8">
               {/* Vertical line connector */}
               <div className="absolute left-[11px] top-3 bottom-3 w-0.5 bg-dashed bg-gradient-to-b from-orange-500 to-emerald-500 opacity-20" />
@@ -102,9 +104,9 @@ export function RequestPreviewDialog({
                   <div className="w-2 h-2 rounded-full bg-orange-500" />
                 </div>
                 <div>
-                  <p className="text-base font-bold font-black text-orange-600 uppercase tracking-widest mb-1">จุดรับสินค้า (Pickup)</p>
+                  <p className="text-base font-bold font-black text-orange-600 uppercase tracking-widest mb-1">{t('reports.pickup_info')}</p>
                   <p className="font-bold text-gray-900 leading-relaxed">
-                    {job.Origin_Location || "ไม่ได้ระบุสถานที่รับ"}
+                    {job.Origin_Location || t('common.no_data')}
                   </p>
                 </div>
               </div>
@@ -115,9 +117,9 @@ export function RequestPreviewDialog({
                   <div className="w-2 h-2 rounded-full bg-emerald-500" />
                 </div>
                 <div>
-                  <p className="text-base font-bold font-black text-emerald-600 uppercase tracking-widest mb-1">จุดส่งสินค้า (Delivery)</p>
+                  <p className="text-base font-bold font-black text-emerald-600 uppercase tracking-widest mb-1">{t('reports.pod_info')}</p>
                   <p className="font-bold text-gray-900 leading-relaxed">
-                    {job.Dest_Location || "ไม่ได้ระบุสถานที่ส่ง"}
+                    {job.Dest_Location || t('common.no_data')}
                   </p>
                 </div>
               </div>
@@ -129,7 +131,7 @@ export function RequestPreviewDialog({
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-base font-bold font-black text-gray-400 uppercase tracking-widest">
                 <Package size={14} className="text-gray-400" />
-                ประเภทสินค้า
+                {t('shipment.cargo')}
               </div>
               <p className="font-bold text-gray-900">{job.Cargo_Type || "-"}</p>
             </div>
@@ -137,9 +139,9 @@ export function RequestPreviewDialog({
 
           {/* Notes */}
           <div className="space-y-2 pt-4 border-t border-gray-50">
-             <p className="text-base font-bold font-black text-gray-400 uppercase tracking-widest">หมายเหตุจากลูกค้า (Notes)</p>
+             <p className="text-base font-bold font-black text-gray-400 uppercase tracking-widest">{t('shipment.notes')}</p>
              <div className="p-4 bg-yellow-50 rounded-2xl text-xl font-medium text-gray-700 leading-relaxed border border-yellow-100 italic">
-                &quot;{job.Notes || "ไม่มีหมายเหตุเพิ่มเติม"}&quot;
+                &quot;{job.Notes || t('shipment.placeholder_no_notes')}&quot;
              </div>
           </div>
         </div>
@@ -150,10 +152,10 @@ export function RequestPreviewDialog({
             onClick={() => onOpenChange(false)}
             className="text-gray-500 font-bold uppercase tracking-widest text-base font-bold"
           >
-            ย้อนกลับ
+            {t('shipment.back_btn')}
           </Button>
           <PremiumButton onClick={onPlan} className="h-14 px-8 rounded-2xl">
-            วางแผนงาน <ArrowRight className="ml-2 w-5 h-5" />
+            {t('shipment.plan_btn')} <ArrowRight className="ml-2 w-5 h-5" />
           </PremiumButton>
         </DialogFooter>
       </DialogContent>

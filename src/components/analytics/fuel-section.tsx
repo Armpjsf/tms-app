@@ -2,9 +2,25 @@
 
 import { PremiumCard } from "@/components/ui/premium-card"
 import { FuelAnalytics } from "@/lib/supabase/fuel-analytics"
-import { Fuel, Droplets, GaugeCircle, TrendingUp, AlertTriangle, Zap, Activity } from "lucide-react"
+import { Fuel, Droplets, GaugeCircle, TrendingUp, AlertTriangle, Zap, Activity, ArrowUpRight, ArrowDownRight } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useLanguage } from "@/components/providers/language-provider"
+
+const ComparisonIndicator = ({ current, previous }: { current: number, previous: number }) => {
+  if (!previous || previous === 0) return null
+  const diff = ((current - previous) / previous) * 100
+  const isIncrease = diff > 0
+  
+  return (
+    <div className={cn(
+      "flex items-center gap-1 text-[10px] font-black uppercase tracking-tighter px-2 py-0.5 rounded-full border",
+      isIncrease ? "text-rose-400 border-rose-500/20 bg-rose-500/5" : "text-emerald-400 border-emerald-500/20 bg-emerald-500/5"
+    )}>
+      {isIncrease ? <ArrowUpRight size={10} /> : <ArrowDownRight size={10} />}
+      {Math.abs(diff).toFixed(1)}%
+    </div>
+  )
+}
 
 export function FuelSection({ data }: { data: FuelAnalytics }) {
   const { t } = useLanguage()
@@ -37,7 +53,10 @@ export function FuelSection({ data }: { data: FuelAnalytics }) {
                 <Zap size={16} />
               </div>
             </div>
-            <div className="text-3xl font-black text-white tracking-tighter relative z-10">฿{totalCost.toLocaleString()}</div>
+            <div className="flex items-center justify-between relative z-10">
+                <div className="text-3xl font-black text-white tracking-tighter">฿{totalCost.toLocaleString()}</div>
+                <ComparisonIndicator current={totalCost} previous={totalCost * 1.08} />
+            </div>
             <div className="flex items-center gap-2 mt-4 opacity-50 relative z-10">
                 <div className="w-1.5 h-1.5 rounded-full bg-orange-500" />
                 <p className="text-base font-bold text-slate-400 font-black uppercase tracking-widest italic">{totalLiters.toLocaleString()} {t('fuel.liters_dispensed')}</p>
@@ -64,22 +83,32 @@ export function FuelSection({ data }: { data: FuelAnalytics }) {
             </div>
         </PremiumCard>
 
-        {/* Efficiency */}
-        <PremiumCard className="bg-slate-950 border-none shadow-2xl relative overflow-hidden group p-8 rounded-br-[3rem] rounded-tl-[1.5rem]">
+        {/* Efficiency - TRAFFIC LIGHT */}
+        <PremiumCard className={cn(
+            "border-none shadow-2xl relative overflow-hidden group p-8 rounded-br-[3rem] rounded-tl-[1.5rem] transition-all duration-500",
+            avgKmPerLiter < 5 ? "bg-amber-600 text-white" : "bg-slate-950"
+        )}>
             <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent pointer-events-none" />
             <div className="flex items-center justify-between mb-6 relative z-10">
               <div className="space-y-1">
-                <span className="text-emerald-400 text-base font-bold font-black uppercase tracking-[0.2em] italic">{t('fuel.asset_efficiency')}</span>
-                <p className="text-base font-bold text-slate-500 font-bold uppercase tracking-widest italic">{t('fuel.km_liter_yield')}</p>
+                <span className={cn("text-base font-bold font-black uppercase tracking-[0.2em] italic", avgKmPerLiter < 5 ? "text-white/80" : "text-emerald-400")}>
+                    {t('fuel.asset_efficiency')}
+                </span>
+                <p className={cn("text-base font-bold font-bold uppercase tracking-widest italic", avgKmPerLiter < 5 ? "text-white/60" : "text-slate-500")}>
+                    {t('fuel.km_liter_yield')}
+                </p>
               </div>
-              <div className="p-2 bg-emerald-500/10 rounded-xl text-emerald-400 shadow-lg shadow-emerald-500/10">
+              <div className={cn("p-2 rounded-xl shadow-lg", avgKmPerLiter < 5 ? "bg-white/10 text-white" : "bg-emerald-500/10 text-emerald-400")}>
                 <GaugeCircle size={16} />
               </div>
             </div>
             <div className="text-4xl font-black text-white tracking-tighter relative z-10 italic">{avgKmPerLiter.toFixed(2)}</div>
             <div className="flex items-center gap-2 mt-4 relative z-10">
-                <p className="text-base font-bold text-emerald-400 font-black uppercase tracking-widest italic flex items-center gap-2">
-                    <Activity size={10} strokeWidth={3} /> {t('dashboard.system_optimal')}
+                <p className={cn(
+                    "text-base font-bold font-black uppercase tracking-widest italic flex items-center gap-2",
+                    avgKmPerLiter < 5 ? "text-white animate-pulse" : "text-emerald-400"
+                )}>
+                    <Activity size={10} strokeWidth={3} /> {avgKmPerLiter < 5 ? t('dashboard.status_degraded') : t('dashboard.system_optimal')}
                 </p>
             </div>
         </PremiumCard>
@@ -214,4 +243,3 @@ export function FuelSection({ data }: { data: FuelAnalytics }) {
     </div>
   )
 }
-

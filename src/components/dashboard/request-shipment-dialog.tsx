@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useLanguage } from "@/components/providers/language-provider"
 import { Calendar, MapPin, Package, StickyNote, Send, CheckCircle2 } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { PremiumButton } from "@/components/ui/premium-button"
@@ -24,6 +25,7 @@ interface RequestShipmentDialogProps {
 }
 
 export function RequestShipmentDialog({ open, onOpenChange }: RequestShipmentDialogProps) {
+    const { t } = useLanguage()
     const [loading, setLoading] = useState(false)
     const [success, setSuccess] = useState(false)
     const [formData, setFormData] = useState({
@@ -53,12 +55,12 @@ export function RequestShipmentDialog({ open, onOpenChange }: RequestShipmentDia
                         Notes: ""
                     })
                 }, 2000)
-                toast.success("ส่งคำขอเรียบร้อยแล้ว")
+                toast.success(t('shipment.toast_success'))
             } else {
                 toast.error(res.message)
             }
         } catch {
-            toast.error("เกิดข้อผิดพลาดในการส่งคำขอ")
+            toast.error(t('shipment.toast_error'))
         } finally {
             setLoading(false)
         }
@@ -78,8 +80,8 @@ export function RequestShipmentDialog({ open, onOpenChange }: RequestShipmentDia
                             <div className="w-20 h-20 bg-emerald-500 rounded-full flex items-center justify-center mb-6 shadow-2xl shadow-emerald-500/20">
                                 <CheckCircle2 className="text-white w-10 h-10" />
                             </div>
-                            <h3 className="text-2xl font-black text-gray-900 mb-2 tracking-tighter">ส่งคำขอสำเร็จ!</h3>
-                            <p className="text-gray-500 font-bold uppercase tracking-widest text-base font-bold">เราได้รับข้อมูลของคุณแล้ว แอดมินจะรีบดำเนินการให้โดยเร็วที่สุด</p>
+                            <h3 className="text-2xl font-black text-gray-900 mb-2 tracking-tighter">{t('shipment.success_title')}</h3>
+                            <p className="text-gray-500 font-bold uppercase tracking-widest text-base font-bold">{t('shipment.success_desc')}</p>
                         </motion.div>
                     ) : (
                         <motion.div
@@ -92,10 +94,10 @@ export function RequestShipmentDialog({ open, onOpenChange }: RequestShipmentDia
                                     <div className="p-2 bg-emerald-500 rounded-xl text-white">
                                         <Package size={20} />
                                     </div>
-                                    <DialogTitle className="text-2xl font-black tracking-tighter text-gray-900">ขอนัดคิวงานใหม่</DialogTitle>
+                                    <DialogTitle className="text-2xl font-black tracking-tighter text-gray-900">{t('shipment.title_request')}</DialogTitle>
                                 </div>
                                 <DialogDescription className="text-gray-500 font-bold uppercase tracking-widest text-base font-bold">
-                                    Request New Shipment
+                                    {t('shipment.subtitle_request')}
                                 </DialogDescription>
                             </DialogHeader>
 
@@ -103,7 +105,7 @@ export function RequestShipmentDialog({ open, onOpenChange }: RequestShipmentDia
                                 <div className="grid grid-cols-1 gap-6">
                                     <div className="space-y-2">
                                         <Label className="text-base font-bold font-black uppercase tracking-widest text-gray-400 flex items-center gap-2">
-                                            <Calendar size={14} className="text-emerald-500" /> วันที่ต้องการให้รถเข้า
+                                            <Calendar size={14} className="text-emerald-500" /> {t('shipment.plan_date')}
                                         </Label>
                                         <Input 
                                             type="date"
@@ -117,10 +119,10 @@ export function RequestShipmentDialog({ open, onOpenChange }: RequestShipmentDia
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="space-y-2">
                                             <Label className="text-base font-bold font-black uppercase tracking-widest text-gray-400 flex items-center gap-2">
-                                                <MapPin size={14} className="text-emerald-500" /> สถานที่รับของ
+                                                <MapPin size={14} className="text-emerald-500" /> {t('shipment.origin')}
                                             </Label>
                                             <Input 
-                                                placeholder="เช่น นวนคร"
+                                                placeholder={t('shipment.placeholder_origin')}
                                                 required
                                                 value={formData.Origin_Location}
                                                 onChange={(e) => setFormData(prev => ({ ...prev, Origin_Location: e.target.value }))}
@@ -129,10 +131,10 @@ export function RequestShipmentDialog({ open, onOpenChange }: RequestShipmentDia
                                         </div>
                                         <div className="space-y-2">
                                             <Label className="text-base font-bold font-black uppercase tracking-widest text-gray-400 flex items-center gap-2">
-                                                <MapPin size={14} className="text-amber-500" /> สถานที่ส่งของ
+                                                <MapPin size={14} className="text-amber-500" /> {t('shipment.destination')}
                                             </Label>
                                             <Input 
-                                                placeholder="เช่น สมุทรปราการ"
+                                                placeholder={t('shipment.placeholder_destination')}
                                                 required
                                                 value={formData.Dest_Location}
                                                 onChange={(e) => setFormData(prev => ({ ...prev, Dest_Location: e.target.value }))}
@@ -143,10 +145,10 @@ export function RequestShipmentDialog({ open, onOpenChange }: RequestShipmentDia
 
                                     <div className="space-y-2">
                                         <Label className="text-base font-bold font-black uppercase tracking-widest text-gray-400 flex items-center gap-2">
-                                            <Package size={14} className="text-blue-500" /> ประเภทสินค้า / น้ำหนัก
+                                            <Package size={14} className="text-blue-500" /> {t('shipment.cargo')}
                                         </Label>
                                         <Input 
-                                            placeholder="เช่น สินค้าอุปโภค (2 ตัน)"
+                                            placeholder={t('shipment.placeholder_cargo')}
                                             required
                                             value={formData.Cargo_Type}
                                             onChange={(e) => setFormData(prev => ({ ...prev, Cargo_Type: e.target.value }))}
@@ -156,10 +158,10 @@ export function RequestShipmentDialog({ open, onOpenChange }: RequestShipmentDia
 
                                     <div className="space-y-2">
                                         <Label className="text-base font-bold font-black uppercase tracking-widest text-gray-400 flex items-center gap-2">
-                                            <StickyNote size={14} className="text-purple-500" /> หมายเหตุเพิ่มเติม
+                                            <StickyNote size={14} className="text-purple-500" /> {t('shipment.notes')}
                                         </Label>
                                         <Textarea 
-                                            placeholder="ระบุเบอร์โทรติดต่อ หรือรายละเอียดอื่นๆ"
+                                            placeholder={t('shipment.placeholder_notes')}
                                             rows={3}
                                             value={formData.Notes}
                                             onChange={(e) => setFormData(prev => ({ ...prev, Notes: e.target.value }))}
@@ -174,10 +176,10 @@ export function RequestShipmentDialog({ open, onOpenChange }: RequestShipmentDia
                                         disabled={loading}
                                         className="w-full h-14 rounded-2xl shadow-xl shadow-emerald-500/20 text-lg group"
                                     >
-                                        {loading ? "กำลังส่งข้อมูล..." : (
+                                        {loading ? t('shipment.submitting') : (
                                             <>
                                                 <Send size={20} className="mr-2 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
-                                                ยืนยันการส่งคำขอ
+                                                {t('shipment.submit_btn')}
                                             </>
                                         )}
                                     </PremiumButton>

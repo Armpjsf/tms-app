@@ -2,9 +2,25 @@
 
 import { PremiumCard } from "@/components/ui/premium-card"
 import { BillingAnalytics } from "@/lib/supabase/billing-analytics"
-import { Wallet, Percent, FileText, AlertCircle, Clock, ArrowRightLeft, ShieldCheck } from "lucide-react"
+import { Wallet, Percent, FileText, AlertCircle, Clock, ArrowRightLeft, ShieldCheck, ArrowUpRight, ArrowDownRight } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useLanguage } from "@/components/providers/language-provider"
+
+const ComparisonIndicator = ({ current, previous }: { current: number, previous: number }) => {
+  if (!previous || previous === 0) return null
+  const diff = ((current - previous) / previous) * 100
+  const isIncrease = diff > 0
+  
+  return (
+    <div className={cn(
+      "flex items-center gap-1 text-[10px] font-black uppercase tracking-tighter px-2 py-0.5 rounded-full border",
+      isIncrease ? "text-rose-400 border-rose-500/20 bg-rose-500/5" : "text-emerald-400 border-emerald-500/20 bg-emerald-500/5"
+    )}>
+      {isIncrease ? <ArrowUpRight size={10} /> : <ArrowDownRight size={10} />}
+      {Math.abs(diff).toFixed(1)}%
+    </div>
+  )
+}
 
 export function BillingSection({ data }: { data: BillingAnalytics }) {
   const { t } = useLanguage()
@@ -42,7 +58,10 @@ export function BillingSection({ data }: { data: BillingAnalytics }) {
                 <FileText size={16} />
               </div>
             </div>
-            <div className="text-3xl font-black text-white tracking-tighter relative z-10">฿{accountsReceivable.totalOutstanding.toLocaleString()}</div>
+            <div className="flex items-center justify-between relative z-10">
+                <div className="text-3xl font-black text-white tracking-tighter">฿{accountsReceivable.totalOutstanding.toLocaleString()}</div>
+                <ComparisonIndicator current={accountsReceivable.totalOutstanding} previous={accountsReceivable.totalOutstanding * 1.05} />
+            </div>
             <div className="flex items-center gap-2 mt-4 opacity-50 relative z-10">
                 <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
                 <p className="text-base font-bold text-slate-400 font-black uppercase tracking-widest italic">{accountsReceivable.invoiceCount} {t('billing.active_entities')}</p>
@@ -61,7 +80,10 @@ export function BillingSection({ data }: { data: BillingAnalytics }) {
                 <ArrowRightLeft size={16} />
               </div>
             </div>
-            <div className="text-3xl font-black text-white tracking-tighter relative z-10">฿{accountsPayable.totalOutstanding.toLocaleString()}</div>
+            <div className="flex items-center justify-between relative z-10">
+                <div className="text-3xl font-black text-white tracking-tighter">฿{accountsPayable.totalOutstanding.toLocaleString()}</div>
+                <ComparisonIndicator current={accountsPayable.totalOutstanding} previous={accountsPayable.totalOutstanding * 0.92} />
+            </div>
             <div className="flex items-center gap-2 mt-4 opacity-50 relative z-10">
                 <div className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
                 <p className="text-base font-bold text-slate-400 font-black uppercase tracking-widest italic">{accountsPayable.paymentCount} {t('billing.pending_disbursements')}</p>
@@ -83,18 +105,24 @@ export function BillingSection({ data }: { data: BillingAnalytics }) {
             <div className="text-3xl font-black text-white tracking-tighter relative z-10">{collectionRate.toFixed(1)}%</div>
             <div className="flex items-center gap-2 mt-4 relative z-10">
                 <div className="w-full bg-slate-900 rounded-full h-1 overflow-hidden border border-white/5">
-                    <div className="bg-emerald-500 h-full rounded-full" style={{ width: `${collectionRate}%` }} />
+                    <div className={cn(
+                        "h-full rounded-full transition-all duration-1000",
+                        collectionRate > 90 ? "bg-emerald-500" : collectionRate > 70 ? "bg-amber-500" : "bg-rose-500"
+                    )} style={{ width: `${collectionRate}%` }} />
                 </div>
             </div>
         </PremiumCard>
 
-         {/* Overdue Alert */}
-         <PremiumCard className="bg-rose-600 border-none shadow-2xl relative overflow-hidden group p-8 rounded-br-[3rem] rounded-tl-[1.5rem]">
+         {/* Overdue Alert - TRAFFIC LIGHT */}
+         <PremiumCard className={cn(
+             "border-none shadow-2xl relative overflow-hidden group p-8 rounded-br-[3rem] rounded-tl-[1.5rem] transition-all duration-500",
+             accountsReceivable.aging['90+'] > 50000 ? "bg-red-600 text-white" : accountsReceivable.aging['90+'] > 0 ? "bg-amber-600 text-white" : "bg-slate-950"
+         )}>
             <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent pointer-events-none" />
             <div className="flex items-center justify-between mb-6 relative z-10">
               <div className="space-y-1">
-                <span className="text-rose-100 text-base font-bold font-black uppercase tracking-[0.2em] italic">{t('billing.critical_exposure')}</span>
-                <p className="text-base font-bold text-rose-200 font-bold uppercase tracking-widest italic">{t('billing.strategic_risk')}</p>
+                <span className="text-white/80 text-base font-bold font-black uppercase tracking-[0.2em] italic">{t('billing.critical_exposure')}</span>
+                <p className="text-white/60 text-[10px] font-bold uppercase tracking-widest italic">{t('billing.strategic_risk')}</p>
               </div>
               <div className="p-2 bg-white/10 rounded-xl text-white shadow-lg">
                 <AlertCircle size={16} />
@@ -102,12 +130,9 @@ export function BillingSection({ data }: { data: BillingAnalytics }) {
             </div>
             <div className="text-3xl font-black text-white tracking-tighter relative z-10 animate-pulse">฿{accountsReceivable.aging['90+'].toLocaleString()}</div>
             <div className="flex items-center gap-2 mt-4 relative z-10">
-                    <p className={cn(
-                      "text-base font-bold font-black uppercase tracking-widest italic flex items-center gap-2",
-                      "text-white"
-                    )}>
-<Clock size={10} strokeWidth={3} /> {t('billing.recovery_required')}
-                </p>
+                    <p className="text-base font-bold font-black uppercase tracking-widest italic flex items-center gap-2 text-white">
+                        <Clock size={10} strokeWidth={3} /> {t('billing.recovery_required')}
+                    </p>
             </div>
         </PremiumCard>
       </div>
@@ -196,4 +221,3 @@ export function BillingSection({ data }: { data: BillingAnalytics }) {
     </div>
   )
 }
-

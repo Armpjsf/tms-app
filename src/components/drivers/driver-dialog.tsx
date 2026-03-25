@@ -9,10 +9,10 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { createDriver, updateDriver, type DriverFormData } from "@/app/drivers/actions"
-import { Loader2, User, Phone, Key, Calendar, Building2, Car, Landmark, Save, X } from "lucide-react"
+import { Loader2, User, Phone, Key, Calendar, Landmark, Save } from "lucide-react"
 import { Driver } from "@/lib/supabase/drivers"
 import { BANKS } from "@/lib/constants/banks"
-import { cn } from "@/lib/utils"
+import { useLanguage } from "@/components/providers/language-provider"
 
 type DriverDialogProps = {
   mode?: 'create' | 'edit'
@@ -36,6 +36,7 @@ export function DriverDialog({
   onOpenChange
 }: DriverDialogProps) {
   const router = useRouter()
+  const { t } = useLanguage()
   const [loading, setLoading] = useState(false)
   const [internalOpen, setInternalOpen] = useState(false)
   
@@ -73,14 +74,15 @@ export function DriverDialog({
       }
       
       if (!result.success) {
-        throw new Error(result.message || 'Operation failed')
+        throw new Error(result.message || t('common.error'))
       }
 
-      toast.success(mode === 'create' ? 'เพิ่มคนขับสำเร็จ' : 'แก้ไขข้อมูลสำเร็จ')
+      toast.success(t('common.success'))
       setShow(false)
       router.refresh()
-    } catch (err: any) {
-      toast.error(err.message || 'เกิดข้อผิดพลาด กรุณาลองใหม่')
+    } catch (err: unknown) {
+      const error = err as Error
+      toast.error(error.message || t('common.error'))
     } finally {
       setLoading(false)
     }
@@ -99,9 +101,9 @@ export function DriverDialog({
               </div>
               <div>
                   <DialogTitle className="text-3xl font-black tracking-tighter uppercase whitespace-nowrap">
-                      {mode === 'create' ? 'Driver Deployment' : 'Intelligence Update'}
+                      {mode === 'create' ? t('drivers.dialog.title_add') : t('drivers.dialog.title_edit')}
                   </DialogTitle>
-                  <p className="text-slate-500 text-base font-bold font-black uppercase tracking-[0.3em]">System Configuration Layer</p>
+                  <p className="text-slate-500 text-base font-bold font-black uppercase tracking-[0.3em]">{t('drivers.dialog.subtitle')}</p>
               </div>
           </div>
         </DialogHeader>
@@ -110,7 +112,7 @@ export function DriverDialog({
           {/* Section: Basic Identity */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <Label htmlFor="Driver_ID" className="text-base font-bold font-black uppercase tracking-widest text-slate-500 ml-1">Serial ID</Label>
+                <Label htmlFor="Driver_ID" className="text-base font-bold font-black uppercase tracking-widest text-slate-500 ml-1">{t('drivers.dialog.serial_id')}</Label>
                 <div className="relative">
                     <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600" size={16} />
                     <Input
@@ -126,7 +128,7 @@ export function DriverDialog({
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="Driver_Name" className="text-base font-bold font-black uppercase tracking-widest text-slate-500 ml-1">Full Designation</Label>
+                <Label htmlFor="Driver_Name" className="text-base font-bold font-black uppercase tracking-widest text-slate-500 ml-1">{t('drivers.dialog.full_designation')}</Label>
                 <Input
                   id="Driver_Name"
                   value={formData.Driver_Name}
@@ -138,7 +140,7 @@ export function DriverDialog({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="Mobile_No" className="text-base font-bold font-black uppercase tracking-widest text-slate-500 ml-1">Comm Channel</Label>
+                <Label htmlFor="Mobile_No" className="text-base font-bold font-black uppercase tracking-widest text-slate-500 ml-1">{t('drivers.dialog.comm_channel')}</Label>
                 <div className="relative">
                     <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600" size={16} />
                     <Input
@@ -153,7 +155,7 @@ export function DriverDialog({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="Password" className="text-base font-bold font-black uppercase tracking-widest text-slate-500 ml-1">Security Key</Label>
+                <Label htmlFor="Password" className="text-base font-bold font-black uppercase tracking-widest text-slate-500 ml-1">{t('drivers.dialog.security_key')}</Label>
                 <div className="relative">
                     <Key className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600" size={16} />
                     <Input
@@ -174,7 +176,7 @@ export function DriverDialog({
           {/* Section: Operational Data */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <Label htmlFor="Expire_Date" className="text-base font-bold font-black uppercase tracking-widest text-slate-500 ml-1">Licence Integrity Date</Label>
+                <Label htmlFor="Expire_Date" className="text-base font-bold font-black uppercase tracking-widest text-slate-500 ml-1">{t('drivers.dialog.licence_integrity_date')}</Label>
                 <div className="relative">
                     <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600" size={16} />
                     <Input
@@ -188,10 +190,10 @@ export function DriverDialog({
               </div>
 
               <div className="space-y-2">
-                <Label className="text-base font-bold font-black uppercase tracking-widest text-slate-500 ml-1">Branch HQ</Label>
+                <Label className="text-base font-bold font-black uppercase tracking-widest text-slate-500 ml-1">{t('drivers.dialog.branch_hq')}</Label>
                 <Select value={formData.Branch_ID || undefined} onValueChange={(val) => setFormData({ ...formData, Branch_ID: val })}>
                     <SelectTrigger className="h-12 rounded-xl bg-white/5 border-white/10 text-white">
-                        <SelectValue placeholder="Command Center" />
+                        <SelectValue placeholder={t('common.all')} />
                     </SelectTrigger>
                     <SelectContent className="bg-slate-900 border-white/10 text-white">
                         {Array.isArray(branches) && branches.map((b) => (
@@ -202,7 +204,7 @@ export function DriverDialog({
               </div>
 
               <div className="space-y-2">
-                <Label className="text-base font-bold font-black uppercase tracking-widest text-slate-500 ml-1">Subcontractor Origin</Label>
+                <Label className="text-base font-bold font-black uppercase tracking-widest text-slate-500 ml-1">{t('drivers.dialog.subcontractor_origin')}</Label>
                 <Select value={formData.Sub_ID || "__independent__"} onValueChange={(val) => setFormData({ ...formData, Sub_ID: val === "__independent__" ? "" : val })}>
                     <SelectTrigger className="h-12 rounded-xl bg-white/5 border-white/10 text-white">
                         <SelectValue placeholder="Independent" />
@@ -217,13 +219,13 @@ export function DriverDialog({
               </div>
 
               <div className="space-y-2">
-                <Label className="text-base font-bold font-black uppercase tracking-widest text-slate-500 ml-1">Asset Allocation</Label>
+                <Label className="text-base font-bold font-black uppercase tracking-widest text-slate-500 ml-1">{t('drivers.dialog.asset_allocation')}</Label>
                 <Select value={formData.Vehicle_Plate || "__none__"} onValueChange={(val) => setFormData({ ...formData, Vehicle_Plate: val === "__none__" ? "" : val })}>
                     <SelectTrigger className="h-12 rounded-xl bg-white/5 border-white/10 text-white">
-                        <SelectValue placeholder="No Vehicle" />
+                        <SelectValue placeholder={t('common.no_data')} />
                     </SelectTrigger>
                     <SelectContent className="bg-slate-900 border-white/10 text-white">
-                        <SelectItem value="__none__">No Assigned Asset</SelectItem>
+                        <SelectItem value="__none__">{t('common.no_data')}</SelectItem>
                         {Array.isArray(vehicles) && vehicles.map((v) => (
                             <SelectItem key={v.Vehicle_Plate} value={v.Vehicle_Plate}>{v.Vehicle_Plate}</SelectItem>
                         ))}
@@ -242,13 +244,13 @@ export function DriverDialog({
             </div>
             
             <div className="space-y-2">
-                <Label className="text-base font-bold font-black text-slate-500 uppercase tracking-widest">Institution</Label>
+                <Label className="text-base font-bold font-black text-slate-500 uppercase tracking-widest">{t('drivers.dialog.institution')}</Label>
                 <Select value={formData.Bank_Name || "__none__"} onValueChange={(val) => setFormData({ ...formData, Bank_Name: val === "__none__" ? "" : val })}>
                     <SelectTrigger className="h-12 border-white/10 bg-black/20 text-white">
-                        <SelectValue placeholder="Select Institution" />
+                        <SelectValue placeholder={t('common.search')} />
                     </SelectTrigger>
                     <SelectContent className="bg-slate-900 border-white/10 text-white">
-                        <SelectItem value="__none__">Unspecified</SelectItem>
+                        <SelectItem value="__none__">{t('common.no_data')}</SelectItem>
                         {BANKS.map((b) => (
                             <SelectItem key={b.value} value={b.value}>{b.label}</SelectItem>
                         ))}
@@ -258,7 +260,7 @@ export function DriverDialog({
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                    <Label className="text-base font-bold font-black text-slate-500 uppercase tracking-widest">Account Serial</Label>
+                    <Label className="text-base font-bold font-black text-slate-500 uppercase tracking-widest">{t('drivers.dialog.account_serial')}</Label>
                     <Input
                         value={formData.Bank_Account_No}
                         onChange={(e) => setFormData({ ...formData, Bank_Account_No: e.target.value })}
@@ -267,7 +269,7 @@ export function DriverDialog({
                     />
                 </div>
                 <div className="space-y-2">
-                    <Label className="text-base font-bold font-black text-slate-500 uppercase tracking-widest">Legal Account Name</Label>
+                    <Label className="text-base font-bold font-black text-slate-500 uppercase tracking-widest">{t('drivers.dialog.legal_account_name')}</Label>
                     <Input
                         value={formData.Bank_Account_Name}
                         onChange={(e) => setFormData({ ...formData, Bank_Account_Name: e.target.value })}
@@ -285,7 +287,7 @@ export function DriverDialog({
                 onClick={() => setShow(false)}
                 className="h-14 px-8 rounded-2xl text-slate-500 font-black uppercase tracking-widest text-base font-bold hover:text-white"
             >
-              Abort
+              {t('drivers.dialog.abort')}
             </Button>
             <Button 
                 type="submit" 
@@ -293,7 +295,7 @@ export function DriverDialog({
                 className="h-14 px-12 rounded-2xl bg-primary hover:brightness-110 text-white font-black uppercase tracking-widest text-base font-bold shadow-xl shadow-primary/20 gap-3"
             >
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save size={18} />}
-              {mode === 'create' ? 'EXECUTE REGISTRATION' : 'SYNCHRONIZE DATA'}
+              {mode === 'create' ? t('drivers.dialog.execute') : t('drivers.dialog.sync')}
             </Button>
           </div>
         </form>

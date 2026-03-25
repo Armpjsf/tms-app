@@ -6,7 +6,7 @@ import { dictionaries, Language } from '@/lib/i18n/dictionaries';
 type LanguageContextType = {
   language: Language;
   setLanguage: (lang: Language) => void;
-  t: (path: string) => string;
+  t: (path: string, data?: Record<string, any>) => string;
 };
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
@@ -27,19 +27,26 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   };
 
   // Helper function to get nested values from dictionary
-  const t = (path: string) => {
+  const t = (path: string, data?: Record<string, any>) => {
     const keys = path.split('.');
     let result: any = dictionaries[language];
     
     for (const key of keys) {
-      if (result[key]) {
+      if (result && result[key]) {
         result = result[key];
       } else {
-        return path; // Return path if key not found
+        return path;
       }
     }
     
-    return result as string;
+    let translated = result as string;
+    if (data) {
+      Object.keys(data).forEach(key => {
+        translated = translated.replace(`{{${key}}}`, data[key]);
+      });
+    }
+    
+    return translated;
   };
 
   return (

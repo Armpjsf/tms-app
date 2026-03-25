@@ -12,6 +12,7 @@ import { createRepairTicket, updateRepairTicket } from "@/app/maintenance/action
 import { Loader2 } from "lucide-react"
 import { ImageUpload } from "@/components/ui/image-upload"
 import Logger from "@/lib/utils/logger"
+import { useLanguage } from "@/components/providers/language-provider"
 
 import { Driver } from "@/lib/supabase/drivers"
 
@@ -46,6 +47,7 @@ export function MaintenanceDialog({
   onOpenChange,
   initialData
 }: MaintenanceDialogProps) {
+  const { t } = useLanguage()
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [internalOpen, setInternalOpen] = useState(false)
@@ -141,7 +143,7 @@ export function MaintenanceDialog({
       {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
       <DialogContent className="sm:max-w-[425px] bg-white/95 border-gray-200 text-white max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{initialData ? 'แก้ไขข้อมูลการซ่อม' : 'แจ้งซ่อมบำรุง'}</DialogTitle>
+          <DialogTitle>{initialData ? t('maintenance.title_edit') : t('maintenance.title_add')}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 mt-4">
           
@@ -153,7 +155,7 @@ export function MaintenanceDialog({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="Date_Report">วัน-เวลาที่แจ้ง</Label>
+            <Label htmlFor="Date_Report">{t('maintenance.date_report')}</Label>
             <Input
               id="Date_Report"
               type="datetime-local"
@@ -166,10 +168,10 @@ export function MaintenanceDialog({
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-                <Label htmlFor="Driver_ID">ผู้แจ้ง</Label>
+                <Label htmlFor="Driver_ID">{t('maintenance.reporter')}</Label>
                 <Select value={formData.Driver_ID || undefined} onValueChange={(val) => setFormData({ ...formData, Driver_ID: val })}>
                     <SelectTrigger className="w-full h-10 border-gray-200 bg-white/5 text-white">
-                        <SelectValue placeholder="เลือกคนขับ" />
+                        <SelectValue placeholder={t('maintenance.placeholder_driver')} />
                     </SelectTrigger>
                     <SelectContent>
                         {drivers.map((d: Driver) => (
@@ -179,10 +181,10 @@ export function MaintenanceDialog({
                 </Select>
             </div>
             <div className="space-y-2">
-                <Label htmlFor="Vehicle_Plate">ทะเบียนรถ</Label>
+                <Label htmlFor="Vehicle_Plate">{t('maintenance.vehicle')}</Label>
                 <Select value={formData.Vehicle_Plate || undefined} onValueChange={(val) => setFormData({ ...formData, Vehicle_Plate: val })}>
                     <SelectTrigger className="w-full h-10 border-gray-200 bg-white/5 text-white">
-                        <SelectValue placeholder="เลือกทะเบียน" />
+                        <SelectValue placeholder={t('maintenance.placeholder_vehicle')} />
                     </SelectTrigger>
                     <SelectContent>
                         {vehicles.map((v: { Vehicle_Plate: string }) => (
@@ -195,42 +197,42 @@ export function MaintenanceDialog({
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-                <Label htmlFor="Issue_Type">ประเภทปัญหา</Label>
+                <Label htmlFor="Issue_Type">{t('maintenance.issue_type')}</Label>
                 <Select value={formData.Issue_Type} onValueChange={(val) => setFormData({ ...formData, Issue_Type: val })}>
                     <SelectTrigger className="w-full h-10 border-gray-200 bg-white/5 text-white">
-                        <SelectValue placeholder="เลือกประเภท" />
+                        <SelectValue placeholder={t('maintenance.placeholder_issue')} />
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="Engine">เครื่องยนต์</SelectItem>
-                        <SelectItem value="Tire">ยาง</SelectItem>
-                        <SelectItem value="Battery">แบตเตอรี่</SelectItem>
-                        <SelectItem value="Body">ตัวถัง</SelectItem>
-                        <SelectItem value="Other">อื่นๆ</SelectItem>
+                        <SelectItem value="Engine">{t('maintenance.engine')}</SelectItem>
+                        <SelectItem value="Tire">{t('maintenance.tire')}</SelectItem>
+                        <SelectItem value="Battery">{t('maintenance.battery')}</SelectItem>
+                        <SelectItem value="Body">{t('maintenance.body')}</SelectItem>
+                        <SelectItem value="Other">{t('maintenance.other')}</SelectItem>
                     </SelectContent>
                 </Select>
             </div>
              <div className="space-y-2">
-                <Label htmlFor="Priority">ความสำคัญ</Label>
+                <Label htmlFor="Priority">{t('maintenance.priority')}</Label>
                 <Select value={formData.Priority} onValueChange={(val) => setFormData({ ...formData, Priority: val })}>
                     <SelectTrigger className="w-full h-10 border-gray-200 bg-white/5 text-white">
-                        <SelectValue placeholder="เลือกระดับ" />
+                        <SelectValue placeholder={t('maintenance.placeholder_priority')} />
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="Low">Low</SelectItem>
-                        <SelectItem value="Medium">Medium</SelectItem>
-                        <SelectItem value="High">High</SelectItem>
+                        <SelectItem value="Low">{t('maintenance.low')}</SelectItem>
+                        <SelectItem value="Medium">{t('maintenance.medium')}</SelectItem>
+                        <SelectItem value="High">{t('maintenance.high')}</SelectItem>
                     </SelectContent>
                 </Select>
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="Description">รายละเอียดปัญหา</Label>
+            <Label htmlFor="Description">{t('maintenance.description')}</Label>
             <Textarea
               id="Description"
               value={formData.Description}
               onChange={(e) => setFormData({ ...formData, Description: e.target.value })}
-              placeholder="รายละเอียด..."
+              placeholder={t('maintenance.placeholder_description')}
               required
               className="bg-white/5 border-gray-200"
             />
@@ -240,21 +242,21 @@ export function MaintenanceDialog({
              <div className="pt-4 border-t border-gray-200 space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                        <Label htmlFor="Status">สถานะ</Label>
+                        <Label htmlFor="Status">{t('maintenance.status')}</Label>
                         <Select value={formData.Status} onValueChange={(val) => setFormData({ ...formData, Status: val })}>
                             <SelectTrigger className="w-full h-10 border-gray-200 bg-white/5 text-white">
-                                <SelectValue placeholder="เลือกสถานะ" />
+                                <SelectValue placeholder={t('maintenance.placeholder_status')} />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="Pending">รอดำเนินการ</SelectItem>
-                                <SelectItem value="In Progress">กำลังซ่อม</SelectItem>
-                                <SelectItem value="Completed">เสร็จสิ้น</SelectItem>
-                                <SelectItem value="Cancelled">ยกเลิก</SelectItem>
+                                <SelectItem value="Pending">{t('maintenance.pending')}</SelectItem>
+                                <SelectItem value="In Progress">{t('maintenance.in_progress')}</SelectItem>
+                                <SelectItem value="Completed">{t('maintenance.completed')}</SelectItem>
+                                <SelectItem value="Cancelled">{t('maintenance.cancelled')}</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
                     <div className="space-y-2">
-                        <Label htmlFor="Cost_Total">ค่าใช้จ่าย</Label>
+                        <Label htmlFor="Cost_Total">{t('maintenance.cost')}</Label>
                          <Input
                             id="Cost_Total"
                             type="number"
@@ -265,12 +267,12 @@ export function MaintenanceDialog({
                     </div>
                 </div>
                  <div className="space-y-2">
-                    <Label htmlFor="Remark">หมายเหตุ / การแก้ไข</Label>
+                    <Label htmlFor="Remark">{t('maintenance.remark')}</Label>
                     <Textarea
                         id="Remark"
                         value={formData.Remark}
                         onChange={(e) => setFormData({ ...formData, Remark: e.target.value })}
-                        placeholder="บันทึกการซ่อม..."
+                        placeholder={t('maintenance.placeholder_remark')}
                         className="bg-white/5 border-gray-200"
                     />
                 </div>
@@ -279,11 +281,11 @@ export function MaintenanceDialog({
 
           <div className="flex justify-end gap-2 mt-6">
             <Button type="button" variant="ghost" onClick={() => setShow(false)}>
-              ยกเลิก
+              {t('jobs.dialog.abort')}
             </Button>
             <Button type="submit" disabled={loading} className="bg-gradient-to-r from-amber-500 to-orange-600">
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {initialData ? 'บันทึกการแก้ไข' : 'แจ้งซ่อม'}
+              {initialData ? t('common.save') : t('maintenance.title_report_btn') || 'แจ้งซ่อม'}
             </Button>
           </div>
         </form>

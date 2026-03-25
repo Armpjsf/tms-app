@@ -393,6 +393,7 @@ export async function POST(req: NextRequest) {
 
                 try {
                     const audioBuffer = await getMessageContent(event.message.id)
+                    console.log(`[Audio] Downloaded ${audioBuffer.length} bytes for msg ${event.message.id}`)
                     const systemContext = await buildAdminAIContext(branchId, userName)
                     const systemPrompt = `
 ${systemContext}
@@ -403,11 +404,12 @@ ${systemContext}
 4. ตอบกลับผู้ใช้ว่าคุณได้ทำอะไรไปบ้าง
 `.trim()
                     
-                    const aiResponse = await callGeminiMultimodal(systemPrompt, "วิเคราะห์เสียงนี้", "audio/x-m4a", audioBuffer)
+                    const aiResponse = await callGeminiMultimodal(systemPrompt, "วิเคราะห์เสียงนี้", "audio/aac", audioBuffer)
                     if (aiResponse) {
                         await replyToUser(replyToken, aiResponse)
                     } else {
-                        await replyToUser(replyToken, 'AI ไม่สามารถสรุปคำสั่งเสียงได้ครับ')
+                        console.warn('[Audio] Gemini returned empty response')
+                        await replyToUser(replyToken, 'AI ไม่สามารถสรุปคำสั่งเสียงได้ในขณะนี้ กรุณาลองอีกครั้งครับ')
                     }
                 } catch (err) {
                     console.error('Audio processing error:', err)

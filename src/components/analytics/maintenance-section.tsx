@@ -104,7 +104,7 @@ export function MaintenanceSection({ data }: { data: MaintenanceScheduleData }) 
             </div>
             <div className="text-3xl font-black text-white tracking-tighter relative z-10">฿{totalCostThisMonth.toLocaleString()}</div>
             <div className="flex items-center gap-2 mt-4 relative z-10 opacity-50">
-                 <p className="text-base font-bold text-slate-400 font-black uppercase tracking-widest italic">ALLOCATED BUDGET: NOMINAL</p>
+                 <p className="text-base font-bold text-slate-400 font-black uppercase tracking-widest italic">{t('maintenance.allocated_budget_nominal')}</p>
             </div>
         </PremiumCard>
       </div>

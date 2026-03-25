@@ -75,8 +75,16 @@ function DriverLoginContent() {
         setLoading(false)
       }
     } catch (err: unknown) {
-      console.error(err)
-      setError(err instanceof Error ? err.message : "เกิดข้อผิดพลาดในการสแกน")
+      console.error("Biometric Login Error:", err)
+      const errMessage = err instanceof Error ? err.message : ""
+      
+      if (errMessage.includes("NotAllowedError") || errMessage.includes("SecurityError")) {
+        setError("การเข้าใช้ระบบสแกนถูกปฏิเสธ")
+      } else if (errMessage.includes("InvalidStateError") || errMessage.includes("not found")) {
+        setError("ไม่พบข้อมูลการสแกนนิ้ว/หน้า กรุณาเข้าสู่ระบบด้วยรหัสผ่านก่อนเพื่อลงทะเบียน")
+      } else {
+        setError("ไม่สามารถสแกนได้ในขณะนี้ กรุณาใช้รหัสผ่านแทน")
+      }
       setLoading(false)
     }
   }

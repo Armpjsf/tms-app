@@ -3,8 +3,11 @@ import { getDriverById } from "@/lib/supabase/drivers"
 import { redirect } from "next/navigation"
 import { MobileHeader } from "@/components/mobile/mobile-header"
 import { MobileMaintenanceForm } from "@/components/mobile/maintenance-form"
+import { Suspense } from "react"
 
-export default async function MobileMaintenancePage() {
+export const dynamic = 'force-dynamic'
+
+async function MaintenanceFormContent() {
   const session = await getDriverSession()
   if (!session) redirect('/mobile/login')
 
@@ -19,5 +22,21 @@ export default async function MobileMaintenancePage() {
         defaultVehiclePlate={driver?.Vehicle_Plate || ""} 
       />
     </div>
+  )
+}
+
+export default function MobileMaintenancePage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#050110] pt-20 px-4">
+        <MobileHeader title="แจ้งซ่อมบำรุง" showBack />
+        <div className="flex flex-col items-center justify-center h-[60vh] space-y-4">
+          <div className="w-12 h-12 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
+          <p className="text-slate-400 font-bold">กำลังโหลดข้อมูล...</p>
+        </div>
+      </div>
+    }>
+      <MaintenanceFormContent />
+    </Suspense>
   )
 }

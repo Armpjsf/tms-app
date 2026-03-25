@@ -11,7 +11,9 @@ import {
   getExecutiveKPIs,
   getRouteEfficiency,
   getDriverLeaderboard,
-  getVehicleProfitability 
+  getVehicleProfitability,
+  getDelayRootCause,
+  getRevenueForecast
 } from "@/lib/supabase/analytics"
 import { getBillingAnalytics } from "@/lib/supabase/billing-analytics"
 import { getFuelAnalytics } from "@/lib/supabase/fuel-analytics"
@@ -34,6 +36,8 @@ import { WorkforceSection } from "@/components/analytics/workforce-section"
 import { CustomerRouteSection } from "@/components/analytics/customer-route-section"
 import { ExportAllButton } from "@/components/analytics/export-all-button"
 import { ProfitabilitySection } from "@/components/analytics/profitability-section"
+import { DelayAnalysis } from "@/components/analytics/delay-analysis"
+import { RevenueForecastChart } from "@/components/analytics/revenue-forecast-chart"
 
 import { PremiumCard } from "@/components/ui/premium-card"
 import { BarChart3, TrendingUp, Truck, ShieldAlert, Layers, Trophy, Star, Zap, Activity } from "lucide-react"
@@ -58,6 +62,7 @@ interface DashboardContentProps {
 interface PriorityData {
   financials: any
   revenueTrend: any[]
+  forecastData: any[]
   exeKPIs: any
   opStats: any
   statusDist: any[]
@@ -76,6 +81,7 @@ interface SecondaryData {
   safety: any
   workforce: any
   esgStats: any
+  delayRootCause: any[]
 }
 
 export function DashboardContent({ 
@@ -97,10 +103,11 @@ export function DashboardContent({
     setSecondary(null)
 
     // === PRIORITY GROUP 1: Critical above-the-fold data ===
-    // These 3 query groups are the most important — fetch in parallel
-    const [financials, revenueTrend, exeKPIs, opStats, statusDist, driverLeaderboard, vehicleProfitability, branchPerf] = await Promise.all([
+    // These query groups are the most important — fetch in parallel
+    const [financials, revenueTrend, forecastData, exeKPIs, opStats, statusDist, driverLeaderboard, vehicleProfitability, branchPerf] = await Promise.all([
       getFinancialStats(startDate, endDate, branchId),
       getRevenueTrend(startDate, endDate, branchId),
+      getRevenueForecast(branchId),
       getExecutiveKPIs(startDate, endDate, branchId),
       getOperationalStats(branchId, startDate, endDate),
       getJobStatusDistribution(startDate, endDate, branchId),
@@ -109,12 +116,12 @@ export function DashboardContent({
       getBranchPerformance(startDate, endDate),
     ])
 
-    setPriority({ financials, revenueTrend, exeKPIs, opStats, statusDist, driverLeaderboard, vehicleProfitability, branchPerf })
+    setPriority({ financials, revenueTrend, forecastData, exeKPIs, opStats, statusDist, driverLeaderboard, vehicleProfitability, branchPerf })
     setLoadingPrimary(false)
 
     // === PRIORITY GROUP 2: Below-the-fold secondary data ===
     // Loads after primary is rendered — users see content faster
-    const [topCustomers, subPerf, routes, billing, fuel, maintenance, safety, workforce, esgStats] = await Promise.all([
+    const [topCustomers, subPerf, routes, billing, fuel, maintenance, safety, workforce, esgStats, delayRootCause] = await Promise.all([
       getTopCustomers(startDate, endDate, branchId),
       getSubcontractorPerformance(startDate, endDate, branchId),
       getRouteEfficiency(startDate, endDate, branchId),
@@ -124,9 +131,10 @@ export function DashboardContent({
       getSafetyAnalytics(startDate, endDate, branchId),
       getWorkforceAnalytics(startDate, endDate, branchId),
       getESGStats(startDate, endDate, branchId),
+      getDelayRootCause(startDate, endDate, branchId),
     ])
 
-    setSecondary({ topCustomers, subPerf, routes, billing, fuel, maintenance, safety, workforce, esgStats })
+    setSecondary({ topCustomers, subPerf, routes, billing, fuel, maintenance, safety, workforce, esgStats, delayRootCause })
     setLoadingSecondary(false)
   }, [startDate, endDate, branchId])
 
@@ -152,6 +160,7 @@ export function DashboardContent({
   const {
     financials,
     revenueTrend = [],
+    forecastData = [],
     exeKPIs = {},
     opStats = { fleet: { onTimeDelivery: 0, utilization: 0, health: 0 } } as any,
     statusDist = [],
@@ -170,13 +179,14 @@ export function DashboardContent({
     safety = {},
     workforce = {},
     esgStats = {},
+    delayRootCause = [],
   } = secondary ?? {}
 
   const allData = {
     financials, revenueTrend, topCustomers, statusDist,
     branchPerf, subPerf, billing, fuel, maintenance,
     safety, workforce, routes, driverLeaderboard, vehicleProfitability,
-    esgStats, opStats
+    esgStats, opStats, delayRootCause
   }
 
   return (
@@ -199,7 +209,7 @@ export function DashboardContent({
             </div>
         </div>
 
-        {/* Section 1: Financial Intelligence HUB */}
+        {/* Section 1: Financial Intelligence Center */}
         <section className="space-y-16">
           <div className="flex items-center gap-8 group/h">
               <div className="p-5 bg-emerald-500/20 rounded-3xl text-emerald-500 shadow-[0_0_30px_rgba(16,185,129,0.2)] border-2 border-emerald-500/30 group-hover/h:scale-110 transition-transform duration-500">
@@ -212,6 +222,8 @@ export function DashboardContent({
           </div>
           
           <FinancialSummaryCards data={exeKPIs} />
+
+          <RevenueForecastChart data={forecastData} />
           
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
               <PremiumCard className="lg:col-span-2 overflow-hidden p-0 bg-[#0a0518] border-2 border-white/5 shadow-3xl rounded-br-[6rem] rounded-tl-[3rem]">
@@ -290,7 +302,7 @@ export function DashboardContent({
           {loadingSecondary ? <SectionSkeleton /> : <CustomerRouteSection customers={topCustomers} routes={routes} />}
         </section>
         
-        {/* Section 2: Fleet COMMAND */}
+        {/* Section 2: Fleet Management */}
         <section className="space-y-16">
            <div className="flex items-center gap-8 group/h">
               <div className="p-5 bg-blue-500/20 rounded-3xl text-blue-500 shadow-[0_0_30px_rgba(59,130,246,0.2)] border-2 border-blue-500/30 group-hover/h:scale-110 transition-transform duration-500">
@@ -303,12 +315,13 @@ export function DashboardContent({
            </div>
            
            {loadingSecondary ? <SectionSkeleton /> : <FuelSection data={fuel} />}
+           {loadingSecondary ? <SectionSkeleton /> : <DelayAnalysis data={delayRootCause} />}
            <ProfitabilitySection data={vehicleProfitability} financials={financials} />
            <EfficiencyCharts data={revenueTrend} />
            {loadingSecondary ? <SectionSkeleton /> : <MaintenanceSection data={maintenance} />}
         </section>
 
-        {/* Section 3: Safety HUB */}
+        {/* Section 3: Safety Center */}
         <section className="space-y-16">
            <div className="flex items-center gap-8 group/h">
               <div className="p-5 bg-rose-500/20 rounded-3xl text-rose-500 shadow-[0_0_30px_rgba(244,63,94,0.2)] border-2 border-rose-500/30 group-hover/h:scale-110 transition-transform duration-500">
@@ -331,7 +344,7 @@ export function DashboardContent({
            </div>
         </section>
 
-        {/* Section 4: System Cluster COMMAND */}
+        {/* Section 4: System Cluster Management */}
         <section className="space-y-16">
           <div className="flex items-center gap-8 group/h">
               <div className="p-5 bg-primary/20 rounded-3xl text-primary shadow-[0_0_30px_rgba(255,30,133,0.2)] border-2 border-primary/30 group-hover/h:scale-110 transition-transform duration-500">
@@ -405,4 +418,3 @@ export function DashboardContent({
 const SectionSkeleton = () => (
     <div className="h-96 bg-[#0a0518] rounded-br-[4rem] rounded-tl-[2rem] border border-white/5 animate-pulse" />
 )
-

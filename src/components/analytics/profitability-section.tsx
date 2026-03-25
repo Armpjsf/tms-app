@@ -14,8 +14,17 @@ import {
   PieChart,
   Pie
 } from 'recharts'
-import { Coins, TrendingUp, Truck, Activity, Zap } from "lucide-react"
+import { Coins, TrendingUp, Truck, Activity, Zap, ExternalLink, Info } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useState, useEffect } from "react"
+import { getVehicleJobDetails } from "@/lib/supabase/analytics"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Badge } from "@/components/ui/badge"
 
 type VehicleProfitData = {
     plate: string
@@ -38,10 +47,94 @@ type Props = {
             maintenance: number
         }
     }
+    startDate?: string
+    endDate?: string
 }
 
-export function ProfitabilitySection({ data = [], financials }: Props) {
+function JobDetailsModal({ 
+    plate, 
+    isOpen, 
+    onClose,
+    startDate,
+    endDate 
+}: { 
+    plate: string | null, 
+    isOpen: boolean, 
+    onClose: () => void,
+    startDate?: string,
+    endDate?: string
+}) {
     const { t } = useLanguage()
+    const [jobs, setJobs] = useState<any[]>([])
+    const [loading, setLoading] = useState(false)
+
+    useEffect(() => {
+        if (isOpen && plate) {
+            setLoading(true)
+            getVehicleJobDetails(plate, startDate, endDate)
+                .then(setJobs)
+                .finally(() => setLoading(false))
+        }
+    }, [isOpen, plate, startDate, endDate])
+
+    return (
+        <Dialog open={isOpen} onOpenChange={onClose}>
+            <DialogContent className="max-w-4xl bg-[#0a0518] border-2 border-white/10 text-white rounded-[2rem] overflow-hidden p-0 shadow-3xl">
+                <DialogHeader className="p-8 border-b border-white/5 bg-black/40">
+                    <DialogTitle className="text-2xl font-black italic uppercase flex items-center gap-4">
+                        <div className="p-2 bg-primary/20 rounded-xl text-primary border border-primary/30">
+                            <Truck size={20} />
+                        </div>
+                        {t('analytics.vehicle_audit') || 'Vehicle Mission Audit'}: <span className="text-primary">{plate}</span>
+                    </DialogTitle>
+                </DialogHeader>
+                <div className="p-8 max-h-[60vh] overflow-y-auto custom-scrollbar">
+                    {loading ? (
+                        <div className="py-20 text-center animate-pulse text-slate-500 font-black uppercase tracking-widest">{t('common.loading') || 'Accessing Data...'}</div>
+                    ) : (
+                        <div className="space-y-4">
+                            <table className="w-full text-left border-collapse">
+                                <thead>
+                                    <tr className="border-b border-white/10">
+                                        <th className="py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">{t('common.job_id') || 'JOB ID'}</th>
+                                        <th className="py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">{t('common.customer') || 'CUSTOMER'}</th>
+                                        <th className="py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest text-right">{t('common.revenue') || 'REVENUE'}</th>
+                                        <th className="py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest text-center">{t('common.status') || 'STATUS'}</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-white/5">
+                                    {jobs.map(job => (
+                                        <tr key={job.Job_ID} className="group hover:bg-white/5 transition-colors">
+                                            <td className="py-4 font-bold text-slate-300">{job.Job_ID}</td>
+                                            <td className="py-4">
+                                                <div className="font-bold text-white">{job.Customer_Name}</div>
+                                                <div className="text-[10px] text-slate-500 uppercase font-black">{job.Route_Name}</div>
+                                            </td>
+                                            <td className="py-4 text-right font-black text-primary italic">฿{job.Price_Cust_Total?.toLocaleString()}</td>
+                                            <td className="py-4 text-center">
+                                                <Badge className={cn(
+                                                    "bg-transparent border-2 uppercase font-black text-[9px] tracking-tighter",
+                                                    job.Job_Status === 'Completed' ? "border-emerald-500/50 text-emerald-500" : "border-amber-500/50 text-amber-500"
+                                                )}>
+                                                    {job.Job_Status}
+                                                </Badge>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                </div>
+            </DialogContent>
+        </Dialog>
+    )
+}
+
+export function ProfitabilitySection({ data = [], financials, startDate, endDate }: Props) {
+    const { t } = useLanguage()
+    const [selectedVehicle, setSelectedVehicle] = useState<string | null>(null)
+
     // Sort by profit for the chart
     const topPerformers = [...data].sort((a, b) => b.netProfit - a.netProfit).slice(0, 5)
     
@@ -53,6 +146,14 @@ export function ProfitabilitySection({ data = [], financials }: Props) {
 
     return (
         <div className="space-y-12">
+            <JobDetailsModal 
+                plate={selectedVehicle} 
+                isOpen={!!selectedVehicle} 
+                onClose={() => setSelectedVehicle(null)}
+                startDate={startDate}
+                endDate={endDate}
+            />
+
             {/* Sub-Section Header */}
             <div className="flex items-center gap-6 group/h">
                 <div className="p-4 bg-emerald-500/20 rounded-2xl text-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.2)] border border-emerald-500/30 group-hover/h:scale-110 transition-transform duration-500">
@@ -204,8 +305,17 @@ export function ProfitabilitySection({ data = [], financials }: Props) {
                             </thead>
                             <tbody className="divide-y divide-white/5">
                                 {data.slice(0, 10).map((item) => (
-                                    <tr key={item.plate} className="group/row hover:bg-white/[0.04] transition-all border-l-4 border-transparent hover:border-primary/50">
-                                        <td className="p-10 font-black text-white text-lg tracking-tighter uppercase italic group-hover/row:translate-x-2 transition-transform duration-500">{item.plate}</td>
+                                    <tr 
+                                        key={item.plate} 
+                                        className="group/row hover:bg-white/[0.04] transition-all border-l-4 border-transparent hover:border-primary/50 cursor-pointer"
+                                        onClick={() => setSelectedVehicle(item.plate)}
+                                    >
+                                        <td className="p-10">
+                                            <div className="flex items-center gap-3">
+                                                <span className="font-black text-white text-lg tracking-tighter uppercase italic group-hover/row:translate-x-2 transition-transform duration-500">{item.plate}</span>
+                                                <Info size={14} className="text-primary opacity-0 group-hover/row:opacity-100 transition-opacity" />
+                                            </div>
+                                        </td>
                                         <td className="p-10 text-right font-black text-primary text-xl tracking-tighter italic">฿{item.revenue.toLocaleString()}</td>
                                         <td className="p-10 text-right font-black text-slate-400 text-xl italic">฿{item.driverCost.toLocaleString()}</td>
                                         <td className="p-10 text-right font-black text-slate-400 text-xl italic">฿{item.fuelCost.toLocaleString()}</td>
@@ -238,4 +348,3 @@ export function ProfitabilitySection({ data = [], financials }: Props) {
         </div>
     )
 }
-

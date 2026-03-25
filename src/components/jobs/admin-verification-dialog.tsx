@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from 'react'
+import { useLanguage } from "@/components/providers/language-provider"
 import { 
   Dialog, 
   DialogContent, 
@@ -22,6 +23,7 @@ interface AdminVerificationDialogProps {
 }
 
 export function AdminVerificationDialog({ job, open, onOpenChange }: AdminVerificationDialogProps) {
+  const { t } = useLanguage()
   const [note, setNote] = useState(job.Verification_Note || '')
   const [loading, setLoading] = useState(false)
 
@@ -30,7 +32,7 @@ export function AdminVerificationDialog({ job, open, onOpenChange }: AdminVerifi
     try {
       const result = await verifyJob(job.Job_ID, status, note)
       if (result.success) {
-        toast.success(`Job ${status === 'Verified' ? 'Approved' : 'Rejected'} successfully`)
+        toast.success(status === 'Verified' ? t('verification.toast_verified') : t('verification.toast_rejected'))
         onOpenChange(false)
       } else {
         toast.error(result.error || 'Failed to update status')
@@ -52,19 +54,19 @@ export function AdminVerificationDialog({ job, open, onOpenChange }: AdminVerifi
                 <div className="p-2 bg-emerald-500/20 rounded-xl text-emerald-400">
                     <CheckCircle2 size={24} />
                 </div>
-                <DialogTitle className="text-2xl font-black tracking-tight">Report Validation</DialogTitle>
+                <DialogTitle className="text-2xl font-black tracking-tight">{t('verification.title')}</DialogTitle>
             </div>
             <DialogDescription className="text-emerald-300 font-medium tracking-tight">
-              Reviewing Job ID: <span className="text-white font-black underline decoration-emerald-500/50 underline-offset-4">{job.Job_ID}</span>
+              {t('verification.subtitle', { id: job.Job_ID })}
             </DialogDescription>
           </DialogHeader>
         </div>
 
         <div className="p-8 space-y-6">
           <div className="space-y-2">
-            <label className="text-base font-bold font-black text-slate-500 uppercase tracking-widest ml-1">Internal Verification Note</label>
+            <label className="text-base font-bold font-black text-slate-500 uppercase tracking-widest ml-1">{t('verification.note_label')}</label>
             <Textarea 
-              placeholder="Enter reasons for rejection or approval notes..."
+              placeholder={t('verification.placeholder_note')}
               className="min-h-[120px] rounded-2xl bg-gray-50 border-gray-100 focus:bg-white transition-all text-xl font-medium p-4 resize-none"
               value={note}
               onChange={(e) => setNote(e.target.value)}
@@ -79,7 +81,7 @@ export function AdminVerificationDialog({ job, open, onOpenChange }: AdminVerifi
                 className="h-14 rounded-2xl border-red-100 text-red-500 font-black hover:bg-red-50 hover:text-red-600 transition-all gap-2"
             >
                 {loading ? <Loader2 className="animate-spin" size={18} /> : <XCircle size={18} />}
-                REJECT
+                {t('verification.reject_btn')}
             </Button>
             <Button 
                 disabled={loading}
@@ -87,14 +89,14 @@ export function AdminVerificationDialog({ job, open, onOpenChange }: AdminVerifi
                 className="h-14 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-black shadow-lg shadow-emerald-500/20 transition-all gap-2"
             >
                 {loading ? <Loader2 className="animate-spin" size={18} /> : <CheckCircle2 size={18} />}
-                APPROVE
+                {t('verification.approve_btn')}
             </Button>
           </div>
         </div>
 
         <div className="p-4 bg-gray-50 border-t border-gray-100 flex items-center justify-center gap-4 text-base font-bold font-black text-slate-500 uppercase tracking-widest">
             <div className="flex items-center gap-1.5">
-                <AlertCircle size={12} className="text-emerald-600" /> This will be logged permanently for audit
+                <AlertCircle size={12} className="text-emerald-600" /> {t('verification.audit_footer')}
             </div>
         </div>
       </DialogContent>

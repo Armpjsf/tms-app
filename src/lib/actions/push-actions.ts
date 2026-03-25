@@ -52,8 +52,9 @@ if (!admin.apps.length) {
         }
 
         admin.initializeApp({ credential })
-    } catch {
-        // Initialization error - Firebase Admin not available
+        console.log("Firebase Admin Initialized Successfully")
+    } catch (err) {
+        console.error("Firebase Admin Initialization Failed:", err)
     }
 }
 

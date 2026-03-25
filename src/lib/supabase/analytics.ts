@@ -21,6 +21,7 @@ export {
     getExecutiveKPIs,
     getRouteEfficiency,
     getRegionalDeepDive,
+    getRevenueForecast,
 } from './financial-analytics'
 
 export {
@@ -32,4 +33,6 @@ export {
     getProvincialMileageStats,
     getFleetComplianceMetrics,
     getFleetHealthScore,
+    getDelayRootCause,
+    getVehicleJobDetails,
 } from './fleet-analytics'

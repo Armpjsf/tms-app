@@ -77,6 +77,7 @@ export async function getExecutiveDashboardUnified(branchId?: string) {
     // 2. Process KPI Growth
     const prevRevenue = Number(prevData?.revenue) || 0
     const prevNetProfit = Number(prevData?.net_profit) || 0
+    const prevMargin = prevRevenue > 0 ? (prevNetProfit / prevRevenue) * 100 : 0
     
     const calculateGrowth = (curr: number, prev: number) => {
         if (prev <= 0) return curr > 0 ? 100 : 0
@@ -100,7 +101,7 @@ export async function getExecutiveDashboardUnified(branchId?: string) {
         kpi: {
             revenue: { current: revenue, previous: prevRevenue, growth: calculateGrowth(revenue, prevRevenue), target: 250000, attainment: (revenue / 250000) * 100 },
             profit: { current: netProfit, previous: prevNetProfit, growth: calculateGrowth(netProfit, prevNetProfit) },
-            margin: { current: margin, target: 15 },
+            margin: { current: margin, growth: margin - prevMargin, target: 15 },
             jobs: { current: Number(fin.job_count) || 0 }
         },
         vehicles: [] // Placeholder or add to RPC if needed

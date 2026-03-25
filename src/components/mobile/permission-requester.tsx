@@ -22,7 +22,7 @@ export function PermissionRequester({ driverId }: Props) {
       if (tokenReceived) return
       tokenReceived = true
       
-      const baseUrl = Capacitor.isNativePlatform() ? 'https://tms-app-five.vercel.app' : ''
+      const baseUrl = '' // Use relative path for all environments
       const apiUrl = `${baseUrl}/api/push/subscribe`
       
       try {
@@ -92,7 +92,7 @@ export function PermissionRequester({ driverId }: Props) {
              if (tokenReceived) return; // Prevent multiple calls
              tokenReceived = true;
              
-             const baseUrl = Capacitor.isNativePlatform() ? 'https://tms-app-five.vercel.app' : ''
+             const baseUrl = '' // Use relative path for all environments
              const apiUrl = `${baseUrl}/api/push/subscribe`
              
              try {

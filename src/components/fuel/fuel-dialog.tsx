@@ -12,6 +12,7 @@ import { Loader2 } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ImageUpload } from "@/components/ui/image-upload"
 import Logger from "@/lib/utils/logger"
+import { useLanguage } from "@/components/providers/language-provider"
 
 interface Driver {
   Driver_ID: string;
@@ -51,6 +52,7 @@ export function FuelDialog({
   onOpenChange,
   initialData
 }: FuelDialogProps) {
+  const { t } = useLanguage()
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [internalOpen, setInternalOpen] = useState(false)
@@ -125,10 +127,10 @@ export function FuelDialog({
 
       if (initialData) {
         await updateFuelLog(initialData.Log_ID, payload)
-        toast.success('Updated fuel log successfully')
+        toast.success(t('fuel.edit_success'))
       } else {
         await createFuelLog(payload)
-        toast.success('Created fuel log successfully')
+        toast.success(t('fuel.save_success'))
       }
       
       setShow(false)
@@ -148,7 +150,7 @@ export function FuelDialog({
       router.refresh()
     } catch (err) {
       Logger.error("Fuel log submit error:", err)
-      toast.error('An error occurred while saving')
+      toast.error(t('jobs.dialog.error'))
     } finally {
       setLoading(false)
     }
@@ -159,7 +161,7 @@ export function FuelDialog({
       {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
       <DialogContent className="sm:max-w-[425px] bg-white/95 border-gray-200 text-white">
         <DialogHeader>
-          <DialogTitle>{initialData ? 'แก้ไขข้อมูลการเติมน้ำมัน' : 'บันทึกการเติมน้ำมัน'}</DialogTitle>
+          <DialogTitle>{initialData ? t('fuel.title_edit') : t('fuel.title_add')}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 mt-4">
           <div className="flex flex-col items-center mb-4 gap-2">
@@ -187,10 +189,10 @@ export function FuelDialog({
                                 Total_Amount: result.totalAmount || prev.Total_Amount,
                                 Station_Name: result.stationName || prev.Station_Name
                             }))
-                            toast.success('สแกนข้อมูลเรียบร้อย! กรุณาตรวจสอบความถูกต้อง')
+                            toast.success(t('fuel.scan_success'))
                         } catch (err) {
                             Logger.error("Fuel OCR error:", err)
-                            toast.error('ไม่สามารถอ่านข้อมูลได้')
+                            toast.error(t('fuel.scan_error'))
                         } finally {
                             setLoading(false)
                         }
@@ -199,13 +201,13 @@ export function FuelDialog({
                     className="text-lg font-bold flex items-center gap-1"
                 >
                     {loading ? <Loader2 className="w-3 h-3 animate-spin"/> : <span className="text-emerald-400">⚡</span>}
-                    สแกนใบเสร็จ
+                    {t('fuel.scan_receipt')}
                 </Button>
              )}
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="Date_Time">วัน-เวลา</Label>
+            <Label htmlFor="Date_Time">{t('fuel.date_time')}</Label>
             <Input
               id="Date_Time"
               type="datetime-local"
@@ -218,10 +220,10 @@ export function FuelDialog({
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-                <Label htmlFor="Driver_ID">คนขับ</Label>
+                <Label htmlFor="Driver_ID">{t('fuel.driver')}</Label>
                 <Select value={formData.Driver_ID || undefined} onValueChange={(val) => setFormData({ ...formData, Driver_ID: val })}>
                     <SelectTrigger className="w-full h-10 border-gray-200 bg-white/5 text-white">
-                        <SelectValue placeholder="เลือกคนขับ" />
+                        <SelectValue placeholder={t('fuel.placeholder_driver')} />
                     </SelectTrigger>
                     <SelectContent>
                         {drivers.map((d) => (
@@ -231,10 +233,10 @@ export function FuelDialog({
                 </Select>
             </div>
             <div className="space-y-2">
-                <Label htmlFor="Vehicle_Plate">ทะเบียนรถ</Label>
+                <Label htmlFor="Vehicle_Plate">{t('fuel.vehicle')}</Label>
                 <Select value={formData.Vehicle_Plate || undefined} onValueChange={(val) => setFormData({ ...formData, Vehicle_Plate: val })}>
                     <SelectTrigger className="w-full h-10 border-gray-200 bg-white/5 text-white">
-                        <SelectValue placeholder="เลือกทะเบียน" />
+                        <SelectValue placeholder={t('fuel.placeholder_vehicle')} />
                     </SelectTrigger>
                     <SelectContent>
                         {vehicles.map((v) => (
@@ -247,23 +249,23 @@ export function FuelDialog({
 
           <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="Station_Name">สถานีบริการ / ปั๊ม</Label>
+                <Label htmlFor="Station_Name">{t('fuel.station')}</Label>
                 <Input
                     id="Station_Name"
                     value={formData.Station_Name}
                     onChange={(e) => setFormData({ ...formData, Station_Name: e.target.value })}
-                    placeholder="เช่น ปตท. สาขา..."
+                    placeholder={t('fuel.placeholder_station')}
                     className="bg-white/5 border-gray-200"
                 />
             </div>
             <div className="space-y-2">
-                 <Label htmlFor="Mileage">เลขไมล์</Label>
+                 <Label htmlFor="Mileage">{t('fuel.odometer')}</Label>
                  <Input
                     id="Mileage"
                     type="number"
                     value={formData.Mileage}
                     onChange={(e) => setFormData({ ...formData, Mileage: e.target.value })}
-                    placeholder="km"
+                    placeholder={t('fuel.placeholder_odometer')}
                     required
                     className="bg-white/5 border-gray-200"
                  />
@@ -272,7 +274,7 @@ export function FuelDialog({
 
           <div className="grid grid-cols-3 gap-4">
             <div className="space-y-2">
-                <Label htmlFor="Liter">จำนวน (ลิตร)</Label>
+                <Label htmlFor="Liter">{t('fuel.liters')}</Label>
                 <Input
                 id="Liter"
                 type="number"
@@ -284,7 +286,7 @@ export function FuelDialog({
                 />
             </div>
             <div className="space-y-2">
-                <Label htmlFor="Price">ราคา/ลิตร</Label>
+                <Label htmlFor="Price">{t('fuel.price_per_liter')}</Label>
                 <Input
                 id="Price"
                 type="number"
@@ -296,7 +298,7 @@ export function FuelDialog({
                 />
             </div>
             <div className="space-y-2">
-                <Label htmlFor="Total_Amount">รวมเงิน</Label>
+                <Label htmlFor="Total_Amount">{t('fuel.total_amount')}</Label>
                 <Input
                 id="Total_Amount"
                 value={formData.Total_Amount.toFixed(2)}
@@ -308,11 +310,11 @@ export function FuelDialog({
 
           <div className="flex justify-end gap-2 mt-6">
             <Button type="button" variant="ghost" onClick={() => setShow(false)}>
-              ยกเลิก
+              {t('jobs.dialog.abort')}
             </Button>
             <Button type="submit" disabled={loading} className="bg-gradient-to-r from-emerald-500 to-teal-600">
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {initialData ? 'บันทึกการแก้ไข' : 'บันทึก'}
+              {initialData ? t('common.save') : t('common.submit') || 'บันทึก'}
             </Button>
           </div>
         </form>

@@ -472,3 +472,60 @@ export async function getFleetHealthScore(branchId?: string) {
         return 100
     }
 }
+
+// 16. Delay/Failure Root Cause Analysis
+export async function getDelayRootCause(startDate?: string, endDate?: string, branchId?: string) {
+    try {
+        const supabase = await createAdminClient()
+        const effectiveBranchId = await getEffectiveBranchId(branchId)
+        const sDate = formatDateSafe(startDate)
+        const eDate = formatDateSafe(endDate)
+
+        let query = supabase
+            .from('Jobs_Main')
+            .select('Failed_Reason')
+            .not('Failed_Reason', 'is', null)
+            .neq('Failed_Reason', '')
+
+        if (sDate) query = query.gte('Plan_Date', sDate)
+        if (eDate) query = query.lte('Plan_Date', eDate)
+        if (effectiveBranchId) query = query.eq('Branch_ID', effectiveBranchId)
+
+        const { data } = await query
+        const reasons: Record<string, number> = {}
+        data?.forEach(j => {
+            const r = j.Failed_Reason || 'อื่นๆ'
+            reasons[r] = (reasons[r] || 0) + 1
+        })
+
+        return Object.entries(reasons)
+            .map(([name, value]) => ({ name, value }))
+            .sort((a, b) => b.value - a.value)
+    } catch {
+        return []
+    }
+}
+
+// 17. Vehicle Job Details (for Drill-down)
+export async function getVehicleJobDetails(plate: string, startDate?: string, endDate?: string) {
+    try {
+        const supabase = await createAdminClient()
+        const sDate = formatDateSafe(startDate)
+        const eDate = formatDateSafe(endDate)
+
+        let query = supabase
+            .from('Jobs_Main')
+            .select('Job_ID, Plan_Date, Customer_Name, Route_Name, Job_Status, Price_Cust_Total, Cost_Driver_Total')
+            .eq('Vehicle_Plate', plate)
+            .order('Plan_Date', { ascending: false })
+
+        if (sDate) query = query.gte('Plan_Date', sDate)
+        if (eDate) query = query.lte('Plan_Date', eDate)
+
+        const { data } = await query
+        return data || []
+    } catch {
+        return []
+    }
+}
+

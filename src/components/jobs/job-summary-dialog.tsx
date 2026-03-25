@@ -25,6 +25,7 @@ import { useEffect, useState } from "react"
 import dynamic from "next/dynamic"
 import { getJobGPSData } from "@/lib/actions/gps-actions"
 import { cn } from "@/lib/utils"
+import { useLanguage } from "@/components/providers/language-provider"
 import { OrderTimeline } from "@/components/ui/order-timeline"
 import { DriverLocation } from "@/components/maps/leaflet-map"
 
@@ -51,6 +52,7 @@ type JobSummaryDialogProps = {
 }
 
 export function JobSummaryDialog({ open, onOpenChange, job }: JobSummaryDialogProps) {
+  const { t } = useLanguage()
   const [gpsData, setGpsData] = useState<JobGPSData | null>(null)
 
   const jobId = job?.Job_ID
@@ -97,9 +99,9 @@ export function JobSummaryDialog({ open, onOpenChange, job }: JobSummaryDialogPr
         <div className="printable-content">
           {/* Print only Header (Simple Text) */}
           <div className="hidden print:block mb-8 border-b-2 border-black pb-4">
-             <h1 className="text-2xl font-bold">รายงานสรุปผลการดำเนินงาน (Job Summary Report)</h1>
-             <p className="text-xl">Job ID: {job.Job_ID} | วันที่: {job.Plan_Date}</p>
-             <p className="text-xl">สถานะ: {job.Job_Status}</p>
+             <h1 className="text-2xl font-bold">{t('reports.title_summary')}</h1>
+             <p className="text-xl">Job ID: {job.Job_ID} | {t('common.date')}: {job.Plan_Date}</p>
+             <p className="text-xl">{t('common.status')}: {job.Job_Status}</p>
           </div>
 
           {/* Web Header (No Print) */}
@@ -111,7 +113,7 @@ export function JobSummaryDialog({ open, onOpenChange, job }: JobSummaryDialogPr
                 </div>
                 <div>
                   <h2 className="text-lg font-bold font-bold text-emerald-600 uppercase tracking-widest flex items-center gap-2">
-                    สรุปผลการดำเนินงาน / Job Summary
+                    {t('reports.title_summary')}
                     <span className="h-1 w-1 rounded-full bg-indigo-400/50"></span>
                   </h2>
                   <div className="flex items-center gap-3">
@@ -158,23 +160,23 @@ export function JobSummaryDialog({ open, onOpenChange, job }: JobSummaryDialogPr
                 <section className="space-y-4">
                     <div className="flex items-center gap-2 text-white font-black border-l-4 border-indigo-500 pl-3 uppercase tracking-wider text-xl">
                         <User size={18} className="text-emerald-400" />
-                        <span>ข้อมูลทั่วไป</span>
+                        <span>{t('reports.general_info')}</span>
                     </div>
                     <div className="bg-white/5 rounded-xl p-4 border border-white/10 grid grid-cols-2 gap-y-4 shadow-sm">
                         <div>
-                            <p className="text-base font-bold uppercase text-slate-400 font-bold mb-1">ลูกค้า (Customer)</p>
+                            <p className="text-base font-bold uppercase text-slate-400 font-bold mb-1">{t('jobs.dialog.customer')}</p>
                             <p className="text-xl font-bold text-slate-100">{job.Customer_Name || '-'}</p>
                         </div>
                         <div>
-                            <p className="text-base font-bold uppercase text-slate-400 font-bold mb-1">เส้นทาง (Route)</p>
+                            <p className="text-base font-bold uppercase text-slate-400 font-bold mb-1">{t('jobs.dialog.route')}</p>
                             <p className="text-xl font-bold text-slate-100">{job.Route_Name || '-'}</p>
                         </div>
                         <div>
-                            <p className="text-base font-bold uppercase text-slate-400 font-bold mb-1">ทะเบียนรถ (Vehicle)</p>
+                            <p className="text-base font-bold uppercase text-slate-400 font-bold mb-1">{t('jobs.dialog.vehicle')}</p>
                             <p className="text-xl font-bold text-slate-100">{job.Vehicle_Plate || '-'}</p>
                         </div>
                         <div>
-                            <p className="text-base font-bold uppercase text-slate-400 font-bold mb-1">คนขับ (Driver)</p>
+                            <p className="text-base font-bold uppercase text-slate-400 font-bold mb-1">{t('jobs.dialog.driver')}</p>
                             <p className="text-xl font-bold text-slate-100">{job.Driver_Name || job.Driver_ID || '-'}</p>
                         </div>
                     </div>
@@ -183,20 +185,20 @@ export function JobSummaryDialog({ open, onOpenChange, job }: JobSummaryDialogPr
                 <section className="space-y-4">
                     <div className="flex items-center gap-2 text-white font-black border-l-4 border-emerald-500 pl-3 uppercase tracking-wider text-xl">
                         <MapPin size={18} className="text-emerald-400" />
-                        <span>สถานที่และเวลา</span>
+                        <span>{t('reports.location_time')}</span>
                     </div>
                     <div className="bg-white/5 rounded-xl p-4 border border-white/10 space-y-4 shadow-sm">
                         <div className="flex gap-3">
                             <div className="mt-1"><div className="w-2 h-2 rounded-full bg-indigo-500 ring-4 ring-indigo-500/20" /></div>
                             <div>
-                                <p className="text-base font-bold uppercase text-slate-400 font-bold">ต้นทาง (Origin)</p>
+                                <p className="text-base font-bold uppercase text-slate-400 font-bold">{t('jobs.dialog.origin')}</p>
                                 <p className="text-lg font-bold text-slate-200 font-medium">{job.Origin_Location || job.Location_Origin_Name || '-'}</p>
                             </div>
                         </div>
                         <div className="flex gap-3">
                             <div className="mt-1"><MapPin size={14} className="text-emerald-500" /></div>
                             <div>
-                                <p className="text-base font-bold uppercase text-slate-400 font-bold">ปลายทาง (Destination)</p>
+                                <p className="text-base font-bold uppercase text-slate-400 font-bold">{t('jobs.dialog.destination')}</p>
                                 <p className="text-lg font-bold text-slate-100 font-bold">{job.Dest_Location || job.Location_Destination_Name || '-'}</p>
                             </div>
                         </div>
@@ -209,7 +211,7 @@ export function JobSummaryDialog({ open, onOpenChange, job }: JobSummaryDialogPr
             <section className="space-y-4 no-print">
               <h3 className="text-xl font-black text-white flex items-center gap-2 uppercase tracking-wider">
                 <MapPin size={16} className="text-emerald-400" />
-                ตำแหน่งล่าสุด
+                {t('reports.latest_location')}
               </h3>
               <div className="h-[250px] rounded-2xl overflow-hidden border border-white/10 bg-white shadow-inner relative">
                 {(job.Tracking_LAT && job.Tracking_LNG) || gpsPoints.length > 0 || latestLocation ? (
@@ -221,7 +223,7 @@ export function JobSummaryDialog({ open, onOpenChange, job }: JobSummaryDialogPr
                 ) : (
                   <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-400 bg-white/80 backdrop-blur-sm">
                     <MapPin size={32} className="mb-2 opacity-20" />
-                    <p className="text-lg font-bold font-medium">ไม่พบข้อมูลพิกัดสำหรับงานนี้</p>
+                    <p className="text-lg font-bold font-medium">{t('reports.no_gps')}</p>
                   </div>
                 )}
               </div>
@@ -233,9 +235,9 @@ export function JobSummaryDialog({ open, onOpenChange, job }: JobSummaryDialogPr
                 <div className="flex items-center justify-between">
                   <h3 className="text-xl font-black text-white flex items-center gap-2 border-l-4 border-indigo-500 pl-3 uppercase tracking-wider">
                     <Package size={16} className="text-emerald-400" />
-                    จุดรับสินค้า (Pickup Info)
+                    {t('reports.pickup_info')}
                   </h3>
-                  <span className="text-base font-bold text-gray-400 font-bold uppercase no-print">{pickupPhotos.length} รูป</span>
+                  <span className="text-base font-bold text-gray-400 font-bold uppercase no-print">{t('reports.photo_count', { count: pickupPhotos.length })}</span>
                 </div>
                 
                 <div className="grid grid-cols-2 gap-3">
@@ -255,7 +257,7 @@ export function JobSummaryDialog({ open, onOpenChange, job }: JobSummaryDialogPr
                 </div>
 
                 <div className="rounded-xl border border-white/10 bg-white/5 p-4 shadow-sm">
-                  <p className="text-base font-bold font-black text-slate-400 uppercase tracking-widest mb-3">ลายเซ็น ณ จุดรับ</p>
+                  <p className="text-base font-bold font-black text-slate-400 uppercase tracking-widest mb-3">{t('reports.pickup_signature')}</p>
                   <div className="h-24 flex items-center justify-center border border-dashed border-white/10 rounded-lg relative overflow-hidden bg-white/5">
                     {job.Signature_Pickup_Url || job.Pickup_Signature_Url ? (
                       <Image 
@@ -265,7 +267,7 @@ export function JobSummaryDialog({ open, onOpenChange, job }: JobSummaryDialogPr
                         className="object-contain p-2"
                       />
                     ) : (
-                      <span className="text-gray-500 text-lg font-bold italic">ไม่มีข้อมูลลายเซ็น</span>
+                      <span className="text-gray-500 text-lg font-bold italic">{t('reports.no_signature')}</span>
                     )}
                   </div>
                 </div>
@@ -276,9 +278,9 @@ export function JobSummaryDialog({ open, onOpenChange, job }: JobSummaryDialogPr
                 <div className="flex items-center justify-between">
                   <h3 className="text-xl font-black text-white flex items-center gap-2 border-l-4 border-emerald-500 pl-3 uppercase tracking-wider">
                     <CheckCircle2 size={16} className="text-emerald-400" />
-                    การส่งสินค้า (POD Info)
+                    {t('reports.pod_info')}
                   </h3>
-                  <span className="text-base font-bold text-gray-400 font-bold uppercase no-print">{podPhotos.length} รูป</span>
+                  <span className="text-base font-bold text-gray-400 font-bold uppercase no-print">{t('reports.photo_count', { count: podPhotos.length })}</span>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
@@ -298,7 +300,7 @@ export function JobSummaryDialog({ open, onOpenChange, job }: JobSummaryDialogPr
                         {isReport && (
                           <div className="absolute top-3 left-3 bg-indigo-500 text-white text-base font-bold font-black px-2 py-0.5 rounded shadow-lg uppercase tracking-wider animate-pulse flex items-center gap-1">
                             <FileText size={10} />
-                            DIGITAL REPORT
+                            {t('reports.digital_report')}
                           </div>
                         )}
                         <div className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center">
@@ -310,7 +312,7 @@ export function JobSummaryDialog({ open, onOpenChange, job }: JobSummaryDialogPr
                 </div>
 
                 <div className="rounded-xl border border-white/10 bg-white/5 p-4 shadow-sm">
-                   <p className="text-base font-bold font-black text-slate-400 uppercase tracking-widest mb-3">ลายเซ็นผู้รับสินค้า</p>
+                   <p className="text-base font-bold font-black text-slate-400 uppercase tracking-widest mb-3">{t('reports.dropoff_signature')}</p>
                   <div className="h-24 flex items-center justify-center border border-dashed border-white/10 rounded-lg relative overflow-hidden bg-white/5">
                     {job.Signature_Proof_Url || job.Signature_Url ? (
                       <Image 
@@ -320,7 +322,7 @@ export function JobSummaryDialog({ open, onOpenChange, job }: JobSummaryDialogPr
                         className="object-contain p-2"
                       />
                     ) : (
-                      <span className="text-gray-500 text-lg font-bold italic">ไม่มีข้อมูลลายเซ็น</span>
+                      <span className="text-gray-500 text-lg font-bold italic">{t('reports.no_signature')}</span>
                     )}
                   </div>
                 </div>
@@ -332,12 +334,12 @@ export function JobSummaryDialog({ open, onOpenChange, job }: JobSummaryDialogPr
         {/* Action Footer */}
         <div className="sticky bottom-0 bg-white/90 backdrop-blur-md p-4 border-t border-gray-200 flex justify-between items-center gap-3 no-print">
           <Button variant="ghost" onClick={() => onOpenChange(false)} className="text-gray-500 hover:text-white">
-            ปิดหน้าต่าง
+            {t('reports.close_btn')}
           </Button>
           <div className="flex gap-2">
             <Button variant="outline" className="gap-2 border-gray-200 text-gray-700" onClick={() => window.print()}>
               <FileText size={16} />
-              พิมพ์รายงาน
+              {t('reports.print_btn')}
             </Button>
             
             {reportUrl ? (
@@ -347,7 +349,7 @@ export function JobSummaryDialog({ open, onOpenChange, job }: JobSummaryDialogPr
               >
                 <Link href={reportUrl} target="_blank">
                   <Eye size={16} />
-                  ดูใบงานตัวจริง
+                  {t('reports.view_original_btn')}
                 </Link>
               </Button>
             ) : (
@@ -357,7 +359,7 @@ export function JobSummaryDialog({ open, onOpenChange, job }: JobSummaryDialogPr
                 className="gap-2 opacity-50 transition-opacity"
               >
                 <FileX size={16} />
-                ไม่พบไฟล์ใบงาน
+                {t('reports.no_file')}
               </Button>
             )}
           </div>

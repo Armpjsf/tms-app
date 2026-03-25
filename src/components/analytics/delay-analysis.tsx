@@ -1,0 +1,124 @@
+"use client"
+
+import { PremiumCard } from "@/components/ui/premium-card"
+import { useLanguage } from "@/components/providers/language-provider"
+import { 
+  PieChart, 
+  Pie, 
+  Cell, 
+  ResponsiveContainer, 
+  Tooltip, 
+  Legend 
+} from 'recharts'
+import { AlertCircle, ShieldAlert } from "lucide-react"
+
+type DelayData = {
+    name: string
+    value: number
+}
+
+type Props = {
+    data: DelayData[]
+}
+
+const COLORS = [
+    '#f43f5e', // rose
+    '#fbbf24', // amber
+    '#3b82f6', // blue
+    '#8b5cf6', // violet
+    '#06b6d4', // cyan
+    '#10b981', // emerald
+]
+
+export function DelayAnalysis({ data = [] }: Props) {
+    const { t } = useLanguage()
+    
+    const total = data.reduce((sum, item) => sum + item.value, 0)
+
+    if (data.length === 0) {
+        return (
+            <PremiumCard className="bg-[#0a0518] border-2 border-white/5 shadow-3xl p-12 text-center rounded-br-[4rem] rounded-tl-[2rem]">
+                <div className="flex flex-col items-center gap-4 text-slate-500">
+                    <ShieldAlert size={48} strokeWidth={1} />
+                    <p className="text-base font-bold font-black uppercase tracking-widest italic">{t('analytics.no_delay_data') || 'No Delay Root Cause Data'}</p>
+                </div>
+            </PremiumCard>
+        )
+    }
+
+    return (
+        <PremiumCard className="bg-[#0a0518] border-2 border-white/5 shadow-3xl p-0 overflow-hidden rounded-br-[4rem] rounded-tl-[2rem] group/delays">
+            <div className="p-10 border-b border-white/5 bg-black/40 relative overflow-hidden flex items-center justify-between">
+                <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-rose-500 to-transparent" />
+                <div className="flex items-center gap-5 relative z-10">
+                    <div className="p-3 bg-rose-500/20 rounded-2xl text-rose-500 border border-rose-500/30 shadow-[0_0_20px_rgba(244,63,94,0.2)]">
+                        <AlertCircle size={22} />
+                    </div>
+                    <div>
+                        <h3 className="text-xl font-black text-white tracking-tighter italic uppercase">{t('analytics.delay_root_cause') || 'Analysis of Delays'}</h3>
+                        <p className="text-rose-500 text-base font-bold font-black uppercase tracking-[0.4em]">{t('analytics.failure_distribution') || 'Job Failure Distribution'}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div className="p-10">
+                <div className="h-[350px] relative">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                            <Pie
+                                data={data}
+                                cx="50%"
+                                cy="50%"
+                                innerRadius={80}
+                                outerRadius={110}
+                                paddingAngle={5}
+                                dataKey="value"
+                                stroke="none"
+                            >
+                                {data.map((entry, index) => (
+                                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} fillOpacity={0.8} />
+                                ))}
+                            </Pie>
+                            <Tooltip 
+                                contentStyle={{ 
+                                    backgroundColor: 'rgba(2, 6, 23, 0.95)', 
+                                    border: '2px solid rgba(255,255,255,0.1)', 
+                                    borderRadius: '24px', 
+                                    backdropFilter: 'blur(12px)',
+                                    padding: '15px'
+                                }}
+                                itemStyle={{ fontSize: '11px', fontWeight: '900', textTransform: 'uppercase', color: '#fff' }}
+                                formatter={(value: number) => [`${value} ${t('common.units')}`, t('common.status')]}
+                            />
+                            <Legend 
+                                layout="vertical" 
+                                align="right" 
+                                verticalAlign="middle"
+                                iconType="circle"
+                                formatter={(value) => <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest italic ml-2">{value}</span>}
+                            />
+                        </PieChart>
+                    </ResponsiveContainer>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none pr-32">
+                        <span className="text-base font-bold font-black text-slate-500 uppercase tracking-[0.2em] leading-none mb-1">TOTAL</span>
+                        <span className="text-4xl font-black text-white tracking-tighter italic">{total}</span>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-8">
+                    {data.slice(0, 6).map((item, index) => (
+                        <div key={item.name} className="p-4 bg-white/[0.02] rounded-2xl border border-white/5 flex flex-col gap-1">
+                            <div className="flex items-center gap-2">
+                                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }} />
+                                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest truncate">{item.name}</span>
+                            </div>
+                            <div className="text-lg font-black text-white italic">
+                                {((item.value / total) * 100).toFixed(1)}%
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </PremiumCard>
+    )
+}

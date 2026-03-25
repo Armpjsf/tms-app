@@ -5,7 +5,7 @@ import { toast } from 'sonner'
 import { createClient } from '@/utils/supabase/client'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Send, Search, MessageSquare, Check, CheckCheck, Loader2, Image as ImageIcon, User, ShieldCheck, Activity } from "lucide-react"
+import { Send, Search, MessageSquare, Check, CheckCheck, Loader2, Image as ImageIcon, User, ShieldCheck, Activity, Target } from "lucide-react"
 import { ChatMessage } from '@/lib/actions/chat-actions'
 import { uploadImageToDrive } from '@/lib/actions/upload-actions'
 import Image from 'next/image'
