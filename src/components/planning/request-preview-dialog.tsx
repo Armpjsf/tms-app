@@ -62,11 +62,11 @@ export function RequestPreviewDialog({
           {/* Main Info Grid */}
           <div className="grid grid-cols-2 gap-8">
             <div className="space-y-1">
-              <p className="text-base font-bold font-black text-gray-400 uppercase tracking-widest">Job ID</p>
+              <p className="text-base font-bold font-black text-gray-400 uppercase tracking-widest">{t('shipment.job_id')}</p>
               <p className="text-lg font-bold text-gray-900">{job.Job_ID}</p>
             </div>
             <div className="space-y-1">
-              <p className="text-base font-bold font-black text-gray-400 uppercase tracking-widest">วันที่ต้องการรถ</p>
+              <p className="text-base font-bold font-black text-gray-400 uppercase tracking-widest">{t('shipment.request_date')}</p>
               <div className="flex items-center gap-2 text-gray-900 font-bold">
                 <Calendar size={16} className="text-orange-500" />
                 <span>{job.Plan_Date ? new Date(job.Plan_Date).toLocaleDateString('th-TH', { 
