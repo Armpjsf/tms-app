@@ -323,7 +323,7 @@ export default function UserSettingsPage() {
             </div>
 
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                <DialogContent className="bg-[#0a0518] border-white/10 text-white max-w-[95vw] sm:max-w-3xl max-h-[95vh] overflow-hidden flex flex-col p-0 shadow-[0_40px_100px_rgba(0,0,0,1)] rounded-[2rem] sm:rounded-[4rem] backdrop-blur-3xl relative">
+                <DialogContent className="bg-[#0a0518] border-white/10 text-white max-w-[95vw] sm:max-w-3xl max-h-[95vh] overflow-hidden flex flex-col p-0 shadow-[0_40px_100px_rgba(0,0,0,1)] rounded-3xl sm:rounded-[2.5rem] backdrop-blur-3xl relative z-[100]">
                     <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary via-indigo-500/50 to-accent" />
                     
                     <DialogHeader className="p-8 sm:p-12 border-b border-white/5 bg-black/40">
