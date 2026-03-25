@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Users, Plus, Edit, Trash2, Search, Loader2, Shield, Fingerprint, Activity, Zap, FileSpreadsheet, Key, AlertCircle, ShieldCheck } from "lucide-react"
+import { Users, Plus, Edit, Trash2, Search, Loader2, Shield, Fingerprint, Activity, Zap, FileSpreadsheet, Key, ShieldCheck } from "lucide-react"
 import { createUser, updateUser, deleteUser, UserData, getCurrentUserRole, createBulkUsers, getUsers } from "@/lib/actions/user-actions"
 import { Customer } from "@/lib/supabase/customers"
 import { ExcelImport } from "@/components/ui/excel-import"
@@ -323,17 +323,17 @@ export default function UserSettingsPage() {
             </div>
 
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                <DialogContent className="bg-[#0a0518] border-white/10 text-white max-w-3xl max-h-[90vh] overflow-hidden flex flex-col p-0 shadow-[0_40px_100px_rgba(0,0,0,1)] rounded-[4rem] backdrop-blur-3xl relative">
+                <DialogContent className="bg-[#0a0518] border-white/10 text-white max-w-[95vw] sm:max-w-3xl max-h-[95vh] overflow-hidden flex flex-col p-0 shadow-[0_40px_100px_rgba(0,0,0,1)] rounded-[2rem] sm:rounded-[4rem] backdrop-blur-3xl relative">
                     <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary via-indigo-500/50 to-accent" />
                     
-                    <DialogHeader className="p-12 border-b border-white/5 bg-black/40">
-                        <DialogTitle className="flex items-center gap-4 text-3xl font-black italic uppercase tracking-widest premium-text-gradient">
+                    <DialogHeader className="p-8 sm:p-12 border-b border-white/5 bg-black/40">
+                        <DialogTitle className="flex items-center gap-4 text-2xl sm:text-3xl font-black italic uppercase tracking-widest premium-text-gradient">
                             <Shield className="w-8 h-8 text-primary animate-pulse" strokeWidth={2.5} />
                             {editingUser ? t('settings_pages.users.dialog.title_edit') : t('settings_pages.users.dialog.title_add')}
                         </DialogTitle>
                     </DialogHeader>
                     
-                    <div className="flex-1 overflow-y-auto p-12 space-y-10 scrollbar-hide">
+                    <div className="flex-1 overflow-y-auto p-8 sm:p-12 space-y-10 custom-scrollbar">
                         <div className="grid grid-cols-2 gap-10">
                              <div className="space-y-3">
                                 <Label className="text-base font-bold font-black text-slate-500 uppercase tracking-[0.4em] ml-4">{t('settings_pages.users.dialog.username')}</Label>
@@ -489,10 +489,10 @@ export default function UserSettingsPage() {
                         </div>
                     </div>
  
-                    <DialogFooter className="p-12 border-t border-white/5 bg-black/40 gap-6">
-                        <PremiumButton variant="outline" onClick={() => setIsDialogOpen(false)} className="h-18 px-10 rounded-[1.5rem] border-white/5 text-slate-500 hover:text-white uppercase tracking-widest text-lg font-bold font-black">{t('settings_pages.users.dialog.abort')}</PremiumButton>
-                        <PremiumButton onClick={handleSave} disabled={saving} className="h-18 px-12 rounded-[2rem] gap-4 shadow-[0_20px_50px_rgba(255,30,133,0.3)] min-w-[200px] text-xl tracking-[0.2em] bg-primary text-white border-0">
-                            {saving ? <Loader2 className="w-6 h-6 animate-spin" /> : <ShieldCheck className="w-6 h-6" />}
+                    <DialogFooter className="p-8 sm:p-12 border-t border-white/5 bg-black/40 gap-4 sm:gap-6 flex-row shrink-0">
+                        <PremiumButton variant="outline" onClick={() => setIsDialogOpen(false)} className="flex-1 sm:flex-none h-14 sm:h-18 px-6 sm:px-10 rounded-[1.2rem] sm:rounded-[1.5rem] border-white/5 text-slate-500 hover:text-white uppercase tracking-widest text-base sm:text-lg font-bold font-black">{t('settings_pages.users.dialog.abort')}</PremiumButton>
+                        <PremiumButton onClick={handleSave} disabled={saving} className="flex-1 sm:flex-none h-14 sm:h-18 px-8 sm:px-12 rounded-[1.5rem] sm:rounded-[2rem] gap-3 sm:gap-4 shadow-[0_20px_50px_rgba(255,30,133,0.3)] sm:min-w-[200px] text-lg sm:text-xl tracking-[0.2em] bg-primary text-white border-0">
+                            {saving ? <Loader2 className="w-5 h-5 sm:w-6 sm:h-6 animate-spin" /> : <ShieldCheck className="w-5 h-5 sm:w-6 sm:h-6" />}
                             {t('settings_pages.users.dialog.execute')}
                         </PremiumButton>
                     </DialogFooter>

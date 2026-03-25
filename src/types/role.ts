@@ -11,7 +11,8 @@ export type RolePermission = {
   Permissions: Record<string, boolean>
 }
 
-export const STANDARD_ROLES = ['Super Admin', 'Admin', 'Executive', 'Accountant', 'Dispatcher', 'Driver', 'Customer']
+export const STANDARD_ROLES = ['Super Admin', 'Admin', 'Executive', 'Accountant', 'Dispatcher', 'Driver', 'Customer', 'Staff'] as const
+export type StandardRole = (typeof STANDARD_ROLES)[number]
 
 export const PERMISSION_CATEGORIES = [
     { id: 'Executive', label: 'Executive Intelligence', icon: 'Target' },
