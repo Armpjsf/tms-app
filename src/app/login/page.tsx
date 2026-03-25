@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Shield, X, Truck } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label"
 import { login } from "./actions"
 import Image from "next/image"
 
-export default function StaffLoginPage() {
+function StaffLoginContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [loading, setLoading] = useState(false)
@@ -186,6 +186,18 @@ export default function StaffLoginPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function StaffLoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#050110] flex items-center justify-center p-6">
+        <div className="w-16 h-16 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
+      </div>
+    }>
+      <StaffLoginContent />
+    </Suspense>
   )
 }
 

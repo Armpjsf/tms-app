@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Lock, User, Shield, Fingerprint, QrCode, Phone, Headphones } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -18,7 +18,7 @@ import { authenticateBiometrics } from "@/lib/webauthn-client"
 import { QRScannerModal } from "@/components/mobile/qr-scanner-modal"
 import Image from "next/image"
 
-export default function DriverLoginPage() {
+function DriverLoginContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [loading, setLoading] = useState(false)
@@ -277,6 +277,18 @@ export default function DriverLoginPage() {
         onScanSuccess={handleQRScanSuccess}
       />
     </div>
+  )
+}
+
+export default function DriverLoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#050110] flex items-center justify-center p-6">
+        <div className="w-16 h-16 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
+      </div>
+    }>
+      <DriverLoginContent />
+    </Suspense>
   )
 }
 
