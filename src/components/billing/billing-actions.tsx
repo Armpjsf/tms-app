@@ -2,13 +2,13 @@
 
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { Printer, Mail, Paperclip, Send, Loader2, X } from "lucide-react"
+import { Printer, Mail, Paperclip, Send, Loader2 } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { AttachmentList } from "./attachment-list"
-import { sendBillingEmail } from "@/lib/actions/email-actions"
+import { sendBillingEmail, type EmailAttachment } from "@/lib/actions/email-actions"
 import { toast } from "sonner"
 import { getAttachments } from "@/lib/actions/attachment-actions"
 
@@ -85,17 +85,16 @@ export function BillingActions({ billingNoteId, customerEmail = "", customerName
 
             // 2. Fetch current attachments
             const attachments = await getAttachments(billingNoteId)
-            const emailAttachments: { filename: string; path: string }[] = attachments?.map(a => ({
+            const emailAttachments: EmailAttachment[] = attachments?.map(a => ({
                 filename: a.File_Name,
-                path: `${process.env.NEXT_PUBLIC_SUPABASE_URL!}/storage/v1/object/public/billing-documents/${a.File_Path}`,
-                Created_By: 'System' as string // Should be user ID
+                path: `${process.env.NEXT_PUBLIC_SUPABASE_URL!}/storage/v1/object/public/billing-documents/${a.File_Path}`
             })) || []
 
             // 3. Add Billing Note As Attachment (Default)
             if (billingHtml) {
                 emailAttachments.push({
                     filename: `BillingNote-${billingNoteId}.html`,
-                    content: billingHtml // Pass content string
+                    content: billingHtml 
                 })
             }
 
@@ -104,8 +103,7 @@ export function BillingActions({ billingNoteId, customerEmail = "", customerName
                 to: emailTo,
                 subject: subject,
                 html: message.replace(/\n/g, '<br/>'),
-                attachments: emailAttachments,
-                Items_JSON: [] as Record<string, unknown>[] // Snapshot
+                attachments: emailAttachments
             })
 
             if (!success) throw new Error(error)
@@ -154,15 +152,15 @@ export function BillingActions({ billingNoteId, customerEmail = "", customerName
 
             {/* Email Dialog */}
             <Dialog open={isEmailOpen} onOpenChange={setIsEmailOpen}>
-                <DialogContent className="max-w-md">
-                    <DialogHeader>
+                <DialogContent className="max-w-md max-h-[95vh] flex flex-col p-0 overflow-hidden">
+                    <DialogHeader className="p-8 pb-4 flex-shrink-0">
                         <DialogTitle>ส่งใบวางบิลทางอีเมล</DialogTitle>
                         <DialogDescription>
                             ส่งเอกสารและไฟล์แนบไปยังลูกค้า
                         </DialogDescription>
                     </DialogHeader>
 
-                    <div className="grid gap-4 py-4">
+                    <div className="flex-1 overflow-y-auto p-8 pt-0 space-y-6 custom-scrollbar">
                         <div className="space-y-2">
                             <Label className="text-gray-800">จาก (Sender Email)</Label>
                             <Input 

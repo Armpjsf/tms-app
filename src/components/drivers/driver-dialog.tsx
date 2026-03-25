@@ -91,10 +91,10 @@ export function DriverDialog({
   return (
     <Dialog open={show} onOpenChange={setShow}>
       {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
-      <DialogContent className="sm:max-w-xl bg-slate-900/95 backdrop-blur-2xl border-white/5 text-white p-0 rounded-[2.5rem] overflow-hidden shadow-[0_0_80px_rgba(0,0,0,0.5)]">
+      <DialogContent className="max-w-[95vw] sm:max-w-xl max-h-[95vh] flex flex-col bg-slate-900/95 backdrop-blur-2xl border-white/5 text-white p-0 rounded-[2.5rem] overflow-hidden shadow-[0_0_80px_rgba(0,0,0,0.5)]">
         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary via-accent to-purple-500" />
         
-        <DialogHeader className="p-8 pb-0">
+        <DialogHeader className="p-8 pb-0 flex-shrink-0">
           <div className="flex items-center gap-4 mb-2">
               <div className="w-12 h-12 rounded-2xl bg-primary/20 flex items-center justify-center">
                   <User className="text-primary" size={24} />
@@ -108,7 +108,7 @@ export function DriverDialog({
           </div>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="p-8 pt-6 space-y-6 max-h-[80vh] overflow-y-auto custom-scrollbar">
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-8 pt-6 space-y-6 custom-scrollbar">
           {/* Section: Basic Identity */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">

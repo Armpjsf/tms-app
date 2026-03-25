@@ -36,15 +36,15 @@ export function RequestPreviewDialog({
   const { t } = useLanguage()
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px] p-0 overflow-hidden border-none shadow-2xl">
-        <DialogHeader className="p-8 bg-orange-500/10 border-b border-orange-500/10">
+      <DialogContent className="max-w-[95vw] sm:max-w-[500px] max-h-[95vh] flex flex-col p-0 overflow-hidden border-none shadow-2xl">
+        <DialogHeader className="p-8 bg-orange-500/10 border-b border-orange-500/10 flex-shrink-0">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
               <div className="p-3 bg-orange-500 rounded-2xl text-white shadow-lg shadow-orange-500/20">
                 <ClipboardList size={24} />
               </div>
               <div>
-                <DialogTitle className="text-2xl font-black tracking-tighter text-gray-900">
+                <DialogTitle className="text-2xl font-black tracking-tighter text-gray-900 uppercase">
                   {t('shipment.title_preview')}
                 </DialogTitle>
                 <p className="text-base font-bold font-black text-orange-600 uppercase tracking-[0.2em]">
@@ -58,7 +58,7 @@ export function RequestPreviewDialog({
           </div>
         </DialogHeader>
 
-        <div className="p-8 space-y-8">
+        <div className="flex-1 overflow-y-auto p-8 space-y-8 custom-scrollbar">
           {/* Main Info Grid */}
           <div className="grid grid-cols-2 gap-8">
             <div className="space-y-1">

@@ -159,12 +159,25 @@ export function FuelDialog({
   return (
     <Dialog open={show} onOpenChange={setShow}>
       {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
-      <DialogContent className="sm:max-w-[425px] bg-white/95 border-gray-200 text-white">
-        <DialogHeader>
-          <DialogTitle>{initialData ? t('fuel.title_edit') : t('fuel.title_add')}</DialogTitle>
+      <DialogContent className="max-w-[95vw] sm:max-w-xl max-h-[95vh] flex flex-col bg-slate-900/95 backdrop-blur-2xl border-white/5 text-white p-0 rounded-[2.5rem] overflow-hidden shadow-[0_0_80px_rgba(0,0,0,0.5)]">
+        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500" />
+        
+        <DialogHeader className="p-8 pb-4 flex-shrink-0">
+          <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-emerald-500/20 flex items-center justify-center">
+                  <span className="text-emerald-500 text-2xl">⛽</span>
+              </div>
+              <div>
+                  <DialogTitle className="text-3xl font-black tracking-tighter uppercase whitespace-nowrap">
+                      {initialData ? t('fuel.title_edit') : t('fuel.title_add')}
+                  </DialogTitle>
+                  <p className="text-slate-500 text-base font-bold font-black uppercase tracking-[0.3em]">Fuel & Energy Consumption Log</p>
+              </div>
+          </div>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4 mt-4">
-          <div className="flex flex-col items-center mb-4 gap-2">
+
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-8 pt-2 space-y-6 custom-scrollbar">
+          <div className="flex flex-col items-center mb-2 gap-4">
              <ImageUpload 
                 value={formData.Photo_Url} 
                 onChange={(url) => setFormData({ ...formData, Photo_Url: url })}
@@ -173,7 +186,7 @@ export function FuelDialog({
                 <Button 
                     type="button" 
                     variant="outline" 
-                    size="sm"
+                    size="lg"
                     onClick={async () => {
                         if (!formData.Photo_Url) return
                         setLoading(true)
@@ -198,34 +211,34 @@ export function FuelDialog({
                         }
                     }}
                     disabled={loading}
-                    className="text-lg font-bold flex items-center gap-1"
+                    className="h-12 px-8 rounded-xl border-white/10 bg-white/5 text-white font-black uppercase tracking-widest hover:bg-white/10 flex items-center gap-3 transition-all active:scale-95"
                 >
-                    {loading ? <Loader2 className="w-3 h-3 animate-spin"/> : <span className="text-emerald-400">⚡</span>}
+                    {loading ? <Loader2 className="w-4 h-4 animate-spin"/> : <span className="text-xl">⚡</span>}
                     {t('fuel.scan_receipt')}
                 </Button>
              )}
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="Date_Time">{t('fuel.date_time')}</Label>
+            <Label htmlFor="Date_Time" className="text-slate-500 font-black uppercase tracking-widest ml-1">{t('fuel.date_time')}</Label>
             <Input
               id="Date_Time"
               type="datetime-local"
               value={formData.Date_Time}
               onChange={(e) => setFormData({ ...formData, Date_Time: e.target.value })}
               required
-              className="bg-white/5 border-gray-200"
+              className="h-12 bg-white/5 border-white/10 text-white rounded-xl focus:ring-emerald-500/40"
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-                <Label htmlFor="Driver_ID">{t('fuel.driver')}</Label>
+                <Label className="text-slate-500 font-black uppercase tracking-widest ml-1">{t('fuel.driver')}</Label>
                 <Select value={formData.Driver_ID || undefined} onValueChange={(val) => setFormData({ ...formData, Driver_ID: val })}>
-                    <SelectTrigger className="w-full h-10 border-gray-200 bg-white/5 text-white">
+                    <SelectTrigger className="h-12 border-white/10 bg-white/5 text-white rounded-xl">
                         <SelectValue placeholder={t('fuel.placeholder_driver')} />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-slate-900 border-white/10 text-white">
                         {drivers.map((d) => (
                             <SelectItem key={d.Driver_ID} value={d.Driver_ID}>{d.Driver_Name}</SelectItem>
                         ))}
@@ -233,12 +246,12 @@ export function FuelDialog({
                 </Select>
             </div>
             <div className="space-y-2">
-                <Label htmlFor="Vehicle_Plate">{t('fuel.vehicle')}</Label>
+                <Label className="text-slate-500 font-black uppercase tracking-widest ml-1">{t('fuel.vehicle')}</Label>
                 <Select value={formData.Vehicle_Plate || undefined} onValueChange={(val) => setFormData({ ...formData, Vehicle_Plate: val })}>
-                    <SelectTrigger className="w-full h-10 border-gray-200 bg-white/5 text-white">
+                    <SelectTrigger className="h-12 border-white/10 bg-white/5 text-white rounded-xl">
                         <SelectValue placeholder={t('fuel.placeholder_vehicle')} />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-slate-900 border-white/10 text-white">
                         {vehicles.map((v) => (
                             <SelectItem key={v.Vehicle_Plate} value={v.Vehicle_Plate}>{v.Vehicle_Plate}</SelectItem>
                         ))}
@@ -247,19 +260,19 @@ export function FuelDialog({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <Label htmlFor="Station_Name">{t('fuel.station')}</Label>
+                <Label htmlFor="Station_Name" className="text-slate-500 font-black uppercase tracking-widest ml-1">{t('fuel.station')}</Label>
                 <Input
                     id="Station_Name"
                     value={formData.Station_Name}
                     onChange={(e) => setFormData({ ...formData, Station_Name: e.target.value })}
                     placeholder={t('fuel.placeholder_station')}
-                    className="bg-white/5 border-gray-200"
+                    className="h-12 bg-white/5 border-white/10 text-white rounded-xl focus:ring-emerald-500/40"
                 />
             </div>
             <div className="space-y-2">
-                 <Label htmlFor="Mileage">{t('fuel.odometer')}</Label>
+                 <Label htmlFor="Mileage" className="text-slate-500 font-black uppercase tracking-widest ml-1">{t('fuel.odometer')}</Label>
                  <Input
                     id="Mileage"
                     type="number"
@@ -267,14 +280,14 @@ export function FuelDialog({
                     onChange={(e) => setFormData({ ...formData, Mileage: e.target.value })}
                     placeholder={t('fuel.placeholder_odometer')}
                     required
-                    className="bg-white/5 border-gray-200"
+                    className="h-12 bg-white/5 border-white/10 text-white rounded-xl focus:ring-emerald-500/40"
                  />
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="space-y-2">
-                <Label htmlFor="Liter">{t('fuel.liters')}</Label>
+                <Label htmlFor="Liter" className="text-slate-500 font-black uppercase tracking-widest ml-1">{t('fuel.liters')}</Label>
                 <Input
                 id="Liter"
                 type="number"
@@ -282,11 +295,11 @@ export function FuelDialog({
                 value={formData.Liter}
                 onChange={(e) => setFormData({ ...formData, Liter: e.target.value })}
                 required
-                className="bg-white/5 border-gray-200"
+                className="h-12 bg-white/5 border-white/10 text-white rounded-xl focus:ring-emerald-500/40"
                 />
             </div>
             <div className="space-y-2">
-                <Label htmlFor="Price">{t('fuel.price_per_liter')}</Label>
+                <Label htmlFor="Price" className="text-slate-500 font-black uppercase tracking-widest ml-1">{t('fuel.price_per_liter')}</Label>
                 <Input
                 id="Price"
                 type="number"
@@ -294,27 +307,36 @@ export function FuelDialog({
                 value={formData.Price}
                 onChange={(e) => setFormData({ ...formData, Price: e.target.value })}
                 required
-                className="bg-white/5 border-gray-200"
+                className="h-12 bg-white/5 border-white/10 text-white rounded-xl focus:ring-emerald-500/40"
                 />
             </div>
             <div className="space-y-2">
-                <Label htmlFor="Total_Amount">{t('fuel.total_amount')}</Label>
+                <Label htmlFor="Total_Amount" className="text-slate-500 font-black uppercase tracking-widest ml-1">{t('fuel.total_amount')}</Label>
                 <Input
                 id="Total_Amount"
                 value={formData.Total_Amount.toFixed(2)}
                 readOnly
-                className="bg-white/5 border-gray-200 text-emerald-400 font-bold"
+                className="h-12 bg-emerald-500/10 border-emerald-500/20 text-emerald-400 font-black text-lg rounded-xl"
                 />
             </div>
           </div>
 
-          <div className="flex justify-end gap-2 mt-6">
-            <Button type="button" variant="ghost" onClick={() => setShow(false)}>
+          <div className="flex justify-end gap-3 pt-4 sticky bottom-0 bg-transparent">
+            <Button 
+                type="button" 
+                variant="ghost" 
+                onClick={() => setShow(false)}
+                className="h-14 px-8 rounded-2xl text-slate-500 font-black uppercase tracking-widest hover:text-white"
+            >
               {t('jobs.dialog.abort')}
             </Button>
-            <Button type="submit" disabled={loading} className="bg-gradient-to-r from-emerald-500 to-teal-600">
+            <Button 
+                type="submit" 
+                disabled={loading} 
+                className="h-14 px-12 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-black uppercase tracking-widest shadow-xl shadow-emerald-500/20"
+            >
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {initialData ? t('common.save') : t('common.submit') || 'บันทึก'}
+              {initialData ? t('common.save') : t('common.submit') || 'SUBMIT_LOG'}
             </Button>
           </div>
         </form>

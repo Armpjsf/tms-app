@@ -123,8 +123,8 @@ export function ExcelImport({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent className="sm:max-w-xl bg-slate-900 border-white/10 text-white rounded-3xl p-0 overflow-hidden">
-        <div className="p-8 space-y-6">
+      <DialogContent className="max-w-[95vw] sm:max-w-xl max-h-[95vh] flex flex-col bg-slate-900 border-white/10 text-white rounded-[2rem] p-0 overflow-hidden shadow-2xl">
+        <div className="flex-1 overflow-y-auto p-8 pb-4 space-y-6 custom-scrollbar">
           <DialogHeader>
             <DialogTitle className="text-xl font-black tracking-tight flex items-center gap-3">
               <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
@@ -255,24 +255,24 @@ export function ExcelImport({
                </div>
             )}
           </div>
-
-          <DialogFooter className="flex gap-3 pt-4">
-            <Button 
-              variant="ghost" 
-              onClick={() => setOpen(false)}
-              className="flex-1 h-12 rounded-2xl border border-white/5 text-slate-400 hover:text-white hover:bg-white/5 font-bold transition-all"
-            >
-              ยกเลิก
-            </Button>
-            <Button
-              onClick={handleImport}
-              disabled={!file || loading || previewData.length === 0}
-              className="flex-1 h-12 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-black shadow-lg shadow-emerald-900/20 transition-all active:scale-95 disabled:opacity-50"
-            >
-              {loading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : "นำเข้าข้อมูล"}
-            </Button>
-          </DialogFooter>
         </div>
+
+        <DialogFooter className="p-8 pt-0 flex gap-3 flex-shrink-0">
+          <Button 
+            variant="ghost" 
+            onClick={() => setOpen(false)}
+            className="flex-1 h-12 rounded-2xl border border-white/5 text-slate-400 hover:text-white hover:bg-white/5 font-bold transition-all"
+          >
+            ยกเลิก
+          </Button>
+          <Button
+            onClick={handleImport}
+            disabled={!file || loading || previewData.length === 0}
+            className="flex-1 h-12 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-black shadow-lg shadow-emerald-900/20 transition-all active:scale-95 disabled:opacity-50"
+          >
+            {loading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : "นำเข้าข้อมูล"}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   )

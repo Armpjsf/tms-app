@@ -68,40 +68,41 @@ export function RequestShipmentDialog({ open, onOpenChange }: RequestShipmentDia
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[500px] p-0 overflow-hidden bg-white/95 backdrop-blur-2xl border border-white/40 shadow-2xl rounded-[2.5rem]">
-                <AnimatePresence mode="wait">
-                    {success ? (
-                        <motion.div 
-                            initial={{ opacity: 0, scale: 0.9 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.9 }}
-                            className="p-12 text-center flex flex-col items-center justify-center min-h-[400px]"
-                        >
-                            <div className="w-20 h-20 bg-emerald-500 rounded-full flex items-center justify-center mb-6 shadow-2xl shadow-emerald-500/20">
-                                <CheckCircle2 className="text-white w-10 h-10" />
-                            </div>
-                            <h3 className="text-2xl font-black text-gray-900 mb-2 tracking-tighter">{t('shipment.success_title')}</h3>
-                            <p className="text-gray-500 font-bold uppercase tracking-widest text-base font-bold">{t('shipment.success_desc')}</p>
-                        </motion.div>
-                    ) : (
-                        <motion.div
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -10 }}
-                        >
-                            <DialogHeader className="p-8 pb-4">
-                                <div className="flex items-center gap-3 mb-2">
-                                    <div className="p-2 bg-emerald-500 rounded-xl text-white">
-                                        <Package size={20} />
-                                    </div>
-                                    <DialogTitle className="text-2xl font-black tracking-tighter text-gray-900">{t('shipment.title_request')}</DialogTitle>
+        <DialogContent className="max-w-[95vw] sm:max-w-[500px] max-h-[95vh] flex flex-col p-0 overflow-hidden bg-white/95 backdrop-blur-2xl border border-white/40 shadow-2xl rounded-[2.5rem]">
+            <AnimatePresence mode="wait">
+                {success ? (
+                    <motion.div 
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.9 }}
+                        className="p-12 text-center flex flex-col items-center justify-center min-h-[400px]"
+                    >
+                        <div className="w-20 h-20 bg-emerald-500 rounded-full flex items-center justify-center mb-6 shadow-2xl shadow-emerald-500/20">
+                            <CheckCircle2 className="text-white w-10 h-10" />
+                        </div>
+                        <h3 className="text-2xl font-black text-gray-900 mb-2 tracking-tighter">{t('shipment.success_title')}</h3>
+                        <p className="text-gray-500 font-bold uppercase tracking-widest text-base font-bold">{t('shipment.success_desc')}</p>
+                    </motion.div>
+                ) : (
+                    <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        className="flex flex-col flex-1 overflow-hidden"
+                    >
+                        <DialogHeader className="p-8 pb-4 flex-shrink-0">
+                            <div className="flex items-center gap-3 mb-2">
+                                <div className="p-2 bg-emerald-500 rounded-xl text-white">
+                                    <Package size={20} />
                                 </div>
-                                <DialogDescription className="text-gray-500 font-bold uppercase tracking-widest text-base font-bold">
-                                    {t('shipment.subtitle_request')}
-                                </DialogDescription>
-                            </DialogHeader>
+                                <DialogTitle className="text-2xl font-black tracking-tighter text-gray-900">{t('shipment.title_request')}</DialogTitle>
+                            </div>
+                            <DialogDescription className="text-gray-500 font-bold uppercase tracking-widest text-base font-bold">
+                                {t('shipment.subtitle_request')}
+                            </DialogDescription>
+                        </DialogHeader>
 
-                            <form onSubmit={handleSubmit} className="p-8 pt-0 space-y-6">
+                        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-8 pt-0 space-y-6 custom-scrollbar">
                                 <div className="grid grid-cols-1 gap-6">
                                     <div className="space-y-2">
                                         <Label className="text-base font-bold font-black uppercase tracking-widest text-gray-400 flex items-center gap-2">

@@ -5,7 +5,7 @@ import { Resend } from 'resend';
 // Initialize Resend conditionally or lazily
 const resend = new Resend(process.env.RESEND_API_KEY || 're_123'); // Default dummy key to prevent crash on init, but check before send
 
-interface EmailAttachment {
+export interface EmailAttachment {
     filename: string;
     path?: string; // URL
     content?: Buffer | string;

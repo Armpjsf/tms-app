@@ -141,13 +141,25 @@ export function MaintenanceDialog({
   return (
     <Dialog open={show} onOpenChange={setShow}>
       {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
-      <DialogContent className="sm:max-w-[425px] bg-white/95 border-gray-200 text-white max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>{initialData ? t('maintenance.title_edit') : t('maintenance.title_add')}</DialogTitle>
+      <DialogContent className="max-w-[95vw] sm:max-w-xl max-h-[95vh] flex flex-col bg-slate-900/95 backdrop-blur-2xl border-white/5 text-white p-0 rounded-[2.5rem] overflow-hidden shadow-[0_0_80px_rgba(0,0,0,0.5)]">
+        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-500 via-orange-500 to-red-500" />
+        
+        <DialogHeader className="p-8 pb-4 flex-shrink-0">
+          <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-amber-500/20 flex items-center justify-center">
+                  <span className="text-amber-500 text-2xl">🛠️</span>
+              </div>
+              <div>
+                  <DialogTitle className="text-3xl font-black tracking-tighter uppercase whitespace-nowrap">
+                      {initialData ? t('maintenance.title_edit') : t('maintenance.title_add')}
+                  </DialogTitle>
+                  <p className="text-slate-500 text-base font-bold font-black uppercase tracking-[0.3em]">Operational Service Log</p>
+              </div>
+          </div>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4 mt-4">
-          
-          <div className="flex justify-center mb-4">
+
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-8 pt-2 space-y-6 custom-scrollbar">
+          <div className="flex justify-center mb-2">
              <ImageUpload 
                 value={formData.Photo_Url} 
                 onChange={(url) => setFormData({ ...formData, Photo_Url: url })}
@@ -155,25 +167,25 @@ export function MaintenanceDialog({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="Date_Report">{t('maintenance.date_report')}</Label>
+            <Label htmlFor="Date_Report" className="text-slate-500 font-black uppercase tracking-widest ml-1">{t('maintenance.date_report')}</Label>
             <Input
               id="Date_Report"
               type="datetime-local"
               value={formData.Date_Report}
               onChange={(e) => setFormData({ ...formData, Date_Report: e.target.value })}
               required
-              className="bg-white/5 border-gray-200"
+              className="h-12 bg-white/5 border-white/10 text-white rounded-xl focus:ring-amber-500/40"
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-                <Label htmlFor="Driver_ID">{t('maintenance.reporter')}</Label>
+                <Label className="text-slate-500 font-black uppercase tracking-widest ml-1">{t('maintenance.reporter')}</Label>
                 <Select value={formData.Driver_ID || undefined} onValueChange={(val) => setFormData({ ...formData, Driver_ID: val })}>
-                    <SelectTrigger className="w-full h-10 border-gray-200 bg-white/5 text-white">
+                    <SelectTrigger className="h-12 border-white/10 bg-white/5 text-white rounded-xl">
                         <SelectValue placeholder={t('maintenance.placeholder_driver')} />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-slate-900 border-white/10 text-white">
                         {drivers.map((d: Driver) => (
                             <SelectItem key={d.Driver_ID} value={d.Driver_ID}>{d.Driver_Name}</SelectItem>
                         ))}
@@ -181,12 +193,12 @@ export function MaintenanceDialog({
                 </Select>
             </div>
             <div className="space-y-2">
-                <Label htmlFor="Vehicle_Plate">{t('maintenance.vehicle')}</Label>
+                <Label className="text-slate-500 font-black uppercase tracking-widest ml-1">{t('maintenance.vehicle')}</Label>
                 <Select value={formData.Vehicle_Plate || undefined} onValueChange={(val) => setFormData({ ...formData, Vehicle_Plate: val })}>
-                    <SelectTrigger className="w-full h-10 border-gray-200 bg-white/5 text-white">
+                    <SelectTrigger className="h-12 border-white/10 bg-white/5 text-white rounded-xl">
                         <SelectValue placeholder={t('maintenance.placeholder_vehicle')} />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-slate-900 border-white/10 text-white">
                         {vehicles.map((v: { Vehicle_Plate: string }) => (
                             <SelectItem key={v.Vehicle_Plate} value={v.Vehicle_Plate}>{v.Vehicle_Plate}</SelectItem>
                         ))}
@@ -195,14 +207,14 @@ export function MaintenanceDialog({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-                <Label htmlFor="Issue_Type">{t('maintenance.issue_type')}</Label>
+                <Label className="text-slate-500 font-black uppercase tracking-widest ml-1">{t('maintenance.issue_type')}</Label>
                 <Select value={formData.Issue_Type} onValueChange={(val) => setFormData({ ...formData, Issue_Type: val })}>
-                    <SelectTrigger className="w-full h-10 border-gray-200 bg-white/5 text-white">
+                    <SelectTrigger className="h-12 border-white/10 bg-white/5 text-white rounded-xl">
                         <SelectValue placeholder={t('maintenance.placeholder_issue')} />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-slate-900 border-white/10 text-white">
                         <SelectItem value="Engine">{t('maintenance.engine')}</SelectItem>
                         <SelectItem value="Tire">{t('maintenance.tire')}</SelectItem>
                         <SelectItem value="Battery">{t('maintenance.battery')}</SelectItem>
@@ -212,12 +224,12 @@ export function MaintenanceDialog({
                 </Select>
             </div>
              <div className="space-y-2">
-                <Label htmlFor="Priority">{t('maintenance.priority')}</Label>
+                <Label className="text-slate-500 font-black uppercase tracking-widest ml-1">{t('maintenance.priority')}</Label>
                 <Select value={formData.Priority} onValueChange={(val) => setFormData({ ...formData, Priority: val })}>
-                    <SelectTrigger className="w-full h-10 border-gray-200 bg-white/5 text-white">
+                    <SelectTrigger className="h-12 border-white/10 bg-white/5 text-white rounded-xl">
                         <SelectValue placeholder={t('maintenance.placeholder_priority')} />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-slate-900 border-white/10 text-white">
                         <SelectItem value="Low">{t('maintenance.low')}</SelectItem>
                         <SelectItem value="Medium">{t('maintenance.medium')}</SelectItem>
                         <SelectItem value="High">{t('maintenance.high')}</SelectItem>
@@ -227,27 +239,27 @@ export function MaintenanceDialog({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="Description">{t('maintenance.description')}</Label>
+            <Label htmlFor="Description" className="text-slate-500 font-black uppercase tracking-widest ml-1">{t('maintenance.description')}</Label>
             <Textarea
               id="Description"
               value={formData.Description}
               onChange={(e) => setFormData({ ...formData, Description: e.target.value })}
               placeholder={t('maintenance.placeholder_description')}
               required
-              className="bg-white/5 border-gray-200"
+              className="min-h-[100px] bg-white/5 border-white/10 text-white rounded-xl focus:ring-amber-500/40"
             />
           </div>
 
           {initialData && (
-             <div className="pt-4 border-t border-gray-200 space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+             <div className="pt-6 border-t border-white/10 space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
-                        <Label htmlFor="Status">{t('maintenance.status')}</Label>
+                        <Label className="text-slate-500 font-black uppercase tracking-widest ml-1">{t('maintenance.status')}</Label>
                         <Select value={formData.Status} onValueChange={(val) => setFormData({ ...formData, Status: val })}>
-                            <SelectTrigger className="w-full h-10 border-gray-200 bg-white/5 text-white">
+                            <SelectTrigger className="h-12 border-white/10 bg-white/5 text-white rounded-xl">
                                 <SelectValue placeholder={t('maintenance.placeholder_status')} />
                             </SelectTrigger>
-                            <SelectContent>
+                            <SelectContent className="bg-slate-900 border-white/10 text-white">
                                 <SelectItem value="Pending">{t('maintenance.pending')}</SelectItem>
                                 <SelectItem value="In Progress">{t('maintenance.in_progress')}</SelectItem>
                                 <SelectItem value="Completed">{t('maintenance.completed')}</SelectItem>
@@ -256,36 +268,45 @@ export function MaintenanceDialog({
                         </Select>
                     </div>
                     <div className="space-y-2">
-                        <Label htmlFor="Cost_Total">{t('maintenance.cost')}</Label>
+                        <Label htmlFor="Cost_Total" className="text-slate-500 font-black uppercase tracking-widest ml-1">{t('maintenance.cost')}</Label>
                          <Input
                             id="Cost_Total"
                             type="number"
                             value={formData.Cost_Total}
                             onChange={(e) => setFormData({ ...formData, Cost_Total: parseFloat(e.target.value) || 0 })}
-                            className="bg-white/5 border-gray-200"
+                            className="h-12 bg-white/5 border-white/10 text-white rounded-xl focus:ring-amber-500/40"
                          />
                     </div>
                 </div>
                  <div className="space-y-2">
-                    <Label htmlFor="Remark">{t('maintenance.remark')}</Label>
+                    <Label htmlFor="Remark" className="text-slate-500 font-black uppercase tracking-widest ml-1">{t('maintenance.remark')}</Label>
                     <Textarea
                         id="Remark"
                         value={formData.Remark}
                         onChange={(e) => setFormData({ ...formData, Remark: e.target.value })}
                         placeholder={t('maintenance.placeholder_remark')}
-                        className="bg-white/5 border-gray-200"
+                        className="min-h-[80px] bg-white/5 border-white/10 text-white rounded-xl focus:ring-amber-500/40"
                     />
                 </div>
              </div>
           )}
 
-          <div className="flex justify-end gap-2 mt-6">
-            <Button type="button" variant="ghost" onClick={() => setShow(false)}>
+          <div className="flex justify-end gap-3 pt-4 sticky bottom-0 bg-transparent">
+            <Button 
+                type="button" 
+                variant="ghost" 
+                onClick={() => setShow(false)}
+                className="h-14 px-8 rounded-2xl text-slate-500 font-black uppercase tracking-widest hover:text-white"
+            >
               {t('jobs.dialog.abort')}
             </Button>
-            <Button type="submit" disabled={loading} className="bg-gradient-to-r from-amber-500 to-orange-600">
+            <Button 
+                type="submit" 
+                disabled={loading} 
+                className="h-14 px-12 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-600 text-white font-black uppercase tracking-widest shadow-xl shadow-amber-500/20"
+            >
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {initialData ? t('common.save') : t('maintenance.title_report_btn') || 'แจ้งซ่อม'}
+              {initialData ? t('common.save') : t('maintenance.title_report_btn') || 'SUBMIT_REPORT'}
             </Button>
           </div>
         </form>

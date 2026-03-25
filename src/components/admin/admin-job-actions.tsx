@@ -75,14 +75,14 @@ export function AdminJobActions({ jobId, currentStatus }: Props) {
           จัดการสถานะ (Admin)
         </Button>
       </DialogTrigger>
-      <DialogContent className="bg-white border-gray-200 sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle className="text-gray-900">อัพเดทสถานะงาน (Admin Override)</DialogTitle>
-          <DialogDescription className="text-gray-500">
+      <DialogContent className="bg-white border-gray-200 max-w-[95vw] sm:max-w-[425px] max-h-[95vh] flex flex-col p-0 overflow-hidden">
+        <DialogHeader className="p-6 pb-2 flex-shrink-0">
+          <DialogTitle className="text-gray-900 font-black">อัพเดทสถานะงาน (Admin Override)</DialogTitle>
+          <DialogDescription className="text-gray-500 font-bold">
             เปลี่ยนสถานะงานแทนคนขับ หรือปิดงานกรณีฉุกเฉิน
           </DialogDescription>
         </DialogHeader>
-        <div className="grid gap-4 py-4">
+        <div className="flex-1 overflow-y-auto p-6 pt-0 space-y-4 custom-scrollbar">
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="status" className="text-right text-gray-700">
               สถานะ
