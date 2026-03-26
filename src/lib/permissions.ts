@@ -70,6 +70,6 @@ export async function isAdmin() {
 }
 
 export async function isCustomer() {
-    const customerId = await getCustomerId()
-    return !!customerId
+    const session = await getSession()
+    return !!session?.customerId || Number(session?.roleId) === 7
 }

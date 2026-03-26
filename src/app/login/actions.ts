@@ -49,13 +49,15 @@ export async function login(formData: FormData) {
     const roleMap: Record<string, number> = {
       'Super Admin': 1,
       'Admin': 2,
-      'Staff': 3,
-      'Driver': 4,
-      'Customer': 5
+      'Dispatcher': 3,
+      'Accountant': 4,
+      'Staff': 5,
+      'Driver': 6,
+      'Customer': 7
     }
-    roleId = roleMap[users.Role] || 3
+    roleId = roleMap[users.Role] || 5
   } else if (roleId === undefined || roleId === null) {
-    roleId = 3
+    roleId = 5
   }
 
   // 2. Fetch Role Permissions
@@ -76,17 +78,23 @@ export async function login(formData: FormData) {
       }
   }
 
-  const branchId = users.Branch_ID || null
-  const customerId = users.Customer_ID || null
-  // Merge Role Permissions with User Specific Permissions
+  const branchId = users.Branch_ID || users.branch_id || null
+  const customerId = users.Customer_ID || users.customer_id || null
+  
+  // MERGE Role Permissions with User Specific Permissions
   const permissions = { ...rolePermissions, ...(users.Permissions || {}) }
+  
+  // SECURITY: If role is Customer, ensure customerId is strictly enforced
+  const finalCustomerId = (users.Role === 'Customer' || roleId === 7) 
+    ? (customerId ? String(customerId) : 'FORCED_RESTRICTION') 
+    : (customerId ? String(customerId) : null)
   
   await createSession(
     users.Username, 
     roleId, 
-    branchId, 
+    branchId ? String(branchId) : null, 
     users.Username, 
-    customerId, 
+    finalCustomerId, 
     permissions
   )
 

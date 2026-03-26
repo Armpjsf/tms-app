@@ -12,12 +12,12 @@ export type SessionPayload = {
   branchId: string | null
   customerId: string | null
   username: string
-  expiresAt: string // Changed to string for safe JWT serialization
-  // permissions are intentionally omitted from JWT to prevent Cookie > 4KB limit
+  expiresAt: string 
+  permissions?: Record<string, boolean>
 }
 
 export async function encrypt(payload: SessionPayload) {
-  return new SignJWT(payload as any)
+  return new SignJWT(payload)
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
     .setExpirationTime('7d')
@@ -30,7 +30,7 @@ export async function decrypt(session: string | undefined = '') {
       algorithms: ['HS256'],
     })
     return payload as unknown as SessionPayload
-  } catch (error) {
+  } catch {
     return null
   }
 }
@@ -52,7 +52,8 @@ export async function createSession(
     branchId, 
     username, 
     customerId, 
-    expiresAt 
+    expiresAt,
+    permissions
   })
   
   const cookieStore = await cookies()

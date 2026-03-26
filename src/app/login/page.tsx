@@ -2,7 +2,7 @@
 
 import { useState, useEffect, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { Shield, X, Truck } from "lucide-react"
+import { Shield, X, Truck, Building } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -82,39 +82,57 @@ function StaffLoginContent() {
             </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-10 px-4 max-w-4xl mx-auto animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-300">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 px-4 max-w-6xl mx-auto animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-300">
             {/* Driver Login Option */}
             <div 
                 onClick={() => router.push('/mobile/login')}
-                className="group cursor-pointer relative overflow-hidden glass-panel rounded-[3rem] p-12 transition-all duration-500 hover:shadow-[0_20px_60px_rgba(255,30,133,0.15)] hover:-translate-y-3 text-center flex flex-col items-center gap-8"
+                className="group cursor-pointer relative overflow-hidden glass-panel rounded-[3rem] p-8 transition-all duration-500 hover:shadow-[0_20px_60px_rgba(255,30,133,0.15)] hover:-translate-y-3 text-center flex flex-col items-center gap-6"
             >
                 <div className="absolute inset-0 bg-gradient-to-br from-primary/[0.05] to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                <div className="w-20 h-20 bg-card border border-border/10 rounded-3xl flex items-center justify-center shadow-2xl group-hover:rotate-6 group-hover:bg-primary transition-all duration-700">
-                    <Truck className="text-white w-10 h-10" strokeWidth={2.5} />
+                <div className="w-16 h-16 bg-card border border-border/10 rounded-2xl flex items-center justify-center shadow-2xl group-hover:rotate-6 group-hover:bg-primary transition-all duration-700">
+                    <Truck className="text-white w-8 h-8" strokeWidth={2.5} />
                 </div>
-                <div className="space-y-2">
-                    <h2 className="text-4xl font-black text-accent tracking-tighter">DRIVER</h2>
-                    <p className="text-muted-foreground text-base font-bold font-black uppercase tracking-[0.3em]">Fleet Portal</p>
+                <div className="space-y-1">
+                    <h2 className="text-3xl font-black text-accent tracking-tighter">DRIVER</h2>
+                    <p className="text-muted-foreground text-[10px] font-bold font-black uppercase tracking-[0.3em]">Fleet Portal</p>
                 </div>
-                <button className="w-full h-16 rounded-2xl bg-primary hover:brightness-110 text-foreground font-bold uppercase tracking-[0.3em] shadow-2xl shadow-primary/20 transition-all">
+                <button className="w-full h-14 rounded-xl bg-primary hover:brightness-110 text-foreground font-bold uppercase tracking-[0.2em] shadow-xl shadow-primary/20 transition-all">
                     Start Engine
+                </button>
+            </div>
+
+            {/* Customer Login Option */}
+            <div 
+                onClick={() => setActiveTab('staff_form')}
+                className="group cursor-pointer relative overflow-hidden glass-panel rounded-[3rem] p-8 transition-all duration-500 hover:shadow-[0_20px_60px_rgba(59,130,246,0.15)] hover:-translate-y-3 text-center flex flex-col items-center gap-6"
+            >
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/[0.05] to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="w-16 h-16 bg-card border border-border/10 rounded-2xl flex items-center justify-center shadow-2xl group-hover:scale-110 group-hover:bg-blue-600 transition-all duration-700">
+                    <Building className="text-white w-8 h-8" strokeWidth={2.5} />
+                </div>
+                <div className="space-y-1">
+                    <h2 className="text-3xl font-black text-accent tracking-tighter">CUSTOMER</h2>
+                    <p className="text-muted-foreground text-[10px] font-bold font-black uppercase tracking-[0.3em]">Consignor Portal</p>
+                </div>
+                <button className="w-full h-14 rounded-xl bg-blue-600 hover:brightness-110 text-white font-bold uppercase tracking-[0.2em] shadow-xl shadow-blue-600/20 transition-all">
+                    Access Grid
                 </button>
             </div>
 
             {/* Staff Login Option */}
             <div 
                 onClick={() => setActiveTab('staff_form')}
-                className="group cursor-pointer relative overflow-hidden glass-panel rounded-[3rem] p-12 transition-all duration-500 hover:shadow-[0_20px_60px_rgba(147,51,234,0.15)] hover:-translate-y-3 text-center flex flex-col items-center gap-8"
+                className="group cursor-pointer relative overflow-hidden glass-panel rounded-[3rem] p-8 transition-all duration-500 hover:shadow-[0_20px_60px_rgba(147,51,234,0.15)] hover:-translate-y-3 text-center flex flex-col items-center gap-6"
             >
                 <div className="absolute inset-0 bg-gradient-to-br from-accent/[0.05] to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                <div className="w-20 h-20 bg-card border border-border/10 rounded-3xl flex items-center justify-center shadow-2xl group-hover:-rotate-6 group-hover:bg-accent transition-all duration-700">
-                    <Shield className="text-white w-10 h-10" strokeWidth={2.5} />
+                <div className="w-16 h-16 bg-card border border-border/10 rounded-2xl flex items-center justify-center shadow-2xl group-hover:-rotate-6 group-hover:bg-accent transition-all duration-700">
+                    <Shield className="text-white w-8 h-8" strokeWidth={2.5} />
                 </div>
-                <div className="space-y-2">
-                    <h2 className="text-4xl font-black text-accent tracking-tighter">ADMIN</h2>
-                    <p className="text-muted-foreground text-base font-bold font-black uppercase tracking-[0.3em]">Command Center</p>
+                <div className="space-y-1">
+                    <h2 className="text-3xl font-black text-accent tracking-tighter">ADMIN</h2>
+                    <p className="text-muted-foreground text-[10px] font-bold font-black uppercase tracking-[0.3em]">Command Center</p>
                 </div>
-                <button className="w-full h-16 rounded-2xl bg-muted/50 border border-border/10 hover:bg-muted/80 text-foreground font-black text-lg font-bold uppercase tracking-[0.3em] shadow-2xl transition-all">
+                <button className="w-full h-14 rounded-xl bg-muted/50 border border-border/10 hover:bg-muted/80 text-foreground font-black text-base font-bold uppercase tracking-[0.2em] shadow-xl transition-all">
                     Command Key
                 </button>
             </div>

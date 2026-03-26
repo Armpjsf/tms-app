@@ -152,11 +152,14 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
         try {
             const role = await getUserRole()
             const { isCustomer } = await import("@/lib/permissions")
-            const customerFlag = await isCustomer()
+            const { getUserProfile } = await import("@/lib/supabase/users")
+            
+            const profile = await getUserProfile()
+            const isCust = (await isCustomer()) || (Number(role) === 7) || (profile?.Role === 'Customer')
             
             setSidebarState({
-                userRole: role || null,
-                isCustomerUser: customerFlag,
+                userRole: role || (profile?.Role === 'Customer' ? 7 : null),
+                isCustomerUser: !!isCust,
                 roleLoaded: true
             })
         } catch {
@@ -171,14 +174,21 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
 
   const filteredNavigation = activeNavigation.filter(group => {
     if (!roleLoaded || userRole === null) return true 
+    
+    // If identified as customer, ONLY allow customerNavigation items
     if (isCustomerUser) return true
+
+    // Safety for Role 7 if for some reason isCustomerUser is false
+    if (Number(userRole) === 7) {
+        return group.titleKey === "nav_groups.client_portal" || group.titleKey === "nav_groups.documents"
+    }
 
     if (group.titleKey === "nav_groups.intelligence") return [1, 2].includes(userRole)
     if (group.titleKey === "nav_groups.financial") return [1, 2, 4].includes(userRole)
     if (group.titleKey === "nav_groups.settings") return [1, 2].includes(userRole)
     
     if (group.titleKey === "nav_groups.operations" || group.titleKey === "nav_groups.asset_control") {
-        if (userRole === 4) return false
+        if (userRole === 4 || userRole === 7) return false
     }
 
     return true

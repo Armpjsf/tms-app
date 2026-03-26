@@ -1,14 +1,12 @@
 "use server"
 
 import { createAdminClient } from '@/utils/supabase/server'
-import { isSuperAdmin, getCustomerId } from "@/lib/permissions"
+import { isSuperAdmin, getCustomerId, isCustomer } from "@/lib/permissions"
 import {
-    FinancialJob,
     REVENUE_STATUSES,
     subDays,
     differenceInDays,
     formatDateSafe,
-    getBranchPlates,
     getEffectiveBranchId
 } from './analytics-helpers'
 
@@ -31,12 +29,15 @@ export async function getExecutiveDashboardUnified(branchId?: string) {
     const sDatePrev = formatDateSafe(prevStart)!
     const eDatePrev = formatDateSafe(prevEnd)!
 
+    const isCust = await isCustomer()
+    const finalCustomerId = customerId || (isCust ? 'RESTRICTED_ACCESS_PENDING' : null)
+
     // Use the new Super RPC for Current Month
     const { data: currentData, error: rpcError } = await supabase.rpc('get_executive_summary', {
         start_date: sDateCurrent,
         end_date: eDateCurrent,
         filter_branch_id: effectiveBranchId || null,
-        filter_customer_id: customerId || null
+        filter_customer_id: finalCustomerId
     })
 
     // Get Previous Month Financials for Growth Calculation
@@ -44,7 +45,7 @@ export async function getExecutiveDashboardUnified(branchId?: string) {
         start_date: sDatePrev,
         end_date: eDatePrev,
         filter_branch_id: effectiveBranchId || null,
-        filter_customer_id: customerId || null
+        filter_customer_id: finalCustomerId
     })
 
     if (rpcError || !currentData) {
@@ -61,13 +62,11 @@ export async function getExecutiveDashboardUnified(branchId?: string) {
     // We still need external costs (Fuel/Repair) which aren't in get_executive_summary's Jobs logic 
     // but the get_dashboard_metrics handle them. For simplicity in this unified view, 
     // let's fetch them if not customer.
-    let fuelCost = 0
-    let maintenanceCost = 0
+    const fuelCost = 0
+    const maintenanceCost = 0
     
     if (!customerId) {
-        const { data: fuelRes } = await supabase.from('Fuel_Logs').select('Price_Total').gte('Date_Time', sDateCurrent).lte('Date_Time', eDateCurrent + 'T23:59:59').eq(effectiveBranchId ? 'Branch_ID' : 'Job_ID', effectiveBranchId || 'dummy').maybeSingle()
-        // Note: For speed, we'll assume the get_dashboard_metrics logic for secondary costs is sufficient for now 
-        // or we could add them to the super RPC later.
+        // External costs are currently handled by RPC metrics
     }
 
     const totalCost = driverCost + extraCost + fuelCost + maintenanceCost
@@ -190,7 +189,10 @@ export async function getTopCustomers(startDate?: string, endDate?: string, bran
         .select('Customer_Name, Price_Cust_Total')
         .in('Job_Status', REVENUE_STATUSES)
     
+    const isCust = await getCustomerId() || await isCustomer()
+    
     if (customerId) query = query.eq('Customer_ID', customerId)
+    else if (isCust) query = query.eq('Customer_ID', 'RESTRICTED_ACCESS')
     else if (effectiveBranchId) query = query.eq('Branch_ID', effectiveBranchId)
 
     const sDate = formatDateSafe(startDate)
@@ -310,14 +312,19 @@ export async function getExecutiveEfficiencyScores(branchId?: string) {
 
 export async function getDetailedProfitability(startDate?: string, endDate?: string, branchId?: string) {
     const supabase = await createAdminClient()
+    const customerId = await getCustomerId()
     const effectiveBranchId = await getEffectiveBranchId(branchId)
     const sDate = formatDateSafe(startDate)
     const eDate = formatDateSafe(endDate)
 
     let query = supabase.from('Jobs_Main').select('Job_ID, Customer_Name, Route_Name, Price_Cust_Total, Cost_Driver_Total, Price_Cust_Extra, Cost_Driver_Extra, Plan_Date').in('Job_Status', REVENUE_STATUSES).order('Plan_Date', { ascending: false }).limit(50)
+    
+    if (customerId) query = query.eq('Customer_ID', customerId)
+    else if (await isCustomer()) query = query.eq('Customer_ID', 'RESTRICTED_ACCESS')
+    else if (effectiveBranchId) query = query.eq('Branch_ID', effectiveBranchId)
+
     if (sDate) query = query.gte('Plan_Date', sDate)
     if (eDate) query = query.lte('Plan_Date', eDate)
-    if (effectiveBranchId) query = query.eq('Branch_ID', effectiveBranchId)
 
     const { data: jobs } = await query
     return (jobs || []).map(job => {
@@ -396,13 +403,18 @@ export async function getRevenueForecast(branchId?: string): Promise<{ month: st
 
 export async function getVehicleProfitability(startDate?: string, endDate?: string, branchId?: string) {
     const supabase = await createAdminClient()
+    const customerId = await getCustomerId()
     const effectiveBranchId = await getEffectiveBranchId(branchId)
     const sDate = formatDateSafe(startDate); const eDate = formatDateSafe(endDate)
 
     let query = supabase.from('Jobs_Main').select('Vehicle_Plate, Price_Cust_Total, Cost_Driver_Total').in('Job_Status', REVENUE_STATUSES)
+    
+    if (customerId) query = query.eq('Customer_ID', customerId)
+    else if (await isCustomer()) query = query.eq('Customer_ID', 'RESTRICTED_ACCESS')
+    else if (effectiveBranchId) query = query.eq('Branch_ID', effectiveBranchId)
+
     if (sDate) query = query.gte('Plan_Date', sDate)
     if (eDate) query = query.lte('Plan_Date', eDate)
-    if (effectiveBranchId) query = query.eq('Branch_ID', effectiveBranchId)
 
     const { data: jobs } = await query
     const stats: Record<string, any> = {}
