@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/dialog"
 
 import { Upload, FileSpreadsheet, Loader2, Download, AlertCircle, CheckCircle2 } from "lucide-react"
-import * as XLSX from "xlsx"
+import { read, utils, writeFile } from "xlsx"
 import { motion, AnimatePresence } from "framer-motion"
 
 interface ExcelImportProps {
@@ -72,10 +72,10 @@ export function ExcelImport({
       reader.onload = (e) => {
         try {
           const data = e.target?.result
-          const workbook = XLSX.read(data, { type: "binary" })
+          const workbook = read(data, { type: "binary" })
           const sheetName = workbook.SheetNames[0]
           const sheet = workbook.Sheets[sheetName]
-          const jsonData = XLSX.utils.sheet_to_json(sheet)
+          const jsonData = utils.sheet_to_json(sheet)
           const plainData = JSON.parse(JSON.stringify(jsonData))
           resolve(plainData)
         } catch (error) {
@@ -114,10 +114,10 @@ export function ExcelImport({
 
   const downloadTemplate = () => {
     if (!templateData) return
-    const ws = XLSX.utils.json_to_sheet(templateData)
-    const wb = XLSX.utils.book_new()
-    XLSX.utils.book_append_sheet(wb, ws, "Template")
-    XLSX.writeFile(wb, templateFilename)
+    const ws = utils.json_to_sheet(templateData)
+    const wb = utils.book_new()
+    utils.book_append_sheet(wb, ws, "Template")
+    writeFile(wb, templateFilename)
   }
 
   return (

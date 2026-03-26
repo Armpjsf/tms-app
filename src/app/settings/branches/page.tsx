@@ -8,15 +8,12 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { 
   Building, 
-  Mail, 
   Save, 
   ArrowLeft,
   Loader2,
   AlertCircle,
   Plus,
   Trash2,
-  MapPin,
-  Phone,
   CheckCircle2,
   Activity,
   Zap,
@@ -37,7 +34,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { useLanguage } from "@/components/providers/language-provider"
-import { cn } from "@/lib/utils"
 
 export default function BranchSettingsPage() {
   const router = useRouter()
@@ -356,11 +352,11 @@ export default function BranchSettingsPage() {
         </motion.div>
       </div>
 
-      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-        <DialogContent className="bg-background border-border/10 text-foreground max-w-2xl max-h-[90vh] overflow-hidden flex flex-col p-0 shadow-[0_40px_100px_rgba(0,0,0,1)] rounded-[4rem] backdrop-blur-3xl relative">
-          <div className="absolute top-0 left-0 w-full h-1 bg-primary animate-pulse shadow-[0_0_20px_rgba(255,30,133,1)]" />
-          
-          <div className="p-12 space-y-10">
+        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+                <DialogContent className="bg-background border-border/10 text-foreground max-w-2xl max-h-[85vh] overflow-hidden flex flex-col p-0 shadow-[0_40px_100px_rgba(0,0,0,1)] rounded-[3rem] sm:rounded-[4rem] backdrop-blur-3xl relative">
+                    <div className="absolute top-0 left-0 w-full h-1 bg-primary animate-pulse shadow-[0_0_20px_rgba(255,30,133,1)]" />
+                    
+                    <div className="flex-1 min-h-0 overflow-y-auto p-6 sm:p-10 space-y-6 custom-scrollbar">
             <DialogHeader>
               <DialogTitle className="text-3xl font-black flex items-center gap-5 italic uppercase tracking-widest premium-text-gradient">
                 <div className="p-4 rounded-[1.5rem] bg-primary/20 text-primary border-2 border-primary/30 shadow-2xl">
@@ -390,7 +386,7 @@ export default function BranchSettingsPage() {
                     value={newBranch.Branch_Name || ""}
                     onChange={(e) => setNewBranch(prev => ({ ...prev, Branch_Name: e.target.value }))}
                     placeholder="Hub name..."
-                    className="h-16 bg-black/40 border-border/5 rounded-[1.5rem] text-foreground font-black italic tracking-widest pl-8 shadow-inner"
+                    className="h-14 bg-black/40 border-border/5 rounded-[1.5rem] text-foreground font-black italic tracking-widest pl-8 shadow-inner"
                   />
                 </div>
               </div>
@@ -401,7 +397,7 @@ export default function BranchSettingsPage() {
                   value={newBranch.Address || ""}
                   onChange={(e) => setNewBranch(prev => ({ ...prev, Address: e.target.value }))}
                   placeholder="Physical deployment site..."
-                  className="h-16 bg-black/40 border-border/5 rounded-[1.5rem] text-foreground font-black italic tracking-widest pl-8 shadow-inner"
+                  className="h-14 bg-black/40 border-border/5 rounded-[1.5rem] text-foreground font-black italic tracking-widest pl-8 shadow-inner"
                 />
               </div>
 
@@ -411,28 +407,29 @@ export default function BranchSettingsPage() {
                   value={newBranch.Phone || ""}
                   onChange={(e) => setNewBranch(prev => ({ ...prev, Phone: e.target.value }))}
                   placeholder="+T-PH-NODE-XXXX"
-                  className="h-16 bg-black/40 border-border/5 rounded-[1.5rem] text-foreground font-black italic tracking-widest pl-8 shadow-inner"
+                  className="h-14 bg-black/40 border-border/5 rounded-[1.5rem] text-foreground font-black italic tracking-widest pl-8 shadow-inner"
                 />
               </div>
             </div>
+          </div>
 
-            <DialogFooter className="flex gap-6 mt-10">
+            <DialogFooter className="p-6 sm:p-10 border-t border-border/5 bg-black/40 flex gap-4 sm:gap-6 shrink-0">
               <PremiumButton 
                 variant="outline" 
                 onClick={() => setIsCreateDialogOpen(false)}
-                className="flex-1 h-18 rounded-[1.5rem] border-border/5 text-muted-foreground hover:text-foreground font-black uppercase tracking-widest italic"
+                className="flex-1 h-14 sm:h-16 rounded-[1.2rem] sm:rounded-[1.5rem] border-border/5 text-muted-foreground hover:text-foreground font-black uppercase tracking-widest italic"
               >
                 ABORT
               </PremiumButton>
               <PremiumButton 
                 onClick={handleCreateBranch}
                 disabled={creating}
-                className="flex-1 h-18 rounded-[2rem] bg-primary text-foreground font-black italic tracking-[0.2em] shadow-[0_20px_50px_rgba(255,30,133,0.3)] border-0"
+                className="flex-1 h-14 sm:h-16 rounded-[1.5rem] sm:rounded-[2rem] bg-primary text-foreground font-black italic tracking-[0.2em] shadow-[0_20px_50px_rgba(255,30,133,0.3)] border-0"
               >
                 {creating ? <Loader2 size={24} className="animate-spin" /> : "DEPLOY_NODE"}
               </PremiumButton>
             </DialogFooter>
-          </div>
+
         </DialogContent>
       </Dialog>
     </DashboardLayout>

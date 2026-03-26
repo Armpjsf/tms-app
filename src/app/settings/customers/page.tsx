@@ -30,6 +30,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from "@/components/ui/dialog"
 import { ExcelImport } from "@/components/ui/excel-import"
 import { createBulkCustomers, getAllCustomers, createCustomer, updateCustomer, deleteCustomer } from "@/lib/supabase/customers"
@@ -222,8 +223,8 @@ export default function CustomersSettingsPage() {
       </div>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent className="bg-background border border-border/5 text-foreground max-w-3xl shadow-[0_50px_100px_rgba(0,0,0,0.5)] rounded-[4rem] p-0 overflow-hidden ring-1 ring-white/10">
-            <div className="bg-card p-12 text-foreground relative overflow-hidden border-b border-border/5">
+          <DialogContent className="bg-background border border-border/5 text-foreground max-w-3xl max-h-[85vh] shadow-[0_50px_100px_rgba(0,0,0,0.5)] rounded-[3rem] sm:rounded-[4rem] p-0 overflow-hidden ring-1 ring-white/10 flex flex-col">
+            <div className="bg-card p-6 sm:p-10 text-foreground relative overflow-hidden border-b border-border/5 shrink-0">
                 <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent pointer-events-none" />
                 <DialogHeader>
                   <DialogTitle className="text-5xl font-black tracking-tighter flex items-center gap-6 uppercase premium-text-gradient">
@@ -235,7 +236,7 @@ export default function CustomersSettingsPage() {
                 </DialogHeader>
             </div>
 
-            <div className="p-12 space-y-10 custom-scrollbar max-h-[70vh] overflow-y-auto">
+            <div className="p-6 sm:p-10 space-y-6 custom-scrollbar flex-1 min-h-0 overflow-y-auto">
               <div className="space-y-4">
                 <Label className="text-base font-bold font-black uppercase tracking-[0.1em] text-muted-foreground ml-2">{t('settings_pages.customers.dialog.name')}</Label>
                 <div className="glass-panel p-1 rounded-2xl border-border/5">
@@ -243,7 +244,7 @@ export default function CustomersSettingsPage() {
                     value={formData.Customer_Name}
                     onChange={(e) => updateForm("Customer_Name", e.target.value)}
                     placeholder={t('settings_pages.customers.dialog.name_placeholder')}
-                    className="bg-transparent border-none text-2xl font-black tracking-tighter rounded-xl h-20 px-8 focus:bg-muted/50 transition-all text-foreground placeholder:text-muted-foreground"
+                    className="bg-transparent border-none text-2xl font-black tracking-tighter rounded-xl h-16 px-8 focus:bg-muted/50 transition-all text-foreground placeholder:text-muted-foreground"
                     />
                 </div>
               </div>
@@ -255,7 +256,7 @@ export default function CustomersSettingsPage() {
                     value={formData.Phone || ""}
                     onChange={(e) => updateForm("Phone", e.target.value)}
                     placeholder="+66 XXX-XXXX"
-                    className="bg-muted/50 border-border/5 rounded-2xl h-16 font-black px-8 text-foreground focus:ring-primary/40 focus:bg-secondary/50 transition-all uppercase tracking-widest text-xl"
+                    className="bg-muted/50 border-border/5 rounded-2xl h-14 font-black px-8 text-foreground focus:ring-primary/40 focus:bg-secondary/50 transition-all uppercase tracking-widest text-xl"
                   />
                 </div>
                 <div className="space-y-4">
@@ -264,7 +265,7 @@ export default function CustomersSettingsPage() {
                     value={formData.Email || ""}
                     onChange={(e) => updateForm("Email", e.target.value)}
                     placeholder="partner@logispro.matrix"
-                    className="bg-muted/50 border-border/5 rounded-2xl h-16 font-black px-8 text-foreground focus:ring-primary/40 focus:bg-secondary/50 transition-all uppercase tracking-widest text-xl"
+                    className="bg-muted/50 border-border/5 rounded-2xl h-14 font-black px-8 text-foreground focus:ring-primary/40 focus:bg-secondary/50 transition-all uppercase tracking-widest text-xl"
                   />
                 </div>
               </div>
@@ -286,7 +287,7 @@ export default function CustomersSettingsPage() {
                     value={formData.Customer_ID || ""}
                     onChange={(e) => updateForm("Customer_ID", e.target.value)}
                     placeholder="SYSTEM GENERATED"
-                    className="bg-muted/50 border-border/5 rounded-2xl h-16 font-black px-8 text-foreground focus:ring-primary/40 focus:bg-secondary/50 transition-all uppercase tracking-widest text-xl"
+                    className="bg-muted/50 border-border/5 rounded-2xl h-14 font-black px-8 text-foreground focus:ring-primary/40 focus:bg-secondary/50 transition-all uppercase tracking-widest text-xl"
                     disabled={!!editingCustomer}
                   />
                 </div>
@@ -296,7 +297,7 @@ export default function CustomersSettingsPage() {
                     value={formData.Tax_ID || ""}
                     onChange={(e) => updateForm("Tax_ID", e.target.value)}
                     placeholder="13-DIGIT VERIFIER"
-                    className="bg-muted/50 border-border/5 rounded-2xl h-16 font-black px-8 text-foreground focus:ring-primary/40 focus:bg-secondary/50 transition-all uppercase tracking-widest text-xl"
+                    className="bg-muted/50 border-border/5 rounded-2xl h-14 font-black px-8 text-foreground focus:ring-primary/40 focus:bg-secondary/50 transition-all uppercase tracking-widest text-xl"
                   />
                 </div>
               </div>
@@ -311,21 +312,19 @@ export default function CustomersSettingsPage() {
                         value={formData.Line_User_ID || ""}
                         onChange={(e) => updateForm("Line_User_ID", e.target.value)}
                         placeholder="ENTER LINE U-VECTOR..."
-                        className="bg-transparent border-none text-foreground font-black rounded-xl h-16 px-8 flex-1 focus:bg-primary/10 tracking-widest"
+                        className="bg-transparent border-none text-foreground font-black rounded-xl h-14 px-8 flex-1 focus:bg-primary/10 tracking-widest"
                     />
                 </div>
               </div>
-
-              <div className="flex gap-6 pt-10 border-t border-border/5 mt-12 mb-8">
-                <PremiumButton onClick={handleSave} disabled={saving} className="flex-[2] bg-primary hover:bg-primary/80 shadow-primary/20 h-20 rounded-3xl text-lg font-black tracking-widest">
-                  {saving ? <Loader2 className="w-6 h-6 mr-4 animate-spin" /> : <Save className="w-6 h-6 mr-4" strokeWidth={3} />}
-                  {t('settings_pages.customers.dialog.execute')}
-                </PremiumButton>
-                <PremiumButton variant="outline" onClick={() => setIsDialogOpen(false)} className="flex-1 border-border/5 h-20 rounded-3xl text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all uppercase font-black tracking-widest">
-                  {t('settings_pages.customers.dialog.abort')}
-                </PremiumButton>
-              </div>
             </div>
+
+            <DialogFooter className="p-6 sm:p-10 border-t border-border/5 bg-black/40 gap-4 sm:gap-6 flex-row shrink-0">
+                <PremiumButton variant="outline" onClick={() => setIsDialogOpen(false)} className="flex-1 sm:flex-none h-14 sm:h-16 px-6 sm:px-10 rounded-[1.2rem] sm:rounded-[1.5rem] border-border/5 text-muted-foreground hover:text-foreground uppercase tracking-widest text-base sm:text-lg font-bold font-black">{t('settings_pages.customers.dialog.abort')}</PremiumButton>
+                <PremiumButton onClick={handleSave} disabled={saving} className="flex-1 sm:flex-none h-14 sm:h-16 px-8 sm:px-12 rounded-[1.5rem] sm:rounded-[2rem] gap-3 sm:gap-4 shadow-[0_20px_50px_rgba(255,30,133,0.3)] sm:min-w-[200px] text-lg sm:text-xl tracking-[0.2em] bg-primary text-foreground border-0">
+                    {saving ? <Loader2 className="w-5 h-5 sm:w-6 sm:h-6 animate-spin" /> : <Save className="w-5 h-5 sm:w-6 sm:h-6" />}
+                    {t('settings_pages.customers.dialog.execute')}
+                </PremiumButton>
+            </DialogFooter>
           </DialogContent>
       </Dialog>
 

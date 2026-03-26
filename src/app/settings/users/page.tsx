@@ -8,16 +8,14 @@ import { Input } from "@/components/ui/input"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Users, Plus, Edit, Trash2, Search, Loader2, Shield, Fingerprint, Activity, Zap, FileSpreadsheet, Key, ShieldCheck } from "lucide-react"
+import { Users, Plus, Edit, Trash2, Search, Loader2, Shield, Fingerprint, Activity, FileSpreadsheet, Key, ShieldCheck } from "lucide-react"
 import { createUser, updateUser, deleteUser, UserData, getCurrentUserRole, createBulkUsers, getUsers } from "@/lib/actions/user-actions"
 import { Customer } from "@/lib/supabase/customers"
 import { ExcelImport } from "@/components/ui/excel-import"
 import { useBranch } from "@/components/providers/branch-provider"
 import { createClient } from "@/utils/supabase/client"
-import { STANDARD_ROLES, SYSTEM_PERMISSIONS, StandardRole } from "@/types/role"
+import { STANDARD_ROLES, StandardRole } from "@/types/role"
 import { getRolePermissions } from "@/lib/actions/permission-actions"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Separator } from "@/components/ui/separator"
 import { toast } from "sonner"
 import { useLanguage } from "@/components/providers/language-provider"
 import { cn } from "@/lib/utils"
@@ -120,15 +118,7 @@ export default function UserSettingsPage() {
         }))
     }
 
-    const toggleGranularPermission = (permId: string, checked: boolean) => {
-        setFormData(prev => ({
-            ...prev,
-            Permissions: {
-                ...(prev.Permissions || {}),
-                [permId]: checked
-            }
-        }))
-    }
+
 
     const handleSave = async () => {
         if (!formData.Username || !formData.Name || !formData.Branch_ID || !formData.Role) {
@@ -323,60 +313,60 @@ export default function UserSettingsPage() {
             </div>
 
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                <DialogContent className="bg-background border-border/10 text-foreground max-w-[95vw] sm:max-w-3xl max-h-[95vh] overflow-hidden flex flex-col p-0 shadow-[0_40px_100px_rgba(0,0,0,1)] rounded-3xl sm:rounded-[2.5rem] backdrop-blur-3xl relative z-[100]">
+                <DialogContent className="bg-background border-border/10 text-foreground max-w-[95vw] sm:max-w-3xl max-h-[98vh] overflow-hidden flex flex-col p-0 shadow-[0_40px_100px_rgba(0,0,0,1)] rounded-3xl sm:rounded-[2.5rem] backdrop-blur-3xl z-[100]">
                     <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary via-indigo-500/50 to-accent" />
                     
-                    <DialogHeader className="p-8 sm:p-12 border-b border-border/5 bg-black/40">
-                        <DialogTitle className="flex items-center gap-4 text-2xl sm:text-3xl font-black italic uppercase tracking-widest premium-text-gradient">
-                            <Shield className="w-8 h-8 text-primary animate-pulse" strokeWidth={2.5} />
+                    <DialogHeader className="p-4 sm:p-6 border-b border-border/5 bg-muted/20">
+                        <DialogTitle className="flex items-center gap-4 text-xl sm:text-2xl font-black italic uppercase tracking-widest premium-text-gradient">
+                            <Shield className="w-6 h-6 sm:w-8 sm:h-8 text-primary animate-pulse" strokeWidth={2.5} />
                             {editingUser ? t('settings_pages.users.dialog.title_edit') : t('settings_pages.users.dialog.title_add')}
                         </DialogTitle>
                     </DialogHeader>
                     
-                    <div className="flex-1 overflow-y-auto p-8 sm:p-12 space-y-10 custom-scrollbar">
-                        <div className="grid grid-cols-2 gap-10">
+                    <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-8 space-y-6 custom-scrollbar">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-10">
                              <div className="space-y-3">
-                                <Label className="text-base font-bold font-black text-muted-foreground uppercase tracking-[0.4em] ml-4">{t('settings_pages.users.dialog.username')}</Label>
+                                <Label className="text-sm sm:text-base font-bold font-black text-muted-foreground uppercase tracking-[0.4em] ml-2 sm:ml-4">{t('settings_pages.users.dialog.username')}</Label>
                                 <Input 
                                     value={formData.Username} 
                                     onChange={e => setFormData({...formData, Username: e.target.value})} 
                                     disabled={!!editingUser}
-                                    className="h-16 rounded-2xl bg-black border-border/5 text-foreground disabled:opacity-50 font-black italic tracking-widest pl-6 shadow-inner" 
+                                    className="h-12 sm:h-14 rounded-2xl bg-muted border-border/5 text-foreground disabled:opacity-50 font-black italic tracking-widest pl-6 shadow-inner" 
                                 />
                             </div>
                             <div className="space-y-3">
-                                <Label className="text-base font-bold font-black text-muted-foreground uppercase tracking-[0.4em] ml-4">{t('settings_pages.users.dialog.password')}</Label>
+                                <Label className="text-sm sm:text-base font-bold font-black text-muted-foreground uppercase tracking-[0.4em] ml-2 sm:ml-4">{t('settings_pages.users.dialog.password')}</Label>
                                 <Input 
                                     type="password"
                                     value={formData.Password || ""} 
                                     onChange={e => setFormData({...formData, Password: e.target.value})} 
-                                    className="h-16 rounded-2xl bg-black border-border/5 text-foreground font-black italic tracking-widest pl-6 shadow-inner" 
+                                    className="h-12 sm:h-14 rounded-2xl bg-muted border-border/5 text-foreground font-black italic tracking-widest pl-6 shadow-inner" 
                                     placeholder={editingUser ? t('settings_pages.users.dialog.password_placeholder_edit') : t('settings_pages.users.dialog.password_placeholder_add')}
                                 />
                             </div>
                         </div>
 
                         <div className="space-y-3">
-                            <Label className="text-base font-bold font-black text-muted-foreground uppercase tracking-[0.4em] ml-4">{t('settings_pages.users.dialog.full_name')}</Label>
+                            <Label className="text-sm sm:text-base font-bold font-black text-muted-foreground uppercase tracking-[0.4em] ml-2 sm:ml-4">{t('settings_pages.users.dialog.full_name')}</Label>
                             <Input 
                                 value={formData.Name} 
                                 onChange={e => setFormData({...formData, Name: e.target.value})} 
-                                className="h-16 rounded-2xl bg-black border-border/5 text-foreground font-black italic tracking-widest pl-6 shadow-inner" 
+                                className="h-12 sm:h-14 rounded-2xl bg-muted border-border/5 text-foreground font-black italic tracking-widest pl-6 shadow-inner" 
                             />
                         </div>
 
-                        <div className="grid grid-cols-2 gap-10">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-10">
                             <div className="space-y-3">
-                                <Label className="text-base font-bold font-black text-muted-foreground uppercase tracking-[0.1em] ml-4">{t('settings_pages.users.dialog.branch')}</Label>
+                                <Label className="text-sm sm:text-base font-bold font-black text-muted-foreground uppercase tracking-[0.1em] ml-2 sm:ml-4">{t('settings_pages.users.dialog.branch')}</Label>
                                 {isAdmin ? (
                                     <Select 
                                         value={formData.Branch_ID || ""} 
                                         onValueChange={v => setFormData({...formData, Branch_ID: v})}
                                     >
-                                        <SelectTrigger className="h-16 rounded-2xl bg-black border-border/5 text-foreground font-black uppercase italic tracking-widest shadow-inner">
+                                        <SelectTrigger className="h-12 sm:h-14 rounded-2xl bg-muted border-border/5 text-foreground font-black uppercase italic tracking-widest shadow-inner">
                                             <SelectValue placeholder={t('settings_pages.users.dialog.select_hub')} />
                                         </SelectTrigger>
-                                        <SelectContent className="bg-background border-border/10 text-foreground">
+                                        <SelectContent className="bg-popover border-border/10 text-foreground">
                                             {branches.map(b => (
                                                 <SelectItem key={b.Branch_ID} value={b.Branch_ID} className="font-black italic uppercase tracking-widest">
                                                     {b.Branch_Name}
@@ -388,20 +378,20 @@ export default function UserSettingsPage() {
                                     <Input 
                                         value={formData.Branch_ID || ""} 
                                         onChange={e => setFormData({...formData, Branch_ID: e.target.value})}
-                                        className="h-16 rounded-2xl bg-black border-border/5 text-foreground font-black italic tracking-widest pl-6 shadow-inner" 
+                                        className="h-14 sm:h-16 rounded-2xl bg-muted border-border/5 text-foreground font-black italic tracking-widest pl-6 shadow-inner" 
                                     />
                                 )}
                             </div>
                             <div className="space-y-3">
-                                <Label className="text-base font-bold font-black text-muted-foreground uppercase tracking-[0.1em] ml-4">{t('settings_pages.users.dialog.role')}</Label>
+                                <Label className="text-sm sm:text-base font-bold font-black text-muted-foreground uppercase tracking-[0.1em] ml-2 sm:ml-4">{t('settings_pages.users.dialog.role')}</Label>
                                 <Select 
                                     value={formData.Role || ""} 
                                     onValueChange={handleRoleChange}
                                 >
-                                    <SelectTrigger className="h-16 rounded-2xl bg-black border-border/5 text-foreground font-black uppercase italic tracking-widest shadow-inner">
+                                    <SelectTrigger className="h-12 sm:h-14 rounded-2xl bg-muted border-border/5 text-foreground font-black uppercase italic tracking-widest shadow-inner">
                                         <SelectValue placeholder={t('settings_pages.users.dialog.select_role')} />
                                     </SelectTrigger>
-                                    <SelectContent className="bg-background border-border/10 text-foreground">
+                                    <SelectContent className="bg-popover border-border/10 text-foreground">
                                         {STANDARD_ROLES.map(role => (
                                             <SelectItem key={role} value={role} className="font-black italic uppercase tracking-widest">
                                                 {role}
@@ -412,56 +402,20 @@ export default function UserSettingsPage() {
                             </div>
                         </div>
 
-                        <Separator className="bg-muted/50" />
-
-                        <div className="space-y-6">
-                            <div className="flex justify-between items-center">
-                                <Label className="text-base font-bold font-black text-primary uppercase tracking-[0.2em] italic">Access Permissions Matrix</Label>
-                                <div className="flex items-center gap-2">
-                                    <Zap size={12} className="text-primary" />
-                                    <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest">Personalized Node Access</span>
-                                </div>
-                            </div>
-                            
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {SYSTEM_PERMISSIONS.map((perm) => (
-                                    <div key={perm.id} className="flex items-start space-x-4 p-5 rounded-3xl bg-black/40 border-2 border-border/5 hover:border-primary/30 transition-all group/perm">
-                                        <Checkbox 
-                                            id={`perm-${perm.id}`}
-                                            checked={formData.Permissions?.[perm.id] || false}
-                                            onCheckedChange={(checked) => toggleGranularPermission(perm.id, !!checked)}
-                                            className="mt-1 border-border/20 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
-                                        />
-                                        <div className="grid gap-2 leading-none cursor-pointer" onClick={() => toggleGranularPermission(perm.id, !formData.Permissions?.[perm.id])}>
-                                            <label
-                                                htmlFor={`perm-${perm.id}`}
-                                                className="text-lg font-bold font-black uppercase tracking-widest text-muted-foreground group-hover/perm:text-foreground transition-colors"
-                                            >
-                                                {perm.label}
-                                            </label>
-                                            <p className="text-base font-bold font-bold text-muted-foreground uppercase group-hover/perm:text-muted-foreground transition-colors italic">
-                                                {perm.desc}
-                                            </p>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-
                         {/* Customer Link (Optional) */}
-                        <div className="space-y-3 p-8 rounded-[2.5rem] bg-indigo-500/5 border-2 border-indigo-500/10 shadow-inner group/client">
+                        <div className="space-y-3 p-6 sm:p-8 rounded-[2rem] sm:rounded-[2.5rem] bg-primary/5 border-2 border-primary/10 shadow-inner group/client">
                             <div className="flex items-center gap-3 mb-2 ml-4">
-                                <Key size={14} className="text-indigo-400 group-hover/client:rotate-45 transition-transform" />
-                                <Label className="text-base font-bold font-black text-indigo-400 uppercase tracking-[0.4em]">External Client Linkage</Label>
+                                <Key size={14} className="text-primary group-hover/client:rotate-45 transition-transform" />
+                                <Label className="text-sm sm:text-base font-bold font-black text-primary uppercase tracking-[0.4em]">External Client Linkage</Label>
                             </div>
                             <Select 
                                 value={formData.Customer_ID || "none"} 
                                 onValueChange={v => setFormData({...formData, Customer_ID: v === "none" ? null : v})}
                             >
-                                <SelectTrigger className="h-16 rounded-2xl bg-black/50 border-border/5 text-foreground font-black uppercase italic tracking-widest shadow-inner">
+                                <SelectTrigger className="h-14 sm:h-16 rounded-2xl bg-muted border-border/5 text-foreground font-black uppercase italic tracking-widest shadow-inner">
                                     <SelectValue placeholder="SYNERGY_ENTITY_LINK" />
                                 </SelectTrigger>
-                                <SelectContent className="bg-background border-border/10 text-foreground">
+                                <SelectContent className="bg-popover border-border/10 text-foreground">
                                     <SelectItem value="none" className="font-black italic uppercase tracking-widest text-muted-foreground underline">-- REMOVE_LINKAGE --</SelectItem>
                                     {customers.map(c => (
                                         <SelectItem key={c.Customer_ID} value={c.Customer_ID} className="font-black italic uppercase tracking-widest">
@@ -472,16 +426,16 @@ export default function UserSettingsPage() {
                             </Select>
                         </div>
 
-                        <div className="space-y-3">
-                             <Label className="text-base font-bold font-black text-muted-foreground uppercase tracking-[0.4em] ml-4">Deployment Status</Label>
+                        <div className="space-y-3 pb-4">
+                             <Label className="text-sm sm:text-base font-bold font-black text-muted-foreground uppercase tracking-[0.4em] ml-4">Deployment Status</Label>
                              <Select 
                                 value={formData.Active_Status} 
                                 onValueChange={v => setFormData({...formData, Active_Status: v})}
                             >
-                                <SelectTrigger className="h-16 rounded-2xl bg-black border-border/5 text-foreground font-black uppercase italic tracking-widest shadow-inner">
+                                <SelectTrigger className="h-12 sm:h-14 rounded-2xl bg-muted border-border/5 text-foreground font-black uppercase italic tracking-widest shadow-inner">
                                     <SelectValue />
                                 </SelectTrigger>
-                                <SelectContent className="bg-background border-border/10 text-foreground">
+                                <SelectContent className="bg-popover border-border/10 text-foreground">
                                     <SelectItem value="Active" className="text-emerald-500 font-black italic uppercase tracking-widest hover:bg-emerald-500/10">NODE_ACTIVE</SelectItem>
                                     <SelectItem value="Inactive" className="text-rose-500 font-black italic uppercase tracking-widest hover:bg-rose-500/10">NODE_DEACTIVATED</SelectItem>
                                 </SelectContent>
@@ -489,10 +443,10 @@ export default function UserSettingsPage() {
                         </div>
                     </div>
  
-                    <DialogFooter className="p-8 sm:p-12 border-t border-border/5 bg-black/40 gap-4 sm:gap-6 flex-row shrink-0">
-                        <PremiumButton variant="outline" onClick={() => setIsDialogOpen(false)} className="flex-1 sm:flex-none h-14 sm:h-18 px-6 sm:px-10 rounded-[1.2rem] sm:rounded-[1.5rem] border-border/5 text-muted-foreground hover:text-foreground uppercase tracking-widest text-base sm:text-lg font-bold font-black">{t('settings_pages.users.dialog.abort')}</PremiumButton>
-                        <PremiumButton onClick={handleSave} disabled={saving} className="flex-1 sm:flex-none h-14 sm:h-18 px-8 sm:px-12 rounded-[1.5rem] sm:rounded-[2rem] gap-3 sm:gap-4 shadow-[0_20px_50px_rgba(255,30,133,0.3)] sm:min-w-[200px] text-lg sm:text-xl tracking-[0.2em] bg-primary text-foreground border-0">
-                            {saving ? <Loader2 className="w-5 h-5 sm:w-6 sm:h-6 animate-spin" /> : <ShieldCheck className="w-5 h-5 sm:w-6 sm:h-6" />}
+                    <DialogFooter className="p-4 sm:p-6 border-t border-border/5 bg-muted/20 gap-4 sm:gap-6 flex-row shrink-0">
+                        <PremiumButton variant="outline" onClick={() => setIsDialogOpen(false)} className="flex-1 sm:flex-none h-12 sm:h-14 px-6 sm:px-10 rounded-xl sm:rounded-2xl border-border/5 text-muted-foreground hover:text-foreground uppercase tracking-widest text-sm sm:text-base font-bold font-black">{t('settings_pages.users.dialog.abort')}</PremiumButton>
+                        <PremiumButton onClick={handleSave} disabled={saving} className="flex-1 sm:flex-none h-12 sm:h-14 px-8 sm:px-12 rounded-xl sm:rounded-2xl gap-3 sm:gap-4 shadow-lg sm:min-w-[200px] text-base sm:text-lg tracking-[0.2em] bg-primary text-foreground border-0">
+                            {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <ShieldCheck className="w-5 h-5" />}
                             {t('settings_pages.users.dialog.execute')}
                         </PremiumButton>
                     </DialogFooter>

@@ -194,17 +194,17 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
         "bg-secondary border-r border-border text-secondary-foreground shadow-2xl transition-all duration-500"
       )}
     >
-      {/* Brand Signature - Logo Only Edition (Maximized) */}
+      {/* Brand Signature - Optimized Logo Only Edition */}
       <div className={cn(
         "relative flex flex-col items-center justify-center border-b border-border bg-background/80 backdrop-blur-3xl overflow-hidden transition-all duration-500",
-        collapsed ? "h-24" : "h-72"
+        collapsed ? "h-20" : "h-40"
       )}>
         {/* Toggle Button - Floating Edition */}
         <button
           onClick={onToggle}
           className={cn(
             "absolute z-[1001] p-1.5 rounded-full bg-primary text-white shadow-xl transition-all duration-500 hover:scale-110 active:scale-95",
-            collapsed ? "right-2 top-2" : "-right-3 top-8"
+            collapsed ? "right-2 top-2" : "-right-3 top-6"
           )}
         >
           <ChevronLeft
@@ -215,11 +215,10 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
 
         <div className={cn(
             "relative flex items-center justify-center logo-container-pure transition-all duration-700",
-            "bg-white rounded-full shadow-2xl ring-1 ring-border/5",
-            "dark:bg-white/10 dark:backdrop-blur-2xl dark:border dark:border-white/20 dark:shadow-[0_0_60px_rgba(255,255,255,0.1)]",
-            collapsed ? "w-14 h-14 p-2.5" : "w-60 h-60 p-8"
+            "bg-muted rounded-full shadow-lg border border-border/10",
+            collapsed ? "w-12 h-12 p-2" : "w-36 h-36 p-4"
         )}>
-          <div className="relative w-full h-full rounded-full overflow-hidden bg-white/5 flex items-center justify-center">
+          <div className="relative w-full h-full rounded-full overflow-hidden bg-background/20 flex items-center justify-center">
             <Image 
               src="/logo2.png" 
               alt="LogisPro" 

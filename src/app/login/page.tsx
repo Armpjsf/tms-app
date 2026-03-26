@@ -56,15 +56,14 @@ function StaffLoginContent() {
       <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-accent/20 rounded-full blur-[120px] translate-y-1/2 animate-pulse" />
       
       <div className="w-full max-w-5xl space-y-12 relative z-10 text-center">
-        {/* Logo & Header Section */}
+        {/* Logo & Header Section - Balanced Edition */}
         <div className="space-y-6 flex flex-col items-center animate-in fade-in slide-in-from-top-4 duration-1000">
             <div className={cn(
-                "relative w-96 h-96 transition-all duration-700 group-hover:scale-105 logo-container-pure",
-                "bg-white rounded-full shadow-3xl ring-1 ring-border/5",
-                "dark:bg-white/10 dark:backdrop-blur-3xl dark:border dark:border-white/20 dark:shadow-[0_0_80px_rgba(255,255,255,0.15)]",
-                "p-12"
+                "relative w-56 h-56 transition-all duration-700 group-hover:scale-105 logo-container-pure",
+                "bg-muted rounded-full shadow-2xl border border-border/10",
+                "p-6"
             )}>
-                <div className="relative w-full h-full rounded-full overflow-hidden bg-white/5 flex items-center justify-center">
+                <div className="relative w-full h-full rounded-full overflow-hidden bg-background/20 flex items-center justify-center">
                     <Image 
                         src="/logo2.png" 
                         alt="LogisPro" 
@@ -73,11 +72,11 @@ function StaffLoginContent() {
                     />
                 </div>
             </div>
-            <div className="space-y-2">
-                <h1 className="text-7xl font-sans font-black text-accent tracking-tighter drop-shadow-lg uppercase italic">
+            <div className="space-y-1">
+                <h1 className="text-6xl font-sans font-black text-accent tracking-tighter drop-shadow-lg uppercase italic">
                     Logis<span className="text-primary">Pro</span>
                 </h1>
-                <p className="text-xl text-muted-foreground font-medium tracking-wide">
+                <p className="text-lg text-muted-foreground font-medium tracking-wide">
                     Sweet deliveries, serious logistics.
                 </p>
             </div>

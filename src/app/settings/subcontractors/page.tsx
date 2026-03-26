@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { PremiumButton } from "@/components/ui/premium-button"
 import { Input } from "@/components/ui/input"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { 
     Plus, 
@@ -332,8 +332,8 @@ export default function SubcontractorsPage() {
             </div>
 
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                <DialogContent className="bg-background border border-border/5 text-foreground max-w-3xl shadow-[0_50px_100px_rgba(0,0,0,0.5)] rounded-[4rem] p-0 overflow-hidden ring-1 ring-white/10">
-                    <div className="bg-card p-12 text-foreground relative overflow-hidden border-b border-border/5">
+                <DialogContent className="bg-background border border-border/5 text-foreground max-w-3xl max-h-[85vh] shadow-[0_50px_100px_rgba(0,0,0,0.5)] rounded-[3rem] sm:rounded-[4rem] p-0 overflow-hidden ring-1 ring-white/10 flex flex-col">
+                    <div className="bg-card p-6 sm:p-10 text-foreground relative overflow-hidden border-b border-border/5 shrink-0">
                         <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent pointer-events-none" />
                         <DialogHeader>
                             <DialogTitle className="text-5xl font-black tracking-tighter flex items-center gap-6 uppercase premium-text-gradient">
@@ -345,7 +345,7 @@ export default function SubcontractorsPage() {
                         </DialogHeader>
                     </div>
                     
-                    <div className="p-12 space-y-10 custom-scrollbar max-h-[70vh] overflow-y-auto">
+                    <div className="p-6 sm:p-10 space-y-6 custom-scrollbar flex-1 min-h-0 overflow-y-auto">
                         <div className="grid grid-cols-2 gap-10">
                             <div className="space-y-4">
                                 <Label className="text-base font-bold font-black uppercase tracking-[0.1em] text-muted-foreground ml-2">{t('settings_pages.subcontractors.dialog.alias_id')}</Label>
@@ -354,7 +354,7 @@ export default function SubcontractorsPage() {
                                     onChange={e => setFormData({...formData, Sub_ID: e.target.value})} 
                                     disabled={!!editingId}
                                     placeholder="E.G. SUB-001"
-                                    className="h-16 bg-muted/50 border-border/5 text-foreground font-black rounded-2xl px-8 text-xl uppercase tracking-widest focus:bg-muted/80 transition-all"
+                                    className="h-14 bg-muted/50 border-border/5 text-foreground font-black rounded-2xl px-8 text-xl uppercase tracking-widest focus:bg-muted/80 transition-all"
                                 />
                             </div>
                             <div className="space-y-4">
@@ -363,7 +363,7 @@ export default function SubcontractorsPage() {
                                     value={formData.Tax_ID || ""} 
                                     onChange={e => setFormData({...formData, Tax_ID: e.target.value})} 
                                     placeholder="13-DIGIT VERIFIER"
-                                    className="h-16 bg-muted/50 border-border/5 text-foreground font-black rounded-2xl px-8 text-xl uppercase tracking-widest focus:bg-muted/80 transition-all font-display"
+                                    className="h-14 bg-muted/50 border-border/5 text-foreground font-black rounded-2xl px-8 text-xl uppercase tracking-widest focus:bg-muted/80 transition-all font-display"
                                 />
                             </div>
                         </div>
@@ -375,7 +375,7 @@ export default function SubcontractorsPage() {
                                     value={formData.Sub_Name} 
                                     onChange={e => setFormData({...formData, Sub_Name: e.target.value})} 
                                     placeholder="ENTER FULL PARTNER NOMENCLATURE..."
-                                    className="bg-transparent border-none text-2xl font-black text-foreground h-20 px-8 uppercase tracking-tighter"
+                                    className="bg-transparent border-none text-2xl font-black text-foreground h-16 px-8 uppercase tracking-tighter"
                                 />
                             </div>
                         </div>
@@ -386,7 +386,7 @@ export default function SubcontractorsPage() {
                                 value={formData.Branch_ID || ""} 
                                 onValueChange={(v: string) => setFormData({...formData, Branch_ID: v})}
                             >
-                                <SelectTrigger className="h-16 bg-muted/50 border-border/5 text-foreground font-black rounded-2xl px-8 text-xl uppercase tracking-widest">
+                                <SelectTrigger className="h-14 bg-muted/50 border-border/5 text-foreground font-black rounded-2xl px-8 text-xl uppercase tracking-widest">
                                     <SelectValue placeholder="SELECT OPERATIONAL BRANCH" />
                                 </SelectTrigger>
                                 <SelectContent className="bg-card border-border/10 text-foreground font-black">
@@ -399,7 +399,7 @@ export default function SubcontractorsPage() {
                             </Select>
                         </div>
 
-                        <div className="p-10 rounded-[2.5rem] bg-accent/5 border border-accent/10 space-y-8 relative overflow-hidden">
+                        <div className="p-6 sm:p-10 rounded-[2.5rem] bg-accent/5 border border-accent/10 space-y-6 relative overflow-hidden">
                             <div className="absolute top-0 right-0 w-32 h-32 bg-accent/10 blur-[80px] pointer-events-none" />
                             <h3 className="text-base font-bold font-black uppercase tracking-[0.5em] text-accent flex items-center gap-3">
                                 <div className="w-1.5 h-1.5 rounded-full bg-accent shadow-[0_0_8px_rgba(168,85,247,1)]" />
@@ -446,17 +446,15 @@ export default function SubcontractorsPage() {
                                 </div>
                             </div>
                         </div>
-
-                        <div className="flex gap-6 pt-10 border-t border-border/5 mt-12 mb-8">
-                            <PremiumButton onClick={handleSave} disabled={saving} className="flex-[2] bg-primary hover:bg-primary/80 shadow-primary/20 h-20 rounded-3xl text-lg font-black tracking-widest uppercase">
-                                {saving ? <Loader2 className="w-6 h-6 mr-4 animate-spin" /> : <Save className="w-6 h-6 mr-4" strokeWidth={3} />}
-                                {t('settings_pages.subcontractors.dialog.execute')}
-                            </PremiumButton>
-                            <PremiumButton variant="outline" onClick={() => setIsDialogOpen(false)} className="flex-1 border-border/5 h-20 rounded-3xl text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all uppercase font-black tracking-widest">
-                                {t('settings_pages.subcontractors.dialog.abort')}
-                            </PremiumButton>
-                        </div>
                     </div>
+
+                    <DialogFooter className="p-6 sm:p-10 border-t border-border/5 bg-black/40 gap-4 sm:gap-6 flex-row shrink-0">
+                        <PremiumButton variant="outline" onClick={() => setIsDialogOpen(false)} className="flex-1 sm:flex-none h-14 sm:h-16 px-6 sm:px-10 rounded-[1.2rem] sm:rounded-[1.5rem] border-border/5 text-muted-foreground hover:text-foreground uppercase tracking-widest text-base sm:text-lg font-bold font-black">{t('settings_pages.subcontractors.dialog.abort')}</PremiumButton>
+                        <PremiumButton onClick={handleSave} disabled={saving} className="flex-1 sm:flex-none h-14 sm:h-16 px-8 sm:px-12 rounded-[1.5rem] sm:rounded-[2rem] gap-3 sm:gap-4 shadow-[0_20px_50px_rgba(255,30,133,0.3)] sm:min-w-[200px] text-lg sm:text-xl tracking-[0.2em] bg-primary text-foreground border-0">
+                            {saving ? <Loader2 className="w-5 h-5 sm:w-6 sm:h-6 animate-spin" /> : <Save className="w-5 h-5 sm:w-6 sm:h-6" />}
+                            {t('settings_pages.subcontractors.dialog.execute')}
+                        </PremiumButton>
+                    </DialogFooter>
                 </DialogContent>
             </Dialog>
 
@@ -468,4 +466,3 @@ export default function SubcontractorsPage() {
         </DashboardLayout>
     )
 }
-

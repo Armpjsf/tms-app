@@ -946,7 +946,7 @@ export const dictionaries = {
                 vector_id: 'รหัสเวกเตอร์ (Vector ID)',
                 identity: 'อัตลักษณ์บุคลากร',
                 hub: 'ศูนย์ปฏิบัติการ (Hub)',
-                role: 'สิทธิ์การเข้าถึง (Clearance)',
+                role: 'ตำแหน่ง (Position)',
                 status: 'สถานะระบบ',
                 actions: 'คำสั่ง (Command)',
             },
@@ -959,12 +959,12 @@ export const dictionaries = {
                 password_placeholder_add: 'กำหนดโปรโตคอล (DEFINE)',
                 full_name: 'ชื่ออัตลักษณ์เต็ม',
                 branch: 'ศูนย์ปฏิบัติการ (Hub)',
-                role: 'ระดับการเข้าถึง (Clearance)',
+                role: 'ตำแหน่ง (Position)',
                 status: 'สถานะแอคทีฟ',
                 execute: 'EXECUTE_SYNC',
                 abort: 'ABORT_SYNC',
                 select_hub: 'เลือกศูนย์เข้าถึง (SELECT_HUB)',
-                select_role: 'เลือกสิทธิ์ (SELECT_CLEARANCE)'
+                select_role: 'เลือกตำแหน่ง (SELECT_POSITION)'
             }
         },
         branches: {
