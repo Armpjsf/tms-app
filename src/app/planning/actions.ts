@@ -8,7 +8,7 @@ import { getAllVehiclesFromTable } from '@/lib/supabase/vehicles'
 import { logActivity } from '@/lib/supabase/logs'
 import { getUserBranchId } from '@/lib/permissions'
 import { notifyDriverNewJob } from '@/lib/actions/push-actions'
-import { getCustomerId } from '@/lib/permissions'
+import { getCustomerId, getUserId, isCustomer } from '@/lib/permissions'
 
 export type JobFormData = {
   Job_ID: string
@@ -399,7 +399,26 @@ export async function requestShipment(data: {
   Notes?: string
 }) {
   const supabase = await createClient()
-  const customerId = await getCustomerId()
+  let customerId = await getCustomerId()
+  const userId = await getUserId()
+
+  // Fallback: If customerId is missing from session, fetch it from Master_Users
+  if (!customerId && userId) {
+      const { data: userData } = await supabase
+          .from('Master_Users')
+          .select('Customer_ID, Role')
+          .eq('Username', userId)
+          .single()
+      
+      if (userData?.Customer_ID) {
+          customerId = userData.Customer_ID
+      }
+  }
+
+  const isCust = await isCustomer()
+  if (!customerId && !isCust) {
+    return { success: false, message: 'Unauthorized: Access restricted to customers only' }
+  }
 
   if (!customerId) {
     return { success: false, message: 'Unauthorized: Customer ID not found' }
