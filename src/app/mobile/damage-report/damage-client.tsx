@@ -180,7 +180,7 @@ export function MobileDamageClient({ driverId, driverName, initialReports, recen
               <button
                 onClick={handleSubmit}
                 disabled={!jobId || !category || !incidentDate || submitting}
-                className="flex-1 p-4 rounded-xl bg-gradient-to-r from-rose-500 to-red-600 text-white font-black text-lg flex items-center justify-center gap-2 disabled:opacity-50 shadow-lg"
+                className="flex-1 p-4 rounded-xl bg-gradient-to-r from-rose-500 to-red-600 text-foreground flex items-center justify-center gap-2 disabled:opacity-50 shadow-lg"
               >
                 <Send size={20} />
                 {submitting ? 'กำลังส่ง...' : 'ส่งรายงาน'}
@@ -195,7 +195,7 @@ export function MobileDamageClient({ driverId, driverName, initialReports, recen
             <p className="font-black text-gray-900 text-base">📋 ประวัติการแจ้งปัญหาของฉัน</p>
           </div>
           {reports.length === 0 ? (
-            <div className="p-8 text-center text-gray-500">
+            <div className="p-8 text-center text-muted-foreground">
               <p className="text-lg font-black">ยังไม่เคยมีรายงาน</p>
             </div>
           ) : (
@@ -216,13 +216,13 @@ export function MobileDamageClient({ driverId, driverName, initialReports, recen
                           {isResolved ? 'ปิดแล้ว' : isRejected ? 'ยกเลิก' : 'รอตรวจสอบ'}
                         </span>
                       </div>
-                      <span className="text-xl font-bold text-gray-500">
+                      <span className="text-xl font-bold text-muted-foreground">
                         {new Date(report.Created_At).toLocaleDateString('th-TH')}
                       </span>
                     </div>
                     
                     <div className="bg-gray-100 rounded-lg p-3 flex items-center gap-2 text-xl">
-                       <FileText size={16} className="text-gray-500" /> 
+                       <FileText size={16} className="text-muted-foreground" /> 
                        <span className="font-mono font-bold text-gray-800 truncate">{report.Job_ID}</span>
                     </div>
 

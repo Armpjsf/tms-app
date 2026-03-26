@@ -38,7 +38,7 @@ export function RouteRiskAnalysis({ risks }: { risks: RouteRisk[] }) {
                                 <div className={`text-xl font-bold ${r.risk_level === 'High' ? 'text-red-500' : r.risk_level === 'Medium' ? 'text-yellow-500' : 'text-emerald-500'}`}>
                                     {r.risk_score}
                                 </div>
-                                <div className="text-base font-bold text-gray-500 uppercase">Score</div>
+                                <div className="text-base font-bold text-muted-foreground uppercase">Score</div>
                             </div>
                             
                             <div>
@@ -46,7 +46,7 @@ export function RouteRiskAnalysis({ risks }: { risks: RouteRisk[] }) {
                                     {r.route_name}
                                 </div>
                                 <div className="flex items-center gap-3 mt-1.5">
-                                    <div className="flex items-center gap-1.5 text-lg font-bold text-gray-500">
+                                    <div className="flex items-center gap-1.5 text-lg font-bold text-muted-foreground">
                                         <div className="w-1.5 h-1.5 rounded-full bg-slate-600"></div>
                                         {r.total_jobs} Jobs
                                     </div>

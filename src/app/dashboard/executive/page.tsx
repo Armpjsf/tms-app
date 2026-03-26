@@ -119,19 +119,19 @@ export default function ExecutiveDashboard() {
         <DashboardLayout>
             <div className="space-y-10 pb-20">
                 {/* Header Command Section */}
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-950/50 backdrop-blur-xl p-8 rounded-[3rem] border border-white/5 shadow-2xl relative overflow-hidden">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-background/50 backdrop-blur-xl p-8 rounded-[3rem] border border-border/5 shadow-2xl relative overflow-hidden">
                     <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-transparent pointer-events-none" />
                     
                     <div className="relative z-10">
-                        <h1 className="text-4xl font-black text-white tracking-tight flex items-center gap-3">
+                        <h1 className="text-4xl font-black text-foreground tracking-tight flex items-center gap-3">
                             <Target className="text-primary" size={32} />
                             {t('dashboard.title')}
                         </h1>
                         <p className="text-primary/80 font-bold mt-1 uppercase tracking-widest text-base font-bold">{t('dashboard.subtitle')}</p>
                     </div>
                     <div className="flex flex-col items-end gap-2 relative z-10">
-                        <RealtimeIndicator isLive={true} className="bg-white/5 border-white/10 text-white" />
-                        <div className="flex items-center gap-3 bg-white/5 p-2 px-4 rounded-2xl border border-white/10">
+                        <RealtimeIndicator isLive={true} className="bg-muted/50 border-border/10 text-foreground" />
+                        <div className="flex items-center gap-3 bg-muted/50 p-2 px-4 rounded-2xl border border-border/10">
                             <Calendar className="text-primary" size={18} />
                             <span className="text-white font-black text-xl uppercase tracking-tighter">
                                 {new Date().toLocaleDateString('th-TH', { month: 'long', year: 'numeric' })}
@@ -212,12 +212,12 @@ export default function ExecutiveDashboard() {
                             {data.vehicles.map((v: any, i: number) => (
                                 <div key={v.plate} className="flex items-center justify-between group">
                                     <div className="flex items-center gap-4">
-                                        <div className="w-10 h-10 rounded-2xl bg-white/5 flex items-center justify-center font-black text-primary border border-white/5 group-hover:border-primary/30 transition-colors">
+                                        <div className="w-10 h-10 rounded-2xl bg-muted/50 flex items-center justify-center font-black text-primary border border-border/5 group-hover:border-primary/30 transition-colors">
                                             {i + 1}
                                         </div>
                                         <div>
                                             <p className="font-black text-white uppercase tracking-tighter">{v.plate}</p>
-                                            <p className="text-base font-bold text-slate-500 font-bold uppercase tracking-widest">
+                                            <p className="text-base font-bold text-muted-foreground font-bold uppercase tracking-widest">
                                                 {t('dashboard.profit')}: <AnimatedNumber value={v.netProfit} prefix="฿" />
                                             </p>
                                         </div>
@@ -226,7 +226,7 @@ export default function ExecutiveDashboard() {
                                         <p className="text-primary font-black tracking-tighter">
                                             <AnimatedNumber value={v.revenue} prefix="฿" />
                                         </p>
-                                        <p className="text-base font-bold text-slate-500 font-bold uppercase tracking-widest">{t('dashboard.revenue')}</p>
+                                        <p className="text-base font-bold text-muted-foreground font-bold uppercase tracking-widest">{t('dashboard.revenue')}</p>
                                     </div>
                                 </div>
                             ))}
@@ -245,16 +245,16 @@ function KpiCard({ title, value, unit, icon, growth, isPercentage = false }: any
             <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
                 {icon}
             </div>
-            <p className="text-base font-bold font-black text-slate-500 uppercase tracking-[0.2em] mb-4">{title}</p>
+            <p className="text-base font-bold font-black text-muted-foreground uppercase tracking-[0.2em] mb-4">{title}</p>
             <div className="flex items-baseline gap-2">
-                <h3 className="text-3xl font-black text-white tracking-tighter">
+                <h3 className="text-3xl font-black text-foreground tracking-tighter">
                     {isPercentage ? (
                         <AnimatedNumber value={value} decimals={1} suffix="%" />
                     ) : (
                         <AnimatedNumber value={value} prefix="฿" />
                     )}
                 </h3>
-                <span className="text-slate-500 text-base font-bold font-black uppercase">{unit}</span>
+                <span className="text-muted-foreground text-base font-bold font-black uppercase">{unit}</span>
             </div>
             {growth !== undefined && (
                 <div className={cn(

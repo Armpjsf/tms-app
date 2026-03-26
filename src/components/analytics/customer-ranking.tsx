@@ -18,7 +18,7 @@ export function CustomerRanking({ data }: { data: CustomerStat[] }) {
              <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-white ${
                 index === 0 ? 'bg-yellow-600' :
                 index === 1 ? 'bg-slate-700' :
-                index === 2 ? 'bg-orange-900' : 'bg-slate-900'
+                index === 2 ? 'bg-orange-900' : 'bg-card'
              }`}>
                 {index + 1}
              </div>

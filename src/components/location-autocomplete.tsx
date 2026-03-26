@@ -78,14 +78,14 @@ export function LocationAutocomplete({
           onFocus={() => setOpen(true)}
           onClick={() => setOpen(true)}
           placeholder={placeholder}
-          className={cn("bg-white border-gray-200 text-gray-900 font-black placeholder:text-gray-700 placeholder:font-bold", className)}
+          className={cn("bg-muted border-border text-foreground font-black placeholder:text-muted-foreground placeholder:font-bold", className)}
         />
       </div>
 
       {open && (
-        <div className="absolute z-[9999] w-full mt-1 bg-gray-100 border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
+        <div className="absolute z-[9999] w-full mt-1 bg-popover border border-border rounded-md shadow-lg max-h-60 overflow-y-auto">
           {filteredLocations.length === 0 ? (
-            <div className="px-3 py-2 text-xl text-gray-700 font-bold text-center">
+            <div className="px-3 py-2 text-xl text-muted-foreground font-bold text-center">
                 ไม่พบข้อมูล
             </div>
           ) : (
@@ -95,13 +95,13 @@ export function LocationAutocomplete({
                     key={index}
                     onClick={() => handleSelect(loc)}
                     className={cn(
-                        "w-full text-left px-3 py-2 text-xl hover:bg-slate-700 flex items-center justify-between transition-colors",
-                         value === loc ? "text-white bg-slate-700" : "text-gray-800"
+                        "w-full text-left px-3 py-2 text-xl hover:bg-muted flex items-center justify-between transition-colors",
+                         value === loc ? "text-foreground bg-muted" : "text-foreground"
                     )}
                     type="button"
                 >
                     <div className="flex items-center gap-2 overflow-hidden">
-                        <MapPin size={14} className="text-gray-700 flex-shrink-0" />
+                        <MapPin size={14} className="text-muted-foreground flex-shrink-0" />
                         <span className="truncate">{loc}</span>
                     </div>
                 </button>

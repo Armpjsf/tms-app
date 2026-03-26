@@ -6,6 +6,7 @@ import { Shield, X, Truck } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { cn } from "@/lib/utils"
 import { login } from "./actions"
 import Image from "next/image"
 
@@ -45,17 +46,9 @@ function StaffLoginContent() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-6 relative overflow-hidden bg-background">
-      {/* Cinematic Background Image & Gradients */}
-      <div className="absolute inset-0 z-0">
-        <Image 
-          src="/images/login-bg.png" 
-          alt="Background" 
-          fill 
-          className="object-cover opacity-30 mix-blend-overlay"
-          priority 
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-background/95 via-transparent to-background" />
-        <div className="absolute inset-0 bg-gradient-to-r from-background/50 via-transparent to-background/50" />
+      {/* Corporate CI Background (Navy #001E4C / Deep Black) */}
+      <div className="absolute inset-0 z-0 bg-background">
+        <div className="absolute inset-0 bg-gradient-to-br from-secondary/20 via-transparent to-background" />
       </div>
 
       {/* Glass Decor Elements */}
@@ -65,14 +58,26 @@ function StaffLoginContent() {
       <div className="w-full max-w-5xl space-y-12 relative z-10 text-center">
         {/* Logo & Header Section */}
         <div className="space-y-6 flex flex-col items-center animate-in fade-in slide-in-from-top-4 duration-1000">
-                        <div className="relative w-48 h-48 rounded-[3.5rem] bg-[#050110]/80 border-2 border-white/10 flex items-center justify-center shadow-2xl shadow-primary/20 overflow-hidden ring-1 ring-white/10 group-hover:scale-105 transition-transform duration-700">
-                             <Image src="/logo-tactical.png" alt="LogisPro" fill className="object-cover p-4" priority />
-                        </div>
+            <div className={cn(
+                "relative w-96 h-96 transition-all duration-700 group-hover:scale-105 logo-container-pure",
+                "bg-white rounded-full shadow-3xl ring-1 ring-border/5",
+                "dark:bg-white/10 dark:backdrop-blur-3xl dark:border dark:border-white/20 dark:shadow-[0_0_80px_rgba(255,255,255,0.15)]",
+                "p-12"
+            )}>
+                <div className="relative w-full h-full rounded-full overflow-hidden bg-white/5 flex items-center justify-center">
+                    <Image 
+                        src="/logo2.png" 
+                        alt="LogisPro" 
+                        fill 
+                        className="object-contain logo-pure mix-blend-multiply dark:mix-blend-normal dark:brightness-110" 
+                    />
+                </div>
+            </div>
             <div className="space-y-2">
-                <h1 className="text-7xl font-black text-white tracking-tighter drop-shadow-lg">
+                <h1 className="text-7xl font-sans font-black text-accent tracking-tighter drop-shadow-lg uppercase italic">
                     Logis<span className="text-primary">Pro</span>
                 </h1>
-                <p className="text-xl text-slate-400 font-medium tracking-wide">
+                <p className="text-xl text-muted-foreground font-medium tracking-wide">
                     Sweet deliveries, serious logistics.
                 </p>
             </div>
@@ -85,14 +90,14 @@ function StaffLoginContent() {
                 className="group cursor-pointer relative overflow-hidden glass-panel rounded-[3rem] p-12 transition-all duration-500 hover:shadow-[0_20px_60px_rgba(255,30,133,0.15)] hover:-translate-y-3 text-center flex flex-col items-center gap-8"
             >
                 <div className="absolute inset-0 bg-gradient-to-br from-primary/[0.05] to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                <div className="w-20 h-20 bg-slate-900 border border-white/10 rounded-3xl flex items-center justify-center shadow-2xl group-hover:rotate-6 group-hover:bg-primary transition-all duration-700">
+                <div className="w-20 h-20 bg-card border border-border/10 rounded-3xl flex items-center justify-center shadow-2xl group-hover:rotate-6 group-hover:bg-primary transition-all duration-700">
                     <Truck className="text-white w-10 h-10" strokeWidth={2.5} />
                 </div>
                 <div className="space-y-2">
-                    <h2 className="text-4xl font-black text-white tracking-tighter">DRIVER</h2>
-                    <p className="text-slate-500 text-base font-bold font-black uppercase tracking-[0.3em]">Fleet Portal</p>
+                    <h2 className="text-4xl font-black text-accent tracking-tighter">DRIVER</h2>
+                    <p className="text-muted-foreground text-base font-bold font-black uppercase tracking-[0.3em]">Fleet Portal</p>
                 </div>
-                <button className="w-full h-16 rounded-2xl bg-primary hover:brightness-110 text-white font-black text-lg font-bold uppercase tracking-[0.3em] shadow-2xl shadow-primary/20 transition-all">
+                <button className="w-full h-16 rounded-2xl bg-primary hover:brightness-110 text-foreground font-bold uppercase tracking-[0.3em] shadow-2xl shadow-primary/20 transition-all">
                     Start Engine
                 </button>
             </div>
@@ -103,14 +108,14 @@ function StaffLoginContent() {
                 className="group cursor-pointer relative overflow-hidden glass-panel rounded-[3rem] p-12 transition-all duration-500 hover:shadow-[0_20px_60px_rgba(147,51,234,0.15)] hover:-translate-y-3 text-center flex flex-col items-center gap-8"
             >
                 <div className="absolute inset-0 bg-gradient-to-br from-accent/[0.05] to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                <div className="w-20 h-20 bg-slate-900 border border-white/10 rounded-3xl flex items-center justify-center shadow-2xl group-hover:-rotate-6 group-hover:bg-accent transition-all duration-700">
+                <div className="w-20 h-20 bg-card border border-border/10 rounded-3xl flex items-center justify-center shadow-2xl group-hover:-rotate-6 group-hover:bg-accent transition-all duration-700">
                     <Shield className="text-white w-10 h-10" strokeWidth={2.5} />
                 </div>
                 <div className="space-y-2">
-                    <h2 className="text-4xl font-black text-white tracking-tighter">ADMIN</h2>
-                    <p className="text-slate-500 text-base font-bold font-black uppercase tracking-[0.3em]">Command Center</p>
+                    <h2 className="text-4xl font-black text-accent tracking-tighter">ADMIN</h2>
+                    <p className="text-muted-foreground text-base font-bold font-black uppercase tracking-[0.3em]">Command Center</p>
                 </div>
-                <button className="w-full h-16 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 text-white font-black text-lg font-bold uppercase tracking-[0.3em] shadow-2xl transition-all">
+                <button className="w-full h-16 rounded-2xl bg-muted/50 border border-border/10 hover:bg-muted/80 text-foreground font-black text-lg font-bold uppercase tracking-[0.3em] shadow-2xl transition-all">
                     Command Key
                 </button>
             </div>
@@ -119,44 +124,44 @@ function StaffLoginContent() {
         {/* Staff Login Modal */}
         {activeTab === 'staff_form' && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-background/60 backdrop-blur-md animate-in fade-in duration-300">
-                <div className="bg-slate-900/90 backdrop-blur-2xl border border-white/10 rounded-[2.5rem] p-10 w-full max-w-sm shadow-[0_0_50px_rgba(0,0,0,0.5)] relative overflow-hidden">
+                <div className="bg-card/90 backdrop-blur-2xl border border-border/10 rounded-[2.5rem] p-10 w-full max-w-sm shadow-[0_0_50px_rgba(0,0,0,0.5)] relative overflow-hidden">
                     <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary via-accent to-purple-500" />
                     
                     <Button 
                         variant="ghost" 
                         size="icon" 
-                        className="absolute right-6 top-6 text-slate-400 hover:text-white hover:bg-white/10 rounded-xl"
+                        className="absolute right-6 top-6 text-muted-foreground hover:text-foreground hover:bg-muted/80 rounded-xl"
                         onClick={() => setActiveTab('info')}
                     >
                         <X className="w-6 h-6" />
                     </Button>
                     
                     <div className="text-center mb-10">
-                        <h3 className="text-3xl font-black text-white mb-2 underline decoration-primary/30 underline-offset-8">Login</h3>
-                        <p className="text-xl text-slate-400 font-medium tracking-tight">Enterprise staff authentication</p>
+                        <h3 className="text-3xl font-black text-accent mb-2 underline decoration-primary/30 underline-offset-8">Login</h3>
+                        <p className="text-xl text-muted-foreground font-medium tracking-tight">Enterprise staff authentication</p>
                     </div>
 
                     <form action={handleSubmit} className="space-y-6">
                         <div className="space-y-3 text-left">
-                            <Label htmlFor="email" className="text-slate-400 text-base font-bold font-black uppercase tracking-widest ml-1">Username / Fleet ID</Label>
+                            <Label htmlFor="email" className="text-muted-foreground text-base font-bold font-black uppercase tracking-widest ml-1">Username / Fleet ID</Label>
                             <Input 
                                 id="email" 
                                 name="email" 
                                 type="text" 
                                 placeholder="e.g. admin_pro_01" 
                                 required 
-                                className="h-14 rounded-2xl bg-white/5 border-white/10 text-white placeholder:text-slate-600 focus:ring-primary/50" 
+                                className="h-14 rounded-2xl bg-muted/50 border-border/10 text-foreground placeholder:text-muted-foreground focus:ring-primary/50" 
                             />
                         </div>
                         <div className="space-y-3 text-left">
-                            <Label htmlFor="password" className="text-slate-400 text-base font-bold font-black uppercase tracking-widest ml-1">Security Key</Label>
+                            <Label htmlFor="password" className="text-muted-foreground text-base font-bold font-black uppercase tracking-widest ml-1">Security Key</Label>
                             <Input 
                                 id="password" 
                                 name="password" 
                                 type="password" 
                                 placeholder="••••••••" 
                                 required 
-                                className="h-14 rounded-2xl bg-white/5 border-white/10 text-white placeholder:text-slate-600 focus:ring-primary/50" 
+                                className="h-14 rounded-2xl bg-muted/50 border-border/10 text-foreground placeholder:text-muted-foreground focus:ring-primary/50" 
                             />
                         </div>
                         {error && (
@@ -167,7 +172,7 @@ function StaffLoginContent() {
                                  error}
                             </div>
                         )}
-                        <Button type="submit" className="w-full h-14 bg-primary hover:brightness-110 text-white font-black text-lg rounded-2xl shadow-xl shadow-primary/20 transition-all hover:scale-[1.02] active:scale-[0.98]" disabled={loading}>
+                        <Button type="submit" className="w-full h-14 bg-primary hover:brightness-110 text-foreground rounded-2xl shadow-xl shadow-primary/20 transition-all hover:scale-[1.02] active:scale-[0.98]" disabled={loading}>
                             {loading ? "AUTHENTICATING..." : "CONFIRM LOGIN"}
                         </Button>
                     </form>
@@ -176,10 +181,10 @@ function StaffLoginContent() {
         )}
 
         <div className="space-y-4 animate-in fade-in duration-1000 delay-700 pt-10">
-            <p className="text-base font-bold text-slate-600 font-black uppercase tracking-[0.2em]">
+            <p className="text-base font-bold text-muted-foreground font-black uppercase tracking-[0.2em]">
                 © 2024 <span className="text-primary/60">LOGIS-PRO</span> COMMAND. ALL RIGHTS RESERVED.
             </p>
-            <div className="flex justify-center gap-8 text-base font-bold text-slate-500 font-black uppercase tracking-widest">
+            <div className="flex justify-center gap-8 text-base font-bold text-muted-foreground font-black uppercase tracking-widest">
                 <a href="#" className="hover:text-primary transition-colors">Privacy</a>
                 <a href="#" className="hover:text-primary transition-colors">Terms</a>
             </div>
@@ -192,7 +197,7 @@ function StaffLoginContent() {
 export default function StaffLoginPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-[#050110] flex items-center justify-center p-6">
+      <div className="min-h-screen bg-background flex items-center justify-center p-6">
         <div className="w-16 h-16 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
       </div>
     }>

@@ -263,7 +263,7 @@ export default function MobileChatPage() {
                 <Button 
                     variant="ghost" 
                     size="icon" 
-                    className="shrink-0 h-11 w-11 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-full"
+                    className="shrink-0 h-11 w-11 text-muted-foreground hover:text-indigo-600 hover:bg-indigo-50 rounded-full"
                     onClick={() => cameraInputRef.current?.click()}
                     disabled={sending || uploadingImage}
                     title="ถ่ายรูป"
@@ -273,7 +273,7 @@ export default function MobileChatPage() {
                 <Button 
                     variant="ghost" 
                     size="icon" 
-                    className="shrink-0 h-11 w-11 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-full"
+                    className="shrink-0 h-11 w-11 text-muted-foreground hover:text-indigo-600 hover:bg-indigo-50 rounded-full"
                     onClick={() => fileInputRef.current?.click()}
                     disabled={sending || uploadingImage}
                     title="แนบรูปภาพ"

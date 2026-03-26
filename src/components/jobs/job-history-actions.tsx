@@ -81,7 +81,7 @@ export function JobHistoryActions({ job, drivers, vehicles, customers, routes, c
       <Button
         variant="ghost"
         size="sm"
-        className="h-10 w-10 p-0 text-slate-400 hover:text-white hover:bg-white/10 border border-white/10 bg-white/5"
+        className="h-10 w-10 p-0 text-muted-foreground hover:text-foreground hover:bg-muted/80 border border-border/10 bg-muted/50"
         onClick={() => setOpen(true)}
         title="ดูรายละเอียด/แก้ไข"
       >
@@ -94,7 +94,7 @@ export function JobHistoryActions({ job, drivers, vehicles, customers, routes, c
             variant="ghost"
             size="sm"
             className={cn(
-                "h-10 w-10 p-0 transition-all outline-none border bg-white/5",
+                "h-10 w-10 p-0 transition-all outline-none border bg-muted/50",
                 job.Verification_Status === 'Verified' ? "text-emerald-500 border-emerald-500/30 hover:bg-emerald-500/10" : 
                 job.Verification_Status === 'Rejected' ? "text-red-500 border-red-500/30 hover:bg-red-500/10" : "text-amber-500 border-amber-500/30 hover:bg-amber-500/10"
             )}

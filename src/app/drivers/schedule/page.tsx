@@ -27,7 +27,7 @@ export default async function DriverSchedulePage() {
       <div className="space-y-6">
         {/* Header */}
         <div>
-          <Link href="/drivers" className="flex items-center gap-2 text-gray-500 hover:text-emerald-600 transition-colors mb-3 text-xl font-bold">
+          <Link href="/drivers" className="flex items-center gap-2 text-muted-foreground hover:text-emerald-600 transition-colors mb-3 text-xl font-bold">
             <ArrowLeft className="w-4 h-4" /> ย้อนกลับ
           </Link>
           <h1 className="text-3xl font-black text-gray-900 tracking-tight flex items-center gap-3">
@@ -36,7 +36,7 @@ export default async function DriverSchedulePage() {
             </div>
             ตารางเวร / ใบลาคนขับ
           </h1>
-          <p className="text-gray-500 font-medium mt-1 text-xl">จัดการใบลาคนขับ — อนุมัติ / ปฏิเสธ</p>
+          <p className="text-muted-foreground font-medium mt-1 text-xl">จัดการใบลาคนขับ — อนุมัติ / ปฏิเสธ</p>
         </div>
 
         {/* Summary */}
@@ -87,7 +87,7 @@ export default async function DriverSchedulePage() {
                           {statusStyle.label}
                         </span>
                       </div>
-                      <p className="text-lg font-bold text-gray-500">
+                      <p className="text-lg font-bold text-muted-foreground">
                         📅 {startDate.toLocaleDateString('th-TH', { day: 'numeric', month: 'short' })}
                         {days > 1 ? ` — ${endDate.toLocaleDateString('th-TH', { day: 'numeric', month: 'short' })}` : ''}
                         {' '}({days} วัน)

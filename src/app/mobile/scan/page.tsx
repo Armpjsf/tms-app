@@ -39,8 +39,8 @@ export default function ScanPage() {
           </div>
           
           <div>
-            <h1 className="text-xl font-bold text-white mb-2">Barcode / QR Scanner</h1>
-            <p className="text-gray-500 text-xl">
+            <h1 className="text-xl font-bold text-foreground mb-2">Barcode / QR Scanner</h1>
+            <p className="text-muted-foreground text-xl">
               สแกน Barcode หรือ QR Code เพื่อค้นหางานหรือยืนยันการส่งสินค้า
             </p>
           </div>
@@ -65,7 +65,7 @@ export default function ScanPage() {
 
           {/* Fallback for manual search */}
           <Link href="/mobile/jobs" className="block">
-            <Button variant="ghost" className="w-full text-gray-500 hover:text-white hover:bg-gray-100">
+            <Button variant="ghost" className="w-full text-muted-foreground hover:text-white hover:bg-gray-100">
                 ค้นหางานด้วยตัวเอง
             </Button>
           </Link>

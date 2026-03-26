@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils'
 const LeafletMap = dynamic(() => import('@/components/maps/leaflet-map'), {
   ssr: false,
   loading: () => (
-    <div className="absolute inset-0 bg-gray-50 flex items-center justify-center">
+    <div className="absolute inset-0 bg-muted flex items-center justify-center">
       <div className="text-emerald-500 animate-pulse font-medium">Initializing Live Fleet Map...</div>
     </div>
   )
@@ -96,7 +96,7 @@ export function DashboardMap({ drivers, allJobs = [], focusPosition, plannedRout
                         "h-10 px-4 rounded-xl border font-black uppercase tracking-tighter transition-all shadow-2xl",
                         showHeatmap 
                             ? "bg-emerald-500 border-emerald-400 text-white hover:bg-emerald-600 scale-105" 
-                            : "bg-white/90 backdrop-blur-md border-gray-200 text-slate-700 hover:bg-white"
+                            : "bg-background/90 backdrop-blur-md border-border/10 text-muted-foreground hover:bg-muted"
                     )}
                 >
                     {showHeatmap ? (
@@ -115,9 +115,6 @@ export function DashboardMap({ drivers, allJobs = [], focusPosition, plannedRout
 
             {/* Map Overlay Badge */}
             <MapOverlay route={routeSummary} />
-            
-            {/* Subtle overlay to make cards more readable */}
-            <div className="absolute inset-0 bg-white/5 pointer-events-none" />
         </div>
     )
 }

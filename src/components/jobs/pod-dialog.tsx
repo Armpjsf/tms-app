@@ -65,7 +65,7 @@ export function PODDialog({ open, onOpenChange, job }: PODDialogProps) {
           <div>
              <h3 className="text-xl font-medium text-muted-foreground mb-3">{t('reports.dropoff_signature')}</h3>
              {signature ? (
-               <div className="relative h-40 w-full md:w-80 border border-border rounded-lg bg-white/5 mx-auto md:mx-0">
+               <div className="relative h-40 w-full md:w-80 border border-border rounded-lg bg-muted/50 mx-auto md:mx-0">
                   <Image 
                       src={signature} 
                       alt="Signature" 

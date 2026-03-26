@@ -177,16 +177,16 @@ export default function CustomerBillingHistory() {
            initial={{ opacity: 0, x: -20 }}
            animate={{ opacity: 1, x: 0 }}
         >
-          <button onClick={() => router.back()} className="flex items-center gap-2 text-gray-500 hover:text-emerald-600 transition-colors mb-3 text-xl font-bold">
+          <button onClick={() => router.back()} className="flex items-center gap-2 text-muted-foreground hover:text-emerald-600 transition-colors mb-3 text-xl font-bold">
             <ArrowLeft className="w-4 h-4" /> ย้อนกลับ
           </button>
-          <h1 className="text-4xl font-black text-slate-100 tracking-tighter flex items-center gap-4">
+          <h1 className="text-4xl font-black text-muted-foreground tracking-tighter flex items-center gap-4">
             <span className="p-3 bg-emerald-500 rounded-3xl shadow-xl shadow-emerald-500/20 text-white">
                 <Receipt size={32} />
             </span>
             ประวัติการวางบิล
           </h1>
-          <p className="text-slate-400 font-bold mt-2 ml-16 uppercase tracking-widest text-lg font-bold">Customer Billing Intelligence</p>
+          <p className="text-muted-foreground font-bold mt-2 ml-16 uppercase tracking-widest text-lg font-bold">Customer Billing Intelligence</p>
         </motion.div>
 
         <div className="flex items-center gap-3">
@@ -198,15 +198,15 @@ export default function CustomerBillingHistory() {
 
       <div className="grid grid-cols-1 gap-6">
         {/* Search & Filters */}
-        <PremiumCard dark className="border-white/10">
+        <PremiumCard dark className="border-border/10">
           <div className="flex flex-col md:flex-row gap-4 items-center">
             <div className="relative flex-1 w-full">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
               <Input
                 placeholder="ค้นหาตามเลขที่เอกสาร หรือ ชื่อลูกค้า..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-12 h-14 bg-white/10 border-white/20 rounded-2xl focus:ring-emerald-500/20 focus:border-emerald-500/50 transition-all font-bold text-slate-100 placeholder:text-slate-500 shadow-inner"
+                className="pl-12 h-14 bg-muted/80 border-border/20 rounded-2xl focus:ring-emerald-500/20 focus:border-emerald-500/50 transition-all font-bold text-muted-foreground placeholder:text-muted-foreground shadow-inner"
               />
             </div>
             
@@ -219,10 +219,10 @@ export default function CustomerBillingHistory() {
                     )}
                 </PremiumButton>
               </PopoverTrigger>
-              <PopoverContent className="w-80 p-6 bg-slate-900 border-white/10 rounded-3xl shadow-2xl" align="end">
+              <PopoverContent className="w-80 p-6 bg-card border-border/10 rounded-3xl shadow-2xl" align="end">
                 <div className="space-y-6">
                   <div className="flex items-center justify-between">
-                    <h4 className="font-black text-slate-100 uppercase tracking-widest text-lg font-bold">ตัวกรองข้อมูล</h4>
+                    <h4 className="font-black text-muted-foreground uppercase tracking-widest text-lg font-bold">ตัวกรองข้อมูล</h4>
                     {(dateFrom || dateTo || statusFilter !== 'all') && (
                         <button 
                             onClick={() => {
@@ -239,12 +239,12 @@ export default function CustomerBillingHistory() {
 
                   <div className="space-y-4">
                     <div className="space-y-2">
-                        <Label className="text-base font-bold font-black text-slate-500 uppercase tracking-widest px-1">สถานะ</Label>
+                        <Label className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest px-1">สถานะ</Label>
                         <Select value={statusFilter} onValueChange={setStatusFilter}>
-                            <SelectTrigger className="bg-white/5 border-white/10 rounded-xl h-12 font-bold text-slate-200">
+                            <SelectTrigger className="bg-muted/50 border-border/10 rounded-xl h-12 font-bold text-muted-foreground">
                                 <SelectValue placeholder="เลือกสถานะ" />
                             </SelectTrigger>
-                            <SelectContent className="bg-slate-900 border-white/10 rounded-xl">
+                            <SelectContent className="bg-card border-border/10 rounded-xl">
                                 <SelectItem value="all">ทั้งหมด</SelectItem>
                                 <SelectItem value="Pending">รอดำเนินการ</SelectItem>
                                 <SelectItem value="Paid">ชำระแล้ว</SelectItem>
@@ -254,21 +254,21 @@ export default function CustomerBillingHistory() {
 
                     <div className="grid grid-cols-2 gap-3">
                         <div className="space-y-2">
-                            <Label className="text-base font-bold font-black text-slate-500 uppercase tracking-widest px-1">ตั้งแต่วันที่</Label>
+                            <Label className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest px-1">ตั้งแต่วันที่</Label>
                             <Input 
                                 type="date" 
                                 value={dateFrom} 
                                 onChange={(e) => setDateFrom(e.target.value)}
-                                className="bg-white/5 border-white/10 rounded-xl h-12 font-bold text-slate-200"
+                                className="bg-muted/50 border-border/10 rounded-xl h-12 font-bold text-muted-foreground"
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label className="text-base font-bold font-black text-slate-500 uppercase tracking-widest px-1">ถึงวันที่</Label>
+                            <Label className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest px-1">ถึงวันที่</Label>
                             <Input 
                                 type="date" 
                                 value={dateTo} 
                                 onChange={(e) => setDateTo(e.target.value)}
-                                className="bg-white/5 border-white/10 rounded-xl h-12 font-bold text-slate-200"
+                                className="bg-muted/50 border-border/10 rounded-xl h-12 font-bold text-muted-foreground"
                             />
                         </div>
                     </div>
@@ -281,21 +281,21 @@ export default function CustomerBillingHistory() {
 
         {/* Billing Notes List */}
         <PremiumCard dark className="p-0 overflow-hidden border-none shadow-2xl">
-            <PremiumCardHeader className="p-8 border-b border-white/5 bg-white/5">
+            <PremiumCardHeader className="p-8 border-b border-border/5 bg-muted/50">
                 <PremiumCardTitle dark icon={<FileText className="text-emerald-500" />}>
                    รายการใบวางบิลล่าสุด
                 </PremiumCardTitle>
             </PremiumCardHeader>
             <div className="p-0">
             <Table>
-              <TableHeader className="bg-white/5">
-                <TableRow className="border-white/10 hover:bg-transparent">
-                  <TableHead className="font-black text-slate-200 uppercase tracking-widest text-lg font-bold py-6 pl-8">เลขที่เอกสาร</TableHead>
-                  <TableHead className="font-black text-slate-300 uppercase tracking-widest text-lg font-bold py-6">วันที่เอกสาร</TableHead>
-                  <TableHead className="font-black text-slate-300 uppercase tracking-widest text-lg font-bold py-6">ลูกค้า</TableHead>
-                  <TableHead className="font-black text-slate-300 uppercase tracking-widest text-lg font-bold py-6 text-right">จำนวนเงินรวม</TableHead>
-                  <TableHead className="font-black text-slate-300 uppercase tracking-widest text-lg font-bold py-6 text-center">สถานะ</TableHead>
-                  <TableHead className="font-black text-slate-300 uppercase tracking-widest text-lg font-bold py-6 text-right pr-8">จัดการ</TableHead>
+              <TableHeader className="bg-muted/50">
+                <TableRow className="border-border/10 hover:bg-transparent">
+                  <TableHead className="font-black text-muted-foreground uppercase tracking-widest text-lg font-bold py-6 pl-8">เลขที่เอกสาร</TableHead>
+                  <TableHead className="font-black text-muted-foreground uppercase tracking-widest text-lg font-bold py-6">วันที่เอกสาร</TableHead>
+                  <TableHead className="font-black text-muted-foreground uppercase tracking-widest text-lg font-bold py-6">ลูกค้า</TableHead>
+                  <TableHead className="font-black text-muted-foreground uppercase tracking-widest text-lg font-bold py-6 text-right">จำนวนเงินรวม</TableHead>
+                  <TableHead className="font-black text-muted-foreground uppercase tracking-widest text-lg font-bold py-6 text-center">สถานะ</TableHead>
+                  <TableHead className="font-black text-muted-foreground uppercase tracking-widest text-lg font-bold py-6 text-right pr-8">จัดการ</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -316,17 +316,17 @@ export default function CustomerBillingHistory() {
                   </TableRow>
                 ) : (
                   filteredNotes.map((note) => (
-                    <TableRow key={note.Billing_Note_ID} className="border-white/5 hover:bg-emerald-500/5 transition-colors group">
-                      <TableCell className="font-black text-slate-100 py-6 pl-8">
+                    <TableRow key={note.Billing_Note_ID} className="border-border/5 hover:bg-emerald-500/5 transition-colors group">
+                      <TableCell className="font-black text-muted-foreground py-6 pl-8">
                         {note.Billing_Note_ID}
                       </TableCell>
-                      <TableCell className="text-slate-400 font-bold">
+                      <TableCell className="text-muted-foreground font-bold">
                         {format(new Date(note.Billing_Date), "dd MMM yyyy", { locale: th })}
                       </TableCell>
                       <TableCell>
-                        <div className="font-black text-slate-100">{note.Customer_Name}</div>
+                        <div className="font-black text-muted-foreground">{note.Customer_Name}</div>
                       </TableCell>
-                      <TableCell className="text-right font-black text-slate-100 text-lg">
+                      <TableCell className="text-right font-black text-muted-foreground text-lg">
                         ฿{note.Total_Amount.toLocaleString()}
                       </TableCell>
                       <TableCell className="text-center">

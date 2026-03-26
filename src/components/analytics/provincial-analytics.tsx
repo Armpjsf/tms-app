@@ -29,7 +29,7 @@ export function ZoneAnalytics({ data = [] }: { data?: { name: string; range: str
                         Active tracking
                     </div>
                 </div>
-                <p className="text-gray-500 font-bold text-lg font-bold mt-1">สรุปการวิ่งรถแยกตามโซน (Zone Compliance Reporting)</p>
+                <p className="text-muted-foreground font-bold text-lg font-bold mt-1">สรุปการวิ่งรถแยกตามโซน (Zone Compliance Reporting)</p>
             </CardHeader>
             <CardContent className="p-8 space-y-6">
                 {zoneData.map((item, idx) => (

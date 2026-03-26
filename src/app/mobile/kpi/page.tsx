@@ -36,7 +36,7 @@ export default async function MobileKPIPage() {
         <div className={`${rankConf.bg} rounded-3xl p-6 text-center shadow-sm`}>
           <p className="text-6xl mb-2">{rankConf.emoji}</p>
           <h2 className={`text-3xl font-black ${rankConf.color}`}>{kpi.rank}</h2>
-          <p className="text-5xl font-black text-gray-900 mt-2">{kpi.points} <span className="text-lg font-bold text-gray-500">แต้ม</span></p>
+          <p className="text-5xl font-black text-gray-900 mt-2">{kpi.points} <span className="text-lg font-bold text-muted-foreground">แต้ม</span></p>
           
           {kpi.nextRankPoints > 0 && (
             <div className="mt-4">

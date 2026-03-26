@@ -17,7 +17,7 @@ export function PredictiveMaintenance({ risks }: { risks: VehicleRisk[] }) {
         <div>
             <h2 className="text-lg font-bold uppercase tracking-[0.2em] flex items-center gap-2">
                 AI Predictive Maintenance
-                <span className="text-base font-bold bg-purple-900 text-white px-2 py-0.5 rounded-full normal-case tracking-normal">BETA</span>
+                <span className="text-foreground px-2 py-0.5 rounded-full normal-case tracking-normal">BETA</span>
             </h2>
             <p className="text-lg font-bold text-gray-900 font-bold">Machine Learning analyzing usage patterns & repair history</p>
         </div>
@@ -27,7 +27,7 @@ export function PredictiveMaintenance({ risks }: { risks: VehicleRisk[] }) {
           <Card className="bg-white/80 border-gray-200 backdrop-blur-sm">
             <CardContent className="p-6">
                 <div className="flex items-center justify-between mb-2">
-                    <span className="text-gray-500 text-xl font-medium">Critical Risk</span>
+                    <span className="text-muted-foreground text-xl font-medium">Critical Risk</span>
                     <AlertOctagon size={16} className="text-red-500" />
                 </div>
                 <div className="text-3xl font-bold text-red-500">{critical.length}</div>
@@ -38,7 +38,7 @@ export function PredictiveMaintenance({ risks }: { risks: VehicleRisk[] }) {
           <Card className="bg-white/80 border-gray-200 backdrop-blur-sm">
             <CardContent className="p-6">
                 <div className="flex items-center justify-between mb-2">
-                    <span className="text-gray-500 text-xl font-medium">Warning Risk</span>
+                    <span className="text-muted-foreground text-xl font-medium">Warning Risk</span>
                     <AlertTriangle size={16} className="text-yellow-500" />
                 </div>
                 <div className="text-3xl font-bold text-yellow-500">{warning.length}</div>
@@ -49,7 +49,7 @@ export function PredictiveMaintenance({ risks }: { risks: VehicleRisk[] }) {
           <Card className="bg-white/80 border-gray-200 backdrop-blur-sm">
             <CardContent className="p-6">
                 <div className="flex items-center justify-between mb-2">
-                    <span className="text-gray-500 text-xl font-medium">Healthy Fleet</span>
+                    <span className="text-muted-foreground text-xl font-medium">Healthy Fleet</span>
                     <CheckCircle2 size={16} className="text-emerald-500" />
                 </div>
                 <div className="text-3xl font-bold text-emerald-500">{risks.length - critical.length - warning.length}</div>
@@ -84,7 +84,7 @@ export function PredictiveMaintenance({ risks }: { risks: VehicleRisk[] }) {
                             </div>
                         </div>
                         <div className="text-right">
-                             <div className="text-gray-500 text-lg font-bold">Est. Service In</div>
+                             <div className="text-muted-foreground text-lg font-bold">Est. Service In</div>
                              <div className={`font-bold text-xl ${r.days_to_service < 14 ? 'text-red-700' : 'text-gray-900'}`}>
                                 {r.days_to_service} Days
                              </div>

@@ -45,7 +45,7 @@ export default function Loading() {
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 border-b border-gray-200 pb-8">
           <div className="flex items-center gap-4">
             <Button variant="outline" size="icon" className="border-gray-200 bg-white border-2" disabled>
-                <ArrowLeft className="h-5 w-5 text-gray-500" />
+                <ArrowLeft className="h-5 w-5 text-muted-foreground" />
             </Button>
             <div>
               <Skeleton className="h-10 w-64 bg-gray-100 mb-2" />

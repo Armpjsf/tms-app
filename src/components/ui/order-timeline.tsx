@@ -24,7 +24,7 @@ const STEPS = [
     labelEn: 'Order Created',
     icon: Calendar, 
     description: 'สร้างคำสั่งงานเข้าระบบ',
-    color: 'text-gray-500',
+    color: 'text-muted-foreground',
     bgColor: 'bg-slate-500/20',
     activeColor: 'text-emerald-700',
     activeBg: 'bg-emerald-500/15',
@@ -37,7 +37,7 @@ const STEPS = [
     labelEn: 'Truck Assigned',
     icon: User, 
     description: 'มอบหมายงานให้คนขับ',
-    color: 'text-gray-500',
+    color: 'text-muted-foreground',
     bgColor: 'bg-slate-500/20',
     activeColor: 'text-emerald-500',
     activeBg: 'bg-emerald-500/15',
@@ -50,7 +50,7 @@ const STEPS = [
     labelEn: 'Picked Up',
     icon: Package, 
     description: 'รับสินค้าจากต้นทาง',
-    color: 'text-gray-500',
+    color: 'text-muted-foreground',
     bgColor: 'bg-slate-500/20',
     activeColor: 'text-amber-400',
     activeBg: 'bg-amber-500/20',
@@ -63,7 +63,7 @@ const STEPS = [
     labelEn: 'On Route',
     icon: Truck, 
     description: 'กำลังเดินทางไปปลายทาง',
-    color: 'text-gray-500',
+    color: 'text-muted-foreground',
     bgColor: 'bg-slate-500/20',
     activeColor: 'text-orange-400',
     activeBg: 'bg-orange-500/20',
@@ -77,7 +77,7 @@ const STEPS = [
     labelEn: 'Delivered',
     icon: CheckCircle2, 
     description: 'ยืนยันการส่งมอบสินค้า',
-    color: 'text-gray-500',
+    color: 'text-muted-foreground',
     bgColor: 'bg-slate-500/20',
     activeColor: 'text-emerald-400',
     activeBg: 'bg-emerald-500/20',
@@ -138,13 +138,13 @@ export function OrderTimeline({ currentStatus, planDate, createdAt, className }:
                   <div>
                     <p className={cn(
                       "text-xl font-black transition-colors",
-                      isCompleted ? "text-white" : "text-slate-500"
+                      isCompleted ? "text-white" : "text-muted-foreground"
                     )}>
                       {step.label}
                     </p>
                     <p className={cn(
                       "text-base font-bold font-black uppercase tracking-wider",
-                      isCompleted ? "text-slate-400" : "text-slate-500"
+                      isCompleted ? "text-muted-foreground" : "text-muted-foreground"
                     )}>
                       {step.labelEn}
                     </p>
@@ -177,7 +177,7 @@ export function OrderTimeline({ currentStatus, planDate, createdAt, className }:
                 {/* Description */}
                 <p className={cn(
                   "text-base font-bold mt-1 font-medium",
-                  isCompleted ? "text-slate-400" : "text-slate-500"
+                  isCompleted ? "text-muted-foreground" : "text-muted-foreground"
                 )}>
                   {step.description}
                 </p>

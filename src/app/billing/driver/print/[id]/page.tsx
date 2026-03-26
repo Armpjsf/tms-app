@@ -72,23 +72,23 @@ export default async function DriverPaymentPrintPage(props: Props) {
                                 <>
                                     <h2 className="font-bold text-base">{company.company_name}</h2>
                                     {company.company_name_en && (
-                                        <p className="text-slate-600 font-medium">{company.company_name_en}</p>
+                                        <p className="text-muted-foreground font-medium">{company.company_name_en}</p>
                                     )}
-                                    <p className="mt-1 text-slate-700 leading-tight">{company.address}</p>
+                                    <p className="mt-1 text-muted-foreground leading-tight">{company.address}</p>
                                     <div className="flex gap-4 mt-1">
                                         <p><span className="font-semibold">Tax ID:</span> {company.tax_id}</p>
                                     </div>
                                 </>
                             ) : (
-                                <p className="text-slate-400">Loading company info...</p>
+                                <p className="text-muted-foreground">Loading company info...</p>
                             )}
                         </div>
                     </div>
 
                     {/* Right: Document Title */}
                     <div className="text-right">
-                        <h1 className="text-3xl font-bold text-slate-900 tracking-wide">ใบสำคัญจ่าย</h1>
-                        <p className="text-slate-500 text-base font-medium tracking-widest uppercase">Payment Voucher</p>
+                        <h1 className="text-3xl font-bold text-foreground tracking-wide">ใบสำคัญจ่าย</h1>
+                        <p className="text-muted-foreground text-base font-medium tracking-widest uppercase">Payment Voucher</p>
                         <div className="mt-2">
                              <span className="px-2 py-0.5 bg-slate-100 rounded text-base font-bold font-mono border border-slate-200">
                                 ORIGINAL (ต้นฉบับ)
@@ -103,27 +103,27 @@ export default async function DriverPaymentPrintPage(props: Props) {
                 <div className="grid grid-cols-2 gap-4 mb-4">
                     {/* Payer Info (Company) */}
                     <div className="border border-slate-200 rounded p-3 bg-slate-50/50">
-                         <h3 className="font-bold text-lg font-bold text-slate-800 border-b border-slate-200 pb-1 mb-1">ผู้ทำจ่าย (Payer)</h3>
+                         <h3 className="font-bold text-lg font-bold text-muted-foreground border-b border-slate-200 pb-1 mb-1">ผู้ทำจ่าย (Payer)</h3>
                          {company ? (
-                            <div className="text-base font-bold text-slate-600 space-y-0.5">
-                                <p className="font-semibold text-xl text-slate-900">{company.company_name}</p>
+                            <div className="text-base font-bold text-muted-foreground space-y-0.5">
+                                <p className="font-semibold text-xl text-foreground">{company.company_name}</p>
                                 <p className="leading-tight">{company.address}</p>
                                 <p><span className="font-semibold">Tax ID:</span> {company.tax_id} {company.phone && <span>โทร: {company.phone}</span>}</p>
                             </div>
                          ) : (
-                            <p className="text-lg font-bold text-slate-400">Loading...</p>
+                            <p className="text-lg font-bold text-muted-foreground">Loading...</p>
                          )}
                     </div>
 
                     {/* Payee Info (Driver) */}
                     <div className="border border-slate-200 rounded p-3">
-                        <h3 className="font-bold text-lg font-bold text-slate-800 border-b border-slate-200 pb-1 mb-1">ผู้รับเงิน (Payee)</h3>
-                        <p className="font-semibold text-xl text-slate-900">{payment.Driver_Name}</p>
-                        <div className="text-base font-bold text-slate-600 space-y-0.5">
+                        <h3 className="font-bold text-lg font-bold text-muted-foreground border-b border-slate-200 pb-1 mb-1">ผู้รับเงิน (Payee)</h3>
+                        <p className="font-semibold text-xl text-foreground">{payment.Driver_Name}</p>
+                        <div className="text-base font-bold text-muted-foreground space-y-0.5">
                             {bankInfo.Bank_Account_No ? (
                                 <>
                                     <p><span className="font-semibold">Bank:</span> {bankInfo.Bank_Name}</p>
-                                    <p><span className="font-semibold">Account No:</span> {bankInfo.Bank_Account_No} <span className="text-base font-bold text-slate-400">({bankInfo.Bank_Account_Name})</span></p>
+                                    <p><span className="font-semibold">Account No:</span> {bankInfo.Bank_Account_No} <span className="text-base font-bold text-muted-foreground">({bankInfo.Bank_Account_Name})</span></p>
                                 </>
                             ) : (
                                 <p className="text-amber-600 italic">* ไม่พบข้อมูลบัญชีธนาคาร</p>
@@ -135,15 +135,15 @@ export default async function DriverPaymentPrintPage(props: Props) {
                 {/* Document Details Row */}
                 <div className="flex justify-between items-center mb-4 text-base font-bold bg-slate-50 p-2 rounded border border-slate-200">
                      <div>
-                        <span className="text-slate-500 mr-2">เลขที่เอกสาร (No.):</span>
+                        <span className="text-muted-foreground mr-2">เลขที่เอกสาร (No.):</span>
                         <span className="font-mono font-bold text-xl tracking-tight">{payment.Driver_Payment_ID}</span>
                      </div>
                      <div>
-                        <span className="text-slate-500 mr-2">วันที่ (Date):</span>
+                        <span className="text-muted-foreground mr-2">วันที่ (Date):</span>
                         <span className="font-medium">{new Date(payment.Payment_Date).toLocaleDateString('th-TH')}</span>
                      </div>
                      <div>
-                        <span className="text-slate-500 mr-2">วิธีการชำระ (Payment Method):</span>
+                        <span className="text-muted-foreground mr-2">วิธีการชำระ (Payment Method):</span>
                         <span className="font-medium">Bank Transfer</span>
                      </div>
                 </div>
@@ -152,7 +152,7 @@ export default async function DriverPaymentPrintPage(props: Props) {
                 <div className="mb-4">
                     <table className="w-full text-[12px] border-collapse">
                         <thead>
-                            <tr className="bg-slate-100 text-slate-700 border-y-2 border-slate-300">
+                            <tr className="bg-slate-100 text-muted-foreground border-y-2 border-slate-300">
                                 <th className="py-2 px-3 text-center font-bold w-12">No.</th>
                                 <th className="py-2 px-3 text-left font-bold">รายการ (Description)</th>
                                 <th className="py-2 px-3 text-center font-bold w-24">วันที่ (Date)</th>
@@ -179,20 +179,20 @@ export default async function DriverPaymentPrintPage(props: Props) {
                                 return (
                                     <tbody key={item.Job_ID} className="border-b border-slate-200">
                                         <tr>
-                                            <td className="py-2 px-3 text-center text-slate-500 align-top">{index + 1}</td>
+                                            <td className="py-2 px-3 text-center text-muted-foreground align-top">{index + 1}</td>
                                             <td className="py-2 px-3">
-                                                <div className="font-bold text-slate-800">ค่าเที่ยววิ่ง (Job: {item.Job_ID})</div>
-                                                <div className="text-base font-bold text-slate-500">{item.Route_Name}</div>
+                                                <div className="font-bold text-muted-foreground">ค่าเที่ยววิ่ง (Job: {item.Job_ID})</div>
+                                                <div className="text-base font-bold text-muted-foreground">{item.Route_Name}</div>
                                             </td>
-                                            <td className="py-2 px-3 text-center text-slate-600 align-top">
+                                            <td className="py-2 px-3 text-center text-muted-foreground align-top">
                                                 {item.Plan_Date ? new Date(item.Plan_Date).toLocaleDateString('th-TH') : '-'}
                                             </td>
-                                            <td className="py-2 px-3 text-right font-bold text-slate-800 align-top">
+                                            <td className="py-2 px-3 text-right font-bold text-muted-foreground align-top">
                                                 {item.Cost_Driver_Total?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                             </td>
                                         </tr>
                                         {extraCosts.map((extra, i) => (
-                                            <tr key={`${item.Job_ID}-extra-${i}`} className="text-slate-600 bg-slate-50/30">
+                                            <tr key={`${item.Job_ID}-extra-${i}`} className="text-muted-foreground bg-slate-50/30">
                                                 <td></td>
                                                 <td className="py-1 px-3">
                                                     <div className="text-base font-bold border-l-2 border-slate-300 pl-2">
@@ -218,21 +218,21 @@ export default async function DriverPaymentPrintPage(props: Props) {
                         <tfoot>
                              <tr>
                                 <td colSpan={2} rowSpan={3} className="pt-2 pr-4 align-top">
-                                    <div className="border border-slate-300 bg-slate-50 p-2 rounded text-base font-bold text-slate-500">
+                                    <div className="border border-slate-300 bg-slate-50 p-2 rounded text-base font-bold text-muted-foreground">
                                         <p className="font-bold mb-0.5">หมายเหตุ (Remarks):</p>
                                         <p>- ยอดเงินนี้รวมค่าแรงและค่าพาหนะแล้ว</p>
                                         <p>- Auto-generated Payment Voucher</p>
                                     </div>
                                 </td>
-                                <td className="py-1 px-3 text-right font-bold text-slate-600">รวมเป็นเงิน</td>
-                                <td className="py-1 px-3 text-right font-bold text-slate-800">{subtotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                                <td className="py-1 px-3 text-right font-bold text-muted-foreground">รวมเป็นเงิน</td>
+                                <td className="py-1 px-3 text-right font-bold text-muted-foreground">{subtotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
                             </tr>
                             <tr>
-                                <td className="py-1 px-3 text-right text-slate-600 text-base font-bold">หัก ณ ที่จ่าย 1%</td>
+                                <td className="py-1 px-3 text-right text-muted-foreground text-base font-bold">หัก ณ ที่จ่าย 1%</td>
                                 <td className="py-1 px-3 text-right text-red-500 font-medium">-{withholding.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
                             </tr>
                             <tr className="bg-slate-50 border-t-2 border-slate-300 border-b-2">
-                                <td className="py-2 px-3 text-right font-bold text-slate-900 text-base">ยอดสุทธิ</td>
+                                <td className="py-2 px-3 text-right font-bold text-foreground text-base">ยอดสุทธิ</td>
                                 <td className="py-2 px-3 text-right font-bold text-indigo-700 text-base decoration-double underline">
                                     {netTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                 </td>
@@ -242,7 +242,7 @@ export default async function DriverPaymentPrintPage(props: Props) {
                 </div>
 
                  {/* Footer Signatures */}
-                <div className="flex justify-between mt-8 text-base font-bold text-slate-600 pb-4 break-inside-avoid">
+                <div className="flex justify-between mt-8 text-base font-bold text-muted-foreground pb-4 break-inside-avoid">
                      <div className="text-center w-[45%]">
                         <div className="border-b border-slate-400 mb-1 h-6 w-3/4 mx-auto"></div>
                         <p className="font-bold">ผู้รับเงิน</p>

@@ -123,7 +123,7 @@ export function ExcelImport({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent className="max-w-[95vw] sm:max-w-xl max-h-[95vh] flex flex-col bg-slate-900 border-white/10 text-white rounded-[2rem] p-0 overflow-hidden shadow-2xl">
+      <DialogContent className="max-w-[95vw] sm:max-w-xl max-h-[95vh] flex flex-col bg-card border-border/10 text-foreground rounded-[2rem] p-0 overflow-hidden shadow-2xl">
         <div className="flex-1 overflow-y-auto p-8 pb-4 space-y-6 custom-scrollbar">
           <DialogHeader>
             <DialogTitle className="text-xl font-black tracking-tight flex items-center gap-3">
@@ -132,7 +132,7 @@ export function ExcelImport({
               </div>
               {title}
             </DialogTitle>
-            <DialogDescription className="text-slate-400 font-medium">
+            <DialogDescription className="text-muted-foreground font-medium">
               {description}
             </DialogDescription>
           </DialogHeader>
@@ -144,7 +144,7 @@ export function ExcelImport({
                   variant="outline"
                   size="sm"
                   onClick={downloadTemplate}
-                  className="h-10 px-4 rounded-xl gap-2 border-white/10 bg-white/5 hover:bg-white/10 text-slate-300 transition-all active:scale-95"
+                  className="h-10 px-4 rounded-xl gap-2 border-border/10 bg-muted/50 hover:bg-muted/80 text-muted-foreground transition-all active:scale-95"
                 >
                   <Download size={14} /> โหลดแบบฟอร์ม (Template)
                 </Button>
@@ -157,7 +157,7 @@ export function ExcelImport({
               className={`relative border-2 border-dashed rounded-3xl p-10 text-center transition-all cursor-pointer group ${
                 file 
                   ? "border-emerald-500/50 bg-emerald-500/5" 
-                  : "border-white/10 bg-white/5 hover:border-emerald-500/30 hover:bg-emerald-500/5"
+                  : "border-border/10 bg-muted/50 hover:border-emerald-500/30 hover:bg-emerald-500/5"
               }`}
               onClick={() => fileInputRef.current?.click()}
             >
@@ -181,8 +181,8 @@ export function ExcelImport({
                         <CheckCircle2 className="w-8 h-8" />
                       </div>
                       <div className="text-center">
-                        <p className="font-bold text-white tracking-tight">{file.name}</p>
-                        <p className="text-lg font-bold text-slate-400 mt-1">
+                        <p className="font-bold text-foreground tracking-tight">{file.name}</p>
+                        <p className="text-lg font-bold text-muted-foreground mt-1">
                           {previewData.length > 0 ? `พบข้อมูล ${previewData.length} รายการ พร้อมนำเข้า` : "กำลังอ่านไฟล์..."}
                         </p>
                       </div>
@@ -194,12 +194,12 @@ export function ExcelImport({
                       animate={{ opacity: 1 }}
                       className="flex flex-col items-center gap-3"
                     >
-                      <div className="p-4 rounded-full bg-white/5 text-slate-400 group-hover:text-emerald-500 group-hover:bg-emerald-500/10 transition-colors">
+                      <div className="p-4 rounded-full bg-muted/50 text-muted-foreground group-hover:text-emerald-500 group-hover:bg-emerald-500/10 transition-colors">
                         <Upload className="w-8 h-8" />
                       </div>
                       <div className="text-center">
-                        <p className="font-bold text-slate-300">คลิกเพื่อเลือกไฟล์ หรือลากไฟล์มาวางที่นี่</p>
-                        <p className="text-lg font-bold text-slate-500 mt-1 uppercase tracking-widest font-black">รองรับไฟล์ .XLSX, .XLS</p>
+                        <p className="font-bold text-muted-foreground">คลิกเพื่อเลือกไฟล์ หรือลากไฟล์มาวางที่นี่</p>
+                        <p className="text-lg font-bold text-muted-foreground mt-1 uppercase tracking-widest font-black">รองรับไฟล์ .XLSX, .XLS</p>
                       </div>
                     </motion.div>
                   )}
@@ -224,10 +224,10 @@ export function ExcelImport({
             </AnimatePresence>
 
             {previewData.length > 0 && !error && (
-               <div className="bg-white/5 rounded-2xl border border-white/5 overflow-hidden">
+               <div className="bg-muted/50 rounded-2xl border border-border/5 overflow-hidden">
                   <div className="max-h-[160px] overflow-auto">
                     <table className="w-full text-base font-bold text-left border-collapse">
-                        <thead className="bg-white/10 text-slate-300 sticky top-0 backdrop-blur-md">
+                        <thead className="bg-muted/80 text-muted-foreground sticky top-0 backdrop-blur-md">
                             <tr>
                                 {Object.keys(previewData[0]).slice(0, 4).map(key => (
                                     <th key={key} className="p-3 font-bold uppercase tracking-wider">{key}</th>
@@ -237,18 +237,18 @@ export function ExcelImport({
                         </thead>
                         <tbody className="divide-y divide-white/5">
                             {previewData.slice(0, 3).map((row, i) => (
-                                <tr key={i} className="hover:bg-white/5 transition-colors">
+                                <tr key={i} className="hover:bg-muted/50 transition-colors">
                                     {Object.values(row).slice(0, 4).map((val: unknown, j) => (
-                                        <td key={j} className="p-3 text-slate-400 font-medium truncate max-w-[100px]">{String(val)}</td>
+                                        <td key={j} className="p-3 text-muted-foreground font-medium truncate max-w-[100px]">{String(val)}</td>
                                     ))}
-                                    {Object.values(row).length > 4 && <td className="p-3 text-slate-500">...</td>}
+                                    {Object.values(row).length > 4 && <td className="p-3 text-muted-foreground">...</td>}
                                 </tr>
                             ))}
                         </tbody>
                     </table>
                   </div>
                   {previewData.length > 3 && (
-                      <div className="p-2 text-base font-bold text-center text-slate-500 bg-white/[0.02] border-t border-white/5 font-bold uppercase tracking-tighter">
+                      <div className="p-2 text-base font-bold text-center text-muted-foreground bg-muted/30 border-t border-border/5 font-bold uppercase tracking-tighter">
                           ... and {previewData.length - 3} more items
                       </div>
                   )}
@@ -261,14 +261,14 @@ export function ExcelImport({
           <Button 
             variant="ghost" 
             onClick={() => setOpen(false)}
-            className="flex-1 h-12 rounded-2xl border border-white/5 text-slate-400 hover:text-white hover:bg-white/5 font-bold transition-all"
+            className="flex-1 h-12 rounded-2xl border border-border/5 text-muted-foreground hover:text-foreground hover:bg-muted/50 font-bold transition-all"
           >
             ยกเลิก
           </Button>
           <Button
             onClick={handleImport}
             disabled={!file || loading || previewData.length === 0}
-            className="flex-1 h-12 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-black shadow-lg shadow-emerald-900/20 transition-all active:scale-95 disabled:opacity-50"
+            className="flex-1 h-12 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-foreground font-black shadow-lg shadow-emerald-900/20 transition-all active:scale-95 disabled:opacity-50"
           >
             {loading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : "นำเข้าข้อมูล"}
           </Button>

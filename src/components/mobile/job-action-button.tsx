@@ -180,7 +180,7 @@ export function JobActionButton({ job }: JobActionButtonProps) {
 
                 default:
                     return (
-                        <Button disabled={true} className="w-full h-14 text-lg bg-slate-700 text-gray-500">
+                        <Button disabled={true} className="w-full h-14 text-lg bg-slate-700 text-muted-foreground">
                              ไม่ทราบสถานะ ({job.Job_Status})
                         </Button>
                     )
@@ -201,7 +201,7 @@ export function JobActionButton({ job }: JobActionButtonProps) {
                         </Button>
                     )}
 
-                    <p className="text-base font-bold text-gray-500 italic text-center px-4">
+                    <p className="text-base font-bold text-muted-foreground italic text-center px-4">
                         {nextAction}
                     </p>
                     <Button 

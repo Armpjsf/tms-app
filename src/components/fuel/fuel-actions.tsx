@@ -57,7 +57,7 @@ export function FuelActions({ log, drivers, vehicles }: FuelActionsProps) {
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="h-8 w-8 p-0 text-gray-500 hover:text-white">
+          <Button variant="ghost" className="h-8 w-8 p-0 text-muted-foreground hover:text-white">
             <span className="sr-only">Open menu</span>
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <MoreHorizontal className="h-4 w-4" />}
           </Button>

@@ -38,7 +38,7 @@ class ErrorBoundary extends Component<Props, State> {
             <AlertCircle className="w-8 h-8 text-red-600" />
           </div>
           <h2 className="text-2xl font-bold text-gray-900 mb-2">เกิดข้อผิดพลาดบางอย่าง</h2>
-          <p className="text-gray-500 mb-8 max-w-md">ขออภัย ระบบขัดข้องชั่วคราว ทีมงานได้รับแจ้งข้อมูลแล้ว กรุณาลองใหม่อีกครั้ง</p>
+          <p className="text-muted-foreground mb-8 max-w-md">ขออภัย ระบบขัดข้องชั่วคราว ทีมงานได้รับแจ้งข้อมูลแล้ว กรุณาลองใหม่อีกครั้ง</p>
           <Button 
             onClick={() => window.location.reload()}
             className="bg-indigo-600 hover:bg-indigo-700 h-11 px-8 rounded-xl shadow-lg shadow-indigo-500/20"

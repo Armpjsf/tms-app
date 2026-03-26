@@ -33,8 +33,8 @@ export default async function DriverJobsPage(props: Props) {
         {/* Active Title Section */}
         <div className="flex justify-between items-end px-1">
             <div className="space-y-1">
-                <h2 className="text-4xl font-black text-white tracking-tighter uppercase font-display">งานของฉัน</h2>
-                <p className="text-slate-500 text-base font-bold font-black uppercase tracking-[0.3em]">งานที่ได้รับมอบหมายทั้งหมด</p>
+                <h2 className="text-4xl font-black text-foreground tracking-tighter uppercase font-display">งานของฉัน</h2>
+                <p className="text-muted-foreground text-base font-bold font-black uppercase tracking-[0.3em]">งานที่ได้รับมอบหมายทั้งหมด</p>
             </div>
             <div className="text-right">
                 <div className="text-2xl font-black text-primary leading-none">{jobs.length}</div>
@@ -44,22 +44,22 @@ export default async function DriverJobsPage(props: Props) {
 
         {/* Search Bar - Aesthetic Placeholder */}
         <div className="relative group">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
             <input 
                 type="text" 
                 placeholder="ค้นหาเลขงาน, ชื่อลูกค้า..." 
-                className="w-full h-14 pl-12 pr-6 rounded-2xl bg-white/5 border border-white/10 text-white placeholder:text-slate-700 outline-none focus:ring-1 focus:ring-primary/40 transition-all font-bold text-xl"
+                className="w-full h-14 pl-12 pr-6 rounded-2xl bg-muted/50 border border-border/10 text-foreground placeholder:text-muted-foreground outline-none focus:ring-1 focus:ring-primary/40 transition-all font-bold text-xl"
             />
         </div>
 
         {/* Job Grid / List */}
         <div className="space-y-6">
             {jobs.length === 0 ? (
-                <div className="text-center py-24 glass-panel rounded-[3rem] border-dashed border-white/10">
-                    <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <Truck className="text-slate-700" size={32} />
+                <div className="text-center py-24 glass-panel rounded-[3rem] border-dashed border-border/10">
+                    <div className="w-16 h-16 bg-muted/50 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Truck className="text-muted-foreground" size={32} />
                     </div>
-                    <p className="text-slate-500 font-bold uppercase tracking-widest text-base font-bold">ยังไม่มีงานในรายการ</p>
+                    <p className="text-muted-foreground font-bold uppercase tracking-widest text-base font-bold">ยังไม่มีงานในรายการ</p>
                 </div>
             ) : jobs.map((job) => (
             <Link href={`/mobile/jobs/${job.Job_ID}`} key={job.Job_ID}>
@@ -70,16 +70,16 @@ export default async function DriverJobsPage(props: Props) {
                     
                     <div className="flex justify-between items-start mb-6">
                         <div className="flex items-center gap-4">
-                            <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center shadow-lg group-hover:bg-primary/20 transition-colors">
+                            <div className="w-14 h-14 rounded-2xl bg-muted/50 border border-border/10 flex items-center justify-center shadow-lg group-hover:bg-primary/20 transition-colors">
                                 <span className="text-primary font-black text-lg font-bold">#{job.Job_ID.slice(-4)}</span>
                             </div>
                             <div className="space-y-1">
-                                <h3 className="text-white font-black text-lg tracking-tighter line-clamp-1">{job.Customer_Name}</h3>
+                                <h3 className="text-foreground font-black text-lg tracking-tighter line-clamp-1">{job.Customer_Name}</h3>
                                 <div className={cn(
                                     "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-base font-bold font-black uppercase tracking-widest border",
                                     job.Job_Status === 'Completed' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 
                                     job.Job_Status === 'In Progress' ? 'bg-primary/10 text-primary border-primary/20' :
-                                    'bg-white/5 text-slate-500 border-white/5'
+                                    'bg-muted/50 text-muted-foreground border-border/5'
                                 )}>
                                     <div className={cn("w-1.5 h-1.5 rounded-full", 
                                         job.Job_Status === 'Completed' ? 'bg-emerald-500' : 
@@ -92,21 +92,21 @@ export default async function DriverJobsPage(props: Props) {
                                 </div>
                             </div>
                         </div>
-                        <ChevronRight className="text-slate-700 group-hover:text-primary transition-colors" size={20} />
+                        <ChevronRight className="text-muted-foreground group-hover:text-primary transition-colors" size={20} />
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4 border-t border-white/5 pt-6">
+                    <div className="grid grid-cols-2 gap-4 border-t border-border/5 pt-6">
                         <div className="space-y-1">
-                            <p className="text-base font-bold font-black text-slate-500 uppercase tracking-widest flex items-center gap-1.5">
+                            <p className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest flex items-center gap-1.5">
                                 <MapPin size={10} className="text-accent" /> จุดส่งของ
                             </p>
-                            <p className="text-base font-bold text-white font-bold truncate">{job.Route_Name || job.Dest_Location}</p>
+                            <p className="text-foreground font-bold truncate">{job.Route_Name || job.Dest_Location}</p>
                         </div>
                         <div className="space-y-1 text-right">
-                            <p className="text-base font-bold font-black text-slate-500 uppercase tracking-widest flex items-center justify-end gap-1.5">
+                            <p className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest flex items-center justify-end gap-1.5">
                                 กำหนดส่ง <Clock size={10} className="text-primary" />
                             </p>
-                            <p className="text-base font-bold text-white font-bold">
+                            <p className="text-foreground font-bold">
                                 {job.Plan_Date ? new Date(job.Plan_Date).toLocaleDateString('th-TH', { day: '2-digit', month: 'short' }) : "-"}
                             </p>
                         </div>

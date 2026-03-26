@@ -48,12 +48,12 @@ export function FinancialSummaryCards({ data }: { data: ExecutiveKPIs }) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
       {/* Revenue COMMAND */}
-      <PremiumCard className="bg-[#0a0518] border-2 border-white/5 shadow-3xl relative overflow-hidden group p-0 rounded-br-[4rem] rounded-tl-[2rem]">
+      <PremiumCard className="bg-background border-2 border-border/5 shadow-3xl relative overflow-hidden group p-0 rounded-br-[4rem] rounded-tl-[2rem]">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent pointer-events-none" />
-        <div className="p-10 border-b border-white/5 flex items-center justify-between">
+        <div className="p-10 border-b border-border/5 flex items-center justify-between">
            <div className="space-y-1">
               <h3 className="text-base font-bold font-black text-primary uppercase tracking-[0.4em] italic">{t('dashboard.gross_yield')}</h3>
-              <p className="text-base font-bold text-slate-500 font-black uppercase tracking-widest italic">{t('dashboard.temporal_revenue')}</p>
+              <p className="text-base font-bold text-muted-foreground font-black uppercase tracking-widest italic">{t('dashboard.temporal_revenue')}</p>
            </div>
            <div className="p-3 bg-primary/20 rounded-2xl text-primary shadow-[0_0_20px_rgba(255,30,133,0.3)] border border-primary/30">
               <DollarSign size={20} strokeWidth={2.5} />
@@ -61,19 +61,19 @@ export function FinancialSummaryCards({ data }: { data: ExecutiveKPIs }) {
         </div>
         <div className="p-10">
           <div className="flex flex-col gap-4">
-            <div className="text-5xl font-black text-white tracking-widest italic">{formatCurrency(revenue.current)}</div>
+            <div className="text-5xl font-black text-foreground tracking-widest italic">{formatCurrency(revenue.current)}</div>
             <div className="flex items-center justify-between mt-2">
                 <GrowthIndicator value={revenue.growth} />
-                <span className="text-base font-bold font-black text-slate-600 uppercase tracking-[0.4em] italic border-l-2 border-white/5 pl-4">{t('common.sync_active')}</span>
+                <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-[0.4em] italic border-l-2 border-border/5 pl-4">{t('common.sync_active')}</span>
             </div>
           </div>
           {revenue.target && (
             <div className="mt-10 space-y-3">
-              <div className="flex justify-between text-base font-bold uppercase tracking-[0.4em] text-slate-500 font-black italic">
+              <div className="flex justify-between text-base font-bold uppercase tracking-[0.4em] text-muted-foreground font-black italic">
                 <span>{t('dashboard.mission_threshold')}</span>
                 <span className="text-primary">{revenue.attainment?.toFixed(0)}%</span>
               </div>
-              <div className="w-full bg-white/5 rounded-full h-2 overflow-hidden border border-white/10 p-0.5">
+              <div className="w-full bg-muted/50 rounded-full h-2 overflow-hidden border border-border/10 p-0.5">
                 <div 
                     className="bg-gradient-to-r from-primary to-purple-600 h-full rounded-full shadow-[0_0_15px_rgba(255,30,133,0.5)]" 
                     style={{ width: `${Math.min(revenue.attainment || 0, 100)}%` }} 
@@ -85,12 +85,12 @@ export function FinancialSummaryCards({ data }: { data: ExecutiveKPIs }) {
       </PremiumCard>
 
       {/* Net Profit COMMAND */}
-      <PremiumCard className="bg-[#0a0518] border-2 border-white/5 shadow-3xl relative overflow-hidden group p-0 rounded-br-[4rem] rounded-tl-[2rem]">
+      <PremiumCard className="bg-background border-2 border-border/5 shadow-3xl relative overflow-hidden group p-0 rounded-br-[4rem] rounded-tl-[2rem]">
         <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-transparent pointer-events-none" />
-        <div className="p-10 border-b border-white/5 flex items-center justify-between">
+        <div className="p-10 border-b border-border/5 flex items-center justify-between">
            <div className="space-y-1">
               <h3 className="text-base font-bold font-black text-purple-400 uppercase tracking-[0.4em] italic">{t('dashboard.net_protocol')}</h3>
-              <p className="text-base font-bold text-slate-500 font-black uppercase tracking-widest italic">{t('dashboard.profit_registry')}</p>
+              <p className="text-base font-bold text-muted-foreground font-black uppercase tracking-widest italic">{t('dashboard.profit_registry')}</p>
            </div>
            <div className="p-3 bg-purple-500/20 rounded-2xl text-purple-400 shadow-[0_0_20px_rgba(168,85,247,0.3)] border border-purple-500/30">
               <TrendingUp size={20} strokeWidth={2.5} />
@@ -98,12 +98,12 @@ export function FinancialSummaryCards({ data }: { data: ExecutiveKPIs }) {
         </div>
         <div className="p-10">
           <div className="flex flex-col gap-4">
-            <div className={cn("text-5xl font-black tracking-widest italic", profit.current >= 0 ? 'text-white' : 'text-rose-500')}>
+            <div className={cn("text-5xl font-black tracking-widest italic", profit.current >= 0 ? 'text-foreground' : 'text-rose-500')}>
               {formatCurrency(profit.current)}
             </div>
             <div className="flex items-center justify-between mt-2">
                 <GrowthIndicator value={profit.growth} />
-                <p className="text-base font-bold text-slate-600 font-black uppercase tracking-[0.2em] italic border-l-2 border-white/5 pl-4">
+                <p className="text-base font-bold text-muted-foreground font-black uppercase tracking-[0.2em] italic border-l-2 border-border/5 pl-4">
                    {t('common.v_node_label')} {formatCurrency(profit.previous)}
                 </p>
             </div>
@@ -112,12 +112,12 @@ export function FinancialSummaryCards({ data }: { data: ExecutiveKPIs }) {
       </PremiumCard>
 
       {/* Profit Margin COMMAND */}
-      <PremiumCard className="bg-[#0a0518] border-2 border-white/5 shadow-3xl relative overflow-hidden group p-0 rounded-br-[4rem] rounded-tl-[2rem]">
+      <PremiumCard className="bg-background border-2 border-border/5 shadow-3xl relative overflow-hidden group p-0 rounded-br-[4rem] rounded-tl-[2rem]">
         <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-transparent pointer-events-none" />
-        <div className="p-10 border-b border-white/5 flex items-center justify-between">
+        <div className="p-10 border-b border-border/5 flex items-center justify-between">
            <div className="space-y-1">
               <h3 className="text-base font-bold font-black text-blue-400 uppercase tracking-[0.4em] italic">{t('dashboard.sector_efficiency')}</h3>
-              <p className="text-base font-bold text-slate-500 font-black uppercase tracking-widest italic">{t('dashboard.asset_utilization')}</p>
+              <p className="text-base font-bold text-muted-foreground font-black uppercase tracking-widest italic">{t('dashboard.asset_utilization')}</p>
            </div>
            <div className="p-3 bg-blue-500/20 rounded-2xl text-blue-400 shadow-[0_0_20px_rgba(59,130,246,0.3)] border border-blue-500/30">
               <Percent size={20} strokeWidth={2.5} />
@@ -125,12 +125,12 @@ export function FinancialSummaryCards({ data }: { data: ExecutiveKPIs }) {
         </div>
         <div className="p-10">
           <div className="flex flex-col gap-4">
-            <div className="text-5xl font-black text-white tracking-widest italic">{(margin.current || 0).toFixed(1)}%</div>
+            <div className="text-5xl font-black text-foreground tracking-widest italic">{(margin.current || 0).toFixed(1)}%</div>
             <div className="flex items-center justify-between mt-2">
                 <GrowthIndicator value={margin.growth} isPoints />
-                <div className="flex items-center gap-3 border-l-2 border-white/5 pl-4">
+                <div className="flex items-center gap-3 border-l-2 border-border/5 pl-4">
                     <Target size={12} className="text-blue-400" />
-                    <span className="text-base font-bold text-slate-600 font-black uppercase tracking-widest italic">{t('common.target_label')} {margin.target}%</span>
+                    <span className="text-base font-bold text-muted-foreground font-black uppercase tracking-widest italic">{t('common.target_label')} {margin.target}%</span>
                 </div>
             </div>
           </div>
@@ -145,7 +145,7 @@ export function FinancialSummaryCards({ data }: { data: ExecutiveKPIs }) {
         <div className="flex items-center justify-between mb-10 relative z-10">
            <div className="space-y-1">
               <h3 className="text-[12px] font-black text-emerald-600 tracking-[0.4em] uppercase italic">{t('dashboard.network_integrity')}</h3>
-              <p className="text-base font-bold text-slate-400 font-black uppercase tracking-widest italic">{t('dashboard.autonomous_audit')}</p>
+              <p className="text-base font-bold text-muted-foreground font-black uppercase tracking-widest italic">{t('dashboard.autonomous_audit')}</p>
            </div>
            <div className="w-5 h-5 rounded-full bg-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.5)] border-4 border-white animate-pulse" />
         </div>
@@ -154,7 +154,7 @@ export function FinancialSummaryCards({ data }: { data: ExecutiveKPIs }) {
             <div className="text-5xl font-black text-emerald-600 tracking-tighter italic flex items-center gap-4 group-hover:scale-105 transition-transform origin-left">
                 {t('dashboard.health_nominal')} <ShieldCheck className="text-emerald-500 shadow-sm" size={40} />
             </div>
-            <p className="text-base font-bold text-slate-600 font-black uppercase tracking-widest mt-4 italic bg-emerald-500/5 px-4 py-2 rounded-2xl border-2 border-emerald-500/10">{t('dashboard.performance_vector')}: {t('dashboard.optimal_sync')}</p>
+            <p className="text-base font-bold text-muted-foreground font-black uppercase tracking-widest mt-4 italic bg-emerald-500/5 px-4 py-2 rounded-2xl border-2 border-emerald-500/10">{t('dashboard.performance_vector')}: {t('dashboard.optimal_sync')}</p>
         </div>
 
         <div className="flex gap-2 mt-10 relative z-10">

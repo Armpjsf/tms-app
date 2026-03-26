@@ -82,7 +82,7 @@ export function ProfileContent({ session, score, unreadChatCount = 0 }: ProfileC
       <Card className="bg-gradient-to-br from-blue-600 to-indigo-700 border-0 mb-4">
         <CardContent className="pt-6 pb-6">
           <div className="flex items-center gap-4">
-            <Avatar className="h-16 w-16 border-2 border-white/20">
+            <Avatar className="h-16 w-16 border-2 border-border/20">
               <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${session.driverName}`} />
               <AvatarFallback className="bg-blue-800 text-white text-xl">
                 {session?.driverName?.charAt(0)}
@@ -96,15 +96,15 @@ export function ProfileContent({ session, score, unreadChatCount = 0 }: ProfileC
         </CardContent>
       </Card>
 
-      <Card className="glass-panel border-white/5 mb-4 overflow-hidden">
+      <Card className="glass-panel border-border/5 mb-4 overflow-hidden">
         <div className="absolute top-0 right-0 p-2 opacity-10">
-            <ClipboardCheck size={100} className="text-white transform rotate-12" />
+            <ClipboardCheck size={100} className="text-foreground transform rotate-12" />
         </div>
         <CardContent className="pt-6 relative z-10">
             <div className="flex justify-between items-start mb-6">
                 <div>
-                    <h2 className="text-lg font-bold text-white mb-1">ผลการทำงาน</h2>
-                    <p className="text-slate-500 text-lg font-bold">สรุปในรอบ 30 วันที่ผ่านมา</p>
+                    <h2 className="text-lg font-bold text-foreground mb-1">ผลการทำงาน</h2>
+                    <p className="text-muted-foreground text-lg font-bold">สรุปในรอบ 30 วันที่ผ่านมา</p>
                 </div>
                 <div className={`w-16 h-16 rounded-full flex flex-col items-center justify-center border-4 ${
                     (score?.totalScore || 0) >= 80 ? 'border-emerald-500 text-emerald-400 bg-emerald-500/10' :
@@ -115,43 +115,43 @@ export function ProfileContent({ session, score, unreadChatCount = 0 }: ProfileC
                 </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-2 text-center divide-x divide-white/10">
+            <div className="grid grid-cols-3 gap-2 text-center divide-x divide-border/10">
                 <div>
-                   <span className="text-base font-bold text-slate-400 uppercase tracking-wider">ส่งตรงเวลา</span>
+                   <span className="text-base font-bold text-muted-foreground uppercase tracking-wider">ส่งตรงเวลา</span>
                    <p className={`text-lg font-bold mt-1 ${
-                       (score?.onTimeScore || 0) >= 90 ? 'text-emerald-400' : 'text-white'
+                       (score?.onTimeScore || 0) >= 90 ? 'text-emerald-400' : 'text-foreground'
                    }`}>{score?.onTimeScore || 0}%</p>
                 </div>
                 <div>
-                   <span className="text-base font-bold text-slate-400 uppercase tracking-wider">ขับขี่ปลอดภัย</span>
-                   <p className="text-lg font-bold mt-1 text-white">{score?.safetyScore || 0}%</p>
+                   <span className="text-base font-bold text-muted-foreground uppercase tracking-wider">ขับขี่ปลอดภัย</span>
+                   <p className="text-foreground">{score?.safetyScore || 0}%</p>
                 </div>
                 <div>
-                   <span className="text-base font-bold text-slate-400 uppercase tracking-wider">อัตราการรับงาน</span>
+                   <span className="text-base font-bold text-muted-foreground uppercase tracking-wider">อัตราการรับงาน</span>
                    <p className={`text-lg font-bold mt-1 ${
-                       (score?.acceptanceScore || 0) >= 90 ? 'text-emerald-400' : 'text-white'
+                       (score?.acceptanceScore || 0) >= 90 ? 'text-emerald-400' : 'text-foreground'
                    }`}>{score?.acceptanceScore || 0}%</p>
                 </div>
             </div>
         </CardContent>
       </Card>
 
-      <Card className="glass-panel border-white/5 mb-4">
+      <Card className="glass-panel border-border/5 mb-4">
         <CardContent className="py-2">
           {menuItems.map((item, index) => {
             const Content = (
-              <div className="flex items-center justify-between py-4 border-b border-white/5 last:border-0 active:bg-white/5 transition-colors w-full text-left">
-                <div className="flex items-center gap-3 text-white">
-                  <item.icon className={`w-5 h-5 ${item.color || 'text-slate-400'}`} />
+              <div className="flex items-center justify-between py-4 border-b border-border/5 last:border-0 active:bg-muted/50 transition-colors w-full text-left">
+                <div className="flex items-center gap-3 text-foreground">
+                  <item.icon className={`w-5 h-5 ${item.color || 'text-muted-foreground'}`} />
                   <span className="font-medium">{item.label}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   {item.badge && item.badge > 0 && (
-                    <span className="bg-primary text-white text-base font-bold font-black px-2 py-0.5 rounded-full min-w-[20px] text-center shadow-lg shadow-primary/20">
+                    <span className="bg-primary text-foreground font-bold font-black px-2 py-0.5 rounded-full min-w-[20px] text-center shadow-lg shadow-primary/20">
                       {item.badge}
                     </span>
                   )}
-                  <ChevronRight className="w-4 h-4 text-slate-600" />
+                  <ChevronRight className="w-4 h-4 text-muted-foreground" />
                 </div>
               </div>
             )

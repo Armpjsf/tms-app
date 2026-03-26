@@ -31,7 +31,7 @@ import { DriverLocation } from "@/components/maps/leaflet-map"
 
 const LeafletMap = dynamic(() => import('@/components/maps/leaflet-map'), { 
     ssr: false,
-    loading: () => <div className="h-[200px] w-full bg-white animate-pulse rounded-xl" />
+    loading: () => <div className="h-[200px] w-full bg-muted animate-pulse rounded-xl" />
 })
 
 interface GPSPoint {
@@ -105,7 +105,7 @@ export function JobSummaryDialog({ open, onOpenChange, job }: JobSummaryDialogPr
           </div>
 
           {/* Web Header (No Print) */}
-          <div className="sticky top-0 z-10 bg-white/90 backdrop-blur-md p-6 border-b border-gray-200 flex justify-between items-start no-print">
+          <div className="sticky top-0 z-10 bg-background/90 backdrop-blur-md p-6 border-b border-border/10 flex justify-between items-start no-print">
             <div>
               <div className="flex items-center gap-3 mb-1">
             <div className="bg-emerald-500/10 p-2 rounded-lg">
@@ -117,7 +117,7 @@ export function JobSummaryDialog({ open, onOpenChange, job }: JobSummaryDialogPr
                     <span className="h-1 w-1 rounded-full bg-indigo-400/50"></span>
                   </h2>
                   <div className="flex items-center gap-3">
-                    <h1 className="text-2xl font-black text-white tracking-tight">
+                    <h1 className="text-2xl font-black text-foreground tracking-tight">
                       {job.Job_ID}
                     </h1>
                     <span className={cn(
@@ -133,7 +133,7 @@ export function JobSummaryDialog({ open, onOpenChange, job }: JobSummaryDialogPr
               </div>
             </div>
             <div className="text-right">
-              <p className="text-lg font-bold text-gray-500 font-medium">{new Date().toLocaleDateString('th-TH')}</p>
+              <p className="text-lg font-bold text-muted-foreground font-medium">{new Date().toLocaleDateString('th-TH')}</p>
             </div>
           </div>
 
@@ -142,8 +142,8 @@ export function JobSummaryDialog({ open, onOpenChange, job }: JobSummaryDialogPr
             {/* Timeline + Info Grid — side by side */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Left: Vertical Order Timeline (Dribbble-inspired) */}
-              <div className="lg:col-span-1 bg-white/5 rounded-2xl border border-white/10 p-5 no-print shadow-sm">
-                <div className="flex items-center gap-2 mb-4 text-white">
+              <div className="lg:col-span-1 bg-muted/50 rounded-2xl border border-border/10 p-5 no-print shadow-sm">
+                <div className="flex items-center gap-2 mb-4 text-foreground">
                   <div className="w-1.5 h-6 bg-indigo-500 rounded-full" />
                   <h3 className="font-black text-xl uppercase tracking-wider">Order Timeline</h3>
                 </div>
@@ -158,48 +158,48 @@ export function JobSummaryDialog({ open, onOpenChange, job }: JobSummaryDialogPr
               <div className="lg:col-span-2">
 
                 <section className="space-y-4">
-                    <div className="flex items-center gap-2 text-white font-black border-l-4 border-indigo-500 pl-3 uppercase tracking-wider text-xl">
+                    <div className="flex items-center gap-2 text-foreground font-black border-l-4 border-indigo-500 pl-3 uppercase tracking-wider text-xl">
                         <User size={18} className="text-emerald-400" />
                         <span>{t('reports.general_info')}</span>
                     </div>
-                    <div className="bg-white/5 rounded-xl p-4 border border-white/10 grid grid-cols-2 gap-y-4 shadow-sm">
+                    <div className="bg-muted/50 rounded-xl p-4 border border-border/10 grid grid-cols-2 gap-y-4 shadow-sm">
                         <div>
-                            <p className="text-base font-bold uppercase text-slate-400 font-bold mb-1">{t('jobs.dialog.customer')}</p>
-                            <p className="text-xl font-bold text-slate-100">{job.Customer_Name || '-'}</p>
+                            <p className="text-base font-bold uppercase text-muted-foreground font-bold mb-1">{t('jobs.dialog.customer')}</p>
+                            <p className="text-xl font-bold text-muted-foreground">{job.Customer_Name || '-'}</p>
                         </div>
                         <div>
-                            <p className="text-base font-bold uppercase text-slate-400 font-bold mb-1">{t('jobs.dialog.route')}</p>
-                            <p className="text-xl font-bold text-slate-100">{job.Route_Name || '-'}</p>
+                            <p className="text-base font-bold uppercase text-muted-foreground font-bold mb-1">{t('jobs.dialog.route')}</p>
+                            <p className="text-xl font-bold text-muted-foreground">{job.Route_Name || '-'}</p>
                         </div>
                         <div>
-                            <p className="text-base font-bold uppercase text-slate-400 font-bold mb-1">{t('jobs.dialog.vehicle')}</p>
-                            <p className="text-xl font-bold text-slate-100">{job.Vehicle_Plate || '-'}</p>
+                            <p className="text-base font-bold uppercase text-muted-foreground font-bold mb-1">{t('jobs.dialog.vehicle')}</p>
+                            <p className="text-xl font-bold text-muted-foreground">{job.Vehicle_Plate || '-'}</p>
                         </div>
                         <div>
-                            <p className="text-base font-bold uppercase text-slate-400 font-bold mb-1">{t('jobs.dialog.driver')}</p>
-                            <p className="text-xl font-bold text-slate-100">{job.Driver_Name || job.Driver_ID || '-'}</p>
+                            <p className="text-base font-bold uppercase text-muted-foreground font-bold mb-1">{t('jobs.dialog.driver')}</p>
+                            <p className="text-xl font-bold text-muted-foreground">{job.Driver_Name || job.Driver_ID || '-'}</p>
                         </div>
                     </div>
                 </section>
 
                 <section className="space-y-4">
-                    <div className="flex items-center gap-2 text-white font-black border-l-4 border-emerald-500 pl-3 uppercase tracking-wider text-xl">
+                    <div className="flex items-center gap-2 text-foreground font-black border-l-4 border-emerald-500 pl-3 uppercase tracking-wider text-xl">
                         <MapPin size={18} className="text-emerald-400" />
                         <span>{t('reports.location_time')}</span>
                     </div>
-                    <div className="bg-white/5 rounded-xl p-4 border border-white/10 space-y-4 shadow-sm">
+                    <div className="bg-muted/50 rounded-xl p-4 border border-border/10 space-y-4 shadow-sm">
                         <div className="flex gap-3">
                             <div className="mt-1"><div className="w-2 h-2 rounded-full bg-indigo-500 ring-4 ring-indigo-500/20" /></div>
                             <div>
-                                <p className="text-base font-bold uppercase text-slate-400 font-bold">{t('jobs.dialog.origin')}</p>
-                                <p className="text-lg font-bold text-slate-200 font-medium">{job.Origin_Location || job.Location_Origin_Name || '-'}</p>
+                                <p className="text-base font-bold uppercase text-muted-foreground font-bold">{t('jobs.dialog.origin')}</p>
+                                <p className="text-lg font-bold text-muted-foreground font-medium">{job.Origin_Location || job.Location_Origin_Name || '-'}</p>
                             </div>
                         </div>
                         <div className="flex gap-3">
                             <div className="mt-1"><MapPin size={14} className="text-emerald-500" /></div>
                             <div>
-                                <p className="text-base font-bold uppercase text-slate-400 font-bold">{t('jobs.dialog.destination')}</p>
-                                <p className="text-lg font-bold text-slate-100 font-bold">{job.Dest_Location || job.Location_Destination_Name || '-'}</p>
+                                <p className="text-base font-bold uppercase text-muted-foreground font-bold">{t('jobs.dialog.destination')}</p>
+                                <p className="text-lg font-bold text-muted-foreground font-bold">{job.Dest_Location || job.Location_Destination_Name || '-'}</p>
                             </div>
                         </div>
                     </div>
@@ -209,11 +209,11 @@ export function JobSummaryDialog({ open, onOpenChange, job }: JobSummaryDialogPr
 
             {/* GPS Map Section */}
             <section className="space-y-4 no-print">
-              <h3 className="text-xl font-black text-white flex items-center gap-2 uppercase tracking-wider">
+              <h3 className="text-xl font-black text-foreground flex items-center gap-2 uppercase tracking-wider">
                 <MapPin size={16} className="text-emerald-400" />
                 {t('reports.latest_location')}
               </h3>
-              <div className="h-[250px] rounded-2xl overflow-hidden border border-white/10 bg-white shadow-inner relative">
+              <div className="h-[250px] rounded-2xl overflow-hidden border border-border/10 bg-muted shadow-inner relative">
                 {(job.Tracking_LAT && job.Tracking_LNG) || gpsPoints.length > 0 || latestLocation ? (
                   <LeafletMap 
                     routeHistory={gpsPoints as [number, number][]}
@@ -221,7 +221,7 @@ export function JobSummaryDialog({ open, onOpenChange, job }: JobSummaryDialogPr
                     center={latestLocation ? [latestLocation.lat, latestLocation.lng] : undefined}
                   />
                 ) : (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-400 bg-white/80 backdrop-blur-sm">
+                  <div className="absolute inset-0 flex flex-col items-center justify-center text-muted-foreground bg-background/80 backdrop-blur-sm">
                     <MapPin size={32} className="mb-2 opacity-20" />
                     <p className="text-lg font-bold font-medium">{t('reports.no_gps')}</p>
                   </div>
@@ -233,16 +233,16 @@ export function JobSummaryDialog({ open, onOpenChange, job }: JobSummaryDialogPr
               {/* Pickup Info */}
               <section className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-xl font-black text-white flex items-center gap-2 border-l-4 border-indigo-500 pl-3 uppercase tracking-wider">
+                  <h3 className="text-xl font-black text-foreground flex items-center gap-2 border-l-4 border-indigo-500 pl-3 uppercase tracking-wider">
                     <Package size={16} className="text-emerald-400" />
                     {t('reports.pickup_info')}
                   </h3>
-                  <span className="text-base font-bold text-gray-400 font-bold uppercase no-print">{t('reports.photo_count', { count: pickupPhotos.length })}</span>
+                  <span className="text-base font-bold text-muted-foreground font-bold uppercase no-print">{t('reports.photo_count', { count: pickupPhotos.length })}</span>
                 </div>
                 
                 <div className="grid grid-cols-2 gap-3">
                   {pickupPhotos.map((url: string, i: number) => (
-                    <div key={i} className="relative aspect-[4/3] rounded-xl overflow-hidden border border-gray-200 bg-white group cursor-pointer" onClick={() => window.open(url, '_blank')}>
+                    <div key={i} className="relative aspect-[4/3] rounded-xl overflow-hidden border border-border/10 bg-muted group cursor-pointer" onClick={() => window.open(url, '_blank')}>
                       <Image 
                         src={url} 
                         alt={`Pickup proof ${i}`} 
@@ -256,9 +256,9 @@ export function JobSummaryDialog({ open, onOpenChange, job }: JobSummaryDialogPr
                   ))}
                 </div>
 
-                <div className="rounded-xl border border-white/10 bg-white/5 p-4 shadow-sm">
-                  <p className="text-base font-bold font-black text-slate-400 uppercase tracking-widest mb-3">{t('reports.pickup_signature')}</p>
-                  <div className="h-24 flex items-center justify-center border border-dashed border-white/10 rounded-lg relative overflow-hidden bg-white/5">
+                <div className="rounded-xl border border-border/10 bg-muted/50 p-4 shadow-sm">
+                  <p className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest mb-3">{t('reports.pickup_signature')}</p>
+                  <div className="h-24 flex items-center justify-center border border-dashed border-border/10 rounded-lg relative overflow-hidden bg-muted/50">
                     {job.Signature_Pickup_Url || job.Pickup_Signature_Url ? (
                       <Image 
                         src={job.Signature_Pickup_Url || job.Pickup_Signature_Url} 
@@ -267,7 +267,7 @@ export function JobSummaryDialog({ open, onOpenChange, job }: JobSummaryDialogPr
                         className="object-contain p-2"
                       />
                     ) : (
-                      <span className="text-gray-500 text-lg font-bold italic">{t('reports.no_signature')}</span>
+                      <span className="text-muted-foreground text-lg font-bold italic">{t('reports.no_signature')}</span>
                     )}
                   </div>
                 </div>
@@ -276,11 +276,11 @@ export function JobSummaryDialog({ open, onOpenChange, job }: JobSummaryDialogPr
               {/* POD Info */}
               <section className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-xl font-black text-white flex items-center gap-2 border-l-4 border-emerald-500 pl-3 uppercase tracking-wider">
+                  <h3 className="text-xl font-black text-foreground flex items-center gap-2 border-l-4 border-emerald-500 pl-3 uppercase tracking-wider">
                     <CheckCircle2 size={16} className="text-emerald-400" />
                     {t('reports.pod_info')}
                   </h3>
-                  <span className="text-base font-bold text-gray-400 font-bold uppercase no-print">{t('reports.photo_count', { count: podPhotos.length })}</span>
+                  <span className="text-base font-bold text-muted-foreground font-bold uppercase no-print">{t('reports.photo_count', { count: podPhotos.length })}</span>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
@@ -288,7 +288,7 @@ export function JobSummaryDialog({ open, onOpenChange, job }: JobSummaryDialogPr
                     const isReport = url.toUpperCase().includes('REPORT');
                     return (
                       <div key={i} className={cn(
-                        "relative aspect-[4/3] rounded-xl overflow-hidden border border-gray-200 bg-white group cursor-pointer",
+                        "relative aspect-[4/3] rounded-xl overflow-hidden border border-border/10 bg-muted group cursor-pointer",
                         isReport && "col-span-2 aspect-video ring-2 ring-indigo-500/30"
                       )} onClick={() => window.open(url, '_blank')}>
                         <Image 
@@ -298,7 +298,7 @@ export function JobSummaryDialog({ open, onOpenChange, job }: JobSummaryDialogPr
                           className="object-cover transition-transform duration-500 hover:scale-110"
                         />
                         {isReport && (
-                          <div className="absolute top-3 left-3 bg-indigo-500 text-white text-base font-bold font-black px-2 py-0.5 rounded shadow-lg uppercase tracking-wider animate-pulse flex items-center gap-1">
+                          <div className="absolute top-3 left-3 bg-indigo-500 text-foreground font-bold font-black px-2 py-0.5 rounded shadow-lg uppercase tracking-wider animate-pulse flex items-center gap-1">
                             <FileText size={10} />
                             {t('reports.digital_report')}
                           </div>
@@ -311,9 +311,9 @@ export function JobSummaryDialog({ open, onOpenChange, job }: JobSummaryDialogPr
                   })}
                 </div>
 
-                <div className="rounded-xl border border-white/10 bg-white/5 p-4 shadow-sm">
-                   <p className="text-base font-bold font-black text-slate-400 uppercase tracking-widest mb-3">{t('reports.dropoff_signature')}</p>
-                  <div className="h-24 flex items-center justify-center border border-dashed border-white/10 rounded-lg relative overflow-hidden bg-white/5">
+                <div className="rounded-xl border border-border/10 bg-muted/50 p-4 shadow-sm">
+                   <p className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest mb-3">{t('reports.dropoff_signature')}</p>
+                  <div className="h-24 flex items-center justify-center border border-dashed border-border/10 rounded-lg relative overflow-hidden bg-muted/50">
                     {job.Signature_Proof_Url || job.Signature_Url ? (
                       <Image 
                         src={job.Signature_Proof_Url || job.Signature_Url} 
@@ -322,7 +322,7 @@ export function JobSummaryDialog({ open, onOpenChange, job }: JobSummaryDialogPr
                         className="object-contain p-2"
                       />
                     ) : (
-                      <span className="text-gray-500 text-lg font-bold italic">{t('reports.no_signature')}</span>
+                      <span className="text-muted-foreground text-lg font-bold italic">{t('reports.no_signature')}</span>
                     )}
                   </div>
                 </div>
@@ -332,12 +332,12 @@ export function JobSummaryDialog({ open, onOpenChange, job }: JobSummaryDialogPr
         </div>
 
         {/* Action Footer */}
-        <div className="sticky bottom-0 bg-white/90 backdrop-blur-md p-4 border-t border-gray-200 flex justify-between items-center gap-3 no-print">
-          <Button variant="ghost" onClick={() => onOpenChange(false)} className="text-gray-500 hover:text-white">
+        <div className="sticky bottom-0 bg-background/90 backdrop-blur-md p-4 border-t border-border/10 flex justify-between items-center gap-3 no-print">
+          <Button variant="ghost" onClick={() => onOpenChange(false)} className="text-muted-foreground hover:text-foreground">
             {t('reports.close_btn')}
           </Button>
           <div className="flex gap-2">
-            <Button variant="outline" className="gap-2 border-gray-200 text-gray-700" onClick={() => window.print()}>
+            <Button variant="outline" className="gap-2 border-border/10 text-foreground" onClick={() => window.print()}>
               <FileText size={16} />
               {t('reports.print_btn')}
             </Button>

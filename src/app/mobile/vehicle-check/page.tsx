@@ -31,11 +31,11 @@ async function VehicleCheckContent() {
 export default function MobileVehicleCheckPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-[#050110] pt-20 px-4">
+      <div className="min-h-screen bg-background pt-20 px-4">
         <MobileHeader title="เช็คสภาพรถประจำวัน" showBack />
         <div className="flex flex-col items-center justify-center h-[60vh] space-y-4">
           <div className="w-12 h-12 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
-          <p className="text-slate-400 font-bold">กำลังโหลดข้อมูล...</p>
+          <p className="text-muted-foreground font-bold">กำลังโหลดข้อมูล...</p>
         </div>
       </div>
     }>

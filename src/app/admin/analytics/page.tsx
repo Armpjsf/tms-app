@@ -15,7 +15,7 @@ export default async function AnalyticsPage(props: { searchParams: Promise<{ [ke
   const maintenance = await getMaintenanceSchedule()
 
   return (
-    <div className="space-y-12 pb-20 p-10 bg-[#050110]">
+    <div className="space-y-12 pb-20 p-10 bg-background">
         <AnalyticsClient 
             overdueCount={maintenance.overdue.length} 
             isSuperAdmin={superAdmin} 
@@ -38,12 +38,12 @@ function AnalyticsContentSkeleton() {
     <div className="space-y-12 animate-pulse p-10">
       <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
         {[1, 2, 3, 4].map(i => (
-          <div key={i} className="h-56 bg-[#0a0518] rounded-br-[4rem] rounded-tl-[2rem] border border-white/5 shadow-2xl" />
+          <div key={i} className="h-56 bg-background rounded-br-[4rem] rounded-tl-[2rem] border border-border/5 shadow-2xl" />
         ))}
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-        <div className="lg:col-span-2 h-[600px] bg-[#0a0518] rounded-br-[6rem] rounded-tl-[3rem] shadow-3xl border border-white/5" />
-        <div className="h-[600px] bg-[#0a0518] rounded-br-[6rem] rounded-tl-[3rem] shadow-3xl border border-white/5" />
+        <div className="lg:col-span-2 h-[600px] bg-background rounded-br-[6rem] rounded-tl-[3rem] shadow-3xl border border-border/5" />
+        <div className="h-[600px] bg-background rounded-br-[6rem] rounded-tl-[3rem] shadow-3xl border border-border/5" />
       </div>
     </div>
   )

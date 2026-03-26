@@ -114,7 +114,7 @@ export function CargoCapacity({ stats }: CargoCapacityProps) {
 
                     <div className="grid grid-cols-2 gap-4 lg:gap-8 w-full">
                         <div className="space-y-1">
-                            <p className="text-base font-bold font-bold text-gray-500 uppercase tracking-widest flex items-center gap-1">
+                            <p className="text-base font-bold font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-1">
                                 <Weight size={10} />
                                 Occupied
                             </p>
@@ -123,7 +123,7 @@ export function CargoCapacity({ stats }: CargoCapacityProps) {
                             </p>
                         </div>
                         <div className="space-y-1 border-l border-gray-100 pl-4 lg:pl-8">
-                            <p className="text-base font-bold font-bold text-gray-500 uppercase tracking-widest flex items-center gap-1">
+                            <p className="text-base font-bold font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-1">
                                 <Maximize2 size={10} />
                                 Capacity
                             </p>
@@ -148,7 +148,7 @@ export function CargoCapacity({ stats }: CargoCapacityProps) {
                 </div>
             </div>
             
-            <p className="text-base font-bold text-center text-gray-500 font-bold">Data synced with IoT weight sensors every 60 seconds</p>
+            <p className="text-base font-bold text-center text-muted-foreground font-bold">Data synced with IoT weight sensors every 60 seconds</p>
         </div>
     )
 }

@@ -25,7 +25,7 @@ export function SidebarProfile({ collapsed }: { collapsed: boolean }) {
   }, [])
 
   if (loading) return (
-    <div className={`flex items-center gap-4 p-4 rounded-2xl bg-white/5 border border-white/5 ${collapsed ? 'justify-center' : ''}`}>
+    <div className={`flex items-center gap-4 p-4 rounded-2xl bg-muted border border-border ${collapsed ? 'justify-center' : ''}`}>
         <Loader2 className="animate-spin text-primary" size={20} />
     </div>
   )
@@ -39,14 +39,14 @@ export function SidebarProfile({ collapsed }: { collapsed: boolean }) {
 
   return (
     <div className={cn(
-        "flex items-center gap-4 p-4 rounded-3xl bg-white/5 border border-white/5 relative overflow-hidden group transition-all hover:bg-white/10 hover:border-primary/20",
+        "flex items-center gap-4 p-4 rounded-3xl bg-muted border border-border relative overflow-hidden group transition-all hover:bg-muted/80 hover:border-primary/20",
         collapsed ? "justify-center p-3" : ""
     )}>
       {/* Visual Accent */}
       <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary via-accent to-primary opacity-0 group-hover:opacity-100 transition-opacity" />
 
       <div className="relative w-11 h-11 rounded-2xl bg-gradient-to-tr from-primary to-accent p-[2px] shadow-lg shadow-primary/10 transition-transform group-hover:scale-105 shrink-0 overflow-hidden">
-        <div className="w-full h-full rounded-[inherit] bg-[#050110] flex items-center justify-center text-white overflow-hidden relative">
+        <div className="w-full h-full rounded-[inherit] bg-background flex items-center justify-center text-foreground overflow-hidden relative">
             {avatarUrl ? (
                 <Image src={avatarUrl} alt={displayName} fill className="object-cover" />
             ) : (
@@ -57,7 +57,7 @@ export function SidebarProfile({ collapsed }: { collapsed: boolean }) {
       
       {!collapsed && (
         <div className="flex-1 min-w-0">
-          <p className="text-xl font-black text-white truncate tracking-tight">{displayName}</p>
+          <p className="text-xl font-black text-foreground truncate tracking-tight">{displayName}</p>
           <p className="text-base font-bold text-primary font-black truncate uppercase tracking-[0.3em] mt-0.5">{role}</p>
         </div>
       )}
@@ -65,7 +65,7 @@ export function SidebarProfile({ collapsed }: { collapsed: boolean }) {
       {!collapsed && (
         <button 
           onClick={() => window.location.href = '/api/auth/logout'}
-          className="p-2.5 text-slate-500 hover:text-rose-500 hover:bg-rose-500/10 rounded-xl transition-all active:scale-90"
+          className="p-2.5 text-muted-foreground hover:text-rose-500 hover:bg-rose-500/10 rounded-xl transition-all active:scale-90"
           title="Sign Out"
         >
           <LogOut size={18} strokeWidth={2.5} />

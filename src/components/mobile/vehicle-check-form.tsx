@@ -240,7 +240,7 @@ export function MobileVehicleCheckForm({ driverId, driverName, defaultVehiclePla
             className={`w-full h-14 font-bold text-lg shadow-lg transition-all ${
                 signature && !loading
                     ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-500/20" 
-                    : "bg-gray-100 text-gray-500 cursor-not-allowed"
+                    : "bg-gray-100 text-muted-foreground cursor-not-allowed"
             }`}
             disabled={loading || !signature}
         >

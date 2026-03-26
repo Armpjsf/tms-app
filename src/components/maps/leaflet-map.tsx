@@ -223,7 +223,7 @@ function MovingMarker({ driver }: { driver: DriverLocation }) {
             html: `
                 <div class="relative flex items-center justify-center" style="width: 60px; height: 60px;">
                     <!-- Floating License Plate -->
-                    <div class="absolute -top-10 left-1/2 -translate-x-1/2 whitespace-nowrap bg-slate-900/90 text-white text-base font-bold font-black px-2 py-0.5 rounded-lg border border-white/20 shadow-2xl z-30 pointer-events-none">
+                    <div class="absolute -top-10 left-1/2 -translate-x-1/2 whitespace-nowrap bg-card/90 text-foreground text-base font-bold font-black px-2 py-0.5 rounded-lg border border-border/20 shadow-2xl z-30 pointer-events-none">
                         ${driver.vehiclePlate || 'N/A'}
                     </div>
 
@@ -233,7 +233,7 @@ function MovingMarker({ driver }: { driver: DriverLocation }) {
                     </div>
 
                     <!-- Marker Body -->
-                    <div class="relative flex items-center justify-center p-2.5 bg-slate-950 rounded-2xl shadow-2xl border border-white/20"
+                    <div class="relative flex items-center justify-center p-2.5 bg-background rounded-2xl shadow-2xl border border-border/20"
                          style="transform: rotate(${heading}deg); border-bottom: 4px solid #10b981;">
                         
                         ${driver.status === 'SOS' ? '<div class="absolute inset-[-4px] border-2 border-red-500 rounded-2xl animate-ping"></div>' : ''}

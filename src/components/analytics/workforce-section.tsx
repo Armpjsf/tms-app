@@ -14,45 +14,45 @@ export function WorkforceSection({ data }: { data: WorkforceAnalytics }) {
     <div className="space-y-10">
       {/* Sub-Section Header */}
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-slate-950 rounded-xl text-blue-500 shadow-lg border border-slate-800">
+          <div className="p-2 bg-background rounded-xl text-blue-500 shadow-lg border border-slate-800">
             <Users size={18} />
           </div>
-          <h3 className="text-xl font-black text-white tracking-tight uppercase premium-text-gradient">{t('dashboard.workforce_intel')}</h3>
+          <h3 className="text-xl font-black text-foreground tracking-tight uppercase premium-text-gradient">{t('dashboard.workforce_intel')}</h3>
         </div>
 
       {/* KPI Bento Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {/* Total Drivers */}
-        <PremiumCard className="bg-slate-950 border-none shadow-2xl relative overflow-hidden group p-8 rounded-br-[3rem] rounded-tl-[1.5rem]">
+        <PremiumCard className="bg-background border-none shadow-2xl relative overflow-hidden group p-8 rounded-br-[3rem] rounded-tl-[1.5rem]">
             <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent pointer-events-none" />
             <div className="flex items-center justify-between mb-6 relative z-10">
               <div className="space-y-1">
                 <span className="text-blue-400 text-base font-bold font-black uppercase tracking-[0.2em] italic">{t('dashboard.active_duty_roster')}</span>
-                <p className="text-base font-bold text-slate-500 font-bold uppercase tracking-widest italic">{t('dashboard.workforce_matrix')}</p>
+                <p className="text-base font-bold text-muted-foreground font-bold uppercase tracking-widest italic">{t('dashboard.workforce_matrix')}</p>
               </div>
               <div className="p-2 bg-blue-500/10 rounded-xl text-blue-500 shadow-lg shadow-blue-500/10">
                 <Users size={16} />
               </div>
             </div>
-            <div className="text-3xl font-black text-white tracking-tighter relative z-10 italic">{kpis.totalBox} {t('dashboard.personnel_label')}</div>
+            <div className="text-3xl font-black text-foreground tracking-tighter relative z-10 italic">{kpis.totalBox} {t('dashboard.personnel_label')}</div>
             <div className="flex items-center gap-2 mt-4 relative z-10 opacity-50">
-                <p className="text-base font-bold text-slate-400 font-black uppercase tracking-widest italic">{t('dashboard.optimal_utilization_label')}</p>
+                <p className="text-base font-bold text-muted-foreground font-black uppercase tracking-widest italic">{t('dashboard.optimal_utilization_label')}</p>
             </div>
         </PremiumCard>
 
         {/* Active Today */}
-        <PremiumCard className="bg-slate-950 border-none shadow-2xl relative overflow-hidden group p-8 rounded-br-[3rem] rounded-tl-[1.5rem]">
+        <PremiumCard className="bg-background border-none shadow-2xl relative overflow-hidden group p-8 rounded-br-[3rem] rounded-tl-[1.5rem]">
             <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent pointer-events-none" />
             <div className="flex items-center justify-between mb-6 relative z-10">
               <div className="space-y-1">
                 <span className="text-emerald-400 text-base font-bold font-black uppercase tracking-[0.2em] italic">{t('dashboard.driver_active')}</span>
-                <p className="text-base font-bold text-slate-500 font-bold uppercase tracking-widest italic">{t('dashboard.labor_optimization_index')}</p>
+                <p className="text-base font-bold text-muted-foreground font-bold uppercase tracking-widest italic">{t('dashboard.labor_optimization_index')}</p>
               </div>
               <div className="p-2 bg-emerald-500/10 rounded-xl text-emerald-400 shadow-lg shadow-emerald-500/10">
                 <UserCheck size={16} />
               </div>
             </div>
-            <div className="text-3xl font-black text-white tracking-tighter relative z-10 italic">{kpis.activeToday} {t('dashboard.active_label')}</div>
+            <div className="text-3xl font-black text-foreground tracking-tighter relative z-10 italic">{kpis.activeToday} {t('dashboard.active_label')}</div>
             <div className="flex items-center gap-2 mt-4 relative z-10">
                 <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                 <p className="text-base font-bold text-emerald-400 font-black uppercase tracking-widest italic">{t('workforce.deployed_to_field')}</p>
@@ -60,18 +60,18 @@ export function WorkforceSection({ data }: { data: WorkforceAnalytics }) {
         </PremiumCard>
 
         {/* Expiring Soon */}
-        <PremiumCard className="bg-slate-950 border-none shadow-2xl relative overflow-hidden group p-8 rounded-br-[3rem] rounded-tl-[1.5rem]">
+        <PremiumCard className="bg-background border-none shadow-2xl relative overflow-hidden group p-8 rounded-br-[3rem] rounded-tl-[1.5rem]">
             <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-transparent pointer-events-none" />
             <div className="flex items-center justify-between mb-6 relative z-10">
               <div className="space-y-1">
                 <span className="text-amber-400 text-base font-bold font-black uppercase tracking-[0.2em] italic">{t('dashboard.fatigue_risk_threshold')}</span>
-                <p className="text-base font-bold text-slate-500 font-bold uppercase tracking-widest italic">{t('dashboard.operator_health_index')}</p>
+                <p className="text-base font-bold text-muted-foreground font-bold uppercase tracking-widest italic">{t('dashboard.operator_health_index')}</p>
               </div>
               <div className="p-2 bg-amber-500/10 rounded-xl text-amber-500 shadow-lg shadow-amber-500/10">
                 <FileWarning size={16} />
               </div>
             </div>
-            <div className="text-3xl font-black text-white tracking-tighter relative z-10 italic">{kpis.licenseExpiring} {t('dashboard.at_risk_label')}</div>
+            <div className="text-3xl font-black text-foreground tracking-tighter relative z-10 italic">{kpis.licenseExpiring} {t('dashboard.at_risk_label')}</div>
             <div className="flex items-center gap-2 mt-4 relative z-10">
                 <p className="text-base font-bold text-amber-400 font-black uppercase tracking-widest italic flex items-center gap-2">
                     <Activity size={10} /> {t('workforce.compliance_window')}
@@ -82,25 +82,25 @@ export function WorkforceSection({ data }: { data: WorkforceAnalytics }) {
         {/* Expired */}
         <PremiumCard className={cn(
             "border-none shadow-2xl relative overflow-hidden group p-8 rounded-br-[3rem] rounded-tl-[1.5rem]",
-            kpis.licenseExpired > 0 ? "bg-rose-600" : "bg-slate-950"
+            kpis.licenseExpired > 0 ? "bg-rose-600" : "bg-background"
         )}>
             <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent pointer-events-none" />
             <div className="flex items-center justify-between mb-6 relative z-10">
               <div className="space-y-1">
-                <span className={cn("text-base font-bold font-black uppercase tracking-[0.2em] italic", kpis.licenseExpired > 0 ? "text-rose-100" : "text-slate-500")}>
+                <span className={cn("text-base font-bold font-black uppercase tracking-[0.2em] italic", kpis.licenseExpired > 0 ? "text-rose-100" : "text-muted-foreground")}>
                     {t('dashboard.critical_breach')}
                 </span>
-                <p className={cn("text-base font-bold font-bold uppercase tracking-widest italic", kpis.licenseExpired > 0 ? "text-rose-200" : "text-slate-600")}>
+                <p className={cn("text-base font-bold font-bold uppercase tracking-widest italic", kpis.licenseExpired > 0 ? "text-rose-200" : "text-muted-foreground")}>
                     {t('dashboard.operational_suspension_log')}
                 </p>
               </div>
-              <div className={cn("p-2 rounded-xl shadow-lg", kpis.licenseExpired > 0 ? "bg-white/20 text-white" : "bg-slate-900 text-slate-500")}>
+              <div className={cn("p-2 rounded-xl shadow-lg", kpis.licenseExpired > 0 ? "bg-white/20 text-foreground" : "bg-card text-muted-foreground")}>
                 <AlertOctagon size={16} />
               </div>
             </div>
-            <div className="text-3xl font-black text-white tracking-tighter relative z-10 italic">{kpis.licenseExpired} {t('dashboard.halted_label')}</div>
+            <div className="text-3xl font-black text-foreground tracking-tighter relative z-10 italic">{kpis.licenseExpired} {t('dashboard.halted_label')}</div>
             <div className="flex items-center gap-2 mt-4 relative z-10">
-                <p className={cn("text-base font-bold font-black uppercase tracking-widest italic", kpis.licenseExpired > 0 ? "text-white" : "text-slate-500")}>
+                <p className={cn(kpis.licenseExpired > 0 ? "text-foreground" : "text-muted-foreground")}>
                     {t('dashboard.lockout_active_label')}
                 </p>
             </div>
@@ -110,15 +110,15 @@ export function WorkforceSection({ data }: { data: WorkforceAnalytics }) {
       {/* Workforce Insight Elite Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Top Performers Elite */}
-        <PremiumCard className="bg-white/5 border border-white/10 shadow-2xl p-0 overflow-hidden rounded-br-[5rem] rounded-tl-[3rem]">
-           <div className="p-8 border-b border-white/5 bg-slate-950 relative overflow-hidden flex items-center justify-between">
+        <PremiumCard className="bg-muted/50 border border-border/10 shadow-2xl p-0 overflow-hidden rounded-br-[5rem] rounded-tl-[3rem]">
+           <div className="p-8 border-b border-border/5 bg-background relative overflow-hidden flex items-center justify-between">
               <div className="absolute inset-0 bg-gradient-to-r from-amber-500/10 to-transparent pointer-events-none" />
               <div className="flex items-center gap-3 relative z-10">
                 <div className="p-2 bg-amber-600 rounded-xl text-white shadow-lg">
                   <Trophy size={16} />
                 </div>
                 <div>
-                  <h3 className="text-lg font-black text-white tracking-tight italic uppercase">{t('dashboard.operator_elite')}</h3>
+                  <h3 className="text-lg font-black text-foreground tracking-tight italic uppercase">{t('dashboard.operator_elite')}</h3>
                   <p className="text-amber-400 text-base font-bold font-bold uppercase tracking-[0.2em]">{t('dashboard.high_yield_performance_metrics')}</p>
                 </div>
               </div>
@@ -126,11 +126,11 @@ export function WorkforceSection({ data }: { data: WorkforceAnalytics }) {
            <div className="p-0">
               <div className="divide-y divide-white/5">
                 {topPerformers.map((d, i) => (
-                    <div key={i} className="p-8 flex items-center justify-between group/perf hover:bg-white/5 transition-all border-l-4 border-transparent hover:border-amber-500">
+                    <div key={i} className="p-8 flex items-center justify-between group/perf hover:bg-muted/50 transition-all border-l-4 border-transparent hover:border-amber-500">
                         <div className="flex items-center gap-6">
                             <div className={cn(
                                 "w-14 h-14 rounded-2xl flex items-center justify-center text-[12px] font-black shadow-xl italic transition-transform duration-500",
-                                i === 0 ? "bg-amber-100 text-amber-700" : "bg-slate-950 text-white"
+                                i === 0 ? "bg-amber-100 text-amber-700" : "bg-background text-foreground"
                             )}>
                                 #{i + 1}
                             </div>
@@ -141,21 +141,21 @@ export function WorkforceSection({ data }: { data: WorkforceAnalytics }) {
                                          {d.successRate.toFixed(0)}% {t('common.sync')}
                                      </span>
                                 </div>
-                                <div className="text-base font-bold text-slate-400 font-black mt-2 tracking-widest italic uppercase">
+                                <div className="text-base font-bold text-muted-foreground font-black mt-2 tracking-widest italic uppercase">
                                     {t('dashboard.missions_completed_prefix')} {d.jobCount}
                                 </div>
                             </div>
                         </div>
                          <div className="text-right">
-                              <div className="text-lg font-black text-white tracking-tighter italic">฿{d.revenue.toLocaleString()}</div>
-                              <div className="text-base font-bold text-slate-400 font-black uppercase tracking-widest mt-1 italic">{t('dashboard.gross_yield')}</div>
+                              <div className="text-foreground tracking-tighter italic">฿{d.revenue.toLocaleString()}</div>
+                              <div className="text-base font-bold text-muted-foreground font-black uppercase tracking-widest mt-1 italic">{t('dashboard.gross_yield')}</div>
                          </div>
                     </div>
                 ))}
                 {topPerformers.length === 0 && (
                     <div className="p-24 text-center">
-                        <Users size={48} strokeWidth={1} className="mx-auto mb-4 text-slate-100" />
-                        <p className="text-base font-bold font-black text-slate-400 uppercase tracking-widest italic">{t('dashboard.performance_data_recalibrating')}</p>
+                        <Users size={48} strokeWidth={1} className="mx-auto mb-4 text-muted-foreground" />
+                        <p className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest italic">{t('dashboard.performance_data_recalibrating')}</p>
                     </div>
                 )}
               </div>
@@ -163,15 +163,15 @@ export function WorkforceSection({ data }: { data: WorkforceAnalytics }) {
         </PremiumCard>
 
         {/* Compliance Alerts Registry */}
-        <PremiumCard className="bg-white/5 border border-white/10 shadow-2xl p-0 overflow-hidden rounded-br-[5rem] rounded-tl-[3rem]">
-           <div className="p-8 border-b border-white/5 bg-slate-950 relative overflow-hidden flex items-center justify-between">
+        <PremiumCard className="bg-muted/50 border border-border/10 shadow-2xl p-0 overflow-hidden rounded-br-[5rem] rounded-tl-[3rem]">
+           <div className="p-8 border-b border-border/5 bg-background relative overflow-hidden flex items-center justify-between">
               <div className="absolute inset-0 bg-gradient-to-r from-rose-500/10 to-transparent pointer-events-none" />
               <div className="flex items-center gap-3 relative z-10">
                 <div className="p-2 bg-rose-600 rounded-xl text-white shadow-lg">
                   <ShieldCheck size={16} />
                 </div>
                 <div>
-                  <h3 className="text-lg font-black text-white tracking-tight italic uppercase">{t('dashboard.compliance_registry')}</h3>
+                  <h3 className="text-lg font-black text-foreground tracking-tight italic uppercase">{t('dashboard.compliance_registry')}</h3>
                   <p className="text-rose-400 text-base font-bold font-bold uppercase tracking-[0.2em]">{t('dashboard.operational_risk_audit')}</p>
                 </div>
               </div>
@@ -179,9 +179,9 @@ export function WorkforceSection({ data }: { data: WorkforceAnalytics }) {
            <div className="p-0">
               <div className="divide-y divide-white/5">
                 {driversWithIssues.map((d) => (
-                    <div key={d.id} className="p-8 flex items-center justify-between group/risk hover:bg-white/5 transition-all border-l-4 border-transparent hover:border-rose-500">
+                    <div key={d.id} className="p-8 flex items-center justify-between group/risk hover:bg-muted/50 transition-all border-l-4 border-transparent hover:border-rose-500">
                         <div className="flex items-center gap-6">
-                            <div className="w-14 h-14 rounded-2xl bg-slate-950 text-white flex items-center justify-center text-[12px] font-black shadow-xl italic uppercase">
+                            <div className="w-14 h-14 rounded-2xl bg-background text-foreground flex items-center justify-center text-[12px] font-black shadow-xl italic uppercase">
                                 {d.name.slice(0, 2)}
                             </div>
                             <div>
@@ -201,14 +201,14 @@ export function WorkforceSection({ data }: { data: WorkforceAnalytics }) {
                               )}>
                                  {d.issue === 'ใบขับขี่หมดอายุ' ? `${t('common.expired')} ${d.daysAuth}D` : `${t('common.expiry')}: ${d.daysAuth}D`}
                               </div>
-                             <div className="text-base font-bold text-slate-400 font-black uppercase tracking-widest mt-1 italic">{t('dashboard.immediate_rectification_reqd')}</div>
+                             <div className="text-base font-bold text-muted-foreground font-black uppercase tracking-widest mt-1 italic">{t('dashboard.immediate_rectification_reqd')}</div>
                         </div>
                     </div>
                 ))}
                 {driversWithIssues.length === 0 && (
                      <div className="p-24 text-center">
                         <ShieldCheck size={48} strokeWidth={1} className="mx-auto mb-4 text-emerald-100" />
-                        <p className="text-base font-bold font-black text-slate-400 uppercase tracking-widest italic">{t('dashboard.compliance_perimeter_secure')}</p>
+                        <p className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest italic">{t('dashboard.compliance_perimeter_secure')}</p>
                     </div>
                 )}
               </div>

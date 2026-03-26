@@ -1252,8 +1252,16 @@ export const dictionaries = {
         oct: 'ตุลาคม',
         nov: 'พฤศจิกายน',
         dec: 'ธันวาคม',
-    }
-  },
+      },
+      login: {
+        tagline: 'ขนส่งง่ายๆ มั่นใจทุกการจัดส่ง',
+        employee_id: 'รหัสพนักงาน / เบอร์โทรศัพท์',
+        password: 'รหัสผ่าน',
+        login_button: 'เข้าสู่ระบบ',
+        start_engine: 'สตาร์ทเครื่องยนต์',
+        forgot_password: 'ลืมรหัสผ่าน?',
+      }
+    },
   en: {
     common: {
       loading: 'Processing...',
@@ -2497,6 +2505,14 @@ export const dictionaries = {
         oct: 'October',
         nov: 'November',
         dec: 'December',
+      },
+      login: {
+        tagline: 'Sweet deliveries, serious logistics.',
+        employee_id: 'Employee ID / Phone Number',
+        password: 'Password',
+        login_button: 'Login',
+        start_engine: 'Start Engine',
+        forgot_password: 'Forgot Password?',
+      }
     }
-  }
 };

@@ -4,7 +4,7 @@ import * as React from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { usePathname } from "next/navigation"
-import { motion, AnimatePresence } from "framer-motion"
+import { motion } from "framer-motion"
 import { cn } from "@/lib/utils"
 import {
   LayoutDashboard,
@@ -191,44 +191,45 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
       transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
       className={cn(
         "fixed top-0 left-0 h-screen z-[1000] flex flex-col font-sans",
-        "bg-[#0a0518] border-r border-white/5 text-slate-400 shadow-[20px_0_60px_rgba(0,0,0,0.4)] transition-all duration-500"
+        "bg-secondary border-r border-border text-secondary-foreground shadow-2xl transition-all duration-500"
       )}
     >
-      {/* Brand Signature */}
-      <div className="flex items-center justify-between h-36 px-6 border-b border-white/5 bg-[#050110]/50 backdrop-blur-3xl">
-        <AnimatePresence mode="wait">
-          {!collapsed && (
-            <motion.div
-              key="logo"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              className="flex items-center gap-5"
-            >
-              <div className="relative group/logo">
-                <div className="absolute inset-0 bg-primary/20 blur-3xl opacity-0 group-hover/logo:opacity-100 transition-all duration-700 rounded-full"></div>
-                <div className="relative w-28 h-28 flex items-center justify-center transition-all duration-500 group-hover/logo:scale-110 overflow-hidden">
-                    <Image src="/logo-tactical.png" alt="LogisPro Logo" fill className="object-contain" priority />
-                </div>
-              </div>
-              <div className="flex flex-col">
-                <h1 className="text-white font-black text-2xl leading-none tracking-tighter drop-shadow-[0_0_10px_rgba(255,255,255,0.3)] uppercase">LOGIS<span className="text-primary italic">PRO</span></h1>
-                <p className="text-base font-bold text-primary font-black tracking-[0.4em] uppercase opacity-90 leading-tight mt-1">COMMAND<br/>CENTRE</p>
-              </div>
-            </motion.div>
+      {/* Brand Signature - Logo Only Edition (Maximized) */}
+      <div className={cn(
+        "relative flex flex-col items-center justify-center border-b border-border bg-background/80 backdrop-blur-3xl overflow-hidden transition-all duration-500",
+        collapsed ? "h-24" : "h-72"
+      )}>
+        {/* Toggle Button - Floating Edition */}
+        <button
+          onClick={onToggle}
+          className={cn(
+            "absolute z-[1001] p-1.5 rounded-full bg-primary text-white shadow-xl transition-all duration-500 hover:scale-110 active:scale-95",
+            collapsed ? "right-2 top-2" : "-right-3 top-8"
           )}
-        </AnimatePresence>
-        
-        <div className="flex flex-col gap-3 items-center">
-            <button
-              onClick={onToggle}
-              className="p-2.5 rounded-2xl bg-white/5 border border-white/10 hover:border-primary/50 text-slate-500 hover:text-primary transition-all active:scale-95 shadow-lg"
-            >
-              <ChevronLeft
-                size={20}
-                className={cn("transition-transform duration-500", collapsed && "rotate-180")}
-              />
-            </button>
+        >
+          <ChevronLeft
+            size={16}
+            className={cn("transition-transform duration-500", collapsed && "rotate-180")}
+          />
+        </button>
+
+        <div className={cn(
+            "relative flex items-center justify-center logo-container-pure transition-all duration-700",
+            "bg-white rounded-full shadow-2xl ring-1 ring-border/5",
+            "dark:bg-white/10 dark:backdrop-blur-2xl dark:border dark:border-white/20 dark:shadow-[0_0_60px_rgba(255,255,255,0.1)]",
+            collapsed ? "w-14 h-14 p-2.5" : "w-60 h-60 p-8"
+        )}>
+          <div className="relative w-full h-full rounded-full overflow-hidden bg-white/5 flex items-center justify-center">
+            <Image 
+              src="/logo2.png" 
+              alt="LogisPro" 
+              fill 
+              className={cn(
+                "object-contain logo-pure transition-all duration-700 hover:scale-110",
+                "mix-blend-multiply dark:mix-blend-normal dark:brightness-110"
+              )} 
+            />
+          </div>
         </div>
       </div>
 
@@ -241,7 +242,7 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
             {filteredNavigation.map((group) => (
               <div key={group.titleKey} className="space-y-4">
                 {!collapsed && (
-                  <h2 className="px-4 text-base font-bold font-black uppercase tracking-[0.4em] text-slate-500/80">
+                  <h2 className="px-4 text-base font-bold font-black uppercase tracking-[0.4em] text-accent/90">
                     {t(group.titleKey)}
                   </h2>
                 )}
@@ -254,14 +255,14 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
                         <div className={cn(
                             "relative flex items-center gap-4 px-4 h-14 rounded-2xl transition-all duration-300 overflow-hidden",
                              isActive
-                             ? "bg-primary/10 text-white shadow-[inset_0_0_20px_rgba(255,30,133,0.05)]"
-                             : "text-slate-500 hover:bg-white/[0.03] hover:text-slate-200"
+                             ? "bg-primary/10 text-accent shadow-[inset_0_0_20px_rgba(182,9,0,0.05)]"
+                             : "text-secondary-foreground hover:bg-muted hover:text-foreground"
                         )}>
                           {/* Active Neon Line */}
                           {isActive && (
                             <motion.div 
                                 layoutId="active-nav"
-                                className="absolute left-0 top-3 bottom-3 w-1 bg-primary rounded-r-full shadow-[0_0_15px_rgba(255,30,133,1)]"
+                                className="absolute left-0 top-3 bottom-3 w-1 bg-accent rounded-r-full shadow-[0_0_15px_rgba(182,9,0,0.8)]"
                             />
                           )}
                           
@@ -275,7 +276,7 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
                           {!collapsed && (
                             <span className={cn(
                                 "text-xl font-black tracking-tight",
-                                isActive ? "text-white" : "text-slate-400 group-hover:text-slate-200"
+                                isActive ? "text-accent" : "text-secondary-foreground group-hover:text-foreground"
                             )}>
                                 {t(item.titleKey)}
                             </span>
@@ -284,7 +285,7 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
                           {item.badge && !collapsed && (
                             <span className={cn(
                                 "ml-auto px-2 py-0.5 text-base font-bold font-black rounded-lg border",
-                                item.badgeColor === "red" && "bg-red-500/10 text-red-500 border-red-500/20",
+                                item.badgeColor === "red" && "bg-destructive/10 text-destructive border-destructive/20",
                                 item.badgeColor === "blue" && "bg-blue-500/10 text-blue-500 border-blue-500/20",
                                 item.badgeColor === "green" && "bg-primary/10 text-primary border-primary/20",
                                 item.badgeColor === "yellow" && "bg-yellow-500/10 text-yellow-500 border-yellow-500/20"
@@ -304,7 +305,7 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
       </nav>
 
       {/* User Core */}
-      <div className="p-6 border-t border-white/5 bg-[#050110]/50">
+      <div className="p-6 border-t border-border bg-background/80">
         <SidebarProfile collapsed={collapsed} />
       </div>
     </motion.aside>
@@ -317,13 +318,13 @@ function SidebarSkeleton({ collapsed }: { collapsed: boolean }) {
       {[1, 2, 3].map((i) => (
         <div key={i} className="space-y-4">
           {!collapsed && (
-            <div className="h-2 w-20 bg-white/5 rounded-full animate-pulse ml-4" />
+            <div className="h-2 w-20 bg-muted rounded-full animate-pulse ml-4" />
           )}
           {[1, 2].map((j) => (
             <div
               key={j}
               className={cn(
-                "h-14 bg-white/[0.02] rounded-2xl animate-pulse border border-white/5",
+                "h-14 bg-muted/50 rounded-2xl animate-pulse border border-border/5",
                 collapsed ? "w-14 mx-auto" : "w-full"
               )}
             />

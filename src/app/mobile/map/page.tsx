@@ -10,7 +10,7 @@ const LeafletMap = dynamic(() => import('@/components/maps/leaflet-map'), {
   ssr: false,
   loading: () => (
     <div className="h-64 bg-gray-100 rounded-lg flex items-center justify-center">
-      <div className="text-gray-500 animate-pulse">Loading Map...</div>
+      <div className="text-muted-foreground animate-pulse">Loading Map...</div>
     </div>
   )
 })
@@ -60,13 +60,13 @@ export default function MobileMapPage() {
 
   return (
     <div className="p-4 space-y-4">
-      <h1 className="text-xl font-bold text-white">Navigation</h1>
+      <h1 className="text-xl font-bold text-foreground">Navigation</h1>
       
       {/* Map */}
       <Card className="bg-white border-gray-200 overflow-hidden">
         {isLoading ? (
           <div className="h-64 flex items-center justify-center bg-gray-100">
-            <p className="text-gray-500 animate-pulse">Getting your location...</p>
+            <p className="text-muted-foreground animate-pulse">Getting your location...</p>
           </div>
         ) : locationError ? (
           <div className="h-64 flex items-center justify-center bg-gray-100">
@@ -85,7 +85,7 @@ export default function MobileMapPage() {
       {/* Current Location Card */}
       <Card className="bg-white border-gray-200">
         <CardHeader className="pb-2">
-          <CardTitle className="text-xl text-gray-500 flex items-center gap-2">
+          <CardTitle className="text-xl text-muted-foreground flex items-center gap-2">
             <MapPin className="w-4 h-4 text-emerald-500" />
             Current Location
           </CardTitle>
@@ -119,7 +119,7 @@ export default function MobileMapPage() {
       {/* Next Destination */}
       <Card className="bg-white border-gray-200">
         <CardHeader className="pb-2">
-          <CardTitle className="text-xl text-gray-500 flex items-center gap-2">
+          <CardTitle className="text-xl text-muted-foreground flex items-center gap-2">
             <Navigation className="w-4 h-4 text-emerald-400" />
             Next Destination
           </CardTitle>

@@ -40,12 +40,12 @@ export default function MobileSettingsPage() {
       
       <div className="space-y-6">
         <div className="space-y-4">
-            <h3 className="text-gray-500 text-xl font-medium uppercase tracking-wider ml-1">ทั่วไป</h3>
+            <h3 className="text-muted-foreground text-xl font-medium uppercase tracking-wider ml-1">ทั่วไป</h3>
             <Card className="bg-white border-gray-200">
                 <CardContent className="p-0 divide-y divide-slate-800">
                     <div className="flex items-center justify-between p-4">
                         <div className="flex items-center gap-3">
-                            <Bell className="text-gray-500" size={20} />
+                            <Bell className="text-muted-foreground" size={20} />
                             <span className="text-gray-800">การแจ้งเตือน</span>
                         </div>
                         <Switch 
@@ -58,7 +58,7 @@ export default function MobileSettingsPage() {
                         onClick={toggleLanguage}
                     >
                         <div className="flex items-center gap-3">
-                            <Globe className="text-gray-500" size={20} />
+                            <Globe className="text-muted-foreground" size={20} />
                             <span className="text-gray-800">เปลี่ยนภาษา</span>
                         </div>
                         <span className="text-gray-400 text-xl font-medium uppercase">{language === "th" ? "ไทย" : "English"}</span>
@@ -68,18 +68,18 @@ export default function MobileSettingsPage() {
         </div>
 
         <div className="space-y-4">
-            <h3 className="text-gray-500 text-xl font-medium uppercase tracking-wider ml-1">ข้อมูล & ความปลอดภัย</h3>
+            <h3 className="text-muted-foreground text-xl font-medium uppercase tracking-wider ml-1">ข้อมูล & ความปลอดภัย</h3>
             <Card className="bg-white border-gray-200">
                 <CardContent className="p-0 divide-y divide-slate-800">
                     <div className="flex items-center justify-between p-4">
                         <div className="flex items-center gap-3">
-                            <Shield className="text-gray-500" size={20} />
+                            <Shield className="text-muted-foreground" size={20} />
                             <span className="text-gray-800">นโยบายความเป็นส่วนตัว</span>
                         </div>
                     </div>
                     <div className="flex items-center justify-between p-4">
                         <div className="flex items-center gap-3">
-                            <Smartphone className="text-gray-500" size={20} />
+                            <Smartphone className="text-muted-foreground" size={20} />
                             <span className="text-gray-800">เวอร์ชันแอปพลิเคชัน</span>
                         </div>
                         <span className="text-gray-400 text-xl">v1.0.26</span>

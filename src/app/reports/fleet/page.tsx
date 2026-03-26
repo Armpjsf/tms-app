@@ -25,12 +25,12 @@ export default async function FleetStatusPage() {
       <div className="space-y-8 pb-12">
         {/* Header Section */}
         {/* Strategic Header Section */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 bg-slate-950 p-10 rounded-br-[5rem] rounded-tl-[3rem] border border-slate-800 shadow-2xl relative overflow-hidden group">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 bg-background p-10 rounded-br-[5rem] rounded-tl-[3rem] border border-slate-800 shadow-2xl relative overflow-hidden group">
           <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-400 opacity-0 group-hover:opacity-100 transition-all duration-700 blur-[0.5px]" />
           <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 blur-3xl rounded-full -mr-20 -mt-20 pointer-events-none" />
           
           <div className="relative z-10">
-            <h1 className="text-5xl font-black text-white mb-2 tracking-tighter flex items-center gap-4">
+            <h1 className="text-5xl font-black text-foreground mb-2 tracking-tighter flex items-center gap-4">
               <div className="p-3 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-3xl shadow-2xl shadow-blue-500/20 text-white transform group-hover:scale-110 transition-transform duration-500">
                 <Truck size={36} />
               </div>
@@ -81,7 +81,7 @@ export default async function FleetStatusPage() {
                           "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-base font-bold font-black uppercase tracking-widest border",
                           v.active_status === 'Active' ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" :
                           v.active_status === 'Maintenance' ? "bg-amber-500/10 text-amber-600 border-amber-500/20" :
-                          "bg-gray-100 text-gray-500 border-gray-200"
+                          "bg-gray-100 text-muted-foreground border-gray-200"
                         )}>
                           {v.active_status}
                         </span>
@@ -126,7 +126,7 @@ export default async function FleetStatusPage() {
                         <span className={cn(
                           "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-base font-bold font-black uppercase tracking-widest border",
                           d.Active_Status === 'Active' ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" :
-                          "bg-gray-100 text-gray-500 border-gray-200"
+                          "bg-gray-100 text-muted-foreground border-gray-200"
                         )}>
                           {d.Active_Status}
                         </span>

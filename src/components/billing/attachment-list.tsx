@@ -80,7 +80,7 @@ export function AttachmentList({ billingNoteId, readonly = false }: AttachmentLi
     return (
         <Card className="mt-6 bg-white/80 border-gray-200">
             <CardHeader className="flex flex-row items-center justify-between py-4">
-                <CardTitle className="text-lg font-medium text-white flex items-center gap-2">
+                <CardTitle className="text-foreground flex items-center gap-2">
                     <Paperclip className="w-5 h-5 text-emerald-600" />
                     เอกสารแนบ (Attachments)
                 </CardTitle>
@@ -116,15 +116,15 @@ export function AttachmentList({ billingNoteId, readonly = false }: AttachmentLi
                                     </div>
                                     <div className="truncate">
                                         <p className="text-xl font-medium text-white truncate max-w-[200px] md:max-w-md">{file.File_Name}</p>
-                                        <p className="text-lg font-bold text-gray-500">{new Date(file.Uploaded_At).toLocaleString('th-TH')}</p>
+                                        <p className="text-lg font-bold text-muted-foreground">{new Date(file.Uploaded_At).toLocaleString('th-TH')}</p>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    <Button size="icon" variant="ghost" onClick={() => handleDownload(file.File_Path)} className="text-gray-500 hover:text-white">
+                                    <Button size="icon" variant="ghost" onClick={() => handleDownload(file.File_Path)} className="text-muted-foreground hover:text-white">
                                         <Download className="w-4 h-4" />
                                     </Button>
                                     {!readonly && (
-                                        <Button size="icon" variant="ghost" onClick={() => handleDelete(file)} className="text-gray-500 hover:text-red-400">
+                                        <Button size="icon" variant="ghost" onClick={() => handleDelete(file)} className="text-muted-foreground hover:text-red-400">
                                             <Trash2 className="w-4 h-4" />
                                         </Button>
                                     )}

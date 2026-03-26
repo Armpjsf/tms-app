@@ -146,13 +146,13 @@ export function DashboardContent({
   if (loadingPrimary) {
     return (
       <div className="space-y-12 animate-pulse">
-        <div className="h-24 bg-[#0a0518] rounded-[2rem] border border-white/5" />
+        <div className="h-24 bg-background rounded-[2rem] border border-border/5" />
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {[1, 2, 3, 4].map(i => (
-            <div key={i} className="h-56 bg-[#0a0518] rounded-br-[4rem] rounded-tl-[2rem] border border-white/5" />
+            <div key={i} className="h-56 bg-background rounded-br-[4rem] rounded-tl-[2rem] border border-border/5" />
           ))}
         </div>
-        <div className="h-[600px] bg-[#0a0518] rounded-br-[6rem] rounded-tl-[3rem] border border-white/5" />
+        <div className="h-[600px] bg-background rounded-br-[6rem] rounded-tl-[3rem] border border-border/5" />
       </div>
     )
   }
@@ -192,15 +192,15 @@ export function DashboardContent({
   return (
     <div className="space-y-32">
         {/* Hub Utility Matrix */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-10 p-12 bg-[#0a0518] border-2 border-white/5 rounded-[4rem] shadow-3xl relative overflow-hidden group">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-10 p-12 bg-background border-2 border-border/5 rounded-[4rem] shadow-3xl relative overflow-hidden group">
             <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-transparent pointer-events-none" />
             <div className="flex items-center gap-8 relative z-10">
                 <div className="w-16 h-16 bg-primary/20 rounded-[2rem] flex items-center justify-center text-primary shadow-[0_0_30px_rgba(255,30,133,0.3)] border-2 border-primary/30 group-hover:scale-110 transition-transform duration-500">
                     <Zap size={28} strokeWidth={2.5} className="animate-pulse" />
                 </div>
                 <div>
-                    <h3 className="text-xl font-black text-white uppercase tracking-[0.3em] italic leading-none mb-3">{t('common.tactical_cluster')}</h3>
-                    <p className="text-base font-bold font-black text-slate-500 uppercase tracking-[0.6em] italic">{t('common.network_stable')}</p>
+                    <h3 className="text-xl font-black text-foreground uppercase tracking-[0.3em] italic leading-none mb-3">{t('common.tactical_cluster')}</h3>
+                    <p className="text-base font-bold font-black text-muted-foreground uppercase tracking-[0.6em] italic">{t('common.network_stable')}</p>
                 </div>
             </div>
             
@@ -216,7 +216,7 @@ export function DashboardContent({
                   <TrendingUp size={36} strokeWidth={2.5} />
               </div>
               <div className="space-y-2">
-                  <h2 className="text-5xl font-black text-white tracking-widest italic uppercase">{t('common.financial_node')}</h2>
+                  <h2 className="text-5xl font-black text-foreground tracking-widest italic uppercase">{t('common.financial_node')}</h2>
                   <p className="text-emerald-500 text-base font-bold font-black uppercase tracking-[0.6em] italic">{t('analytics.commercial_monitoring')}</p>
               </div>
           </div>
@@ -226,15 +226,15 @@ export function DashboardContent({
           <RevenueForecastChart data={forecastData} />
           
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-              <PremiumCard className="lg:col-span-2 overflow-hidden p-0 bg-[#0a0518] border-2 border-white/5 shadow-3xl rounded-br-[6rem] rounded-tl-[3rem]">
-                  <div className="p-10 border-b border-white/5 bg-black/40 relative overflow-hidden flex items-center justify-between">
+              <PremiumCard className="lg:col-span-2 overflow-hidden p-0 bg-background border-2 border-border/5 shadow-3xl rounded-br-[6rem] rounded-tl-[3rem]">
+                  <div className="p-10 border-b border-border/5 bg-black/40 relative overflow-hidden flex items-center justify-between">
                       <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary to-transparent" />
                       <div className="flex items-center gap-5 relative z-10">
                           <div className="p-3 bg-primary/20 rounded-2xl text-primary border border-primary/30 shadow-[0_0_20px_rgba(255,30,133,0.2)]">
                               <BarChart3 size={24} />
                           </div>
                           <div>
-                              <h3 className="text-2xl font-black text-white tracking-tighter italic uppercase">{t('common.revenue_dynamics')}</h3>
+                              <h3 className="text-2xl font-black text-foreground tracking-tighter italic uppercase">{t('common.revenue_dynamics')}</h3>
                               <p className="text-primary text-base font-bold font-black uppercase tracking-[0.4em]">{t('analytics.temporal_realization')}</p>
                           </div>
                       </div>
@@ -243,8 +243,8 @@ export function DashboardContent({
               </PremiumCard>
               
               <div className="flex flex-col">
-                 <PremiumCard className="overflow-hidden p-0 bg-[#0a0518] border-2 border-white/5 shadow-3xl rounded-br-[5rem] rounded-tl-[3rem] group/leaderboard flex-1 relative">
-                    <div className="p-12 border-b border-white/5 relative overflow-hidden bg-black/40">
+                 <PremiumCard className="overflow-hidden p-0 bg-background border-2 border-border/5 shadow-3xl rounded-br-[5rem] rounded-tl-[3rem] group/leaderboard flex-1 relative">
+                    <div className="p-12 border-b border-border/5 relative overflow-hidden bg-black/40">
                         <div className="absolute top-0 right-0 p-8 opacity-20 group-hover/leaderboard:opacity-100 transition-opacity">
                              <Trophy size={48} className="text-primary" />
                         </div>
@@ -253,29 +253,29 @@ export function DashboardContent({
                                 <Star size={24} className="animate-pulse" />
                             </div>
                             <div className="space-y-1">
-                                <h3 className="text-2xl font-black text-white tracking-tighter italic uppercase">{t('common.elite_force')}</h3>
+                                <h3 className="text-2xl font-black text-foreground tracking-tighter italic uppercase">{t('common.elite_force')}</h3>
                                 <p className="text-primary text-base font-bold font-black uppercase tracking-[0.4em]">{t('dashboard.top_tier_asset')}</p>
                             </div>
                         </div>
                     </div>
                     <div className="p-2 space-y-2">
                         {((driverLeaderboard as any[]) || []).slice(0, 6).map((driver: DriverStats, idx: number) => (
-                            <div key={driver.name} className="p-10 flex items-center justify-between group/driver transition-all hover:bg-white/5 rounded-3xl border-2 border-transparent hover:border-primary/20">
+                            <div key={driver.name} className="p-10 flex items-center justify-between group/driver transition-all hover:bg-muted/50 rounded-3xl border-2 border-transparent hover:border-primary/20">
                                 <div className="flex items-center gap-8">
                                     <div className="relative">
-                                        <div className="w-16 h-16 rounded-[2rem] bg-white/5 flex items-center justify-center text-xl font-black text-white border-2 border-white/5 group-hover/driver:border-primary/50 transition-all uppercase italic">
+                                        <div className="w-16 h-16 rounded-[2rem] bg-muted/50 flex items-center justify-center text-xl font-black text-foreground border-2 border-border/5 group-hover/driver:border-primary/50 transition-all uppercase italic">
                                             {driver.name?.slice(0, 2) || "???"}
                                         </div>
                                         {idx < 3 && (
-                                            <div className="absolute -top-3 -right-3 p-2 bg-primary rounded-full shadow-2xl border-4 border-[#0a0518]">
-                                                <Trophy size={12} className="text-white" />
+                                            <div className="absolute -top-3 -right-3 p-2 bg-primary rounded-full shadow-2xl border-4 border-background">
+                                                <Trophy size={12} className="text-foreground" />
                                             </div>
                                         )}
                                     </div>
                                     <div className="space-y-2">
-                                        <div className="text-lg font-black text-white tracking-widest uppercase italic leading-none">{driver.name}</div>
+                                        <div className="text-lg font-black text-foreground tracking-widest uppercase italic leading-none">{driver.name}</div>
                                         <div className="flex items-center gap-4">
-                                           <div className="text-base font-bold text-slate-500 font-black uppercase tracking-[0.4em] flex items-center gap-2">
+                                           <div className="text-base font-bold text-muted-foreground font-black uppercase tracking-[0.4em] flex items-center gap-2">
                                               {driver.completedJobs} {t('dashboard.ops_label')}
                                            </div>
                                            <div className="h-1 w-1 rounded-full bg-slate-800" />
@@ -286,7 +286,7 @@ export function DashboardContent({
                                     </div>
                                 </div>
                                 <div className="text-right">
-                                    <div className="text-2xl font-black text-white italic tracking-tighter bg-primary/10 px-6 py-2 rounded-2xl border-2 border-primary/20 group-hover/driver:scale-110 transition-transform">
+                                    <div className="text-2xl font-black text-foreground italic tracking-tighter bg-primary/10 px-6 py-2 rounded-2xl border-2 border-primary/20 group-hover/driver:scale-110 transition-transform">
                                         ฿{Math.round((driver.revenue || 0) / 1000)}K
                                     </div>
                                 </div>
@@ -309,7 +309,7 @@ export function DashboardContent({
                   <Truck size={36} strokeWidth={2.5} />
               </div>
               <div className="space-y-2">
-                  <h2 className="text-5xl font-black text-white tracking-widest italic uppercase">{t('common.asset_tactical')}</h2>
+                  <h2 className="text-5xl font-black text-foreground tracking-widest italic uppercase">{t('common.asset_tactical')}</h2>
                   <p className="text-blue-500 text-base font-bold font-black uppercase tracking-[0.6em] italic">{t('dashboard.operational_throughput')} &amp; {t('dashboard.tier_1_monitoring')}</p>
               </div>
            </div>
@@ -328,7 +328,7 @@ export function DashboardContent({
                   <ShieldAlert size={36} strokeWidth={2.5} />
               </div>
               <div className="space-y-2">
-                  <h2 className="text-5xl font-black text-white tracking-widest italic uppercase">{t('common.protocol_integrity')}</h2>
+                  <h2 className="text-5xl font-black text-foreground tracking-widest italic uppercase">{t('common.protocol_integrity')}</h2>
                   <p className="text-rose-500 text-base font-bold font-black uppercase tracking-[0.6em] italic">{t('dashboard.human_capital_efficiency')} &amp; {t('dashboard.safety_protocol_audit')} {"//"} {t('dashboard.critical_vectors')}</p>
               </div>
            </div>
@@ -351,7 +351,7 @@ export function DashboardContent({
                   <Layers size={36} strokeWidth={2.5} />
               </div>
               <div className="space-y-2">
-                  <h2 className="text-5xl font-black text-white tracking-widest italic uppercase">{t('common.system_cluster')}</h2>
+                  <h2 className="text-5xl font-black text-foreground tracking-widest italic uppercase">{t('common.system_cluster')}</h2>
                   <p className="text-primary text-base font-bold font-black uppercase tracking-[0.6em] italic">{t('dashboard.health_index')} {"//"} {t('dashboard.aggregate_nodes')}</p>
               </div>
           </div>
@@ -394,21 +394,21 @@ export function DashboardContent({
         </section>
 
         {/* Tactical Footer */}
-        <div className="p-20 bg-[#0a0518] rounded-[6rem] border-2 border-white/5 flex flex-col items-center text-center space-y-8 relative overflow-hidden group">
+        <div className="p-20 bg-background rounded-[6rem] border-2 border-border/5 flex flex-col items-center text-center space-y-8 relative overflow-hidden group">
             <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent pointer-events-none" />
             <div className="p-6 bg-primary/20 rounded-[2.5rem] shadow-[0_0_40px_rgba(255,30,133,0.2)] border-2 border-primary/30 group-hover:scale-110 transition-all duration-700">
                 <Activity size={40} className="text-primary" />
             </div>
             <div className="space-y-4">
-                <h4 className="text-2xl font-black text-white uppercase tracking-[0.4em] italic">{t('common.intel_engine')}</h4>
-                <p className="text-lg font-bold text-slate-500 font-black uppercase tracking-[0.2em] max-w-2xl leading-relaxed">
+                <h4 className="text-2xl font-black text-foreground uppercase tracking-[0.4em] italic">{t('common.intel_engine')}</h4>
+                <p className="text-lg font-bold text-muted-foreground font-black uppercase tracking-[0.2em] max-w-2xl leading-relaxed">
                     {t('dashboard.intel_sync_warning')} <br />
                     {t('dashboard.system_cycle_complete')}
                 </p>
             </div>
-            <div className="flex items-center gap-4 py-2 px-6 bg-white/5 rounded-full border border-white/10">
+            <div className="flex items-center gap-4 py-2 px-6 bg-muted/50 rounded-full border border-border/10">
                <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-               <span className="text-base font-bold font-black text-slate-500 uppercase tracking-widest">{t('common.sync_complete')}</span>
+               <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest">{t('common.sync_complete')}</span>
             </div>
         </div>
     </div>
@@ -416,5 +416,5 @@ export function DashboardContent({
 }
 
 const SectionSkeleton = () => (
-    <div className="h-96 bg-[#0a0518] rounded-br-[4rem] rounded-tl-[2rem] border border-white/5 animate-pulse" />
+    <div className="h-96 bg-background rounded-br-[4rem] rounded-tl-[2rem] border border-border/5 animate-pulse" />
 )

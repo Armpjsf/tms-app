@@ -37,14 +37,14 @@ export function PerformanceCharts({ data }: { data: PerformanceData[] }) {
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
       {/* Job Volume Trend */}
       <PremiumCard className="bg-white border-none shadow-[0_30px_100px_rgba(0,0,0,0.1)] p-0 overflow-hidden rounded-br-[5rem] rounded-tl-[3rem]">
-        <div className="p-8 border-b border-slate-50 bg-slate-950 relative overflow-hidden flex items-center justify-between">
+        <div className="p-8 border-b border-slate-50 bg-background relative overflow-hidden flex items-center justify-between">
             <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 to-transparent pointer-events-none" />
             <div className="flex items-center gap-3 relative z-10">
                 <div className="p-2 bg-emerald-600 rounded-xl text-white shadow-lg">
                     <Package size={16} />
                 </div>
                 <div>
-                    <h3 className="text-lg font-black text-white tracking-tight italic uppercase">{t('charts.mission_volume')}</h3>
+                    <h3 className="text-lg font-black text-foreground tracking-tight italic uppercase">{t('charts.mission_volume')}</h3>
                     <p className="text-emerald-400 text-base font-bold font-bold uppercase tracking-[0.2em]">{t('charts.throughput_trend')}</p>
                 </div>
             </div>
@@ -90,14 +90,14 @@ export function PerformanceCharts({ data }: { data: PerformanceData[] }) {
 
       {/* On-Time Efficiency */}
       <PremiumCard className="bg-white border-none shadow-[0_30_100px_rgba(0,0,0,0.1)] p-0 overflow-hidden rounded-br-[5rem] rounded-tl-[3rem]">
-        <div className="p-8 border-b border-slate-50 bg-slate-950 relative overflow-hidden flex items-center justify-between">
+        <div className="p-8 border-b border-slate-50 bg-background relative overflow-hidden flex items-center justify-between">
             <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-transparent pointer-events-none" />
             <div className="flex items-center gap-3 relative z-10">
                 <div className="p-2 bg-blue-600 rounded-xl text-white shadow-lg">
                     <CheckCircle2 size={16} />
                 </div>
                 <div>
-                    <h3 className="text-lg font-black text-white tracking-tight italic uppercase">{t('charts.reliability_index')}</h3>
+                    <h3 className="text-lg font-black text-foreground tracking-tight italic uppercase">{t('charts.reliability_index')}</h3>
                     <p className="text-blue-400 text-base font-bold font-bold uppercase tracking-[0.2em]">{t('charts.on_time_efficiency')}</p>
                 </div>
             </div>

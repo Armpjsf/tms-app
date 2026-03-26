@@ -118,7 +118,7 @@ export function AiSuggestionCard({ jobData, onSelect }: AiSuggestionCardProps) {
               variant="ghost" 
               size="sm" 
               onClick={handleSearch} 
-              className="text-gray-400 hover:text-white text-lg font-bold"
+              className="text-gray-400 hover:text-foreground font-bold"
             >
               รีเฟรช
             </Button>
@@ -137,7 +137,7 @@ export function AiSuggestionCard({ jobData, onSelect }: AiSuggestionCardProps) {
                     {/* Rank Badge */}
                     <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-lg ${
                       index === 0 ? 'bg-amber-500/20 text-amber-400 ring-2 ring-amber-500/30' :
-                      index === 1 ? 'bg-slate-400/20 text-slate-300' :
+                      index === 1 ? 'bg-slate-400/20 text-muted-foreground' :
                       'bg-orange-700/20 text-orange-400'
                     }`}>
                       {index === 0 ? <Star className="w-5 h-5" /> : `#${index + 1}`}
@@ -191,7 +191,7 @@ export function AiSuggestionCard({ jobData, onSelect }: AiSuggestionCardProps) {
                   <Button
                     type="button"
                     size="sm"
-                    className="w-full bg-white/10 hover:bg-white/20 text-white font-bold text-lg font-bold"
+                    className="w-full bg-muted/80 hover:bg-white/20 text-foreground font-bold text-lg font-bold"
                     onClick={(e) => {
                       e.stopPropagation()
                       onSelect(driver)

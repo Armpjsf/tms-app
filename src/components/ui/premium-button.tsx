@@ -24,10 +24,10 @@ export function PremiumButton({
   
   const variants = {
     primary: "bg-primary text-white shadow-lg shadow-primary/25 hover:brightness-110",
-    secondary: "bg-white/5 text-slate-100 border border-white/10 shadow-lg shadow-black/20 hover:bg-white/10",
-    outline: "bg-transparent border-2 border-white/10 text-slate-400 hover:border-primary/50 hover:text-primary hover:bg-primary/5",
-    ghost: "bg-transparent text-slate-500 hover:bg-white/5 hover:text-slate-200",
-    danger: "bg-rose-500 text-white shadow-lg shadow-rose-500/25 hover:bg-rose-600",
+    secondary: "bg-secondary text-secondary-foreground border border-border shadow-lg shadow-lg hover:brightness-110",
+    outline: "bg-transparent border-2 border-border text-muted-foreground hover:border-primary hover:text-primary hover:bg-primary/5",
+    ghost: "bg-transparent text-muted-foreground hover:bg-muted hover:text-foreground",
+    danger: "bg-accent text-white shadow-lg shadow-accent/25 hover:brightness-110",
   }
 
   const sizes = {

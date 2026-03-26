@@ -183,13 +183,13 @@ export default function DriverPaymentHistory() {
       {/* Header */}
       <div className="flex justify-between items-end mb-10">
         <div>
-          <h1 className="text-4xl font-black text-slate-100 flex items-center gap-4 tracking-tight">
+          <h1 className="text-4xl font-black text-muted-foreground flex items-center gap-4 tracking-tight">
             <span className="p-3 bg-emerald-500/10 rounded-2xl border border-emerald-500/20 shadow-[0_0_20px_rgba(16,185,129,0.1)]">
                 <Wallet className="text-emerald-400 w-8 h-8" />
             </span>
             ประวัติการจ่ายเงินคนขับ
           </h1>
-          <div className="text-xl font-bold text-slate-500 mt-3 uppercase tracking-widest flex items-center gap-2">
+          <div className="text-xl font-bold text-muted-foreground mt-3 uppercase tracking-widest flex items-center gap-2">
               <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
               รายการใบสรุปจ่ายที่สร้างแล้วทั้งหมด
           </div>
@@ -197,32 +197,32 @@ export default function DriverPaymentHistory() {
         <PremiumButton 
             variant="outline" 
             onClick={() => router.back()}
-            className="rounded-2xl border-white/5 hover:bg-white/5"
+            className="rounded-2xl border-border/5 hover:bg-muted/50"
         >
             <ArrowLeft className="w-4 h-4 mr-2" /> ย้อนกลับ
         </PremiumButton>
       </div>
 
       {/* Filters */}
-      <PremiumCard dark className="mb-8 border-white/5">
+      <PremiumCard dark className="mb-8 border-border/5">
         <div className="p-6">
             <div className="flex flex-col md:flex-row gap-6">
                 <div className="relative flex-1 group">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 group-focus-within:text-emerald-400 transition-colors" />
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground group-focus-within:text-emerald-400 transition-colors" />
                     <input 
                         type="text" 
                         placeholder="ค้นหาเลขที่เอกสาร หรือ ชื่อคนขับ..." 
-                        className="w-full h-14 pl-12 pr-6 rounded-2xl bg-white/10 border border-white/10 text-slate-100 font-black placeholder:text-slate-500 focus:outline-none focus:border-emerald-500/50 focus:ring-4 focus:ring-emerald-500/10 transition-all shadow-inner"
+                        className="w-full h-14 pl-12 pr-6 rounded-2xl bg-muted/80 border border-border/10 text-muted-foreground font-black placeholder:text-muted-foreground focus:outline-none focus:border-emerald-500/50 focus:ring-4 focus:ring-emerald-500/10 transition-all shadow-inner"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
                 </div>
                 <div className="w-full md:w-48">
                     <Select value={statusFilter} onValueChange={setStatusFilter}>
-                        <SelectTrigger className="h-14 bg-white/10 border-white/10 text-white font-black rounded-2xl px-6">
+                        <SelectTrigger className="h-14 bg-muted/80 border-border/10 text-foreground font-black rounded-2xl px-6">
                             <SelectValue placeholder="สถานะ" />
                         </SelectTrigger>
-                        <SelectContent className="bg-slate-900 border-white/10 text-white font-black">
+                        <SelectContent className="bg-card border-border/10 text-foreground font-black">
                             <SelectItem value="all" className="hover:bg-emerald-500/20 focus:bg-emerald-500/20 uppercase tracking-widest text-[10px]">ทั้งหมด</SelectItem>
                             <SelectItem value="Pending" className="hover:bg-emerald-500/20 focus:bg-emerald-500/20 uppercase tracking-widest text-[10px]">รอดำเนินการ</SelectItem>
                             <SelectItem value="Paid" className="hover:bg-emerald-500/20 focus:bg-emerald-500/20 uppercase tracking-widest text-[10px]">ชำระแล้ว</SelectItem>
@@ -235,7 +235,7 @@ export default function DriverPaymentHistory() {
                             type="date"
                             value={dateFrom}
                             onChange={(e) => setDateFrom(e.target.value)}
-                            className="h-14 bg-white/10 border-white/10 text-white font-black rounded-2xl px-6 focus:bg-white/20 transition-all"
+                            className="h-14 bg-muted/80 border-border/10 text-foreground font-black rounded-2xl px-6 focus:bg-white/20 transition-all"
                         />
                     </div>
                     <div className="space-y-1">
@@ -243,7 +243,7 @@ export default function DriverPaymentHistory() {
                             type="date"
                             value={dateTo}
                             onChange={(e) => setDateTo(e.target.value)}
-                            className="h-14 bg-white/10 border-white/10 text-white font-black rounded-2xl px-6 focus:bg-white/20 transition-all"
+                            className="h-14 bg-muted/80 border-border/10 text-foreground font-black rounded-2xl px-6 focus:bg-white/20 transition-all"
                         />
                     </div>
                 </div>
@@ -252,8 +252,8 @@ export default function DriverPaymentHistory() {
       </PremiumCard>
 
       {/* Table */}
-      <PremiumCard dark className="border-white/5 overflow-hidden">
-        <PremiumCardHeader className="bg-white/5 border-b border-white/5 px-8 py-6">
+      <PremiumCard dark className="border-border/5 overflow-hidden">
+        <PremiumCardHeader className="bg-muted/50 border-b border-border/5 px-8 py-6">
             <PremiumCardTitle dark className="text-lg font-black uppercase tracking-widest flex items-center gap-3">
                 <div className="w-1.5 h-6 bg-emerald-500 rounded-full" />
                 รายการใบสรุปจ่าย ({filteredPayments.length})
@@ -262,44 +262,44 @@ export default function DriverPaymentHistory() {
         <div className="p-0">
           <div className="overflow-x-auto">
             <Table>
-              <TableHeader className="bg-white/5">
-                <TableRow className="border-white/5 hover:bg-transparent">
-                  <TableHead className="py-6 px-8 text-slate-200 font-black uppercase tracking-widest text-base font-bold">เลขที่เอกสาร</TableHead>
-                  <TableHead className="py-6 px-4 text-slate-300 font-black uppercase tracking-widest text-base font-bold">วันที่ทำรายการ</TableHead>
-                  <TableHead className="py-6 px-4 text-slate-300 font-black uppercase tracking-widest text-base font-bold">คนขับ</TableHead>
-                  <TableHead className="py-6 px-4 text-right text-slate-300 font-black uppercase tracking-widest text-base font-bold">ยอดเงิน</TableHead>
-                  <TableHead className="py-6 px-4 text-center text-slate-300 font-black uppercase tracking-widest text-base font-bold">สถานะ</TableHead>
-                  <TableHead className="py-6 px-8 text-right text-slate-300 font-black uppercase tracking-widest text-base font-bold">จัดการ</TableHead>
+              <TableHeader className="bg-muted/50">
+                <TableRow className="border-border/5 hover:bg-transparent">
+                  <TableHead className="py-6 px-8 text-muted-foreground font-black uppercase tracking-widest text-base font-bold">เลขที่เอกสาร</TableHead>
+                  <TableHead className="py-6 px-4 text-muted-foreground font-black uppercase tracking-widest text-base font-bold">วันที่ทำรายการ</TableHead>
+                  <TableHead className="py-6 px-4 text-muted-foreground font-black uppercase tracking-widest text-base font-bold">คนขับ</TableHead>
+                  <TableHead className="py-6 px-4 text-right text-muted-foreground font-black uppercase tracking-widest text-base font-bold">ยอดเงิน</TableHead>
+                  <TableHead className="py-6 px-4 text-center text-muted-foreground font-black uppercase tracking-widest text-base font-bold">สถานะ</TableHead>
+                  <TableHead className="py-6 px-8 text-right text-muted-foreground font-black uppercase tracking-widest text-base font-bold">จัดการ</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {loading ? (
-                    <TableRow className="border-white/5">
+                    <TableRow className="border-border/5">
                         <TableCell colSpan={6} className="text-center py-12">
-                            <div className="flex flex-col items-center justify-center gap-3 text-slate-500">
+                            <div className="flex flex-col items-center justify-center gap-3 text-muted-foreground">
                                 <Loader2 className="w-8 h-8 animate-spin text-emerald-500" />
                                 <span className="font-bold uppercase tracking-tighter text-lg font-bold">กำลังโหลดข้อมูล...</span>
                             </div>
                         </TableCell>
                     </TableRow>
                 ) : filteredPayments.length === 0 ? (
-                    <TableRow className="border-white/5">
-                        <TableCell colSpan={6} className="text-center py-12 text-slate-500 font-bold uppercase tracking-widest text-lg font-bold">ไม่พบข้อมูลใบสรุปจ่าย</TableCell>
+                    <TableRow className="border-border/5">
+                        <TableCell colSpan={6} className="text-center py-12 text-muted-foreground font-bold uppercase tracking-widest text-lg font-bold">ไม่พบข้อมูลใบสรุปจ่าย</TableCell>
                     </TableRow>
                 ) : (
                     filteredPayments.map((item) => (
-                    <TableRow key={item.Driver_Payment_ID} className="border-white/5 hover:bg-white/5 transition-colors group">
+                    <TableRow key={item.Driver_Payment_ID} className="border-border/5 hover:bg-muted/50 transition-colors group">
                         <TableCell className="py-5 px-8 font-black text-emerald-400 font-mono tracking-wider">{item.Driver_Payment_ID}</TableCell>
                         <TableCell className="py-5 px-4">
-                             <div className="flex items-center gap-2 text-slate-400 font-bold">
+                             <div className="flex items-center gap-2 text-muted-foreground font-bold">
                                 <Calendar className="w-3.5 h-3.5" />
                                 {new Date(item.Created_At).toLocaleDateString('th-TH')}
                              </div>
                         </TableCell>
-                        <TableCell className="py-5 px-4 text-slate-100 font-black tracking-tight">{item.Driver_Name}</TableCell>
+                        <TableCell className="py-5 px-4 text-muted-foreground font-black tracking-tight">{item.Driver_Name}</TableCell>
                         <TableCell className="py-5 px-4 text-right">
-                            <span className="text-slate-100 font-black text-lg tracking-tighter">
-                                <span className="text-slate-500 text-lg font-bold mr-1">฿</span>
+                            <span className="text-muted-foreground font-black text-lg tracking-tighter">
+                                <span className="text-muted-foreground text-lg font-bold mr-1">฿</span>
                                 {item.Total_Amount.toLocaleString()}
                             </span>
                         </TableCell>
@@ -335,7 +335,7 @@ export default function DriverPaymentHistory() {
                                 <PremiumButton 
                                     size="sm" 
                                     variant="ghost" 
-                                    className="text-slate-400 hover:text-white hover:bg-white/5 rounded-xl" 
+                                    className="text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-xl" 
                                     title="Export SCB"
                                     onClick={() => handleExportSCB(item.Driver_Payment_ID)}
                                     disabled={processingId === item.Driver_Payment_ID}
@@ -345,7 +345,7 @@ export default function DriverPaymentHistory() {
                                 <PremiumButton 
                                     size="sm" 
                                     variant="ghost" 
-                                    className="text-slate-400 hover:text-white hover:bg-white/5 rounded-xl" 
+                                    className="text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-xl" 
                                     title="พิมพ์"
                                     onClick={() => handlePrint(item.Driver_Payment_ID)}
                                 >

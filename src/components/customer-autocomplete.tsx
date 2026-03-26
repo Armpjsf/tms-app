@@ -91,18 +91,18 @@ export function CustomerAutocomplete({
           onChange={handleInputChange}
           onFocus={handleInputFocus}
           placeholder="พิมพ์เพื่อค้นหาลูกค้า..."
-          className="pr-10 bg-gray-100 border-gray-200 text-gray-900 font-black placeholder:text-gray-700 placeholder:font-bold"
+          className="pr-10 bg-muted border-border text-foreground font-black placeholder:text-muted-foreground placeholder:font-bold"
         />
-        <div className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-700">
+        <div className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
              {/* Icon or toggle */}
              <ChevronsUpDown className="w-4 h-4 opacity-50" />
         </div>
       </div>
 
       {open && (
-        <div className="absolute z-50 w-full mt-1 bg-gray-100 border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
+        <div className="absolute z-50 w-full mt-1 bg-popover border border-border rounded-md shadow-lg max-h-60 overflow-y-auto">
           {filteredCustomers.length === 0 ? (
-            <div className="p-2 text-xl text-gray-700 font-bold text-center">
+            <div className="p-2 text-xl text-muted-foreground font-bold text-center">
                ไม่พบลูกค้าที่ตรงกัน (ใช้ชื่อนี้เป็นลูกค้าใหม่)
             </div>
           ) : (
@@ -111,8 +111,8 @@ export function CustomerAutocomplete({
                 <li
                   key={`${customer.Customer_Name}-${index}`}
                   className={cn(
-                    "px-3 py-2 text-xl text-gray-800 cursor-pointer hover:bg-slate-700 flex items-center justify-between",
-                    value === customer.Customer_Name && "bg-slate-700 font-medium text-white"
+                    "px-3 py-2 text-xl text-foreground cursor-pointer hover:bg-muted flex items-center justify-between",
+                    value === customer.Customer_Name && "bg-muted font-medium text-foreground"
                   )}
                   onClick={() => handleSelect(customer)}
                 >

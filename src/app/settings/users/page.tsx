@@ -177,7 +177,7 @@ export default function UserSettingsPage() {
         <DashboardLayout>
             <div className="space-y-12 pb-20 p-4 lg:p-10">
                 {/* Tactical Registry Header */}
-                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-10 bg-[#0a0518]/60 backdrop-blur-3xl p-10 rounded-br-[6rem] rounded-tl-[3rem] border border-white/5 shadow-2xl relative overflow-hidden group">
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-10 bg-background/60 backdrop-blur-3xl p-10 rounded-br-[6rem] rounded-tl-[3rem] border border-border/5 shadow-2xl relative overflow-hidden group">
                     <div className="absolute top-0 right-0 w-80 h-80 bg-primary/10 blur-[120px] rounded-full -mr-40 -mt-40 pointer-events-none" />
                     
                     <div className="relative z-10 space-y-8">
@@ -186,7 +186,7 @@ export default function UserSettingsPage() {
                                 <Users size={42} strokeWidth={2.5} />
                             </div>
                             <div>
-                                <h1 className="text-5xl font-black text-white tracking-widest uppercase leading-none italic premium-text-gradient">
+                                <h1 className="text-5xl font-black text-foreground tracking-widest uppercase leading-none italic premium-text-gradient">
                                     {t('settings_pages.users.title')}
                                 </h1>
                                 <p className="text-base font-bold font-black text-primary uppercase tracking-[0.2em] mt-2 opacity-80 italic">{t('settings_pages.users.subtitle')}</p>
@@ -197,7 +197,7 @@ export default function UserSettingsPage() {
                     <div className="flex flex-wrap gap-4 relative z-10">
                         <ExcelImport 
                             trigger={
-                                <PremiumButton variant="outline" className="h-14 px-8 rounded-2xl border-white/10 hover:border-primary/50 text-slate-400 gap-3">
+                                <PremiumButton variant="outline" className="h-14 px-8 rounded-2xl border-border/10 hover:border-primary/50 text-muted-foreground gap-3">
                                     <FileSpreadsheet size={20} /> {t('settings_pages.users.bulk_import')}
                                 </PremiumButton>
                             }
@@ -206,44 +206,44 @@ export default function UserSettingsPage() {
                             templateData={[{ Username: "user01", Name: "นาย สมชาย ใจดี", Branch: "สำนักงานใหญ่", Role: "Staff", Password: "password123", Active_Status: "Active", Customer_ID: "" }]}
                             templateFilename="template_users.xlsx"
                         />
-                        <PremiumButton onClick={() => handleOpenDialog()} className="h-14 px-8 rounded-2xl gap-3 shadow-[0_15px_30px_rgba(255,30,133,0.3)] bg-primary text-white border-0">
+                        <PremiumButton onClick={() => handleOpenDialog()} className="h-14 px-8 rounded-2xl gap-3 shadow-[0_15px_30px_rgba(255,30,133,0.3)] bg-primary text-foreground border-0">
                             <Plus size={20} /> {t('settings_pages.users.add_user')}
                         </PremiumButton>
                     </div>
                 </div>
 
                 {/* Filter Matrix */}
-                <div className="bg-[#0a0518]/40 p-8 rounded-[3rem] border border-white/5 shadow-2xl relative overflow-hidden backdrop-blur-xl">
+                <div className="bg-background/40 p-8 rounded-[3rem] border border-border/5 shadow-2xl relative overflow-hidden backdrop-blur-xl">
                     <div className="relative group w-full">
-                        <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-600 group-focus-within:text-primary transition-colors" size={24} />
+                        <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors" size={24} />
                         <Input 
                             autoComplete="off"
                             placeholder={t('settings_pages.users.search_placeholder')}
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full h-18 bg-[#0a0518] border-white/5 rounded-3xl pl-16 pr-8 text-xl font-black uppercase tracking-[0.2em] focus:border-primary/50 transition-all text-white placeholder:text-slate-700 italic shadow-inner"
+                            className="w-full h-18 bg-background border-border/5 rounded-3xl pl-16 pr-8 text-xl font-black uppercase tracking-[0.2em] focus:border-primary/50 transition-all text-foreground placeholder:text-muted-foreground italic shadow-inner"
                         />
                     </div>
                 </div>
 
                 {/* Registry Table */}
-                <PremiumCard className="bg-[#0a0518]/40 border-2 border-white/5 shadow-3xl rounded-[4rem] overflow-hidden group/registry">
-                    <div className="p-10 border-b border-white/5 bg-black/40 flex items-center justify-between relative overflow-hidden">
+                <PremiumCard className="bg-background/40 border-2 border-border/5 shadow-3xl rounded-[4rem] overflow-hidden group/registry">
+                    <div className="p-10 border-b border-border/5 bg-black/40 flex items-center justify-between relative overflow-hidden">
                         <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 blur-[80px] pointer-events-none" />
                         <div className="flex items-center gap-5 relative z-10">
                             <Fingerprint size={24} className="text-primary animate-pulse" />
-                            <h2 className="text-2xl font-black text-white tracking-widest uppercase italic">{t('settings_pages.users.registry_title')}</h2>
+                            <h2 className="text-2xl font-black text-foreground tracking-widest uppercase italic">{t('settings_pages.users.registry_title')}</h2>
                         </div>
-                        <div className="flex items-center gap-3 px-5 py-2 bg-white/5 rounded-full border border-white/10 relative z-10">
+                        <div className="flex items-center gap-3 px-5 py-2 bg-muted/50 rounded-full border border-border/10 relative z-10">
                             <Activity size={14} className="text-primary" />
-                            <span className="text-base font-bold font-black text-slate-500 uppercase tracking-widest">REALTIME_FLOW: ACTIVE</span>
+                            <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest">REALTIME_FLOW: ACTIVE</span>
                         </div>
                     </div>
 
                     <div className="relative w-full overflow-auto">
                         <table className="w-full text-xl text-left border-collapse">
                             <thead>
-                                <tr className="bg-black/20 text-[12px] font-black uppercase tracking-[0.1em] text-slate-500 border-b border-white/5">
+                                <tr className="bg-black/20 text-[12px] font-black uppercase tracking-[0.1em] text-muted-foreground border-b border-border/5">
                                     <th className="px-10 py-8">{t('settings_pages.users.table.vector_id')}</th>
                                     <th className="px-10 py-8">{t('settings_pages.users.table.identity')}</th>
                                     <th className="px-10 py-8">{t('settings_pages.users.table.hub')}</th>
@@ -256,10 +256,10 @@ export default function UserSettingsPage() {
                                 {loading ? (
                                     <tr><td colSpan={6} className="text-center py-20 opacity-30"><Loader2 className="w-8 h-8 animate-spin mx-auto text-primary" /></td></tr>
                                 ) : filteredUsers.length === 0 ? (
-                                    <tr><td colSpan={6} className="text-center py-20 opacity-30 italic font-black uppercase tracking-widest text-white">Registry Void detected</td></tr>
+                                    <tr><td colSpan={6} className="text-center py-20 opacity-30 italic font-black uppercase tracking-widest text-foreground">Registry Void detected</td></tr>
                                 ) : (
                                     filteredUsers.map((user) => (
-                                        <tr key={user.Username} className="group/row hover:bg-white/[0.03] transition-all duration-300">
+                                        <tr key={user.Username} className="group/row hover:bg-muted/40 transition-all duration-300">
                                             <td className="px-10 py-8">
                                                 <div className="flex flex-col">
                                                     <span className="text-primary font-black tracking-widest uppercase italic group-hover/row:scale-110 origin-left transition-transform inline-block">
@@ -272,8 +272,8 @@ export default function UserSettingsPage() {
                                                     )}
                                                 </div>
                                             </td>
-                                            <td className="px-10 py-8 font-black text-white uppercase tracking-tight italic">{user.Name}</td>
-                                            <td className="px-10 py-8 text-slate-500 font-black uppercase tracking-widest text-lg font-bold">
+                                            <td className="px-10 py-8 font-black text-foreground uppercase tracking-tight italic">{user.Name}</td>
+                                            <td className="px-10 py-8 text-muted-foreground font-black uppercase tracking-widest text-lg font-bold">
                                                 {user.Branch_ID || "GLOBAL_NODE"}
                                             </td>
                                             <td className="px-10 py-8">
@@ -297,7 +297,7 @@ export default function UserSettingsPage() {
                                                         variant="outline" 
                                                         size="icon" 
                                                         onClick={() => handleOpenDialog(user)} 
-                                                        className="h-12 w-12 rounded-2xl bg-white/5 border-white/5 hover:bg-primary text-white disabled:opacity-30 transition-all shadow-lg"
+                                                        className="h-12 w-12 rounded-2xl bg-muted/50 border-border/5 hover:bg-primary text-foreground disabled:opacity-30 transition-all shadow-lg"
                                                         disabled={(user.Role === "Super Admin" || user.Role === "Admin") && currentRoleId !== 1}
                                                      >
                                                          <Edit size={18} />
@@ -306,7 +306,7 @@ export default function UserSettingsPage() {
                                                         variant="outline" 
                                                         size="icon" 
                                                         onClick={() => handleDelete(user.Username)} 
-                                                        className="h-12 w-12 rounded-2xl bg-white/5 border-white/5 hover:bg-rose-600 text-white disabled:opacity-30 transition-all shadow-lg"
+                                                        className="h-12 w-12 rounded-2xl bg-muted/50 border-border/5 hover:bg-rose-600 text-foreground disabled:opacity-30 transition-all shadow-lg"
                                                         disabled={(user.Role === "Super Admin" || user.Role === "Admin") && currentRoleId !== 1}
                                                      >
                                                          <Trash2 size={18} />
@@ -323,10 +323,10 @@ export default function UserSettingsPage() {
             </div>
 
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                <DialogContent className="bg-[#0a0518] border-white/10 text-white max-w-[95vw] sm:max-w-3xl max-h-[95vh] overflow-hidden flex flex-col p-0 shadow-[0_40px_100px_rgba(0,0,0,1)] rounded-3xl sm:rounded-[2.5rem] backdrop-blur-3xl relative z-[100]">
+                <DialogContent className="bg-background border-border/10 text-foreground max-w-[95vw] sm:max-w-3xl max-h-[95vh] overflow-hidden flex flex-col p-0 shadow-[0_40px_100px_rgba(0,0,0,1)] rounded-3xl sm:rounded-[2.5rem] backdrop-blur-3xl relative z-[100]">
                     <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary via-indigo-500/50 to-accent" />
                     
-                    <DialogHeader className="p-8 sm:p-12 border-b border-white/5 bg-black/40">
+                    <DialogHeader className="p-8 sm:p-12 border-b border-border/5 bg-black/40">
                         <DialogTitle className="flex items-center gap-4 text-2xl sm:text-3xl font-black italic uppercase tracking-widest premium-text-gradient">
                             <Shield className="w-8 h-8 text-primary animate-pulse" strokeWidth={2.5} />
                             {editingUser ? t('settings_pages.users.dialog.title_edit') : t('settings_pages.users.dialog.title_add')}
@@ -336,47 +336,47 @@ export default function UserSettingsPage() {
                     <div className="flex-1 overflow-y-auto p-8 sm:p-12 space-y-10 custom-scrollbar">
                         <div className="grid grid-cols-2 gap-10">
                              <div className="space-y-3">
-                                <Label className="text-base font-bold font-black text-slate-500 uppercase tracking-[0.4em] ml-4">{t('settings_pages.users.dialog.username')}</Label>
+                                <Label className="text-base font-bold font-black text-muted-foreground uppercase tracking-[0.4em] ml-4">{t('settings_pages.users.dialog.username')}</Label>
                                 <Input 
                                     value={formData.Username} 
                                     onChange={e => setFormData({...formData, Username: e.target.value})} 
                                     disabled={!!editingUser}
-                                    className="h-16 rounded-2xl bg-black border-white/5 text-white disabled:opacity-50 font-black italic tracking-widest pl-6 shadow-inner" 
+                                    className="h-16 rounded-2xl bg-black border-border/5 text-foreground disabled:opacity-50 font-black italic tracking-widest pl-6 shadow-inner" 
                                 />
                             </div>
                             <div className="space-y-3">
-                                <Label className="text-base font-bold font-black text-slate-500 uppercase tracking-[0.4em] ml-4">{t('settings_pages.users.dialog.password')}</Label>
+                                <Label className="text-base font-bold font-black text-muted-foreground uppercase tracking-[0.4em] ml-4">{t('settings_pages.users.dialog.password')}</Label>
                                 <Input 
                                     type="password"
                                     value={formData.Password || ""} 
                                     onChange={e => setFormData({...formData, Password: e.target.value})} 
-                                    className="h-16 rounded-2xl bg-black border-white/5 text-white font-black italic tracking-widest pl-6 shadow-inner" 
+                                    className="h-16 rounded-2xl bg-black border-border/5 text-foreground font-black italic tracking-widest pl-6 shadow-inner" 
                                     placeholder={editingUser ? t('settings_pages.users.dialog.password_placeholder_edit') : t('settings_pages.users.dialog.password_placeholder_add')}
                                 />
                             </div>
                         </div>
 
                         <div className="space-y-3">
-                            <Label className="text-base font-bold font-black text-slate-500 uppercase tracking-[0.4em] ml-4">{t('settings_pages.users.dialog.full_name')}</Label>
+                            <Label className="text-base font-bold font-black text-muted-foreground uppercase tracking-[0.4em] ml-4">{t('settings_pages.users.dialog.full_name')}</Label>
                             <Input 
                                 value={formData.Name} 
                                 onChange={e => setFormData({...formData, Name: e.target.value})} 
-                                className="h-16 rounded-2xl bg-black border-white/5 text-white font-black italic tracking-widest pl-6 shadow-inner" 
+                                className="h-16 rounded-2xl bg-black border-border/5 text-foreground font-black italic tracking-widest pl-6 shadow-inner" 
                             />
                         </div>
 
                         <div className="grid grid-cols-2 gap-10">
                             <div className="space-y-3">
-                                <Label className="text-base font-bold font-black text-slate-500 uppercase tracking-[0.1em] ml-4">{t('settings_pages.users.dialog.branch')}</Label>
+                                <Label className="text-base font-bold font-black text-muted-foreground uppercase tracking-[0.1em] ml-4">{t('settings_pages.users.dialog.branch')}</Label>
                                 {isAdmin ? (
                                     <Select 
                                         value={formData.Branch_ID || ""} 
                                         onValueChange={v => setFormData({...formData, Branch_ID: v})}
                                     >
-                                        <SelectTrigger className="h-16 rounded-2xl bg-black border-white/5 text-white font-black uppercase italic tracking-widest shadow-inner">
+                                        <SelectTrigger className="h-16 rounded-2xl bg-black border-border/5 text-foreground font-black uppercase italic tracking-widest shadow-inner">
                                             <SelectValue placeholder={t('settings_pages.users.dialog.select_hub')} />
                                         </SelectTrigger>
-                                        <SelectContent className="bg-[#0a0518] border-white/10 text-white">
+                                        <SelectContent className="bg-background border-border/10 text-foreground">
                                             {branches.map(b => (
                                                 <SelectItem key={b.Branch_ID} value={b.Branch_ID} className="font-black italic uppercase tracking-widest">
                                                     {b.Branch_Name}
@@ -388,20 +388,20 @@ export default function UserSettingsPage() {
                                     <Input 
                                         value={formData.Branch_ID || ""} 
                                         onChange={e => setFormData({...formData, Branch_ID: e.target.value})}
-                                        className="h-16 rounded-2xl bg-black border-white/5 text-white font-black italic tracking-widest pl-6 shadow-inner" 
+                                        className="h-16 rounded-2xl bg-black border-border/5 text-foreground font-black italic tracking-widest pl-6 shadow-inner" 
                                     />
                                 )}
                             </div>
                             <div className="space-y-3">
-                                <Label className="text-base font-bold font-black text-slate-500 uppercase tracking-[0.1em] ml-4">{t('settings_pages.users.dialog.role')}</Label>
+                                <Label className="text-base font-bold font-black text-muted-foreground uppercase tracking-[0.1em] ml-4">{t('settings_pages.users.dialog.role')}</Label>
                                 <Select 
                                     value={formData.Role || ""} 
                                     onValueChange={handleRoleChange}
                                 >
-                                    <SelectTrigger className="h-16 rounded-2xl bg-black border-white/5 text-white font-black uppercase italic tracking-widest shadow-inner">
+                                    <SelectTrigger className="h-16 rounded-2xl bg-black border-border/5 text-foreground font-black uppercase italic tracking-widest shadow-inner">
                                         <SelectValue placeholder={t('settings_pages.users.dialog.select_role')} />
                                     </SelectTrigger>
-                                    <SelectContent className="bg-[#0a0518] border-white/10 text-white">
+                                    <SelectContent className="bg-background border-border/10 text-foreground">
                                         {STANDARD_ROLES.map(role => (
                                             <SelectItem key={role} value={role} className="font-black italic uppercase tracking-widest">
                                                 {role}
@@ -412,34 +412,34 @@ export default function UserSettingsPage() {
                             </div>
                         </div>
 
-                        <Separator className="bg-white/5" />
+                        <Separator className="bg-muted/50" />
 
                         <div className="space-y-6">
                             <div className="flex justify-between items-center">
                                 <Label className="text-base font-bold font-black text-primary uppercase tracking-[0.2em] italic">Access Permissions Matrix</Label>
                                 <div className="flex items-center gap-2">
                                     <Zap size={12} className="text-primary" />
-                                    <span className="text-base font-bold font-black text-slate-600 uppercase tracking-widest">Personalized Node Access</span>
+                                    <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest">Personalized Node Access</span>
                                 </div>
                             </div>
                             
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 {SYSTEM_PERMISSIONS.map((perm) => (
-                                    <div key={perm.id} className="flex items-start space-x-4 p-5 rounded-3xl bg-black/40 border-2 border-white/5 hover:border-primary/30 transition-all group/perm">
+                                    <div key={perm.id} className="flex items-start space-x-4 p-5 rounded-3xl bg-black/40 border-2 border-border/5 hover:border-primary/30 transition-all group/perm">
                                         <Checkbox 
                                             id={`perm-${perm.id}`}
                                             checked={formData.Permissions?.[perm.id] || false}
                                             onCheckedChange={(checked) => toggleGranularPermission(perm.id, !!checked)}
-                                            className="mt-1 border-white/20 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                                            className="mt-1 border-border/20 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
                                         />
                                         <div className="grid gap-2 leading-none cursor-pointer" onClick={() => toggleGranularPermission(perm.id, !formData.Permissions?.[perm.id])}>
                                             <label
                                                 htmlFor={`perm-${perm.id}`}
-                                                className="text-lg font-bold font-black uppercase tracking-widest text-slate-300 group-hover/perm:text-white transition-colors"
+                                                className="text-lg font-bold font-black uppercase tracking-widest text-muted-foreground group-hover/perm:text-foreground transition-colors"
                                             >
                                                 {perm.label}
                                             </label>
-                                            <p className="text-base font-bold font-bold text-slate-600 uppercase group-hover/perm:text-slate-500 transition-colors italic">
+                                            <p className="text-base font-bold font-bold text-muted-foreground uppercase group-hover/perm:text-muted-foreground transition-colors italic">
                                                 {perm.desc}
                                             </p>
                                         </div>
@@ -458,11 +458,11 @@ export default function UserSettingsPage() {
                                 value={formData.Customer_ID || "none"} 
                                 onValueChange={v => setFormData({...formData, Customer_ID: v === "none" ? null : v})}
                             >
-                                <SelectTrigger className="h-16 rounded-2xl bg-black/50 border-white/5 text-white font-black uppercase italic tracking-widest shadow-inner">
+                                <SelectTrigger className="h-16 rounded-2xl bg-black/50 border-border/5 text-foreground font-black uppercase italic tracking-widest shadow-inner">
                                     <SelectValue placeholder="SYNERGY_ENTITY_LINK" />
                                 </SelectTrigger>
-                                <SelectContent className="bg-[#0a0518] border-white/10 text-white">
-                                    <SelectItem value="none" className="font-black italic uppercase tracking-widest text-slate-500 underline">-- REMOVE_LINKAGE --</SelectItem>
+                                <SelectContent className="bg-background border-border/10 text-foreground">
+                                    <SelectItem value="none" className="font-black italic uppercase tracking-widest text-muted-foreground underline">-- REMOVE_LINKAGE --</SelectItem>
                                     {customers.map(c => (
                                         <SelectItem key={c.Customer_ID} value={c.Customer_ID} className="font-black italic uppercase tracking-widest">
                                             {c.Customer_Name}
@@ -473,15 +473,15 @@ export default function UserSettingsPage() {
                         </div>
 
                         <div className="space-y-3">
-                             <Label className="text-base font-bold font-black text-slate-500 uppercase tracking-[0.4em] ml-4">Deployment Status</Label>
+                             <Label className="text-base font-bold font-black text-muted-foreground uppercase tracking-[0.4em] ml-4">Deployment Status</Label>
                              <Select 
                                 value={formData.Active_Status} 
                                 onValueChange={v => setFormData({...formData, Active_Status: v})}
                             >
-                                <SelectTrigger className="h-16 rounded-2xl bg-black border-white/5 text-white font-black uppercase italic tracking-widest shadow-inner">
+                                <SelectTrigger className="h-16 rounded-2xl bg-black border-border/5 text-foreground font-black uppercase italic tracking-widest shadow-inner">
                                     <SelectValue />
                                 </SelectTrigger>
-                                <SelectContent className="bg-[#0a0518] border-white/10 text-white">
+                                <SelectContent className="bg-background border-border/10 text-foreground">
                                     <SelectItem value="Active" className="text-emerald-500 font-black italic uppercase tracking-widest hover:bg-emerald-500/10">NODE_ACTIVE</SelectItem>
                                     <SelectItem value="Inactive" className="text-rose-500 font-black italic uppercase tracking-widest hover:bg-rose-500/10">NODE_DEACTIVATED</SelectItem>
                                 </SelectContent>
@@ -489,9 +489,9 @@ export default function UserSettingsPage() {
                         </div>
                     </div>
  
-                    <DialogFooter className="p-8 sm:p-12 border-t border-white/5 bg-black/40 gap-4 sm:gap-6 flex-row shrink-0">
-                        <PremiumButton variant="outline" onClick={() => setIsDialogOpen(false)} className="flex-1 sm:flex-none h-14 sm:h-18 px-6 sm:px-10 rounded-[1.2rem] sm:rounded-[1.5rem] border-white/5 text-slate-500 hover:text-white uppercase tracking-widest text-base sm:text-lg font-bold font-black">{t('settings_pages.users.dialog.abort')}</PremiumButton>
-                        <PremiumButton onClick={handleSave} disabled={saving} className="flex-1 sm:flex-none h-14 sm:h-18 px-8 sm:px-12 rounded-[1.5rem] sm:rounded-[2rem] gap-3 sm:gap-4 shadow-[0_20px_50px_rgba(255,30,133,0.3)] sm:min-w-[200px] text-lg sm:text-xl tracking-[0.2em] bg-primary text-white border-0">
+                    <DialogFooter className="p-8 sm:p-12 border-t border-border/5 bg-black/40 gap-4 sm:gap-6 flex-row shrink-0">
+                        <PremiumButton variant="outline" onClick={() => setIsDialogOpen(false)} className="flex-1 sm:flex-none h-14 sm:h-18 px-6 sm:px-10 rounded-[1.2rem] sm:rounded-[1.5rem] border-border/5 text-muted-foreground hover:text-foreground uppercase tracking-widest text-base sm:text-lg font-bold font-black">{t('settings_pages.users.dialog.abort')}</PremiumButton>
+                        <PremiumButton onClick={handleSave} disabled={saving} className="flex-1 sm:flex-none h-14 sm:h-18 px-8 sm:px-12 rounded-[1.5rem] sm:rounded-[2rem] gap-3 sm:gap-4 shadow-[0_20px_50px_rgba(255,30,133,0.3)] sm:min-w-[200px] text-lg sm:text-xl tracking-[0.2em] bg-primary text-foreground border-0">
                             {saving ? <Loader2 className="w-5 h-5 sm:w-6 sm:h-6 animate-spin" /> : <ShieldCheck className="w-5 h-5 sm:w-6 sm:h-6" />}
                             {t('settings_pages.users.dialog.execute')}
                         </PremiumButton>

@@ -40,11 +40,11 @@ export function ChecksClient({ checks }: ChecksClientProps) {
     return (
         <div className="space-y-12 pb-20 p-4 lg:p-10">
             {/* Tactical Elite Header */}
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-10 bg-[#0a0518]/60 backdrop-blur-3xl p-10 rounded-br-[6rem] rounded-tl-[3rem] border border-white/5 shadow-2xl relative overflow-hidden group">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-10 bg-background/60 backdrop-blur-3xl p-10 rounded-br-[6rem] rounded-tl-[3rem] border border-border/5 shadow-2xl relative overflow-hidden group">
                 <div className="absolute top-0 right-0 w-80 h-80 bg-primary/10 blur-[120px] rounded-full -mr-40 -mt-40 pointer-events-none" />
                 
                 <div className="relative z-10 space-y-8">
-                    <Link href="/dashboard" className="inline-flex items-center gap-2 text-slate-500 hover:text-primary transition-all font-black uppercase tracking-[0.4em] text-base font-bold group/back italic">
+                    <Link href="/dashboard" className="inline-flex items-center gap-2 text-muted-foreground hover:text-primary transition-all font-black uppercase tracking-[0.4em] text-base font-bold group/back italic">
                         <ArrowLeft className="w-4 h-4 group-hover/back:-translate-x-1 transition-transform" /> 
                         {t('common.back')}
                     </Link>
@@ -53,7 +53,7 @@ export function ChecksClient({ checks }: ChecksClientProps) {
                             <Truck size={42} strokeWidth={2.5} />
                         </div>
                         <div>
-                            <h1 className="text-5xl font-black text-white tracking-widest uppercase leading-none italic premium-text-gradient">
+                            <h1 className="text-5xl font-black text-foreground tracking-widest uppercase leading-none italic premium-text-gradient">
                                 {t('navigation.checks')}
                             </h1>
                             <p className="text-base font-bold font-black text-primary uppercase tracking-[0.6em] mt-2 opacity-80 italic">{t('dashboard.subtitle')}</p>
@@ -62,9 +62,9 @@ export function ChecksClient({ checks }: ChecksClientProps) {
                 </div>
 
                 <div className="flex flex-col items-end gap-4 relative z-10">
-                    <div className="bg-white/5 border border-white/10 px-6 py-3 rounded-2xl flex items-center gap-3 backdrop-blur-md">
+                    <div className="bg-muted/50 border border-border/10 px-6 py-3 rounded-2xl flex items-center gap-3 backdrop-blur-md">
                         <div className="w-2 h-2 rounded-full bg-primary animate-pulse shadow-[0_0_10px_rgba(255,30,133,1)]" />
-                        <span className="text-base font-bold font-black text-slate-400 uppercase tracking-widest">{t('dashboard.system_integrity')}</span>
+                        <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest">{t('dashboard.system_integrity')}</span>
                     </div>
                     <div className="flex items-center gap-3 px-6 py-4 bg-primary/10 border border-primary/20 rounded-2xl">
                         <Activity className="text-primary" size={18} />
@@ -80,35 +80,35 @@ export function ChecksClient({ checks }: ChecksClientProps) {
                   { label: t('common.error'), value: "02", icon: Target, color: "rose" },
                   { label: t('navigation.fleet'), value: "86", icon: Truck, color: "blue" },
                 ].map((stat, i) => (
-                   <PremiumCard key={i} className="p-8 group hover:border-primary/40 transition-all duration-500 border-white/5 bg-[#0a0518]/40 backdrop-blur-xl">
+                   <PremiumCard key={i} className="p-8 group hover:border-primary/40 transition-all duration-500 border-border/5 bg-background/40 backdrop-blur-xl">
                        <div className="flex justify-between items-start mb-4">
-                          <span className="text-base font-bold font-black text-slate-500 uppercase tracking-widest">{stat.label}</span>
+                          <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest">{stat.label}</span>
                           <stat.icon className="text-primary opacity-20 group-hover:opacity-100 transition-opacity" size={20} />
                        </div>
-                       <p className="text-4xl font-black text-white italic tracking-tighter mb-2">{stat.value}</p>
+                       <p className="text-4xl font-black text-foreground italic tracking-tighter mb-2">{stat.value}</p>
                        <div className="h-1 w-12 bg-primary rounded-full shadow-lg shadow-primary/20" />
                    </PremiumCard>
                 ))}
             </div>
 
             {/* Registry Table */}
-            <PremiumCard className="bg-[#0a0518]/40 border-2 border-white/5 shadow-3xl rounded-[4rem] overflow-hidden group/table">
-                <div className="p-10 border-b border-white/5 bg-black/40 relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-8">
+            <PremiumCard className="bg-background/40 border-2 border-border/5 shadow-3xl rounded-[4rem] overflow-hidden group/table">
+                <div className="p-10 border-b border-border/5 bg-black/40 relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-8">
                     <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 blur-[80px] pointer-events-none" />
                     <div className="flex items-center gap-5 relative z-10">
-                        <div className="p-3 bg-white/5 rounded-2xl text-primary border border-white/10 shadow-inner group-hover/table:rotate-12 transition-transform duration-500">
+                        <div className="p-3 bg-muted/50 rounded-2xl text-primary border border-border/10 shadow-inner group-hover/table:rotate-12 transition-transform duration-500">
                             <FileText size={24} />
                         </div>
                         <div>
-                            <h2 className="text-2xl font-black text-white tracking-widest uppercase italic">{t('checks.registry')}</h2>
-                            <p className="text-base font-bold font-black text-slate-500 uppercase tracking-[0.4em] mt-1">{t('notifications.registry_subtitle')}</p>
+                            <h2 className="text-2xl font-black text-foreground tracking-widest uppercase italic">{t('checks.registry')}</h2>
+                            <p className="text-base font-bold font-black text-muted-foreground uppercase tracking-[0.4em] mt-1">{t('notifications.registry_subtitle')}</p>
                         </div>
                     </div>
                     
                     <div className="relative z-10 w-full md:w-80 group/search">
-                        <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within/search:text-primary transition-colors" size={20} />
+                        <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within/search:text-primary transition-colors" size={20} />
                         <input 
-                            className="w-full h-16 bg-[#0a0518] border-white/5 rounded-3xl pl-16 pr-8 text-lg font-bold font-black uppercase tracking-widest focus:border-primary/50 transition-all text-white placeholder:text-slate-700 italic shadow-inner outline-none"
+                            className="w-full h-16 bg-background border-border/5 rounded-3xl pl-16 pr-8 text-lg font-bold font-black uppercase tracking-widest focus:border-primary/50 transition-all text-foreground placeholder:text-muted-foreground italic shadow-inner outline-none"
                             placeholder={t('common.search')}
                         />
                     </div>
@@ -117,7 +117,7 @@ export function ChecksClient({ checks }: ChecksClientProps) {
                 <div className="overflow-x-auto">
                     <table className="w-full border-collapse">
                         <thead>
-                            <tr className="bg-black/20 text-base font-bold font-black uppercase tracking-[0.4em] text-slate-500 border-b border-white/5">
+                            <tr className="bg-black/20 text-base font-bold font-black uppercase tracking-[0.4em] text-muted-foreground border-b border-border/5">
                                 <th className="text-left p-10">{t('common.date')} Node</th>
                                 <th className="text-left p-10">{t('navigation.fleet')} Plate</th>
                                 <th className="text-left p-10">{t('navigation.drivers')} Operator</th>
@@ -132,20 +132,20 @@ export function ChecksClient({ checks }: ChecksClientProps) {
                                 const isPass = failedItems.length === 0
 
                                 return (
-                                    <tr key={check.id} className="group/row hover:bg-white/[0.03] transition-all duration-300">
+                                    <tr key={check.id} className="group/row hover:bg-muted/40 transition-all duration-300">
                                         <td className="p-10">
                                             <div className="flex flex-col">
                                                 <span className="text-white font-black tracking-tight text-xl uppercase italic group-hover/row:text-primary transition-colors">
                                                     {new Date(check.Check_Date).toLocaleDateString(t('common.loading') === 'กำลังประมวลผล...' ? 'th-TH' : 'en-US')}
                                                 </span>
-                                                <span className="text-base font-bold text-slate-600 font-black uppercase tracking-widest mt-1">
+                                                <span className="text-base font-bold text-muted-foreground font-black uppercase tracking-widest mt-1">
                                                     {new Date(check.Check_Date).toLocaleTimeString(t('common.loading') === 'กำลังประมวลผล...' ? 'th-TH' : 'en-US')}
                                                 </span>
                                             </div>
                                         </td>
                                         <td className="p-10">
                                             <div className="flex items-center gap-4">
-                                                <div className="w-10 h-10 rounded-2xl bg-white/5 flex items-center justify-center text-primary group-hover/row:scale-110 group-hover/row:bg-primary/20 transition-all duration-500 shadow-inner border border-white/5">
+                                                <div className="w-10 h-10 rounded-2xl bg-muted/50 flex items-center justify-center text-primary group-hover/row:scale-110 group-hover/row:bg-primary/20 transition-all duration-500 shadow-inner border border-border/5">
                                                     <Truck size={18} />
                                                 </div>
                                                 <span className="font-black text-white text-xl tracking-widest uppercase italic border-b-2 border-primary/20">{check.Vehicle_Plate}</span>
@@ -153,11 +153,11 @@ export function ChecksClient({ checks }: ChecksClientProps) {
                                         </td>
                                         <td className="p-10">
                                             <div className="flex items-center gap-4">
-                                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white text-base font-bold font-black italic shadow-lg shadow-primary/20 border-2 border-white/10 overflow-hidden relative">
+                                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-foreground font-bold font-black italic shadow-lg shadow-primary/20 border-2 border-border/10 overflow-hidden relative">
                                                     <div className="absolute inset-0 bg-primary/20" />
                                                     {(check.Driver_Name || "A").charAt(0)}
                                                 </div>
-                                                <span className="text-lg font-bold font-black text-slate-400 group-hover/row:text-white transition-colors uppercase tracking-widest">{check.Driver_Name || "OP_ALPHA"}</span>
+                                                <span className="text-foreground transition-colors uppercase tracking-widest">{check.Driver_Name || "OP_ALPHA"}</span>
                                             </div>
                                         </td>
                                         <td className="p-10">
@@ -194,7 +194,7 @@ export function ChecksClient({ checks }: ChecksClientProps) {
                                                         href={check.Photo_Urls.split(',')[0]}
                                                         target="_blank"
                                                         rel="noreferrer"
-                                                        className="h-12 px-6 rounded-2xl bg-white/5 hover:bg-primary text-white text-base font-bold font-black uppercase tracking-widest flex items-center justify-center transition-all border border-white/10 hover:border-primary/50 group/intel shadow-lg active:scale-95"
+                                                        className="h-12 px-6 rounded-2xl bg-muted/50 hover:bg-primary text-foreground text-base font-bold font-black uppercase tracking-widest flex items-center justify-center transition-all border border-border/10 hover:border-primary/50 group/intel shadow-lg active:scale-95"
                                                     >
                                                         <ImageIcon size={14} className="mr-3 group-hover/intel:scale-110 transition-transform" />
                                                         {t('notifications.visual') || 'VISUAL'}
@@ -205,7 +205,7 @@ export function ChecksClient({ checks }: ChecksClientProps) {
                                                         href={check.Signature_Url}
                                                         target="_blank"
                                                         rel="noreferrer"
-                                                        className="w-12 h-12 rounded-2xl bg-white/5 hover:bg-emerald-500 text-white flex items-center justify-center transition-all border border-white/10 hover:border-emerald-500 shadow-lg active:scale-95 group/sig"
+                                                        className="w-12 h-12 rounded-2xl bg-muted/50 hover:bg-emerald-500 text-foreground flex items-center justify-center transition-all border border-border/10 hover:border-emerald-500 shadow-lg active:scale-95 group/sig"
                                                     >
                                                         <PenTool size={18} className="group-hover/sig:rotate-12 transition-transform" />
                                                     </a>

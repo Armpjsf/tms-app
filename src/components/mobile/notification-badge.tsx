@@ -56,7 +56,7 @@ export function MobileNotificationBadge() {
   }, [supabase])
 
   return (
-    <Link href="/mobile/notifications" className="text-gray-500 hover:text-foreground relative transition-colors">
+    <Link href="/mobile/notifications" className="text-muted-foreground hover:text-foreground relative transition-colors">
         <Bell size={24} />
         {hasUnread && (
             <span className="absolute top-0 right-0 w-2.5 h-2.5 rounded-full bg-red-500 border-2 border-background animate-pulse" />

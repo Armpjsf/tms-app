@@ -314,7 +314,7 @@ export function PODDownloadButton({ job }: PODDownloadButtonProps) {
     <Button 
       onClick={handleDownload}
       disabled={isGenerating}
-      className="w-full h-14 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-black text-lg gap-3 shadow-lg shadow-indigo-500/20 transition-all group"
+      className="w-full h-14 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-foreground font-black text-lg gap-3 shadow-lg shadow-indigo-500/20 transition-all group"
     >
       {isGenerating ? (
           <Loader2 className="h-6 w-6 animate-spin" />

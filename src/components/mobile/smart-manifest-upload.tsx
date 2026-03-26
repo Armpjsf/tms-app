@@ -54,8 +54,8 @@ export function SmartManifestUpload() {
               <Camera size={32} />
             </div>
             <div className="text-center">
-              <p className="text-lg font-black text-slate-900 tracking-tight">Smart Manifest Scan</p>
-              <p className="text-lg font-bold font-bold text-slate-500 uppercase tracking-widest mt-1">AI-Powered OCR Engine</p>
+              <p className="text-lg font-black text-foreground tracking-tight">Smart Manifest Scan</p>
+              <p className="text-lg font-bold font-bold text-muted-foreground uppercase tracking-widest mt-1">AI-Powered OCR Engine</p>
             </div>
             <input type="file" accept="image/*" className="hidden" onChange={handleFileUpload} disabled={isScanning} />
           </label>
@@ -90,36 +90,36 @@ export function SmartManifestUpload() {
               <CheckCircle2 size={20} />
             </div>
             <div>
-              <h3 className="text-lg font-black text-slate-900 tracking-tight">Analysis Result</h3>
-              <p className="text-base font-bold font-bold text-slate-400 uppercase tracking-widest">Extracted by Gemini 1.5 Flash</p>
+              <h3 className="text-lg font-black text-foreground tracking-tight">Analysis Result</h3>
+              <p className="text-base font-bold font-bold text-muted-foreground uppercase tracking-widest">Extracted by Gemini 1.5 Flash</p>
             </div>
           </div>
 
           <div className="grid gap-4">
             <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
-              <p className="text-base font-bold font-black text-slate-400 uppercase tracking-widest mb-1">Job ID / Reference</p>
-              <p className="text-xl font-black text-slate-900">{result.jobId || "Not detected"}</p>
+              <p className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest mb-1">Job ID / Reference</p>
+              <p className="text-xl font-black text-foreground">{result.jobId || "Not detected"}</p>
             </div>
 
             <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
-              <p className="text-base font-bold font-black text-slate-400 uppercase tracking-widest mb-1">Customer Name</p>
-              <p className="text-xl font-black text-slate-900">{result.customerName || "Not detected"}</p>
+              <p className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest mb-1">Customer Name</p>
+              <p className="text-xl font-black text-foreground">{result.customerName || "Not detected"}</p>
             </div>
 
             <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
-              <p className="text-base font-bold font-black text-slate-400 uppercase tracking-widest mb-1">Items Detected</p>
+              <p className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest mb-1">Items Detected</p>
               <div className="mt-2 space-y-2">
                 {result.items?.map((item, idx) => (
                   <div key={idx} className="flex items-center justify-between text-lg font-bold py-1 border-b border-slate-200 last:border-0">
-                    <span className="font-bold text-slate-700 flex items-center gap-2">
+                    <span className="font-bold text-muted-foreground flex items-center gap-2">
                       <Package size={12} className="text-emerald-500" />
                       {item.name}
                     </span>
-                    <span className="bg-emerald-500 text-white px-2 py-0.5 rounded-full font-black text-base font-bold">
+                    <span className="bg-emerald-500 text-foreground font-bold">
                       QTY: {item.quantity}
                     </span>
                   </div>
-                )) || <p className="text-lg font-bold italic text-slate-400">No items found</p>}
+                )) || <p className="text-lg font-bold italic text-muted-foreground">No items found</p>}
               </div>
             </div>
           </div>

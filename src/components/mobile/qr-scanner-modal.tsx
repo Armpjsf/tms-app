@@ -111,7 +111,7 @@ export function QRScannerModal({ isOpen, onOpenChange, onScanSuccess }: QRScanne
       if (!open) stopScanner()
       onOpenChange(open)
     }}>
-      <DialogContent className="bg-[#050110] border-white/10 rounded-[2.5rem] p-6 max-w-[90vw] md:max-w-md overflow-hidden">
+      <DialogContent className="bg-background border-border/10 rounded-[2.5rem] p-6 max-w-[90vw] md:max-w-md overflow-hidden">
         <DialogHeader className="space-y-4">
           <div className="w-12 h-12 bg-accent/20 rounded-2xl flex items-center justify-center text-accent mx-auto mb-2">
             <QrCode size={24} />
@@ -119,13 +119,13 @@ export function QRScannerModal({ isOpen, onOpenChange, onScanSuccess }: QRScanne
           <DialogTitle className="text-xl font-black text-white text-center uppercase tracking-tighter">สแกนคิวอาร์เพื่อเข้าสู่ระบบ</DialogTitle>
         </DialogHeader>
 
-        <div className="relative mt-4 aspect-square bg-slate-900 rounded-[2rem] overflow-hidden border border-white/5 shadow-inner">
+        <div className="relative mt-4 aspect-square bg-card rounded-[2rem] overflow-hidden border border-border/5 shadow-inner">
           <div id="qr-reader" className="w-full h-full"></div>
           
           {!isStarted && !error && (
             <div className="absolute inset-0 flex flex-col items-center justify-center space-y-4">
                <RefreshCw size={32} className="text-primary animate-spin" />
-               <p className="text-base font-bold font-bold text-slate-500 uppercase tracking-widest">กำลังเริ่มต้นกล้อง...</p>
+               <p className="text-base font-bold font-bold text-muted-foreground uppercase tracking-widest">กำลังเริ่มต้นกล้อง...</p>
             </div>
           )}
 
@@ -133,7 +133,7 @@ export function QRScannerModal({ isOpen, onOpenChange, onScanSuccess }: QRScanne
             <div className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center space-y-4">
                <Camera size={40} className="text-red-500 opacity-50" />
                <p className="text-lg font-black text-red-400 leading-relaxed">{error}</p>
-               <div className="text-sm text-slate-500 space-y-2 pt-2 border-t border-white/5 w-full">
+               <div className="text-sm text-muted-foreground space-y-2 pt-2 border-t border-border/5 w-full">
                   <p>1. ตรวจสอบว่าไม่ได้ใช้กล้องในแอปอื่น</p>
                   <p>2. กดสัญลักษณ์ล็อค (🔒) ที่แถบบนเบราว์เซอร์</p>
                   <p>3. เลือก Permissions -&gt; Camera -&gt; Allow</p>
@@ -141,7 +141,7 @@ export function QRScannerModal({ isOpen, onOpenChange, onScanSuccess }: QRScanne
                <Button 
                  variant="outline" 
                  onClick={() => { setError(null); onOpenChange(false); }}
-                 className="mt-4 border-white/10 text-white rounded-xl"
+                 className="mt-4 border-border/10 text-white rounded-xl"
                >
                  ลองใหม่อีกครั้ง
                </Button>
@@ -155,13 +155,13 @@ export function QRScannerModal({ isOpen, onOpenChange, onScanSuccess }: QRScanne
           </div>
         </div>
 
-        <p className="text-center text-slate-500 text-base font-bold font-bold uppercase tracking-widest mt-6">
+        <p className="text-center text-muted-foreground text-base font-bold font-bold uppercase tracking-widest mt-6">
           วางรหัสคิวอาร์ให้อยู่ในกรอบเพื่อสแกน
         </p>
 
         <Button 
           onClick={() => onOpenChange(false)}
-          className="w-full h-14 mt-6 bg-white/5 hover:bg-white/10 text-white rounded-2xl font-black uppercase tracking-widest text-base font-bold border border-white/10"
+          className="w-full h-14 mt-6 bg-muted/50 hover:bg-muted/80 text-foreground rounded-2xl font-black uppercase tracking-widest text-base font-bold border border-border/10"
         >
           ยกเลิก
         </Button>

@@ -47,7 +47,7 @@ export const MapOverlay = memo(function MapOverlay({ route }: MapOverlayProps) {
                             </div>
                         )}
                         {route.distance && (
-                            <p className="text-base font-bold font-bold text-gray-500 uppercase tracking-tighter">{route.distance} Remaining</p>
+                            <p className="text-base font-bold font-bold text-muted-foreground uppercase tracking-tighter">{route.distance} Remaining</p>
                         )}
                         {!route.eta && !route.distance && (
                             <p className="text-base font-bold font-bold text-emerald-600 uppercase tracking-widest">Optimized</p>
@@ -62,7 +62,7 @@ export const MapOverlay = memo(function MapOverlay({ route }: MapOverlayProps) {
                     initial={{ scale: 0, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     transition={{ delay: 0.5 }}
-                    className="absolute -bottom-12 left-1/2 -translate-x-1/2 bg-gray-900 text-white px-3 py-1.5 rounded-full flex items-center gap-2 shadow-xl border border-white/10"
+                    className="absolute -bottom-12 left-1/2 -translate-x-1/2 bg-gray-900 text-white px-3 py-1.5 rounded-full flex items-center gap-2 shadow-xl border border-border/10"
                 >
                     <MapPin size={10} className="text-emerald-400" />
                     <span className="text-base font-bold font-black uppercase tracking-widest italic truncate max-w-[200px]">

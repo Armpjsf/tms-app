@@ -33,7 +33,7 @@ export function JobWorkflow({ currentStatus, className }: JobWorkflowProps) {
     <div className={cn("py-6", className)}>
       <div className="relative flex justify-between px-2">
         {/* Background Tactical Line */}
-        <div className="absolute top-6 left-0 w-full h-1 bg-white/5 rounded-full" />
+        <div className="absolute top-6 left-0 w-full h-1 bg-muted/50 rounded-full" />
         
         {/* Active Progress Line */}
         <div 
@@ -53,14 +53,14 @@ export function JobWorkflow({ currentStatus, className }: JobWorkflowProps) {
                   "w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-500 border-2 shadow-2xl",
                   isCompleted ? "bg-primary border-primary text-white" : 
                   isActive ? "bg-secondary border-primary/50 text-primary ring-8 ring-primary/10 animate-pulse" : 
-                  "bg-slate-900 border-white/5 text-slate-700"
+                  "bg-card border-border/5 text-muted-foreground"
                 )}
               >
                 <StepIcon size={20} className={isActive ? "animate-bounce" : ""} />
               </div>
               <p className={cn(
                 "mt-3 text-base font-bold font-black text-center uppercase tracking-widest transition-colors duration-500",
-                isCompleted || isActive ? "text-white" : "text-slate-700"
+                isCompleted || isActive ? "text-white" : "text-muted-foreground"
               )}>
                 {step.label}
               </p>
@@ -77,7 +77,7 @@ export function JobWorkflow({ currentStatus, className }: JobWorkflowProps) {
           </div>
           <div className="space-y-1">
             <p className="text-base font-bold font-black text-primary uppercase tracking-[0.3em]">Current Protocol:</p>
-            <p className="text-lg font-bold text-slate-300 font-bold leading-relaxed">
+            <p className="text-lg font-bold text-muted-foreground font-bold leading-relaxed">
                {currentIndex === -1 ? 'New mission detected. Tap "ACCEPT MISSION" to engage deployment protocols.' : 
                 currentIndex === 0 ? 'Asset transit initiated. Proceed to ORIGIN point and secure the payload.' :
                 currentIndex === 1 ? 'Payload reached. Verify cargo integrity, document assets, and clear for transit.' :

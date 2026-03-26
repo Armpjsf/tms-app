@@ -159,7 +159,7 @@ export function FuelDialog({
   return (
     <Dialog open={show} onOpenChange={setShow}>
       {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
-      <DialogContent className="max-w-[95vw] sm:max-w-xl max-h-[95vh] flex flex-col bg-slate-900/95 backdrop-blur-2xl border-white/5 text-white p-0 rounded-[2.5rem] overflow-hidden shadow-[0_0_80px_rgba(0,0,0,0.5)]">
+      <DialogContent className="max-w-[95vw] sm:max-w-xl max-h-[95vh] flex flex-col bg-card/95 backdrop-blur-2xl border-border/5 text-foreground p-0 rounded-[2.5rem] overflow-hidden shadow-[0_0_80px_rgba(0,0,0,0.5)]">
         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500" />
         
         <DialogHeader className="p-8 pb-4 flex-shrink-0">
@@ -171,7 +171,7 @@ export function FuelDialog({
                   <DialogTitle className="text-3xl font-black tracking-tighter uppercase whitespace-nowrap">
                       {initialData ? t('fuel.title_edit') : t('fuel.title_add')}
                   </DialogTitle>
-                  <p className="text-slate-500 text-base font-bold font-black uppercase tracking-[0.3em]">Fuel & Energy Consumption Log</p>
+                  <p className="text-muted-foreground text-base font-bold font-black uppercase tracking-[0.3em]">Fuel & Energy Consumption Log</p>
               </div>
           </div>
         </DialogHeader>
@@ -211,7 +211,7 @@ export function FuelDialog({
                         }
                     }}
                     disabled={loading}
-                    className="h-12 px-8 rounded-xl border-white/10 bg-white/5 text-white font-black uppercase tracking-widest hover:bg-white/10 flex items-center gap-3 transition-all active:scale-95"
+                    className="h-12 px-8 rounded-xl border-border/10 bg-muted/50 text-foreground font-black uppercase tracking-widest hover:bg-muted/80 flex items-center gap-3 transition-all active:scale-95"
                 >
                     {loading ? <Loader2 className="w-4 h-4 animate-spin"/> : <span className="text-xl">⚡</span>}
                     {t('fuel.scan_receipt')}
@@ -220,25 +220,25 @@ export function FuelDialog({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="Date_Time" className="text-slate-500 font-black uppercase tracking-widest ml-1">{t('fuel.date_time')}</Label>
+            <Label htmlFor="Date_Time" className="text-muted-foreground font-black uppercase tracking-widest ml-1">{t('fuel.date_time')}</Label>
             <Input
               id="Date_Time"
               type="datetime-local"
               value={formData.Date_Time}
               onChange={(e) => setFormData({ ...formData, Date_Time: e.target.value })}
               required
-              className="h-12 bg-white/5 border-white/10 text-white rounded-xl focus:ring-emerald-500/40"
+              className="h-12 bg-muted/50 border-border/10 text-foreground rounded-xl focus:ring-emerald-500/40"
             />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-                <Label className="text-slate-500 font-black uppercase tracking-widest ml-1">{t('fuel.driver')}</Label>
+                <Label className="text-muted-foreground font-black uppercase tracking-widest ml-1">{t('fuel.driver')}</Label>
                 <Select value={formData.Driver_ID || undefined} onValueChange={(val) => setFormData({ ...formData, Driver_ID: val })}>
-                    <SelectTrigger className="h-12 border-white/10 bg-white/5 text-white rounded-xl">
+                    <SelectTrigger className="h-12 border-border/10 bg-muted/50 text-foreground rounded-xl">
                         <SelectValue placeholder={t('fuel.placeholder_driver')} />
                     </SelectTrigger>
-                    <SelectContent className="bg-slate-900 border-white/10 text-white">
+                    <SelectContent className="bg-card border-border/10 text-foreground">
                         {drivers.map((d) => (
                             <SelectItem key={d.Driver_ID} value={d.Driver_ID}>{d.Driver_Name}</SelectItem>
                         ))}
@@ -246,12 +246,12 @@ export function FuelDialog({
                 </Select>
             </div>
             <div className="space-y-2">
-                <Label className="text-slate-500 font-black uppercase tracking-widest ml-1">{t('fuel.vehicle')}</Label>
+                <Label className="text-muted-foreground font-black uppercase tracking-widest ml-1">{t('fuel.vehicle')}</Label>
                 <Select value={formData.Vehicle_Plate || undefined} onValueChange={(val) => setFormData({ ...formData, Vehicle_Plate: val })}>
-                    <SelectTrigger className="h-12 border-white/10 bg-white/5 text-white rounded-xl">
+                    <SelectTrigger className="h-12 border-border/10 bg-muted/50 text-foreground rounded-xl">
                         <SelectValue placeholder={t('fuel.placeholder_vehicle')} />
                     </SelectTrigger>
-                    <SelectContent className="bg-slate-900 border-white/10 text-white">
+                    <SelectContent className="bg-card border-border/10 text-foreground">
                         {vehicles.map((v) => (
                             <SelectItem key={v.Vehicle_Plate} value={v.Vehicle_Plate}>{v.Vehicle_Plate}</SelectItem>
                         ))}
@@ -262,17 +262,17 @@ export function FuelDialog({
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <Label htmlFor="Station_Name" className="text-slate-500 font-black uppercase tracking-widest ml-1">{t('fuel.station')}</Label>
+                <Label htmlFor="Station_Name" className="text-muted-foreground font-black uppercase tracking-widest ml-1">{t('fuel.station')}</Label>
                 <Input
                     id="Station_Name"
                     value={formData.Station_Name}
                     onChange={(e) => setFormData({ ...formData, Station_Name: e.target.value })}
                     placeholder={t('fuel.placeholder_station')}
-                    className="h-12 bg-white/5 border-white/10 text-white rounded-xl focus:ring-emerald-500/40"
+                    className="h-12 bg-muted/50 border-border/10 text-foreground rounded-xl focus:ring-emerald-500/40"
                 />
             </div>
             <div className="space-y-2">
-                 <Label htmlFor="Mileage" className="text-slate-500 font-black uppercase tracking-widest ml-1">{t('fuel.odometer')}</Label>
+                 <Label htmlFor="Mileage" className="text-muted-foreground font-black uppercase tracking-widest ml-1">{t('fuel.odometer')}</Label>
                  <Input
                     id="Mileage"
                     type="number"
@@ -280,14 +280,14 @@ export function FuelDialog({
                     onChange={(e) => setFormData({ ...formData, Mileage: e.target.value })}
                     placeholder={t('fuel.placeholder_odometer')}
                     required
-                    className="h-12 bg-white/5 border-white/10 text-white rounded-xl focus:ring-emerald-500/40"
+                    className="h-12 bg-muted/50 border-border/10 text-foreground rounded-xl focus:ring-emerald-500/40"
                  />
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="space-y-2">
-                <Label htmlFor="Liter" className="text-slate-500 font-black uppercase tracking-widest ml-1">{t('fuel.liters')}</Label>
+                <Label htmlFor="Liter" className="text-muted-foreground font-black uppercase tracking-widest ml-1">{t('fuel.liters')}</Label>
                 <Input
                 id="Liter"
                 type="number"
@@ -295,11 +295,11 @@ export function FuelDialog({
                 value={formData.Liter}
                 onChange={(e) => setFormData({ ...formData, Liter: e.target.value })}
                 required
-                className="h-12 bg-white/5 border-white/10 text-white rounded-xl focus:ring-emerald-500/40"
+                className="h-12 bg-muted/50 border-border/10 text-foreground rounded-xl focus:ring-emerald-500/40"
                 />
             </div>
             <div className="space-y-2">
-                <Label htmlFor="Price" className="text-slate-500 font-black uppercase tracking-widest ml-1">{t('fuel.price_per_liter')}</Label>
+                <Label htmlFor="Price" className="text-muted-foreground font-black uppercase tracking-widest ml-1">{t('fuel.price_per_liter')}</Label>
                 <Input
                 id="Price"
                 type="number"
@@ -307,11 +307,11 @@ export function FuelDialog({
                 value={formData.Price}
                 onChange={(e) => setFormData({ ...formData, Price: e.target.value })}
                 required
-                className="h-12 bg-white/5 border-white/10 text-white rounded-xl focus:ring-emerald-500/40"
+                className="h-12 bg-muted/50 border-border/10 text-foreground rounded-xl focus:ring-emerald-500/40"
                 />
             </div>
             <div className="space-y-2">
-                <Label htmlFor="Total_Amount" className="text-slate-500 font-black uppercase tracking-widest ml-1">{t('fuel.total_amount')}</Label>
+                <Label htmlFor="Total_Amount" className="text-muted-foreground font-black uppercase tracking-widest ml-1">{t('fuel.total_amount')}</Label>
                 <Input
                 id="Total_Amount"
                 value={formData.Total_Amount.toFixed(2)}
@@ -326,7 +326,7 @@ export function FuelDialog({
                 type="button" 
                 variant="ghost" 
                 onClick={() => setShow(false)}
-                className="h-14 px-8 rounded-2xl text-slate-500 font-black uppercase tracking-widest hover:text-white"
+                className="h-14 px-8 rounded-2xl text-muted-foreground font-black uppercase tracking-widest hover:text-white"
             >
               {t('jobs.dialog.abort')}
             </Button>

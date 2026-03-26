@@ -32,15 +32,15 @@ export function RevenueForecastChart({ data = [] }: Props) {
     if (data.length === 0) return null
 
     return (
-        <PremiumCard className="bg-[#0a0518] border-2 border-white/5 shadow-3xl p-0 overflow-hidden rounded-br-[6rem] rounded-tl-[3rem] group/forecast">
-            <div className="p-10 border-b border-white/5 bg-black/40 relative overflow-hidden flex items-center justify-between">
+        <PremiumCard className="bg-background border-2 border-border/5 shadow-3xl p-0 overflow-hidden rounded-br-[6rem] rounded-tl-[3rem] group/forecast">
+            <div className="p-10 border-b border-border/5 bg-black/40 relative overflow-hidden flex items-center justify-between">
                 <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-purple-500 to-transparent" />
                 <div className="flex items-center gap-5 relative z-10">
                     <div className="p-3 bg-purple-500/20 rounded-2xl text-purple-400 border border-purple-500/30 shadow-[0_0_20px_rgba(168,85,247,0.2)]">
                         <BrainCircuit size={22} />
                     </div>
                     <div>
-                        <h3 className="text-xl font-black text-white tracking-tighter italic uppercase">{t('analytics.revenue_prediction') || 'Revenue Forecasting'}</h3>
+                        <h3 className="text-xl font-black text-foreground tracking-tighter italic uppercase">{t('analytics.revenue_prediction') || 'Revenue Forecasting'}</h3>
                         <p className="text-purple-400 text-base font-bold font-black uppercase tracking-[0.4em]">{t('analytics.ai_inference') || 'Strategic AI Inference'}</p>
                     </div>
                 </div>
@@ -120,18 +120,18 @@ export function RevenueForecastChart({ data = [] }: Props) {
                 </ResponsiveContainer>
             </div>
             
-            <div className="p-10 bg-white/[0.02] border-t border-white/5">
+            <div className="p-10 bg-muted/30 border-t border-border/5">
                 <div className="flex flex-col md:flex-row items-center justify-between gap-8">
                     <div className="flex items-center gap-6">
                         <div className="p-4 bg-emerald-500/10 rounded-2xl border border-emerald-500/20">
                             <TrendingUp className="text-emerald-500" size={24} />
                         </div>
                         <div>
-                            <p className="text-base font-bold font-black text-slate-500 uppercase tracking-widest leading-none mb-2">{t('analytics.projection_confidence') || 'Confidence Level'}</p>
-                            <p className="text-2xl font-black text-white italic">🔥 HIGH (88%)</p>
+                            <p className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest leading-none mb-2">{t('analytics.projection_confidence') || 'Confidence Level'}</p>
+                            <p className="text-2xl font-black text-foreground italic">🔥 HIGH (88%)</p>
                         </div>
                     </div>
-                    <p className="text-base font-bold font-black text-slate-500 uppercase tracking-widest max-w-md italic text-center md:text-right">
+                    <p className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest max-w-md italic text-center md:text-right">
                         {t('analytics.forecast_disclaimer') || 'AI models utilize historical seasonality and recent trends to project quarterly performance.'}
                     </p>
                 </div>

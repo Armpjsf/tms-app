@@ -41,7 +41,7 @@ export function ExecutiveSectorHealth({ sectors }: { sectors: SectorHealth[] }) 
       case 'good': return 'text-emerald-400 border-emerald-500/20 bg-emerald-500/5'
       case 'warning': return 'text-amber-400 border-amber-500/20 bg-amber-500/5'
       case 'critical': return 'text-rose-400 border-rose-500/20 bg-rose-500/5'
-      default: return 'text-slate-400 border-slate-500/20 bg-slate-500/5'
+      default: return 'text-muted-foreground border-slate-500/20 bg-slate-500/5'
     }
   }
 
@@ -52,21 +52,21 @@ export function ExecutiveSectorHealth({ sectors }: { sectors: SectorHealth[] }) 
         const isOptimal = sector.metrics.every(m => m.status === 'good')
         
         return (
-          <PremiumCard key={sector.title} className="bg-slate-950 border-none shadow-2xl relative overflow-hidden group p-0 rounded-br-[4rem] rounded-tl-[2rem]">
+          <PremiumCard key={sector.title} className="bg-background border-none shadow-2xl relative overflow-hidden group p-0 rounded-br-[4rem] rounded-tl-[2rem]">
             {/* Dynamic context glow */}
             <div className={cn(
                 "absolute -right-8 -top-8 w-32 h-32 rounded-full blur-3xl opacity-20 transition-opacity duration-700",
                 isOptimal ? "bg-emerald-500/30" : "bg-amber-500/30"
             )} />
             
-            <div className="p-8 border-b border-white/5 relative overflow-hidden flex items-center justify-between">
+            <div className="p-8 border-b border-border/5 relative overflow-hidden flex items-center justify-between">
                 <div className="flex items-center gap-4 relative z-10">
-                    <div className="p-2.5 bg-white/5 rounded-xl text-white border border-white/10 group-hover:border-white/20 transition-all">
+                    <div className="p-2.5 bg-muted/50 rounded-xl text-foreground border border-border/10 group-hover:border-border/20 transition-all">
                         <Icon size={20} />
                     </div>
                     <div>
-                        <h4 className="text-base font-bold font-black text-white uppercase tracking-[0.3em] italic leading-none">{sector.title}</h4>
-                        <p className="text-base font-bold text-slate-500 font-bold uppercase tracking-widest mt-1">{t('dashboard.sector_integrity')}</p>
+                        <h4 className="text-base font-bold font-black text-foreground uppercase tracking-[0.3em] italic leading-none">{sector.title}</h4>
+                        <p className="text-base font-bold text-muted-foreground font-bold uppercase tracking-widest mt-1">{t('dashboard.sector_integrity')}</p>
                     </div>
                 </div>
                 <div className="relative z-10">
@@ -85,13 +85,13 @@ export function ExecutiveSectorHealth({ sectors }: { sectors: SectorHealth[] }) 
             <div className="p-8">
               <div className="grid grid-cols-1 gap-4 mb-8">
                 {sector.metrics.map((m) => (
-                  <div key={m.label} className="p-5 bg-white/5 rounded-2xl border border-white/5 group-hover:border-white/10 transition-all">
+                  <div key={m.label} className="p-5 bg-muted/50 rounded-2xl border border-border/5 group-hover:border-border/10 transition-all">
                     <div className="flex items-center justify-between mb-3">
-                        <p className="text-base font-bold text-slate-500 font-black uppercase tracking-widest leading-none">{m.label}</p>
+                        <p className="text-base font-bold text-muted-foreground font-black uppercase tracking-widest leading-none">{m.label}</p>
                         <div className={cn("w-1.5 h-1.5 rounded-full shadow-[0_0_8px_rgba(0,0,0,0.5)]", getStatusColor(m.status))} />
                     </div>
                     <div className="flex items-center gap-2">
-                       <span className="text-3xl font-black text-white tracking-tighter italic leading-none">{m.value}</span>
+                       <span className="text-3xl font-black text-foreground tracking-tighter italic leading-none">{m.value}</span>
                        <span className={cn("text-base font-bold font-black border px-2 py-0.5 rounded-lg uppercase tracking-tighter italic", getStatusText(m.status))}>
                           {m.status.toUpperCase()}
                        </span>
@@ -101,7 +101,7 @@ export function ExecutiveSectorHealth({ sectors }: { sectors: SectorHealth[] }) 
               </div>
               
               <Link href={sector.href} className="block group/link">
-                <button className="w-full h-12 rounded-2xl bg-slate-900 border border-slate-800 text-white font-black text-base font-bold uppercase tracking-[0.2em] italic flex items-center justify-between px-6 group-hover/link:bg-white group-hover/link:text-black transition-all duration-500 overflow-hidden relative">
+                <button className="w-full h-12 rounded-2xl bg-card border border-slate-800 text-foreground font-black text-base font-bold uppercase tracking-[0.2em] italic flex items-center justify-between px-6 group-hover/link:bg-white group-hover/link:text-black transition-all duration-500 overflow-hidden relative">
                     <span className="relative z-10">{t('dashboard.access_sector')}</span>
                     <ChevronRight size={14} className="relative z-10 group-hover/link:translate-x-1 transition-transform" />
                 </button>

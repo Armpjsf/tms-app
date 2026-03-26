@@ -68,7 +68,7 @@ export function RequestShipmentDialog({ open, onOpenChange }: RequestShipmentDia
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-[95vw] sm:max-w-[500px] max-h-[95vh] flex flex-col p-0 overflow-hidden bg-white/95 backdrop-blur-2xl border border-white/40 shadow-2xl rounded-[2.5rem]">
+        <DialogContent className="max-w-[95vw] sm:max-w-[500px] max-h-[95vh] flex flex-col p-0 overflow-hidden bg-background/95 backdrop-blur-2xl border border-border/10 shadow-2xl rounded-[2.5rem]">
             <AnimatePresence mode="wait">
                 {success ? (
                     <motion.div 
@@ -80,8 +80,8 @@ export function RequestShipmentDialog({ open, onOpenChange }: RequestShipmentDia
                         <div className="w-20 h-20 bg-emerald-500 rounded-full flex items-center justify-center mb-6 shadow-2xl shadow-emerald-500/20">
                             <CheckCircle2 className="text-white w-10 h-10" />
                         </div>
-                        <h3 className="text-2xl font-black text-gray-900 mb-2 tracking-tighter">{t('shipment.success_title')}</h3>
-                        <p className="text-gray-500 font-bold uppercase tracking-widest text-base font-bold">{t('shipment.success_desc')}</p>
+                        <h3 className="text-2xl font-black text-foreground mb-2 tracking-tighter">{t('shipment.success_title')}</h3>
+                        <p className="text-muted-foreground font-bold uppercase tracking-widest text-base font-bold">{t('shipment.success_desc')}</p>
                     </motion.div>
                 ) : (
                     <motion.div
@@ -95,9 +95,9 @@ export function RequestShipmentDialog({ open, onOpenChange }: RequestShipmentDia
                                 <div className="p-2 bg-emerald-500 rounded-xl text-white">
                                     <Package size={20} />
                                 </div>
-                                <DialogTitle className="text-2xl font-black tracking-tighter text-gray-900">{t('shipment.title_request')}</DialogTitle>
+                                <DialogTitle className="text-2xl font-black tracking-tighter text-foreground">{t('shipment.title_request')}</DialogTitle>
                             </div>
-                            <DialogDescription className="text-gray-500 font-bold uppercase tracking-widest text-base font-bold">
+                            <DialogDescription className="text-muted-foreground font-bold uppercase tracking-widest text-base font-bold">
                                 {t('shipment.subtitle_request')}
                             </DialogDescription>
                         </DialogHeader>
@@ -105,7 +105,7 @@ export function RequestShipmentDialog({ open, onOpenChange }: RequestShipmentDia
                         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-8 pt-0 space-y-6 custom-scrollbar">
                                 <div className="grid grid-cols-1 gap-6">
                                     <div className="space-y-2">
-                                        <Label className="text-base font-bold font-black uppercase tracking-widest text-gray-400 flex items-center gap-2">
+                                        <Label className="text-base font-bold font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
                                             <Calendar size={14} className="text-emerald-500" /> {t('shipment.plan_date')}
                                         </Label>
                                         <Input 
@@ -113,13 +113,13 @@ export function RequestShipmentDialog({ open, onOpenChange }: RequestShipmentDia
                                             required
                                             value={formData.Plan_Date}
                                             onChange={(e) => setFormData(prev => ({ ...prev, Plan_Date: e.target.value }))}
-                                            className="h-12 rounded-2xl bg-gray-50/50 border-gray-100 font-bold focus:ring-emerald-500/20 focus:border-emerald-500/50"
+                                            className="h-12 rounded-2xl bg-muted/50 border-border/10 font-bold focus:ring-emerald-500/20 focus:border-emerald-500/50"
                                         />
                                     </div>
 
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="space-y-2">
-                                            <Label className="text-base font-bold font-black uppercase tracking-widest text-gray-400 flex items-center gap-2">
+                                            <Label className="text-base font-bold font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
                                                 <MapPin size={14} className="text-emerald-500" /> {t('shipment.origin')}
                                             </Label>
                                             <Input 
@@ -127,11 +127,11 @@ export function RequestShipmentDialog({ open, onOpenChange }: RequestShipmentDia
                                                 required
                                                 value={formData.Origin_Location}
                                                 onChange={(e) => setFormData(prev => ({ ...prev, Origin_Location: e.target.value }))}
-                                                className="h-12 rounded-2xl bg-gray-50/50 border-gray-100 font-bold focus:ring-emerald-500/20 focus:border-emerald-500/50"
+                                                className="h-12 rounded-2xl bg-muted/50 border-border/10 font-bold focus:ring-emerald-500/20 focus:border-emerald-500/50"
                                             />
                                         </div>
                                         <div className="space-y-2">
-                                            <Label className="text-base font-bold font-black uppercase tracking-widest text-gray-400 flex items-center gap-2">
+                                            <Label className="text-base font-bold font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
                                                 <MapPin size={14} className="text-amber-500" /> {t('shipment.destination')}
                                             </Label>
                                             <Input 
@@ -139,13 +139,13 @@ export function RequestShipmentDialog({ open, onOpenChange }: RequestShipmentDia
                                                 required
                                                 value={formData.Dest_Location}
                                                 onChange={(e) => setFormData(prev => ({ ...prev, Dest_Location: e.target.value }))}
-                                                className="h-12 rounded-2xl bg-gray-50/50 border-gray-100 font-bold focus:ring-emerald-500/20 focus:border-emerald-500/50"
+                                                className="h-12 rounded-2xl bg-muted/50 border-border/10 font-bold focus:ring-emerald-500/20 focus:border-emerald-500/50"
                                             />
                                         </div>
                                     </div>
 
                                     <div className="space-y-2">
-                                        <Label className="text-base font-bold font-black uppercase tracking-widest text-gray-400 flex items-center gap-2">
+                                        <Label className="text-base font-bold font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
                                             <Package size={14} className="text-blue-500" /> {t('shipment.cargo')}
                                         </Label>
                                         <Input 
@@ -153,12 +153,12 @@ export function RequestShipmentDialog({ open, onOpenChange }: RequestShipmentDia
                                             required
                                             value={formData.Cargo_Type}
                                             onChange={(e) => setFormData(prev => ({ ...prev, Cargo_Type: e.target.value }))}
-                                            className="h-12 rounded-2xl bg-gray-50/50 border-gray-100 font-bold focus:ring-emerald-500/20 focus:border-emerald-500/50"
+                                            className="h-12 rounded-2xl bg-muted/50 border-border/10 font-bold focus:ring-emerald-500/20 focus:border-emerald-500/50"
                                         />
                                     </div>
 
                                     <div className="space-y-2">
-                                        <Label className="text-base font-bold font-black uppercase tracking-widest text-gray-400 flex items-center gap-2">
+                                        <Label className="text-base font-bold font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
                                             <StickyNote size={14} className="text-purple-500" /> {t('shipment.notes')}
                                         </Label>
                                         <Textarea 
@@ -166,12 +166,12 @@ export function RequestShipmentDialog({ open, onOpenChange }: RequestShipmentDia
                                             rows={3}
                                             value={formData.Notes}
                                             onChange={(e) => setFormData(prev => ({ ...prev, Notes: e.target.value }))}
-                                            className="rounded-2xl bg-gray-50/50 border-gray-100 font-bold focus:ring-emerald-500/20 focus:border-emerald-500/50 resize-none"
+                                            className="rounded-2xl bg-muted/50 border-border/10 font-bold focus:ring-emerald-500/20 focus:border-emerald-500/50 resize-none"
                                         />
                                     </div>
                                 </div>
 
-                                <DialogFooter className="pt-4 border-t border-gray-50">
+                                <DialogFooter className="pt-4 border-t border-border/10">
                                     <PremiumButton 
                                         type="submit" 
                                         disabled={loading}

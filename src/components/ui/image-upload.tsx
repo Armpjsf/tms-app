@@ -85,7 +85,7 @@ export function ImageUpload({
         <Button
           type="button"
           variant="outline"
-          className="w-24 h-24 border-dashed border-2 flex flex-col items-center justify-center gap-2 text-gray-500 hover:text-white hover:border-slate-400 bg-transparent"
+          className="w-24 h-24 border-dashed border-2 flex flex-col items-center justify-center gap-2 text-muted-foreground hover:text-white hover:border-slate-400 bg-transparent"
           onClick={() => fileInputRef.current?.click()}
           disabled={disabled || loading}
         >

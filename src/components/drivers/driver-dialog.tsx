@@ -91,7 +91,7 @@ export function DriverDialog({
   return (
     <Dialog open={show} onOpenChange={setShow}>
       {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
-      <DialogContent className="max-w-[95vw] sm:max-w-xl max-h-[95vh] flex flex-col bg-slate-900/95 backdrop-blur-2xl border-white/5 text-white p-0 rounded-[2.5rem] overflow-hidden shadow-[0_0_80px_rgba(0,0,0,0.5)]">
+      <DialogContent className="max-w-[95vw] sm:max-w-xl max-h-[95vh] flex flex-col bg-card/95 backdrop-blur-2xl border-border/5 text-foreground p-0 rounded-[2.5rem] overflow-hidden shadow-[0_0_80px_rgba(0,0,0,0.5)]">
         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary via-accent to-purple-500" />
         
         <DialogHeader className="p-8 pb-0 flex-shrink-0">
@@ -103,7 +103,7 @@ export function DriverDialog({
                   <DialogTitle className="text-3xl font-black tracking-tighter uppercase whitespace-nowrap">
                       {mode === 'create' ? t('drivers.dialog.title_add') : t('drivers.dialog.title_edit')}
                   </DialogTitle>
-                  <p className="text-slate-500 text-base font-bold font-black uppercase tracking-[0.3em]">{t('drivers.dialog.subtitle')}</p>
+                  <p className="text-muted-foreground text-base font-bold font-black uppercase tracking-[0.3em]">{t('drivers.dialog.subtitle')}</p>
               </div>
           </div>
         </DialogHeader>
@@ -112,9 +112,9 @@ export function DriverDialog({
           {/* Section: Basic Identity */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <Label htmlFor="Driver_ID" className="text-base font-bold font-black uppercase tracking-widest text-slate-500 ml-1">{t('drivers.dialog.serial_id')}</Label>
+                <Label htmlFor="Driver_ID" className="text-base font-bold font-black uppercase tracking-widest text-muted-foreground ml-1">{t('drivers.dialog.serial_id')}</Label>
                 <div className="relative">
-                    <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600" size={16} />
+                    <User className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
                     <Input
                       id="Driver_ID"
                       value={formData.Driver_ID}
@@ -122,42 +122,42 @@ export function DriverDialog({
                       placeholder="e.g. DRV-001"
                       required
                       disabled={mode === 'edit'}
-                      className="h-12 pl-12 rounded-xl bg-white/5 border-white/10 text-white placeholder:text-slate-700 focus:ring-primary/40"
+                      className="h-12 pl-12 rounded-xl bg-muted/50 border-border/10 text-foreground placeholder:text-muted-foreground focus:ring-primary/40"
                     />
                 </div>
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="Driver_Name" className="text-base font-bold font-black uppercase tracking-widest text-slate-500 ml-1">{t('drivers.dialog.full_designation')}</Label>
+                <Label htmlFor="Driver_Name" className="text-base font-bold font-black uppercase tracking-widest text-muted-foreground ml-1">{t('drivers.dialog.full_designation')}</Label>
                 <Input
                   id="Driver_Name"
                   value={formData.Driver_Name}
                   onChange={(e) => setFormData({ ...formData, Driver_Name: e.target.value })}
                   placeholder="Designated Name"
                   required
-                  className="h-12 px-6 rounded-xl bg-white/5 border-white/10 text-white placeholder:text-slate-700 focus:ring-primary/40"
+                  className="h-12 px-6 rounded-xl bg-muted/50 border-border/10 text-foreground placeholder:text-muted-foreground focus:ring-primary/40"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="Mobile_No" className="text-base font-bold font-black uppercase tracking-widest text-slate-500 ml-1">{t('drivers.dialog.comm_channel')}</Label>
+                <Label htmlFor="Mobile_No" className="text-base font-bold font-black uppercase tracking-widest text-muted-foreground ml-1">{t('drivers.dialog.comm_channel')}</Label>
                 <div className="relative">
-                    <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600" size={16} />
+                    <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
                     <Input
                       id="Mobile_No"
                       value={formData.Mobile_No}
                       onChange={(e) => setFormData({ ...formData, Mobile_No: e.target.value })}
                       placeholder="0XX-XXX-XXXX"
                       required
-                      className="h-12 pl-12 rounded-xl bg-white/5 border-white/10 text-white placeholder:text-slate-700 focus:ring-primary/40"
+                      className="h-12 pl-12 rounded-xl bg-muted/50 border-border/10 text-foreground placeholder:text-muted-foreground focus:ring-primary/40"
                     />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="Password" className="text-base font-bold font-black uppercase tracking-widest text-slate-500 ml-1">{t('drivers.dialog.security_key')}</Label>
+                <Label htmlFor="Password" className="text-base font-bold font-black uppercase tracking-widest text-muted-foreground ml-1">{t('drivers.dialog.security_key')}</Label>
                 <div className="relative">
-                    <Key className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600" size={16} />
+                    <Key className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
                     <Input
                       id="Password"
                       type="text"
@@ -165,37 +165,37 @@ export function DriverDialog({
                       onChange={(e) => setFormData({ ...formData, Password: e.target.value })}
                       placeholder="••••••••"
                       required={mode === 'create'}
-                      className="h-12 pl-12 rounded-xl bg-white/5 border-white/10 text-white placeholder:text-slate-700 focus:ring-primary/40"
+                      className="h-12 pl-12 rounded-xl bg-muted/50 border-border/10 text-foreground placeholder:text-muted-foreground focus:ring-primary/40"
                     />
                 </div>
               </div>
           </div>
 
-          <div className="h-px bg-white/5 mx-[-2rem]" />
+          <div className="h-px bg-muted/50 mx-[-2rem]" />
 
           {/* Section: Operational Data */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <Label htmlFor="Expire_Date" className="text-base font-bold font-black uppercase tracking-widest text-slate-500 ml-1">{t('drivers.dialog.licence_integrity_date')}</Label>
+                <Label htmlFor="Expire_Date" className="text-base font-bold font-black uppercase tracking-widest text-muted-foreground ml-1">{t('drivers.dialog.licence_integrity_date')}</Label>
                 <div className="relative">
-                    <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600" size={16} />
+                    <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
                     <Input
                         id="Expire_Date"
                         type="date"
                         value={formData.Expire_Date}
                         onChange={(e) => setFormData({ ...formData, Expire_Date: e.target.value })}
-                        className="h-12 pl-12 rounded-xl bg-white/5 border-white/10 text-white focus:ring-primary/40 invert-[0.9] dark:invert-0"
+                        className="h-12 pl-12 rounded-xl bg-muted/50 border-border/10 text-foreground focus:ring-primary/40 invert-[0.9] dark:invert-0"
                     />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label className="text-base font-bold font-black uppercase tracking-widest text-slate-500 ml-1">{t('drivers.dialog.branch_hq')}</Label>
+                <Label className="text-base font-bold font-black uppercase tracking-widest text-muted-foreground ml-1">{t('drivers.dialog.branch_hq')}</Label>
                 <Select value={formData.Branch_ID || undefined} onValueChange={(val) => setFormData({ ...formData, Branch_ID: val })}>
-                    <SelectTrigger className="h-12 rounded-xl bg-white/5 border-white/10 text-white">
+                    <SelectTrigger className="h-12 rounded-xl bg-muted/50 border-border/10 text-foreground">
                         <SelectValue placeholder={t('common.all')} />
                     </SelectTrigger>
-                    <SelectContent className="bg-slate-900 border-white/10 text-white">
+                    <SelectContent className="bg-card border-border/10 text-foreground">
                         {Array.isArray(branches) && branches.map((b) => (
                             <SelectItem key={b.Branch_ID} value={b.Branch_ID}>{b.Branch_Name}</SelectItem>
                         ))}
@@ -204,12 +204,12 @@ export function DriverDialog({
               </div>
 
               <div className="space-y-2">
-                <Label className="text-base font-bold font-black uppercase tracking-widest text-slate-500 ml-1">{t('drivers.dialog.subcontractor_origin')}</Label>
+                <Label className="text-base font-bold font-black uppercase tracking-widest text-muted-foreground ml-1">{t('drivers.dialog.subcontractor_origin')}</Label>
                 <Select value={formData.Sub_ID || "__independent__"} onValueChange={(val) => setFormData({ ...formData, Sub_ID: val === "__independent__" ? "" : val })}>
-                    <SelectTrigger className="h-12 rounded-xl bg-white/5 border-white/10 text-white">
+                    <SelectTrigger className="h-12 rounded-xl bg-muted/50 border-border/10 text-foreground">
                         <SelectValue placeholder="Independent" />
                     </SelectTrigger>
-                    <SelectContent className="bg-slate-900 border-white/10 text-white">
+                    <SelectContent className="bg-card border-border/10 text-foreground">
                         <SelectItem value="__independent__">Independent / Fleet Ops</SelectItem>
                         {Array.isArray(subcontractors) && subcontractors.map((s) => (
                             <SelectItem key={s.Sub_ID} value={s.Sub_ID}>{s.Sub_Name}</SelectItem>
@@ -219,12 +219,12 @@ export function DriverDialog({
               </div>
 
               <div className="space-y-2">
-                <Label className="text-base font-bold font-black uppercase tracking-widest text-slate-500 ml-1">{t('drivers.dialog.asset_allocation')}</Label>
+                <Label className="text-base font-bold font-black uppercase tracking-widest text-muted-foreground ml-1">{t('drivers.dialog.asset_allocation')}</Label>
                 <Select value={formData.Vehicle_Plate || "__none__"} onValueChange={(val) => setFormData({ ...formData, Vehicle_Plate: val === "__none__" ? "" : val })}>
-                    <SelectTrigger className="h-12 rounded-xl bg-white/5 border-white/10 text-white">
+                    <SelectTrigger className="h-12 rounded-xl bg-muted/50 border-border/10 text-foreground">
                         <SelectValue placeholder={t('common.no_data')} />
                     </SelectTrigger>
-                    <SelectContent className="bg-slate-900 border-white/10 text-white">
+                    <SelectContent className="bg-card border-border/10 text-foreground">
                         <SelectItem value="__none__">{t('common.no_data')}</SelectItem>
                         {Array.isArray(vehicles) && vehicles.map((v) => (
                             <SelectItem key={v.Vehicle_Plate} value={v.Vehicle_Plate}>{v.Vehicle_Plate}</SelectItem>
@@ -235,7 +235,7 @@ export function DriverDialog({
           </div>
 
           {/* Section: Financial Interface */}
-          <div className="p-6 rounded-3xl bg-white/5 border border-white/10 space-y-6">
+          <div className="p-6 rounded-3xl bg-muted/50 border border-border/10 space-y-6">
             <div className="flex items-center gap-3">
                  <div className="p-2 bg-emerald-500/20 rounded-xl">
                     <Landmark size={18} className="text-emerald-400" /> 
@@ -244,12 +244,12 @@ export function DriverDialog({
             </div>
             
             <div className="space-y-2">
-                <Label className="text-base font-bold font-black text-slate-500 uppercase tracking-widest">{t('drivers.dialog.institution')}</Label>
+                <Label className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest">{t('drivers.dialog.institution')}</Label>
                 <Select value={formData.Bank_Name || "__none__"} onValueChange={(val) => setFormData({ ...formData, Bank_Name: val === "__none__" ? "" : val })}>
-                    <SelectTrigger className="h-12 border-white/10 bg-black/20 text-white">
+                    <SelectTrigger className="h-12 border-border/10 bg-black/20 text-white">
                         <SelectValue placeholder={t('common.search')} />
                     </SelectTrigger>
-                    <SelectContent className="bg-slate-900 border-white/10 text-white">
+                    <SelectContent className="bg-card border-border/10 text-foreground">
                         <SelectItem value="__none__">{t('common.no_data')}</SelectItem>
                         {BANKS.map((b) => (
                             <SelectItem key={b.value} value={b.value}>{b.label}</SelectItem>
@@ -260,21 +260,21 @@ export function DriverDialog({
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                    <Label className="text-base font-bold font-black text-slate-500 uppercase tracking-widest">{t('drivers.dialog.account_serial')}</Label>
+                    <Label className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest">{t('drivers.dialog.account_serial')}</Label>
                     <Input
                         value={formData.Bank_Account_No}
                         onChange={(e) => setFormData({ ...formData, Bank_Account_No: e.target.value })}
                         placeholder="000-0-00000-0"
-                        className="h-12 bg-black/20 border-white/10 text-white placeholder:text-slate-800"
+                        className="h-12 bg-black/20 border-border/10 text-white placeholder:text-muted-foreground"
                     />
                 </div>
                 <div className="space-y-2">
-                    <Label className="text-base font-bold font-black text-slate-500 uppercase tracking-widest">{t('drivers.dialog.legal_account_name')}</Label>
+                    <Label className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest">{t('drivers.dialog.legal_account_name')}</Label>
                     <Input
                         value={formData.Bank_Account_Name}
                         onChange={(e) => setFormData({ ...formData, Bank_Account_Name: e.target.value })}
                         placeholder="Verified Full Name"
-                        className="h-12 bg-black/20 border-white/10 text-white placeholder:text-slate-800"
+                        className="h-12 bg-black/20 border-border/10 text-white placeholder:text-muted-foreground"
                     />
                 </div>
             </div>
@@ -285,14 +285,14 @@ export function DriverDialog({
                 type="button" 
                 variant="ghost" 
                 onClick={() => setShow(false)}
-                className="h-14 px-8 rounded-2xl text-slate-500 font-black uppercase tracking-widest text-base font-bold hover:text-white"
+                className="h-14 px-8 rounded-2xl text-muted-foreground font-black uppercase tracking-widest text-foreground"
             >
               {t('drivers.dialog.abort')}
             </Button>
             <Button 
                 type="submit" 
                 disabled={loading} 
-                className="h-14 px-12 rounded-2xl bg-primary hover:brightness-110 text-white font-black uppercase tracking-widest text-base font-bold shadow-xl shadow-primary/20 gap-3"
+                className="h-14 px-12 rounded-2xl bg-primary hover:brightness-110 text-foreground font-bold shadow-xl shadow-primary/20 gap-3"
             >
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save size={18} />}
               {mode === 'create' ? t('drivers.dialog.execute') : t('drivers.dialog.sync')}

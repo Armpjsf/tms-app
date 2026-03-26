@@ -206,7 +206,7 @@ export function PermissionRequester({ driverId }: Props) {
                     <Button 
                         size="sm" 
                         variant="ghost" 
-                        className="flex-1 text-gray-500 hover:text-gray-800 hover:bg-gray-100 font-bold"
+                        className="flex-1 text-muted-foreground hover:text-gray-800 hover:bg-gray-100 font-bold"
                         onClick={() => setShowPrompt(false)}
                     >
                         ภายหลัง

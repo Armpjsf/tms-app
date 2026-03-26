@@ -31,10 +31,10 @@ export function BranchPerformance({ data }: { data: BranchPerformanceItem[] }) {
             <Table>
                 <TableHeader>
                     <TableRow className="border-gray-200 hover:bg-transparent">
-                        <TableHead className="text-gray-500">ชื่อสาขา (Branch)</TableHead>
-                        <TableHead className="text-right text-gray-500">งาน (Jobs)</TableHead>
-                        <TableHead className="text-right text-gray-500">รายรับ (Revenue)</TableHead>
-                        <TableHead className="text-right text-gray-500">กำไรเบื้องต้น (Profit)</TableHead>
+                        <TableHead className="text-muted-foreground">ชื่อสาขา (Branch)</TableHead>
+                        <TableHead className="text-right text-muted-foreground">งาน (Jobs)</TableHead>
+                        <TableHead className="text-right text-muted-foreground">รายรับ (Revenue)</TableHead>
+                        <TableHead className="text-right text-muted-foreground">กำไรเบื้องต้น (Profit)</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -50,7 +50,7 @@ export function BranchPerformance({ data }: { data: BranchPerformanceItem[] }) {
                     ))}
                 </TableBody>
             </Table>
-            <p className="text-base font-bold text-gray-500 mt-4 italic">
+            <p className="text-base font-bold text-muted-foreground mt-4 italic">
                 *กำไรเบื้องต้น คำนวณจาก รายรับ - ค่าขนส่ง (ไม่รวมค่าน้ำมันและค่าซ่อมบำรุง)
             </p>
         </div>

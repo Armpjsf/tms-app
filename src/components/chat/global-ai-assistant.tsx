@@ -65,24 +65,24 @@ export function GlobalAIAssistant() {
                             }}
                             exit={{ opacity: 0, scale: 0.9, y: 20 }}
                             className={cn(
-                                "mb-4 lg:mb-6 bg-[#0a0518]/95 backdrop-blur-3xl border border-white/10 rounded-2xl lg:rounded-[2.5rem] shadow-[0_50px_100px_rgba(0,0,0,0.6)] flex flex-col overflow-hidden ring-1 ring-white/5",
+                                "mb-4 lg:mb-6 bg-background/95 backdrop-blur-3xl border border-border/10 rounded-2xl lg:rounded-[2.5rem] shadow-[0_50px_100px_rgba(0,0,0,0.6)] flex flex-col overflow-hidden ring-1 ring-border/5",
                                 isMinimized && "rounded-full"
                             )}
                         >
                             {/* Header */}
-                            <div className="p-4 lg:p-6 bg-white/[0.03] border-b border-white/5 flex items-center justify-between shrink-0">
+                            <div className="p-4 lg:p-6 bg-muted/40 border-b border-border/5 flex items-center justify-between shrink-0">
                                 <div className="flex items-center gap-3 lg:gap-4">
                                     <div className="relative">
                                         <div className="w-8 h-8 lg:w-10 lg:h-10 rounded-lg lg:rounded-xl bg-primary/20 flex items-center justify-center border border-primary/30 text-primary animate-pulse">
                                             <Bot size={16} strokeWidth={2.5} className="lg:w-5 lg:h-5" />
                                         </div>
-                                        <div className="absolute -bottom-1 -right-1 w-2.5 h-2.5 lg:w-3 lg:h-3 bg-emerald-500 rounded-full border-2 border-[#0a0518]" />
+                                        <div className="absolute -bottom-1 -right-1 w-2.5 h-2.5 lg:w-3 lg:h-3 bg-emerald-500 rounded-full border-2 border-background" />
                                     </div>
                                     <div>
-                                        <h3 className="text-lg font-bold lg:text-xl font-black text-white italic tracking-widest uppercase">Tactical AI</h3>
+                                        <h3 className="text-lg font-bold lg:text-xl font-black text-foreground italic tracking-widest uppercase">Tactical AI</h3>
                                         <div className="flex items-center gap-2">
                                             <div className="w-1 h-1 lg:w-1.5 lg:h-1.5 rounded-full bg-emerald-500/60" />
-                                            <span className="text-[7px] lg:text-base font-bold font-black text-slate-500 uppercase tracking-widest">Neural Link Est.</span>
+                                            <span className="text-[7px] lg:text-base font-bold font-black text-muted-foreground uppercase tracking-widest">Neural Link Est.</span>
                                         </div>
                                     </div>
                                 </div>
@@ -90,7 +90,7 @@ export function GlobalAIAssistant() {
                                     <Button 
                                         variant="ghost" 
                                         size="icon" 
-                                        className="h-7 w-7 lg:h-8 lg:w-8 text-slate-500 hover:text-white"
+                                        className="h-7 w-7 lg:h-8 lg:w-8 text-muted-foreground hover:text-foreground"
                                         onClick={() => setIsMinimized(!isMinimized)}
                                     >
                                         {isMinimized ? <Maximize2 size={12} className="lg:w-[14px] lg:h-[14px]" /> : <Minimize2 size={12} className="lg:w-[14px] lg:h-[14px]" />}
@@ -98,7 +98,7 @@ export function GlobalAIAssistant() {
                                     <Button 
                                         variant="ghost" 
                                         size="icon" 
-                                        className="h-7 w-7 lg:h-8 lg:w-8 text-slate-500 hover:text-rose-500"
+                                        className="h-7 w-7 lg:h-8 lg:w-8 text-muted-foreground hover:text-rose-500"
                                         onClick={() => setIsOpen(false)}
                                     >
                                         <X size={14} className="lg:w-4 lg:h-4" />
@@ -120,13 +120,13 @@ export function GlobalAIAssistant() {
                                             )}>
                                                 <div className={cn(
                                                     "w-7 h-7 lg:w-8 lg:h-8 rounded-lg flex items-center justify-center shrink-0 text-base font-bold lg:text-base font-bold border shadow-lg",
-                                                    msg.role === 'user' ? 'bg-primary border-primary/20 text-white' : 'bg-white/5 border-white/10 text-primary'
+                                                    msg.role === 'user' ? 'bg-primary border-primary/20 text-foreground' : 'bg-muted/50 border-border/10 text-primary'
                                                 )}>
                                                     {msg.role === 'user' ? 'U' : <Bot size={12} className="lg:w-[14px] lg:h-[14px]" />}
                                                 </div>
                                                 <div className={cn(
                                                     "max-w-[85%] lg:max-w-[80%] p-3 lg:p-4 rounded-xl lg:rounded-2xl text-base font-bold lg:text-[12px] font-bold leading-relaxed whitespace-pre-wrap uppercase tracking-tight italic",
-                                                    msg.role === 'user' ? 'bg-primary text-white rounded-br-none' : 'bg-white/5 text-slate-300 border border-white/5 rounded-bl-none'
+                                                    msg.role === 'user' ? 'bg-primary text-foreground rounded-br-none' : 'bg-muted/50 text-muted-foreground border border-border/5 rounded-bl-none'
                                                 )}>
                                                     {msg.content}
                                                 </div>
@@ -134,10 +134,10 @@ export function GlobalAIAssistant() {
                                         ))}
                                         {loading && (
                                             <div className="flex items-end gap-2 lg:gap-3">
-                                                <div className="w-7 h-7 lg:w-8 lg:h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-primary animate-pulse">
+                                                <div className="w-7 h-7 lg:w-8 lg:h-8 rounded-lg bg-muted/50 border border-border/10 flex items-center justify-center text-primary animate-pulse">
                                                     <Bot size={12} className="lg:w-[14px] lg:h-[14px]" />
                                                 </div>
-                                                <div className="bg-white/[0.02] border border-white/5 p-3 lg:p-4 rounded-xl lg:rounded-2xl rounded-bl-none flex gap-2 lg:gap-3 items-center">
+                                                <div className="bg-muted/30 border border-border/5 p-3 lg:p-4 rounded-xl lg:rounded-2xl rounded-bl-none flex gap-2 lg:gap-3 items-center">
                                                     <Loader2 className="w-2.5 h-2.5 lg:w-3 lg:h-3 animate-spin text-primary" />
                                                     <span className="text-base font-bold lg:text-base font-bold font-black uppercase tracking-[0.3em] text-primary italic">Syncing Neural Core...</span>
                                                 </div>
@@ -146,19 +146,19 @@ export function GlobalAIAssistant() {
                                     </div>
 
                                     {/* Input Area */}
-                                    <div className="p-4 lg:p-6 bg-white/[0.02] border-t border-white/5">
+                                    <div className="p-4 lg:p-6 bg-muted/30 border-t border-border/5">
                                         <div className="flex gap-2 lg:gap-3 relative">
                                             <Input 
                                                 value={input}
                                                 onChange={(e) => setInput(e.target.value)}
                                                 onKeyDown={(e) => e.key === 'Enter' && handleSend()}
                                                 placeholder="Ask Commander..." 
-                                                className="flex-1 bg-[#050110] border-white/5 text-white placeholder:text-slate-700 h-10 lg:h-12 rounded-lg lg:rounded-xl text-base font-bold lg:text-base font-bold font-black uppercase tracking-widest italic pl-3 lg:pl-4"
+                                                className="flex-1 bg-background border-border/5 text-foreground placeholder:text-muted-foreground h-10 lg:h-12 rounded-lg lg:rounded-xl text-base font-bold lg:text-base font-bold font-black uppercase tracking-widest italic pl-3 lg:pl-4"
                                             />
                                             <Button 
                                                 onClick={handleSend}
                                                 disabled={loading || !input.trim()}
-                                                className="w-10 h-10 lg:w-12 lg:h-12 rounded-lg lg:rounded-xl bg-primary hover:bg-primary/80 text-white shrink-0"
+                                                className="w-10 h-10 lg:w-12 lg:h-12 rounded-lg lg:rounded-xl bg-primary hover:bg-primary/80 text-foreground shrink-0"
                                             >
                                                 <Send size={14} className="lg:w-4 lg:h-4" />
                                             </Button>
@@ -177,13 +177,13 @@ export function GlobalAIAssistant() {
                         onClick={() => setIsOpen(true)}
                         whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.9 }}
-                        className="w-16 h-16 lg:w-20 lg:h-20 rounded-2xl lg:rounded-[2rem] bg-primary text-white shadow-[0_20px_40px_rgba(255,30,133,0.4)] flex items-center justify-center relative group overflow-hidden border-2 border-white/20"
+                        className="w-16 h-16 lg:w-20 lg:h-20 rounded-2xl lg:rounded-[2rem] bg-primary text-foreground shadow-[0_20px_40px_rgba(255,30,133,0.4)] flex items-center justify-center relative group overflow-hidden border-2 border-border/20"
                     >
                         <div className="absolute inset-0 bg-gradient-to-tr from-white/20 to-transparent pointer-events-none" />
                         <Bot size={24} strokeWidth={2.5} className="group-hover:rotate-12 transition-transform duration-500 lg:w-8 lg:h-8" />
                         
                         {/* Glow Effect */}
-                        <div className="absolute inset-0 bg-white/10 blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <div className="absolute inset-0 bg-muted/80 blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
                     </motion.button>
                 )}
             </div>

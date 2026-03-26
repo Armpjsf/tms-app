@@ -79,7 +79,7 @@ export default function MobileSOSPage() {
 
         <div className="space-y-2">
             <h1 className="text-2xl font-bold text-gray-900">ฉุกเฉิน / อุบัติเหตุ</h1>
-            <p className="text-gray-500">
+            <p className="text-muted-foreground">
                 กดปุ่มด้านล่างเพื่อโทรออกทันที
             </p>
         </div>
@@ -143,7 +143,7 @@ export default function MobileSOSPage() {
                     )}
                 </div>
                 
-                <p className="text-gray-500 text-xl break-words">
+                <p className="text-muted-foreground text-xl break-words">
                     {loading ? "กำลังระบุตำแหน่ง..." : address}
                 </p>
                 
@@ -153,7 +153,7 @@ export default function MobileSOSPage() {
                     </p>
                 )}
 
-                <p className="text-base font-bold text-gray-500 mt-2">
+                <p className="text-base font-bold text-muted-foreground mt-2">
                     *พิกัดจะถูกส่งให้แอดมินอัตโนมัติเมื่อกดโทรออก
                 </p>
             </CardContent>

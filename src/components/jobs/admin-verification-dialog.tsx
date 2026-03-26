@@ -47,7 +47,7 @@ export function AdminVerificationDialog({ job, open, onOpenChange }: AdminVerifi
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md max-h-[95vh] flex flex-col bg-white rounded-3xl border-none shadow-2xl p-0 overflow-hidden">
-        <div className="bg-slate-950 p-8 text-white relative flex-shrink-0">
+        <div className="bg-background p-8 text-foreground relative flex-shrink-0">
           <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 blur-3xl rounded-full -mr-16 -mt-16" />
           <DialogHeader className="relative z-10">
             <div className="flex items-center gap-3 mb-2">
@@ -64,7 +64,7 @@ export function AdminVerificationDialog({ job, open, onOpenChange }: AdminVerifi
 
         <div className="flex-1 overflow-y-auto p-8 space-y-6 custom-scrollbar">
           <div className="space-y-2">
-            <label className="text-base font-bold font-black text-slate-500 uppercase tracking-widest ml-1">{t('verification.note_label')}</label>
+            <label className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest ml-1">{t('verification.note_label')}</label>
             <Textarea 
               placeholder={t('verification.placeholder_note')}
               className="min-h-[120px] rounded-2xl bg-gray-50 border-gray-100 focus:bg-white transition-all text-xl font-medium p-4 resize-none"
@@ -94,7 +94,7 @@ export function AdminVerificationDialog({ job, open, onOpenChange }: AdminVerifi
           </div>
         </div>
 
-        <div className="p-4 bg-gray-50 border-t border-gray-100 flex items-center justify-center gap-4 text-base font-bold font-black text-slate-500 uppercase tracking-widest">
+        <div className="p-4 bg-gray-50 border-t border-gray-100 flex items-center justify-center gap-4 text-base font-bold font-black text-muted-foreground uppercase tracking-widest">
             <div className="flex items-center gap-1.5">
                 <AlertCircle size={12} className="text-emerald-600" /> {t('verification.audit_footer')}
             </div>

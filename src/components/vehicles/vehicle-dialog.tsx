@@ -114,7 +114,7 @@ export function VehicleDialog({
   return (
     <Dialog open={show} onOpenChange={setShow}>
       {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
-      <DialogContent className="max-w-[95vw] sm:max-w-xl max-h-[95vh] flex flex-col bg-slate-900/95 backdrop-blur-2xl border-white/5 text-white p-0 rounded-[2.5rem] overflow-hidden shadow-[0_0_80px_rgba(0,0,0,0.5)]">
+      <DialogContent className="max-w-[95vw] sm:max-w-xl max-h-[95vh] flex flex-col bg-card/95 backdrop-blur-2xl border-border/5 text-foreground p-0 rounded-[2.5rem] overflow-hidden shadow-[0_0_80px_rgba(0,0,0,0.5)]">
         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary via-accent to-purple-500" />
         
         <DialogHeader className="p-8 pb-0 flex-shrink-0">
@@ -126,7 +126,7 @@ export function VehicleDialog({
                   <DialogTitle className="text-3xl font-black tracking-tighter uppercase whitespace-nowrap">
                       {mode === 'create' ? t('vehicles.dialog.title_add') : t('vehicles.dialog.title_edit')}
                   </DialogTitle>
-                  <p className="text-slate-500 text-base font-bold font-black uppercase tracking-[0.3em]">{t('vehicles.dialog.subtitle')}</p>
+                  <p className="text-muted-foreground text-base font-bold font-black uppercase tracking-[0.3em]">{t('vehicles.dialog.subtitle')}</p>
               </div>
           </div>
         </DialogHeader>
@@ -135,12 +135,12 @@ export function VehicleDialog({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {branches.length > 0 && (
                 <div className="space-y-2">
-                    <Label htmlFor="Branch_ID" className="text-xs font-black uppercase tracking-widest text-slate-500 ml-1">Branch HQ</Label>
+                    <Label htmlFor="Branch_ID" className="text-xs font-black uppercase tracking-widest text-muted-foreground ml-1">Branch HQ</Label>
                     <Select value={formData.Branch_ID || undefined} onValueChange={(val) => setFormData({ ...formData, Branch_ID: val })}>
-                        <SelectTrigger className="h-10 rounded-xl bg-white/5 border-white/10 text-white">
+                        <SelectTrigger className="h-10 rounded-xl bg-muted/50 border-border/10 text-foreground">
                             <SelectValue placeholder={t('common.all')} />
                         </SelectTrigger>
-                        <SelectContent className="bg-slate-900 border-white/10 text-white">
+                        <SelectContent className="bg-card border-border/10 text-foreground">
                             {branches.map((b) => (
                                 <SelectItem key={b.Branch_ID} value={b.Branch_ID}>
                                     {b.Branch_Name}
@@ -153,12 +153,12 @@ export function VehicleDialog({
 
               {subcontractors && subcontractors.length > 0 && (
                 <div className="space-y-2">
-                    <Label htmlFor="Sub_ID" className="text-xs font-black uppercase tracking-widest text-slate-500 ml-1">Fleet Provider</Label>
+                    <Label htmlFor="Sub_ID" className="text-xs font-black uppercase tracking-widest text-muted-foreground ml-1">Fleet Provider</Label>
                     <Select value={formData.Sub_ID || "__company__"} onValueChange={(val) => setFormData({ ...formData, Sub_ID: val === "__company__" ? "" : val })}>
-                        <SelectTrigger className="h-10 rounded-xl bg-white/5 border-white/10 text-white">
+                        <SelectTrigger className="h-10 rounded-xl bg-muted/50 border-border/10 text-foreground">
                             <SelectValue placeholder="Company Fleet" />
                         </SelectTrigger>
-                        <SelectContent className="bg-slate-900 border-white/10 text-white">
+                        <SelectContent className="bg-card border-border/10 text-foreground">
                             <SelectItem value="__company__">Independent / Company</SelectItem>
                             {subcontractors.map((s) => (
                                 <SelectItem key={s.Sub_ID} value={s.Sub_ID}>{s.Sub_Name}</SelectItem>
@@ -170,10 +170,10 @@ export function VehicleDialog({
             </div>
           )}
 
-          <div className="h-px bg-white/5 mx-[-2rem]" />
+          <div className="h-px bg-muted/50 mx-[-2rem]" />
 
           <div className="space-y-2">
-            <Label htmlFor="Vehicle_Plate" className="text-base font-bold font-black uppercase tracking-widest text-slate-500 ml-1">{t('vehicles.dialog.plate')}</Label>
+            <Label htmlFor="Vehicle_Plate" className="text-base font-bold font-black uppercase tracking-widest text-muted-foreground ml-1">{t('vehicles.dialog.plate')}</Label>
             <Input
               id="Vehicle_Plate"
               value={formData.Vehicle_Plate}
@@ -181,57 +181,57 @@ export function VehicleDialog({
               placeholder="1กข-1234"
               required
               disabled={mode === 'edit'}
-              className="h-12 px-6 rounded-xl bg-white/5 border-white/10 text-white placeholder:text-slate-700 focus:ring-primary/40"
+              className="h-12 px-6 rounded-xl bg-muted/50 border-border/10 text-foreground placeholder:text-muted-foreground focus:ring-primary/40"
             />
           </div>
           
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-                <Label htmlFor="Brand" className="text-base font-bold font-black uppercase tracking-widest text-slate-500 ml-1">{t('vehicles.dialog.brand')}</Label>
+                <Label htmlFor="Brand" className="text-base font-bold font-black uppercase tracking-widest text-muted-foreground ml-1">{t('vehicles.dialog.brand')}</Label>
                 <Input
                 id="Brand"
                 value={formData.Brand}
                 onChange={(e) => setFormData({ ...formData, Brand: e.target.value })}
                 placeholder="Toyota"
-                className="h-12 px-6 rounded-xl bg-white/5 border-white/10 text-white placeholder:text-slate-700 focus:ring-primary/40"
+                className="h-12 px-6 rounded-xl bg-muted/50 border-border/10 text-foreground placeholder:text-muted-foreground focus:ring-primary/40"
                 />
             </div>
             <div className="space-y-2">
-                <Label htmlFor="Model" className="text-base font-bold font-black uppercase tracking-widest text-slate-500 ml-1">{t('vehicles.dialog.model')}</Label>
+                <Label htmlFor="Model" className="text-base font-bold font-black uppercase tracking-widest text-muted-foreground ml-1">{t('vehicles.dialog.model')}</Label>
                 <Input
                 id="Model"
                 value={formData.Model}
                 onChange={(e) => setFormData({ ...formData, Model: e.target.value })}
                 placeholder="Hilux Revo"
-                className="h-12 px-6 rounded-xl bg-white/5 border-white/10 text-white placeholder:text-slate-700 focus:ring-primary/40"
+                className="h-12 px-6 rounded-xl bg-muted/50 border-border/10 text-foreground placeholder:text-muted-foreground focus:ring-primary/40"
                 />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-                <Label htmlFor="Current_Mileage" className="text-base font-bold font-black uppercase tracking-widest text-slate-500 ml-1">{t('vehicles.dialog.mileage')}</Label>
+                <Label htmlFor="Current_Mileage" className="text-base font-bold font-black uppercase tracking-widest text-muted-foreground ml-1">{t('vehicles.dialog.mileage')}</Label>
                 <Input
                 id="Current_Mileage"
                 type="number"
                 value={formData.Current_Mileage}
                 onChange={(e) => setFormData({ ...formData, Current_Mileage: Number(e.target.value) })}
-                className="h-12 px-6 rounded-xl bg-white/5 border-white/10 text-white focus:ring-primary/40"
+                className="h-12 px-6 rounded-xl bg-muted/50 border-border/10 text-foreground focus:ring-primary/40"
                 />
             </div>
             <div className="space-y-2">
-                <Label htmlFor="Next_Service_Mileage" className="text-base font-bold font-black uppercase tracking-widest text-slate-500 ml-1">{t('vehicles.dialog.next_service')}</Label>
+                <Label htmlFor="Next_Service_Mileage" className="text-base font-bold font-black uppercase tracking-widest text-muted-foreground ml-1">{t('vehicles.dialog.next_service')}</Label>
                 <Input
                 id="Next_Service_Mileage"
                 type="number"
                 value={formData.Next_Service_Mileage}
                 onChange={(e) => setFormData({ ...formData, Next_Service_Mileage: Number(e.target.value) })}
-                className="h-12 px-6 rounded-xl bg-white/5 border-white/10 text-white focus:ring-primary/40"
+                className="h-12 px-6 rounded-xl bg-muted/50 border-border/10 text-foreground focus:ring-primary/40"
                 />
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4 border-t border-white/5 pt-6">
+          <div className="grid grid-cols-2 gap-4 border-t border-border/5 pt-6">
              <div className="space-y-2">
                 <Label htmlFor="Max_Weight_kg" className="text-base font-bold font-black uppercase tracking-widest text-emerald-500/80 ml-1">{t('vehicles.dialog.max_weight')}</Label>
                 <div className="relative">
@@ -263,7 +263,7 @@ export function VehicleDialog({
             </div>
           </div>
 
-          <div className="p-6 rounded-3xl bg-white/5 border border-white/10 space-y-6">
+          <div className="p-6 rounded-3xl bg-muted/50 border border-border/10 space-y-6">
             <div className="flex items-center gap-3">
                  <div className="p-2 bg-blue-500/20 rounded-xl">
                     <Shield size={18} className="text-blue-400" /> 
@@ -273,43 +273,43 @@ export function VehicleDialog({
             
             <div className="grid grid-cols-1 gap-4">
                 <div className="grid grid-cols-2 items-center gap-4">
-                    <Label htmlFor="Tax_Expiry" className="text-xs font-black uppercase tracking-widest text-slate-500">{t('vehicles.dialog.tax_expiry')}</Label>
+                    <Label htmlFor="Tax_Expiry" className="text-xs font-black uppercase tracking-widest text-muted-foreground">{t('vehicles.dialog.tax_expiry')}</Label>
                     <div className="relative">
-                        <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600" size={14} />
+                        <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={14} />
                         <Input
                             id="Tax_Expiry"
                             type="date"
                             value={formData.Tax_Expiry}
                             onChange={(e) => setFormData({ ...formData, Tax_Expiry: e.target.value })}
-                            className="h-10 pl-10 border-white/10 bg-black/20 text-white focus:ring-primary/40 invert-[0.9] dark:invert-0"
+                            className="h-10 pl-10 border-border/10 bg-black/20 text-foreground focus:ring-primary/40 invert-[0.9] dark:invert-0"
                         />
                     </div>
                 </div>
                 
                 <div className="grid grid-cols-2 items-center gap-4">
-                    <Label htmlFor="Insurance_Expiry" className="text-xs font-black uppercase tracking-widest text-slate-500">{t('vehicles.dialog.insurance_expiry')}</Label>
+                    <Label htmlFor="Insurance_Expiry" className="text-xs font-black uppercase tracking-widest text-muted-foreground">{t('vehicles.dialog.insurance_expiry')}</Label>
                     <div className="relative">
-                        <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600" size={14} />
+                        <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={14} />
                         <Input
                             id="Insurance_Expiry"
                             type="date"
                             value={formData.Insurance_Expiry}
                             onChange={(e) => setFormData({ ...formData, Insurance_Expiry: e.target.value })}
-                            className="h-10 pl-10 border-white/10 bg-black/20 text-white focus:ring-primary/40 invert-[0.9] dark:invert-0"
+                            className="h-10 pl-10 border-border/10 bg-black/20 text-foreground focus:ring-primary/40 invert-[0.9] dark:invert-0"
                         />
                     </div>
                 </div>
 
                 <div className="grid grid-cols-2 items-center gap-4">
-                    <Label htmlFor="Act_Expiry" className="text-xs font-black uppercase tracking-widest text-slate-500">{t('vehicles.dialog.act_expiry')}</Label>
+                    <Label htmlFor="Act_Expiry" className="text-xs font-black uppercase tracking-widest text-muted-foreground">{t('vehicles.dialog.act_expiry')}</Label>
                     <div className="relative">
-                        <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600" size={14} />
+                        <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={14} />
                         <Input
                             id="Act_Expiry"
                             type="date"
                             value={formData.Act_Expiry}
                             onChange={(e) => setFormData({ ...formData, Act_Expiry: e.target.value })}
-                            className="h-10 pl-10 border-white/10 bg-black/20 text-white focus:ring-primary/40 invert-[0.9] dark:invert-0"
+                            className="h-10 pl-10 border-border/10 bg-black/20 text-foreground focus:ring-primary/40 invert-[0.9] dark:invert-0"
                         />
                     </div>
                 </div>
@@ -321,12 +321,12 @@ export function VehicleDialog({
 
 
           <div className="space-y-2">
-            <Label htmlFor="Vehicle_Type" className="text-base font-bold font-black uppercase tracking-widest text-slate-500 ml-1">{t('vehicles.dialog.type')}</Label>
+            <Label htmlFor="Vehicle_Type" className="text-base font-bold font-black uppercase tracking-widest text-muted-foreground ml-1">{t('vehicles.dialog.type')}</Label>
             <Select value={formData.Vehicle_Type} onValueChange={(val) => setFormData({ ...formData, Vehicle_Type: val })}>
-                <SelectTrigger className="h-10 rounded-xl bg-white/5 border-white/10 text-white">
+                <SelectTrigger className="h-10 rounded-xl bg-muted/50 border-border/10 text-foreground">
                     <SelectValue placeholder={t('vehicles.type')} />
                 </SelectTrigger>
-                <SelectContent className="bg-slate-900 border-white/10 text-white">
+                <SelectContent className="bg-card border-border/10 text-foreground">
                     {vehicleTypes.length > 0 ? (
                         vehicleTypes.map((type) => (
                             <SelectItem key={type.type_id} value={type.type_name}>
@@ -346,12 +346,12 @@ export function VehicleDialog({
 
           {mode === 'edit' && (
              <div className="space-y-2">
-              <Label htmlFor="Active_Status" className="text-base font-bold font-black uppercase tracking-widest text-slate-500 ml-1">{t('common.status')}</Label>
+              <Label htmlFor="Active_Status" className="text-base font-bold font-black uppercase tracking-widest text-muted-foreground ml-1">{t('common.status')}</Label>
               <Select value={formData.Active_Status} onValueChange={(val) => setFormData({ ...formData, Active_Status: val })}>
-                <SelectTrigger className="h-10 rounded-xl bg-white/5 border-white/10 text-white">
+                <SelectTrigger className="h-10 rounded-xl bg-muted/50 border-border/10 text-foreground">
                     <SelectValue placeholder={t('common.status')} />
                 </SelectTrigger>
-                <SelectContent className="bg-slate-900 border-white/10 text-white">
+                <SelectContent className="bg-card border-border/10 text-foreground">
                     <SelectItem value="Active">Active</SelectItem>
                     <SelectItem value="Maintenance">Maintenance</SelectItem>
                     <SelectItem value="Inactive">Inactive</SelectItem>
@@ -365,14 +365,14 @@ export function VehicleDialog({
                 type="button" 
                 variant="ghost" 
                 onClick={() => setShow(false)}
-                className="h-14 px-8 rounded-2xl text-slate-500 font-black uppercase tracking-widest text-base font-bold hover:text-white"
+                className="h-14 px-8 rounded-2xl text-muted-foreground font-black uppercase tracking-widest text-base font-bold hover:text-foreground"
             >
               {t('vehicles.dialog.abort')}
             </Button>
             <Button 
                 type="submit" 
                 disabled={loading} 
-                className="h-14 px-12 rounded-2xl bg-primary hover:brightness-110 text-white font-black uppercase tracking-widest text-base font-bold shadow-xl shadow-primary/20 gap-3"
+                className="h-14 px-12 rounded-2xl bg-primary hover:brightness-110 text-foreground font-black uppercase tracking-widest text-base font-bold shadow-xl shadow-primary/20 gap-3"
             >
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save size={18} />}
               {mode === 'create' ? t('vehicles.dialog.execute') : t('vehicles.dialog.sync')}

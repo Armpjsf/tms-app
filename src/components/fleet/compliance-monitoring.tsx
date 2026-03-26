@@ -27,7 +27,7 @@ export function FleetCompliance({ data = [] }: { data?: { name: string; status: 
                         Risk Monitoring
                     </div>
                 </div>
-                <p className="text-gray-500 font-bold text-lg font-bold mt-1">การติดตามใบอนุญาตและเอกสารสำคัญ (Executive Risk View)</p>
+                <p className="text-muted-foreground font-bold text-lg font-bold mt-1">การติดตามใบอนุญาตและเอกสารสำคัญ (Executive Risk View)</p>
             </CardHeader>
             <CardContent className="p-8">
                 <div className="grid grid-cols-1 gap-4">
@@ -51,7 +51,7 @@ export function FleetCompliance({ data = [] }: { data?: { name: string; status: 
                                 </div>
                                 <div>
                                     <p className="text-xl font-black text-gray-900 leading-tight">{item.name}</p>
-                                    <p className="text-base font-bold font-bold text-gray-500 uppercase tracking-wider mt-0.5">Expires: {item.date}</p>
+                                    <p className="text-base font-bold font-bold text-muted-foreground uppercase tracking-wider mt-0.5">Expires: {item.date}</p>
                                 </div>
                             </div>
                             <div className="text-right">

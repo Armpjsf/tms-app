@@ -19,7 +19,7 @@ export default async function ChatPage() {
         <DashboardLayout>
             <div className="flex flex-col gap-8 h-[calc(100vh-140px)]">
                 {/* Tactical Communication Header */}
-                <div className="bg-[#0a0518] p-10 rounded-br-[5rem] rounded-tl-[3rem] border border-white/5 shadow-[0_30px_60px_rgba(0,0,0,0.5)] relative overflow-hidden group">
+                <div className="bg-background p-10 rounded-br-[5rem] rounded-tl-[3rem] border border-border/5 shadow-[0_30px_60px_rgba(0,0,0,0.5)] relative overflow-hidden group">
                     <div className="absolute top-0 right-0 w-80 h-80 bg-blue-500/5 blur-[120px] rounded-full -mr-40 -mt-40 pointer-events-none" />
                     <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8 relative z-10">
                         <div className="flex items-center gap-6">
@@ -27,19 +27,19 @@ export default async function ChatPage() {
                                 <MessageSquare size={32} strokeWidth={2.5} />
                             </div>
                             <div>
-                                <h1 className="text-4xl font-black text-white tracking-widest uppercase leading-none mb-2 italic">Comm Channel</h1>
+                                <h1 className="text-4xl font-black text-foreground tracking-widest uppercase leading-none mb-2 italic">Comm Channel</h1>
                                 <p className="text-base font-bold font-black text-blue-400 uppercase tracking-[0.6em] opacity-80 italic italic">Secure Fleet Messaging & Data Packet Liaison // COMM_V4</p>
                             </div>
                         </div>
-                        <div className="flex items-center gap-4 bg-white/5 p-4 rounded-2xl border border-white/10 backdrop-blur-md">
+                        <div className="flex items-center gap-4 bg-muted/50 p-4 rounded-2xl border border-border/10 backdrop-blur-md">
                             <div className="flex items-center gap-3">
                                 <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                                <span className="text-base font-bold font-black text-slate-400 uppercase tracking-widest">Signal: Active</span>
+                                <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest">Signal: Active</span>
                             </div>
-                            <div className="w-px h-6 bg-white/10" />
+                            <div className="w-px h-6 bg-muted/80" />
                             <div className="flex items-center gap-3">
                                 <ShieldCheck size={14} className="text-blue-500" />
-                                <span className="text-base font-bold font-black text-slate-400 uppercase tracking-widest">Secure_Link</span>
+                                <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest">Secure_Link</span>
                             </div>
                         </div>
                     </div>

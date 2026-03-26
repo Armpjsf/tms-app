@@ -78,7 +78,7 @@ export function AdminJobActions({ jobId, currentStatus }: Props) {
       <DialogContent className="bg-white border-gray-200 max-w-[95vw] sm:max-w-[425px] max-h-[95vh] flex flex-col p-0 overflow-hidden">
         <DialogHeader className="p-6 pb-2 flex-shrink-0">
           <DialogTitle className="text-gray-900 font-black">อัพเดทสถานะงาน (Admin Override)</DialogTitle>
-          <DialogDescription className="text-gray-500 font-bold">
+          <DialogDescription className="text-muted-foreground font-bold">
             เปลี่ยนสถานะงานแทนคนขับ หรือปิดงานกรณีฉุกเฉิน
           </DialogDescription>
         </DialogHeader>
@@ -117,7 +117,7 @@ export function AdminJobActions({ jobId, currentStatus }: Props) {
           </div>
         </div>
         <DialogFooter>
-          <Button variant="ghost" onClick={() => setOpen(false)} className="text-gray-500 hover:text-white" disabled={loading}>
+          <Button variant="ghost" onClick={() => setOpen(false)} className="text-muted-foreground hover:text-white" disabled={loading}>
             ยกเลิก
           </Button>
           <Button onClick={handleUpdate} disabled={loading} className="bg-emerald-600 hover:bg-blue-700 text-white">

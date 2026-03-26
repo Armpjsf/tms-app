@@ -51,11 +51,11 @@ export default function BackupSettingsPage() {
     <DashboardLayout>
       <div className="space-y-12 pb-20 p-4 lg:p-10 max-w-7xl mx-auto">
         {/* Tactical Elite Header */}
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-10 bg-[#0a0518]/60 backdrop-blur-3xl p-10 rounded-br-[6rem] rounded-tl-[3rem] border border-white/5 shadow-2xl relative overflow-hidden group">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-10 bg-background/60 backdrop-blur-3xl p-10 rounded-br-[6rem] rounded-tl-[3rem] border border-border/5 shadow-2xl relative overflow-hidden group">
             <div className="absolute top-0 right-0 w-80 h-80 bg-emerald-500/10 blur-[120px] rounded-full -mr-40 -mt-40 pointer-events-none" />
             
             <div className="relative z-10 space-y-8">
-                <button onClick={() => router.back()} className="inline-flex items-center gap-2 text-slate-500 hover:text-emerald-500 transition-all font-black uppercase tracking-[0.1em] text-base font-bold group/back italic">
+                <button onClick={() => router.back()} className="inline-flex items-center gap-2 text-muted-foreground hover:text-emerald-500 transition-all font-black uppercase tracking-[0.1em] text-base font-bold group/back italic">
                     <ArrowLeft className="w-4 h-4 group-hover/back:-translate-x-1 transition-transform" /> 
                     {t('common.back')}
                 </button>
@@ -64,7 +64,7 @@ export default function BackupSettingsPage() {
                         <Database size={42} strokeWidth={2.5} />
                     </div>
                     <div>
-                        <h1 className="text-5xl font-black text-white tracking-widest uppercase leading-none italic premium-text-gradient">
+                        <h1 className="text-5xl font-black text-foreground tracking-widest uppercase leading-none italic premium-text-gradient">
                             Data Vault
                         </h1>
                         <p className="text-base font-bold font-black text-emerald-500 uppercase tracking-[0.2em] mt-2 opacity-80 italic italic">{t('settings.items.vault_desc')}</p>
@@ -73,20 +73,20 @@ export default function BackupSettingsPage() {
             </div>
 
             <div className="flex flex-col items-end gap-6 relative z-10">
-                <div className="bg-white/5 border border-white/10 px-6 py-3 rounded-2xl flex items-center gap-3 backdrop-blur-md">
+                <div className="bg-muted/50 border border-border/10 px-6 py-3 rounded-2xl flex items-center gap-3 backdrop-blur-md">
                     <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_10px_rgba(16,185,129,1)]" />
-                    <span className="text-base font-bold font-black text-slate-400 uppercase tracking-widest italic">VAULT_STATUS: SECURE_STANDBY</span>
+                    <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest italic">VAULT_STATUS: SECURE_STANDBY</span>
                 </div>
                 <div className="flex items-center gap-4 bg-emerald-500/10 p-4 rounded-2xl border border-emerald-500/20">
                    <ShieldCheck className="text-emerald-500" size={18} />
-                   <span className="text-base font-bold font-black text-white uppercase tracking-[0.1em] italic">Encrypted Payload Readiness</span>
+                   <span className="text-base font-bold font-black text-foreground uppercase tracking-[0.1em] italic">Encrypted Payload Readiness</span>
                 </div>
             </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {backupItems.map((item) => (
-              <PremiumCard key={item.table} className="bg-[#0a0518]/40 border-2 border-white/5 shadow-3xl rounded-[3rem] overflow-hidden group/vault hover:border-emerald-500/30 transition-all duration-500">
+              <PremiumCard key={item.table} className="bg-background/40 border-2 border-border/5 shadow-3xl rounded-[3rem] overflow-hidden group/vault hover:border-emerald-500/30 transition-all duration-500">
                   <div className="p-10 space-y-8">
                       <div className="flex justify-between items-start">
                           <div className="p-4 rounded-2xl bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 shadow-inner group-hover/vault:rotate-6 transition-transform">
@@ -94,25 +94,25 @@ export default function BackupSettingsPage() {
                           </div>
                           <div className="flex items-center gap-2 opacity-20 group-hover/vault:opacity-100 transition-opacity">
                              <Zap size={14} className="text-emerald-500" />
-                             <span className="text-base font-bold font-black text-slate-500 uppercase tracking-widest italic">READY_FOR_EXPORT</span>
+                             <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest italic">READY_FOR_EXPORT</span>
                           </div>
                       </div>
                       
                       <div>
-                          <h3 className="text-2xl font-black text-white tracking-widest uppercase italic group-hover/vault:text-emerald-400 transition-colors">{item.label}</h3>
-                          <p className="text-base font-bold font-black text-slate-500 uppercase tracking-[0.1em] mt-2 h-10 italic">
+                          <h3 className="text-2xl font-black text-foreground tracking-widest uppercase italic group-hover/vault:text-emerald-400 transition-colors">{item.label}</h3>
+                          <p className="text-base font-bold font-black text-muted-foreground uppercase tracking-[0.1em] mt-2 h-10 italic">
                             {"// "} {item.desc}
                           </p>
                       </div>
 
                       <div className="space-y-4 pt-4">
-                           <div className="flex items-center justify-between text-base font-bold font-black uppercase tracking-[0.1em] text-slate-700 italic">
+                           <div className="flex items-center justify-between text-base font-bold font-black uppercase tracking-[0.1em] text-muted-foreground italic">
                                 <span>PROTOCOL: JSON_UPLINK</span>
                                 <span>STATUS: NOMINAL</span>
                            </div>
                            <PremiumButton 
                               variant="outline" 
-                              className="w-full h-16 rounded-2xl gap-4 bg-white/5 border-white/5 hover:bg-emerald-600 hover:text-white hover:border-emerald-500 transition-all shadow-xl font-black uppercase text-xl tracking-[0.1em] italic" 
+                              className="w-full h-16 rounded-2xl gap-4 bg-muted/50 border-border/5 hover:bg-emerald-600 hover:text-foreground hover:border-emerald-500 transition-all shadow-xl font-black uppercase text-xl tracking-[0.1em] italic" 
                               onClick={() => handleBackup(item.table)}
                               disabled={loading}
                            >
@@ -133,12 +133,12 @@ export default function BackupSettingsPage() {
             </div>
             <div className="space-y-4 text-center md:text-left flex-1">
                 <p className="text-xl font-black text-emerald-500 italic uppercase tracking-widest">COLD_STORAGE_ADVISORY</p>
-                <p className="text-xl font-bold text-slate-600 leading-relaxed uppercase tracking-wider italic">
+                <p className="text-xl font-bold text-muted-foreground leading-relaxed uppercase tracking-wider italic">
                     Backups are captured as high-parity JSON snapshots. For disaster recovery or system migration, ensure payload integrity before deployment to secondary nodes. <br />
                     Scheduled automated syncs occur every orbital cycle at 00:00 UTC.
                 </p>
             </div>
-            <PremiumButton variant="outline" className="h-14 px-10 rounded-2xl border-white/10 text-white gap-3 uppercase font-black text-base font-bold tracking-[0.1em] ml-auto italic">
+            <PremiumButton variant="outline" className="h-14 px-10 rounded-2xl border-border/10 text-foreground gap-3 uppercase font-black text-base font-bold tracking-[0.1em] ml-auto italic">
                 <Share2 size={18} /> SYNC_EXTERNAL_VAULT
             </PremiumButton>
         </div>

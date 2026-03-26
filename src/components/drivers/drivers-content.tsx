@@ -52,7 +52,7 @@ export function DriversContent({ drivers, count, branches, vehicles = [], subcon
   return (
     <div className="space-y-10 pb-20">
       {/* Brand Header */}
-      <div className="relative group p-12 rounded-[4rem] bg-slate-950 border border-white/5 overflow-hidden shadow-2xl">
+      <div className="relative group p-12 rounded-[4rem] bg-background border border-border/5 overflow-hidden shadow-2xl">
         <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-transparent pointer-events-none" />
         <div className="absolute top-0 right-0 p-12 text-primary/5 pointer-events-none">
             <Users size={180} />
@@ -67,41 +67,41 @@ export function DriversContent({ drivers, count, branches, vehicles = [], subcon
                 {isAdmin ? "COMMAND CENTER" : "BASE OPERATIONS"}
               </Badge>
           </div>
-          <h1 className="text-6xl font-black text-white tracking-tighter uppercase">
+          <h1 className="text-6xl font-black text-foreground tracking-tighter uppercase">
             {t('navigation.drivers')}<span className="text-primary font-black italic">ELITE</span>
           </h1>
-          <p className="text-slate-500 font-bold uppercase tracking-[0.4em] text-lg font-bold">{t('dashboard.subtitle')}</p>
+          <p className="text-muted-foreground font-bold uppercase tracking-[0.4em] text-lg font-bold">{t('dashboard.subtitle')}</p>
         </div>
       </div>
 
       {/* Analytics Placeholder (Future Feature) */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <PremiumCard className="glass-panel p-8 rounded-[3rem] border-white/5 opacity-50">
+        <PremiumCard className="glass-panel p-8 rounded-[3rem] border-border/5 opacity-50">
              <div className="flex items-center gap-4 mb-4">
                 <div className="p-2 bg-primary/10 rounded-xl">
                     <Zap size={20} className="text-primary" />
                 </div>
-                <h4 className="text-white font-black text-lg font-bold uppercase tracking-widest">{t('navigation.monitoring')} Matrix</h4>
+                <h4 className="text-foreground font-black text-lg font-bold uppercase tracking-widest">{t('navigation.monitoring')} Matrix</h4>
              </div>
-             <p className="text-slate-500 text-base font-bold font-black uppercase tracking-widest">Analytics Layer Offline</p>
+             <p className="text-muted-foreground text-base font-bold font-black uppercase tracking-widest">Analytics Layer Offline</p>
         </PremiumCard>
-        <PremiumCard className="glass-panel p-8 rounded-[3rem] border-white/5 opacity-50">
+        <PremiumCard className="glass-panel p-8 rounded-[3rem] border-border/5 opacity-50">
              <div className="flex items-center gap-4 mb-4">
                 <div className="p-2 bg-accent/10 rounded-xl">
                     <ShieldCheck size={20} className="text-accent" />
                 </div>
-                <h4 className="text-white font-black text-lg font-bold uppercase tracking-widest">{t('navigation.monitoring')} Status</h4>
+                <h4 className="text-foreground font-black text-lg font-bold uppercase tracking-widest">{t('navigation.monitoring')} Status</h4>
              </div>
-             <p className="text-slate-500 text-base font-bold font-black uppercase tracking-widest">Scanning Protocols Deferred</p>
+             <p className="text-muted-foreground text-base font-bold font-black uppercase tracking-widest">Scanning Protocols Deferred</p>
         </PremiumCard>
-        <PremiumCard className="glass-panel p-8 rounded-[3rem] border-white/5 opacity-50">
+        <PremiumCard className="glass-panel p-8 rounded-[3rem] border-border/5 opacity-50">
              <div className="flex items-center gap-4 mb-4">
                 <div className="p-2 bg-blue-500/10 rounded-xl">
                     <Award size={20} className="text-blue-400" />
                 </div>
-                <h4 className="text-white font-black text-lg font-bold uppercase tracking-widest">Merit System</h4>
+                <h4 className="text-foreground font-black text-lg font-bold uppercase tracking-widest">Merit System</h4>
              </div>
-             <p className="text-slate-500 text-base font-bold font-black uppercase tracking-widest">Database Sync Required</p>
+             <p className="text-muted-foreground text-base font-bold font-black uppercase tracking-widest">Database Sync Required</p>
         </PremiumCard>
       </div>
 
@@ -109,20 +109,20 @@ export function DriversContent({ drivers, count, branches, vehicles = [], subcon
       <div className="flex flex-col md:flex-row gap-6 items-center justify-between glass-panel p-8 rounded-[3rem]">
         <div className="flex items-center gap-4 w-full md:w-auto">
             <div className="relative flex-1 md:w-80">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
                 <input 
                     type="text" 
                     placeholder={t('common.search')}
-                    className="w-full h-14 pl-12 pr-6 rounded-2xl bg-white/5 border border-white/10 text-white placeholder:text-slate-700 focus:ring-primary/40 focus:border-primary/40 transition-all font-medium text-xl outline-none"
+                    className="w-full h-14 pl-12 pr-6 rounded-2xl bg-muted/50 border border-border/10 text-foreground placeholder:text-muted-foreground focus:ring-primary/40 focus:border-primary/40 transition-all font-medium text-xl outline-none"
                 />
             </div>
-            <button className="p-4 rounded-2xl bg-white/5 border border-white/10 text-slate-400 hover:text-primary transition-colors">
+            <button className="p-4 rounded-2xl bg-muted/50 border border-border/10 text-muted-foreground hover:text-primary transition-colors">
                 <Filter size={20} />
             </button>
         </div>
 
         <div className="flex items-center gap-4 w-full md:w-auto">
-            <PremiumButton variant="outline" className="h-14 px-8 rounded-2xl border-white/10 hover:bg-white/5 text-slate-300 text-base font-bold font-black uppercase tracking-widest gap-2">
+            <PremiumButton variant="outline" className="h-14 px-8 rounded-2xl border-border/10 hover:bg-muted/50 text-muted-foreground text-base font-bold font-black uppercase tracking-widest gap-2">
                 <Download size={16} />
                 {t('common.success')}
             </PremiumButton>
@@ -132,7 +132,7 @@ export function DriversContent({ drivers, count, branches, vehicles = [], subcon
                 branches={branches}
                 subcontractors={subcontractors}
                 trigger={
-                    <PremiumButton className="h-14 px-10 rounded-2xl bg-primary hover:brightness-110 text-white text-base font-bold font-black uppercase tracking-widest gap-3 shadow-[0_10px_30px_rgba(255,30,133,0.3)]">
+                    <PremiumButton className="h-14 px-10 rounded-2xl bg-primary hover:brightness-110 text-foreground font-bold font-black uppercase tracking-widest gap-3 shadow-[0_10px_30px_rgba(255,30,133,0.3)]">
                         <Plus size={20} strokeWidth={3} />
                         {t('common.success')}
                     </PremiumButton>
@@ -144,7 +144,7 @@ export function DriversContent({ drivers, count, branches, vehicles = [], subcon
       {/* Driver Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {(drivers || []).map((driver) => (
-          <PremiumCard key={driver.Driver_ID} className="group glass-panel rounded-[3.5rem] border-white/5 hover:border-primary/30 transition-all duration-500 hover:-translate-y-2 overflow-hidden">
+          <PremiumCard key={driver.Driver_ID} className="group glass-panel rounded-[3.5rem] border-border/5 hover:border-primary/30 transition-all duration-500 hover:-translate-y-2 overflow-hidden">
             <div className="p-8 space-y-8">
               <div className="flex justify-between items-start">
                 <div className="flex items-center gap-5">
@@ -153,12 +153,12 @@ export function DriversContent({ drivers, count, branches, vehicles = [], subcon
                       <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${driver.Driver_Name}`} />
                       <AvatarFallback className="bg-secondary text-primary font-black uppercase">{driver.Driver_Name?.charAt(0)}</AvatarFallback>
                     </Avatar>
-                    <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-emerald-500 border-4 border-[#0a0518] rounded-full" />
+                    <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-emerald-500 border-4 border-background rounded-full" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-black text-white tracking-tight group-hover:text-primary transition-colors line-clamp-1">{driver.Driver_Name || t('common.loading')}</h3>
+                    <h3 className="text-xl font-black text-foreground tracking-tight group-hover:text-primary transition-colors line-clamp-1">{driver.Driver_Name || t('common.loading')}</h3>
                     <div className="flex items-center gap-2 mt-1">
-                        <span className="text-base font-bold font-black text-slate-500 uppercase tracking-widest">ID: {driver.Driver_ID}</span>
+                        <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest">ID: {driver.Driver_ID}</span>
                         <div className="w-1 h-1 rounded-full bg-slate-700" />
                         <span className="text-primary font-black text-base font-bold uppercase tracking-widest">ACTIVE ELITE</span>
                     </div>
@@ -172,7 +172,7 @@ export function DriversContent({ drivers, count, branches, vehicles = [], subcon
                         branches={branches}
                         subcontractors={subcontractors}
                         trigger={
-                            <button className="p-3 rounded-2xl bg-white/5 border border-white/10 text-slate-400 hover:text-primary transition-all hover:bg-primary/10">
+                            <button className="p-3 rounded-2xl bg-muted/50 border border-border/10 text-muted-foreground hover:text-primary transition-all hover:bg-primary/10">
                                 <Edit size={16} />
                             </button>
                         }
@@ -180,7 +180,7 @@ export function DriversContent({ drivers, count, branches, vehicles = [], subcon
                     <button 
                         onClick={() => handleDelete(driver.Driver_ID, driver.Driver_Name || '')}
                         disabled={deletingId === driver.Driver_ID}
-                        className="p-3 rounded-2xl bg-white/5 border border-white/10 text-slate-400 hover:text-red-400 transition-all hover:bg-red-400/10 disabled:opacity-50"
+                        className="p-3 rounded-2xl bg-muted/50 border border-border/10 text-muted-foreground hover:text-red-400 transition-all hover:bg-red-400/10 disabled:opacity-50"
                     >
                         <Trash2 size={16} />
                     </button>
@@ -188,23 +188,23 @@ export function DriversContent({ drivers, count, branches, vehicles = [], subcon
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                  <div className="p-4 bg-white/[0.03] rounded-2xl border border-white/5 group-hover:bg-white/5 transition-colors">
-                      <p className="text-base font-bold font-black text-slate-500 uppercase tracking-widest mb-1.5">{t('navigation.vehicles')}</p>
+                  <div className="p-4 bg-muted/40 rounded-2xl border border-border/5 group-hover:bg-muted/50 transition-colors">
+                      <p className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest mb-1.5">{t('navigation.vehicles')}</p>
                       <div className="flex items-center gap-2">
                         <Truck size={14} className="text-primary" />
-                        <span className="text-lg font-bold font-black text-slate-200">{driver.Vehicle_Plate || t('common.pending')}</span>
+                        <span className="text-lg font-bold font-black text-muted-foreground">{driver.Vehicle_Plate || t('common.pending')}</span>
                       </div>
                   </div>
-                  <div className="p-4 bg-white/[0.03] rounded-2xl border border-white/5 group-hover:bg-white/5 transition-colors">
-                      <p className="text-base font-bold font-black text-slate-500 uppercase tracking-widest mb-1.5">{t('navigation.chat')}</p>
+                  <div className="p-4 bg-muted/40 rounded-2xl border border-border/5 group-hover:bg-muted/50 transition-colors">
+                      <p className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest mb-1.5">{t('navigation.chat')}</p>
                       <div className="flex items-center gap-2">
                         <Phone size={14} className="text-primary" />
-                        <span className="text-lg font-bold font-black text-slate-200">{driver.Mobile_No || "-"}</span>
+                        <span className="text-lg font-bold font-black text-muted-foreground">{driver.Mobile_No || "-"}</span>
                       </div>
                   </div>
               </div>
 
-              <div className="flex items-center justify-between border-t border-white/5 pt-6">
+              <div className="flex items-center justify-between border-t border-border/5 pt-6">
                 <div className="flex items-center gap-4">
                     {[
                         { icon: ShieldCheck, color: "text-primary" },
@@ -212,7 +212,7 @@ export function DriversContent({ drivers, count, branches, vehicles = [], subcon
                         { icon: Award, color: "text-blue-400" }
                     ].map((m, i) => <m.icon key={i} size={16} className={m.color} />)}
                 </div>
-                <PremiumButton variant="ghost" size="sm" className="text-base font-bold font-black uppercase tracking-widest text-slate-400 hover:text-primary transition-all">
+                <PremiumButton variant="ghost" size="sm" className="text-base font-bold font-black uppercase tracking-widest text-muted-foreground hover:text-primary transition-all">
                   Performance DNA
                 </PremiumButton>
               </div>

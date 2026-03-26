@@ -125,11 +125,11 @@ export default function VehicleTypesPage() {
     <DashboardLayout>
       <div className="space-y-12 pb-20 p-4 lg:p-10">
         {/* Tactical Elite Header */}
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-10 bg-[#0a0518]/60 backdrop-blur-3xl p-10 rounded-br-[6rem] rounded-tl-[3rem] border border-white/5 shadow-2xl relative overflow-hidden group">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-10 bg-background/60 backdrop-blur-3xl p-10 rounded-br-[6rem] rounded-tl-[3rem] border border-border/5 shadow-2xl relative overflow-hidden group">
             <div className="absolute top-0 right-0 w-80 h-80 bg-primary/10 blur-[120px] rounded-full -mr-40 -mt-40 pointer-events-none" />
             
             <div className="relative z-10 space-y-8">
-                <button onClick={() => router.back()} className="inline-flex items-center gap-2 text-slate-500 hover:text-primary transition-all font-black uppercase tracking-[0.1em] text-base font-bold group/back italic">
+                <button onClick={() => router.back()} className="inline-flex items-center gap-2 text-muted-foreground hover:text-primary transition-all font-black uppercase tracking-[0.1em] text-base font-bold group/back italic">
                     <ArrowLeft className="w-4 h-4 group-hover/back:-translate-x-1 transition-transform" /> 
                     {t('settings_pages.vehicle_types.ui.command_control')}
                 </button>
@@ -138,7 +138,7 @@ export default function VehicleTypesPage() {
                         <Truck size={42} strokeWidth={2.5} />
                     </div>
                     <div>
-                        <h1 className="text-5xl font-black text-white tracking-widest uppercase leading-none italic premium-text-gradient">
+                        <h1 className="text-5xl font-black text-foreground tracking-widest uppercase leading-none italic premium-text-gradient">
                             {t('settings_pages.vehicle_types.title')}
                         </h1>
                         <p className="text-base font-bold font-black text-primary uppercase tracking-[0.2em] mt-2 opacity-80 italic">{t('settings_pages.vehicle_types.subtitle')}</p>
@@ -147,11 +147,11 @@ export default function VehicleTypesPage() {
             </div>
 
             <div className="flex flex-col items-end gap-6 relative z-10">
-                <div className="bg-white/5 border border-white/10 px-6 py-3 rounded-2xl flex items-center gap-3 backdrop-blur-md">
+                <div className="bg-muted/50 border border-border/10 px-6 py-3 rounded-2xl flex items-center gap-3 backdrop-blur-md">
                     <div className="w-2 h-2 rounded-full bg-primary animate-pulse shadow-[0_0_10px_rgba(255,30,133,1)]" />
-                    <span className="text-base font-bold font-black text-slate-400 uppercase tracking-widest italic">MATRIX_SCAN: OPTIMIZED</span>
+                    <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest italic">MATRIX_SCAN: OPTIMIZED</span>
                 </div>
-                <PremiumButton onClick={handleOpenCreate} className="h-16 px-12 rounded-2xl bg-primary text-white border-0 shadow-[0_20px_50px_rgba(255,30,133,0.3)] gap-4 text-xl tracking-widest">
+                <PremiumButton onClick={handleOpenCreate} className="h-16 px-12 rounded-2xl bg-primary text-foreground border-0 shadow-[0_20px_50px_rgba(255,30,133,0.3)] gap-4 text-xl tracking-widest">
                     <Plus size={24} strokeWidth={3} />
                     {t('settings_pages.vehicle_types.add_type')}
                 </PremiumButton>
@@ -160,9 +160,9 @@ export default function VehicleTypesPage() {
 
         {/* Global Registry Table */}
         <div className="grid grid-cols-1 gap-8">
-            <PremiumCard className="bg-[#0a0518]/40 border-2 border-white/5 shadow-3xl rounded-[4rem] overflow-hidden group/matrix">
-                <div className="p-10 border-b border-white/5 bg-black/40 flex items-center justify-between">
-                    <h3 className="text-xl font-black text-white tracking-widest uppercase italic flex items-center gap-3">
+            <PremiumCard className="bg-background/40 border-2 border-border/5 shadow-3xl rounded-[4rem] overflow-hidden group/matrix">
+                <div className="p-10 border-b border-border/5 bg-black/40 flex items-center justify-between">
+                    <h3 className="text-xl font-black text-foreground tracking-widest uppercase italic flex items-center gap-3">
                         <Database size={20} className="text-primary" />
                         {t('settings_pages.vehicle_types.specification_nodes')}
                     </h3>
@@ -174,11 +174,11 @@ export default function VehicleTypesPage() {
                 <div className="relative overflow-x-auto custom-scrollbar">
                     <table className="w-full text-left border-collapse">
                         <thead>
-                            <tr className="bg-white/[0.02] border-b border-white/5">
-                                <th className="px-12 py-8 text-[12px] font-black uppercase tracking-[0.1em] text-slate-500 italic">{t('settings_pages.vehicle_types.table.designation')}</th>
-                                <th className="px-8 py-8 text-[12px] font-black uppercase tracking-[0.1em] text-slate-500 italic">{t('settings_pages.vehicle_types.table.parameters')}</th>
-                                <th className="px-8 py-8 text-[12px] font-black uppercase tracking-[0.1em] text-slate-500 italic">{t('settings_pages.vehicle_types.table.status')}</th>
-                                <th className="px-12 py-8 text-[12px] font-black uppercase tracking-[0.1em] text-slate-500 text-right italic">{t('settings_pages.vehicle_types.table.command')}</th>
+                            <tr className="bg-muted/30 border-b border-border/5">
+                                <th className="px-12 py-8 text-[12px] font-black uppercase tracking-[0.1em] text-muted-foreground italic">{t('settings_pages.vehicle_types.table.designation')}</th>
+                                <th className="px-8 py-8 text-[12px] font-black uppercase tracking-[0.1em] text-muted-foreground italic">{t('settings_pages.vehicle_types.table.parameters')}</th>
+                                <th className="px-8 py-8 text-[12px] font-black uppercase tracking-[0.1em] text-muted-foreground italic">{t('settings_pages.vehicle_types.table.status')}</th>
+                                <th className="px-12 py-8 text-[12px] font-black uppercase tracking-[0.1em] text-muted-foreground text-right italic">{t('settings_pages.vehicle_types.table.command')}</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-white/5">
@@ -189,12 +189,12 @@ export default function VehicleTypesPage() {
                                             <Loader2 className="w-16 h-16 text-primary animate-spin opacity-20" strokeWidth={1} />
                                             <Activity className="absolute inset-0 m-auto text-primary animate-pulse" size={24} />
                                         </div>
-                                        <p className="mt-8 text-slate-700 font-black uppercase tracking-[0.6em] text-base font-bold">{t('settings_pages.vehicle_types.loading')}</p>
+                                        <p className="mt-8 text-muted-foreground font-black uppercase tracking-[0.6em] text-base font-bold">{t('settings_pages.vehicle_types.loading')}</p>
                                     </td>
                                 </tr>
                             ) : types.length === 0 ? (
                                 <tr>
-                                    <td colSpan={4} className="text-center py-40 text-slate-700 font-black uppercase tracking-[0.5em] text-lg font-bold">
+                                    <td colSpan={4} className="text-center py-40 text-muted-foreground font-black uppercase tracking-[0.5em] text-lg font-bold">
                                         {t('settings_pages.vehicle_types.empty')}
                                     </td>
                                 </tr>
@@ -203,18 +203,18 @@ export default function VehicleTypesPage() {
                                     <tr key={type.type_id} className="group/row hover:bg-primary/[0.03] transition-all duration-500">
                                         <td className="px-12 py-8">
                                             <div className="flex items-center gap-6">
-                                                <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/5 flex items-center justify-center text-primary group-hover/row:bg-primary group-hover/row:text-white transition-all duration-500 shadow-xl group-hover/row:shadow-[0_0_30px_rgba(255,30,133,0.3)] group-hover/row:-rotate-3">
+                                                <div className="w-14 h-14 rounded-2xl bg-muted/50 border border-border/5 flex items-center justify-center text-primary group-hover/row:bg-primary group-hover/row:text-foreground transition-all duration-500 shadow-xl group-hover/row:shadow-[0_0_30px_rgba(255,30,133,0.3)] group-hover/row:-rotate-3">
                                                     <Truck size={22} strokeWidth={2.5} />
                                                 </div>
                                                 <div>
-                                                    <span className="font-black text-white text-xl tracking-tighter group-hover/row:text-primary transition-colors font-display uppercase italic">{type.type_name}</span>
-                                                    <p className="text-base font-bold font-black text-slate-600 uppercase tracking-[0.3em] mt-1 italic">V_MATRIX_ID: {type.type_id}</p>
+                                                    <span className="font-black text-foreground text-xl tracking-tighter group-hover/row:text-primary transition-colors font-display uppercase italic">{type.type_name}</span>
+                                                    <p className="text-base font-bold font-black text-muted-foreground uppercase tracking-[0.3em] mt-1 italic">V_MATRIX_ID: {type.type_id}</p>
                                                 </div>
                                             </div>
                                         </td>
                                         <td className="px-8 py-8">
                                             <div className="max-w-xs">
-                                                <p className="text-slate-400 font-bold text-xl tracking-tight leading-relaxed uppercase italic">
+                                                <p className="text-muted-foreground font-bold text-xl tracking-tight leading-relaxed uppercase italic">
                                                     {type.description || '// NO_INTEL_PROVIDED'}
                                                 </p>
                                             </div>
@@ -230,10 +230,10 @@ export default function VehicleTypesPage() {
                                         </td>
                                         <td className="px-12 py-8 text-right">
                                             <div className="flex justify-end gap-3 opacity-0 group-hover/row:opacity-100 transition-all duration-500 translate-x-4 group-hover/row:translate-x-0">
-                                                <button onClick={() => handleOpenEdit(type)} className="h-11 w-11 flex items-center justify-center rounded-xl bg-white/5 border border-white/5 text-slate-400 hover:text-white hover:bg-primary/20 hover:border-primary/30 transition-all shadow-xl">
+                                                <button onClick={() => handleOpenEdit(type)} className="h-11 w-11 flex items-center justify-center rounded-xl bg-muted/50 border border-border/5 text-muted-foreground hover:text-foreground hover:bg-primary/20 hover:border-primary/30 transition-all shadow-xl">
                                                     <Edit size={16} />
                                                 </button>
-                                                <button onClick={() => handleDelete(type.type_id)} className="h-11 w-11 flex items-center justify-center rounded-xl bg-white/5 border border-white/5 text-rose-800 hover:bg-rose-500 hover:text-white transition-all shadow-xl">
+                                                <button onClick={() => handleDelete(type.type_id)} className="h-11 w-11 flex items-center justify-center rounded-xl bg-muted/50 border border-border/5 text-rose-800 hover:bg-rose-500 hover:text-foreground transition-all shadow-xl">
                                                     <Trash2 size={16} />
                                                 </button>
                                             </div>
@@ -244,8 +244,8 @@ export default function VehicleTypesPage() {
                         </tbody>
                     </table>
                 </div>
-                <div className="p-8 border-t border-white/5 bg-white/[0.02] flex items-center justify-between">
-                    <p className="text-base font-bold font-black text-slate-700 uppercase tracking-[0.4em] italic">Fleet Specification & Capacity Matrix Node</p>
+                <div className="p-8 border-t border-border/5 bg-muted/30 flex items-center justify-between">
+                    <p className="text-base font-bold font-black text-muted-foreground uppercase tracking-[0.4em] italic">Fleet Specification & Capacity Matrix Node</p>
                     <Zap size={16} className="text-primary/20" />
                 </div>
             </PremiumCard>
@@ -259,19 +259,19 @@ export default function VehicleTypesPage() {
             </div>
             <div className="space-y-4 text-center md:text-left flex-1">
                 <p className="text-xl font-black text-primary italic uppercase tracking-widest">{t('settings_pages.vehicle_types.ui.advisory_title')}</p>
-                <p className="text-xl font-bold text-slate-600 leading-relaxed uppercase tracking-wider italic">
+                <p className="text-xl font-bold text-muted-foreground leading-relaxed uppercase tracking-wider italic">
                     {t('settings_pages.vehicle_types.ui.advisory_desc')}
                 </p>
             </div>
-            <PremiumButton variant="outline" className="h-14 px-10 rounded-2xl border-white/10 text-white gap-3 uppercase font-black text-base font-bold tracking-[0.3em] ml-auto italic">
+            <PremiumButton variant="outline" className="h-14 px-10 rounded-2xl border-border/10 text-foreground gap-3 uppercase font-black text-base font-bold tracking-[0.3em] ml-auto italic">
                 <Activity size={18} /> {t('settings_pages.vehicle_types.ui.view_capacity')}
             </PremiumButton>
         </div>
 
         {/* Tactical Config Dialog */}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogContent className="bg-[#0a0518] border border-white/5 text-white max-w-xl shadow-[0_50px_100px_rgba(0,0,0,0.5)] rounded-[4rem] p-0 overflow-hidden ring-1 ring-white/10">
-                <div className="bg-[#0c061d] p-12 text-white relative overflow-hidden border-b border-white/5">
+            <DialogContent className="bg-background border border-border/5 text-foreground max-w-xl shadow-[0_50px_100px_rgba(0,0,0,0.5)] rounded-[4rem] p-0 overflow-hidden ring-1 ring-white/10">
+                <div className="bg-card p-12 text-foreground relative overflow-hidden border-b border-border/5">
                     <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent pointer-events-none" />
                     <DialogHeader>
                         <DialogTitle className="text-4xl font-black tracking-tighter flex items-center gap-6 uppercase premium-text-gradient italic">
@@ -285,45 +285,45 @@ export default function VehicleTypesPage() {
                 
                 <form onSubmit={handleSubmit} className="p-12 space-y-10">
                     <div className="space-y-4">
-                        <Label className="text-base font-bold font-black uppercase tracking-[0.1em] text-slate-500 ml-4">{t('settings_pages.vehicle_types.dialog.name')} *</Label>
+                        <Label className="text-base font-bold font-black uppercase tracking-[0.1em] text-muted-foreground ml-4">{t('settings_pages.vehicle_types.dialog.name')} *</Label>
                         <Input 
                             value={formData.type_name}
                             onChange={(e) => setFormData({...formData, type_name: e.target.value})}
                             placeholder={t('settings_pages.vehicle_types.ui.name_placeholder')}
-                            className="h-16 bg-white/5 border-white/5 text-white font-black rounded-2xl px-8 text-xl uppercase tracking-widest focus:bg-white/10 transition-all italic"
+                            className="h-16 bg-muted/50 border-border/5 text-foreground font-black rounded-2xl px-8 text-xl uppercase tracking-widest focus:bg-muted/80 transition-all italic"
                             required
                         />
                     </div>
                     <div className="space-y-4">
-                        <Label className="text-base font-bold font-black uppercase tracking-[0.1em] text-slate-500 ml-4">{t('settings_pages.vehicle_types.dialog.desc')}</Label>
+                        <Label className="text-base font-bold font-black uppercase tracking-[0.1em] text-muted-foreground ml-4">{t('settings_pages.vehicle_types.dialog.desc')}</Label>
                         <Input 
                             value={formData.description}
                             onChange={(e) => setFormData({...formData, description: e.target.value})}
                             placeholder={t('settings_pages.vehicle_types.ui.desc_placeholder')}
-                            className="h-16 bg-white/5 border-white/5 text-white font-black rounded-2xl px-8 text-xl uppercase tracking-widest focus:bg-white/10 transition-all italic"
+                            className="h-16 bg-muted/50 border-border/5 text-foreground font-black rounded-2xl px-8 text-xl uppercase tracking-widest focus:bg-muted/80 transition-all italic"
                         />
                     </div>
                     
                     {currentType && (
                         <div className="space-y-4">
-                            <Label className="text-base font-bold font-black uppercase tracking-[0.1em] text-slate-500 ml-4">{t('settings_pages.vehicle_types.ui.registry_status')}</Label>
+                            <Label className="text-base font-bold font-black uppercase tracking-[0.1em] text-muted-foreground ml-4">{t('settings_pages.vehicle_types.ui.registry_status')}</Label>
                             <select 
                                 value={formData.active_status}
                                 onChange={(e) => setFormData({...formData, active_status: e.target.value})}
-                                className="w-full h-16 bg-white/5 border-2 border-white/5 rounded-2xl px-8 text-xl font-black uppercase tracking-widest text-white focus:border-primary/50 transition-all outline-none italic"
+                                className="w-full h-16 bg-muted/50 border-2 border-border/5 rounded-2xl px-8 text-xl font-black uppercase tracking-widest text-foreground focus:border-primary/50 transition-all outline-none italic"
                             >
-                                <option value="Active" className="bg-[#0c061d]">{t('settings_pages.vehicle_types.ui.active_node')}</option>
-                                <option value="Inactive" className="bg-[#0c061d]">{t('settings_pages.vehicle_types.ui.offline_node')}</option>
+                                <option value="Active" className="bg-card">{t('settings_pages.vehicle_types.ui.active_node')}</option>
+                                <option value="Inactive" className="bg-card">{t('settings_pages.vehicle_types.ui.offline_node')}</option>
                             </select>
                         </div>
                     )}
 
-                    <div className="flex gap-6 pt-10 border-t border-white/5 mt-12 mb-4">
+                    <div className="flex gap-6 pt-10 border-t border-border/5 mt-12 mb-4">
                         <PremiumButton type="submit" disabled={isSubmitting} className="flex-[2] bg-primary hover:bg-primary/80 shadow-primary/20 h-20 rounded-3xl text-lg font-black tracking-widest uppercase italic">
                             {isSubmitting ? <Loader2 className="w-6 h-6 mr-4 animate-spin" /> : <Save className="w-6 h-6 mr-4" strokeWidth={3} />}
                             {t('settings_pages.vehicle_types.ui.finalize')}
                         </PremiumButton>
-                        <PremiumButton type="button" variant="outline" onClick={() => setIsDialogOpen(false)} className="flex-1 border-white/5 h-20 rounded-3xl text-slate-500 hover:text-white hover:bg-white/5 transition-all uppercase font-black tracking-widest italic">
+                        <PremiumButton type="button" variant="outline" onClick={() => setIsDialogOpen(false)} className="flex-1 border-border/5 h-20 rounded-3xl text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all uppercase font-black tracking-widest italic">
                             {t('settings_pages.vehicle_types.ui.abort')}
                         </PremiumButton>
                     </div>

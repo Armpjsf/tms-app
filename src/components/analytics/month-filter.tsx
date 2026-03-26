@@ -89,7 +89,7 @@ export function MonthFilter() {
       <Button 
         variant="ghost" 
         size="icon" 
-        className="h-8 w-8 hover:bg-gray-100 text-gray-500 hover:text-gray-900"
+        className="h-8 w-8 hover:bg-gray-100 text-muted-foreground hover:text-gray-900"
         onClick={handlePrevMonth}
         disabled={isPending}
       >
@@ -129,7 +129,7 @@ export function MonthFilter() {
                       variant={month === m.value ? "secondary" : "ghost"}
                       size="sm"
                       onClick={() => updateFilter(m.value, year)}
-                      className={cn("w-full text-lg font-bold", month === m.value ? "bg-slate-700 text-white" : "text-gray-500 hover:text-gray-900 hover:bg-gray-100")}
+                      className={cn(month === m.value ? "w-full text-foreground" : "text-muted-foreground hover:text-gray-900 hover:bg-gray-100")}
                     >
                       {m.label}
                     </Button>
@@ -142,7 +142,7 @@ export function MonthFilter() {
       <Button 
         variant="ghost" 
         size="icon" 
-        className="h-8 w-8 hover:bg-gray-100 text-gray-500 hover:text-white"
+        className="h-8 w-8 hover:bg-gray-100 text-muted-foreground hover:text-white"
         onClick={handleNextMonth}
         disabled={isPending}
       >

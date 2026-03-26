@@ -106,25 +106,25 @@ export function PlanningClient({
             {/* Planning Command Header */}
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
                 <div>
-                    <h1 className="text-4xl font-black text-white tracking-tight flex items-center gap-3 italic">
+                    <h1 className="text-4xl font-black text-foreground tracking-tight flex items-center gap-3 italic">
                         <Calendar className="text-primary" size={32} />
                         {t('planning.title')}
                     </h1>
                     <div className="flex items-center gap-3 mt-2">
-                        <RealtimeIndicator isLive={true} className="bg-white/5 border-white/10" />
-                        <p className="text-slate-500 font-bold uppercase tracking-[0.3em] text-base font-bold">
+                        <RealtimeIndicator isLive={true} className="bg-muted/50 border-border/10" />
+                        <p className="text-muted-foreground font-bold uppercase tracking-[0.3em] text-base font-bold">
                             Tactical Mission Orchestration
                         </p>
                     </div>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-3">
-                    <div className="flex bg-white/5 p-1.5 rounded-2xl border border-white/10 shadow-inner">
+                    <div className="flex bg-muted/50 p-1.5 rounded-2xl border border-border/10 shadow-inner">
                         <button
                             onClick={() => setView('list')}
                             className={cn(
                                 "flex items-center gap-2 px-4 py-2 rounded-xl text-lg font-bold font-black transition-all",
-                                view === 'list' ? "bg-primary text-white shadow-lg" : "text-slate-500 hover:text-slate-300"
+                                view === 'list' ? "bg-primary text-white shadow-lg" : "text-muted-foreground hover:text-muted-foreground"
                             )}
                         >
                             <List size={14} />
@@ -134,7 +134,7 @@ export function PlanningClient({
                             onClick={() => setView('kanban')}
                             className={cn(
                                 "flex items-center gap-2 px-4 py-2 rounded-xl text-lg font-bold font-black transition-all",
-                                view === 'kanban' ? "bg-primary text-white shadow-lg" : "text-slate-500 hover:text-slate-300"
+                                view === 'kanban' ? "bg-primary text-white shadow-lg" : "text-muted-foreground hover:text-muted-foreground"
                             )}
                         >
                             <LayoutGrid size={14} />
@@ -144,13 +144,13 @@ export function PlanningClient({
                             onClick={() => setView('requests')}
                             className={cn(
                                 "flex items-center gap-2 px-4 py-2 rounded-xl text-lg font-bold font-black transition-all relative",
-                                view === 'requests' ? "bg-primary text-white shadow-lg" : "text-slate-500 hover:text-slate-300"
+                                view === 'requests' ? "bg-primary text-white shadow-lg" : "text-muted-foreground hover:text-muted-foreground"
                             )}
                         >
                             <Inbox size={14} />
                             {t('planning.requests')}
                             {requestCount > 0 && (
-                                <span className="absolute -top-1 -right-1 w-4 h-4 bg-rose-500 text-base font-bold flex items-center justify-center rounded-full border-2 border-[#050110]">
+                                <span className="absolute -top-1 -right-1 w-4 h-4 bg-rose-500 text-base font-bold flex items-center justify-center rounded-full border-2 border-background">
                                     {requestCount}
                                 </span>
                             )}
@@ -166,7 +166,7 @@ export function PlanningClient({
                                 routes={routes}
                                 subcontractors={subcontractors}
                                 trigger={
-                                    <button className="flex items-center gap-2 bg-white text-slate-900 px-6 py-3 rounded-2xl font-black text-xl hover:bg-primary hover:text-white transition-all shadow-xl active:scale-95 group">
+                                    <button className="flex items-center gap-2 bg-card text-foreground px-6 py-3 rounded-2xl font-black text-xl hover:bg-primary hover:text-white transition-all shadow-xl active:scale-95 group">
                                         <Plus size={18} className="group-hover:rotate-90 transition-transform duration-300" />
                                         {t('planning.new_job')}
                                     </button>
@@ -246,16 +246,16 @@ function StatCard({ label, value, icon, color }: { label: string, value: number,
     return (
         <motion.div 
             variants={item}
-            className="bg-white/[0.03] backdrop-blur-md border border-white/5 p-6 rounded-[2.5rem] relative overflow-hidden group hover:bg-white/[0.05] transition-all duration-500"
+            className="bg-muted/40 backdrop-blur-md border border-border/5 p-6 rounded-[2.5rem] relative overflow-hidden group hover:bg-muted transition-all duration-500"
         >
             <div className={cn("absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-30 transition-opacity", colorMap[color])}>
                 {icon}
             </div>
             <div className="relative z-10">
-                <p className="text-base font-bold font-black text-slate-500 uppercase tracking-[0.3em] mb-2">{label}</p>
+                <p className="text-base font-bold font-black text-muted-foreground uppercase tracking-[0.3em] mb-2">{label}</p>
                 <div className="flex items-baseline gap-2">
-                    <span className="text-4xl font-black text-white tracking-tighter italic">{value}</span>
-                    <span className="text-slate-600 text-base font-bold font-bold uppercase tracking-widest">Units</span>
+                    <span className="text-4xl font-black text-foreground tracking-tighter italic">{value}</span>
+                    <span className="text-muted-foreground text-base font-bold font-bold uppercase tracking-widest">Units</span>
                 </div>
             </div>
             <div className={cn("absolute bottom-0 left-0 h-1 w-0 group-hover:w-full transition-all duration-700", 

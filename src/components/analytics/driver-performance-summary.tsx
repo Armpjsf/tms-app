@@ -52,7 +52,7 @@ export function DriverPerformanceSummary({ leaderboard, compliance, efficiency }
                                             <span className="text-2xl font-black text-gray-900 font-black">฿{driver.revenue.toLocaleString()}</span>
                                             <span className="text-base font-bold text-emerald-700 font-black">Yield</span>
                                         </div>
-                                        <div className="mt-2 flex items-center justify-between text-base font-bold text-gray-500">
+                                        <div className="mt-2 flex items-center justify-between text-base font-bold text-muted-foreground">
                                             <span>{driver.completedJobs} Jobs</span>
                                             <span className="text-emerald-500">{driver.successRate.toFixed(1)}% SR</span>
                                         </div>
@@ -74,7 +74,7 @@ export function DriverPerformanceSummary({ leaderboard, compliance, efficiency }
             {/* 2. Compliance & Documents */}
             <Card className="lg:col-span-5 bg-white/80 backdrop-blur-sm border-gray-200 shadow-xl self-start">
                 <CardHeader>
-                    <CardTitle className="text-xl font-bold text-gray-500 uppercase tracking-widest flex items-center gap-2">
+                    <CardTitle className="text-xl font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
                         <ShieldCheck size={16} className="text-emerald-400" /> License & Compliance Audit
                     </CardTitle>
                 </CardHeader>
@@ -96,14 +96,14 @@ export function DriverPerformanceSummary({ leaderboard, compliance, efficiency }
                         </div>
                         <span className="text-xl font-black text-red-500">{compliance.expired + compliance.missing}</span>
                     </div>
-                    <p className="text-base font-bold text-gray-500 text-center italic">Compliance Score: {Math.round((compliance.valid / (efficiency.totalDrivers || 1)) * 100)}%</p>
+                    <p className="text-base font-bold text-muted-foreground text-center italic">Compliance Score: {Math.round((compliance.valid / (efficiency.totalDrivers || 1)) * 100)}%</p>
                 </CardContent>
             </Card>
 
             {/* 3. Reliability Metrics */}
             <Card className="lg:col-span-7 bg-white/80 backdrop-blur-sm border-gray-200 shadow-xl h-full">
                 <CardHeader>
-                    <CardTitle className="text-xl font-bold text-gray-500 uppercase tracking-widest flex items-center gap-2">
+                    <CardTitle className="text-xl font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
                         <TrendingUp size={16} className="text-emerald-600" /> Service Reliability Index
                     </CardTitle>
                 </CardHeader>

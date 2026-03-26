@@ -12,11 +12,11 @@ export default async function InvoiceViewPage({ params }: { params: Promise<{ id
   if (!invoice) return <div className="p-8 text-white">Invoice Not Found</div>
 
   return (
-    <div className="min-h-screen bg-slate-900 print:bg-white text-slate-200 print:text-black p-8 font-sans">
+    <div className="min-h-screen bg-card print:bg-white text-muted-foreground print:text-black p-8 font-sans">
         {/* Actions - Hidden on Print */}
         <div className="max-w-[210mm] mx-auto mb-6 flex justify-between items-center print-hidden">
             <Link href="/billing/invoices">
-                <Button variant="ghost" className="text-slate-400 hover:text-white">
+                <Button variant="ghost" className="text-muted-foreground hover:text-white">
                     <ArrowLeft className="mr-2 h-4 w-4" /> กลับ
                 </Button>
             </Link>
@@ -30,7 +30,7 @@ export default async function InvoiceViewPage({ params }: { params: Promise<{ id
                 <div>
                      {/* Company Logo/Name logic here (Hardcoded for now as placeholder) */}
                      <h1 className="text-2xl font-bold text-indigo-800">LOGIS-PRO 360</h1>
-                     <p className="text-xl text-gray-500">
+                     <p className="text-xl text-muted-foreground">
                         123 Transport Lane, Logistics City<br/>
                         Bangkok, 10110<br/>
                         Tax ID: 0105551234567
@@ -72,7 +72,7 @@ export default async function InvoiceViewPage({ params }: { params: Promise<{ id
                                 <td className="p-3 align-top">{idx + 1}</td>
                                 <td className="p-3">
                                     <div className="font-bold text-gray-800">{item.Route_Name}</div>
-                                    <div className="text-lg font-bold text-gray-500 mt-1">
+                                    <div className="text-lg font-bold text-muted-foreground mt-1">
                                         Job ID: {item.Job_ID} | Date: {new Date(item.Plan_Date).toLocaleDateString('th-TH')}
                                     </div>
                                 </td>
@@ -120,20 +120,20 @@ export default async function InvoiceViewPage({ params }: { params: Promise<{ id
                 <div className="text-center">
                     <div className="border-b border-black mb-2 w-3/4 mx-auto h-8"></div>
                     <p className="text-xl font-bold">Authorized Signature</p>
-                    <p className="text-lg font-bold text-gray-500 mt-1">LOGIS-PRO 360</p>
+                    <p className="text-lg font-bold text-muted-foreground mt-1">LOGIS-PRO 360</p>
                     <p className="text-lg font-bold text-gray-400 mt-1">Date: ____/____/____</p>
                 </div>
                 <div className="text-center">
                     <div className="border-b border-black mb-2 w-3/4 mx-auto h-8"></div>
                     <p className="text-xl font-bold">Customer Signature</p>
-                    <p className="text-lg font-bold text-gray-500 mt-1">Received By</p>
+                    <p className="text-lg font-bold text-muted-foreground mt-1">Received By</p>
                     <p className="text-lg font-bold text-gray-400 mt-1">Date: ____/____/____</p>
                 </div>
             </div>
             
             {/* Notes */}
             {invoice.Notes && (
-                <div className="mt-12 pt-4 border-t text-xl text-gray-500 print:text-lg font-bold">
+                <div className="mt-12 pt-4 border-t text-xl text-muted-foreground print:text-lg font-bold">
                     <strong className="text-gray-700">Notes:</strong> {invoice.Notes}
                 </div>
             )}

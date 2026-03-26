@@ -133,7 +133,7 @@ export function NotificationDropdown() {
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               exit={{ scale: 0 }}
-              className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] flex items-center justify-center text-base font-bold font-bold bg-red-500 text-white rounded-full px-1 shadow-lg shadow-red-500/30"
+              className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] flex items-center justify-center text-base font-bold font-bold bg-red-500 text-foreground rounded-full px-1 shadow-lg shadow-red-500/30"
             >
               {unreadCount > 9 ? '9+' : unreadCount}
             </motion.span>
@@ -149,7 +149,7 @@ export function NotificationDropdown() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -10, scale: 0.95 }}
             transition={{ duration: 0.15 }}
-            className="absolute right-0 top-full mt-2 w-[380px] max-h-[480px] overflow-hidden rounded-2xl border border-border bg-popover shadow-2xl shadow-black/30 z-[100]"
+            className="absolute right-0 top-full mt-2 w-[380px] max-h-[480px] overflow-hidden rounded-2xl border border-border bg-popover shadow-2xl shadow-xl z-[100]"
           >
             {/* Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-muted/30">

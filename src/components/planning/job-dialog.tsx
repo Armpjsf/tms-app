@@ -576,7 +576,7 @@ export function JobDialog({
       >
         <DialogHeader>
           <div className="flex flex-wrap items-start justify-between gap-6 w-full pr-8">
-            <DialogTitle className="text-4xl font-black text-white px-1 py-1 rounded-sm uppercase tracking-tighter">
+            <DialogTitle className="text-4xl font-black text-foreground px-1 py-1 rounded-sm uppercase tracking-tighter">
                 {internalMode === 'create' ? t('jobs.dialog.title_add') : t('jobs.dialog.title_edit')}
             </DialogTitle>
             {internalMode === 'edit' && (
@@ -603,7 +603,7 @@ export function JobDialog({
               className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md text-xl font-black transition-colors ${
                 activeTab === tab.id 
                   ? 'bg-emerald-600 text-white shadow-lg' 
-                  : 'text-slate-400 hover:text-white hover:bg-white/10'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-muted/80'
               }`}
             >
               {tab.icon}
@@ -625,7 +625,7 @@ export function JobDialog({
                     placeholder={t('jobs.dialog.job_id_placeholder')}
                     className="bg-background border-input text-foreground"
                   />
-                  <p className="text-base font-bold text-slate-500 italic">{t('jobs.dialog.job_id_placeholder')}</p>
+                  <p className="text-base font-bold text-muted-foreground italic">{t('jobs.dialog.job_id_placeholder')}</p>
                   <Button
                     type="button"
                     variant="outline"
@@ -721,7 +721,7 @@ export function JobDialog({
                         ))}
                       </SelectContent>
                     </Select>
-                    <p className="text-base font-bold text-slate-400 mt-1">
+                    <p className="text-base font-bold text-muted-foreground mt-1">
                       หากไม่เลือก จะใช้สาขาที่ท่านกำลังเลือกอยู่ที่แถบด้านบน (Header)
                     </p>
                 </div>
@@ -1008,8 +1008,8 @@ export function JobDialog({
                                         {nearbyJobs.slice(0, 2).map((nj) => (
                                             <div key={nj.Job_ID} className="flex items-center justify-between bg-white p-2 rounded border border-blue-100 shadow-sm">
                                                 <div>
-                                                    <p className="text-base font-bold font-bold text-slate-900">{nj.Job_ID}</p>
-                                                    <p className="text-base font-bold text-slate-500">{nj.Customer_Name}</p>
+                                                    <p className="text-base font-bold font-bold text-foreground">{nj.Job_ID}</p>
+                                                    <p className="text-base font-bold text-muted-foreground">{nj.Customer_Name}</p>
                                                 </div>
                                                 <Button 
                                                     type="button" 
@@ -1134,7 +1134,7 @@ export function JobDialog({
                             </select>
                         </div>
                         <div className="space-y-2">
-                            <Label className="flex items-center gap-1 text-lg font-bold text-gray-500">
+                            <Label className="flex items-center gap-1 text-lg font-bold text-muted-foreground">
                                 <User className="w-3 h-3" /> {t('jobs.dialog.driver')}
                             </Label>
                             <DriverAutocomplete

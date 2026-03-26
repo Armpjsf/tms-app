@@ -184,7 +184,7 @@ export function CommandPalette() {
 
       {/* Palette */}
       <div className="fixed inset-x-0 top-[15%] mx-auto max-w-xl z-50 px-4 animate-in slide-in-from-top-4 fade-in duration-300">
-        <div className="bg-slate-900/95 backdrop-blur-xl border border-slate-700/50 rounded-2xl shadow-2xl shadow-black/50 overflow-hidden">
+        <div className="bg-card/95 backdrop-blur-xl border border-slate-700/50 rounded-2xl shadow-2xl shadow-2xl overflow-hidden">
           {/* Search Input */}
           <div className="flex items-center gap-3 px-4 py-3 border-b border-slate-700/50">
             <Search className="w-5 h-5 text-gray-400 flex-shrink-0" />
@@ -195,10 +195,10 @@ export function CommandPalette() {
               onChange={(e) => handleQueryChange(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="ค้นหางาน, ลูกค้า, คนขับ... หรือเลือกเมนู"
-              className="flex-1 bg-transparent text-white placeholder:text-gray-500 outline-none text-xl"
+              className="flex-1 bg-transparent text-white placeholder:text-muted-foreground outline-none text-xl"
             />
             {loading && <Loader2 className="w-4 h-4 text-gray-400 animate-spin flex-shrink-0" />}
-            <kbd className="hidden md:flex items-center gap-1 px-2 py-1 text-base font-bold font-bold text-gray-500 bg-slate-800 rounded-lg border border-slate-700">
+            <kbd className="hidden md:flex items-center gap-1 px-2 py-1 text-base font-bold font-bold text-muted-foreground bg-slate-800 rounded-lg border border-slate-700">
               ESC
             </kbd>
           </div>
@@ -208,7 +208,7 @@ export function CommandPalette() {
             {/* Quick Actions (when no query) */}
             {query.length < 2 && (
               <div>
-                <p className="px-3 py-2 text-base font-bold font-black text-gray-500 uppercase tracking-widest">
+                <p className="px-3 py-2 text-base font-bold font-black text-muted-foreground uppercase tracking-widest">
                   Quick Actions
                 </p>
                 {QUICK_ACTIONS.map((action, i) => {
@@ -217,7 +217,7 @@ export function CommandPalette() {
                     <button
                       key={action.id}
                       className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-colors ${
-                        selectedIndex === i ? 'bg-white/10 text-white' : 'text-gray-300 hover:bg-white/5'
+                        selectedIndex === i ? 'bg-muted/80 text-foreground' : 'text-gray-300 hover:bg-muted/50'
                       }`}
                       onClick={() => handleSelect(action)}
                     >
@@ -235,7 +235,7 @@ export function CommandPalette() {
             {/* Search Results */}
             {query.length >= 2 && results.length > 0 && (
               <div>
-                <p className="px-3 py-2 text-base font-bold font-black text-gray-500 uppercase tracking-widest">
+                <p className="px-3 py-2 text-base font-bold font-black text-muted-foreground uppercase tracking-widest">
                   ผลลัพธ์ ({results.length})
                 </p>
                 {results.map((result, i) => {
@@ -245,7 +245,7 @@ export function CommandPalette() {
                     <button
                       key={`${result.type}-${result.id}`}
                       className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-colors ${
-                        selectedIndex === i ? 'bg-white/10 text-white' : 'text-gray-300 hover:bg-white/5'
+                        selectedIndex === i ? 'bg-muted/80 text-foreground' : 'text-gray-300 hover:bg-muted/50'
                       }`}
                       onClick={() => handleSelect(result)}
                     >
@@ -254,7 +254,7 @@ export function CommandPalette() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-xl font-bold truncate">{result.title}</p>
-                        <p className="text-base font-bold text-gray-500 truncate">{result.subtitle}</p>
+                        <p className="text-base font-bold text-muted-foreground truncate">{result.subtitle}</p>
                       </div>
                       <span className={`text-base font-bold font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${colorClass}`}>
                         {TYPE_LABELS[result.type] || result.type}
@@ -275,7 +275,7 @@ export function CommandPalette() {
           </div>
 
           {/* Footer */}
-          <div className="px-4 py-2 border-t border-slate-700/50 flex items-center justify-between text-base font-bold text-gray-500">
+          <div className="px-4 py-2 border-t border-slate-700/50 flex items-center justify-between text-base font-bold text-muted-foreground">
             <div className="flex items-center gap-3">
               <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 bg-slate-800 rounded font-bold">↑↓</kbd> เลือก</span>
               <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 bg-slate-800 rounded font-bold">Enter</kbd> เปิด</span>

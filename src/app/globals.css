@@ -4,8 +4,8 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme {
-  --font-sans: var(--font-outfit), var(--font-prompt), ui-sans-serif, system-ui, sans-serif;
-  --font-display: var(--font-outfit), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-prompt), var(--font-outfit), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-prompt), var(--font-outfit), ui-sans-serif, system-ui, sans-serif;
 
   /* Tailwind 4 Custom Animations */
   --animate-pulse-gentle: pulse-gentle 3s ease-in-out infinite;
@@ -14,11 +14,11 @@
   @keyframes pulse-gentle {
     0%, 100% { 
       opacity: 1; 
-      filter: drop-shadow(0 0 15px rgba(255, 30, 133, 0.4)); 
+      filter: drop-shadow(0 0 15px rgba(0, 39, 156, 0.4)); 
     }
     50% { 
       opacity: 0.8; 
-      filter: drop-shadow(0 0 25px rgba(255, 30, 133, 0.6)); 
+      filter: drop-shadow(0 0 25px rgba(182, 9, 0, 0.6)); 
     }
   }
 
@@ -38,74 +38,136 @@
 }
 
 /* ============================================
-   LOGIS-PRO PREMIUM - THE STITCH DESIGN SYSTEM
-   Deep Midnight Purple & Vibrant Magenta Glow
+   LOGIS-PRO PREMIUM - CI REDESIGN
+   Corporate Blue, Navy & Crimson Red
+   Supports Light & Dark Modes
    ============================================ */
 
 :root {
-  --background: 255 80% 3%;
-  --foreground: 210 40% 98%;
-  --primary: 330 100% 55%;
-  --primary-foreground: 330 100% 5%;
-  --secondary: 255 45% 10%;
-  --secondary-foreground: 210 40% 98%;
-  --accent: 280 80% 60%;
-  --accent-foreground: 210 40% 98%;
-  --destructive: 0 84% 60%;
-  --destructive-foreground: 210 40% 98%;
+  /* LIGHT MODE - CORPORATE CLEAN (Based on requested palette) */
+  --background: 0 0% 100%; /* White 10% */
+  --foreground: 216 100% 15%; /* Dark Blue #001e4c 20% */
+  
+  --primary: 225 100% 31%; /* Blue #00279C 50% */
+  --primary-foreground: 0 0% 100%;
+  
+  --secondary: 0 0% 98%; /* Light Sidebar in Light Mode */
+  --secondary-foreground: 216 100% 15%;
+  
+  --accent: 3 100% 36%; /* Red #B60900 10% */
+  --accent-foreground: 0 0% 100%;
+  
+  --destructive: 3 100% 36%; /* Use Red for destructive as well */
+  --destructive-foreground: 0 0% 100%;
+  
   --success: 160 84% 39%;
-  --success-foreground: 160 84% 5%;
-  --card: 255 80% 5%;
-  --card-foreground: 210 40% 98%;
-  --popover: 255 80% 5%;
-  --popover-foreground: 210 40% 98%;
-  --muted: 255 45% 15%;
-  --muted-foreground: 215 20% 65%;
-  --border: 255 45% 15%;
-  --input: 255 45% 12%;
-  --ring: 330 100% 55%;
-  --radius: 2.5rem;
+  --success-foreground: 0 0% 100%;
+  
+  --card: 0 0% 100%;
+  --card-foreground: 216 100% 15%;
+  
+  --popover: 0 0% 100%;
+  --popover-foreground: 216 100% 15%;
+  
+  --muted: 216 100% 95%;
+  --muted-foreground: 216 100% 30%;
+  
+  --border: 216 100% 15% / 0.15;
+  --input: 216 100% 15% / 0.05;
+  --ring: 225 100% 31%;
+  --radius: 2rem;
 
-  --gradient-elite: radial-gradient(at 0% 0%, rgba(255, 30, 133, 0.15) 0px, transparent 50%),
-                    radial-gradient(at 100% 0%, rgba(147, 51, 234, 0.15) 0px, transparent 50%);
+  --gradient-elite: radial-gradient(at 0% 0%, rgba(0, 39, 156, 0.03) 0px, transparent 50%),
+                    radial-gradient(at 100% 0%, rgba(0, 30, 76, 0.03) 0px, transparent 50%);
+}
+
+.dark {
+  /* DARK MODE - COMMAND CENTRE (Based on requested palette) */
+  --background: 216 100% 6%; /* Very Dark Blue #001e4c base */
+  --foreground: 0 0% 100%; /* White */
+  
+  --primary: 225 100% 45%; /* Slightly lighter Blue for visibility on dark background */
+  --primary-foreground: 0 0% 100%;
+  
+  --secondary: 216 100% 10%; /* Dark Sidebar in Dark Mode */
+  --secondary-foreground: 0 0% 100%;
+  
+  --accent: 3 100% 45%; /* Slightly lighter Red for visibility */
+  --accent-foreground: 0 0% 100%;
+  
+  --card: 216 100% 10%; /* Darker Navy for cards */
+  --card-foreground: 0 0% 100%;
+  
+  --popover: 216 100% 12%; 
+  --popover-foreground: 0 0% 100%;
+  
+  --muted: 216 100% 20%;
+  --muted-foreground: 216 100% 80%;
+  
+  --border: 216 100% 30%;
+  --input: 216 100% 20%;
+  --ring: 225 100% 45%;
+  
+  --gradient-elite: radial-gradient(at 0% 0%, rgba(0, 39, 156, 0.1) 0px, transparent 50%),
+                    radial-gradient(at 100% 0%, rgba(0, 30, 76, 0.1) 0px, transparent 50%);
 }
 
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
+  /* กฎพิเศษสำหรับโลโก้: ปิดขอบและเงาทุกชนิด */
+  img.logo-pure, .logo-container-pure {
+    border: none !important;
+    box-shadow: none !important;
+    outline: none !important;
+  }
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
   body {
-    @apply bg-[#050110] text-foreground antialiased selection:bg-primary/30;
-    font-family: var(--font-sans);
+    @apply bg-background text-foreground antialiased selection:bg-primary/30;
+    font-family: var(--font-prompt), var(--font-outfit), ui-sans-serif, system-ui, sans-serif !important;
     background-image: var(--gradient-elite);
     min-height: 100vh;
     font-size: 16px;
   }
   h1, h2, h3, h4, h5, h6 {
-    @apply font-display font-black tracking-tighter;
+    @apply font-black tracking-tighter text-accent transition-colors duration-300;
+    font-family: var(--font-prompt), var(--font-outfit), ui-sans-serif, system-ui, sans-serif !important;
+    -webkit-font-smoothing: antialiased;
+  }
+  /* In dark mode, ensure headers are not too dark if they are Red */
+  .dark h1, .dark h2, .dark h3, .dark h4, .dark h5, .dark h6 {
+    @apply text-accent;
   }
   input, textarea, select {
-    background-color: rgba(10, 5, 24, 0.6) !important;
-    border-color: rgba(255, 255, 255, 0.05) !important;
-    color: white !important;
+    background-color: hsl(var(--input)) !important;
+    border-color: hsl(var(--border)) !important;
+    color: inherit !important;
     @apply rounded-2xl outline-none focus:border-primary/50 transition-all duration-300;
   }
   /* Custom Focus Glow for Inputs */
   input:focus, textarea:focus, select:focus {
-    box-shadow: 0 0 20px rgba(255, 30, 133, 0.15), inset 0 0 10px rgba(255, 30, 133, 0.05);
+    box-shadow: 0 0 20px rgba(0, 39, 156, 0.15), inset 0 0 10px rgba(182, 9, 0, 0.05);
   }
 }
 
 @layer utilities {
   .glass-panel {
-    @apply bg-white/[0.03] backdrop-blur-2xl border border-white/[0.08] relative overflow-hidden;
+    @apply bg-card/60 backdrop-blur-2xl border border-border relative overflow-hidden;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.05);
+  }
+  .dark .glass-panel {
     box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
   }
   .inner-glow {
     box-shadow: inset 0 0 30px rgba(255, 255, 255, 0.03);
   }
   .primary-glow {
-    filter: drop-shadow(0 0 15px rgba(255, 30, 133, 0.4));
+    filter: drop-shadow(0 0 15px rgba(0, 39, 156, 0.4));
     @apply animate-pulse-gentle;
   }
 }

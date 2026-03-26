@@ -77,7 +77,7 @@ export function NotificationsContent({ notifications: initialNotifications, driv
       {/* Header with mark all read */}
       {unreadCount > 0 && (
         <div className="flex justify-between items-center">
-          <span className="text-xl text-gray-500">ยังไม่อ่าน {unreadCount} รายการ</span>
+          <span className="text-xl text-muted-foreground">ยังไม่อ่าน {unreadCount} รายการ</span>
           <Button 
             variant="ghost" 
             size="sm" 
@@ -117,10 +117,10 @@ export function NotificationsContent({ notifications: initialNotifications, driv
                   {getIcon(notif.Type)}
                 </div>
                 <div className="flex-1">
-                  <h4 className={`font-medium ${notif.Is_Read ? 'text-gray-700' : 'text-white'}`}>
+                  <h4 className={`font-medium ${notif.Is_Read ? 'text-gray-700' : 'text-foreground'}`}>
                     {notif.Title}
                   </h4>
-                  <p className="text-xl text-gray-500 mt-1">{notif.Message}</p>
+                  <p className="text-xl text-muted-foreground mt-1">{notif.Message}</p>
                   <p className="text-lg font-bold text-gray-400 mt-2">{formatTime(notif.Created_At)}</p>
                 </div>
                 {!notif.Is_Read && (

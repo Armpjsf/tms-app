@@ -86,20 +86,20 @@ export function DashboardClient({
             <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8">
                 <div className="space-y-4">
                     <div className="flex items-center gap-3">
-                        <div className="p-2 bg-primary/20 rounded-xl shadow-lg shadow-primary/10">
-                            <LayoutGrid className="text-primary" size={24} />
+                        <div className="p-2 bg-accent/20 rounded-xl shadow-lg shadow-accent/10">
+                            <LayoutGrid className="text-accent" size={24} />
                         </div>
-                        <h2 className="text-lg font-bold font-black text-primary uppercase tracking-[0.3em]">{t('dashboard.matrix_title')}</h2>
+                        <h2 className="text-lg font-bold font-black text-accent uppercase tracking-[0.3em]">{t('dashboard.matrix_title')}</h2>
                     </div>
-                    <h1 className="text-7xl font-black text-white tracking-tighter premium-text-gradient uppercase">
+                    <h1 className="text-7xl font-black text-accent tracking-tighter premium-text-gradient uppercase italic">
                         {customerMode ? `${t('navigation.dashboard')}: ${userName || 'Alpha'}` : t('dashboard.title')}
                     </h1>
                     <div className="flex items-center gap-4">
-                        <div className="px-5 py-2 rounded-full bg-primary/10 border border-primary/20 text-base font-bold font-black uppercase tracking-[0.2em] flex items-center gap-3 text-primary">
-                            <div className="w-2 h-2 rounded-full bg-primary animate-pulse shadow-[0_0_12px_rgba(255,30,133,1)]" />
+                        <div className="px-5 py-2 rounded-full bg-accent/10 border border-accent/20 text-base font-bold font-black uppercase tracking-[0.2em] flex items-center gap-3 text-accent transition-all duration-500">
+                            <div className="w-2 h-2 rounded-full bg-accent animate-pulse shadow-[0_0_12px_rgba(182,9,0,1)]" />
                             {t('dashboard.system_integrity')}
                         </div>
-                        <p className="text-slate-500 text-lg font-bold font-bold uppercase tracking-widest opacity-60">
+                        <p className="text-muted-foreground text-lg font-bold font-bold uppercase tracking-widest opacity-60">
                              {t('dashboard.node_execution')} {branchId || "Global"}
                         </p>
                     </div>
@@ -109,17 +109,17 @@ export function DashboardClient({
                     {customerMode && (
                         <button 
                             onClick={() => setIsRequestDialogOpen(true)}
-                            className="h-16 px-12 bg-primary hover:bg-primary/90 text-white rounded-3xl font-black text-lg font-bold uppercase tracking-[0.2em] transition-all shadow-[0_20px_40px_rgba(255,30,133,0.3)] active:scale-95 border border-primary/30"
+                            className="h-16 px-12 bg-primary hover:bg-primary/90 text-foreground font-bold uppercase tracking-[0.2em] transition-all shadow-[0_20px_40px_rgba(255,30,133,0.3)] active:scale-95 border border-primary/30"
                         >
                             {t('navigation.request_mission')}
                         </button>
                     )}
-                    <div className="h-16 px-8 glass-panel rounded-3xl flex items-center gap-6 border-white/5 shadow-2xl">
+                    <div className="h-16 px-8 glass-panel rounded-3xl flex items-center gap-6 border-border/5 shadow-2xl">
                         <div className="text-right">
-                            <p className="text-base font-bold font-black text-slate-500 uppercase tracking-widest mb-1">{t('dashboard.fleet_utilization')}</p>
-                            <p className="text-white font-black text-2xl leading-none">{fleetHealth || 98}%</p>
+                            <p className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest mb-1">{t('dashboard.fleet_utilization')}</p>
+                            <p className="text-accent font-black text-2xl leading-none">{fleetHealth || 98}%</p>
                         </div>
-                        <Activity className="text-primary" size={28} />
+                        <Activity className="text-accent" size={28} />
                     </div>
                 </div>
             </div>
@@ -132,14 +132,14 @@ export function DashboardClient({
                 className="grid grid-cols-1 lg:grid-cols-12 gap-8"
             >
                 {/* 1. Asset Visualization (MAP) */}
-                <motion.div variants={item} className="lg:col-span-8 h-[650px] glass-panel rounded-[4rem] relative group border-white/5 shadow-2xl overflow-hidden ring-1 ring-white/5 hover:ring-primary/20 transition-all duration-700">
+                <motion.div variants={item} className="lg:col-span-8 h-[650px] glass-panel rounded-[4rem] relative group border-border/5 shadow-2xl overflow-hidden ring-1 ring-border/5 hover:ring-primary/20 transition-all duration-700">
                     <div className="absolute inset-0 z-0">
                         <DashboardMap drivers={fleetStatus} />
                     </div>
                     <div className="absolute top-10 left-10 z-10">
-                        <div className="px-8 py-4 glass-panel rounded-3xl border-white/10 backdrop-blur-3xl shadow-2xl">
+                        <div className="px-8 py-4 glass-panel rounded-3xl border-border/10 backdrop-blur-3xl shadow-2xl">
                             <p className="text-lg font-bold font-black text-primary uppercase tracking-[0.2em] mb-1.5">{t('dashboard.live_matrix')}</p>
-                            <h3 className="text-white font-black text-2xl tracking-tighter">{(fleetStatus || []).length} {t('dashboard.units_deployed')}</h3>
+                            <h3 className="text-foreground font-black text-2xl tracking-tighter">{(fleetStatus || []).length} {t('dashboard.units_deployed')}</h3>
                         </div>
                     </div>
                     <div className="absolute inset-0 pointer-events-none shadow-[inset_0_0_120px_rgba(0,0,0,0.6)]" />
@@ -148,36 +148,36 @@ export function DashboardClient({
                 {/* 2. Tactical Metrics (Right) */}
                 <div className="lg:col-span-4 space-y-8 flex flex-col">
                     {/* Performance Score */}
-                    <motion.div variants={item} className="flex-1 glass-panel rounded-[4rem] p-12 flex flex-col justify-center items-center text-center group border-white/5 hover:border-primary/20 transition-all">
-                        <div className="w-28 h-28 rounded-[2.5rem] bg-primary/10 flex items-center justify-center mb-8 border border-primary/20 group-hover:scale-110 group-hover:bg-primary/20 transition-all duration-700 shadow-xl shadow-primary/5">
-                            <CheckCircle2 className="text-primary w-14 h-14" strokeWidth={2.5} />
+                    <motion.div variants={item} className="flex-1 glass-panel rounded-[4rem] p-12 flex flex-col justify-center items-center text-center group border-border/5 hover:border-primary/20 transition-all">
+                        <div className="w-28 h-28 rounded-[2.5rem] bg-accent/10 flex items-center justify-center mb-8 border border-accent/20 group-hover:scale-110 group-hover:bg-accent/20 transition-all duration-700 shadow-xl shadow-accent/5">
+                            <CheckCircle2 className="text-accent w-14 h-14" strokeWidth={2.5} />
                         </div>
-                        <h3 className="text-slate-500 font-black text-lg font-bold uppercase tracking-[0.3em] mb-4">{t('dashboard.ops_integrity')}</h3>
-                        <p className="text-9xl font-black text-white tracking-tighter leading-none mb-6 premium-text-gradient uppercase">A<span className="text-primary">+</span></p>
-                        <div className="w-full h-2 bg-white/5 rounded-full overflow-hidden mb-6">
+                        <h3 className="text-muted-foreground font-black text-lg font-bold uppercase tracking-[0.3em] mb-4">{t('dashboard.ops_integrity')}</h3>
+                        <p className="text-9xl font-black text-accent tracking-tighter leading-none mb-6 premium-text-gradient uppercase italic">A<span className="text-primary">+</span></p>
+                        <div className="w-full h-2 bg-muted/50 rounded-full overflow-hidden mb-6">
                             <motion.div 
                                 initial={{ width: 0 }}
                                 animate={{ width: '96%' }}
                                 transition={{ duration: 2, ease: "easeOut" }}
-                                className="h-full bg-primary shadow-[0_0_20px_rgba(255,30,133,0.8)]" 
+                                className="h-full bg-accent shadow-[0_0_20px_rgba(182,9,0,0.8)]" 
                             />
                         </div>
-                        <p className="text-primary/60 text-lg font-bold font-black uppercase tracking-[0.15em]">{t('dashboard.efficiency_index')} 96.4%</p>
+                        <p className="text-accent/60 text-lg font-bold font-black uppercase tracking-[0.15em]">{t('dashboard.efficiency_index')} 96.4%</p>
                     </motion.div>
 
                     {/* Quick Stats Grid */}
                     <div className="grid grid-cols-2 gap-8">
-                        <motion.div variants={item} className="glass-panel rounded-[3rem] p-8 border-white/5 flex flex-col justify-between h-44 hover:border-rose-500/20 transition-all">
-                            <p className="text-lg font-bold font-black text-slate-500 uppercase tracking-widest">{t('monitoring.alerts')}</p>
+                        <motion.div variants={item} className="glass-panel rounded-[3rem] p-8 border-border/5 flex flex-col justify-between h-44 hover:border-rose-500/20 transition-all">
+                            <p className="text-lg font-bold font-black text-muted-foreground uppercase tracking-widest">{t('monitoring.alerts')}</p>
                             <div className="flex items-end justify-between">
-                                <p className={cn("text-6xl font-black tracking-tighter", sosCount > 0 ? "text-rose-500" : "text-white")}>{sosCount}</p>
-                                <AlertTriangle size={24} className={sosCount > 0 ? "text-rose-500 animate-bounce" : "text-slate-800 opacity-40"} />
+                                <p className={cn("text-6xl font-black tracking-tighter", sosCount > 0 ? "text-rose-500" : "text-foreground")}>{sosCount}</p>
+                                <AlertTriangle size={24} className={sosCount > 0 ? "text-rose-500 animate-bounce" : "text-muted-foreground opacity-40"} />
                             </div>
                         </motion.div>
-                        <motion.div variants={item} className="glass-panel rounded-[3rem] p-8 border-white/5 flex flex-col justify-between h-44 hover:border-primary/20 transition-all">
-                            <p className="text-lg font-bold font-black text-slate-500 uppercase tracking-widest">{t('navigation.planning')}</p>
+                        <motion.div variants={item} className="glass-panel rounded-[3rem] p-8 border-border/5 flex flex-col justify-between h-44 hover:border-primary/20 transition-all">
+                            <p className="text-lg font-bold font-black text-muted-foreground uppercase tracking-widest">{t('navigation.planning')}</p>
                             <div className="flex items-end justify-between">
-                                <p className="text-6xl font-black text-white tracking-tighter">{jobStats?.inProgress || 0}</p>
+                                <p className="text-6xl font-black text-foreground tracking-tighter">{jobStats?.inProgress || 0}</p>
                                 <Truck size={24} className="text-primary" />
                             </div>
                         </motion.div>
@@ -194,23 +194,23 @@ export function DashboardClient({
                             <div className="inline-flex items-center gap-3 px-5 py-2 glass-panel rounded-full text-lg font-bold font-black uppercase tracking-[0.2em] text-primary border-primary/20">
                                 <Leaf size={16} /> {t('dashboard.esg_intelligence')}
                             </div>
-                             <h2 className="text-6xl font-black text-white tracking-tighter leading-tight uppercase">
+                             <h2 className="text-6xl font-black text-foreground tracking-tighter leading-tight uppercase">
                                 {t('dashboard.cleaner_future')}<br/>
                                 <span className="opacity-40">{t('dashboard.carbon_offset')}</span> <span className="premium-text-gradient">1,420 KG CO2</span>
                             </h2>
-                            <p className="text-slate-400 font-bold text-lg max-w-2xl leading-relaxed">
+                            <p className="text-muted-foreground font-bold text-lg max-w-2xl leading-relaxed">
                                 {t('dashboard.esg_description')}
                             </p>
                         </div>
                         <div className="flex gap-16">
                             <div className="text-center group/stat">
-                                <p className="text-7xl font-black text-white tracking-tighter mb-2 group-hover/stat:text-primary transition-colors">68.2</p>
-                                <p className="text-lg font-bold font-black text-primary uppercase tracking-[0.2em]">{t('dashboard.trees_saved')}</p>
+                                <p className="text-7xl font-black text-accent tracking-tighter mb-2 group-hover/stat:text-primary transition-colors">68.2</p>
+                                <p className="text-lg font-bold font-black text-accent uppercase tracking-[0.2em]">{t('dashboard.trees_saved')}</p>
                             </div>
-                            <div className="w-px h-28 bg-white/10" />
+                            <div className="w-px h-28 bg-muted/50" />
                             <div className="text-center group/stat">
-                                <p className="text-7xl font-black text-white tracking-tighter mb-2 group-hover/stat:text-primary transition-colors">285<span className="text-2xl text-slate-500 ml-1">L</span></p>
-                                <p className="text-lg font-bold font-black text-primary uppercase tracking-[0.2em]">{t('dashboard.fuel_reclaimed')}</p>
+                                <p className="text-7xl font-black text-accent tracking-tighter mb-2 group-hover/stat:text-primary transition-colors">285<span className="text-2xl text-muted-foreground ml-1">L</span></p>
+                                <p className="text-lg font-bold font-black text-accent uppercase tracking-[0.2em]">{t('dashboard.fuel_reclaimed')}</p>
                             </div>
                         </div>
                     </div>
@@ -224,33 +224,33 @@ export function DashboardClient({
                         </div>
                     )}
 
-                    <div className="glass-panel rounded-[3.5rem] border-white/5 shadow-2xl overflow-hidden p-10 group hover:border-primary/20 transition-all">
+                    <div className="glass-panel rounded-[3.5rem] border-border/5 shadow-2xl overflow-hidden p-10 group hover:border-primary/20 transition-all">
                         <div className="flex items-center justify-between mb-10">
-                            <h3 className="text-2xl font-black text-white tracking-tight flex items-center gap-4">
+                            <h3 className="text-2xl font-black text-foreground tracking-tight flex items-center gap-4">
                                 <div className="p-3 bg-primary/20 rounded-2xl text-primary shadow-lg shadow-primary/10">
                                     <TrendingUp size={24} />
                                 </div>
                                 {t('dashboard.growth_analytics')}
                             </h3>
-                            <span className="text-lg font-bold font-black text-slate-500 uppercase tracking-[0.2em]">{t('dashboard.performance_spectrum')}</span>
+                            <span className="text-lg font-bold font-black text-muted-foreground uppercase tracking-[0.2em]">{t('dashboard.performance_spectrum')}</span>
                         </div>
-                        <div className="text-white">
+                        <div className="text-foreground">
                             <WeeklyShipmentChart data={weeklyStats} />
                         </div>
                     </div>
                 </motion.div>
 
                 <motion.div variants={item} className="lg:col-span-5">
-                    <div className="glass-panel rounded-[3.5rem] h-full p-10 flex flex-col border-white/5 hover:border-primary/20 transition-all">
+                    <div className="glass-panel rounded-[3.5rem] h-full p-10 flex flex-col border-border/5 hover:border-primary/20 transition-all">
                         <div className="flex items-center justify-between mb-10">
-                            <h3 className="text-2xl font-black text-white tracking-tight flex items-center gap-4">
+                            <h3 className="text-2xl font-black text-foreground tracking-tight flex items-center gap-4">
                                 <div className="p-3 bg-accent/20 rounded-2xl text-accent shadow-lg shadow-accent/10">
                                     <Activity size={24} />
                                 </div>
                                 {t('dashboard.operational_stream')}
                             </h3>
                         </div>
-                        <div className="flex-1 overflow-y-auto custom-scrollbar pr-4 text-slate-300">
+                        <div className="flex-1 overflow-y-auto custom-scrollbar pr-4 text-muted-foreground">
                             <ActivityFeed jobStats={jobStats} sosCount={sosCount} />
                         </div>
                     </div>

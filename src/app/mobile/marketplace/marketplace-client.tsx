@@ -35,7 +35,7 @@ export function MarketplaceClient({ initialJobs, driverId, driverName }: Marketp
                         <Activity size={32} />
                     </div>
                     <h2 className="text-xl font-bold text-gray-900 mb-2">ข้อมูลบัญชีไม่สมบูรณ์</h2>
-                    <p className="text-gray-500">บัญชีนี้ยังไม่ถูกตั้งค่าเป็นพนักงานขับรถ ไม่สามารถเสนอราคางานได้</p>
+                    <p className="text-muted-foreground">บัญชีนี้ยังไม่ถูกตั้งค่าเป็นพนักงานขับรถ ไม่สามารถเสนอราคางานได้</p>
                 </div>
                 <BottomNav />
             </div>
@@ -76,7 +76,7 @@ export function MarketplaceClient({ initialJobs, driverId, driverName }: Marketp
                 <div className="flex items-center justify-between">
                     <div>
                         <h2 className="font-bold text-gray-900 text-lg">Unassigned Jobs</h2>
-                        <p className="text-lg font-bold text-gray-500">งานที่พร้อมให้คุณรับ</p>
+                        <p className="text-lg font-bold text-muted-foreground">งานที่พร้อมให้คุณรับ</p>
                     </div>
                     <Badge variant="outline" className="bg-emerald-50 text-emerald-600 border-none">
                         {jobs.length} งานใหม่
@@ -93,7 +93,7 @@ export function MarketplaceClient({ initialJobs, driverId, driverName }: Marketp
                             <Activity className="text-gray-300 w-8 h-8" />
                         </div>
                         <h4 className="text-lg font-bold text-gray-900 mb-1">ยังไม่มีงานในช่วงนี้</h4>
-                        <p className="text-xl text-gray-500">ขณะนี้ไม่มีงานใหม่ที่เปิดรับประมูล เมื่อมีงานเข้ามาจะแสดงที่หน้านี้อัตโนมัติ</p>
+                        <p className="text-xl text-muted-foreground">ขณะนี้ไม่มีงานใหม่ที่เปิดรับประมูล เมื่อมีงานเข้ามาจะแสดงที่หน้านี้อัตโนมัติ</p>
                     </motion.div>
                 ) : (
                     <div className="space-y-4">
@@ -149,9 +149,9 @@ export function MarketplaceClient({ initialJobs, driverId, driverName }: Marketp
                                                     className="bg-emerald-500/5 border border-emerald-500/20 rounded-xl p-3 space-y-3"
                                                 >
                                                     <div>
-                                                        <label className="text-base font-bold uppercase font-bold text-gray-500 tracking-wider">เสนอราคาของคุณ (บาท)</label>
+                                                        <label className="text-base font-bold uppercase font-bold text-muted-foreground tracking-wider">เสนอราคาของคุณ (บาท)</label>
                                                         <div className="relative mt-1">
-                                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-bold">฿</span>
+                                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-bold">฿</span>
                                                             <Input 
                                                                 type="number"
                                                                 value={bidAmount}
@@ -183,7 +183,7 @@ export function MarketplaceClient({ initialJobs, driverId, driverName }: Marketp
                                             ) : (
                                                 <Button 
                                                     onClick={() => handleBidClick(job.Job_ID)}
-                                                    className="w-full bg-black hover:bg-gray-800 text-white rounded-xl font-bold shadow-md shadow-black/10 active:scale-95 transition-all text-xl h-11"
+                                                    className="w-full bg-black hover:bg-gray-800 text-white rounded-xl font-bold shadow-md shadow-md active:scale-95 transition-all text-xl h-11"
                                                 >
                                                     เสนอราคารับงานนี้
                                                 </Button>

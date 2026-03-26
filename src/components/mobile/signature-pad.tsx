@@ -58,7 +58,7 @@ export function SignaturePad({ onSave }: Props) {
           onEnd={handleEnd}
         />
         {isEmpty && (
-           <div className="absolute inset-0 flex items-center justify-center pointer-events-none text-gray-500">
+           <div className="absolute inset-0 flex items-center justify-center pointer-events-none text-muted-foreground">
               เซ็นชื่อที่นี่ (หมึกสีดำ)
            </div>
         )}

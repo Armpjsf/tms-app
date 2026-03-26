@@ -141,26 +141,26 @@ export function MonitoringCommandCenter({
     const alertCount = jobs.filter(j => j.Job_Status === 'SOS' || j.Job_Status === 'Failed').length
 
     return (
-        <div className="flex h-[calc(100vh-64px)] bg-[#050110] text-slate-300 overflow-hidden font-sans rounded-[2.5rem] border border-white/5 shadow-2xl relative z-10">
+        <div className="flex h-[calc(100vh-64px)] bg-background text-muted-foreground overflow-hidden font-sans rounded-[2.5rem] border border-border/5 shadow-2xl relative z-10">
             {/* 1. Tactical Sidebar */}
-            <div className="w-[400px] border-r border-white/5 flex flex-col bg-slate-950/50 backdrop-blur-2xl">
-                <div className="p-8 border-b border-white/5">
+            <div className="w-[400px] border-r border-border/5 flex flex-col bg-background/50 backdrop-blur-2xl">
+                <div className="p-8 border-b border-border/5">
                     <div className="flex items-center justify-between mb-8">
-                        <h2 className="text-2xl font-black text-white tracking-tight flex items-center gap-3 italic">
+                        <h2 className="text-2xl font-black text-foreground tracking-tight flex items-center gap-3 italic">
                             <div className="p-2.5 bg-primary/20 rounded-2xl border border-primary/30 shadow-[0_0_20px_rgba(255,30,133,0.2)]">
                                 <Activity className="text-primary" size={24} />
                             </div>
                             {t('monitoring.title')}
                         </h2>
-                        <RealtimeIndicator isLive={true} className="bg-white/5 border-white/10 text-primary" />
+                        <RealtimeIndicator isLive={true} className="bg-muted/50 border-border/10 text-primary" />
                     </div>
 
                     <div className="relative group">
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-primary transition-colors" size={16} />
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors" size={16} />
                         <input 
                             type="text" 
                             placeholder={t('common.search')}
-                            className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-xl focus:outline-none focus:border-primary/50 focus:bg-white/10 transition-all placeholder:text-slate-600 font-bold"
+                            className="w-full bg-muted/50 border border-border/10 rounded-2xl py-4 pl-12 pr-4 text-xl focus:outline-none focus:border-primary/50 focus:bg-muted/80 transition-all placeholder:text-muted-foreground font-bold"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                         />
@@ -176,7 +176,7 @@ export function MonitoringCommandCenter({
                 <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar">
                     {filter === 'all' || filter === 'drivers' ? (
                         driversWithGPS.map(driver => (
-                            <div key={driver.Driver_ID} className="bg-white/5 border border-white/5 p-4 rounded-3xl hover:bg-white/10 transition-all cursor-pointer group">
+                            <div key={driver.Driver_ID} className="bg-muted/50 border border-border/5 p-4 rounded-3xl hover:bg-muted/80 transition-all cursor-pointer group">
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-3" onClick={() => handleJobClick(driver as any)}>
                                         <div className="relative">
@@ -187,7 +187,7 @@ export function MonitoringCommandCenter({
                                         </div>
                                         <div>
                                             <p className="text-xl font-black text-white">{driver.Driver_Name}</p>
-                                            <p className="text-lg font-bold font-bold text-slate-500 uppercase tracking-tighter">{driver.Vehicle_Plate}</p>
+                                            <p className="text-lg font-bold font-bold text-muted-foreground uppercase tracking-tighter">{driver.Vehicle_Plate}</p>
                                         </div>
                                     </div>
                                     <SafetyScoreBadge metrics={calculateSafetyScore(driver)} />
@@ -218,7 +218,7 @@ function FilterButton({ active, onClick, label, count, color = "primary" }: any)
                 "px-5 py-2.5 rounded-xl text-lg font-bold font-black uppercase tracking-[0.15em] whitespace-nowrap transition-all border flex items-center gap-2",
                 active 
                     ? `bg-${color}-500 text-white border-${color}-400 shadow-lg shadow-${color}-500/20 scale-105` 
-                    : "bg-white/5 border-white/5 text-slate-500 hover:text-slate-300"
+                    : "bg-muted/50 border-border/5 text-muted-foreground hover:text-muted-foreground"
             )}
         >
             {label}

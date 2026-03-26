@@ -38,7 +38,7 @@ export function FuelClient({
   return (
     <div className="space-y-12 pb-20">
       {/* Tactical Energy Header */}
-      <div className="bg-[#0a0518] p-12 rounded-br-[6rem] rounded-tl-[3rem] border border-white/5 shadow-[0_30px_60px_rgba(0,0,0,0.5)] relative overflow-hidden group">
+      <div className="bg-background p-12 rounded-br-[6rem] rounded-tl-[3rem] border border-border/5 shadow-[0_30px_60px_rgba(0,0,0,0.5)] relative overflow-hidden group">
         <div className="absolute top-0 right-0 w-80 h-80 bg-primary/10 blur-[120px] rounded-full -mr-40 -mt-40 pointer-events-none" />
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-10 relative z-10">
           <div>
@@ -47,7 +47,7 @@ export function FuelClient({
                   <Fuel size={40} strokeWidth={2.5} />
                </div>
                <div>
-                  <h1 className="text-5xl font-black text-white tracking-widest uppercase leading-none mb-2 italic">{t('navigation.fuel')}</h1>
+                  <h1 className="text-5xl font-black text-foreground tracking-widest uppercase leading-none mb-2 italic">{t('navigation.fuel')}</h1>
                   <p className="text-base font-bold font-black text-primary uppercase tracking-[0.6em] opacity-80 italic italic">{t('dashboard.subtitle')}</p>
                </div>
             </div>
@@ -74,7 +74,7 @@ export function FuelClient({
                 <TrendingUp size={24} strokeWidth={2.5} />
             </div>
             <div>
-                <h2 className="text-3xl font-black text-white tracking-[0.2em] uppercase italic">{t('navigation.analytics')}</h2>
+                <h2 className="text-3xl font-black text-foreground tracking-[0.2em] uppercase italic">{t('navigation.analytics')}</h2>
                 <p className="text-base font-bold font-black text-primary uppercase tracking-[0.6em] opacity-60">{t('dashboard.subtitle')}</p>
             </div>
          </div>
@@ -87,33 +87,33 @@ export function FuelClient({
             <div className="p-3 bg-blue-500/20 rounded-2xl text-blue-500 border-2 border-blue-500/30">
                 <Activity size={20} />
             </div>
-            <h3 className="text-xl font-black text-white uppercase tracking-[0.4em] italic">{t('common.search')}</h3>
+            <h3 className="text-xl font-black text-foreground uppercase tracking-[0.4em] italic">{t('common.search')}</h3>
         </div>
         
         <div className="flex flex-col lg:flex-row gap-6">
           <div className="flex-1">
               <SearchInput 
                 placeholder={t('common.search')}
-                className="h-16 bg-[#0a0518] border-2 border-white/5 rounded-2xl text-white placeholder:text-slate-600 focus:border-primary/50 transition-all font-black"
+                className="h-16 bg-background border-2 border-border/5 rounded-2xl text-foreground placeholder:text-muted-foreground focus:border-primary/50 transition-all font-black"
               />
           </div>
           <form className="flex flex-wrap lg:flex-nowrap gap-4 items-center">
-              <div className="flex items-center gap-4 bg-[#0a0518] border-2 border-white/5 p-2 rounded-2xl">
+              <div className="flex items-center gap-4 bg-background border-2 border-border/5 p-2 rounded-2xl">
                 <Input 
                     type="date" 
                     name="startDate"
                     defaultValue={startDate}
-                    className="h-12 bg-transparent border-none text-white focus:ring-0 uppercase font-black text-lg font-bold"
+                    className="h-12 bg-transparent border-none text-foreground focus:ring-0 uppercase font-black text-lg font-bold"
                 />
-                <ArrowRight size={16} className="text-slate-700" />
+                <ArrowRight size={16} className="text-muted-foreground" />
                 <Input 
                     type="date" 
                     name="endDate"
                     defaultValue={endDate}
-                    className="h-12 bg-transparent border-none text-white focus:ring-0 uppercase font-black text-lg font-bold"
+                    className="h-12 bg-transparent border-none text-foreground focus:ring-0 uppercase font-black text-lg font-bold"
                 />
               </div>
-              <PremiumButton type="submit" variant="secondary" className="h-16 px-10 rounded-2xl border-2 border-white/5 bg-white/5 hover:bg-white/10 text-white font-black uppercase tracking-widest italic">
+              <PremiumButton type="submit" variant="secondary" className="h-16 px-10 rounded-2xl border-2 border-border/5 bg-muted/50 hover:bg-muted/80 text-foreground font-black uppercase tracking-widest italic">
                   {t('common.success')}
               </PremiumButton>
           </form>
@@ -121,33 +121,33 @@ export function FuelClient({
       </div>
 
       {/* Fuel Log Ledger */}
-      <PremiumCard className="bg-[#0a0518] border-2 border-white/5 p-0 overflow-hidden shadow-3xl rounded-br-[5rem] rounded-tl-[3rem]">
-          <div className="p-10 border-b border-white/5 bg-black/40 flex items-center justify-between relative overflow-hidden">
+      <PremiumCard className="bg-background border-2 border-border/5 p-0 overflow-hidden shadow-3xl rounded-br-[5rem] rounded-tl-[3rem]">
+          <div className="p-10 border-b border-border/5 bg-black/40 flex items-center justify-between relative overflow-hidden">
             <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary to-transparent" />
             <div className="flex items-center gap-6 relative z-10">
                 <div className="p-4 bg-primary/20 rounded-3xl text-primary border-2 border-primary/30 shadow-[0_0_20px_rgba(255,30,133,0.3)]">
                     <Hash size={24} />
                 </div>
                 <div>
-                    <h2 className="text-3xl font-black text-white tracking-widest uppercase italic leading-none mb-1">{t('navigation.history')}</h2>
+                    <h2 className="text-3xl font-black text-foreground tracking-widest uppercase italic leading-none mb-1">{t('navigation.history')}</h2>
                     <p className="text-primary text-base font-bold font-black uppercase tracking-[0.4em] opacity-60">{t('dashboard.subtitle')}</p>
                 </div>
             </div>
-            <div className="hidden lg:flex items-center gap-3 py-2 px-5 bg-white/5 rounded-full border border-white/10">
+            <div className="hidden lg:flex items-center gap-3 py-2 px-5 bg-muted/50 rounded-full border border-border/10">
                 <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                <span className="text-base font-bold font-black text-slate-500 uppercase tracking-widest">ACTIVE</span>
+                <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest">ACTIVE</span>
             </div>
           </div>
 
           <div className="overflow-x-auto">
             {logs.length === 0 ? (
                 <div className="p-32 text-center space-y-6">
-                    <Droplets className="w-20 h-20 text-white/5 mx-auto animate-pulse" />
-                    <p className="text-slate-500 font-black uppercase tracking-[0.4em] text-lg font-bold">{t('common.no_data')}</p>
+                    <Droplets className="w-20 h-20 text-foreground/5 mx-auto animate-pulse" />
+                    <p className="text-muted-foreground font-black uppercase tracking-[0.4em] text-lg font-bold">{t('common.no_data')}</p>
                 </div>
             ) : (
                 <table className="w-full border-collapse">
-                  <thead className="text-base font-bold uppercase bg-black/60 text-slate-500 border-b border-white/5 font-black tracking-[0.3em] italic">
+                  <thead className="text-base font-bold uppercase bg-black/60 text-muted-foreground border-b border-border/5 font-black tracking-[0.3em] italic">
                     <tr>
                       <th className="text-left p-8">{t('common.date')}</th>
                       <th className="text-left p-8">{t('navigation.drivers')}</th>
@@ -166,10 +166,10 @@ export function FuelClient({
                     {logs.map((log: any) => (
                   <tr 
                     key={log.Log_ID} 
-                    className="hover:bg-white/[0.03] transition-all group/row"
+                    className="hover:bg-muted/40 transition-all group/row"
                   >
                     <td className="p-8">
-                      <span className="text-white font-black text-xl tracking-widest uppercase italic opacity-90">
+                      <span className="text-foreground font-black text-xl tracking-widest uppercase italic opacity-90">
                         {log.Date_Time ? new Date(log.Date_Time).toLocaleString('th-TH', { 
                           timeZone: 'Asia/Bangkok',
                           day: '2-digit',
@@ -179,18 +179,18 @@ export function FuelClient({
                         }) : "VOID"}
                       </span>
                     </td>
-                    <td className="p-8 text-white font-black text-xl tracking-widest uppercase">{log.Driver_Name || "UNASSIGNED"}</td>
+                    <td className="p-8 text-foreground font-black text-xl tracking-widest uppercase">{log.Driver_Name || "UNASSIGNED"}</td>
                     <td className="p-8">
-                       <span className="px-4 py-1.5 bg-white/5 rounded-xl border border-white/10 text-white font-black text-lg font-bold tracking-widest uppercase">{log.Vehicle_Plate || "VOID_ID"}</span>
+                       <span className="px-4 py-1.5 bg-muted/50 rounded-xl border border-border/10 text-foreground font-black text-lg font-bold tracking-widest uppercase">{log.Vehicle_Plate || "VOID_ID"}</span>
                     </td>
                     <td className="p-8">
                       <div className="flex flex-col gap-2">
-                          <span className="text-white font-black text-lg font-bold tracking-widest uppercase">{log.Station_Name || "DEFAULT_HUB"}</span>
+                          <span className="text-foreground font-black text-lg font-bold tracking-widest uppercase">{log.Station_Name || "DEFAULT_HUB"}</span>
                                <span className={cn(
                                  "text-base font-bold px-3 py-1 rounded-full w-fit font-black uppercase tracking-widest",
                                  log.Status === 'Approved' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/20' :
                                  log.Status === 'Rejected' ? 'bg-rose-500/20 text-rose-500 border border-rose-500/20' :
-                                 'bg-white/5 text-slate-500 border border-white/10'
+                                 'bg-muted/50 text-muted-foreground border border-border/10'
                               )}>
                                   {log.Status === 'Approved' ? t('fuel.status.synchronized') : 
                                    log.Status === 'Rejected' ? t('fuel.status.denied') : t('common.loading')}
@@ -199,7 +199,7 @@ export function FuelClient({
                     </td>
                     <td className="p-8 text-center text-center">
                       {log.Photo_Url ? (
-                          <div className="relative w-12 h-12 mx-auto rounded-2xl overflow-hidden border-2 border-white/10 bg-slate-900 group cursor-pointer shadow-2xl hover:border-primary/50 transition-all">
+                          <div className="relative w-12 h-12 mx-auto rounded-2xl overflow-hidden border-2 border-border/10 bg-card group cursor-pointer shadow-2xl hover:border-primary/50 transition-all">
                               <NextImage 
                                   src={log.Photo_Url} 
                                   alt="Receipt" 
@@ -215,33 +215,33 @@ export function FuelClient({
                               </div>
                           </div>
                       ) : (
-                          <span className="text-slate-800 text-lg font-bold font-black">N/A</span>
+                          <span className="text-muted-foreground text-lg font-bold font-black">N/A</span>
                       )}
                     </td>
                     <td className="p-8 text-right">
                        <div className="flex flex-col items-end gap-1">
                            <span className={cn(
                              "text-base font-black italic tracking-tighter",
-                             log.Capacity_Status === 'Overflow' ? 'text-rose-500' : 'text-white'
+                             log.Capacity_Status === 'Overflow' ? 'text-rose-500' : 'text-foreground'
                            )}>
                                {log.Liters?.toFixed(2)}
                            </span>
                            {log.Capacity_Status === 'Overflow' && (
-                               <span className="text-base font-bold text-white bg-rose-600 px-2 py-0.5 rounded-lg font-black uppercase tracking-widest animate-pulse">
+                               <span className="text-base font-bold text-foreground bg-rose-600 px-2 py-0.5 rounded-lg font-black uppercase tracking-widest animate-pulse">
                                    {t('fuel.alerts.overflow')}
                                </span>
                            )}
                        </div>
                     </td>
-                    <td className="p-8 text-right text-slate-500 font-black text-lg font-bold tracking-tighter italic">
+                    <td className="p-8 text-right text-muted-foreground font-black text-lg font-bold tracking-tighter italic">
                         ฿{(log.Price_Total && log.Liters) ? (log.Price_Total / log.Liters).toFixed(2) : "0.00"}
                     </td>
                     <td className="p-8 text-right">
-                      <span className="text-xl font-black text-white italic tracking-tighter bg-primary/10 px-6 py-2 rounded-2xl border-2 border-primary/20 group-hover/row:scale-110 transition-transform block w-fit ml-auto shadow-[0_5px_15px_rgba(255,30,133,0.1)]">
+                      <span className="text-xl font-black text-foreground italic tracking-tighter bg-primary/10 px-6 py-2 rounded-2xl border-2 border-primary/20 group-hover/row:scale-110 transition-transform block w-fit ml-auto shadow-[0_5px_15px_rgba(255,30,133,0.1)]">
                         ฿{log.Price_Total?.toLocaleString()}
                       </span>
                     </td>
-                    <td className="p-8 text-right text-white font-black italic text-base tracking-tighter opacity-80">{log.Odometer?.toLocaleString() || "VOID"}</td>
+                    <td className="p-8 text-right text-foreground font-black italic text-base tracking-tighter opacity-80">{log.Odometer?.toLocaleString() || "VOID"}</td>
                     <td className="p-8 text-right">
                        {log.Km_Per_Liter && log.Km_Per_Liter > 0 ? (
                            <div className="flex flex-col items-end gap-1">
@@ -263,7 +263,7 @@ export function FuelClient({
                                )}
                            </div>
                        ) : (
-                           <span className="text-slate-800 font-black text-lg font-bold">NO_METRIC</span>
+                           <span className="text-muted-foreground font-black text-lg font-bold">NO_METRIC</span>
                        )}
                     </td>
                     <td className="p-8">
@@ -280,7 +280,7 @@ export function FuelClient({
             )}
           </div>
 
-          <div className="p-10 border-t border-white/5 bg-black/40 flex justify-center">
+          <div className="p-10 border-t border-border/5 bg-black/40 flex justify-center">
              <Pagination totalItems={count || 0} limit={limit} />
           </div>
       </PremiumCard>

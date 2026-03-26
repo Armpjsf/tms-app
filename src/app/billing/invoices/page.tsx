@@ -52,7 +52,7 @@ export default async function InvoicesPage({
   return (
     <DashboardLayout>
       {/* Tactical Invoice Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-10 mb-16 bg-[#0a0518]/60 backdrop-blur-3xl p-12 rounded-[4rem] border border-white/5 shadow-2xl relative group ring-1 ring-white/5 hover:ring-primary/20 transition-all duration-700">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-10 mb-16 bg-background/60 backdrop-blur-3xl p-12 rounded-[4rem] border border-border/5 shadow-2xl relative group ring-1 ring-border/5 hover:ring-primary/20 transition-all duration-700">
         <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 blur-[100px] pointer-events-none" />
         
         <div className="relative z-10 space-y-4">
@@ -62,10 +62,10 @@ export default async function InvoicesPage({
                 </div>
                 <h2 className="text-base font-bold font-black text-primary uppercase tracking-[0.4em]">FINANCIAL PROTOCOL</h2>
             </div>
-            <h1 className="text-6xl font-black text-white tracking-tighter flex items-center gap-5 uppercase premium-text-gradient">
+            <h1 className="text-6xl font-black text-foreground tracking-tighter flex items-center gap-5 uppercase premium-text-gradient">
                 Invoice Engine
             </h1>
-            <p className="text-slate-500 font-bold text-xl tracking-wide opacity-80 uppercase tracking-widest leading-relaxed">
+            <p className="text-muted-foreground font-bold text-xl tracking-wide opacity-80 uppercase tracking-widest leading-relaxed">
               Tax compliance, automated invoicing & fiscal documentation vault
             </p>
         </div>
@@ -81,22 +81,22 @@ export default async function InvoicesPage({
       </div>
 
       {/* Registry Intelligence Filters */}
-      <div className="glass-panel border-white/5 rounded-[3rem] p-10 mb-12 relative overflow-hidden">
+      <div className="glass-panel border-border/5 rounded-[3rem] p-10 mb-12 relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent pointer-events-none" />
           <div className="flex items-end justify-between gap-8 relative z-10">
             <div className="flex-1 max-w-2xl space-y-3">
-              <Label className="text-base font-bold font-black uppercase tracking-[0.3em] text-slate-500 ml-2">Search Invoice Matrix</Label>
+              <Label className="text-base font-bold font-black uppercase tracking-[0.3em] text-muted-foreground ml-2">Search Invoice Matrix</Label>
               <div className="relative group/search">
-                <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-500 group-hover/search:text-primary transition-colors duration-300" size={20} />
+                <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-muted-foreground group-hover/search:text-primary transition-colors duration-300" size={20} />
                 <Input
                     placeholder="SCAN BY INVOICE ID, ENTITY OR FISCAL CODE..."
-                    className="w-full h-16 bg-white/5 border-white/5 text-white font-black rounded-2xl pl-16 pr-6 uppercase tracking-widest text-xl focus:bg-white/10 transition-all border-2 focus:border-primary/30"
+                    className="w-full h-16 bg-muted/50 border-border/5 text-foreground font-black rounded-2xl pl-16 pr-6 uppercase tracking-widest text-xl focus:bg-muted/80 transition-all border-2 focus:border-primary/30"
                     defaultValue={query}
                 />
               </div>
             </div>
             
-            <PremiumButton variant="outline" className="h-16 px-10 rounded-2xl border-white/5 bg-white/5 gap-4">
+            <PremiumButton variant="outline" className="h-16 px-10 rounded-2xl border-border/5 bg-muted/50 gap-4">
                 <Activity className="w-5 h-5" />
                 <span className="font-black uppercase tracking-widest text-base font-bold">EXECUTE RECONCILIATION</span>
             </PremiumButton>
@@ -104,17 +104,17 @@ export default async function InvoicesPage({
       </div>
 
       {/* Invoice Registry */}
-      <div className="glass-panel rounded-[4rem] border-white/5 shadow-2xl overflow-hidden bg-[#0a0518]/20 relative">
+      <div className="glass-panel rounded-[4rem] border-border/5 shadow-2xl overflow-hidden bg-background/20 relative">
         <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent pointer-events-none" />
         
         <div className="flex flex-col lg:flex-row lg:items-center justify-between p-12 gap-8 relative z-10">
           <div className="space-y-2">
-            <h3 className="text-2xl font-black text-white tracking-tighter uppercase premium-text-gradient">Tax Compliance Ledger</h3>
-            <p className="text-base font-bold font-black text-slate-500 uppercase tracking-[0.4em]">Official Fiscal Node Repository</p>
+            <h3 className="text-2xl font-black text-foreground tracking-tighter uppercase premium-text-gradient">Tax Compliance Ledger</h3>
+            <p className="text-base font-bold font-black text-muted-foreground uppercase tracking-[0.4em]">Official Fiscal Node Repository</p>
           </div>
           
           <div className="flex items-center gap-4">
-              <div className="px-5 py-2 rounded-full bg-white/5 border border-white/5 text-base font-bold font-black text-emerald-500 uppercase tracking-widest flex items-center gap-2">
+              <div className="px-5 py-2 rounded-full bg-muted/50 border border-border/5 text-base font-bold font-black text-emerald-500 uppercase tracking-widest flex items-center gap-2">
                   <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                   REAL-TIME SYNC ACTIVE
               </div>
@@ -124,13 +124,13 @@ export default async function InvoicesPage({
         <div className="relative w-full overflow-auto custom-scrollbar">
             <table className="w-full text-xl text-left border-collapse">
               <thead>
-                <tr className="bg-white/[0.02] border-b border-white/5">
-                  <th className="px-12 py-10 text-base font-bold font-black uppercase tracking-[0.4em] text-slate-500">Invoice Identity</th>
-                  <th className="px-8 py-10 text-base font-bold font-black uppercase tracking-[0.4em] text-slate-500">Commercial Entity</th>
-                  <th className="px-8 py-10 text-base font-bold font-black uppercase tracking-[0.4em] text-slate-500 text-center">Issue Vector</th>
-                  <th className="px-8 py-10 text-base font-bold font-black uppercase tracking-[0.4em] text-slate-500 text-center">Settlement Due</th>
-                  <th className="px-8 py-10 text-base font-bold font-black uppercase tracking-[0.4em] text-slate-500 text-right">Net Value</th>
-                  <th className="px-12 py-10 text-base font-bold font-black uppercase tracking-[0.4em] text-slate-500 text-center">Protocol Status</th>
+                <tr className="bg-muted/30 border-b border-border/5">
+                  <th className="px-12 py-10 text-base font-bold font-black uppercase tracking-[0.4em] text-muted-foreground">Invoice Identity</th>
+                  <th className="px-8 py-10 text-base font-bold font-black uppercase tracking-[0.4em] text-muted-foreground">Commercial Entity</th>
+                  <th className="px-8 py-10 text-base font-bold font-black uppercase tracking-[0.4em] text-muted-foreground text-center">Issue Vector</th>
+                  <th className="px-8 py-10 text-base font-bold font-black uppercase tracking-[0.4em] text-muted-foreground text-center">Settlement Due</th>
+                  <th className="px-8 py-10 text-base font-bold font-black uppercase tracking-[0.4em] text-muted-foreground text-right">Net Value</th>
+                  <th className="px-12 py-10 text-base font-bold font-black uppercase tracking-[0.4em] text-muted-foreground text-center">Protocol Status</th>
                   <th className="px-12 py-10 w-20"></th>
                 </tr>
               </thead>
@@ -139,10 +139,10 @@ export default async function InvoicesPage({
                     <tr>
                         <td colSpan={7} className="text-center py-40">
                           <div className="flex flex-col items-center gap-6 opacity-30">
-                             <div className="p-8 bg-white/5 rounded-full border-2 border-white/5 animate-pulse">
-                                <FileText size={64} className="text-slate-500" strokeWidth={1} />
+                             <div className="p-8 bg-muted/50 rounded-full border-2 border-border/5 animate-pulse">
+                                <FileText size={64} className="text-muted-foreground" strokeWidth={1} />
                              </div>
-                             <p className="text-slate-700 font-black uppercase tracking-[0.5em] text-lg font-bold">Zero Fiscal Records Detected</p>
+                             <p className="text-muted-foreground font-black uppercase tracking-[0.5em] text-lg font-bold">Zero Fiscal Records Detected</p>
                           </div>
                         </td>
                     </tr>
@@ -153,26 +153,26 @@ export default async function InvoicesPage({
                             <div className="flex flex-col gap-1">
                                 <span className="font-black text-white text-xl tracking-tighter group-hover/row:text-primary transition-colors font-display uppercase">{inv.Invoice_ID}</span>
                                 {inv.Tax_Invoice_ID && (
-                                    <span className="text-base font-bold text-slate-600 font-black uppercase tracking-[0.2em]">FISCAL: {inv.Tax_Invoice_ID}</span>
+                                    <span className="text-base font-bold text-muted-foreground font-black uppercase tracking-[0.2em]">FISCAL: {inv.Tax_Invoice_ID}</span>
                                 )}
                             </div>
                         </td>
                         <td className="px-8 py-10">
                            <div className="flex flex-col gap-1">
-                               <span className="font-black text-slate-300 text-xl uppercase tracking-tight">{inv.Customer_Name}</span>
-                               <span className="text-base font-bold text-slate-600 font-bold uppercase tracking-widest italic group-hover/row:text-slate-500">Verified Corporate Account</span>
+                               <span className="font-black text-muted-foreground text-xl uppercase tracking-tight">{inv.Customer_Name}</span>
+                               <span className="text-base font-bold text-muted-foreground font-bold uppercase tracking-widest italic group-hover/row:text-muted-foreground">Verified Corporate Account</span>
                            </div>
                         </td>
-                        <td className="px-8 py-10 text-center text-slate-500 font-bold uppercase tracking-widest text-base font-bold">
+                        <td className="px-8 py-10 text-center text-muted-foreground font-bold uppercase tracking-widest text-base font-bold">
                             {inv.Issue_Date ? new Date(inv.Issue_Date).toLocaleDateString('th-TH') : '-'}
                         </td>
-                        <td className="px-8 py-10 text-center text-slate-500 font-bold uppercase tracking-widest text-base font-bold">
+                        <td className="px-8 py-10 text-center text-muted-foreground font-bold uppercase tracking-widest text-base font-bold">
                             {inv.Due_Date ? new Date(inv.Due_Date).toLocaleDateString('th-TH') : '-'}
                         </td>
                         <td className="px-8 py-10 text-right">
                              <div className="flex flex-col items-end">
-                                <span className="text-2xl font-black text-white tracking-tighter group-hover/row:text-primary transition-colors bg-white/5 px-5 py-2 rounded-2xl">฿{Number(inv.Grand_Total || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
-                                <span className="text-base font-bold font-black text-slate-700 uppercase tracking-widest mt-2">Net Settlement</span>
+                                <span className="text-2xl font-black text-foreground tracking-tighter group-hover/row:text-primary transition-colors bg-muted/50 px-5 py-2 rounded-2xl">฿{Number(inv.Grand_Total || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                                <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest mt-2">Net Settlement</span>
                             </div>
                         </td>
                         <td className="px-12 py-10 text-center">
@@ -193,13 +193,13 @@ export default async function InvoicesPage({
                         <td className="px-12 py-10">
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" className="h-12 w-12 p-0 rounded-2xl hover:bg-white/10 text-slate-500 hover:text-white transition-all">
+                              <Button variant="ghost" className="h-12 w-12 p-0 rounded-2xl hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-all">
                                 <span className="sr-only">Open menu</span>
                                 <MoreHorizontal className="h-5 w-5" />
                               </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="bg-[#0c061d] border-white/10 text-white min-w-[200px] p-2 rounded-2xl shadow-2xl ring-1 ring-white/10">
-                              <DropdownMenuLabel className="text-base font-bold font-black text-slate-500 uppercase tracking-widest px-4 py-3">Vector Command</DropdownMenuLabel>
+                            <DropdownMenuContent align="end" className="bg-card border-border/10 text-foreground min-w-[200px] p-2 rounded-2xl shadow-2xl ring-1 ring-white/10">
+                              <DropdownMenuLabel className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest px-4 py-3">Vector Command</DropdownMenuLabel>
                               <DropdownMenuItem className="focus:bg-primary/20 focus:text-white cursor-pointer rounded-xl px-4 py-3 gap-3 transition-colors">
                                 <FileCheck className="h-4 w-4 text-primary" /> 
                                 <span className="text-base font-bold font-black uppercase tracking-widest">Audit Analytics</span>
@@ -210,7 +210,7 @@ export default async function InvoicesPage({
                                   <span className="text-base font-bold font-black uppercase tracking-widest">Output PDF</span>
                                 </Link>
                               </DropdownMenuItem>
-                              <div className="h-px bg-white/5 my-2 mx-2" />
+                              <div className="h-px bg-muted/50 my-2 mx-2" />
                               <DropdownMenuItem className="focus:bg-rose-500/20 focus:text-rose-500 cursor-pointer rounded-xl px-4 py-3 gap-3 transition-colors">
                                 <Zap className="h-4 w-4" /> 
                                 <span className="text-base font-bold font-black uppercase tracking-widest">Abort Record</span>
@@ -225,10 +225,10 @@ export default async function InvoicesPage({
             </table>
         </div>
 
-        <div className="p-10 border-t border-white/5 bg-white/[0.02] flex items-center justify-between">
+        <div className="p-10 border-t border-border/5 bg-muted/30 flex items-center justify-between">
             <div className="flex items-center gap-6">
-                <p className="text-base font-bold font-black text-slate-700 uppercase tracking-[0.6em]">Invoice Engine Cluster v4.0</p>
-                <div className="h-4 w-px bg-white/5" />
+                <p className="text-base font-bold font-black text-muted-foreground uppercase tracking-[0.6em]">Invoice Engine Cluster v4.0</p>
+                <div className="h-4 w-px bg-muted/50" />
                 <div className="flex items-center gap-2">
                     <div className="w-1.5 h-1.5 rounded-full bg-primary" />
                     <span className="text-base font-bold font-black text-primary uppercase tracking-widest">ENCRYPTED VAULT</span>
@@ -239,7 +239,7 @@ export default async function InvoicesPage({
       </div>
 
       <div className="mt-20 text-center mb-24">
-        <div className="inline-flex items-center gap-4 px-8 py-3 glass-panel rounded-full text-base font-bold font-black text-slate-700 uppercase tracking-[0.6em] opacity-40 hover:opacity-100 transition-opacity">
+        <div className="inline-flex items-center gap-4 px-8 py-3 glass-panel rounded-full text-base font-bold font-black text-muted-foreground uppercase tracking-[0.6em] opacity-40 hover:opacity-100 transition-opacity">
             <Zap size={14} className="text-primary" /> LogisPro Fiscal Engine • Matrix Synchronization v4.2
         </div>
       </div>

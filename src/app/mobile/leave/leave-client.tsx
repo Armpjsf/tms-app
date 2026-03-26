@@ -145,7 +145,7 @@ export function MobileLeaveClient({ driverId, driverName, initialLeaves }: Props
               <button
                 onClick={handleSubmit}
                 disabled={!leaveType || !startDate || !endDate || submitting}
-                className="flex-1 p-4 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-black text-lg flex items-center justify-center gap-2 disabled:opacity-50 shadow-lg"
+                className="flex-1 p-4 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-foreground flex items-center justify-center gap-2 disabled:opacity-50 shadow-lg"
               >
                 <Send size={20} />
                 {submitting ? 'กำลังส่ง...' : 'ส่งใบลา'}
@@ -160,7 +160,7 @@ export function MobileLeaveClient({ driverId, driverName, initialLeaves }: Props
             <p className="font-black text-gray-900 text-base">📋 ประวัติใบลาของฉัน</p>
           </div>
           {leaves.length === 0 ? (
-            <div className="p-8 text-center text-gray-500">
+            <div className="p-8 text-center text-muted-foreground">
               <p className="text-lg font-black">ยังไม่มีใบลา</p>
             </div>
           ) : (

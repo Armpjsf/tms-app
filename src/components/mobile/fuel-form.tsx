@@ -94,7 +94,7 @@ export function MobileFuelForm({ driverId, driverName, defaultVehiclePlate }: Mo
                 <Label className="text-foreground">ทะเบียนรถ</Label>
                 <Input 
                     placeholder="เลขทะเบียนรถ" 
-                    className="bg-background border-gray-200 text-white"
+                    className="bg-background border-gray-200 text-foreground"
                     value={plate}
                     onChange={(e) => setPlate(e.target.value)}
                     required
@@ -108,7 +108,7 @@ export function MobileFuelForm({ driverId, driverName, defaultVehiclePlate }: Mo
                     <Input 
                         type="number" 
                         placeholder="0.00" 
-                        className="bg-background border-gray-200 pl-10 text-white"
+                        className="bg-background border-gray-200 pl-10 text-foreground"
                         value={amount}
                         onChange={(e) => setAmount(e.target.value)}
                         required
@@ -121,7 +121,7 @@ export function MobileFuelForm({ driverId, driverName, defaultVehiclePlate }: Mo
                 <Input 
                     type="number" 
                     placeholder="0.00" 
-                    className="bg-background border-gray-200 text-white"
+                    className="bg-background border-gray-200 text-foreground"
                     value={liters}
                     onChange={(e) => setLiters(e.target.value)}
                     required
@@ -133,7 +133,7 @@ export function MobileFuelForm({ driverId, driverName, defaultVehiclePlate }: Mo
                 <Input 
                     type="number" 
                     placeholder="เลขไมล์ปัจจุบัน" 
-                    className="bg-background border-gray-200 text-white"
+                    className="bg-background border-gray-200 text-foreground"
                     value={mileage}
                     onChange={(e) => setMileage(e.target.value)}
                     required
@@ -144,7 +144,7 @@ export function MobileFuelForm({ driverId, driverName, defaultVehiclePlate }: Mo
                 <Label className="text-foreground">ชื่อปั๊มน้ำมัน</Label>
                 <Input 
                     placeholder="เช่น ปตท. สาขา..." 
-                    className="bg-background border-gray-200 text-white"
+                    className="bg-background border-gray-200 text-foreground"
                     value={station}
                     onChange={(e) => setStation(e.target.value)}
                     required

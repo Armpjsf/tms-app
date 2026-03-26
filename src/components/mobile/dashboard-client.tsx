@@ -64,29 +64,29 @@ export function DashboardClient({ session, stats, currentJob, gamification, toda
             {/* Header / Brand Section */}
             <motion.div variants={item} className="flex items-center justify-between px-2">
                 <div className="flex items-center gap-3">
-                    <button className="p-2.5 rounded-2xl bg-white/5 border border-white/10 text-primary">
+                    <button className="p-2.5 rounded-2xl bg-muted/50 border border-border/10 text-primary">
                         <LayoutGrid size={24} />
                     </button>
-                    <h1 className="text-2xl font-black text-white tracking-widest uppercase">
+                    <h1 className="text-2xl font-black text-accent tracking-widest uppercase italic">
                         Logis<span className="text-primary italic">Pro</span>
                     </h1>
                 </div>
                 <div className="flex items-center gap-3">
-                    <button className="relative p-2.5 rounded-2xl bg-white/5 border border-white/10 text-slate-400">
+                    <button className="relative p-2.5 rounded-2xl bg-muted/50 border border-border/10 text-muted-foreground">
                         <Bell size={20} />
                         <span className="absolute top-2 right-2 w-2 h-2 bg-primary rounded-full" />
                     </button>
-                    <Avatar className="h-11 w-11 border-2 border-primary/20 bg-slate-900">
+                    <Avatar className="h-11 w-11 border-2 border-primary/20 bg-card">
                         <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${session.driverName}`} />
-                        <AvatarFallback className="bg-slate-900 text-white">{session.driverName?.charAt(0)}</AvatarFallback>
+                        <AvatarFallback className="bg-card text-foreground">{session.driverName?.charAt(0)}</AvatarFallback>
                     </Avatar>
                 </div>
             </motion.div>
 
             {/* Title & Stats Overview */}
             <motion.div variants={item} className="space-y-1">
-                <h2 className="text-4xl font-black text-white px-1 font-display uppercase tracking-tighter">งานวันนี้</h2>
-                <p className="text-slate-500 font-bold px-1 tracking-tight">มีงานที่ต้องจัดการ {stats.total} รายการ</p>
+                <h2 className="text-4xl font-black text-accent px-1 font-display uppercase tracking-tighter italic">งานวันนี้</h2>
+                <p className="text-muted-foreground font-bold px-1 tracking-tight">มีงานที่ต้องจัดการ {stats.total} รายการ</p>
             </motion.div>
 
             {/* Circular Stats Grid */}
@@ -101,7 +101,7 @@ export function DashboardClient({ session, stats, currentJob, gamification, toda
                         </div>
                     </div>
                     <div className="text-center">
-                        <div className="text-4xl font-black text-white tracking-tighter">{stats.total < 10 ? `0${stats.total}` : stats.total}</div>
+                        <div className="text-4xl font-black text-accent tracking-tighter">{stats.total < 10 ? `0${stats.total}` : stats.total}</div>
                         <div className="text-base font-bold font-black text-primary uppercase tracking-[0.2em] opacity-80">งานในมือ</div>
                     </div>
                 </div>
@@ -114,7 +114,7 @@ export function DashboardClient({ session, stats, currentJob, gamification, toda
                          <Banknote className="text-blue-400" size={20} strokeWidth={2.5} />
                     </div>
                     <div className="text-center">
-                        <div className="text-3xl font-black text-white tracking-tighter">
+                        <div className="text-3xl font-black text-accent tracking-tighter">
                             {todayIncome.toLocaleString()}
                         </div>
                         <div className="text-base font-bold font-black text-blue-400 uppercase tracking-[0.2em] opacity-80">รายได้วันนี้</div>
@@ -134,28 +134,28 @@ export function DashboardClient({ session, stats, currentJob, gamification, toda
                             
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-4">
-                                    <div className="w-14 h-14 bg-white/5 border border-white/10 rounded-3xl flex items-center justify-center shadow-2xl">
+                                    <div className="w-14 h-14 bg-muted/50 border border-border/10 rounded-3xl flex items-center justify-center shadow-2xl">
                                         <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
                                             <Star size={16} className="text-primary fill-primary" />
                                         </div>
                                     </div>
                                     <div>
-                                        <h4 className="text-2xl font-black text-white tracking-tighter">#{currentJob.Job_ID}</h4>
-                                        <p className="text-slate-500 text-lg font-bold font-bold uppercase tracking-widest">{currentJob.Customer_Name}</p>
+                                        <h4 className="text-2xl font-black text-accent tracking-tighter italic">#{currentJob.Job_ID}</h4>
+                                        <p className="text-muted-foreground text-lg font-bold font-bold uppercase tracking-widest">{currentJob.Customer_Name}</p>
                                     </div>
                                 </div>
-                                <div className="px-4 py-1.5 rounded-full bg-primary text-base font-bold font-black text-white uppercase tracking-widest shadow-xl shadow-primary/30">
+                                <div className="px-4 py-1.5 rounded-full bg-primary text-foreground uppercase tracking-widest shadow-xl shadow-primary/30">
                                     กำลังไปส่ง
                                 </div>
                             </div>
 
                             <div className="space-y-3">
                                 <div className="flex justify-between items-center text-base font-bold font-black uppercase tracking-widest">
-                                    <span className="text-slate-500">{currentJob.Origin_Location || "จุดรับของ"}</span>
+                                    <span className="text-muted-foreground">{currentJob.Origin_Location || "จุดรับของ"}</span>
                                     <span className="text-primary">ความคืบหน้า 75%</span>
-                                    <span className="text-slate-500">{currentJob.Dest_Location || "จุดส่งของ"}</span>
+                                    <span className="text-muted-foreground">{currentJob.Dest_Location || "จุดส่งของ"}</span>
                                 </div>
-                                <div className="h-2.5 w-full bg-white/5 rounded-full overflow-hidden">
+                                <div className="h-2.5 w-full bg-muted/50 rounded-full overflow-hidden">
                                      <motion.div 
                                         initial={{ width: 0 }}
                                         animate={{ width: "75%" }}
@@ -172,11 +172,11 @@ export function DashboardClient({ session, stats, currentJob, gamification, toda
                                             <AvatarFallback>U</AvatarFallback>
                                         </Avatar>
                                     ))}
-                                    <div className="h-10 w-10 rounded-full bg-white/10 backdrop-blur-md border-2 border-secondary flex items-center justify-center text-base font-bold font-black text-white">
+                                    <div className="h-10 w-10 rounded-full bg-muted/80 backdrop-blur-md border-2 border-secondary flex items-center justify-center text-base font-bold font-black text-foreground">
                                         +2
                                     </div>
                                 </div>
-                                <Button className="h-14 px-10 rounded-2xl bg-primary hover:brightness-110 text-white font-black text-lg font-bold uppercase tracking-widest shadow-xl shadow-primary/30 transition-all">
+                                <Button className="h-14 px-10 rounded-2xl bg-primary hover:brightness-110 text-foreground font-bold uppercase tracking-widest shadow-xl shadow-primary/30 transition-all">
                                     ดูรายละเอียด
                                 </Button>
                             </div>
@@ -186,41 +186,41 @@ export function DashboardClient({ session, stats, currentJob, gamification, toda
                         <div className="glass-panel rounded-[3rem] p-8 space-y-6 opacity-80 scale-95 origin-top transition-all hover:opacity-100 hover:scale-100">
                              <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-4">
-                                     <div className="w-14 h-14 bg-white/5 border border-white/10 rounded-3xl flex items-center justify-center">
+                                     <div className="w-14 h-14 bg-muted/50 border border-border/10 rounded-3xl flex items-center justify-center">
                                          <Clock className="text-accent" size={24} />
                                      </div>
                                      <div>
-                                         <h4 className="text-2xl font-black text-white tracking-tighter">#CL-9011-ZC</h4>
-                                         <p className="text-slate-500 text-lg font-bold font-bold uppercase tracking-widest">Sour Worms Logistics</p>
+                                         <h4 className="text-2xl font-black text-accent tracking-tighter italic">#CL-9011-ZC</h4>
+                                         <p className="text-muted-foreground text-lg font-bold font-bold uppercase tracking-widest">Sour Worms Logistics</p>
                                      </div>
                                 </div>
                                 <div className="px-4 py-1.5 rounded-full bg-accent/20 border border-accent/30 text-base font-bold font-black text-accent uppercase tracking-widest">
                                     รอรับของ
                                 </div>
                             </div>
-                            <div className="h-2.5 w-full bg-white/5 rounded-full overflow-hidden">
+                            <div className="h-2.5 w-full bg-muted/50 rounded-full overflow-hidden">
                                  <div className="h-full w-[20%] bg-accent rounded-full shadow-[0_0_15px_rgba(147,51,234,0.5)]" />
                             </div>
-                            <div className="flex items-center justify-between text-slate-500">
+                            <div className="flex items-center justify-between text-muted-foreground">
                                 <div className="flex items-center gap-2 text-base font-bold font-bold">
                                     <MapPin size={14} className="text-accent" />
                                     ระยะเวลา: 2 ชม. 45 นาที
                                 </div>
-                                <Button variant="ghost" className="text-white font-black text-lg font-bold uppercase tracking-widest hover:text-primary">
+                                <Button variant="ghost" className="text-foreground font-bold uppercase tracking-widest hover:text-primary">
                                     ข้อมูลงาน
                                 </Button>
                             </div>
                         </div>
                     </div>
                 ) : (
-                    <div className="text-center py-20 px-8 glass-panel rounded-[3rem] border-dashed border-white/10">
-                         <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4">
-                             <Truck className="text-slate-600" size={32} />
+                    <div className="text-center py-20 px-8 glass-panel rounded-[3rem] border-dashed border-border/10">
+                         <div className="w-16 h-16 bg-muted/50 rounded-full flex items-center justify-center mx-auto mb-4">
+                             <Truck className="text-muted-foreground" size={32} />
                          </div>
-                         <h3 className="text-white font-black text-xl mb-1">ยังไม่มีงานในขณะนี้</h3>
-                         <p className="text-slate-500 text-xl font-medium mb-6">คุณยังไม่มีรายการงานที่ได้รับมอบหมาย</p>
+                         <h3 className="text-foreground font-black text-xl mb-1">ยังไม่มีงานในขณะนี้</h3>
+                         <p className="text-muted-foreground text-xl font-medium mb-6">คุณยังไม่มีรายการงานที่ได้รับมอบหมาย</p>
                          <Link href="/mobile/marketplace">
-                             <Button className="h-14 px-8 rounded-2xl bg-primary text-white font-black text-lg font-bold uppercase tracking-widest shadow-xl shadow-primary/30">
+                             <Button className="h-14 px-8 rounded-2xl bg-primary text-foreground font-bold uppercase tracking-widest shadow-xl shadow-primary/30">
                                  กดรับงานใหม่
                              </Button>
                          </Link>
@@ -231,7 +231,7 @@ export function DashboardClient({ session, stats, currentJob, gamification, toda
             {/* Floating Action Button (Marketplace) */}
             <div className="fixed bottom-32 right-6 z-50">
                  <Link href="/mobile/marketplace">
-                     <button className="w-16 h-16 rounded-full bg-primary flex flex-col items-center justify-center text-white shadow-[0_8px_30px_rgba(255,30,133,0.4)] transition-transform hover:scale-110 active:scale-95 border-4 border-[#0a0518]">
+                     <button className="w-16 h-16 rounded-full bg-primary flex flex-col items-center justify-center text-white shadow-[0_8px_30px_rgba(255,30,133,0.4)] transition-transform hover:scale-110 active:scale-95 border-4 border-background">
                         <Gavel size={28} strokeWidth={3} />
                         <span className="text-[7px] font-black uppercase tracking-tighter -mt-1">ประมูลงาน</span>
                      </button>

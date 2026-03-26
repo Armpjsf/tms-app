@@ -192,8 +192,8 @@ export default function JobCompletePage() {
               <div className="w-20 h-20 bg-emerald-500/20 rounded-full flex items-center justify-center text-emerald-500 animate-in zoom-in duration-300">
                   <CheckCircle size={48} />
               </div>
-              <h1 className="text-2xl font-bold text-white">ส่งงานสำเร็จ!</h1>
-              <p className="text-slate-400">ขอบคุณสำหรับการทำงาน</p>
+              <h1 className="text-2xl font-bold text-foreground">ส่งงานสำเร็จ!</h1>
+              <p className="text-muted-foreground">ขอบคุณสำหรับการทำงาน</p>
               <Button 
                 onClick={() => router.push(`/mobile/jobs/${params.id}`)}
                 className="w-full bg-emerald-600 hover:bg-emerald-700"
@@ -222,12 +222,12 @@ export default function JobCompletePage() {
 
       <div className="space-y-6">
         <section>
-            <h2 className="text-slate-200 font-bold mb-2">1. ถ่ายรูปสินค้า</h2>
+            <h2 className="text-muted-foreground font-bold mb-2">1. ถ่ายรูปสินค้า</h2>
             <CameraInput onImagesChange={setPhotos} maxImages={5} />
             
             {/* AI Verification Feedback */}
             {photos.length > 0 && (
-                <div className="mt-3 bg-slate-900 border border-slate-800 rounded-lg p-3">
+                <div className="mt-3 bg-card border border-slate-800 rounded-lg p-3">
                     {verifying ? (
                         <div className="flex items-center gap-3 text-purple-400 animate-pulse">
                             <ScanLine className="animate-spin-slow" size={20} />
@@ -253,7 +253,7 @@ export default function JobCompletePage() {
                                             {issue}
                                         </div>
                                     ))}
-                                    <p className="text-lg font-bold text-slate-500 mt-1 pl-5">แนะนำให้ถ่ายใหม่อีกครั้งเพื่อความชัดเจน</p>
+                                    <p className="text-lg font-bold text-muted-foreground mt-1 pl-5">แนะนำให้ถ่ายใหม่อีกครั้งเพื่อความชัดเจน</p>
                                 </div>
                              )}
                         </div>
@@ -263,7 +263,7 @@ export default function JobCompletePage() {
         </section>
 
         <section>
-            <h2 className="text-slate-200 font-bold mb-2">2. ลายเซ็นผู้รับ</h2>
+            <h2 className="text-muted-foreground font-bold mb-2">2. ลายเซ็นผู้รับ</h2>
             <SignaturePad onSave={setSignature} />
         </section>
 
@@ -274,7 +274,7 @@ export default function JobCompletePage() {
                 className={`w-full h-14 font-bold text-lg shadow-lg transition-all ${
                     photos.length > 0 && signature 
                         ? "bg-gradient-to-r from-blue-600 to-indigo-600 shadow-blue-500/20 text-white" 
-                        : "bg-slate-800 text-slate-400 cursor-not-allowed"
+                        : "bg-slate-800 text-muted-foreground cursor-not-allowed"
                 }`}
             >
                 {loading ? <Loader2 className="animate-spin" /> : "ยืนยันการส่งงาน"}

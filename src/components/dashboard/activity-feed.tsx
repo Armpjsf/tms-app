@@ -63,9 +63,9 @@ export function ActivityFeed({ jobStats, sosCount }: ActivityFeedProps) {
       icon: Clock,
       label: `${stats.pending} MISSIONS QUEUED`,
       time: 'PENDING',
-      color: 'text-slate-400',
-      bgColor: 'bg-white/5',
-      borderColor: 'border-white/5',
+      color: 'text-muted-foreground',
+      bgColor: 'bg-muted/50',
+      borderColor: 'border-border/5',
     }] : []),
   ]
 
@@ -87,7 +87,7 @@ export function ActivityFeed({ jobStats, sosCount }: ActivityFeedProps) {
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: index * 0.05 }}
               className={cn(
-                  "flex items-center gap-4 p-5 rounded-[2rem] border transition-all hover:scale-[1.02] cursor-default bg-[#0a0518]/40 backdrop-blur-xl group",
+                  "flex items-center gap-4 p-5 rounded-[2rem] border transition-all hover:scale-[1.02] cursor-default bg-background/40 backdrop-blur-xl group",
                   activity.borderColor
               )}
             >
@@ -99,22 +99,22 @@ export function ActivityFeed({ jobStats, sosCount }: ActivityFeedProps) {
                 <Icon size={20} strokeWidth={2.5} />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-xl font-black text-white truncate tracking-tight uppercase">{activity.label}</p>
+                <p className="text-xl font-black text-foreground truncate tracking-tight uppercase">{activity.label}</p>
                 <div className="flex items-center gap-2 mt-1">
                     <span className={cn("text-base font-bold font-black uppercase tracking-[0.2em]", activity.color)}>
                         {activity.time}
                     </span>
                     <div className="w-1 h-1 rounded-full bg-slate-700" />
-                    <span className="text-base font-bold font-black text-slate-500 uppercase tracking-[0.2em]">CYCLE REFRESHED</span>
+                    <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-[0.2em]">CYCLE REFRESHED</span>
                 </div>
               </div>
             </motion.div>
           )
         })
       ) : (
-        <div className="p-12 text-center glass-panel rounded-[3rem] border-dashed border-white/5">
-          <Activity className="w-12 h-12 text-slate-800 mx-auto mb-4 opacity-20" />
-          <p className="text-base font-bold font-black text-slate-600 uppercase tracking-[0.3em]">Operational Silence</p>
+        <div className="p-12 text-center glass-panel rounded-[3rem] border-dashed border-border/5">
+          <Activity className="w-12 h-12 text-muted-foreground mx-auto mb-4 opacity-20" />
+          <p className="text-base font-bold font-black text-muted-foreground uppercase tracking-[0.3em]">Operational Silence</p>
         </div>
       )}
     </motion.div>

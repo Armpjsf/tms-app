@@ -48,7 +48,7 @@ export default function GeminiCheck() {
             >
                 {loading ? 'Running...' : 'Run Diagnostics'}
             </button>
-            <div className="mt-4 bg-slate-900 text-slate-100 p-4 rounded font-mono text-xl space-y-1">
+            <div className="mt-4 bg-card text-muted-foreground p-4 rounded font-mono text-xl space-y-1">
                 {status.map((s, i) => (
                     <div key={i} className={s.type === 'err' ? 'text-red-400' : s.type === 'ok' ? 'text-green-400' : ''}>
                         {s.type === 'err' ? '✖ ' : s.type === 'ok' ? '✔ ' : '• '}{s.msg}

@@ -64,7 +64,7 @@ export function MaintenanceClient({
   return (
     <div className="space-y-12 pb-20">
       {/* Tactical Maintenance Header */}
-      <div className="bg-[#0a0518] p-12 rounded-br-[6rem] rounded-tl-[3rem] border border-white/5 shadow-[0_30px_60px_rgba(0,0,0,0.5)] relative overflow-hidden group">
+      <div className="bg-background p-12 rounded-br-[6rem] rounded-tl-[3rem] border border-border/5 shadow-[0_30px_60px_rgba(0,0,0,0.5)] relative overflow-hidden group">
         <div className="absolute top-0 right-0 w-80 h-80 bg-amber-500/10 blur-[120px] rounded-full -mr-40 -mt-40 pointer-events-none" />
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-10 relative z-10">
           <div>
@@ -73,7 +73,7 @@ export function MaintenanceClient({
                   <Wrench size={40} strokeWidth={2.5} />
                </div>
                <div>
-                  <h1 className="text-5xl font-black text-white tracking-widest uppercase leading-none mb-2 italic">
+                  <h1 className="text-5xl font-black text-foreground tracking-widest uppercase leading-none mb-2 italic">
                     {t('maintenance.title')}
                   </h1>
                   <p className="text-base font-bold font-black text-amber-500 uppercase tracking-[0.6em] opacity-80 italic">{t('dashboard.subtitle')}</p>
@@ -85,7 +85,7 @@ export function MaintenanceClient({
                 drivers={drivers}
                 vehicles={vehicles}
                 trigger={
-                    <PremiumButton className="h-16 px-10 rounded-2xl shadow-[0_15px_30px_rgba(245,158,11,0.2)] gap-3 bg-amber-600 hover:bg-amber-500 text-white font-black italic tracking-widest">
+                    <PremiumButton className="h-16 px-10 rounded-2xl shadow-[0_15px_30px_rgba(245,158,11,0.2)] gap-3 bg-amber-600 hover:bg-amber-500 text-foreground font-black italic tracking-widest">
                         <Plus size={24} strokeWidth={3} />
                         {t('maintenance.issue_ticket')}
                     </PremiumButton>
@@ -103,7 +103,7 @@ export function MaintenanceClient({
           { label: t('maintenance.stats.active'), value: stats.inProgress, icon: Loader2, color: "blue" },
           { label: t('maintenance.stats.complete'), value: stats.completed, icon: CheckCircle2, color: "emerald" },
         ].map((stat, idx) => (
-          <PremiumCard key={idx} className="bg-[#0a0518] border-2 border-white/5 p-8 relative overflow-hidden group hover:border-white/20 transition-all">
+          <PremiumCard key={idx} className="bg-background border-2 border-border/5 p-8 relative overflow-hidden group hover:border-border/20 transition-all">
             <div className="flex items-center justify-between mb-8">
                 <div className={cn(
                     "p-4 rounded-2xl shadow-xl transition-all duration-500 group-hover:scale-110 group-hover:rotate-3",
@@ -114,19 +114,19 @@ export function MaintenanceClient({
                 )}>
                     <stat.icon size={28} className={stat.icon === Loader2 ? 'animate-spin' : ''} />
                 </div>
-                <div className="flex items-center gap-2 px-3 py-1 bg-white/5 rounded-full border border-white/10">
-                    <Activity size={14} className="text-slate-500" />
-                    <span className="text-base font-bold font-black text-slate-500 uppercase tracking-widest italic">{t('maintenance.node_status')}</span>
+                <div className="flex items-center gap-2 px-3 py-1 bg-muted/50 rounded-full border border-border/10">
+                    <Activity size={14} className="text-muted-foreground" />
+                    <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest italic">{t('maintenance.node_status')}</span>
                 </div>
             </div>
             <div className="relative z-10">
-                <p className="text-slate-500 font-black text-base font-bold uppercase tracking-[0.4em] mb-2">{stat.label}</p>
+                <p className="text-muted-foreground font-black text-base font-bold uppercase tracking-[0.4em] mb-2">{stat.label}</p>
                 <div className="flex items-end gap-3">
-                   <p className="text-5xl font-black text-white italic tracking-tighter leading-none">{stat.value}</p>
-                   <span className="text-base font-bold font-black text-slate-700 uppercase mb-1">{t('common.units')}</span>
+                   <p className="text-5xl font-black text-foreground italic tracking-tighter leading-none">{stat.value}</p>
+                   <span className="text-base font-bold font-black text-muted-foreground uppercase mb-1">{t('common.units')}</span>
                 </div>
             </div>
-            <div className="absolute -right-6 -bottom-6 text-8xl font-black text-white/[0.02] pointer-events-none italic select-none">
+            <div className="absolute -right-6 -bottom-6 text-8xl font-black text-foreground/[0.02] pointer-events-none italic select-none">
                 0{idx + 1}
             </div>
           </PremiumCard>
@@ -134,48 +134,48 @@ export function MaintenanceClient({
       </div>
 
       {/* Signal Filtering Matrix */}
-      <div className="space-y-8 bg-[#0a0518] p-10 rounded-[3rem] border border-white/5 shadow-2xl">
+      <div className="space-y-8 bg-background p-10 rounded-[3rem] border border-border/5 shadow-2xl">
         <div className="flex items-center gap-6 mb-2">
-            <div className="p-3 bg-white/5 rounded-2xl text-slate-500">
+            <div className="p-3 bg-muted/50 rounded-2xl text-muted-foreground">
                 <Filter size={20} />
             </div>
-            <h3 className="text-xl font-black text-white uppercase tracking-[0.4em] italic leading-none">{t('maintenance.filter_hub')}</h3>
+            <h3 className="text-xl font-black text-foreground uppercase tracking-[0.4em] italic leading-none">{t('maintenance.filter_hub')}</h3>
         </div>
         
         <div className="flex flex-col xl:flex-row gap-6">
           <div className="flex-1">
               <SearchInput 
                 placeholder={t('common.search')} 
-                className="h-16 bg-black/60 border-white/5 rounded-2xl text-white font-black"
+                className="h-16 bg-black/60 border-border/5 rounded-2xl text-foreground font-black"
               />
           </div>
           <form className="flex flex-wrap lg:flex-nowrap gap-4 items-center">
-              <div className="flex items-center gap-4 bg-black/60 border border-white/5 p-2 rounded-2xl">
+              <div className="flex items-center gap-4 bg-black/60 border border-border/5 p-2 rounded-2xl">
                 <Input 
                     type="date" 
                     name="startDate"
                     defaultValue={startDate}
-                    className="h-12 bg-transparent border-none text-white focus:ring-0 uppercase font-black text-lg font-bold"
+                    className="h-12 bg-transparent border-none text-foreground focus:ring-0 uppercase font-black text-lg font-bold"
                 />
-                <ArrowRight size={16} className="text-slate-700" />
+                <ArrowRight size={16} className="text-muted-foreground" />
                 <Input 
                     type="date" 
                     name="endDate"
                     defaultValue={endDate}
-                    className="h-12 bg-transparent border-none text-white focus:ring-0 uppercase font-black text-lg font-bold"
+                    className="h-12 bg-transparent border-none text-foreground focus:ring-0 uppercase font-black text-lg font-bold"
                 />
               </div>
               <select 
                   name="status" 
                   defaultValue={status}
-                  className="h-16 min-w-[180px] rounded-2xl border border-white/5 bg-black/60 px-6 text-lg font-bold font-black text-white uppercase tracking-widest focus:outline-none focus:ring-2 focus:ring-amber-500 shadow-xl outline-none"
+                  className="h-16 min-w-[180px] rounded-2xl border border-border/5 bg-black/60 px-6 text-lg font-bold font-black text-foreground uppercase tracking-widest focus:outline-none focus:ring-2 focus:ring-amber-500 shadow-xl outline-none"
               >
                   <option value="">{t('common.all')}</option>
                   <option value="Pending">{t('maintenance.stats.pending')}</option>
                   <option value="In Progress">{t('maintenance.stats.active')}</option>
                   <option value="Completed">{t('maintenance.stats.complete')}</option>
               </select>
-              <PremiumButton type="submit" variant="secondary" className="h-16 px-10 rounded-2xl border-white/5 bg-white/10 hover:bg-white/20 text-white font-black uppercase tracking-widest italic outline-none">
+              <PremiumButton type="submit" variant="secondary" className="h-16 px-10 rounded-2xl border-border/5 bg-muted/80 hover:bg-white/20 text-foreground font-black uppercase tracking-widest italic outline-none">
                   {t('maintenance.refresh')}
               </PremiumButton>
           </form>
@@ -185,12 +185,12 @@ export function MaintenanceClient({
       {/* Ticket Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {tickets.length === 0 ? (
-          <div className="col-span-full text-center py-32 bg-[#0a0518]/50 rounded-[4rem] border-2 border-dashed border-white/5">
-             <ShieldAlert className="w-20 h-20 text-white/5 mx-auto mb-6 animate-pulse" />
-             <p className="text-slate-500 font-black uppercase tracking-[0.4em] text-lg font-bold">{t('common.no_data')}</p>
+          <div className="col-span-full text-center py-32 bg-background/50 rounded-[4rem] border-2 border-dashed border-border/5">
+             <ShieldAlert className="w-20 h-20 text-foreground/5 mx-auto mb-6 animate-pulse" />
+             <p className="text-muted-foreground font-black uppercase tracking-[0.4em] text-lg font-bold">{t('common.no_data')}</p>
           </div>
         ) : tickets.map((ticket: RepairTicket) => (
-          <PremiumCard key={ticket.Ticket_ID} className="bg-[#0a0518] p-0 overflow-hidden group border-2 border-white/5 rounded-br-[4rem] rounded-tl-[2rem] shadow-3xl relative hover:border-amber-500/30 transition-all duration-500">
+          <PremiumCard key={ticket.Ticket_ID} className="bg-background p-0 overflow-hidden group border-2 border-border/5 rounded-br-[4rem] rounded-tl-[2rem] shadow-3xl relative hover:border-amber-500/30 transition-all duration-500">
             <div className="absolute top-6 right-6 z-20">
                  <MaintenanceActions 
                     ticket={ticket} 
@@ -203,14 +203,14 @@ export function MaintenanceClient({
               <div className="flex items-start gap-6">
                 <div className={cn(
                   "w-20 h-20 rounded-3xl flex items-center justify-center shadow-2xl transform group-hover:scale-110 group-hover:-rotate-3 transition-all duration-700 border-2",
-                  ticket.Priority === 'High' ? 'bg-rose-500/20 border-rose-500/30 text-rose-500 shadow-rose-500/10' : 'bg-white/5 border-white/10 text-white'
+                  ticket.Priority === 'High' ? 'bg-rose-500/20 border-rose-500/30 text-rose-500 shadow-rose-500/10' : 'bg-muted/50 border-border/10 text-foreground'
                 )}>
                   {ticket.Priority === 'High' ? <AlertTriangle size={36} className="animate-pulse" /> : <Wrench size={36} />}
                 </div>
                 <div className="space-y-2">
-                  <h3 className="text-3xl font-black text-white italic tracking-widest uppercase leading-none">{ticket.Vehicle_Plate || "VOID_ID"}</h3>
+                  <h3 className="text-3xl font-black text-foreground italic tracking-widest uppercase leading-none">{ticket.Vehicle_Plate || "VOID_ID"}</h3>
                   <div className="flex flex-wrap items-center gap-3">
-                      <span className="text-base font-bold font-black text-slate-500 font-mono tracking-widest uppercase italic bg-white/5 px-2 py-0.5 rounded-lg border border-white/5">ID: {ticket.Ticket_ID}</span>
+                      <span className="text-base font-bold font-black text-muted-foreground font-mono tracking-widest uppercase italic bg-muted/50 px-2 py-0.5 rounded-lg border border-border/5">ID: {ticket.Ticket_ID}</span>
                       <span className="text-base font-bold font-black text-amber-500/80 uppercase tracking-widest bg-amber-500/10 px-2 py-0.5 rounded-lg border border-amber-500/10">{ticket.Issue_Type}</span>
                   </div>
                 </div>
@@ -219,7 +219,7 @@ export function MaintenanceClient({
               <div className="flex items-center justify-between">
                  <div className="flex items-center gap-3">
                     <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-                    <span className="text-base font-bold font-black text-slate-400 uppercase tracking-[0.3em]">{t('common.status')}</span>
+                    <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-[0.3em]">{t('common.status')}</span>
                  </div>
                  <span className={cn(
                     "px-4 py-1.5 rounded-xl text-base font-bold font-black uppercase tracking-widest border transition-all duration-500 shadow-2xl",
@@ -236,7 +236,7 @@ export function MaintenanceClient({
 
               <div className="space-y-6">
                  {ticket.Photo_Url && (
-                    <div className="relative w-full h-56 rounded-[2.5rem] overflow-hidden border-2 border-white/10 bg-black/40 shadow-inner group-hover:border-primary/40 transition-all duration-700">
+                    <div className="relative w-full h-56 rounded-[2.5rem] overflow-hidden border-2 border-border/10 bg-black/40 shadow-inner group-hover:border-primary/40 transition-all duration-700">
                         <Image 
                             src={(() => {
                                 try {
@@ -257,18 +257,18 @@ export function MaintenanceClient({
                     </div>
                  )}
                  <div className="relative">
-                    <p className="text-xl text-slate-400 font-black italic uppercase leading-relaxed bg-white/5 p-8 rounded-[2.5rem] border-2 border-white/5 relative overflow-hidden group-hover:bg-white/10 transition-all duration-500 min-h-[120px]">
-                        <span className="absolute -top-3 -left-2 text-6xl text-white/5 font-black leading-none select-none tracking-tighter italic">ISSUE</span>
+                    <p className="text-xl text-muted-foreground font-black italic uppercase leading-relaxed bg-muted/50 p-8 rounded-[2.5rem] border-2 border-border/5 relative overflow-hidden group-hover:bg-muted/80 transition-all duration-500 min-h-[120px]">
+                        <span className="absolute -top-3 -left-2 text-6xl text-foreground/5 font-black leading-none select-none tracking-tighter italic">ISSUE</span>
                         <span className="relative z-10">{ticket.Description || t('common.no_data')}</span>
                     </p>
                  </div>
 
-                 <div className="flex items-center justify-between text-lg font-bold pt-6 border-t border-white/5">
+                 <div className="flex items-center justify-between text-lg font-bold pt-6 border-t border-border/5">
                     <div className="flex items-center gap-3">
-                       <div className="p-2 bg-white/5 rounded-xl border border-white/10">
-                         <Clock size={16} className="text-slate-500" />
+                       <div className="p-2 bg-muted/50 rounded-xl border border-border/10">
+                         <Clock size={16} className="text-muted-foreground" />
                        </div>
-                       <span className="font-black uppercase tracking-[0.2em] text-base font-bold text-slate-500">
+                       <span className="font-black uppercase tracking-[0.2em] text-base font-bold text-muted-foreground">
                         {ticket.Date_Report ? new Date(ticket.Date_Report).toLocaleDateString(t('common.loading') === 'กำลังประมวลผล...' ? 'th-TH' : 'en-US') : "VOID_DATE"}
                        </span>
                     </div>
@@ -277,7 +277,7 @@ export function MaintenanceClient({
                             <span className="text-emerald-400 font-black text-2xl tracking-tighter italic leading-none">฿{ticket.Cost_Total.toLocaleString()}</span>
                         </div>
                     ) : (
-                        <div className="flex items-center gap-3 font-black text-slate-800 uppercase tracking-[0.4em] text-base font-bold italic">
+                        <div className="flex items-center gap-3 font-black text-muted-foreground uppercase tracking-[0.4em] text-base font-bold italic">
                            {t('maintenance.cost_tbd')}
                         </div>
                     )}
@@ -299,7 +299,7 @@ export function MaintenanceClient({
                 <Zap size={24} strokeWidth={2.5} />
             </div>
             <div>
-                <h2 className="text-3xl font-black text-white tracking-[0.2em] uppercase italic">{t('maintenance.workflow_pulse')}</h2>
+                <h2 className="text-3xl font-black text-foreground tracking-[0.2em] uppercase italic">{t('maintenance.workflow_pulse')}</h2>
                 <p className="text-base font-bold font-black text-primary uppercase tracking-[0.6em] opacity-60">{t('maintenance.workflow_matrix')}</p>
             </div>
          </div>
@@ -307,21 +307,21 @@ export function MaintenanceClient({
       </section>
 
       {/* Tactical Footer */}
-      <div className="p-16 bg-[#0a0518] rounded-[6rem] border-2 border-white/5 flex flex-col items-center text-center space-y-6 mt-20 relative overflow-hidden group">
+      <div className="p-16 bg-background rounded-[6rem] border-2 border-border/5 flex flex-col items-center text-center space-y-6 mt-20 relative overflow-hidden group">
           <div className="absolute inset-0 bg-gradient-to-b from-amber-500/5 to-transparent pointer-events-none" />
           <div className="p-5 bg-amber-500/20 rounded-[2rem] shadow-[0_0_40px_rgba(245,158,11,0.2)] border-2 border-amber-500/30 group-hover:scale-110 transition-all duration-700">
               <Wrench size={32} className="text-amber-500" />
           </div>
           <div className="space-y-3">
-              <h4 className="text-xl font-black text-white uppercase tracking-[0.4em] italic">{t('maintenance.readiness_engine')}</h4>
-              <p className="text-base font-bold text-slate-600 font-black uppercase tracking-[0.2em] max-w-2xl leading-relaxed">
+              <h4 className="text-xl font-black text-foreground uppercase tracking-[0.4em] italic">{t('maintenance.readiness_engine')}</h4>
+              <p className="text-base font-bold text-muted-foreground font-black uppercase tracking-[0.2em] max-w-2xl leading-relaxed">
                   {t('maintenance.integrity_desc')} <br />
                   {t('maintenance.capability_verified')}
               </p>
           </div>
-          <div className="px-5 py-2 bg-white/5 rounded-full border border-white/10 flex items-center gap-3">
+          <div className="px-5 py-2 bg-muted/50 rounded-full border border-border/10 flex items-center gap-3">
              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-             <span className="text-base font-bold font-black text-slate-600 uppercase tracking-widest">{t('maintenance.integrity_index')}: 0.988</span>
+             <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest">{t('maintenance.integrity_index')}: 0.988</span>
           </div>
       </div>
     </div>

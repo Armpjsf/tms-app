@@ -65,7 +65,7 @@ export function RecentJobItem({ job, drivers, vehicles, customers, routes, subco
     <>
       <div 
         onClick={handleOpen}
-        className="px-8 py-10 transition-all cursor-pointer group relative overflow-hidden border-b border-white/5 last:border-0 bg-[#0a0518]"
+        className="px-8 py-10 transition-all cursor-pointer group relative overflow-hidden border-b border-border/5 last:border-0 bg-background"
       >
         {/* Hover Highlight Accent */}
         <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary opacity-0 group-hover:opacity-100 transition-opacity shadow-[0_0_15px_rgba(255,30,133,1)]" />
@@ -75,13 +75,13 @@ export function RecentJobItem({ job, drivers, vehicles, customers, routes, subco
           {/* Section 1: Identifier & Customer */}
           <div className="flex items-center gap-8 min-w-[30%]">
             <div className="w-16 h-16 rounded-full bg-primary flex items-center justify-center shadow-[0_0_30px_rgba(255,30,133,0.3)] border border-primary/50">
-              <Package size={28} strokeWidth={2.5} className="text-white" />
+              <Package size={28} strokeWidth={2.5} className="text-foreground" />
             </div>
             <div>
                 <p className="text-primary font-black text-3xl tracking-tighter transition-colors uppercase font-display break-all leading-none mb-1">
                     {job.Job_ID}
                 </p>
-                <p className="text-white font-bold text-xl tracking-tight opacity-90">
+                <p className="text-foreground font-bold text-xl tracking-tight opacity-90">
                     {job.Customer_Name || t('jobs.unassigned_client')}
                 </p>
             </div>
@@ -90,15 +90,15 @@ export function RecentJobItem({ job, drivers, vehicles, customers, routes, subco
           {/* Section 2: Technical Metrics */}
           <div className="flex flex-1 items-center justify-center gap-16 xl:gap-24">
             <div className="text-right">
-                <p className="text-base font-black text-slate-500 uppercase tracking-widest mb-1.5">{t('jobs.label_route_node')}</p>
-                <p className="text-lg font-black text-white uppercase tracking-tighter whitespace-nowrap">
+                <p className="text-base font-black text-muted-foreground uppercase tracking-widest mb-1.5">{t('jobs.label_route_node')}</p>
+                <p className="text-lg font-black text-foreground uppercase tracking-tighter whitespace-nowrap">
                     {job.Route_Name || "UNASSIGNED GRID"}
                 </p>
             </div>
-            <div className="h-10 w-px bg-white/10" />
+            <div className="h-10 w-px bg-muted/80" />
             <div className="text-right">
-                <p className="text-base font-black text-slate-500 uppercase tracking-widest mb-1.5">{t('jobs.label_assigned_unit')}</p>
-                <p className="text-lg font-black text-white uppercase tracking-tighter whitespace-nowrap">
+                <p className="text-base font-black text-muted-foreground uppercase tracking-widest mb-1.5">{t('jobs.label_assigned_unit')}</p>
+                <p className="text-lg font-black text-foreground uppercase tracking-tighter whitespace-nowrap">
                     {job.Vehicle_Plate || "ASSET-TBD"}
                 </p>
             </div>
@@ -107,14 +107,14 @@ export function RecentJobItem({ job, drivers, vehicles, customers, routes, subco
           {/* Section 3: Status & Date */}
           <div className="flex flex-col items-end gap-3 min-w-[180px]">
             <button className={cn(
-                "px-10 py-4 rounded-full text-base font-black uppercase tracking-[0.2em] transition-all border shadow-lg bg-white/5 text-slate-400 border-white/10",
-                (job.Job_Status === 'Complete' || job.Job_Status === 'Delivered') && 'bg-white/10 text-white border-white/20'
+                "px-10 py-4 rounded-full text-base font-black uppercase tracking-[0.2em] transition-all border shadow-lg bg-muted/50 text-muted-foreground border-border/10",
+                (job.Job_Status === 'Complete' || job.Job_Status === 'Delivered') && 'bg-muted/80 text-foreground border-border/20'
             )}>
               {getStatusLabel(job.Job_Status)}
             </button>
             <div className="flex items-center gap-2 pr-2">
                 <div className="w-3 h-3 rounded-full bg-primary shadow-[0_0_10px_rgba(255,30,133,0.5)]" />
-                <p className="text-base font-black text-slate-500 uppercase tracking-[0.2em]">
+                <p className="text-base font-black text-muted-foreground uppercase tracking-[0.2em]">
                     {job.Plan_Date ? new Date(job.Plan_Date).toLocaleDateString('en-GB') : "PENDING"}
                 </p>
             </div>

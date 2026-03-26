@@ -48,11 +48,11 @@ export default async function IncomeSummaryPage() {
           </div>
           <CardContent className="p-6 relative z-10">
             <p className="text-blue-100 text-xl mb-1">รายได้รวมทั้งหมด</p>
-            <h2 className="text-4xl font-bold text-white mb-4">
+            <h2 className="text-4xl font-bold text-foreground mb-4">
               ฿{totalEarnings.toLocaleString()}
             </h2>
             <div className="flex gap-4">
-               <div className="bg-white/10 rounded-lg px-3 py-2">
+               <div className="bg-muted/80 rounded-lg px-3 py-2">
                   <p className="text-blue-100 text-base font-bold uppercase">งานที่สำเร็จ</p>
                   <p className="text-white font-bold">{totalJobs} งาน</p>
                </div>
@@ -62,12 +62,12 @@ export default async function IncomeSummaryPage() {
 
         {/* History List */}
         <div className="space-y-3">
-          <h3 className="text-gray-500 font-medium text-xl flex items-center gap-2">
+          <h3 className="text-muted-foreground font-medium text-xl flex items-center gap-2">
             <Calendar size={14} /> ประวัติงานที่สำเร็จ
           </h3>
           
           {totalJobs === 0 ? (
-            <div className="text-center py-10 text-gray-500">
+            <div className="text-center py-10 text-muted-foreground">
               <p>ไม่พบประวัติงานที่สำเร็จ</p>
             </div>
           ) : (

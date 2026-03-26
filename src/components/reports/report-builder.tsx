@@ -196,7 +196,7 @@ function StatusBadge({ status }: { status: string }) {
     'in_progress': 'bg-emerald-500/15 text-emerald-700 font-bold',
   }
   return (
-    <span className={`px-2 py-0.5 rounded-full text-lg font-bold font-medium ${styles[status] || 'bg-slate-500/20 text-gray-500'}`}>
+    <span className={`px-2 py-0.5 rounded-full text-lg font-bold font-medium ${styles[status] || 'bg-slate-500/20 text-muted-foreground'}`}>
       {status}
     </span>
   )
@@ -289,11 +289,11 @@ export function ReportBuilder() {
               className={`relative p-4 rounded-xl border transition-all text-left ${
                 isActive
                   ? 'bg-blue-500/20 border-blue-400/50 ring-2 ring-blue-500/20'
-                  : 'bg-white/5 border-slate-700 hover:border-slate-500 hover:bg-white/10'
+                  : 'bg-muted/50 border-slate-700 hover:border-slate-500 hover:bg-muted/80'
               }`}
             >
-              <Icon size={20} className={isActive ? 'text-blue-400' : 'text-slate-300'} />
-              <p className={`mt-2 text-xl font-black ${isActive ? 'text-white' : 'text-slate-100'}`}>
+              <Icon size={20} className={isActive ? 'text-blue-400' : 'text-muted-foreground'} />
+              <p className={`mt-2 text-xl font-black ${isActive ? 'text-white' : 'text-muted-foreground'}`}>
                 {rt.label}
               </p>
               {isActive && (
@@ -305,10 +305,10 @@ export function ReportBuilder() {
       </div>
 
       {/* Filters */}
-      <Card className="bg-slate-900/50 border-slate-800 backdrop-blur-md">
+      <Card className="bg-card/50 border-slate-800 backdrop-blur-md">
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-base flex items-center gap-2 text-white">
+            <CardTitle className="text-foreground">
               <Filter size={16} className="text-primary" />
               ตัวกรอง — {activeReport.label}
             </CardTitle>
@@ -330,7 +330,7 @@ export function ReportBuilder() {
                   {activeReport.hasDate && (
                     <>
                       <div className="space-y-1.5">
-                        <Label className="text-lg font-bold text-slate-300 font-black">จากวันที่</Label>
+                        <Label className="text-lg font-bold text-muted-foreground font-black">จากวันที่</Label>
                         <Input
                           type="date"
                           value={dateFrom}
@@ -339,7 +339,7 @@ export function ReportBuilder() {
                         />
                       </div>
                       <div className="space-y-1.5">
-                        <Label className="text-lg font-bold text-slate-300 font-black">ถึงวันที่</Label>
+                        <Label className="text-lg font-bold text-muted-foreground font-black">ถึงวันที่</Label>
                         <Input
                           type="date"
                           value={dateTo}
@@ -353,7 +353,7 @@ export function ReportBuilder() {
                   {/* Status */}
                   {activeReport.hasStatus && statusOptions[selectedType] && (
                     <div className="space-y-1.5">
-                      <Label className="text-lg font-bold text-slate-300 font-black">สถานะ</Label>
+                      <Label className="text-lg font-bold text-muted-foreground font-black">สถานะ</Label>
                       <Select value={status} onValueChange={setStatus}>
                         <SelectTrigger className="bg-background border-input">
                           <SelectValue />
@@ -419,17 +419,17 @@ export function ReportBuilder() {
             exit={{ opacity: 0, y: -20 }}
           >
             <div id="report-to-pdf">
-              <Card className="bg-slate-900/50 border-slate-800 backdrop-blur-md">
+              <Card className="bg-card/50 border-slate-800 backdrop-blur-md">
                 <CardHeader>
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                    <CardTitle className="text-base flex items-center gap-2 text-white">
+                    <CardTitle className="text-foreground">
                       <FileSpreadsheet size={16} className="text-primary" />
                       ผลลัพธ์ ({filteredData.length.toLocaleString()} รายการ)
                     </CardTitle>
                     <div className="flex items-center gap-2">
                       {/* Search within results */}
                       <div className="relative">
-                        <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                        <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
                         <Input
                           type="text"
                           placeholder="ค้นหาในผลลัพธ์..."
@@ -438,7 +438,7 @@ export function ReportBuilder() {
                           className="pl-8 h-9 w-48 bg-background text-xl border-slate-800"
                         />
                         {searchTerm && (
-                          <button onClick={() => setSearchTerm('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-foreground">
+                          <button onClick={() => setSearchTerm('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
                             <X size={12} />
                           </button>
                         )}
@@ -478,22 +478,22 @@ export function ReportBuilder() {
                 </CardHeader>
                 <CardContent className="p-0">
                   {filteredData.length === 0 ? (
-                    <div className="py-16 text-center text-slate-400 font-bold">
+                    <div className="py-16 text-center text-muted-foreground font-bold">
                       <BarChart3 size={40} className="mx-auto mb-3 opacity-30" />
-                      <p className="text-slate-200">ไม่พบข้อมูล</p>
-                      <p className="text-lg font-bold mt-1 text-slate-500">ลองปรับเงื่อนไขการค้นหา</p>
+                      <p className="text-muted-foreground">ไม่พบข้อมูล</p>
+                      <p className="text-lg font-bold mt-1 text-muted-foreground">ลองปรับเงื่อนไขการค้นหา</p>
                     </div>
                   ) : (
                     <div className="overflow-x-auto">
                       <table className="w-full text-xl">
                         <thead>
-                          <tr className="border-b border-white/10 bg-white/5">
-                            <th className="px-4 py-3 text-left text-lg font-bold font-black text-slate-400 w-10">#</th>
+                          <tr className="border-b border-border/10 bg-muted/50">
+                            <th className="px-4 py-3 text-left text-lg font-bold font-black text-muted-foreground w-10">#</th>
                             {columns.map(col => (
                               <th
                                 key={col}
                                 onClick={() => handleSort(col)}
-                                className="px-4 py-3 text-left text-lg font-bold font-black text-slate-200 cursor-pointer hover:text-white transition-colors group"
+                                className="px-4 py-3 text-left text-foreground transition-colors group"
                               >
                                 <span className="flex items-center gap-1">
                                   {columnLabels[col] || (col.startsWith('Extra_') ? col.replace('Extra_', '') : col)}
@@ -506,9 +506,9 @@ export function ReportBuilder() {
                         <tbody className="divide-y divide-border/50">
                           {filteredData.slice(0, 500).map((row: any, i) => (
                             <tr key={i} className="hover:bg-muted/20 transition-colors">
-                              <td className="px-4 py-2.5 text-lg font-bold text-slate-400">{i + 1}</td>
+                              <td className="px-4 py-2.5 text-lg font-bold text-muted-foreground">{i + 1}</td>
                               {columns.map(col => (
-                                <td key={col} className="px-4 py-2.5 text-slate-200">
+                                <td key={col} className="px-4 py-2.5 text-muted-foreground">
                                   {(col === 'Status' || col === 'status' || col === 'Job_Status' || col === 'priority') && row[col] ? (
                                     <StatusBadge status={String(row[col])} />
                                   ) : (col.toLowerCase().includes('cost') || col === 'amount' || col === 'Price_Cust_Total' || col.startsWith('Extra_')) ? (

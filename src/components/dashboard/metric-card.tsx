@@ -123,7 +123,7 @@ export function MetricCard({
 
           {/* Title Area */}
           <div className="space-y-1">
-            <p className="text-base font-bold font-black text-gray-500 uppercase tracking-[0.2em]">
+            <p className="text-base font-bold font-black text-muted-foreground uppercase tracking-[0.2em]">
               {title}
             </p>
             <div className="flex items-baseline gap-2">

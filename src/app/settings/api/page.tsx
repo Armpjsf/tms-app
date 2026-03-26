@@ -53,11 +53,11 @@ export default function ApiSettingsPage() {
     <DashboardLayout>
       <div className="space-y-12 pb-20 p-4 lg:p-10">
         {/* Tactical Elite Header */}
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-10 bg-[#0a0518]/60 backdrop-blur-3xl p-10 rounded-br-[6rem] rounded-tl-[3rem] border border-white/5 shadow-2xl relative overflow-hidden group">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-10 bg-background/60 backdrop-blur-3xl p-10 rounded-br-[6rem] rounded-tl-[3rem] border border-border/5 shadow-2xl relative overflow-hidden group">
             <div className="absolute top-0 right-0 w-80 h-80 bg-primary/10 blur-[120px] rounded-full -mr-40 -mt-40 pointer-events-none" />
             
             <div className="relative z-10 space-y-8">
-                <button onClick={() => router.back()} className="inline-flex items-center gap-2 text-slate-500 hover:text-primary transition-all font-black uppercase tracking-[0.4em] text-base font-bold group/back italic">
+                <button onClick={() => router.back()} className="inline-flex items-center gap-2 text-muted-foreground hover:text-primary transition-all font-black uppercase tracking-[0.4em] text-base font-bold group/back italic">
                     <ArrowLeft className="w-4 h-4 group-hover/back:-translate-x-1 transition-transform" /> 
                     Command Control
                 </button>
@@ -66,7 +66,7 @@ export default function ApiSettingsPage() {
                         <Globe size={42} strokeWidth={2.5} />
                     </div>
                     <div>
-                        <h1 className="text-5xl font-black text-white tracking-widest uppercase leading-none italic premium-text-gradient">
+                        <h1 className="text-5xl font-black text-foreground tracking-widest uppercase leading-none italic premium-text-gradient">
                             API Interlink
                         </h1>
                         <p className="text-base font-bold font-black text-primary uppercase tracking-[0.6em] mt-2 opacity-80 italic italic">External Node Integration & Secure Signal Nexus</p>
@@ -75,13 +75,13 @@ export default function ApiSettingsPage() {
             </div>
 
             <div className="flex flex-col items-end gap-6 relative z-10">
-                <div className="bg-white/5 border border-white/10 px-6 py-3 rounded-2xl flex items-center gap-3 backdrop-blur-md">
+                <div className="bg-muted/50 border border-border/10 px-6 py-3 rounded-2xl flex items-center gap-3 backdrop-blur-md">
                     <div className="w-2 h-2 rounded-full bg-primary animate-pulse shadow-[0_0_10px_rgba(255,30,133,1)]" />
-                    <span className="text-base font-bold font-black text-slate-400 uppercase tracking-widest italic">INTERLINK_STATE: NOMINAL</span>
+                    <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest italic">INTERLINK_STATE: NOMINAL</span>
                 </div>
                 <div className="flex items-center gap-4 bg-primary/10 p-4 rounded-2xl border border-primary/20">
                    <ShieldCheck className="text-primary" size={18} />
-                   <span className="text-base font-bold font-black text-white uppercase tracking-[0.3em] italic">Encrypted Payload Protocol</span>
+                   <span className="text-base font-bold font-black text-foreground uppercase tracking-[0.3em] italic">Encrypted Payload Protocol</span>
                 </div>
             </div>
         </div>
@@ -89,7 +89,7 @@ export default function ApiSettingsPage() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
              {/* Key Management Card */}
              <div className="lg:col-span-12">
-                  <PremiumCard className="bg-[#0a0518]/40 border-2 border-white/5 shadow-3xl rounded-[4rem] overflow-hidden group/api">
+                  <PremiumCard className="bg-background/40 border-2 border-border/5 shadow-3xl rounded-[4rem] overflow-hidden group/api">
                       <div className="p-20 relative overflow-hidden">
                           <div className="absolute top-0 right-0 w-96 h-96 bg-primary/5 blur-[100px] pointer-events-none" />
                           <div className="absolute -bottom-20 -left-20 w-80 h-80 bg-indigo-500/5 blur-[100px] pointer-events-none" />
@@ -101,15 +101,15 @@ export default function ApiSettingsPage() {
                                           <div className="p-3 bg-primary/20 rounded-2xl text-primary border border-primary/30">
                                               <Key size={32} strokeWidth={2.5} />
                                           </div>
-                                          <h2 className="text-3xl font-black text-white tracking-widest uppercase italic">Master Access Token</h2>
+                                          <h2 className="text-3xl font-black text-foreground tracking-widest uppercase italic">Master Access Token</h2>
                                       </div>
-                                      <p className="text-xl font-bold text-slate-500 uppercase tracking-widest italic leading-relaxed">
+                                      <p className="text-xl font-bold text-muted-foreground uppercase tracking-widest italic leading-relaxed">
                                           Required for external ERP nodes, satellite tracking systems, and spatial telemetry integrations.
                                       </p>
                                   </div>
-                                  <div className="flex items-center gap-3 px-6 py-3 bg-white/5 rounded-2xl border border-white/10">
+                                  <div className="flex items-center gap-3 px-6 py-3 bg-muted/50 rounded-2xl border border-border/10">
                                        <Cpu size={18} className="text-primary" />
-                                       <span className="text-base font-bold font-black text-slate-400 uppercase tracking-widest italic">RSA_ENCRYPTION: ACTIVE</span>
+                                       <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest italic">RSA_ENCRYPTION: ACTIVE</span>
                                   </div>
                               </div>
 
@@ -121,13 +121,13 @@ export default function ApiSettingsPage() {
                                       <Input 
                                           value={apiKey} 
                                           readOnly 
-                                          className="h-20 bg-black/40 border-2 border-white/5 rounded-[2rem] pl-20 pr-32 text-xl font-mono font-bold text-primary tracking-widest shadow-inner group-hover/api:border-primary/20 transition-all select-all italic"
+                                          className="h-20 bg-black/40 border-2 border-border/5 rounded-[2rem] pl-20 pr-32 text-xl font-mono font-bold text-primary tracking-widest shadow-inner group-hover/api:border-primary/20 transition-all select-all italic"
                                       />
                                       <div className="absolute inset-y-0 right-3 flex items-center">
                                           <PremiumButton 
                                              variant="outline" 
                                              onClick={() => copyToClipboard(apiKey)}
-                                             className="h-14 px-8 rounded-2xl bg-white/5 border-white/5 hover:bg-primary hover:text-white transition-all text-base font-bold font-black uppercase tracking-widest italic"
+                                             className="h-14 px-8 rounded-2xl bg-muted/50 border-border/5 hover:bg-primary hover:text-foreground transition-all text-base font-bold font-black uppercase tracking-widest italic"
                                           >
                                               <Copy size={16} className="mr-3" /> BUFFER_COPY
                                           </PremiumButton>
@@ -142,17 +142,17 @@ export default function ApiSettingsPage() {
                                   </div>
                               </div>
 
-                              <div className="pt-10 border-t border-white/5 flex flex-col md:flex-row md:items-center justify-between gap-8">
+                              <div className="pt-10 border-t border-border/5 flex flex-col md:flex-row md:items-center justify-between gap-8">
                                   <div className="space-y-2">
-                                      <p className="text-base font-bold font-black text-slate-600 uppercase tracking-[0.4em] italic mb-2">Security Lifecycle Management</p>
+                                      <p className="text-base font-bold font-black text-muted-foreground uppercase tracking-[0.4em] italic mb-2">Security Lifecycle Management</p>
                                       <div className="flex items-center gap-4">
                                           <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,1)]" />
-                                          <span className="text-lg font-bold font-black text-white uppercase tracking-widest italic">TOKEN_STABILITY: NOMINAL</span>
+                                          <span className="text-lg font-bold font-black text-foreground uppercase tracking-widest italic">TOKEN_STABILITY: NOMINAL</span>
                                       </div>
                                   </div>
                                   <PremiumButton 
                                       variant="outline" 
-                                      className="h-16 px-10 rounded-[1.5rem] border-rose-500/30 text-rose-500 bg-rose-500/5 hover:bg-rose-600 hover:text-white transition-all text-lg font-bold font-black uppercase tracking-[0.2em] italic gap-4"
+                                      className="h-16 px-10 rounded-[1.5rem] border-rose-500/30 text-rose-500 bg-rose-500/5 hover:bg-rose-600 hover:text-foreground transition-all text-lg font-bold font-black uppercase tracking-[0.2em] italic gap-4"
                                       onClick={generateNewKey}
                                   >
                                       <RefreshCw size={20} className="group-hover/api:rotate-180 transition-transform duration-1000" /> REGENERATE_ACCESS_CORE
@@ -172,13 +172,13 @@ export default function ApiSettingsPage() {
             </div>
             <div className="space-y-4 text-center md:text-left flex-1">
                 <p className="text-xl font-black text-primary italic uppercase tracking-widest">INTERLINK_ADVISORY</p>
-                <p className="text-xl font-bold text-slate-600 leading-relaxed uppercase tracking-wider italic">
+                <p className="text-xl font-bold text-muted-foreground leading-relaxed uppercase tracking-wider italic">
                     The API Interlink supports RESTful signal transmissions via GraphQL and traditional HTTP protocols. <br />
                     Rate limits are enforced at the node level to ensure global system stability. <br />
                     Refer to the Intelligence Documentation for implementation vectors.
                 </p>
             </div>
-            <PremiumButton variant="outline" className="h-14 px-10 rounded-2xl border-white/10 text-white gap-3 uppercase font-black text-base font-bold tracking-[0.3em] ml-auto italic">
+            <PremiumButton variant="outline" className="h-14 px-10 rounded-2xl border-border/10 text-foreground gap-3 uppercase font-black text-base font-bold tracking-[0.3em] ml-auto italic">
                 <FileText size={18} /> VIEW_DOCS
             </PremiumButton>
         </div>

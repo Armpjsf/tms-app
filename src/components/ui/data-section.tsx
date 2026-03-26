@@ -19,9 +19,9 @@ export function DataSection({ title, icon, headerAction, children, noPadding }: 
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
         >
-            <Card className="bg-slate-900/40 border-white/5 backdrop-blur-md overflow-hidden shadow-2xl rounded-[2.5rem]">
+            <Card className="bg-card/40 border-border/5 backdrop-blur-md overflow-hidden shadow-2xl rounded-[2.5rem]">
                 <CardContent className="p-0">
-                    <div className="p-6 border-b border-white/5 flex items-center justify-between bg-white/[0.02]">
+                    <div className="p-6 border-b border-border/5 flex items-center justify-between bg-muted/30">
                         <div className="flex items-center gap-3">
                             <div className="w-1.5 h-8 bg-primary rounded-full" />
                             {icon && (

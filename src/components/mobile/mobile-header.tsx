@@ -27,21 +27,21 @@ export function MobileHeader({ title, showBack, rightElement }: Props) {
   }
 
   return (
-    <header className="fixed top-0 left-0 right-0 h-20 bg-[#0a0518]/80 backdrop-blur-2xl border-b border-white/5 flex items-center justify-between px-6 z-[100] transition-colors duration-300">
+    <header className="fixed top-0 left-0 right-0 h-20 bg-background/80 backdrop-blur-2xl border-b border-border flex items-center justify-between px-6 z-[100] transition-colors duration-300">
       <div className="flex items-center gap-4">
         {showBack && (
             <button 
                 onClick={() => router.back()}
-                className="w-10 h-10 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 active:scale-95"
+                className="w-10 h-10 rounded-2xl bg-card border border-border flex items-center justify-center text-muted-foreground active:scale-95"
             >
                 <ChevronLeft size={20} />
             </button>
         )}
         <div className="flex flex-col">
-            <h1 className="font-black text-white text-xl tracking-tighter uppercase leading-none">{title}</h1>
+            <h1 className="font-black text-accent text-xl tracking-tighter uppercase leading-none italic">{title}</h1>
             <span 
                 onClick={clearCache}
-                className="text-base font-bold text-primary font-black cursor-pointer hover:opacity-80 transition-opacity uppercase tracking-widest mt-1"
+                className="text-base font-bold text-primary italic font-black cursor-pointer hover:opacity-80 transition-opacity uppercase tracking-widest mt-1"
             >
                 LOGIS-PRO v1.2.0
             </span>
@@ -52,7 +52,7 @@ export function MobileHeader({ title, showBack, rightElement }: Props) {
         {rightElement ? (
           rightElement
         ) : (
-          <div className="w-10 h-10 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center">
+          <div className="w-10 h-10 rounded-2xl bg-muted/50 border border-border/10 flex items-center justify-center">
             <MobileNotificationBadge />
           </div>
         )}

@@ -16,14 +16,14 @@ export default async function CostPerTripPage() {
     <DashboardLayout>
       <div className="space-y-6">
         {/* Bespoke Strategic Header */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-8 mb-12 bg-slate-950 p-10 rounded-br-[5rem] rounded-tl-[2rem] border border-slate-800 shadow-2xl relative overflow-hidden group">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-8 mb-12 bg-background p-10 rounded-br-[5rem] rounded-tl-[2rem] border border-slate-800 shadow-2xl relative overflow-hidden group">
           <div className="absolute inset-0 bg-gradient-to-r from-violet-500/10 to-transparent pointer-events-none" />
           
           <div className="relative z-10 text-left">
-            <Link href="/reports" className="flex items-center gap-2 text-violet-400 hover:text-white transition-colors mb-6 text-base font-bold font-black uppercase tracking-[0.2em] w-fit">
+            <Link href="/reports" className="flex items-center gap-2 text-violet-400 hover:text-foreground font-bold font-black uppercase tracking-[0.2em] w-fit">
               <ArrowLeft className="w-4 h-4" /> Reports Hub
             </Link>
-            <h1 className="text-5xl font-black text-white mb-2 tracking-tighter flex items-center gap-4">
+            <h1 className="text-5xl font-black text-foreground mb-2 tracking-tighter flex items-center gap-4">
               <div className="p-3 bg-violet-500 rounded-3xl shadow-2xl shadow-violet-500/20 text-white transform group-hover:scale-110 transition-transform duration-500">
                 <DollarSign size={32} />
               </div>
@@ -59,7 +59,7 @@ export default async function CostPerTripPage() {
             <p className={`text-2xl font-black ${summary.totalProfit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
               ฿{formatMoney(summary.totalProfit)}
             </p>
-            <p className="text-lg font-bold text-gray-500 mt-1">
+            <p className="text-lg font-bold text-muted-foreground mt-1">
               เฉลี่ย ฿{formatMoney(summary.avgProfitPerTrip)}/เที่ยว ({Math.round(summary.avgProfitPct)}%)
             </p>
           </div>
@@ -80,7 +80,7 @@ export default async function CostPerTripPage() {
             <div className="overflow-x-auto">
               <table className="w-full text-xl">
                 <thead>
-                  <tr className="bg-gray-50/80 text-lg font-bold text-gray-500 uppercase tracking-wider">
+                  <tr className="bg-gray-50/80 text-lg font-bold text-muted-foreground uppercase tracking-wider">
                     <th className="text-left px-4 py-3 font-black">วันที่</th>
                     <th className="text-left px-4 py-3 font-black">ลูกค้า</th>
                     <th className="text-left px-4 py-3 font-black">เส้นทาง</th>
@@ -96,14 +96,14 @@ export default async function CostPerTripPage() {
                 <tbody className="divide-y divide-gray-50">
                   {trips.map(trip => (
                     <tr key={trip.Job_ID} className="hover:bg-gray-50/50 transition-colors">
-                      <td className="px-4 py-3 whitespace-nowrap text-lg font-bold text-gray-500">
+                      <td className="px-4 py-3 whitespace-nowrap text-lg font-bold text-muted-foreground">
                         {trip.Plan_Date ? new Date(trip.Plan_Date + 'T00:00:00').toLocaleDateString('th-TH', { day: 'numeric', month: 'short' }) : '-'}
                       </td>
                       <td className="px-4 py-3 font-medium text-gray-900 max-w-[150px] truncate">
                         {trip.Customer_Name || '-'}
                       </td>
                       <td className="px-4 py-3">
-                        <span className="flex items-center gap-1 text-lg font-bold text-gray-500">
+                        <span className="flex items-center gap-1 text-lg font-bold text-muted-foreground">
                           <MapPin size={12} /> {trip.Route_Name || '-'}
                         </span>
                       </td>

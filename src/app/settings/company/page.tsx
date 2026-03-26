@@ -115,11 +115,11 @@ export default function CompanySettingsPage() {
     <DashboardLayout>
       <div className="space-y-12 pb-20 p-4 lg:p-10">
         {/* Tactical Elite Header */}
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-10 bg-[#0a0518]/60 backdrop-blur-3xl p-10 rounded-br-[6rem] rounded-tl-[3rem] border border-white/5 shadow-2xl relative overflow-hidden group">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-10 bg-background/60 backdrop-blur-3xl p-10 rounded-br-[6rem] rounded-tl-[3rem] border border-border/5 shadow-2xl relative overflow-hidden group">
             <div className="absolute top-0 right-0 w-80 h-80 bg-primary/10 blur-[120px] rounded-full -mr-40 -mt-40 pointer-events-none" />
             
             <div className="relative z-10 space-y-8">
-                <button onClick={() => router.back()} className="inline-flex items-center gap-2 text-slate-500 hover:text-primary transition-all font-black uppercase tracking-[0.4em] text-base font-bold group/back italic">
+                <button onClick={() => router.back()} className="inline-flex items-center gap-2 text-muted-foreground hover:text-primary transition-all font-black uppercase tracking-[0.4em] text-base font-bold group/back italic">
                     <ArrowLeft className="w-4 h-4 group-hover/back:-translate-x-1 transition-transform" /> 
                     {t('settings_pages.company.command_control')}
                 </button>
@@ -128,7 +128,7 @@ export default function CompanySettingsPage() {
                         <Building size={42} strokeWidth={2.5} />
                     </div>
                     <div>
-                        <h1 className="text-5xl font-black text-white tracking-widest uppercase leading-none italic premium-text-gradient">
+                        <h1 className="text-5xl font-black text-foreground tracking-widest uppercase leading-none italic premium-text-gradient">
                             {t('settings_pages.company.title')}
                         </h1>
                         <p className="text-base font-bold font-black text-primary uppercase tracking-[0.6em] mt-2 opacity-80 italic italic">{t('settings_pages.company.subtitle')}</p>
@@ -137,14 +137,14 @@ export default function CompanySettingsPage() {
             </div>
 
             <div className="flex flex-col items-end gap-6 relative z-10">
-                <div className="bg-white/5 border border-white/10 px-6 py-3 rounded-2xl flex items-center gap-3 backdrop-blur-md">
+                <div className="bg-muted/50 border border-border/10 px-6 py-3 rounded-2xl flex items-center gap-3 backdrop-blur-md">
                     <div className="w-2 h-2 rounded-full bg-primary animate-pulse shadow-[0_0_10px_rgba(255,30,133,1)]" />
-                    <span className="text-base font-bold font-black text-slate-400 uppercase tracking-widest italic">{t('settings_pages.company.profile_status')}</span>
+                    <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest italic">{t('settings_pages.company.profile_status')}</span>
                 </div>
                 <PremiumButton 
                     onClick={handleSave} 
                     disabled={loading} 
-                    className="h-16 px-12 rounded-2xl bg-primary text-white border-0 shadow-[0_20px_50px_rgba(255,30,133,0.3)] gap-4 text-xl tracking-widest"
+                    className="h-16 px-12 rounded-2xl bg-primary text-foreground border-0 shadow-[0_20px_50px_rgba(255,30,133,0.3)] gap-4 text-xl tracking-widest"
                 >
                     {loading ? <Loader2 size={24} className="animate-spin" /> : <Save size={24} />}
                     {t('settings_pages.company.commit_changes')}
@@ -155,17 +155,17 @@ export default function CompanySettingsPage() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
           {/* Logo Entity Card */}
           <div className="lg:col-span-4 lg:sticky lg:top-10 h-fit">
-            <PremiumCard className="bg-[#0a0518]/40 border-2 border-white/5 shadow-3xl rounded-[4rem] overflow-hidden group/logo">
-                <div className="p-10 border-b border-white/5 bg-black/40 relative overflow-hidden">
+            <PremiumCard className="bg-background/40 border-2 border-border/5 shadow-3xl rounded-[4rem] overflow-hidden group/logo">
+                <div className="p-10 border-b border-border/5 bg-black/40 relative overflow-hidden">
                     <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 blur-[40px] pointer-events-none" />
-                    <h3 className="text-xl font-black text-white tracking-widest uppercase italic flex items-center gap-3">
+                    <h3 className="text-xl font-black text-foreground tracking-widest uppercase italic flex items-center gap-3">
                         <ImageIcon size={20} className="text-primary" />
                         {t('settings_pages.company.visual_signature')}
                     </h3>
                 </div>
                 <div className="p-10 space-y-8 flex flex-col items-center">
                     <div 
-                        className="w-64 h-64 rounded-[3rem] border-4 border-dashed border-white/5 flex items-center justify-center cursor-pointer hover:border-primary/50 transition-all bg-black/40 overflow-hidden relative group/upload"
+                        className="w-64 h-64 rounded-[3rem] border-4 border-dashed border-border/5 flex items-center justify-center cursor-pointer hover:border-primary/50 transition-all bg-black/40 overflow-hidden relative group/upload"
                         onClick={() => !uploading && fileInputRef.current?.click()}
                     >
                         {uploading && (
@@ -178,20 +178,20 @@ export default function CompanySettingsPage() {
                             <img src={logoPreview} alt="Logo" className="w-full h-full object-contain p-8 group-hover/upload:scale-105 transition-transform duration-700" />
                         ) : (
                             <div className="text-center space-y-4">
-                                <div className="p-6 bg-white/5 rounded-full border border-white/10 text-slate-500 group-hover/upload:text-primary group-hover/upload:bg-primary/20 transition-all">
+                                <div className="p-6 bg-muted/50 rounded-full border border-border/10 text-muted-foreground group-hover/upload:text-primary group-hover/upload:bg-primary/20 transition-all">
                                     <Upload size={40} />
                                 </div>
                                 <div className="space-y-1">
-                                    <p className="text-base font-bold font-black text-white uppercase tracking-widest">{t('settings_pages.company.init_uplink')}</p>
-                                    <p className="text-base font-bold font-bold text-slate-600 uppercase tracking-widest italic">PNG/JPG (MAX 2MB)</p>
+                                    <p className="text-base font-bold font-black text-foreground uppercase tracking-widest">{t('settings_pages.company.init_uplink')}</p>
+                                    <p className="text-base font-bold font-bold text-muted-foreground uppercase tracking-widest italic">PNG/JPG (MAX 2MB)</p>
                                 </div>
                             </div>
                         )}
                     </div>
                     <input ref={fileInputRef} type="file" accept="image/*" onChange={handleLogoUpload} className="hidden" />
                     
-                    <div className="w-full p-6 rounded-3xl bg-white/5 border border-white/5 text-center">
-                         <p className="text-base font-bold font-black text-slate-500 leading-relaxed uppercase tracking-widest italic">
+                    <div className="w-full p-6 rounded-3xl bg-muted/50 border border-border/5 text-center">
+                         <p className="text-base font-bold font-black text-muted-foreground leading-relaxed uppercase tracking-widest italic">
                             {t('settings_pages.company.optimal_dims')} <br />
                             {t('settings_pages.company.alpha_channel')}
                          </p>
@@ -200,7 +200,7 @@ export default function CompanySettingsPage() {
                     {logoPreview && (
                       <PremiumButton 
                         variant="outline" 
-                        className="w-full h-14 rounded-2xl border-rose-500/20 text-rose-500 bg-rose-500/5 hover:bg-rose-600 hover:text-white transition-all text-base font-bold font-black uppercase tracking-widest italic"
+                        className="w-full h-14 rounded-2xl border-rose-500/20 text-rose-500 bg-rose-500/5 hover:bg-rose-600 hover:text-foreground transition-all text-base font-bold font-black uppercase tracking-widest italic"
                         onClick={() => setLogoPreview(null)}
                       >
                         {t('settings_pages.company.purge_signature')}
@@ -213,9 +213,9 @@ export default function CompanySettingsPage() {
           {/* Form Details */}
           <div className="lg:col-span-8 space-y-10">
             {/* General Intelligence */}
-            <PremiumCard className="bg-[#0a0518]/40 border-2 border-white/5 shadow-3xl rounded-[4rem] overflow-hidden group/info">
-                <div className="p-10 border-b border-white/5 bg-black/40 flex items-center justify-between">
-                    <h3 className="text-xl font-black text-white tracking-widest uppercase italic flex items-center gap-3">
+            <PremiumCard className="bg-background/40 border-2 border-border/5 shadow-3xl rounded-[4rem] overflow-hidden group/info">
+                <div className="p-10 border-b border-border/5 bg-black/40 flex items-center justify-between">
+                    <h3 className="text-xl font-black text-foreground tracking-widest uppercase italic flex items-center gap-3">
                         <FileText size={20} className="text-primary" />
                         {t('settings_pages.company.entity_params')}
                     </h3>
@@ -231,7 +231,7 @@ export default function CompanySettingsPage() {
                                 value={formData.company_name}
                                 onChange={(e) => updateForm("company_name", e.target.value)}
                                 placeholder={t('settings_pages.company.placeholders.company_name_th')}
-                                className="h-16 bg-black/40 border-white/5 rounded-[1.5rem] focus:border-primary/50 transition-all text-white font-black italic tracking-widest pl-8 shadow-inner"
+                                className="h-16 bg-black/40 border-border/5 rounded-[1.5rem] focus:border-primary/50 transition-all text-foreground font-black italic tracking-widest pl-8 shadow-inner"
                             />
                         </div>
                         <div className="space-y-4">
@@ -240,7 +240,7 @@ export default function CompanySettingsPage() {
                                 value={formData.company_name_en}
                                 onChange={(e) => updateForm("company_name_en", e.target.value)}
                                 placeholder={t('settings_pages.company.placeholders.company_name_en')}
-                                className="h-16 bg-black/40 border-white/5 rounded-[1.5rem] focus:border-primary/50 transition-all text-white font-black italic tracking-widest pl-8 shadow-inner"
+                                className="h-16 bg-black/40 border-border/5 rounded-[1.5rem] focus:border-primary/50 transition-all text-foreground font-black italic tracking-widest pl-8 shadow-inner"
                             />
                         </div>
                     </div>
@@ -254,7 +254,7 @@ export default function CompanySettingsPage() {
                                 value={formData.tax_id}
                                 onChange={(e) => updateForm("tax_id", e.target.value)}
                                 placeholder={t('settings_pages.company.placeholders.tax_id')}
-                                className="h-16 bg-black/40 border-white/5 rounded-[1.5rem] focus:border-primary/50 transition-all text-white font-black italic tracking-widest pl-8 shadow-inner"
+                                className="h-16 bg-black/40 border-border/5 rounded-[1.5rem] focus:border-primary/50 transition-all text-foreground font-black italic tracking-widest pl-8 shadow-inner"
                             />
                         </div>
                         <div className="space-y-4">
@@ -263,7 +263,7 @@ export default function CompanySettingsPage() {
                                 value={formData.branch}
                                 onChange={(e) => updateForm("branch", e.target.value)}
                                 placeholder={t('settings_pages.company.placeholders.branch')}
-                                className="h-16 bg-black/40 border-white/5 rounded-[1.5rem] focus:border-primary/50 transition-all text-white font-black italic tracking-widest pl-8 shadow-inner"
+                                className="h-16 bg-black/40 border-border/5 rounded-[1.5rem] focus:border-primary/50 transition-all text-foreground font-black italic tracking-widest pl-8 shadow-inner"
                             />
                         </div>
                     </div>
@@ -276,7 +276,7 @@ export default function CompanySettingsPage() {
                             value={formData.address}
                             onChange={(e) => updateForm("address", e.target.value)}
                             placeholder={t('settings_pages.company.placeholders.address')}
-                            className="bg-black/40 border-white/5 rounded-[2rem] text-white font-black italic tracking-widest pl-8 p-6 shadow-inner min-h-[120px] focus:border-primary/50 transition-all resize-none"
+                            className="bg-black/40 border-border/5 rounded-[2rem] text-foreground font-black italic tracking-widest pl-8 p-6 shadow-inner min-h-[120px] focus:border-primary/50 transition-all resize-none"
                         />
                     </div>
 
@@ -289,7 +289,7 @@ export default function CompanySettingsPage() {
                                 value={formData.phone}
                                 onChange={(e) => updateForm("phone", e.target.value)}
                                 placeholder={t('settings_pages.company.placeholders.phone')}
-                                className="h-16 bg-black/40 border-white/5 rounded-[1.5rem] focus:border-primary/50 transition-all text-white font-black italic tracking-widest pl-8 shadow-inner"
+                                className="h-16 bg-black/40 border-border/5 rounded-[1.5rem] focus:border-primary/50 transition-all text-foreground font-black italic tracking-widest pl-8 shadow-inner"
                             />
                         </div>
                         <div className="space-y-4">
@@ -298,7 +298,7 @@ export default function CompanySettingsPage() {
                                 value={formData.fax}
                                 onChange={(e) => updateForm("fax", e.target.value)}
                                 placeholder={t('settings_pages.company.placeholders.fax')}
-                                className="h-16 bg-black/40 border-white/5 rounded-[1.5rem] focus:border-primary/50 transition-all text-white font-black italic tracking-widest pl-8 shadow-inner"
+                                className="h-16 bg-black/40 border-border/5 rounded-[1.5rem] focus:border-primary/50 transition-all text-foreground font-black italic tracking-widest pl-8 shadow-inner"
                             />
                         </div>
                         <div className="space-y-4">
@@ -310,7 +310,7 @@ export default function CompanySettingsPage() {
                                 value={formData.email}
                                 onChange={(e) => updateForm("email", e.target.value)}
                                 placeholder="info@..."
-                                className="h-16 bg-black/40 border-white/5 rounded-[1.5rem] focus:border-primary/50 transition-all text-white font-black italic tracking-widest pl-8 shadow-inner"
+                                className="h-16 bg-black/40 border-border/5 rounded-[1.5rem] focus:border-primary/50 transition-all text-foreground font-black italic tracking-widest pl-8 shadow-inner"
                             />
                         </div>
                     </div>
@@ -323,16 +323,16 @@ export default function CompanySettingsPage() {
                             value={formData.website}
                             onChange={(e) => updateForm("website", e.target.value)}
                             placeholder="https://..."
-                            className="h-16 bg-black/40 border-white/5 rounded-[1.5rem] focus:border-primary/50 transition-all text-white font-black italic tracking-widest pl-8 shadow-inner"
+                            className="h-16 bg-black/40 border-border/5 rounded-[1.5rem] focus:border-primary/50 transition-all text-foreground font-black italic tracking-widest pl-8 shadow-inner"
                         />
                     </div>
                 </div>
             </PremiumCard>
 
             {/* Financial Config */}
-            <PremiumCard className="bg-[#0a0518]/40 border-2 border-white/5 shadow-3xl rounded-[4rem] overflow-hidden group/finance">
-                <div className="p-10 border-b border-white/5 bg-black/40 flex items-center justify-between">
-                    <h3 className="text-xl font-black text-white tracking-widest uppercase italic flex items-center gap-3">
+            <PremiumCard className="bg-background/40 border-2 border-border/5 shadow-3xl rounded-[4rem] overflow-hidden group/finance">
+                <div className="p-10 border-b border-border/5 bg-black/40 flex items-center justify-between">
+                    <h3 className="text-xl font-black text-foreground tracking-widest uppercase italic flex items-center gap-3">
                         <CreditCard size={20} className="text-indigo-400" />
                         {t('settings_pages.company.settlement_params')}
                     </h3>
@@ -347,15 +347,15 @@ export default function CompanySettingsPage() {
                             <select
                                 value={formData.bank_name}
                                 onChange={(e) => updateForm("bank_name", e.target.value)}
-                                className="w-full h-16 px-8 rounded-[1.5rem] bg-black/40 border-2 border-white/5 text-white font-black italic tracking-widest focus:border-indigo-500/50 transition-all outline-none shadow-inner"
+                                className="w-full h-16 px-8 rounded-[1.5rem] bg-black/40 border-2 border-border/5 text-foreground font-black italic tracking-widest focus:border-indigo-500/50 transition-all outline-none shadow-inner"
                             >
                                 <option value="" className="bg-black">{t('settings_pages.company.select_link')}</option>
-                                <option value="กรุงเทพ" className="bg-black text-white">{t('settings_pages.company.banks.bkk')}</option>
-                                <option value="กสิกรไทย" className="bg-black text-white">{t('settings_pages.company.banks.kbank')}</option>
-                                <option value="ไทยพาณิชย์" className="bg-black text-white">{t('settings_pages.company.banks.scb')}</option>
-                                <option value="กรุงไทย" className="bg-black text-white">{t('settings_pages.company.banks.ktb')}</option>
-                                <option value="ทหารไทยธนชาต" className="bg-black text-white">{t('settings_pages.company.banks.ttb')}</option>
-                                <option value="กรุงศรี" className="bg-black text-white">{t('settings_pages.company.banks.bay')}</option>
+                                <option value="กรุงเทพ" className="bg-black text-foreground">{t('settings_pages.company.banks.bkk')}</option>
+                                <option value="กสิกรไทย" className="bg-black text-foreground">{t('settings_pages.company.banks.kbank')}</option>
+                                <option value="ไทยพาณิชย์" className="bg-black text-foreground">{t('settings_pages.company.banks.scb')}</option>
+                                <option value="กรุงไทย" className="bg-black text-foreground">{t('settings_pages.company.banks.ktb')}</option>
+                                <option value="ทหารไทยธนชาต" className="bg-black text-foreground">{t('settings_pages.company.banks.ttb')}</option>
+                                <option value="กรุงศรี" className="bg-black text-foreground">{t('settings_pages.company.banks.bay')}</option>
                             </select>
                         </div>
                         <div className="space-y-4">
@@ -364,7 +364,7 @@ export default function CompanySettingsPage() {
                                 value={formData.bank_account_name}
                                 onChange={(e) => updateForm("bank_account_name", e.target.value)}
                                 placeholder={t('settings_pages.company.placeholders.account_holder')}
-                                className="h-16 bg-black/40 border-white/5 rounded-[1.5rem] focus:border-indigo-500/50 transition-all text-white font-black italic tracking-widest pl-8 shadow-inner"
+                                className="h-16 bg-black/40 border-border/5 rounded-[1.5rem] focus:border-indigo-500/50 transition-all text-foreground font-black italic tracking-widest pl-8 shadow-inner"
                             />
                         </div>
                         <div className="space-y-4">
@@ -373,7 +373,7 @@ export default function CompanySettingsPage() {
                                 value={formData.bank_account_no}
                                 onChange={(e) => updateForm("bank_account_no", e.target.value)}
                                 placeholder={t('settings_pages.company.placeholders.account_number')}
-                                className="h-16 bg-black/40 border-white/5 rounded-[1.5rem] focus:border-indigo-500/50 transition-all text-white font-black italic tracking-widest pl-8 shadow-inner"
+                                className="h-16 bg-black/40 border-border/5 rounded-[1.5rem] focus:border-indigo-500/50 transition-all text-foreground font-black italic tracking-widest pl-8 shadow-inner"
                             />
                         </div>
                     </div>
@@ -399,11 +399,11 @@ export default function CompanySettingsPage() {
             </div>
             <div className="space-y-4 text-center md:text-left flex-1">
                 <p className="text-xl font-black text-primary italic uppercase tracking-widest">{t('settings_pages.company.tactical_advisory')}</p>
-                <p className="text-xl font-bold text-slate-600 leading-relaxed uppercase tracking-wider italic">
+                <p className="text-xl font-bold text-muted-foreground leading-relaxed uppercase tracking-wider italic">
                     {t('settings_pages.company.advisory_desc')}
                 </p>
             </div>
-            <PremiumButton variant="outline" className="h-14 px-10 rounded-2xl border-white/10 text-white gap-3 uppercase font-black text-base font-bold tracking-[0.3em] ml-auto italic">
+            <PremiumButton variant="outline" className="h-14 px-10 rounded-2xl border-border/10 text-foreground gap-3 uppercase font-black text-base font-bold tracking-[0.3em] ml-auto italic">
                 <UserCheck size={18} /> {t('settings_pages.company.verify_identity')}
             </PremiumButton>
         </div>

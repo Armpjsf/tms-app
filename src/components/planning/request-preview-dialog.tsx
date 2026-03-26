@@ -150,7 +150,7 @@ export function RequestPreviewDialog({
           <Button 
             variant="ghost" 
             onClick={() => onOpenChange(false)}
-            className="text-gray-500 font-bold uppercase tracking-widest text-base font-bold"
+            className="text-muted-foreground font-bold uppercase tracking-widest text-base font-bold"
           >
             {t('shipment.back_btn')}
           </Button>

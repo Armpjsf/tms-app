@@ -119,7 +119,7 @@ export default function JobPickupPage() {
                 </div>
                 <div>
                     <h2 className="font-bold">ยืนยันการรับสินค้า</h2>
-                    <p className="text-xl text-slate-400">ถ่ายรูปสินค้าเพื่อยืนยันสภาพก่อนขนส่ง</p>
+                    <p className="text-xl text-muted-foreground">ถ่ายรูปสินค้าเพื่อยืนยันสภาพก่อนขนส่ง</p>
                 </div>
              </div>
 
@@ -127,7 +127,7 @@ export default function JobPickupPage() {
         </section>
 
         <section>
-            <h2 className="text-slate-200 font-bold mb-2">2. ลายเซ็นผู้ส่งของ</h2>
+            <h2 className="text-muted-foreground font-bold mb-2">2. ลายเซ็นผู้ส่งของ</h2>
             <SignaturePad onSave={setSignature} />
         </section>
 
@@ -137,7 +137,7 @@ export default function JobPickupPage() {
             className={`w-full h-14 font-bold text-lg shadow-lg transition-all ${
                 photos.length > 0 && signature 
                     ? "bg-gradient-to-r from-amber-600 to-orange-600 shadow-amber-500/20 text-white" 
-                    : "bg-slate-800 text-slate-400 cursor-not-allowed"
+                    : "bg-slate-800 text-muted-foreground cursor-not-allowed"
             }`}
         >
             {loading ? <Loader2 className="animate-spin" /> : "ยืนยันการรับสินค้า / ออกเดินทาง"}

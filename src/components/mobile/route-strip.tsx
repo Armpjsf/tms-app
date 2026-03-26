@@ -22,7 +22,7 @@ export function RouteStrip({ origin, destination, destinations, distanceKm, stat
   const isCompleted = status === 'Completed'
 
   return (
-    <div className="glass-panel border-white/5 rounded-[2.5rem] p-6 shadow-2xl relative overflow-hidden">
+    <div className="glass-panel border-border/5 rounded-[2.5rem] p-6 shadow-2xl relative overflow-hidden">
       <div className="absolute top-0 right-0 p-6 text-primary/5 pointer-events-none">
           <Navigation size={60} />
       </div>
@@ -30,7 +30,7 @@ export function RouteStrip({ origin, destination, destinations, distanceKm, stat
       {/* Distance / ETA Status */}
       <div className="flex items-center gap-2 mb-6 px-1">
         <Navigation size={14} className={isCompleted ? "text-emerald-400" : "text-primary"} />
-        <span className="text-base font-bold font-black uppercase tracking-[0.2em] text-slate-500">
+        <span className="text-base font-bold font-black uppercase tracking-[0.2em] text-muted-foreground">
           Mission Path Tracking
         </span>
         {distanceKm && (
@@ -50,7 +50,7 @@ export function RouteStrip({ origin, destination, destinations, distanceKm, stat
 
         {/* Tactical Timeline */}
         <div className="flex-1 relative flex items-center h-4">
-          <div className="absolute inset-x-0 h-1 bg-white/5 rounded-full overflow-hidden">
+          <div className="absolute inset-x-0 h-1 bg-muted/50 rounded-full overflow-hidden">
                <div className="h-full w-full bg-gradient-to-r from-primary/10 via-primary/20 to-transparent" />
           </div>
           
@@ -67,7 +67,7 @@ export function RouteStrip({ origin, destination, destinations, distanceKm, stat
               return (
                 <div 
                     key={idx}
-                    className="absolute w-2 h-2 rounded-full bg-white/10 border border-white/20 translate-x-[-50%]"
+                    className="absolute w-2 h-2 rounded-full bg-muted/80 border border-border/20 translate-x-[-50%]"
                     style={{ left: `${pos}%` }}
                 />
               )
@@ -76,7 +76,7 @@ export function RouteStrip({ origin, destination, destinations, distanceKm, stat
           {/* Animated Asset Indicator */}
           {isInTransit && (
             <div 
-                className="absolute bg-primary p-1.5 rounded-xl border-2 border-[#0a0518] shadow-[0_0_20px_rgba(255,30,133,0.5)] -translate-x-1/2" 
+                className="absolute bg-primary p-1.5 rounded-xl border-2 border-background shadow-[0_0_20px_rgba(255,30,133,0.5)] -translate-x-1/2" 
                 style={{ left: '42%' }}
             >
               <Truck size={12} className="text-white" />
@@ -87,7 +87,7 @@ export function RouteStrip({ origin, destination, destinations, distanceKm, stat
         {/* Destination dot */}
         <div className={isCompleted 
             ? "w-3.5 h-3.5 rounded-full bg-primary ring-4 ring-primary/10 shrink-0 shadow-[0_0_10px_rgba(255,30,133,0.5)]" 
-            : "w-3.5 h-3.5 rounded-full bg-white/10 border border-white/20 shrink-0"
+            : "w-3.5 h-3.5 rounded-full bg-muted/80 border border-border/20 shrink-0"
         } />
       </div>
 
@@ -95,14 +95,14 @@ export function RouteStrip({ origin, destination, destinations, distanceKm, stat
       <div className="grid grid-cols-2 gap-8">
         <div className="space-y-1">
           <p className="text-base font-bold font-black uppercase tracking-[0.2em] text-primary">Origin</p>
-          <p className="text-base font-bold text-white font-bold leading-tight line-clamp-2">
+          <p className="text-foreground font-bold leading-tight line-clamp-2">
             {origin || 'WAREHOUSE BASE'}
           </p>
         </div>
 
         <div className="space-y-1 text-right">
-          <p className="text-base font-bold font-black uppercase tracking-[0.2em] text-slate-500">Destination</p>
-          <p className="text-base font-bold text-white font-bold leading-tight line-clamp-2">
+          <p className="text-base font-bold font-black uppercase tracking-[0.2em] text-muted-foreground">Destination</p>
+          <p className="text-foreground font-bold leading-tight line-clamp-2">
             {destination || (isMultiStop ? destinations[destinations.length - 1].name : 'TACTICAL DROP')}
           </p>
         </div>

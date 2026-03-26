@@ -58,7 +58,7 @@ export function MobileJobFilter() {
           <Filter size={14} />
           ตัวกรอง
           {activeFilterCount > 0 && (
-              <span className="flex items-center justify-center w-5 h-5 ml-1 text-base font-bold font-bold text-white bg-emerald-600 rounded-full">
+              <span className="flex items-center justify-center w-5 h-5 ml-1 text-foreground bg-emerald-600 rounded-full">
                   {activeFilterCount}
               </span>
           )}
@@ -69,7 +69,7 @@ export function MobileJobFilter() {
           <SheetTitle className="text-white flex justify-between items-center">
             <span>ตัวกรองงาน</span>
             {activeFilterCount > 0 && (
-                <Button variant="ghost" size="sm" onClick={handleClear} className="h-8 text-lg font-bold text-gray-500 hover:text-white">
+                <Button variant="ghost" size="sm" onClick={handleClear} className="h-8 text-foreground">
                     ล้างค่า
                 </Button>
             )}
@@ -88,7 +88,7 @@ export function MobileJobFilter() {
                         onChange={(e) => setDate(e.target.value)}
                         className="bg-gray-100 border-gray-200 text-white pl-10 h-12"
                     />
-                    <Calendar className="absolute left-3 top-3.5 text-gray-500" size={18} />
+                    <Calendar className="absolute left-3 top-3.5 text-muted-foreground" size={18} />
                 </div>
             </div>
 
@@ -103,7 +103,7 @@ export function MobileJobFilter() {
                             className={`px-4 py-2 rounded-full text-xl border transition-colors ${
                                 status === s 
                                     ? 'bg-emerald-600 border-blue-600 text-white' 
-                                    : 'bg-transparent border-gray-200 text-gray-500 hover:border-slate-500'
+                                    : 'bg-transparent border-gray-200 text-muted-foreground hover:border-slate-500'
                             }`}
                         >
                             {s === 'All' ? 'ทั้งหมด' : s}

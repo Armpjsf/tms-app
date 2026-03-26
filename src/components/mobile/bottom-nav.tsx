@@ -19,7 +19,7 @@ export function BottomNav() {
   return (
     <div className="fixed bottom-0 left-0 right-0 z-[100] pointer-events-none">
       <div className="max-w-md mx-auto pointer-events-auto">
-        <div className="bg-[#0a0518]/95 backdrop-blur-2xl border-t border-white/5 px-2 py-4 pb-8">
+        <div className="bg-background/95 backdrop-blur-2xl border-t border-border/5 px-2 py-4 pb-8">
           <div className="flex justify-around items-end h-16">
             {navItems.map((item) => {
               const isActive = pathname === item.href
@@ -27,8 +27,8 @@ export function BottomNav() {
               if (item.isCenter) {
                 return (
                   <Link key={item.href} href={item.href} className="relative -top-6 transition-all active:scale-90 group">
-                    <div className="w-16 h-16 rounded-[1.5rem] bg-primary flex items-center justify-center shadow-[0_10px_30px_rgba(255,30,133,0.4)] border-4 border-[#0a0518] relative z-10 transition-transform group-hover:scale-110">
-                      <item.icon className="text-white" size={28} strokeWidth={2.5} />
+                    <div className="w-16 h-16 rounded-[1.5rem] bg-primary flex items-center justify-center shadow-[0_10px_30px_rgba(255,30,133,0.4)] border-4 border-background relative z-10 transition-transform group-hover:scale-110">
+                      <item.icon className="text-foreground" size={28} strokeWidth={2.5} />
                     </div>
                     <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-base font-bold font-black text-primary tracking-widest opacity-100 uppercase">
                         {item.label}
@@ -42,7 +42,7 @@ export function BottomNav() {
                   key={item.href} 
                   href={item.href}
                   className={`relative flex flex-col items-center justify-center w-14 transition-all duration-300 active:scale-90 h-full ${
-                    isActive ? "text-primary" : "text-slate-600 hover:text-slate-400"
+                    isActive ? "text-primary" : "text-muted-foreground hover:text-muted-foreground"
                   }`}
                 >
                   <item.icon size={24} strokeWidth={isActive ? 2.5 : 2} className="transition-transform group-hover:translate-y-[-2px]" />

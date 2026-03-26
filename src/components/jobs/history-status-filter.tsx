@@ -71,7 +71,7 @@ export function HistoryStatusFilter({ initialValue }: { initialValue: string }) 
           </SelectItem>
           <SelectItem value="Cancelled">
             <div className="flex items-center gap-2">
-              <AlertCircle size={14} className="text-gray-500" />
+              <AlertCircle size={14} className="text-muted-foreground" />
               <span>ยกเลิก</span>
             </div>
           </SelectItem>

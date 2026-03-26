@@ -47,7 +47,7 @@ export function StatsGrid({ stats, columns = 4 }: StatsGridProps) {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.5, delay: idx * 0.1 }}
                         className={cn(
-                            "p-8 rounded-[3rem] border backdrop-blur-3xl shadow-2xl relative overflow-hidden group transition-all hover:scale-[1.03] bg-[#0a0518]/40",
+                            "p-8 rounded-[3rem] border backdrop-blur-3xl shadow-2xl relative overflow-hidden group transition-all hover:scale-[1.03] bg-card/40",
                             colors.border,
                             colors.shadow
                         )}
@@ -65,13 +65,13 @@ export function StatsGrid({ stats, columns = 4 }: StatsGridProps) {
                         </div>
 
                         <div className="relative z-10">
-                            <p className="text-slate-500 font-black text-base font-bold uppercase tracking-[0.3em] mb-2">{stat.label}</p>
+                            <p className="text-muted-foreground font-black text-base font-bold uppercase tracking-[0.3em] mb-2">{stat.label}</p>
                             <p className={cn("text-4xl font-black tracking-tighter leading-none", colors.text)}>
                                 {typeof stat.value === 'number' ? stat.value.toLocaleString() : stat.value}
                             </p>
                         </div>
 
-                        <div className="absolute -bottom-4 -right-4 text-7xl font-black text-white/[0.02] pointer-events-none italic">
+                        <div className="absolute -bottom-4 -right-4 text-7xl font-black text-foreground/[0.02] pointer-events-none italic">
                             0{idx + 1}
                         </div>
                     </motion.div>
