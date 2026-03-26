@@ -46,7 +46,7 @@ export function JobGrid({
         <PremiumCard dark={true} className="p-0 overflow-hidden shadow-[0_30px_100px_rgba(0,0,0,0.1)] border-none rounded-br-[5rem] rounded-tl-[3rem]">
             <PremiumCardHeader className="p-8 border-b border-slate-50 bg-background relative overflow-hidden flex flex-row items-center justify-between">
                 <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 to-transparent pointer-events-none" />
-                <PremiumCardTitle icon={<Package className="text-emerald-400" />} className="text-white relative z-10 flex-1">
+                <PremiumCardTitle icon={<Package className="text-emerald-600" />} className="text-emerald-950 relative z-10 flex-1">
                    {view === 'requests' ? t('jobs.head_requests') : t('jobs.head_live_feed')}
                 </PremiumCardTitle>
                 <Link href="/jobs/history" className="relative z-10">

@@ -234,7 +234,14 @@ function KanbanColumn({
   return (
     <div 
       ref={setNodeRef}
-      className="flex flex-col w-[350px] min-w-[350px] bg-black/40 rounded-[3rem] border border-border/5 p-6 backdrop-blur-2xl relative group/col transition-all duration-700 hover:border-border/10"
+      className={cn(
+        "flex flex-col w-[350px] min-w-[350px] rounded-[3rem] border p-6 backdrop-blur-2xl relative group/col transition-all duration-700",
+        column.color === 'emerald' ? "bg-emerald-500/5 border-emerald-500/10 hover:border-emerald-500/30 shadow-[0_20px_50px_rgba(16,185,129,0.05)]" :
+        column.color === 'blue' ? "bg-blue-500/5 border-blue-500/10 hover:border-blue-500/30 shadow-[0_20px_50px_rgba(59,130,246,0.05)]" :
+        column.color === 'amber' ? "bg-amber-500/5 border-amber-500/10 hover:border-amber-500/30 shadow-[0_20px_50px_rgba(245,158,11,0.05)]" :
+        column.color === 'teal' ? "bg-teal-500/5 border-teal-500/10 hover:border-teal-500/30 shadow-[0_20px_50px_rgba(20,184,166,0.05)]" : 
+        "bg-slate-500/5 border-slate-500/10 hover:border-slate-500/30 shadow-none"
+      )}
     >
       <div className="flex items-center justify-between mb-8 px-4">
         <div className="flex items-center gap-4">
