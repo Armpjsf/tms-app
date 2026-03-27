@@ -9,61 +9,47 @@ interface NavigationButtonProps {
 }
 
 export function NavigationButton({ job }: NavigationButtonProps) {
-    const handleNavigation = () => {
-        const destinations = typeof job.original_destinations_json === 'string' 
-            ? JSON.parse(job.original_destinations_json) 
-            : job.original_destinations_json;
+    const destinations = typeof job.original_destinations_json === 'string' 
+        ? JSON.parse(job.original_destinations_json) 
+        : job.original_destinations_json;
 
-        // If it's a multi-stop job (more than 1 destination)
-        if (Array.isArray(destinations) && destinations.length > 1) {
-            const last = destinations[destinations.length - 1];
-            const intermediates = destinations.slice(1, -1);
+    let navigationUrl = "";
 
-            // Create Google Maps Directions URL
-            // Format: https://www.google.com/maps/dir/?api=1&destination=LAST&waypoints=W1|W2|W3
-            // Note: origin is optional and defaults to current location if omitted
-            const destQuery = last.lat && last.lng ? `${last.lat},${last.lng}` : encodeURIComponent(last.name);
-            const waypointQuery = intermediates.map(w => 
-                w.lat && w.lng ? `${w.lat},${w.lng}` : encodeURIComponent(w.name)
-            ).join('|');
+    // Calculate URL
+    if (Array.isArray(destinations) && destinations.length > 1) {
+        const last = destinations[destinations.length - 1];
+        const intermediates = destinations.slice(1, -1);
+        const destQuery = last.lat && last.lng ? `${last.lat},${last.lng}` : encodeURIComponent(last.name);
+        const waypointQuery = intermediates.map(w => 
+            w.lat && w.lng ? `${w.lat},${w.lng}` : encodeURIComponent(w.name)
+        ).join('|');
 
-            let url = `https://www.google.com/maps/dir/?api=1&destination=${destQuery}`;
-            if (waypointQuery) {
-                url += `&waypoints=${waypointQuery}`;
-            }
-
-            window.open(url, '_blank');
-            return;
+        navigationUrl = `https://www.google.com/maps/dir/?api=1&destination=${destQuery}`;
+        if (waypointQuery) {
+            navigationUrl += `&waypoints=${waypointQuery}`;
         }
-
-        // Priority 1: Direct coordinates from database (Single point)
-        if (job.Delivery_Lat && job.Delivery_Lon) {
-            const url = `https://www.google.com/maps/search/?api=1&query=${job.Delivery_Lat},${job.Delivery_Lon}`;
-            window.open(url, '_blank');
-            return;
-        }
-
-        // Priority 2: Single point from JSON
+    } else if (job.Delivery_Lat && job.Delivery_Lon) {
+        navigationUrl = `https://www.google.com/maps/search/?api=1&query=${job.Delivery_Lat},${job.Delivery_Lon}`;
+    } else {
         const target = Array.isArray(destinations) ? destinations[0] : null;
         if (target?.lat && target?.lng) {
-            const url = `https://www.google.com/maps/search/?api=1&query=${target.lat},${target.lng}`;
-            window.open(url, '_blank');
-            return;
+            navigationUrl = `https://www.google.com/maps/search/?api=1&query=${target.lat},${target.lng}`;
+        } else {
+            const address = job.Dest_Location || job.Route_Name || "";
+            navigationUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
         }
-
-        // Priority 3: Text address fallback
-        const address = job.Dest_Location || job.Route_Name || "";
-        const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
-        window.open(url, '_blank');
     }
 
     return (
         <Button 
+            asChild
             size="sm" 
-            className="bg-emerald-600 hover:bg-blue-700 gap-2"
-            onClick={handleNavigation}
+            className="bg-emerald-600 hover:bg-emerald-700 gap-2 h-12 px-6 rounded-xl shadow-lg shadow-emerald-500/20"
         >
-            <Navigation size={16} /> นำทาง
+            <a href={navigationUrl} target="_blank" rel="noopener noreferrer">
+                <Navigation size={18} strokeWidth={2.5} /> 
+                <span className="font-bold">นำทาง</span>
+            </a>
         </Button>
     )
 }

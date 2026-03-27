@@ -61,11 +61,6 @@ export default function MobileSOSPage() {
     if (number) window.location.href = `tel:${number}`
   }
 
-  const openMap = () => {
-    if (location) {
-        window.open(`https://www.google.com/maps/search/?api=1&query=${location.lat},${location.lng}`, '_blank')
-    }
-  }
 
   return (
     <div className="min-h-screen bg-background pb-24 pt-16 px-4">
@@ -139,8 +134,16 @@ export default function MobileSOSPage() {
                         พิกัดปัจจุบันของคุณ
                     </h3>
                     {location && (
-                        <Button variant="ghost" size="sm" onClick={openMap} className="h-6 text-emerald-600 p-0 hover:text-emerald-500">
-                            <ExternalLink size={14} className="mr-1" /> เปิดแผนที่
+                        <Button variant="ghost" size="sm" asChild className="h-10 text-emerald-600 px-3 hover:text-emerald-500 bg-emerald-50 rounded-xl">
+                            <a 
+                                href={`https://www.google.com/maps/search/?api=1&query=${location.lat},${location.lng}`} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-1"
+                            >
+                                <ExternalLink size={16} /> 
+                                <span className="font-bold">เปิดแผนที่</span>
+                            </a>
                         </Button>
                     )}
                 </div>

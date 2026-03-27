@@ -51,12 +51,6 @@ export default function MobileMapPage() {
     return () => navigator.geolocation.clearWatch(watchId)
   }, [])
 
-  const openGoogleMaps = () => {
-    if (currentPosition) {
-      const url = `https://www.google.com/maps?q=${currentPosition[0]},${currentPosition[1]}`
-      window.open(url, '_blank')
-    }
-  }
 
   return (
     <div className="p-4 space-y-4">
@@ -107,12 +101,19 @@ export default function MobileMapPage() {
       {/* Actions */}
       <div className="space-y-2">
         <Button 
-          className="w-full bg-emerald-600 hover:bg-blue-700"
-          onClick={openGoogleMaps}
+          asChild
+          className="w-full bg-emerald-600 hover:bg-emerald-700 h-14 rounded-2xl shadow-lg border-0"
           disabled={!currentPosition}
         >
-          <ExternalLink className="w-4 h-4 mr-2" />
-          Open in Google Maps
+          <a 
+            href={currentPosition ? `https://www.google.com/maps?q=${currentPosition[0]},${currentPosition[1]}` : '#'} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="flex items-center justify-center gap-2"
+          >
+            <ExternalLink className="w-5 h-5" />
+            <span className="font-bold text-lg">เปิดใน Google Maps</span>
+          </a>
         </Button>
       </div>
 
