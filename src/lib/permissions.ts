@@ -44,6 +44,11 @@ export async function getCustomerId() {
     return session?.customerId
 }
 
+export async function getUserId() {
+    const session = await getSession()
+    return session?.userId
+}
+
 export async function hasPermission(permission: string) {
     const session = await getSession()
     if (!session) return false

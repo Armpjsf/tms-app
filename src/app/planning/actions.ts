@@ -433,17 +433,24 @@ export async function requestShipment(data: {
 
   const jobId = `REQ-${Date.now().toString().slice(-6)}-${Math.floor(Math.random() * 1000)}`
 
+  // Build a complete payload to satisfy DB constraints
   const payload = {
     Job_ID: jobId,
     Customer_ID: customerId,
     Customer_Name: customer?.Customer_Name || 'Unknown Customer',
     Branch_ID: customer?.Branch_ID || 'HQ',
     Plan_Date: data.Plan_Date,
+    Delivery_Date: data.Plan_Date, // Default delivery to plan date for requests
     Origin_Location: data.Origin_Location,
     Dest_Location: data.Dest_Location,
     Cargo_Type: data.Cargo_Type,
     Notes: data.Notes,
     Job_Status: 'Requested',
+    Weight_Kg: 0,
+    Volume_Cbm: 0,
+    Price_Cust_Total: 0,
+    Cost_Driver_Total: 0,
+    Est_Distance_KM: 0,
     Created_At: new Date().toISOString()
   }
 

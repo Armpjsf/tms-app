@@ -128,7 +128,8 @@ export const dictionaries = {
           info: 'ข้อมูลทั่วไป (CORE_INFO)',
           locations: 'จุดรับ-ส่ง (NODES)',
           items: 'รายการสินค้า (CARGO)',
-          assignment: 'การมอบหมาย (DEPLOYMENT)'
+          assignment: 'การมอบหมาย (DEPLOYMENT)',
+          price: 'ราคาและค่าใช้จ่าย (PRICING)'
         },
         abort: 'ยกเลิก (ABORT)',
         execute: 'สร้างงาน (EXECUTE)',
@@ -213,9 +214,9 @@ export const dictionaries = {
         battery: 'แบตเตอรี่',
         body: 'ตัวถัง',
         other: 'อื่นๆ',
-        low: 'Low',
-        medium: 'Medium',
-        high: 'High',
+        low: 'ต่ำ (LOW)',
+        medium: 'ปานกลาง (MEDIUM)',
+        high: 'สูง (HIGH)',
         pending: 'รอดำเนินการ',
         in_progress: 'กำลังซ่อม',
         completed: 'เสร็จสิ้น',
@@ -1381,7 +1382,8 @@ export const dictionaries = {
           info: 'Core Info (CORE_INFO)',
           locations: 'Nodes (NODES)',
           items: 'Cargo (CARGO)',
-          assignment: 'Deployment (DEPLOYMENT)'
+          assignment: 'Deployment (DEPLOYMENT)',
+          price: 'Pricing & Costs (PRICING)'
         },
         abort: 'Abort (ABORT)',
         execute: 'Create Job (EXECUTE)',
