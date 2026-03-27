@@ -218,7 +218,7 @@ export async function getActiveFleetStatus(branchId?: string | null, customerId?
       Driver_Name: driver.Driver_Name || driver.driver_name || "Unknown",
       Vehicle_Plate: driver.Vehicle_Plate || driver.vehicle_plate || "-",
       Mobile_No: driver.Mobile_No || driver.mobile_no || "",
-      Last_Update: driver.Last_Seen || driver.last_seen || null,
+      Last_Update: driver.Last_Seen || driver.last_seen || driver.Updated_At || driver.updated_at || null,
       Latitude: driver.Current_Lat ?? driver.current_lat ?? null,
       Longitude: driver.Current_Lon ?? driver.current_lon ?? null,
     }));

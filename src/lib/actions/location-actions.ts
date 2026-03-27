@@ -17,8 +17,8 @@ export async function updateDriverLocation(driverId: string, lat: number, lon: n
             Current_Lon: lon,
             current_lat: lat,
             current_lon: lon,
-            Last_Seen: new Date().toISOString(),
-            last_seen: new Date().toISOString()
+            Updated_At: new Date().toISOString(),
+            updated_at: new Date().toISOString()
         })
         .eq('Driver_ID', driverId)
         .select()
