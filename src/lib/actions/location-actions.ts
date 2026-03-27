@@ -10,20 +10,31 @@ export async function updateDriverLocation(driverId: string, lat: number, lon: n
     console.log('[DEBUG] updateDriverLocation start:', { driverId, lat, lon })
     const supabase = createAdminClient()
 
-    const { error } = await supabase
+    const { data, error } = await supabase
         .from('Master_Drivers')
         .update({
             Current_Lat: lat,
             Current_Lon: lon,
-            Last_Seen: new Date().toISOString()
+            current_lat: lat,
+            current_lon: lon,
+            Last_Seen: new Date().toISOString(),
+            last_seen: new Date().toISOString()
         })
         .eq('Driver_ID', driverId)
+        .select()
 
     if (error) {
-        console.error('[DEBUG] updateDriverLocation error:', error)
+        console.error('[DEBUG] updateDriverLocation error:', JSON.stringify(error, null, 2))
         return { success: false, error: error.message }
     }
 
-    console.log('[DEBUG] updateDriverLocation success for:', driverId)
+    if (!data || data.length === 0) {
+        // Try snake_case ID check
+        await supabase.from('Master_Drivers').update({ current_lat: lat, current_lon: lon }).eq('driver_id', driverId)
+        console.warn('[DEBUG] updateDriverLocation: No record updated for ID:', driverId)
+    } else {
+        console.log('[DEBUG] updateDriverLocation success for:', driverId, 'New Coords:', data[0].Current_Lat || data[0].current_lat)
+    }
+
     return { success: true }
 }
