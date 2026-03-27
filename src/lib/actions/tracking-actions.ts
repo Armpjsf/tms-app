@@ -93,7 +93,7 @@ export async function getPublicJobDetails(
   // Fetch latest location for the vehicle/driver associated with this job
   // Use admin client to bypass RLS for public tracking page
   let lastLocation = null;
-  if (["In Transit", "Picked Up", "En Route", "En-Route"].includes(job.Job_Status)) {
+  if (["Assigned", "Picked Up", "In Transit", "Arrived", "SOS", "En Route", "En-Route"].includes(job.Job_Status)) {
     const adminSupabase = createAdminClient();
     const { data: gpsData } = await adminSupabase
       .from("gps_logs")
