@@ -1,7 +1,7 @@
 "use server";
 
 import { createClient, createAdminClient } from "@/utils/supabase/server";
-import { getUserBranchId, isSuperAdmin } from "@/lib/permissions";
+import { getUserBranchId, isSuperAdmin, isAdmin } from "@/lib/permissions";
 
 // Type matching actual Supabase schema (ProperCase columns!)
 export type GPSLog = {
@@ -162,8 +162,9 @@ export async function getDriverRouteForDate(driverId: string, date: string) {
 
 export async function getActiveFleetStatus(branchId?: string | null, customerId?: string | null) {
   try {
-    const isAdmin = await isSuperAdmin();
-    const supabase = isAdmin ? await createAdminClient() : await createClient();
+    const isSuper = await isSuperAdmin();
+    const isAdminUser = await isAdmin();
+    const supabase = (isSuper || isAdminUser) ? await createAdminClient() : await createClient();
 
     // 1. Get all drivers
     const sessionBranchId = await getUserBranchId();
@@ -172,7 +173,7 @@ export async function getActiveFleetStatus(branchId?: string | null, customerId?
     // 1. Get all drivers with their current location from Master_Drivers
     let driversQuery = supabase
       .from("Master_Drivers")
-      .select("Driver_ID, Driver_Name, Vehicle_Plate, Mobile_No, Current_Lat, Current_Lon, Last_Seen");
+      .select("*");
 
     if (customerId) {
       // Find Driver_IDs from Jobs_Main for this customer
@@ -198,7 +199,7 @@ export async function getActiveFleetStatus(branchId?: string | null, customerId?
     const { data: drivers, error: driverError } = await driversQuery;
 
     if (driverError || !drivers) {
-      console.error('[DEBUG] getActiveFleetStatus driver error:', driverError)
+      console.error('[DEBUG] getActiveFleetStatus driver error:', JSON.stringify(driverError, null, 2))
       return [];
     }
 
