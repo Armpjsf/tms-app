@@ -70,11 +70,11 @@ export async function isSuperAdmin() {
 export async function isAdmin() {
     const roleId = await getUserRole()
     const result = Number(roleId) === 1 || Number(roleId) === 2
-    console.log(`[DEBUG] isAdmin check: roleId=${roleId}, result=${result}`)
     return result
 }
 
 export async function isCustomer() {
     const session = await getSession()
-    return !!session?.customerId || Number(session?.roleId) === 7
+    const result = !!session?.customerId || Number(session?.roleId) === 7
+    return result
 }

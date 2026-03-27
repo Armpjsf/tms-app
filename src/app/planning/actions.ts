@@ -399,8 +399,11 @@ export async function requestShipment(data: {
   Notes?: string
 }) {
   const supabase = createAdminClient()
-  let customerId = await getCustomerId()
+  const customerId_Session = await getCustomerId()
   const userId = await getUserId()
+  const isCust = await isCustomer()
+  
+  let customerId = customerId_Session
 
   // Fallback: If customerId is missing from session, fetch it from Master_Users
   if (!customerId && userId) {
@@ -415,7 +418,6 @@ export async function requestShipment(data: {
       }
   }
 
-  const isCust = await isCustomer()
   if (!customerId && !isCust) {
     return { success: false, message: 'Unauthorized: Access restricted to customers only' }
   }
@@ -431,14 +433,17 @@ export async function requestShipment(data: {
     .eq('Customer_ID', customerId)
     .single()
 
+
+
+  const userBranchId = await getUserBranchId()
   const jobId = `REQ-${Date.now().toString().slice(-6)}-${Math.floor(Math.random() * 1000)}`
 
   // Build a complete payload to satisfy DB constraints
   const payload = {
     Job_ID: jobId,
     Customer_ID: customerId,
-    Customer_Name: customer?.Customer_Name || 'Unknown Customer',
-    Branch_ID: customer?.Branch_ID || 'HQ',
+    Customer_Name: customer?.Customer_Name || userId || 'Unknown Customer',
+    Branch_ID: customer?.Branch_ID || userBranchId || 'HQ',
     Plan_Date: data.Plan_Date,
     Delivery_Date: data.Plan_Date, // Default delivery to plan date for requests
     Origin_Location: data.Origin_Location,
@@ -453,6 +458,8 @@ export async function requestShipment(data: {
     Est_Distance_KM: 0,
     Created_At: new Date().toISOString()
   }
+
+
 
   const { error } = await supabase.from('Jobs_Main').insert(payload)
 

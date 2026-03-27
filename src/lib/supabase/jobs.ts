@@ -822,8 +822,8 @@ export async function getMarketplaceJobs(providedBranchId?: string): Promise<Job
 // ดึงการขอรถที่รอดำเนินการ (Requested) ทั้งหมด โดยไม่จำกัดวันที่
 export async function getRequestedJobs(): Promise<Job[]> {
     try {
-        const isAdmin = await isSuperAdmin()
-        const supabase = isAdmin ? createAdminClient() : await createClient()
+        const isSuper = await isSuperAdmin()
+        const supabase = createAdminClient()
         const branchId = await getUserBranchId()
         const customerId = await getCustomerId()
 
@@ -836,17 +836,32 @@ export async function getRequestedJobs(): Promise<Job[]> {
             dbQuery = dbQuery.eq('Customer_ID', customerId)
         } else if (branchId && branchId !== 'All') {
             dbQuery = dbQuery.eq('Branch_ID', branchId)
-        } else if (!isAdmin && !branchId) {
+        } else if (!isSuper && !branchId) {
             return []
         }
 
-        const { data } = await dbQuery.order('Created_At', { ascending: false })
+        const { data, error } = await dbQuery.order('Created_At', { ascending: false })
+
+        if (error) {
+            console.error('[DEBUG] getRequestedJobs select error:', error)
+            return []
+        }
 
         if (!data) {
             return []
         }
 
-        return data || []
+        // Map column name Branch_ID to type field branch_id for frontend consistency
+        const mappedData = data.map(job => ({
+            ...job,
+            branch_id: job.Branch_ID || job.branch_id
+        }))
+
+        if (mappedData.length > 0) {
+            console.log('[DEBUG] getRequestedJobs sample job (first item):', JSON.stringify(mappedData[0], null, 2))
+        }
+
+        return mappedData as Job[]
     } catch {
         return []
     }

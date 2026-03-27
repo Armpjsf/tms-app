@@ -35,7 +35,8 @@ export async function getAllCustomers(page?: number, limit?: number, query?: str
     
     if (customerId) {
         queryBuilder = queryBuilder.eq('Customer_ID', customerId)
-    } else if (branchId && branchId !== 'All' && !isSuper && !isAdminUser) {
+    } else if (branchId && branchId !== 'All' && !isSuper) {
+        // Restricted to branch for everyone except Super Admin
         queryBuilder = queryBuilder.eq('Branch_ID', branchId)
     } else if (!isSuper && !isAdminUser && !branchId) {
         return { data: [], count: 0 }

@@ -66,15 +66,14 @@ const item = {
     show: { opacity: 1, y: 0 }
 }
 
-export function PlanningClient({ 
-    stats, 
-    todayJobs, 
+export function PlanningClient({
+    stats,
+    todayJobs,
     requestedJobs,
-    jobCreationData, 
-    canViewPrice, 
-    canDelete, 
-    canCreate,
-    createBulkJobs
+    jobCreationData,
+    canViewPrice,
+    canDelete,
+    canCreate
 }: PlanningClientProps) {
     const { drivers, vehicles, customers, routes, subcontractors } = jobCreationData
     const [view, setView] = useState<'list' | 'kanban' | 'requests'>('list')
@@ -83,7 +82,6 @@ export function PlanningClient({
 
     // Real-time: Jobs_Main
     useRealtime('Jobs_Main', () => {
-        console.log("Job Update Detected - Refreshing Planning Data...")
         router.refresh()
     })
 

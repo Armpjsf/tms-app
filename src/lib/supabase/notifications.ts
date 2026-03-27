@@ -2,7 +2,7 @@
 
 import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { getChatSchema } from './chat'
-import { getUserBranchId, isSuperAdmin } from '@/lib/permissions'
+import { getUserBranchId, isAdmin as isAnyAdmin } from '@/lib/permissions'
 import { cookies } from 'next/headers'
 
 export interface AppNotification {
@@ -18,7 +18,7 @@ export interface AppNotification {
 
 // Generate notifications from existing data sources
 export async function getNotifications(): Promise<AppNotification[]> {
-  const isAdmin = await isSuperAdmin()
+  const isAdmin = await isAnyAdmin()
   const supabase = isAdmin ? createAdminClient() : await createClient()
   const branchId = await getUserBranchId()
   const cookieStore = await cookies()
@@ -278,7 +278,7 @@ export async function getNotifications(): Promise<AppNotification[]> {
         }
       }
     }
-  } catch (err) {
+  } catch {
     // Idle detection error
   }
 
