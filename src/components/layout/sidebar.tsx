@@ -58,7 +58,6 @@ const navigation: NavGroup[] = [
     titleKey: "nav_groups.operations",
     items: [
       { titleKey: "navigation.planning", href: "/planning", icon: <CalendarDays size={20} /> },
-      { titleKey: "navigation.routes", href: "/routes", icon: <Navigation size={20} /> },
       { titleKey: "navigation.calendar", href: "/calendar", icon: <CalendarDays size={20} /> },
       { titleKey: "navigation.history", href: "/jobs/history", icon: <History size={20} /> },
       { titleKey: "navigation.monitoring", href: "/monitoring", icon: <Activity size={20} />, badge: "Live", badgeColor: "green" },
@@ -71,6 +70,7 @@ const navigation: NavGroup[] = [
   {
     titleKey: "nav_groups.asset_control",
     items: [
+      { titleKey: "navigation.routes", href: "/routes", icon: <Navigation size={20} /> },
       { titleKey: "navigation.drivers", href: "/drivers", icon: <Users size={20} /> },
       { titleKey: "navigation.customers", href: "/settings/customers", icon: <Building size={20} /> },
       { titleKey: "navigation.fleet", href: "/vehicles", icon: <Truck size={20} /> },
