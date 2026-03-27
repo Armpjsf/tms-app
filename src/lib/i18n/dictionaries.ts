@@ -94,6 +94,7 @@ export const dictionaries = {
       customers: 'จัดการข้อมูลลูกค้า',
       ai: 'ผู้ช่วยอัจฉริยะ (AI)',
       request_mission: 'สั่งงาน / เปิดงานใหม่',
+      routes: 'จัดการเส้นทาง',
     },
     jobs: {
       status_requested: 'รอการตอบรับ',
@@ -1348,6 +1349,7 @@ export const dictionaries = {
       customers: 'Customer Registry',
       ai: 'AI Support',
       request_mission: 'Enlist Mission',
+      routes: 'Route Management',
     },
     jobs: {
       status_requested: 'Requested',

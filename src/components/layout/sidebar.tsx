@@ -17,6 +17,7 @@ import {
   BarChart3,
   ChevronLeft,
   Activity,
+  Navigation,
   Users,
   Building,
   CalendarDays,
@@ -57,6 +58,7 @@ const navigation: NavGroup[] = [
     titleKey: "nav_groups.operations",
     items: [
       { titleKey: "navigation.planning", href: "/planning", icon: <CalendarDays size={20} /> },
+      { titleKey: "navigation.routes", href: "/routes", icon: <Navigation size={20} /> },
       { titleKey: "navigation.calendar", href: "/calendar", icon: <CalendarDays size={20} /> },
       { titleKey: "navigation.history", href: "/jobs/history", icon: <History size={20} /> },
       { titleKey: "navigation.monitoring", href: "/monitoring", icon: <Activity size={20} />, badge: "Live", badgeColor: "green" },
@@ -107,6 +109,7 @@ const customerNavigation: NavGroup[] = [
       items: [
         { titleKey: "navigation.dashboard", href: "/dashboard", icon: <LayoutDashboard size={20} /> },
         { titleKey: "navigation.monitoring", href: "/monitoring", icon: <Activity size={20} />, badge: "Live", badgeColor: "green" },
+        { titleKey: "navigation.routes", href: "/routes", icon: <Navigation size={20} /> },
         { titleKey: "navigation.history", href: "/jobs/history", icon: <History size={20} /> },
       ],
     },
