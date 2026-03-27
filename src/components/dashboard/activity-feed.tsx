@@ -21,13 +21,15 @@ interface ActivityFeedProps {
     delivered: number
   }
   sosCount: number
+  logs?: any[]
 }
 
-export function ActivityFeed({ jobStats, sosCount }: ActivityFeedProps) {
+export function ActivityFeed({ jobStats, sosCount, logs = [] }: ActivityFeedProps) {
   const { t } = useLanguage()
   const stats = jobStats || { total: 0, pending: 0, inProgress: 0, delivered: 0 }
   const sCount = sosCount || 0
 
+  // Combine real logs with summary items
   const activities = [
     ...(sCount > 0 ? [{
       icon: AlertTriangle,
@@ -37,7 +39,17 @@ export function ActivityFeed({ jobStats, sosCount }: ActivityFeedProps) {
       bgColor: 'bg-rose-500/10',
       borderColor: 'border-rose-500/20',
     }] : []),
-    ...(stats.total > 0 ? [{
+    // Real system logs mapping
+    ...(logs.map(log => ({
+      icon: log.action_type === 'CREATE' ? Package : log.action_type === 'APPROVE' ? CheckCircle2 : Activity,
+      label: `${log.module}: ${log.details?.description || log.action_type}`,
+      time: log.username || 'System',
+      color: log.action_type === 'CREATE' ? 'text-primary' : 'text-accent',
+      bgColor: log.action_type === 'CREATE' ? 'bg-primary/10' : 'bg-accent/10',
+      borderColor: log.action_type === 'CREATE' ? 'border-primary/20' : 'border-accent/20',
+      timestamp: log.created_at
+    }))),
+    ...(stats.total > 0 && logs.length === 0 ? [{
       icon: Package,
       label: t('dashboard.activity.missions_created', { count: stats.total }),
       time: t('dashboard.activity.system'),

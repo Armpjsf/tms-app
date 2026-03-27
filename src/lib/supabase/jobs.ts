@@ -13,7 +13,7 @@ export type JobAssignment = {
   Show_Price_To_Driver?: boolean
   Cost_Driver_Total?: number
   Price_Cust_Total?: number
-  branch_id?: string
+  Branch_ID?: string
 }
 
 export type Job = {
@@ -62,7 +62,7 @@ export type Job = {
   Pickup_Lon?: number | null
   Delivery_Lat?: number | null
   Delivery_Lon?: number | null
-  branch_id?: string | null
+  Branch_ID?: string | null
   Verification_Status?: 'Pending' | 'Verified' | 'Rejected' | null
   Verification_Note?: string | null
   Verified_By?: string | null
@@ -510,6 +510,8 @@ function getStatusColor(status: string) {
         default: return '#cbd5e1'
     }
 }
+import { sanitizeJobData } from './utils'
+
 // สร้างงานใหม่
 export async function createJob(jobData: Partial<Job>) {
     try {
@@ -522,15 +524,17 @@ export async function createJob(jobData: Partial<Job>) {
         const randomSuffix = Math.floor(Math.random() * 10000).toString().padStart(4, '0')
         const newJobId = `JOB-${dateStr}-${randomSuffix}`
 
+        const sanitized = sanitizeJobData({
+            ...jobData,
+            Job_ID: newJobId,
+            Job_Status: 'New',
+            Branch_ID: await getUserBranchId() || 'HQ',
+            Created_At: new Date().toISOString()
+        })
+
         const { data, error } = await supabase
             .from('Jobs_Main')
-            .insert({
-                ...jobData,
-                Job_ID: newJobId,
-                Job_Status: 'New',
-                Branch_ID: await getUserBranchId() || 'HQ',
-                Created_At: new Date().toISOString()
-            })
+            .insert(sanitized)
             .select()
             .single()
  
@@ -547,7 +551,7 @@ export async function createJob(jobData: Partial<Job>) {
                 customer_name: jobData.Customer_Name,
                 plan_date: jobData.Plan_Date,
                 route: jobData.Route_Name,
-                branch_id: jobData.branch_id || ''
+                Branch_ID: jobData.Branch_ID || ''
             }
         })
 
@@ -794,7 +798,7 @@ export async function getMarketplaceJobs(providedBranchId?: string): Promise<Job
     let dbQuery = supabase
       .from('Jobs_Main')
       .select('*')
-      .eq('Job_Status', 'New')
+      .in('Job_Status', ['New', 'Requested', 'Assigned'])
       .is('Driver_ID', null)
     
     if (customerId) {

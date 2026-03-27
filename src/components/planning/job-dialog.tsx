@@ -145,7 +145,7 @@ export function JobDialog({
     Weight_Kg: job?.Weight_Kg || 0,
     Volume_Cbm: job?.Volume_Cbm || 0,
     Zone: job?.Zone || '',
-    branch_id: job?.branch_id || '',
+    Branch_ID: job?.Branch_ID || job?.branch_id || '',
     Delivery_Lat: job?.Delivery_Lat || null,
     Delivery_Lon: job?.Delivery_Lon || null,
     Sub_ID: job?.Sub_ID || '',
@@ -247,7 +247,7 @@ export function JobDialog({
             Vehicle_Type: job.Vehicle_Type || '4-Wheel',
             Vehicle_Plate: job.Vehicle_Plate || '',
             Driver_ID: job.Driver_ID || '',
-            branch_id: job.branch_id || '',
+            Branch_ID: job.Branch_ID || job.branch_id || '',
             Sub_ID: job.Sub_ID || '',
             Show_Price_To_Driver: job.Show_Price_To_Driver !== false,
             Cost_Driver_Total: job.Cost_Driver_Total ? Number(job.Cost_Driver_Total) : 0,
@@ -488,14 +488,14 @@ export function JobDialog({
             Job_ID: assignments.length > 1 ? `${effectiveJobId}-${index + 1}` : effectiveJobId,
             // Per-job assignment details
             Vehicle_Type: assignment.Vehicle_Type,
-            Vehicle_Plate: assignment.Vehicle_Plate,
-            Driver_ID: assignment.Driver_ID,
-            Sub_ID: assignment.Sub_ID,
+            Vehicle_Plate: assignment.Vehicle_Plate || null,
+            Driver_ID: assignment.Driver_ID || null,
+            Sub_ID: assignment.Sub_ID || null,
             Show_Price_To_Driver: assignment.Show_Price_To_Driver,
             // Use individual costs if they differ from shared baseData
             Price_Cust_Total: assignment.Price_Cust_Total ?? baseData.Price_Cust_Total,
             Cost_Driver_Total: assignment.Cost_Driver_Total ?? baseData.Cost_Driver_Total,
-            Driver_Name: drivers.find(d => d.Driver_ID === assignment.Driver_ID)?.Driver_Name || '',
+            Driver_Name: assignment.Driver_ID ? (drivers.find(d => d.Driver_ID === assignment.Driver_ID)?.Driver_Name || '') : null,
         }))
 
         const result = await createBulkJobs(jobsToCreate)
@@ -512,13 +512,13 @@ export function JobDialog({
         const updateData = {
             ...baseData,
             Vehicle_Type: assignment.Vehicle_Type,
-            Vehicle_Plate: assignment.Vehicle_Plate,
-            Driver_ID: assignment.Driver_ID,
-            Sub_ID: assignment.Sub_ID,
+            Vehicle_Plate: assignment.Vehicle_Plate || null,
+            Driver_ID: assignment.Driver_ID || null,
+            Sub_ID: assignment.Sub_ID || null,
             Show_Price_To_Driver: assignment.Show_Price_To_Driver,
             Price_Cust_Total: assignment.Price_Cust_Total !== undefined ? assignment.Price_Cust_Total : baseData.Price_Cust_Total,
             Cost_Driver_Total: assignment.Cost_Driver_Total !== undefined ? assignment.Cost_Driver_Total : baseData.Cost_Driver_Total,
-            Driver_Name: drivers.find(d => d.Driver_ID === assignment.Driver_ID)?.Driver_Name || '',
+            Driver_Name: assignment.Driver_ID ? (drivers.find(d => d.Driver_ID === assignment.Driver_ID)?.Driver_Name || '') : null,
         }
 
         if (!job?.Job_ID) throw new Error(t('jobs.dialog.error'))
@@ -550,9 +550,10 @@ export function JobDialog({
       
       toast.success(internalMode === 'create' ? t('jobs.dialog.save_success') : t('jobs.dialog.edit_success'))
       router.refresh()
-    } catch {
+    } catch (error: unknown) {
       // Submit error
-      toast.error(t('jobs.dialog.error'))
+      const message = error instanceof Error ? error.message : t('jobs.dialog.error')
+      toast.error(message)
     } finally {
       setLoading(false)
     }
@@ -642,13 +643,14 @@ export function JobDialog({
                 <div className="space-y-2">
                    <Label className="text-xl font-black text-primary/80 uppercase tracking-normal">{t('jobs.dialog.zone')}</Label>
                    <Select 
-                      value={formData.Zone} 
-                      onValueChange={(val) => setFormData({ ...formData, Zone: val })}
+                      value={formData.Zone || "none"} 
+                      onValueChange={(val) => setFormData({ ...formData, Zone: val === "none" ? "" : val })}
                    >
                     <SelectTrigger className="bg-background border-input">
                         <SelectValue placeholder={t('jobs.dialog.zone')} />
                     </SelectTrigger>
                     <SelectContent>
+                        <SelectItem value="none">-- Select Zone --</SelectItem>
                         {ZONES.map((z) => (
                             <SelectItem key={z.id} value={z.id}>{z.name}</SelectItem>
                         ))}
@@ -667,6 +669,7 @@ export function JobDialog({
                     </SelectTrigger>
                     <SelectContent>
                         <SelectItem value="New">{t('jobs.status_pending')} (New)</SelectItem>
+                        <SelectItem value="Requested">{t('jobs.status_requested')} (Requested)</SelectItem>
                         <SelectItem value="Assigned">{t('jobs.status_pending')} (Assigned)</SelectItem>
                         <SelectItem value="In Transit">{t('jobs.status_in_transit')} (In Transit)</SelectItem>
                         <SelectItem value="Delivered">{t('jobs.status_delivered')} (Delivered)</SelectItem>
@@ -706,8 +709,8 @@ export function JobDialog({
                 <div className="p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
                     <Label className="text-yellow-400 font-bold mb-2 block font-medium">{t('jobs.dialog.branch_super_admin')}</Label>
                     <Select 
-                      value={formData.branch_id || "none"} 
-                      onValueChange={(val) => setFormData({ ...formData, branch_id: val === "none" ? "" : val })}
+                      value={formData.Branch_ID || "none"} 
+                      onValueChange={(val) => setFormData({ ...formData, Branch_ID: val === "none" ? "" : val })}
                     >
                       <SelectTrigger className="bg-background border-yellow-500/30">
                         <SelectValue placeholder={t('jobs.dialog.use_current_branch')} />

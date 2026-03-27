@@ -1,3 +1,5 @@
+"use server"
+
 import { createAdminClient } from "./admin";
 import { getSession } from "../session";
 

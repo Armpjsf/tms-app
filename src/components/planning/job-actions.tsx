@@ -8,7 +8,28 @@ import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { JobDialog } from "./job-dialog"
 
-export function JobActions({ job, drivers, vehicles }: { job: Record<string, unknown>, drivers: Record<string, unknown>[], vehicles: Record<string, unknown>[] }) {
+import { Job } from "@/lib/supabase/jobs"
+import { Driver } from "@/lib/supabase/drivers"
+import { Vehicle } from "@/lib/supabase/vehicles"
+import { Customer } from "@/lib/supabase/customers"
+import { Route } from "@/lib/supabase/routes"
+import { Subcontractor } from "@/types/subcontractor"
+
+export function JobActions({ 
+  job, 
+  drivers, 
+  vehicles,
+  customers = [],
+  routes = [],
+  subcontractors = []
+}: { 
+  job: Job, 
+  drivers: Driver[], 
+  vehicles: Vehicle[],
+  customers?: Customer[],
+  routes?: Route[],
+  subcontractors?: Subcontractor[]
+}) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [showEdit, setShowEdit] = useState(false)
@@ -34,6 +55,9 @@ export function JobActions({ job, drivers, vehicles }: { job: Record<string, unk
         job={job} 
         drivers={drivers}
         vehicles={vehicles}
+        customers={customers}
+        routes={routes}
+        subcontractors={subcontractors}
         open={showEdit}
         onOpenChange={setShowEdit}
       />

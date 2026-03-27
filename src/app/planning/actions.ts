@@ -8,7 +8,8 @@ import { getAllVehiclesFromTable } from '@/lib/supabase/vehicles'
 import { logActivity } from '@/lib/supabase/logs'
 import { getUserBranchId } from '@/lib/permissions'
 import { notifyDriverNewJob } from '@/lib/actions/push-actions'
-import { getCustomerId, getUserId, isCustomer } from '@/lib/permissions'
+import { getCustomerId, getUserId, isCustomer, isSuperAdmin, isAdmin } from '@/lib/permissions'
+import { sanitizeJobData } from '@/lib/supabase/utils'
 
 export type JobFormData = {
   Job_ID: string
@@ -203,7 +204,8 @@ async function autoSaveOriginDestinations(branchId: string | null, originsJson?:
 }
 
 export async function createBulkJobs(jobs: Partial<JobFormData>[]) {
-  const supabase = await createClient()
+  const isAdminUser = await isAdmin()
+  const supabase = isAdminUser ? await createAdminClient() : await createClient()
 
   // Get Branch_ID for auto-assignment
   const userBranchId = await getUserBranchId()
@@ -266,7 +268,7 @@ export async function createBulkJobs(jobs: Partial<JobFormData>[]) {
     const driver = driverMap.get(driverId)
     const vehicle = vehicleMap.get(vehiclePlate)
 
-    return {
+    const sanitized = sanitizeJobData({
       Job_ID: (data.Job_ID as string) || `JOB-${Date.now().toString().slice(-6)}-${Math.floor(Math.random()*1000)}`,
       Branch_ID: effectiveBranchId,
       Plan_Date: (data.Plan_Date as string) || new Date().toISOString().split('T')[0],
@@ -284,7 +286,6 @@ export async function createBulkJobs(jobs: Partial<JobFormData>[]) {
       Weight_Kg: Number(data.Weight_Kg) || 0,
       Volume_Cbm: Number(data.Volume_Cbm) || 0,
       Created_At: new Date().toISOString(),
-      Ref_No: (data.Ref_No as string) || null,
       // Pass coordinates through
       Pickup_Lat: data.Pickup_Lat ? Number(data.Pickup_Lat) : null,
       Pickup_Lon: data.Pickup_Lon ? Number(data.Pickup_Lon) : null,
@@ -292,7 +293,12 @@ export async function createBulkJobs(jobs: Partial<JobFormData>[]) {
       Delivery_Lon: data.Delivery_Lon ? Number(data.Delivery_Lon) : null,
       Origin_Location: (data.Origin_Location as string) || null,
       Dest_Location: (data.Dest_Location as string) || null,
-    }
+    })
+    
+    if (typeof sanitized.Price_Cust_Total === 'string') sanitized.Price_Cust_Total = parseFloat(sanitized.Price_Cust_Total) || 0
+    if (typeof sanitized.Cost_Driver_Total === 'string') sanitized.Cost_Driver_Total = parseFloat(sanitized.Cost_Driver_Total) || 0
+    
+    return sanitized
   }).filter(j => j.Customer_Name)
 
   if (cleanData.length === 0) {
@@ -363,7 +369,7 @@ export async function createBulkJobs(jobs: Partial<JobFormData>[]) {
 export async function updateJob(jobId: string, data: Partial<JobFormData>) {
   const supabase = await createClient()
 
-  const updateData: Record<string, unknown> = { ...data }
+  const updateData = sanitizeJobData({ ...data })
   
   // Ensure JSON fields are parsed if they are strings
   if (data.extra_costs_json) updateData.extra_costs_json = parseIfString(data.extra_costs_json)
@@ -451,7 +457,10 @@ export async function deleteJob(jobId: string) {
 }
 
 export async function getJobCreationData() {
-  const supabase = await createClient()
+  const isSuper = await isSuperAdmin()
+  const isAdminUser = await isAdmin()
+  const branchId = await getUserBranchId()
+  const supabase = (isSuper || isAdminUser) ? createAdminClient() : await createClient()
 
   const [driversResult, vehiclesResult, customersResult, routesResult, subcontractorsResult] = await Promise.all([
     getAllDriversFromTable(),
@@ -461,12 +470,25 @@ export async function getJobCreationData() {
     supabase.from('Master_Subcontractors').select('*').order('Sub_Name', { ascending: true })
   ])
 
+  // Filter regular select results by branch if not admin using RLS or manual filter if no RLS
+  // Note: drivers/vehicles already have branch filtering inside their helper functions.
+  // For others, if the user is not an admin, we might need a manual filter if RLS is not fully configured for those tables.
+  let customers = customersResult.data || []
+  let routes = routesResult.data || []
+  let subcontractors = subcontractorsResult.data || []
+
+  if (branchId && branchId !== 'All' && !isSuper && !isAdminUser) {
+      customers = customers.filter(c => c.Branch_ID === branchId)
+      routes = routes.filter(r => r.Branch_ID === branchId)
+      subcontractors = subcontractors.filter(s => s.Branch_ID === branchId)
+  }
+
   return {
     drivers: driversResult,
     vehicles: vehiclesResult,
-    customers: customersResult.data || [],
-    routes: routesResult.data || [],
-    subcontractors: subcontractorsResult.data || []
+    customers,
+    routes,
+    subcontractors
   }
 }
 

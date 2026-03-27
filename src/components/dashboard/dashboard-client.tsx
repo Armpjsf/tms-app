@@ -61,6 +61,7 @@ interface DashboardClientProps {
     }[]
     fleetStatus: DriverStatus[] 
     marketplaceJobs: Job[]
+    logs?: any[]
     fleetHealth: number
 }
 
@@ -73,6 +74,7 @@ export function DashboardClient({
     weeklyStats, 
     fleetStatus,
     marketplaceJobs,
+    logs,
     fleetHealth
 }: DashboardClientProps) {
     const { t } = useLanguage()
@@ -258,7 +260,7 @@ export function DashboardClient({
                             </h3>
                         </div>
                         <div className="flex-1 overflow-y-auto custom-scrollbar pr-4 text-muted-foreground">
-                            <ActivityFeed jobStats={jobStats} sosCount={sosCount} />
+                            <ActivityFeed jobStats={jobStats} sosCount={sosCount} logs={logs} />
                         </div>
                     </div>
                 </motion.div>

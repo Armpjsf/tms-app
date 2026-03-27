@@ -1,6 +1,6 @@
 'use server'
 
-import { createClient } from '@/utils/supabase/server'
+import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { logActivity } from '@/lib/supabase/logs'
 import { sendPushToDriver } from '@/lib/actions/push-actions'
@@ -17,12 +17,12 @@ export type JobBid = {
 
 // ฝั่งคนขับ: ดึงงานที่ยังไม่มีคนรับ
 export async function getUnassignedJobs() {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
 
   const { data, error } = await supabase
     .from('Jobs_Main')
     .select('*')
-    .in('Job_Status', ['New', 'Requested'])
+    .in('Job_Status', ['New', 'Requested', 'Assigned'])
     .is('Driver_ID', null)
     .order('Created_At', { ascending: false })
 

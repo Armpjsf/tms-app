@@ -5,6 +5,8 @@ import { DashboardClient } from "@/components/dashboard/dashboard-client"
 import { getExecutiveDashboardUnified } from "@/lib/supabase/financial-analytics"
 import { getSOSDriverIds } from "@/lib/supabase/sos"
 import { getCustomerName } from "@/lib/supabase/customers"
+import { getMarketplaceJobs } from "@/lib/supabase/jobs"
+import { getSystemLogs } from "@/lib/supabase/logs"
 import { isCustomer, getCustomerId } from "@/lib/permissions"
 import { useEffect, useState, useCallback } from "react"
 import { useBranch } from "@/components/providers/branch-provider"
@@ -19,10 +21,12 @@ export default function DashboardPage() {
   const loadData = useCallback(async () => {
     setLoading(true)
     try {
-      // Two parallel fetches instead of nine separate ones
-      const [unified, sosIds, customerMode, custId] = await Promise.all([
-        getExecutiveDashboardUnified(selectedBranch === 'All' ? undefined : selectedBranch),
+      const currentBranchId = selectedBranch === 'All' ? undefined : selectedBranch
+      const [unified, sosIds, marketplaceJobs, logs, customerMode, custId] = await Promise.all([
+        getExecutiveDashboardUnified(currentBranchId),
         getSOSDriverIds(),
+        getMarketplaceJobs(currentBranchId),
+        getSystemLogs({ branchId: currentBranchId, limit: 10 }),
         isCustomer(),
         getCustomerId()
       ])
@@ -32,7 +36,7 @@ export default function DashboardPage() {
           custName = await getCustomerName(custId) || custId
       }
 
-      setData({ unified, sosIds, customerMode, custId, custName })
+      setData({ unified, sosIds, marketplaceJobs, logs, customerMode, custId, custName })
     } finally {
       setLoading(false)
     }
@@ -50,13 +54,17 @@ export default function DashboardPage() {
     </DashboardLayout>
   )
 
-  const { unified, sosIds, customerMode, custId, custName } = data
+  const { unified, sosIds, marketplaceJobs, logs, customerMode, custId, custName } = data
 
-  // Map unified data to DashboardClient props
   const jobStats = {
     total: unified.kpi?.jobs?.current ?? 0,
-    active: unified.statusDist?.find((s: any) => s.name === 'In Progress')?.value ?? 0,
-    completed: unified.statusDist?.find((s: any) => ['Completed', 'Delivered', 'Finished', 'Closed'].includes(s.name))
+    pending: unified.statusDist?.find((s: any) => ['New', 'Requested', 'Assigned', 'Pending'].includes(s.name))
+                ? unified.statusDist.filter((s: any) => ['New', 'Requested', 'Assigned', 'Pending'].includes(s.name)).reduce((a: number, b: any) => a + b.value, 0)
+                : 0,
+    inProgress: unified.statusDist?.find((s: any) => ['In Progress', 'In Transit', 'Active'].includes(s.name))
+                 ? unified.statusDist.filter((s: any) => ['In Progress', 'In Transit', 'Active'].includes(s.name)).reduce((a: number, b: any) => a + b.value, 0)
+                 : 0,
+    delivered: unified.statusDist?.find((s: any) => ['Completed', 'Delivered', 'Finished', 'Closed'].includes(s.name))
                   ? unified.statusDist.filter((s: any) => ['Completed', 'Delivered', 'Finished', 'Closed'].includes(s.name)).reduce((a: number, b: any) => a + b.value, 0)
                   : 0
   }
@@ -71,7 +79,8 @@ export default function DashboardPage() {
         sosCount={sosIds.length}
         weeklyStats={unified.trend ?? []}
         fleetStatus={[]}
-        marketplaceJobs={[]}
+        marketplaceJobs={marketplaceJobs ?? []}
+        logs={logs ?? []}
         fleetHealth={unified.kpi?.margin?.current ? Math.round(unified.kpi.margin.current + 80) : 98}
       />
     </DashboardLayout>
