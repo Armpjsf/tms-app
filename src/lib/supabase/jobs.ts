@@ -295,6 +295,8 @@ export async function getDriverJobs(
   try {
     // USE admin client for driver-specific queries to bypass RLS 
     // since drivers use custom cookie auth, not Supabase Auth
+    const branchId = await getUserBranchId()
+    const isAdmin = await isSuperAdmin()
     const supabase = createAdminClient()
     
     let query = supabase
@@ -820,9 +822,9 @@ export async function getMarketplaceJobs(providedBranchId?: string): Promise<Job
 // ดึงการขอรถที่รอดำเนินการ (Requested) ทั้งหมด โดยไม่จำกัดวันที่
 export async function getRequestedJobs(): Promise<Job[]> {
     try {
-        const supabase = await createClient()
-        const branchId = await getUserBranchId()
         const isAdmin = await isSuperAdmin()
+        const supabase = isAdmin ? createAdminClient() : await createClient()
+        const branchId = await getUserBranchId()
         const customerId = await getCustomerId()
 
         let dbQuery = supabase

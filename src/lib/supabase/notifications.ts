@@ -1,6 +1,6 @@
 "use server"
 
-import { createClient } from '@/utils/supabase/server'
+import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { getChatSchema } from './chat'
 import { getUserBranchId, isSuperAdmin } from '@/lib/permissions'
 import { cookies } from 'next/headers'
@@ -18,9 +18,9 @@ export interface AppNotification {
 
 // Generate notifications from existing data sources
 export async function getNotifications(): Promise<AppNotification[]> {
-  const supabase = await createClient()
-  const branchId = await getUserBranchId()
   const isAdmin = await isSuperAdmin()
+  const supabase = isAdmin ? createAdminClient() : await createClient()
+  const branchId = await getUserBranchId()
   const cookieStore = await cookies()
   const selectedBranch = cookieStore.get('selectedBranch')?.value
   
@@ -110,7 +110,42 @@ export async function getNotifications(): Promise<AppNotification[]> {
   }
 
   try {
-    // 3. Maintenance Due Soon (within 7 days)
+    // 3. New Shipment Requests (Pending)
+    let requestQuery = supabase
+      .from('Jobs_Main')
+      .select('Job_ID, Customer_Name, Created_At, Job_Status, Plan_Date')
+      .eq('Job_Status', 'Requested')
+      .order('Created_At', { ascending: false })
+      .limit(5)
+
+    if (isAdmin && selectedBranch && selectedBranch !== 'All') {
+      requestQuery = requestQuery.eq('Branch_ID', selectedBranch)
+    } else if (branchId && !isAdmin) {
+      requestQuery = requestQuery.eq('Branch_ID', branchId)
+    }
+
+    const { data: requests } = await requestQuery
+
+    if (requests) {
+      requests.forEach((req: { Job_ID: string, Customer_Name?: string, Created_At?: string, Plan_Date?: string }) => {
+        notifications.push({
+          id: `request-${req.Job_ID}`,
+          type: 'system',
+          title: '🆕 คำขอส่งสินค้าใหม่',
+          message: `${req.Customer_Name || 'ลูกค้า'} ขอรถสำหรับวันที่ ${req.Plan_Date || 'ไม่ระบุ'}`,
+          timestamp: req.Created_At || now.toISOString(),
+          read: false,
+          href: '/planning',
+          severity: 'info'
+        })
+      })
+    }
+  } catch {
+    // Request query error
+  }
+
+  try {
+    // 4. Maintenance Due Soon (within 7 days)
     const weekFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
     
     const { data: maintenanceDue } = await supabase
