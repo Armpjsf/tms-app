@@ -1,6 +1,6 @@
 "use server";
 
-import { createClient } from "@/utils/supabase/server";
+import { createClient, createAdminClient } from "@/utils/supabase/server";
 
 export interface PublicJobDetails {
   jobId: string;
@@ -91,9 +91,11 @@ export async function getPublicJobDetails(
     : [];
 
   // Fetch latest location for the vehicle/driver associated with this job
+  // Use admin client to bypass RLS for public tracking page
   let lastLocation = null;
-  if (["In Transit", "Picked Up"].includes(job.Job_Status)) {
-    const { data: gpsData } = await supabase
+  if (["In Transit", "Picked Up", "En Route", "En-Route"].includes(job.Job_Status)) {
+    const adminSupabase = createAdminClient();
+    const { data: gpsData } = await adminSupabase
       .from("gps_logs")
       .select("*")
       .eq("driver_id", job.Driver_ID) 
