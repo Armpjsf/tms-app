@@ -192,7 +192,7 @@ export async function getActiveFleetStatus(branchId?: string | null, customerId?
       driversQuery = driversQuery.in("Driver_ID", activeDriverIds);
     } else if (effectiveBranchId && effectiveBranchId !== "All") {
       driversQuery = driversQuery.eq("Branch_ID", effectiveBranchId);
-    } else if (!isAdmin && !effectiveBranchId) {
+    } else if (!isSuper && !isAdminUser && !effectiveBranchId) {
       return [];
     }
 
@@ -212,14 +212,14 @@ export async function getActiveFleetStatus(branchId?: string | null, customerId?
     }
 
     // 2. Format the data to match expected return type
-    return drivers.map(driver => ({
-      Driver_ID: driver.Driver_ID,
-      Driver_Name: driver.Driver_Name || "Unknown",
-      Vehicle_Plate: driver.Vehicle_Plate || "-",
-      Mobile_No: driver.Mobile_No || "",
-      Last_Update: driver.Last_Seen || null,
-      Latitude: driver.Current_Lat || null,
-      Longitude: driver.Current_Lon || null,
+    return drivers.map((driver: any) => ({
+      Driver_ID: driver.Driver_ID || driver.driver_id,
+      Driver_Name: driver.Driver_Name || driver.driver_name || "Unknown",
+      Vehicle_Plate: driver.Vehicle_Plate || driver.vehicle_plate || "-",
+      Mobile_No: driver.Mobile_No || driver.mobile_no || "",
+      Last_Update: driver.Last_Seen || driver.last_seen || null,
+      Latitude: driver.Current_Lat ?? driver.current_lat ?? null,
+      Longitude: driver.Current_Lon ?? driver.current_lon ?? null,
     }));
   } catch {
     return [];

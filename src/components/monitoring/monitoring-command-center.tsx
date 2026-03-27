@@ -1,12 +1,10 @@
 "use client"
 
-import { useMemo, useEffect, useRef, useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { useMemo, useState, useRef } from 'react'
 import { 
     Search, 
     Activity, 
-    Truck, 
-    Target
+    Truck
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useSearchParams } from 'next/navigation'
@@ -118,7 +116,15 @@ export function MonitoringCommandCenter({
         const jobAny = job as any
         if (jobAny.Pickup_Lat && jobAny.Pickup_Lon) {
             setFocusPosition([jobAny.Pickup_Lat, jobAny.Pickup_Lon])
-            setTimeout(() => setFocusPosition(undefined), 1000)
+        }
+    }
+
+    const handleDriverClick = (driver: DriverWithGPS) => {
+        if (driver.Latitude && driver.Longitude) {
+            setSelectedId(driver.Driver_ID)
+            setFocusPosition([driver.Latitude, driver.Longitude])
+        } else {
+            toast.error(t('monitoring.no_location'))
         }
     }
 
@@ -176,9 +182,14 @@ export function MonitoringCommandCenter({
                 <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar">
                     {filter === 'all' || filter === 'drivers' ? (
                         driversWithGPS.map(driver => (
-                            <div key={driver.Driver_ID} className="bg-muted/50 border border-border/5 p-4 rounded-3xl hover:bg-muted/80 transition-all cursor-pointer group">
+                            <div key={driver.Driver_ID} 
+                                 onClick={() => handleDriverClick(driver)}
+                                 className={cn(
+                                    "bg-muted/50 border border-border/10 p-4 rounded-3xl hover:bg-muted/80 transition-all cursor-pointer group",
+                                    selectedId === driver.Driver_ID && "ring-2 ring-primary bg-primary/5"
+                                 )}>
                                 <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-3" onClick={() => handleJobClick(driver as any)}>
+                                    <div className="flex items-center gap-3">
                                         <div className="relative">
                                             <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/20">
                                                 <Truck size={20} className="text-primary" />
@@ -186,8 +197,8 @@ export function MonitoringCommandCenter({
                                             <div className={cn("absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-[#050110]", driver.status === 'Online' ? "bg-emerald-500" : "bg-slate-500")} />
                                         </div>
                                         <div>
-                                            <p className="text-xl font-black text-white">{driver.Driver_Name}</p>
-                                            <p className="text-lg font-bold font-bold text-muted-foreground uppercase tracking-tighter">{driver.Vehicle_Plate}</p>
+                                            <p className="text-xl font-black text-foreground">{driver.Driver_Name}</p>
+                                            <p className="text-lg font-bold text-muted-foreground uppercase tracking-tighter">{driver.Vehicle_Plate}</p>
                                         </div>
                                     </div>
                                     <SafetyScoreBadge metrics={calculateSafetyScore(driver)} />
@@ -217,8 +228,8 @@ function FilterButton({ active, onClick, label, count, color = "primary" }: any)
             className={cn(
                 "px-5 py-2.5 rounded-xl text-lg font-bold font-black uppercase tracking-[0.15em] whitespace-nowrap transition-all border flex items-center gap-2",
                 active 
-                    ? `bg-${color}-500 text-white border-${color}-400 shadow-lg shadow-${color}-500/20 scale-105` 
-                    : "bg-muted/50 border-border/5 text-muted-foreground hover:text-muted-foreground"
+                    ? `bg-primary text-white border-primary shadow-lg shadow-primary/20 scale-105` 
+                    : "bg-muted/50 border-border/10 text-muted-foreground hover:text-muted-foreground"
             )}
         >
             {label}
