@@ -250,3 +250,19 @@ export async function createBulkCustomers(customers: Record<string, unknown>[]) 
         return { success: false, message: (e as Error).message }
     }
 }
+
+export async function getCustomerName(customerId: string) {
+    try {
+        const supabase = await createAdminClient()
+        const { data, error } = await supabase
+            .from('Master_Customers')
+            .select('Customer_Name')
+            .eq('Customer_ID', customerId)
+            .single()
+        
+        if (error) return null
+        return data.Customer_Name
+    } catch {
+        return null
+    }
+}

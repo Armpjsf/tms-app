@@ -4,6 +4,7 @@ import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { DashboardClient } from "@/components/dashboard/dashboard-client"
 import { getExecutiveDashboardUnified } from "@/lib/supabase/financial-analytics"
 import { getSOSDriverIds } from "@/lib/supabase/sos"
+import { getCustomerName } from "@/lib/supabase/customers"
 import { isCustomer, getCustomerId } from "@/lib/permissions"
 import { useEffect, useState, useCallback } from "react"
 import { useBranch } from "@/components/providers/branch-provider"
@@ -28,17 +29,7 @@ export default function DashboardPage() {
 
       let custName = custId;
       if (customerMode && custId) {
-          const { createClient } = await import('@/lib/supabase/server')
-          const supabase = await createClient()
-          const { data: customer } = await supabase
-            .from('Master_Customers')
-            .select('Customer_Name')
-            .eq('Customer_ID', custId)
-            .single()
-          
-          if (customer?.Customer_Name) {
-              custName = customer.Customer_Name
-          }
+          custName = await getCustomerName(custId) || custId
       }
 
       setData({ unified, sosIds, customerMode, custId, custName })
