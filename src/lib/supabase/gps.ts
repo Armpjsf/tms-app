@@ -203,9 +203,11 @@ export async function getActiveFleetStatus(branchId?: string | null, customerId?
     }
 
     console.log('[DEBUG] getActiveFleetStatus found drivers:', drivers.length, 'for branch:', effectiveBranchId)
+    console.log('[DEBUG] Found Driver IDs:', drivers.map(d => d.Driver_ID).join(', '))
+    
     if (drivers.length === 0 && effectiveBranchId !== 'All') {
-        const { count } = await supabase.from('Master_Drivers').select('*', { count: 'exact', head: true }).eq('Driver_ID', 'DVR-000')
-        console.log('[DEBUG] Total check for DVR-000 exists:', count)
+        const { data: d000 } = await supabase.from('Master_Drivers').select('*').eq('Driver_ID', 'DVR-000').single()
+        console.log('[DEBUG] DVR-000 in DB?:', d000 ? `YES (Branch: ${d000.Branch_ID})` : 'NO')
     }
 
     // 2. Format the data to match expected return type

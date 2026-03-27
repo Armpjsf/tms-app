@@ -14,7 +14,7 @@ export default async function MobileLayout({
   return (
     <div className="flex flex-col min-h-screen bg-transparent text-foreground pt-[env(safe-area-inset-top)] pb-32">
       <SyncManager />
-      {session && <LocationTracker driverId={session.driverId} />}
+      {session && <LocationTracker driverId={session.driverId} branchId={session.branchId} />}
       {session && <PermissionRequester driverId={session.driverId} />}
       <main className="flex-1">{children}</main>
       {session && <BottomNav />}
