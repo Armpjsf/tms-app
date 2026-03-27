@@ -4,26 +4,25 @@ import { useEffect, useRef, useState } from "react"
 import { saveGPSLog } from "@/lib/supabase/gps"
 import { updateDriverLocation } from "@/lib/actions/location-actions"
 
-const UPDATE_INTERVAL = 60000 // Update every 1 minute (60,000 ms)
-const MIN_DISTANCE = 0.0002 // Approx 20-30 meters difference to trigger update
+const UPDATE_INTERVAL = 60000 // Update every 1 minute
+const MIN_DISTANCE = 0.0002 // Approx 20-30 meters
 
 export function LocationTracker({ driverId }: { driverId?: string }) {
   const [status, setStatus] = useState<"idle" | "tracking" | "error">("idle")
+  const [debugPos, setDebugPos] = useState<{ lat: number; lng: number } | null>(null)
+  
   const lastUpdateRef = useRef<number>(0)
   const lastPosRef = useRef<{ lat: number; lng: number } | null>(null)
   
   useEffect(() => {
-    if (!driverId) return // No driver logged in
+    if (!driverId) return
 
-    // Check if geolocation is supported
     if (!("geolocation" in navigator)) {
-      if (status !== "error") {
-          setTimeout(() => setStatus("error"), 0)
-      }
+      setTimeout(() => setStatus("error"), 0)
       return
     }
 
-    if (status !== "tracking") {
+    if (status === "idle") {
         setTimeout(() => setStatus("tracking"), 0)
     }
 
@@ -32,7 +31,9 @@ export function LocationTracker({ driverId }: { driverId?: string }) {
             const now = Date.now()
             const { latitude, longitude, speed } = position.coords
             
-            // Throttle updates: Only send if enough time passed OR significant distance moved
+            // For debug display (State updates only on first position or change)
+            setDebugPos({ lat: latitude, lng: longitude })
+
             const timeDiff = now - lastUpdateRef.current
             const isTime = timeDiff > UPDATE_INTERVAL
             
@@ -41,26 +42,21 @@ export function LocationTracker({ driverId }: { driverId?: string }) {
                 : true
 
             if (isTime || isDistance) {
-                // Update refs
                 lastUpdateRef.current = now
                 lastPosRef.current = { lat: latitude, lng: longitude }
 
-                // 1. Log to History (gps_logs)
                 saveGPSLog({
                     driverId: driverId,
                     lat: latitude,
                     lng: longitude,
                     speed: speed || 0,
-                }).catch(() => {/* Silent fail for history */})
+                }).catch(() => {})
 
-                // 2. Update Current Location (Master_Drivers) for real-time dashboard
-                updateDriverLocation(driverId, latitude, longitude).catch(() => {/* Silent fail for real-time */})
+                updateDriverLocation(driverId, latitude, longitude).catch(() => {})
             }
         },
         () => {
-            if (status !== "error") {
-                setTimeout(() => setStatus("error"), 0)
-            }
+            setStatus("error")
         },
         {
             enableHighAccuracy: true,
@@ -74,16 +70,24 @@ export function LocationTracker({ driverId }: { driverId?: string }) {
     }
   }, [driverId, status])
 
-  if (status === "error") return null // Don't show anything on error
+  if (!driverId) return null
 
-  // Optional: Show a small indicator that tracking is active (Debug mode or always)
   return (
-    <div className="fixed top-2 right-2 z-50 pointer-events-none">
+    <div className="fixed top-2 right-2 z-50 pointer-events-none flex flex-col items-end gap-1">
+       {/* Visual Debug Status */}
+       <div className="bg-black/70 text-[8px] text-white px-2 py-1 rounded-md backdrop-blur-sm border border-white/10 uppercase tracking-tighter">
+         ID: {driverId} | {status} | {debugPos ? 'GPS-OK' : 'NO-GPS'}
+       </div>
+
        {status === "tracking" && (
            <span className="flex h-2 w-2 relative">
              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
            </span>
+       )}
+
+       {status === "error" && (
+           <span className="h-2 w-2 rounded-full bg-red-500 shadow-sm shadow-red-500/50"></span>
        )}
     </div>
   )

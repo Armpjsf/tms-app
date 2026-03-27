@@ -7,6 +7,7 @@ import { createAdminClient } from "@/utils/supabase/server"
  * This is used for real-time tracking on the admin dashboard.
  */
 export async function updateDriverLocation(driverId: string, lat: number, lon: number) {
+    console.log('[DEBUG] updateDriverLocation start:', { driverId, lat, lon })
     const supabase = createAdminClient()
 
     const { error } = await supabase
@@ -19,8 +20,10 @@ export async function updateDriverLocation(driverId: string, lat: number, lon: n
         .eq('Driver_ID', driverId)
 
     if (error) {
+        console.error('[DEBUG] updateDriverLocation error:', error)
         return { success: false, error: error.message }
     }
 
+    console.log('[DEBUG] updateDriverLocation success for:', driverId)
     return { success: true }
 }
