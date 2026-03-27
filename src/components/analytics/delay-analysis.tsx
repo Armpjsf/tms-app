@@ -37,26 +37,26 @@ export function DelayAnalysis({ data = [] }: Props) {
 
     if (data.length === 0) {
         return (
-            <PremiumCard className="bg-background border-2 border-border/5 shadow-3xl p-12 text-center rounded-br-[4rem] rounded-tl-[2rem]">
+            <PremiumCard className="bg-muted/50 border border-border/10 shadow-3xl p-12 text-center rounded-br-[4rem] rounded-tl-[2rem]">
                 <div className="flex flex-col items-center gap-4 text-muted-foreground">
                     <ShieldAlert size={48} strokeWidth={1} />
-                    <p className="text-base font-bold font-black uppercase tracking-widest italic">{t('analytics.no_delay_data') || 'No Delay Root Cause Data'}</p>
+                    <p className="text-base font-bold font-black uppercase italic">{t('analytics.no_delay_data') || 'No Delay Root Cause Data'}</p>
                 </div>
             </PremiumCard>
         )
     }
 
     return (
-        <PremiumCard className="bg-background border-2 border-border/5 shadow-3xl p-0 overflow-hidden rounded-br-[4rem] rounded-tl-[2rem] group/delays">
-            <div className="p-10 border-b border-border/5 bg-black/40 relative overflow-hidden flex items-center justify-between">
-                <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-rose-500 to-transparent" />
+        <PremiumCard className="bg-muted/50 border border-border/10 shadow-3xl p-0 overflow-hidden rounded-br-[4rem] rounded-tl-[2rem] group/delays">
+            <div className="p-10 border-b border-border/5 bg-gradient-to-r from-rose-500/20 via-rose-500/5 to-transparent backdrop-blur-md relative overflow-hidden flex items-center justify-between">
+                <div className="absolute inset-0 bg-gradient-to-r from-rose-500/10 to-transparent pointer-events-none" />
                 <div className="flex items-center gap-5 relative z-10">
                     <div className="p-3 bg-rose-500/20 rounded-2xl text-rose-500 border border-rose-500/30 shadow-[0_0_20px_rgba(244,63,94,0.2)]">
                         <AlertCircle size={22} />
                     </div>
                     <div>
                         <h3 className="text-xl font-black text-foreground tracking-tighter italic uppercase">{t('analytics.delay_root_cause') || 'Analysis of Delays'}</h3>
-                        <p className="text-rose-500 text-base font-bold font-black uppercase tracking-[0.4em]">{t('analytics.failure_distribution') || 'Job Failure Distribution'}</p>
+                        <p className="text-rose-500 text-base font-bold font-black uppercase italic">{t('analytics.failure_distribution') || 'Job Failure Distribution'}</p>
                     </div>
                 </div>
             </div>
@@ -88,19 +88,19 @@ export function DelayAnalysis({ data = [] }: Props) {
                                     padding: '15px'
                                 }}
                                 itemStyle={{ fontSize: '11px', fontWeight: '900', textTransform: 'uppercase', color: '#fff' }}
-                                formatter={(value: number) => [`${value} ${t('common.units')}`, t('common.status')]}
+                                formatter={(value: number | undefined) => [`${value ?? 0} ${t('common.units')}`, t('common.status')]}
                             />
                             <Legend 
                                 layout="vertical" 
                                 align="right" 
                                 verticalAlign="middle"
                                 iconType="circle"
-                                formatter={(value) => <span className="text-[11px] font-black text-muted-foreground uppercase tracking-widest italic ml-2">{value}</span>}
+                                formatter={(value) => <span className="text-[11px] font-black text-muted-foreground uppercase italic ml-2">{value}</span>}
                             />
                         </PieChart>
                     </ResponsiveContainer>
                     <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none pr-32">
-                        <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-[0.2em] leading-none mb-1">TOTAL</span>
+                        <span className="text-base font-bold font-black text-muted-foreground uppercase leading-none mb-1">TOTAL</span>
                         <span className="text-4xl font-black text-foreground tracking-tighter italic">{total}</span>
                     </div>
                 </div>
@@ -110,7 +110,7 @@ export function DelayAnalysis({ data = [] }: Props) {
                         <div key={item.name} className="p-4 bg-muted/30 rounded-2xl border border-border/5 flex flex-col gap-1">
                             <div className="flex items-center gap-2">
                                 <div className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }} />
-                                <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest truncate">{item.name}</span>
+                                <span className="text-[10px] font-black text-muted-foreground uppercase truncate">{item.name}</span>
                             </div>
                             <div className="text-foreground italic">
                                 {((item.value / total) * 100).toFixed(1)}%

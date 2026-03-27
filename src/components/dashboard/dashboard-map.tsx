@@ -6,14 +6,22 @@ import { TrendingUp, Activity, Layers } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
+import { useLanguage } from '@/components/providers/language-provider'
+import { MapOverlay } from './map-overlay'
+
 const LeafletMap = dynamic(() => import('@/components/maps/leaflet-map'), {
   ssr: false,
-  loading: () => (
+  loading: () => <LoadingMap />
+})
+
+function LoadingMap() {
+  const { t } = useLanguage()
+  return (
     <div className="absolute inset-0 bg-muted flex items-center justify-center">
-      <div className="text-emerald-500 animate-pulse font-medium">Initializing Live Fleet Map...</div>
+      <div className="text-emerald-500 animate-pulse font-medium">{t('dashboard.map.loading')}</div>
     </div>
   )
-})
+}
 
 interface DashboardMapProps {
     drivers: {
@@ -37,9 +45,8 @@ interface DashboardMapProps {
     sosDriverIds?: (string | null)[]
 }
 
-import { MapOverlay } from './map-overlay'
-
 export function DashboardMap({ drivers, allJobs = [], focusPosition, plannedRoute, routeSummary, sosDriverIds = [] }: DashboardMapProps) {
+    const { t } = useLanguage()
     const [currentTime] = useState<number>(() => Date.now())
     const [showHeatmap, setShowHeatmap] = useState(false)
 
@@ -102,12 +109,12 @@ export function DashboardMap({ drivers, allJobs = [], focusPosition, plannedRout
                     {showHeatmap ? (
                         <>
                             <Activity className="mr-2 h-4 w-4" />
-                            Live Fleet
+                            {t('dashboard.map.live_fleet')}
                         </>
                     ) : (
                         <>
                             <TrendingUp className="mr-2 h-4 w-4" />
-                            Profit Heatmap
+                            {t('dashboard.map.profit_heatmap')}
                         </>
                     )}
                 </Button>

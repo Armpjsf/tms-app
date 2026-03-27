@@ -60,7 +60,7 @@ const navigation: NavGroup[] = [
       { titleKey: "navigation.planning", href: "/planning", icon: <CalendarDays size={20} /> },
       { titleKey: "navigation.calendar", href: "/calendar", icon: <CalendarDays size={20} /> },
       { titleKey: "navigation.history", href: "/jobs/history", icon: <History size={20} /> },
-      { titleKey: "navigation.monitoring", href: "/monitoring", icon: <Activity size={20} />, badge: "Live", badgeColor: "green" },
+      { titleKey: "navigation.monitoring", href: "/monitoring", icon: <Activity size={20} />, badge: "common.live", badgeColor: "green" },
       { titleKey: "navigation.pod", href: "/pod", icon: <FileText size={20} /> },
       { titleKey: "navigation.sos", href: "/sos", icon: <AlertTriangle size={20} />, badgeColor: "red" },
       { titleKey: "navigation.notifications", href: "/notifications", icon: <Bell size={20} />, badgeColor: "yellow" },
@@ -108,7 +108,7 @@ const customerNavigation: NavGroup[] = [
       titleKey: "nav_groups.client_portal",
       items: [
         { titleKey: "navigation.dashboard", href: "/dashboard", icon: <LayoutDashboard size={20} /> },
-        { titleKey: "navigation.monitoring", href: "/monitoring", icon: <Activity size={20} />, badge: "Live", badgeColor: "green" },
+        { titleKey: "navigation.monitoring", href: "/monitoring", icon: <Activity size={20} />, badge: "common.live", badgeColor: "green" },
         { titleKey: "navigation.routes", href: "/routes", icon: <Navigation size={20} /> },
         { titleKey: "navigation.history", href: "/jobs/history", icon: <History size={20} /> },
       ],
@@ -302,7 +302,7 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
                                 item.badgeColor === "green" && "bg-primary/10 text-primary border-primary/20",
                                 item.badgeColor === "yellow" && "bg-yellow-500/10 text-yellow-500 border-yellow-500/20"
                             )}>
-                                {item.badge}
+                                {typeof item.badge === 'string' ? t(item.badge) : item.badge}
                             </span>
                           )}
                         </div>

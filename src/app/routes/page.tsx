@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
-import { PremiumCard } from "@/components/ui/premium-card"
 import { PremiumButton } from "@/components/ui/premium-button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -13,16 +12,13 @@ import {
   Edit,
   Trash2,
   Save,
-  X,
   Loader2,
   Navigation,
   Globe,
   FileSpreadsheet,
   Ruler,
-  Building2,
-  Activity,
-  Zap,
   ShieldCheck,
+  Activity,
   Target
 } from "lucide-react"
 import {
@@ -50,10 +46,11 @@ import {
 import { ExcelImport } from "@/components/ui/excel-import"
 import { LocationAutocomplete } from "@/components/location-autocomplete"
 import { useBranch } from "@/components/providers/branch-provider"
+import { useLanguage } from "@/components/providers/language-provider"
 import { toast } from "sonner"
-import { cn } from "@/lib/utils"
 
 export default function RoutesPage() {
+  const { t } = useLanguage()
   const { selectedBranch, branches } = useBranch()
   
   const [routes, setRoutes] = useState<Route[]>([])
@@ -135,7 +132,7 @@ export default function RoutesPage() {
 
   const handleSave = async () => {
     if (!formData.Route_Name) {
-      toast.warning("กรุณาระบุชื่อเส้นทาง")
+      toast.warning(t('routes.toasts.name_required'))
       return
     }
 
@@ -152,19 +149,19 @@ export default function RoutesPage() {
       setIsDialogOpen(false)
       resetForm()
       fetchData()
-      toast.success("บันทึกข้อมูลเส้นทางเรียบร้อยแล้ว")
+      toast.success(t('routes.toasts.save_success'))
     } catch {
-      toast.error("เกิดข้อผิดพลาดในการบันทึก")
+      toast.error(t('routes.toasts.save_error'))
     } finally {
       setSaving(false)
     }
   }
 
   const handleDelete = async (routeName: string) => {
-    if (confirm(`ยืนยันลบเส้นทาง "${routeName}"?`)) {
+    if (confirm(t('routes.toasts.confirm_delete').replace('{{name}}', routeName))) {
       await deleteRoute(routeName)
       fetchData()
-      toast.success("ลบข้อมูลเส้นทางเรียบร้อยแล้ว")
+      toast.success(t('routes.toasts.delete_success'))
     }
   }
 
@@ -179,13 +176,13 @@ export default function RoutesPage() {
                 <div className="p-2 bg-primary/20 rounded-xl shadow-lg">
                     <Navigation className="text-primary" size={20} />
                 </div>
-                <h2 className="text-base font-bold font-black text-primary uppercase tracking-[0.4em]">Geospatial Intelligence Matrix</h2>
+                <h2 className="text-base font-bold font-black text-primary uppercase tracking-tight">{t('routes.geospatial_matrix')}</h2>
             </div>
             <h1 className="text-6xl font-black text-foreground tracking-tighter flex items-center gap-5 uppercase premium-text-gradient">
-                Logistics Routes
+                {t('routes.title')}
             </h1>
-            <p className="text-muted-foreground font-bold text-xl tracking-wide opacity-80 uppercase tracking-widest leading-relaxed">
-              Tactical Route Optimization & Mapping Command Centre
+            <p className="text-muted-foreground font-bold text-xl tracking-normal opacity-80 uppercase leading-relaxed">
+              {t('routes.subtitle')}
             </p>
         </div>
 
@@ -194,16 +191,16 @@ export default function RoutesPage() {
                 trigger={
                     <PremiumButton variant="outline" className="h-14 px-8 rounded-2xl border-border/5 bg-muted/50 text-muted-foreground hover:bg-muted/80 hover:text-foreground transition-all">
                         <FileSpreadsheet size={20} className="mr-3 opacity-50" /> 
-                        Spatial Import
+                        {t('routes.spatial_import')}
                     </PremiumButton>
                 }
-                title="Route Vector Import"
+                title={t('routes.spatial_import')}
                 onImport={createBulkRoutes}
                 templateFilename="logispro_routes_template.xlsx"
             />
             <PremiumButton onClick={() => handleOpenDialog()} className="h-14 px-10 rounded-2xl shadow-xl shadow-primary/20">
               <Plus size={24} className="mr-3" strokeWidth={3} />
-              ENLIST ROUTE
+              {t('routes.enlist_route')}
             </PremiumButton>
         </div>
       </div>
@@ -217,7 +214,7 @@ export default function RoutesPage() {
                 <Input
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="SCAN ROUTE VECTORS & NODES..."
+                    placeholder={t('routes.search_placeholder')}
                     className="bg-transparent border-none text-2xl font-black text-foreground px-4 h-20 placeholder:text-muted-foreground tracking-tighter uppercase focus-visible:ring-0"
                 />
             </div>
@@ -233,7 +230,7 @@ export default function RoutesPage() {
                     <div className="p-3 bg-primary/20 rounded-2xl shadow-xl ring-1 ring-primary/30">
                         <Target size={32} className="text-primary" strokeWidth={2.5} />
                     </div>
-                    {editingRoute ? "Refine Vector" : "Plot New Route"}
+                    {editingRoute ? t('routes.dialog.title_edit') : t('routes.dialog.title_add')}
                   </DialogTitle>
                 </DialogHeader>
             </div>
@@ -242,27 +239,27 @@ export default function RoutesPage() {
               {/* Route Primary Metadata */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                 <div className="space-y-4">
-                  <Label className="text-base font-bold font-black uppercase tracking-[0.4em] text-muted-foreground ml-2">Mission Route Name</Label>
+                  <Label className="text-base font-bold font-black uppercase tracking-tight text-muted-foreground ml-2">{t('routes.dialog.route_name')}</Label>
                   <Input
                     value={formData.Route_Name || ""}
                     onChange={(e) => updateForm("Route_Name", e.target.value)}
-                    placeholder="E.G. SECTOR-A, GRID-X"
-                    className="h-16 bg-muted/50 border-border/5 text-foreground font-black rounded-2xl px-8 text-xl uppercase tracking-widest focus:bg-muted/80 transition-all"
+                    placeholder={t('routes.dialog.placeholder_name')}
+                    className="h-16 bg-muted/50 border-border/5 text-foreground font-black rounded-2xl px-8 text-xl uppercase tracking-normal focus:bg-muted/80 transition-all"
                     disabled={!!editingRoute}
                   />
                 </div>
                 <div className="space-y-4">
-                  <Label className="text-base font-bold font-black uppercase tracking-[0.4em] text-muted-foreground ml-2">Command Center / Branch</Label>
+                  <Label className="text-base font-bold font-black uppercase tracking-tight text-muted-foreground ml-2">{t('routes.dialog.branch')}</Label>
                   <Select 
                       value={formData.Branch_ID || ""} 
                       onValueChange={(value) => updateForm("Branch_ID", value)}
                   >
-                      <SelectTrigger className="h-16 bg-muted/50 border-border/5 text-foreground font-black rounded-2xl px-8 text-xl uppercase tracking-widest">
-                        <SelectValue placeholder="SELECT SECTOR" />
+                      <SelectTrigger className="h-16 bg-muted/50 border-border/5 text-foreground font-black rounded-2xl px-8 text-xl uppercase tracking-normal">
+                        <SelectValue placeholder={t('routes.dialog.placeholder_branch')} />
                       </SelectTrigger>
                       <SelectContent className="bg-card border-border/10 text-foreground font-black">
                       {branches.map(b => (
-                          <SelectItem key={b.Branch_ID} value={b.Branch_ID} className="hover:bg-primary/20 focus:bg-primary/20 uppercase tracking-widest text-base font-bold">
+                          <SelectItem key={b.Branch_ID} value={b.Branch_ID} className="hover:bg-primary/20 focus:bg-primary/20 uppercase tracking-normal text-base font-bold">
                           {b.Branch_Name} ({b.Branch_ID})
                           </SelectItem>
                       ))}
@@ -273,23 +270,23 @@ export default function RoutesPage() {
 
               {/* Origin Tactical Block */}
               <div className="space-y-6">
-                <h3 className="text-lg font-bold font-black text-primary tracking-[0.3em] uppercase flex items-center gap-3">
+                <h3 className="text-lg font-bold font-black text-primary tracking-tight uppercase flex items-center gap-3">
                     <span className="w-1.5 h-1.5 rounded-full bg-primary shadow-[0_0_8px_rgba(255,30,133,1)]" />
-                    Origin Logistics Node
+                    {t('routes.dialog.origin_node')}
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                     <div className="space-y-4">
-                        <Label className="text-base font-bold font-black text-muted-foreground uppercase tracking-[0.3em] ml-2">Node Alias</Label>
+                        <Label className="text-base font-bold font-black text-muted-foreground uppercase tracking-tight ml-2">{t('routes.dialog.node_alias')}</Label>
                         <LocationAutocomplete
                             value={formData.Origin || ""}
                             onChange={(val) => updateForm("Origin", val)}
                             locations={locations}
-                            placeholder="ENLIST ORIGIN NODAL POINT..."
-                            className="h-16 bg-muted/50 border-border/5 rounded-2xl px-8 text-lg font-bold font-black uppercase tracking-widest text-foreground placeholder:text-muted-foreground"
+                            placeholder={t('routes.dialog.placeholder_origin')}
+                            className="h-16 bg-muted/50 border-border/5 rounded-2xl px-8 text-lg font-bold font-black uppercase tracking-normal text-foreground placeholder:text-muted-foreground"
                         />
                     </div>
                     <div className="space-y-4">
-                        <Label className="text-base font-bold font-black text-muted-foreground uppercase tracking-[0.3em] ml-2">GEO Vector Link</Label>
+                        <Label className="text-base font-bold font-black text-muted-foreground uppercase tracking-tight ml-2">{t('routes.dialog.geo_link')}</Label>
                         <Input
                             value={formData.Map_Link_Origin || ""}
                             onChange={(e) => updateForm("Map_Link_Origin", e.target.value)}
@@ -300,25 +297,25 @@ export default function RoutesPage() {
                 </div>
                 <div className="grid grid-cols-2 gap-10 p-8 bg-primary/5 rounded-[2.5rem] border border-primary/10">
                     <div className="space-y-3">
-                        <Label className="text-base font-bold font-black text-primary uppercase tracking-[0.4em] ml-2">Lat-X Matrix</Label>
+                        <Label className="text-base font-bold font-black text-primary uppercase tracking-tight ml-2">{t('routes.dialog.lat_matrix')}</Label>
                         <Input
                             type="number"
                             step="any"
                             value={formData.Origin_Lat ?? ""}
                             onChange={(e) => updateForm("Origin_Lat", e.target.value ? parseFloat(e.target.value) : null)}
                             placeholder="13.XXXX"
-                            className="bg-transparent border-border/10 text-foreground font-black text-center text-xl tracking-widest h-12"
+                            className="bg-transparent border-border/10 text-foreground font-black text-center text-xl tracking-normal h-12"
                         />
                     </div>
                     <div className="space-y-3">
-                        <Label className="text-base font-bold font-black text-primary uppercase tracking-[0.4em] ml-2">Lon-Y Matrix</Label>
+                        <Label className="text-base font-bold font-black text-primary uppercase tracking-tight ml-2">{t('routes.dialog.lon_matrix')}</Label>
                         <Input
                             type="number"
                             step="any"
                             value={formData.Origin_Lon ?? ""}
                             onChange={(e) => updateForm("Origin_Lon", e.target.value ? parseFloat(e.target.value) : null)}
                             placeholder="100.XXXX"
-                            className="bg-transparent border-border/10 text-foreground font-black text-center text-xl tracking-widest h-12"
+                            className="bg-transparent border-border/10 text-foreground font-black text-center text-xl tracking-normal h-12"
                         />
                     </div>
                 </div>
@@ -326,23 +323,23 @@ export default function RoutesPage() {
 
               {/* Destination Tactical Block */}
               <div className="space-y-6">
-                <h3 className="text-lg font-bold font-black text-accent tracking-[0.3em] uppercase flex items-center gap-3">
+                <h3 className="text-lg font-bold font-black text-accent tracking-tight uppercase flex items-center gap-3">
                     <span className="w-1.5 h-1.5 rounded-full bg-accent shadow-[0_0_8px_rgba(168,85,247,1)]" />
-                    Destination Logistics Node
+                    {t('routes.dialog.dest_node')}
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                     <div className="space-y-4">
-                        <Label className="text-base font-bold font-black text-muted-foreground uppercase tracking-[0.3em] ml-2">Terminus Alias</Label>
+                        <Label className="text-base font-bold font-black text-muted-foreground uppercase tracking-tight ml-2">{t('routes.dialog.node_alias')}</Label>
                         <LocationAutocomplete
                             value={formData.Destination || ""}
                             onChange={(val) => updateForm("Destination", val)}
                             locations={locations}
-                            placeholder="ENLIST DESTINATION TERMINUS..."
-                            className="h-16 bg-muted/50 border-border/5 rounded-2xl px-8 text-lg font-bold font-black uppercase tracking-widest text-foreground placeholder:text-muted-foreground"
+                            placeholder={t('routes.dialog.placeholder_dest')}
+                            className="h-16 bg-muted/50 border-border/5 rounded-2xl px-8 text-lg font-bold font-black uppercase tracking-normal text-foreground placeholder:text-muted-foreground"
                         />
                     </div>
                     <div className="space-y-4">
-                        <Label className="text-base font-bold font-black text-muted-foreground uppercase tracking-[0.3em] ml-2">GEO Terminus Link</Label>
+                        <Label className="text-base font-bold font-black text-muted-foreground uppercase tracking-tight ml-2">{t('routes.dialog.geo_link')}</Label>
                         <Input
                             value={formData.Map_Link_Destination || ""}
                             onChange={(e) => updateForm("Map_Link_Destination", e.target.value)}
@@ -353,66 +350,65 @@ export default function RoutesPage() {
                 </div>
                 <div className="grid grid-cols-2 gap-10 p-8 bg-accent/5 rounded-[2.5rem] border border-accent/10">
                     <div className="space-y-3">
-                        <Label className="text-base font-bold font-black text-accent uppercase tracking-[0.4em] ml-2">Lat-X Matrix</Label>
+                        <Label className="text-base font-bold font-black text-accent uppercase tracking-tight ml-2">{t('routes.dialog.lat_matrix')}</Label>
                         <Input
                             type="number"
                             step="any"
                             value={formData.Dest_Lat ?? ""}
                             onChange={(e) => updateForm("Dest_Lat", e.target.value ? parseFloat(e.target.value) : null)}
                             placeholder="13.XXXX"
-                            className="bg-transparent border-border/10 text-foreground font-black text-center text-xl tracking-widest h-12"
+                            className="bg-transparent border-border/10 text-foreground font-black text-center text-xl tracking-normal h-12"
                         />
                     </div>
                     <div className="space-y-3">
-                        <Label className="text-base font-bold font-black text-accent uppercase tracking-[0.4em] ml-2">Lon-Y Matrix</Label>
+                        <Label className="text-base font-bold font-black text-accent uppercase tracking-tight ml-2">{t('routes.dialog.lon_matrix')}</Label>
                         <Input
                             type="number"
                             step="any"
                             value={formData.Dest_Lon ?? ""}
                             onChange={(e) => updateForm("Dest_Lon", e.target.value ? parseFloat(e.target.value) : null)}
                             placeholder="100.XXXX"
-                            className="bg-transparent border-border/10 text-foreground font-black text-center text-xl tracking-widest h-12"
+                            className="bg-transparent border-border/10 text-foreground font-black text-center text-xl tracking-normal h-12"
                         />
                     </div>
                 </div>
               </div>
 
               <div className="space-y-4">
-                  <Label className="text-base font-bold font-black uppercase tracking-[0.4em] text-muted-foreground ml-2">Nodal Distance Delta (KM)</Label>
+                  <Label className="text-base font-bold font-black uppercase tracking-tight text-muted-foreground ml-2">{t('routes.dialog.distance')}</Label>
                   <div className="glass-panel p-1 rounded-2xl border-border/5">
                     <Input
                         type="number"
                         value={formData.Distance_KM || ""}
                         onChange={(e) => updateForm("Distance_KM", parseFloat(e.target.value))}
                         placeholder="0.0"
-                        className="bg-transparent border-none text-2xl font-black text-foreground text-center h-16 tracking-widest"
+                        className="bg-transparent border-none text-2xl font-black text-foreground text-center h-16 tracking-normal"
                     />
                   </div>
               </div>
 
               <div className="flex gap-6 pt-10 border-t border-border/5 mt-12 mb-8">
-                <PremiumButton onClick={handleSave} disabled={saving} className="flex-[2] bg-primary hover:bg-primary/80 shadow-primary/20 h-20 rounded-3xl text-lg font-black tracking-widest uppercase">
+                <PremiumButton onClick={handleSave} disabled={saving} className="flex-[2] bg-primary hover:bg-primary/80 shadow-primary/20 h-20 rounded-3xl text-lg font-black tracking-normal uppercase">
                   {saving ? <Loader2 className="w-6 h-6 mr-4 animate-spin" /> : <Save className="w-6 h-6 mr-4" strokeWidth={3} />}
-                  EXECUTE PLOT
+                  {t('routes.dialog.execute_plot')}
                 </PremiumButton>
-                <PremiumButton variant="outline" onClick={() => setIsDialogOpen(false)} className="flex-1 border-border/5 h-20 rounded-3xl text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all uppercase font-black tracking-widest">
-                  Abort
+                <PremiumButton variant="outline" onClick={() => setIsDialogOpen(false)} className="flex-1 border-border/5 h-20 rounded-3xl text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all uppercase font-black tracking-normal">
+                  {t('common.abort')}
                 </PremiumButton>
               </div>
             </div>
           </DialogContent>
       </Dialog>
 
-      {/* Routes Intelligence Grid */}
-      {loading ? (
-        <div className="flex flex-col items-center justify-center py-40 glass-panel rounded-[4rem] border-border/5 group">
-             <div className="relative">
-                <Loader2 className="animate-spin text-primary opacity-40" size={80} strokeWidth={1} />
-                <Navigation className="absolute inset-0 m-auto text-primary animate-pulse" size={32} />
-             </div>
-             <p className="mt-10 text-muted-foreground font-black uppercase tracking-[0.6em] text-base font-bold animate-pulse">Scanning Spatial Fabric...</p>
-        </div>
-      ) : (
+          {loading ? (
+            <div className="flex flex-col items-center justify-center py-40 glass-panel rounded-[4rem] border-border/5 group">
+                 <div className="relative">
+                    <Loader2 className="animate-spin text-primary opacity-40" size={80} strokeWidth={1} />
+                    <Navigation className="absolute inset-0 m-auto text-primary animate-pulse" size={32} />
+                 </div>
+                 <p className="mt-10 text-muted-foreground font-black uppercase tracking-wide text-base font-bold animate-pulse">{t('routes.scanning')}</p>
+            </div>
+          ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
           {routes.map((route) => (
             <div key={route.Route_Name} className="p-0 overflow-hidden group border border-border/5 bg-background/40 backdrop-blur-2xl rounded-[3.5rem] shadow-2xl relative hover:shadow-[0_45px_100px_-20px_rgba(255,30,133,0.1)] transition-all duration-700 hover:ring-1 hover:ring-primary/30">
@@ -427,13 +423,13 @@ export default function RoutesPage() {
                     <div>
                       <h3 className="text-2xl font-black text-foreground tracking-tighter group-hover:text-primary transition-colors line-clamp-1 duration-500 uppercase font-display">{route.Route_Name}</h3>
                       <div className="flex items-center gap-3 mt-2">
-                          <span className="text-muted-foreground font-black text-base font-bold uppercase tracking-[0.4em] italic">{route.Branch_ID || "HQ-CENTER"}</span>
+                          <span className="text-muted-foreground font-black text-base font-bold uppercase tracking-tight italic">{route.Branch_ID || "HQ-CENTER"}</span>
                           {route.Distance_KM !== null && (
                             <>
                                 <div className="w-1.5 h-1.5 rounded-full bg-primary/40" />
                                 <div className="flex items-center gap-2">
                                     <Ruler size={10} className="text-primary/60" />
-                                    <span className="text-primary font-black text-base font-bold uppercase tracking-widest">{route.Distance_KM} KM</span>
+                                    <span className="text-primary font-black text-base font-bold uppercase tracking-tight">{route.Distance_KM} {t('common.baht') === 'บาท' ? 'กม.' : 'KM'}</span>
                                 </div>
                             </>
                           )}
@@ -451,7 +447,7 @@ export default function RoutesPage() {
                             <div className="w-1.5 h-1.5 rounded-full bg-primary" />
                         </div>
                         <div className="flex items-center justify-between">
-                            <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest">Inception Point</span>
+                            <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-tight">{t('routes.card.inception')}</span>
                             {route.Map_Link_Origin && (
                                 <a href={route.Map_Link_Origin} target="_blank" rel="noopener noreferrer" className="p-1.5 bg-muted/50 rounded-lg text-primary hover:bg-primary hover:text-foreground transition-all">
                                     <Globe size={12} />
@@ -466,7 +462,7 @@ export default function RoutesPage() {
                             <div className="w-1.5 h-1.5 rounded-full bg-accent" />
                         </div>
                         <div className="flex items-center justify-between">
-                            <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest">Terminus Point</span>
+                            <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-tight">{t('routes.card.terminus')}</span>
                             {route.Map_Link_Destination && (
                                 <a href={route.Map_Link_Destination} target="_blank" rel="noopener noreferrer" className="p-1.5 bg-muted/50 rounded-lg text-accent hover:bg-accent hover:text-foreground transition-all">
                                     <Globe size={12} />
@@ -479,10 +475,10 @@ export default function RoutesPage() {
 
                 <div className="flex gap-4 pt-6 border-t border-border/5">
                   <button 
-                    className="flex-1 h-14 bg-muted/50 border border-border/5 rounded-2xl text-base font-bold font-black uppercase tracking-widest text-muted-foreground hover:bg-primary/20 hover:text-primary transition-all flex items-center justify-center gap-3"
+                    className="flex-1 h-14 bg-muted/50 border border-border/5 rounded-2xl text-base font-bold font-black uppercase tracking-tight text-muted-foreground hover:bg-primary/20 hover:text-primary transition-all flex items-center justify-center gap-3"
                     onClick={() => handleOpenDialog(route)}
                   >
-                    <Edit size={16} /> Refine Plot
+                    <Edit size={16} /> {t('routes.card.refine')}
                   </button>
                   <button 
                     className="h-14 w-14 bg-muted/50 border border-border/5 rounded-2xl flex items-center justify-center text-rose-800 hover:bg-rose-500 hover:text-foreground transition-all shadow-lg"
@@ -499,14 +495,14 @@ export default function RoutesPage() {
           {routes.length === 0 && (
             <div className="col-span-full text-center py-40 glass-panel rounded-[4rem] border-dashed border-border/5 group">
               <Activity className="w-20 h-20 text-muted-foreground mx-auto mb-8 opacity-20 group-hover:scale-110 transition-transform duration-1000" />
-              <p className="text-muted-foreground font-black uppercase tracking-[0.5em] text-base font-bold">Registry Empty • No Route Vectors Detected</p>
+              <p className="text-muted-foreground font-black uppercase tracking-wide text-base font-bold">{t('routes.empty')}</p>
             </div>
           )}
         </div>
       )}
 
       <div className="mt-20 text-center mb-24">
-        <div className="inline-flex items-center gap-4 px-8 py-3 glass-panel rounded-full text-base font-bold font-black text-muted-foreground uppercase tracking-[0.6em] opacity-40 hover:opacity-100 transition-opacity">
+        <div className="inline-flex items-center gap-4 px-8 py-3 glass-panel rounded-full text-base font-bold font-black text-muted-foreground uppercase tracking-wide opacity-40 hover:opacity-100 transition-opacity">
             <ShieldCheck size={14} className="text-primary" /> GIS Neural Grid Core v6.0 • Tactical Nodal Routing
         </div>
       </div>

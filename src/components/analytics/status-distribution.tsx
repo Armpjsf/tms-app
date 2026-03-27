@@ -30,25 +30,24 @@ export function StatusDistribution({ data }: { data: StatusItem[] }) {
             {sortedData.map((item) => {
                 const percentage = total > 0 ? (item.value / total) * 100 : 0;
                 return (
-                    <div key={item.name} className="space-y-1">
-                        <div className="flex justify-between text-lg font-bold transition-colors">
-                            <span className="text-gray-700 font-black">{item.name}</span>
-                            <span className="text-gray-900 font-black">{item.value} <span className="text-gray-550 font-bold">({percentage.toFixed(1)}%)</span></span>
+                    <div key={item.name} className="space-y-2">
+                        <div className="flex justify-between text-base font-bold transition-colors">
+                            <span className="text-muted-foreground font-black uppercase italic">{item.name}</span>
+                            <span className="text-foreground font-black italic">{item.value} <span className="text-muted-foreground/60 font-bold">({percentage.toFixed(1)}%)</span></span>
                         </div>
-                        <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                        <div className="w-full bg-muted/40 rounded-full h-2 overflow-hidden border border-border/5 p-0.5">
                             <div 
-                                className={`${getStatusColor(item.name)} h-full transition-all`}
+                                className={`${getStatusColor(item.name)} h-full rounded-full shadow-[0_0_10px_rgba(0,0,0,0.5)] transition-all duration-700`}
                                 style={{ width: `${percentage}%` }}
                             />
                         </div>
                     </div>
                 );
             })}
-            <div className="pt-2 border-t border-gray-200 flex justify-between items-center transition-colors">
-                <span className="text-lg font-bold text-gray-700 font-black">งานทั้งหมด (Total Jobs)</span>
-                <span className="text-xl font-black text-gray-950">{total} รายการ</span>
+            <div className="pt-6 border-t border-border/10 flex justify-between items-center transition-colors">
+                <span className="text-base font-black text-muted-foreground uppercase italic">งานทั้งหมด (Total Jobs)</span>
+                <span className="text-2xl font-black text-foreground italic">{total}</span>
             </div>
         </div>
     );
 }
-

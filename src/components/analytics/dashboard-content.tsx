@@ -60,26 +60,52 @@ interface DashboardContentProps {
 
 // Split state into two priority layers
 interface PriorityData {
-  financials: any
-  revenueTrend: any[]
-  forecastData: any[]
-  exeKPIs: any
-  opStats: any
-  statusDist: any[]
-  driverLeaderboard: any[]
-  vehicleProfitability: any[]
-  branchPerf: any[]
+  financials: {
+    totalRevenue: number
+    totalProfit: number
+    margin: number
+    growth: number
+  }
+  revenueTrend: Array<{ month: string; actual: number; target: number }>
+  forecastData: Array<{ month: string; actual: number; forecast: number }>
+  exeKPIs: {
+    efficiency: number
+    utilization: number
+    onTimeRate: number
+    safetyScore: number
+  }
+  opStats: Record<string, number>
+  statusDist: Array<{ name: string; value: number; color: string }>
+  driverLeaderboard: Array<{ id: string; name: string; score: number; trips: number }>
+  vehicleProfitability: Array<{ id: string; plate: string; profit: number }>
+  branchPerf: Array<{ name: string; performance: number }>
 }
 
 interface SecondaryData {
-  topCustomers: any[]
-  subPerf: any[]
-  routes: any[]
-  billing: any
-  fuel: any
-  maintenance: any
-  safety: any
-  workforce: any
+  topCustomers: Array<{ name: string; revenue: number }>
+  subPerf: Array<{ name: string; rating: number }>
+  routes: Array<{ id: string; start: string; end: string; efficiency: number }>
+  billing: {
+    arAging: Record<string, number>
+    totalInvoiced: number
+  }
+  fuel: {
+    consumption: number
+    avgPrice: number
+    anomalies: any[]
+  }
+  maintenance: {
+    upcoming: any[]
+    fleetHealth: number
+  }
+  safety: {
+    incidents: number
+    riskScore: number
+  }
+  workforce: {
+    activeDrivers: number
+    pendingTraining: any[]
+  }
   esgStats: any
   delayRootCause: any[]
 }
@@ -139,7 +165,11 @@ export function DashboardContent({
   }, [startDate, endDate, branchId])
 
   useEffect(() => {
-    loadData()
+    // Small delay to ensure render is stable before firing large parallel fetches
+    const timer = setTimeout(() => {
+        loadData()
+    }, 10)
+    return () => clearTimeout(timer)
   }, [loadData])
 
   // Primary skeleton while initial load
@@ -199,8 +229,8 @@ export function DashboardContent({
                     <Zap size={28} strokeWidth={2.5} className="animate-pulse" />
                 </div>
                 <div>
-                    <h3 className="text-xl font-black text-foreground uppercase tracking-[0.3em] italic leading-none mb-3">{t('common.tactical_cluster')}</h3>
-                    <p className="text-base font-bold font-black text-muted-foreground uppercase tracking-[0.6em] italic">{t('common.network_stable')}</p>
+                    <h3 className="text-xl font-black text-foreground uppercase italic leading-none mb-3">{t('common.tactical_cluster')}</h3>
+                    <p className="text-base font-bold font-black text-muted-foreground uppercase italic">{t('common.network_stable')}</p>
                 </div>
             </div>
             
@@ -216,8 +246,8 @@ export function DashboardContent({
                   <TrendingUp size={36} strokeWidth={2.5} />
               </div>
               <div className="space-y-2">
-                  <h2 className="text-5xl font-black text-foreground tracking-widest italic uppercase">{t('common.financial_node')}</h2>
-                  <p className="text-emerald-500 text-base font-bold font-black uppercase tracking-[0.6em] italic">{t('analytics.commercial_monitoring')}</p>
+                  <h2 className="text-5xl font-black text-foreground italic uppercase">{t('common.financial_node')}</h2>
+                  <p className="text-emerald-500 text-base font-bold font-black uppercase italic">{t('analytics.commercial_monitoring')}</p>
               </div>
           </div>
           
@@ -227,7 +257,7 @@ export function DashboardContent({
           
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
               <PremiumCard className="lg:col-span-2 overflow-hidden p-0 bg-background border-2 border-border/5 shadow-3xl rounded-br-[6rem] rounded-tl-[3rem]">
-                  <div className="p-10 border-b border-border/5 bg-black/40 relative overflow-hidden flex items-center justify-between">
+                  <div className="p-10 border-b border-border/5 bg-gradient-to-r from-primary/20 via-primary/5 to-transparent backdrop-blur-md relative overflow-hidden flex items-center justify-between">
                       <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary to-transparent" />
                       <div className="flex items-center gap-5 relative z-10">
                           <div className="p-3 bg-primary/20 rounded-2xl text-primary border border-primary/30 shadow-[0_0_20px_rgba(255,30,133,0.2)]">
@@ -244,7 +274,7 @@ export function DashboardContent({
               
               <div className="flex flex-col">
                  <PremiumCard className="overflow-hidden p-0 bg-background border-2 border-border/5 shadow-3xl rounded-br-[5rem] rounded-tl-[3rem] group/leaderboard flex-1 relative">
-                    <div className="p-12 border-b border-border/5 relative overflow-hidden bg-black/40">
+                    <div className="p-12 border-b border-border/5 relative overflow-hidden bg-gradient-to-r from-primary/20 via-primary/5 to-transparent backdrop-blur-md">
                         <div className="absolute top-0 right-0 p-8 opacity-20 group-hover/leaderboard:opacity-100 transition-opacity">
                              <Trophy size={48} className="text-primary" />
                         </div>
@@ -309,8 +339,8 @@ export function DashboardContent({
                   <Truck size={36} strokeWidth={2.5} />
               </div>
               <div className="space-y-2">
-                  <h2 className="text-5xl font-black text-foreground tracking-widest italic uppercase">{t('common.asset_tactical')}</h2>
-                  <p className="text-blue-500 text-base font-bold font-black uppercase tracking-[0.6em] italic">{t('dashboard.operational_throughput')} &amp; {t('dashboard.tier_1_monitoring')}</p>
+                  <h2 className="text-5xl font-black text-foreground italic uppercase">{t('common.mission_node')}</h2>
+                <p className="text-blue-500 text-base font-bold font-black uppercase italic">{t('analytics.fleet_deployment')}</p>
               </div>
            </div>
            

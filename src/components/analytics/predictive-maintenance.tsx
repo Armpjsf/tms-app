@@ -15,9 +15,9 @@ export function PredictiveMaintenance({ risks }: { risks: VehicleRisk[] }) {
             <BrainCircuit size={20} />
         </div>
         <div>
-            <h2 className="text-lg font-bold uppercase tracking-[0.2em] flex items-center gap-2">
+            <h2 className="text-lg font-bold uppercase flex items-center gap-2">
                 AI Predictive Maintenance
-                <span className="text-foreground px-2 py-0.5 rounded-full normal-case tracking-normal">BETA</span>
+                <span className="text-foreground px-2 py-0.5 rounded-full normal-case">BETA</span>
             </h2>
             <p className="text-lg font-bold text-gray-900 font-bold">Machine Learning analyzing usage patterns & repair history</p>
         </div>

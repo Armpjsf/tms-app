@@ -2,13 +2,11 @@
 
 import { PremiumCard } from "@/components/ui/premium-card"
 import { useLanguage } from "@/components/providers/language-provider"
-import { 
-  LineChart, 
-  Line, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
+import {
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
   ResponsiveContainer,
   Legend,
   Area,
@@ -33,7 +31,7 @@ export function RevenueForecastChart({ data = [] }: Props) {
 
     return (
         <PremiumCard className="bg-background border-2 border-border/5 shadow-3xl p-0 overflow-hidden rounded-br-[6rem] rounded-tl-[3rem] group/forecast">
-            <div className="p-10 border-b border-border/5 bg-black/40 relative overflow-hidden flex items-center justify-between">
+            <div className="p-10 border-b border-border/5 bg-gradient-to-r from-purple-500/20 via-purple-500/5 to-transparent backdrop-blur-md relative overflow-hidden flex items-center justify-between">
                 <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-purple-500 to-transparent" />
                 <div className="flex items-center gap-5 relative z-10">
                     <div className="p-3 bg-purple-500/20 rounded-2xl text-purple-400 border border-purple-500/30 shadow-[0_0_20px_rgba(168,85,247,0.2)]">
@@ -41,12 +39,12 @@ export function RevenueForecastChart({ data = [] }: Props) {
                     </div>
                     <div>
                         <h3 className="text-xl font-black text-foreground tracking-tighter italic uppercase">{t('analytics.revenue_prediction') || 'Revenue Forecasting'}</h3>
-                        <p className="text-purple-400 text-base font-bold font-black uppercase tracking-[0.4em]">{t('analytics.ai_inference') || 'Strategic AI Inference'}</p>
+                        <p className="text-purple-400 text-base font-bold font-black uppercase">{t('analytics.ai_inference') || 'Strategic AI Inference'}</p>
                     </div>
                 </div>
                 <div className="hidden md:flex items-center gap-4 bg-purple-500/10 px-6 py-3 rounded-2xl border border-purple-500/20">
                     <Zap size={14} className="text-purple-400 animate-pulse" />
-                    <span className="text-base font-bold font-black text-purple-300 uppercase tracking-[0.2em]">{t('analytics.predictive_active') || 'Predictive Core v2'}</span>
+                    <span className="text-base font-bold font-black text-purple-300 uppercase">{t('analytics.predictive_active') || 'Predictive Core v2'}</span>
                 </div>
             </div>
             
@@ -88,13 +86,14 @@ export function RevenueForecastChart({ data = [] }: Props) {
                         <Tooltip 
                             contentStyle={{ 
                                 backgroundColor: 'rgba(2, 6, 23, 0.95)', 
-                                border: '2px solid rgba(255,255,255,0.1)', 
-                                borderRadius: '24px', 
-                                backdropFilter: 'blur(12px)',
-                                padding: '20px'
+                                borderColor: 'rgba(139, 92, 246, 0.2)', 
+                                borderRadius: '20px', 
+                                border: '1px solid rgba(255,255,255,0.05)',
+                                backdropFilter: 'blur(16px)',
+                                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
                             }}
-                            itemStyle={{ fontSize: '11px', fontWeight: '900', textTransform: 'uppercase' }}
-                            formatter={(value: number) => [`฿${value.toLocaleString()}`, '']}
+                            itemStyle={{ fontSize: '12px', fontWeight: '900', textTransform: 'uppercase' }}
+                            formatter={(value: number | undefined) => [`฿${(value || 0).toLocaleString()}`, t('analytics.projected_yield') || 'Expected Yield']}
                         />
                         <Legend verticalAlign="top" align="right" height={36} iconType="circle" />
                         <Area 
@@ -127,11 +126,11 @@ export function RevenueForecastChart({ data = [] }: Props) {
                             <TrendingUp className="text-emerald-500" size={24} />
                         </div>
                         <div>
-                            <p className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest leading-none mb-2">{t('analytics.projection_confidence') || 'Confidence Level'}</p>
+                            <p className="text-base font-bold font-black text-muted-foreground uppercase leading-none mb-2">{t('analytics.projection_confidence') || 'Confidence Level'}</p>
                             <p className="text-2xl font-black text-foreground italic">🔥 HIGH (88%)</p>
                         </div>
                     </div>
-                    <p className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest max-w-md italic text-center md:text-right">
+                    <p className="text-base font-bold font-black text-muted-foreground uppercase max-w-md italic text-center md:text-right">
                         {t('analytics.forecast_disclaimer') || 'AI models utilize historical seasonality and recent trends to project quarterly performance.'}
                     </p>
                 </div>

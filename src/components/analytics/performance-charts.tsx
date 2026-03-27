@@ -37,7 +37,7 @@ export function PerformanceCharts({ data }: { data: PerformanceData[] }) {
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
       {/* Job Volume Trend */}
       <PremiumCard className="bg-white border-none shadow-[0_30px_100px_rgba(0,0,0,0.1)] p-0 overflow-hidden rounded-br-[5rem] rounded-tl-[3rem]">
-        <div className="p-8 border-b border-slate-50 bg-background relative overflow-hidden flex items-center justify-between">
+        <div className="p-8 border-b border-slate-50 bg-gradient-to-r from-emerald-500/20 via-emerald-500/5 to-transparent backdrop-blur-md relative overflow-hidden flex items-center justify-between">
             <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 to-transparent pointer-events-none" />
             <div className="flex items-center gap-3 relative z-10">
                 <div className="p-2 bg-emerald-600 rounded-xl text-white shadow-lg">
@@ -45,7 +45,7 @@ export function PerformanceCharts({ data }: { data: PerformanceData[] }) {
                 </div>
                 <div>
                     <h3 className="text-lg font-black text-foreground tracking-tight italic uppercase">{t('charts.mission_volume')}</h3>
-                    <p className="text-emerald-400 text-base font-bold font-bold uppercase tracking-[0.2em]">{t('charts.throughput_trend')}</p>
+                    <p className="text-emerald-400 text-base font-bold font-bold uppercase">{t('charts.throughput_trend')}</p>
                 </div>
             </div>
         </div>
@@ -80,7 +80,7 @@ export function PerformanceCharts({ data }: { data: PerformanceData[] }) {
                 }}
                 itemStyle={{ fontSize: '11px', fontWeight: '900', textTransform: 'uppercase' }}
               />
-              <Legend verticalAlign="top" align="right" iconType="circle" wrapperStyle={{ paddingBottom: '20px', fontSize: '10px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '0.1em' }}/>
+              <Legend verticalAlign="top" align="right" iconType="circle" wrapperStyle={{ paddingBottom: '20px', fontSize: '10px', fontWeight: '900', textTransform: 'uppercase' }}/>
               <Bar dataKey="onTimeCount" name={t('charts.nominal_ops')} stackId="a" fill="#10b981" radius={[0, 0, 0, 0]} />
               <Bar dataKey="lateJobs" name={t('charts.delayed')} stackId="a" fill="#f59e0b" radius={[4, 4, 0, 0]} />
             </BarChart>
@@ -89,8 +89,8 @@ export function PerformanceCharts({ data }: { data: PerformanceData[] }) {
       </PremiumCard>
 
       {/* On-Time Efficiency */}
-      <PremiumCard className="bg-white border-none shadow-[0_30_100px_rgba(0,0,0,0.1)] p-0 overflow-hidden rounded-br-[5rem] rounded-tl-[3rem]">
-        <div className="p-8 border-b border-slate-50 bg-background relative overflow-hidden flex items-center justify-between">
+      <PremiumCard className="bg-white border-none shadow-[0_30px_100px_rgba(0,0,0,0.1)] p-0 overflow-hidden rounded-br-[5rem] rounded-tl-[3rem]">
+        <div className="p-8 border-b border-slate-50 bg-gradient-to-r from-blue-500/20 via-blue-500/5 to-transparent backdrop-blur-md relative overflow-hidden flex items-center justify-between">
             <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-transparent pointer-events-none" />
             <div className="flex items-center gap-3 relative z-10">
                 <div className="p-2 bg-blue-600 rounded-xl text-white shadow-lg">
@@ -98,7 +98,7 @@ export function PerformanceCharts({ data }: { data: PerformanceData[] }) {
                 </div>
                 <div>
                     <h3 className="text-lg font-black text-foreground tracking-tight italic uppercase">{t('charts.reliability_index')}</h3>
-                    <p className="text-blue-400 text-base font-bold font-bold uppercase tracking-[0.2em]">{t('charts.on_time_efficiency')}</p>
+                    <p className="text-blue-400 text-base font-bold font-bold uppercase">{t('charts.on_time_efficiency')}</p>
                 </div>
             </div>
         </div>

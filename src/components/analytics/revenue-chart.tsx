@@ -1,7 +1,6 @@
 "use client"
 
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
-import { cn } from "@/lib/utils"
 import { useLanguage } from "@/components/providers/language-provider"
 
 type RevenueData = {
@@ -43,7 +42,7 @@ export function RevenueTrendChart({ data }: { data: RevenueData[] }) {
             tickLine={false} 
             axisLine={false}
             dy={20}
-            className="uppercase italic tracking-[0.2em]"
+            className="uppercase italic"
           />
           <YAxis 
             stroke="#64748b" 
@@ -63,7 +62,7 @@ export function RevenueTrendChart({ data }: { data: RevenueData[] }) {
                 backdropFilter: 'blur(20px)',
                 boxShadow: '0 30px 60px -12px rgba(0, 0, 0, 0.8)'
             }}
-            itemStyle={{ fontSize: '10px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '0.2em', color: '#fff' }}
+            itemStyle={{ fontSize: '10px', fontWeight: '900', textTransform: 'uppercase', color: '#fff' }}
             formatter={(value: number | string | undefined) => [
               new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB', maximumFractionDigits: 0 }).format(Number(value || 0)), 
               ''
@@ -73,7 +72,7 @@ export function RevenueTrendChart({ data }: { data: RevenueData[] }) {
             verticalAlign="top" 
             align="right" 
             iconType="rect" 
-            wrapperStyle={{ paddingBottom: '40px', fontSize: '10px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '0.3em', fontStyle: 'italic' }} 
+            wrapperStyle={{ paddingBottom: '40px', fontSize: '10px', fontWeight: '900', textTransform: 'uppercase', fontStyle: 'italic' }} 
           />
           <Area 
             type="monotone" 

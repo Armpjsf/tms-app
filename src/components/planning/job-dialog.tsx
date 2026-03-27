@@ -309,7 +309,7 @@ export function JobDialog({
         updateOrigin(index, 'lat', res.lat.toString())
         updateOrigin(index, 'lng', res.lng.toString())
       } else {
-        toast.info("ไม่พบพิกัดสำหรับสถานที่นี้")
+        toast.info(t('jobs.dialog.location_not_found'))
       }
     } catch {
       // Geocoding error
@@ -328,7 +328,7 @@ export function JobDialog({
         updateDestination(index, 'lat', res.lat.toString())
         updateDestination(index, 'lng', res.lng.toString())
       } else {
-        toast.info("ไม่พบพิกัดสำหรับสถานที่นี้")
+        toast.info(t('jobs.dialog.location_not_found'))
       }
     } catch {
       // Geocoding error
@@ -405,9 +405,9 @@ export function JobDialog({
   const validateForm = () => {
     const errors: string[] = []
 
-    if (!formData.Customer_Name) errors.push("กรุณาระบุชื่อลูกค้า")
-    if (!origins[0].name) errors.push("กรุณาระบุต้นทางอย่างน้อย 1 แห่ง")
-    if (!destinations[0].name) errors.push("กรุณาระบุปลายทางอย่างน้อย 1 แห่ง")
+    if (!formData.Customer_Name) errors.push(t('jobs.dialog.customer_required'))
+    if (!origins[0].name) errors.push(t('jobs.dialog.origin_required'))
+    if (!destinations[0].name) errors.push(t('jobs.dialog.dest_required'))
     
     // Check assignments - Relaxed for bidding system (Optional driver/vehicle)
     return errors
@@ -415,18 +415,18 @@ export function JobDialog({
 
   const handleDelete = async () => {
     if (!job?.Job_ID) return
-    if (!confirm('คุณแน่ใจหรือไม่ว่าต้องการลบงานนี้?')) return
+    if (!confirm(t('jobs.dialog.confirm_delete'))) return
     
     setLoading(true)
     try {
         const result = await deleteJob(job.Job_ID)
         if (!result.success) throw new Error(result.message)
         setShow(false)
-        toast.success("ลบงานเรียบร้อยแล้ว")
+        toast.success(t('jobs.dialog.delete_success'))
         router.refresh()
     } catch {
         // Delete error
-        toast.error('ลบงานไม่สำเร็จ')
+        toast.error(t('jobs.dialog.delete_failed'))
     } finally {
         setLoading(false)
     }
@@ -521,7 +521,7 @@ export function JobDialog({
             Driver_Name: drivers.find(d => d.Driver_ID === assignment.Driver_ID)?.Driver_Name || '',
         }
 
-        if (!job?.Job_ID) throw new Error('ไม่พบรหัสงานสำหรับการแก้ไข')
+        if (!job?.Job_ID) throw new Error(t('jobs.dialog.error'))
         const result = await updateJob(job.Job_ID, updateData)
         if (!result.success) throw new Error(result.message)
       }
@@ -548,11 +548,11 @@ export function JobDialog({
         setShow(false)
       }
       
-      toast.success(internalMode === 'create' ? "บันทึกงานเรียบร้อย" : "แก้ไขข้อมูลเรียบร้อย")
+      toast.success(internalMode === 'create' ? t('jobs.dialog.save_success') : t('jobs.dialog.edit_success'))
       router.refresh()
     } catch {
       // Submit error
-      toast.error('เกิดข้อผิดพลาด กรุณาลองใหม่')
+      toast.error(t('jobs.dialog.error'))
     } finally {
       setLoading(false)
     }
@@ -618,7 +618,7 @@ export function JobDialog({
             <div className="space-y-12">
               <div className="grid grid-cols-1 gap-10">
                 <div className="space-y-2">
-                  <Label className="text-xl font-black text-primary/80 uppercase tracking-widest">{t('jobs.dialog.job_id')}</Label>
+                  <Label className="text-xl font-black text-primary/80 uppercase tracking-normal">{t('jobs.dialog.job_id')}</Label>
                   <Input
                     value={formData.Job_ID}
                     onChange={(e) => setFormData({ ...formData, Job_ID: e.target.value })}
@@ -635,12 +635,12 @@ export function JobDialog({
                     disabled={!formData.Job_ID}
                   >
                     {copied ? <Check className="w-3 h-3 mr-2" /> : <LinkIcon className="w-3 h-3 mr-2" />}
-                    {copied ? t('jobs.dialog.tracking_copied') : 'Copy Tracking Link'}
+                    {copied ? t('jobs.dialog.tracking_copied') : t('jobs.dialog.copy_tracking')}
                   </Button>
                 </div>
                 
                 <div className="space-y-2">
-                   <Label className="text-xl font-black text-primary/80 uppercase tracking-widest">{t('jobs.dialog.zone')}</Label>
+                   <Label className="text-xl font-black text-primary/80 uppercase tracking-normal">{t('jobs.dialog.zone')}</Label>
                    <Select 
                       value={formData.Zone} 
                       onValueChange={(val) => setFormData({ ...formData, Zone: val })}
@@ -657,7 +657,7 @@ export function JobDialog({
                 </div>
 
                 <div className="space-y-2">
-                   <Label className="text-xl font-black text-primary/80 uppercase tracking-widest">{t('jobs.dialog.status')}</Label>
+                   <Label className="text-xl font-black text-primary/80 uppercase tracking-normal">{t('jobs.dialog.status')}</Label>
                    <Select 
                       value={formData.Job_Status} 
                       onValueChange={(val) => setFormData({ ...formData, Job_Status: val })}
@@ -677,7 +677,7 @@ export function JobDialog({
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="flex items-center gap-1 text-xl font-black text-primary/80 uppercase tracking-widest">
+                  <Label className="flex items-center gap-1 text-xl font-black text-primary/80 uppercase tracking-normal">
                     <Calendar className="w-4 h-4 mr-2" /> {t('jobs.dialog.plan_date')}
                   </Label>
                   <Input
@@ -689,7 +689,7 @@ export function JobDialog({
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label className="flex items-center gap-1 text-xl font-black text-primary/80 uppercase tracking-widest">
+                  <Label className="flex items-center gap-1 text-xl font-black text-primary/80 uppercase tracking-normal">
                     <Calendar className="w-4 h-4 mr-2" /> {t('jobs.dialog.delivery_date')}
                   </Label>
                   <Input
@@ -704,16 +704,16 @@ export function JobDialog({
 
               {isAdmin && branches.length > 0 && (
                 <div className="p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
-                    <Label className="text-yellow-400 font-bold mb-2 block font-medium">สาขาสำหรับงานนี้ (Super Admin Only)</Label>
+                    <Label className="text-yellow-400 font-bold mb-2 block font-medium">{t('jobs.dialog.branch_super_admin')}</Label>
                     <Select 
                       value={formData.branch_id || "none"} 
                       onValueChange={(val) => setFormData({ ...formData, branch_id: val === "none" ? "" : val })}
                     >
                       <SelectTrigger className="bg-background border-yellow-500/30">
-                        <SelectValue placeholder="-- ใช้สาขาปัจจุบัน --" />
+                        <SelectValue placeholder={t('jobs.dialog.use_current_branch')} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="none">-- ใช้สาขาปัจจุบัน --</SelectItem>
+                        <SelectItem value="none">{t('jobs.dialog.use_current_branch')}</SelectItem>
                         {branches.map(b => (
                           <SelectItem key={b.Branch_ID} value={b.Branch_ID}>
                             {b.Branch_Name} ({b.Branch_ID})
@@ -722,14 +722,14 @@ export function JobDialog({
                       </SelectContent>
                     </Select>
                     <p className="text-base font-bold text-muted-foreground mt-1">
-                      หากไม่เลือก จะใช้สาขาที่ท่านกำลังเลือกอยู่ที่แถบด้านบน (Header)
+                      {t('jobs.dialog.branch_helper')}
                     </p>
                 </div>
               )}
 
               <div className="grid grid-cols-1 gap-10">
                 <div className="space-y-4">
-                  <Label className="flex items-center gap-2 text-2xl font-black text-primary uppercase tracking-widest">
+                  <Label className="flex items-center gap-2 text-2xl font-black text-primary uppercase tracking-normal">
                     <Building2 className="w-6 h-6 text-primary" /> {t('jobs.dialog.customer')}
                   </Label>
                    <CustomerAutocomplete
@@ -741,7 +741,7 @@ export function JobDialog({
                   />
                 </div>
                 <div className="space-y-4">
-                  <Label className="flex items-center gap-2 text-2xl font-black text-primary uppercase tracking-widest">
+                  <Label className="flex items-center gap-2 text-2xl font-black text-primary uppercase tracking-normal">
                     <Package className="w-6 h-6 text-primary" /> {t('jobs.dialog.cargo_type')}
                   </Label>
                   <Input
@@ -768,7 +768,7 @@ export function JobDialog({
 
               <div className="grid grid-cols-1 gap-10">
                  <div className="space-y-4">
-                    <Label className="text-primary text-2xl font-black uppercase tracking-widest">{t('jobs.dialog.weight')}</Label>
+                    <Label className="text-primary text-2xl font-black uppercase tracking-normal">{t('jobs.dialog.weight')}</Label>
                     <Input
                         type="number"
                         value={formData.Weight_Kg}
@@ -778,7 +778,7 @@ export function JobDialog({
                     />
                  </div>
                  <div className="space-y-4">
-                    <Label className="text-primary text-2xl font-black uppercase tracking-widest">{t('jobs.dialog.volume')}</Label>
+                    <Label className="text-primary text-2xl font-black uppercase tracking-normal">{t('jobs.dialog.volume')}</Label>
                     <Input
                         type="number"
                         value={formData.Volume_Cbm}
@@ -813,7 +813,7 @@ export function JobDialog({
                     {/* Origins */}
                     <div className="space-y-3">
                         <div className="flex items-center justify-between">
-                        <Label className="text-xl font-black text-primary uppercase tracking-widest flex items-center gap-2">
+                        <Label className="text-xl font-black text-primary uppercase tracking-normal flex items-center gap-2">
                             <MapPin className="w-5 h-5" /> {t('jobs.dialog.origin')} <span className="text-muted-foreground text-lg font-bold">({originLocations.length})</span>
                         </Label>
                         <Button type="button" size="sm" variant="outline" onClick={addOrigin} className="border-primary/30 text-primary hover:bg-primary/10">
@@ -883,7 +883,7 @@ export function JobDialog({
                     {/* Destinations */}
                     <div className="space-y-3">
                         <div className="flex items-center justify-between">
-                        <Label className="text-xl font-black text-indigo-400 uppercase tracking-widest flex items-center gap-2">
+                        <Label className="text-xl font-black text-indigo-400 uppercase tracking-normal flex items-center gap-2">
                             <MapPin className="w-5 h-5" /> {t('jobs.dialog.destination')} <span className="text-muted-foreground text-lg font-bold">({destinationLocations.length})</span>
                         </Label>
                         <Button type="button" size="sm" variant="outline" onClick={addDestination} className="border-indigo-500/30 text-indigo-400 hover:bg-indigo-500/10">
@@ -943,7 +943,7 @@ export function JobDialog({
                                     disabled={destinations.length === 1}
                                     className="text-destructive hover:text-destructive hover:bg-destructive/10 h-6 text-lg font-bold"
                                 >
-                                    ลบ
+                                    {t('jobs.dialog.delete')}
                                 </Button>
                             </div>
                         </div>
@@ -1059,7 +1059,7 @@ export function JobDialog({
 
                     <div className="grid grid-cols-1 gap-10 mb-8">
                         <div className="space-y-4">
-                        <Label className="flex items-center gap-2 text-2xl font-black text-primary uppercase tracking-widest">
+                        <Label className="flex items-center gap-2 text-2xl font-black text-primary uppercase tracking-normal">
                             <Truck className="w-6 h-6" /> {t('jobs.dialog.vehicle_type')}
                         </Label>
                         <select
@@ -1075,7 +1075,7 @@ export function JobDialog({
                         </select>
                         </div>
                         <div className="space-y-4">
-                        <Label className="flex items-center gap-2 text-2xl font-black text-primary uppercase tracking-widest">
+                        <Label className="flex items-center gap-2 text-2xl font-black text-primary uppercase tracking-normal">
                             <Truck className="w-6 h-6" /> {t('jobs.dialog.vehicle_plate')}
                         </Label>
                         <VehicleAutocomplete
@@ -1337,7 +1337,7 @@ export function JobDialog({
             <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="space-y-2">
-                  <Label className="text-xl font-black text-primary/80 uppercase tracking-widest">{t('jobs.dialog.price_cust')} (THB)</Label>
+                  <Label className="text-xl font-black text-primary/80 uppercase tracking-normal">{t('jobs.dialog.price_cust')} (THB)</Label>
                   <Input
                     type="number"
                     value={formData.Price_Cust_Total}
@@ -1346,7 +1346,7 @@ export function JobDialog({
                   />
                 </div>
                 <div className="space-y-2">
-                   <Label className="text-xl font-black text-primary/80 uppercase tracking-widest">{t('jobs.dialog.cost_driver')} (THB)</Label>
+                   <Label className="text-xl font-black text-primary/80 uppercase tracking-normal">{t('jobs.dialog.cost_driver')} (THB)</Label>
                    <Input
                     type="number"
                     value={formData.Cost_Driver_Total}
@@ -1358,7 +1358,7 @@ export function JobDialog({
 
               <div className="space-y-3">
                  <div className="flex items-center justify-between">
-                  <Label className="flex items-center gap-2 text-2xl font-black text-primary uppercase tracking-widest">
+                  <Label className="flex items-center gap-2 text-2xl font-black text-primary uppercase tracking-normal">
                     <Banknote className="w-6 h-6" /> {t('jobs.dialog.extra_costs')}
                   </Label>
                   <Button type="button" size="sm" variant="outline" onClick={addExtraCost} className="border-primary/30 text-primary hover:bg-primary/10">
@@ -1457,7 +1457,7 @@ export function JobDialog({
                 <Button 
                     type="submit" 
                     disabled={loading} 
-                    className="bg-primary hover:bg-primary/90 text-white text-xl h-14 px-12 font-black shadow-lg uppercase tracking-widest"
+                    className="bg-primary hover:bg-primary/90 text-white text-xl h-14 px-12 font-black shadow-lg uppercase tracking-normal"
                 >
                     {loading && <Loader2 className="w-5 h-5 mr-3 animate-spin" />}
                     {internalMode === 'create' ? t('jobs.dialog.execute') : t('jobs.dialog.sync')}

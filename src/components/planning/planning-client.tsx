@@ -111,7 +111,7 @@ export function PlanningClient({
                     <div className="flex items-center gap-3 mt-2">
                         <RealtimeIndicator isLive={true} className="bg-muted/50 border-border/10" />
                         <p className="text-muted-foreground font-bold uppercase tracking-[0.3em] text-base font-bold">
-                            Tactical Mission Orchestration
+                            {t('planning.mission_orchestration')}
                         </p>
                     </div>
                 </div>
@@ -234,6 +234,7 @@ export function PlanningClient({
 }
 
 function StatCard({ label, value, icon, color }: { label: string, value: number, icon: React.ReactNode, color: 'primary' | 'yellow' | 'blue' | 'green' }) {
+    const { t } = useLanguage()
     const colorMap = {
         primary: "text-primary bg-primary/10 border-primary/20",
         yellow: "text-amber-500 bg-amber-500/10 border-amber-500/20",
@@ -253,7 +254,7 @@ function StatCard({ label, value, icon, color }: { label: string, value: number,
                 <p className="text-base font-bold font-black text-muted-foreground uppercase tracking-[0.3em] mb-2">{label}</p>
                 <div className="flex items-baseline gap-2">
                     <span className="text-4xl font-black text-foreground tracking-tighter italic">{value}</span>
-                    <span className="text-muted-foreground text-base font-bold font-bold uppercase tracking-widest">Units</span>
+                    <span className="text-muted-foreground text-base font-bold font-black uppercase tracking-widest">{t('common.units')}</span>
                 </div>
             </div>
             <div className={cn("absolute bottom-0 left-0 h-1 w-0 group-hover:w-full transition-all duration-700", 

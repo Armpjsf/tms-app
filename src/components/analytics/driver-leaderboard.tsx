@@ -20,7 +20,7 @@ export function DriverLeaderboard({ data }: { data: DriverPerformance[] }) {
       {data.map((driver, index) => (
         <div 
             key={driver.name} 
-            className="group relative flex items-center justify-between p-4 bg-white/80 border border-gray-200 rounded-xl hover:border-emerald-500/30 transition-all overflow-hidden"
+            className="group relative flex items-center justify-between p-4 bg-muted/40 border border-border/5 rounded-xl hover:border-emerald-500/30 transition-all overflow-hidden"
         >
           {/* Rank indicator */}
           <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-transparent via-emerald-500/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -35,8 +35,8 @@ export function DriverLeaderboard({ data }: { data: DriverPerformance[] }) {
               {index + 1}
             </div>
             <div>
-              <p className="font-black text-gray-900 mb-0.5">{driver.name}</p>
-              <div className="flex items-center gap-3 text-base font-bold uppercase tracking-wider font-black text-gray-700">
+              <p className="font-black text-foreground mb-0.5">{driver.name}</p>
+              <div className="flex items-center gap-3 text-base font-bold font-black text-muted-foreground">
                 <span className="flex items-center gap-1"><Star size={10} className="text-amber-500" /> {driver.successRate.toFixed(0)}% Success</span>
                 <span>•</span>
                 <span>{driver.completedJobs} / {driver.totalJobs} Jobs</span>
@@ -45,7 +45,7 @@ export function DriverLeaderboard({ data }: { data: DriverPerformance[] }) {
           </div>
 
           <div className="text-right">
-            <p className="text-lg font-black text-gray-900">{formatCurrency(driver.revenue)}</p>
+            <p className="text-lg font-black text-foreground">{formatCurrency(driver.revenue)}</p>
             <div className="flex items-center justify-end gap-1 text-base font-bold uppercase font-bold text-emerald-400">
               <TrendingUp size={10} /> Yield Focus
             </div>

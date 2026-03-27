@@ -65,8 +65,8 @@ export function ExecutiveSectorHealth({ sectors }: { sectors: SectorHealth[] }) 
                         <Icon size={20} />
                     </div>
                     <div>
-                        <h4 className="text-base font-bold font-black text-foreground uppercase tracking-[0.3em] italic leading-none">{sector.title}</h4>
-                        <p className="text-base font-bold text-muted-foreground font-bold uppercase tracking-widest mt-1">{t('dashboard.sector_integrity')}</p>
+                        <h4 className="text-base font-bold font-black text-foreground uppercase italic leading-none">{sector.title}</h4>
+                        <p className="text-base font-bold text-muted-foreground font-bold uppercase mt-1">{t('dashboard.sector_integrity')}</p>
                     </div>
                 </div>
                 <div className="relative z-10">
@@ -87,7 +87,7 @@ export function ExecutiveSectorHealth({ sectors }: { sectors: SectorHealth[] }) 
                 {sector.metrics.map((m) => (
                   <div key={m.label} className="p-5 bg-muted/50 rounded-2xl border border-border/5 group-hover:border-border/10 transition-all">
                     <div className="flex items-center justify-between mb-3">
-                        <p className="text-base font-bold text-muted-foreground font-black uppercase tracking-widest leading-none">{m.label}</p>
+                        <p className="text-base font-bold text-muted-foreground font-black uppercase leading-none">{m.label}</p>
                         <div className={cn("w-1.5 h-1.5 rounded-full shadow-[0_0_8px_rgba(0,0,0,0.5)]", getStatusColor(m.status))} />
                     </div>
                     <div className="flex items-center gap-2">
@@ -101,7 +101,7 @@ export function ExecutiveSectorHealth({ sectors }: { sectors: SectorHealth[] }) 
               </div>
               
               <Link href={sector.href} className="block group/link">
-                <button className="w-full h-12 rounded-2xl bg-card border border-slate-800 text-foreground font-black text-base font-bold uppercase tracking-[0.2em] italic flex items-center justify-between px-6 group-hover/link:bg-white group-hover/link:text-black transition-all duration-500 overflow-hidden relative">
+                <button className="w-full h-12 rounded-2xl bg-card border border-slate-800 text-foreground font-black text-base font-bold uppercase italic flex items-center justify-between px-6 group-hover/link:bg-white group-hover/link:text-black transition-all duration-500 overflow-hidden relative">
                     <span className="relative z-10">{t('dashboard.access_sector')}</span>
                     <ChevronRight size={14} className="relative z-10 group-hover/link:translate-x-1 transition-transform" />
                 </button>

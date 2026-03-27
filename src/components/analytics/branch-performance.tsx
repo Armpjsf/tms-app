@@ -30,20 +30,20 @@ export function BranchPerformance({ data }: { data: BranchPerformanceItem[] }) {
         <div className="overflow-x-auto">
             <Table>
                 <TableHeader>
-                    <TableRow className="border-gray-200 hover:bg-transparent">
-                        <TableHead className="text-muted-foreground">ชื่อสาขา (Branch)</TableHead>
-                        <TableHead className="text-right text-muted-foreground">งาน (Jobs)</TableHead>
-                        <TableHead className="text-right text-muted-foreground">รายรับ (Revenue)</TableHead>
-                        <TableHead className="text-right text-muted-foreground">กำไรเบื้องต้น (Profit)</TableHead>
+                    <TableRow className="border-border/5 hover:bg-transparent bg-muted/30">
+                        <TableHead className="text-muted-foreground font-black uppercase text-base">ชื่อสาขา (Branch)</TableHead>
+                        <TableHead className="text-right text-muted-foreground font-black uppercase text-base">งาน (Jobs)</TableHead>
+                        <TableHead className="text-right text-muted-foreground font-black uppercase text-base">รายรับ (Revenue)</TableHead>
+                        <TableHead className="text-right text-muted-foreground font-black uppercase text-base">กำไรเบื้องต้น (Profit)</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
                     {data.map((branch) => (
-                        <TableRow key={branch.branchId} className="border-gray-200 hover:bg-gray-50">
-                            <TableCell className="font-medium text-gray-900">{branch.branchName}</TableCell>
-                            <TableCell className="text-right text-gray-700">{branch.jobsCount}</TableCell>
-                            <TableCell className="text-right text-gray-950 font-black">{formatCurrency(branch.revenue)}</TableCell>
-                            <TableCell className={`text-right font-black ${branch.profit >= 0 ? 'text-emerald-700' : 'text-red-700'}`}>
+                        <TableRow key={branch.branchId} className="border-border/5 hover:bg-white/5 group transition-colors">
+                            <TableCell className="font-bold text-foreground group-hover:text-primary transition-colors">{branch.branchName}</TableCell>
+                            <TableCell className="text-right text-muted-foreground font-bold">{branch.jobsCount}</TableCell>
+                            <TableCell className="text-right text-foreground font-black italic">{formatCurrency(branch.revenue)}</TableCell>
+                            <TableCell className={`text-right font-black italic ${branch.profit >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
                                 {formatCurrency(branch.profit)}
                             </TableCell>
                         </TableRow>

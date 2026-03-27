@@ -13,15 +13,16 @@ export type GeocodeResult = {
 }
 
 export async function geocodeAddress(address: string): Promise<GeocodeResult | null> {
-  if (!address || address.length < 3) return null;
+  const cleanAddress = address.trim().replace(/\s+/g, ' ');
+  if (!cleanAddress || cleanAddress.length < 2) return null;
 
   try {
     // Nominatim requires a descriptive User-Agent
-    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address)}&format=json&limit=1&addressdetails=1`;
+    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(cleanAddress)}&format=json&limit=1&addressdetails=1&countrycodes=th`;
     
     const response = await fetch(url, {
       headers: {
-        'User-Agent': 'TMS-2026-Logistics-App (contact@yourdomain.com)' 
+        'User-Agent': 'TMS-Logistics-Platform-v2 (contact@logispro-epod.app)' 
       }
     });
 

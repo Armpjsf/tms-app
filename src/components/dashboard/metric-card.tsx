@@ -3,7 +3,7 @@
 import * as React from "react"
 import { motion, useSpring, useTransform } from "framer-motion"
 import { cn } from "@/lib/utils"
-import { TrendingUp, TrendingDown, Minus } from "lucide-react"
+import { TrendingUp, TrendingDown } from "lucide-react"
 
 interface MetricCardProps {
   title: string
@@ -107,12 +107,12 @@ export function MetricCard({
               "shadow-2xl shadow-emerald-500/20",
               "text-white transform group-hover:scale-110 group-hover:rotate-3 transition-transform duration-500"
             )}>
-              {React.cloneElement(icon as React.ReactElement, { size: 28 })}
+              {React.cloneElement(icon as React.ReactElement<{ size?: number }>, { size: 28 })}
             </div>
 
             {trend && (
               <div className={cn(
-                "flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-base font-bold font-black uppercase tracking-widest",
+                "flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-base font-bold font-black uppercase tracking-normal",
                 trend.value > 0 ? "bg-emerald-500/10 text-emerald-600" : "bg-rose-500/10 text-rose-600"
               )}>
                 {trend.value > 0 ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
@@ -123,7 +123,7 @@ export function MetricCard({
 
           {/* Title Area */}
           <div className="space-y-1">
-            <p className="text-base font-bold font-black text-muted-foreground uppercase tracking-[0.2em]">
+            <p className="text-base font-bold font-black text-muted-foreground uppercase tracking-wide">
               {title}
             </p>
             <div className="flex items-baseline gap-2">
@@ -136,7 +136,7 @@ export function MetricCard({
             {subtitle && (
               <div className="flex items-center gap-2 mt-4">
                 <div className={cn("w-1.5 h-1.5 rounded-full", "bg-" + (gradient === 'primary' || gradient === 'success' ? 'emerald' : 'rose') + "-500")} />
-                <p className="text-base font-bold font-black text-gray-700 uppercase tracking-widest leading-none">
+                <p className="text-base font-bold font-black text-gray-700 uppercase tracking-normal leading-none">
                     {subtitle}
                 </p>
               </div>

@@ -11,6 +11,7 @@ import {
   Package
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useLanguage } from "@/components/providers/language-provider"
 
 interface ActivityFeedProps {
   jobStats: {
@@ -23,46 +24,47 @@ interface ActivityFeedProps {
 }
 
 export function ActivityFeed({ jobStats, sosCount }: ActivityFeedProps) {
+  const { t } = useLanguage()
   const stats = jobStats || { total: 0, pending: 0, inProgress: 0, delivered: 0 }
   const sCount = sosCount || 0
 
   const activities = [
     ...(sCount > 0 ? [{
       icon: AlertTriangle,
-      label: `${sCount} SOS ALERTS ACTIVE`,
-      time: 'CRITICAL',
+      label: t('dashboard.activity.sos_active', { count: sCount }),
+      time: t('dashboard.activity.critical'),
       color: 'text-rose-500',
       bgColor: 'bg-rose-500/10',
       borderColor: 'border-rose-500/20',
     }] : []),
     ...(stats.total > 0 ? [{
       icon: Package,
-      label: `${stats.total} MISSIONS CREATED`,
-      time: 'SYSTEM',
+      label: t('dashboard.activity.missions_created', { count: stats.total }),
+      time: t('dashboard.activity.system'),
       color: 'text-primary',
       bgColor: 'bg-primary/10',
       borderColor: 'border-primary/20',
     }] : []),
     ...(stats.inProgress > 0 ? [{
       icon: Truck,
-      label: `${stats.inProgress} UNITS IN TRANSIT`,
-      time: 'ACTIVE',
+      label: t('dashboard.activity.units_in_transit', { count: stats.inProgress }),
+      time: t('dashboard.activity.active'),
       color: 'text-accent',
       bgColor: 'bg-accent/10',
       borderColor: 'border-accent/20',
     }] : []),
     ...(stats.delivered > 0 ? [{
       icon: CheckCircle2,
-      label: `${stats.delivered} MISSIONS COMPLETED`,
-      time: 'SUCCESS',
+      label: t('dashboard.activity.missions_completed', { count: stats.delivered }),
+      time: t('dashboard.activity.success'),
       color: 'text-primary',
       bgColor: 'bg-primary/10',
       borderColor: 'border-primary/20',
     }] : []),
     ...(stats.pending > 0 ? [{
       icon: Clock,
-      label: `${stats.pending} MISSIONS QUEUED`,
-      time: 'PENDING',
+      label: t('dashboard.activity.missions_queued', { count: stats.pending }),
+      time: t('dashboard.activity.pending'),
       color: 'text-muted-foreground',
       bgColor: 'bg-muted/50',
       borderColor: 'border-border/5',
@@ -105,7 +107,7 @@ export function ActivityFeed({ jobStats, sosCount }: ActivityFeedProps) {
                         {activity.time}
                     </span>
                     <div className="w-1 h-1 rounded-full bg-slate-700" />
-                    <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-[0.2em]">CYCLE REFRESHED</span>
+                    <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-[0.2em]">{t('dashboard.activity.cycle_refreshed')}</span>
                 </div>
               </div>
             </motion.div>
@@ -114,7 +116,7 @@ export function ActivityFeed({ jobStats, sosCount }: ActivityFeedProps) {
       ) : (
         <div className="p-12 text-center glass-panel rounded-[3rem] border-dashed border-border/5">
           <Activity className="w-12 h-12 text-muted-foreground mx-auto mb-4 opacity-20" />
-          <p className="text-base font-bold font-black text-muted-foreground uppercase tracking-[0.3em]">Operational Silence</p>
+          <p className="text-base font-bold font-black text-muted-foreground uppercase tracking-[0.3em]">{t('dashboard.activity.operational_silence')}</p>
         </div>
       )}
     </motion.div>

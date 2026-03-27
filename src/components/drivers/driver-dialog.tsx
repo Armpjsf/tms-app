@@ -103,7 +103,7 @@ export function DriverDialog({
                   <DialogTitle className="text-3xl font-black tracking-tighter uppercase whitespace-nowrap">
                       {mode === 'create' ? t('drivers.dialog.title_add') : t('drivers.dialog.title_edit')}
                   </DialogTitle>
-                  <p className="text-muted-foreground text-base font-bold font-black uppercase tracking-[0.3em]">{t('drivers.dialog.subtitle')}</p>
+                  <p className="text-muted-foreground text-base font-bold font-black uppercase tracking-normal">{t('drivers.dialog.subtitle')}</p>
               </div>
           </div>
         </DialogHeader>
@@ -112,7 +112,7 @@ export function DriverDialog({
           {/* Section: Basic Identity */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <Label htmlFor="Driver_ID" className="text-base font-bold font-black uppercase tracking-widest text-muted-foreground ml-1">{t('drivers.dialog.serial_id')}</Label>
+                <Label htmlFor="Driver_ID" className="text-base font-bold font-black uppercase tracking-tight text-muted-foreground ml-1">{t('drivers.dialog.serial_id')}</Label>
                 <div className="relative">
                     <User className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
                     <Input
@@ -128,7 +128,7 @@ export function DriverDialog({
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="Driver_Name" className="text-base font-bold font-black uppercase tracking-widest text-muted-foreground ml-1">{t('drivers.dialog.full_designation')}</Label>
+                <Label htmlFor="Driver_Name" className="text-base font-bold font-black uppercase tracking-tight text-muted-foreground ml-1">{t('drivers.dialog.full_designation')}</Label>
                 <Input
                   id="Driver_Name"
                   value={formData.Driver_Name}
@@ -140,7 +140,7 @@ export function DriverDialog({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="Mobile_No" className="text-base font-bold font-black uppercase tracking-widest text-muted-foreground ml-1">{t('drivers.dialog.comm_channel')}</Label>
+                <Label htmlFor="Mobile_No" className="text-base font-bold font-black uppercase tracking-tight text-muted-foreground ml-1">{t('drivers.dialog.comm_channel')}</Label>
                 <div className="relative">
                     <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
                     <Input
@@ -155,7 +155,7 @@ export function DriverDialog({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="Password" className="text-base font-bold font-black uppercase tracking-widest text-muted-foreground ml-1">{t('drivers.dialog.security_key')}</Label>
+                <Label htmlFor="Password" className="text-base font-bold font-black uppercase tracking-tight text-muted-foreground ml-1">{t('drivers.dialog.security_key')}</Label>
                 <div className="relative">
                     <Key className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
                     <Input
@@ -176,7 +176,7 @@ export function DriverDialog({
           {/* Section: Operational Data */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <Label htmlFor="Expire_Date" className="text-base font-bold font-black uppercase tracking-widest text-muted-foreground ml-1">{t('drivers.dialog.licence_integrity_date')}</Label>
+                <Label htmlFor="Expire_Date" className="text-base font-bold font-black uppercase tracking-tight text-muted-foreground ml-1">{t('drivers.dialog.licence_integrity_date')}</Label>
                 <div className="relative">
                     <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
                     <Input
@@ -190,7 +190,7 @@ export function DriverDialog({
               </div>
 
               <div className="space-y-2">
-                <Label className="text-base font-bold font-black uppercase tracking-widest text-muted-foreground ml-1">{t('drivers.dialog.branch_hq')}</Label>
+                <Label className="text-base font-bold font-black uppercase tracking-tight text-muted-foreground ml-1">{t('drivers.dialog.branch_hq')}</Label>
                 <Select value={formData.Branch_ID || undefined} onValueChange={(val) => setFormData({ ...formData, Branch_ID: val })}>
                     <SelectTrigger className="h-12 rounded-xl bg-muted/50 border-border/10 text-foreground">
                         <SelectValue placeholder={t('common.all')} />
@@ -204,13 +204,13 @@ export function DriverDialog({
               </div>
 
               <div className="space-y-2">
-                <Label className="text-base font-bold font-black uppercase tracking-widest text-muted-foreground ml-1">{t('drivers.dialog.subcontractor_origin')}</Label>
+                <Label className="text-base font-bold font-black uppercase tracking-tight text-muted-foreground ml-1">{t('drivers.dialog.subcontractor_origin')}</Label>
                 <Select value={formData.Sub_ID || "__independent__"} onValueChange={(val) => setFormData({ ...formData, Sub_ID: val === "__independent__" ? "" : val })}>
                     <SelectTrigger className="h-12 rounded-xl bg-muted/50 border-border/10 text-foreground">
-                        <SelectValue placeholder="Independent" />
+                        <SelectValue placeholder={t('drivers.dialog.independent')} />
                     </SelectTrigger>
                     <SelectContent className="bg-card border-border/10 text-foreground">
-                        <SelectItem value="__independent__">Independent / Fleet Ops</SelectItem>
+                        <SelectItem value="__independent__">{t('drivers.dialog.independent')}</SelectItem>
                         {Array.isArray(subcontractors) && subcontractors.map((s) => (
                             <SelectItem key={s.Sub_ID} value={s.Sub_ID}>{s.Sub_Name}</SelectItem>
                         ))}
@@ -219,7 +219,7 @@ export function DriverDialog({
               </div>
 
               <div className="space-y-2">
-                <Label className="text-base font-bold font-black uppercase tracking-widest text-muted-foreground ml-1">{t('drivers.dialog.asset_allocation')}</Label>
+                <Label className="text-base font-bold font-black uppercase tracking-tight text-muted-foreground ml-1">{t('drivers.dialog.asset_allocation')}</Label>
                 <Select value={formData.Vehicle_Plate || "__none__"} onValueChange={(val) => setFormData({ ...formData, Vehicle_Plate: val === "__none__" ? "" : val })}>
                     <SelectTrigger className="h-12 rounded-xl bg-muted/50 border-border/10 text-foreground">
                         <SelectValue placeholder={t('common.no_data')} />
@@ -240,11 +240,11 @@ export function DriverDialog({
                  <div className="p-2 bg-emerald-500/20 rounded-xl">
                     <Landmark size={18} className="text-emerald-400" /> 
                  </div>
-                 <h4 className="text-base font-bold font-black text-emerald-400 uppercase tracking-[0.3em]">Compensation Channel</h4>
+                 <h4 className="text-base font-bold font-black text-emerald-400 uppercase tracking-normal">Compensation Channel</h4>
             </div>
             
             <div className="space-y-2">
-                <Label className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest">{t('drivers.dialog.institution')}</Label>
+                <Label className="text-base font-bold font-black text-muted-foreground uppercase tracking-tight">{t('drivers.dialog.institution')}</Label>
                 <Select value={formData.Bank_Name || "__none__"} onValueChange={(val) => setFormData({ ...formData, Bank_Name: val === "__none__" ? "" : val })}>
                     <SelectTrigger className="h-12 border-border/10 bg-black/20 text-white">
                         <SelectValue placeholder={t('common.search')} />
@@ -260,7 +260,7 @@ export function DriverDialog({
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                    <Label className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest">{t('drivers.dialog.account_serial')}</Label>
+                    <Label className="text-base font-bold font-black text-muted-foreground uppercase tracking-tight">{t('drivers.dialog.account_serial')}</Label>
                     <Input
                         value={formData.Bank_Account_No}
                         onChange={(e) => setFormData({ ...formData, Bank_Account_No: e.target.value })}
@@ -269,7 +269,7 @@ export function DriverDialog({
                     />
                 </div>
                 <div className="space-y-2">
-                    <Label className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest">{t('drivers.dialog.legal_account_name')}</Label>
+                    <Label className="text-base font-bold font-black text-muted-foreground uppercase tracking-tight">{t('drivers.dialog.legal_account_name')}</Label>
                     <Input
                         value={formData.Bank_Account_Name}
                         onChange={(e) => setFormData({ ...formData, Bank_Account_Name: e.target.value })}
@@ -285,7 +285,7 @@ export function DriverDialog({
                 type="button" 
                 variant="ghost" 
                 onClick={() => setShow(false)}
-                className="h-14 px-8 rounded-2xl text-muted-foreground font-black uppercase tracking-widest text-foreground"
+                className="h-14 px-8 rounded-2xl text-muted-foreground font-black uppercase tracking-tight text-foreground"
             >
               {t('drivers.dialog.abort')}
             </Button>

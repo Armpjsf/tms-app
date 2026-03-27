@@ -94,9 +94,9 @@ function StaffLoginContent() {
                 </div>
                 <div className="space-y-1">
                     <h2 className="text-3xl font-black text-accent tracking-tighter">DRIVER</h2>
-                    <p className="text-muted-foreground text-[10px] font-bold font-black uppercase tracking-[0.3em]">Fleet Portal</p>
+                    <p className="text-muted-foreground text-[10px] font-bold font-black uppercase tracking-widest">Fleet Portal</p>
                 </div>
-                <button className="w-full h-14 rounded-xl bg-primary hover:brightness-110 text-foreground font-bold uppercase tracking-[0.2em] shadow-xl shadow-primary/20 transition-all">
+                <button className="w-full h-14 rounded-xl bg-primary hover:brightness-110 text-foreground font-bold uppercase tracking-wide shadow-xl shadow-primary/20 transition-all">
                     Start Engine
                 </button>
             </div>
@@ -112,9 +112,9 @@ function StaffLoginContent() {
                 </div>
                 <div className="space-y-1">
                     <h2 className="text-3xl font-black text-accent tracking-tighter">CUSTOMER</h2>
-                    <p className="text-muted-foreground text-[10px] font-bold font-black uppercase tracking-[0.3em]">Consignor Portal</p>
+                    <p className="text-muted-foreground text-[10px] font-bold font-black uppercase tracking-widest">Consignor Portal</p>
                 </div>
-                <button className="w-full h-14 rounded-xl bg-blue-600 hover:brightness-110 text-white font-bold uppercase tracking-[0.2em] shadow-xl shadow-blue-600/20 transition-all">
+                <button className="w-full h-14 rounded-xl bg-blue-600 hover:brightness-110 text-white font-bold uppercase tracking-wide shadow-xl shadow-blue-600/20 transition-all">
                     Access Grid
                 </button>
             </div>
@@ -130,9 +130,9 @@ function StaffLoginContent() {
                 </div>
                 <div className="space-y-1">
                     <h2 className="text-3xl font-black text-accent tracking-tighter">ADMIN</h2>
-                    <p className="text-muted-foreground text-[10px] font-bold font-black uppercase tracking-[0.3em]">Command Center</p>
+                    <p className="text-muted-foreground text-[10px] font-bold font-black uppercase tracking-widest">Command Center</p>
                 </div>
-                <button className="w-full h-14 rounded-xl bg-muted/50 border border-border/10 hover:bg-muted/80 text-foreground font-black text-base font-bold uppercase tracking-[0.2em] shadow-xl transition-all">
+                <button className="w-full h-14 rounded-xl bg-muted/50 border border-border/10 hover:bg-muted/80 text-foreground font-black text-base font-bold uppercase tracking-wide shadow-xl transition-all">
                     Command Key
                 </button>
             </div>
@@ -160,7 +160,7 @@ function StaffLoginContent() {
 
                     <form action={handleSubmit} className="space-y-6">
                         <div className="space-y-3 text-left">
-                            <Label htmlFor="email" className="text-muted-foreground text-base font-bold font-black uppercase tracking-widest ml-1">Username / Fleet ID</Label>
+                            <Label htmlFor="email" className="text-muted-foreground text-base font-bold font-black uppercase tracking-normal ml-1">Username / Fleet ID</Label>
                             <Input 
                                 id="email" 
                                 name="email" 
@@ -171,7 +171,7 @@ function StaffLoginContent() {
                             />
                         </div>
                         <div className="space-y-3 text-left">
-                            <Label htmlFor="password" className="text-muted-foreground text-base font-bold font-black uppercase tracking-widest ml-1">Security Key</Label>
+                            <Label htmlFor="password" className="text-muted-foreground text-base font-bold font-black uppercase tracking-normal ml-1">Security Key</Label>
                             <Input 
                                 id="password" 
                                 name="password" 
@@ -198,10 +198,10 @@ function StaffLoginContent() {
         )}
 
         <div className="space-y-4 animate-in fade-in duration-1000 delay-700 pt-10">
-            <p className="text-base font-bold text-muted-foreground font-black uppercase tracking-[0.2em]">
+            <p className="text-base font-bold text-muted-foreground font-black uppercase tracking-wide">
                 © 2024 <span className="text-primary/60">LOGIS-PRO</span> COMMAND. ALL RIGHTS RESERVED.
             </p>
-            <div className="flex justify-center gap-8 text-base font-bold text-muted-foreground font-black uppercase tracking-widest">
+            <div className="flex justify-center gap-8 text-base font-bold text-muted-foreground font-black uppercase tracking-normal">
                 <a href="#" className="hover:text-primary transition-colors">Privacy</a>
                 <a href="#" className="hover:text-primary transition-colors">Terms</a>
             </div>

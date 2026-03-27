@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react"
 import { MapPin } from "lucide-react"
 import { Input } from "@/components/ui/input"
+import { useLanguage } from "@/components/providers/language-provider"
 import { cn } from "@/lib/utils"
 
 interface LocationAutocompleteProps {
@@ -20,6 +21,7 @@ export function LocationAutocomplete({
   className,
   placeholder = "ค้นหาสถานที่..."
 }: LocationAutocompleteProps) {
+  const { t } = useLanguage()
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState("")
   const wrapperRef = useRef<HTMLDivElement>(null)
@@ -77,7 +79,7 @@ export function LocationAutocomplete({
           onChange={handleInputChange}
           onFocus={() => setOpen(true)}
           onClick={() => setOpen(true)}
-          placeholder={placeholder}
+          placeholder={placeholder || t('common.search')}
           className={cn("bg-muted border-border text-foreground font-black placeholder:text-muted-foreground placeholder:font-bold", className)}
         />
       </div>
@@ -86,7 +88,7 @@ export function LocationAutocomplete({
         <div className="absolute z-[9999] w-full mt-1 bg-popover border border-border rounded-md shadow-lg max-h-60 overflow-y-auto">
           {filteredLocations.length === 0 ? (
             <div className="px-3 py-2 text-xl text-muted-foreground font-bold text-center">
-                ไม่พบข้อมูล
+                {t('common.no_data')}
             </div>
           ) : (
             <div className="py-1">

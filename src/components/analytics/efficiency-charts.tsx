@@ -33,8 +33,8 @@ export function EfficiencyCharts({ data }: { data: { date: string; revenue: numb
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
       {/* Revenue vs Cost Correlation - Large Matrix */}
-      <PremiumCard className="lg:col-span-2 bg-white border-none shadow-[0_30px_100px_rgba(0,0,0,0.1)] p-0 overflow-hidden rounded-br-[5rem] rounded-tl-[3rem]">
-        <div className="p-8 border-b border-slate-50 bg-background relative overflow-hidden flex items-center justify-between">
+      <PremiumCard className="lg:col-span-2 bg-muted/50 border border-border/10 shadow-3xl p-0 overflow-hidden rounded-br-[5rem] rounded-tl-[3rem]">
+        <div className="p-8 border-b border-border/5 bg-gradient-to-r from-blue-500/20 via-blue-500/5 to-transparent backdrop-blur-md relative overflow-hidden flex items-center justify-between">
            <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-transparent pointer-events-none" />
            <div className="flex items-center gap-3 relative z-10">
              <div className="p-2 bg-blue-600 rounded-xl text-white shadow-lg">

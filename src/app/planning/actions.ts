@@ -103,6 +103,10 @@ export async function createJob(data: JobFormData) {
           })
       }
       revalidatePath('/planning')
+      
+      // Auto-save locations for future use
+      autoSaveOriginDestinations(data.Branch_ID || null, data.original_origins_json, data.original_destinations_json).catch(() => {})
+      
       return { success: true, message: 'Job created successfully' }
   }
 
@@ -157,6 +161,47 @@ function buildInsertPayload(data: JobFormData, driverName: string, subId: string
   }
 }
 
+/**
+ * Auto-saves new origins/destinations into Master_Routes for future autocomplete
+ */
+async function autoSaveOriginDestinations(branchId: string | null, originsJson?: string, destsJson?: string) {
+    if (!branchId) return
+    const supabase = createAdminClient()
+
+    const parseNodes = (json?: string) => {
+        if (!json) return []
+        try {
+            const parsed = JSON.parse(json)
+            return Array.isArray(parsed) ? parsed : []
+        } catch {
+            return []
+        }
+    }
+
+    const allNodes = [...parseNodes(originsJson), ...parseNodes(destsJson)]
+    const validNodes = allNodes.filter(n => n.name && n.lat && n.lng)
+
+    if (validNodes.length === 0) return
+
+    // Prepare upsert payload
+    const routesToSave = validNodes.map(node => ({
+        Route_Name: node.name.trim(),
+        Origin: node.name.trim(),
+        Origin_Lat: parseFloat(String(node.lat)),
+        Origin_Lon: parseFloat(String(node.lng)),
+        Destination: node.name.trim(),
+        Dest_Lat: parseFloat(String(node.lat)),
+        Dest_Lon: parseFloat(String(node.lng)),
+        Branch_ID: branchId,
+        Distance_KM: 0
+    }))
+
+    // Upsert to Master_Routes (Ignore duplicates or update coordinates)
+    await supabase
+        .from('Master_Routes')
+        .upsert(routesToSave, { onConflict: 'Route_Name' })
+}
+
 export async function createBulkJobs(jobs: Partial<JobFormData>[]) {
   const supabase = await createClient()
 
@@ -203,6 +248,13 @@ export async function createBulkJobs(jobs: Partial<JobFormData>[]) {
     normalized.Cost_Driver_Total = getValue(['Cost_Driver_Total', 'cost', 'ต้นทุน', 'ค่ารถ'])
     normalized.Notes = getValue(['Notes', 'remark', 'หมายเหตุ'])
     normalized.Ref_No = getValue(['Ref_No', 'so', 'do', 'เลขที่อ้างอิง'])
+    
+    // Support coordinate mapping in Excel
+    normalized.Pickup_Lat = getValue(['pickup_lat', 'origin_lat', 'lat_start', 'ละติจูดต้นทาง', 'lat_ต้นทาง'])
+    normalized.Pickup_Lon = getValue(['pickup_lon', 'origin_lon', 'lon_start', 'ลองติจูดต้นทาง', 'lon_ต้นทาง'])
+    normalized.Delivery_Lat = getValue(['delivery_lat', 'dest_lat', 'lat_end', 'ละติจูดปลายทาง', 'lat_ปลายทาง'])
+    normalized.Delivery_Lon = getValue(['delivery_lon', 'dest_lon', 'lon_end', 'ลองติจูดปลายทาง', 'lon_ปลายทาง'])
+    
     return normalized
   }
 
@@ -233,6 +285,13 @@ export async function createBulkJobs(jobs: Partial<JobFormData>[]) {
       Volume_Cbm: Number(data.Volume_Cbm) || 0,
       Created_At: new Date().toISOString(),
       Ref_No: (data.Ref_No as string) || null,
+      // Pass coordinates through
+      Pickup_Lat: data.Pickup_Lat ? Number(data.Pickup_Lat) : null,
+      Pickup_Lon: data.Pickup_Lon ? Number(data.Pickup_Lon) : null,
+      Delivery_Lat: data.Delivery_Lat ? Number(data.Delivery_Lat) : null,
+      Delivery_Lon: data.Delivery_Lon ? Number(data.Delivery_Lon) : null,
+      Origin_Location: (data.Origin_Location as string) || null,
+      Dest_Location: (data.Dest_Location as string) || null,
     }
   }).filter(j => j.Customer_Name)
 
@@ -246,6 +305,22 @@ export async function createBulkJobs(jobs: Partial<JobFormData>[]) {
 
   if (error) {
     return { success: false, message: `Failed to import: ${error.message}` }
+  }
+
+  // Auto-save locations from the batch
+  const locationsToSave: { name: string, lat: number, lng: number }[] = []
+  cleanData.forEach(j => {
+      if (j.Origin_Location && j.Pickup_Lat && j.Pickup_Lon) {
+          locationsToSave.push({ name: j.Origin_Location, lat: j.Pickup_Lat, lng: j.Pickup_Lon })
+      }
+      if (j.Dest_Location && j.Delivery_Lat && j.Delivery_Lon) {
+          locationsToSave.push({ name: j.Dest_Location, lat: j.Delivery_Lat, lng: j.Delivery_Lon })
+      }
+  })
+  
+  if (locationsToSave.length > 0) {
+     const originsJson = JSON.stringify(locationsToSave)
+     autoSaveOriginDestinations(effectiveBranchId, originsJson).catch(() => {})
   }
 
   // Audit: Log any backdated job entries
@@ -327,6 +402,10 @@ export async function updateJob(jobId: string, data: Partial<JobFormData>) {
   if (error) {
     return { success: false, message: `Failed to update job: ${error.message}` }
   }
+
+  // Auto-save locations for future use
+  const branchId = await getUserBranchId()
+  autoSaveOriginDestinations(branchId || null, data.original_origins_json, data.original_destinations_json).catch(() => {})
 
   revalidatePath('/planning')
 

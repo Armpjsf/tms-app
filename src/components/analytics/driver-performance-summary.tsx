@@ -47,7 +47,7 @@ export function DriverPerformanceSummary({ leaderboard, compliance, efficiency }
                                 {leaderboard.slice(0, 3).map((driver, i) => (
                                     <div key={driver.name} className="bg-white/90 p-4 rounded-xl border border-gray-200 relative">
                                         <div className="absolute -top-2 -right-2 w-6 h-6 bg-amber-500 rounded-full flex items-center justify-center text-base font-bold font-black text-black">#{i+1}</div>
-                                        <p className="text-base font-bold text-gray-700 font-black uppercase tracking-widest mb-1 truncate">{driver.name}</p>
+                                        <p className="text-base font-bold text-gray-700 font-black uppercase mb-1 truncate">{driver.name}</p>
                                         <div className="flex items-baseline gap-1">
                                             <span className="text-2xl font-black text-gray-900 font-black">฿{driver.revenue.toLocaleString()}</span>
                                             <span className="text-base font-bold text-emerald-700 font-black">Yield</span>
@@ -61,7 +61,7 @@ export function DriverPerformanceSummary({ leaderboard, compliance, efficiency }
                             </div>
                         </div>
                         <div className="bg-gray-50 p-6 rounded-2xl flex flex-col items-center justify-center border border-gray-200">
-                            <p className="text-base font-bold text-gray-700 font-black uppercase tracking-widest mb-1 text-center">Avg. On-Time Rate</p>
+                            <p className="text-base font-bold text-gray-700 font-black uppercase mb-1 text-center">Avg. On-Time Rate</p>
                             <p className="text-5xl font-black text-gray-900">{efficiency.avgOnTime}%</p>
                             <div className="w-full bg-slate-700 h-1.5 rounded-full mt-4">
                                 <div className="bg-blue-500 h-full rounded-full shadow-[0_0_10px_rgba(59,130,246,0.5)]" style={{ width: `${efficiency.avgOnTime}%` }} />
@@ -74,7 +74,7 @@ export function DriverPerformanceSummary({ leaderboard, compliance, efficiency }
             {/* 2. Compliance & Documents */}
             <Card className="lg:col-span-5 bg-white/80 backdrop-blur-sm border-gray-200 shadow-xl self-start">
                 <CardHeader>
-                    <CardTitle className="text-xl font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+                    <CardTitle className="text-xl font-bold text-muted-foreground uppercase flex items-center gap-2">
                         <ShieldCheck size={16} className="text-emerald-400" /> License & Compliance Audit
                     </CardTitle>
                 </CardHeader>
@@ -103,7 +103,7 @@ export function DriverPerformanceSummary({ leaderboard, compliance, efficiency }
             {/* 3. Reliability Metrics */}
             <Card className="lg:col-span-7 bg-white/80 backdrop-blur-sm border-gray-200 shadow-xl h-full">
                 <CardHeader>
-                    <CardTitle className="text-xl font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+                    <CardTitle className="text-xl font-bold text-muted-foreground uppercase flex items-center gap-2">
                         <TrendingUp size={16} className="text-emerald-600" /> Service Reliability Index
                     </CardTitle>
                 </CardHeader>
@@ -111,16 +111,16 @@ export function DriverPerformanceSummary({ leaderboard, compliance, efficiency }
                     <div className="flex items-center justify-around mb-8">
                         <div className="text-center">
                             <div className="text-4xl font-black text-gray-950 mb-1">{efficiency.avgSuccess}%</div>
-                            <p className="text-base font-bold text-gray-700 uppercase font-black tracking-widest leading-none">Job Success</p>
+                            <p className="text-base font-bold text-gray-700 uppercase font-black leading-none">Job Success</p>
                         </div>
                         <div className="w-px h-12 bg-gray-100" />
                         <div className="text-center">
                             <div className="text-4xl font-black text-emerald-600 mb-1">{efficiency.totalDrivers}</div>
-                            <p className="text-base font-bold text-gray-400 uppercase font-bold tracking-widest leading-none">Managed Fleet</p>
+                            <p className="text-base font-bold text-gray-400 uppercase font-bold leading-none">Managed Fleet</p>
                         </div>
                     </div>
                     <div className="space-y-3">
-                         <div className="flex justify-between text-base font-bold uppercase font-black tracking-widest">
+                         <div className="flex justify-between text-base font-bold uppercase font-black">
                              <span className="text-gray-400">Fleet Uptime Goal</span>
                              <span className="text-emerald-600">92%</span>
                          </div>

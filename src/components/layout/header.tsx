@@ -4,6 +4,7 @@ import * as React from "react"
 import { cn } from "@/lib/utils"
 import { Search, Building2 } from "lucide-react"
 import { useBranch } from "@/components/providers/branch-provider"
+import { useLanguage } from "@/components/providers/language-provider"
 import { NotificationDropdown } from "@/components/notifications/notification-dropdown"
 import { LanguageSwitcher } from "@/components/ui/language-switcher"
 import { ThemeToggle } from "@/components/ui/theme-toggle"
@@ -21,6 +22,7 @@ interface HeaderProps {
 
 export function Header({ sidebarCollapsed = false }: HeaderProps) {
   const { selectedBranch, setSelectedBranch, branches, isAdmin } = useBranch()
+  const { t } = useLanguage()
 
   return (
     <header
@@ -38,8 +40,8 @@ export function Header({ sidebarCollapsed = false }: HeaderProps) {
             <span className="text-2xl font-black text-accent tracking-tighter uppercase italic leading-none">
                 Logis<span className="text-primary">Pro</span>
             </span>
-            <span className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] mt-1">
-                Command Centre
+            <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mt-1">
+                {t('header.command_centre')}
             </span>
          </div>
 
@@ -55,13 +57,13 @@ export function Header({ sidebarCollapsed = false }: HeaderProps) {
                             <div className="p-2 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors">
                                 <Building2 className="w-4 h-4 text-primary shrink-0" />
                             </div>
-                             <span className="truncate font-black text-accent text-sm font-bold uppercase tracking-widest">
-                                {selectedBranch === 'All' ? 'ALL BRANCHES' : branches.find(b => b.Branch_ID === selectedBranch)?.Branch_Name || selectedBranch}
+                             <span className="truncate font-black text-accent text-sm font-bold uppercase tracking-normal">
+                                {selectedBranch === 'All' ? t('header.all_branches') : branches.find(b => b.Branch_ID === selectedBranch)?.Branch_Name || selectedBranch}
                             </span>
                             </div>
                     </SelectTrigger>
                     <SelectContent className="z-[70] bg-popover border border-border shadow-[0_20px_60px_rgba(0,0,0,0.2)] dark:shadow-[0_20px_60px_rgba(0,0,0,0.6)] rounded-[2rem] text-popover-foreground p-2">
-                        <SelectItem value="All" className="rounded-xl hover:bg-primary/10 focus:bg-primary/10 focus:text-primary transition-colors cursor-pointer py-3 h-12">ALL BRANCHES</SelectItem>
+                        <SelectItem value="All" className="rounded-xl hover:bg-primary/10 focus:bg-primary/10 focus:text-primary transition-colors cursor-pointer py-3 h-12">{t('header.all_branches')}</SelectItem>
                         {branches.map(b => (
                             <SelectItem key={b.Branch_ID} value={b.Branch_ID} className="rounded-xl hover:bg-primary/10 focus:bg-primary/10 focus:text-primary transition-colors cursor-pointer py-3 h-12">
                                 {b.Branch_Name?.toUpperCase()}
@@ -78,8 +80,8 @@ export function Header({ sidebarCollapsed = false }: HeaderProps) {
           onClick={() => window.dispatchEvent(new CustomEvent('toggle-command-palette'))}
         >
           <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-primary group-hover:scale-110 transition-transform" size={20} strokeWidth={2.5} />
-          <div className="w-80 h-14 pl-14 pr-6 rounded-2xl bg-muted border border-border text-muted-foreground flex items-center text-sm font-bold font-black uppercase tracking-[0.2em] hover:bg-muted/80 hover:border-primary/30 transition-all shadow-inner group-hover:text-foreground">
-             Quick Cmd... <span className="ml-auto text-[10px] font-bold bg-background px-3 py-1.5 rounded-xl border border-border text-muted-foreground font-black">Ctrl + K</span>
+          <div className="w-80 h-14 pl-14 pr-6 rounded-2xl bg-muted border border-border text-muted-foreground flex items-center text-sm font-bold font-black uppercase tracking-wide hover:bg-muted/80 hover:border-primary/30 transition-all shadow-inner group-hover:text-foreground">
+             {t('header.quick_cmd')} <span className="ml-auto text-[10px] font-bold bg-background px-3 py-1.5 rounded-xl border border-border text-muted-foreground font-black">Ctrl + K</span>
           </div>
         </div>
       </div>

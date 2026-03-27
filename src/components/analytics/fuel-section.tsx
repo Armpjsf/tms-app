@@ -1,6 +1,6 @@
 "use client"
 
-import { motion } from "framer-motion"
+
 import { PremiumCard } from "@/components/ui/premium-card"
 import { FuelAnalytics } from "@/lib/supabase/fuel-analytics"
 import { Fuel, Droplets, GaugeCircle, TrendingUp, AlertTriangle, Zap, Activity, ArrowUpRight, ArrowDownRight } from "lucide-react"
@@ -47,8 +47,8 @@ export function FuelSection({ data }: { data: FuelAnalytics }) {
               <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent pointer-events-none" />
               <div className="flex items-center justify-between mb-6 relative z-10">
                 <div className="space-y-1">
-                  <span className="text-accent text-base font-bold font-black uppercase tracking-[0.2em] italic">{t('dashboard.energy_expenditure')}</span>
-                  <p className="text-base font-bold text-muted-foreground font-bold uppercase tracking-widest italic">{t('dashboard.operational_fuel_matrix')}</p>
+                  <span className="text-accent text-base font-bold font-black uppercase italic">{t('dashboard.energy_expenditure')}</span>
+                  <p className="text-base font-bold text-muted-foreground font-bold uppercase italic">{t('dashboard.operational_fuel_matrix')}</p>
                 </div>
               <div className="p-2 bg-primary/10 rounded-xl text-primary shadow-lg shadow-primary/10">
                 <Zap size={16} />
@@ -60,7 +60,7 @@ export function FuelSection({ data }: { data: FuelAnalytics }) {
             </div>
             <div className="flex items-center gap-2 mt-4 opacity-50 relative z-10">
                 <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                <p className="text-base font-bold text-muted-foreground font-black uppercase tracking-widest italic">{totalLiters.toLocaleString()} {t('fuel.liters_dispensed')}</p>
+                <p className="text-base font-bold text-muted-foreground font-black uppercase italic">{totalLiters.toLocaleString()} {t('fuel.liters_dispensed')}</p>
             </div>
         </PremiumCard>
 
@@ -68,8 +68,8 @@ export function FuelSection({ data }: { data: FuelAnalytics }) {
             <div className="absolute inset-0 bg-gradient-to-br from-secondary/5 to-transparent pointer-events-none" />
             <div className="flex items-center justify-between mb-6 relative z-10">
               <div className="space-y-1">
-                <span className="text-accent text-base font-bold font-black uppercase tracking-[0.2em] italic">{t('fuel.unit_market_cost')}</span>
-                <p className="text-base font-bold text-muted-foreground font-bold uppercase tracking-widest italic">{t('fuel.weighted_average')}</p>
+                <span className="text-accent text-base font-bold font-black uppercase italic">{t('fuel.unit_market_cost')}</span>
+                <p className="text-base font-bold text-muted-foreground font-bold uppercase italic">{t('fuel.weighted_average')}</p>
               </div>
               <div className="p-2 bg-secondary/10 rounded-xl text-secondary shadow-lg shadow-secondary/10">
                 <Droplets size={16} />
@@ -105,7 +105,7 @@ export function FuelSection({ data }: { data: FuelAnalytics }) {
             <div className="text-4xl font-black text-foreground tracking-tighter relative z-10 italic">{avgKmPerLiter.toFixed(2)}</div>
             <div className="flex items-center gap-2 mt-4 relative z-10">
                 <p className={cn(
-                    "text-base font-bold font-black uppercase tracking-widest italic flex items-center gap-2",
+                    "text-base font-bold font-black uppercase italic flex items-center gap-2",
                     avgKmPerLiter < 5 ? "text-white animate-pulse" : "text-emerald-400"
                 )}>
                     <Activity size={10} strokeWidth={3} /> {avgKmPerLiter < 5 ? t('dashboard.status_degraded') : t('dashboard.system_optimal')}
@@ -121,10 +121,10 @@ export function FuelSection({ data }: { data: FuelAnalytics }) {
             <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent pointer-events-none" />
             <div className="flex items-center justify-between mb-6 relative z-10">
               <div className="space-y-1">
-                <span className={cn("text-base font-bold font-black uppercase tracking-[0.2em] italic", anomalies.length > 0 ? "text-red-100" : "text-muted-foreground")}>
+                <span className={cn("text-base font-bold font-black uppercase italic", anomalies.length > 0 ? "text-red-100" : "text-muted-foreground")}>
                     {t('fuel.integrity_alerts')}
                 </span>
-                <p className={cn("text-base font-bold font-bold uppercase tracking-widest italic", anomalies.length > 0 ? "text-red-200" : "text-muted-foreground")}>
+                <p className={cn("text-base font-bold font-bold uppercase italic", anomalies.length > 0 ? "text-red-200" : "text-muted-foreground")}>
                     {t('fuel.consumption_divergence')}
                 </p>
               </div>
@@ -147,7 +147,7 @@ export function FuelSection({ data }: { data: FuelAnalytics }) {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Fuel Dynamics Trend */}
          <PremiumCard className="bg-card/40 border border-border shadow-2xl p-0 overflow-hidden rounded-br-[5rem] rounded-tl-[3rem]">
-            <div className="p-8 border-b border-border bg-card relative overflow-hidden flex items-center justify-between">
+            <div className="p-8 border-b border-border bg-gradient-to-r from-orange-500/20 via-orange-500/5 to-transparent backdrop-blur-md relative overflow-hidden flex items-center justify-between">
                <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-transparent pointer-events-none" />
               <div className="flex items-center gap-3 relative z-10">
                 <div className="p-2 bg-orange-600 rounded-xl text-white shadow-lg shadow-orange-500/20">
@@ -155,7 +155,7 @@ export function FuelSection({ data }: { data: FuelAnalytics }) {
                 </div>
                 <div>
                   <h3 className="text-lg font-black text-accent tracking-tight italic">{t('fuel.temporal_burn_registry')}</h3>
-                  <p className="text-orange-400 text-base font-bold font-bold uppercase tracking-[0.2em]">{t('fuel.expenditure_volatility')}</p>
+                  <p className="text-orange-400 text-base font-bold font-bold uppercase">{t('fuel.expenditure_volatility')}</p>
                 </div>
               </div>
            </div>
@@ -178,13 +178,13 @@ export function FuelSection({ data }: { data: FuelAnalytics }) {
                                 </div>
                             </div>
                         </div>
-                        <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest italic">{m.month}</span>
+                        <span className="text-base font-bold font-black text-muted-foreground uppercase italic">{m.month}</span>
                     </div>
                 ))}
                 {monthlyTrends.length === 0 && (
                     <div className="w-full h-full flex flex-col items-center justify-center text-muted-foreground gap-2">
                         <Activity size={32} strokeWidth={1} className="opacity-20" />
-                        <p className="text-base font-bold font-black uppercase tracking-widest italic opacity-50">{t('fuel.trend_data_unavailable')}</p>
+                        <p className="text-base font-bold font-black uppercase italic opacity-50">{t('fuel.trend_data_unavailable')}</p>
                     </div>
                 )}
               </div>
@@ -193,7 +193,7 @@ export function FuelSection({ data }: { data: FuelAnalytics }) {
 
         {/* Elite Asset Consumption Registry */}
          <PremiumCard className="bg-card/40 border border-border shadow-2xl p-0 overflow-hidden rounded-br-[5rem] rounded-tl-[3rem]">
-            <div className="p-8 border-b border-border bg-card relative overflow-hidden flex items-center justify-between">
+            <div className="p-8 border-b border-border bg-gradient-to-r from-yellow-500/20 via-yellow-500/5 to-transparent backdrop-blur-md relative overflow-hidden flex items-center justify-between">
                <div className="absolute inset-0 bg-gradient-to-r from-secondary/10 to-transparent pointer-events-none" />
               <div className="flex items-center gap-3 relative z-10">
                 <div className="p-2 bg-yellow-600 rounded-xl text-white shadow-lg shadow-yellow-500/20">
@@ -201,7 +201,7 @@ export function FuelSection({ data }: { data: FuelAnalytics }) {
                 </div>
                 <div>
                   <h3 className="text-lg font-black text-accent tracking-tight italic">{t('fuel.consumption_matrix')}</h3>
-                  <p className="text-yellow-400 text-base font-bold font-bold uppercase tracking-[0.2em]">{t('fuel.high_utility_registry')}</p>
+                  <p className="text-yellow-400 text-base font-bold font-bold uppercase">{t('fuel.high_utility_registry')}</p>
                 </div>
               </div>
            </div>
@@ -216,7 +216,7 @@ export function FuelSection({ data }: { data: FuelAnalytics }) {
                             <div>
                                 <div className="text-foreground tracking-tighter group-hover/v:text-orange-400 transition-colors uppercase italic">{v.vehicle_plate}</div>
                                 <div className="flex items-center gap-2 mt-2">
-                                    <span className="text-base font-bold text-muted-foreground font-black uppercase tracking-widest italic bg-muted/50 px-2 py-0.5 rounded-full border border-border/10">
+                                    <span className="text-base font-bold text-muted-foreground font-black uppercase italic bg-muted/50 px-2 py-0.5 rounded-full border border-border/10">
                                        {v.logCount} {t('fuel.transactions')}
                                     </span>
                                 </div>
@@ -224,7 +224,7 @@ export function FuelSection({ data }: { data: FuelAnalytics }) {
                         </div>
                         <div className="text-right">
                              <div className="text-2xl font-black text-accent tracking-tighter italic">฿{v.totalCost.toLocaleString()}</div>
-                             <div className="text-base font-bold text-emerald-400 font-black mt-1 uppercase tracking-widest italic bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20 w-fit ml-auto">
+                             <div className="text-base font-bold text-emerald-400 font-black mt-1 uppercase italic bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20 w-fit ml-auto">
                                 {t('dashboard.efficiency_prefix')} {v.avgEfficiency.toFixed(1)} KM/L
                              </div>
                         </div>
@@ -233,7 +233,7 @@ export function FuelSection({ data }: { data: FuelAnalytics }) {
                  {vehicleBreakdown.length === 0 && (
                     <div className="p-24 text-center">
                         <Droplets size={48} strokeWidth={1} className="mx-auto mb-4 text-muted-foreground/30" />
-                        <p className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest italic">{t('fuel.asset_register_empty')}</p>
+                        <p className="text-base font-bold font-black text-muted-foreground uppercase italic">{t('fuel.asset_register_empty')}</p>
                     </div>
                 )}
               </div>

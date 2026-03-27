@@ -176,10 +176,10 @@ export default function UserSettingsPage() {
                                 <Users size={42} strokeWidth={2.5} />
                             </div>
                             <div>
-                                <h1 className="text-5xl font-black text-foreground tracking-widest uppercase leading-none italic premium-text-gradient">
+                                <h1 className="text-5xl font-black text-foreground uppercase leading-none italic premium-text-gradient">
                                     {t('settings_pages.users.title')}
                                 </h1>
-                                <p className="text-base font-bold font-black text-primary uppercase tracking-[0.2em] mt-2 opacity-80 italic">{t('settings_pages.users.subtitle')}</p>
+                                <p className="text-base font-bold font-black text-primary uppercase tracking-wide mt-2 opacity-80 italic">{t('settings_pages.users.subtitle')}</p>
                             </div>
                         </div>
                     </div>
@@ -211,7 +211,7 @@ export default function UserSettingsPage() {
                             placeholder={t('settings_pages.users.search_placeholder')}
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full h-18 bg-background border-border/5 rounded-3xl pl-16 pr-8 text-xl font-black uppercase tracking-[0.2em] focus:border-primary/50 transition-all text-foreground placeholder:text-muted-foreground italic shadow-inner"
+                            className="w-full h-18 bg-background border-border/5 rounded-3xl pl-16 pr-8 text-xl font-black uppercase tracking-wide focus:border-primary/50 transition-all text-foreground placeholder:text-muted-foreground italic shadow-inner"
                         />
                     </div>
                 </div>
@@ -222,18 +222,18 @@ export default function UserSettingsPage() {
                         <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 blur-[80px] pointer-events-none" />
                         <div className="flex items-center gap-5 relative z-10">
                             <Fingerprint size={24} className="text-primary animate-pulse" />
-                            <h2 className="text-2xl font-black text-foreground tracking-widest uppercase italic">{t('settings_pages.users.registry_title')}</h2>
+                            <h2 className="text-2xl font-black text-foreground tracking-normal uppercase italic">{t('settings_pages.users.registry_title')}</h2>
                         </div>
                         <div className="flex items-center gap-3 px-5 py-2 bg-muted/50 rounded-full border border-border/10 relative z-10">
                             <Activity size={14} className="text-primary" />
-                            <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest">REALTIME_FLOW: ACTIVE</span>
+                            <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-normal">REALTIME_FLOW: ACTIVE</span>
                         </div>
                     </div>
 
                     <div className="relative w-full overflow-auto">
                         <table className="w-full text-xl text-left border-collapse">
                             <thead>
-                                <tr className="bg-black/20 text-[12px] font-black uppercase tracking-[0.1em] text-muted-foreground border-b border-border/5">
+                                <tr className="bg-black/20 text-[12px] font-black uppercase tracking-tight text-muted-foreground border-b border-border/5">
                                     <th className="px-10 py-8">{t('settings_pages.users.table.vector_id')}</th>
                                     <th className="px-10 py-8">{t('settings_pages.users.table.identity')}</th>
                                     <th className="px-10 py-8">{t('settings_pages.users.table.hub')}</th>
@@ -246,13 +246,13 @@ export default function UserSettingsPage() {
                                 {loading ? (
                                     <tr><td colSpan={6} className="text-center py-20 opacity-30"><Loader2 className="w-8 h-8 animate-spin mx-auto text-primary" /></td></tr>
                                 ) : filteredUsers.length === 0 ? (
-                                    <tr><td colSpan={6} className="text-center py-20 opacity-30 italic font-black uppercase tracking-widest text-foreground">Registry Void detected</td></tr>
+                                    <tr><td colSpan={6} className="text-center py-20 opacity-30 italic font-black uppercase tracking-normal text-foreground">Registry Void detected</td></tr>
                                 ) : (
                                     filteredUsers.map((user) => (
                                         <tr key={user.Username} className="group/row hover:bg-muted/40 transition-all duration-300">
                                             <td className="px-10 py-8">
                                                 <div className="flex flex-col">
-                                                    <span className="text-primary font-black tracking-widest uppercase italic group-hover/row:scale-110 origin-left transition-transform inline-block">
+                                                    <span className="text-primary font-black tracking-normal uppercase italic group-hover/row:scale-110 origin-left transition-transform inline-block">
                                                         {user.Username}
                                                     </span>
                                                     {user.Customer_ID && (
@@ -263,17 +263,17 @@ export default function UserSettingsPage() {
                                                 </div>
                                             </td>
                                             <td className="px-10 py-8 font-black text-foreground uppercase tracking-tight italic">{user.Name}</td>
-                                            <td className="px-10 py-8 text-muted-foreground font-black uppercase tracking-widest text-lg font-bold">
+                                            <td className="px-10 py-8 text-muted-foreground font-black uppercase tracking-normal text-lg font-bold">
                                                 {user.Branch_ID || "GLOBAL_NODE"}
                                             </td>
                                             <td className="px-10 py-8">
-                                                <div className="px-4 py-1.5 rounded-xl bg-primary/10 text-primary border border-primary/20 text-base font-bold font-black uppercase tracking-widest italic shadow-[0_0_15px_rgba(255,30,133,0.1)] w-fit">
+                                                <div className="px-4 py-1.5 rounded-xl bg-primary/10 text-primary border border-primary/20 text-base font-bold font-black uppercase tracking-normal italic shadow-[0_0_15px_rgba(255,30,133,0.1)] w-fit">
                                                     {user.Role || "NO_ROLES_ASSIGNED"}
                                                 </div>
                                             </td>
                                             <td className="px-10 py-8">
                                                 <div className={cn(
-                                                    "px-3 py-1 rounded-full text-base font-bold font-black uppercase tracking-widest border w-fit italic",
+                                                    "px-3 py-1 rounded-full text-base font-bold font-black uppercase tracking-normal border w-fit italic",
                                                     user.Active_Status === 'Active' 
                                                         ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' 
                                                         : 'bg-rose-500/10 text-rose-400 border-rose-500/20 animate-pulse'
@@ -317,7 +317,7 @@ export default function UserSettingsPage() {
                     <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary via-indigo-500/50 to-accent" />
                     
                     <DialogHeader className="p-4 sm:p-6 border-b border-border/5 bg-muted/20">
-                        <DialogTitle className="flex items-center gap-4 text-xl sm:text-2xl font-black italic uppercase tracking-widest premium-text-gradient">
+                        <DialogTitle className="flex items-center gap-4 text-xl sm:text-2xl font-black italic uppercase tracking-normal premium-text-gradient">
                             <Shield className="w-6 h-6 sm:w-8 sm:h-8 text-primary animate-pulse" strokeWidth={2.5} />
                             {editingUser ? t('settings_pages.users.dialog.title_edit') : t('settings_pages.users.dialog.title_add')}
                         </DialogTitle>
@@ -326,49 +326,49 @@ export default function UserSettingsPage() {
                     <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-8 space-y-6 custom-scrollbar">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-10">
                              <div className="space-y-3">
-                                <Label className="text-sm sm:text-base font-bold font-black text-muted-foreground uppercase tracking-[0.4em] ml-2 sm:ml-4">{t('settings_pages.users.dialog.username')}</Label>
+                                <Label className="text-sm sm:text-base font-bold font-black text-muted-foreground uppercase tracking-widest ml-2 sm:ml-4">{t('settings_pages.users.dialog.username')}</Label>
                                 <Input 
                                     value={formData.Username} 
                                     onChange={e => setFormData({...formData, Username: e.target.value})} 
                                     disabled={!!editingUser}
-                                    className="h-12 sm:h-14 rounded-2xl bg-muted border-border/5 text-foreground disabled:opacity-50 font-black italic tracking-widest pl-6 shadow-inner" 
+                                    className="h-12 sm:h-14 rounded-2xl bg-muted border-border/5 text-foreground disabled:opacity-50 font-black italic tracking-normal pl-6 shadow-inner" 
                                 />
                             </div>
                             <div className="space-y-3">
-                                <Label className="text-sm sm:text-base font-bold font-black text-muted-foreground uppercase tracking-[0.4em] ml-2 sm:ml-4">{t('settings_pages.users.dialog.password')}</Label>
+                                <Label className="text-sm sm:text-base font-bold font-black text-muted-foreground uppercase tracking-widest ml-2 sm:ml-4">{t('settings_pages.users.dialog.password')}</Label>
                                 <Input 
                                     type="password"
                                     value={formData.Password || ""} 
                                     onChange={e => setFormData({...formData, Password: e.target.value})} 
-                                    className="h-12 sm:h-14 rounded-2xl bg-muted border-border/5 text-foreground font-black italic tracking-widest pl-6 shadow-inner" 
+                                    className="h-12 sm:h-14 rounded-2xl bg-muted border-border/5 text-foreground font-black italic tracking-normal pl-6 shadow-inner" 
                                     placeholder={editingUser ? t('settings_pages.users.dialog.password_placeholder_edit') : t('settings_pages.users.dialog.password_placeholder_add')}
                                 />
                             </div>
                         </div>
 
                         <div className="space-y-3">
-                            <Label className="text-sm sm:text-base font-bold font-black text-muted-foreground uppercase tracking-[0.4em] ml-2 sm:ml-4">{t('settings_pages.users.dialog.full_name')}</Label>
+                            <Label className="text-sm sm:text-base font-bold font-black text-muted-foreground uppercase tracking-widest ml-2 sm:ml-4">{t('settings_pages.users.dialog.full_name')}</Label>
                             <Input 
                                 value={formData.Name} 
                                 onChange={e => setFormData({...formData, Name: e.target.value})} 
-                                className="h-12 sm:h-14 rounded-2xl bg-muted border-border/5 text-foreground font-black italic tracking-widest pl-6 shadow-inner" 
+                                className="h-12 sm:h-14 rounded-2xl bg-muted border-border/5 text-foreground font-black italic tracking-normal pl-6 shadow-inner" 
                             />
                         </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-10">
                             <div className="space-y-3">
-                                <Label className="text-sm sm:text-base font-bold font-black text-muted-foreground uppercase tracking-[0.1em] ml-2 sm:ml-4">{t('settings_pages.users.dialog.branch')}</Label>
+                                <Label className="text-sm sm:text-base font-bold font-black text-muted-foreground uppercase tracking-tight ml-2 sm:ml-4">{t('settings_pages.users.dialog.branch')}</Label>
                                 {isAdmin ? (
                                     <Select 
                                         value={formData.Branch_ID || ""} 
                                         onValueChange={v => setFormData({...formData, Branch_ID: v})}
                                     >
-                                        <SelectTrigger className="h-12 sm:h-14 rounded-2xl bg-muted border-border/5 text-foreground font-black uppercase italic tracking-widest shadow-inner">
+                                        <SelectTrigger className="h-12 sm:h-14 rounded-2xl bg-muted border-border/5 text-foreground font-black uppercase italic tracking-normal shadow-inner">
                                             <SelectValue placeholder={t('settings_pages.users.dialog.select_hub')} />
                                         </SelectTrigger>
                                         <SelectContent className="bg-popover border-border/10 text-foreground">
                                             {branches.map(b => (
-                                                <SelectItem key={b.Branch_ID} value={b.Branch_ID} className="font-black italic uppercase tracking-widest">
+                                                <SelectItem key={b.Branch_ID} value={b.Branch_ID} className="font-black italic uppercase tracking-normal">
                                                     {b.Branch_Name}
                                                 </SelectItem>
                                             ))}
@@ -378,22 +378,22 @@ export default function UserSettingsPage() {
                                     <Input 
                                         value={formData.Branch_ID || ""} 
                                         onChange={e => setFormData({...formData, Branch_ID: e.target.value})}
-                                        className="h-14 sm:h-16 rounded-2xl bg-muted border-border/5 text-foreground font-black italic tracking-widest pl-6 shadow-inner" 
+                                        className="h-14 sm:h-16 rounded-2xl bg-muted border-border/5 text-foreground font-black italic tracking-normal pl-6 shadow-inner" 
                                     />
                                 )}
                             </div>
                             <div className="space-y-3">
-                                <Label className="text-sm sm:text-base font-bold font-black text-muted-foreground uppercase tracking-[0.1em] ml-2 sm:ml-4">{t('settings_pages.users.dialog.role')}</Label>
+                                <Label className="text-sm sm:text-base font-bold font-black text-muted-foreground uppercase tracking-tight ml-2 sm:ml-4">{t('settings_pages.users.dialog.role')}</Label>
                                 <Select 
                                     value={formData.Role || ""} 
                                     onValueChange={handleRoleChange}
                                 >
-                                    <SelectTrigger className="h-12 sm:h-14 rounded-2xl bg-muted border-border/5 text-foreground font-black uppercase italic tracking-widest shadow-inner">
+                                    <SelectTrigger className="h-12 sm:h-14 rounded-2xl bg-muted border-border/5 text-foreground font-black uppercase italic tracking-normal shadow-inner">
                                         <SelectValue placeholder={t('settings_pages.users.dialog.select_role')} />
                                     </SelectTrigger>
                                     <SelectContent className="bg-popover border-border/10 text-foreground">
                                         {STANDARD_ROLES.map(role => (
-                                            <SelectItem key={role} value={role} className="font-black italic uppercase tracking-widest">
+                                            <SelectItem key={role} value={role} className="font-black italic uppercase tracking-normal">
                                                 {role}
                                             </SelectItem>
                                         ))}
@@ -406,19 +406,19 @@ export default function UserSettingsPage() {
                         <div className="space-y-3 p-6 sm:p-8 rounded-[2rem] sm:rounded-[2.5rem] bg-primary/5 border-2 border-primary/10 shadow-inner group/client">
                             <div className="flex items-center gap-3 mb-2 ml-4">
                                 <Key size={14} className="text-primary group-hover/client:rotate-45 transition-transform" />
-                                <Label className="text-sm sm:text-base font-bold font-black text-primary uppercase tracking-[0.4em]">External Client Linkage</Label>
+                                <Label className="text-sm sm:text-base font-bold font-black text-primary uppercase tracking-widest">External Client Linkage</Label>
                             </div>
                             <Select 
                                 value={formData.Customer_ID || "none"} 
                                 onValueChange={v => setFormData({...formData, Customer_ID: v === "none" ? null : v})}
                             >
-                                <SelectTrigger className="h-14 sm:h-16 rounded-2xl bg-muted border-border/5 text-foreground font-black uppercase italic tracking-widest shadow-inner">
+                                <SelectTrigger className="h-14 sm:h-16 rounded-2xl bg-muted border-border/5 text-foreground font-black uppercase italic tracking-normal shadow-inner">
                                     <SelectValue placeholder="SYNERGY_ENTITY_LINK" />
                                 </SelectTrigger>
                                 <SelectContent className="bg-popover border-border/10 text-foreground">
-                                    <SelectItem value="none" className="font-black italic uppercase tracking-widest text-muted-foreground underline">-- REMOVE_LINKAGE --</SelectItem>
+                                    <SelectItem value="none" className="font-black italic uppercase tracking-normal text-muted-foreground underline">-- REMOVE_LINKAGE --</SelectItem>
                                     {customers.map(c => (
-                                        <SelectItem key={c.Customer_ID} value={c.Customer_ID} className="font-black italic uppercase tracking-widest">
+                                        <SelectItem key={c.Customer_ID} value={c.Customer_ID} className="font-black italic uppercase tracking-normal">
                                             {c.Customer_Name}
                                         </SelectItem>
                                     ))}
@@ -427,25 +427,25 @@ export default function UserSettingsPage() {
                         </div>
 
                         <div className="space-y-3 pb-4">
-                             <Label className="text-sm sm:text-base font-bold font-black text-muted-foreground uppercase tracking-[0.4em] ml-4">Deployment Status</Label>
+                             <Label className="text-sm sm:text-base font-bold font-black text-muted-foreground uppercase tracking-widest ml-4">Deployment Status</Label>
                              <Select 
                                 value={formData.Active_Status} 
                                 onValueChange={v => setFormData({...formData, Active_Status: v})}
                             >
-                                <SelectTrigger className="h-12 sm:h-14 rounded-2xl bg-muted border-border/5 text-foreground font-black uppercase italic tracking-widest shadow-inner">
+                                <SelectTrigger className="h-12 sm:h-14 rounded-2xl bg-muted border-border/5 text-foreground font-black uppercase italic tracking-normal shadow-inner">
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent className="bg-popover border-border/10 text-foreground">
-                                    <SelectItem value="Active" className="text-emerald-500 font-black italic uppercase tracking-widest hover:bg-emerald-500/10">NODE_ACTIVE</SelectItem>
-                                    <SelectItem value="Inactive" className="text-rose-500 font-black italic uppercase tracking-widest hover:bg-rose-500/10">NODE_DEACTIVATED</SelectItem>
+                                    <SelectItem value="Active" className="text-emerald-500 font-black italic uppercase tracking-normal hover:bg-emerald-500/10">NODE_ACTIVE</SelectItem>
+                                    <SelectItem value="Inactive" className="text-rose-500 font-black italic uppercase tracking-normal hover:bg-rose-500/10">NODE_DEACTIVATED</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
                     </div>
  
                     <DialogFooter className="p-4 sm:p-6 border-t border-border/5 bg-muted/20 gap-4 sm:gap-6 flex-row shrink-0">
-                        <PremiumButton variant="outline" onClick={() => setIsDialogOpen(false)} className="flex-1 sm:flex-none h-12 sm:h-14 px-6 sm:px-10 rounded-xl sm:rounded-2xl border-border/5 text-muted-foreground hover:text-foreground uppercase tracking-widest text-sm sm:text-base font-bold font-black">{t('settings_pages.users.dialog.abort')}</PremiumButton>
-                        <PremiumButton onClick={handleSave} disabled={saving} className="flex-1 sm:flex-none h-12 sm:h-14 px-8 sm:px-12 rounded-xl sm:rounded-2xl gap-3 sm:gap-4 shadow-lg sm:min-w-[200px] text-base sm:text-lg tracking-[0.2em] bg-primary text-foreground border-0">
+                        <PremiumButton variant="outline" onClick={() => setIsDialogOpen(false)} className="flex-1 sm:flex-none h-12 sm:h-14 px-6 sm:px-10 rounded-xl sm:rounded-2xl border-border/5 text-muted-foreground hover:text-foreground uppercase tracking-normal text-sm sm:text-base font-bold font-black">{t('settings_pages.users.dialog.abort')}</PremiumButton>
+                        <PremiumButton onClick={handleSave} disabled={saving} className="flex-1 sm:flex-none h-12 sm:h-14 px-8 sm:px-12 rounded-xl sm:rounded-2xl gap-3 sm:gap-4 shadow-lg sm:min-w-[200px] text-base sm:text-lg tracking-normal bg-primary text-foreground border-0">
                             {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <ShieldCheck className="w-5 h-5" />}
                             {t('settings_pages.users.dialog.execute')}
                         </PremiumButton>

@@ -102,33 +102,33 @@ export default function CustomersSettingsPage() {
   }
 
   const handleSave = async () => {
-    if (!formData.Customer_Name) return toast.warning("กรุณากรอกชื่อลูกค้า")
+    if (!formData.Customer_Name) return toast.warning(t('common.error'))
     setSaving(true)
     try {
       if (editingCustomer) {
         await updateCustomer(formData.Customer_ID!, formData)
-        toast.success("แก้ไขข้อมูลลูกค้าเรียบร้อยแล้ว")
+        toast.success(t('common.toast.success_edit'))
       } else {
         await createCustomer(formData)
-        toast.success("เพิ่มลูกค้าใหม่เรียบร้อยแล้ว")
+        toast.success(t('common.toast.success_save'))
       }
       setIsDialogOpen(false)
       loadCustomers()
     } catch {
-      toast.error("เกิดข้อผิดพลาดในการบันทึก")
+      toast.error(t('common.toast.error_save'))
     } finally {
       setSaving(false)
     }
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm("ยืนยันการลบข้อมูลลูกค้า?")) return
+    if (!confirm(t('common.toast.confirm_delete'))) return
     try {
       await deleteCustomer(id)
-      toast.success("ลบข้อมูลลูกค้าเรียบร้อยแล้ว")
+      toast.success(t('common.toast.success_delete'))
       loadCustomers()
     } catch {
-      toast.error("เกิดข้อผิดพลาดในการลบ")
+      toast.error(t('common.toast.error_delete'))
     }
   }
 
@@ -147,12 +147,12 @@ export default function CustomersSettingsPage() {
                 <div className="p-2 bg-primary/20 rounded-xl shadow-lg">
                     <Users className="text-primary" size={20} />
                 </div>
-                <h2 className="text-base font-bold font-black text-primary uppercase tracking-[0.1em]">Strategic Partner Ecosystem</h2>
+                <h2 className="text-base font-bold font-black text-primary uppercase tracking-tight">{t('settings_pages.customers.title')}</h2>
             </div>
             <h1 className="text-6xl font-black text-foreground tracking-tighter flex items-center gap-5 uppercase premium-text-gradient">
                 {t('settings_pages.customers.title')}
             </h1>
-            <p className="text-muted-foreground font-bold text-xl tracking-wide opacity-80 uppercase tracking-widest leading-relaxed">{t('settings_pages.customers.subtitle')}</p>
+            <p className="text-muted-foreground font-bold text-xl tracking-wide opacity-80 uppercase leading-relaxed">{t('settings_pages.customers.subtitle')}</p>
         </div>
 
         <div className="flex flex-wrap gap-4 relative z-10">
@@ -194,11 +194,11 @@ export default function CustomersSettingsPage() {
                             <stat.icon size={24} strokeWidth={2.5} />
                         </div>
                         <div className="flex items-center gap-1.5 px-3 py-1 bg-muted/50 rounded-full border border-border/5">
-                             <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest italic">{stat.trend}</span>
+                             <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-normal italic">{stat.trend}</span>
                         </div>
                     </div>
                     <div className="relative z-10">
-                        <p className="text-muted-foreground font-black text-base font-bold uppercase tracking-[0.1em] mb-2">{stat.label}</p>
+                        <p className="text-muted-foreground font-black text-base font-bold uppercase tracking-tight mb-2">{stat.label}</p>
                         <p className="text-4xl font-black text-foreground tracking-tighter leading-none">{stat.value}</p>
                     </div>
                 </div>
@@ -238,7 +238,7 @@ export default function CustomersSettingsPage() {
 
             <div className="p-6 sm:p-10 space-y-6 custom-scrollbar flex-1 min-h-0 overflow-y-auto">
               <div className="space-y-4">
-                <Label className="text-base font-bold font-black uppercase tracking-[0.1em] text-muted-foreground ml-2">{t('settings_pages.customers.dialog.name')}</Label>
+                <Label className="text-base font-bold font-black uppercase tracking-tight text-muted-foreground ml-2">{t('settings_pages.customers.dialog.name')}</Label>
                 <div className="glass-panel p-1 rounded-2xl border-border/5">
                     <Input
                     value={formData.Customer_Name}
@@ -251,27 +251,27 @@ export default function CustomersSettingsPage() {
 
               <div className="grid grid-cols-2 gap-10">
                 <div className="space-y-4">
-                  <Label className="text-base font-bold font-black uppercase tracking-[0.1em] text-muted-foreground ml-2">{t('settings_pages.customers.dialog.phone')}</Label>
+                  <Label className="text-base font-bold font-black uppercase tracking-tight text-muted-foreground ml-2">{t('settings_pages.customers.dialog.phone')}</Label>
                   <Input
                     value={formData.Phone || ""}
                     onChange={(e) => updateForm("Phone", e.target.value)}
                     placeholder="+66 XXX-XXXX"
-                    className="bg-muted/50 border-border/5 rounded-2xl h-14 font-black px-8 text-foreground focus:ring-primary/40 focus:bg-secondary/50 transition-all uppercase tracking-widest text-xl"
+                    className="bg-muted/50 border-border/5 rounded-2xl h-14 font-black px-8 text-foreground focus:ring-primary/40 focus:bg-secondary/50 transition-all uppercase tracking-normal text-xl"
                   />
                 </div>
                 <div className="space-y-4">
-                  <Label className="text-base font-bold font-black uppercase tracking-[0.1em] text-muted-foreground ml-2">{t('settings_pages.customers.dialog.email')}</Label>
+                  <Label className="text-base font-bold font-black uppercase tracking-tight text-muted-foreground ml-2">{t('settings_pages.customers.dialog.email')}</Label>
                   <Input
                     value={formData.Email || ""}
                     onChange={(e) => updateForm("Email", e.target.value)}
                     placeholder="partner@logispro.matrix"
-                    className="bg-muted/50 border-border/5 rounded-2xl h-14 font-black px-8 text-foreground focus:ring-primary/40 focus:bg-secondary/50 transition-all uppercase tracking-widest text-xl"
+                    className="bg-muted/50 border-border/5 rounded-2xl h-14 font-black px-8 text-foreground focus:ring-primary/40 focus:bg-secondary/50 transition-all uppercase tracking-normal text-xl"
                   />
                 </div>
               </div>
 
               <div className="space-y-4">
-                <Label className="text-base font-bold font-black uppercase tracking-[0.1em] text-muted-foreground ml-2">{t('settings_pages.customers.dialog.address')}</Label>
+                <Label className="text-base font-bold font-black uppercase tracking-tight text-muted-foreground ml-2">{t('settings_pages.customers.dialog.address')}</Label>
                 <Textarea
                   value={formData.Address || ""}
                   onChange={(e) => updateForm("Address", e.target.value)}
@@ -282,22 +282,22 @@ export default function CustomersSettingsPage() {
 
               <div className="grid grid-cols-2 gap-10">
                 <div className="space-y-4">
-                  <Label className="text-base font-bold font-black uppercase tracking-[0.1em] text-muted-foreground ml-2">{t('settings_pages.customers.dialog.branch')}</Label>
+                  <Label className="text-base font-bold font-black uppercase tracking-tight text-muted-foreground ml-2">{t('settings_pages.customers.dialog.branch')}</Label>
                   <Input
                     value={formData.Customer_ID || ""}
                     onChange={(e) => updateForm("Customer_ID", e.target.value)}
                     placeholder="SYSTEM GENERATED"
-                    className="bg-muted/50 border-border/5 rounded-2xl h-14 font-black px-8 text-foreground focus:ring-primary/40 focus:bg-secondary/50 transition-all uppercase tracking-widest text-xl"
+                    className="bg-muted/50 border-border/5 rounded-2xl h-14 font-black px-8 text-foreground focus:ring-primary/40 focus:bg-secondary/50 transition-all uppercase tracking-normal text-xl"
                     disabled={!!editingCustomer}
                   />
                 </div>
                  <div className="space-y-4">
-                   <Label className="text-base font-bold font-black uppercase tracking-[0.1em] text-muted-foreground ml-2">{t('settings_pages.customers.dialog.tax_id')}</Label>
+                   <Label className="text-base font-bold font-black uppercase tracking-tight text-muted-foreground ml-2">{t('settings_pages.customers.dialog.tax_id')}</Label>
                   <Input
                     value={formData.Tax_ID || ""}
                     onChange={(e) => updateForm("Tax_ID", e.target.value)}
                     placeholder="13-DIGIT VERIFIER"
-                    className="bg-muted/50 border-border/5 rounded-2xl h-14 font-black px-8 text-foreground focus:ring-primary/40 focus:bg-secondary/50 transition-all uppercase tracking-widest text-xl"
+                    className="bg-muted/50 border-border/5 rounded-2xl h-14 font-black px-8 text-foreground focus:ring-primary/40 focus:bg-secondary/50 transition-all uppercase tracking-normal text-xl"
                   />
                 </div>
               </div>
@@ -312,15 +312,15 @@ export default function CustomersSettingsPage() {
                         value={formData.Line_User_ID || ""}
                         onChange={(e) => updateForm("Line_User_ID", e.target.value)}
                         placeholder="ENTER LINE U-VECTOR..."
-                        className="bg-transparent border-none text-foreground font-black rounded-xl h-14 px-8 flex-1 focus:bg-primary/10 tracking-widest"
+                        className="bg-transparent border-none text-foreground font-black rounded-xl h-14 px-8 flex-1 focus:bg-primary/10 tracking-normal"
                     />
                 </div>
               </div>
             </div>
 
             <DialogFooter className="p-6 sm:p-10 border-t border-border/5 bg-black/40 gap-4 sm:gap-6 flex-row shrink-0">
-                <PremiumButton variant="outline" onClick={() => setIsDialogOpen(false)} className="flex-1 sm:flex-none h-14 sm:h-16 px-6 sm:px-10 rounded-[1.2rem] sm:rounded-[1.5rem] border-border/5 text-muted-foreground hover:text-foreground uppercase tracking-widest text-base sm:text-lg font-bold font-black">{t('settings_pages.customers.dialog.abort')}</PremiumButton>
-                <PremiumButton onClick={handleSave} disabled={saving} className="flex-1 sm:flex-none h-14 sm:h-16 px-8 sm:px-12 rounded-[1.5rem] sm:rounded-[2rem] gap-3 sm:gap-4 shadow-[0_20px_50px_rgba(255,30,133,0.3)] sm:min-w-[200px] text-lg sm:text-xl tracking-[0.2em] bg-primary text-foreground border-0">
+                <PremiumButton variant="outline" onClick={() => setIsDialogOpen(false)} className="flex-1 sm:flex-none h-14 sm:h-16 px-6 sm:px-10 rounded-[1.2rem] sm:rounded-[1.5rem] border-border/5 text-muted-foreground hover:text-foreground uppercase tracking-normal text-base sm:text-lg font-bold font-black">{t('settings_pages.customers.dialog.abort')}</PremiumButton>
+                <PremiumButton onClick={handleSave} disabled={saving} className="flex-1 sm:flex-none h-14 sm:h-16 px-8 sm:px-12 rounded-[1.5rem] sm:rounded-[2rem] gap-3 sm:gap-4 shadow-[0_20px_50px_rgba(255,30,133,0.3)] sm:min-w-[200px] text-lg sm:text-xl tracking-normal bg-primary text-foreground border-0">
                     {saving ? <Loader2 className="w-5 h-5 sm:w-6 sm:h-6 animate-spin" /> : <Save className="w-5 h-5 sm:w-6 sm:h-6" />}
                     {t('settings_pages.customers.dialog.execute')}
                 </PremiumButton>
@@ -334,7 +334,7 @@ export default function CustomersSettingsPage() {
                 <Loader2 className="animate-spin text-primary opacity-40" size={80} strokeWidth={1} />
                 <Activity className="absolute inset-0 m-auto text-primary animate-pulse" size={32} />
              </div>
-             <p className="mt-10 text-muted-foreground font-black uppercase tracking-[0.6em] text-base font-bold animate-pulse">{t('settings_pages.customers.status.syncing')}</p>
+             <p className="mt-10 text-muted-foreground font-black uppercase tracking-widest text-base font-bold animate-pulse">{t('settings_pages.customers.status.syncing')}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
@@ -351,9 +351,9 @@ export default function CustomersSettingsPage() {
                     <div>
                       <h3 className="text-2xl font-black text-foreground tracking-tighter group-hover:text-primary transition-colors line-clamp-1 duration-500 uppercase font-display">{customer.Customer_Name}</h3>
                       <div className="flex items-center gap-3 mt-2">
-                          <span className="text-muted-foreground font-black text-base font-bold uppercase tracking-[0.3em]">{customer.Customer_ID}</span>
+                          <span className="text-muted-foreground font-black text-base font-bold uppercase tracking-wide">{customer.Customer_ID}</span>
                           <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse shadow-[0_0_10px_rgba(255,30,133,1)]" />
-                          <span className="text-primary font-black text-base font-bold uppercase tracking-[0.4em] italic opacity-70">{t('settings_pages.customers.status.strategic')}</span>
+                          <span className="text-primary font-black text-base font-bold uppercase tracking-wide italic opacity-70">{t('settings_pages.customers.status.strategic')}</span>
                       </div>
                     </div>
                   </div>
@@ -380,7 +380,7 @@ export default function CustomersSettingsPage() {
                             <ShieldCheck size={18} strokeWidth={2.5} />
                         </div>
                         <div>
-                            <p className="text-base font-bold font-black text-muted-foreground uppercase tracking-[0.3em] mb-1">{t('settings_pages.customers.dialog.tax_id')}</p>
+                            <p className="text-base font-bold font-black text-muted-foreground uppercase tracking-wide mb-1">{t('settings_pages.customers.dialog.tax_id')}</p>
                             <p className="text-xl font-black text-foreground tracking-tight">{customer.Tax_ID || t('settings_pages.customers.status.unverified')}</p>
                         </div>
                   </div>
@@ -390,17 +390,17 @@ export default function CustomersSettingsPage() {
                         <div className="absolute top-0 right-0 w-12 h-12 bg-accent/5 blur-2xl rounded-full" />
                         <div className="flex items-center gap-2 mb-3">
                             <Phone size={14} className="text-accent" />
-                            <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest leading-none">{t('settings_pages.customers.dialog.phone')}</span>
+                            <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-normal leading-none">{t('settings_pages.customers.dialog.phone')}</span>
                         </div>
-                        <p className="text-base font-bold font-black text-foreground truncate tracking-widest">{customer.Phone || t('settings_pages.customers.status.offline')}</p>
+                        <p className="text-base font-bold font-black text-foreground truncate tracking-normal">{customer.Phone || t('settings_pages.customers.status.offline')}</p>
                     </div>
                     <div className="p-6 bg-muted/30 rounded-3xl border border-border/5 group-hover:bg-muted/50 transition-all duration-700 relative overflow-hidden">
                         <div className="absolute top-0 right-0 w-12 h-12 bg-primary/5 blur-2xl rounded-full" />
                         <div className="flex items-center gap-2 mb-3">
                             <MapPin size={14} className="text-primary" />
-                            <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest leading-none">{t('settings_pages.customers.dialog.branch')}</span>
+                            <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-normal leading-none">{t('settings_pages.customers.dialog.branch')}</span>
                         </div>
-                        <p className="text-base font-bold font-black text-foreground truncate tracking-widest">{customer.Branch_ID || "Global"}</p>
+                        <p className="text-base font-bold font-black text-foreground truncate tracking-normal">{customer.Branch_ID || "Global"}</p>
                     </div>
                   </div>
                 </div>
@@ -412,11 +412,11 @@ export default function CustomersSettingsPage() {
                     <div className="p-2 bg-muted/50 rounded-xl border border-border/5">
                         <Mail size={12} className="text-muted-foreground group-hover:text-primary transition-colors" />
                     </div>
-                    <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest truncate max-w-[160px] italic group-hover:text-muted-foreground transition-colors">{customer.Email || "registry-pending@logispro.io"}</span>
+                    <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-normal truncate max-w-[160px] italic group-hover:text-muted-foreground transition-colors">{customer.Email || "registry-pending@logispro.io"}</span>
                 </div>
                 <div className="flex items-center gap-2 px-4 py-2 bg-primary/20 text-primary rounded-2xl shadow-lg shadow-primary/5 ring-1 ring-primary/30">
                     <Zap size={14} className="animate-pulse" />
-                    <span className="text-base font-bold font-black tracking-[0.2em]">{t('settings_pages.customers.status.connected')}</span>
+                    <span className="text-base font-bold font-black tracking-normal">{t('settings_pages.customers.status.connected')}</span>
                 </div>
               </div>
             </div>
@@ -426,14 +426,14 @@ export default function CustomersSettingsPage() {
           {customers.length === 0 && (
             <div className="col-span-full text-center py-40 glass-panel rounded-[4rem] border-dashed border-border/5 group">
               <Activity className="w-20 h-20 text-muted-foreground mx-auto mb-8 opacity-20 group-hover:scale-110 transition-transform duration-1000" />
-              <p className="text-muted-foreground font-black uppercase tracking-[0.5em] text-base font-bold">{t('settings_pages.customers.status.empty')}</p>
+              <p className="text-muted-foreground font-black uppercase tracking-widest text-base font-bold">{t('settings_pages.customers.status.empty')}</p>
             </div>
           )}
         </div>
       )}
 
       <div className="mt-20 text-center mb-24">
-        <div className="inline-flex items-center gap-4 px-8 py-3 glass-panel rounded-full text-base font-bold font-black text-muted-foreground uppercase tracking-[0.6em] opacity-40 hover:opacity-100 transition-opacity">
+        <div className="inline-flex items-center gap-4 px-8 py-3 glass-panel rounded-full text-base font-bold font-black text-muted-foreground uppercase tracking-widest opacity-40 hover:opacity-100 transition-opacity">
             <Activity size={14} className="text-primary" /> {t('settings_pages.customers.status.footer')}
         </div>
       </div>

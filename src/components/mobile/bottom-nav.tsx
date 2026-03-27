@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { LayoutGrid, Users, Truck, Map, Activity } from "lucide-react"
+import { LayoutGrid, Users, Truck, Map } from "lucide-react"
 
 export function BottomNav() {
   const pathname = usePathname()
@@ -30,7 +30,7 @@ export function BottomNav() {
                     <div className="w-16 h-16 rounded-[1.5rem] bg-primary flex items-center justify-center shadow-[0_10px_30px_rgba(255,30,133,0.4)] border-4 border-background relative z-10 transition-transform group-hover:scale-110">
                       <item.icon className="text-foreground" size={28} strokeWidth={2.5} />
                     </div>
-                    <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-base font-bold font-black text-primary tracking-widest opacity-100 uppercase">
+                    <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-base font-bold font-black text-primary tracking-normal opacity-100 uppercase">
                         {item.label}
                     </span>
                   </Link>
@@ -46,7 +46,7 @@ export function BottomNav() {
                   }`}
                 >
                   <item.icon size={24} strokeWidth={isActive ? 2.5 : 2} className="transition-transform group-hover:translate-y-[-2px]" />
-                  <span className={`text-base font-bold mt-2 font-black uppercase tracking-[0.2em] transition-opacity ${isActive ? "opacity-100" : "opacity-60"}`}>
+                  <span className={`text-base font-bold mt-2 font-black uppercase tracking-wide transition-opacity ${isActive ? "opacity-100" : "opacity-60"}`}>
                     {item.label}
                   </span>
                   {isActive && (

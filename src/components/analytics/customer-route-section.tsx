@@ -30,7 +30,7 @@ export function CustomerRouteSection({
     <div className="space-y-10">
       {/* Sub-Section Header */}
       <div className="flex items-center gap-3">
-        <div className="p-2 bg-background rounded-xl text-purple-500 shadow-lg border border-slate-800">
+        <div className="p-2 bg-muted/60 rounded-xl text-purple-500 shadow-lg border border-border/10">
           <MapPin size={18} />
         </div>
         <h3 className="text-xl font-black text-foreground tracking-tight uppercase premium-text-gradient">{t('dashboard.customer_route_header')}</h3>
@@ -39,15 +39,15 @@ export function CustomerRouteSection({
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Top Customers Elite */}
         <PremiumCard className="bg-muted/50 border border-border/10 shadow-2xl p-0 overflow-hidden rounded-br-[5rem] rounded-tl-[3rem]">
-           <div className="p-8 border-b border-border/5 bg-background relative overflow-hidden flex items-center justify-between">
+           <div className="p-8 border-b border-border/5 bg-gradient-to-r from-purple-500/20 via-purple-500/5 to-transparent backdrop-blur-md relative overflow-hidden flex items-center justify-between">
               <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-transparent pointer-events-none" />
               <div className="flex items-center gap-3 relative z-10">
                 <div className="p-2 bg-purple-600 rounded-xl text-white shadow-lg">
                   <Building2 size={16} />
                 </div>
                 <div>
-                  <h3 className="text-lg font-black text-foreground tracking-tight italic uppercase">{t('dashboard.market_command')}</h3>
-                  <p className="text-purple-400 text-base font-bold font-bold uppercase tracking-[0.2em]">{t('dashboard.customer_yield')}</p>
+                  <h3 className="text-lg font-black text-foreground italic uppercase">{t('dashboard.market_command')}</h3>
+                  <p className="text-purple-400 text-base font-bold font-bold uppercase italic">{t('dashboard.customer_yield')}</p>
                 </div>
               </div>
            </div>
@@ -64,21 +64,21 @@ export function CustomerRouteSection({
                             </div>
                             <div>
                                 <div className="text-white font-black text-xl tracking-tight uppercase italic group-hover/cust:text-purple-400 transition-colors">{c.name}</div>
-                                <div className="text-base font-bold text-muted-foreground font-black mt-2 tracking-widest italic uppercase">
+                                <div className="text-base font-bold text-muted-foreground font-black mt-2 italic uppercase">
                                     {t('dashboard.mission_volume')}: {c.jobCount}
                                 </div>
                             </div>
                         </div>
                         <div className="text-right">
                              <div className="text-foreground tracking-tighter italic">฿{c.revenue.toLocaleString()}</div>
-                             <div className="text-base font-bold text-muted-foreground font-black uppercase tracking-widest mt-1 italic">{t('dashboard.aggregate_revenue')}</div>
+                              <div className="text-base font-bold text-muted-foreground font-black uppercase mt-1 italic">{t('dashboard.aggregate_revenue')}</div>
                         </div>
                     </div>
                 ))}
                 {customers.length === 0 && (
                      <div className="p-24 text-center">
                         <Building2 size={48} strokeWidth={1} className="mx-auto mb-4 text-muted-foreground" />
-                        <p className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest italic">{t('dashboard.awaiting_market')}</p>
+                        <p className="text-base font-bold font-black text-muted-foreground uppercase italic">{t('dashboard.awaiting_market')}</p>
                     </div>
                 )}
               </div>
@@ -87,15 +87,15 @@ export function CustomerRouteSection({
 
         {/* Route Profitability Elite */}
         <PremiumCard className="bg-muted/50 border border-border/10 shadow-2xl p-0 overflow-hidden rounded-br-[5rem] rounded-tl-[3rem]">
-           <div className="p-8 border-b border-border/5 bg-background relative overflow-hidden flex items-center justify-between">
+           <div className="p-8 border-b border-border/5 bg-gradient-to-r from-emerald-500/20 via-emerald-500/5 to-transparent backdrop-blur-md relative overflow-hidden flex items-center justify-between">
               <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 to-transparent pointer-events-none" />
               <div className="flex items-center gap-3 relative z-10">
                 <div className="p-2 bg-emerald-600 rounded-xl text-white shadow-lg">
                   <TrendingUp size={16} />
                 </div>
                 <div>
-                  <h3 className="text-lg font-black text-foreground tracking-tight italic uppercase">{t('dashboard.corridor_yield')}</h3>
-                  <p className="text-emerald-400 text-base font-bold font-bold uppercase tracking-[0.2em]">{t('dashboard.route_margin')}</p>
+                  <h3 className="text-lg font-black text-foreground italic uppercase">{t('dashboard.corridor_yield')}</h3>
+                  <p className="text-emerald-400 text-base font-bold font-bold uppercase italic">{t('dashboard.route_margin')}</p>
                 </div>
               </div>
            </div>
@@ -110,7 +110,7 @@ export function CustomerRouteSection({
                             <div>
                                 <div className="text-white font-black text-xl tracking-tight uppercase italic">{r.route}</div>
                                 <div className="flex items-center gap-3 mt-2">
-                                    <span className="text-base font-bold font-black text-muted-foreground bg-muted/50 px-2 py-0.5 rounded-full border border-border/10 tracking-widest uppercase">
+                                    <span className="text-base font-bold font-black text-muted-foreground bg-muted/50 px-2 py-0.5 rounded-full border border-border/10 uppercase">
                                         {r.count} {t('dashboard.missions')}
                                     </span>
                                     <span className="text-base font-bold text-muted-foreground font-bold italic">COST: ฿{r.cost.toLocaleString()}</span>
@@ -119,14 +119,14 @@ export function CustomerRouteSection({
                         </div>
                         <div className="text-right">
                              <div className="text-lg font-black text-emerald-400 tracking-tighter italic">+{r.margin.toFixed(1)}%</div>
-                             <div className="text-base font-bold text-muted-foreground font-black uppercase tracking-widest mt-1 italic">{t('dashboard.net_margin')}</div>
+                              <div className="text-base font-bold text-muted-foreground font-black uppercase mt-1 italic">{t('dashboard.net_margin')}</div>
                         </div>
                     </div>
                 ))}
                 {routes.length === 0 && (
                      <div className="p-24 text-center">
                         <Activity size={48} strokeWidth={1} className="mx-auto mb-4 text-muted-foreground" />
-                        <p className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest italic">{t('dashboard.sector_nominal')}</p>
+                        <p className="text-base font-bold font-black text-muted-foreground uppercase italic">{t('dashboard.sector_nominal')}</p>
                     </div>
                 )}
               </div>

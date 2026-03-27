@@ -18,25 +18,25 @@ export function RoutePerformance({ data }: { data: RouteStats[] }) {
   }
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white/80 overflow-hidden">
+    <div className="rounded-xl border border-border/10 bg-muted/40 overflow-hidden shadow-2xl">
       <Table>
-        <TableHeader className="bg-white/80">
-          <TableRow className="border-gray-200 hover:bg-transparent">
-            <TableHead className="text-muted-foreground font-bold uppercase tracking-wider text-base font-bold">เส้นทาง (Route)</TableHead>
-            <TableHead className="text-muted-foreground font-bold uppercase tracking-wider text-base font-bold text-center">จำนวนงาน</TableHead>
-            <TableHead className="text-muted-foreground font-bold uppercase tracking-wider text-base font-bold">รายรับ</TableHead>
-            <TableHead className="text-muted-foreground font-bold uppercase tracking-wider text-base font-bold text-right">Margin (%)</TableHead>
+        <TableHeader className="bg-muted/50">
+          <TableRow className="border-border/5 hover:bg-transparent">
+            <TableHead className="text-muted-foreground font-black uppercase text-base italic">เส้นทาง (Route)</TableHead>
+            <TableHead className="text-muted-foreground font-black uppercase text-base italic text-center">จำนวนงาน</TableHead>
+            <TableHead className="text-muted-foreground font-black uppercase text-base italic">รายรับ</TableHead>
+            <TableHead className="text-muted-foreground font-black uppercase text-base italic text-right">Margin (%)</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {data.map((item) => (
-            <TableRow key={item.route} className="border-gray-200 hover:bg-gray-50 transition-colors">
+            <TableRow key={item.route} className="border-border/5 hover:bg-white/5 transition-colors group">
               <TableCell>
-                <div className="flex items-center gap-2">
-                  <div className="p-1.5 bg-emerald-500/10 rounded-md">
-                    <MapPin size={12} className="text-emerald-600" />
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-emerald-500/20 rounded-lg border border-emerald-500/20">
+                    <MapPin size={14} className="text-emerald-400" />
                   </div>
-                  <span className="font-bold text-gray-800">{item.route}</span>
+                  <span className="font-black text-foreground italic uppercase tracking-tight group-hover:text-emerald-400 transition-colors">{item.route}</span>
                 </div>
               </TableCell>
               <TableCell className="text-center">

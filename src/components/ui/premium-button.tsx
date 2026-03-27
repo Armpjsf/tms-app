@@ -44,7 +44,7 @@ export function PremiumButton({
       whileTap={{ scale: 0.98 }}
       disabled={disabled || loading}
       className={cn(
-        "rounded-2xl font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all duration-300 relative overflow-hidden group",
+        "rounded-2xl font-black uppercase tracking-normal flex items-center justify-center gap-2 transition-all duration-300 relative overflow-hidden group",
         variants[variant],
         sizes[size],
         (disabled || loading) && "opacity-50 cursor-not-allowed grayscale",

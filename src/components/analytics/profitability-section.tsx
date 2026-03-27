@@ -14,7 +14,7 @@ import {
   PieChart,
   Pie
 } from 'recharts'
-import { Coins, TrendingUp, Truck, Activity, Zap, ExternalLink, Info } from "lucide-react"
+import { Coins, TrendingUp, Truck, Activity, Zap, Info } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useState, useEffect } from "react"
 import { getVehicleJobDetails } from "@/lib/supabase/analytics"
@@ -51,6 +51,14 @@ type Props = {
     endDate?: string
 }
 
+interface JobDetail {
+    Job_ID: string
+    Customer_Name: string
+    Route_Name: string
+    Price_Cust_Total: number
+    Job_Status: string
+}
+
 function JobDetailsModal({ 
     plate, 
     isOpen, 
@@ -65,15 +73,18 @@ function JobDetailsModal({
     endDate?: string
 }) {
     const { t } = useLanguage()
-    const [jobs, setJobs] = useState<any[]>([])
+    const [jobs, setJobs] = useState<JobDetail[]>([])
     const [loading, setLoading] = useState(false)
 
     useEffect(() => {
         if (isOpen && plate) {
-            setLoading(true)
-            getVehicleJobDetails(plate, startDate, endDate)
-                .then(setJobs)
-                .finally(() => setLoading(false))
+            const timer = setTimeout(() => {
+                setLoading(true)
+                getVehicleJobDetails(plate, startDate, endDate)
+                    .then(res => setJobs(res as JobDetail[]))
+                    .finally(() => setLoading(false))
+            }, 0)
+            return () => clearTimeout(timer)
         }
     }, [isOpen, plate, startDate, endDate])
 
@@ -167,16 +178,16 @@ export function ProfitabilitySection({ data = [], financials, startDate, endDate
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
                 {/* Vehicle Profitability Chart */}
-                <PremiumCard className="lg:col-span-2 bg-background border-2 border-border/5 shadow-3xl p-0 overflow-hidden rounded-br-[6rem] rounded-tl-[3rem] group/chart">
-                    <div className="p-10 border-b border-border/5 bg-black/40 relative overflow-hidden flex items-center justify-between">
-                        <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-emerald-500 to-transparent" />
+                <PremiumCard className="lg:col-span-2 bg-muted/50 border border-border/10 shadow-3xl p-0 overflow-hidden rounded-br-[6rem] rounded-tl-[3rem] group/chart">
+                    <div className="p-10 border-b border-border/5 bg-gradient-to-r from-emerald-500/20 via-emerald-500/5 to-transparent backdrop-blur-md relative overflow-hidden flex items-center justify-between">
+                        <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 to-transparent pointer-events-none" />
                         <div className="flex items-center gap-5 relative z-10">
                             <div className="p-3 bg-emerald-500/20 rounded-2xl text-emerald-500 border border-emerald-500/30 shadow-[0_0_20px_rgba(16,185,129,0.2)]">
                                 <Truck size={22} />
                             </div>
                             <div>
-                                <h3 className="text-xl font-black text-foreground tracking-tighter italic uppercase">{t('analytics.asset_yield_command')}</h3>
-                                <p className="text-emerald-500 text-base font-bold font-black uppercase tracking-[0.4em]">{t('analytics.net_profit_analysis')}</p>
+                                <h3 className="text-lg font-black text-foreground italic uppercase">{t('dashboard.asset_yield_spectrum')}</h3>
+                                <p className="text-primary text-base font-bold font-black uppercase italic">{t('dashboard.strategic_revenue_distribution')}</p>
                             </div>
                         </div>
                     </div>
@@ -197,7 +208,7 @@ export function ProfitabilitySection({ data = [], financials, startDate, endDate
                                         padding: '20px'
                                     }}
                                     itemStyle={{ fontSize: '11px', fontWeight: '900', textTransform: 'uppercase', color: '#fff' }}
-                                    formatter={(value: any) => [`฿${Number(value || 0).toLocaleString()}`, t('common.net_margin')]}
+                                    formatter={(value: number | string) => [`฿${Number(value || 0).toLocaleString()}`, t('common.net_margin')]}
                                 />
                                 <Bar dataKey="netProfit" radius={[0, 8, 8, 0]} barSize={32}>
                                     {topPerformers.map((entry, index) => (
@@ -210,16 +221,16 @@ export function ProfitabilitySection({ data = [], financials, startDate, endDate
                 </PremiumCard>
 
                 {/* Cost Structure Analysis */}
-                <PremiumCard className="bg-background border-2 border-border/5 shadow-3xl relative overflow-hidden group/cost p-0 rounded-br-[5rem] rounded-tl-[3rem]">
-                    <div className="p-10 border-b border-border/5 bg-black/40 relative overflow-hidden flex items-center justify-between">
-                        <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-indigo-500 to-transparent" />
+                <PremiumCard className="bg-muted/50 border border-border/10 shadow-3xl relative overflow-hidden group/cost p-0 rounded-br-[5rem] rounded-tl-[3rem]">
+                    <div className="p-10 border-b border-border/5 bg-gradient-to-r from-indigo-500/20 via-indigo-500/5 to-transparent backdrop-blur-md relative overflow-hidden flex items-center justify-between">
+                        <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/10 to-transparent pointer-events-none" />
                         <div className="flex items-center gap-5 relative z-10">
                             <div className="p-3 bg-indigo-500/20 rounded-2xl text-indigo-500 border border-indigo-500/30 shadow-[0_0_20px_rgba(99,102,241,0.2)]">
                                 <Coins size={22} />
                             </div>
                             <div>
-                                <h3 className="text-xl font-black text-foreground tracking-tighter italic uppercase">{t('analytics.cost_composition')}</h3>
-                                <p className="text-indigo-500 text-base font-bold font-black uppercase tracking-[0.4em]">{t('analytics.regional_expenditure')}</p>
+                                <h3 className="text-lg font-black text-foreground italic uppercase">{t('dashboard.cost_composition_matrix')}</h3>
+                                <p className="text-amber-400 text-base font-bold font-black uppercase italic">{t('dashboard.operational_expenditure_analytics')}</p>
                             </div>
                         </div>
                     </div>
@@ -273,9 +284,9 @@ export function ProfitabilitySection({ data = [], financials, startDate, endDate
                 </PremiumCard>
 
                 {/* Performance Ledger Table */}
-                <PremiumCard className="lg:col-span-3 bg-background border-2 border-border/5 shadow-3xl p-0 overflow-hidden rounded-br-[6rem] rounded-tl-[3rem]">
-                    <div className="p-10 border-b border-border/5 bg-black/40 relative overflow-hidden flex items-center justify-between">
-                        <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-slate-500 to-transparent" />
+                <PremiumCard className="lg:col-span-3 bg-muted/50 border border-border/10 shadow-3xl p-0 overflow-hidden rounded-br-[6rem] rounded-tl-[3rem]">
+                    <div className="p-10 border-b border-border/5 bg-gradient-to-r from-slate-500/20 via-slate-500/5 to-transparent backdrop-blur-md relative overflow-hidden flex items-center justify-between">
+                        <div className="absolute inset-0 bg-gradient-to-r from-slate-500/10 to-transparent pointer-events-none" />
                         <div className="flex items-center gap-5 relative z-10">
                             <div className="p-3 bg-muted/80 rounded-2xl text-foreground border border-border/10">
                                 <Activity size={22} />

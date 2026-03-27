@@ -18,6 +18,7 @@ import {
 import { Upload, FileSpreadsheet, Loader2, Download, AlertCircle, CheckCircle2 } from "lucide-react"
 import { read, utils, writeFile } from "xlsx"
 import { motion, AnimatePresence } from "framer-motion"
+import { useLanguage } from "@/components/providers/language-provider"
 
 interface ExcelImportProps {
   trigger: React.ReactNode
@@ -31,11 +32,12 @@ interface ExcelImportProps {
 export function ExcelImport({
   trigger,
   title,
-  description = "อัปโหลดไฟล์ Excel (.xlsx, .xls) เพื่อนำเข้าข้อมูล",
+  description,
   onImport,
   templateData,
   templateFilename = "template.xlsx",
 }: ExcelImportProps) {
+  const { t } = useLanguage()
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -43,6 +45,8 @@ export function ExcelImport({
   const [previewData, setPreviewData] = useState<Record<string, unknown>[]>([])
   const [error, setError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const effectiveDescription = description || t('common.import.description')
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0]
@@ -56,11 +60,11 @@ export function ExcelImport({
       const data = await parseExcel(selectedFile)
       setPreviewData(data)
       if (data.length === 0) {
-        setError("ไม่พบข้อมูลในไฟล์")
+        setError(t('common.import.error_empty'))
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err)
-      setError("ไม่สามารถอ่านไฟล์ได้: " + msg)
+      setError(t('common.import.error_read').replace('{{error}}', msg))
     } finally {
       setLoading(false)
     }
@@ -99,14 +103,14 @@ export function ExcelImport({
         setOpen(false)
         setFile(null)
         setPreviewData([])
-        toast.success(result.message || "นำเข้าข้อมูลสำเร็จ")
+        toast.success(result.message || t('common.import.success'))
         router.refresh()
       } else {
         Logger.error("Excel import failed:", result.error)
-        toast.error(result.message || "เกิดข้อผิดพลาดในการนำเข้าข้อมูล")
+        toast.error(result.message || t('common.import.failed'))
       }
     } catch {
-      setError("เกิดข้อผิดพลาดในการนำเข้า")
+      setError(t('common.import.failed'))
     } finally {
       setLoading(false)
     }
@@ -133,7 +137,7 @@ export function ExcelImport({
               {title}
             </DialogTitle>
             <DialogDescription className="text-muted-foreground font-medium">
-              {description}
+              {effectiveDescription}
             </DialogDescription>
           </DialogHeader>
 
@@ -146,7 +150,7 @@ export function ExcelImport({
                   onClick={downloadTemplate}
                   className="h-10 px-4 rounded-xl gap-2 border-border/10 bg-muted/50 hover:bg-muted/80 text-muted-foreground transition-all active:scale-95"
                 >
-                  <Download size={14} /> โหลดแบบฟอร์ม (Template)
+                  <Download size={14} /> {t('common.import.template')}
                 </Button>
               </div>
             )}
@@ -183,7 +187,9 @@ export function ExcelImport({
                       <div className="text-center">
                         <p className="font-bold text-foreground tracking-tight">{file.name}</p>
                         <p className="text-lg font-bold text-muted-foreground mt-1">
-                          {previewData.length > 0 ? `พบข้อมูล ${previewData.length} รายการ พร้อมนำเข้า` : "กำลังอ่านไฟล์..."}
+                          {previewData.length > 0 
+                            ? t('common.import.file_ready').replace('{{count}}', String(previewData.length)) 
+                            : t('common.import.reading')}
                         </p>
                       </div>
                     </motion.div>
@@ -198,8 +204,8 @@ export function ExcelImport({
                         <Upload className="w-8 h-8" />
                       </div>
                       <div className="text-center">
-                        <p className="font-bold text-muted-foreground">คลิกเพื่อเลือกไฟล์ หรือลากไฟล์มาวางที่นี่</p>
-                        <p className="text-lg font-bold text-muted-foreground mt-1 uppercase tracking-widest font-black">รองรับไฟล์ .XLSX, .XLS</p>
+                        <p className="font-bold text-muted-foreground">{t('common.import.upload_area')}</p>
+                        <p className="text-lg font-bold text-muted-foreground mt-1 uppercase tracking-widest font-black">{t('common.import.placeholder')}</p>
                       </div>
                     </motion.div>
                   )}
@@ -216,7 +222,7 @@ export function ExcelImport({
                 >
                   <AlertCircle className="h-5 w-5 shrink-0" />
                   <div>
-                    <p className="font-black uppercase tracking-wider text-base font-bold">Import Error</p>
+                    <p className="font-black uppercase tracking-wider text-base font-bold">{t('common.import.error_title')}</p>
                     <p className="font-medium mt-1">{error}</p>
                   </div>
                 </motion.div>
@@ -249,7 +255,7 @@ export function ExcelImport({
                   </div>
                   {previewData.length > 3 && (
                       <div className="p-2 text-base font-bold text-center text-muted-foreground bg-muted/30 border-t border-border/5 font-bold uppercase tracking-tighter">
-                          ... and {previewData.length - 3} more items
+                          {t('common.import.more_items').replace('{{count}}', String(previewData.length - 3))}
                       </div>
                   )}
                </div>
@@ -263,14 +269,14 @@ export function ExcelImport({
             onClick={() => setOpen(false)}
             className="flex-1 h-12 rounded-2xl border border-border/5 text-muted-foreground hover:text-foreground hover:bg-muted/50 font-bold transition-all"
           >
-            ยกเลิก
+            {t('common.cancel')}
           </Button>
           <Button
             onClick={handleImport}
             disabled={!file || loading || previewData.length === 0}
             className="flex-1 h-12 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-foreground font-black shadow-lg shadow-emerald-900/20 transition-all active:scale-95 disabled:opacity-50"
           >
-            {loading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : "นำเข้าข้อมูล"}
+            {loading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : t('common.import.btn_import')}
           </Button>
         </DialogFooter>
       </DialogContent>
