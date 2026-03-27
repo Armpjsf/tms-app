@@ -1,6 +1,6 @@
 'use server'
 
-import { createAdminClient } from "@/utils/supabase/server"
+// No admin client needed here anymore since we only log.
 
 /**
  * Updates the current location of a driver in the Master_Drivers table.
@@ -8,33 +8,8 @@ import { createAdminClient } from "@/utils/supabase/server"
  */
 export async function updateDriverLocation(driverId: string, lat: number, lon: number) {
     console.log('[DEBUG] updateDriverLocation start:', { driverId, lat, lon })
-    const supabase = createAdminClient()
-
-    const { data, error } = await supabase
-        .from('Master_Drivers')
-        .update({
-            Current_Lat: lat,
-            Current_Lon: lon,
-            current_lat: lat,
-            current_lon: lon,
-            Updated_At: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-        })
-        .eq('Driver_ID', driverId)
-        .select()
-
-    if (error) {
-        console.error('[DEBUG] updateDriverLocation error:', JSON.stringify(error, null, 2))
-        return { success: false, error: error.message }
-    }
-
-    if (!data || data.length === 0) {
-        // Try snake_case ID check
-        await supabase.from('Master_Drivers').update({ current_lat: lat, current_lon: lon }).eq('driver_id', driverId)
-        console.warn('[DEBUG] updateDriverLocation: No record updated for ID:', driverId)
-    } else {
-        console.log('[DEBUG] updateDriverLocation success for:', driverId, 'New Coords:', data[0].Current_Lat || data[0].current_lat)
-    }
-
+    // We NO LONGER update Master_Drivers because it lacks the necessary columns (Current_Lat, Updated_At, etc.)
+    // The coordinates are already saved to 'gps_logs' via saveGPSLog.
+    console.log('[DEBUG] updateDriverLocation skip Master_Drivers update (log based tracking only)')
     return { success: true }
 }

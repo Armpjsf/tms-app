@@ -203,25 +203,41 @@ export async function getActiveFleetStatus(branchId?: string | null, customerId?
       return [];
     }
 
-    if (drivers.length > 0) {
-        console.log('[DEBUG] Driver Keys:', Object.keys(drivers[0]))
-        console.log('[DEBUG] Driver 0 Sample:', {
-            ID: drivers[0].Driver_ID || drivers[0].driver_id,
-            Lat: drivers[0].Current_Lat,
-            lat: drivers[0].current_lat
-        })
-    }
+    // 2. Fetch latest GPS logs for these drivers (Last 24 hours to keep it efficient)
+    const driverIds = drivers.map(d => d.Driver_ID || d.driver_id);
+    const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    
+    const { data: latestLogs } = await supabase
+      .from("gps_logs")
+      .select("driver_id, latitude, longitude, timestamp, speed")
+      .in("driver_id", driverIds)
+      .gte("timestamp", yesterday)
+      .order("timestamp", { ascending: false });
 
-    // 2. Format the data to match expected return type
-    return drivers.map((driver: any) => ({
-      Driver_ID: driver.Driver_ID || driver.driver_id,
-      Driver_Name: driver.Driver_Name || driver.driver_name || "Unknown",
-      Vehicle_Plate: driver.Vehicle_Plate || driver.vehicle_plate || "-",
-      Mobile_No: driver.Mobile_No || driver.mobile_no || "",
-      Last_Update: driver.Last_Seen || driver.last_seen || driver.Updated_At || driver.updated_at || null,
-      Latitude: driver.Current_Lat ?? driver.current_lat ?? null,
-      Longitude: driver.Current_Lon ?? driver.current_lon ?? null,
-    }));
+    // 3. Map logs to drivers
+    const logMap = new Map();
+    latestLogs?.forEach(log => {
+        const dId = log.driver_id;
+        if (!logMap.has(dId)) {
+            logMap.set(dId, log);
+        }
+    });
+
+    // 4. Format the data to match expected return type
+    return drivers.map((driver: any) => {
+      const dId = driver.Driver_ID || driver.driver_id;
+      const log = logMap.get(dId);
+      
+      return {
+        Driver_ID: dId,
+        Driver_Name: driver.Driver_Name || driver.driver_name || "Unknown",
+        Vehicle_Plate: driver.Vehicle_Plate || driver.vehicle_plate || "-",
+        Mobile_No: driver.Mobile_No || driver.mobile_no || "",
+        Last_Update: log?.timestamp || null,
+        Latitude: log?.latitude ?? null,
+        Longitude: log?.longitude ?? null,
+      };
+    });
   } catch {
     return [];
   }
