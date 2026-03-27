@@ -54,7 +54,7 @@ export function LocationTracker({ driverId }: { driverId?: string, branchId?: st
                         setStatus("tracking")
                     } else {
                         setStatus("error")
-                        console.error('[DEBUG] updateDriverLocation fail:', res.error)
+                        console.error('[DEBUG] updateDriverLocation fail')
                     }
                 } catch (e) {
                     setStatus("error")
@@ -76,7 +76,7 @@ export function LocationTracker({ driverId }: { driverId?: string, branchId?: st
     return () => {
         if (watchId) navigator.geolocation.clearWatch(watchId)
     }
-  }, [driverId, status])
+  }, [driverId])
 
   if (!driverId) return null
 

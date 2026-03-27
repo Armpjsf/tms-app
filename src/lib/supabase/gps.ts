@@ -27,7 +27,7 @@ export async function saveGPSLog(data: {
   speed?: number;
 }) {
   try {
-    const supabase = await createClient();
+    const supabase = await createAdminClient();
 
     // Note: GPS_Logs table uses lowercase column names
     const { error } = await supabase
@@ -44,8 +44,11 @@ export async function saveGPSLog(data: {
       });
 
     if (error) {
+      console.error('[DEBUG] saveGPSLog error:', JSON.stringify(error, null, 2))
       return { success: false, error };
     }
+
+    console.log('[DEBUG] saveGPSLog success for:', data.driverId)
 
     return { success: true };
   } catch (e) {
@@ -209,7 +212,7 @@ export async function getActiveFleetStatus(branchId?: string | null, customerId?
     
     const { data: latestLogs } = await supabase
       .from("gps_logs")
-      .select("driver_id, latitude, longitude, timestamp, speed")
+      .select("*")
       .in("driver_id", driverIds)
       .gte("timestamp", yesterday)
       .order("timestamp", { ascending: false });
@@ -217,8 +220,8 @@ export async function getActiveFleetStatus(branchId?: string | null, customerId?
     // 3. Map logs to drivers
     const logMap = new Map();
     latestLogs?.forEach(log => {
-        const dId = log.driver_id;
-        if (!logMap.has(dId)) {
+        const dId = log.driver_id || log.Driver_ID;
+        if (dId && !logMap.has(dId)) {
             logMap.set(dId, log);
         }
     });
@@ -233,9 +236,9 @@ export async function getActiveFleetStatus(branchId?: string | null, customerId?
         Driver_Name: driver.Driver_Name || driver.driver_name || "Unknown",
         Vehicle_Plate: driver.Vehicle_Plate || driver.vehicle_plate || "-",
         Mobile_No: driver.Mobile_No || driver.mobile_no || "",
-        Last_Update: log?.timestamp || null,
-        Latitude: log?.latitude ?? null,
-        Longitude: log?.longitude ?? null,
+        Last_Update: log?.timestamp || log?.Timestamp || null,
+        Latitude: log?.latitude ?? log?.Latitude ?? null,
+        Longitude: log?.longitude ?? log?.Longitude ?? null,
       };
     });
   } catch {
