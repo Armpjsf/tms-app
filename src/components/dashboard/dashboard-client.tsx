@@ -99,9 +99,16 @@ export function DashboardClient({
                             <div className="w-2 h-2 rounded-full bg-accent animate-pulse shadow-[0_0_12px_rgba(182,9,0,1)]" />
                             {t('dashboard.system_integrity')}
                         </div>
-                        <p className="text-muted-foreground text-lg font-bold font-bold uppercase tracking-widest opacity-60">
-                             {t('dashboard.node_execution')} {branchId || "Global"}
-                        </p>
+                        {!customerMode && (
+                            <p className="text-muted-foreground text-lg font-bold font-bold uppercase tracking-widest opacity-60">
+                                {t('dashboard.node_execution')} {branchId || "Global"}
+                            </p>
+                        )}
+                        {customerMode && (
+                            <p className="text-muted-foreground text-lg font-bold font-bold uppercase tracking-widest opacity-60">
+                                {t('dashboard.live_status')}
+                            </p>
+                        )}
                     </div>
                 </div>
                 

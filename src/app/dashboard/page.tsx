@@ -25,7 +25,23 @@ export default function DashboardPage() {
         isCustomer(),
         getCustomerId()
       ])
-      setData({ unified, sosIds, customerMode, custId })
+
+      let custName = custId;
+      if (customerMode && custId) {
+          const { createClient } = await import('@/lib/supabase/server')
+          const supabase = await createClient()
+          const { data: customer } = await supabase
+            .from('Master_Customers')
+            .select('Customer_Name')
+            .eq('Customer_ID', custId)
+            .single()
+          
+          if (customer?.Customer_Name) {
+              custName = customer.Customer_Name
+          }
+      }
+
+      setData({ unified, sosIds, customerMode, custId, custName })
     } finally {
       setLoading(false)
     }
@@ -43,7 +59,7 @@ export default function DashboardPage() {
     </DashboardLayout>
   )
 
-  const { unified, sosIds, customerMode, custId } = data
+  const { unified, sosIds, customerMode, custId, custName } = data
 
   // Map unified data to DashboardClient props
   const jobStats = {
@@ -59,7 +75,7 @@ export default function DashboardPage() {
       <DashboardClient 
         branchId={selectedBranch}
         customerMode={customerMode}
-        userName={custId as string}
+        userName={custName as string}
         jobStats={jobStats}
         sosCount={sosIds.length}
         weeklyStats={unified.trend ?? []}
