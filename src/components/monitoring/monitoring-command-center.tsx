@@ -18,6 +18,7 @@ import { useRealtime } from "@/hooks/useRealtime"
 import { RealtimeIndicator } from "@/components/ui/realtime-indicator"
 import { toast } from "sonner"
 import { calculateSafetyScore } from "@/services/safety-scoring"
+import { Button } from "@/components/ui/button"
 
 export type DriverWithGPS = Driver & {
     Latitude: number | null
@@ -201,7 +202,22 @@ export function MonitoringCommandCenter({
                                             <p className="text-lg font-bold text-muted-foreground uppercase tracking-tighter">{driver.Vehicle_Plate}</p>
                                         </div>
                                     </div>
-                                    <SafetyScoreBadge metrics={calculateSafetyScore(driver)} />
+                                    <div className="flex flex-col items-end gap-2">
+                                        <SafetyScoreBadge metrics={calculateSafetyScore(driver)} />
+                                        {driver.Latitude && driver.Longitude && (
+                                            <Button 
+                                                variant="outline" 
+                                                size="sm" 
+                                                className="h-8 px-3 text-[10px] font-bold border-primary/20 text-primary hover:bg-primary/5 rounded-xl transition-all"
+                                                onClick={(e: React.MouseEvent) => {
+                                                    e.stopPropagation()
+                                                    window.open(`https://www.google.com/maps/search/?api=1&query=${driver.Latitude},${driver.Longitude}`, '_blank')
+                                                }}
+                                            >
+                                                OPEN MAPS
+                                            </Button>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         ))

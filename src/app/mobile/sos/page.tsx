@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { MobileHeader } from "@/components/mobile/mobile-header"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { Phone, AlertTriangle, ShieldAlert, Ambulance, MapPin, ExternalLink } from "lucide-react"
+import { Phone, AlertTriangle, ShieldAlert, Ambulance, ExternalLink } from "lucide-react"
 import { getCompanyProfile, CompanyProfile } from "@/lib/supabase/settings"
 
 export default function MobileSOSPage() {
@@ -50,8 +50,10 @@ export default function MobileSOSPage() {
             { enableHighAccuracy: true, timeout: 10000 }
         )
     } else {
-        setAddress("อุปกรณ์ไม่รองรับ GPS")
-        setLoading(false)
+        setTimeout(() => {
+            setAddress("อุปกรณ์ไม่รองรับ GPS")
+            setLoading(false)
+        }, 0)
     }
   }, [])
 
@@ -61,7 +63,7 @@ export default function MobileSOSPage() {
 
   const openMap = () => {
     if (location) {
-        window.open(`https://www.google.com/maps?q=${location.lat},${location.lng}`, '_blank')
+        window.open(`https://www.google.com/maps/search/?api=1&query=${location.lat},${location.lng}`, '_blank')
     }
   }
 

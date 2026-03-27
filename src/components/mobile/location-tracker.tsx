@@ -7,9 +7,8 @@ import { updateDriverLocation } from "@/lib/actions/location-actions"
 const UPDATE_INTERVAL = 60000 // Update every 1 minute
 const MIN_DISTANCE = 0.0002 // Approx 20-30 meters
 
-export function LocationTracker({ driverId, branchId }: { driverId?: string, branchId?: string }) {
+export function LocationTracker({ driverId }: { driverId?: string, branchId?: string }) {
   const [status, setStatus] = useState<"idle" | "tracking" | "error">("idle")
-  const [debugPos, setDebugPos] = useState<{ lat: number; lng: number } | null>(null)
   
   const lastUpdateRef = useRef<number>(0)
   const lastPosRef = useRef<{ lat: number; lng: number } | null>(null)
@@ -29,7 +28,6 @@ export function LocationTracker({ driverId, branchId }: { driverId?: string, bra
     const watchId = navigator.geolocation.watchPosition(
         async (position) => {
             const { latitude, longitude, speed } = position.coords
-            setDebugPos({ lat: latitude, lng: longitude })
             
             const now = Date.now()
             const timeDiff = now - lastUpdateRef.current
@@ -84,11 +82,6 @@ export function LocationTracker({ driverId, branchId }: { driverId?: string, bra
 
   return (
     <div className="fixed top-2 right-2 z-50 pointer-events-none flex flex-col items-end gap-1">
-       {/* Visual Debug Status */}
-       <div className="bg-black/70 text-[8px] text-white px-2 py-1 rounded-md backdrop-blur-sm border border-white/10 uppercase tracking-tighter">
-         ID: {driverId} | B:{branchId || 'NONE'} | {status} | {debugPos ? 'GPS-OK' : 'NO-GPS'}
-       </div>
-
        {status === "tracking" && (
            <span className="flex h-2 w-2 relative">
              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
