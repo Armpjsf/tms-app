@@ -1,6 +1,6 @@
 'use server'
 
-import { createClient } from '@/utils/supabase/server'
+import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
 
 import { getAllDriversFromTable } from '@/lib/supabase/drivers'
@@ -52,7 +52,7 @@ const parseIfString = (val: string | undefined | null) => {
 }
 
 export async function createJob(data: JobFormData) {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
 
   // Auto-assign Branch_ID if missing
   if (!data.Branch_ID) {
@@ -398,7 +398,7 @@ export async function requestShipment(data: {
   Cargo_Type: string
   Notes?: string
 }) {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
   let customerId = await getCustomerId()
   const userId = await getUserId()
 

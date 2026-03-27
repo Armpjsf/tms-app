@@ -1,4 +1,6 @@
 import { validateApiKey } from '@/lib/security/api-security'
+import { createAdminClient } from '@/utils/supabase/server'
+import { NextRequest, NextResponse } from 'next/server'
 
 /**
  * Enterprise Integration API (v1)
@@ -12,8 +14,8 @@ export async function POST(req: NextRequest) {
         let clientContext
         try {
             clientContext = await validateApiKey(authHeader || '')
-        } catch (authError: Error | any) {
-            return NextResponse.json({ error: authError.message }, { status: 401 })
+        } catch (authError: unknown) {
+            return NextResponse.json({ error: (authError as Error).message }, { status: 401 })
         }
 
         const body = await req.json()
@@ -31,7 +33,7 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
         }
 
-        const supabase = await createClient()
+        const supabase = createAdminClient()
 
         // Insert new job
         const { data, error } = await supabase
