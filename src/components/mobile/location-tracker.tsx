@@ -28,15 +28,12 @@ export function LocationTracker({ driverId, branchId }: { driverId?: string, bra
 
     const watchId = navigator.geolocation.watchPosition(
         async (position) => {
-            const now = Date.now()
             const { latitude, longitude, speed } = position.coords
-            
-            // For debug display (State updates only on first position or change)
             setDebugPos({ lat: latitude, lng: longitude })
-
+            
+            const now = Date.now()
             const timeDiff = now - lastUpdateRef.current
             const isTime = timeDiff > UPDATE_INTERVAL
-            
             const isDistance = lastPosRef.current 
                 ? Math.abs(latitude - lastPosRef.current.lat) + Math.abs(longitude - lastPosRef.current.lng) > MIN_DISTANCE
                 : true
@@ -45,17 +42,30 @@ export function LocationTracker({ driverId, branchId }: { driverId?: string, bra
                 lastUpdateRef.current = now
                 lastPosRef.current = { lat: latitude, lng: longitude }
 
-                saveGPSLog({
-                    driverId: driverId,
-                    lat: latitude,
-                    lng: longitude,
-                    speed: speed || 0,
-                }).catch(() => {})
+                try {
+                    // Send both to log and master update
+                    await saveGPSLog({
+                        driverId: driverId,
+                        lat: latitude,
+                        lng: longitude,
+                        speed: speed || 0,
+                    })
 
-                updateDriverLocation(driverId, latitude, longitude).catch(() => {})
+                    const res = await updateDriverLocation(driverId, latitude, longitude)
+                    if (res.success) {
+                        setStatus("tracking")
+                    } else {
+                        setStatus("error")
+                        console.error('[DEBUG] updateDriverLocation fail:', res.error)
+                    }
+                } catch (e) {
+                    setStatus("error")
+                    console.error('[DEBUG] updateDriverLocation exception:', e)
+                }
             }
         },
-        () => {
+        (err) => {
+            console.error('[DEBUG] Geolocation error:', err)
             setStatus("error")
         },
         {
