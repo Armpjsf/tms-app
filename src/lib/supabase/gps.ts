@@ -167,7 +167,7 @@ export async function getActiveFleetStatus(branchId?: string | null, customerId?
   try {
     const isSuper = await isSuperAdmin();
     const isAdminUser = await isAdmin();
-    const supabase = (isSuper || isAdminUser) ? await createAdminClient() : await createClient();
+    const supabase = await createAdminClient();
 
     // 1. Get all drivers
     const sessionBranchId = await getUserBranchId();
