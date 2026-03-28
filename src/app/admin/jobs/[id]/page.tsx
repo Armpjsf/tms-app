@@ -102,9 +102,9 @@ export default async function AdminJobDetailPage({
                           <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest italic">Temporal Stamping</span>
                       </div>
                       <p className="text-3xl font-black text-foreground italic tracking-tighter">
-                        {new Date(job.Plan_Date || "").toLocaleDateString("th-TH")}
+                        {job.Plan_Date ? new Date(job.Plan_Date).toLocaleDateString("th-TH") : "NOT_SPECIFIED"}
                       </p>
-                      <p className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest mt-2">// PLAN_CYCLE_ACTIVE</p>
+                      <p className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest mt-2">PLAN_CYCLE_ACTIVE</p>
                   </div>
                   
                   <div className="flex-[1.5] space-y-6 relative">

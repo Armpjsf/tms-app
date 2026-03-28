@@ -28,6 +28,7 @@ export default function VehiclesPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const { selectedBranch } = useBranch()
   const { t } = useLanguage()
+  const [refreshTrigger, setRefreshTrigger] = useState(0)
 
   useEffect(() => {
     async function loadVehicles() {
@@ -37,11 +38,11 @@ export default function VehiclesPage() {
       setLoading(false)
     }
     loadVehicles()
-  }, [selectedBranch])
+  }, [selectedBranch, refreshTrigger])
 
   const filteredVehicles = vehicles.filter(v => 
-    v.Vehicle_Plate.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    v.Vehicle_Type.toLowerCase().includes(searchQuery.toLowerCase())
+    (v.Vehicle_Plate || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (v.Vehicle_Type || "").toLowerCase().includes(searchQuery.toLowerCase())
   )
 
   return (
@@ -64,7 +65,9 @@ export default function VehiclesPage() {
             </div>
 
             <div className="relative z-10">
-                <VehicleDialog trigger={
+                <VehicleDialog 
+                    onSuccess={() => setRefreshTrigger(prev => prev + 1)}
+                    trigger={
                     <button className="flex items-center gap-2 bg-white text-foreground px-8 py-4 rounded-2xl font-black text-xl hover:bg-primary hover:text-foreground transition-all shadow-xl active:scale-95 group/btn">
                         <Plus size={20} className="group-hover/btn:rotate-90 transition-transform duration-300" />
                         {t('vehicles.add_vehicle')}

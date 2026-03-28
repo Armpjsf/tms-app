@@ -24,6 +24,7 @@ type VehicleDialogProps = {
   trigger?: React.ReactNode
   open?: boolean
   onOpenChange?: (open: boolean) => void
+  onSuccess?: () => void
 }
 
 export function VehicleDialog({
@@ -33,7 +34,8 @@ export function VehicleDialog({
   subcontractors = [],
   trigger,
   open,
-  onOpenChange
+  onOpenChange,
+  onSuccess
 }: VehicleDialogProps) {
   const router = useRouter()
   const { t } = useLanguage()
@@ -105,6 +107,7 @@ export function VehicleDialog({
               Act_Expiry: ''
           })
         }
+        if (onSuccess) onSuccess()
         router.refresh()
       } else {
         toast.error(result.message || t('common.error'))
