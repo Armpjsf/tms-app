@@ -12,11 +12,12 @@ async function DashboardContent() {
   const session = await getDriverSession()
   if (!session) redirect("/mobile/login")
 
-  const { stats, currentJob, gamification, todayIncome } = await getDriverDashboardStats(session.driverId) || { 
+  const { stats, currentJob, activeJobs, gamification, todayIncome } = await getDriverDashboardStats(session.driverId) || { 
       stats: { total: 0, completed: 0 }, 
       todayIncome: 0,
       gamification: { points: 0, rank: 'Bronze', nextRankPoints: 300, monthlyCompleted: 0 },
-      currentJob: null 
+      currentJob: null,
+      activeJobs: []
   }
 
   return (
@@ -24,6 +25,7 @@ async function DashboardContent() {
       session={session}
       stats={stats}
       currentJob={currentJob}
+      activeJobs={activeJobs}
       gamification={gamification}
       todayIncome={todayIncome}
     />

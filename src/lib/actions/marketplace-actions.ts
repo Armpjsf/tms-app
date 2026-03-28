@@ -153,6 +153,17 @@ export async function getAllActiveBids() {
 export async function acceptBid(jobId: string, bidId: string, driverId: string, driverName: string, amount: number) {
     const supabase = await createClient()
 
+    // 0. ตรวจสอบก่อนว่างานนี้มีคนรับไปหรือยัง
+    const { data: currentJob } = await supabase
+        .from('Jobs_Main')
+        .select('Driver_ID, Job_Status')
+        .eq('Job_ID', jobId)
+        .single()
+
+    if (currentJob?.Driver_ID) {
+        return { success: false, message: 'ขออภัย งานนี้มีคนขับรับไปเรียบร้อยแล้ว' }
+    }
+
     // 1. อัปเดตตาราง Jobs_Main (จ่ายงานให้คนขับ และลงราคาจ้าง)
     const { error: updateJobError } = await supabase
         .from('Jobs_Main')
