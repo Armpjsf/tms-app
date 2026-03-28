@@ -126,8 +126,8 @@ export function JobDialog({
   // Form State
   const [formData, setFormData] = useState({
     Job_ID: job?.Job_ID || '', // Empty for new jobs to allow manual entry or auto-gen
-    Plan_Date: job?.Pickup_Date || job?.Plan_Date || defaultDate || new Date().toISOString().split('T')[0],
-    Delivery_Date: job?.Delivery_Date || defaultDate || new Date().toISOString().split('T')[0],
+    Plan_Date: job?.Pickup_Date || job?.Plan_Date || defaultDate || new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' }),
+    Delivery_Date: job?.Delivery_Date || defaultDate || new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' }),
     Customer_ID: job?.Customer_ID || '',
     Customer_Name: job?.Customer_Name || '',
     Route_Name: job?.Route_Name || '', // Not used directly in UI but kept for compatibility
@@ -218,8 +218,8 @@ export function JobDialog({
       setFormData(prev => ({ 
         ...prev, 
         Job_ID: '',
-        Plan_Date: defaultDate || new Date().toISOString().split('T')[0],
-        Delivery_Date: defaultDate || new Date().toISOString().split('T')[0]
+        Plan_Date: defaultDate || new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' }),
+        Delivery_Date: defaultDate || new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' })
       }))
     }
   }, [show, internalMode, job, defaultDate])

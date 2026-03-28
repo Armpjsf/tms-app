@@ -20,11 +20,13 @@ export function OrderBidding({ orders = [] }: OrderBiddingProps) {
     const [bidsByJob, setBidsByJob] = useState<Record<string, JobBid[]>>({})
     const [loadingBids, setLoadingBids] = useState<Record<string, boolean>>({})
     const [processingBid, setProcessingBid] = useState<string | null>(null)
-    const [refreshTrigger, setRefreshTrigger] = useState(0)
+    const [processingJobId, setProcessingJobId] = useState<string | null>(null)
+    const [acceptedJobIds, setAcceptedJobIds] = useState<Set<string>>(new Set())
+    const [refreshTrigger] = useState(0)
 
     // Derived states
     // In admin view, we want to see unassigned jobs that have potential bids
-    const displayOrders = orders
+    const displayOrders = orders.filter(o => !acceptedJobIds.has(o.Job_ID))
 
     const fetchBids = async (jobId: string) => {
         setLoadingBids(prev => ({ ...prev, [jobId]: true }))
@@ -64,15 +66,25 @@ export function OrderBidding({ orders = [] }: OrderBiddingProps) {
         if (!confirm(t('logistics.confirm_accept', { name: bid.driver_name, amount: bid.bid_amount.toLocaleString() }))) return
 
         setProcessingBid(bid.bid_id)
-        const result = await acceptBid(job.Job_ID, bid.bid_id, bid.driver_id, bid.driver_name, bid.bid_amount)
-        setProcessingBid(null)
+        setProcessingJobId(job.Job_ID)
         
-        if (result.success) {
-            toast.success(result.message)
-            // It will refetch through Next.js revalidatePath, but locally we can just close it
-            setExpandedJobId(null)
-        } else {
-            toast.error(result.message)
+        try {
+            const result = await acceptBid(job.Job_ID, bid.bid_id, bid.driver_id, bid.driver_name, bid.bid_amount)
+            
+            if (result.success) {
+                toast.success(result.message)
+                // Optimistic UI: Hide this job immediately
+                setAcceptedJobIds(prev => new Set(prev).add(job.Job_ID))
+                setExpandedJobId(null)
+            } else {
+                toast.error(result.message)
+            }
+        } catch (err) {
+            console.error('Accept bid error:', err)
+            toast.error(t('common.error'))
+        } finally {
+            setProcessingBid(null)
+            setProcessingJobId(null)
         }
     }
 
@@ -215,7 +227,7 @@ export function OrderBidding({ orders = [] }: OrderBiddingProps) {
                                                                         </div>
                                                                         <Button 
                                                                             onClick={(e) => { e.stopPropagation(); handleAcceptBid(order, bid); }}
-                                                                            disabled={processingBid === bid.bid_id}
+                                                                            disabled={processingJobId === order.Job_ID}
                                                                             className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-lg shadow-emerald-500/20 px-6"
                                                                         >
                                                                             {processingBid === bid.bid_id ? t('logistics.processing') : (

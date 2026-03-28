@@ -519,8 +519,7 @@ export async function createJob(jobData: Partial<Job>) {
         const supabase = isAdmin ? await createAdminClient() : await createClient()
         
         // Generate Job ID (Format: JOB-YYYYMMDD-XXXX)
-        const today = new Date()
-        const dateStr = today.toISOString().split('T')[0].replace(/-/g, '')
+        const dateStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' }).replace(/-/g, '')
         const randomSuffix = Math.floor(Math.random() * 10000).toString().padStart(4, '0')
         const newJobId = `JOB-${dateStr}-${randomSuffix}`
 

@@ -89,7 +89,7 @@ export function PlanningClient({
         if (view === 'requests') {
             return requestedJobs
         }
-        return todayJobs.filter(j => j.Job_Status !== 'Requested').slice(0, 10)
+        return todayJobs.filter(j => j.Job_Status !== 'Requested')
     }, [todayJobs, requestedJobs, view])
 
     const requestCount = requestedJobs.length
