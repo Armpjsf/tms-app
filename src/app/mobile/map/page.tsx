@@ -22,8 +22,10 @@ export default function MobileMapPage() {
 
   useEffect(() => {
     if (!navigator.geolocation) {
-      setLocationError('Geolocation is not supported')
-      setIsLoading(false)
+      setTimeout(() => {
+        setLocationError('Geolocation is not supported')
+        setIsLoading(false)
+      }, 0)
       return
     }
 
@@ -105,10 +107,31 @@ export default function MobileMapPage() {
           disabled={!currentPosition}
           onClick={() => {
             if (!currentPosition) return;
-            const url = `https://www.google.com/maps?q=${currentPosition[0]},${currentPosition[1]}`;
-            const newWindow = window.open(url, '_blank', 'noopener,noreferrer');
-            if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
-                window.location.href = url;
+            const destinationQuery = `${currentPosition[0]},${currentPosition[1]}`;
+            const universalUrl = `https://www.google.com/maps/search/?api=1&query=${destinationQuery}`;
+            
+            const isAndroid = /Android/i.test(navigator.userAgent);
+            const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+            if (isAndroid) {
+                const newWindow = window.open(universalUrl, '_blank', 'noopener,noreferrer');
+                if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
+                    window.location.href = `geo:0,0?q=${destinationQuery}`;
+                    setTimeout(() => {
+                        if (document.visibilityState === 'visible') {
+                            window.location.href = universalUrl;
+                        }
+                    }, 1000);
+                }
+            } else if (isIOS) {
+                window.location.href = `comgooglemaps://?daddr=${destinationQuery}`;
+                setTimeout(() => {
+                    if (document.visibilityState === 'visible') {
+                        window.location.href = `https://maps.apple.com/?daddr=${destinationQuery}`;
+                    }
+                }, 500);
+            } else {
+                window.open(universalUrl, '_blank');
             }
           }}
         >

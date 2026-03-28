@@ -139,10 +139,31 @@ export default function MobileSOSPage() {
                             size="sm" 
                             className="h-10 text-emerald-600 px-3 hover:text-emerald-500 bg-emerald-50 rounded-xl flex items-center gap-1"
                             onClick={() => {
-                                const url = `https://www.google.com/maps/search/?api=1&query=${location.lat},${location.lng}`;
-                                const newWindow = window.open(url, '_blank', 'noopener,noreferrer');
-                                if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
-                                    window.location.href = url;
+                                const destinationQuery = `${location.lat},${location.lng}`;
+                                const universalUrl = `https://www.google.com/maps/search/?api=1&query=${destinationQuery}`;
+                                
+                                const isAndroid = /Android/i.test(navigator.userAgent);
+                                const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+                                if (isAndroid) {
+                                    const newWindow = window.open(universalUrl, '_blank', 'noopener,noreferrer');
+                                    if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
+                                        window.location.href = `geo:0,0?q=${destinationQuery}`;
+                                        setTimeout(() => {
+                                            if (document.visibilityState === 'visible') {
+                                                window.location.href = universalUrl;
+                                            }
+                                        }, 1000);
+                                    }
+                                } else if (isIOS) {
+                                    window.location.href = `comgooglemaps://?daddr=${destinationQuery}`;
+                                    setTimeout(() => {
+                                        if (document.visibilityState === 'visible') {
+                                            window.location.href = `https://maps.apple.com/?daddr=${destinationQuery}`;
+                                        }
+                                    }, 500);
+                                } else {
+                                    window.open(universalUrl, '_blank');
                                 }
                             }}
                         >

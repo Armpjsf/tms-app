@@ -14,7 +14,6 @@ export function NavigationButton({ job }: NavigationButtonProps) {
             ? JSON.parse(job.original_destinations_json) 
             : job.original_destinations_json;
 
-        let navigationUrl = "";
         let destinationQuery = "";
 
         // Calculate destination query
@@ -30,18 +29,29 @@ export function NavigationButton({ job }: NavigationButtonProps) {
         const isAndroid = /Android/i.test(navigator.userAgent);
         const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
 
-        // Universal Google Maps URL (Most reliable for WebViews/APK)
+        // Standard Google Maps URL (Most compatible)
         const universalUrl = `https://www.google.com/maps/search/?api=1&query=${destinationQuery}`;
 
         if (isAndroid) {
-            // For Android APK, we use window.location to trigger the intent system
-            window.location.href = universalUrl;
+            // For Android, we must use window.open to force handoff to system browser (Chrome/Maps)
+            // as internal WebViews often fail to resolve intent:// schemes via window.location.href
+            const newWindow = window.open(universalUrl, '_blank', 'noopener,noreferrer');
+            if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
+                // Pop-up blocked or not handled, fallback to geo: or location.href
+                window.location.href = `geo:0,0?q=${destinationQuery}`;
+                // Secondary fallback to standard URL if geo fails
+                setTimeout(() => {
+                    if (document.visibilityState === 'visible') {
+                        window.location.href = universalUrl;
+                    }
+                }, 1000);
+            }
         } else if (isIOS) {
-            // For iOS, try to open in app first
+            // For iOS, try to open in app first, then fallback to web maps
             window.location.href = `comgooglemaps://?daddr=${destinationQuery}&directionsmode=driving`;
             setTimeout(() => {
                 if (document.visibilityState === 'visible') {
-                    window.location.href = universalUrl;
+                    window.location.href = `https://maps.apple.com/?daddr=${destinationQuery}`;
                 }
             }, 500);
         } else {
