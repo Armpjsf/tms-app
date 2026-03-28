@@ -76,33 +76,39 @@ export function VehicleDialog({
     setLoading(true)
 
     try {
+      let result;
       if (mode === 'create') {
-        await createVehicle(formData)
+        result = await createVehicle(formData)
       } else {
         if (!vehicle?.Vehicle_Plate) throw new Error("Vehicle Plate not found")
-        await updateVehicle(vehicle.Vehicle_Plate, formData)
+        result = await updateVehicle(vehicle.Vehicle_Plate, formData)
       }
-      setShow(false)
-      if (!isControlled) {
-        setFormData({
-            Vehicle_Plate: '',
-            Vehicle_Type: '4-Wheel',
-            Brand: '',
-            Model: '',
-            Active_Status: 'Active',
-            Current_Mileage: 0,
-            Next_Service_Mileage: 0,
 
-            Branch_ID: '',
-            Sub_ID: '',
-            Max_Weight_kg: 0,
-            Max_Volume_cbm: 0,
-            Tax_Expiry: '',
-            Insurance_Expiry: '',
-            Act_Expiry: ''
-        })
+      if (result.success) {
+        toast.success(result.message || (mode === 'create' ? t('common.toast.success_save') : t('common.toast.success_edit')))
+        setShow(false)
+        if (!isControlled) {
+          setFormData({
+              Vehicle_Plate: '',
+              Vehicle_Type: '4-Wheel',
+              Brand: '',
+              Model: '',
+              Active_Status: 'Active',
+              Current_Mileage: 0,
+              Next_Service_Mileage: 0,
+              Branch_ID: '',
+              Sub_ID: '',
+              Max_Weight_kg: 0,
+              Max_Volume_cbm: 0,
+              Tax_Expiry: '',
+              Insurance_Expiry: '',
+              Act_Expiry: ''
+          })
+        }
+        router.refresh()
+      } else {
+        toast.error(result.message || t('common.error'))
       }
-      router.refresh()
     } catch (err: unknown) {
       const error = err as Error
       toast.error(error.message || t('common.error'))
