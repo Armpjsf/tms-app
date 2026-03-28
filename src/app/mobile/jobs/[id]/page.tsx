@@ -3,7 +3,7 @@ import { redirect } from "next/navigation"
 import { getJobById } from "@/lib/supabase/jobs"
 import { MobileHeader } from "@/components/mobile/mobile-header"
 import { Card, CardContent } from "@/components/ui/card"
-import { MapPin, Phone, User, Package, CheckCircle, ArrowRight, Calendar, Bookmark, Info } from "lucide-react"
+import { MapPin, Phone, User, Package, CheckCircle, ArrowRight, Calendar, Bookmark, Info, Truck } from "lucide-react"
 import { JobActionButton } from "@/components/mobile/job-action-button"
 import { JobWorkflow } from "@/components/mobile/job-workflow"
 import { NavigationButton } from "@/components/mobile/navigation-button"
@@ -43,7 +43,7 @@ export default async function JobDetailPage(props: Props) {
       <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-primary/10 rounded-full blur-[120px] -translate-y-1/2 pointer-events-none" />
       <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-accent/10 rounded-full blur-[120px] translate-y-1/2 pointer-events-none" />
 
-      <MobileHeader title={`JOB #${job.Job_ID.slice(-6)}`} showBack />
+      <MobileHeader title={`JOB #${String(job.Job_ID || '').slice(-6)}`} showBack />
       
       {/* Success Notification */}
       {success && (
@@ -71,7 +71,7 @@ export default async function JobDetailPage(props: Props) {
         <RouteStrip 
           origin={job.Origin_Location}
           destination={job.Dest_Location || job.Route_Name}
-          destinations={job.original_destinations_json}
+          destinations={typeof job.original_destinations_json === 'string' ? JSON.parse(job.original_destinations_json) : null}
           status={job.Job_Status}
         />
       </div>
@@ -196,7 +196,12 @@ export default async function JobDetailPage(props: Props) {
 
         {/* Mission Deployment Controls */}
         <div className="fixed bottom-32 left-6 right-6 z-[100]">
-            <JobActionButton job={job} />
+            <JobActionButton job={{
+                ...job,
+                original_destinations_json: typeof job.original_destinations_json === 'string' 
+                    ? JSON.parse(job.original_destinations_json) 
+                    : []
+            } as any} />
         </div>
       </div>
     </div>
