@@ -29,6 +29,9 @@ export async function createVehicle(data: VehicleFormData) {
 
   const finalBranchId = (isAdmin && data.Branch_ID) ? data.Branch_ID : userBranchId
   
+  // Helper to convert empty strings to null for optional fields
+  const emptyToNull = (val: string | undefined | null) => (val === '' || val === undefined) ? null : val;
+  const numOrNull = (val: number | undefined | null) => (val === undefined || isNaN(Number(val))) ? null : Number(val);
 
   const { error } = await supabase
     .from('Master_Vehicles')
@@ -40,12 +43,12 @@ export async function createVehicle(data: VehicleFormData) {
       Active_Status: 'Active',
       Current_Mileage: data.Current_Mileage || 0,
       Next_Service_Mileage: data.Next_Service_Mileage || 0,
-      Tax_Expiry: data.Tax_Expiry,
-      Insurance_Expiry: data.Insurance_Expiry,
-      Act_Expiry: data.Act_Expiry,
+      Tax_Expiry: emptyToNull(data.Tax_Expiry),
+      Insurance_Expiry: emptyToNull(data.Insurance_Expiry),
+      Act_Expiry: emptyToNull(data.Act_Expiry),
       Sub_ID: data.Sub_ID,
-      Max_Weight_kg: data.Max_Weight_kg,
-      Max_Volume_cbm: data.Max_Volume_cbm,
+      Max_Weight_kg: numOrNull(data.Max_Weight_kg),
+      Max_Volume_cbm: numOrNull(data.Max_Volume_cbm),
       Branch_ID: finalBranchId
     })
 
@@ -117,9 +120,9 @@ export async function createBulkVehicles(vehicles: Record<string, unknown>[]) {
       Active_Status: data.Active_Status,
       Current_Mileage: Number(data.Current_Mileage) || 0,
       Next_Service_Mileage: Number(data.Next_Service_Mileage) || 0,
-      Tax_Expiry: data.Tax_Expiry,
-      Insurance_Expiry: data.Insurance_Expiry,
-      Act_Expiry: data.Act_Expiry,
+      Tax_Expiry: data.Tax_Expiry || null,
+      Insurance_Expiry: data.Insurance_Expiry || null,
+      Act_Expiry: data.Act_Expiry || null,
       Max_Weight_kg: Number(data.Max_Weight_kg) || null,
       Max_Volume_cbm: Number(data.Max_Volume_cbm) || null,
       Sub_ID: data.Sub_ID || null,
@@ -164,9 +167,9 @@ export async function updateVehicle(plate: string, data: Partial<VehicleFormData
         Active_Status: data.Active_Status,
         Current_Mileage: data.Current_Mileage,
         Next_Service_Mileage: data.Next_Service_Mileage,
-        Tax_Expiry: data.Tax_Expiry,
-        Insurance_Expiry: data.Insurance_Expiry,
-        Act_Expiry: data.Act_Expiry,
+        Tax_Expiry: data.Tax_Expiry || null,
+        Insurance_Expiry: data.Insurance_Expiry || null,
+        Act_Expiry: data.Act_Expiry || null,
         Sub_ID: data.Sub_ID,
         Max_Weight_kg: data.Max_Weight_kg,
         Max_Volume_cbm: data.Max_Volume_cbm

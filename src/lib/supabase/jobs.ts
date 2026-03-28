@@ -741,7 +741,8 @@ export async function getDriverDashboardStats(driverId: string) {
           nextRankPoints,
           monthlyCompleted: monthlyCompletedCount || 0
       },
-      currentJob
+      currentJob,
+      activeJobs // <--- Fixed: Added missing activeJobs to return 
     }
   } catch {
      return { 

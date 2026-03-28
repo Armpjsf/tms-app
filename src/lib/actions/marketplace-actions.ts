@@ -151,7 +151,7 @@ export async function getAllActiveBids() {
 
 // ฝั่งแอดมิน: ยืนยันเลือกคนขับ (Accept Bid)
 export async function acceptBid(jobId: string, bidId: string, driverId: string, driverName: string, amount: number) {
-    const supabase = await createClient()
+    const supabase = createAdminClient()
 
     // 0. ตรวจสอบก่อนว่างานนี้มีคนรับไปหรือยัง
     const { data: currentJob } = await supabase
@@ -220,6 +220,9 @@ export async function acceptBid(jobId: string, bidId: string, driverId: string, 
     revalidatePath('/dashboard')
     revalidatePath('/planning')
     revalidatePath('/jobs')
+    revalidatePath('/mobile/dashboard')
+    revalidatePath('/mobile/jobs')
+    revalidatePath('/mobile/marketplace')
 
     await logActivity({
         module: 'Jobs',
