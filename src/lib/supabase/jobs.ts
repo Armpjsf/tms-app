@@ -712,9 +712,8 @@ export async function getDriverDashboardStats(driverId: string) {
     const total = (jobs?.length || 0) - completed
     
     // Find current active job (In Progress/Transit, Arrived Pickup/Dropoff) OR the first Assigned/New job
-    const currentJob = jobs?.find(j => ['In Progress', 'In Transit', 'Arrived Pickup', 'Arrived Dropoff', 'Accepted'].includes(j.Job_Status || '')) 
-      || jobs?.find(j => ['Assigned', 'New'].includes(j.Job_Status || '')) 
-      || null
+    const activeJobs = jobs?.filter(j => !['Completed', 'Delivered', 'Cancelled'].includes(j.Job_Status || '')) || []
+    const currentJob = activeJobs.length > 0 ? activeJobs[0] : null
 
     // 2. Gamification Stats (Monthly)
     const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString()

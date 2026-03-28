@@ -27,6 +27,7 @@ interface DashboardClientProps {
         Dest_Location?: string
         Route_Name?: string
     } | null
+    activeJobs?: any[]
     gamification: {
         points: number
         rank: string
@@ -51,8 +52,11 @@ const item = {
     show: { opacity: 1, y: 0 }
 }
 
-export function DashboardClient({ session, stats, currentJob, gamification, todayIncome }: DashboardClientProps) {
+export function DashboardClient({ session, stats, currentJob, activeJobs = [], gamification, todayIncome }: DashboardClientProps) {
     const { t } = useLanguage()
+
+    // Separate the primary (first) job from the rest
+    const secondaryJobs = activeJobs.filter(j => j.Job_ID !== currentJob?.Job_ID)
 
     return (
         <motion.div 
@@ -139,26 +143,32 @@ export function DashboardClient({ session, stats, currentJob, gamification, toda
                                             <Star size={16} className="text-primary fill-primary" />
                                         </div>
                                     </div>
-                                    <div>
-                                        <h4 className="text-2xl font-black text-accent tracking-tighter italic">#{currentJob.Job_ID}</h4>
-                                        <p className="text-muted-foreground text-lg font-bold font-bold uppercase tracking-widest">{currentJob.Customer_Name}</p>
+                                    <div className="min-w-0">
+                                        <h4 className="text-2xl font-black text-accent tracking-tighter italic truncate">#{currentJob.Job_ID}</h4>
+                                        <p className="text-muted-foreground text-lg font-bold font-bold uppercase tracking-widest truncate">{currentJob.Customer_Name}</p>
                                     </div>
                                 </div>
-                                <div className="px-4 py-1.5 rounded-full bg-primary text-foreground uppercase tracking-widest shadow-xl shadow-primary/30">
-                                    กำลังไปส่ง
+                                <div className={`px-4 py-1.5 rounded-full text-foreground uppercase tracking-widest shadow-xl font-bold text-[10px] ${
+                                    ['In Progress', 'In Transit', 'Arrived Pickup', 'Arrived Dropoff'].includes(currentJob.Job_Status) 
+                                    ? 'bg-primary shadow-primary/30' 
+                                    : 'bg-accent shadow-accent/30'
+                                }`}>
+                                    {currentJob.Job_Status === 'Assigned' || currentJob.Job_Status === 'New' ? 'รอเริ่มงาน' : currentJob.Job_Status}
                                 </div>
                             </div>
 
                             <div className="space-y-3">
                                 <div className="flex justify-between items-center text-base font-bold font-black uppercase tracking-widest">
-                                    <span className="text-muted-foreground">{currentJob.Origin_Location || "จุดรับของ"}</span>
-                                    <span className="text-primary">ความคืบหน้า 75%</span>
-                                    <span className="text-muted-foreground">{currentJob.Dest_Location || "จุดส่งของ"}</span>
+                                    <span className="text-muted-foreground truncate max-w-[40%]">{currentJob.Origin_Location || "จุดรับของ"}</span>
+                                    <span className="text-primary text-[10px]">
+                                        {['In Progress', 'In Transit'].includes(currentJob.Job_Status) ? 'กำลังส่ง' : 'คิวงานถัดไป'}
+                                    </span>
+                                    <span className="text-muted-foreground truncate max-w-[40%]">{currentJob.Dest_Location || "จุดส่งของ"}</span>
                                 </div>
                                 <div className="h-2.5 w-full bg-muted/50 rounded-full overflow-hidden">
                                      <motion.div 
                                         initial={{ width: 0 }}
-                                        animate={{ width: "75%" }}
+                                        animate={{ width: ['In Progress', 'In Transit'].includes(currentJob.Job_Status) ? "50%" : "5%" }}
                                         className="h-full bg-primary rounded-full shadow-[0_0_15px_rgba(255,30,133,0.5)]"
                                      />
                                 </div>
@@ -166,51 +176,48 @@ export function DashboardClient({ session, stats, currentJob, gamification, toda
 
                             <div className="flex items-center justify-between pt-2">
                                 <div className="flex -space-x-3">
-                                    {[1, 2].map(i => (
-                                        <Avatar key={i} className="h-10 w-10 border-2 border-secondary shadow-xl">
-                                            <AvatarImage src={`https://i.pravatar.cc/100?img=${i + 10}`} />
-                                            <AvatarFallback>U</AvatarFallback>
-                                        </Avatar>
-                                    ))}
                                     <div className="h-10 w-10 rounded-full bg-muted/80 backdrop-blur-md border-2 border-secondary flex items-center justify-center text-base font-bold font-black text-foreground">
-                                        +2
+                                        {currentJob.Customer_Name?.charAt(0)}
                                     </div>
                                 </div>
-                                <Button className="h-14 px-10 rounded-2xl bg-primary hover:brightness-110 text-foreground font-bold uppercase tracking-widest shadow-xl shadow-primary/30 transition-all">
-                                    ดูรายละเอียด
-                                </Button>
+                                <Link href={`/mobile/jobs/${currentJob.Job_ID}`}>
+                                    <Button className="h-14 px-10 rounded-2xl bg-primary hover:brightness-110 text-foreground font-bold uppercase tracking-widest shadow-xl shadow-primary/30 transition-all">
+                                        ดูรายละเอียด
+                                    </Button>
+                                </Link>
                             </div>
                         </div>
 
-                        {/* Secondary Secondary Card */}
-                        <div className="glass-panel rounded-[3rem] p-8 space-y-6 opacity-80 scale-95 origin-top transition-all hover:opacity-100 hover:scale-100">
-                             <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-4">
-                                     <div className="w-14 h-14 bg-muted/50 border border-border/10 rounded-3xl flex items-center justify-center">
-                                         <Clock className="text-accent" size={24} />
-                                     </div>
-                                     <div>
-                                         <h4 className="text-2xl font-black text-accent tracking-tighter italic">#CL-9011-ZC</h4>
-                                         <p className="text-muted-foreground text-lg font-bold font-bold uppercase tracking-widest">Sour Worms Logistics</p>
-                                     </div>
+                        {/* Secondary Assigned Jobs List */}
+                        {secondaryJobs.map((job) => (
+                            <Link key={job.Job_ID} href={`/mobile/jobs/${job.Job_ID}`}>
+                                <div className="glass-panel rounded-[3rem] p-8 space-y-6 opacity-90 hover:opacity-100 transition-all mb-4">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-14 h-14 bg-muted/50 border border-border/10 rounded-3xl flex items-center justify-center">
+                                                <Clock className="text-accent" size={24} />
+                                            </div>
+                                            <div className="min-w-0">
+                                                <h4 className="text-2xl font-black text-accent tracking-tighter italic truncate">#{job.Job_ID}</h4>
+                                                <p className="text-muted-foreground text-lg font-bold font-bold uppercase tracking-widest truncate">{job.Customer_Name}</p>
+                                            </div>
+                                        </div>
+                                        <div className="px-4 py-1.5 rounded-full bg-accent/20 border border-accent/30 text-base font-bold font-black text-accent uppercase tracking-widest text-[10px]">
+                                            คิวรอ (QUEUE)
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center justify-between text-muted-foreground">
+                                        <div className="flex items-center gap-2 text-base font-bold font-bold">
+                                            <MapPin size={14} className="text-accent" />
+                                            ไปที่: {job.Dest_Location}
+                                        </div>
+                                        <div className="text-foreground font-bold uppercase tracking-widest hover:text-primary">
+                                            รายละเอียด
+                                        </div>
+                                    </div>
                                 </div>
-                                <div className="px-4 py-1.5 rounded-full bg-accent/20 border border-accent/30 text-base font-bold font-black text-accent uppercase tracking-widest">
-                                    รอรับของ
-                                </div>
-                            </div>
-                            <div className="h-2.5 w-full bg-muted/50 rounded-full overflow-hidden">
-                                 <div className="h-full w-[20%] bg-accent rounded-full shadow-[0_0_15px_rgba(147,51,234,0.5)]" />
-                            </div>
-                            <div className="flex items-center justify-between text-muted-foreground">
-                                <div className="flex items-center gap-2 text-base font-bold font-bold">
-                                    <MapPin size={14} className="text-accent" />
-                                    ระยะเวลา: 2 ชม. 45 นาที
-                                </div>
-                                <Button variant="ghost" className="text-foreground font-bold uppercase tracking-widest hover:text-primary">
-                                    ข้อมูลงาน
-                                </Button>
-                            </div>
-                        </div>
+                            </Link>
+                        ))}
                     </div>
                 ) : (
                     <div className="text-center py-20 px-8 glass-panel rounded-[3rem] border-dashed border-border/10">
@@ -240,4 +247,3 @@ export function DashboardClient({ session, stats, currentJob, gamification, toda
         </motion.div>
     )
 }
-
