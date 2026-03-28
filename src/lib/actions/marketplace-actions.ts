@@ -47,21 +47,32 @@ export async function getMyBidForJob(jobId: string, driverId: string) {
     return data as JobBid | null
 }
 
-// ฝั่งคนขับ: เสนอราคา
+// ฝั่งคนขับ: ดึงรายการประมูลทั้งหมดของตัวเอง
+export async function getMyBidsForJobs(driverId: string) {
+    const supabase = await createClient()
+    const { data } = await supabase
+        .from('Job_Bids')
+        .select('job_id, bid_amount')
+        .eq('driver_id', driverId)
+    return data || []
+}
+
+// ฝั่งคนขับ: เสนอราคา (ปรับให้รองรับการอัปเดตราคาเดิมด้วย)
 export async function submitBid(jobId: string, driverId: string, driverName: string, amount: number) {
   try {
-    // Use Admin Client to allow drivers to submit bids cross-branch
     const supabase = createAdminClient()
 
+    // Use upsert to update price if same driver bids on same job again
     const { error } = await supabase
       .from('Job_Bids')
-      .insert({
+      .upsert({
         job_id: jobId,
         driver_id: driverId,
         driver_name: driverName,
         bid_amount: amount,
-        status: 'Pending'
-      })
+        status: 'Pending',
+        created_at: new Date().toISOString()
+      }, { onConflict: 'job_id, driver_id' })
 
     if (error) {
       console.error('[DEBUG] submitBid Error:', error)

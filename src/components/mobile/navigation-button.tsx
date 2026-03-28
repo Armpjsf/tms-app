@@ -42,19 +42,35 @@ export function NavigationButton({ job }: NavigationButtonProps) {
         }
 
         if (navigationUrl) {
-            // For APK/WebView environments, window.open often fails. 
-            // Using window.location.href is more reliable to trigger external intents.
-            const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-            
-            if (isMobile) {
-                // Use location.replace or href to ensure the WebView triggers the intent system
-                window.location.href = navigationUrl;
-            } else {
-                const newWindow = window.open(navigationUrl, '_blank', 'noopener,noreferrer');
-                if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
-                    window.location.href = navigationUrl;
+            const isAndroid = /Android/i.test(navigator.userAgent);
+            const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+            let finalUrl = navigationUrl;
+
+            // Deep link for Android APK/WebView
+            if (isAndroid) {
+                // Extracts query/destination from standard URL to form an intent
+                const urlObj = new URL(navigationUrl);
+                const dest = urlObj.searchParams.get('destination') || urlObj.searchParams.get('query');
+                if (dest) {
+                    finalUrl = `google.navigation:q=${dest}`;
                 }
+            } 
+            // Deep link for iOS
+            else if (isIOS) {
+                finalUrl = navigationUrl.replace('https://www.google.com/maps', 'comgooglemaps://');
             }
+
+            // For APK environments, we try to redirect the current location
+            // which the WebView will catch and pass to the OS intent system
+            window.location.href = finalUrl;
+
+            // Fallback for browsers if location.href doesn't trigger immediately
+            setTimeout(() => {
+                if (document.visibilityState === 'visible') {
+                    window.open(navigationUrl, '_blank');
+                }
+            }, 500);
         }
     }
 

@@ -20,10 +20,18 @@ export function OrderBidding({ orders = [] }: OrderBiddingProps) {
     const [bidsByJob, setBidsByJob] = useState<Record<string, JobBid[]>>({})
     const [loadingBids, setLoadingBids] = useState<Record<string, boolean>>({})
     const [processingBid, setProcessingBid] = useState<string | null>(null)
+    const [refreshTrigger, setRefreshTrigger] = useState(0)
 
     // Derived states
     // In admin view, we want to see unassigned jobs that have potential bids
     const displayOrders = orders
+
+    const fetchBids = async (jobId: string) => {
+        setLoadingBids(prev => ({ ...prev, [jobId]: true }))
+        const bids = await getBidsForJob(jobId)
+        setBidsByJob(prev => ({ ...prev, [jobId]: bids }))
+        setLoadingBids(prev => ({ ...prev, [jobId]: false }))
+    }
 
     const toggleExpand = async (jobId: string) => {
         if (expandedJobId === jobId) {
@@ -34,11 +42,8 @@ export function OrderBidding({ orders = [] }: OrderBiddingProps) {
         setExpandedJobId(jobId)
         
         // Fetch bids if not already fetched
-        if (!bidsByJob[jobId]) {
-            setLoadingBids(prev => ({ ...prev, [jobId]: true }))
-            const bids = await getBidsForJob(jobId)
-            setBidsByJob(prev => ({ ...prev, [jobId]: bids }))
-            setLoadingBids(prev => ({ ...prev, [jobId]: false }))
+        if (!bidsByJob[jobId] || bidsByJob[jobId].length === 0) {
+            await fetchBids(jobId)
         }
     }
 
@@ -53,7 +58,7 @@ export function OrderBidding({ orders = [] }: OrderBiddingProps) {
             setBidsByJob(results)
         }
         if (orders.length > 0) fetchAllBids()
-    }, [orders])
+    }, [orders, refreshTrigger])
 
     const handleAcceptBid = async (job: Job, bid: JobBid) => {
         if (!confirm(t('logistics.confirm_accept', { name: bid.driver_name, amount: bid.bid_amount.toLocaleString() }))) return
