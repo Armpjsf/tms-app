@@ -15,62 +15,43 @@ export function NavigationButton({ job }: NavigationButtonProps) {
             : job.original_destinations_json;
 
         let navigationUrl = "";
+        let destinationQuery = "";
 
-        // Calculate URL
-        if (Array.isArray(destinations) && destinations.length > 1) {
+        // Calculate destination query
+        if (Array.isArray(destinations) && destinations.length > 0) {
             const last = destinations[destinations.length - 1];
-            const intermediates = destinations.slice(1, -1);
-            const destQuery = last.lat && last.lng ? `${last.lat},${last.lng}` : encodeURIComponent(last.name);
-            const waypointQuery = intermediates.map(w => 
-                w.lat && w.lng ? `${w.lat},${w.lng}` : encodeURIComponent(w.name)
-            ).join('|');
-
-            navigationUrl = `https://www.google.com/maps/dir/?api=1&destination=${destQuery}`;
-            if (waypointQuery) {
-                navigationUrl += `&waypoints=${waypointQuery}`;
-            }
+            destinationQuery = last.lat && last.lng ? `${last.lat},${last.lng}` : encodeURIComponent(last.name);
         } else if (job.Delivery_Lat && job.Delivery_Lon) {
-            navigationUrl = `https://www.google.com/maps/search/?api=1&query=${job.Delivery_Lat},${job.Delivery_Lon}`;
+            destinationQuery = `${job.Delivery_Lat},${job.Delivery_Lon}`;
         } else {
-            const target = Array.isArray(destinations) ? destinations[0] : null;
-            if (target?.lat && target?.lng) {
-                navigationUrl = `https://www.google.com/maps/search/?api=1&query=${target.lat},${target.lng}`;
-            } else {
-                const address = job.Dest_Location || job.Route_Name || "";
-                navigationUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
-            }
+            destinationQuery = encodeURIComponent(job.Dest_Location || job.Route_Name || "");
         }
 
+        const isAndroid = /Android/i.test(navigator.userAgent);
+        const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+        if (isAndroid) {
+            // Standard Android Intent for Google Maps app
+            navigationUrl = `google.navigation:q=${destinationQuery}`;
+        } else if (isIOS) {
+            // Standard iOS URL Scheme for Google Maps app
+            navigationUrl = `comgooglemaps://?daddr=${destinationQuery}&directionsmode=driving`;
+        } else {
+            // Fallback for desktop/others
+            navigationUrl = `https://www.google.com/maps/dir/?api=1&destination=${destinationQuery}`;
+        }
+
+        // Action: Direct location assignment is most reliable for WebViews/APK
         if (navigationUrl) {
-            const isAndroid = /Android/i.test(navigator.userAgent);
-            const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-
-            let finalUrl = navigationUrl;
-
-            // Deep link for Android APK/WebView
-            if (isAndroid) {
-                // Extracts query/destination from standard URL to form an intent
-                const urlObj = new URL(navigationUrl);
-                const dest = urlObj.searchParams.get('destination') || urlObj.searchParams.get('query');
-                if (dest) {
-                    finalUrl = `google.navigation:q=${dest}`;
-                }
-            } 
-            // Deep link for iOS
-            else if (isIOS) {
-                finalUrl = navigationUrl.replace('https://www.google.com/maps', 'comgooglemaps://');
-            }
-
-            // For APK environments, we try to redirect the current location
-            // which the WebView will catch and pass to the OS intent system
-            window.location.href = finalUrl;
-
-            // Fallback for browsers if location.href doesn't trigger immediately
+            window.location.href = navigationUrl;
+            
+            // Secondary fallback if the custom scheme isn't handled (e.g. app not installed)
             setTimeout(() => {
                 if (document.visibilityState === 'visible') {
-                    window.open(navigationUrl, '_blank');
+                    const fallbackUrl = `https://www.google.com/maps/search/?api=1&query=${destinationQuery}`;
+                    window.open(fallbackUrl, '_blank');
                 }
-            }, 500);
+            }, 1000);
         }
     }
 

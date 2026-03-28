@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { Activity, MapPin, Truck, Clock } from "lucide-react"
 import { MobileHeader } from "@/components/mobile/mobile-header"
 import { BottomNav } from "@/components/mobile/bottom-nav"
-import { submitBid } from "@/lib/actions/marketplace-actions"
+import { submitBid, getMyBidsForJobs } from "@/lib/actions/marketplace-actions"
 import { toast } from "sonner"
 import type { Job } from "@/lib/supabase/jobs"
 
@@ -37,18 +37,42 @@ export function MarketplaceClient({ initialJobs, driverId, driverName }: Marketp
     // Effect to check if driver has already bid on these jobs
     useEffect(() => {
         const checkBids = async () => {
-            const { getMyBidsForJobs } = await import("@/lib/actions/marketplace-actions")
-            const bids = await getMyBidsForJobs(driverId)
-            const bidMap: Record<string, number> = {}
-            bids.forEach((b: any) => {
-                bidMap[b.job_id] = b.bid_amount
-            })
-            setMyBids(bidMap)
+            if (!driverId) return
+            try {
+                const bids = await getMyBidsForJobs(driverId)
+                const bidMap: Record<string, number> = {}
+                bids.forEach((b: any) => {
+                    bidMap[b.job_id] = b.bid_amount
+                })
+                setMyBids(bidMap)
+            } catch (err) {
+                console.error("Failed to fetch bids:", err)
+            }
         }
-        if (driverId) checkBids()
+        checkBids()
     }, [driverId, isSubmitting])
 
-    // ... (keep driverId check)
+    // Check if missing driver details
+    if (!driverId) {
+        return (
+            <div className="min-h-screen bg-gray-50 pb-20">
+                <MobileHeader title="Marketplace" />
+                <div className="pt-20 px-4 text-center">
+                    <div className="w-16 h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Activity size={32} />
+                    </div>
+                    <h2 className="text-xl font-bold text-gray-900 mb-2">ข้อมูลบัญชีไม่สมบูรณ์</h2>
+                    <p className="text-muted-foreground">บัญชีนี้ยังไม่ถูกตั้งค่าเป็นพนักงานขับรถ ไม่สามารถเสนอราคางานได้</p>
+                </div>
+                <BottomNav />
+            </div>
+        )
+    }
+
+    const handleBidClick = (jobId: string) => {
+        setBiddingJob(jobId)
+        setBidAmount("")
+    }
 
     const handleSubmitBid = async (jobId: string) => {
         if (!bidAmount || isNaN(Number(bidAmount)) || Number(bidAmount) <= 0) {
@@ -57,17 +81,20 @@ export function MarketplaceClient({ initialJobs, driverId, driverName }: Marketp
         }
 
         setIsSubmitting(true)
-        const result = await submitBid(jobId, driverId, driverName, Number(bidAmount))
-        
-        if (result.success) {
-            toast.success(result.message)
-            setBiddingJob(null)
-            // Re-fetch or update local bid state instead of removing the job
-            setMyBids(prev => ({ ...prev, [jobId]: Number(bidAmount) }))
-        } else {
-            toast.error(result.message)
+        try {
+            const result = await submitBid(jobId, driverId, driverName, Number(bidAmount))
+            if (result.success) {
+                toast.success(result.message)
+                setBiddingJob(null)
+                setMyBids(prev => ({ ...prev, [jobId]: Number(bidAmount) }))
+            } else {
+                toast.error(result.message)
+            }
+        } catch (err) {
+            toast.error("เกิดข้อผิดพลาดในการเชื่อมต่อระบบ")
+        } finally {
+            setIsSubmitting(false)
         }
-        setIsSubmitting(false)
     }
 
     return (
@@ -177,14 +204,14 @@ export function MarketplaceClient({ initialJobs, driverId, driverName }: Marketp
                                                         <div className="flex items-center gap-2">
                                                             <Button 
                                                                 variant="outline" 
-                                                                className="flex-1 text-gray-600"
+                                                                className="flex-1 text-gray-600 font-bold h-12 rounded-xl"
                                                                 onClick={() => setBiddingJob(null)}
                                                                 disabled={isSubmitting}
                                                             >
                                                                 ยกเลิก
                                                             </Button>
                                                             <Button 
-                                                                className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
+                                                                className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-12 rounded-xl"
                                                                 onClick={() => handleSubmitBid(job.Job_ID)}
                                                                 disabled={isSubmitting || !bidAmount}
                                                             >
@@ -195,9 +222,9 @@ export function MarketplaceClient({ initialJobs, driverId, driverName }: Marketp
                                                 ) : (
                                                     <Button 
                                                         onClick={() => handleBidClick(job.Job_ID)}
-                                                        className={`w-full rounded-xl font-bold shadow-md active:scale-95 transition-all text-xl h-11 ${
+                                                        className={`w-full rounded-xl font-bold shadow-md active:scale-95 transition-all text-xl h-12 ${
                                                             currentBid 
-                                                                ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200' 
+                                                                ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200 border border-emerald-500/20' 
                                                                 : 'bg-black text-white hover:bg-gray-800'
                                                         }`}
                                                     >
@@ -218,4 +245,3 @@ export function MarketplaceClient({ initialJobs, driverId, driverName }: Marketp
         </div>
     )
 }
-

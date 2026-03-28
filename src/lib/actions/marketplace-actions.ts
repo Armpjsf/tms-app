@@ -98,7 +98,7 @@ export async function submitBid(jobId: string, driverId: string, driverName: str
 
 // ฝั่งแอดมิน: ดึงรายการประมูลทั้งหมดของแต่ละงาน
 export async function getBidsForJob(jobId: string) {
-    const supabase = await createClient()
+    const supabase = createAdminClient()
     const { data, error } = await supabase
         .from('Job_Bids')
         .select('*')
@@ -106,6 +106,7 @@ export async function getBidsForJob(jobId: string) {
         .order('bid_amount', { ascending: true }) // เรียงจากราคาถูกสุดขึ้นก่อน
         
     if (error) {
+        console.error('[DEBUG] getBidsForJob Error:', error)
         return []
     }
     return data as JobBid[]
