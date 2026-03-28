@@ -42,11 +42,18 @@ export function NavigationButton({ job }: NavigationButtonProps) {
         }
 
         if (navigationUrl) {
-            // Use a slight delay to ensure it's handled as a user-initiated action
-            const newWindow = window.open(navigationUrl, '_blank', 'noopener,noreferrer');
-            if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
-                // Fallback if window.open is blocked
+            // For APK/WebView environments, window.open often fails. 
+            // Using window.location.href is more reliable to trigger external intents.
+            const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+            
+            if (isMobile) {
+                // Use location.replace or href to ensure the WebView triggers the intent system
                 window.location.href = navigationUrl;
+            } else {
+                const newWindow = window.open(navigationUrl, '_blank', 'noopener,noreferrer');
+                if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
+                    window.location.href = navigationUrl;
+                }
             }
         }
     }

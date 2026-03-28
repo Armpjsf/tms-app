@@ -42,6 +42,19 @@ export function OrderBidding({ orders = [] }: OrderBiddingProps) {
         }
     }
 
+    // Effect to pre-load bid counts for all orders
+    useEffect(() => {
+        const fetchAllBids = async () => {
+            const results: Record<string, JobBid[]> = {}
+            for (const order of orders) {
+                const bids = await getBidsForJob(order.Job_ID)
+                results[order.Job_ID] = bids
+            }
+            setBidsByJob(results)
+        }
+        if (orders.length > 0) fetchAllBids()
+    }, [orders])
+
     const handleAcceptBid = async (job: Job, bid: JobBid) => {
         if (!confirm(t('logistics.confirm_accept', { name: bid.driver_name, amount: bid.bid_amount.toLocaleString() }))) return
 
@@ -123,12 +136,28 @@ export function OrderBidding({ orders = [] }: OrderBiddingProps) {
 
                                         <div className="flex items-center justify-between md:flex-col md:justify-center md:items-end md:w-48 gap-4 border-t md:border-t-0 md:border-l border-gray-100 pt-4 md:pt-0 pl-0 md:pl-6">
                                             <div className="text-left md:text-right">
-                                                <p className="text-base font-bold uppercase tracking-wider text-muted-foreground font-bold mb-1">
-                                                    {t('logistics.base_price')}
-                                                </p>
-                                                <p className="text-lg font-black text-gray-900">
-                                                    ฿{(order.Cost_Driver_Total || 0).toLocaleString()}
-                                                </p>
+                                                {bidsByJob[order.Job_ID]?.length > 0 ? (
+                                                    <div className="space-y-1">
+                                                        <Badge className="bg-orange-500 hover:bg-orange-600 text-white border-0 font-black px-2 py-0.5 text-xs animate-pulse">
+                                                            {bidsByJob[order.Job_ID].length} BIDS
+                                                        </Badge>
+                                                        <p className="text-base font-bold uppercase tracking-wider text-muted-foreground font-bold">
+                                                            {t('logistics.best_offer')}
+                                                        </p>
+                                                        <p className="text-lg font-black text-orange-600">
+                                                            ฿{Math.min(...bidsByJob[order.Job_ID].map(b => b.bid_amount)).toLocaleString()}
+                                                        </p>
+                                                    </div>
+                                                ) : (
+                                                    <>
+                                                        <p className="text-base font-bold uppercase tracking-wider text-muted-foreground font-bold mb-1">
+                                                            {t('logistics.base_price')}
+                                                        </p>
+                                                        <p className="text-lg font-black text-gray-900">
+                                                            ฿{(order.Cost_Driver_Total || 0).toLocaleString()}
+                                                        </p>
+                                                    </>
+                                                )}
                                             </div>
                                             <button 
                                                 className={`h-10 px-4 rounded-xl font-bold text-lg font-bold gap-2 border border-gray-200 hover:bg-gray-100 flex items-center ${expandedJobId === order.Job_ID ? 'bg-gray-100' : ''}`}
