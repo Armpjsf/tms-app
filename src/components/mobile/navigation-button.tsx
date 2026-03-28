@@ -30,28 +30,22 @@ export function NavigationButton({ job }: NavigationButtonProps) {
         const isAndroid = /Android/i.test(navigator.userAgent);
         const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
 
-        if (isAndroid) {
-            // Standard Android Intent for Google Maps app
-            navigationUrl = `google.navigation:q=${destinationQuery}`;
-        } else if (isIOS) {
-            // Standard iOS URL Scheme for Google Maps app
-            navigationUrl = `comgooglemaps://?daddr=${destinationQuery}&directionsmode=driving`;
-        } else {
-            // Fallback for desktop/others
-            navigationUrl = `https://www.google.com/maps/dir/?api=1&destination=${destinationQuery}`;
-        }
+        // Universal Google Maps URL (Most reliable for WebViews/APK)
+        const universalUrl = `https://www.google.com/maps/search/?api=1&query=${destinationQuery}`;
 
-        // Action: Direct location assignment is most reliable for WebViews/APK
-        if (navigationUrl) {
-            window.location.href = navigationUrl;
-            
-            // Secondary fallback if the custom scheme isn't handled (e.g. app not installed)
+        if (isAndroid) {
+            // For Android APK, we use window.location to trigger the intent system
+            window.location.href = universalUrl;
+        } else if (isIOS) {
+            // For iOS, try to open in app first
+            window.location.href = `comgooglemaps://?daddr=${destinationQuery}&directionsmode=driving`;
             setTimeout(() => {
                 if (document.visibilityState === 'visible') {
-                    const fallbackUrl = `https://www.google.com/maps/search/?api=1&query=${destinationQuery}`;
-                    window.open(fallbackUrl, '_blank');
+                    window.location.href = universalUrl;
                 }
-            }, 1000);
+            }, 500);
+        } else {
+            window.open(universalUrl, '_blank');
         }
     }
 

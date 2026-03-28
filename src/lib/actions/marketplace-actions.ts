@@ -57,26 +57,48 @@ export async function getMyBidsForJobs(driverId: string) {
     return data || []
 }
 
-// ฝั่งคนขับ: เสนอราคา (ปรับให้รองรับการอัปเดตราคาเดิมด้วย)
+// ฝั่งคนขับ: เสนอราคา
 export async function submitBid(jobId: string, driverId: string, driverName: string, amount: number) {
   try {
     const supabase = createAdminClient()
 
-    // Use upsert to update price if same driver bids on same job again
-    const { error } = await supabase
-      .from('Job_Bids')
-      .upsert({
-        job_id: jobId,
-        driver_id: driverId,
-        driver_name: driverName,
-        bid_amount: amount,
-        status: 'Pending',
-        created_at: new Date().toISOString()
-      }, { onConflict: 'job_id, driver_id' })
+    // 1. Check if bid already exists
+    const { data: existingBid } = await supabase
+        .from('Job_Bids')
+        .select('bid_id')
+        .eq('job_id', jobId)
+        .eq('driver_id', driverId)
+        .maybeSingle()
+
+    let error;
+    
+    if (existingBid) {
+        // Update existing
+        const { error: updateError } = await supabase
+            .from('Job_Bids')
+            .update({
+                bid_amount: amount,
+                created_at: new Date().toISOString()
+            })
+            .eq('bid_id', existingBid.bid_id)
+        error = updateError
+    } else {
+        // Insert new
+        const { error: insertError } = await supabase
+            .from('Job_Bids')
+            .insert({
+                job_id: jobId,
+                driver_id: driverId,
+                driver_name: driverName,
+                bid_amount: amount,
+                status: 'Pending'
+            })
+        error = insertError
+    }
 
     if (error) {
       console.error('[DEBUG] submitBid Error:', error)
-      return { success: false, message: `เกิดข้อผิดพลาดในการเสนอราคา: ${error.message}` }
+      return { success: false, message: `DB Error: ${error.message} (Code: ${error.code})` }
     }
 
     revalidatePath('/mobile/marketplace')
