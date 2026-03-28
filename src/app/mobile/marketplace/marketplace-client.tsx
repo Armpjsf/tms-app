@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -12,12 +12,6 @@ import { BottomNav } from "@/components/mobile/bottom-nav"
 import { submitBid } from "@/lib/actions/marketplace-actions"
 import { toast } from "sonner"
 import type { Job } from "@/lib/supabase/jobs"
-
-interface MarketplaceClientProps {
-    initialJobs: Job[]
-    driverId: string
-    driverName: string
-}
 
 interface MarketplaceClientProps {
     initialJobs: Job[]
@@ -92,7 +86,17 @@ export function MarketplaceClient({ initialJobs, driverId, driverName }: Marketp
                 </div>
 
                 {jobs.length === 0 ? (
-                    // ... (keep empty state)
+                    <motion.div 
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="bg-white border border-gray-100 rounded-[2rem] p-8 mt-6 flex flex-col items-center justify-center text-center shadow-lg"
+                    >
+                        <div className="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center mb-4">
+                            <Activity className="text-gray-300 w-8 h-8" />
+                        </div>
+                        <h4 className="text-lg font-bold text-gray-900 mb-1">ยังไม่มีงานในช่วงนี้</h4>
+                        <p className="text-xl text-muted-foreground">ขณะนี้ไม่มีงานใหม่ที่เปิดรับประมูล เมื่อมีงานเข้ามาจะแสดงที่หน้านี้อัตโนมัติ</p>
+                    </motion.div>
                 ) : (
                     <div className="space-y-4">
                         {jobs.map((job, idx) => {
