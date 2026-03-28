@@ -250,6 +250,7 @@ export async function createBulkJobs(jobs: Partial<JobFormData>[]) {
     normalized.Cost_Driver_Total = getValue(['Cost_Driver_Total', 'cost', 'ต้นทุน', 'ค่ารถ'])
     normalized.Notes = getValue(['Notes', 'remark', 'หมายเหตุ'])
     normalized.Ref_No = getValue(['Ref_No', 'so', 'do', 'เลขที่อ้างอิง'])
+    normalized.Branch_ID = getValue(['Branch_ID', 'branch', 'สาขา'])
     
     // Support coordinate mapping in Excel
     normalized.Pickup_Lat = getValue(['pickup_lat', 'origin_lat', 'lat_start', 'ละติจูดต้นทาง', 'lat_ต้นทาง'])
@@ -270,7 +271,7 @@ export async function createBulkJobs(jobs: Partial<JobFormData>[]) {
 
     const sanitized = sanitizeJobData({
       Job_ID: (data.Job_ID as string) || `JOB-${Date.now().toString().slice(-6)}-${Math.floor(Math.random()*1000)}`,
-      Branch_ID: effectiveBranchId,
+      Branch_ID: (data.Branch_ID as string) || effectiveBranchId,
       Plan_Date: (data.Plan_Date as string) || new Date().toISOString().split('T')[0],
       Customer_ID: (data.Customer_ID as string) || customerMap.get((data.Customer_Name as string)?.toLowerCase().trim()) || null,
       Customer_Name: data.Customer_Name as string,

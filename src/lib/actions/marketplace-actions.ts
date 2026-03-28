@@ -49,33 +49,40 @@ export async function getMyBidForJob(jobId: string, driverId: string) {
 
 // ฝั่งคนขับ: เสนอราคา
 export async function submitBid(jobId: string, driverId: string, driverName: string, amount: number) {
-  const supabase = await createClient()
+  try {
+    // Use Admin Client to allow drivers to submit bids cross-branch
+    const supabase = createAdminClient()
 
-  const { error } = await supabase
-    .from('Job_Bids')
-    .insert({
-      job_id: jobId,
-      driver_id: driverId,
-      driver_name: driverName,
-      bid_amount: amount,
-      status: 'Pending'
+    const { error } = await supabase
+      .from('Job_Bids')
+      .insert({
+        job_id: jobId,
+        driver_id: driverId,
+        driver_name: driverName,
+        bid_amount: amount,
+        status: 'Pending'
+      })
+
+    if (error) {
+      console.error('[DEBUG] submitBid Error:', error)
+      return { success: false, message: `เกิดข้อผิดพลาดในการเสนอราคา: ${error.message}` }
+    }
+
+    revalidatePath('/mobile/marketplace')
+    revalidatePath('/dashboard') // Update admin dashboard
+    
+    await logActivity({
+        module: 'Jobs',
+        action_type: 'CREATE',
+        target_id: jobId,
+        details: { description: `Driver ${driverName} bid ฿${amount} for job ${jobId}` }
     })
 
-  if (error) {
-    return { success: false, message: 'เกิดข้อผิดพลาดในการเสนอราคา' }
+    return { success: true, message: 'เสนอราคาสำเร็จ! แอดมินกำลังตรวจสอบข้อเสนอของคุณ' }
+  } catch (err) {
+    console.error('[DEBUG] submitBid Exception:', err)
+    return { success: false, message: 'เกิดข้อผิดพลาดในการเสนอราคา (System Exception)' }
   }
-
-  revalidatePath('/mobile/marketplace')
-  revalidatePath('/dashboard') // Update admin dashboard
-  
-  await logActivity({
-      module: 'Jobs',
-      action_type: 'CREATE',
-      target_id: jobId,
-      details: { description: `Driver ${driverName} bid ฿${amount} for job ${jobId}` }
-  })
-
-  return { success: true, message: 'เสนอราคาสำเร็จ! แอดมินกำลังตรวจสอบข้อเสนอของคุณ' }
 }
 
 // ฝั่งแอดมิน: ดึงรายการประมูลทั้งหมดของแต่ละงาน

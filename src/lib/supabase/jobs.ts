@@ -241,7 +241,7 @@ export async function getTodayJobStats(branchId?: string) {
       total: jobs.length,
       delivered: jobs.filter(j => j.Job_Status === 'Delivered' || j.Job_Status === 'Completed').length,
       inProgress: jobs.filter(j => j.Job_Status === 'In Transit' || j.Job_Status === 'In Progress').length,
-      pending: jobs.filter(j => j.Job_Status === 'New' || j.Job_Status === 'Assigned').length,
+      pending: jobs.filter(j => j.Job_Status === 'New' || j.Job_Status === 'Assigned' || j.Job_Status === 'Requested').length,
     }
   } catch {
     return { total: 0, delivered: 0, inProgress: 0, pending: 0 }
@@ -790,9 +790,8 @@ export async function getBillableJobs(customerId: string) {
 // Get unassigned jobs for the marketplace
 export async function getMarketplaceJobs(providedBranchId?: string): Promise<Job[]> {
   try {
-    const supabase = await createClient()
-    const branchId = providedBranchId || await getUserBranchId()
-    const isAdmin = await isSuperAdmin()
+    // Use Admin Client to bypass branch RLS so we can show global bidding pool
+    const supabase = createAdminClient()
     const customerId = await getCustomerId()
 
     let dbQuery = supabase
@@ -801,24 +800,29 @@ export async function getMarketplaceJobs(providedBranchId?: string): Promise<Job
       .in('Job_Status', ['New', 'Requested', 'Assigned'])
       .is('Driver_ID', null)
     
+    // Logic:
+    // 1. If it's a customer login, ONLY show their own unassigned jobs
     if (customerId) {
         dbQuery = dbQuery.eq('Customer_ID', customerId)
-    } else if (branchId && branchId !== 'All') {
-        dbQuery = dbQuery.eq('Branch_ID', branchId)
-    } else if (!isAdmin && !branchId) {
-        return []
+    } 
+    // 2. If a specific branch is selected (and not 'All'), filter by that branch
+    else if (providedBranchId && providedBranchId !== 'All' && providedBranchId !== 'Global') {
+        dbQuery = dbQuery.eq('Branch_ID', providedBranchId)
     }
+    // 3. Otherwise (Super Admin / Staff viewing 'All'), show everything!
 
-    const { data } = await dbQuery
+    const { data, error } = await dbQuery
       .order('Created_At', { ascending: false })
-      .limit(10)
+      .limit(50) 
     
-    if (data === null) {
-      return []
+    if (error) {
+        console.error('[DEBUG] getMarketplaceJobs Error:', error)
+        return []
     }
     
     return data || []
-  } catch {
+  } catch (err) {
+    console.error('[DEBUG] getMarketplaceJobs Exception:', err)
     return []
   }
 }
