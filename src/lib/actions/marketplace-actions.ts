@@ -174,19 +174,37 @@ export async function acceptBid(jobId: string, bidId: string, driverId: string, 
         .update({ status: 'Accepted' })
         .eq('bid_id', bidId)
 
-    // 3. ปฏิเสธการประมูลอื่นๆ ของงานนี้ (Rejected)
+    // 3. ดึงรายชื่อคนขับคนอื่นที่ประมูลงานนี้ เพื่อส่งแจ้งเตือนว่าไม่ได้รับเลือก
+    const { data: otherBidders } = await supabase
+        .from('Job_Bids')
+        .select('driver_id')
+        .eq('job_id', jobId)
+        .neq('bid_id', bidId)
+
+    // 4. ปฏิเสธการประมูลอื่นๆ ของงานนี้ (Rejected)
     await supabase
         .from('Job_Bids')
         .update({ status: 'Rejected' })
         .eq('job_id', jobId)
         .neq('bid_id', bidId)
 
-    // แจ้งเตือน Push Notification หาคนขับ
+    // แจ้งเตือน Push Notification หาคนขับที่ชนะ
     await sendPushToDriver(driverId, {
       title: '🎉 ยินดีด้วย! คุณได้รับงานจากการประมูล',
       body: `แอดมินยืนยันให้คุณรับงาน ${jobId} แล้วในราคา ฿${amount}`,
       url: `/mobile/jobs/${jobId}`
     })
+
+    // แจ้งเตือนคนขับคนอื่นๆ ที่ไม่ได้รับเลือก
+    if (otherBidders && otherBidders.length > 0) {
+        for (const bidder of otherBidders) {
+            await sendPushToDriver(bidder.driver_id, {
+                title: '📌 งานประมูลปิดแล้ว',
+                body: `งาน ${jobId} มีผู้รับไปแล้ว ขอบคุณที่ร่วมเสนอราคา ลองดูงานอื่นใน Marketplace นะ!`,
+                url: `/mobile/marketplace`
+            }).catch(err => console.error('Failed to notify rejected bidder:', err))
+        }
+    }
 
     revalidatePath('/dashboard')
     revalidatePath('/planning')
