@@ -35,7 +35,7 @@ export async function createVehicle(data: VehicleFormData) {
 
   const { error } = await supabase
     .from('Master_Vehicles')
-    .insert({
+    .upsert({
       Vehicle_Plate: data.Vehicle_Plate,
       Vehicle_Type: data.Vehicle_Type,
       Brand: data.Brand,
@@ -50,7 +50,7 @@ export async function createVehicle(data: VehicleFormData) {
       Max_Weight_kg: numOrNull(data.Max_Weight_kg),
       Max_Volume_cbm: numOrNull(data.Max_Volume_cbm),
       Branch_ID: finalBranchId
-    })
+    }, { onConflict: 'Vehicle_Plate' })
 
   if (error) {
     return { success: false, message: 'Failed to create vehicle: ' + error.message }
