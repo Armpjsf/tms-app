@@ -101,19 +101,19 @@ export default function MobileMapPage() {
       {/* Actions */}
       <div className="space-y-2">
         <Button 
-          asChild
           className="w-full bg-emerald-600 hover:bg-emerald-700 h-14 rounded-2xl shadow-lg border-0"
           disabled={!currentPosition}
+          onClick={() => {
+            if (!currentPosition) return;
+            const url = `https://www.google.com/maps?q=${currentPosition[0]},${currentPosition[1]}`;
+            const newWindow = window.open(url, '_blank', 'noopener,noreferrer');
+            if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
+                window.location.href = url;
+            }
+          }}
         >
-          <a 
-            href={currentPosition ? `https://www.google.com/maps?q=${currentPosition[0]},${currentPosition[1]}` : '#'} 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="flex items-center justify-center gap-2"
-          >
-            <ExternalLink className="w-5 h-5" />
-            <span className="font-bold text-lg">เปิดใน Google Maps</span>
-          </a>
+          <ExternalLink className="w-5 h-5" />
+          <span className="font-bold text-lg">เปิดใน Google Maps</span>
         </Button>
       </div>
 

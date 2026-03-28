@@ -134,16 +134,20 @@ export default function MobileSOSPage() {
                         พิกัดปัจจุบันของคุณ
                     </h3>
                     {location && (
-                        <Button variant="ghost" size="sm" asChild className="h-10 text-emerald-600 px-3 hover:text-emerald-500 bg-emerald-50 rounded-xl">
-                            <a 
-                                href={`https://www.google.com/maps/search/?api=1&query=${location.lat},${location.lng}`} 
-                                target="_blank" 
-                                rel="noopener noreferrer"
-                                className="flex items-center gap-1"
-                            >
-                                <ExternalLink size={16} /> 
-                                <span className="font-bold">เปิดแผนที่</span>
-                            </a>
+                        <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="h-10 text-emerald-600 px-3 hover:text-emerald-500 bg-emerald-50 rounded-xl flex items-center gap-1"
+                            onClick={() => {
+                                const url = `https://www.google.com/maps/search/?api=1&query=${location.lat},${location.lng}`;
+                                const newWindow = window.open(url, '_blank', 'noopener,noreferrer');
+                                if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
+                                    window.location.href = url;
+                                }
+                            }}
+                        >
+                            <ExternalLink size={16} /> 
+                            <span className="font-bold">เปิดแผนที่</span>
                         </Button>
                     )}
                 </div>
