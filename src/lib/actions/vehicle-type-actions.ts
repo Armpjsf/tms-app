@@ -32,16 +32,7 @@ export async function getVehicleTypes() {
 export async function createVehicleType(data: { type_name: string; description?: string }) {
   const supabase = createAdminClient()
 
-  // Check for duplicate name
-  const { data: existing } = await supabase
-    .from('Master_Vehicle_Types')
-    .select('type_id')
-    .eq('type_name', data.type_name)
-    .single()
-
-  if (existing) {
-    return { success: false, message: 'ชื่อประเภทรถนี้มีอยู่แล้ว' }
-  }
+  // Removed duplicate name check to allow variants in the description as requested.
 
   const { error } = await supabase
     .from('Master_Vehicle_Types')

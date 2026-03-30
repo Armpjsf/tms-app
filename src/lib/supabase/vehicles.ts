@@ -173,8 +173,16 @@ export async function getAllVehicles(page?: number, limit?: number, query?: stri
     
     if (branchId && branchId !== 'All') {
         queryBuilder = queryBuilder.eq('Branch_ID', branchId)
-    } else if (!isSuper && !isAdminUser && !branchId) {
-        return { data: [], count: 0 }
+    } else if (!isSuper && !isAdminUser && (!branchId || branchId === 'All')) {
+        // Non-admin users must have a specific branch to see anything
+        // Unless we decide otherwise, but usually they only see their branch.
+        // If they try to see 'All' but aren't admins, they get nothing (or their own).
+        const actualBranch = await getUserBranchId()
+        if (actualBranch && actualBranch !== 'All') {
+            queryBuilder = queryBuilder.eq('Branch_ID', actualBranch)
+        } else {
+            return { data: [], count: 0 }
+        }
     }
     
     if (query) {

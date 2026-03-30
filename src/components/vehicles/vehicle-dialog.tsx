@@ -339,7 +339,7 @@ export function VehicleDialog({
                     {vehicleTypes.length > 0 ? (
                         vehicleTypes.map((type) => (
                             <SelectItem key={type.type_id} value={type.type_name}>
-                                {type.type_name} {type.description ? `(${type.description})` : ''}
+                                {type.type_name} {type.description ? `- ${type.description}` : ''}
                             </SelectItem>
                         ))
                     ) : (
