@@ -228,6 +228,15 @@ export function ChatWindow({ initialContacts, initialDrivers, forcedDriverId }: 
           try { new Audio('/sounds/notification.mp3').play().catch(() => {}) } catch {}
         }
       } else if (newMsg.sender_id !== 'admin') {
+         // Show visual notification when message is from a driver and not the selected one
+         const driverName = contacts.find(c => c.driver_id === newMsg.sender_id)?.driver_name || 'Driver'
+         toast.info(`ข้อความใหม่จาก ${driverName}`, {
+             description: newMsg.message.startsWith('[IMAGE]') ? '📷 ส่งรูปภาพ' : newMsg.message,
+             action: {
+                 label: 'เปิดแชท',
+                 onClick: () => setSelectedDriverId(newMsg.sender_id)
+             }
+         })
          try { new Audio('/sounds/notification.mp3').play().catch(() => {}) } catch {}
       }
       updateContactList(newMsg)

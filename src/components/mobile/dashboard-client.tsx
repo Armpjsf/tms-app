@@ -1,14 +1,17 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { 
     Truck, MapPin, 
-    LayoutGrid, Bell, Gavel, Clock, Star, Banknote
+    LayoutGrid, Bell, Gavel, Clock, Star, Banknote, Activity
 } from "lucide-react"
 import Link from "next/link"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useLanguage } from "@/components/providers/language-provider"
+import { createClient } from "@/utils/supabase/client"
+import { toast } from "sonner"
 
 interface DashboardClientProps {
     session: {
@@ -54,6 +57,41 @@ const item = {
 
 export function DashboardClient({ session, stats, currentJob, activeJobs = [], gamification, todayIncome }: DashboardClientProps) {
     const { t } = useLanguage()
+    const supabase = createClient()
+
+    // Real-time Chat Notification for Driver
+    useEffect(() => {
+        if (!session.driverId) return
+
+        const channel = supabase
+            .channel('driver_chat_noti_dashboard')
+            .on('postgres_changes', 
+                { 
+                    event: 'INSERT', 
+                    schema: 'public', 
+                    table: 'Chat_Messages', 
+                    filter: `receiver_id=eq.${session.driverId}` 
+                }, 
+                (payload) => {
+                    const newMsg = payload.new
+                    if (newMsg.sender_id === 'admin') {
+                        toast.info("ข้อความใหม่จากแอดมิน", {
+                            description: newMsg.message.startsWith('[IMAGE]') ? '📷 ส่งรูปภาพ' : newMsg.message,
+                            action: {
+                                label: 'อ่านแชท',
+                                onClick: () => window.location.href = '/mobile/chat'
+                            }
+                        })
+                        try { 
+                            const audio = new Audio('/sounds/notification.mp3')
+                            audio.play().catch(() => {}) 
+                        } catch {}
+                    }
+                }
+            ).subscribe()
+        
+        return () => { supabase.removeChannel(channel) }
+    }, [session.driverId, supabase])
 
     // Separate the primary (first) job from the rest
     const secondaryJobs = activeJobs.filter(j => j.Job_ID !== currentJob?.Job_ID)
@@ -76,21 +114,23 @@ export function DashboardClient({ session, stats, currentJob, activeJobs = [], g
                     </h1>
                 </div>
                 <div className="flex items-center gap-3">
-                    <button className="relative p-2.5 rounded-2xl bg-muted/50 border border-border/10 text-muted-foreground">
+                    <Link href="/mobile/notifications" className="relative p-2.5 rounded-2xl bg-muted/50 border border-border/10 text-muted-foreground">
                         <Bell size={20} />
                         <span className="absolute top-2 right-2 w-2 h-2 bg-primary rounded-full" />
-                    </button>
-                    <Avatar className="h-11 w-11 border-2 border-primary/20 bg-card">
-                        <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${session.driverName}`} />
-                        <AvatarFallback className="bg-card text-foreground">{session.driverName?.charAt(0)}</AvatarFallback>
-                    </Avatar>
+                    </Link>
+                    <Link href="/mobile/profile">
+                        <Avatar className="h-11 w-11 border-2 border-primary/20 bg-card">
+                            <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${session.driverName}`} />
+                            <AvatarFallback className="bg-card text-foreground">{session.driverName?.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                    </Link>
                 </div>
             </motion.div>
 
             {/* Title & Stats Overview */}
             <motion.div variants={item} className="space-y-1">
                 <h2 className="text-4xl font-black text-accent px-1 font-display uppercase tracking-tighter italic">งานวันนี้</h2>
-                <p className="text-muted-foreground font-bold px-1 tracking-tight">มีงานที่ต้องจัดการ {stats.total} รายการ</p>
+                <p className="text-muted-foreground font-bold px-1 tracking-tight">มีงานที่ต้องจัดการ {activeJobs.length} รายการ</p>
             </motion.div>
 
             {/* Circular Stats Grid */}
@@ -105,7 +145,7 @@ export function DashboardClient({ session, stats, currentJob, activeJobs = [], g
                         </div>
                     </div>
                     <div className="text-center">
-                        <div className="text-4xl font-black text-accent tracking-tighter">{stats.total < 10 ? `0${stats.total}` : stats.total}</div>
+                        <div className="text-4xl font-black text-accent tracking-tighter">{activeJobs.length < 10 ? `0${activeJobs.length}` : activeJobs.length}</div>
                         <div className="text-base font-bold font-black text-primary uppercase tracking-[0.2em] opacity-80">งานในมือ</div>
                     </div>
                 </div>

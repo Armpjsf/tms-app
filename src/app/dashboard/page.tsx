@@ -68,15 +68,17 @@ export default function DashboardPage() {
   // Fallback if data is still null after loading
   if (!data) return null;
 
+  const { unified, sosIds, marketplaceJobs, logs, customerMode, custName } = data;
+
   const jobStats = {
-    total: unified.kpi?.jobs?.current ?? 0,
-    pending: unified.statusDist?.find((s: any) => ['New', 'Requested', 'Assigned', 'Pending'].includes(s.name))
+    total: unified?.kpi?.jobs?.current ?? 0,
+    pending: unified?.statusDist?.find((s: any) => ['New', 'Requested', 'Assigned', 'Pending'].includes(s.name))
                 ? unified.statusDist.filter((s: any) => ['New', 'Requested', 'Assigned', 'Pending'].includes(s.name)).reduce((a: number, b: any) => a + b.value, 0)
                 : 0,
-    inProgress: unified.statusDist?.find((s: any) => ['In Progress', 'In Transit', 'Active'].includes(s.name))
+    inProgress: unified?.statusDist?.find((s: any) => ['In Progress', 'In Transit', 'Active'].includes(s.name))
                  ? unified.statusDist.filter((s: any) => ['In Progress', 'In Transit', 'Active'].includes(s.name)).reduce((a: number, b: any) => a + b.value, 0)
                  : 0,
-    delivered: unified.statusDist?.find((s: any) => ['Completed', 'Delivered', 'Finished', 'Closed'].includes(s.name))
+    delivered: unified?.statusDist?.find((s: any) => ['Completed', 'Delivered', 'Finished', 'Closed'].includes(s.name))
                   ? unified.statusDist.filter((s: any) => ['Completed', 'Delivered', 'Finished', 'Closed'].includes(s.name)).reduce((a: number, b: any) => a + b.value, 0)
                   : 0
   }
