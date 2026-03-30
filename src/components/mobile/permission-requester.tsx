@@ -67,9 +67,13 @@ export function PermissionRequester({ driverId }: Props) {
     // 2. Web Push
     else {
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/sw-push.js', { scope: '/' })
-          .then(() => { /* SW Registered */ })
-          .catch(() => {})
+        // Register the MAIN sw.js which now contains our push logic
+        navigator.serviceWorker.register('/sw.js', { scope: '/' })
+          .then((reg) => {
+              // Check if we need to update
+              reg.update();
+          })
+          .catch((err) => console.error("SW Register Error:", err))
       }
       if ("Notification" in window && Notification.permission === "default") {
         setTimeout(() => setShowPrompt(true), 2000)
