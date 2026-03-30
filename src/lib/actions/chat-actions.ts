@@ -2,7 +2,7 @@
 
 import { createClient, createAdminClient } from "@/utils/supabase/server"
 import { getChatSchema } from "@/lib/supabase/chat"
-import { sendPushToDriver } from "@/lib/actions/push-actions"
+import { notifyAdminNewChat, notifyDriverNewChat } from "@/lib/actions/push-actions"
 
 export interface ChatMessage {
     id: number
@@ -88,14 +88,22 @@ export async function sendChatMessage(senderId: string, message: string, receive
         return { success: false, error: error.message }
     }
     
-    // Trigger push notification if Admin is sending to a Driver
+    // ── Push Notifications ──
+    // Admin sends to driver → push to driver
     if (senderId === 'admin' && receiverId !== 'admin') {
-        const isImage = message.startsWith('[IMAGE] ')
-        await sendPushToDriver(receiverId, {
-            title: '💬 ข้อความใหม่จากแอดมิน',
-            body: isImage ? '📷 ส่งรูปภาพ' : message,
-            url: '/mobile/chat'
-        })
+        notifyDriverNewChat(receiverId, message).catch(() => {})
+    }
+    // Driver sends to admin → push to all admins
+    else if (senderId !== 'admin' && receiverId === 'admin') {
+        // Fetch driver name for notification title
+        const { createAdminClient: _ac } = await import('@/utils/supabase/server')
+        const _supabase = _ac()
+        const { data: driver } = await _supabase
+            .from('Master_Drivers')
+            .select('Driver_Name')
+            .eq('Driver_ID', senderId)
+            .single()
+        notifyAdminNewChat(senderId, driver?.Driver_Name || 'คนขับ', message).catch(() => {})
     }
     
     return { success: true }

@@ -1,7 +1,7 @@
 'use server'
 
 import webpush from 'web-push'
-import { createClient } from '@/utils/supabase/server'
+import { createAdminClient } from '@/utils/supabase/server'
 import { createNotification } from './notification-actions'
 import * as admin from 'firebase-admin'
 import { join } from 'path'
@@ -12,24 +12,16 @@ if (!admin.apps.length) {
     try {
         let credential: admin.credential.Credential
 
-        // Define environment variables for clarity and potential sanitization
         const envProjectId = process.env.FIREBASE_PROJECT_ID
         const envClientEmail = process.env.FIREBASE_CLIENT_EMAIL
         const envPrivateKey = process.env.FIREBASE_PRIVATE_KEY
         const envServiceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT
 
         if (envProjectId && envClientEmail && envPrivateKey) {
-            // Preferred: individual env vars (safer for Vercel — avoids JSON newline corruption)
-            // Robust sanitization: handle escaped newlines, literal quotes, and extra whitespace
             const privateKey = envPrivateKey
                 .replace(/\\n/g, '\n')
-                .replace(/"/g, '') // Remove literal quotes if present
+                .replace(/"/g, '')
                 .trim()
-            
-            // Diagnostic check for email/project mismatch (optional, but good for debugging)
-            if (!envClientEmail.includes(envProjectId)) {
-                // Email does not contain Project ID - might indicate misconfiguration
-            }
 
             credential = admin.credential.cert({
                 projectId: envProjectId,
@@ -37,7 +29,6 @@ if (!admin.apps.length) {
                 privateKey,
             })
         } else if (envServiceAccountJson) {
-            // Fallback: full JSON blob
             try {
                 const sa = JSON.parse(envServiceAccountJson) as admin.ServiceAccount
                 credential = admin.credential.cert(sa)
@@ -45,7 +36,6 @@ if (!admin.apps.length) {
                 throw new Error('Invalid FIREBASE_SERVICE_ACCOUNT JSON format.')
             }
         } else {
-            // Local dev fallback: read from file
             const KEY_FILE_PATH = join(process.cwd(), 'service_account.json')
             const sa = JSON.parse(readFileSync(KEY_FILE_PATH, 'utf8')) as admin.ServiceAccount
             credential = admin.credential.cert(sa)
@@ -67,9 +57,9 @@ if (VAPID_PUBLIC && VAPID_PRIVATE) {
     webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC, VAPID_PRIVATE)
 }
 
-/**
- * Save a push subscription to the database
- */
+// ─────────────────────────────────────────────
+// Types
+// ─────────────────────────────────────────────
 interface PushSubscription {
     endpoint: string;
     keys?: {
@@ -79,17 +69,48 @@ interface PushSubscription {
     isFCM?: boolean;
 }
 
-export async function savePushSubscription(driverId: string, subscription: PushSubscription) {
-    const supabase = await createClient()
+export type PushPayload = {
+    title: string
+    body: string
+    url?: string
+    /** 'chat' | 'new_job' | 'sos' | 'marketplace' | 'status_update' */
+    type?: string
+    /** Extra data for action buttons in SW */
+    actions?: { action: string; title: string }[]
+    tag?: string
+    driverPhone?: string // For SOS call button
+}
 
-    // Native FCM Push tokens pass { isFCM: true, endpoint: 'token_string' }
+// ─────────────────────────────────────────────
+// Core: Send one Web Push subscription
+// ─────────────────────────────────────────────
+async function sendWebPush(sub: { Endpoint: string; Keys_P256dh: string; Keys_Auth: string }, payload: PushPayload) {
+    try {
+        await webpush.sendNotification(
+            { endpoint: sub.Endpoint, keys: { p256dh: sub.Keys_P256dh, auth: sub.Keys_Auth } },
+            JSON.stringify(payload)
+        )
+        return { success: true }
+    } catch (err: unknown) {
+        if (err && typeof err === 'object' && 'statusCode' in err) {
+            return { success: false, statusCode: (err as { statusCode: number }).statusCode }
+        }
+        return { success: false, statusCode: 0 }
+    }
+}
+
+// ─────────────────────────────────────────────
+// Save Driver Push Subscription
+// ─────────────────────────────────────────────
+export async function savePushSubscription(driverId: string, subscription: PushSubscription) {
+    const supabase = await createAdminClient()
     const isFCM = subscription.isFCM === true
 
-    // Upsert — if driver already has a subscription, replace it
     const { error } = await supabase
         .from('Push_Subscriptions')
         .upsert({
             Driver_ID: driverId,
+            User_ID: null,
             Endpoint: subscription.endpoint,
             Keys_P256dh: subscription.keys?.p256dh || '',
             Keys_Auth: isFCM ? 'FCM' : (subscription.keys?.auth || ''),
@@ -99,21 +120,38 @@ export async function savePushSubscription(driverId: string, subscription: PushS
     if (error) {
         return { success: false, error: error.message }
     }
-
     return { success: true }
 }
 
-/**
- * Send a push notification to a specific driver
- */
-export async function sendPushToDriver(driverId: string, payload: {
-    title: string
-    body: string
-    url?: string
-}) {
-    const supabase = await createClient()
+// ─────────────────────────────────────────────
+// Save Admin Push Subscription (Web Push on Desktop)
+// ─────────────────────────────────────────────
+export async function saveAdminPushSubscription(userId: string, subscription: PushSubscription) {
+    const supabase = await createAdminClient()
 
-    // 1. Get the driver's push subscription
+    const { error } = await supabase
+        .from('Push_Subscriptions')
+        .upsert({
+            Driver_ID: null,
+            User_ID: userId,
+            Endpoint: subscription.endpoint,
+            Keys_P256dh: subscription.keys?.p256dh || '',
+            Keys_Auth: subscription.keys?.auth || '',
+            Updated_At: new Date().toISOString()
+        }, { onConflict: 'User_ID' })
+
+    if (error) {
+        return { success: false, error: error.message }
+    }
+    return { success: true }
+}
+
+// ─────────────────────────────────────────────
+// Send Push to a Specific Driver
+// ─────────────────────────────────────────────
+export async function sendPushToDriver(driverId: string, payload: PushPayload) {
+    const supabase = await createAdminClient()
+
     const { data: sub, error } = await supabase
         .from('Push_Subscriptions')
         .select('*')
@@ -124,77 +162,83 @@ export async function sendPushToDriver(driverId: string, payload: {
         return { success: false, reason: 'no_subscription' }
     }
 
-    // Check if this is an FCM Native Push notification
+    // FCM Native Push
     if (sub.Keys_Auth === 'FCM') {
         try {
-            const message = {
-                notification: {
-                    title: payload.title,
-                    body: payload.body,
-                },
-                data: {
-                    url: payload.url || '/mobile/jobs'
+            await admin.messaging().send({
+                notification: { title: payload.title, body: payload.body },
+                data: { url: payload.url || '/mobile/jobs', type: payload.type || 'general' },
+                android: {
+                    notification: {
+                        sound: 'default',
+                        channelId: 'tms-notifications',
+                        priority: 'high',
+                        vibrateTimingsMillis: [0, 300, 100, 300, 100, 400],
+                    }
                 },
                 token: sub.Endpoint
-            }
-            await admin.messaging().send(message)
+            })
             return { success: true }
         } catch (err: unknown) {
-            // Remove token if not found/unregistered
-            if (err && typeof err === 'object' && 'code' in err && (err as { code: string }).code === 'messaging/registration-token-not-registered') {
+            if (err && typeof err === 'object' && 'code' in err &&
+                (err as { code: string }).code === 'messaging/registration-token-not-registered') {
                 await supabase.from('Push_Subscriptions').delete().eq('Driver_ID', driverId)
             }
             return { success: false, reason: 'send_failed' }
         }
     }
 
-    // 2. Build the Web Push subscription object
-    const pushSubscription = {
-        endpoint: sub.Endpoint,
-        keys: {
-            p256dh: sub.Keys_P256dh,
-            auth: sub.Keys_Auth
-        }
+    // Web Push
+    console.log(`[PUSH] Attempting Web Push to driver: ${driverId}`)
+    const result = await sendWebPush(sub, { ...payload, url: payload.url || '/mobile/jobs' })
+
+    if (!result.success && (result.statusCode === 404 || result.statusCode === 410)) {
+        console.log(`[PUSH] Removing expired subscription for driver ${driverId}`)
+        await supabase.from('Push_Subscriptions').delete().eq('Driver_ID', driverId)
     }
 
-    // 3. Send Web Push notification
-    try {
-        console.log(`[PUSH] Attempting Web Push to driver: ${driverId}`);
-        const response = await webpush.sendNotification(
-            pushSubscription,
-            JSON.stringify({
-                title: payload.title,
-                body: payload.body,
-                url: payload.url || '/mobile/jobs'
-            })
-        )
-        console.log(`[PUSH] Web Push Success: Status ${response.statusCode}`);
-        return { success: true }
-    } catch (err: unknown) {
-        console.error(`[PUSH] Web Push Failed for driver ${driverId}:`, err);
-        if (err && typeof err === 'object' && 'statusCode' in err) {
-            const errorObj = err as { statusCode: number; body?: unknown }
-            const status = errorObj.statusCode
-
-            // If subscription has expired/is invalid, remove it
-            if (status === 404 || status === 410) {
-            console.log(`[PUSH] Removing invalid/expired subscription for driver ${driverId}`);
-            await supabase
-                .from('Push_Subscriptions')
-                .delete()
-                .eq('Driver_ID', driverId)
-            }
-        }
-
-        return { success: false, reason: 'send_failed', error: String(err) }
-    }
+    console.log(`[PUSH] Web Push to driver ${driverId}: ${result.success ? 'OK' : `FAIL (${result.statusCode})`}`)
+    return result.success ? { success: true } : { success: false, reason: 'send_failed' }
 }
 
-/**
- * Notify driver of a new job assignment — creates DB notification + sends push
- */
+// ─────────────────────────────────────────────
+// Send Push to All Admin Users
+// ─────────────────────────────────────────────
+export async function sendPushToAdmins(payload: PushPayload) {
+    const supabase = await createAdminClient()
+
+    const { data: subs, error } = await supabase
+        .from('Push_Subscriptions')
+        .select('*')
+        .not('User_ID', 'is', null)
+
+    if (error || !subs || subs.length === 0) {
+        console.log('[PUSH] No admin subscriptions found')
+        return { success: false, reason: 'no_admin_subscriptions' }
+    }
+
+    console.log(`[PUSH] Sending push to ${subs.length} admin(s)`)
+
+    const results = await Promise.allSettled(
+        subs.map(async (sub) => {
+            const result = await sendWebPush(sub, { ...payload, url: payload.url || '/chat' })
+            // Clean up expired subscriptions
+            if (!result.success && (result.statusCode === 404 || result.statusCode === 410)) {
+                await supabase.from('Push_Subscriptions').delete().eq('User_ID', sub.User_ID)
+            }
+            return result
+        })
+    )
+
+    const successCount = results.filter(r => r.status === 'fulfilled' && (r.value as { success: boolean }).success).length
+    console.log(`[PUSH] Admin push results: ${successCount}/${subs.length} sent`)
+    return { success: successCount > 0 }
+}
+
+// ─────────────────────────────────────────────
+// Notify: Driver New Job
+// ─────────────────────────────────────────────
 export async function notifyDriverNewJob(driverId: string, jobId: string, customerName: string) {
-    // 1. Create in-app notification
     await createNotification({
         Driver_ID: driverId,
         Title: '📦 งานใหม่สำหรับคุณ!',
@@ -203,10 +247,80 @@ export async function notifyDriverNewJob(driverId: string, jobId: string, custom
         Link: `/mobile/jobs/${jobId}`
     })
 
-    // 2. Send push notification
     await sendPushToDriver(driverId, {
         title: '📦 งานใหม่สำหรับคุณ!',
         body: `งาน ${jobId} • ลูกค้า: ${customerName}`,
-        url: `/mobile/jobs/${jobId}`
+        url: `/mobile/jobs/${jobId}`,
+        type: 'new_job',
+        tag: `new_job_${jobId}`,
+    })
+}
+
+// ─────────────────────────────────────────────
+// Notify: Driver sends Chat → Push to Admin
+// ─────────────────────────────────────────────
+export async function notifyAdminNewChat(driverId: string, driverName: string, message: string) {
+    const isImage = message.startsWith('[IMAGE] ')
+    await sendPushToAdmins({
+        title: `💬 ${driverName || 'คนขับ'}`,
+        body: isImage ? '📷 ส่งรูปภาพ' : message.slice(0, 120),
+        url: `/chat?driver=${driverId}`,
+        type: 'chat',
+        tag: `chat_${driverId}`,
+    })
+}
+
+// ─────────────────────────────────────────────
+// Notify: Admin sends Chat → Push to Driver
+// ─────────────────────────────────────────────
+export async function notifyDriverNewChat(driverId: string, message: string) {
+    const isImage = message.startsWith('[IMAGE] ')
+    await sendPushToDriver(driverId, {
+        title: '💬 ข้อความใหม่จากเจ้าหน้าที่',
+        body: isImage ? '📷 ส่งรูปภาพ' : message.slice(0, 120),
+        url: '/mobile/chat',
+        type: 'chat',
+        tag: `chat_admin`,
+    })
+}
+
+// ─────────────────────────────────────────────
+// Notify: Driver SOS → Push to All Admins
+// ─────────────────────────────────────────────
+export async function notifyAdminSOS(driverId: string, driverName: string, driverPhone?: string) {
+    await sendPushToAdmins({
+        title: `🆘 SOS! ${driverName || 'คนขับ'}`,
+        body: `${driverName} กดปุ่มฉุกเฉิน — กดเพื่อดูตำแหน่งและโทรทันที`,
+        url: `/monitoring?driver=${driverId}`,
+        type: 'sos',
+        tag: `sos_${driverId}`,
+        driverPhone,
+        actions: [
+            { action: 'view_location', title: '📍 ดูตำแหน่ง' },
+            { action: 'call_driver', title: '📞 โทรหาคนขับ' },
+        ]
+    })
+}
+
+// ─────────────────────────────────────────────
+// Notify: Driver Job Status Update → Push to Admin
+// ─────────────────────────────────────────────
+export async function notifyAdminJobStatus(driverId: string, driverName: string, jobId: string, newStatus: string) {
+    const statusEmoji: Record<string, string> = {
+        'Picked Up': '📦',
+        'In Transit': '🚛',
+        'Delivered': '✅',
+        'Completed': '✅',
+        'Failed': '❌',
+        'SOS': '🆘',
+    }
+    const emoji = statusEmoji[newStatus] || '🔔'
+
+    await sendPushToAdmins({
+        title: `${emoji} ${driverName} อัปเดตงาน`,
+        body: `งาน ${jobId} → ${newStatus}`,
+        url: `/planning?job=${jobId}`,
+        type: 'status_update',
+        tag: `status_${jobId}`,
     })
 }

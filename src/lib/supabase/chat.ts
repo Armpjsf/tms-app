@@ -1,6 +1,6 @@
 import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { getUserBranchId, isSuperAdmin } from "@/lib/permissions"
-import { sendPushToDriver } from '@/lib/actions/push-actions'
+import { notifyDriverNewChat } from '@/lib/actions/push-actions'
 import { SupabaseClient } from '@supabase/supabase-js'
 
 export type ChatMessage = {
@@ -248,22 +248,14 @@ export async function sendMessage(driverId: string, driverName: string, message:
             throw adminError
         }
 
-        // Also send push in admin fallback path
-        await sendPushToDriver(driverId, {
-            title: '💬 ข้อความใหม่จากเจ้าหน้าที่',
-            body: message,
-            url: '/mobile/chat'
-        }).catch(() => {})
+        // Push admin fallback path
+        notifyDriverNewChat(driverId, message).catch(() => {})
 
         return { success: true, data: adminData }
     }
 
     // Notify Driver via Push
-    await sendPushToDriver(driverId, {
-        title: '💬 ข้อความใหม่จากเจ้าหน้าที่',
-        body: message,
-        url: '/mobile/chat'
-    }).catch(() => {})
+    notifyDriverNewChat(driverId, message).catch(() => {})
 
     return { success: true, data }
   } catch (error) {
