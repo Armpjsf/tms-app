@@ -105,8 +105,27 @@ export function ProfileContent({ session, score, unreadChatCount = 0 }: ProfileC
     }
   }
 
+  const handleTestPush = async () => {
+    try {
+      const { sendPushToDriver } = await import("@/lib/actions/push-actions")
+      const result = await sendPushToDriver(session.driverId, {
+        title: "🔔 ทดสอบแจ้งเตือน",
+        body: "หากคุณเห็นข้อความนี้ แสดงว่าระบบแจ้งเตือนของคุณทำงานปกติครับ",
+        url: "/mobile/dashboard"
+      })
+      if (result.success) {
+        toast.success("ส่งข้อความทดสอบแล้ว กรุณารอสักครู่...")
+      } else {
+        toast.error("ส่งไม่สำเร็จ: " + (result.reason || "ไม่พบข้อมูลเครื่องของคุณ"))
+      }
+    } catch (err) {
+      toast.error("เกิดข้อผิดพลาดในการส่ง")
+    }
+  }
+
   const menuItems = [
     { icon: Bell, label: "เปิดรับการแจ้งเตือนงาน", action: handleSubscribePush, color: 'text-blue-500' },
+    { icon: Bell, label: "ทดสอบแจ้งเตือน (Test)", action: handleTestPush, color: 'text-orange-500' },
     { icon: Fingerprint, label: "ลงทะเบียนสแกนนิ้ว/หน้า", action: handleRegisterBiometrics, color: 'text-primary' },
     { icon: LayoutGrid, label: "รับงานกลาง (ประมูล)", href: "/mobile/marketplace" },
     { icon: Star, label: "คะแนนและผลงาน", href: "/mobile/kpi" },
