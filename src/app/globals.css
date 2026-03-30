@@ -131,8 +131,24 @@
     @apply bg-background text-foreground antialiased selection:bg-primary/30;
     font-family: var(--font-prompt), var(--font-outfit), ui-sans-serif, system-ui, sans-serif !important;
     background-image: var(--gradient-elite);
-    min-height: 100vh;
+    min-height: 100dvh; /* Use dynamic viewport height for mobile */
     font-size: 16px;
+    
+    /* Native App Feel for Mobile/PWA */
+    -webkit-touch-callout: none; /* iOS Safari */
+    -webkit-user-select: none; /* Safari */
+    -khtml-user-select: none; /* Konqueror HTML */
+    -moz-user-select: none; /* Old versions of Firefox */
+    -ms-user-select: none; /* Internet Explorer/Edge */
+    user-select: none; /* Non-prefixed version, currently supported by Chrome, Edge, Opera and Firefox */
+    -webkit-tap-highlight-color: transparent; /* Remove grey highlight on touch in Android/iOS */
+    overscroll-behavior-y: none; /* Prevent pull-to-refresh and bounce effect */
+  }
+  
+  /* Allow text selection specifically in inputs and textareas */
+  input, textarea {
+    -webkit-user-select: auto;
+    user-select: auto;
   }
   h1, h2, h3, h4, h5, h6 {
     @apply font-black tracking-tighter text-accent transition-colors duration-300;
@@ -172,10 +188,14 @@
   }
 }
 
-/* Elite Scrollbar */
-::-webkit-scrollbar { width: 5px; }
-::-webkit-scrollbar-track { @apply bg-transparent; }
-::-webkit-scrollbar-thumb { @apply bg-white/10 rounded-full hover:bg-white/20 transition-colors; }
+/* Elite Scrollbar (Hidden for Native App feel) */
+::-webkit-scrollbar { 
+  display: none; /* Hide scrollbar for Chrome, Safari and Opera */
+}
+* {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
 
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
