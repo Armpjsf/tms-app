@@ -16,12 +16,17 @@ export default function DashboardPage() {
   const { selectedBranch } = useBranch()
   const { t } = useLanguage()
   const [data, setData] = useState<any | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [isInitialLoading, setIsInitialLoading] = useState(true)
+  const [isRefreshing, setIsRefreshing] = useState(false)
 
-  const loadData = useCallback(async () => {
-    setLoading(true)
+  const loadData = useCallback(async (isInitial = false) => {
+    if (isInitial) setIsInitialLoading(true)
+    else setIsRefreshing(true)
+    
     try {
       const currentBranchId = selectedBranch === 'All' ? undefined : selectedBranch
+      
+      // Basic permissions can be fetched once or kept in Promise.all if they are fast
       const [unified, sosIds, marketplaceJobs, logs, customerMode, custId] = await Promise.all([
         getExecutiveDashboardUnified(currentBranchId),
         getSOSDriverIds(),
@@ -37,24 +42,31 @@ export default function DashboardPage() {
       }
 
       setData({ unified, sosIds, marketplaceJobs, logs, customerMode, custId, custName })
+    } catch (error) {
+      console.error("Dashboard data fetch error:", error)
     } finally {
-      setLoading(false)
+      setIsInitialLoading(false)
+      setIsRefreshing(false)
     }
   }, [selectedBranch])
 
   useEffect(() => {
-    loadData()
-  }, [loadData])
+    loadData(true)
+  }, [selectedBranch]) // Only trigger on branch change, loadData handles the rest
 
-  if (loading || !data) return (
+  if (isInitialLoading && !data) return (
     <DashboardLayout>
       <div className="flex items-center justify-center h-[60vh]">
-        <p className="text-primary animate-pulse font-black uppercase tracking-[0.3em]">{t('common.loading')}</p>
+        <div className="flex flex-col items-center gap-4">
+            <div className="w-12 h-12 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
+            <p className="text-primary animate-pulse font-black uppercase tracking-[0.3em]">{t('common.loading')}</p>
+        </div>
       </div>
     </DashboardLayout>
   )
 
-  const { unified, sosIds, marketplaceJobs, logs, customerMode, custId, custName } = data
+  // Fallback if data is still null after loading
+  if (!data) return null;
 
   const jobStats = {
     total: unified.kpi?.jobs?.current ?? 0,
