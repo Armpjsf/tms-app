@@ -159,7 +159,8 @@ export async function sendPushToDriver(driverId: string, payload: {
 
     // 3. Send Web Push notification
     try {
-        await webpush.sendNotification(
+        console.log(`[PUSH] Attempting Web Push to driver: ${driverId}`);
+        const response = await webpush.sendNotification(
             pushSubscription,
             JSON.stringify({
                 title: payload.title,
@@ -167,14 +168,17 @@ export async function sendPushToDriver(driverId: string, payload: {
                 url: payload.url || '/mobile/jobs'
             })
         )
+        console.log(`[PUSH] Web Push Success: Status ${response.statusCode}`);
         return { success: true }
     } catch (err: unknown) {
+        console.error(`[PUSH] Web Push Failed for driver ${driverId}:`, err);
         if (err && typeof err === 'object' && 'statusCode' in err) {
             const errorObj = err as { statusCode: number; body?: unknown }
             const status = errorObj.statusCode
 
             // If subscription has expired/is invalid, remove it
             if (status === 404 || status === 410) {
+            console.log(`[PUSH] Removing invalid/expired subscription for driver ${driverId}`);
             await supabase
                 .from('Push_Subscriptions')
                 .delete()
@@ -182,7 +186,7 @@ export async function sendPushToDriver(driverId: string, payload: {
             }
         }
 
-        return { success: false, reason: 'send_failed' }
+        return { success: false, reason: 'send_failed', error: String(err) }
     }
 }
 

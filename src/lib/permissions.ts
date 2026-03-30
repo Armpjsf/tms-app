@@ -56,20 +56,24 @@ export async function hasPermission(permission: string) {
     // Super Admin (Role 1) always has all permissions
     if (session.roleId === 1) return true
     
-    // For other roles, check the specific permission flag
-    // Support both boolean true and presence in an array if we ever change formats, 
-    // but sticking to Record<string, boolean> as per current standard.
     return !!session?.permissions?.[permission]
 }
 
 export async function isSuperAdmin() {
     const roleId = await getUserRole()
-    return Number(roleId) === 1
+    const result = Number(roleId) === 1
+    if (result) {
+        console.log(`[AUTH] User identified as SUPER_ADMIN (Role: ${roleId})`)
+    }
+    return result
 }
 
 export async function isAdmin() {
     const roleId = await getUserRole()
     const result = Number(roleId) === 1 || Number(roleId) === 2
+    if (result) {
+        console.log(`[AUTH] User identified as ADMIN/MANAGER (Role: ${roleId})`)
+    }
     return result
 }
 

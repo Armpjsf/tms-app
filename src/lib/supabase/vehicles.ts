@@ -162,8 +162,13 @@ export async function getAllVehicles(page?: number, limit?: number, query?: stri
     const isSuper = await isSuperAdmin()
     const isAdminUser = await isAdmin()
     const branchId = providedBranchId || await getUserBranchId()
-    const supabase = (isSuper || isAdminUser) ? await createAdminClient() : await createClient()
     
+    // Choose client based on role
+    const supabase = (isSuper || isAdminUser) ? createAdminClient() : await createClient()
+    const clientType = (isSuper || isAdminUser) ? 'ADMIN_CLIENT (RLS Bypass)' : 'USER_CLIENT (Respects RLS)'
+    
+    console.log(`[DB] Fetching Vehicles: Client=${clientType}, BranchID=${branchId}, Page=${page}`)
+
     let queryBuilder = supabase.from('Master_Vehicles').select(`
       *,
       Primary_Driver:Master_Drivers!Master_Vehicles_Driver_ID_fkey (
@@ -171,16 +176,22 @@ export async function getAllVehicles(page?: number, limit?: number, query?: stri
       )
     `, { count: 'exact' })
     
-    if (branchId && branchId !== 'All') {
-        queryBuilder = queryBuilder.eq('Branch_ID', branchId)
-    } else if (!isSuper && !isAdminUser && (!branchId || branchId === 'All')) {
-        // Non-admin users must have a specific branch to see anything
-        // Unless we decide otherwise, but usually they only see their branch.
-        // If they try to see 'All' but aren't admins, they get nothing (or their own).
-        const actualBranch = await getUserBranchId()
-        if (actualBranch && actualBranch !== 'All') {
-            queryBuilder = queryBuilder.eq('Branch_ID', actualBranch)
+    // Filtering logic
+    if (isSuper || isAdminUser) {
+        // Admins can see specific branches or everything
+        if (branchId && branchId !== 'All') {
+            queryBuilder = queryBuilder.eq('Branch_ID', branchId)
         } else {
+            console.log(`[DB] Admin fetching ALL branches.`)
+        }
+    } else {
+        // Non-admin users MUST be filtered by their branch
+        const userBranch = await getUserBranchId()
+        if (userBranch && userBranch !== 'All') {
+            console.log(`[DB] User filtering by branch: ${userBranch}`)
+            queryBuilder = queryBuilder.eq('Branch_ID', userBranch)
+        } else {
+            console.warn(`[DB] Non-admin user with no branch ID attempted to fetch vehicles. Returning empty.`)
             return { data: [], count: 0 }
         }
     }
@@ -196,8 +207,14 @@ export async function getAllVehicles(page?: number, limit?: number, query?: stri
     }
     
     const { data, error, count } = await queryBuilder
-    if (error) return { data: [], count: 0 }
     
+    if (error) {
+      console.error(`[DB] Vehicle Fetch Error:`, error.message, error.code)
+      return { data: [], count: 0 }
+    }
+    
+    console.log(`[DB] Successfully fetched ${data?.length || 0} vehicles. Total count: ${count}`)
+
     // Map joined driver name to the flat field
     const mappedData = (data || []).map((v: any) => ({
       ...v,
@@ -205,7 +222,8 @@ export async function getAllVehicles(page?: number, limit?: number, query?: stri
     }))
     
     return { data: mappedData, count: count || 0 }
-  } catch {
+  } catch (err) {
+    console.error(`[DB] Critical Failure in getAllVehicles:`, err)
     return { data: [], count: 0 }
   }
 }
