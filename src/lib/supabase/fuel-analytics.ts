@@ -106,9 +106,9 @@ export async function getFuelAnalytics(dateFrom?: string, dateTo?: string): Prom
 
   // Get vehicle tank capacities for anomaly detection
   const { data: vehicles } = await supabase
-    .from('master_vehicles')
-    .select('vehicle_plate, tank_capacity')
-  const tankMap = new Map(vehicles?.map(v => [v.vehicle_plate, v.tank_capacity || 50]) || [])
+    .from('Master_Vehicles')
+    .select('Vehicle_Plate, Tank_Capacity')
+  const tankMap = new Map(vehicles?.map(v => [v.Vehicle_Plate, v.Tank_Capacity || 50]) || [])
 
   // Calculate totals
   const totalLiters = logs.reduce((s, l) => s + (l.Liters || 0), 0)

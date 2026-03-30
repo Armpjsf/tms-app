@@ -41,7 +41,7 @@ export default function BackupSettingsPage() {
   const backupItems = [
     { label: "Jobs Mission Log", table: "Jobs_Main", desc: "Primary transport operations & job telemetry" },
     { label: "Operator Registry", table: "Master_Users", desc: "Field personnel credentials & performance history" }, // Changed from Master_Drivers to Master_Users as it's more relevant for "Operator Registry"
-    { label: "Asset Fleet Data", table: "master_vehicles", desc: "Global vehicle inventory & maintenance specs" },
+    { label: "Asset Fleet Data", table: "Master_Vehicles", desc: "Global vehicle inventory & maintenance specs" },
     { label: "Energy Consumption", table: "Fuel_Logs", desc: "Fuel logistics & efficiency monitoring data" },
     { label: "Maintenance Intel", table: "Repair_Tickets", desc: "Repair history & technical equipment status" },
     { label: "Entity Database", table: "Master_Customers", desc: "Partner organization & customer identity nexus" },

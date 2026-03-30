@@ -44,10 +44,10 @@ export async function getVehicleRiskAssessment(branchId?: string): Promise<Vehic
 
   // 1. Fetch Vehicles
   let vehicleQuery = supabase
-    .from('master_vehicles')
-    .select('vehicle_plate, vehicle_type, year, current_mileage, next_service_mileage, last_service_date, brand, model')
+    .from('Master_Vehicles')
+    .select('Vehicle_Plate, Vehicle_Type, Year, Current_Mileage, Next_Service_Mileage, Last_Service_Date, Brand, Model')
   
-  if (effectiveBranchId) vehicleQuery = vehicleQuery.eq('branch_id', effectiveBranchId)
+  if (effectiveBranchId) vehicleQuery = vehicleQuery.eq('Branch_ID', effectiveBranchId)
 
   const { data: vehicles } = await vehicleQuery
   if (!vehicles) return []
@@ -100,7 +100,7 @@ export async function getVehicleRiskAssessment(branchId?: string): Promise<Vehic
 
   for (const v of vehicles) {
        // Usage
-       const vLogs = vehicleLogs.get(v.vehicle_plate) || []
+       const vLogs = vehicleLogs.get(v.Vehicle_Plate) || []
        let avgKmPerDay = 100 // Default assumption: 100km/day if data missing
        
        if (vLogs.length >= 2) {
@@ -110,14 +110,11 @@ export async function getVehicleRiskAssessment(branchId?: string): Promise<Vehic
            if (days > 0 && first.Odometer && last.Odometer) {
                avgKmPerDay = (last.Odometer - first.Odometer) / days
            }
-       } else if (vLogs.length === 1 && v.current_mileage) {
-            // Rough estimate if only 1 log + current mileage
-            // Not accurate, stick to default or usage based on log
        }
 
        // Time to Service
-       const currentKm = v.current_mileage || 0
-       const nextServiceKm = v.next_service_mileage || (currentKm + 10000)
+       const currentKm = v.Current_Mileage || 0
+       const nextServiceKm = v.Next_Service_Mileage || (currentKm + 10000)
        const kmRemaining = nextServiceKm - currentKm
        const daysToService = avgKmPerDay > 0 ? kmRemaining / avgKmPerDay : 999
 
@@ -125,7 +122,7 @@ export async function getVehicleRiskAssessment(branchId?: string): Promise<Vehic
        let score = 100
        
        // Age Risk
-       const age = v.year ? currentYear - v.year : 5
+       const age = v.Year ? currentYear - v.Year : 5
        if (age > 5) score -= (age - 5) * 5
        
        // Mileage Risk (High mileage -> higher risk)
@@ -133,7 +130,7 @@ export async function getVehicleRiskAssessment(branchId?: string): Promise<Vehic
        if (currentKm > 400000) score -= 20
        
        // Repair Frequency Risk
-       const repairCount = repairCounts.get(v.vehicle_plate) || 0
+       const repairCount = repairCounts.get(v.Vehicle_Plate) || 0
        if (repairCount > 2) score -= (repairCount * 5)
        
        // Service Overdue Risk
@@ -155,8 +152,8 @@ export async function getVehicleRiskAssessment(branchId?: string): Promise<Vehic
        else if (age > 10) prediction = `Age-related failure risk`
 
        results.push({
-           vehicle_plate: v.vehicle_plate,
-           vehicle_type: v.vehicle_type || 'Unknown',
+           vehicle_plate: v.Vehicle_Plate,
+           vehicle_type: v.Vehicle_Type || 'Unknown',
            age_years: age,
            current_mileage: currentKm,
            avg_km_per_day: Math.round(avgKmPerDay),

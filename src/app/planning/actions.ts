@@ -86,11 +86,11 @@ export async function createJob(data: JobFormData) {
   // If subId still null, try looking up via Vehicle_Plate
   if (!subId && data.Vehicle_Plate) {
     const { data: vehicle } = await supabase
-      .from('master_vehicles')
-      .select('sub_id')
-      .eq('vehicle_plate', data.Vehicle_Plate)
+      .from('Master_Vehicles')
+      .select('Sub_ID')
+      .eq('Vehicle_Plate', data.Vehicle_Plate)
       .single()
-    if (vehicle) subId = vehicle.sub_id || null
+    if (vehicle) subId = vehicle.Sub_ID || null
   }
 
   // Attempt 1
@@ -214,12 +214,12 @@ export async function createBulkJobs(jobs: Partial<JobFormData>[]) {
   // Fetch Master Data for lookups
   const [{ data: allDrivers }, { data: allVehicles }, { data: allCustomers }] = await Promise.all([
     supabase.from('Master_Drivers').select('Driver_ID, Driver_Name, Sub_ID'),
-    supabase.from('master_vehicles').select('vehicle_plate, sub_id'),
+    supabase.from('Master_Vehicles').select('Vehicle_Plate, Sub_ID'),
     supabase.from('Master_Customers').select('Customer_ID, Customer_Name')
   ])
 
   const driverMap = new Map(allDrivers?.map(d => [d.Driver_ID, d]) || [])
-  const vehicleMap = new Map(allVehicles?.map(v => [v.vehicle_plate, v]) || [])
+  const vehicleMap = new Map(allVehicles?.map(v => [v.Vehicle_Plate, v]) || [])
   const customerMap = new Map(allCustomers?.map(c => [c.Customer_Name?.toLowerCase().trim(), c.Customer_ID]) || [])
 
   // Helper to normalize keys
@@ -283,7 +283,7 @@ export async function createBulkJobs(jobs: Partial<JobFormData>[]) {
       Notes: data.Notes as string || null,
       Price_Cust_Total: Number(data.Price_Cust_Total) || 0,
       Cost_Driver_Total: Number(data.Cost_Driver_Total) || 0,
-      Sub_ID: driver?.Sub_ID || vehicle?.sub_id || null,
+      Sub_ID: driver?.Sub_ID || (vehicle as any)?.Sub_ID || null,
       Weight_Kg: Number(data.Weight_Kg) || 0,
       Volume_Cbm: Number(data.Volume_Cbm) || 0,
       Created_At: new Date().toISOString(),
@@ -394,11 +394,11 @@ export async function updateJob(jobId: string, data: Partial<JobFormData>) {
   // Also check Vehicle_Plate for Sub_ID if still not present
   if (!updateData.Sub_ID && data.Vehicle_Plate) {
     const { data: vehicle } = await supabase
-      .from('master_vehicles')
-      .select('sub_id')
-      .eq('vehicle_plate', data.Vehicle_Plate)
+      .from('Master_Vehicles')
+      .select('Sub_ID')
+      .eq('Vehicle_Plate', data.Vehicle_Plate)
       .single()
-    if (vehicle) updateData.Sub_ID = vehicle.sub_id || null
+    if (vehicle) updateData.Sub_ID = vehicle.Sub_ID || null
   }
   
   const { error } = await supabase

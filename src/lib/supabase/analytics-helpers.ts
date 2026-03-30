@@ -41,10 +41,10 @@ export const formatDateSafe = (dateInput: string | Date | null | undefined) => {
 export async function getBranchPlates(branchId: string) {
     const supabase = await createAdminClient()
     const { data } = await supabase
-        .from('master_vehicles')
-        .select('vehicle_plate')
-        .eq('branch_id', branchId)
-    return data?.map(v => v.vehicle_plate) || []
+        .from('Master_Vehicles')
+        .select('Vehicle_Plate')
+        .eq('Branch_ID', branchId)
+    return (data || []).map(v => v.Vehicle_Plate).filter(Boolean) as string[]
 }
 
 // Common helper to resolve branch filtering

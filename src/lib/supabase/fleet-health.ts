@@ -22,22 +22,22 @@ export async function getFleetHealthAlerts(): Promise<HealthAlert[]> {
 
         // 1. Fetch all active vehicles for the branch
         let vehicleQuery = supabase
-            .from('master_vehicles')
+            .from('Master_Vehicles')
             .select(`
-                vehicle_plate, 
-                driver_id,
-                insurance_expiry, 
-                tax_expiry, 
-                act_expiry, 
-                current_mileage, 
-                next_service_mileage,
-                active_status,
-                branch_id
+                Vehicle_Plate, 
+                Driver_ID,
+                Insurance_Expiry, 
+                Tax_Expiry, 
+                Act_Expiry, 
+                Current_Mileage, 
+                Next_Service_Mileage,
+                Active_Status,
+                Branch_ID
             `)
-            .eq('active_status', 'Active')
+            .eq('Active_Status', 'Active')
 
         if (branchId && branchId !== 'All') {
-            vehicleQuery = vehicleQuery.eq('branch_id', branchId)
+            vehicleQuery = vehicleQuery.eq('Branch_ID', branchId)
         } else if (!isAdmin && !branchId) {
             return []
         }
@@ -69,13 +69,13 @@ export async function getFleetHealthAlerts(): Promise<HealthAlert[]> {
         const thirtyDaysAhead = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000)
 
         vehicles.forEach(v => {
-            const driverName = v.driver_id ? driverMap.get(v.driver_id) : undefined
+            const driverName = v.Driver_ID ? driverMap.get(v.Driver_ID) : undefined
 
             // Compliance Checks
             const checks = [
-                { type: 'Insurance', date: v.insurance_expiry },
-                { type: 'Tax', date: v.tax_expiry },
-                { type: 'ACT', date: v.act_expiry }
+                { type: 'Insurance', date: v.Insurance_Expiry },
+                { type: 'Tax', date: v.Tax_Expiry },
+                { type: 'ACT', date: v.Act_Expiry }
             ]
 
             checks.forEach(check => {
@@ -83,8 +83,8 @@ export async function getFleetHealthAlerts(): Promise<HealthAlert[]> {
                     const expiry = new Date(check.date)
                     if (expiry < now) {
                         alerts.push({
-                            vehicle_plate: v.vehicle_plate,
-                            driver_id: v.driver_id,
+                            vehicle_plate: v.Vehicle_Plate,
+                            driver_id: v.Driver_ID,
                             driver_name: driverName,
                             issue_type: 'compliance',
                             description: `${check.type} Expired`,
@@ -93,8 +93,8 @@ export async function getFleetHealthAlerts(): Promise<HealthAlert[]> {
                         })
                     } else if (expiry < thirtyDaysAhead) {
                         alerts.push({
-                            vehicle_plate: v.vehicle_plate,
-                            driver_id: v.driver_id,
+                            vehicle_plate: v.Vehicle_Plate,
+                            driver_id: v.Driver_ID,
                             driver_name: driverName,
                             issue_type: 'compliance',
                             description: `${check.type} Expiring Soon`,
@@ -106,12 +106,12 @@ export async function getFleetHealthAlerts(): Promise<HealthAlert[]> {
             })
 
             // Service Checks (Mileage)
-            if (v.current_mileage && v.next_service_mileage) {
-                const diff = v.next_service_mileage - v.current_mileage
+            if (v.Current_Mileage && v.Next_Service_Mileage) {
+                const diff = v.Next_Service_Mileage - v.Current_Mileage
                 if (diff <= 0) {
                     alerts.push({
-                        vehicle_plate: v.vehicle_plate,
-                        driver_id: v.driver_id,
+                        vehicle_plate: v.Vehicle_Plate,
+                        driver_id: v.Driver_ID,
                         driver_name: driverName,
                         issue_type: 'service',
                         description: 'Overdue for Service',
@@ -120,8 +120,8 @@ export async function getFleetHealthAlerts(): Promise<HealthAlert[]> {
                     })
                 } else if (diff <= 1000) {
                     alerts.push({
-                        vehicle_plate: v.vehicle_plate,
-                        driver_id: v.driver_id,
+                        vehicle_plate: v.Vehicle_Plate,
+                        driver_id: v.Driver_ID,
                         driver_name: driverName,
                         issue_type: 'service',
                         description: 'Service Due Soon',
@@ -132,11 +132,11 @@ export async function getFleetHealthAlerts(): Promise<HealthAlert[]> {
             }
 
             // Maintenance Checks (Active Tickets)
-            const vehicleRepairs = repairs?.filter(r => r.Vehicle_Plate === v.vehicle_plate) || []
+            const vehicleRepairs = repairs?.filter(r => r.Vehicle_Plate === v.Vehicle_Plate) || []
             vehicleRepairs.forEach(r => {
                 alerts.push({
-                    vehicle_plate: v.vehicle_plate,
-                    driver_id: v.driver_id,
+                    vehicle_plate: v.Vehicle_Plate,
+                    driver_id: v.Driver_ID,
                     driver_name: driverName,
                     issue_type: 'maintenance',
                     description: r.Issue_Type || 'Maintenance Required',

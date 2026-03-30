@@ -42,18 +42,16 @@ export async function getMaintenanceSchedule(): Promise<MaintenanceScheduleData>
   const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString()
 
   // Get all vehicles
-  // SCHEMA FIX: status -> active_status, registration_expiry -> tax_expiry
   let vehicleQuery = supabase
-    .from('master_vehicles')
-    .select('vehicle_plate, vehicle_type, active_status, insurance_expiry, tax_expiry, last_service_date, last_service_odometer, next_service_mileage, current_mileage')
+    .from('Master_Vehicles')
+    .select('Vehicle_Plate, Vehicle_Type, Active_Status, Insurance_Expiry, Tax_Expiry, Last_Service_Date, Last_Service_Odometer, Next_Service_Mileage, Current_Mileage')
 
-  // SCHEMA FIX: Branch filtering on vehicles uses 'branch_id' (lowercase)
   if (isAdmin) {
     if (selectedBranch && selectedBranch !== 'All') {
-      vehicleQuery = vehicleQuery.eq('branch_id', selectedBranch)
+      vehicleQuery = vehicleQuery.eq('Branch_ID', selectedBranch)
     }
   } else if (branchId) {
-    vehicleQuery = vehicleQuery.eq('branch_id', branchId)
+    vehicleQuery = vehicleQuery.eq('Branch_ID', branchId)
   }
 
   const { data: vehicles } = await vehicleQuery
@@ -99,35 +97,34 @@ export async function getMaintenanceSchedule(): Promise<MaintenanceScheduleData>
   const dayMs = 86400000
 
   for (const v of allVehicles) {
-    // SCHEMA FIX: active_status
-    if (v.active_status === 'Inactive') continue
+    if (v.Active_Status === 'Inactive') continue
 
     // Insurance expiry check
-    if (v.insurance_expiry) {
-      const expiry = new Date(v.insurance_expiry)
+    if (v.Insurance_Expiry) {
+      const expiry = new Date(v.Insurance_Expiry)
       const daysUntil = Math.ceil((expiry.getTime() - now.getTime()) / dayMs)
       if (daysUntil <= 30) {
         services.push({
-          vehicle_plate: v.vehicle_plate,
-          vehicle_type: v.vehicle_type || 'Unknown',
+          vehicle_plate: v.Vehicle_Plate,
+          vehicle_type: v.Vehicle_Type || 'Unknown',
           service_type: 'ต่อประกันภัย',
-          due_date: v.insurance_expiry,
+          due_date: v.Insurance_Expiry,
           days_until: daysUntil,
           status: daysUntil <= 0 ? 'overdue' : daysUntil <= 7 ? 'due_soon' : 'upcoming',
         })
       }
     }
 
-    // Registration expiry check (SCHEMA FIX: tax_expiry)
-    if (v.tax_expiry) {
-      const expiry = new Date(v.tax_expiry)
+    // Registration expiry check
+    if (v.Tax_Expiry) {
+      const expiry = new Date(v.Tax_Expiry)
       const daysUntil = Math.ceil((expiry.getTime() - now.getTime()) / dayMs)
       if (daysUntil <= 30) {
         services.push({
-          vehicle_plate: v.vehicle_plate,
-          vehicle_type: v.vehicle_type || 'Unknown',
+          vehicle_plate: v.Vehicle_Plate,
+          vehicle_type: v.Vehicle_Type || 'Unknown',
           service_type: 'ต่อทะเบียน',
-          due_date: v.tax_expiry,
+          due_date: v.Tax_Expiry,
           days_until: daysUntil,
           status: daysUntil <= 0 ? 'overdue' : daysUntil <= 7 ? 'due_soon' : 'upcoming',
         })
@@ -135,14 +132,14 @@ export async function getMaintenanceSchedule(): Promise<MaintenanceScheduleData>
     }
 
     // Periodic service check (every 6 months or based on mileage)
-    if (v.last_service_date) {
-      const lastService = new Date(v.last_service_date)
+    if (v.Last_Service_Date) {
+      const lastService = new Date(v.Last_Service_Date)
       const nextService = new Date(lastService.getTime() + 180 * dayMs) // ~6 months
       const daysUntil = Math.ceil((nextService.getTime() - now.getTime()) / dayMs)
       
-      // Mileage check: If current_mileage > next_service_mileage OR within 1000km
-      const isMileageOverdue = v.next_service_mileage && v.current_mileage && v.current_mileage >= v.next_service_mileage
-      const isMileageSoon = v.next_service_mileage && v.current_mileage && (v.next_service_mileage - v.current_mileage) <= 1000
+      // Mileage check: If Current_Mileage > Next_Service_Mileage OR within 1000km
+      const isMileageOverdue = v.Next_Service_Mileage && v.Current_Mileage && v.Current_Mileage >= v.Next_Service_Mileage
+      const isMileageSoon = v.Next_Service_Mileage && v.Current_Mileage && (v.Next_Service_Mileage - v.Current_Mileage) <= 1000
 
       if (daysUntil <= 30 || isMileageSoon || isMileageOverdue) {
         let status: 'overdue' | 'due_soon' | 'upcoming' = 'upcoming'
@@ -150,14 +147,14 @@ export async function getMaintenanceSchedule(): Promise<MaintenanceScheduleData>
         else if (daysUntil <= 7 || isMileageSoon) status = 'due_soon'
 
         services.push({
-          vehicle_plate: v.vehicle_plate,
-          vehicle_type: v.vehicle_type || 'Unknown',
+          vehicle_plate: v.Vehicle_Plate,
+          vehicle_type: v.Vehicle_Type || 'Unknown',
           service_type: isMileageOverdue ? 'เซอร์วิส (ไมล์เกินกำหนด)' : isMileageSoon ? 'เซอร์วิส (ใกล้ถึงระยะ)' : 'เซอร์วิสตามระยะ',
           due_date: nextService.toISOString().split('T')[0],
           days_until: daysUntil,
           status,
-          last_service: v.last_service_date,
-          odometer: v.current_mileage,
+          last_service: v.Last_Service_Date,
+          odometer: v.Current_Mileage,
         })
       }
     }

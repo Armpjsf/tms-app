@@ -18,11 +18,11 @@ export async function getOperationalStats(branchId?: string, startDate?: string,
     const lastDay = formatDateSafe(endDate) || formatDateSafe(new Date(now.getFullYear(), now.getMonth() + 1, 0)) || ""
 
     let vehicleQuery = supabase
-        .from('master_vehicles') 
+        .from('Master_Vehicles') 
         .select('*', { count: 'exact', head: true })
     
     if (effectiveBranchId) {
-        vehicleQuery = vehicleQuery.eq('branch_id', effectiveBranchId)
+        vehicleQuery = vehicleQuery.eq('Branch_ID', effectiveBranchId)
     }
 
     const { count: totalVehicles } = await vehicleQuery
@@ -403,10 +403,10 @@ export async function getFleetComplianceMetrics(branchId?: string) {
         const supabase = await createAdminClient()
         const effectiveBranchId = await getEffectiveBranchId(branchId)
 
-        let query = supabase.from('master_vehicles').select('vehicle_plate, tax_expiry, insurance_expiry, act_expiry')
+        let query = supabase.from('Master_Vehicles').select('Vehicle_Plate, Tax_Expiry, Insurance_Expiry, Act_Expiry')
         
         if (effectiveBranchId) {
-            query = query.eq('branch_id', effectiveBranchId)
+            query = query.eq('Branch_ID', effectiveBranchId)
         }
 
         const { data, error } = await query
@@ -437,9 +437,9 @@ export async function getFleetComplianceMetrics(branchId?: string) {
                 if (diffDays <= 0) metrics[idx].status = 'expiredSoon'
             }
 
-            check(v.tax_expiry, 0)
-            check(v.insurance_expiry, 1)
-            check(v.act_expiry, 2)
+            check(v.Tax_Expiry, 0)
+            check(v.Insurance_Expiry, 1)
+            check(v.Act_Expiry, 2)
         })
 
         return metrics.map(m => ({
@@ -457,16 +457,16 @@ export async function getFleetHealthScore(branchId?: string) {
         const supabase = await createAdminClient()
         const effectiveBranchId = await getEffectiveBranchId(branchId)
 
-        let query = supabase.from('master_vehicles').select('active_status')
+        let query = supabase.from('Master_Vehicles').select('Active_Status')
         
         if (effectiveBranchId) {
-            query = query.eq('branch_id', effectiveBranchId)
+            query = query.eq('Branch_ID', effectiveBranchId)
         }
 
         const { data, error } = await query
         if (error || !data || data.length === 0) return 100
 
-        const active = data.filter(v => v.active_status === 'Active').length
+        const active = data.filter(v => v.Active_Status === 'Active').length
         return Math.round((active / data.length) * 100)
     } catch {
         return 100

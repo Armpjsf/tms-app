@@ -169,12 +169,7 @@ export async function getAllVehicles(page?: number, limit?: number, query?: stri
     
     console.log(`[DB] Fetching Vehicles: Client=${clientType}, BranchID=${branchId}, Page=${page}`)
 
-    let queryBuilder = supabase.from('Master_Vehicles').select(`
-      *,
-      Primary_Driver:Master_Drivers!Master_Vehicles_Driver_ID_fkey (
-        Full_Name
-      )
-    `, { count: 'exact' })
+    let queryBuilder = supabase.from('Master_Vehicles').select('*', { count: 'exact' })
     
     // Filtering logic
     if (isSuper || isAdminUser) {
@@ -212,13 +207,30 @@ export async function getAllVehicles(page?: number, limit?: number, query?: stri
       console.error(`[DB] Vehicle Fetch Error:`, error.message, error.code)
       return { data: [], count: 0 }
     }
-    
-    console.log(`[DB] Successfully fetched ${data?.length || 0} vehicles. Total count: ${count}`)
 
+    // Manual Driver Mapping (since PGRST relationship may not be defined)
+    const driverIds = Array.from(new Set(data?.map(v => v.Driver_ID).filter(Boolean)))
+    const driverMap = new Map<string, string>()
+    
+    if (driverIds.length > 0) {
+        const { data: drivers } = await supabase
+            .from('Master_Drivers')
+            .select('Driver_ID, Driver_Name')
+            .in('Driver_ID', driverIds)
+        
+        drivers?.forEach(d => {
+            if (d.Driver_ID && d.Driver_Name) {
+                driverMap.set(d.Driver_ID, d.Driver_Name)
+            }
+        })
+    }
+    
+    console.log(`[DB] Mapping ${driverMap.size} drivers to ${data?.length || 0} vehicles.`)
+    
     // Map joined driver name to the flat field
     const mappedData = (data || []).map((v: any) => ({
       ...v,
-      Primary_Driver_Name: v.Primary_Driver?.Full_Name
+      Primary_Driver_Name: driverMap.get(v.Driver_ID) || null
     }))
     
     return { data: mappedData, count: count || 0 }

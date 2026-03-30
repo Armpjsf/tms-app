@@ -359,13 +359,20 @@ export async function getFuelAnomalyAlerts(branchId?: string) {
     if (!logs || logs.length === 0) return []
 
     const plates = Array.from(new Set(logs.map(l => l.Vehicle_Plate)))
-    const { data: vehicles } = await supabase.from('master_vehicles').select('vehicle_plate, tank_capacity').in('vehicle_plate', plates)
-    const vMap = new Map(vehicles?.map(v => [v.vehicle_plate, v]) || [])
+    const { data: vehicles } = await supabase.from('Master_Vehicles').select('Vehicle_Plate, Tank_Capacity').in('Vehicle_Plate', plates)
+    const vMap = new Map(vehicles?.map(v => [v.Vehicle_Plate, v]) || [])
 
     return logs.filter(l => {
         const v = vMap.get(l.Vehicle_Plate)
-        return v && v.tank_capacity > 0 && l.Liters > v.tank_capacity * 1.05
-    }).map(l => ({ type: 'CRITICAL', category: 'Fuel Over-fill', plate: l.Vehicle_Plate, date: l.Date_Time, message: `เติมน้ำมัน ${l.Liters}L เกินความจุถัง (${vMap.get(l.Vehicle_Plate)?.tank_capacity}L)`, value: l.Liters })).slice(0, 10)
+        return v && v.Tank_Capacity > 0 && Number(l.Liters) > (v.Tank_Capacity || 0) * 1.05
+    }).map(l => ({ 
+        type: 'CRITICAL', 
+        category: 'Fuel Over-fill', 
+        plate: l.Vehicle_Plate, 
+        date: l.Date_Time, 
+        message: `เติมน้ำมัน ${l.Liters}L เกินความจุถัง (${vMap.get(l.Vehicle_Plate)?.Tank_Capacity}L)`, 
+        value: Number(l.Liters) 
+    })).slice(0, 10)
 }
 
 export async function getRevenueForecast(branchId?: string): Promise<{ month: string; actual?: number; forecast?: number }[]> {
