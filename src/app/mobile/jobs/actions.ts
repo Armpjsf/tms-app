@@ -2,8 +2,9 @@
 
 import { createAdminClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { notifyAdminJobStatus } from '@/lib/actions/push-actions'
 
-export async function updateJobStatus(jobId: string, status: string) {
+export async function updateJobStatus(jobId: string, status: string, driverId?: string) {
   try {
     const supabase = createAdminClient()
 
@@ -17,6 +18,22 @@ export async function updateJobStatus(jobId: string, status: string) {
 
     if (error) {
       return { success: false, message: `Failed to update status: ${error.message}` }
+    }
+
+    // 2. Push notify admin (fire-and-forget)
+    if (driverId) {
+      const { data: driver } = await supabase
+        .from('Master_Drivers')
+        .select('Driver_Name')
+        .eq('Driver_ID', driverId)
+        .single()
+      
+      notifyAdminJobStatus(
+        driverId,
+        driver?.Driver_Name || 'คนขับ',
+        jobId,
+        status
+      ).catch(() => {})
     }
 
     revalidatePath(`/mobile/jobs/${jobId}`)
