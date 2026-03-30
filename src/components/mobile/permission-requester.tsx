@@ -172,12 +172,18 @@ export function PermissionRequester({ driverId }: Props) {
           })
         })
 
-        if (res.ok) { /* Success */ }
-        else { /* Failed */ }
+        if (res.ok) { 
+            toast.success("ลงทะเบียนรับแจ้งเตือนเรียบร้อยแล้ว")
+        } else { 
+            const errData = await res.json().catch(() => ({}));
+            toast.error(`ลงทะเบียนไม่สำเร็จ: ${errData.error || 'Unknown error'}`)
+        }
 
         setShowPrompt(false)
       }
-    } catch {
+    } catch (err: any) {
+      console.error("Push subscription error:", err)
+      toast.error(`ข้อผิดพลาด: ${err.message || 'ไม่สามารถเปิดแจ้งเตือนได้'}`)
       setShowPrompt(false)
     }
   }

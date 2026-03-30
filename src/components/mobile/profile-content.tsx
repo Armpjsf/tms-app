@@ -49,7 +49,64 @@ export function ProfileContent({ session, score, unreadChatCount = 0 }: ProfileC
     }
   }
 
+  const handleSubscribePush = async () => {
+    try {
+      if (!("Notification" in window)) {
+        toast.error("เบราว์เซอร์นี้ไม่รองรับการแจ้งเตือน")
+        return
+      }
+
+      const result = await Notification.requestPermission()
+      if (result !== "granted") {
+        toast.error("คุณต้องอนุญาตการแจ้งเตือนก่อนใช้งาน")
+        return
+      }
+
+      const reg = await navigator.serviceWorker.ready
+      const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
+      if (!vapidKey) {
+        toast.error("ระบบขัดข้อง: VAPID Key Missing")
+        return
+      }
+
+      const urlBase64ToUint8Array = (base64String: string) => {
+        const padding = '='.repeat((4 - base64String.length % 4) % 4)
+        const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/')
+        const rawData = window.atob(base64)
+        const outputArray = new Uint8Array(rawData.length)
+        for (let i = 0; i < rawData.length; ++i) {
+          outputArray[i] = rawData.charCodeAt(i)
+        }
+        return outputArray
+      }
+
+      const subscription = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(vapidKey)
+      })
+
+      const res = await fetch('/api/push/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          driverId: session.driverId,
+          subscription: subscription.toJSON()
+        })
+      })
+
+      if (res.ok) {
+        toast.success("เปิดการแจ้งเตือนเรียบร้อยแล้ว!")
+      } else {
+        toast.error("บันทึกข้อมูลไม่สำเร็จ กรุณาลองใหม่อีกครั้ง")
+      }
+    } catch (error: any) {
+      console.error(error)
+      toast.error(error.message || "เกิดข้อผิดพลาดในการเปิดแจ้งเตือน")
+    }
+  }
+
   const menuItems = [
+    { icon: Bell, label: "เปิดรับการแจ้งเตือนงาน", action: handleSubscribePush, color: 'text-blue-500' },
     { icon: Fingerprint, label: "ลงทะเบียนสแกนนิ้ว/หน้า", action: handleRegisterBiometrics, color: 'text-primary' },
     { icon: LayoutGrid, label: "รับงานกลาง (ประมูล)", href: "/mobile/marketplace" },
     { icon: Star, label: "คะแนนและผลงาน", href: "/mobile/kpi" },
