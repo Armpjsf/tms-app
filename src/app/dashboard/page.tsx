@@ -5,54 +5,70 @@ import { DashboardClient } from "@/components/dashboard/dashboard-client"
 import { getExecutiveDashboardUnified } from "@/lib/supabase/financial-analytics"
 import { getSOSDriverIds } from "@/lib/supabase/sos"
 import { getCustomerName } from "@/lib/supabase/customers"
-import { getMarketplaceJobs } from "@/lib/supabase/jobs"
-import { getSystemLogs } from "@/lib/supabase/logs"
+import { getMarketplaceJobs, getTodayJobStats } from "@/lib/supabase/jobs"
+import { getDriverStats } from "@/lib/supabase/drivers"
 import { isCustomer, getCustomerId } from "@/lib/permissions"
 import { useEffect, useState, useCallback } from "react"
 import { useBranch } from "@/components/providers/branch-provider"
 import { useLanguage } from "@/components/providers/language-provider"
 
+interface DashboardData {
+  unified: any
+  sosIds: string[]
+  marketplaceJobs: any[]
+  customerMode: boolean
+  custId: string | null
+  custName: string | null
+  dailyStats: any
+  driverStats: any
+}
+
 export default function DashboardPage() {
   const { selectedBranch } = useBranch()
   const { t } = useLanguage()
-  const [data, setData] = useState<any | null>(null)
+  const [data, setData] = useState<DashboardData | null>(null)
   const [isInitialLoading, setIsInitialLoading] = useState(true)
-  const [isRefreshing, setIsRefreshing] = useState(false)
-
   const loadData = useCallback(async (isInitial = false) => {
     if (isInitial) setIsInitialLoading(true)
-    else setIsRefreshing(true)
     
     try {
       const currentBranchId = selectedBranch === 'All' ? undefined : selectedBranch
       
-      // Basic permissions can be fetched once or kept in Promise.all if they are fast
-      const [unified, sosIds, marketplaceJobs, logs, customerMode, custId] = await Promise.all([
+      const [unified, sosIds, marketplaceJobs, customerMode, custId, dailyStats, driverStats] = await Promise.all([
         getExecutiveDashboardUnified(currentBranchId),
         getSOSDriverIds(),
         getMarketplaceJobs(currentBranchId),
-        getSystemLogs({ branchId: currentBranchId, limit: 10 }),
         isCustomer(),
-        getCustomerId()
+        getCustomerId(),
+        getTodayJobStats(currentBranchId),
+        getDriverStats(currentBranchId)
       ])
 
-      let custName = custId;
+      let custName: string | null = custId;
       if (customerMode && custId) {
           custName = await getCustomerName(custId) || custId
       }
 
-      setData({ unified, sosIds, marketplaceJobs, logs, customerMode, custId, custName })
+      setData({ 
+        unified, 
+        sosIds, 
+        marketplaceJobs, 
+        customerMode, 
+        custId: custId || null, 
+        custName: custName || null, 
+        dailyStats: dailyStats || { total: 0, delivered: 0, inProgress: 0, pending: 0 }, 
+        driverStats: driverStats || { total: 0, active: 0, onJob: 0 } 
+      })
     } catch (error) {
       console.error("Dashboard data fetch error:", error)
     } finally {
       setIsInitialLoading(false)
-      setIsRefreshing(false)
     }
   }, [selectedBranch])
 
   useEffect(() => {
     loadData(true)
-  }, [selectedBranch]) // Only trigger on branch change, loadData handles the rest
+  }, [selectedBranch, loadData])
 
   if (isInitialLoading && !data) return (
     <DashboardLayout>
@@ -65,23 +81,9 @@ export default function DashboardPage() {
     </DashboardLayout>
   )
 
-  // Fallback if data is still null after loading
   if (!data) return null;
 
-  const { unified, sosIds, marketplaceJobs, logs, customerMode, custName } = data;
-
-  const jobStats = {
-    total: unified?.kpi?.jobs?.current ?? 0,
-    pending: unified?.statusDist?.find((s: any) => ['New', 'Requested', 'Assigned', 'Pending'].includes(s.name))
-                ? unified.statusDist.filter((s: any) => ['New', 'Requested', 'Assigned', 'Pending'].includes(s.name)).reduce((a: number, b: any) => a + b.value, 0)
-                : 0,
-    inProgress: unified?.statusDist?.find((s: any) => ['In Progress', 'In Transit', 'Active'].includes(s.name))
-                 ? unified.statusDist.filter((s: any) => ['In Progress', 'In Transit', 'Active'].includes(s.name)).reduce((a: number, b: any) => a + b.value, 0)
-                 : 0,
-    delivered: unified?.statusDist?.find((s: any) => ['Completed', 'Delivered', 'Finished', 'Closed'].includes(s.name))
-                  ? unified.statusDist.filter((s: any) => ['Completed', 'Delivered', 'Finished', 'Closed'].includes(s.name)).reduce((a: number, b: any) => a + b.value, 0)
-                  : 0
-  }
+  const { unified, sosIds, marketplaceJobs, customerMode, custName, dailyStats, driverStats } = data;
 
   return (
     <DashboardLayout>
@@ -89,12 +91,12 @@ export default function DashboardPage() {
         branchId={selectedBranch}
         customerMode={customerMode}
         userName={custName as string}
-        jobStats={jobStats}
+        jobStats={dailyStats}
+        driverStats={driverStats}
         sosCount={sosIds.length}
         weeklyStats={unified.trend ?? []}
         fleetStatus={[]}
         marketplaceJobs={marketplaceJobs ?? []}
-        logs={logs ?? []}
         fleetHealth={unified.kpi?.margin?.current ? Math.round(unified.kpi.margin.current + 80) : 98}
       />
     </DashboardLayout>

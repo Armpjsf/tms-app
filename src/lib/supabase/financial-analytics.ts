@@ -40,17 +40,26 @@ export async function getExecutiveDashboardUnified(branchId?: string) {
         filter_customer_id: finalCustomerId
     })
 
+    if (rpcError || !currentData) {
+        console.error('[getExecutiveDashboardUnified] get_executive_summary RPC Error:', {
+            message: rpcError?.message,
+            details: rpcError?.details,
+            hint: rpcError?.hint,
+            code: rpcError?.code
+        })
+        return { financial: { revenue: 0, cost: { total: 0 }, netProfit: 0 }, trend: [], statusDist: [], kpi: {} }
+    }
+
     // Get Previous Month Financials for Growth Calculation
-    const { data: prevData } = await supabase.rpc('get_dashboard_metrics', {
+    const { data: prevData, error: prevRpcError } = await supabase.rpc('get_dashboard_metrics', {
         start_date: sDatePrev,
         end_date: eDatePrev,
         filter_branch_id: effectiveBranchId || null,
         filter_customer_id: finalCustomerId
     })
 
-    if (rpcError || !currentData) {
-        console.error('[getExecutiveDashboardUnified] RPC Error:', rpcError)
-        return { financial: { revenue: 0, cost: { total: 0 }, netProfit: 0 }, trend: [], statusDist: [], kpi: {} }
+    if (prevRpcError) {
+        console.error('[getExecutiveDashboardUnified] get_dashboard_metrics RPC Error:', prevRpcError)
     }
 
     // 1. Process Financials

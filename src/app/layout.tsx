@@ -40,7 +40,7 @@ import { BranchProvider } from "@/components/providers/branch-provider";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { LanguageProvider } from "@/components/providers/language-provider";
 import { GlobalClientComponents } from "@/components/providers/global-client-components";
-import ErrorBoundary from "@/components/error-boundary";
+import { ErrorBoundary } from "@/components/error-boundary";
 
 export default function RootLayout({
   children,

@@ -9,7 +9,6 @@ import {
   Wrench,
   Users,
   Truck,
-  Activity,
   ShieldCheck,
   Zap
 } from "lucide-react"
@@ -19,15 +18,44 @@ import { getVehicleStats } from "@/lib/supabase/vehicles"
 import { getTodayFuelStats } from "@/lib/supabase/fuel"
 import { getRepairTicketStats } from "@/lib/supabase/maintenance"
 import { ReportBuilder } from "@/components/reports/report-builder"
+import { getSOSDriverIds } from "@/lib/supabase/sos"
+import { getSystemLogs } from "@/lib/supabase/logs"
+import { getExecutiveDashboardUnified } from "@/lib/supabase/financial-analytics"
+import { ActivityFeed } from "@/components/dashboard/activity-feed"
 
 export default async function ReportsPage() {
-  const [{ count: jobCount }, driverStats, vehicleStats, fuelStats, maintenanceStats] = await Promise.all([
+  const [
+    { count: jobCount }, 
+    driverStats, 
+    vehicleStats, 
+    fuelStats, 
+    maintenanceStats,
+    sosIds,
+    logs,
+    unified
+  ] = await Promise.all([
     getAllJobs(1, 1),
     getDriverStats(),
     getVehicleStats(),
     getTodayFuelStats(),
     getRepairTicketStats(),
+    getSOSDriverIds(),
+    getSystemLogs({ limit: 10 }),
+    getExecutiveDashboardUnified(),
   ])
+
+  const jobStats = {
+    total: unified?.kpi?.jobs?.current ?? 0,
+    pending: unified?.statusDist?.find((s: any) => ['New', 'Requested', 'Assigned', 'Pending'].includes(s.name))
+                ? unified.statusDist.filter((s: any) => ['New', 'Requested', 'Assigned', 'Pending'].includes(s.name)).reduce((a: number, b: any) => a + b.value, 0)
+                : 0,
+    inProgress: unified?.statusDist?.find((s: any) => ['In Progress', 'In Transit', 'Active'].includes(s.name))
+                 ? unified.statusDist.filter((s: any) => ['In Progress', 'In Transit', 'Active'].includes(s.name)).reduce((a: number, b: any) => a + b.value, 0)
+                 : 0,
+    delivered: unified?.statusDist?.find((s: any) => ['Completed', 'Delivered', 'Finished', 'Closed'].includes(s.name))
+                   ? unified.statusDist.filter((s: any) => ['Completed', 'Delivered', 'Finished', 'Closed'].includes(s.name)).reduce((a: number, b: any) => a + b.value, 0)
+                   : 0
+  }
 
   return (
     <DashboardLayout>
@@ -83,6 +111,20 @@ export default async function ReportsPage() {
         </div>
         <div className="glass-panel p-2 rounded-[4rem] border-border/5 bg-background/20 shadow-3xl">
             <ReportBuilder />
+        </div>
+      </div>
+
+      {/* Activity Log Section */}
+      <div className="mt-20 space-y-12">
+        <div className="flex items-center gap-4 mb-2">
+            <div className="w-1.5 h-10 bg-accent rounded-full shadow-[0_0_15px_rgba(182,9,0,0.8)]" />
+            <div>
+                <h3 className="text-3xl font-black text-foreground tracking-tighter uppercase font-display">System Activity Log</h3>
+                <p className="text-muted-foreground text-base font-bold font-black uppercase tracking-[0.4em] mt-1 italic">Real-time Operational Stream & Audit Trail</p>
+            </div>
+        </div>
+        <div className="glass-panel p-10 rounded-[4rem] border-border/5 bg-background/20 shadow-3xl">
+            <ActivityFeed jobStats={jobStats} sosCount={sosIds.length} logs={logs} />
         </div>
       </div>
 

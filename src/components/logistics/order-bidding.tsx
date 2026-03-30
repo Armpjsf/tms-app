@@ -5,9 +5,9 @@ import { motion, AnimatePresence } from "framer-motion"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardTitle } from "@/components/ui/card"
-import { Activity, Clock, MapPin, ArrowRight, Truck, Database, ChevronDown, CheckCircle2 } from "lucide-react"
+import { Activity, Clock, MapPin, ArrowRight, Truck, Database, ChevronDown, CheckCircle2, Trash2 } from "lucide-react"
 import { Job } from "@/lib/supabase/jobs"
-import { getBidsForJob, acceptBid, JobBid } from "@/lib/actions/marketplace-actions"
+import { getBidsForJob, acceptBid, cancelBiddingJob, JobBid } from "@/lib/actions/marketplace-actions"
 import { toast } from "sonner"
 import { useLanguage } from "@/components/providers/language-provider"
 
@@ -22,6 +22,7 @@ export function OrderBidding({ orders = [] }: OrderBiddingProps) {
     const [processingBid, setProcessingBid] = useState<string | null>(null)
     const [processingJobId, setProcessingJobId] = useState<string | null>(null)
     const [acceptedJobIds, setAcceptedJobIds] = useState<Set<string>>(new Set())
+    const [cancellingJobId, setCancellingJobId] = useState<string | null>(null)
     const [refreshTrigger] = useState(0)
 
     // Derived states
@@ -79,12 +80,28 @@ export function OrderBidding({ orders = [] }: OrderBiddingProps) {
             } else {
                 toast.error(result.message)
             }
-        } catch (err) {
-            console.error('Accept bid error:', err)
-            toast.error(t('common.error'))
         } finally {
             setProcessingBid(null)
             setProcessingJobId(null)
+        }
+    }
+
+    const handleDelete = async (jobId: string) => {
+        if (!confirm(t('logistics.confirm_cancel_market', { id: jobId }))) return
+        
+        setCancellingJobId(jobId)
+        try {
+            const result = await cancelBiddingJob(jobId)
+            if (result.success) {
+                toast.success(result.message)
+                setAcceptedJobIds(prev => new Set(prev).add(jobId))
+            } else {
+                toast.error(result.message)
+            }
+        } catch {
+            toast.error(t('common.error'))
+        } finally {
+            setCancellingJobId(null)
         }
     }
 
@@ -176,11 +193,25 @@ export function OrderBidding({ orders = [] }: OrderBiddingProps) {
                                                     </>
                                                 )}
                                             </div>
-                                            <button 
-                                                className={`h-10 px-4 rounded-xl font-bold text-lg font-bold gap-2 border border-gray-200 hover:bg-gray-100 flex items-center ${expandedJobId === order.Job_ID ? 'bg-gray-100' : ''}`}
-                                            >
-                                                {t('logistics.view_bids')} <ChevronDown size={14} className={`transition-transform ${expandedJobId === order.Job_ID ? 'rotate-180' : ''}`} />
-                                            </button>
+                                            <div className="flex items-center gap-2">
+                                                <button 
+                                                    onClick={(e) => { e.stopPropagation(); handleDelete(order.Job_ID); }}
+                                                    disabled={cancellingJobId === order.Job_ID}
+                                                    className="w-10 h-10 rounded-xl flex items-center justify-center text-rose-500 hover:bg-rose-50 border border-rose-100 transition-colors disabled:opacity-50"
+                                                    title={t('common.delete')}
+                                                >
+                                                    {cancellingJobId === order.Job_ID ? (
+                                                        <div className="w-4 h-4 border-2 border-rose-500 border-t-transparent rounded-full animate-spin" />
+                                                    ) : (
+                                                        <Trash2 size={18} />
+                                                    )}
+                                                </button>
+                                                <button 
+                                                    className={`h-10 px-4 rounded-xl font-bold text-lg font-bold gap-2 border border-gray-200 hover:bg-gray-100 flex items-center transition-all ${expandedJobId === order.Job_ID ? 'bg-gray-100 ring-2 ring-primary/20' : ''}`}
+                                                >
+                                                    {t('logistics.view_bids')} <ChevronDown size={14} className={`transition-transform duration-300 ${expandedJobId === order.Job_ID ? 'rotate-180' : ''}`} />
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
 

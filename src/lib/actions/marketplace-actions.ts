@@ -233,3 +233,54 @@ export async function acceptBid(jobId: string, bidId: string, driverId: string, 
 
     return { success: true, message: 'ยืนยันเลือกคนขับรถสำเร็จ งานถูกส่งให้คนขับแล้ว!' }
 }
+
+// ฝั่งแอดมิน: ยกเลิกงานที่รอประมูล (กรณีลูกค้ายกเลิกแผน)
+export async function cancelBiddingJob(jobId: string) {
+    const supabase = createAdminClient()
+
+    try {
+        // 1. ตรวสอบสถานะก่อนลบ (ต้องยังไม่มีคนรับงาน)
+        const { data: job } = await supabase
+            .from('Jobs_Main')
+            .select('Driver_ID, Job_Status')
+            .eq('Job_ID', jobId)
+            .single()
+
+        if (job?.Driver_ID) {
+            return { success: false, message: 'ไม่สามารถยกเลิกได้ เนื่องจากมีคนรับงานไปแล้ว' }
+        }
+
+        // 2. อัปเดตสถานะเป็น Cancelled
+        const { error } = await supabase
+            .from('Jobs_Main')
+            .update({ Job_Status: 'Cancelled' })
+            .eq('Job_ID', jobId)
+
+        if (error) {
+            console.error('Cancel bidding job error:', error)
+            return { success: false, message: 'เกิดข้อผิดพลาดในการยกเลิกงาน' }
+        }
+
+        // 3. ปฏิเสธการประมูลที่มีอยู่ทั้งหมด (ถ้ามี)
+        await supabase
+            .from('Job_Bids')
+            .update({ status: 'Rejected' })
+            .eq('job_id', jobId)
+
+        await logActivity({
+            module: 'Jobs',
+            action_type: 'UPDATE', // Use UPDATE as it's a status change
+            target_id: jobId,
+            details: { description: `Admin cancelled bidding job ${jobId} (Customer cancelled plan)` }
+        })
+
+        revalidatePath('/dashboard')
+        revalidatePath('/planning')
+        revalidatePath('/mobile/marketplace')
+
+        return { success: true, message: 'ยกเลิกรายการประมูลเรียบร้อยแล้ว' }
+    } catch (err) {
+        console.error('Cancel bidding job exception:', err)
+        return { success: false, message: 'ระบบขัดข้อง ไม่สามารถดำเนินการได้' }
+    }
+}

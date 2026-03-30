@@ -1,18 +1,20 @@
+"use client"
+
 import { useState } from "react"
 import { motion, Variants } from "framer-motion"
 import {
-  AlertTriangle,
-  CheckCircle2,
   Activity,
   TrendingUp,
   Truck,
   Leaf,
-  LayoutGrid
+  LayoutGrid,
+  CheckCircle2,
+  AlertTriangle
 } from "lucide-react"
 import { WeeklyShipmentChart } from "@/components/dashboard/charts/weekly-shipment-chart"
-import { ActivityFeed } from "@/components/dashboard/activity-feed"
 import { DashboardMap } from "@/components/dashboard/dashboard-map"
 import { OrderBidding } from "@/components/logistics/order-bidding"
+import { DailySummary } from "@/components/dashboard/daily-summary"
 import { Job } from "@/lib/supabase/jobs"
 import { cn } from "@/lib/utils"
 import { useLanguage } from "@/components/providers/language-provider"
@@ -49,9 +51,14 @@ interface DashboardClientProps {
     userName?: string | null
     jobStats: {
         total: number
-        pending: number
-        inProgress: number
         delivered: number
+        inProgress: number
+        pending: number
+    }
+    driverStats: {
+        total: number
+        active: number
+        onJob: number
     }
     sosCount: number
     weeklyStats: {
@@ -61,7 +68,6 @@ interface DashboardClientProps {
     }[]
     fleetStatus: DriverStatus[] 
     marketplaceJobs: Job[]
-    logs?: any[]
     fleetHealth: number
 }
 
@@ -70,11 +76,11 @@ export function DashboardClient({
     customerMode, 
     userName,
     jobStats, 
-    sosCount, 
+    driverStats,
+    sosCount,
     weeklyStats, 
     fleetStatus,
     marketplaceJobs,
-    logs,
     fleetHealth
 }: DashboardClientProps) {
     const { t } = useLanguage()
@@ -120,7 +126,7 @@ export function DashboardClient({
                             onClick={() => setIsRequestDialogOpen(true)}
                             className="h-16 px-12 bg-primary hover:bg-primary/90 text-foreground font-bold uppercase tracking-[0.2em] transition-all shadow-[0_20px_40px_rgba(255,30,133,0.3)] active:scale-95 border border-primary/30"
                         >
-                            {t('navigation.request_mission')}
+                            Today&apos;s Mission
                         </button>
                     )}
                     <div className="h-16 px-8 glass-panel rounded-3xl flex items-center gap-6 border-border/5 shadow-2xl">
@@ -131,6 +137,16 @@ export function DashboardClient({
                         <Activity className="text-accent" size={28} />
                     </div>
                 </div>
+            </div>
+
+            {/* 1. Bento Grid Tactical Summary (NEW) */}
+            <div className="w-full">
+                <DailySummary 
+                    stats={jobStats} 
+                    driverStats={driverStats}
+                    biddingCount={marketplaceJobs.length}
+                    sosCount={sosCount}
+                />
             </div>
 
             {/* Tactical Grid */}
@@ -154,9 +170,9 @@ export function DashboardClient({
                     <div className="absolute inset-0 pointer-events-none shadow-[inset_0_0_120px_rgba(0,0,0,0.6)]" />
                 </motion.div>
 
-                {/* 2. Tactical Metrics (Right) */}
+                {/* 2. Operational KPIs (Right) */}
                 <div className="lg:col-span-4 space-y-8 flex flex-col">
-                    {/* Performance Score */}
+                    {/* Performance Analytics Column */}
                     <motion.div variants={item} className="flex-1 glass-panel rounded-[4rem] p-12 flex flex-col justify-center items-center text-center group border-border/5 hover:border-primary/20 transition-all">
                         <div className="w-28 h-28 rounded-[2.5rem] bg-accent/10 flex items-center justify-center mb-8 border border-accent/20 group-hover:scale-110 group-hover:bg-accent/20 transition-all duration-700 shadow-xl shadow-accent/5">
                             <CheckCircle2 className="text-accent w-14 h-14" strokeWidth={2.5} />
@@ -187,7 +203,7 @@ export function DashboardClient({
                             <p className="text-lg font-bold font-black text-muted-foreground uppercase tracking-widest">{t('navigation.planning')}</p>
                             <div className="flex items-end justify-between">
                                 <p className="text-6xl font-black text-foreground tracking-tighter">{jobStats?.inProgress || 0}</p>
-                                <Truck size={24} className="text-primary" />
+                                <CheckCircle2 size={24} className="text-primary" />
                             </div>
                         </motion.div>
                     </div>
@@ -226,7 +242,7 @@ export function DashboardClient({
                 </motion.div>
 
                 {/* 4. ANALYTICS & MARKETPLACE */}
-                <motion.div variants={item} className="lg:col-span-7 space-y-8">
+                <motion.div variants={item} className="lg:col-span-12 space-y-8">
                     {!customerMode && (
                         <div className="glass-panel rounded-[3.5rem] overflow-hidden p-2 border-primary/10 shadow-[0_20px_50px_rgba(255,30,133,0.05)]">
                             <OrderBidding orders={marketplaceJobs} />
@@ -248,24 +264,7 @@ export function DashboardClient({
                         </div>
                     </div>
                 </motion.div>
-
-                <motion.div variants={item} className="lg:col-span-5">
-                    <div className="glass-panel rounded-[3.5rem] h-full p-10 flex flex-col border-border/5 hover:border-primary/20 transition-all">
-                        <div className="flex items-center justify-between mb-10">
-                            <h3 className="text-2xl font-black text-foreground tracking-tight flex items-center gap-4">
-                                <div className="p-3 bg-accent/20 rounded-2xl text-accent shadow-lg shadow-accent/10">
-                                    <Activity size={24} />
-                                </div>
-                                {t('dashboard.operational_stream')}
-                            </h3>
-                        </div>
-                        <div className="flex-1 overflow-y-auto custom-scrollbar pr-4 text-muted-foreground">
-                            <ActivityFeed jobStats={jobStats} sosCount={sosCount} logs={logs} />
-                        </div>
-                    </div>
-                </motion.div>
             </motion.div>
         </div>
     )
 }
-
