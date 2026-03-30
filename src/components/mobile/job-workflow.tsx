@@ -11,16 +11,16 @@ interface JobWorkflowProps {
 }
 
 const STEPS: { status: JobStep; label: string; icon: React.ElementType; description: string }[] = [
-  { status: 'Accepted', label: 'ASSIGNED', icon: ShieldCheck, description: 'Mission briefing received' },
-  { status: 'Arrived Pickup', label: 'ORIGIN', icon: MapPin, description: 'Secure payload at base' },
-  { status: 'In Transit', label: 'TRANSIT', icon: Truck, description: 'Tactical deployment underway' },
-  { status: 'Arrived Dropoff', label: 'TARGET', icon: MapPin, description: 'Securing drop zone' },
-  { status: 'Completed', label: 'DELIVERED', icon: Package, description: 'Mission success verified' }
+  { status: 'Accepted', label: 'รับงาน', icon: ShieldCheck, description: 'ยืนยันรับภารกิจ' },
+  { status: 'Arrived Pickup', label: 'จุดรับ', icon: MapPin, description: 'ถึงจุดรับสินค้า' },
+  { status: 'In Transit', label: 'ขนส่ง', icon: Truck, description: 'กำลังเดินทาง' },
+  { status: 'Arrived Dropoff', label: 'จุดส่ง', icon: MapPin, description: 'ถึงจุดหมาย' },
+  { status: 'Completed', label: 'สำเร็จ', icon: Package, description: 'ส่งมอบเรียบร้อย' }
 ]
 
 export function JobWorkflow({ currentStatus, className }: JobWorkflowProps) {
   // Normalize status
-  const normalizedStatus = currentStatus === 'New' || currentStatus === 'Assigned' ? 'Pending' : currentStatus as JobStep
+  const normalizedStatus = (currentStatus === 'New' || currentStatus === 'Assigned') ? 'Pending' : currentStatus as JobStep
   
   const getStepIndex = (status: string) => {
     if (status === 'Pending') return -1
@@ -59,7 +59,7 @@ export function JobWorkflow({ currentStatus, className }: JobWorkflowProps) {
                 <StepIcon size={20} className={isActive ? "animate-bounce" : ""} />
               </div>
               <p className={cn(
-                "mt-3 text-base font-bold font-black text-center uppercase tracking-widest transition-colors duration-500",
+                "mt-3 text-[10px] font-bold font-black text-center uppercase tracking-widest transition-colors duration-500",
                 isCompleted || isActive ? "text-white" : "text-muted-foreground"
               )}>
                 {step.label}
@@ -76,13 +76,13 @@ export function JobWorkflow({ currentStatus, className }: JobWorkflowProps) {
              <Clock className="text-primary animate-spin-slow" size={18} />
           </div>
           <div className="space-y-1">
-            <p className="text-base font-bold font-black text-primary uppercase tracking-[0.3em]">Current Protocol:</p>
+            <p className="text-base font-bold font-black text-primary uppercase tracking-[0.3em]">ขั้นตอนปัจจุบัน:</p>
             <p className="text-lg font-bold text-muted-foreground font-bold leading-relaxed">
-               {currentIndex === -1 ? 'New mission detected. Tap "ACCEPT MISSION" to engage deployment protocols.' : 
-                currentIndex === 0 ? 'Asset transit initiated. Proceed to ORIGIN point and secure the payload.' :
-                currentIndex === 1 ? 'Payload reached. Verify cargo integrity, document assets, and clear for transit.' :
-                currentIndex === 2 ? 'Mission in critical path. Navigate to TARGET drop zone and ensure secure arrival.' :
-                'Drop zone reached. Finalize delivery, collect biometric signatures, and close mission file.'}
+               {currentIndex === -1 ? 'ตรวจพบงานใหม่ กรุณากด "รับงาน" เพื่อเริ่มเข้าสู่ระบบการขนส่ง' : 
+                currentIndex === 0 ? 'ยืนยันรับงานเรียบร้อย กรุณาเดินทางไปยังจุดรับสินค้าและแจ้งระบบเมื่อถึงที่หมาย' :
+                currentIndex === 1 ? 'ถึงจุดรับสินค้าแล้ว กรุณาตรวจสอบความถูกต้อง ถ่ายรูปสินค้า และกดออกเดินทาง' :
+                currentIndex === 2 ? 'กำลังอยู่ระหว่างการขนส่ง กรุณานำทางไปยังจุดหมายปลายทางและแจ้งระบบเมื่อถึง' :
+                'ถึงจุดหมายแล้ว กรุณาทำการส่งมอบ ถ่ายรูปหลักฐาน และให้ลูกค้าเซ็นชื่อเพื่อจบงาน'}
             </p>
           </div>
         </div>
@@ -90,4 +90,3 @@ export function JobWorkflow({ currentStatus, className }: JobWorkflowProps) {
     </div>
   )
 }
-

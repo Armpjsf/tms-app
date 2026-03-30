@@ -22,20 +22,16 @@ export function RouteStrip({ origin, destination, destinations, distanceKm, stat
   const isCompleted = status === 'Completed'
 
   return (
-    <div className="glass-panel border-border/5 rounded-[2.5rem] p-6 shadow-2xl relative overflow-hidden">
-      <div className="absolute top-0 right-0 p-6 text-primary/5 pointer-events-none">
-          <Navigation size={60} />
-      </div>
-
+    <div className="bg-muted/20 border border-border/5 rounded-3xl p-6 relative overflow-hidden">
       {/* Distance / ETA Status */}
       <div className="flex items-center gap-2 mb-6 px-1">
         <Navigation size={14} className={isCompleted ? "text-emerald-400" : "text-primary"} />
-        <span className="text-base font-bold font-black uppercase tracking-[0.2em] text-muted-foreground">
-          Mission Path Tracking
+        <span className="text-xs font-bold font-black uppercase tracking-[0.2em] text-muted-foreground">
+          ติดตามเส้นทางจัดส่ง
         </span>
         {distanceKm && (
-            <span className="text-lg font-bold font-black text-primary ml-auto flex items-center gap-1.5">
-                {distanceKm} KM <span className="opacity-40 tracking-tighter">REMAINING</span>
+            <span className="text-base font-bold font-black text-primary ml-auto flex items-center gap-1.5">
+                {distanceKm} กม. <span className="opacity-40 tracking-tighter text-[10px]">คงเหลือ</span>
             </span>
         )}
       </div>
@@ -45,7 +41,7 @@ export function RouteStrip({ origin, destination, destinations, distanceKm, stat
         {/* Origin dot */}
         <div className="relative">
             <div className="w-3.5 h-3.5 rounded-full bg-primary ring-4 ring-primary/10 shrink-0 shadow-[0_0_10px_rgba(255,30,133,0.5)]" />
-            <div className="absolute -inset-1.5 bg-primary/20 rounded-full animate-ping" />
+            {!isCompleted && <div className="absolute -inset-1.5 bg-primary/20 rounded-full animate-ping" />}
         </div>
 
         {/* Tactical Timeline */}
@@ -94,20 +90,19 @@ export function RouteStrip({ origin, destination, destinations, distanceKm, stat
       {/* Location Labels */}
       <div className="grid grid-cols-2 gap-8">
         <div className="space-y-1">
-          <p className="text-base font-bold font-black uppercase tracking-[0.2em] text-primary">Origin</p>
-          <p className="text-foreground font-bold leading-tight line-clamp-2">
-            {origin || 'WAREHOUSE BASE'}
+          <p className="text-[10px] font-bold font-black uppercase tracking-[0.2em] text-primary">ต้นทาง</p>
+          <p className="text-foreground font-bold text-base leading-tight line-clamp-2">
+            {origin || 'ศูนย์กระจายสินค้า'}
           </p>
         </div>
 
         <div className="space-y-1 text-right">
-          <p className="text-base font-bold font-black uppercase tracking-[0.2em] text-muted-foreground">Destination</p>
-          <p className="text-foreground font-bold leading-tight line-clamp-2">
-            {destination || (isMultiStop ? destinations[destinations.length - 1].name : 'TACTICAL DROP')}
+          <p className="text-[10px] font-bold font-black uppercase tracking-[0.2em] text-muted-foreground">ปลายทาง</p>
+          <p className="text-foreground font-bold text-base leading-tight line-clamp-2">
+            {destination || (isMultiStop ? destinations[destinations.length - 1].name : 'จุดหมาย')}
           </p>
         </div>
       </div>
     </div>
   )
 }
-
