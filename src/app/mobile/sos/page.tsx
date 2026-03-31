@@ -14,6 +14,7 @@ export default async function MobileSOSPage() {
       driverId={session.driverId}
       driverName={session.driverName || "คนขับ"}
       driverPhone={driver?.Mobile_No || ""}
+      branchId={session.branchId || ""}
     />
   )
 }

@@ -13,9 +13,10 @@ type Props = {
   driverId: string
   driverName: string
   driverPhone: string
+  branchId: string
 }
 
-export function SOSPageClient({ driverId, driverName, driverPhone }: Props) {
+export function SOSPageClient({ driverId, driverName, driverPhone, branchId }: Props) {
   const [profile, setProfile] = useState<CompanyProfile | null>(null)
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null)
   const [address, setAddress] = useState<string>("กำลังค้นหาพิกัด...")
@@ -61,7 +62,7 @@ export function SOSPageClient({ driverId, driverName, driverPhone }: Props) {
     if (driverId && !sosNotifyRef.current) {
       sosNotifyRef.current = true
       setSosSent(true)
-      notifyAdminSOS(driverId, driverName, number).catch(e => console.error("SOS Background error:", e))
+      notifyAdminSOS(driverId, driverName, number, branchId).catch(e => console.error("SOS Background error:", e))
     }
     
     // Trigger dialer immediately
@@ -79,7 +80,8 @@ export function SOSPageClient({ driverId, driverName, driverPhone }: Props) {
             driverPhone, 
             location?.lat, 
             location?.lng, 
-            address
+            address,
+            branchId
         )
         setSosSent(true)
     } catch (e) {

@@ -288,8 +288,36 @@ export async function notifyDriverNewChat(driverId: string, message: string) {
 // ─────────────────────────────────────────────
 // Notify: Driver SOS → Push to All Admins
 // ─────────────────────────────────────────────
-export async function notifyAdminSOS(driverId: string, driverName: string, driverPhone?: string) {
-    // 1. Fire Push to Admins
+export async function notifyAdminSOS(driverId: string, driverName: string, driverPhone?: string, branchId?: string) {
+    // 1. Update Database (Mark Current Job as SOS)
+    try {
+        const adminSupabase = createAdminClient()
+        // Find current active job for this driver
+        const today = new Date().toISOString().split('T')[0]
+        const { data: currentJobs } = await adminSupabase
+            .from('Jobs_Main')
+            .select('Job_ID')
+            .eq('Driver_ID', driverId)
+            .eq('Plan_Date', today)
+            .in('Job_Status', ['Pending', 'Confirmed', 'In Progress', 'In Transit', 'Picked Up'])
+            .order('Created_At', { ascending: false })
+            .limit(1)
+        
+        if (currentJobs && currentJobs.length > 0) {
+            await adminSupabase
+                .from('Jobs_Main')
+                .update({ 
+                    Job_Status: 'SOS',
+                    Failed_Reason: 'Operator triggered SOS Call',
+                    Failed_Time: new Date().toISOString()
+                })
+                .eq('Job_ID', currentJobs[0].Job_ID)
+        }
+    } catch (dbErr) {
+        console.error("[SOS] DB Update failed:", dbErr)
+    }
+
+    // 2. Fire Push to Admins
     await sendPushToAdmins({
         title: `🆘 SOS! ${driverName || 'คนขับ'}`,
         body: `${driverName} กดปุ่มฉุกเฉิน — กดเพื่อดูตำแหน่งและโทรทันที`,
@@ -303,11 +331,13 @@ export async function notifyAdminSOS(driverId: string, driverName: string, drive
         ]
     })
 
-    // 2. Log Activity (Critical for Admin Alert Center)
+    // 3. Log Activity (Critical for Admin Alert Center)
     await logActivity({
         module: 'Jobs', 
         action_type: 'UPDATE',
         target_id: driverId,
+        branch_id: branchId,
+        username: driverName,
         details: {
             alert_type: 'SOS',
             driver_name: driverName,
@@ -350,7 +380,8 @@ export async function notifySilentSOS(
     driverPhone?: string,
     lat?: number,
     lng?: number,
-    address?: string
+    address?: string,
+    branchId?: string
 ) {
     const locationStr = (lat && lng) ? `${lat.toFixed(6)}, ${lng.toFixed(6)}` : 'ไม่ทราบพิกัด'
     const alertMessage = `🚨 ฉุกเฉิน! ${driverName} แจ้งเหตุ (ไม่สะดวกคุย)
@@ -358,7 +389,36 @@ export async function notifySilentSOS(
 📍 พิกัด: ${locationStr}
 🏠 ที่อยู่: ${address || 'N/A'}`
 
-    // 1. Create Notification (CRITICAL - Await this first)
+    // 1. Update Database (Mark Current Job as SOS)
+    try {
+        const adminSupabase = createAdminClient()
+        const today = new Date().toISOString().split('T')[0]
+        const { data: currentJobs } = await adminSupabase
+            .from('Jobs_Main')
+            .select('Job_ID')
+            .eq('Driver_ID', driverId)
+            .eq('Plan_Date', today)
+            .in('Job_Status', ['Pending', 'Confirmed', 'In Progress', 'In Transit', 'Picked Up'])
+            .order('Created_At', { ascending: false })
+            .limit(1)
+        
+        if (currentJobs && currentJobs.length > 0) {
+            await adminSupabase
+                .from('Jobs_Main')
+                .update({ 
+                    Job_Status: 'SOS',
+                    Failed_Reason: `Silent SOS: ${address || 'No address'}`,
+                    Failed_Time: new Date().toISOString(),
+                    Delivery_Lat: lat,
+                    Delivery_Lon: lng
+                })
+                .eq('Job_ID', currentJobs[0].Job_ID)
+        }
+    } catch (dbErr) {
+        console.error("[SOS] Silent DB Update failed:", dbErr)
+    }
+
+    // 2. Create Notification (For Driver Bell Icon)
     try {
         const supabase = await createAdminClient()
         await supabase
@@ -375,8 +435,8 @@ export async function notifySilentSOS(
         console.error("[SOS] Database notification failed (Critical):", dbErr)
     }
 
-    // 2. Fire Push to Admins (Optional / Background)
-    sendPushToAdmins({
+    // 3. Fire Push to Admins
+    await sendPushToAdmins({
         title: `🆘 SOS! ${driverName}`,
         body: alertMessage.slice(0, 200),
         url: `/monitoring?driver=${driverId}`,
@@ -389,11 +449,13 @@ export async function notifySilentSOS(
         ]
     }).catch(pushErr => console.error("[SOS] Background push failed:", pushErr))
 
-    // 3. Log Activity (Background)
-    logActivity({
+    // 4. Log Activity (Critical for Admin Alert Center)
+    await logActivity({
         module: 'Jobs', 
         action_type: 'UPDATE',
         target_id: driverId,
+        branch_id: branchId,
+        username: driverName,
         details: {
             alert_type: 'SILENT_SOS',
             driver_name: driverName,
