@@ -1,6 +1,7 @@
 "use client"
 
-import { Bell, AlertTriangle, ShieldAlert, Wrench, FileWarning, Truck, ArrowLeft, Activity, Target, Zap } from "lucide-react"
+import { useState, useEffect } from "react"
+import { Bell, AlertTriangle, ShieldAlert, Wrench, FileWarning, Truck, ArrowLeft, Activity, Target, Zap, Monitor, CheckCircle2, Info } from "lucide-react"
 import Link from "next/link"
 import { PremiumCard } from "@/components/ui/premium-card"
 import { cn } from "@/lib/utils"
@@ -44,8 +45,37 @@ const TYPE_LABELS = {
   maintenance: "notifications.lifecycle_service",
 }
 
-export function NotificationsClient({ alerts = [] }: any) {
+export function NotificationsClient({ alerts = [] }: { alerts: any[] }) {
+  const [pushStatus, setPushStatus] = useState<string>(typeof window !== 'undefined' ? Notification.permission : 'default')
+  const [isRegistering, setIsRegistering] = useState(false)
   const { t } = useLanguage()
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'Notification' in window) {
+      setPushStatus(Notification.permission)
+    }
+  }, [])
+
+  const handleEnablePush = async () => {
+    if (typeof window === 'undefined' || !('Notification' in window)) return
+    
+    setIsRegistering(true)
+    try {
+      const permission = await Notification.requestPermission()
+      setPushStatus(permission)
+      
+      if (permission === 'granted') {
+        await navigator.serviceWorker.register('/sw.js', { scope: '/' })
+        await navigator.serviceWorker.ready
+        
+        // Reload to trigger subscription flow if needed
+        window.location.reload()
+      }
+    } finally {
+      setIsRegistering(false)
+    }
+  }
+
   const criticalCount = alerts?.filter((a: any) => a.severity === 'critical').length || 0
   const warningCount = alerts?.filter((a: any) => a.severity === 'warning').length || 0
   const infoCount = alerts?.filter((a: any) => a.severity === 'info').length || 0
@@ -98,40 +128,81 @@ export function NotificationsClient({ alerts = [] }: any) {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
         {[
           { label: t('navigation.sos'), count: criticalCount, icon: AlertTriangle, color: "rose" },
-          { label: t('navigation.notifications'), count: warningCount, icon: Bell, color: "amber" },
-          { label: t('navigation.monitoring'), count: infoCount, icon: Zap, color: "blue" },
+          { label: t('notifications.warning'), count: warningCount, icon: Zap, color: "amber" },
+          { label: t('notifications.protocol'), count: infoCount, icon: Target, color: "blue" },
         ].map((stat, idx) => (
           <PremiumCard key={idx} className={cn(
-             "bg-background p-8 relative overflow-hidden group border-2 transition-all duration-500",
-             stat.color === 'rose' ? 'border-rose-500/20 hover:border-rose-500/50' : 
-             stat.color === 'amber' ? 'border-amber-500/20 hover:border-amber-500/50' : 
-             'border-blue-500/20 hover:border-blue-500/50'
+             "p-8 group/stat",
+             stat.color === 'rose' ? "border-rose-500/20" : stat.color === 'amber' ? "border-amber-500/20" : "border-blue-500/20"
           )}>
-            <div className="flex items-center gap-6">
+            <div className="flex items-center justify-between gap-4">
               <div className={cn(
-                "p-5 rounded-3xl text-foreground shadow-2xl transition-all duration-500 group-hover:scale-110",
-                stat.color === 'rose' ? 'bg-rose-500 shadow-rose-500/20' : 
-                stat.color === 'amber' ? 'bg-amber-500 shadow-amber-500/20' : 
-                'bg-blue-500 shadow-blue-500/20'
+                "p-4 rounded-2xl flex items-center justify-center transition-all duration-500",
+                stat.color === 'rose' ? "bg-rose-500/10 text-rose-500 group-hover/stat:bg-rose-500 group-hover/stat:text-white" :
+                stat.color === 'amber' ? "bg-amber-500/10 text-amber-500 group-hover/stat:bg-amber-500 group-hover/stat:text-white" :
+                "bg-blue-500/10 text-blue-500 group-hover/stat:bg-blue-500 group-hover/stat:text-white"
               )}>
                 <stat.icon size={28} />
               </div>
-              <div className="space-y-1">
-                <p className="text-4xl font-black text-foreground italic tracking-tighter">{stat.count}</p>
-                <p className={cn(
-                    "text-base font-bold font-black uppercase tracking-[0.4em] leading-none",
-                    stat.color === 'rose' ? 'text-rose-500' : 
-                    stat.color === 'amber' ? 'text-amber-500' : 
-                    'text-blue-500'
-                )}>{stat.label}</p>
+              <div className="text-right">
+                <p className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest mb-1">{stat.label}</p>
+                <p className="text-5xl font-black text-foreground italic leading-none">{stat.count}</p>
               </div>
             </div>
           </PremiumCard>
         ))}
       </div>
 
-      {/* Alert Groups */}
-      <div className="space-y-10">
+      {/* Desktop Alerts Setup */}
+      <PremiumCard className="p-10 border-blue-500/30 bg-blue-500/[0.03] overflow-hidden relative group/alerts">
+         <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/5 blur-[80px] rounded-full -mr-32 -mt-32 pointer-events-none group-hover/alerts:bg-blue-500/10 transition-all duration-700" />
+         
+         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-8 relative z-10">
+            <div className="flex gap-6 max-w-2xl">
+               <div className="p-5 bg-blue-500/10 rounded-[2rem] border border-blue-500/20 text-blue-400 group-hover/alerts:scale-110 transition-transform">
+                  <Monitor size={44} strokeWidth={1.5} />
+               </div>
+               <div>
+                  <h3 className="text-3xl font-black text-foreground uppercase tracking-[0.1em] mb-3 italic">การตั้งค่าแจ้งเตือนบนหน้าจอ (Desktop Alerts)</h3>
+                  <p className="text-lg font-bold text-muted-foreground leading-relaxed">
+                    เปิดรับการแจ้งเตือนแบบ Pop-up บน Windows/Mac เพื่อให้คุณเห็นเหตุการณ์ <span className="text-rose-400">SOS</span> หรือ <span className="text-blue-400">แชทจากคนขับ</span> ได้ทันที แม้จะทำงานในโปรแกรมอื่นอยู่ก็ตาม
+                  </p>
+                  
+                  <div className="mt-6 flex flex-wrap gap-4">
+                     <div className="flex items-center gap-2 px-4 py-2 bg-background/50 border border-border/50 rounded-xl text-sm font-bold text-muted-foreground italic">
+                        <Info size={14} /> 
+                        แนะนำ: ปิดโหมด Focus Assist ใน Windows เพื่อรับแจ้งเตือนได้ทันที
+                     </div>
+                  </div>
+               </div>
+            </div>
+
+            <div className="flex flex-col items-center gap-4 min-w-[240px]">
+               {pushStatus === 'granted' ? (
+                  <div className="flex flex-col items-center gap-2">
+                     <div className="flex items-center gap-2 text-emerald-400 font-black uppercase tracking-widest text-lg italic">
+                        <CheckCircle2 className="animate-pulse" />
+                        เชื่อมต่อระบบแจ้งเตือนแล้ว
+                     </div>
+                     <p className="text-xs text-muted-foreground font-bold">แจ้งเตือนจะทำงานในพื้นหลังของเบราว์เซอร์</p>
+                  </div>
+               ) : (
+                  <PremiumButton 
+                     onClick={handleEnablePush}
+                     isLoading={isRegistering}
+                     variant="primary" 
+                     className="w-full h-16 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white font-black text-lg uppercase tracking-[0.2em] shadow-[0_10px_30px_rgba(59,130,246,0.3)]"
+                  >
+                     <Bell className="mr-2" size={20} />
+                     เปิดการแจ้งเตือนระบบ
+                  </PremiumButton>
+               )}
+            </div>
+         </div>
+      </PremiumCard>
+
+      {/* Categories Matrix */}
+      <div className="space-y-16">
         {!alerts || alerts.length === 0 ? (
           <PremiumCard className="bg-background/50 p-24 text-center border-2 border-dashed border-border/5 rounded-[4rem]">
               <div className="relative inline-block mb-8">
