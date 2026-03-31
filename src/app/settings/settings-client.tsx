@@ -154,20 +154,20 @@ export default function SettingsPage() {
                          {profile ? `${profile.First_Name || ""} ${profile.Last_Name || ""}`.trim() || profile.Username : "OPERATOR_ALPHA"}
                        </h2>
                        <div className="px-4 py-1 bg-primary/10 rounded-full border-2 border-primary/30">
-                          <span className="text-base font-bold font-black text-primary uppercase tracking-[0.2em]">IDENTIFIED</span>
+                          <span className="text-base font-bold font-black text-primary uppercase tracking-[0.2em]">{t('settings.identified')}</span>
                        </div>
                     </div>
-                    <p className="text-muted-foreground font-black tracking-[0.4em] text-lg font-bold uppercase leading-none opacity-80">{profile?.Email || "SECURE_CHANNEL_PENDING"}</p>
+                    <p className="text-muted-foreground font-black tracking-[0.4em] text-lg font-bold uppercase leading-none opacity-80">{profile?.Email || t('settings.secure_pending')}</p>
                  </div>
 
                  <div className="flex flex-wrap items-center justify-center lg:justify-start gap-10">
                     <div className="flex flex-col gap-2">
                        <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest leading-none">{t('settings.auth_level')}</span>
-                       <span className="px-5 py-2 bg-muted/50 rounded-2xl border border-border/10 text-lg font-bold font-black text-primary uppercase tracking-widest shadow-xl">{profile?.Role || "STAFF_OPERATOR"}</span>
+                       <span className="px-5 py-2 bg-muted/50 rounded-2xl border border-border/10 text-lg font-bold font-black text-primary uppercase tracking-widest shadow-xl">{t(`settings.roles_list.${profile?.Role}` as any) || profile?.Role || "STAFF_OPERATOR"}</span>
                     </div>
                     <div className="w-px h-12 bg-muted/50 hidden lg:block" />
                     <div className="flex flex-col gap-2">
-                       <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest leading-none">Temporal ID</span>
+                       <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest leading-none">{t('settings.temporal_id')}</span>
                        <span className="text-xl font-black text-foreground uppercase italic tracking-tighter">@{profile?.Username || "node_unbound"}</span>
                     </div>
                  </div>
@@ -280,9 +280,9 @@ export default function SettingsPage() {
          <div className="mt-20 py-10 border-t border-border/5 flex flex-col items-center opacity-30 group/version">
             <div className="flex items-center gap-4 mb-2">
                <Cpu size={16} className="text-muted-foreground group-hover/version:text-primary transition-colors" />
-               <p className="text-base font-bold font-black text-foreground uppercase tracking-[0.4em]">LogisPro Terminal v3.2.0-STABLE</p>
+               <p className="text-base font-bold font-black text-foreground uppercase tracking-[0.4em]">{t('settings.terminal_version')}</p>
             </div>
-            <p className="text-base font-bold font-black text-muted-foreground tracking-widest">ENCRYPTED OPERATION // SECURE ENDPOINT</p>
+            <p className="text-base font-bold font-black text-muted-foreground tracking-widest">{t('settings.encrypted_op')}</p>
          </div>
     </div>
   )

@@ -77,6 +77,28 @@ export async function createLeaveRequest(data: {
       Status: 'Pending',
     })
     if (error) return { success: false, error: error.message }
+
+    // Trigger Admin Alert (Push & Toast)
+    try {
+        const { sendPushToAdmins } = await import('@/lib/actions/push-actions')
+        
+        // Fetch driver's branch for filtering
+        const { data: driver } = await supabase
+            .from('Master_Drivers')
+            .select('Branch_ID')
+            .eq('Driver_ID', data.Driver_ID)
+            .single()
+
+        await sendPushToAdmins({
+            title: `📅 แจ้งลางานใหม่: ${data.Driver_Name}`,
+            body: `ประเภท: ${data.Leave_Type} (${data.Start_Date} ถึง ${data.End_Date})`,
+            url: '/drivers',
+            type: 'standard'
+        }, driver?.Branch_ID)
+    } catch (e) {
+        console.error("Push broadcast failed:", e)
+    }
+
     return { success: true }
   } catch (e: unknown) {
     return { success: false, error: String(e) }

@@ -88,47 +88,47 @@ export default function BranchSettingsPage() {
     const result = await updateBranchSettings(branchId, settings)
     
     if (result.success) {
-      toast.success("บันทึกการตั้งค่าสาขาเรียบร้อยแล้ว")
+      toast.success(t('settings_pages.branches.toasts.save_success'))
       router.refresh()
     } else {
-      toast.error(`เกิดข้อผิดพลาด: ${result.error}`)
+      toast.error(t('settings_pages.branches.toasts.error') + result.error)
     }
     setSavingId(null)
   }
 
   const handleDelete = async (branchId: string) => {
-    if (!confirm("คุณแน่ใจหรือไม่ว่าต้องการลบสาขานี้? การดำเนินการนี้ไม่สามารถย้อนกลับได้")) return
+    if (!confirm(t('settings_pages.branches.toasts.confirm_delete'))) return
     setDeletingId(branchId)
     const result = await deleteBranch(branchId)
     
     if (result.success) {
-      toast.success("ลบสาขาเรียบร้อยแล้ว")
+      toast.success(t('settings_pages.branches.toasts.delete_success'))
       setBranches(prev => prev.filter(b => b.Branch_ID !== branchId))
     } else {
-      toast.error(`เกิดข้อผิดพลาด: ${result.error}`)
+      toast.error(t('settings_pages.branches.toasts.error') + result.error)
     }
     setDeletingId(null)
   }
 
   const handleCreateBranch = async () => {
     if (!newBranch.Branch_ID || !newBranch.Branch_Name) {
-      toast.error("กรุณาระบุรหัสและชื่อสาขา")
+      toast.error(t('settings_pages.branches.toasts.required'))
       return
     }
     setCreating(true)
     try {
       const result = await createBranch(newBranch as Branch)
       if (result.success) {
-        toast.success("สร้างสาขาใหม่เรียบร้อยแล้ว")
+        toast.success(t('settings_pages.branches.toasts.create_success'))
         setIsCreateDialogOpen(false)
         setNewBranch({ Branch_ID: "", Branch_Name: "", Address: "", Phone: "", Email: "", Sender_Name: "" })
         await loadBranches()
       } else {
-        toast.error(`เกิดข้อผิดพลาด: ${result.error}`)
+        toast.error(t('settings_pages.branches.toasts.error') + result.error)
       }
     } catch (err) {
       console.error("Connection error:", err)
-      toast.error("เกิดข้อผิดพลาดในการเชื่อมต่อ")
+      toast.error(t('settings_pages.branches.toasts.conn_error'))
     } finally {
       setCreating(false)
     }
@@ -172,6 +172,28 @@ export default function BranchSettingsPage() {
                 </PremiumButton>
             </div>
         </div>
+
+        {/* Advisory Matrix */}
+        <motion.div
+           initial={{ opacity: 0 }}
+           animate={{ opacity: 1 }}
+           transition={{ delay: 1 }}
+           className="mt-20 p-10 rounded-[3rem] bg-primary/5 border-2 border-primary/10 flex flex-col md:flex-row gap-10 items-center relative overflow-hidden"
+        >
+          <div className="absolute top-0 right-0 w-64 h-full bg-gradient-to-l from-primary/5 to-transparent pointer-events-none" />
+          <div className="p-6 rounded-[2rem] bg-primary/20 text-primary border-2 border-primary/30 shadow-2xl animate-bounce">
+            <CheckCircle2 size={32} />
+          </div>
+          <div className="space-y-4 text-center md:text-left">
+            <p className="text-xl font-black text-primary italic uppercase tracking-widest">{t('settings_pages.branches.ui.tactical_advisory')}</p>
+            <p className="text-xl font-bold text-muted-foreground leading-relaxed uppercase tracking-wider italic">
+              {t('settings_pages.branches.ui.advisory_desc')}
+            </p>
+          </div>
+          <PremiumButton variant="outline" className="h-14 px-10 rounded-2xl border-border/10 text-foreground gap-3 uppercase font-black text-base font-bold tracking-[0.3em] ml-auto italic">
+            <Target size={18} /> {t('settings_pages.branches.ui.sync_all')}
+          </PremiumButton>
+        </motion.div>
 
         {loading && branches.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-40 gap-6 opacity-30">
@@ -362,17 +384,17 @@ export default function BranchSettingsPage() {
                 <div className="p-4 rounded-[1.5rem] bg-primary/20 text-primary border-2 border-primary/30 shadow-2xl">
                   <Plus size={32} />
                 </div>
-                NODE_INITIALIZATION
+                {t('settings_pages.branches.dialog.title_add')}
               </DialogTitle>
               <DialogDescription className="text-muted-foreground font-black uppercase tracking-wide pt-4 italic">
-                REGISTERING NEW OPERATIONAL NODE INTO THE LOGISPRO NETWORK
+                {t('settings_pages.branches.dialog.desc')}
               </DialogDescription>
             </DialogHeader>
 
             <div className="grid gap-10">
               <div className="grid grid-cols-2 gap-10">
                 <div className="space-y-3">
-                  <Label className="text-base font-bold font-black uppercase text-muted-foreground tracking-tight ml-4">NODE_ID (Unique)</Label>
+                  <Label className="text-base font-bold font-black uppercase text-muted-foreground tracking-tight ml-4">{t('settings_pages.branches.dialog.hub_id')}</Label>
                   <Input 
                     value={newBranch.Branch_ID || ""}
                     onChange={(e) => setNewBranch(prev => ({ ...prev, Branch_ID: e.target.value }))}
@@ -381,7 +403,7 @@ export default function BranchSettingsPage() {
                   />
                 </div>
                 <div className="space-y-3">
-                  <Label className="text-base font-bold font-black uppercase text-muted-foreground tracking-tight ml-4">NODE_DESIGNATION</Label>
+                  <Label className="text-base font-bold font-black uppercase text-muted-foreground tracking-tight ml-4">{t('settings_pages.branches.dialog.hub_name')}</Label>
                   <Input 
                     value={newBranch.Branch_Name || ""}
                     onChange={(e) => setNewBranch(prev => ({ ...prev, Branch_Name: e.target.value }))}
@@ -392,7 +414,7 @@ export default function BranchSettingsPage() {
               </div>
 
               <div className="space-y-3">
-                <Label className="text-base font-bold font-black uppercase text-muted-foreground tracking-tight ml-4">GEOSPATIAL_NULL</Label>
+                <Label className="text-base font-bold font-black uppercase text-muted-foreground tracking-tight ml-4">{t('settings_pages.branches.coordinates')}</Label>
                 <Input 
                   value={newBranch.Address || ""}
                   onChange={(e) => setNewBranch(prev => ({ ...prev, Address: e.target.value }))}
@@ -402,7 +424,7 @@ export default function BranchSettingsPage() {
               </div>
 
               <div className="space-y-3">
-                <Label className="text-base font-bold font-black uppercase text-muted-foreground tracking-tight ml-4">VOICE_UPLINK</Label>
+                <Label className="text-base font-bold font-black uppercase text-muted-foreground tracking-tight ml-4">{t('settings_pages.branches.comm_link')}</Label>
                 <Input 
                   value={newBranch.Phone || ""}
                   onChange={(e) => setNewBranch(prev => ({ ...prev, Phone: e.target.value }))}
@@ -419,14 +441,14 @@ export default function BranchSettingsPage() {
                 onClick={() => setIsCreateDialogOpen(false)}
                 className="flex-1 h-14 sm:h-16 rounded-[1.2rem] sm:rounded-[1.5rem] border-border/5 text-muted-foreground hover:text-foreground font-black uppercase tracking-widest italic"
               >
-                ABORT
+                {t('common.abort')}
               </PremiumButton>
               <PremiumButton 
                 onClick={handleCreateBranch}
                 disabled={creating}
                 className="flex-1 h-14 sm:h-16 rounded-[1.5rem] sm:rounded-[2rem] bg-primary text-foreground font-black italic tracking-normal shadow-[0_20px_50px_rgba(255,30,133,0.3)] border-0"
               >
-                {creating ? <Loader2 size={24} className="animate-spin" /> : "DEPLOY_NODE"}
+                {creating ? <Loader2 size={24} className="animate-spin" /> : t('settings_pages.branches.dialog.execute')}
               </PremiumButton>
             </DialogFooter>
 

@@ -29,32 +29,76 @@ export async function getNotifications(): Promise<AppNotification[]> {
   const today = now.toISOString().split('T')[0]
 
   try {
-    // 1. SOS Alerts (Critical) — last 24 hours
-    const sosQuery = supabase
-      .from('sos_alerts')
-      .select('id, driver_name, message, created_at, status, location_name')
-      .gte('created_at', new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString())
+    // 1. SOS Alerts (Critical) — last 24 hours from System_Logs
+    const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString()
+    const { data: sosLogs } = await supabase
+      .from('System_Logs')
+      .select('*')
+      .eq('module', 'Jobs')
+      .eq('action_type', 'UPDATE')
+      .gte('created_at', yesterday)
       .order('created_at', { ascending: false })
-      .limit(5)
 
-    const { data: sosAlerts } = await sosQuery
+    if (sosLogs) {
+      console.log(`[DEBUG] Found ${sosLogs.length} SOS logs in System_Logs`)
+      sosLogs.forEach(log => {
+        const details = log.details || {}
+        if (details.alert_type === 'SOS' || details.alert_type === 'SILENT_SOS') {
+          // Filter by branch (Flexible comparison)
+          if (isAdmin && selectedBranch && selectedBranch !== 'All') {
+              if (String(log.branch_id) !== String(selectedBranch)) return
+          } else if (branchId && !isAdmin) {
+              if (String(log.branch_id) !== String(branchId)) return
+          }
 
-    if (sosAlerts) {
-      sosAlerts.forEach(sos => {
-        notifications.push({
-          id: `sos-${sos.id}`,
-          type: 'sos',
-          title: '🚨 SOS Alert',
-          message: `${sos.driver_name}: ${sos.message || 'ขอความช่วยเหลือ'} ${sos.location_name ? `@ ${sos.location_name}` : ''}`,
-          timestamp: sos.created_at,
-          read: sos.status === 'resolved',
-          href: '/sos',
-          severity: 'critical'
-        })
+          console.log(`[DEBUG] Adding SOS notification for ${details.driver_name}`)
+          notifications.push({
+            id: `sos-log-${log.id}`,
+            type: 'sos',
+            title: `🆘 SOS: ${details.driver_name || 'คนขับ'}`,
+            message: details.alert_type === 'SILENT_SOS' 
+              ? `แจ้งเหตุฉุกเฉิน (ไม่สะดวกคุย): ${details.address || 'ไม่ทราบตำแหน่ง'}`
+              : `พนักงานกดโทรฉุกเฉินหาแอดมิน`,
+            timestamp: log.created_at,
+            read: false,
+            href: `/monitoring?driver=${log.target_id}`,
+            severity: 'critical'
+          })
+        }
       })
     }
-  } catch {
-    // SOS table may not exist
+
+    // 1.1 Also check for jobs currently in SOS status
+    let activeSOSQuery = supabase
+      .from('Jobs_Main')
+      .select('Job_ID, Driver_Name, Failed_Reason, Failed_Time, Driver_ID, Branch_ID')
+      .eq('Job_Status', 'SOS')
+      .limit(5)
+    
+    if (isAdmin && selectedBranch && selectedBranch !== 'All') {
+        activeSOSQuery = activeSOSQuery.eq('Branch_ID', selectedBranch)
+    }
+
+    const { data: activeSOS } = await activeSOSQuery
+    if (activeSOS) {
+        activeSOS.forEach(job => {
+            // Avoid duplicate if already in logs
+            if (notifications.some(n => n.id.includes(job.Job_ID))) return
+
+            notifications.push({
+                id: `sos-job-${job.Job_ID}`,
+                type: 'sos',
+                title: `🆘 งานสถานะ SOS: ${job.Job_ID}`,
+                message: `${job.Driver_Name || 'คนขับ'}: ${job.Failed_Reason || 'แจ้งเหตุฉุกเฉิน'}`,
+                timestamp: job.Failed_Time || now.toISOString(),
+                read: false,
+                href: `/monitoring?driver=${job.Driver_ID}`,
+                severity: 'critical'
+            })
+        })
+    }
+  } catch (err) {
+    console.error("SOS Notification fetch error:", err)
   }
 
   try {

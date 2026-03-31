@@ -241,8 +241,9 @@ export async function getTodayJobStats(branchId?: string) {
     return {
       total: jobs.length,
       delivered: jobs.filter(j => j.Job_Status === 'Delivered' || j.Job_Status === 'Completed').length,
-      inProgress: jobs.filter(j => j.Job_Status === 'In Transit' || j.Job_Status === 'In Progress').length,
-      pending: jobs.filter(j => j.Job_Status === 'New' || j.Job_Status === 'Assigned' || j.Job_Status === 'Requested').length,
+      inProgress: jobs.filter(j => j.Job_Status === 'In Transit' || j.Job_Status === 'In Progress' || j.Job_Status === 'Arrived Pickup' || j.Job_Status === 'Arrived Dropoff').length,
+      pending: jobs.filter(j => j.Job_Status === 'New' || j.Job_Status === 'Assigned' || j.Job_Status === 'Requested' || j.Job_Status === 'Pending').length,
+      sos: jobs.filter(j => j.Job_Status === 'SOS').length
     }
   } catch {
     return { total: 0, delivered: 0, inProgress: 0, pending: 0 }

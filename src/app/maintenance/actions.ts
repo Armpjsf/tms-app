@@ -42,6 +42,19 @@ export async function createRepairTicket(data: TicketFormData) {
       return { success: false, message: `Failed to create ticket: ${error.message}` }
     }
 
+    // Trigger Admin Alert (Push & Toast)
+    try {
+        const { sendPushToAdmins } = await import('@/lib/actions/push-actions')
+        await sendPushToAdmins({
+            title: `🔧 แจ้งซ่อมใหม่ (${data.Priority})`,
+            body: `ทะเบียน: ${data.Vehicle_Plate} • อาการ: ${data.Issue_Type}`,
+            url: '/maintenance',
+            type: 'standard'
+        }, branchId)
+    } catch (e) {
+        console.error("Push broadcast failed:", e)
+    }
+
     // Update vehicle status to Maintenance if priority is High
     if (data.Priority === 'High') {
         await supabase

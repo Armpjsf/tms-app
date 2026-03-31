@@ -203,14 +203,21 @@ export async function sendPushToDriver(driverId: string, payload: PushPayload) {
 }
 
 // ─────────────────────────────────────────────
-// Send Push to All Admin Users
+// Send Push to Admin Users (Optionally filtered by Branch)
 // ─────────────────────────────────────────────
-export async function sendPushToAdmins(payload: PushPayload) {
+export async function sendPushToAdmins(payload: PushPayload, branchId?: string | null) {
     const supabase = await createAdminClient()
 
+    // Query both subscriptions AND user profiles to filter by branch/role
     const { data: subs, error } = await supabase
         .from('Push_Subscriptions')
-        .select('*')
+        .select(`
+            *,
+            Master_Users:User_ID (
+                Branch_ID,
+                Role
+            )
+        `)
         .not('User_ID', 'is', null)
 
     if (error || !subs || subs.length === 0) {
@@ -218,10 +225,30 @@ export async function sendPushToAdmins(payload: PushPayload) {
         return { success: false, reason: 'no_admin_subscriptions' }
     }
 
-    console.log(`[PUSH] Sending push to ${subs.length} admin(s)`)
+    // Filter recipients based on branch and role
+    const recipients = subs.filter(sub => {
+        const profile = (sub as any).Master_Users
+        if (!profile) return false // No linked profile, skip
+
+        // Super Admins see EVERYTHING
+        if (profile.Role === 'Super Admin' || profile.Role === 'Developer') return true
+
+        // If no specific branch filter is provided, send to all admins
+        if (!branchId || branchId === 'All') return true
+
+        // Otherwise, match the branch
+        return String(profile.Branch_ID) === String(branchId)
+    })
+
+    if (recipients.length === 0) {
+        console.log(`[PUSH] No admins found for branch: ${branchId}`)
+        return { success: true, reason: 'no_matching_recipients' }
+    }
+
+    console.log(`[PUSH] Broadcasting to ${recipients.length} admin(s) [Filter: ${branchId || 'All'}]`)
 
     const results = await Promise.allSettled(
-        subs.map(async (sub) => {
+        recipients.map(async (sub) => {
             const result = await sendWebPush(sub, { ...payload, url: payload.url || '/chat' })
             // Clean up expired subscriptions
             if (!result.success && (result.statusCode === 404 || result.statusCode === 410)) {
@@ -232,7 +259,6 @@ export async function sendPushToAdmins(payload: PushPayload) {
     )
 
     const successCount = results.filter(r => r.status === 'fulfilled' && (r.value as { success: boolean }).success).length
-    console.log(`[PUSH] Admin push results: ${successCount}/${subs.length} sent`)
     return { success: successCount > 0 }
 }
 

@@ -72,7 +72,7 @@ export default function DashboardPage() {
         customerMode, 
         custId: custId || null, 
         custName: custName || null, 
-        dailyStats: dailyStats || { total: 0, delivered: 0, inProgress: 0, pending: 0 }, 
+        dailyStats: dailyStats || { total: 0, delivered: 0, inProgress: 0, pending: 0, sos: 0 }, 
         driverStats: driverStats || { total: 0, active: 0, onJob: 0 },
         fleetStatus: fleetStatus || [],
         esgStats: esgStats || { co2SavedKg: 0, treesSaved: 0, totalSavedKm: 0 }

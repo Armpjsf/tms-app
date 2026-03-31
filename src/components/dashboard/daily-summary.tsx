@@ -16,6 +16,7 @@ interface DailySummaryProps {
         delivered: number
         inProgress: number
         pending: number
+        sos?: number
     }
     driverStats: {
         total: number

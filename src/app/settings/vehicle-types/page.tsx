@@ -149,7 +149,7 @@ export default function VehicleTypesPage() {
             <div className="flex flex-col items-end gap-6 relative z-10">
                 <div className="bg-muted/50 border border-border/10 px-6 py-3 rounded-2xl flex items-center gap-3 backdrop-blur-md">
                     <div className="w-2 h-2 rounded-full bg-primary animate-pulse shadow-[0_0_10px_rgba(255,30,133,1)]" />
-                    <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest italic">MATRIX_SCAN: OPTIMIZED</span>
+                    <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest italic">{t('common.tactical.system_ready')}</span>
                 </div>
                 <PremiumButton onClick={handleOpenCreate} className="h-16 px-12 rounded-2xl bg-primary text-foreground border-0 shadow-[0_20px_50px_rgba(255,30,133,0.3)] gap-4 text-xl tracking-widest">
                     <Plus size={24} strokeWidth={3} />
@@ -208,14 +208,14 @@ export default function VehicleTypesPage() {
                                                 </div>
                                                 <div>
                                                     <span className="font-black text-foreground text-xl tracking-tighter group-hover/row:text-primary transition-colors font-display uppercase italic">{type.type_name}</span>
-                                                    <p className="text-base font-bold font-black text-muted-foreground uppercase tracking-[0.3em] mt-1 italic">V_MATRIX_ID: {type.type_id}</p>
+                                                    <p className="text-base font-bold font-black text-muted-foreground uppercase tracking-[0.3em] mt-1 italic">{t('common.tactical.v_matrix_id')}: {type.type_id}</p>
                                                 </div>
                                             </div>
                                         </td>
                                         <td className="px-8 py-8">
                                             <div className="max-w-xs">
                                                 <p className="text-muted-foreground font-bold text-xl tracking-tight leading-relaxed uppercase italic">
-                                                    {type.description || '// NO_INTEL_PROVIDED'}
+                                                    {type.description || t('common.tactical.no_intel')}
                                                 </p>
                                             </div>
                                         </td>
@@ -225,7 +225,7 @@ export default function VehicleTypesPage() {
                                                 type.active_status === 'Active' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-rose-500/10 text-rose-500 border-rose-500/20'
                                             )}>
                                                 <span className={cn("w-1.5 h-1.5 rounded-full shadow-[0_0_10px_currentColor]", type.active_status === 'Active' ? "bg-current animate-pulse" : "bg-rose-500")} />
-                                                {type.active_status}
+                                                {type.active_status === 'Active' ? t('common.tactical.active') : t('common.tactical.inactive')}
                                             </div>
                                         </td>
                                         <td className="px-12 py-8 text-right">
@@ -245,7 +245,7 @@ export default function VehicleTypesPage() {
                     </table>
                 </div>
                 <div className="p-8 border-t border-border/5 bg-muted/30 flex items-center justify-between">
-                    <p className="text-base font-bold font-black text-muted-foreground uppercase tracking-[0.4em] italic">Fleet Specification & Capacity Matrix Node</p>
+                    <p className="text-base font-bold font-black text-muted-foreground uppercase tracking-[0.4em] italic">{t('common.tactical.fleet_spec_node')}</p>
                     <Zap size={16} className="text-primary/20" />
                 </div>
             </PremiumCard>

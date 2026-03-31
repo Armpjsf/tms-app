@@ -54,6 +54,19 @@ export async function createFuelLog(data: FuelFormData) {
       return { success: false, message: `Failed to create log: ${error.message}` }
     }
 
+    // Trigger Admin Alert (Push & Toast)
+    try {
+        const { sendPushToAdmins } = await import('@/lib/actions/push-actions')
+        await sendPushToAdmins({
+            title: '⛽ แจ้งเติมน้ำมันใหม่',
+            body: `ทะเบียน: ${data.Vehicle_Plate} • จำนวน: ${data.Liter} ลิตร`,
+            url: '/fuel',
+            type: 'standard'
+        }, branchId)
+    } catch (e) {
+        console.error("Push broadcast failed:", e)
+    }
+
     // Log the activity
     await logActivity({
       module: 'Fuel',

@@ -52,6 +52,19 @@ export async function POST(req: NextRequest) {
 
         if (error) throw error
 
+        // Trigger Admin Alert (Push & Toast)
+        try {
+            const { sendPushToAdmins } = await import('@/lib/actions/push-actions')
+            await sendPushToAdmins({
+                title: '📦 จองงานใหม่ (Enterprise API)',
+                body: `งาน ID: ${data[0].Job_ID} • ลูกค้า: ${customer_id}`,
+                url: '/jobs',
+                type: 'standard'
+            }, null) // Broadcast to all Super Admins for Enterprise API
+        } catch (e) {
+            console.error("Push broadcast failed:", e)
+        }
+
         return NextResponse.json({ 
             success: true, 
             message: 'Job created via Enterprise API',

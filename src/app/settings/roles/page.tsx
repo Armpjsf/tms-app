@@ -186,7 +186,7 @@ export default function RolesPage() {
                                         "font-black text-[13px] uppercase tracking-widest italic transition-colors",
                                         selectedRoleIndex === idx ? "text-foreground" : "text-muted-foreground group-hover/role-btn:text-muted-foreground"
                                     )}>
-                                        {role.Role}
+                                        {t(`settings.roles_list.${role.Role}` as any) || role.Role}
                                     </span>
                                 </div>
                                 {selectedRoleIndex === idx && <Zap size={16} className="text-primary animate-pulse" />}
@@ -266,13 +266,13 @@ export default function RolesPage() {
                                                                     "font-black text-[13px] uppercase tracking-widest italic transition-colors",
                                                                     activeRole.Permissions?.[perm.id] ? "text-primary shadow-[0_0_10px_rgba(255,30,133,0.3)]" : "text-muted-foreground group-hover/perm:text-foreground"
                                                                 )}>
-                                                                    {perm.label}
+                                                                    {t(`settings_pages.roles.permissions.${perm.id}` as any)}
                                                                 </span>
                                                                 <span className={cn(
                                                                     "text-base font-bold font-black leading-tight uppercase tracking-tight italic transition-colors",
                                                                     activeRole.Permissions?.[perm.id] ? "text-primary/60" : "text-muted-foreground"
                                                                 )}>
-                                                                    {perm.desc}
+                                                                    {t(`settings_pages.roles.descriptions.${perm.id}` as any)}
                                                                 </span>
                                                             </div>
                                                             <Switch 

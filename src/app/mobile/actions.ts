@@ -118,23 +118,38 @@ export async function submitVehicleCheck(formData: FormData) {
       return { success: false, message: `บันทึกไม่สำเร็จ (DB Error): ${error.message}` }
     }
 
+    // Trigger Admin Alert (Push & Toast)
+    try {
+        // Find failure items
+        const rawItems = items as Record<string, boolean>
+        const hasFailures = Object.values(rawItems).some(passed => passed === false)
+
+        if (hasFailures) {
+            const { sendPushToAdmins } = await import('@/lib/actions/push-actions')
+            
+            // Fetch driver's branch
+            const { data: driver } = await supabase
+                .from('Master_Drivers')
+                .select('Branch_ID')
+                .eq('Driver_ID', driverId)
+                .single()
+
+            await sendPushToAdmins({
+                title: `📋 ตรวจรถไม่ผ่าน: ${vehiclePlate}`,
+                body: `คนขับ: ${driverName} ตรวจสภาพไม่ผ่านบางรายการ`,
+                url: '/admin/vehicle-checks',
+                type: 'standard'
+            }, driver?.Branch_ID)
+        }
+    } catch (e) {
+        console.error("Push broadcast failed:", e)
+    }
+
     const failureMsg = failures.length > 0 ? `\n(แต่บางไฟล์อัปโหลดไม่สำเร็จ: ${failures.join(", ")})` : ""
     const finalMsg = `บันทึกการตรวจสอบเรียบร้อยแล้ว${failureMsg}`
 
     revalidatePath('/mobile/vehicle-check')
     revalidatePath('/admin/vehicle-checks')
-
-    // Create Admin Notification
-    try {
-        await createNotification({
-          Driver_ID: 'admin', // Targeting admin
-          Title: 'มีการแจ้งตรวจเช็ครถใหม่',
-          Message: `คนขับ ${driverName} ได้ทำการตรวจเช็ครถทะเบียน ${vehiclePlate}`,
-          Type: 'info'
-        })
-    } catch {
-        // Silent failure
-    }
 
     return { success: true, message: finalMsg }
 

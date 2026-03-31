@@ -17,8 +17,10 @@ import { checkAccountingConnection, saveAccountingSettings } from "@/app/setting
 import { getSetting } from "@/lib/supabase/system_settings"
 import { hasPermission } from "@/lib/permissions"
 import { cn } from "@/lib/utils"
+import { useLanguage } from "@/components/providers/language-provider"
 
 export default function AccountingSettingsPage() {
+  const { t } = useLanguage()
   const router = useRouter()
   const [checking, setChecking] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -64,10 +66,10 @@ export default function AccountingSettingsPage() {
     const result = await saveAccountingSettings(apiKey, companyId, userEmail)
     setSaving(false)
     if (result.success) {
-      toast.success("Fiscal protocols synchronized")
+      toast.success(t('settings_pages.accounting.toasts.sync_success'))
       setStatus('idle')
     } else {
-      toast.error("Failed to commit settings: " + result.message)
+      toast.error(t('settings_pages.accounting.toasts.sync_failed') + result.message)
     }
   }
 
@@ -78,11 +80,11 @@ export default function AccountingSettingsPage() {
     setChecking(false)
     if (result.success && result.connected) {
         setStatus('connected')
-        toast.success("Cloud uplink established")
+        toast.success(t('settings_pages.accounting.toasts.uplink_success'))
     } else {
         setStatus('failed')
         setErrorMsg(result.message || "Unknown connection error")
-        toast.error("Uplink handshake failed")
+        toast.error(t('settings_pages.accounting.toasts.uplink_failed'))
     }
   }
 
@@ -106,7 +108,7 @@ export default function AccountingSettingsPage() {
             <div className="relative z-10 space-y-8">
                 <button onClick={() => router.back()} className="inline-flex items-center gap-2 text-muted-foreground hover:text-primary transition-all font-black uppercase tracking-[0.1em] text-base font-bold group/back italic">
                     <ArrowLeft className="w-4 h-4 group-hover/back:-translate-x-1 transition-transform" /> 
-                    Command Control
+                    {t('settings_pages.roles.config_back')}
                 </button>
                 <div className="flex items-center gap-6">
                     <div className="p-4 bg-primary/20 rounded-[2.5rem] border-2 border-primary/30 shadow-[0_0_40px_rgba(255,30,133,0.2)] text-primary group-hover:scale-110 transition-all duration-500">
@@ -114,9 +116,9 @@ export default function AccountingSettingsPage() {
                     </div>
                     <div>
                         <h1 className="text-5xl font-black text-foreground tracking-widest uppercase leading-none italic premium-text-gradient">
-                            Fiscal Interlink
+                            {t('settings_pages.accounting.interlink_title')}
                         </h1>
-                        <p className="text-base font-bold font-black text-primary uppercase tracking-[0.2em] mt-2 opacity-80 italic">Akaunting Cloud Integration & Settlement Protocol</p>
+                        <p className="text-base font-bold font-black text-primary uppercase tracking-[0.2em] mt-2 opacity-80 italic">{t('settings_pages.accounting.interlink_subtitle')}</p>
                     </div>
                 </div>
             </div>
@@ -128,7 +130,7 @@ export default function AccountingSettingsPage() {
                         status === 'connected' ? "bg-emerald-500" : status === 'failed' ? "bg-rose-500" : "bg-primary"
                     )} />
                     <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest italic">
-                        UPLINK_STATUS: {status === 'connected' ? 'ESTABLISHED' : status === 'failed' ? 'INTERRUPTED' : 'STANDBY'}
+                        {t('settings_pages.accounting.uplink_status')}: {status === 'connected' ? t('settings_pages.accounting.status_established') : status === 'failed' ? t('settings_pages.accounting.status_interrupted') : t('settings_pages.accounting.status_standby')}
                     </span>
                 </div>
                 {canManage && (
@@ -138,7 +140,7 @@ export default function AccountingSettingsPage() {
                         className="h-16 px-12 rounded-2xl bg-primary text-foreground border-0 shadow-[0_20px_50px_rgba(255,30,133,0.3)] gap-4 text-xl tracking-widest"
                     >
                         {saving ? <Loader2 size={24} className="animate-spin" /> : <Save size={24} />}
-                        COMMIT_FISCAL_PROTOCOLS
+                        {t('settings_pages.accounting.commit_protocols')}
                     </PremiumButton>
                 )}
             </div>
@@ -151,16 +153,16 @@ export default function AccountingSettingsPage() {
                     <div className="p-10 border-b border-border/5 bg-black/40 flex items-center justify-between">
                         <h3 className="text-xl font-black text-foreground tracking-widest uppercase italic flex items-center gap-3">
                             <Key size={20} className="text-primary" />
-                            Access Geometry
+                            {t('settings_pages.accounting.access_geometry')}
                         </h3>
                         <div className="px-5 py-1.5 rounded-xl bg-primary/10 text-base font-bold font-black text-primary uppercase tracking-[0.1em] border border-primary/20 italic">
-                            CREDENTIALS
+                            {t('settings_pages.accounting.credentials')}
                         </div>
                     </div>
                     <div className="p-12 space-y-10">
                         <div className="space-y-4">
                             <Label className="text-base font-bold font-black uppercase text-primary/60 tracking-[0.1em] ml-6 flex items-center gap-2">
-                                <Cpu size={12} /> AKAUNTING_API_VECTOR
+                                <Cpu size={12} /> {t('settings_pages.accounting.api_vector')}
                             </Label>
                             <Input 
                                 type="password"
@@ -170,11 +172,11 @@ export default function AccountingSettingsPage() {
                                 className="h-16 bg-black/40 border-border/5 rounded-[1.5rem] focus:border-primary/50 transition-all text-foreground font-black italic tracking-widest pl-8 shadow-inner"
                                 disabled={!canManage}
                             />
-                            <p className="text-base font-bold font-black text-muted-foreground uppercase tracking-[0.1em] italic ml-8">// LOCATE IN USER_PROFILE &gt; API_TOKEN WITHIN THE CLOUD NODE</p>
+                            <p className="text-base font-bold font-black text-muted-foreground uppercase tracking-[0.1em] italic ml-8">{t('settings_pages.accounting.api_hint')}</p>
                         </div>
 
                         <div className="space-y-4">
-                            <Label className="text-base font-bold font-black uppercase text-primary/60 tracking-[0.1em] ml-6">AUTHORIZED_EMAIL_NULL</Label>
+                            <Label className="text-base font-bold font-black uppercase text-primary/60 tracking-[0.1em] ml-6">{t('settings_pages.accounting.authorized_email')}</Label>
                             <Input 
                                 type="email"
                                 placeholder="operator@..."
@@ -187,7 +189,7 @@ export default function AccountingSettingsPage() {
                         
                         <div className="space-y-4">
                             <Label className="text-base font-bold font-black uppercase text-primary/60 tracking-[0.1em] ml-6 flex items-center gap-2">
-                                 <Building2 size={12} /> ENTITY_IDENTIFIER (Company ID)
+                                 <Building2 size={12} /> {t('settings_pages.accounting.entity_identifier')}
                             </Label>
                             <Input 
                                 placeholder="1"
@@ -205,7 +207,7 @@ export default function AccountingSettingsPage() {
              <div className="lg:col-span-5 space-y-10">
                 <PremiumCard className="bg-background/40 border-2 border-border/5 shadow-3xl rounded-[4rem] overflow-hidden group/status">
                     <div className="p-10 border-b border-border/5 bg-black/40">
-                        <h3 className="text-xl font-black text-foreground tracking-widest uppercase italic">Uplink Telemetry</h3>
+                        <h3 className="text-xl font-black text-foreground tracking-widest uppercase italic">{t('settings_pages.accounting.uplink_telemetry')}</h3>
                     </div>
                     <div className="p-12 space-y-10">
                         <div className="flex flex-col gap-8">
@@ -215,8 +217,8 @@ export default function AccountingSettingsPage() {
                                         <CloudSync size={28} strokeWidth={2.5} />
                                     </div>
                                     <div>
-                                        <p className="text-lg font-black text-foreground uppercase tracking-widest italic">Akaunting Cloud</p>
-                                        <p className="text-base font-bold font-black text-emerald-500 uppercase tracking-[0.1em] italic mt-1">SYNC_PROTOCOL: ACTIVE</p>
+                                        <p className="text-lg font-black text-foreground uppercase tracking-widest italic">{t('settings_pages.accounting.akaunting_cloud')}</p>
+                                        <p className="text-base font-bold font-black text-emerald-500 uppercase tracking-[0.1em] italic mt-1">{t('settings_pages.accounting.sync_active')}</p>
                                     </div>
                                 </div>
                                 <div className="absolute top-0 right-0 w-32 h-full bg-primary/[0.03] pointer-events-none" />
@@ -226,12 +228,12 @@ export default function AccountingSettingsPage() {
                                 <div className="flex items-center justify-center gap-6">
                                     {status === 'connected' && (
                                         <div className="flex items-center gap-3 text-base font-bold font-black text-emerald-500 bg-emerald-500/10 px-8 py-3 rounded-2xl border border-emerald-500/20 shadow-2xl animate-pulse italic uppercase tracking-widest">
-                                            <CheckCircle2 size={16} /> SIGNAL_ESTABLISHED
+                                            <CheckCircle2 size={16} /> {t('settings_pages.accounting.signal_established')}
                                         </div>
                                     )}
                                     {status === 'failed' && (
                                         <div className="flex items-center gap-3 text-base font-bold font-black text-rose-500 bg-rose-500/10 px-8 py-3 rounded-2xl border border-rose-500/20 shadow-2xl animate-bounce italic uppercase tracking-widest">
-                                            <XCircle size={16} /> SIGNAL_COLLAPSED
+                                            <XCircle size={16} /> {t('settings_pages.accounting.signal_collapsed')}
                                         </div>
                                     )}
                                 </div>
@@ -243,7 +245,7 @@ export default function AccountingSettingsPage() {
                                     disabled={checking || !apiKey}
                                 >
                                     {checking ? <RefreshCcw size={20} className="animate-spin" /> : <RefreshCcw size={20} />}
-                                    RUN_UPLINK_DIAGNOSTIC
+                                    {t('settings_pages.accounting.run_uplink')}
                                 </PremiumButton>
                             </div>
                         </div>
@@ -253,7 +255,7 @@ export default function AccountingSettingsPage() {
                                 <div className="absolute top-0 right-0 p-4 opacity-10">
                                     <Activity className="text-rose-500" size={32} />
                                 </div>
-                                <p className="text-base font-bold font-black text-rose-500 uppercase tracking-[0.1em] mb-3 italic">DEEP_ERROR_TELEMETRY:</p>
+                                <p className="text-base font-bold font-black text-rose-500 uppercase tracking-[0.1em] mb-3 italic">{t('settings_pages.accounting.error_telemetry')}:</p>
                                 <p className="text-lg font-bold text-rose-400 font-mono italic leading-relaxed uppercase tracking-widest bg-black/40 p-4 rounded-xl border border-rose-500/5 select-all">
                                     &gt; {errorMsg}
                                 </p>
@@ -262,12 +264,12 @@ export default function AccountingSettingsPage() {
 
                         <div className="grid grid-cols-1 gap-6 pt-6">
                             <div className="p-8 bg-emerald-500/5 rounded-3xl border-2 border-emerald-500/10 flex flex-col gap-2">
-                                <p className="text-base font-bold font-black text-emerald-500 uppercase tracking-widest italic opacity-60">Invoicing Matrix (Customer)</p>
-                                <p className="text-xl font-black text-foreground italic uppercase tracking-widest leading-none">BILLING_NOTE_INTERFACING</p>
+                                <p className="text-base font-bold font-black text-emerald-500 uppercase tracking-widest italic opacity-60">{t('settings_pages.accounting.invoicing_matrix')}</p>
+                                <p className="text-xl font-black text-foreground italic uppercase tracking-widest leading-none">{t('settings_pages.accounting.billing_note_interfacing')}</p>
                             </div>
                             <div className="p-8 bg-indigo-500/5 rounded-3xl border-2 border-indigo-500/10 flex flex-col gap-2">
-                                <p className="text-base font-bold font-black text-indigo-400 uppercase tracking-widest italic opacity-60">Settlement Matrix (Operator)</p>
-                                <p className="text-xl font-black text-foreground italic uppercase tracking-widest leading-none">DRIVER_PAYOUT_INTERFACING</p>
+                                <p className="text-base font-bold font-black text-indigo-400 uppercase tracking-widest italic opacity-60">{t('settings_pages.accounting.settlement_matrix')}</p>
+                                <p className="text-xl font-black text-foreground italic uppercase tracking-widest leading-none">{t('settings_pages.accounting.driver_payout_interfacing')}</p>
                             </div>
                         </div>
                     </div>
@@ -282,14 +284,13 @@ export default function AccountingSettingsPage() {
                 <Target size={32} />
             </div>
             <div className="space-y-4 text-center md:text-left flex-1">
-                <p className="text-xl font-black text-indigo-400 italic uppercase tracking-[0.1em]">FISCAL_SYNCHRONIZATION_ADVISORY</p>
+                <p className="text-xl font-black text-indigo-400 italic uppercase tracking-[0.1em]">{t('settings_pages.accounting.advisory_title')}</p>
                 <p className="text-xl font-bold text-muted-foreground leading-relaxed uppercase tracking-wider italic">
-                    All document emissions within the TMS trigger an automated relay to the Akaunting Cloud node. <br />
-                    Ensure the API Vector has 'Write' permissions for Invoices, Bills, and Customer entities to prevent relay collision.
+                    {t('settings_pages.accounting.advisory_desc')}
                 </p>
             </div>
             <PremiumButton variant="outline" className="h-14 px-10 rounded-2xl border-border/10 text-foreground gap-3 uppercase font-black text-base font-bold tracking-[0.1em] ml-auto italic">
-                <Activity size={18} /> EVENT_LOG_UPLINK
+                <Activity size={18} /> {t('settings_pages.accounting.event_log_uplink')}
             </PremiumButton>
         </div>
       </div>

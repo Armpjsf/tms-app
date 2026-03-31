@@ -75,6 +75,30 @@ export async function createDamageReport(data: {
       Status: 'Pending',
     })
     if (error) return { success: false, error: error.message }
+
+    // Trigger Admin Alert (Push & Toast)
+    try {
+        const { sendPushToAdmins } = await import('@/lib/actions/push-actions')
+        const { createAdminClient } = await import('@/utils/supabase/server')
+        const adminSupabase = createAdminClient()
+        
+        // Fetch driver's branch
+        const { data: driver } = await adminSupabase
+            .from('Master_Drivers')
+            .select('Branch_ID')
+            .eq('Driver_ID', data.Driver_ID)
+            .single()
+
+        await sendPushToAdmins({
+            title: `📦❌ แจ้งสินค้าเสียหาย`,
+            body: `คนขับ: ${data.Driver_Name} แจ้งเหตุ: ${data.Reason_Category}`,
+            url: '/reports',
+            type: 'standard'
+        }, driver?.Branch_ID)
+    } catch (e) {
+        console.error("Push broadcast failed:", e)
+    }
+
     return { success: true }
   } catch (e: unknown) {
     return { success: false, error: String(e) }

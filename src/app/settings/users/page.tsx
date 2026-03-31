@@ -226,7 +226,7 @@ export default function UserSettingsPage() {
                         </div>
                         <div className="flex items-center gap-3 px-5 py-2 bg-muted/50 rounded-full border border-border/10 relative z-10">
                             <Activity size={14} className="text-primary" />
-                            <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-normal">REALTIME_FLOW: ACTIVE</span>
+                            <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-normal">{t('common.tactical.realtime_active')}</span>
                         </div>
                     </div>
 
@@ -246,7 +246,7 @@ export default function UserSettingsPage() {
                                 {loading ? (
                                     <tr><td colSpan={6} className="text-center py-20 opacity-30"><Loader2 className="w-8 h-8 animate-spin mx-auto text-primary" /></td></tr>
                                 ) : filteredUsers.length === 0 ? (
-                                    <tr><td colSpan={6} className="text-center py-20 opacity-30 italic font-black uppercase tracking-normal text-foreground">Registry Void detected</td></tr>
+                                    <tr><td colSpan={6} className="text-center py-20 opacity-30 italic font-black uppercase tracking-normal text-foreground">{t('common.tactical.registry_void')}</td></tr>
                                 ) : (
                                     filteredUsers.map((user) => (
                                         <tr key={user.Username} className="group/row hover:bg-muted/40 transition-all duration-300">
@@ -257,18 +257,18 @@ export default function UserSettingsPage() {
                                                     </span>
                                                     {user.Customer_ID && (
                                                         <div className="text-base font-bold text-accent font-black uppercase tracking-tighter mt-1 opacity-60">
-                                                            EXT_CLIENT: {user.Master_Customers?.Customer_Name || user.Customer_ID}
+                                                            {t('common.tactical.ext_client')}: {user.Master_Customers?.Customer_Name || user.Customer_ID}
                                                         </div>
                                                     )}
                                                 </div>
                                             </td>
                                             <td className="px-10 py-8 font-black text-foreground uppercase tracking-tight italic">{user.Name}</td>
                                             <td className="px-10 py-8 text-muted-foreground font-black uppercase tracking-normal text-lg font-bold">
-                                                {user.Branch_ID || "GLOBAL_NODE"}
+                                                {user.Branch_ID || t('common.tactical.global_node')}
                                             </td>
                                             <td className="px-10 py-8">
                                                 <div className="px-4 py-1.5 rounded-xl bg-primary/10 text-primary border border-primary/20 text-base font-bold font-black uppercase tracking-normal italic shadow-[0_0_15px_rgba(255,30,133,0.1)] w-fit">
-                                                    {user.Role || "NO_ROLES_ASSIGNED"}
+                                                    {t(`settings.roles_list.${user.Role}` as any) || user.Role || t('common.tactical.no_roles')}
                                                 </div>
                                             </td>
                                             <td className="px-10 py-8">
@@ -278,7 +278,7 @@ export default function UserSettingsPage() {
                                                         ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' 
                                                         : 'bg-rose-500/10 text-rose-400 border-rose-500/20 animate-pulse'
                                                 )}>
-                                                    {user.Active_Status}
+                                                    {user.Active_Status === 'Active' ? t('common.tactical.active') : t('common.tactical.inactive')}
                                                 </div>
                                             </td>
                                              <td className="px-10 py-8 text-right">
@@ -406,17 +406,17 @@ export default function UserSettingsPage() {
                         <div className="space-y-3 p-6 sm:p-8 rounded-[2rem] sm:rounded-[2.5rem] bg-primary/5 border-2 border-primary/10 shadow-inner group/client">
                             <div className="flex items-center gap-3 mb-2 ml-4">
                                 <Key size={14} className="text-primary group-hover/client:rotate-45 transition-transform" />
-                                <Label className="text-sm sm:text-base font-bold font-black text-primary uppercase tracking-widest">External Client Linkage</Label>
+                                <Label className="text-sm sm:text-base font-bold font-black text-primary uppercase tracking-widest">{t('common.tactical.ext_client_link')}</Label>
                             </div>
                             <Select 
                                 value={formData.Customer_ID || "none"} 
                                 onValueChange={v => setFormData({...formData, Customer_ID: v === "none" ? null : v})}
                             >
                                 <SelectTrigger className="h-14 sm:h-16 rounded-2xl bg-muted border-border/5 text-foreground font-black uppercase italic tracking-normal shadow-inner">
-                                    <SelectValue placeholder="SYNERGY_ENTITY_LINK" />
+                                    <SelectValue placeholder={t('common.tactical.synergy_link')} />
                                 </SelectTrigger>
                                 <SelectContent className="bg-popover border-border/10 text-foreground">
-                                    <SelectItem value="none" className="font-black italic uppercase tracking-normal text-muted-foreground underline">-- REMOVE_LINKAGE --</SelectItem>
+                                    <SelectItem value="none" className="font-black italic uppercase tracking-normal text-muted-foreground underline">{t('common.tactical.remove_link')}</SelectItem>
                                     {customers.map(c => (
                                         <SelectItem key={c.Customer_ID} value={c.Customer_ID} className="font-black italic uppercase tracking-normal">
                                             {c.Customer_Name}
@@ -427,7 +427,7 @@ export default function UserSettingsPage() {
                         </div>
 
                         <div className="space-y-3 pb-4">
-                             <Label className="text-sm sm:text-base font-bold font-black text-muted-foreground uppercase tracking-widest ml-4">Deployment Status</Label>
+                             <Label className="text-sm sm:text-base font-bold font-black text-muted-foreground uppercase tracking-widest ml-4">{t('common.tactical.deploy_status')}</Label>
                              <Select 
                                 value={formData.Active_Status} 
                                 onValueChange={v => setFormData({...formData, Active_Status: v})}
@@ -436,8 +436,8 @@ export default function UserSettingsPage() {
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent className="bg-popover border-border/10 text-foreground">
-                                    <SelectItem value="Active" className="text-emerald-500 font-black italic uppercase tracking-normal hover:bg-emerald-500/10">NODE_ACTIVE</SelectItem>
-                                    <SelectItem value="Inactive" className="text-rose-500 font-black italic uppercase tracking-normal hover:bg-rose-500/10">NODE_DEACTIVATED</SelectItem>
+                                    <SelectItem value="Active" className="text-emerald-500 font-black italic uppercase tracking-normal hover:bg-emerald-500/10">{t('common.tactical.node_active')}</SelectItem>
+                                    <SelectItem value="Inactive" className="text-rose-500 font-black italic uppercase tracking-normal hover:bg-rose-500/10">{t('common.tactical.node_deactivated')}</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
