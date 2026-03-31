@@ -106,9 +106,30 @@ export function MonitoringCommandCenter({
     useRealtime('Notifications', (payload) => {
         if (payload.eventType === 'INSERT') {
             const notification = payload.new
-            toast(notification.Title || t('monitoring.alerts'), {
-                description: notification.Message
-            })
+            const isSOS = notification.Title?.includes('SOS')
+            
+            if (isSOS) {
+                toast.error(notification.Title, {
+                    description: notification.Message,
+                    duration: 20000, // 20 seconds for SOS
+                    action: {
+                        label: '📍 ดูตำแหน่ง',
+                        onClick: () => {
+                            if (notification.Driver_ID) {
+                                setSelectedId(notification.Driver_ID)
+                                const drv = drivers.find(d => d.Driver_ID === notification.Driver_ID)
+                                if (drv?.Latitude && drv?.Longitude) {
+                                    setFocusPosition([drv.Latitude, drv.Longitude])
+                                }
+                            }
+                        }
+                    }
+                })
+            } else {
+                toast(notification.Title || t('monitoring.alerts'), {
+                    description: notification.Message
+                })
+            }
         }
     })
 

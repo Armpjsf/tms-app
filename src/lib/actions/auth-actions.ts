@@ -132,7 +132,18 @@ export async function loginDriver(formData: FormData) {
 
 export async function logoutDriver() {
   const cookieStore = await cookies()
+  
+  // Clear cookie with specific options to ensure it is deleted
+  cookieStore.set("driver_session", "", {
+    maxAge: 0,
+    path: "/",
+    expires: new Date(0),
+    httpOnly: true,
+    sameSite: "lax"
+  })
+
   cookieStore.delete("driver_session")
+  
   redirect("/mobile/login")
 }
 

@@ -1,13 +1,13 @@
 'use server'
 
-import { createClient } from '@/utils/supabase/server'
+import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { getUserBranchId, isSuperAdmin } from '@/lib/permissions'
 
 export async function adminUpdateJobStatus(jobId: string, newStatus: string, note?: string) {
-  const supabase = await createClient()
-  const branchId = await getUserBranchId()
   const isAdmin = await isSuperAdmin()
+  const supabase = isAdmin ? await createAdminClient() : await createClient()
+  const branchId = await getUserBranchId()
 
   // 1. Verify Permission (Check if job belongs to admin's branch)
   if (!isAdmin && branchId) {
@@ -24,33 +24,42 @@ export async function adminUpdateJobStatus(jobId: string, newStatus: string, not
 
   // 2. Prepare Update Data
   const updateData: Record<string, unknown> = {
-      Job_Status: newStatus,
-      Updated_At: new Date().toISOString()
+      Job_Status: newStatus
   }
 
   // Add note if provided
   if (note) {
-      updateData.Note = note // Assuming 'Note' column exists, otherwise we might need to append to existing notes or ignore
+      updateData.Notes = note 
   }
 
-  // Complete the job timestamps if finishing
+  // Handle timestamps based on status
+  const now = new Date()
+  const timeString = now.toTimeString().split(' ')[0] // Provides "HH:mm:ss"
+  const dateString = now.toISOString().split('T')[0]  // Provides "YYYY-MM-DD"
+  
+  if (newStatus === 'Picked Up') {
+      updateData.Actual_Pickup_Time = timeString
+      updateData.Pickup_Date = dateString
+  }
+  
   if (newStatus === 'Delivered' || newStatus === 'Completed') {
-      updateData.Actual_Finish_Time = new Date().toISOString()
-  }
-
-  // If cancelling
-  if (newStatus === 'Cancelled') {
-    // Maybe clear driver? No, keep history.
+      updateData.Actual_Delivery_Time = timeString
+      updateData.Delivery_Date = dateString
   }
 
   // 3. Perform Update
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from('Jobs_Main')
     .update(updateData)
     .eq('Job_ID', jobId)
+    .select()
 
   if (error) {
     return { success: false, message: `Failed to update: ${error.message}` }
+  }
+
+  if (!data || data.length === 0) {
+    return { success: false, message: 'No job found with the given ID' }
   }
 
   // 4. Log Admin Action (Optional, can be added to a logs table later)

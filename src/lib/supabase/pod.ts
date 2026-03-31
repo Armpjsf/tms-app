@@ -1,5 +1,5 @@
 import { createClient, createAdminClient } from '@/utils/supabase/server'
-import { getUserBranchId, isSuperAdmin, getCustomerId } from "@/lib/permissions"
+import { getUserBranchId, isSuperAdmin, isAdmin, getCustomerId } from "@/lib/permissions"
 
 export type PODRecord = {
   Job_ID: string
@@ -19,8 +19,8 @@ export type PODRecord = {
 // ดึงรายการ POD วันนี้
 export async function getTodayPODs(): Promise<PODRecord[]> {
   try {
-    const isAdmin = await isSuperAdmin()
-    const supabase = isAdmin ? await createAdminClient() : await createClient()
+    const isSuper = await isSuperAdmin()
+    const supabase = isSuper ? createAdminClient() : await createClient()
     const today = new Date().toISOString().split('T')[0]
     
     const branchId = await getUserBranchId()
@@ -28,9 +28,9 @@ export async function getTodayPODs(): Promise<PODRecord[]> {
 
     let dbQuery = supabase
       .from('Jobs_Main')
-      .select('Job_ID, Job_Status, Plan_Date, Customer_Name, Driver_Name, Vehicle_Plate, Route_Name, Photo_Proof_Url, Signature_Url, Actual_Delivery_Time, Delivery_Lat, Delivery_Lon')
+      .select('Job_ID, Job_Status, Plan_Date, Customer_Name, Driver_Name, Vehicle_Plate, Route_Name, Photo_Proof_Url, Signature_Url, Actual_Delivery_Time, Delivery_Lat, Delivery_Lon, Created_At')
       .eq('Plan_Date', today)
-      .in('Job_Status', ['Delivered', 'Complete', 'In Transit', 'Picked Up'])
+      .in('Job_Status', ['Delivered', 'Complete', 'Completed', 'In Transit', 'Picked Up'])
 
     if (customerId) {
         dbQuery = dbQuery.eq('Customer_ID', customerId)
@@ -41,7 +41,8 @@ export async function getTodayPODs(): Promise<PODRecord[]> {
     }
 
     const { data, error } = await dbQuery
-      .order('Actual_Delivery_Time', { ascending: false })
+      .order('Plan_Date', { ascending: false })
+      .order('Created_At', { ascending: false })
     
     if (error) {
       return []
@@ -54,10 +55,10 @@ export async function getTodayPODs(): Promise<PODRecord[]> {
 }
 
 // ดึงรายการ POD ทั้งหมด
-export async function getAllPODs(page = 1, limit = 50, dateFrom?: string, dateTo?: string): Promise<{ data: PODRecord[], count: number }> {
+export async function getAllPODs(page = 1, limit = 50, dateFrom?: string, dateTo?: string, query?: string): Promise<{ data: PODRecord[], count: number }> {
   try {
-    const isAdmin = await isSuperAdmin()
-    const supabase = isAdmin ? await createAdminClient() : await createClient()
+    const isSuper = await isSuperAdmin()
+    const supabase = isSuper ? createAdminClient() : await createClient()
     const offset = (page - 1) * limit
     
     const branchId = await getUserBranchId()
@@ -65,16 +66,16 @@ export async function getAllPODs(page = 1, limit = 50, dateFrom?: string, dateTo
 
     let dbQuery = supabase
       .from('Jobs_Main')
-      .select('Job_ID, Job_Status, Plan_Date, Customer_Name, Driver_Name, Vehicle_Plate, Route_Name, Photo_Proof_Url, Signature_Url, Actual_Delivery_Time, Delivery_Lat, Delivery_Lon', { count: 'exact' })
-      .in('Job_Status', ['Delivered', 'Complete', 'Completed', 'In Transit', 'Picked Up', 'Assigned', 'New', 'Failed'])
+      .select('Job_ID, Job_Status, Plan_Date, Customer_Name, Driver_Name, Vehicle_Plate, Route_Name, Photo_Proof_Url, Signature_Url, Actual_Delivery_Time, Delivery_Lat, Delivery_Lon, Created_At', { count: 'exact' })
+      .in('Job_Status', ['Delivered', 'Complete', 'Completed', 'In Transit', 'Picked Up', 'Assigned', 'New', 'Failed', 'In Progress', 'Pending'])
     
     if (customerId) {
         dbQuery = dbQuery.eq('Customer_ID', customerId)
-    } else if (isAdmin && (!branchId || branchId === 'All')) {
+    } else if (isSuper && (!branchId || branchId === 'All')) {
         // No filter
     } else if (branchId && branchId !== 'All') {
         dbQuery = dbQuery.eq('Branch_ID', branchId)
-    } else if (!isAdmin && !branchId) {
+    } else if (!isSuper && !branchId) {
         return { data: [], count: 0 }
     }
 
@@ -84,9 +85,13 @@ export async function getAllPODs(page = 1, limit = 50, dateFrom?: string, dateTo
     if (dateTo) {
         dbQuery = dbQuery.lte('Plan_Date', dateTo)
     }
+    if (query) {
+        dbQuery = dbQuery.or(`Job_ID.ilike.%${query}%,Customer_Name.ilike.%${query}%,Driver_Name.ilike.%${query}%`)
+    }
 
     const { data, error, count } = await dbQuery
       .order('Plan_Date', { ascending: false })
+      .order('Created_At', { ascending: false })
       .range(offset, offset + limit - 1)
     
     if (error) {
@@ -99,12 +104,12 @@ export async function getAllPODs(page = 1, limit = 50, dateFrom?: string, dateTo
   }
 }
 
+
 // นับสถิติ POD
-export async function getPODStats() {
+export async function getPODStats(dateFrom?: string, dateTo?: string) {
   try {
-    const isAdmin = await isSuperAdmin()
-    const supabase = isAdmin ? await createAdminClient() : await createClient()
-    const today = new Date().toISOString().split('T')[0]
+    const isSuper = await isSuperAdmin()
+    const supabase = isSuper ? createAdminClient() : await createClient()
     
     const branchId = await getUserBranchId()
     const customerId = await getCustomerId()
@@ -112,19 +117,30 @@ export async function getPODStats() {
     let dbQuery = supabase
       .from('Jobs_Main')
       .select('Job_Status, Photo_Proof_Url, Signature_Url')
-      .eq('Plan_Date', today)
+      .neq('Job_Status', 'Cancelled')
     
     if (customerId) {
         dbQuery = dbQuery.eq('Customer_ID', customerId)
+    } else if (isSuper && (!branchId || branchId === 'All')) {
+        // No branch filter for super admin
     } else if (branchId && branchId !== 'All') {
         dbQuery = dbQuery.eq('Branch_ID', branchId)
-    } else if (!isAdmin && !branchId) {
+    } else if (!isSuper && !branchId) {
         return { total: 0, withPhoto: 0, withSignature: 0, complete: 0 }
+    }
+
+    // Filter by date if provided
+    if (dateFrom && dateFrom.trim() !== '') {
+        dbQuery = dbQuery.gte('Plan_Date', dateFrom)
+    }
+    if (dateTo && dateTo.trim() !== '') {
+        dbQuery = dbQuery.lte('Plan_Date', dateTo)
     }
 
     const { data, error } = await dbQuery
     
     if (error) {
+      console.error("Error fetching POD stats:", error)
       return { total: 0, withPhoto: 0, withSignature: 0, complete: 0 }
     }
     
@@ -133,9 +149,11 @@ export async function getPODStats() {
       total: jobs.length,
       withPhoto: jobs.filter(j => j.Photo_Proof_Url).length,
       withSignature: jobs.filter(j => j.Signature_Url).length,
-      complete: jobs.filter(j => j.Job_Status === 'Delivered' || j.Job_Status === 'Complete').length,
+      complete: jobs.filter(j => j.Job_Status === 'Delivered' || j.Job_Status === 'Complete' || j.Job_Status === 'Completed').length,
     }
-  } catch {
+  } catch (err) {
+    console.error("POD stats exception:", err)
     return { total: 0, withPhoto: 0, withSignature: 0, complete: 0 }
   }
 }
+

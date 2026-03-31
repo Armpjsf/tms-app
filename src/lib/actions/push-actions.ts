@@ -3,6 +3,7 @@
 import webpush from 'web-push'
 import { createAdminClient } from '@/utils/supabase/server'
 import { createNotification } from './notification-actions'
+import { logActivity } from '@/lib/supabase/logs'
 import * as admin from 'firebase-admin'
 import { join } from 'path'
 import { readFileSync } from 'fs'
@@ -323,4 +324,63 @@ export async function notifyAdminJobStatus(driverId: string, driverName: string,
         type: 'status_update',
         tag: `status_${jobId}`,
     })
+}
+
+/**
+ * Notify: Driver Silent SOS (No Call)
+ * Sends alerts to admins with location and driver info.
+ */
+export async function notifySilentSOS(
+    driverId: string, 
+    driverName: string, 
+    driverPhone?: string,
+    lat?: number,
+    lng?: number,
+    address?: string
+) {
+    const locationStr = (lat && lng) ? `${lat.toFixed(6)}, ${lng.toFixed(6)}` : 'ไม่ทราบพิกัด'
+    const alertMessage = `🚨 ฉุกเฉิน! ${driverName} แจ้งเหตุ (ไม่สะดวกคุย)
+📞 โทร: ${driverPhone || 'N/A'}
+📍 พิกัด: ${locationStr}
+🏠 ที่อยู่: ${address || 'N/A'}`
+
+    // 1. Send Push to Admins
+    await sendPushToAdmins({
+        title: `🆘 SOS! ${driverName}`,
+        body: alertMessage.slice(0, 200),
+        url: `/monitoring?driver=${driverId}`,
+        type: 'sos',
+        tag: `sos_silent_${driverId}`,
+        driverPhone,
+        actions: [
+            { action: 'view_location', title: '📍 ดูตำแหน่ง' },
+            { action: 'call_driver', title: '📞 โทรกลับ' },
+        ]
+    })
+
+    // 2. Create Notification (Triggers toast in Dashboard)
+    await createNotification({
+        Driver_ID: driverId,
+        Title: `🆘 SOS: ${driverName}`,
+        Message: alertMessage,
+        Type: 'error',
+        Link: `/monitoring?driver=${driverId}`
+    })
+
+    // 3. Log Activity
+    await logActivity({
+        module: 'Jobs', 
+        action_type: 'UPDATE',
+        target_id: driverId,
+        details: {
+            alert_type: 'SILENT_SOS',
+            driver_name: driverName,
+            phone: driverPhone,
+            lat,
+            lng,
+            address
+        }
+    })
+
+    return { success: true }
 }

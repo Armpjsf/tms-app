@@ -11,19 +11,24 @@ export default async function PODPage(props: {
   const dateFrom = (searchParams.from as string) || ''
   const dateTo = (searchParams.to as string) || ''
   const query = (searchParams.q as string) || ''
+  const page = Number(searchParams.page) || 1
+  const limit = 50
 
   // Fetch data on server
-  const [{ data: pods }, stats] = await Promise.all([
-    getAllPODs(1, 100, dateFrom, dateTo, query), 
-    getPODStats(),
+  const [{ data: pods, count }, stats] = await Promise.all([
+    getAllPODs(page, limit, dateFrom, dateTo, query), 
+    getPODStats(dateFrom, dateTo),
   ])
+
 
   return (
     <DashboardLayout>
        <PODClientPage 
           pods={pods || []} 
           stats={stats} 
-          searchParams={{ from: dateFrom, to: dateTo, q: query }} 
+          count={count || 0}
+          limit={limit}
+          searchParams={{ from: dateFrom, to: dateTo, q: query, page }} 
        />
     </DashboardLayout>
   )

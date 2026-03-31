@@ -6,14 +6,15 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Phone, AlertTriangle, ShieldAlert, Ambulance, ExternalLink } from "lucide-react"
 import { getCompanyProfile, CompanyProfile } from "@/lib/supabase/settings"
-import { notifyAdminSOS } from "@/lib/actions/push-actions"
+import { notifyAdminSOS, notifySilentSOS } from "@/lib/actions/push-actions"
 
 type Props = {
   driverId: string
   driverName: string
+  driverPhone: string
 }
 
-export function SOSPageClient({ driverId, driverName }: Props) {
+export function SOSPageClient({ driverId, driverName, driverPhone }: Props) {
   const [profile, setProfile] = useState<CompanyProfile | null>(null)
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null)
   const [address, setAddress] = useState<string>("กำลังค้นหาพิกัด...")
@@ -62,6 +63,24 @@ export function SOSPageClient({ driverId, driverName }: Props) {
     window.location.href = `tel:${number}`
   }
 
+  const handleSilentSOS = async () => {
+    if (!driverId) return
+    
+    setSosSent(true)
+    try {
+        await notifySilentSOS(
+            driverId, 
+            driverName, 
+            driverPhone, 
+            location?.lat, 
+            location?.lng, 
+            address
+        )
+    } catch (e) {
+        console.error("Silent SOS failed:", e)
+    }
+  }
+
   const handleCall = (number: string) => {
     window.location.href = `tel:${number}`
   }
@@ -87,7 +106,7 @@ export function SOSPageClient({ driverId, driverName }: Props) {
 
   return (
     <div className="min-h-screen bg-background pb-24 pt-16 px-4">
-      <MobileHeader title="ขอความช่วยเหลือ (SOS)" showBack />
+      <MobileHeader title="แจ้งเหตุฉุกเฉิน (ระบบใหม่)" showBack />
 
       <div className="space-y-6 text-center">
 
@@ -99,14 +118,27 @@ export function SOSPageClient({ driverId, driverName }: Props) {
 
         <div className="space-y-2">
           <h1 className="text-2xl font-bold text-gray-900">ฉุกเฉิน / อุบัติเหตุ</h1>
-          <p className="text-muted-foreground">กดปุ่มด้านล่างเพื่อโทรออกทันที</p>
+          <p className="text-muted-foreground">กดปุ่มด้านล่างเพื่อขอความช่วยเหลือทันที</p>
         </div>
 
         <div className="grid gap-4">
+          {/* Silent SOS Button (New Request - Using Direct Style to prevent CSS Cache issues) */}
+          <Button
+            onClick={handleSilentSOS}
+            style={{ backgroundColor: '#e11d48' }}
+            className="h-32 text-2xl font-black text-white shadow-xl flex flex-col items-center justify-center gap-1 border-b-8 border-rose-900 active:border-b-0 active:translate-y-2 transition-all rounded-3xl mb-2"
+          >
+            <div className="flex items-center gap-3">
+                <AlertTriangle size={36} className="animate-pulse" />
+                <span>แจ้งฉุกเฉิน (ไม่โทร)</span>
+            </div>
+            <span className="text-sm font-bold opacity-80 uppercase tracking-widest">กดเพื่อส่งพิกัดให้แอดมินทันที</span>
+          </Button>
+
           {/* SOS sent banner */}
           {sosSent && (
             <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-3 animate-in fade-in duration-300">
-              <p className="text-red-400 font-bold text-sm">🆘 แจ้งเตือนเจ้าหน้าที่แล้ว — กำลังโทรออก...</p>
+              <p className="text-red-400 font-bold text-sm">🆘 แจ้งเตือนเจ้าหน้าที่แล้ว — กำลังดำเนินการ...</p>
             </div>
           )}
 

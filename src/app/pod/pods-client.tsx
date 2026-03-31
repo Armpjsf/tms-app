@@ -25,16 +25,18 @@ import { PremiumCard } from "@/components/ui/premium-card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
+import { Pagination } from "@/components/ui/pagination"
 
-export default function PODPage({ pods, stats, searchParams }: any) {
+export default function PODPage({ pods, stats, count, limit, searchParams }: any) {
   const { t } = useLanguage()
   const [filterQuery, setFilterQuery] = useState('')
   
   const statusConfig: Record<string, { label: string; color: string; glow: string; icon: React.ReactNode }> = {
     Delivered: { label: t('common.success'), color: "text-emerald-400 bg-emerald-500/10", glow: "shadow-[0_0_15px_rgba(16,185,129,0.3)]", icon: <CheckCircle2 size={12} /> },
     Complete: { label: t('common.success'), color: "text-emerald-400 bg-emerald-500/10", glow: "shadow-[0_0_15px_rgba(16,185,129,0.3)]", icon: <CheckCircle2 size={12} /> },
-    "In Transit": { label: t('common.loading'), color: "text-primary bg-primary/10", glow: "shadow-[0_0_15px_rgba(255,30,133,0.3)]", icon: <Clock size={12} /> },
-    "Picked Up": { label: t('common.pending'), color: "text-primary/80 bg-primary/5", glow: "shadow-none", icon: <Clock size={12} /> },
+    Completed: { label: t('common.success'), color: "text-emerald-400 bg-emerald-500/10", glow: "shadow-[0_0_15px_rgba(16,185,129,0.3)]", icon: <CheckCircle2 size={12} /> },
+    "In Transit": { label: t('jobs.status_in_transit'), color: "text-primary bg-primary/10", glow: "shadow-[0_0_15px_rgba(255,30,133,0.3)]", icon: <Clock size={12} /> },
+    "Picked Up": { label: t('jobs.status_picked_up'), color: "text-primary/80 bg-primary/5", glow: "shadow-none", icon: <Clock size={12} /> },
     Failed: { label: t('common.error'), color: "text-rose-400 bg-rose-500/10", glow: "shadow-[0_0_15px_rgba(244,63,94,0.3)]", icon: <AlertCircle size={12} /> },
   }
 
@@ -65,7 +67,7 @@ export default function PODPage({ pods, stats, searchParams }: any) {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
         <PremiumCard className="p-8 group hover:border-primary/50 transition-all duration-500 border-border/5 bg-muted/50">
            <div className="flex justify-between items-start mb-4">
-              <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest">{t('navigation.reports')}</span>
+              <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest">{t('pod.total')}</span>
               <FileText className="text-primary opacity-20 group-hover:opacity-100 transition-opacity" size={20} />
            </div>
            <p className="text-5xl font-black text-foreground italic tracking-tighter mb-2">{stats.total}</p>
@@ -74,7 +76,7 @@ export default function PODPage({ pods, stats, searchParams }: any) {
 
         <PremiumCard className="p-8 group hover:border-emerald-500/50 transition-all duration-500 border-border/5 bg-muted/50 shadow-[inset_0_0_30px_rgba(16,185,129,0.02)]">
            <div className="flex justify-between items-start mb-4">
-              <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest">{t('common.success')}</span>
+              <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest">{t('pod.completed')}</span>
               <CheckCircle2 className="text-emerald-400 opacity-20 group-hover:opacity-100 transition-opacity" size={20} />
            </div>
            <p className="text-5xl font-black text-emerald-400 italic tracking-tighter mb-2">{stats.complete}</p>
@@ -83,24 +85,24 @@ export default function PODPage({ pods, stats, searchParams }: any) {
 
         <PremiumCard className="p-8 group hover:border-primary/50 transition-all duration-500 border-border/5 bg-muted/50">
            <div className="flex justify-between items-start mb-4">
-              <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest">{t('common.loading')}</span>
+              <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest">{t('pod.visual_proof')}</span>
               <ImageIcon className="text-primary opacity-20 group-hover:opacity-100 transition-opacity" size={20} />
            </div>
            <div className="flex items-end gap-3">
               <p className="text-5xl font-black text-foreground italic tracking-tighter mb-2">{stats.withPhoto}</p>
-              <span className="text-base font-bold font-black text-primary mb-4 uppercase">{t('common.success')}</span>
+              <span className="text-base font-bold font-black text-primary mb-4 uppercase">{t('common.units')}</span>
            </div>
            <div className="h-1 w-12 bg-primary/50 rounded-full" />
         </PremiumCard>
 
         <PremiumCard className="p-8 group hover:border-primary/50 transition-all duration-500 border-border/5 bg-muted/50">
            <div className="flex justify-between items-start mb-4">
-              <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest">{t('navigation.monitoring')}</span>
+              <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest">{t('pod.auth_sig')}</span>
               <PenTool className="text-primary opacity-20 group-hover:opacity-100 transition-opacity" size={20} />
            </div>
            <div className="flex items-end gap-3">
               <p className="text-5xl font-black text-foreground italic tracking-tighter mb-2">{stats.withSignature}</p>
-              <span className="text-base font-bold font-black text-primary mb-4 uppercase">{t('common.success')}</span>
+              <span className="text-base font-bold font-black text-primary mb-4 uppercase">{t('common.units')}</span>
            </div>
            <div className="h-1 w-12 bg-primary/50 rounded-full" />
         </PremiumCard>
@@ -152,13 +154,13 @@ export default function PODPage({ pods, stats, searchParams }: any) {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-border/5 bg-muted/30">
-                <th className="p-8 text-[12px] font-black text-muted-foreground uppercase tracking-[0.1em]">{t('common.actions')} ID</th>
+                <th className="p-8 text-[12px] font-black text-muted-foreground uppercase tracking-[0.1em]">{t('jobs.col_id')}</th>
                 <th className="p-8 text-[12px] font-black text-muted-foreground uppercase tracking-[0.1em]">{t('common.date')}</th>
-                <th className="p-8 text-[12px] font-black text-muted-foreground uppercase tracking-[0.1em]">{t('navigation.reports')}</th>
+                <th className="p-8 text-[12px] font-black text-muted-foreground uppercase tracking-[0.1em]">{t('navigation.customers')}</th>
                 <th className="p-8 text-[12px] font-black text-muted-foreground uppercase tracking-[0.1em]">{t('navigation.drivers')}</th>
-                <th className="p-8 text-[12px] font-black text-muted-foreground uppercase tracking-[0.1em] text-center">{t('common.loading')}</th>
+                <th className="p-8 text-[12px] font-black text-muted-foreground uppercase tracking-[0.1em] text-center">{t('pod.visual_proof')}</th>
                 <th className="p-8 text-[12px] font-black text-muted-foreground uppercase tracking-[0.1em]">{t('common.status')}</th>
-                <th className="p-8 text-right text-[12px] font-black text-muted-foreground uppercase tracking-[0.1em]">{t('common.actions')}</th>
+                <th className="p-8 text-right text-[12px] font-black text-muted-foreground uppercase tracking-[0.1em]">{t('common.action')}</th>
               </tr>
             </thead>
             <tbody>
@@ -174,7 +176,7 @@ export default function PODPage({ pods, stats, searchParams }: any) {
                   <td className="p-8">
                     <div className="flex flex-col">
                        <span className="text-lg font-bold font-black text-foreground uppercase tracking-tight">
-                          {pod.Plan_Date ? new Date(pod.Plan_Date).toLocaleDateString('th-TH') : "N/A"}
+                          {pod.Plan_Date ? new Date(pod.Plan_Date).toLocaleDateString(useLanguage().language === 'th' ? 'th-TH' : 'en-US') : "N/A"}
                        </span>
                        <span className="text-base font-bold font-black text-muted-foreground uppercase">{t('pod.synchronized')}</span>
                     </div>
@@ -253,9 +255,13 @@ export default function PODPage({ pods, stats, searchParams }: any) {
         {pods.length === 0 && (
           <div className="py-32 text-center opacity-30">
              <FileText size={64} className="mx-auto mb-6 text-muted-foreground" />
-             <p className="text-lg font-bold font-black uppercase tracking-[0.6em] text-foreground">{t('common.pending')}</p>
+             <p className="text-lg font-bold font-black uppercase tracking-[0.6em] text-foreground">{t('common.no_data')}</p>
           </div>
         )}
+      </div>
+
+      <div className="p-8 bg-muted/30 border-t border-border/5 rounded-b-[4rem]">
+         <Pagination totalItems={count} limit={limit} />
       </div>
     </div>
   )
