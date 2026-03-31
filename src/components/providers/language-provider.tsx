@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { dictionaries, Language } from '@/lib/i18n/dictionaries';
 
 type LanguageContextType = {
@@ -13,21 +13,24 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const [language, setLanguage] = useState<Language>('th');
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     const savedLang = localStorage.getItem('app_language') as Language;
-    if (savedLang) {
+    if (savedLang && savedLang !== 'th') {
       setLanguage(savedLang);
     }
   }, []);
 
-  const handleSetLanguage = (lang: Language) => {
+  const handleSetLanguage = useCallback((lang: Language) => {
     setLanguage(lang);
     localStorage.setItem('app_language', lang);
-  };
+    document.cookie = `app_language=${lang}; path=/; max-age=31536000`; // 1 year
+  }, []);
 
-  // Helper function to get nested values from dictionary
-  const t = (path: string, data?: Record<string, any>) => {
+  // Helper function to get nested values from dictionary (Stable reference)
+  const t = useCallback((path: string, data?: Record<string, any>) => {
     const keys = path.split('.');
     let result: any = dictionaries[language];
     
@@ -40,18 +43,23 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     }
     
     let translated = result as string;
+    if (typeof translated !== 'string') return path;
+
     if (data) {
       Object.keys(data).forEach(key => {
+        translated = translated.replace(`{${key}}`, data[key]);
         translated = translated.replace(`{{${key}}}`, data[key]);
       });
     }
     
     return translated;
-  };
+  }, [language]);
 
   return (
     <LanguageContext.Provider value={{ language, setLanguage: handleSetLanguage, t }}>
-      {children}
+      <div style={{ visibility: mounted ? 'visible' : 'hidden' }}>
+        {children}
+      </div>
     </LanguageContext.Provider>
   );
 }

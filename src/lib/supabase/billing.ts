@@ -20,6 +20,14 @@ export interface BillingNote {
   Customer_Tax_ID?: string
 }
 
+function getErrorMessage(e: any): string {
+    if (!e) return "Unknown error"
+    if (typeof e === 'string') return e
+    if (e.message) return e.message
+    if (e.error?.message) return e.error.message
+    return JSON.stringify(e)
+}
+
 export async function createBillingNote(
     jobIds: string[], 
     customerName: string, 
@@ -27,7 +35,8 @@ export async function createBillingNote(
     dueDate?: string
 ) {
     try {
-        const supabase = await createClient()
+        const hasAdminPrivileges = await isAdmin()
+        const supabase = hasAdminPrivileges ? await createAdminClient() : await createClient()
 
         // 1. Calculate Total Amount
         const { data: jobs, error: jobsError } = await supabase
@@ -70,10 +79,14 @@ export async function createBillingNote(
         const billingNoteId = `BN-${ym}-${randomSuffix}`
 
         // 3. Insert Billing Note
-        // 3. Insert Billing Note
         const userBranchId = await getUserBranchId()
         // Use Branch_ID from the first job if available, otherwise fallback to user's branch
-        const branchId = jobs?.[0]?.Branch_ID || userBranchId || 'HQ'
+        let branchId = jobs?.[0]?.Branch_ID || userBranchId || 'HQ'
+        
+        // Normalize "All" branch (super admin default)
+        if (branchId === 'All') {
+            branchId = jobs?.[0]?.Branch_ID || 'HQ'
+        }
 
         const { error: insertError } = await supabase
             .from('Billing_Notes')
@@ -134,8 +147,7 @@ export async function createBillingNote(
         return { success: true, id: billingNoteId }
 
     } catch (e: unknown) {
-        const message = e instanceof Error ? e.message : String(e)
-        return { success: false, error: message }
+        return { success: false, error: getErrorMessage(e) }
     }
 }
 
@@ -145,7 +157,8 @@ export async function createDriverPayment(
     date: string
 ) {
     try {
-        const supabase = await createClient()
+        const hasAdminPrivileges = await isAdmin()
+        const supabase = hasAdminPrivileges ? await createAdminClient() : await createClient()
 
         // 1. Calculate Total Amount
         const { data: jobs, error: jobsError } = await supabase
@@ -166,7 +179,12 @@ export async function createDriverPayment(
         // 3. Insert Driver Payment
         const userBranchId = await getUserBranchId()
         // Use Branch_ID from the first job if available, otherwise fallback to user's branch
-        const branchId = jobs?.[0]?.Branch_ID || userBranchId || 'HQ'
+        let branchId = jobs?.[0]?.Branch_ID || userBranchId || 'HQ'
+        
+        // Normalize "All" branch
+        if (branchId === 'All') {
+            branchId = jobs?.[0]?.Branch_ID || 'HQ'
+        }
 
         const { error: insertError } = await supabase
             .from('Driver_Payments')
@@ -224,8 +242,8 @@ export async function createDriverPayment(
 
         return { success: true, id: paymentId }
 
-    } catch {
-        return { success: false, error: "เกิดข้อผิดพลาดในการบันทึกข้อมูล" }
+    } catch (e: unknown) {
+        return { success: false, error: getErrorMessage(e) }
     }
 }
 
@@ -255,19 +273,35 @@ export async function getBillingNotes(filters?: { dateFrom?: string, dateTo?: st
         if (error) {
             return []
         }
-        return data as BillingNote[]
+        
+        const notes = data as BillingNote[]
+        
+        // Fetch emails separately to avoid join errors if relationships aren't configured
+        const customerNames = Array.from(new Set(notes.map(n => n.Customer_Name))).filter(Boolean)
+        if (customerNames.length > 0) {
+            const { data: customers } = await supabase
+                .from('Master_Customers')
+                .select('Customer_Name, Email')
+                .in('Customer_Name', customerNames)
+            
+            if (customers) {
+                const emailMap = new Map(customers.map(c => [c.Customer_Name, c.Email]))
+                notes.forEach(n => {
+                    n.Customer_Email = emailMap.get(n.Customer_Name) || ""
+                })
+            }
+        }
+
+        return notes
     } catch {
         return []
     }
 }
 
-// Interface moved to top of file
-
-// ... (in createBillingNote, createDriverPayment, getBillingNotes - unchanged)
-
 export async function getBillingNoteByIdWithJobs(id: string) {
     try {
-        const supabase = await createClient()
+        const admin = await isAdmin()
+        const supabase = admin ? await createAdminClient() : await createClient()
         
         // 1. Get Billing Note
         const { data: note, error: noteError } = await supabase
@@ -303,17 +337,16 @@ export async function getBillingNoteByIdWithJobs(id: string) {
         }
 
         // 4. Get Customer Details
-        const customerEmail = ""
+        let customerEmail = ""
         let customerAddress = ""
         let customerTaxId = ""
 
         if (note && note.Customer_Name) {
-            // Note: Email is not in Master_Customers schema provided by user.
             const { data: customer, error: custError } = await supabase
                 .from('Master_Customers')
-                .select('Address, Tax_ID') 
+                .select('Address, Tax_ID, Email') 
                 .eq('Customer_Name', note.Customer_Name)
-                .limit(1) // Safely handle duplicates by taking the first one
+                .limit(1)
                 .maybeSingle()
             
             if (custError) {
@@ -321,11 +354,9 @@ export async function getBillingNoteByIdWithJobs(id: string) {
             }
 
             if (customer) {
-                // customerEmail = customer.Email // Column doesn't exist
                 customerAddress = customer.Address
                 customerTaxId = customer.Tax_ID
-            } else {
-                // Customer not found
+                customerEmail = customer.Email || ""
             }
         }
 
@@ -424,7 +455,6 @@ export async function getDriverPaymentByIdWithJobs(id: string) {
         }
 
         // 4. Get Payee Details (Bank Info)
-        // Check if Driver_Name is a Subcontractor or Driver
         let bankInfo = {
             Bank_Name: "",
             Bank_Account_No: "",
@@ -488,8 +518,7 @@ export async function updateBillingNoteStatus(id: string, status: string) {
 
         return { success: true }
     } catch (e: unknown) {
-        const message = e instanceof Error ? e.message : String(e)
-        return { success: false, error: message }
+        return { success: false, error: getErrorMessage(e) }
     }
 }
 
@@ -519,8 +548,7 @@ export async function updateDriverPaymentStatus(id: string, status: string) {
 
         return { success: true }
     } catch (e: unknown) {
-        const message = e instanceof Error ? e.message : String(e)
-        return { success: false, error: message }
+        return { success: false, error: getErrorMessage(e) }
     }
 }
 
@@ -559,8 +587,7 @@ export async function recallBillingNote(id: string) {
 
         return { success: true }
     } catch (e: unknown) {
-        const message = e instanceof Error ? e.message : String(e)
-        return { success: false, error: message }
+        return { success: false, error: getErrorMessage(e) }
     }
 }
 
@@ -599,7 +626,6 @@ export async function recallDriverPayment(id: string) {
 
         return { success: true }
     } catch (e: unknown) {
-        const message = e instanceof Error ? e.message : String(e)
-        return { success: false, error: message }
+        return { success: false, error: getErrorMessage(e) }
     }
 }

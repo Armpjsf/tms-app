@@ -1,7 +1,5 @@
 "use client"
 
-"use client"
-
 import dynamic from "next/dynamic"
 import { useState, useEffect } from "react"
 
@@ -15,24 +13,35 @@ export function GlobalClientComponents() {
   const [adminUserId, setAdminUserId] = useState<string | null>(null)
   const [adminBranchId, setAdminBranchId] = useState<string | null>(null)
   const [isAdmin, setIsAdmin] = useState<boolean>(false)
+  const [isMounted, setIsMounted] = useState(false)
 
   useEffect(() => {
-    // Only run when in admin context or has session
+    setIsMounted(true)
+    const controller = new AbortController()
+
     const fetchAdminContext = async () => {
         try {
-          const res = await fetch('/api/notifications')
+          const res = await fetch('/api/notifications', { signal: controller.signal })
+          if (!res.ok) return
           const data = await res.json()
+          
           if (data.userId) {
             setAdminUserId(data.userId)
             setAdminBranchId(data.branchId)
             setIsAdmin(data.isAdmin)
           }
         } catch (e) {
-          console.error("Failed to fetch admin context", e)
+          if ((e as Error).name !== 'AbortError') {
+            // Silently fail if not logged in or endpoint not ready
+          }
         }
     }
     fetchAdminContext()
-  }, [])
+
+    return () => controller.abort()
+  }, []) // Fix: Execute only once on mount
+
+  if (!isMounted) return null
 
   return (
     <>

@@ -1,4 +1,5 @@
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
+import { cookies } from "next/headers"
 import { Button } from "@/components/ui/button"
 import { PremiumButton } from "@/components/ui/premium-button"
 import { PremiumCard } from "@/components/ui/premium-card"
@@ -45,6 +46,9 @@ export default async function InvoicesPage({
   const resolvedParams = await searchParams
   const page = Number(resolvedParams?.page) || 1
   const query = resolvedParams?.query || ""
+  
+  const cookieStore = await cookies()
+  const language = cookieStore.get('app_language')?.value || 'th'
   
   const { data: invoices } = await getInvoices(page, 20, query)
   const safeInvoices = Array.isArray(invoices) ? invoices : []
@@ -164,10 +168,10 @@ export default async function InvoicesPage({
                            </div>
                         </td>
                         <td className="px-8 py-10 text-center text-muted-foreground font-bold uppercase tracking-widest text-base font-bold">
-                            {inv.Issue_Date ? new Date(inv.Issue_Date).toLocaleDateString('th-TH') : '-'}
+                            {inv.Issue_Date ? new Date(inv.Issue_Date).toLocaleDateString(language === 'th' ? 'th-TH' : 'en-US') : '-'}
                         </td>
                         <td className="px-8 py-10 text-center text-muted-foreground font-bold uppercase tracking-widest text-base font-bold">
-                            {inv.Due_Date ? new Date(inv.Due_Date).toLocaleDateString('th-TH') : '-'}
+                            {inv.Due_Date ? new Date(inv.Due_Date).toLocaleDateString(language === 'th' ? 'th-TH' : 'en-US') : '-'}
                         </td>
                         <td className="px-8 py-10 text-right">
                              <div className="flex flex-col items-end">
@@ -205,7 +209,7 @@ export default async function InvoicesPage({
                                 <span className="text-base font-bold font-black uppercase tracking-widest">Audit Analytics</span>
                               </DropdownMenuItem>
                               <DropdownMenuItem className="focus:bg-primary/20 focus:text-white cursor-pointer rounded-xl px-4 py-3 gap-3 transition-colors" asChild>
-                                <Link href={`/billing/print/${inv.Invoice_ID}`} target="_blank" className="flex items-center">
+                                <Link href={`/billing/print/${inv.Invoice_ID}?lang=${language}`} target="_blank" className="flex items-center">
                                   <Download className="h-4 w-4 text-primary" /> 
                                   <span className="text-base font-bold font-black uppercase tracking-widest">Output PDF</span>
                                 </Link>

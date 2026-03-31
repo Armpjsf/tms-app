@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Outfit, Prompt } from "next/font/google";
 import "./globals.css";
+import { ClientProviders } from "@/components/providers/client-providers";
 
 const outfit = Outfit({
   variable: "--font-outfit",
@@ -36,12 +37,6 @@ export const viewport = {
   themeColor: '#050110',
 }
 
-import { BranchProvider } from "@/components/providers/branch-provider";
-import { ThemeProvider } from "@/components/providers/theme-provider";
-import { LanguageProvider } from "@/components/providers/language-provider";
-import { GlobalClientComponents } from "@/components/providers/global-client-components";
-import { ErrorBoundary } from "@/components/error-boundary";
-
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -52,21 +47,9 @@ export default function RootLayout({
       <body
         className={`${outfit.variable} ${prompt.variable} font-sans antialiased`}
       >
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <ErrorBoundary>
-            <LanguageProvider>
-              <BranchProvider>
-                {children}
-                <GlobalClientComponents />
-              </BranchProvider>
-            </LanguageProvider>
-          </ErrorBoundary>
-        </ThemeProvider>
+        <ClientProviders>
+          {children}
+        </ClientProviders>
       </body>
     </html>
   );

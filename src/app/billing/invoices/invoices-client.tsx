@@ -35,7 +35,7 @@ interface InvoicesClientProps {
 }
 
 export default function InvoicesClient({ initialInvoices, query }: InvoicesClientProps) {
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
 
   return (
     <DashboardLayout>
@@ -193,7 +193,7 @@ export default function InvoicesClient({ initialInvoices, query }: InvoicesClien
                                 <span className="text-base font-bold font-black uppercase tracking-widest">Audit Analytics</span>
                               </DropdownMenuItem>
                               <DropdownMenuItem className="focus:bg-primary/20 focus:text-white cursor-pointer rounded-xl px-4 py-3 gap-3 transition-colors" asChild>
-                                <Link href={`/billing/print/${inv.Invoice_ID}`} target="_blank" className="flex items-center">
+                                <Link href={`/billing/print/${inv.Invoice_ID}?lang=${language}`} target="_blank" className="flex items-center">
                                   <Download className="h-4 w-4 text-primary" /> 
                                   <span className="text-base font-bold font-black uppercase tracking-widest">{t('invoices.print')}</span>
                                 </Link>

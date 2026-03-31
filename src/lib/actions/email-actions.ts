@@ -8,61 +8,46 @@ const resend = new Resend(process.env.RESEND_API_KEY || 're_123'); // Default du
 export interface EmailAttachment {
     filename: string;
     path?: string; // URL
-    content?: Buffer | string;
+    content?: string; // Base64 string or HTML content
 }
 
 interface SendBillingEmailProps {
     from?: string;
     to: string;
+    cc?: string; // Comma separated or single email
     subject: string;
     html: string;
     attachments?: EmailAttachment[];
 }
 
-export async function sendBillingEmail({ from, to, subject, html, attachments }: SendBillingEmailProps) {
+export async function sendBillingEmail({ from, to, cc, subject, html, attachments }: SendBillingEmailProps) {
     if (!process.env.RESEND_API_KEY) {
         return { success: false, error: "RESEND_API_KEY is not configured" };
     }
 
     try {
-        let senderEmail = from || 'Billing <billing@resend.dev>';
+        // RESEND SECURITY RULE: 'from' must be a VERIFIED domain in your Resend account.
+        // We use a verified fallback for delivery, and set the user's input as 'reply_to'
+        // so that the customer can still reply directly to the person who sent it.
+        const deliverySender = 'Logis-Pro <onboarding@resend.dev>'; 
+        const replyToAddress = from || '';
 
-        // If 'from' is not provided, try to fetch from branch settings
-        if (!from) {
-            try {
-                const { createClient } = await import('@/utils/supabase/server');
-                const { getUserBranchId } = await import('@/lib/permissions');
-                const supabase = await createClient();
-                const branchId = await getUserBranchId();
-
-                if (branchId) {
-                    const { data: branch } = await supabase
-                        .from('Master_Branches')
-                        .select('Email, Sender_Name')
-                        .eq('Branch_ID', branchId)
-                        .single();
-
-                    if (branch?.Email) {
-                        senderEmail = branch.Sender_Name 
-                            ? `${branch.Sender_Name} <${branch.Email}>`
-                            : branch.Email;
-                    }
-                }
-            } catch {
-                // Failed to fetch branch email settings
-            }
-        }
+        // Handle CC: split by comma if it's a string
+        const ccList = cc ? cc.split(',').map(e => e.trim()).filter(Boolean) : undefined;
 
         const { data, error } = await resend.emails.send({
-            from: senderEmail, 
+            from: deliverySender, 
             to: [to],
-            // cc: 'billing@mycompany.com', // Optional: Auto CC yourself
+            cc: ccList,
+            replyTo: replyToAddress,
             subject: subject,
             html: html,
             attachments: attachments
         });
 
         if (error) {
+            // Log full error for debugging but return safe message
+            console.error("[Email Action Error]", error);
             return { success: false, error: error.message };
         }
 

@@ -28,6 +28,7 @@ import {
   PopoverContent, 
   PopoverTrigger 
 } from "@/components/ui/popover"
+import { useLanguage } from "@/components/providers/language-provider"
 import {
   Select,
   SelectContent,
@@ -47,6 +48,7 @@ import { exportToCSV } from "@/lib/utils/export"
 
 export default function CustomerBillingHistory() {
   const router = useRouter()
+  const { language } = useLanguage()
   const [notes, setNotes] = useState<BillingNote[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
@@ -370,7 +372,7 @@ export default function CustomerBillingHistory() {
                                 <CloudSync className="w-4 h-4" />
                             </PremiumButton>
 
-                            <Link href={`/billing/print/${note.Billing_Note_ID}`} target="_blank">
+                            <Link href={`/billing/print/${note.Billing_Note_ID}?lang=${language}`} target="_blank">
                                 <PremiumButton size="sm" variant="secondary" className="h-9 px-4 rounded-xl">
                                     <ArrowRight className="w-4 h-4 mr-2" /> รายละเอียด
                                 </PremiumButton>

@@ -58,12 +58,13 @@ export function LocationTracker({ driverId }: { driverId?: string, branchId?: st
                     }
                 } catch (e) {
                     setStatus("error")
-                    console.error('[DEBUG] updateDriverLocation exception:', e)
+                    console.warn('[DEBUG] updateDriverLocation exception:', e)
                 }
             }
         },
         (err) => {
-            console.error('[DEBUG] Geolocation error:', err)
+            // Use warn to avoid blocking the UI with Next.js Error Overlay
+            console.warn('[DEBUG] Geolocation error:', err.code, err.message)
             setStatus("error")
         },
         {
