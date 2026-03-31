@@ -2,6 +2,8 @@
 
 import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { getUserBranchId, getCustomerId, isSuperAdmin } from "@/lib/permissions"
+import { getSystemLogs } from "@/lib/supabase/logs"
+import { getJobById as fetchJobById } from "@/lib/supabase/jobs"
 
 export interface CalendarJob {
   Job_ID: string
@@ -42,4 +44,23 @@ export async function getJobsForMonth(year: number, month: number) {
   if (error) return []
   
   return (data || []) as CalendarJob[]
+}
+
+export async function getJobById(jobId: string) {
+  return await fetchJobById(jobId)
+}
+
+export async function getJobTimeline(jobId: string) {
+  try {
+    const logs = await getSystemLogs({
+       module: 'Jobs',
+       limit: 50
+    })
+    // Filter locally for now as getSystemLogs doesn't support targetId filter yet
+    // Actually, I should update getSystemLogs to support targetId or just filter here.
+    return logs.filter(log => log.target_id === jobId)
+  } catch (error) {
+    console.error("Error fetching job timeline:", error)
+    return []
+  }
 }

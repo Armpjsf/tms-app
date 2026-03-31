@@ -13,13 +13,14 @@ import { CustomerAutocomplete } from "@/components/customer-autocomplete"
 import { LocationAutocomplete } from "@/components/location-autocomplete"
 import { VehicleAutocomplete } from "@/components/vehicle-autocomplete"
 import { DriverAutocomplete } from "@/components/driver-autocomplete"
-import { ZONES } from "@/lib/constants"
+import { ZONES, VEHICLE_CAPACITIES } from "@/lib/constants"
 import { useBranch } from "@/components/providers/branch-provider"
 import { Driver } from "@/lib/supabase/drivers"
 import { Vehicle } from "@/lib/supabase/vehicles"
 import { Customer } from "@/lib/supabase/customers"
 import { AiSuggestionCard } from "@/components/planning/ai-suggestion-card"
 import { geocodeAddress } from "@/lib/ai/geocoding"
+import { getDrivingDistance } from "@/lib/ai/distance"
 import { Search as SearchIcon } from "lucide-react"
 import { toast } from "sonner"
 import { useLanguage } from "@/components/providers/language-provider"
@@ -44,8 +45,12 @@ import {
   Link as LinkIcon,
   Check,
   Eye,
-  EyeOff
+  EyeOff,
+  Activity,
+  History,
+  ShieldCheck
 } from "lucide-react"
+import { JobTimeline } from "./job-timeline"
 
 type LocationPoint = {
   name: string
@@ -115,8 +120,13 @@ export function JobDialog({
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [open, setOpen] = useState(false)
-  const [activeTab, setActiveTab] = useState<'info' | 'location' | 'assign' | 'price'>('info')
+  const [activeTab, setActiveTab] = useState<'info' | 'location' | 'assign' | 'price' | 'history'>('info')
   const [internalMode, setInternalMode] = useState<'create' | 'edit'>(mode)
+
+  // Sync internalMode state with mode prop if it changes
+  useEffect(() => {
+    setInternalMode(mode)
+  }, [mode])
   
   const isControlled = controlledOpen !== undefined
   const show = isControlled ? controlledOpen : open
@@ -145,11 +155,14 @@ export function JobDialog({
     Weight_Kg: job?.Weight_Kg || 0,
     Volume_Cbm: job?.Volume_Cbm || 0,
     Zone: job?.Zone || '',
-    Branch_ID: job?.Branch_ID || job?.branch_id || '',
+    Branch_ID: job?.Branch_ID || '',
     Delivery_Lat: job?.Delivery_Lat || null,
     Delivery_Lon: job?.Delivery_Lon || null,
     Sub_ID: job?.Sub_ID || '',
     Show_Price_To_Driver: job?.Show_Price_To_Driver !== false,
+    Est_Distance_KM: job?.Est_Distance_KM || 0,
+    Price_Cust_Extra: job?.Price_Cust_Extra || 0,
+    Cost_Driver_Extra: job?.Cost_Driver_Extra || 0,
   })
 
   // Multi-Assignment State
@@ -168,12 +181,14 @@ export function JobDialog({
   )
 
   // Helper to safely parse JSON or return existing array
-  const parseJson = (val: string | unknown[] | null | undefined, defaultVal: unknown) => {
+  const parseJson = (val: string | unknown[] | Record<string, any> | null | undefined, defaultVal: any) => {
     if (!val) return defaultVal
     if (Array.isArray(val)) return val
+    if (typeof val === 'object' && val !== null) return [val] // Wrap single object as array if needed
     if (typeof val === 'string') {
       try {
-        return JSON.parse(val)
+        const parsed = JSON.parse(val)
+        return Array.isArray(parsed) ? parsed : [parsed]
       } catch {
         return defaultVal
       }
@@ -213,16 +228,7 @@ export function JobDialog({
   // Job Bundling State
   const [nearbyJobs, setNearbyJobs] = useState<Array<{ Job_ID: string; Customer_Name: string | null }>>([])
 
-  useEffect(() => {
-    if (show && internalMode === 'create' && !job) {
-      setFormData(prev => ({ 
-        ...prev, 
-        Job_ID: '',
-        Plan_Date: defaultDate || new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' }),
-        Delivery_Date: defaultDate || new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' })
-      }))
-    }
-  }, [show, internalMode, job, defaultDate])
+  // Merged sync logic below handles both create and edit modes robustly.
 
   // Fetch nearby unassigned jobs when origin coordinates available
   useEffect(() => {
@@ -240,32 +246,138 @@ export function JobDialog({
     if (show && internalMode === 'create') fetchNearby()
   }, [origins, formData.Job_ID, show, internalMode])
 
-  // Sync initial assignment state from job prop if editing
+  // AUTO-DISTANCE: Trigger calculation when endpoints have valid coordinates
   useEffect(() => {
-    if (show && internalMode === 'edit' && job) {
-        setAssignments([{
-            Vehicle_Type: job.Vehicle_Type || '4-Wheel',
+    const calculateDistance = async () => {
+        // Collect all points from origins and destinations in order
+        const points = [
+            ...origins.filter(o => o.lat && o.lng).map(o => ({ lat: Number(o.lat), lng: Number(o.lng) })),
+            ...destinations.filter(d => d.lat && d.lng).map(d => ({ lat: Number(d.lat), lng: Number(d.lng) }))
+        ]
+        
+        // Only trigger if we have at least 2 valid points (one origin, one destination)
+        if (points.length >= 2) {
+            const dist = await getDrivingDistance(points)
+            if (dist !== null) {
+                setFormData(prev => ({ ...prev, Est_Distance_KM: dist }))
+            }
+        }
+    }
+    if (show) calculateDistance()
+  }, [origins, destinations, show])
+
+  // Comprehensive State Sync when dialog opens in Edit Mode
+  // Centralized State Sync: Handles Create/Edit transitions and Data Population
+  useEffect(() => {
+    if (!show) return;
+
+    console.log('[JobDialog DEBUG] Sync Triggered', { internalMode, jobId: job?.Job_ID, show });
+
+    if (internalMode === 'edit' && job) {
+      console.log('[JobDialog DEBUG] Syncing EDIT Data for', job.Job_ID);
+      
+      // A. Sync Locations
+      const rawOrigins = (job.origins || job.original_origins_json)
+      let parsedOrigins = parseJson(rawOrigins, []) as LocationPoint[]
+      if (parsedOrigins.length === 0 && job.Origin_Location) {
+        parsedOrigins = [{ name: job.Origin_Location, lat: job.Pickup_Lat?.toString() || '', lng: job.Pickup_Lon?.toString() || '' }]
+      }
+      if (parsedOrigins.length === 0) parsedOrigins = [{ name: '', lat: '', lng: '' }]
+      setOrigins(parsedOrigins)
+
+      const rawDestinations = (job.destinations || job.original_destinations_json)
+      let parsedDestinations = parseJson(rawDestinations, []) as LocationPoint[]
+      if (parsedDestinations.length === 0 && job.Dest_Location) {
+        parsedDestinations = [{ name: job.Dest_Location, lat: job.Delivery_Lat?.toString() || '', lng: job.Delivery_Lon?.toString() || '' }]
+      }
+      if (parsedDestinations.length === 0) parsedDestinations = [{ name: '', lat: '', lng: '' }]
+      setDestinations(parsedDestinations)
+
+      // B. Sync Extra Costs
+      const rawCosts = (job.extra_costs || job.extra_costs_json)
+      setExtraCosts(parseJson(rawCosts, []) as ExtraCost[])
+
+      // C. Sync Assignments & Form Data Atomically
+      const initialAssignments = job.assignments && job.assignments.length > 0
+        ? job.assignments
+        : [{
             Vehicle_Plate: job.Vehicle_Plate || '',
+            Vehicle_Type: job.Vehicle_Type || '4-Wheel',
             Driver_ID: job.Driver_ID || '',
-            Branch_ID: job.Branch_ID || job.branch_id || '',
             Sub_ID: job.Sub_ID || '',
             Show_Price_To_Driver: job.Show_Price_To_Driver !== false,
+            Price_Cust_Total: job.Price_Cust_Total ? Number(job.Price_Cust_Total) : 0,
             Cost_Driver_Total: job.Cost_Driver_Total ? Number(job.Cost_Driver_Total) : 0,
-            Price_Cust_Total: job.Price_Cust_Total ? Number(job.Price_Cust_Total) : 0
-        }])
-    } else if (show && internalMode === 'create' && !job?.assignments) {
-        // Reset to one empty assignment if not cloned
-        setAssignments([{ 
-            Vehicle_Type: '4-Wheel', 
-            Vehicle_Plate: '', 
-            Driver_ID: '', 
-            Sub_ID: '', 
-            Show_Price_To_Driver: true,
-            Cost_Driver_Total: 0,
-            Price_Cust_Total: 0
-        }])
+          }]
+      setAssignments(initialAssignments)
+
+      const firstAssign = initialAssignments[0]
+      const newFormData = {
+        Job_ID: job.Job_ID || '',
+        Plan_Date: job.Plan_Date || job.Pickup_Date || defaultDate || new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' }),
+        Delivery_Date: job.Delivery_Date || defaultDate || new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' }),
+        Customer_ID: job.Customer_ID || '',
+        Customer_Name: job.Customer_Name || '',
+        Route_Name: job.Route_Name || '',
+        Driver_ID: firstAssign.Driver_ID || '',
+        Vehicle_Plate: firstAssign.Vehicle_Plate || '',
+        Vehicle_Type: firstAssign.Vehicle_Type || '',
+        Sub_ID: firstAssign.Sub_ID || '',
+        Price_Cust_Total: firstAssign.Price_Cust_Total || 0,
+        Cost_Driver_Total: firstAssign.Cost_Driver_Total || 0,
+        Price_Cust_Extra: job.Price_Cust_Extra || 0,
+        Cost_Driver_Extra: job.Cost_Driver_Extra || 0,
+        Cargo_Type: job.Cargo_Type || '',
+        Notes: job.Notes || '',
+        Job_Status: job.Job_Status || 'New',
+        Weight_Kg: job.Weight_Kg ? Number(job.Weight_Kg) : 0,
+        Volume_Cbm: job.Volume_Cbm ? Number(job.Volume_Cbm) : 0,
+        Est_Distance_KM: job.Est_Distance_KM ? Number(job.Est_Distance_KM) : 0,
+        Zone: job.Zone || '',
+        Branch_ID: job.Branch_ID || '',
+        Show_Price_To_Driver: firstAssign.Show_Price_To_Driver ?? true,
+        Delivery_Lat: job.Delivery_Lat || null,
+        Delivery_Lon: job.Delivery_Lon || null,
+      }
+      console.log('[JobDialog DEBUG] Setting formData:', newFormData);
+      setFormData(newFormData);
+
+    } else if (internalMode === 'create' && !job) {
+      console.log('[JobDialog DEBUG] Syncing CREATE Data');
+      setFormData({
+        Job_ID: '',
+        Plan_Date: defaultDate || new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' }),
+        Delivery_Date: defaultDate || new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' }),
+        Customer_ID: '',
+        Customer_Name: '',
+        Route_Name: '',
+        Driver_ID: '',
+        Vehicle_Plate: '',
+        Vehicle_Type: '4-Wheel',
+        Sub_ID: '',
+        Price_Cust_Total: 0,
+        Cost_Driver_Total: 0,
+        Price_Cust_Extra: 0,
+        Cost_Driver_Extra: 0,
+        Cargo_Type: '',
+        Notes: '',
+        Job_Status: 'New',
+        Weight_Kg: 0,
+        Volume_Cbm: 0,
+        Est_Distance_KM: 0,
+        Zone: '',
+        Branch_ID: '',
+        Show_Price_To_Driver: true,
+        Delivery_Lat: null,
+        Delivery_Lon: null,
+      })
+      setOrigins([{ name: '', lat: '', lng: '' }])
+      setDestinations([{ name: '', lat: '', lng: '' }])
+      setExtraCosts([])
+      setAssignments([{ Vehicle_Type: '4-Wheel', Vehicle_Plate: '', Driver_ID: '', Sub_ID: '', Show_Price_To_Driver: true, Cost_Driver_Total: 0, Price_Cust_Total: 0 }])
     }
-  }, [show, internalMode, job])
+  }, [show, internalMode, job?.Job_ID, defaultDate])
+
 
   const handleDuplicate = () => {
     setInternalMode('create')
@@ -304,7 +416,9 @@ export function JobDialog({
     if (!origin.name) return
     setLoading(true)
     try {
-      const res = await geocodeAddress(origin.name)
+      // Get zone name as context if available
+      const zoneName = ZONES.find(z => z.id === formData.Zone)?.name || formData.Zone
+      const res = await geocodeAddress(origin.name, zoneName)
       if (res) {
         updateOrigin(index, 'lat', res.lat.toString())
         updateOrigin(index, 'lng', res.lng.toString())
@@ -323,7 +437,9 @@ export function JobDialog({
     if (!dest.name) return
     setLoading(true)
     try {
-      const res = await geocodeAddress(dest.name)
+      // Get zone name as context if available
+      const zoneName = ZONES.find(z => z.id === formData.Zone)?.name || formData.Zone
+      const res = await geocodeAddress(dest.name, zoneName)
       if (res) {
         updateDestination(index, 'lat', res.lat.toString())
         updateDestination(index, 'lng', res.lng.toString())
@@ -381,6 +497,22 @@ export function JobDialog({
   const updateAssignment = (index: number, field: keyof JobAssignment, value: string | boolean | number) => {
     const newAssignments = [...assignments]
     newAssignments[index] = { ...newAssignments[index], [field]: value } as JobAssignment
+    
+    // AUTO-CAPACITY LOGIC: If vehicle type changes and current values are 0, auto-fill from standard capacities
+    if (field === 'Vehicle_Type' && typeof value === 'string') {
+        const capacity = VEHICLE_CAPACITIES[value]
+        if (capacity) {
+            // Only update Weight if currently 0 or default
+            if (Number(formData.Weight_Kg) === 0) {
+                setFormData(prev => ({ ...prev, Weight_Kg: capacity.weight }))
+            }
+            // Only update Volume if currently 0 or default
+            if (Number(formData.Volume_Cbm) === 0) {
+                setFormData(prev => ({ ...prev, Volume_Cbm: capacity.volume }))
+            }
+        }
+    }
+
     setAssignments(newAssignments)
     
     // Sync first assignment to main form data for backward compatibility / validation
@@ -478,6 +610,9 @@ export function JobDialog({
         original_origins_json: JSON.stringify(origins),
         original_destinations_json: JSON.stringify(destinations),
         extra_costs_json: JSON.stringify(extraCosts),
+        Est_Distance_KM: formData.Est_Distance_KM,
+        Price_Cust_Extra: formData.Price_Cust_Extra, // Ensure Extra Costs saved
+        Cost_Driver_Extra: formData.Cost_Driver_Extra,
       }
 
       if (internalMode === 'create') {
@@ -564,7 +699,8 @@ export function JobDialog({
     { id: 'info', label: t('jobs.dialog.tabs.info'), icon: <FileText className="w-4 h-4" /> },
     { id: 'location', label: t('jobs.dialog.tabs.locations'), icon: <MapPin className="w-4 h-4" /> },
     { id: 'assign', label: t('jobs.dialog.tabs.assignment'), icon: <Truck className="w-4 h-4" /> },
-    ...(canViewPrice ? [{ id: 'price', label: t('jobs.dialog.tabs.items'), icon: <Banknote className="w-4 h-4" /> }] as const : []),
+    ...(canViewPrice ? [{ id: 'price', label: t('jobs.dialog.tabs.price'), icon: <Banknote className="w-4 h-4" /> }] as const : []),
+    ...(internalMode === 'edit' ? [{ id: 'history', label: t('jobs.dialog.tabs.history') || 'History', icon: <History className="w-4 h-4" /> }] as const : []),
   ] as const
 
   return (
@@ -658,26 +794,28 @@ export function JobDialog({
                    </Select>
                 </div>
 
-                <div className="space-y-2">
-                   <Label className="text-xl font-black text-primary/80 uppercase tracking-normal">{t('jobs.dialog.status')}</Label>
-                   <Select 
-                      value={formData.Job_Status} 
-                      onValueChange={(val) => setFormData({ ...formData, Job_Status: val })}
-                   >
-                    <SelectTrigger className="bg-background border-input">
-                        <SelectValue placeholder={t('jobs.dialog.status')} />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="New">{t('jobs.status_pending')} (New)</SelectItem>
-                        <SelectItem value="Requested">{t('jobs.status_requested')} (Requested)</SelectItem>
-                        <SelectItem value="Assigned">{t('jobs.status_pending')} (Assigned)</SelectItem>
-                        <SelectItem value="In Transit">{t('jobs.status_in_transit')} (In Transit)</SelectItem>
-                        <SelectItem value="Delivered">{t('jobs.status_delivered')} (Delivered)</SelectItem>
-                        <SelectItem value="Completed">{t('jobs.status_completed')} (Completed)</SelectItem>
-                        <SelectItem value="Cancelled">{t('jobs.status_cancelled')} (Cancelled)</SelectItem>
-                    </SelectContent>
-                   </Select>
-                </div>
+                {internalMode === 'edit' && (
+                  <div className="space-y-2">
+                    <Label className="text-xl font-black text-primary/80 uppercase tracking-normal">{t('jobs.dialog.status')}</Label>
+                    <Select 
+                        value={formData.Job_Status} 
+                        onValueChange={(val) => setFormData({ ...formData, Job_Status: val })}
+                    >
+                      <SelectTrigger className="bg-background border-input">
+                          <SelectValue placeholder={t('jobs.dialog.status')} />
+                      </SelectTrigger>
+                      <SelectContent>
+                          <SelectItem value="New">{t('jobs.status_pending')} (New)</SelectItem>
+                          <SelectItem value="Requested">{t('jobs.status_requested')} (Requested)</SelectItem>
+                          <SelectItem value="Assigned">{t('jobs.status_pending')} (Assigned)</SelectItem>
+                          <SelectItem value="In Transit">{t('jobs.status_in_transit')} (In Transit)</SelectItem>
+                          <SelectItem value="Delivered">{t('jobs.status_delivered')} (Delivered)</SelectItem>
+                          <SelectItem value="Completed">{t('jobs.status_completed')} (Completed)</SelectItem>
+                          <SelectItem value="Cancelled">{t('jobs.status_cancelled')} (Cancelled)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
 
                 <div className="space-y-2">
                   <Label className="flex items-center gap-1 text-xl font-black text-primary/80 uppercase tracking-normal">
@@ -769,7 +907,7 @@ export function JobDialog({
                 />
               </div>
 
-              <div className="grid grid-cols-1 gap-10">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
                  <div className="space-y-4">
                     <Label className="text-primary text-2xl font-black uppercase tracking-normal">{t('jobs.dialog.weight')}</Label>
                     <Input
@@ -790,6 +928,22 @@ export function JobDialog({
                         step="0.01"
                         className="bg-background border-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-xl h-14"
                     />
+                 </div>
+                 <div className="space-y-4">
+                    <Label className="text-blue-500 text-2xl font-black uppercase tracking-normal flex items-center gap-2">
+                        <MapPin className="w-5 h-5" /> {t('jobs.dialog.distance')} (KM)
+                    </Label>
+                    <div className="relative">
+                        <Input
+                            type="number"
+                            value={formData.Est_Distance_KM}
+                            readOnly
+                            className="bg-blue-500/5 border-blue-500/30 text-blue-600 dark:text-blue-400 text-xl h-14 font-black cursor-not-allowed"
+                        />
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2 text-blue-500/50 text-base font-bold uppercase animate-pulse">
+                            Auto
+                        </div>
+                    </div>
                  </div>
               </div>
             </div>
@@ -817,7 +971,7 @@ export function JobDialog({
                     <div className="space-y-3">
                         <div className="flex items-center justify-between">
                         <Label className="text-xl font-black text-primary uppercase tracking-normal flex items-center gap-2">
-                            <MapPin className="w-5 h-5" /> {t('jobs.dialog.origin')} <span className="text-muted-foreground text-lg font-bold">({originLocations.length})</span>
+                            <MapPin className="w-5 h-5" /> {t('jobs.dialog.origin')} <span className="text-muted-foreground text-lg font-bold">({origins.length})</span>
                         </Label>
                         <Button type="button" size="sm" variant="outline" onClick={addOrigin} className="border-primary/30 text-primary hover:bg-primary/10">
                             <Plus className="w-4 h-4 mr-1" /> {t('jobs.dialog.add_origin')}
@@ -887,7 +1041,7 @@ export function JobDialog({
                     <div className="space-y-3">
                         <div className="flex items-center justify-between">
                         <Label className="text-xl font-black text-indigo-400 uppercase tracking-normal flex items-center gap-2">
-                            <MapPin className="w-5 h-5" /> {t('jobs.dialog.destination')} <span className="text-muted-foreground text-lg font-bold">({destinationLocations.length})</span>
+                            <MapPin className="w-5 h-5" /> {t('jobs.dialog.destination')} <span className="text-muted-foreground text-lg font-bold">({destinations.length})</span>
                         </Label>
                         <Button type="button" size="sm" variant="outline" onClick={addDestination} className="border-indigo-500/30 text-indigo-400 hover:bg-indigo-500/10">
                             <Plus className="w-4 h-4 mr-1" /> {t('jobs.dialog.add_destination')}
@@ -1036,8 +1190,8 @@ export function JobDialog({
                                 <div className="absolute inset-0 flex items-center">
                                     <span className="w-full border-t border-border" />
                                 </div>
-                                <div className="relative flex justify-center text-lg font-bold uppercase">
-                                    <span className="bg-muted px-2 text-muted-foreground uppercase">{t('jobs.dialog.manual_selection')}</span>
+                                <div className="relative flex justify-center text-lg font-bold uppercase font-black">
+                                    <span className="bg-muted px-4 text-foreground uppercase tracking-widest">{t('jobs.dialog.manual_selection')}</span>
                                 </div>
                             </div>
                         </div>
@@ -1060,75 +1214,15 @@ export function JobDialog({
                         )}
                     </div>
 
-                    <div className="grid grid-cols-1 gap-10 mb-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
                         <div className="space-y-4">
-                        <Label className="flex items-center gap-2 text-2xl font-black text-primary uppercase tracking-normal">
-                            <Truck className="w-6 h-6" /> {t('jobs.dialog.vehicle_type')}
-                        </Label>
-                        <select
-                            value={assignment.Vehicle_Type}
-                            onChange={(e) => updateAssignment(index, 'Vehicle_Type', e.target.value)}
-                            className="w-full h-14 px-3 rounded-md bg-background border border-input text-foreground text-2xl font-black"
-                        >
-                            <option value="">{t('jobs.dialog.all_types')}</option>
-                            {/* Unique Vehicle Types from Data */}
-                            {Array.from(new Set(vehicles.map((v) => v.Vehicle_Type).filter((t): t is string => !!t))).map((type) => (
-                            <option key={type} value={type}>{type}</option>
-                            ))}
-                        </select>
-                        </div>
-                        <div className="space-y-4">
-                        <Label className="flex items-center gap-2 text-2xl font-black text-primary uppercase tracking-normal">
-                            <Truck className="w-6 h-6" /> {t('jobs.dialog.vehicle_plate')}
-                        </Label>
-                        <VehicleAutocomplete
-                            value={assignment.Vehicle_Plate}
-                            onChange={(val) => updateAssignment(index, 'Vehicle_Plate', val)}
-                            vehicles={assignment.Vehicle_Type 
-                                ? vehicles.filter((v) => v.Vehicle_Type === assignment.Vehicle_Type) 
-                                : vehicles
-                            }
-                            onSelect={(v) => {
-                                // Auto-fill driver and other vehicle details
-                                const newAssignments = [...assignments]
-                                const current = newAssignments[index]
-                                
-                                
-                                newAssignments[index] = {
-                                    ...current,
-                                    Vehicle_Plate: v.Vehicle_Plate,
-                                    Vehicle_Type: v.Vehicle_Type || current.Vehicle_Type,
-                                    Sub_ID: v.Sub_ID || current.Sub_ID,
-                                    Driver_ID: v.Driver_ID || current.Driver_ID
-                                }
-                                setAssignments(newAssignments)
-                                
-                                // Sync to main form data for the first assignment
-                                if (index === 0) {
-                                    setFormData(prev => ({
-                                        ...prev,
-                                        Vehicle_Plate: v.Vehicle_Plate,
-                                        Vehicle_Type: v.Vehicle_Type || prev.Vehicle_Type,
-                                        Sub_ID: v.Sub_ID || prev.Sub_ID,
-                                        Driver_ID: v.Driver_ID || prev.Driver_ID
-                                    }))
-                                }
-                            }}
-                            placeholder={t('jobs.dialog.vehicle_plate_placeholder')}
-                            className="bg-background border-input text-2xl h-14"
-                        />
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-4">
-                        <div className="space-y-2">
-                            <Label className="flex items-center gap-1 text-lg font-bold text-muted-foreground">
-                                <Building2 className="w-3 h-3" /> {t('jobs.dialog.carrier')}
+                            <Label className="flex items-center gap-2 text-2xl font-black text-primary uppercase tracking-normal">
+                                <Building2 className="w-6 h-6" /> {t('jobs.dialog.carrier')}
                             </Label>
                             <select
                                 value={assignment.Sub_ID || ""}
                                 onChange={(e) => updateAssignment(index, 'Sub_ID', e.target.value)}
-                                className="w-full h-10 px-3 rounded-md bg-background border border-input text-foreground text-xl"
+                                className="w-full h-14 px-3 rounded-md bg-background border border-input text-foreground text-2xl font-black"
                             >
                                 <option value="">{t('jobs.dialog.internal')}</option>
                                 {subcontractors.map((sub) => (
@@ -1136,34 +1230,85 @@ export function JobDialog({
                                 ))}
                             </select>
                         </div>
-                        <div className="space-y-2">
-                            <Label className="flex items-center gap-1 text-lg font-bold text-muted-foreground">
-                                <User className="w-3 h-3" /> {t('jobs.dialog.driver')}
+                        <div className="space-y-4">
+                            <Label className="flex items-center gap-2 text-2xl font-black text-primary uppercase tracking-normal">
+                                <Truck className="w-6 h-6" /> {t('jobs.dialog.vehicle_type')}
+                            </Label>
+                            <select
+                                value={assignment.Vehicle_Type}
+                                onChange={(e) => updateAssignment(index, 'Vehicle_Type', e.target.value)}
+                                className="w-full h-14 px-3 rounded-md bg-background border border-input text-foreground text-2xl font-black"
+                            >
+                                <option value="">{t('jobs.dialog.all_types')}</option>
+                                {Array.from(new Set(vehicles.map((v) => v.Vehicle_Type).filter((vt): vt is string => !!vt))).map((type) => (
+                                <option key={type} value={type}>{type}</option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                        <div className="space-y-4">
+                            <Label className="flex items-center gap-2 text-2xl font-black text-primary uppercase tracking-normal">
+                                <Truck className="w-6 h-6" /> {t('jobs.dialog.vehicle_plate')}
+                            </Label>
+                            <VehicleAutocomplete
+                                value={assignment.Vehicle_Plate}
+                                onChange={(val) => updateAssignment(index, 'Vehicle_Plate', val)}
+                                vehicles={vehicles.filter((v) => {
+                                    const subMatch = !assignment.Sub_ID ? (!v.Sub_ID) : v.Sub_ID === assignment.Sub_ID
+                                    const typeMatch = !assignment.Vehicle_Type || v.Vehicle_Type === assignment.Vehicle_Type
+                                    return subMatch && typeMatch
+                                })}
+                                onSelect={(v) => {
+                                    const newAssignments = [...assignments]
+                                    const current = newAssignments[index]
+                                    newAssignments[index] = {
+                                        ...current,
+                                        Vehicle_Plate: v.Vehicle_Plate,
+                                        Vehicle_Type: v.Vehicle_Type || current.Vehicle_Type,
+                                        Sub_ID: v.Sub_ID || current.Sub_ID,
+                                        Driver_ID: v.Driver_ID || current.Driver_ID
+                                    }
+                                    setAssignments(newAssignments)
+                                    if (index === 0) {
+                                        setFormData(prev => ({
+                                            ...prev,
+                                            Vehicle_Plate: v.Vehicle_Plate,
+                                            Vehicle_Type: v.Vehicle_Type || prev.Vehicle_Type,
+                                            Sub_ID: v.Sub_ID || prev.Sub_ID,
+                                            Driver_ID: v.Driver_ID || prev.Driver_ID
+                                        }))
+                                    }
+                                }}
+                                placeholder={t('jobs.dialog.vehicle_plate_placeholder')}
+                                className="bg-background border-input text-2xl h-14"
+                            />
+                        </div>
+                        <div className="space-y-4">
+                            <Label className="flex items-center gap-2 text-2xl font-black text-primary uppercase tracking-normal">
+                                <User className="w-6 h-6" /> {t('jobs.dialog.driver')}
                             </Label>
                             <DriverAutocomplete
                                 value={assignment.Driver_ID}
                                 onChange={(val) => updateAssignment(index, 'Driver_ID', val)}
-                                drivers={drivers}
+                                drivers={drivers.filter((d) => {
+                                    const subMatch = !assignment.Sub_ID ? (!d.Sub_ID) : d.Sub_ID === assignment.Sub_ID
+                                    return subMatch
+                                })}
                                 onSelect={(d) => {
-                                    // Auto-fill vehicle and other driver details
                                     const newAssignments = [...assignments]
                                     const current = newAssignments[index]
-                                    
-                                    // Find assigned vehicle if any
                                     const assignedVehicle = d.Vehicle_Plate ? vehicles.find(v => v.Vehicle_Plate === d.Vehicle_Plate) : null
-                                    
                                     newAssignments[index] = {
                                         ...current,
                                         Driver_ID: d.Driver_ID,
                                         Sub_ID: d.Sub_ID || current.Sub_ID,
                                         Vehicle_Plate: assignedVehicle ? assignedVehicle.Vehicle_Plate : (d.Vehicle_Plate || current.Vehicle_Plate),
                                         Vehicle_Type: (assignedVehicle ? assignedVehicle.Vehicle_Type : (d.Vehicle_Type || current.Vehicle_Type)) || "",
-                                        // Use driver default if explicitly set, otherwise keep current
                                         Show_Price_To_Driver: d.Show_Price_Default ?? current.Show_Price_To_Driver
                                     }
                                     setAssignments(newAssignments)
-                                    
-                                    // Sync to main form data for the first assignment
                                     if (index === 0) {
                                         setFormData(prev => ({
                                             ...prev,
@@ -1175,35 +1320,12 @@ export function JobDialog({
                                         }))
                                     }
                                 }}
-                                className="bg-background border-input text-xl"
+                                className="bg-background border-input text-2xl h-14"
                             />
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-16 gap-y-10 mb-8">
-                        <div className="space-y-1">
-                            <Label className="text-base font-bold text-muted-foreground flex items-center gap-1">
-                                <Banknote className="w-3 h-3" /> {t('jobs.dialog.cost_driver')} (THB)
-                            </Label>
-                            <Input
-                                type="number"
-                                value={assignment.Cost_Driver_Total}
-                                onChange={(e) => updateAssignment(index, 'Cost_Driver_Total', Number(e.target.value))}
-                                className="h-8 text-lg font-bold bg-background border-input"
-                            />
-                        </div>
-                        <div className="space-y-1">
-                            <Label className="text-base font-bold text-muted-foreground flex items-center gap-1">
-                                <Banknote className="w-3 h-3" /> {t('jobs.dialog.price_cust')} (THB)
-                            </Label>
-                            <Input
-                                type="number"
-                                value={assignment.Price_Cust_Total}
-                                onChange={(e) => updateAssignment(index, 'Price_Cust_Total', Number(e.target.value))}
-                                className="h-8 text-lg font-bold bg-background border-input"
-                            />
-                        </div>
-                    </div>
+
 
                     {canViewPrice && (
                     <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg border border-border">
@@ -1377,7 +1499,11 @@ export function JobDialog({
                             onChange={(e) => updateExtraCost(index, 'type', e.target.value)}
                             className="w-full h-9 px-2 rounded-md bg-background border border-input text-foreground text-xl"
                         >
-                            {EXPENSE_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                            {EXPENSE_TYPES.map(expenseType => (
+                              <option key={expenseType} value={expenseType}>
+                                {t(`jobs.dialog.expenses.${expenseType}` as any) || expenseType}
+                              </option>
+                            ))}
                         </select>
                     </div>
                     <div className="col-span-3 space-y-1">
@@ -1422,6 +1548,30 @@ export function JobDialog({
                     </span>
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* History Tab */}
+          {activeTab === 'history' && (
+            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="p-8 bg-muted/20 border border-border/5 rounded-[3rem] shadow-inner mb-10 overflow-hidden relative">
+                    <div className="absolute top-0 right-0 p-10 opacity-5 -mr-10 -mt-10">
+                        <Activity size={120} className="text-primary" />
+                    </div>
+                    <h3 className="text-2xl font-black text-foreground uppercase tracking-widest flex items-center gap-4 italic mb-8 relative z-10">
+                        <Activity className="text-primary" size={24} /> 
+                        {t('jobs.dialog.timeline_title')}
+                    </h3>
+                    <JobTimeline jobId={formData.Job_ID} />
+                </div>
+                
+                <div className="p-10 border-2 border-dashed border-border/10 rounded-[3rem] bg-black/10 flex items-center justify-between group/audit">
+                    <div className="space-y-2">
+                        <p className="text-lg font-black text-foreground uppercase tracking-widest italic group-hover/audit:text-primary transition-colors">{t('jobs.dialog.audit_verified')}</p>
+                        <p className="text-xs font-black text-muted-foreground/40 uppercase tracking-[0.4em]">{t('jobs.dialog.audit_desc')}</p>
+                    </div>
+                    <ShieldCheck className="text-emerald-500/30 group-hover/audit:text-emerald-500 transition-all duration-700" size={48} />
+                </div>
             </div>
           )}
 

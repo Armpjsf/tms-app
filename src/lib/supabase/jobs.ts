@@ -63,6 +63,7 @@ export type Job = {
   Delivery_Lat?: number | null
   Delivery_Lon?: number | null
   Branch_ID?: string | null
+  Est_Distance_KM?: number | null
   Verification_Status?: 'Pending' | 'Verified' | 'Rejected' | null
   Verification_Note?: string | null
   Verified_By?: string | null

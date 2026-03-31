@@ -6,6 +6,7 @@ import { PremiumButton } from "@/components/ui/premium-button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import Link from "next/link"
+import { useRouter, useSearchParams, usePathname } from "next/navigation"
 import { 
   History, 
   Truck,
@@ -65,6 +66,20 @@ export function HistoryClient({
   limit
 }: HistoryClientProps) {
   const { t } = useLanguage()
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const pathname = usePathname()
+
+  const handleDateChange = (name: string, value: string) => {
+    const params = new URLSearchParams(searchParams.toString())
+    if (value) {
+      params.set(name, value)
+    } else {
+      params.delete(name)
+    }
+    params.set("page", "1")
+    router.push(`${pathname}?${params.toString()}`)
+  }
 
   const statusConfig: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
     New: { label: t('common.pending'), color: "text-primary bg-primary/10 border-primary/20", icon: <Package size={14} /> },
@@ -74,8 +89,8 @@ export function HistoryClient({
     Delivered: { label: t('common.success'), color: "text-primary bg-primary/10 border-primary/20", icon: <CheckCircle2 size={14} /> },
     Completed: { label: t('common.success'), color: "text-primary bg-primary/20 border-primary/30", icon: <CheckCircle2 size={14} /> },
     Complete: { label: t('common.success'), color: "text-primary bg-primary/20 border-primary/30", icon: <CheckCircle2 size={14} /> },
-    Failed: { label: t('common.error'), color: "text-rose-500 bg-rose-500/10 border-rose-500/20", icon: <AlertCircle size={14} /> },
-    Cancelled: { label: t('common.error'), color: "text-muted-foreground bg-muted/50 border-border/10", icon: <XCircle size={14} /> },
+    Failed: { label: t('common.failed'), color: "text-rose-500 bg-rose-500/10 border-rose-500/20", icon: <AlertCircle size={14} /> },
+    Cancelled: { label: t('common.cancelled'), color: "text-muted-foreground bg-muted/50 border-border/10", icon: <XCircle size={14} /> },
   }
 
   return (
@@ -113,7 +128,7 @@ export function HistoryClient({
                title={t('navigation.reports')}
                trigger={
                  <PremiumButton variant="secondary" className="h-14 px-8 rounded-2xl bg-primary text-foreground shadow-xl shadow-primary/20">
-                     <Download className="w-5 h-5 mr-3" /> {t('common.success')}
+                     <Download className="w-5 h-5 mr-3" /> {t('common.download_report')}
                  </PremiumButton>
                }
             />
@@ -126,8 +141,8 @@ export function HistoryClient({
         {[
           { label: t('navigation.pod'), value: count || 0, icon: Package, color: "text-muted-foreground", bg: "bg-muted/50", border: "border-border/5" },
           { label: t('common.success'), value: jobs?.filter((j: any) => ['Delivered', 'Complete', 'Completed'].includes(j?.Job_Status || '')).length || 0, icon: CheckCircle2, color: "text-primary", bg: "bg-primary/20", border: "border-primary/20" },
-          { label: t('common.error'), value: jobs?.filter((j: any) => j?.Job_Status === 'Failed').length || 0, icon: AlertCircle, color: "text-rose-500", bg: "bg-rose-500/10", border: "border-rose-500/20" },
-          { label: t('common.error'), value: jobs?.filter((j: any) => j?.Job_Status === 'Cancelled').length || 0, icon: XCircle, color: "text-muted-foreground", bg: "bg-muted/50", border: "border-border/5" },
+          { label: t('common.failed'), value: jobs?.filter((j: any) => j?.Job_Status === 'Failed').length || 0, icon: AlertCircle, color: "text-rose-500", bg: "bg-rose-500/10", border: "border-rose-500/20" },
+          { label: t('common.cancelled'), value: jobs?.filter((j: any) => j?.Job_Status === 'Cancelled').length || 0, icon: XCircle, color: "text-muted-foreground", bg: "bg-muted/50", border: "border-border/5" },
         ].map((stat, idx) => (
           <div key={idx} className={cn(
                   "p-8 rounded-[3rem] border backdrop-blur-3xl shadow-2xl relative overflow-hidden group transition-all hover:scale-[1.03] bg-background/40",
@@ -164,7 +179,7 @@ export function HistoryClient({
                 </div>
             </div>
 
-            <form className="grid grid-cols-1 md:grid-cols-12 gap-8 relative z-10">
+            <form onSubmit={(e) => e.preventDefault()} className="grid grid-cols-1 md:grid-cols-12 gap-8 relative z-10">
                 <div className="md:col-span-12 lg:col-span-5">
                     <div className="glass-panel rounded-2xl p-0.5 border-border/5">
                         <SearchInput placeholder={t('common.search')} className="bg-transparent border-none text-foreground h-16 px-8 text-lg font-bold font-black tracking-widest uppercase placeholder:text-muted-foreground" />
@@ -174,8 +189,9 @@ export function HistoryClient({
                     <Label className="text-base font-bold font-black text-muted-foreground uppercase tracking-[0.3em] ml-2">{t('common.date')}</Label>
                     <Input
                         type="date"
-                        defaultValue={dateFrom}
+                        value={dateFrom}
                         name="from"
+                        onChange={(e) => handleDateChange('from', e.target.value)}
                         className="h-16 bg-muted/50 border-border/5 text-foreground font-black rounded-2xl shadow-inner focus:ring-primary/40 transition-all px-8 text-lg font-bold uppercase tracking-widest"
                     />
                 </div>
@@ -183,8 +199,9 @@ export function HistoryClient({
                     <Label className="text-base font-bold font-black text-muted-foreground uppercase tracking-[0.3em] ml-2">{t('common.date')}</Label>
                     <Input
                         type="date"
-                        defaultValue={dateTo}
+                        value={dateTo}
                         name="to"
+                        onChange={(e) => handleDateChange('to', e.target.value)}
                         className="h-16 bg-muted/50 border-border/5 text-foreground font-black rounded-2xl shadow-inner focus:ring-primary/40 transition-all px-8 text-lg font-bold uppercase tracking-widest"
                     />
                 </div>
@@ -201,7 +218,7 @@ export function HistoryClient({
             <div className="flex items-center gap-4">
                 <div className="w-1.5 h-10 bg-primary rounded-full shadow-[0_0_15px_rgba(255,30,133,0.8)]" />
                 <div>
-                    <h3 className="text-3xl font-black text-foreground tracking-tighter uppercase">{t('navigation.monitoring')} Log</h3>
+                    <h3 className="text-3xl font-black text-foreground tracking-tighter uppercase">{t('navigation.history')} Log</h3>
                     <p className="text-muted-foreground text-base font-bold font-black uppercase tracking-[0.4em] mt-1">{t('history.profiles_found').replace('{count}', count.toString())} • {t('history.historical_node')}</p>
                 </div>
             </div>
@@ -223,14 +240,14 @@ export function HistoryClient({
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-border/5 bg-muted/30">
-                    <th className="text-left py-8 px-12 text-base font-bold font-black text-muted-foreground uppercase tracking-[0.3em]">{t('common.action')} ID</th>
-                    <th className="text-left py-8 px-6 text-base font-bold font-black text-muted-foreground uppercase tracking-[0.3em]">{t('navigation.reports')}</th>
-                    <th className="text-left py-8 px-6 text-base font-bold font-black text-muted-foreground uppercase tracking-[0.3em]">{t('navigation.vehicles')}</th>
-                    <th className="text-center py-8 px-6 text-base font-bold font-black text-muted-foreground uppercase tracking-[0.3em]">{t('navigation.monitoring')}</th>
-                    <th className="text-center py-8 px-6 text-base font-bold font-black text-muted-foreground uppercase tracking-[0.3em]">{t('navigation.pod')}</th>
-                    {canViewPrice && <th className="text-right py-8 px-6 text-base font-bold font-black text-primary uppercase tracking-[0.3em]">Matrix</th>}
-                    <th className="text-left py-8 px-6 text-base font-bold font-black text-muted-foreground uppercase tracking-[0.3em]">{t('common.status')}</th>
-                    <th className="text-right py-8 px-6 text-base font-bold font-black text-muted-foreground uppercase tracking-[0.3em]">{t('common.action')}</th>
+                    <th className="text-left py-6 px-6 text-sm font-bold font-black text-muted-foreground uppercase tracking-[0.3em]">{t('common.action')} ID</th>
+                    <th className="text-left py-6 px-4 text-sm font-bold font-black text-muted-foreground uppercase tracking-[0.3em]">{t('navigation.reports')}</th>
+                    <th className="text-left py-6 px-4 text-sm font-bold font-black text-muted-foreground uppercase tracking-[0.3em]">{t('navigation.vehicles')}</th>
+                    <th className="text-center py-6 px-4 text-sm font-bold font-black text-muted-foreground uppercase tracking-[0.3em]">{t('common.integrity')}</th>
+                    <th className="text-center py-6 px-4 text-sm font-bold font-black text-muted-foreground uppercase tracking-[0.3em]">{t('navigation.pod')}</th>
+                    {canViewPrice && <th className="text-right py-6 px-4 text-sm font-bold font-black text-primary uppercase tracking-[0.3em]">Matrix</th>}
+                    <th className="text-left py-6 px-4 text-sm font-bold font-black text-muted-foreground uppercase tracking-[0.3em]">{t('common.status')}</th>
+                    <th className="text-right py-6 px-6 text-sm font-bold font-black text-muted-foreground uppercase tracking-[0.3em]">{t('common.action')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
@@ -239,45 +256,45 @@ export function HistoryClient({
                       key={job.Job_ID} 
                       className="group/row transition-all duration-500 hover:bg-primary/[0.03]"
                     >
-                      <td className="py-10 px-12">
-                        <div className="flex items-center gap-6">
-                            <div className="w-14 h-14 rounded-2xl bg-muted/50 border border-border/5 flex items-center justify-center group-hover/row:bg-primary group-hover/row:text-foreground transition-all duration-500 shadow-xl group-hover/row:shadow-[0_0_30px_rgba(255,30,133,0.3)] group-hover/row:-rotate-3">
-                                <Package size={22} strokeWidth={2.5} />
+                      <td className="py-8 px-6">
+                        <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-xl bg-muted/50 border border-border/5 flex items-center justify-center group-hover/row:bg-primary group-hover/row:text-foreground transition-all duration-500 shadow-xl group-hover/row:shadow-[0_0_30px_rgba(255,30,133,0.3)] group-hover/row:-rotate-3">
+                                <Package size={18} strokeWidth={2.5} />
                             </div>
                             <div>
-                                <p className="text-foreground font-black text-xl tracking-tighter group-hover/row:text-primary transition-colors font-display uppercase">{job.Job_ID}</p>
-                                <div className="flex items-center gap-2 mt-2">
-                                    <Clock size={12} className="text-muted-foreground" />
-                                    <p className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest">{job.Plan_Date || t('common.pending')}</p>
+                                <p className="text-foreground font-black text-lg tracking-tighter group-hover/row:text-primary transition-colors font-display uppercase">{job.Job_ID}</p>
+                                <div className="flex items-center gap-2 mt-1">
+                                    <Clock size={10} className="text-muted-foreground" />
+                                    <p className="text-sm font-bold font-black text-muted-foreground uppercase tracking-widest">{job.Plan_Date || t('common.pending')}</p>
                                 </div>
                             </div>
                         </div>
                       </td>
-                      <td className="py-10 px-6">
-                         <div className="flex flex-col gap-2">
-                            <p className="text-foreground font-black text-xl tracking-tight uppercase group-hover/row:text-primary transition-colors">{job.Customer_Name || "-"}</p>
-                            <div className="flex items-center gap-2 text-base font-bold font-black text-muted-foreground uppercase tracking-widest">
-                                <MapPin size={12} className="text-primary/60" />
+                      <td className="py-8 px-4">
+                         <div className="flex flex-col gap-1">
+                            <p className="text-foreground font-black text-lg tracking-tight uppercase group-hover/row:text-primary transition-colors leading-tight">{job.Customer_Name || "-"}</p>
+                            <div className="flex items-center gap-2 text-sm font-bold font-black text-muted-foreground uppercase tracking-widest">
+                                <MapPin size={10} className="text-primary/60" />
                                 <span className="line-clamp-1">{job.Route_Name || "DIRECT VECTOR"}</span>
                             </div>
                          </div>
                       </td>
-                      <td className="py-10 px-6">
-                        <div className="flex flex-col gap-2">
-                            <div className="flex items-center gap-3">
-                                <div className="p-2 bg-muted/50 rounded-xl text-muted-foreground group-hover/row:text-primary transition-colors">
-                                    <Truck size={14} strokeWidth={2.5} />
+                      <td className="py-8 px-4">
+                        <div className="flex flex-col gap-1">
+                            <div className="flex items-center gap-2">
+                                <div className="p-1.5 bg-muted/50 rounded-lg text-muted-foreground group-hover/row:text-primary transition-colors">
+                                    <Truck size={12} strokeWidth={2.5} />
                                 </div>
-                                <p className="text-foreground font-black text-xl tracking-tight uppercase">{job.Vehicle_Plate || "-"}</p>
+                                <p className="text-foreground font-black text-lg tracking-tight uppercase leading-tight">{job.Vehicle_Plate || "-"}</p>
                             </div>
-                            <p className="text-base font-bold font-black text-muted-foreground uppercase tracking-[0.2em] pl-1">{job.Driver_Name || t('common.pending')}</p>
+                            <p className="text-sm font-bold font-black text-muted-foreground uppercase tracking-[0.2em] pl-1">{job.Driver_Name || t('common.pending')}</p>
                         </div>
                       </td>
-                      <td className="py-10 px-6">
-                        <div className="flex flex-col items-center gap-2 min-w-[120px]">
+                      <td className="py-8 px-4 text-center">
+                        <div className="flex flex-col items-center gap-1.5 min-w-[100px]">
                            {job.Verification_Status ? (
                                <Badge className={cn(
-                                   "rounded-[1.25rem] px-4 py-1.5 font-black text-base font-bold border-none shadow-lg tracking-widest uppercase",
+                                   "rounded-[1.25rem] px-3 py-1 font-black text-sm font-bold border-none shadow-lg tracking-widest uppercase",
                                    job.Verification_Status === 'Verified' ? "bg-primary text-foreground shadow-primary/20" :
                                    job.Verification_Status === 'Rejected' ? "bg-rose-500 text-foreground shadow-rose-500/20" : "bg-accent text-foreground shadow-accent/20"
                                )}>
@@ -286,20 +303,20 @@ export function HistoryClient({
                            ) : (
                                <div className="flex items-center gap-2">
                                 <span className="w-1 h-1 rounded-full bg-slate-700 animate-ping" />
-                                <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-[0.3em] italic">{t('common.pending')} Integrity</span>
+                                 <span className="text-sm font-bold font-black text-muted-foreground uppercase tracking-[0.3em] italic">{`${t('common.pending')} ${t('common.integrity')}`}</span>
                                </div>
                            )}
                            {job.Verified_At && (
-                               <p className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest truncate w-32 text-center">
+                               <p className="text-xs font-bold font-black text-muted-foreground uppercase tracking-widest truncate w-28 text-center">
                                    {t('history.agent')} {job.Verified_By?.split('@')[0]}
                                </p>
                            )}
                         </div>
                       </td>
-                      <td className="py-10 px-6">
-                        <div className="flex items-center justify-center gap-4">
+                      <td className="py-8 px-4">
+                        <div className="flex items-center justify-center gap-3">
                              {job.Photo_Proof_Url ? (
-                                <div className="relative w-14 h-14 rounded-2xl border border-border/10 shadow-2xl overflow-hidden bg-muted/50 group/img ring-4 ring-primary/0 hover:ring-primary/40 transition-all duration-500 scale-95 hover:scale-100">
+                                <div className="relative w-12 h-12 rounded-xl border border-border/10 shadow-2xl overflow-hidden bg-muted/50 group/img ring-4 ring-primary/0 hover:ring-primary/40 transition-all duration-500 scale-95 hover:scale-100">
                                     <NextImage 
                                         src={job.Photo_Proof_Url.split(',')[0]} 
                                         alt="POD Photo" 
@@ -307,16 +324,16 @@ export function HistoryClient({
                                         className="object-cover group-hover/img:scale-125 transition-transform duration-1000" 
                                     />
                                     <a href={job.Photo_Proof_Url.split(',')[0]} target="_blank" rel="noreferrer" className="absolute inset-0 z-10 flex items-center justify-center bg-primary/40 opacity-0 group-hover/img:opacity-100 transition-opacity">
-                                        <Eye size={20} className="text-foreground" />
+                                        <Eye size={16} className="text-foreground" />
                                     </a>
                                 </div>
                              ) : (
-                                <div className="w-14 h-14 rounded-2xl border-2 border-dashed border-border/5 flex items-center justify-center text-muted-foreground transition-colors group-hover/row:border-primary/20">
-                                    <ImageIcon size={20} strokeWidth={1.5} />
+                                <div className="w-12 h-12 rounded-xl border-2 border-dashed border-border/5 flex items-center justify-center text-muted-foreground transition-colors group-hover/row:border-primary/20">
+                                    <ImageIcon size={16} strokeWidth={1.5} />
                                 </div>
                              )}
                              {job.Signature_Url ? (
-                                <div className="relative w-20 h-14 rounded-2xl border border-border/10 shadow-2xl overflow-hidden bg-muted/80 p-2 group/sig ring-4 ring-accent/0 hover:ring-accent/40 transition-all duration-500 scale-95 hover:scale-100">
+                                <div className="relative w-16 h-12 rounded-xl border border-border/10 shadow-2xl overflow-hidden bg-muted/80 p-2 group/sig ring-4 ring-accent/0 hover:ring-accent/40 transition-all duration-500 scale-95 hover:scale-100">
                                     <NextImage 
                                         src={job.Signature_Url} 
                                         alt="Signature" 
@@ -326,42 +343,42 @@ export function HistoryClient({
                                     <a href={job.Signature_Url} target="_blank" rel="noreferrer" className="absolute inset-0 z-10 flex items-center justify-center bg-accent/40 opacity-0 group-hover/sig:opacity-100 transition-opacity" />
                                 </div>
                              ) : (
-                                <div className="w-20 h-14 rounded-2xl border-2 border-dashed border-border/5 transition-colors group-hover/row:border-accent/20" />
+                                <div className="w-16 h-12 rounded-xl border-2 border-dashed border-border/5 transition-colors group-hover/row:border-accent/20" />
                              )}
                         </div>
                       </td>
                       {canViewPrice && (
-                        <td className="py-10 px-6 text-right">
-                            <div className="flex flex-col items-end gap-2">
-                                <div className="flex items-center gap-2 px-4 py-1.5 bg-primary/10 rounded-xl border border-primary/20">
-                                    <span className="text-foreground font-black text-base tracking-tighter">
+                        <td className="py-8 px-4 text-right">
+                            <div className="flex flex-col items-end gap-1">
+                                <div className="flex items-center gap-2 px-3 py-1 bg-primary/10 rounded-lg border border-primary/20">
+                                    <span className="text-foreground font-black text-sm tracking-tighter">
                                         {typeof job.Price_Cust_Total === 'number' 
                                             ? job.Price_Cust_Total.toLocaleString() 
                                             : (Number(job.Price_Cust_Total) || 0).toLocaleString()}
                                     </span>
-                                    <span className="text-base font-bold font-black text-primary tracking-[0.2em] uppercase">{t('financial.credit') || 'CREDIT'}</span>
+                                    <span className="text-xs font-bold font-black text-primary tracking-[0.2em] uppercase">{t('financial.credit') || 'CREDIT'}</span>
                                 </div>
-                                <div className="pr-4 flex items-center gap-2">
-                                    <span className="text-[12px] font-black text-muted-foreground tracking-tighter">
+                                <div className="pr-2 flex items-center gap-2">
+                                    <span className="text-[10px] font-black text-muted-foreground tracking-tighter">
                                         {typeof job.Cost_Driver_Total === 'number' 
                                             ? job.Cost_Driver_Total.toLocaleString() 
                                             : (Number(job.Cost_Driver_Total) || 0).toLocaleString()}
                                     </span>
-                                    <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest italic">{t('financial.debit') || 'DEBIT'}</span>
+                                    <span className="text-[10px] font-bold font-black text-muted-foreground uppercase tracking-widest italic">{t('financial.debit') || 'DEBIT'}</span>
                                 </div>
                             </div>
                         </td>
                       )}
-                      <td className="py-10 px-6">
+                      <td className="py-8 px-4">
                         <span className={cn(
-                            "inline-flex items-center gap-2.5 px-5 py-2.5 rounded-[1.5rem] text-base font-bold font-black uppercase tracking-widest border shadow-xl transition-all duration-500 group-hover/row:scale-105",
+                            "inline-flex items-center gap-2 px-4 py-2 rounded-2xl text-sm font-bold font-black uppercase tracking-widest border shadow-xl transition-all duration-500 group-hover/row:scale-105",
                             statusConfig[job.Job_Status]?.color || 'bg-muted/50 text-muted-foreground border-border/10'
                         )}>
                           <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse shadow-[0_0_10px_currentColor]" />
                           {statusConfig[job.Job_Status]?.label || job.Job_Status}
                         </span>
                       </td>
-                      <td className="py-10 px-6 text-right">
+                      <td className="py-8 px-6 text-right">
                           {!customerMode && (
                               <div className="flex justify-end transition-all duration-500">
                                 <JobHistoryActions 

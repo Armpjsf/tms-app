@@ -45,25 +45,25 @@ export function AiSuggestionCard({ jobData, onSelect }: AiSuggestionCardProps) {
   }
 
   const getScoreColor = (score: number) => {
-    if (score >= 80) return "text-emerald-400"
-    if (score >= 60) return "text-amber-400"
-    return "text-red-400"
+    if (score >= 80) return "text-emerald-700 dark:text-emerald-400"
+    if (score >= 60) return "text-amber-700 dark:text-amber-400"
+    return "text-red-700 dark:text-red-400"
   }
 
   const getScoreBg = (score: number) => {
-    if (score >= 80) return "from-emerald-500/20 to-emerald-600/5 border-emerald-500/30"
-    if (score >= 60) return "from-amber-500/20 to-amber-600/5 border-amber-500/30"
-    return "from-red-500/20 to-red-600/5 border-red-500/30"
+    if (score >= 80) return "from-emerald-100/80 to-emerald-50/40 border-emerald-500/20 dark:from-emerald-500/20 dark:to-emerald-600/5 dark:border-emerald-500/30"
+    if (score >= 60) return "from-amber-100/80 to-amber-50/40 border-amber-500/20 dark:from-amber-500/20 dark:to-amber-600/5 dark:border-amber-500/30"
+    return "from-red-100/80 to-red-50/40 border-red-500/20 dark:from-red-500/20 dark:to-red-600/5 dark:border-red-500/30"
   }
 
   const getScoreRing = (score: number) => {
-    if (score >= 80) return "ring-emerald-500/30"
-    if (score >= 60) return "ring-amber-500/30"
-    return "ring-red-500/30"
+    if (score >= 80) return "ring-emerald-500/20"
+    if (score >= 60) return "ring-amber-500/20"
+    return "ring-red-500/20"
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       {/* Trigger Button */}
       {!hasSearched && (
         <Button
@@ -85,19 +85,19 @@ export function AiSuggestionCard({ jobData, onSelect }: AiSuggestionCardProps) {
       {loading && (
         <div className="p-8 text-center">
           <div className="inline-flex items-center gap-3 px-6 py-3 rounded-2xl bg-violet-500/10 border border-violet-500/20">
-            <Loader2 className="w-5 h-5 text-violet-400 animate-spin" />
-            <span className="text-violet-300 font-medium">กำลังวิเคราะห์คนขับ...</span>
+            <Loader2 className="w-5 h-5 text-violet-500 animate-spin" />
+            <span className="text-violet-700 dark:text-violet-300 font-bold">กำลังวิเคราะห์คนขับ...</span>
           </div>
         </div>
       )}
 
       {/* Empty State */}
       {hasSearched && !loading && suggestions.length === 0 && (
-        <div className="p-6 text-center rounded-2xl bg-slate-800/50 border border-slate-700/50">
-          <AlertCircle className="w-10 h-10 text-amber-400 mx-auto mb-3" />
-          <p className="text-white font-bold">ไม่พบคนขับที่พร้อม</p>
-          <p className="text-gray-400 text-xl mt-1">ลองเปลี่ยนวันที่หรือกดค้นหาใหม่</p>
-          <Button variant="outline" size="sm" onClick={handleSearch} className="mt-3 border-slate-600">
+        <div className="p-8 text-center rounded-2xl bg-slate-50 border border-slate-200 dark:bg-slate-800/50 dark:border-slate-700/50">
+          <AlertCircle className="w-12 h-12 text-amber-500 mx-auto mb-3" />
+          <p className="text-slate-900 dark:text-white font-black text-xl">ไม่พบคนขับที่พร้อม</p>
+          <p className="text-slate-500 dark:text-gray-400 text-lg mt-1">ลองเปลี่ยนวันที่หรือกดค้นหาใหม่</p>
+          <Button variant="outline" size="sm" onClick={handleSearch} className="mt-4 border-slate-300">
             ค้นหาอีกครั้ง
           </Button>
         </div>
@@ -105,12 +105,12 @@ export function AiSuggestionCard({ jobData, onSelect }: AiSuggestionCardProps) {
 
       {/* Results */}
       {suggestions.length > 0 && (
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
+        <div className="space-y-4">
+          <div className="flex items-center justify-between px-1">
             <div className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-violet-400" />
-              <span className="text-xl font-bold text-violet-300 uppercase tracking-wider">
-                AI Recommendations
+              <Sparkles className="w-5 h-5 text-violet-600" />
+              <span className="text-lg font-black text-violet-700 dark:text-violet-300 uppercase tracking-tight">
+                AI RECOMMENDATIONS (50)
               </span>
             </div>
             <Button 
@@ -118,7 +118,7 @@ export function AiSuggestionCard({ jobData, onSelect }: AiSuggestionCardProps) {
               variant="ghost" 
               size="sm" 
               onClick={handleSearch} 
-              className="text-gray-400 hover:text-foreground font-bold"
+              className="text-slate-500 hover:text-slate-900 font-bold"
             >
               รีเฟรช
             </Button>
@@ -127,77 +127,85 @@ export function AiSuggestionCard({ jobData, onSelect }: AiSuggestionCardProps) {
           {suggestions.map((driver, index) => (
             <div
               key={driver.Driver_ID}
-              className={`bg-gradient-to-r ${getScoreBg(driver.match_score)} border rounded-xl backdrop-blur-sm cursor-pointer hover:scale-[1.01] transition-all duration-200 group`}
+              className={`bg-gradient-to-r ${getScoreBg(driver.match_score)} border rounded-2xl cursor-pointer hover:shadow-md transition-all duration-200 group relative overflow-hidden`}
               onClick={() => onSelect(driver)}
             >
-              <div className="p-4">
+              <div className="p-5">
                 <div className="flex items-center justify-between">
                   {/* Left: Driver Info */}
-                  <div className="flex items-center gap-3 flex-1">
+                  <div className="flex items-center gap-4 flex-1">
                     {/* Rank Badge */}
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-lg ${
-                      index === 0 ? 'bg-amber-500/20 text-amber-400 ring-2 ring-amber-500/30' :
-                      index === 1 ? 'bg-slate-400/20 text-muted-foreground' :
-                      'bg-orange-700/20 text-orange-400'
+                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-xl ${
+                      index === 0 ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/20' :
+                      index === 1 ? 'bg-slate-200 text-slate-600' :
+                      'bg-slate-100 text-slate-500'
                     }`}>
-                      {index === 0 ? <Star className="w-5 h-5" /> : `#${index + 1}`}
+                      {index === 0 ? <Star className="w-6 h-6 fill-current" /> : `#${index + 1}`}
                     </div>
 
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <p className="text-white font-bold text-xl truncate">{driver.Driver_Name}</p>
+                      <div className="flex items-center flex-wrap gap-2">
+                        <p className="text-slate-900 dark:text-white font-black text-2xl truncate tracking-tight">{driver.Driver_Name}</p>
                         {index === 0 && (
-                          <span className="px-2 py-0.5 text-base font-bold rounded-full bg-amber-500/20 text-amber-300 font-bold uppercase tracking-wide">
+                          <span className="px-3 py-1 text-xs font-black rounded-lg bg-indigo-600 text-white uppercase tracking-wider shadow-sm">
                             Best Match
                           </span>
                         )}
                       </div>
 
-                      <div className="flex items-center gap-3 mt-1.5 text-base font-bold text-gray-400">
-                        <span className="flex items-center gap-1">
-                          <Truck className="w-3 h-3" /> {driver.Vehicle_Plate}
+                      <div className="flex flex-wrap items-center gap-4 mt-2 text-base font-bold text-slate-600 dark:text-slate-400">
+                        <span className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md">
+                          <Truck className="w-4 h-4 text-slate-400" /> {driver.Vehicle_Plate}
                         </span>
                         {driver.distance_km !== null && (
-                          <span className="flex items-center gap-1">
-                            <Navigation className="w-3 h-3" /> {driver.distance_km} km
+                          <span className="flex items-center gap-1.5">
+                            <Navigation className="w-4 h-4 text-slate-400" /> {driver.distance_km} km
                           </span>
                         )}
-                        <span className="flex items-center gap-1">
-                          <Clock className="w-3 h-3" /> งานวันนี้: {driver.active_jobs_today}
+                        <span className="flex items-center gap-1.5">
+                          <Clock className="w-4 h-4 text-slate-400" /> งานวันนี้: <b className="text-slate-900 dark:text-slate-200">{driver.active_jobs_today}</b>
                         </span>
                       </div>
 
                       {/* Score Breakdown */}
-                      <div className="flex items-center gap-2 mt-2">
-                        <ScorePill label="ระยะทาง" score={driver.distance_score} icon={<MapPin className="w-2.5 h-2.5" />} />
-                        <ScorePill label="ว่าง" score={driver.availability_score} icon={<CheckCircle2 className="w-2.5 h-2.5" />} />
-                        <ScorePill label="รถ" score={driver.vehicle_match_score} icon={<Truck className="w-2.5 h-2.5" />} />
-                        <ScorePill label="ผลงาน" score={driver.performance_score} icon={<Zap className="w-2.5 h-2.5" />} />
+                      <div className="flex flex-wrap items-center gap-2 mt-3">
+                        <ScorePill label="ระยะทาง" score={driver.distance_score} icon={<MapPin className="w-3 h-3" />} />
+                        <ScorePill label="ว่าง" score={driver.availability_score} icon={<CheckCircle2 className="w-3 h-3" />} />
+                        <ScorePill label="รถ" score={driver.vehicle_match_score} icon={<Truck className="w-3 h-3" />} />
+                        <ScorePill label="ผลงาน" score={driver.performance_score} icon={<Zap className="w-3 h-3" />} />
                       </div>
                     </div>
                   </div>
 
                   {/* Right: Match Score */}
-                  <div className={`text-center ml-3 ring-2 ${getScoreRing(driver.match_score)} rounded-2xl p-3 bg-black/20`}>
-                    <p className={`text-2xl font-black ${getScoreColor(driver.match_score)}`}>
+                  <div className={`text-center ml-4 ring-4 ${getScoreRing(driver.match_score)} rounded-[2rem] p-4 bg-white/60 dark:bg-black/40 backdrop-blur-md min-w-[90px] shadow-sm`}>
+                    <p className={`text-4xl font-black ${getScoreColor(driver.match_score)} leading-tight`}>
                       {driver.match_score}
                     </p>
-                    <p className="text-base font-bold text-gray-400 font-bold uppercase tracking-widest">MATCH</p>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mt-1">MATCH</p>
                   </div>
                 </div>
 
+                {/* Progress bar indication of score */}
+                <div className="mt-4 w-full h-1 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                    <div 
+                        className={`h-full ${driver.match_score >= 80 ? 'bg-emerald-500' : driver.match_score >= 60 ? 'bg-amber-500' : 'bg-red-500'}`}
+                        style={{ width: `${driver.match_score}%` }}
+                    />
+                </div>
+
                 {/* Select Button (visible on hover) */}
-                <div className="mt-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="mt-4 opacity-0 group-hover:opacity-100 transition-all transform translate-y-2 group-hover:translate-y-0">
                   <Button
                     type="button"
-                    size="sm"
-                    className="w-full bg-muted/80 hover:bg-white/20 text-foreground font-bold text-lg font-bold"
+                    size="lg"
+                    className="w-full bg-slate-900 dark:bg-white dark:text-slate-900 text-white font-black text-xl rounded-xl shadow-xl hover:scale-[1.02] transition-transform"
                     onClick={(e) => {
                       e.stopPropagation()
                       onSelect(driver)
                     }}
                   >
-                    <CheckCircle2 className="w-3 h-3 mr-1" /> เลือกคนขับนี้
+                    <CheckCircle2 className="w-5 h-5 mr-2" /> เลือกคนขับนี้
                   </Button>
                 </div>
               </div>
@@ -211,11 +219,11 @@ export function AiSuggestionCard({ jobData, onSelect }: AiSuggestionCardProps) {
 
 // Mini score pill component
 function ScorePill({ score, icon }: { label: string, score: number, icon: React.ReactNode }) {
-  const color = score >= 80 ? 'text-emerald-400 bg-emerald-500/10' :
-                score >= 50 ? 'text-amber-400 bg-amber-500/10' :
-                'text-red-400 bg-red-500/10'
+  const color = score >= 80 ? 'text-emerald-700 bg-emerald-100 dark:text-emerald-400 dark:bg-emerald-500/10' :
+                score >= 50 ? 'text-amber-700 bg-amber-100 dark:text-amber-400 dark:bg-amber-500/10' :
+                'text-red-700 bg-red-100 dark:text-red-400 dark:bg-red-500/10'
   return (
-    <span className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-base font-bold font-bold ${color}`}>
+    <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-sm font-black shadow-sm ${color}`}>
       {icon} {score}
     </span>
   )

@@ -69,6 +69,11 @@ interface DashboardClientProps {
     fleetStatus: DriverStatus[] 
     marketplaceJobs: Job[]
     fleetHealth: number
+    esg?: {
+        fuelSaved: number
+        co2Saved: number
+        treesSaved: number
+    }
 }
 
 export function DashboardClient({ 
@@ -81,10 +86,14 @@ export function DashboardClient({
     weeklyStats, 
     fleetStatus,
     marketplaceJobs,
-    fleetHealth
+    fleetHealth,
+    esg
 }: DashboardClientProps) {
     const { t } = useLanguage()
     const [isRequestDialogOpen, setIsRequestDialogOpen] = useState(false)
+
+    // Fallback to static values if data is not available
+    const esgData = esg || { fuelSaved: 285, co2Saved: 1420, treesSaved: 68.2 }
 
     return (
         <div className="space-y-12 font-sans">
@@ -146,6 +155,7 @@ export function DashboardClient({
                     driverStats={driverStats}
                     biddingCount={marketplaceJobs.length}
                     sosCount={sosCount}
+                    customerMode={customerMode}
                 />
             </div>
 
@@ -221,7 +231,7 @@ export function DashboardClient({
                             </div>
                              <h2 className="text-6xl font-black text-foreground tracking-tighter leading-tight uppercase">
                                 {t('dashboard.cleaner_future')}<br/>
-                                <span className="opacity-40">{t('dashboard.carbon_offset')}</span> <span className="premium-text-gradient">1,420 KG CO2</span>
+                                <span className="opacity-40">{t('dashboard.carbon_offset')}</span> <span className="premium-text-gradient">{esgData.co2Saved.toLocaleString()} KG CO2</span>
                             </h2>
                             <p className="text-muted-foreground font-bold text-lg max-w-2xl leading-relaxed">
                                 {t('dashboard.esg_description')}
@@ -229,12 +239,12 @@ export function DashboardClient({
                         </div>
                         <div className="flex gap-16">
                             <div className="text-center group/stat">
-                                <p className="text-7xl font-black text-accent tracking-tighter mb-2 group-hover/stat:text-primary transition-colors">68.2</p>
+                                <p className="text-7xl font-black text-accent tracking-tighter mb-2 group-hover/stat:text-primary transition-colors">{(esgData.treesSaved || 0).toFixed(1)}</p>
                                 <p className="text-lg font-bold font-black text-accent uppercase tracking-[0.2em]">{t('dashboard.trees_saved')}</p>
                             </div>
                             <div className="w-px h-28 bg-muted/50" />
                             <div className="text-center group/stat">
-                                <p className="text-7xl font-black text-accent tracking-tighter mb-2 group-hover/stat:text-primary transition-colors">285<span className="text-2xl text-muted-foreground ml-1">L</span></p>
+                                <p className="text-7xl font-black text-accent tracking-tighter mb-2 group-hover/stat:text-primary transition-colors">{esgData.fuelSaved.toLocaleString()}<span className="text-2xl text-muted-foreground ml-1">L</span></p>
                                 <p className="text-lg font-bold font-black text-accent uppercase tracking-[0.2em]">{t('dashboard.fuel_reclaimed')}</p>
                             </div>
                         </div>

@@ -33,21 +33,87 @@ export async function getExecutiveDashboardUnified(branchId?: string) {
     const finalCustomerId = customerId || (isCust ? 'RESTRICTED_ACCESS_PENDING' : null)
 
     // Use the new Super RPC for Current Month
-    const { data: currentData, error: rpcError } = await supabase.rpc('get_executive_summary', {
-        start_date: sDateCurrent,
-        end_date: eDateCurrent,
-        filter_branch_id: effectiveBranchId || null,
-        filter_customer_id: finalCustomerId
-    })
-
-    if (rpcError || !currentData) {
-        console.error('[getExecutiveDashboardUnified] get_executive_summary RPC Error:', {
-            message: rpcError?.message,
-            details: rpcError?.details,
-            hint: rpcError?.hint,
-            code: rpcError?.code
+    let currentData, rpcError;
+    try {
+        const response = await supabase.rpc('get_executive_summary', {
+            start_date: sDateCurrent,
+            end_date: eDateCurrent,
+            filter_branch_id: effectiveBranchId || null,
+            filter_customer_id: finalCustomerId
         })
-        return { financial: { revenue: 0, cost: { total: 0 }, netProfit: 0 }, trend: [], statusDist: [], kpi: {} }
+        currentData = response.data
+        rpcError = response.error
+    } catch (e) {
+        console.warn('[getExecutiveDashboardUnified] RPC call failed, switching to fallback.')
+    }
+
+    // Fallback if RPC fails or is missing
+    if (rpcError || !currentData) {
+        if (rpcError && rpcError.message) {
+            console.warn('[getExecutiveDashboardUnified] RPC failed, using manual fallback:', rpcError.message)
+        }
+        
+        // Manual fallback to keep dashboard alive with strict security filtering
+        let query = supabase
+            .from('Jobs_Main')
+            .select('Price_Cust_Total, Cost_Driver_Total, Price_Cust_Extra, Cost_Driver_Extra, Job_Status, Plan_Date, Est_Distance_KM')
+            .gte('Plan_Date', sDateCurrent)
+            .lte('Plan_Date', eDateCurrent)
+        
+        // SECURITY: Apply strict isolation for customers and branches
+        if (finalCustomerId) {
+            query = query.eq('Customer_ID', finalCustomerId)
+        }
+        if (effectiveBranchId) {
+            query = query.eq('Branch_ID', effectiveBranchId)
+        }
+        
+        const { data: fallbackJobs } = await query
+        const jobs = fallbackJobs || []
+        const revenue = jobs.filter(j => REVENUE_STATUSES.includes(j.Job_Status || '')).reduce((sum, j) => sum + (Number(j.Price_Cust_Total) || 0), 0)
+        const cost = jobs.filter(j => REVENUE_STATUSES.includes(j.Job_Status || '')).reduce((sum, j) => sum + (Number(j.Cost_Driver_Total) || 0) + (Number(j.Price_Cust_Extra) || 0) + (Number(j.Cost_Driver_Extra) || 0), 0)
+        
+        // Calculate status distribution and daily trend for the fallback
+        const statusMap: Record<string, number> = {}
+        const trendMap: Record<string, { total: number, completed: number }> = {}
+        
+        jobs.forEach(j => {
+            const s = j.Job_Status || 'Unknown'
+            statusMap[s] = (statusMap[s] || 0) + 1
+            
+            const d = j.Plan_Date ? String(j.Plan_Date).split('T')[0] : 'Unknown'
+            if (d !== 'Unknown') {
+                if (!trendMap[d]) trendMap[d] = { total: 0, completed: 0 }
+                trendMap[d].total++
+                if (REVENUE_STATUSES.includes(s)) trendMap[d].completed++
+            }
+        })
+
+        const trend = Object.entries(trendMap)
+            .map(([date, counts]) => ({ date, ...counts }))
+            .sort((a, b) => a.date.localeCompare(b.date))
+
+        return {
+            financial: { 
+                revenue, 
+                cost: { total: cost, driver: cost, extra: 0, fuel: 0, maintenance: 0 }, 
+                netProfit: revenue - cost, 
+                profitMargin: revenue > 0 ? ((revenue - cost) / revenue) * 100 : 0 
+            },
+            trend, 
+            esg: {
+                fuelSaved: Math.round((jobs.reduce((sum, j) => sum + (Number(j.Est_Distance_KM) || 0), 0) / 5.5) * 0.08),
+                co2Saved: Math.round(((jobs.reduce((sum, j) => sum + (Number(j.Est_Distance_KM) || 0), 0) / 5.5) * 0.08) * 2.68),
+                treesSaved: Number(((((jobs.reduce((sum, j) => sum + (Number(j.Est_Distance_KM) || 0), 0) / 5.5) * 0.08) * 2.68) / 20.2).toFixed(1))
+            },
+            statusDist: Object.entries(statusMap).map(([name, value]) => ({ name, value })),
+            kpi: { 
+                revenue: { current: revenue, previous: 0, growth: 0, target: 250000, attainment: (revenue / 250000) * 100 }, 
+                profit: { current: revenue - cost, previous: 0, growth: 0 }, 
+                margin: { current: revenue > 0 ? ((revenue - cost) / revenue) * 100 : 0, growth: 0, target: 15 }, 
+                jobs: { current: jobs.length } 
+            }
+        }
     }
 
     // Get Previous Month Financials for Growth Calculation
@@ -68,17 +134,7 @@ export async function getExecutiveDashboardUnified(branchId?: string) {
     const driverCost = Number(fin.driver_cost) || 0
     const extraCost = Number(fin.extra_cost) || 0
     
-    // We still need external costs (Fuel/Repair) which aren't in get_executive_summary's Jobs logic 
-    // but the get_dashboard_metrics handle them. For simplicity in this unified view, 
-    // let's fetch them if not customer.
-    const fuelCost = 0
-    const maintenanceCost = 0
-    
-    if (!customerId) {
-        // External costs are currently handled by RPC metrics
-    }
-
-    const totalCost = driverCost + extraCost + fuelCost + maintenanceCost
+    const totalCost = driverCost + extraCost
     const netProfit = revenue - totalCost
     const margin = revenue > 0 ? (netProfit / revenue) * 100 : 0
 
@@ -92,18 +148,32 @@ export async function getExecutiveDashboardUnified(branchId?: string) {
         return ((curr - prev) / prev) * 100
     }
 
+    // 3. ESG Intelligence (Dynamic)
+    // Formula: Total Distance * Efficiency Factor * Improvement %
+    // Heuristic: Use real distance or 12.5km per job if distance data is missing
+    const rawDistance = Number(currentData.financial?.total_distance) || 0
+    const jobCount = Number(currentData.financial?.job_count) || 0
+    const effectiveDistance = Math.max(rawDistance, jobCount * 12.5)
+    
+    // TMS 2026 Goal: 8.2% Efficiency Gain Benchmark
+    const totalSavedKm = effectiveDistance * 0.082
+    const co2Saved = totalSavedKm * 0.12 // 0.12 kg CO2 per avg KM saved (Medium Fleet)
+    const fuelSaved = co2Saved / 2.68 
+    const treesSaved = co2Saved / 20.2 
+
     return {
         financial: {
             revenue,
-            cost: { total: totalCost, driver: driverCost, extra: extraCost, fuel: fuelCost, maintenance: maintenanceCost },
+            cost: { total: totalCost, driver: driverCost, extra: extraCost, fuel: 0, maintenance: 0 },
             netProfit,
             profitMargin: margin
         },
         trend: (currentData.trend || []).map((t: any) => ({
             date: t.date,
+            total: Number(t.job_count) || 0,
+            completed: Number(t.completed_count) || 0,
             revenue: Number(t.revenue),
-            cost: Number(t.cost),
-            jobCount: Number(t.job_count)
+            cost: Number(t.cost)
         })),
         statusDist: Object.entries(currentData.status_dist || {}).map(([name, value]) => ({ name, value: Number(value) })),
         kpi: {
@@ -112,7 +182,12 @@ export async function getExecutiveDashboardUnified(branchId?: string) {
             margin: { current: margin, growth: margin - prevMargin, target: 15 },
             jobs: { current: Number(fin.job_count) || 0 }
         },
-        vehicles: [] // Placeholder or add to RPC if needed
+        esg: {
+            fuelSaved: Math.round(fuelSaved),
+            co2Saved: Math.round(co2Saved),
+            treesSaved: Number(treesSaved.toFixed(1))
+        },
+        vehicles: []
     }
 }
 

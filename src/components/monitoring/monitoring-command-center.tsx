@@ -138,11 +138,13 @@ export function MonitoringCommandCenter({
     }
 
     const driversWithGPS = useMemo(() => {
-        return drivers.map(d => {
-            const lastUpdateDate = d.Last_Update ? new Date(d.Last_Update) : null
-            const isOnline = lastUpdateDate && (new Date().getTime() - lastUpdateDate.getTime() < 10 * 60 * 1000)
-            return { ...d, status: isOnline ? 'Online' : 'Offline' }
-        })
+        return drivers
+            .map(d => {
+                const lastUpdateDate = d.Last_Update ? new Date(d.Last_Update) : null
+                const isOnline = lastUpdateDate && (new Date().getTime() - lastUpdateDate.getTime() < 10 * 60 * 1000)
+                return { ...d, status: isOnline ? 'Online' : 'Offline' }
+            })
+            .sort((a, b) => (a.status === 'Online' ? -1 : 1))
     }, [drivers])
 
     const alertCount = jobs.filter(j => j.Job_Status === 'SOS' || j.Job_Status === 'Failed').length
@@ -181,42 +183,69 @@ export function MonitoringCommandCenter({
                 </div>
 
                 <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar">
-                    {filter === 'all' || filter === 'drivers' ? (
-                        driversWithGPS.map(driver => (
-                            <div key={driver.Driver_ID} 
-                                 onClick={() => handleDriverClick(driver)}
+                    {(filter === 'all' || filter === 'drivers') ? (
+                        driversWithGPS
+                            .filter(d => filter === 'all' || d.status === 'Online')
+                            .map(driver => (
+                                <div key={driver.Driver_ID} 
+                                     onClick={() => handleDriverClick(driver)}
+                                     className={cn(
+                                        "bg-muted/50 border border-border/10 p-4 rounded-3xl hover:bg-muted/80 transition-all cursor-pointer group",
+                                        selectedId === driver.Driver_ID && "ring-2 ring-primary bg-primary/5"
+                                     )}>
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <div className="relative">
+                                                <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/20">
+                                                    <Truck size={20} className="text-primary" />
+                                                </div>
+                                                <div className={cn("absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-[#050110]", driver.status === 'Online' ? "bg-emerald-500" : "bg-slate-500")} />
+                                            </div>
+                                            <div>
+                                                <p className="text-xl font-black text-foreground">{driver.Driver_Name}</p>
+                                                <p className="text-lg font-bold text-muted-foreground uppercase tracking-tighter">{driver.Vehicle_Plate}</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex flex-col items-end gap-2">
+                                            <SafetyScoreBadge metrics={calculateSafetyScore(driver)} />
+                                            {driver.Latitude && driver.Longitude && (
+                                                <Button 
+                                                    variant="outline" 
+                                                    size="sm" 
+                                                    className="h-8 px-3 text-[10px] font-bold border-primary/20 text-primary hover:bg-primary/5 rounded-xl transition-all"
+                                                    onClick={(e: React.MouseEvent) => {
+                                                        e.stopPropagation()
+                                                        window.open(`https://www.google.com/maps/search/?api=1&query=${driver.Latitude},${driver.Longitude}`, '_blank')
+                                                    }}
+                                                >
+                                                    OPEN MAPS
+                                                </Button>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            ))
+                    ) : filter === 'alerts' ? (
+                        jobs.filter(j => j.Job_Status === 'SOS' || j.Job_Status === 'Failed').map(job => (
+                            <div key={job.Job_ID}
+                                 onClick={() => handleJobClick(job)}
                                  className={cn(
-                                    "bg-muted/50 border border-border/10 p-4 rounded-3xl hover:bg-muted/80 transition-all cursor-pointer group",
-                                    selectedId === driver.Driver_ID && "ring-2 ring-primary bg-primary/5"
+                                    "bg-rose-500/5 border border-rose-500/10 p-4 rounded-3xl hover:bg-rose-500/10 transition-all cursor-pointer group",
+                                    selectedId === job.Job_ID && "ring-2 ring-rose-500"
                                  )}>
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-3">
-                                        <div className="relative">
-                                            <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/20">
-                                                <Truck size={20} className="text-primary" />
-                                            </div>
-                                            <div className={cn("absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-[#050110]", driver.status === 'Online' ? "bg-emerald-500" : "bg-slate-500")} />
+                                        <div className="p-3 bg-rose-500/20 rounded-2xl text-rose-500">
+                                            <Activity size={20} />
                                         </div>
                                         <div>
-                                            <p className="text-xl font-black text-foreground">{driver.Driver_Name}</p>
-                                            <p className="text-lg font-bold text-muted-foreground uppercase tracking-tighter">{driver.Vehicle_Plate}</p>
+                                            <p className="text-xl font-black text-foreground">{job.Job_ID}</p>
+                                            <p className="text-lg font-bold text-rose-500 uppercase">{job.Job_Status}</p>
                                         </div>
                                     </div>
-                                    <div className="flex flex-col items-end gap-2">
-                                        <SafetyScoreBadge metrics={calculateSafetyScore(driver)} />
-                                        {driver.Latitude && driver.Longitude && (
-                                            <Button 
-                                                variant="outline" 
-                                                size="sm" 
-                                                className="h-8 px-3 text-[10px] font-bold border-primary/20 text-primary hover:bg-primary/5 rounded-xl transition-all"
-                                                onClick={(e: React.MouseEvent) => {
-                                                    e.stopPropagation()
-                                                    window.open(`https://www.google.com/maps/search/?api=1&query=${driver.Latitude},${driver.Longitude}`, '_blank')
-                                                }}
-                                            >
-                                                OPEN MAPS
-                                            </Button>
-                                        )}
+                                    <div className="text-right">
+                                        <p className="text-base font-bold text-foreground truncate max-w-[150px]">{job.Dest_Location}</p>
+                                        <p className="text-xs font-bold text-muted-foreground">{job.Driver_Name || 'No Driver'}</p>
                                     </div>
                                 </div>
                             </div>

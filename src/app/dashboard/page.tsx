@@ -21,6 +21,12 @@ interface DashboardData {
   custName: string | null
   dailyStats: any
   driverStats: any
+  fleetStatus: any[]
+  esgStats: {
+    co2SavedKg: number
+    treesSaved: number
+    totalSavedKm: number
+  }
 }
 
 export default function DashboardPage() {
@@ -28,26 +34,36 @@ export default function DashboardPage() {
   const { t } = useLanguage()
   const [data, setData] = useState<DashboardData | null>(null)
   const [isInitialLoading, setIsInitialLoading] = useState(true)
+  const [isRefreshing, setIsRefreshing] = useState(false)
+
   const loadData = useCallback(async (isInitial = false) => {
     if (isInitial) setIsInitialLoading(true)
+    else setIsRefreshing(true)
     
     try {
       const currentBranchId = selectedBranch === 'All' ? undefined : selectedBranch
       
-      const [unified, sosIds, marketplaceJobs, customerMode, custId, dailyStats, driverStats] = await Promise.all([
+      const { getESGStats } = await import("@/lib/supabase/esg-analytics")
+
+      const [unified, sosIds, marketplaceJobs, customerMode, custId, dailyStats, driverStats, esgStats] = await Promise.all([
         getExecutiveDashboardUnified(currentBranchId),
         getSOSDriverIds(),
         getMarketplaceJobs(currentBranchId),
         isCustomer(),
         getCustomerId(),
         getTodayJobStats(currentBranchId),
-        getDriverStats(currentBranchId)
+        getDriverStats(currentBranchId),
+        getESGStats(undefined, undefined, currentBranchId)
       ])
 
       let custName: string | null = custId;
       if (customerMode && custId) {
           custName = await getCustomerName(custId) || custId
       }
+
+      // Fetch Live Fleet GPS Status
+      const { getActiveFleetStatus } = await import("@/lib/supabase/gps")
+      const fleetStatus = await getActiveFleetStatus(currentBranchId, customerMode ? custId : null)
 
       setData({ 
         unified, 
@@ -57,12 +73,15 @@ export default function DashboardPage() {
         custId: custId || null, 
         custName: custName || null, 
         dailyStats: dailyStats || { total: 0, delivered: 0, inProgress: 0, pending: 0 }, 
-        driverStats: driverStats || { total: 0, active: 0, onJob: 0 } 
+        driverStats: driverStats || { total: 0, active: 0, onJob: 0 },
+        fleetStatus: fleetStatus || [],
+        esgStats: esgStats || { co2SavedKg: 0, treesSaved: 0, totalSavedKm: 0 }
       })
     } catch (error) {
       console.error("Dashboard data fetch error:", error)
     } finally {
       setIsInitialLoading(false)
+      setIsRefreshing(false)
     }
   }, [selectedBranch])
 
@@ -83,7 +102,7 @@ export default function DashboardPage() {
 
   if (!data) return null;
 
-  const { unified, sosIds, marketplaceJobs, customerMode, custName, dailyStats, driverStats } = data;
+  const { unified, sosIds, marketplaceJobs, customerMode, custName, dailyStats, driverStats, fleetStatus, esgStats } = data;
 
   return (
     <DashboardLayout>
@@ -95,9 +114,14 @@ export default function DashboardPage() {
         driverStats={driverStats}
         sosCount={sosIds.length}
         weeklyStats={unified.trend ?? []}
-        fleetStatus={[]}
+        fleetStatus={fleetStatus}
         marketplaceJobs={marketplaceJobs ?? []}
         fleetHealth={unified.kpi?.margin?.current ? Math.round(unified.kpi.margin.current + 80) : 98}
+        esg={{
+          co2Saved: esgStats.co2SavedKg,
+          treesSaved: esgStats.treesSaved,
+          fuelSaved: Math.round(esgStats.co2SavedKg / 2.68)
+        }}
       />
     </DashboardLayout>
   )

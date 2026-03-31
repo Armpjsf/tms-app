@@ -368,7 +368,8 @@ export async function createBulkJobs(jobs: Partial<JobFormData>[]) {
 }
 
 export async function updateJob(jobId: string, data: Partial<JobFormData>) {
-  const supabase = await createClient()
+  const isAdminUser = await isAdmin()
+  const supabase = isAdminUser ? createAdminClient() : await createClient()
 
   const updateData = sanitizeJobData({ ...data })
   
@@ -415,6 +416,7 @@ export async function updateJob(jobId: string, data: Partial<JobFormData>) {
   autoSaveOriginDestinations(branchId || null, data.original_origins_json, data.original_destinations_json).catch(() => {})
 
   revalidatePath('/planning')
+  revalidatePath('/jobs/history')
 
   // Log the update
   await logActivity({
@@ -431,7 +433,8 @@ export async function updateJob(jobId: string, data: Partial<JobFormData>) {
 }
 
 export async function deleteJob(jobId: string) {
-  const supabase = await createClient()
+  const isAdminUser = await isAdmin()
+  const supabase = isAdminUser ? createAdminClient() : await createClient()
 
   const { error } = await supabase
     .from('Jobs_Main')
@@ -443,6 +446,7 @@ export async function deleteJob(jobId: string) {
   }
 
   revalidatePath('/planning')
+  revalidatePath('/jobs/history')
 
   // Log the deletion
   await logActivity({

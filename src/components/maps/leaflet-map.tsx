@@ -4,6 +4,7 @@ import { MapContainer, TileLayer, Marker, Popup, useMap, Polyline } from 'react-
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { useEffect, useState, useRef } from 'react'
+import { Truck, MapPin } from 'lucide-react'
 import { ProfitabilityHeatmap, ProfitPoint } from './profitability-heatmap'
 
 // Fix for default marker icons in Next.js

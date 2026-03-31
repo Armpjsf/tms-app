@@ -15,3 +15,11 @@ export const VEHICLE_TYPES = [
     'Pickup',
     'Motorcycle'
 ]
+
+export const VEHICLE_CAPACITIES: Record<string, { weight: number, volume: number }> = {
+    '4-Wheel': { weight: 1500, volume: 4.0 },
+    'Pickup': { weight: 1500, volume: 4.0 },
+    '6-Wheel': { weight: 5000, volume: 15.0 },
+    '10-Wheel': { weight: 12000, volume: 35.0 },
+    'Motorcycle': { weight: 30, volume: 0.2 },
+}

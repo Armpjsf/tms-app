@@ -12,9 +12,20 @@ export type GeocodeResult = {
   display_name: string
 }
 
-export async function geocodeAddress(address: string): Promise<GeocodeResult | null> {
+export async function geocodeAddress(address: string, context?: string): Promise<GeocodeResult | null> {
   const cleanAddress = address.trim().replace(/\s+/g, ' ');
   if (!cleanAddress || cleanAddress.length < 2) return null;
+
+  // 0. Direct Coordinate Detection: 13.949013, 100.860599
+  const latLngRegex = /^(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)$/;
+  const match = cleanAddress.match(latLngRegex);
+  if (match) {
+    return {
+      lat: parseFloat(match[1]),
+      lng: parseFloat(match[2]),
+      display_name: cleanAddress
+    };
+  }
 
   const performSearch = async (query: string) => {
     try {
@@ -39,18 +50,37 @@ export async function geocodeAddress(address: string): Promise<GeocodeResult | n
     }
   };
 
-  // 1. Try full address
-  let result = await performSearch(cleanAddress);
+  // 1. Try address + context if available
+  let result = null;
+  if (context) {
+    result = await performSearch(`${cleanAddress} ${context}`);
+    if (result) return result;
+  }
+
+  // 1b. Try full address
+  result = await performSearch(cleanAddress);
   if (result) return result;
 
-  // 2. Smart Cleanup: Strip common Thai business/org prefixes that might confuse global search
-  const prefixes = ['บริษัท', 'ห้างหุ้นส่วน', 'บมจ.', 'หจก.', 'โรงงาน', 'คลังสินค้า', 'สำนักงาน'];
+  // 2. Smart Cleanup: Strip common POI prefixes/suffixes
+  // Thai prefixes
+  const thaiPrefixes = ['บริษัท', 'ห้างหุ้นส่วน', 'บมจ.', 'หจก.', 'โรงงาน', 'คลังสินค้า', 'สำนักงาน'];
+  // English suffixes
+  const engSuffixes = [', Ltd.', ' Co., Ltd.', ' Co.,Ltd.', ' Ltd.', ' Co. Ltd.', ' PLC', ' Corp.'];
+  
   let strippedAddress = cleanAddress;
-  for (const p of prefixes) {
+  
+  // Remove Thai prefixes
+  for (const p of thaiPrefixes) {
     if (strippedAddress.startsWith(p)) {
       strippedAddress = strippedAddress.replace(p, '').trim();
       break;
     }
+  }
+
+  // Remove English suffixes (case insensitive)
+  for (const s of engSuffixes) {
+    const regex = new RegExp(s.replace('.', '\\.'), 'gi');
+    strippedAddress = strippedAddress.replace(regex, '').trim();
   }
   
   if (strippedAddress !== cleanAddress) {
@@ -58,11 +88,20 @@ export async function geocodeAddress(address: string): Promise<GeocodeResult | n
     if (result) return result;
   }
 
-  // 3. Fallback: Last resort - try finding the district and province parts
-  // Very simple split by space, take the last 2-3 tokens which are usually address details
-  const parts = cleanAddress.split(' ');
-  if (parts.length > 2) {
-    const fallbackQuery = parts.slice(-2).join(' '); // Usually [District, Province]
+  // 3. Fallback: Split by common delimiters and try the first part (usually the name)
+  const delimiters = [',', ' ', ' | '];
+  for (const d of delimiters) {
+      const parts = cleanAddress.split(d);
+      if (parts.length > 1) {
+          result = await performSearch(parts[0].trim());
+          if (result) return result;
+      }
+  }
+
+  // 4. Fallback: Last resort - try finding the district and province parts (last 2 tokens)
+  const tokens = cleanAddress.split(' ');
+  if (tokens.length > 2) {
+    const fallbackQuery = tokens.slice(-2).join(' '); 
     result = await performSearch(fallbackQuery);
     if (result) return result;
   }

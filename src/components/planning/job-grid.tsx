@@ -51,7 +51,7 @@ export function JobGrid({
                 </PremiumCardTitle>
                 <Link href="/jobs/history" className="relative z-10">
                     <PremiumButton variant="ghost" size="sm" className="text-base tracking-[0.2em] text-muted-foreground hover:text-foreground hover:bg-muted/50">
-                        ARCHIVE DATA <ArrowRight className="w-5 h-5 ml-2" />
+                        {t('navigation.history').toUpperCase()} <ArrowRight className="w-5 h-5 ml-2" />
                     </PremiumButton>
                 </Link>
             </PremiumCardHeader>
@@ -62,7 +62,7 @@ export function JobGrid({
                             <Package className="w-10 h-10 text-gray-400" />
                         </div>
                         <p className="text-xl text-muted-foreground font-bold mb-6">
-                            {view === 'requests' ? "ไม่มีคำขอใหม่จากลูกค้า" : "ยังไม่มีงานที่วางแผนไว้สำหรับวันนี้"}
+                            {view === 'requests' ? t('jobs.dialog.zero_missions') : t('common.no_data')}
                         </p>
                         <div className="flex justify-center gap-3">
                             {view !== 'requests' && (
@@ -76,7 +76,7 @@ export function JobGrid({
                                         canCreate ? (
                                             <PremiumButton className="h-16 px-12 rounded-2xl text-lg">
                                                 <Plus size={28} className="mr-2" />
-                                                เริ่มแผนงานแรก
+                                                {t('planning.new_job')}
                                             </PremiumButton>
                                         ) : <></>
                                     }

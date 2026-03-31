@@ -114,7 +114,7 @@ export function FuelClient({
                 />
               </div>
               <PremiumButton type="submit" variant="secondary" className="h-16 px-10 rounded-2xl border-2 border-border/5 bg-muted/50 hover:bg-muted/80 text-foreground font-black uppercase tracking-widest italic">
-                  {t('common.success')}
+                  {t('common.filter')}
               </PremiumButton>
           </form>
         </div>
