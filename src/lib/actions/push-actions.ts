@@ -344,43 +344,60 @@ export async function notifySilentSOS(
 📍 พิกัด: ${locationStr}
 🏠 ที่อยู่: ${address || 'N/A'}`
 
-    // 1. Send Push to Admins
-    await sendPushToAdmins({
-        title: `🆘 SOS! ${driverName}`,
-        body: alertMessage.slice(0, 200),
-        url: `/monitoring?driver=${driverId}`,
-        type: 'sos',
-        tag: `sos_silent_${driverId}`,
-        driverPhone,
-        actions: [
-            { action: 'view_location', title: '📍 ดูตำแหน่ง' },
-            { action: 'call_driver', title: '📞 โทรกลับ' },
-        ]
-    })
+    // 1. Send Push to Admins (Optional, don't let failure stop us)
+    try {
+        await sendPushToAdmins({
+            title: `🆘 SOS! ${driverName}`,
+            body: alertMessage.slice(0, 200),
+            url: `/monitoring?driver=${driverId}`,
+            type: 'sos',
+            tag: `sos_silent_${driverId}`,
+            driverPhone,
+            actions: [
+                { action: 'view_location', title: '📍 ดูตำแหน่ง' },
+                { action: 'call_driver', title: '📞 โทรกลับ' },
+            ]
+        })
+    } catch (pushErr) {
+        console.error("[SOS] Push failed (skipping):", pushErr)
+    }
 
-    // 2. Create Notification (Triggers toast in Dashboard)
-    await createNotification({
-        Driver_ID: driverId,
-        Title: `🆘 SOS: ${driverName}`,
-        Message: alertMessage,
-        Type: 'error',
-        Link: `/monitoring?driver=${driverId}`
-    })
+    // 2. Create Notification (CRITICAL - Use Admin Client to ensure it bypasses RLS)
+    try {
+        const supabase = await createAdminClient()
+        await supabase
+            .from('Notifications')
+            .insert({
+                Driver_ID: driverId,
+                Title: `🆘 SOS: ${driverName}`,
+                Message: alertMessage,
+                Type: 'error',
+                Link: `/monitoring?driver=${driverId}`,
+                Created_At: new Date().toISOString()
+            })
+    } catch (dbErr) {
+        console.error("[SOS] Database notification failed:", dbErr)
+        // If this fails, we are in trouble, but let's try to log the activity anyway
+    }
 
     // 3. Log Activity
-    await logActivity({
-        module: 'Jobs', 
-        action_type: 'UPDATE',
-        target_id: driverId,
-        details: {
-            alert_type: 'SILENT_SOS',
-            driver_name: driverName,
-            phone: driverPhone,
-            lat,
-            lng,
-            address
-        }
-    })
+    try {
+        await logActivity({
+            module: 'Jobs', 
+            action_type: 'UPDATE',
+            target_id: driverId,
+            details: {
+                alert_type: 'SILENT_SOS',
+                driver_name: driverName,
+                phone: driverPhone,
+                lat,
+                lng,
+                address
+            }
+        })
+    } catch (logErr) {
+        console.error("[SOS] Log failed:", logErr)
+    }
 
     return { success: true }
 }
