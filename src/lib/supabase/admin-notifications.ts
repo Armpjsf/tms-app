@@ -1,7 +1,7 @@
 "use server"
 
-import { createClient } from '@/utils/supabase/server'
-import { getUserBranchId } from "@/lib/permissions"
+import { createClient, createAdminClient } from '@/utils/supabase/server'
+import { getUserBranchId, isAdmin } from "@/lib/permissions"
 
 export interface AdminAlert {
   id: string
@@ -14,7 +14,8 @@ export interface AdminAlert {
 }
 
 export async function getAdminAlerts(): Promise<AdminAlert[]> {
-  const supabase = await createClient()
+  const isAdminUser = await isAdmin()
+  const supabase = isAdminUser ? createAdminClient() : await createClient()
   const branchId = await getUserBranchId()
   const alerts: AdminAlert[] = []
   const today = new Date()
@@ -33,14 +34,19 @@ export async function getAdminAlerts(): Promise<AdminAlert[]> {
     sosLogs?.forEach(log => {
       const details = log.details || {}
       if (details.alert_type === 'SOS' || details.alert_type === 'SILENT_SOS') {
+        // Filter by branch
+        if (isAdminUser && branchId && branchId !== 'All') {
+            if (String(log.branch_id) !== String(branchId)) return
+        }
+
         alerts.push({
           id: `sos-${log.id}`,
           type: 'sos',
           severity: 'critical',
           title: `🆘 SOS: ${details.driver_name || 'คนขับ'}`,
           description: details.alert_type === 'SILENT_SOS' 
-            ? `แจ้งฉุกเฉิน (ไม่โทร): ${details.address || 'ไม่ทราบตำแหน่ง'}`
-            : `กดโทรฉุกเฉินหาแอดมิน`,
+            ? `แจ้งเหตุฉุกเฉิน (ไม่สะดวกคุย): ${details.address || 'ไม่ทราบตำแหน่ง'}`
+            : `พนักงานกดโทรฉุกเฉินหาแอดมิน`,
           date: log.created_at,
           meta: { 
             driverId: log.target_id || '', 
@@ -81,15 +87,15 @@ export async function getAdminAlerts(): Promise<AdminAlert[]> {
         
         if (diffDays <= 30) {
           alerts.push({
-            id: `${v.vehicle_plate}-${c.type}`,
+            id: `${v.Vehicle_Plate}-${c.type}`,
             type: 'expiry',
             severity: diffDays <= 0 ? 'critical' : diffDays <= 15 ? 'warning' : 'info',
-            title: `${c.label} — ${v.vehicle_plate}`,
+            title: `${c.label} — ${v.Vehicle_Plate}`,
             description: diffDays <= 0 
               ? `หมดอายุแล้ว ${Math.abs(diffDays)} วัน` 
               : `เหลืออีก ${diffDays} วัน (หมดอายุ ${expDate.toLocaleDateString('th-TH')})`,
             date: c.field,
-            meta: { plate: v.vehicle_plate, expiryType: c.type }
+            meta: { plate: v.Vehicle_Plate, expiryType: c.type }
           })
         }
       })
@@ -131,7 +137,7 @@ export async function getAdminAlerts(): Promise<AdminAlert[]> {
 
   // 3. Pending maintenance (open repair tickets)
   try {
-    let mQuery = supabase
+    const mQuery = supabase
       .from('Repair_Tickets')
       .select('Ticket_ID, Vehicle_Plate, Issue_Desc, Status, Date_Report, Priority')
       .in('Status', ['Pending', 'In Progress'])
