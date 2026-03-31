@@ -95,6 +95,7 @@ export const dictionaries = {
       v_node_label: 'จุดเป้าหมาย:',
       pts_unit: 'คะแนน',
       auto: 'อัตโนมัติ',
+      view_details: 'ดูรายละเอียด',
       download_report: 'ดาวน์โหลดรายงาน',
     },
     financial: {
@@ -1522,6 +1523,7 @@ export const dictionaries = {
       abort: 'Abort',
       execute: 'Execute',
       auto: 'Automatic',
+      view_details: 'View Details',
       download_report: 'Download Report',
       import: {
         title: 'Import Data',

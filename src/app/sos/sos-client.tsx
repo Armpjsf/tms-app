@@ -197,7 +197,7 @@ export default function SOSPage({ alerts: initialAlerts, activeCount: initialCou
                </PremiumButton>
                <Link href={`/admin/jobs/${alert.Job_ID}`} className="block">
                   <PremiumButton className="h-14 rounded-2xl w-full gap-3 shadow-[0_10px_20px_rgba(255,30,133,0.2)]">
-                     <Target className="w-4 h-4" /> {t('common.loading')}
+                     <Target className="w-4 h-4" /> {t('common.view_details')}
                   </PremiumButton>
                </Link>
             </div>
