@@ -5,12 +5,13 @@ import { toast } from 'sonner'
 import { createClient } from '@/utils/supabase/client'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Send, Search, MessageSquare, Check, CheckCheck, Loader2, Image as ImageIcon, User, ShieldCheck, Activity, Target } from "lucide-react"
+import { Send, Search, MessageSquare, Check, CheckCheck, Loader2, Image as ImageIcon, User, ShieldCheck, Activity, Target, CheckCircle2 } from "lucide-react"
 import { ChatMessage } from '@/lib/actions/chat-actions'
 import { uploadImageToDrive } from '@/lib/actions/upload-actions'
 import Image from 'next/image'
 import { cn } from "@/lib/utils"
 import { motion, AnimatePresence } from "framer-motion"
+import { useLanguage } from "@/components/providers/language-provider"
 
 interface Contact {
   driver_id: string
@@ -36,9 +37,9 @@ function formatDate(dateStr: string) {
   const yesterday = new Date(today)
   yesterday.setDate(yesterday.getDate() - 1)
   
-  if (d.toDateString() === today.toDateString()) return 'TODAY'
-  if (d.toDateString() === yesterday.toDateString()) return 'YESTERDAY'
-  return d.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }).toUpperCase()
+  if (d.toDateString() === today.toDateString()) return 'วันนี้'
+  if (d.toDateString() === yesterday.toDateString()) return 'เมื่อวาน'
+  return d.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
 function groupMessagesByDate(messages: ChatMessage[]) {
@@ -57,6 +58,7 @@ function groupMessagesByDate(messages: ChatMessage[]) {
 }
 
 export function ChatWindow({ initialContacts, initialDrivers, forcedDriverId }: ChatWindowProps) {
+  const { t } = useLanguage()
   const [selectedDriverId, setSelectedDriverId] = useState<string | null>(null)
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [inputMessage, setInputMessage] = useState('')
@@ -89,8 +91,8 @@ export function ChatWindow({ initialContacts, initialDrivers, forcedDriverId }: 
   const filteredContacts = useMemo(() => {
     const all = contacts.length > 0 ? contacts : initialDrivers.map(d => ({
       driver_id: d.Driver_ID,
-      driver_name: d.Driver_Name || 'Unknown',
-      last_message: 'INITIATE_CONTACT',
+      driver_name: d.Driver_Name || `พนักงานขับรถ (${d.Driver_ID})`,
+      last_message: 'เริ่มการสนทนา',
       unread: 0,
       updated_at: new Date().toISOString()
     }))
@@ -156,10 +158,10 @@ export function ChatWindow({ initialContacts, initialDrivers, forcedDriverId }: 
             const { sendChatMessage } = await import('@/lib/actions/chat-actions')
             await sendChatMessage('admin', imageUrlMessage, selectedDriverId)
         } else {
-            toast.error('UPLOAD_FAILURE')
+            toast.error('อัปโหลดล้มเหลว')
         }
     } catch {
-        toast.error('SYSTEM_ERROR')
+        toast.error('เกิดข้อผิดพลาดของระบบ')
     } finally {
         setUploadingImage(false)
         if (fileInputRef.current) fileInputRef.current.value = ''
@@ -182,16 +184,16 @@ export function ChatWindow({ initialContacts, initialDrivers, forcedDriverId }: 
         return prev.map(c => c.driver_id === driverId ? {
           ...c,
           last_message: newMsg.message.startsWith('[IMAGE] ') 
-            ? (newMsg.sender_id === 'admin' ? 'SYSTEM: 📷 ARTIFACT_SENT' : '📷 ARTIFACT_RECEIVED')
-            : (newMsg.sender_id === 'admin' ? `SYSTEM: ${newMsg.message}` : newMsg.message),
+            ? (newMsg.sender_id === 'admin' ? 'คุณ: 📷 ส่งรูปภาพ' : '📷 ส่งรูปภาพ')
+            : (newMsg.sender_id === 'admin' ? `คุณ: ${newMsg.message}` : newMsg.message),
           unread: (newMsg.sender_id !== 'admin' && driverId !== selectedDriverId) ? (c.unread || 0) + 1 : c.unread,
           updated_at: newMsg.created_at
         } : c).sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
       } else {
         return [{
           driver_id: driverId,
-          driver_name: newMsg.driver_name || 'Driver',
-          last_message: newMsg.message.startsWith('[IMAGE] ') ? '📷 ARTIFACT_RECEIVED' : newMsg.message,
+          driver_name: newMsg.driver_name || 'พนักงานขับรถ',
+          last_message: newMsg.message.startsWith('[IMAGE] ') ? '📷 ส่งรูปภาพ' : newMsg.message,
           unread: newMsg.sender_id !== 'admin' ? 1 : 0,
           updated_at: newMsg.created_at
         }, ...prev]
@@ -228,8 +230,7 @@ export function ChatWindow({ initialContacts, initialDrivers, forcedDriverId }: 
           try { new Audio('/sounds/notification.mp3').play().catch(() => {}) } catch {}
         }
       } else if (newMsg.sender_id !== 'admin') {
-         // Show visual notification when message is from a driver and not the selected one
-         const driverName = contacts.find(c => c.driver_id === newMsg.sender_id)?.driver_name || 'Driver'
+         const driverName = contacts.find(c => c.driver_id === newMsg.sender_id)?.driver_name || 'พนักงานขับรถ'
          toast.info(`ข้อความใหม่จาก ${driverName}`, {
              description: newMsg.message.startsWith('[IMAGE]') ? '📷 ส่งรูปภาพ' : newMsg.message,
              action: {
@@ -261,18 +262,50 @@ export function ChatWindow({ initialContacts, initialDrivers, forcedDriverId }: 
   const totalUnread = useMemo(() => contacts.reduce((s, c) => s + (c.unread || 0), 0), [contacts])
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-4 gap-0 h-[calc(100vh-280px)] min-h-[550px] border border-border/5 rounded-[3rem] overflow-hidden bg-background shadow-[0_50px_100px_rgba(0,0,0,0.6)] relative">
+    <div className="flex flex-col gap-8 h-full">
+      {/* Communication Center Header */}
+      <div className="bg-background p-10 rounded-br-[5rem] rounded-tl-[3rem] border border-border/5 shadow-[0_30px_60px_rgba(0,0,0,0.5)] relative overflow-hidden group shrink-0">
+          <div className="absolute top-0 right-0 w-80 h-80 bg-blue-500/5 blur-[120px] rounded-full -mr-40 -mt-40 pointer-events-none" />
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8 relative z-10">
+              <div className="flex items-center gap-6">
+                  <div className="p-4 bg-blue-500/20 rounded-[2rem] border-2 border-blue-500/30 shadow-[0_0_40px_rgba(59,130,246,0.2)] text-blue-500 group-hover:scale-110 transition-all duration-500">
+                      <MessageSquare size={32} strokeWidth={2.5} />
+                  </div>
+                  <div>
+                      <h1 className="text-4xl font-black text-foreground tracking-tight flex items-center gap-3 uppercase leading-none mb-2">
+                          {t('navigation.chat')}
+                      </h1>
+                      <p className="text-base font-bold text-muted-foreground uppercase tracking-[0.3em] opacity-80">
+                          ระบบแชทติดต่อสื่อสารกับพนักงานขับรถเรียลไทม์
+                      </p>
+                  </div>
+              </div>
+              <div className="flex items-center gap-4 bg-muted/50 p-4 rounded-2xl border border-border/10 backdrop-blur-md">
+                  <div className="flex items-center gap-3">
+                      <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                      <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest">{t('dashboard.live_status')}</span>
+                  </div>
+                  <div className="w-px h-6 bg-muted/80" />
+                  <div className="flex items-center gap-3">
+                      <ShieldCheck size={14} className="text-blue-500" />
+                      <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest">{t('common.integrity')}</span>
+                  </div>
+              </div>
+          </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-0 flex-1 min-h-0 border border-border/10 rounded-[2rem] overflow-hidden bg-background shadow-[0_20px_50px_rgba(0,0,0,0.2)] relative">
       {/* Background Ambience */}
-      <div className="absolute inset-0 bg-gradient-to-tr from-primary/5 via-transparent to-blue-500/5 pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-tr from-blue-500/5 via-transparent to-primary/5 pointer-events-none" />
       
       {/* Contacts Sidebar */}
-      <div className="lg:col-span-1 bg-black/40 border-r border-border/5 flex flex-col relative z-20">
-        <div className="p-8 border-b border-border/5 space-y-6">
+      <div className="lg:col-span-1 bg-muted/20 border-r border-border/10 flex flex-col relative z-20">
+        <div className="p-6 border-b border-border/10 space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-xl font-black text-foreground uppercase tracking-[0.4em] italic leading-none">Fleet Nodes</h3>
+            <h3 className="text-lg font-bold text-foreground uppercase tracking-wider">{t('drivers.subtitle')}</h3>
             {totalUnread > 0 && (
-              <span className="px-3 py-1 rounded-full bg-primary text-base font-bold text-foreground font-black italic shadow-[0_0_15px_rgba(255,30,133,0.4)]">
-                {totalUnread} SIGNAL
+              <span className="px-2.5 py-0.5 rounded-full bg-primary text-xs font-bold text-white shadow-lg">
+                {totalUnread}
               </span>
             )}
           </div>
@@ -281,15 +314,15 @@ export function ChatWindow({ initialContacts, initialDrivers, forcedDriverId }: 
             <Input 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="LINK_PROTOCOL Search..." 
-              className="bg-black/60 border-2 border-border/5 pl-12 h-14 rounded-2xl text-lg font-bold font-black text-foreground placeholder:text-muted-foreground focus:border-primary/40 transition-all font-mono" 
+              placeholder="ค้นหารายชื่อ..." 
+              className="bg-background border-border/10 pl-11 h-12 rounded-xl text-base focus:ring-primary/20 transition-all shadow-sm" 
             />
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto custom-scrollbar p-2">
+        <div className="flex-1 overflow-y-auto custom-scrollbar p-3">
           {filteredContacts.length === 0 ? (
-            <div className="text-center py-20 text-muted-foreground font-black uppercase tracking-widest text-lg font-bold italic">Sector Void</div>
+            <div className="text-center py-20 text-muted-foreground text-sm font-medium italic">ไม่พบรายชื่อผู้ติดต่อ</div>
           ) : (
             filteredContacts.map((c: Contact) => {
               const id = c.driver_id
@@ -301,39 +334,34 @@ export function ChatWindow({ initialContacts, initialDrivers, forcedDriverId }: 
                   layout
                   onClick={() => setSelectedDriverId(id)}
                   className={cn(
-                    "flex items-center gap-4 p-5 rounded-[2rem] cursor-pointer transition-all border-2 mb-2 relative group",
+                    "flex items-center gap-4 p-4 rounded-2xl cursor-pointer transition-all border-2 mb-2 relative group",
                     isSelected 
-                      ? 'bg-primary/10 border-primary/30 shadow-[0_15px_30px_rgba(255,30,133,0.1)]' 
+                      ? 'bg-primary/10 border-primary/20 shadow-sm' 
                       : 'bg-transparent border-transparent hover:bg-muted/50'
                   )}
                 >
                   <div className="relative shrink-0">
                     <div className={cn(
-                      "w-12 h-12 rounded-2xl flex items-center justify-center text-foreground font-black text-xl border-2 transform group-hover:scale-110 group-hover:rotate-3 transition-all duration-500",
-                      isSelected ? 'bg-primary border-primary shadow-[0_0_20px_rgba(255,30,133,0.3)]' : 'bg-background border-border/10 text-muted-foreground'
+                      "w-12 h-12 rounded-full flex items-center justify-center text-foreground font-bold text-lg border-2 transition-all duration-300",
+                      isSelected ? 'bg-primary border-primary text-white' : 'bg-background border-border/10 text-muted-foreground'
                     )}>
                       {name.charAt(0)}
                     </div>
                     {(c.unread || 0) > 0 && (
-                       <span className="absolute -top-1 -right-1 w-4 h-4 bg-primary text-base font-bold text-foreground flex items-center justify-center rounded-full font-black animate-bounce border-2 border-background">
+                       <span className="absolute -top-1 -right-1 w-5 h-5 bg-primary text-[10px] font-bold text-white flex items-center justify-center rounded-full border-2 border-background">
                           {c.unread}
                        </span>
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex justify-between items-center mb-1">
-                      <p className={cn("font-black text-lg font-bold tracking-widest uppercase truncate italic", isSelected ? 'text-foreground' : 'text-muted-foreground')}>{name}</p>
-                      <span className="text-base font-bold text-muted-foreground font-black shrink-0 ml-2 italic">
+                    <div className="flex justify-between items-center mb-0.5">
+                      <p className={cn("font-bold text-base truncate", isSelected ? 'text-foreground' : 'text-muted-foreground')}>{name}</p>
+                      <span className="text-[10px] text-muted-foreground font-medium shrink-0 ml-2">
                         {formatTime(c.updated_at)}
                       </span>
                     </div>
-                    <p className="text-base font-bold text-muted-foreground font-black truncate pr-2 uppercase tracking-tighter opacity-60">{(c.last_message || 'NOMINAL').toUpperCase()}</p>
+                    <p className="text-xs text-muted-foreground truncate pr-2 opacity-70 font-medium">{(c.last_message || 'ไม่มีข้อความ')}</p>
                   </div>
-                  {isSelected && (
-                    <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                       <ShieldCheck size={14} className="text-primary/50" />
-                    </div>
-                  )}
                 </motion.div>
               )
             })
@@ -342,60 +370,62 @@ export function ChatWindow({ initialContacts, initialDrivers, forcedDriverId }: 
       </div>
 
       {/* Chat Area */}
-      <div className="lg:col-span-3 bg-black/60 flex flex-col relative z-20">
+      <div className="lg:col-span-3 bg-background/50 flex flex-col relative z-20">
         <AnimatePresence mode="wait">
           {selectedDriverId && activeDriver ? (
             <motion.div 
               key={selectedDriverId}
-              initial={{ opacity: 0, x: 20 }}
+              initial={{ opacity: 0, x: 10 }}
               animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
+              exit={{ opacity: 0, x: -10 }}
               className="flex-1 flex flex-col h-full"
             >
               {/* Chat Header */}
-              <div className="p-8 border-b border-border/5 bg-black/40 backdrop-blur-xl flex items-center justify-between">
-                <div className="flex items-center gap-6">
+              <div className="p-6 border-b border-border/10 bg-background/80 backdrop-blur-md flex items-center justify-between shadow-sm">
+                <div className="flex items-center gap-4">
                   <div className="relative">
-                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center text-foreground font-black text-lg shadow-[0_0_20px_rgba(255,30,133,0.2)] border-2 border-border/10">
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold text-lg shadow-md">
                       {(activeDriver.driver_name || activeDriver.Driver_Name || '?').charAt(0)}
                     </div>
-                    <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 rounded-full border-4 border-background shadow-[0_0_10px_rgba(16,185,129,0.4)]" />
+                    <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-emerald-500 rounded-full border-2 border-background shadow-sm" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-black text-foreground italic tracking-[0.2em] uppercase leading-none mb-2">{activeDriver.driver_name || activeDriver.Driver_Name}</h3>
-                    <div className="flex items-center gap-3">
-                        <span className="text-base font-bold font-black text-primary uppercase tracking-[0.3em] font-mono bg-primary/10 px-2 py-0.5 rounded-md border border-primary/20">TARGET_ID: {selectedDriverId}</span>
-                        <div className="w-1 h-1 rounded-full bg-slate-800" />
-                        <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest italic flex items-center gap-1.5">
-                           <Activity size={10} className="text-emerald-500" /> ENCRYPTED_LINK_ESTABLISHED
+                    <h3 className="text-lg font-bold text-foreground leading-none mb-1">{activeDriver.driver_name || activeDriver.Driver_Name}</h3>
+                    <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-bold text-primary px-2 py-0.5 rounded-full bg-primary/10 border border-primary/10 tracking-tight">ID: {selectedDriverId}</span>
+                        <div className="w-1 h-1 rounded-full bg-border" />
+                        <span className="text-[10px] text-muted-foreground font-medium flex items-center gap-1">
+                           <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> เชื่อมต่อแล้ว
                         </span>
                     </div>
                   </div>
                 </div>
-                <div className="flex gap-4">
-                   <div className="p-3 bg-muted/50 rounded-xl border border-border/10 text-muted-foreground hover:text-foreground hover:bg-muted/80 cursor-pointer transition-all">
-                      <Target size={20} />
-                   </div>
+                <div className="flex gap-2">
+                   <Button variant="ghost" size="icon" className="rounded-full text-muted-foreground hover:text-primary hover:bg-primary/5">
+                      <Target size={18} />
+                   </Button>
                 </div>
               </div>
 
               {/* Messages */}
-              <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-10 space-y-8 custom-scrollbar">
+              <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-8 space-y-6 custom-scrollbar bg-slate-50/30">
                 {messages.length === 0 ? (
-                  <div className="text-center py-20">
-                    <MessageSquare size={48} className="mx-auto mb-4 text-foreground/[0.03] animate-pulse" />
-                    <p className="text-lg font-bold font-black text-muted-foreground uppercase tracking-[0.4em] italic mb-1">Establish Protocol with Operator</p>
-                    <p className="text-base font-bold text-muted-foreground font-mono">INIT_SESSION_WAITING_FOR_DATA_PACKETS</p>
+                  <div className="text-center py-20 flex flex-col items-center">
+                    <div className="w-16 h-16 bg-muted/50 rounded-full flex items-center justify-center mb-4">
+                        <MessageSquare size={32} className="text-muted-foreground/30" />
+                    </div>
+                    <p className="text-base font-bold text-muted-foreground">เริ่มการสนทนากับพนักงานขับรถ</p>
+                    <p className="text-xs text-muted-foreground/60 mt-1">ส่งข้อความเพื่อประสานงานหรือสอบถามสถานะ</p>
                   </div>
                 ) : (
                   messageGroups.map((group, gi) => (
                     <div key={gi} className="space-y-6">
                       <div className="flex items-center justify-center gap-4">
-                        <div className="h-px bg-muted/50 flex-1" />
-                        <span className="px-4 py-1.5 rounded-full bg-muted/50 border border-border/10 text-base font-bold text-muted-foreground font-black italic tracking-widest">
+                        <div className="h-px bg-border/50 flex-1" />
+                        <span className="px-3 py-1 rounded-full bg-background border border-border/10 text-[10px] font-bold text-muted-foreground uppercase tracking-widest shadow-sm">
                           {formatDate(group.date)}
                         </span>
-                        <div className="h-px bg-muted/50 flex-1" />
+                        <div className="h-px bg-border/50 flex-1" />
                       </div>
                       
                       <div className="space-y-4">
@@ -404,45 +434,50 @@ export function ChatWindow({ initialContacts, initialDrivers, forcedDriverId }: 
                           return (
                             <motion.div 
                               key={msg.id} 
-                              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                              initial={{ opacity: 0, scale: 0.98, y: 5 }}
                               animate={{ opacity: 1, scale: 1, y: 0 }}
                               className={cn(
-                                "flex items-end gap-3",
+                                "flex items-end gap-2",
                                 isAdmin ? 'flex-row-reverse' : 'flex-row'
                               )}
                             >
+                              {!isAdmin && (
+                                <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-xs shrink-0 border border-indigo-200">
+                                    {(activeDriver.driver_name || activeDriver.Driver_Name || '?').charAt(0)}
+                                </div>
+                              )}
                               <div className={cn(
-                                "max-w-[70%] space-y-2",
+                                "max-w-[75%] space-y-1",
                                 isAdmin ? 'items-end' : 'items-start'
                               )}>
                                 <div className={cn(
-                                  "rounded-[2rem] p-6 shadow-2xl relative group/msg transition-all duration-300",
+                                  "rounded-2xl px-4 py-3 shadow-sm relative group/msg transition-all duration-200",
                                   isAdmin 
-                                    ? 'bg-primary border-2 border-primary/20 text-foreground rounded-br-sm' 
-                                    : 'bg-background border-2 border-border/5 text-muted-foreground rounded-bl-sm'
+                                    ? 'bg-blue-600 text-white rounded-br-none' 
+                                    : 'bg-white border border-border/10 text-foreground rounded-bl-none shadow-md'
                                 )}>
                                   {msg.message.startsWith('[IMAGE] ') ? (
-                                    <div className="relative w-48 h-48 sm:w-80 sm:h-80 rounded-[1.5rem] overflow-hidden border-2 border-border/10 bg-black shadow-2xl group cursor-pointer">
-                                        <Image src={msg.message.replace('[IMAGE] ', '')} alt="Chat image" fill className="object-cover group-hover:scale-110 transition-transform duration-700" />
-                                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm">
-                                           <span className="text-base font-bold font-black text-foreground italic tracking-widest border border-border/20 p-2 rounded-lg">PROTO_EXPAND</span>
+                                    <div className="relative w-48 h-48 sm:w-64 sm:h-64 rounded-xl overflow-hidden bg-black shadow-inner group cursor-pointer">
+                                        <Image src={msg.message.replace('[IMAGE] ', '')} alt="Chat image" fill className="object-cover group-hover:scale-105 transition-transform duration-500" />
+                                        <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                           <span className="text-[10px] font-bold text-white bg-black/40 px-2 py-1 rounded-lg backdrop-blur-sm">ขยายรูปภาพ</span>
                                         </div>
                                     </div>
                                   ) : (
-                                    <p className="text-xl font-black italic tracking-tight uppercase leading-relaxed break-words">{msg.message}</p>
+                                    <p className="text-sm font-medium leading-relaxed break-words">{msg.message}</p>
                                   )}
                                   
                                   <div className={cn(
-                                    "flex items-center gap-2 mt-3 opacity-0 group-hover/msg:opacity-100 transition-opacity",
-                                    isAdmin ? 'justify-end' : 'justify-start'
+                                    "flex items-center gap-1.5 mt-1.5 opacity-60",
+                                    isAdmin ? 'justify-end text-white/80' : 'justify-start text-muted-foreground'
                                   )}>
-                                    <span className="text-base font-bold font-black italic tracking-widest text-foreground/40">
+                                    <span className="text-[9px] font-medium tracking-tight">
                                       {formatTime(msg.created_at)}
                                     </span>
                                     {isAdmin && (
                                       msg.is_read 
-                                        ? <CheckCheck size={12} className="text-cyan-400" />
-                                        : <Check size={12} className="text-foreground/30" />
+                                        ? <CheckCheck size={10} className="text-blue-200" />
+                                        : <Check size={10} className="text-white/40" />
                                     )}
                                   </div>
                                 </div>
@@ -458,8 +493,8 @@ export function ChatWindow({ initialContacts, initialDrivers, forcedDriverId }: 
               </div>
 
               {/* Message Input Container */}
-              <div className="p-8 border-t border-border/5 bg-black/40 backdrop-blur-2xl">
-                <div className="flex gap-4 items-center bg-background border-2 border-border/5 p-3 rounded-[2.5rem] shadow-3xl group-focus-within:border-primary/40 transition-all">
+              <div className="p-6 border-t border-border/10 bg-background/80 backdrop-blur-md">
+                <div className="flex gap-3 items-center bg-muted/30 border border-border/10 p-2 rounded-2xl transition-all focus-within:ring-2 focus-within:ring-primary/10 focus-within:border-primary/30">
                   <input 
                       type="file" 
                       ref={fileInputRef} 
@@ -472,9 +507,9 @@ export function ChatWindow({ initialContacts, initialDrivers, forcedDriverId }: 
                       size="icon" 
                       onClick={() => fileInputRef.current?.click()}
                       disabled={isSending || uploadingImage}
-                      className="text-muted-foreground hover:text-primary hover:bg-primary/10 shrink-0 h-14 w-14 p-0 rounded-2xl transition-all"
+                      className="text-muted-foreground hover:text-primary hover:bg-primary/5 shrink-0 h-10 w-10 p-0 rounded-xl transition-all"
                   >
-                      {uploadingImage ? <Loader2 className="animate-spin" size={20} /> : <ImageIcon size={24} />}
+                      {uploadingImage ? <Loader2 className="animate-spin" size={18} /> : <ImageIcon size={20} />}
                   </Button>
                   <Input 
                     value={inputMessage}
@@ -485,16 +520,16 @@ export function ChatWindow({ initialContacts, initialDrivers, forcedDriverId }: 
                         sendMessage()
                       }
                     }}
-                    placeholder="Link Data Packet to Operator..." 
-                    className="bg-transparent border-none focus-visible:ring-0 h-14 text-foreground text-lg font-bold font-black italic tracking-widest uppercase placeholder:text-muted-foreground" 
+                    placeholder="พิมพ์ข้อความที่นี่..." 
+                    className="bg-transparent border-none focus-visible:ring-0 h-10 text-foreground text-sm font-medium placeholder:text-muted-foreground/60" 
                     disabled={isSending}
                   />
                   <Button 
                     onClick={sendMessage} 
                     disabled={!inputMessage.trim() || isSending}
-                    className="bg-primary hover:bg-primary/90 text-foreground shadow-[0_5px_15px_rgba(255,30,133,0.3)] h-14 w-14 p-0 shrink-0 rounded-2xl group/send"
+                    className="bg-primary hover:bg-primary/90 text-white shadow-md h-10 w-10 p-0 shrink-0 rounded-xl transition-all active:scale-95"
                   >
-                    <Send size={20} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+                    <Send size={18} />
                   </Button>
                 </div>
               </div>
@@ -505,28 +540,27 @@ export function ChatWindow({ initialContacts, initialDrivers, forcedDriverId }: 
               animate={{ opacity: 1 }}
               className="flex-1 flex flex-col items-center justify-center text-center p-20 space-y-6"
             >
-              <div className="relative">
-                 <div className="w-24 h-24 rounded-[2rem] bg-muted/50 border-2 border-border/5 flex items-center justify-center mb-6 relative z-10">
-                    <MessageSquare size={40} className="text-foreground/10" />
-                 </div>
-                 <div className="absolute inset-x-0 -bottom-10 h-20 bg-primary/20 blur-[60px] rounded-full pointer-events-none" />
+              <div className="w-24 h-24 rounded-full bg-primary/5 flex items-center justify-center mb-4 relative">
+                 <div className="absolute inset-0 bg-primary/10 blur-2xl rounded-full animate-pulse" />
+                 <MessageSquare size={48} className="text-primary/20 relative z-10" />
               </div>
-              <div className="space-y-2">
-                <p className="text-xl font-black text-foreground italic tracking-[0.4em] uppercase">Communication Offline</p>
-                <p className="text-base font-bold font-black text-muted-foreground uppercase tracking-[0.2em] font-mono italic">Select active Fleet Node to synchronize data stream</p>
+              <div className="space-y-2 relative z-10">
+                <h3 className="text-2xl font-bold text-foreground">ยินดีต้อนรับสู่ระบบแชท</h3>
+                <p className="text-muted-foreground text-base max-w-xs mx-auto">เลือกพนักงานขับรถจากรายการทางด้านซ้ายเพื่อเริ่มต้นการสนทนา</p>
               </div>
-              <div className="pt-10 flex items-center gap-4">
-                 <div className="flex items-center gap-2 text-base font-bold font-black text-muted-foreground uppercase tracking-widest bg-muted/50 px-4 py-2 rounded-full border border-border/5">
-                    <User size={12} /> {filteredContacts.length} OPERATORS_AVAIL
+              <div className="pt-8 flex flex-wrap justify-center gap-3 relative z-10">
+                 <div className="flex items-center gap-2 text-xs font-bold text-muted-foreground bg-muted/50 px-4 py-2 rounded-full border border-border/5 shadow-sm">
+                    <User size={12} className="text-primary" /> มีคนขับ {filteredContacts.length} คนในรายการ
                  </div>
-                 <div className="flex items-center gap-2 text-base font-bold font-black text-muted-foreground uppercase tracking-widest bg-muted/50 px-4 py-2 rounded-full border border-border/5">
-                    <Activity size={12} /> SECURE_ID_MAPPING
+                 <div className="flex items-center gap-2 text-xs font-bold text-muted-foreground bg-muted/50 px-4 py-2 rounded-full border border-border/5 shadow-sm">
+                    <CheckCircle2 size={12} className="text-emerald-500" /> ระบบเชื่อมต่อปลอดภัย
                  </div>
               </div>
             </motion.div>
           )}
         </AnimatePresence>
       </div>
+    </div>
     </div>
   )
 }

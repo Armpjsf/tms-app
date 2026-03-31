@@ -5,7 +5,7 @@ import { getUserBranchId } from "@/lib/permissions"
 
 export interface AdminAlert {
   id: string
-  type: 'expiry' | 'inspection_fail' | 'maintenance'
+  type: 'expiry' | 'inspection_fail' | 'maintenance' | 'sos'
   severity: 'critical' | 'warning' | 'info'
   title: string
   description: string
@@ -18,6 +18,43 @@ export async function getAdminAlerts(): Promise<AdminAlert[]> {
   const branchId = await getUserBranchId()
   const alerts: AdminAlert[] = []
   const today = new Date()
+
+  // 0. SOS Alerts from System_Logs (Last 24 hours)
+  try {
+    const yesterday = new Date(today.getTime() - 24 * 60 * 60 * 1000).toISOString()
+    const { data: sosLogs } = await supabase
+      .from('System_Logs')
+      .select('*')
+      .eq('module', 'Jobs')
+      .eq('action_type', 'UPDATE')
+      .gte('created_at', yesterday)
+      .order('created_at', { ascending: false })
+
+    sosLogs?.forEach(log => {
+      const details = log.details || {}
+      if (details.alert_type === 'SOS' || details.alert_type === 'SILENT_SOS') {
+        alerts.push({
+          id: `sos-${log.id}`,
+          type: 'sos',
+          severity: 'critical',
+          title: `🆘 SOS: ${details.driver_name || 'คนขับ'}`,
+          description: details.alert_type === 'SILENT_SOS' 
+            ? `แจ้งฉุกเฉิน (ไม่โทร): ${details.address || 'ไม่ทราบตำแหน่ง'}`
+            : `กดโทรฉุกเฉินหาแอดมิน`,
+          date: log.created_at,
+          meta: { 
+            driverId: log.target_id || '', 
+            driverName: details.driver_name || '',
+            lat: String(details.lat || ''),
+            lng: String(details.lng || ''),
+            address: details.address || ''
+          }
+        })
+      }
+    })
+  } catch (err) {
+    console.error("Admin SOS alerts error:", err)
+  }
 
   // 1. Vehicle document expiry alerts (tax, insurance, ACT)
   try {

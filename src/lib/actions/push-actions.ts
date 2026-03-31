@@ -289,6 +289,7 @@ export async function notifyDriverNewChat(driverId: string, message: string) {
 // Notify: Driver SOS → Push to All Admins
 // ─────────────────────────────────────────────
 export async function notifyAdminSOS(driverId: string, driverName: string, driverPhone?: string) {
+    // 1. Fire Push to Admins
     await sendPushToAdmins({
         title: `🆘 SOS! ${driverName || 'คนขับ'}`,
         body: `${driverName} กดปุ่มฉุกเฉิน — กดเพื่อดูตำแหน่งและโทรทันที`,
@@ -301,6 +302,19 @@ export async function notifyAdminSOS(driverId: string, driverName: string, drive
             { action: 'call_driver', title: '📞 โทรหาคนขับ' },
         ]
     })
+
+    // 2. Log Activity (Critical for Admin Alert Center)
+    await logActivity({
+        module: 'Jobs', 
+        action_type: 'UPDATE',
+        target_id: driverId,
+        details: {
+            alert_type: 'SOS',
+            driver_name: driverName,
+            phone: driverPhone,
+            message: 'กดปุ่มโทรฉุกเฉินหาแอดมิน'
+        }
+    }).catch(logErr => console.error("[SOS] Background log failed:", logErr))
 }
 
 // ─────────────────────────────────────────────
@@ -344,25 +358,7 @@ export async function notifySilentSOS(
 📍 พิกัด: ${locationStr}
 🏠 ที่อยู่: ${address || 'N/A'}`
 
-    // 1. Send Push to Admins (Optional, don't let failure stop us)
-    try {
-        await sendPushToAdmins({
-            title: `🆘 SOS! ${driverName}`,
-            body: alertMessage.slice(0, 200),
-            url: `/monitoring?driver=${driverId}`,
-            type: 'sos',
-            tag: `sos_silent_${driverId}`,
-            driverPhone,
-            actions: [
-                { action: 'view_location', title: '📍 ดูตำแหน่ง' },
-                { action: 'call_driver', title: '📞 โทรกลับ' },
-            ]
-        })
-    } catch (pushErr) {
-        console.error("[SOS] Push failed (skipping):", pushErr)
-    }
-
-    // 2. Create Notification (CRITICAL - Use Admin Client to ensure it bypasses RLS)
+    // 1. Create Notification (CRITICAL - Await this first)
     try {
         const supabase = await createAdminClient()
         await supabase
@@ -376,28 +372,37 @@ export async function notifySilentSOS(
                 Created_At: new Date().toISOString()
             })
     } catch (dbErr) {
-        console.error("[SOS] Database notification failed:", dbErr)
-        // If this fails, we are in trouble, but let's try to log the activity anyway
+        console.error("[SOS] Database notification failed (Critical):", dbErr)
     }
 
-    // 3. Log Activity
-    try {
-        await logActivity({
-            module: 'Jobs', 
-            action_type: 'UPDATE',
-            target_id: driverId,
-            details: {
-                alert_type: 'SILENT_SOS',
-                driver_name: driverName,
-                phone: driverPhone,
-                lat,
-                lng,
-                address
-            }
-        })
-    } catch (logErr) {
-        console.error("[SOS] Log failed:", logErr)
-    }
+    // 2. Fire Push to Admins (Optional / Background)
+    sendPushToAdmins({
+        title: `🆘 SOS! ${driverName}`,
+        body: alertMessage.slice(0, 200),
+        url: `/monitoring?driver=${driverId}`,
+        type: 'sos',
+        tag: `sos_silent_${driverId}`,
+        driverPhone,
+        actions: [
+            { action: 'view_location', title: '📍 ดูตำแหน่ง' },
+            { action: 'call_driver', title: '📞 โทรกลับ' },
+        ]
+    }).catch(pushErr => console.error("[SOS] Background push failed:", pushErr))
+
+    // 3. Log Activity (Background)
+    logActivity({
+        module: 'Jobs', 
+        action_type: 'UPDATE',
+        target_id: driverId,
+        details: {
+            alert_type: 'SILENT_SOS',
+            driver_name: driverName,
+            phone: driverPhone,
+            lat,
+            lng,
+            address
+        }
+    }).catch(logErr => console.error("[SOS] Background log failed:", logErr))
 
     return { success: true }
 }

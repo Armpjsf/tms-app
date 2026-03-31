@@ -17,7 +17,7 @@ export function GlobalAIAssistant() {
 
     useEffect(() => {
         if (messages.length === 0) {
-            setMessages([{ role: 'bot', content: "สวัสดีครับ! ผม Tactical AI Assistant ยินดีช่วยดูแลระบบให้คุณ สามารถสอบถามข้อมูล รายได้ งาน หรือสถานะรถได้ทุกเวลาครับ" }])
+            setMessages([{ role: 'bot', content: "สวัสดีครับ! ผมผู้ช่วย AI ยินดีดูแลคุณ สามารถสอบถามข้อมูล รายได้ งาน หรือสถานะรถได้ทันทีครับ" }])
         }
     }, [messages.length])
 
@@ -43,7 +43,7 @@ export function GlobalAIAssistant() {
             const data = await res.json()
             setMessages(prev => [...prev, { role: 'bot', content: data.response || "ขออภัยครับ เกิดข้อผิดพลาดในการประมวลผล" }])
         } catch {
-            setMessages(prev => [...prev, { role: 'bot', content: "ระบบเชื่อมต่อกับ Neural Core ขัดข้อง กรุณาลองใหม่ครู่เดียวครับ" }])
+            setMessages(prev => [...prev, { role: 'bot', content: "การเชื่อมต่อขัดข้อง กรุณาลองใหม่ครู่เดียวครับ" }])
         } finally {
             setLoading(false)
         }
@@ -65,43 +65,43 @@ export function GlobalAIAssistant() {
                             }}
                             exit={{ opacity: 0, scale: 0.9, y: 20 }}
                             className={cn(
-                                "mb-4 lg:mb-6 bg-background/95 backdrop-blur-3xl border border-border/10 rounded-2xl lg:rounded-[2.5rem] shadow-[0_50px_100px_rgba(0,0,0,0.6)] flex flex-col overflow-hidden ring-1 ring-border/5",
+                                "mb-4 lg:mb-6 bg-background/95 backdrop-blur-3xl border border-border/10 rounded-[2rem] shadow-[0_40px_80px_rgba(0,0,0,0.3)] flex flex-col overflow-hidden",
                                 isMinimized && "rounded-full"
                             )}
                         >
                             {/* Header */}
-                            <div className="p-4 lg:p-6 bg-muted/40 border-b border-border/5 flex items-center justify-between shrink-0">
+                            <div className="p-5 lg:p-6 bg-muted/20 border-b border-border/5 flex items-center justify-between shrink-0">
                                 <div className="flex items-center gap-3 lg:gap-4">
                                     <div className="relative">
-                                        <div className="w-8 h-8 lg:w-10 lg:h-10 rounded-lg lg:rounded-xl bg-primary/20 flex items-center justify-center border border-primary/30 text-primary animate-pulse">
-                                            <Bot size={16} strokeWidth={2.5} className="lg:w-5 lg:h-5" />
+                                        <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/20 text-primary">
+                                            <Bot size={20} strokeWidth={2} />
                                         </div>
-                                        <div className="absolute -bottom-1 -right-1 w-2.5 h-2.5 lg:w-3 lg:h-3 bg-emerald-500 rounded-full border-2 border-background" />
+                                        <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 rounded-full border-2 border-background" />
                                     </div>
                                     <div>
-                                        <h3 className="text-lg font-bold lg:text-xl font-black text-foreground italic tracking-widest uppercase">Tactical AI</h3>
+                                        <h3 className="text-base lg:text-lg font-bold text-foreground leading-tight">ผู้ช่วย AI อัจฉริยะ</h3>
                                         <div className="flex items-center gap-2">
-                                            <div className="w-1 h-1 lg:w-1.5 lg:h-1.5 rounded-full bg-emerald-500/60" />
-                                            <span className="text-[7px] lg:text-base font-bold font-black text-muted-foreground uppercase tracking-widest">Neural Link Est.</span>
+                                            <div className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse" />
+                                            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Online</span>
                                         </div>
                                     </div>
                                 </div>
-                                <div className="flex items-center gap-1 lg:gap-2">
+                                <div className="flex items-center gap-1">
                                     <Button 
                                         variant="ghost" 
                                         size="icon" 
-                                        className="h-7 w-7 lg:h-8 lg:w-8 text-muted-foreground hover:text-foreground"
+                                        className="h-8 w-8 text-muted-foreground hover:text-foreground rounded-full"
                                         onClick={() => setIsMinimized(!isMinimized)}
                                     >
-                                        {isMinimized ? <Maximize2 size={12} className="lg:w-[14px] lg:h-[14px]" /> : <Minimize2 size={12} className="lg:w-[14px] lg:h-[14px]" />}
+                                        {isMinimized ? <Maximize2 size={14} /> : <Minimize2 size={14} />}
                                     </Button>
                                     <Button 
                                         variant="ghost" 
                                         size="icon" 
-                                        className="h-7 w-7 lg:h-8 lg:w-8 text-muted-foreground hover:text-rose-500"
+                                        className="h-8 w-8 text-muted-foreground hover:text-rose-500 rounded-full"
                                         onClick={() => setIsOpen(false)}
                                     >
-                                        <X size={14} className="lg:w-4 lg:h-4" />
+                                        <X size={16} />
                                     </Button>
                                 </div>
                             </div>
@@ -111,56 +111,56 @@ export function GlobalAIAssistant() {
                                     {/* Messages Area */}
                                     <div 
                                         ref={scrollRef}
-                                        className="flex-1 overflow-y-auto p-4 lg:p-6 space-y-4 lg:space-y-6 custom-scrollbar bg-gradient-to-b from-transparent to-primary/[0.02]"
+                                        className="flex-1 overflow-y-auto p-5 lg:p-6 space-y-5 custom-scrollbar bg-slate-50/20"
                                     >
                                         {messages.map((msg, i) => (
                                             <div key={i} className={cn(
-                                                "flex items-end gap-2 lg:gap-3",
+                                                "flex items-start gap-3",
                                                 msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'
                                             )}>
                                                 <div className={cn(
-                                                    "w-7 h-7 lg:w-8 lg:h-8 rounded-lg flex items-center justify-center shrink-0 text-base font-bold lg:text-base font-bold border shadow-lg",
-                                                    msg.role === 'user' ? 'bg-primary border-primary/20 text-foreground' : 'bg-muted/50 border-border/10 text-primary'
+                                                    "w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border shadow-sm",
+                                                    msg.role === 'user' ? 'bg-primary border-primary/20 text-white' : 'bg-white border-border/10 text-primary'
                                                 )}>
-                                                    {msg.role === 'user' ? 'U' : <Bot size={12} className="lg:w-[14px] lg:h-[14px]" />}
+                                                    {msg.role === 'user' ? 'U' : <Bot size={16} />}
                                                 </div>
                                                 <div className={cn(
-                                                    "max-w-[85%] lg:max-w-[80%] p-3 lg:p-4 rounded-xl lg:rounded-2xl text-base font-bold lg:text-[12px] font-bold leading-relaxed whitespace-pre-wrap uppercase tracking-tight italic",
-                                                    msg.role === 'user' ? 'bg-primary text-foreground rounded-br-none' : 'bg-muted/50 text-muted-foreground border border-border/5 rounded-bl-none'
+                                                    "max-w-[85%] lg:max-w-[80%] p-4 rounded-2xl text-sm font-medium leading-relaxed",
+                                                    msg.role === 'user' ? 'bg-primary text-white rounded-tr-none' : 'bg-white border border-border/10 text-foreground rounded-tl-none shadow-sm'
                                                 )}>
                                                     {msg.content}
                                                 </div>
                                             </div>
                                         ))}
                                         {loading && (
-                                            <div className="flex items-end gap-2 lg:gap-3">
-                                                <div className="w-7 h-7 lg:w-8 lg:h-8 rounded-lg bg-muted/50 border border-border/10 flex items-center justify-center text-primary animate-pulse">
-                                                    <Bot size={12} className="lg:w-[14px] lg:h-[14px]" />
+                                            <div className="flex items-start gap-3">
+                                                <div className="w-8 h-8 rounded-lg bg-white border border-border/10 flex items-center justify-center text-primary">
+                                                    <Bot size={16} />
                                                 </div>
-                                                <div className="bg-muted/30 border border-border/5 p-3 lg:p-4 rounded-xl lg:rounded-2xl rounded-bl-none flex gap-2 lg:gap-3 items-center">
-                                                    <Loader2 className="w-2.5 h-2.5 lg:w-3 lg:h-3 animate-spin text-primary" />
-                                                    <span className="text-base font-bold lg:text-base font-bold font-black uppercase tracking-[0.3em] text-primary italic">Syncing Neural Core...</span>
+                                                <div className="bg-white border border-border/10 p-4 rounded-2xl rounded-tl-none flex gap-3 items-center shadow-sm">
+                                                    <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                                                    <span className="text-xs font-bold text-muted-foreground italic">กำลังค้นหาข้อมูล...</span>
                                                 </div>
                                             </div>
                                         )}
                                     </div>
 
                                     {/* Input Area */}
-                                    <div className="p-4 lg:p-6 bg-muted/30 border-t border-border/5">
-                                        <div className="flex gap-2 lg:gap-3 relative">
+                                    <div className="p-5 lg:p-6 border-t border-border/10 bg-background">
+                                        <div className="flex gap-3 relative">
                                             <Input 
                                                 value={input}
                                                 onChange={(e) => setInput(e.target.value)}
                                                 onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                                                placeholder="Ask Commander..." 
-                                                className="flex-1 bg-background border-border/5 text-foreground placeholder:text-muted-foreground h-10 lg:h-12 rounded-lg lg:rounded-xl text-base font-bold lg:text-base font-bold font-black uppercase tracking-widest italic pl-3 lg:pl-4"
+                                                placeholder="สอบถามข้อมูลที่นี่..." 
+                                                className="flex-1 bg-muted/30 border-border/10 text-foreground placeholder:text-muted-foreground/60 h-12 rounded-xl text-sm font-medium focus:ring-primary/10 transition-all"
                                             />
                                             <Button 
                                                 onClick={handleSend}
                                                 disabled={loading || !input.trim()}
-                                                className="w-10 h-10 lg:w-12 lg:h-12 rounded-lg lg:rounded-xl bg-primary hover:bg-primary/80 text-foreground shrink-0"
+                                                className="w-12 h-12 rounded-xl bg-primary hover:bg-primary/90 text-white shrink-0 shadow-md active:scale-95 transition-all"
                                             >
-                                                <Send size={14} className="lg:w-4 lg:h-4" />
+                                                <Send size={18} />
                                             </Button>
                                         </div>
                                     </div>

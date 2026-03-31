@@ -118,9 +118,10 @@ export async function getChatContacts(): Promise<ChatContact[]> {
         created_at: msg[columns.created_at]
     })) || []
 
-    // 1. Get Drivers in my branch to filter messages
+    // 1. Get Drivers in my branch to filter messages (Use Admin client for names to ensure visibility)
+    const adminSupabase = createAdminClient()
     let allowedDriverIds: Set<string> | null = null
-    const { data: allDrivers } = await supabase.from('Master_Drivers').select('Driver_ID, Driver_Name, Branch_ID')
+    const { data: allDrivers } = await adminSupabase.from('Master_Drivers').select('Driver_ID, Driver_Name, Branch_ID')
     
     if (branchId && branchId !== 'All') {
         allowedDriverIds = new Set(allDrivers?.filter(d => d.Branch_ID === branchId).map(d => d.Driver_ID) || [])
@@ -142,8 +143,8 @@ export async function getChatContacts(): Promise<ChatContact[]> {
       if (!contactMap.has(driverId)) {
         contactMap.set(driverId, {
           driver_id: driverId,
-          driver_name: driverNameMap.get(driverId) || 'Unknown Driver',
-          last_message: msg.sender_id === 'admin' ? `You: ${msg.message}` : msg.message,
+          driver_name: driverNameMap.get(driverId) || `พนักงานขับรถ (${driverId})`,
+          last_message: msg.message,
           unread: 0,
           updated_at: msg.created_at
         })
