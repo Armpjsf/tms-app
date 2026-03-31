@@ -201,7 +201,7 @@ export function NotificationsClient({ alerts = [] }: any) {
 
                         <div className="hidden lg:block">
                            <PremiumButton variant="secondary" className="bg-muted/50 border-border/5 hover:bg-muted/80 text-foreground font-black uppercase tracking-widest text-base font-bold h-12 rounded-2xl">
-                               {t('common.loading')}
+                               {t('common.view_details')}
                            </PremiumButton>
                         </div>
                       </div>

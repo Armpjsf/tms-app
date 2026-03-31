@@ -33,9 +33,8 @@ export function SOSGlobalListener() {
         // New SOS detected!
         notifiedIds.current.add(data.Job_ID)
         
-        // Play sound if possible (optional enhancement)
         try {
-          const audio = new Audio('/sounds/emergency-alert.mp3')
+          const audio = new Audio('/sounds/notification.mp3')
           audio.volume = 0.5
           audio.play().catch(() => {})
         } catch {}

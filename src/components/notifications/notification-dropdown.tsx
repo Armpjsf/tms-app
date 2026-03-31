@@ -7,6 +7,8 @@ import { cn } from "@/lib/utils"
 import Link from "next/link"
 import { createClient } from "@/utils/supabase/client"
 
+import { toast } from "sonner"
+
 interface Notification {
   id: string
   type: 'sos' | 'job_status' | 'maintenance' | 'system'
@@ -69,7 +71,28 @@ export function NotificationDropdown() {
     try {
       const r = await fetch('/api/notifications')
       const data = await r.json()
-      setNotifications(data.notifications || [])
+      const newNotifications: Notification[] = data.notifications || []
+      
+      // Check for new critical SOS alerts to show toast
+      const newCriticalSOS = newNotifications.filter(n => 
+        n.type === 'sos' && 
+        n.severity === 'critical' && 
+        !notifications.some(old => old.id === n.id)
+      )
+
+      newCriticalSOS.forEach(sos => {
+        toast.error(sos.title, {
+          description: sos.message,
+          duration: 10000,
+          action: {
+            label: 'ดูตำแหน่ง',
+            onClick: () => window.location.href = sos.href || '#'
+          }
+        })
+        try { new Audio('/sounds/notification.mp3').play().catch(() => {}) } catch {}
+      })
+
+      setNotifications(newNotifications)
     } catch {
       // Silently fail
     } finally {
@@ -86,7 +109,7 @@ export function NotificationDropdown() {
     const channel = supabase.channel('admin-notifications-realtime')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'Jobs_Main' }, () => fetchNotifications())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'Chat_Messages' }, () => fetchNotifications())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'chat_messages' }, () => fetchNotifications())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'System_Logs' }, () => fetchNotifications())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'sos_alerts' }, () => fetchNotifications())
       .subscribe()
 
