@@ -58,7 +58,11 @@ export async function getDriverById(id: string): Promise<Driver | null> {
   try {
     const isSuper = await isSuperAdmin()
     const isAdminUser = await isAdmin()
-    const supabase = (isSuper || isAdminUser) ? await createAdminClient() : await createClient()
+    
+    // Use admin client if it's an admin/super or if we're fetching a specific ID 
+    // (drivers authenticated via cookies need admin client to see their own record if RLS is on)
+    const supabase = (isSuper || isAdminUser || id) ? createAdminClient() : await createClient()
+    
     const { data, error } = await supabase
       .from('Master_Drivers')
       .select('*')

@@ -19,13 +19,39 @@ export function SOSPageClient({ driverId, driverName, driverPhone }: Props) {
   const [profile, setProfile] = useState<CompanyProfile | null>(null)
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null)
   const [address, setAddress] = useState<string>("กำลังค้นหาพิกัด...")
+  const [loading, setLoading] = useState(true)
   const [isSending, setIsSending] = useState(false)
   const [sosSent, setSosSent] = useState(false)
   const sosNotifyRef = useRef(false)
 
   useEffect(() => {
     getCompanyProfile().then(setProfile).catch(() => {})
-    // ... rest of geolocation logic ...
+
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          const { latitude, longitude } = position.coords
+          setLocation({ lat: latitude, lng: longitude })
+          setAddress(`${latitude.toFixed(6)}, ${longitude.toFixed(6)}`)
+          setLoading(false)
+          try {
+            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`)
+            const data = await res.json()
+            if (data.display_name) setAddress(data.display_name)
+          } catch {}
+        },
+        () => {
+          setAddress("ไม่สามารถระบุพิกัดได้")
+          setLoading(false)
+        },
+        { enableHighAccuracy: true, timeout: 10000 }
+      )
+    } else {
+      setTimeout(() => {
+        setAddress("อุปกรณ์ไม่รองรับ GPS")
+        setLoading(false)
+      }, 0)
+    }
   }, [])
 
   const handleSOSCall = () => {
@@ -89,7 +115,7 @@ export function SOSPageClient({ driverId, driverName, driverPhone }: Props) {
 
   return (
     <div className="min-h-screen bg-background pb-24 pt-16 px-4">
-      <MobileHeader title="แจ้งเหตุฉุกเฉิน (ระบบใหม่)" showBack />
+      <MobileHeader title="แจ้งเหตุฉุกเฉิน" showBack />
 
       <div className="space-y-6 text-center">
 
