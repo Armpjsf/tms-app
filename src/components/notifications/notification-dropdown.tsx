@@ -73,11 +73,14 @@ export function NotificationDropdown() {
       const data = await r.json()
       const newNotifications: Notification[] = data.notifications || []
       
-      // Check for new critical SOS alerts to show toast
+      const now = Date.now()
+
+      // 1. SOS Alerts: Only toast if new AND recent (last 2 mins)
       const newCriticalSOS = newNotifications.filter(n => 
         n.type === 'sos' && 
         n.severity === 'critical' && 
-        !notifications.some(old => old.id === n.id)
+        !notifications.some(old => old.id === n.id) &&
+        (now - new Date(n.timestamp).getTime()) < 120000 // 2 min threshold
       )
 
       newCriticalSOS.forEach(sos => {
@@ -87,6 +90,26 @@ export function NotificationDropdown() {
           action: {
             label: 'ดูตำแหน่ง',
             onClick: () => window.location.href = sos.href || '#'
+          }
+        })
+        try { new Audio('/sounds/emergency.mp3').play().catch(() => {}) } catch {}
+      })
+
+      // 2. Chat Notifications: Only toast if new AND very recent (last 1 min)
+      const newChats = newNotifications.filter(n =>
+        n.type === 'system' &&
+        n.title.includes('💬') &&
+        !notifications.some(old => old.id === n.id) &&
+        (now - new Date(n.timestamp).getTime()) < 60000 // 1 min threshold
+      )
+
+      newChats.forEach(chat => {
+        toast.info(chat.title, {
+          description: chat.message,
+          duration: 6000,
+          action: {
+            label: 'ตอบกลับ',
+            onClick: () => window.location.href = chat.href || '#'
           }
         })
         try { new Audio('/sounds/notification.mp3').play().catch(() => {}) } catch {}
