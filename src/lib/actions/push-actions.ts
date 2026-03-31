@@ -292,14 +292,12 @@ export async function notifyAdminSOS(driverId: string, driverName: string, drive
     // 1. Update Database (Mark Current Job as SOS)
     try {
         const adminSupabase = createAdminClient()
-        // Find current active job for this driver
-        const today = new Date().toISOString().split('T')[0]
+        // Find current active job for this driver (any date, but prioritizing in-progress)
         const { data: currentJobs } = await adminSupabase
             .from('Jobs_Main')
             .select('Job_ID')
             .eq('Driver_ID', driverId)
-            .eq('Plan_Date', today)
-            .in('Job_Status', ['Pending', 'Confirmed', 'In Progress', 'In Transit', 'Picked Up'])
+            .in('Job_Status', ['In Transit', 'In Progress', 'Picked Up', 'Arrived Pickup', 'Arrived Dropoff', 'Pending', 'Confirmed', 'Assigned', 'New', 'Requested'])
             .order('Created_At', { ascending: false })
             .limit(1)
         
@@ -308,10 +306,33 @@ export async function notifyAdminSOS(driverId: string, driverName: string, drive
                 .from('Jobs_Main')
                 .update({ 
                     Job_Status: 'SOS',
-                    Failed_Reason: 'Operator triggered SOS Call',
+                    Failed_Reason: 'Operator triggered SOS Call (Voice Contact Needed)',
                     Failed_Time: new Date().toISOString()
                 })
                 .eq('Job_ID', currentJobs[0].Job_ID)
+        } else {
+            // No active job found - Create a Global SOS Emergency Record
+            const { data: driverInfo } = await adminSupabase
+                .from('Master_Drivers')
+                .select('Vehicle_Plate, Branch_ID')
+                .eq('Driver_ID', driverId)
+                .single()
+
+            const sosJobId = `SOS-${driverId}-${Date.now().toString().slice(-6)}`
+            await adminSupabase
+                .from('Jobs_Main')
+                .insert({
+                    Job_ID: sosJobId,
+                    Job_Status: 'SOS',
+                    Driver_ID: driverId,
+                    Driver_Name: driverName,
+                    Vehicle_Plate: driverInfo?.Vehicle_Plate || 'N/A',
+                    Route_Name: 'GLOBAL SOS / EMERGENCY',
+                    Failed_Reason: 'Operator triggered SOS Call (Voice Contact Needed)',
+                    Failed_Time: new Date().toISOString(),
+                    Created_At: new Date().toISOString(),
+                    Branch_ID: branchId || driverInfo?.Branch_ID || 'HQ'
+                })
         }
     } catch (dbErr) {
         console.error("[SOS] DB Update failed:", dbErr)
@@ -392,13 +413,12 @@ export async function notifySilentSOS(
     // 1. Update Database (Mark Current Job as SOS)
     try {
         const adminSupabase = createAdminClient()
-        const today = new Date().toISOString().split('T')[0]
+        // Find current active job for this driver (any date, but prioritizing in-progress)
         const { data: currentJobs } = await adminSupabase
             .from('Jobs_Main')
             .select('Job_ID')
             .eq('Driver_ID', driverId)
-            .eq('Plan_Date', today)
-            .in('Job_Status', ['Pending', 'Confirmed', 'In Progress', 'In Transit', 'Picked Up'])
+            .in('Job_Status', ['In Transit', 'In Progress', 'Picked Up', 'Arrived Pickup', 'Arrived Dropoff', 'Pending', 'Confirmed', 'Assigned', 'New', 'Requested'])
             .order('Created_At', { ascending: false })
             .limit(1)
         
@@ -407,12 +427,37 @@ export async function notifySilentSOS(
                 .from('Jobs_Main')
                 .update({ 
                     Job_Status: 'SOS',
-                    Failed_Reason: `Silent SOS: ${address || 'No address'}`,
+                    Failed_Reason: `Silent SOS: ${address || 'No address provided'}`,
                     Failed_Time: new Date().toISOString(),
                     Delivery_Lat: lat,
                     Delivery_Lon: lng
                 })
                 .eq('Job_ID', currentJobs[0].Job_ID)
+        } else {
+            // No active job found - Create a Global SOS Emergency Record
+            const { data: driverInfo } = await adminSupabase
+                .from('Master_Drivers')
+                .select('Vehicle_Plate, Branch_ID')
+                .eq('Driver_ID', driverId)
+                .single()
+
+            const sosJobId = `SOS-SILENT-${driverId}-${Date.now().toString().slice(-6)}`
+            await adminSupabase
+                .from('Jobs_Main')
+                .insert({
+                    Job_ID: sosJobId,
+                    Job_Status: 'SOS',
+                    Driver_ID: driverId,
+                    Driver_Name: driverName,
+                    Vehicle_Plate: driverInfo?.Vehicle_Plate || 'N/A',
+                    Route_Name: 'GLOBAL SOS / EMERGENCY (SILENT)',
+                    Failed_Reason: `Silent SOS: ${address || 'No address provided'}`,
+                    Failed_Time: new Date().toISOString(),
+                    Created_At: new Date().toISOString(),
+                    Branch_ID: branchId || driverInfo?.Branch_ID || 'HQ',
+                    Delivery_Lat: lat,
+                    Delivery_Lon: lng
+                })
         }
     } catch (dbErr) {
         console.error("[SOS] Silent DB Update failed:", dbErr)
@@ -420,7 +465,7 @@ export async function notifySilentSOS(
 
     // 2. Create Notification (For Driver Bell Icon)
     try {
-        const supabase = await createAdminClient()
+        const supabase = createAdminClient()
         await supabase
             .from('Notifications')
             .insert({

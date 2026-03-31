@@ -20,9 +20,41 @@ import { PremiumCard } from "@/components/ui/premium-card"
 import { cn } from "@/lib/utils"
 import { useLanguage } from "@/components/providers/language-provider"
 import Link from "next/link"
+import { useState, useEffect } from "react"
+import { createClient } from "@/utils/supabase/client"
 
-export default function SOSPage({ alerts, activeCount }: any) {
+export default function SOSPage({ alerts: initialAlerts, activeCount: initialCount }: any) {
   const { t } = useLanguage()
+  const [alerts, setAlerts] = useState(initialAlerts)
+  const [activeCount, setActiveCount] = useState(initialCount)
+
+  useEffect(() => {
+    const supabase = createClient()
+    const channel = supabase
+      .channel('sos-realtime')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'Jobs_Main'
+      }, async (payload) => {
+        // If status changed to SOS or an SOS alert was updated/deleted
+        const isSOS = (payload.new as any)?.Job_Status === 'SOS' || (payload.old as any)?.Job_Status === 'SOS'
+        
+        if (isSOS) {
+          const [freshAlerts, freshCount] = await Promise.all([
+            getAllSOSAlerts(),
+            getSOSCount()
+          ])
+          setAlerts(freshAlerts)
+          setActiveCount(freshCount)
+        }
+      })
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [])
   return (
     <div className="space-y-12 pb-20">
       {/* Strategic SOS Hub Header */}

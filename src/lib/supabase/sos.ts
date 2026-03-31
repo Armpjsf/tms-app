@@ -1,6 +1,6 @@
 "use server"
 
-import { createClient } from '@/utils/supabase/server'
+import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { getUserBranchId, isSuperAdmin } from "@/lib/permissions"
 
 export type SOSAlert = {
@@ -20,10 +20,10 @@ export type SOSAlert = {
 // ดึง SOS Alerts ที่ Active
 export async function getActiveSOSAlerts(): Promise<SOSAlert[]> {
   try {
-    const supabase = await createClient()
+    const isAdmin = await isSuperAdmin()
+    const supabase = isAdmin ? createAdminClient() : await createClient()
     
     const branchId = await getUserBranchId()
-    const isAdmin = await isSuperAdmin()
 
     let dbQuery = supabase
       .from('Jobs_Main')
@@ -52,15 +52,16 @@ export async function getActiveSOSAlerts(): Promise<SOSAlert[]> {
 // ดึง SOS ทั้งหมด (รวม resolved)
 export async function getAllSOSAlerts(): Promise<SOSAlert[]> {
   try {
-    const supabase = await createClient()
+    const isAdmin = await isSuperAdmin()
+    const supabase = isAdmin ? createAdminClient() : await createClient()
     
     const branchId = await getUserBranchId()
-    const isAdmin = await isSuperAdmin()
 
     let dbQuery = supabase
       .from('Jobs_Main')
       .select('Job_ID, Job_Status, Plan_Date, Driver_ID, Driver_Name, Vehicle_Plate, Route_Name, Failed_Reason, Failed_Time, Delivery_Lat, Delivery_Lon')
-      .in('Job_Status', ['SOS', 'Failed'])
+      .in('Job_Status', ['SOS', 'Failed', 'Completed', 'Delivered'])
+      .not('Failed_Time', 'is', null)
     
     if (branchId && branchId !== 'All') {
         dbQuery = dbQuery.eq('Branch_ID', branchId)
@@ -85,10 +86,10 @@ export async function getAllSOSAlerts(): Promise<SOSAlert[]> {
 // นับ SOS Active
 export async function getSOSCount(): Promise<number> {
   try {
-    const supabase = await createClient()
+    const isAdmin = await isSuperAdmin()
+    const supabase = isAdmin ? createAdminClient() : await createClient()
     
     const branchId = await getUserBranchId()
-    const isAdmin = await isSuperAdmin()
 
     let dbQuery = supabase
       .from('Jobs_Main')
@@ -116,10 +117,10 @@ export async function getSOSCount(): Promise<number> {
 // ดึง SOS Driver IDs ที่ Active
 export async function getSOSDriverIds(): Promise<string[]> {
   try {
-    const supabase = await createClient()
+    const isAdmin = await isSuperAdmin()
+    const supabase = isAdmin ? createAdminClient() : await createClient()
     
     const branchId = await getUserBranchId()
-    const isAdmin = await isSuperAdmin()
 
     let dbQuery = supabase
       .from('Jobs_Main')
