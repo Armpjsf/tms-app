@@ -11,6 +11,7 @@ export interface AdminAlert {
   description: string
   date: string
   meta?: Record<string, string>
+  href?: string
 }
 
 export async function getAdminAlerts(): Promise<AdminAlert[]> {
@@ -48,6 +49,7 @@ export async function getAdminAlerts(): Promise<AdminAlert[]> {
             ? `แจ้งเหตุฉุกเฉิน (ไม่สะดวกคุย): ${details.address || 'ไม่ทราบตำแหน่ง'}`
             : `พนักงานกดโทรฉุกเฉินหาแอดมิน`,
           date: log.created_at,
+          href: '/sos',
           meta: { 
             driverId: log.target_id || '', 
             driverName: details.driver_name || '',
@@ -95,6 +97,7 @@ export async function getAdminAlerts(): Promise<AdminAlert[]> {
               ? `หมดอายุแล้ว ${Math.abs(diffDays)} วัน` 
               : `เหลืออีก ${diffDays} วัน (หมดอายุ ${expDate.toLocaleDateString('th-TH')})`,
             date: c.field,
+            href: `/fleet?search=${v.Vehicle_Plate}`,
             meta: { plate: v.Vehicle_Plate, expiryType: c.type }
           })
         }
@@ -125,6 +128,7 @@ export async function getAdminAlerts(): Promise<AdminAlert[]> {
           title: `ตรวจรถไม่ผ่าน — ${check.Vehicle_Plate}`,
           description: `ไม่ผ่าน ${failedItems.length} รายการ: ${failedItems.join(', ')}`,
           date: check.Check_Date,
+          href: `/admin/vehicle-checks?id=${check.id}`,
           meta: { 
             plate: check.Vehicle_Plate, 
             driver: check.Driver_Name || '-',
@@ -156,6 +160,7 @@ export async function getAdminAlerts(): Promise<AdminAlert[]> {
         title: `แจ้งซ่อม — ${ticket.Vehicle_Plate}`,
         description: `${ticket.Issue_Desc || 'ไม่ระบุ'} (เปิดมา ${daysOpen} วัน)`,
         date: ticket.Date_Report,
+        href: `/maintenance?ticket=${ticket.Ticket_ID}`,
         meta: { plate: ticket.Vehicle_Plate, status: ticket.Status, ticketId: ticket.Ticket_ID }
       })
     })
