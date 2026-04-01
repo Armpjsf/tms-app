@@ -1,15 +1,18 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { MobileHeader } from "@/components/mobile/mobile-header"
 import { createDamageReport, getMyDamageReports, DamageReport } from "@/lib/supabase/damage-reports"
-import { AlertOctagon, CheckCircle2, Send, Upload, FileText } from "lucide-react"
+import { AlertOctagon, CheckCircle2, Send, Camera, FileText, X, Image as ImageIcon, Loader2 } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { toast } from "sonner"
+import { cn } from "@/lib/utils"
 
 const CATEGORIES = [
-  { value: 'อุบัติเหตุ', label: '💥 อุบัติเหตุ', color: 'bg-red-100 text-red-700 border-red-300' },
-  { value: 'สินค้าชำรุด', label: '📦 สินค้าชำรุด', color: 'bg-orange-100 text-orange-700 border-orange-300' },
-  { value: 'สินค้าสูญหาย', label: '❓ สินค้าสูญหาย', color: 'bg-purple-100 text-purple-700 border-purple-300' },
-  { value: 'อื่นๆ', label: '📝 อื่นๆ', color: 'bg-gray-100 text-gray-700 border-gray-300' },
+  { value: 'อุบัติเหตุ', label: '💥 อุบัติเหตุ', color: 'bg-red-500/10 text-red-500 border-red-500/20' },
+  { value: 'สินค้าชำรุด', label: '📦 สินค้าชำรุด', color: 'bg-orange-500/10 text-orange-500 border-orange-500/20' },
+  { value: 'สินค้าสูญหาย', label: '❓ สินค้าสูญหาย', color: 'bg-purple-500/10 text-purple-500 border-purple-500/20' },
+  { value: 'อื่นๆ', label: '📝 อื่นๆ', color: 'bg-slate-500/10 text-slate-500 border-slate-500/20' },
 ]
 
 interface RecentJob {
@@ -36,6 +39,9 @@ export function MobileDamageClient({ driverId, driverName, initialReports, recen
   const [submitting, setSubmitting] = useState(false)
   const [success, setSuccess] = useState(false)
   const [reports, setReports] = useState(initialReports)
+  const [image, setImage] = useState<string | null>(null)
+  
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleJobSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const jId = e.target.value
@@ -46,195 +52,283 @@ export function MobileDamageClient({ driverId, driverName, initialReports, recen
     }
   }
 
+  const handleCapture = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setImage(reader.result as string)
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
   const handleSubmit = async () => {
-    if (!jobId || !category || !incidentDate) return
+    if (!jobId || !category || !incidentDate) {
+        toast.error("กรุณากรอกข้อมูลให้ครบถ้วน")
+        return
+    }
     setSubmitting(true)
-    const result = await createDamageReport({
-      Job_ID: jobId,
-      Driver_ID: driverId,
-      Driver_Name: driverName,
-      Vehicle_Plate: vehiclePlate,
-      Incident_Date: incidentDate,
-      Reason_Category: category,
-      Description: desc,
-      // Image_Path would ideally be implemented with Supabase Storage here, skipping for UI demonstration
-    })
     
-    setSubmitting(false)
-    if (result.success) {
-      setSuccess(true)
-      setShowForm(false)
-      setJobId('')
-      setCategory('')
-      setDesc('')
-      
-      const updated = await getMyDamageReports(driverId)
-      setReports(updated)
-      setTimeout(() => setSuccess(false), 3000)
+    try {
+        const result = await createDamageReport({
+          Job_ID: jobId,
+          Driver_ID: driverId,
+          Driver_Name: driverName,
+          Vehicle_Plate: vehiclePlate,
+          Incident_Date: incidentDate,
+          Reason_Category: category,
+          Description: desc,
+          Image_Base64: image || undefined // Added support for image
+        })
+        
+        if (result.success) {
+          setSuccess(true)
+          setShowForm(false)
+          setJobId('')
+          setCategory('')
+          setDesc('')
+          setImage(null)
+          
+          const updated = await getMyDamageReports(driverId)
+          setReports(updated)
+          toast.success("ส่งรายงานเรียบร้อยแล้ว")
+          setTimeout(() => setSuccess(false), 3000)
+        } else {
+            toast.error("ไม่สามารถส่งรายงานได้ กรุณาลองใหม่")
+        }
+    } catch (err) {
+        toast.error("เกิดข้อผิดพลาดในการส่งข้อมูล")
+    } finally {
+        setSubmitting(false)
     }
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-28 pt-16 px-4">
-      <MobileHeader title="แจ้งปัญหา/เคลม" showBack />
+    <div className="min-h-screen bg-background pb-32 pt-20 px-6 relative overflow-hidden">
+      {/* Background Decor */}
+      <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-red-500/5 rounded-full blur-[100px] -translate-y-1/2 pointer-events-none" />
+      
+      <MobileHeader title="แจ้งปัญหา & เคลม" showBack />
 
-      <div className="space-y-5 mt-2">
-
-        {/* Success Toast */}
-        {success && (
-          <div className="bg-emerald-100 border-2 border-emerald-300 rounded-2xl p-4 flex items-center gap-3">
-            <CheckCircle2 size={28} className="text-emerald-600" />
-            <p className="text-lg font-black text-emerald-700">ส่งรายงานสำเร็จ!</p>
-          </div>
-        )}
-
-        {/* Create Button */}
+      <div className="relative z-10 space-y-6 mt-4">
+        {/* Create Button Section */}
         {!showForm ? (
-          <button
-            onClick={() => setShowForm(true)}
-            className="w-full bg-gradient-to-r from-rose-500 to-red-600 text-white rounded-2xl p-5 text-center shadow-lg shadow-rose-500/20"
-          >
-            <AlertOctagon size={32} className="mx-auto mb-2" />
-            <p className="text-xl font-black">ส่งรายงานปัญหา</p>
-            <p className="text-xl opacity-80 mt-1">อุบัติเหตุ, สินค้าชำรุด หรือสูญหาย</p>
-          </button>
-        ) : (
-          <div className="bg-white rounded-2xl border border-gray-200 p-5 space-y-5 shadow-sm">
-            <h3 className="text-xl font-black text-gray-900 text-center">🚨 แจ้งปัญหาใหม่</h3>
-
-            {/* Select Job */}
-            <div>
-              <p className="text-base font-black text-gray-700 mb-1">เลือกงานที่เกิดปัญหา</p>
-              <select
-                value={jobId}
-                onChange={handleJobSelect}
-                className="w-full p-3 border-2 border-gray-300 rounded-xl text-base font-black text-gray-900 focus:border-rose-500 focus:outline-none bg-white"
-              >
-                <option value="">-- เลือกงาน --</option>
-                {recentJobs.map(j => (
-                  <option key={j.Job_ID} value={j.Job_ID}>
-                    {j.Job_ID} ({j.Customer_Name})
-                  </option>
-                ))}
-              </select>
+          <div className="space-y-4">
+            <div className="px-1">
+                <h2 className="text-3xl font-black text-foreground tracking-tighter uppercase italic">รายงานปัญหา</h2>
+                <p className="text-muted-foreground text-sm font-bold">แจ้งอุบัติเหตุหรือสินค้าเสียหายทันที</p>
             </div>
-
-            {/* Date */}
-            <div>
-              <p className="text-base font-black text-gray-700 mb-1">วันที่เกิดเหตุ</p>
-              <input
-                type="date"
-                value={incidentDate}
-                onChange={e => setIncidentDate(e.target.value)}
-                className="w-full p-3 border-2 border-gray-300 rounded-xl text-base font-black text-gray-900 focus:border-rose-500 focus:outline-none"
-              />
-            </div>
-
-            {/* Category */}
-            <div>
-              <p className="text-base font-black text-gray-700 mb-2">ประเภทปัญหา</p>
-              <div className="grid grid-cols-2 gap-2">
-                {CATEGORIES.map(t => (
-                  <button
-                    key={t.value}
-                    onClick={() => setCategory(t.value)}
-                    className={`p-3 rounded-xl border-2 text-center font-black transition-all text-base
-                      ${category === t.value ? `${t.color} ring-2 ring-offset-1 scale-[0.98]` : 'bg-gray-100 text-gray-700 border-gray-300'}
-                    `}
-                  >
-                    {t.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Photo Upload Placeholder */}
-            <div>
-              <p className="text-base font-black text-gray-700 mb-1">ถ่ายรูปปัญหา (หลักฐาน)</p>
-              <div className="w-full h-24 border-2 border-dashed border-gray-400 rounded-xl flex flex-col items-center justify-center text-gray-600 bg-gray-50">
-                <Upload size={28} className="mb-2" />
-                <p className="text-xl font-black">แตะเพื่อถ่ายรูป</p>
-              </div>
-            </div>
-
-            {/* Description */}
-            <div>
-              <p className="text-base font-black text-gray-700 mb-1">รายละเอียด</p>
-              <textarea
-                value={desc}
-                onChange={e => setDesc(e.target.value)}
-                placeholder="อธิบายเหตุการณ์ หรือระบุป้ายทะเบียนที่ถูกชน..."
-                rows={3}
-                className="w-full p-3 border-2 border-gray-300 rounded-xl text-base font-medium text-gray-900 resize-none focus:border-rose-500 focus:outline-none"
-              />
-            </div>
-
-            {/* Actions */}
-            <div className="flex gap-3 mt-4">
-              <button
-                onClick={() => setShowForm(false)}
-                className="flex-1 p-4 rounded-xl text-gray-700 bg-gray-200 font-black text-lg"
-              >
-                ยกเลิก
-              </button>
-              <button
-                onClick={handleSubmit}
-                disabled={!jobId || !category || !incidentDate || submitting}
-                className="flex-1 p-4 rounded-xl bg-gradient-to-r from-rose-500 to-red-600 text-foreground flex items-center justify-center gap-2 disabled:opacity-50 shadow-lg"
-              >
-                <Send size={20} />
-                {submitting ? 'กำลังส่ง...' : 'ส่งรายงาน'}
-              </button>
-            </div>
+            
+            <button
+                onClick={() => setShowForm(true)}
+                className="w-full bg-foreground text-white rounded-[2.5rem] p-8 text-left relative overflow-hidden shadow-2xl shadow-foreground/20 active:scale-95 transition-all group"
+            >
+                <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:scale-110 transition-transform">
+                    <AlertOctagon size={100} />
+                </div>
+                <div className="relative z-10 flex flex-col gap-4">
+                    <div className="w-14 h-14 rounded-2xl bg-white/10 flex items-center justify-center">
+                        <AlertOctagon size={32} className="text-red-400" />
+                    </div>
+                    <div>
+                        <p className="text-2xl font-black italic uppercase">สร้างรายงานใหม่</p>
+                        <p className="text-sm font-bold opacity-60">กดที่นี่เพื่อแจ้งเหตุฉุกเฉิน</p>
+                    </div>
+                </div>
+            </button>
           </div>
+        ) : (
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="glass-panel rounded-[3rem] border-red-500/20 p-8 space-y-8 shadow-2xl"
+          >
+            <div className="flex items-center justify-between">
+                <h3 className="text-2xl font-black text-foreground italic uppercase">🚨 รายละเอียดเหตุการณ์</h3>
+                <button onClick={() => setShowForm(false)} className="p-2 bg-muted rounded-full text-muted-foreground">
+                    <X size={20} />
+                </button>
+            </div>
+
+            <div className="space-y-6">
+                {/* Select Job */}
+                <div className="space-y-2">
+                  <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest px-1">เลือกงานที่เกิดปัญหา</p>
+                  <select
+                    value={jobId}
+                    onChange={handleJobSelect}
+                    className="w-full h-16 px-6 rounded-2xl bg-card border border-border/10 text-foreground font-bold text-lg focus:ring-2 focus:ring-red-500/20 transition-all outline-none appearance-none"
+                  >
+                    <option value="">-- เลือกรายการงาน --</option>
+                    {recentJobs.length === 0 ? (
+                        <option disabled>ไม่มีงานในประวัติล่าสุด</option>
+                    ) : recentJobs.map(j => (
+                      <option key={j.Job_ID} value={j.Job_ID}>
+                        #{String(j.Job_ID).slice(-8)} ({j.Customer_Name})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Category Grid */}
+                <div className="space-y-2">
+                  <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest px-1">ประเภทของปัญหา</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    {CATEGORIES.map(t => (
+                      <button
+                        key={t.value}
+                        type="button"
+                        onClick={() => setCategory(t.value)}
+                        className={cn(
+                            "h-16 rounded-2xl border-2 flex items-center justify-center font-black text-sm transition-all",
+                            category === t.value ? "bg-foreground text-white border-foreground scale-[1.02] shadow-lg shadow-foreground/20" : "bg-muted/50 text-muted-foreground border-transparent hover:border-muted"
+                        )}
+                      >
+                        {t.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Photo Capture */}
+                <div className="space-y-2">
+                  <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest px-1">หลักฐานภาพถ่าย</p>
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    capture="environment" 
+                    className="hidden" 
+                    ref={fileInputRef}
+                    onChange={handleCapture}
+                  />
+                  
+                  {image ? (
+                    <div className="relative rounded-[2rem] overflow-hidden border-2 border-red-500/20 aspect-video group">
+                        <img src={image} alt="Captured" className="w-full h-full object-cover" />
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4">
+                            <button 
+                                onClick={() => fileInputRef.current?.click()}
+                                className="p-4 bg-white rounded-full text-foreground shadow-xl"
+                            >
+                                <Camera size={24} />
+                            </button>
+                            <button 
+                                onClick={() => setImage(null)}
+                                className="p-4 bg-red-500 rounded-full text-white shadow-xl"
+                            >
+                                <X size={24} />
+                            </button>
+                        </div>
+                    </div>
+                  ) : (
+                    <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="w-full aspect-video rounded-[2.5rem] border-2 border-dashed border-muted-foreground/20 bg-muted/30 flex flex-col items-center justify-center gap-3 text-muted-foreground hover:bg-muted/50 transition-all active:scale-95"
+                    >
+                        <div className="w-16 h-16 rounded-full bg-background flex items-center justify-center shadow-lg">
+                            <Camera size={32} />
+                        </div>
+                        <p className="text-base font-black italic uppercase">แตะเพื่อถ่ายรูป</p>
+                    </button>
+                  )}
+                </div>
+
+                {/* Description */}
+                <div className="space-y-2">
+                  <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest px-1">รายละเอียดเพิ่มเติม</p>
+                  <textarea
+                    value={desc}
+                    onChange={e => setDesc(e.target.value)}
+                    placeholder="อธิบายเหตุการณ์ที่เกิดขึ้น..."
+                    rows={3}
+                    className="w-full p-6 rounded-2xl bg-card border border-border/10 text-foreground font-bold focus:ring-2 focus:ring-red-500/20 outline-none resize-none"
+                  />
+                </div>
+
+                {/* Submit Button */}
+                <Button
+                    onClick={handleSubmit}
+                    disabled={!jobId || !category || submitting}
+                    className="w-full h-18 rounded-[2rem] bg-red-600 hover:bg-red-700 text-white font-black text-xl italic uppercase tracking-[0.1em] shadow-2xl shadow-red-600/30 active:scale-95 transition-all"
+                >
+                    {submitting ? (
+                        <>
+                            <Loader2 className="mr-2 animate-spin" />
+                            กำลังส่งข้อมูล...
+                        </>
+                    ) : (
+                        <>
+                            <Send className="mr-2" size={24} />
+                            ส่งรายงานด่วน
+                        </>
+                    )}
+                </Button>
+            </div>
+          </motion.div>
         )}
 
-        {/* History */}
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden mt-6">
-          <div className="px-5 py-4 border-b border-gray-200 bg-gray-100">
-            <p className="font-black text-gray-900 text-base">📋 ประวัติการแจ้งปัญหาของฉัน</p>
-          </div>
-          {reports.length === 0 ? (
-            <div className="p-8 text-center text-muted-foreground">
-              <p className="text-lg font-black">ยังไม่เคยมีรายงาน</p>
+        {/* History Section */}
+        <div className="space-y-4 pt-4">
+            <div className="flex items-center justify-between px-1">
+                <h3 className="text-xl font-black text-foreground uppercase italic flex items-center gap-2">
+                    <div className="w-1.5 h-6 bg-muted rounded-full" />
+                    ประวัติการแจ้งเหตุ
+                </h3>
+                <Badge variant="outline" className="rounded-xl border-muted text-muted-foreground">{reports.length} รายการ</Badge>
             </div>
-          ) : (
-            <div className="divide-y divide-gray-100">
-              {reports.map(report => {
-                const isResolved = report.Status === 'Resolved'
-                const isRejected = report.Status === 'Rejected'
-                return (
-                  <div key={report.id} className="px-5 py-4 flex flex-col gap-3">
-                    <div className="flex justify-between items-start">
-                      <div className="flex items-center gap-2">
-                        <span className="font-black text-gray-900 text-base">{report.Reason_Category}</span>
-                        <span className={`px-2 py-1 rounded-full text-lg font-bold font-black
-                          ${isResolved ? 'bg-emerald-100 text-emerald-800' : ''}
-                          ${isRejected ? 'bg-red-100 text-red-800' : ''}
-                          ${(!isResolved && !isRejected) ? 'bg-amber-100 text-amber-800' : ''}
-                        `}>
-                          {isResolved ? 'ปิดแล้ว' : isRejected ? 'ยกเลิก' : 'รอตรวจสอบ'}
-                        </span>
-                      </div>
-                      <span className="text-xl font-bold text-muted-foreground">
-                        {new Date(report.Created_At).toLocaleDateString('th-TH')}
-                      </span>
-                    </div>
-                    
-                    <div className="bg-gray-100 rounded-lg p-3 flex items-center gap-2 text-xl">
-                       <FileText size={16} className="text-muted-foreground" /> 
-                       <span className="font-mono font-bold text-gray-800 truncate">{report.Job_ID}</span>
-                    </div>
 
-                    <p className="text-base font-medium text-gray-800">{report.Description}</p>
-                  </div>
-                )
-              })}
-            </div>
-          )}
+            {reports.length === 0 ? (
+                <div className="glass-panel rounded-[2.5rem] p-12 text-center border-dashed border-border/20">
+                    <FileText className="mx-auto mb-4 text-muted-foreground/30" size={48} />
+                    <p className="text-muted-foreground font-bold italic uppercase tracking-widest">ยังไม่เคยมีรายงานในระบบ</p>
+                </div>
+            ) : (
+                <div className="space-y-4 pb-10">
+                    {reports.map((report) => (
+                        <div key={report.id} className="glass-panel rounded-[2.5rem] p-6 border-border/5 bg-gradient-to-br from-card to-transparent shadow-lg">
+                            <div className="flex justify-between items-start mb-4">
+                                <div className="space-y-1">
+                                    <div className="px-3 py-1 bg-red-500/10 rounded-xl border border-red-500/20 inline-block">
+                                        <span className="text-red-500 font-black text-[10px] uppercase tracking-widest">{report.Reason_Category}</span>
+                                    </div>
+                                    <h4 className="text-lg font-black text-foreground tracking-tighter">#{String(report.Job_ID).slice(-8)}</h4>
+                                </div>
+                                <div className={cn(
+                                    "px-3 py-1.5 rounded-xl font-black text-[10px] uppercase tracking-widest border shadow-sm",
+                                    report.Status === 'Resolved' ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" : "bg-amber-500/10 text-amber-500 border-amber-500/20"
+                                )}>
+                                    {report.Status === 'Resolved' ? 'ตรวจสอบแล้ว' : 'รอการตรวจสอบ'}
+                                </div>
+                            </div>
+                            
+                            {report.Description && (
+                                <p className="text-muted-foreground text-sm font-bold mb-4 line-clamp-2 italic leading-relaxed">
+                                    "{report.Description}"
+                                </p>
+                            )}
+
+                            <div className="flex items-center justify-between pt-4 border-t border-border/5">
+                                <div className="flex items-center gap-2 text-muted-foreground">
+                                    <FileText size={14} />
+                                    <span className="text-[10px] font-black uppercase tracking-widest">
+                                        {new Date(report.Created_At).toLocaleDateString('th-TH', { day: '2-digit', month: 'short', year: '2-digit' })}
+                                    </span>
+                                </div>
+                                <div className="flex items-center gap-1.5 text-primary">
+                                    <ImageIcon size={14} />
+                                    <span className="text-[10px] font-black uppercase tracking-widest">ATTACHED</span>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
         </div>
       </div>
     </div>
   )
 }
+
 

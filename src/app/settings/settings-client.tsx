@@ -17,62 +17,68 @@ import {
   Cpu,
   Fingerprint,
   Activity,
-  Globe
+  Globe,
+  Users,
+  Navigation,
+  Truck,
+  Receipt,
+  Zap
 } from "lucide-react"
 import { getUserProfile, UserProfile } from "@/lib/supabase/users"
 import { PremiumButton } from "@/components/ui/premium-button"
 import { PremiumCard } from "@/components/ui/premium-card"
 import { useLanguage } from "@/components/providers/language-provider"
+import { getPermissionsByRole } from "@/lib/actions/permission-actions"
 
 const settingsSections = [
   {
     titleKey: "settings.sections.profile",
     icon: User,
     items: [
-      { labelKey: "settings.items.identity", descKey: "settings.items.identity_desc", path: "/settings/profile" },
-      { labelKey: "settings.items.security", descKey: "settings.items.security_desc", path: "/settings/security" },
+      { labelKey: "settings.items.identity", descKey: "settings.items.identity_desc", path: "/settings/profile", permKey: "settings.items.identity" },
+      { labelKey: "settings.items.security", descKey: "settings.items.security_desc", path: "/settings/security", permKey: "settings.items.security" },
     ]
   },
   {
     titleKey: "settings.sections.org",
     icon: Building,
     items: [
-        { labelKey: "settings.items.company", descKey: "settings.items.company_desc", path: "/settings/company" },
-        { labelKey: "settings.items.customers", descKey: "settings.items.customers_desc", path: "/settings/customers" },
-        { labelKey: "settings.items.rbac", descKey: "settings.items.rbac_desc", path: "/settings/roles" },
-        { labelKey: "settings.items.operators", descKey: "settings.items.operators_desc", path: "/settings/users" },
-        { labelKey: "settings.items.branches", descKey: "settings.items.branches_desc", path: "/settings/branches" },
-        { labelKey: "settings.items.partners", descKey: "settings.items.partners_desc", path: "/settings/subcontractors" },
-        { labelKey: "settings.items.vehicles", descKey: "settings.items.vehicles_desc", path: "/settings/vehicle-types" },
+        { labelKey: "settings.items.company", descKey: "settings.items.company_desc", path: "/settings/company", permKey: "settings.items.company" },
+        { labelKey: "settings.items.customers", descKey: "settings.items.customers_desc", path: "/settings/customers", permKey: "settings.items.customers" },
+        { labelKey: "settings.items.permissions", descKey: "settings.items.permissions_desc", path: "/settings/permissions", permKey: "settings.items.permissions" },
+        { labelKey: "settings.items.operators", descKey: "settings.items.operators_desc", path: "/settings/users", permKey: "settings.items.operators" },
+        { labelKey: "settings.items.branches", descKey: "settings.items.branches_desc", path: "/settings/branches", permKey: "settings.items.branches" },
+        { labelKey: "settings.items.partners", descKey: "settings.items.partners_desc", path: "/settings/subcontractors", permKey: "settings.items.partners" },
+        { labelKey: "settings.items.vehicles", descKey: "settings.items.vehicles_desc", path: "/settings/vehicle-types", permKey: "settings.items.vehicles" },
     ]
   },
   {
     titleKey: "settings.sections.alerts",
     icon: Bell,
     items: [
-      { labelKey: "settings.items.alerts_config", descKey: "settings.items.alerts_config_desc", path: "/settings/notifications" },
+      { labelKey: "settings.items.alerts_config", descKey: "settings.items.alerts_config_desc", path: "/settings/notifications", permKey: "settings.items.notifications" },
     ]
   },
   {
     titleKey: "settings.sections.integrations",
     icon: Database,
     items: [
-      { labelKey: "settings.items.accounting", descKey: "settings.items.accounting_desc", path: "/settings/accounting" },
-      { labelKey: "settings.items.expense_types", descKey: "settings.items.expense_types_desc", path: "/settings/expense-types" },
+      { labelKey: "settings.items.accounting", descKey: "settings.items.accounting_desc", path: "/settings/accounting", permKey: "settings.items.accounting" },
+      { labelKey: "settings.items.expense_types", descKey: "settings.items.expense_types_desc", path: "/settings/expense-types", permKey: "settings.items.expense_types" },
     ]
   },
   {
     titleKey: "settings.sections.interface",
     icon: Palette,
     items: [
-      { labelKey: "settings.items.theme", descKey: "settings.items.theme_desc", path: "/settings/theme" },
+      { labelKey: "settings.items.theme", descKey: "settings.items.theme_desc", path: "/settings/theme", permKey: "settings.items.theme" },
     ]
   },
   {
     titleKey: "settings.sections.security",
     icon: Shield,
     items: [
-      { labelKey: "settings.items.vault", descKey: "settings.items.vault_desc", path: "/settings/backup" },
+      { labelKey: "settings.items.vault", descKey: "settings.items.vault_desc", path: "/settings/backup", permKey: "settings.items.vault" },
     ]
   },
 ]
@@ -81,20 +87,36 @@ export default function SettingsPage() {
   const router = useRouter()
   const { t } = useLanguage()
   const [profile, setProfile] = useState<UserProfile | null>(null)
+  const [allowedMenus, setAllowedMenus] = useState<string[] | null>(null)
   const [loading, setLoading] = useState(true)
   
   useEffect(() => {
-    async function loadProfile() {
-      const data = await getUserProfile()
-      setProfile(data)
+    async function loadData() {
+      const userData = await getUserProfile()
+      setProfile(userData)
+      
+      if (userData?.Role) {
+          const perms = await getPermissionsByRole(userData.Role)
+          setAllowedMenus(perms)
+      }
+      
       setLoading(false)
     }
-    loadProfile()
+    loadData()
   }, [])
 
   const handleNavigate = (path: string) => {
     router.push(path)
   }
+
+  // Filter sections and items based on permissions
+  const filteredSections = settingsSections.map(section => ({
+      ...section,
+      items: section.items.filter(item => {
+          if (!allowedMenus) return true // Default to show (e.g. for Admin if perms not set)
+          return allowedMenus.includes(item.permKey || "") || allowedMenus.includes(item.labelKey)
+      })
+  })).filter(section => section.items.length > 0)
 
   return (
     <div className="space-y-12 pb-20">
@@ -186,19 +208,7 @@ export default function SettingsPage() {
 
       {/* Configuration Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-        {settingsSections.map((section, sectionIndex) => {
-            const filteredItems = section.items.filter(item => {
-                const userRole = profile?.Role
-                if (item.path === '/settings/roles') {
-                    // Super Admin (1) or Admin (2)
-                    return ['1', '2', 'Super Admin', 'Admin'].includes(String(userRole || ''))
-                }
-                return true
-            })
-
-            if (filteredItems.length === 0) return null
-
-            return (
+        {filteredSections.map((section, sectionIndex) => (
           <motion.div
             key={section.titleKey}
             initial={{ opacity: 0, scale: 0.95 }}
@@ -219,7 +229,7 @@ export default function SettingsPage() {
                     </div>
                  </div>
                  <div className="p-4 space-y-2">
-                   {filteredItems.map((item) => (
+                   {section.items.map((item) => (
                      <motion.div
                        key={item.labelKey}
                        whileHover={{ x: 10, backgroundColor: 'rgba(255,255,255,0.03)' }}
@@ -238,7 +248,7 @@ export default function SettingsPage() {
                  </div>
                </PremiumCard>
              </motion.div>
-           )})}
+           ))}
          </div>
    
          {/* Quick Core Protocols */}
@@ -287,5 +297,3 @@ export default function SettingsPage() {
     </div>
   )
 }
-
-

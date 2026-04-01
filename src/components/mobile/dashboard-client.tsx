@@ -119,7 +119,7 @@ export function DashboardClient({ session, stats, currentJob, activeJobs = [], g
                         </div>
                     </div>
                     <div>
-                        <p className="text-muted-foreground text-sm font-bold uppercase tracking-wider">สวัสดีตอนเช้า</p>
+                        <p className="text-muted-foreground text-sm font-bold uppercase tracking-wider">ยินดีต้อนรับ</p>
                         <h1 className="text-2xl font-black text-foreground tracking-tight leading-none truncate max-w-[180px]">
                             คุณ {session.driverName}
                         </h1>
@@ -215,7 +215,7 @@ export function DashboardClient({ session, stats, currentJob, activeJobs = [], g
                                 ? "bg-accent text-white shadow-accent/20 animate-pulse"
                                 : "bg-muted text-muted-foreground"
                             )}>
-                                {currentJob.Job_Status === 'Assigned' ? 'รอเริ่มงาน' : 'กำลังดำเนินการ'}
+                                {currentJob.Job_Status === 'Assigned' || currentJob.Job_Status === 'New' ? 'รอเริ่มงาน' : 'กำลังไปส่ง'}
                             </div>
                         </div>
 
@@ -257,7 +257,7 @@ export function DashboardClient({ session, stats, currentJob, activeJobs = [], g
                         <div className="relative z-10">
                             <Link href={`/mobile/jobs/${currentJob.Job_ID}`} className="block w-full">
                                 <Button className="w-full h-18 rounded-[2rem] bg-foreground hover:bg-foreground/90 text-white font-black text-lg uppercase tracking-[0.15em] shadow-2xl shadow-foreground/20 group transition-all active:scale-95">
-                                    ไปจัดการงานนี้
+                                    จัดการงานนี้
                                     <ArrowUpRight className="ml-2 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
                                 </Button>
                             </Link>
@@ -276,7 +276,7 @@ export function DashboardClient({ session, stats, currentJob, activeJobs = [], g
                          <p className="text-muted-foreground text-base font-bold mb-8">ไม่มีงานค้างในมือ กดที่ตลาดเพื่อรับงาน</p>
                          <Link href="/mobile/marketplace">
                              <Button className="h-16 px-10 rounded-2xl bg-primary text-white font-black uppercase tracking-widest shadow-xl shadow-primary/30 active:scale-95 transition-all">
-                                 เข้าสู่ตลาดประมูลงาน
+                                 เข้าสู่ตลาดรับงาน
                              </Button>
                          </Link>
                     </motion.div>

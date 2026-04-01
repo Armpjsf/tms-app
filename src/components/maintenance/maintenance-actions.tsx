@@ -48,9 +48,10 @@ export function MaintenanceActions({ ticket, drivers, vehicles }: MaintenanceAct
   const handleStatusUpdate = async (status: string) => {
     setLoading(true)
     try {
-      // For quick status update, we just send the status and required ID
       const result = await updateRepairTicket(ticket.Ticket_ID, { ...ticket, Status: status })
-      if (!result.success) {
+      if (result.success) {
+        toast.success(`อัปเดตสถานะเป็น ${status} เรียบร้อยแล้ว`)
+      } else {
         toast.error(result.message)
       }
     } catch {
@@ -58,6 +59,53 @@ export function MaintenanceActions({ ticket, drivers, vehicles }: MaintenanceAct
     } finally {
       setLoading(false)
     }
+  }
+
+  // Inline Quick Actions for Pending Tickets
+  if (ticket.Status === 'Pending') {
+    return (
+        <div className="flex gap-2">
+            <Button 
+                disabled={loading}
+                onClick={() => handleStatusUpdate('In Progress')}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs uppercase tracking-widest h-10 px-4 rounded-xl shadow-lg shadow-emerald-600/20 active:scale-95 transition-all"
+            >
+                {loading ? <Loader2 className="animate-spin h-3 w-3" /> : 'อนุมัติ'}
+            </Button>
+            <Button 
+                disabled={loading}
+                variant="outline"
+                onClick={() => handleStatusUpdate('Rejected')}
+                className="border-2 border-red-200 text-red-600 hover:bg-red-50 font-black text-xs uppercase tracking-widest h-10 px-4 rounded-xl active:scale-95 transition-all"
+            >
+                {loading ? <Loader2 className="animate-spin h-3 w-3" /> : 'ปฏิเสธ'}
+            </Button>
+            
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="h-10 w-10 p-0 text-muted-foreground hover:bg-muted rounded-xl">
+                        <MoreVertical className="h-4 w-4" />
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="bg-white border-gray-200 text-gray-800">
+                    <DropdownMenuItem onClick={() => setShowEditDialog(true)} className="cursor-pointer">
+                        <Pencil className="mr-2 h-4 w-4" /> แก้ไข
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleDelete} className="text-red-500 cursor-pointer">
+                        <Trash2 className="mr-2 h-4 w-4" /> ลบ
+                    </DropdownMenuItem>
+                </DropdownMenuContent>
+            </DropdownMenu>
+
+            <MaintenanceDialog 
+                open={showEditDialog} 
+                onOpenChange={setShowEditDialog}
+                drivers={drivers}
+                vehicles={vehicles}
+                initialData={ticket}
+            />
+        </div>
+    )
   }
 
   return (
@@ -72,7 +120,7 @@ export function MaintenanceActions({ ticket, drivers, vehicles }: MaintenanceAct
         <DropdownMenuContent align="end" className="bg-white border-gray-200 text-gray-800">
           <DropdownMenuLabel>การจัดการ</DropdownMenuLabel>
           <DropdownMenuItem 
-            className="cursor-pointer hover:bg-gray-100 hover:text-white focus:bg-gray-100 focus:text-white"
+            className="cursor-pointer hover:bg-gray-100"
             onClick={() => setShowEditDialog(true)}
           >
             <Pencil className="mr-2 h-4 w-4" />
@@ -80,7 +128,7 @@ export function MaintenanceActions({ ticket, drivers, vehicles }: MaintenanceAct
           </DropdownMenuItem>
           
           <DropdownMenuSub>
-            <DropdownMenuSubTrigger className="hover:bg-gray-100 hover:text-white focus:bg-gray-100 focus:text-white cursor-pointer">
+            <DropdownMenuSubTrigger className="hover:bg-gray-100 cursor-pointer">
               <CheckCircle2 className="mr-2 h-4 w-4" />
               อัปเดตสถานะ
             </DropdownMenuSubTrigger>
@@ -104,7 +152,7 @@ export function MaintenanceActions({ ticket, drivers, vehicles }: MaintenanceAct
           
           <DropdownMenuItem 
             onClick={handleDelete}
-            className="text-red-400 focus:text-red-400 cursor-pointer hover:bg-red-950/20 focus:bg-red-950/20"
+            className="text-red-400 focus:text-red-400 cursor-pointer hover:bg-red-50"
           >
             <Trash2 className="mr-2 h-4 w-4" />
             ลบรายการ
@@ -122,3 +170,4 @@ export function MaintenanceActions({ ticket, drivers, vehicles }: MaintenanceAct
     </>
   )
 }
+

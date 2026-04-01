@@ -15,10 +15,10 @@ export function BottomNav() {
   if (pathname === "/mobile/login") return null
 
   const navItems = [
-    { href: "/mobile/dashboard", icon: LayoutGrid, label: "Home" },
-    { href: "/mobile/jobs", icon: Truck, label: "Jobs", isCenter: true },
-    { href: "/mobile/map", icon: Map, label: "Map" },
-    { href: "/mobile/profile", icon: Users, label: "Profile" },
+    { href: "/mobile/dashboard", icon: LayoutGrid, label: "หน้าแรก" },
+    { href: "/mobile/jobs", icon: Truck, label: "งาน", isCenter: true },
+    { href: "/mobile/map", icon: Map, label: "แผนที่" },
+    { href: "/mobile/profile", icon: Users, label: "โปรไฟล์" },
   ]
 
   return (
@@ -37,7 +37,7 @@ export function BottomNav() {
                   <Link 
                     key={item.href} 
                     href={item.href} 
-                    className="relative -top-8 transition-all active:scale-90 group"
+                    className="relative -top-6 transition-all active:scale-90 group"
                   >
                     <div className={cn(
                         "w-20 h-20 rounded-[2rem] flex items-center justify-center border-4 border-background relative z-10 transition-all duration-500",

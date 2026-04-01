@@ -27,6 +27,16 @@ export default async function BillingPrintPage(props: Props) {
 
     const { note, jobs, company } = data
 
+    // CO2 Extraction Helper
+    const extractCO2 = (notes?: string | null): number => {
+        if (!notes) return 0
+        const match = notes.match(/\[ESG\] ปล่อย CO2: (\d+\.?\d*) kg/)
+        if (match) return parseFloat(match[1])
+        return 0
+    }
+
+    const calculateCO2 = (dist?: number | null) => (Number(dist) || 0) * 0.12
+
     // Calculate totals dynamically to ensure consistency with displayed items
     const subtotal = jobs.reduce((sum, job) => {
         const base = job.Price_Cust_Total || 0
@@ -43,7 +53,7 @@ export default async function BillingPrintPage(props: Props) {
                 
                 if (Array.isArray(costs)) {
                     extra = costs
-                        .filter((c: { charge_cust?: number }) => c.charge_cust && c.charge_cust > 0)
+                        .filter((c: { charge_cust?: number }) => (Number(c.charge_cust) || 0) > 0)
                         .reduce((acc: number, c: { charge_cust?: number }) => acc + (Number(c.charge_cust) || 0), 0)
                 }
             }
@@ -51,7 +61,14 @@ export default async function BillingPrintPage(props: Props) {
         return sum + base + extra
     }, 0)
 
-    const total = subtotal
+    const wht = subtotal * 0.01
+    const netTotal = subtotal - wht
+
+    const totalCO2 = jobs.reduce((sum, job) => {
+        const fromNote = extractCO2(job.Notes)
+        if (fromNote > 0) return sum + fromNote
+        return sum + calculateCO2(job.Est_Distance_KM)
+    }, 0)
 
     const localeStr = lang === 'th' ? 'th-TH' : 'en-US'
     const displayCompanyName = (lang === 'en' && company?.company_name_en) 
@@ -159,7 +176,7 @@ export default async function BillingPrintPage(props: Props) {
                                 }
                             } catch {}
 
-                            const chargeableExtras = extraCosts.filter(c => (c.charge_cust ?? 0) > 0)
+                            const chargeableExtras = extraCosts.filter(c => (Number(c.charge_cust) || 0) > 0)
 
                             return (
                                 <tbody key={job.Job_ID} className="text-base border-b border-slate-100 italic-none">
@@ -190,6 +207,27 @@ export default async function BillingPrintPage(props: Props) {
                             )
                         })}
                 </table>
+
+                {/* ESG Section (NEW) */}
+                <div className="mb-8 p-6 rounded-2xl bg-emerald-50 border-2 border-emerald-100/50 flex items-center justify-between gap-8 relative overflow-hidden group page-break-avoid">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-200/20 blur-3xl rounded-full -mr-16 -mt-16" />
+                    <div className="flex items-center gap-6 relative z-10">
+                        <div className="w-14 h-14 bg-white rounded-2xl shadow-sm border border-emerald-100 flex items-center justify-center text-emerald-600">
+                            <span className="text-2xl font-black">CO₂</span>
+                        </div>
+                        <div>
+                            <h4 className="text-sm font-black text-emerald-800 uppercase tracking-widest italic mb-1">{t.co2_summary_title}</h4>
+                            <p className="text-xs text-emerald-600 font-bold uppercase tracking-widest opacity-70">LogisPro ESG Protocol v2.5</p>
+                        </div>
+                    </div>
+                    <div className="text-right relative z-10">
+                        <div className="text-3xl font-black text-emerald-900 leading-none mb-1">
+                            {totalCO2.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            <span className="text-sm font-bold text-emerald-600/60 uppercase ml-2 tracking-widest">{t.co2_unit}</span>
+                        </div>
+                        <p className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.3em]">{t.co2_total_label}</p>
+                    </div>
+                </div>
 
                 {/* Totals and Remarks - Side by Side */}
                 <div className="flex justify-between items-start gap-12 mb-8 break-inside-avoid">
@@ -224,13 +262,18 @@ export default async function BillingPrintPage(props: Props) {
                             <span className="text-xs">{t.subtotal}</span>
                             <span className="text-slate-900">{subtotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                         </div>
+                        
+                        <div className="flex justify-between text-base font-bold text-rose-500 uppercase tracking-widest border-t border-dashed border-slate-200 pt-2">
+                            <span className="text-[10px]">{t.wht}</span>
+                            <span>- {wht.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                        </div>
 
                         <div className="flex justify-between items-end text-slate-900 border-t-2 border-slate-900 pt-4 mt-2">
-                            <span className="text-xs font-black uppercase tracking-[0.2em] text-slate-400 mb-1">{t.total}</span>
+                            <span className="text-xs font-black uppercase tracking-[0.2em] text-slate-400 mb-1">{t.net_total_label}</span>
                             <div className="text-right">
                                 <span className="text-2xl font-black italic-none leading-none">
                                     <span className="text-sm font-bold mr-1 text-slate-400 italic">฿</span>
-                                    {total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                    {netTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                 </span>
                             </div>
                         </div>

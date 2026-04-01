@@ -7,7 +7,7 @@ import {
     MapPin, Phone, User, Package, CheckCircle, 
     ArrowRight, Info, Truck, Activity, ShieldCheck, 
     ClipboardCheck, LayoutGrid, Navigation, Scale, Box,
-    ChevronRight, Calendar, Hash, Target
+    ChevronRight, Calendar, Hash, Target, TrendingUp
 } from "lucide-react"
 import { JobActionButton } from "@/components/mobile/job-action-button"
 import { JobWorkflow } from "@/components/mobile/job-workflow"
@@ -25,9 +25,9 @@ interface JobDetailClientProps {
 export function JobDetailClient({ job, success }: JobDetailClientProps) {
     const [activeTab, setActiveTab] = useState<'mission' | 'info'>('mission')
 
-    const destinations = typeof job.original_destinations_json === 'string' 
+    const destinations = typeof job?.original_destinations_json === 'string' 
         ? JSON.parse(job.original_destinations_json) 
-        : job.original_destinations_json;
+        : job?.original_destinations_json || [];
 
     return (
         <div className="min-h-screen bg-background pb-32 pt-24 relative overflow-hidden flex flex-col">
@@ -35,7 +35,7 @@ export function JobDetailClient({ job, success }: JobDetailClientProps) {
             <div className="absolute top-0 right-[-10%] w-[600px] h-[600px] bg-primary/5 rounded-full blur-[140px] -translate-y-1/2 pointer-events-none" />
             <div className="absolute bottom-0 left-[-10%] w-[400px] h-[400px] bg-accent/5 rounded-full blur-[120px] pointer-events-none" />
 
-            <MobileHeader title="Job Detail" showBack />
+            <MobileHeader title="รายละเอียดงาน" showBack />
 
             {/* Premium Sticky Tab Selector */}
             <div className="px-6 mb-8 mt-2 sticky top-24 z-[50]">
@@ -94,19 +94,19 @@ export function JobDetailClient({ job, success }: JobDetailClientProps) {
                             {/* Job ID Header Card */}
                             <div className="flex items-center justify-between px-2">
                                 <div className="space-y-1">
-                                    <p className="text-accent text-[10px] font-black uppercase tracking-[0.4em] leading-none">Status Center</p>
-                                    <h2 className="text-4xl font-black text-foreground tracking-tighter uppercase italic leading-none">#{String(job.Job_ID || '').slice(-8)}</h2>
+                                    <p className="text-accent text-[10px] font-black uppercase tracking-[0.4em] leading-none">สถานะงาน</p>
+                                    <h2 className="text-4xl font-black text-foreground tracking-tighter uppercase italic leading-none">#{String(job?.Job_ID || '').slice(-8)}</h2>
                                 </div>
                                 <div className="text-right">
                                     <p className="text-muted-foreground text-[10px] font-black uppercase tracking-widest mb-1">กำหนดส่ง</p>
                                     <div className="flex items-center gap-1.5 text-primary">
                                         <Calendar size={14} strokeWidth={2.5} />
-                                        <span className="font-black text-sm italic">{job.Plan_Date ? new Date(job.Plan_Date).toLocaleDateString('th-TH', { day: '2-digit', month: 'short' }) : "-"}</span>
+                                        <span className="font-black text-sm italic">{job?.Plan_Date ? new Date(job.Plan_Date).toLocaleDateString('th-TH', { day: '2-digit', month: 'short' }) : "-"}</span>
                                     </div>
                                 </div>
                             </div>
 
-                            <JobWorkflow currentStatus={job.Job_Status || 'New'} />
+                            <JobWorkflow currentStatus={job?.Job_Status || 'New'} />
 
                             <div className="glass-panel p-8 rounded-[3rem] border-primary/10 shadow-2xl space-y-8 relative overflow-hidden">
                                 <div className="absolute top-0 right-0 p-8 text-primary/5 pointer-events-none transform translate-x-4 -translate-y-4">
@@ -121,7 +121,7 @@ export function JobDetailClient({ job, success }: JobDetailClientProps) {
                                         <div>
                                             <p className="text-muted-foreground text-[10px] font-black uppercase tracking-widest mb-1">ภารกิจที่กำลังทำ</p>
                                             <h3 className="text-2xl font-black text-foreground uppercase tracking-tight italic leading-none">
-                                                {job.Job_Status === 'New' ? 'เตรียมเริ่มงาน' : job.Job_Status}
+                                                {job?.Job_Status === 'New' || job?.Job_Status === 'Assigned' ? 'รอเริ่มงาน' : job?.Job_Status}
                                             </h3>
                                         </div>
                                     </div>
@@ -129,10 +129,10 @@ export function JobDetailClient({ job, success }: JobDetailClientProps) {
                                 </div>
 
                                 <RouteStrip 
-                                    origin={job.Origin_Location}
-                                    destination={job.Dest_Location || job.Route_Name}
+                                    origin={job?.Origin_Location}
+                                    destination={job?.Dest_Location || job?.Route_Name}
                                     destinations={destinations}
-                                    status={job.Job_Status}
+                                    status={job?.Job_Status}
                                 />
                             </div>
                         </motion.div>
@@ -157,11 +157,11 @@ export function JobDetailClient({ job, success }: JobDetailClientProps) {
                                         </div>
                                         <div>
                                             <p className="text-muted-foreground text-[10px] font-black uppercase tracking-widest mb-1">ข้อมูลผู้รับสินค้า</p>
-                                            <h3 className="text-2xl font-black text-foreground tracking-tight italic uppercase">{job.Customer_Name}</h3>
+                                            <h3 className="text-2xl font-black text-foreground tracking-tight italic uppercase">{job?.Customer_Name}</h3>
                                         </div>
                                     </div>
-                                    <div className="px-3 py-1.5 bg-muted/50 rounded-xl border border-border/10 text-[10px] font-black text-muted-foreground uppercase tracking-widest shrink-0">
-                                        ID: {job.Customer_ID}
+                                    <div className="px-3 py-1.5 bg-muted rounded-xl border border-border/10 text-[10px] font-black text-foreground uppercase tracking-widest shrink-0">
+                                        ID: {job?.Customer_ID}
                                     </div>
                                 </div>
                                 
@@ -172,7 +172,7 @@ export function JobDetailClient({ job, success }: JobDetailClientProps) {
                                         </div>
                                         <div className="flex-1">
                                             <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">สถานที่นำส่ง</p>
-                                            <p className="text-foreground font-bold text-base leading-snug italic">{job.Dest_Location || job.Route_Name}</p>
+                                            <p className="text-foreground font-bold text-base leading-snug italic">{job?.Dest_Location || job?.Route_Name}</p>
                                         </div>
                                     </div>
                                     <div className="flex items-center justify-between p-6 rounded-[2rem] bg-emerald-500/5 border border-emerald-500/10">
@@ -182,7 +182,7 @@ export function JobDetailClient({ job, success }: JobDetailClientProps) {
                                             </div>
                                             <div className="truncate">
                                                 <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-0.5">เบอร์โทรติดต่อ</p>
-                                                <p className="text-emerald-500 font-black text-lg italic tracking-widest">CONTACT READY</p>
+                                                <p className="text-emerald-500 font-black text-lg italic tracking-widest">ติดต่อลูกค้า</p>
                                             </div>
                                         </div>
                                         <button className="px-8 h-14 bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl font-black text-sm uppercase tracking-widest shadow-lg shadow-emerald-500/20 active:scale-95 transition-all shrink-0">
@@ -206,7 +206,7 @@ export function JobDetailClient({ job, success }: JobDetailClientProps) {
                                         </div>
                                         <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">น้ำหนักรวม</p>
                                         <div className="flex items-baseline gap-1">
-                                            <h5 className="text-3xl font-black text-foreground tracking-tighter italic leading-none">{job.Weight_Kg?.toLocaleString() || '0.0'}</h5>
+                                            <h5 className="text-3xl font-black text-foreground tracking-tighter italic leading-none">{job?.Weight_Kg?.toLocaleString() || '0.0'}</h5>
                                             <span className="text-[10px] font-black text-muted-foreground">KG</span>
                                         </div>
                                     </div>
@@ -216,7 +216,7 @@ export function JobDetailClient({ job, success }: JobDetailClientProps) {
                                         </div>
                                         <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">ปริมาตรรวม</p>
                                         <div className="flex items-baseline gap-1">
-                                            <h5 className="text-3xl font-black text-foreground tracking-tighter italic leading-none">{job.Volume_Cbm || '0.0'}</h5>
+                                            <h5 className="text-3xl font-black text-foreground tracking-tighter italic leading-none">{job?.Volume_Cbm || '0.0'}</h5>
                                             <span className="text-[10px] font-black text-muted-foreground">CBM</span>
                                         </div>
                                     </div>
@@ -227,12 +227,12 @@ export function JobDetailClient({ job, success }: JobDetailClientProps) {
                                         <ClipboardCheck size={18} className="text-primary" strokeWidth={2.5} />
                                         <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">หมายเหตุ / คำแนะนำพิเศษ</p>
                                     </div>
-                                    <p className="text-foreground font-bold leading-relaxed text-sm italic">{job.Notes || "ไม่มีข้อมูลเพิ่มเติม"}</p>
+                                    <p className="text-foreground font-bold leading-relaxed text-sm italic">{job?.Notes || "ไม่มีข้อมูลเพิ่มเติม"}</p>
                                 </div>
                             </div>
 
                             {/* Revenue Highlight Card */}
-                            {job.Show_Price_To_Driver && (
+                            {job?.Show_Price_To_Driver && (
                                 <div className="relative group p-8 rounded-[3.5rem] bg-foreground border border-primary/30 overflow-hidden shadow-2xl shadow-foreground/20">
                                     <div className="absolute top-0 right-0 p-10 opacity-10 pointer-events-none group-hover:scale-125 transition-transform duration-1000">
                                         <TrendingUp size={120} className="text-primary" />
@@ -245,9 +245,9 @@ export function JobDetailClient({ job, success }: JobDetailClientProps) {
                                             <h4 className="text-xs font-black uppercase tracking-[0.2em] text-white italic">ค่าตอบแทนที่จะได้รับ</h4>
                                         </div>
                                         <div className="flex items-end gap-3">
-                                            <span className="text-6xl font-black text-white tracking-tighter leading-none italic">฿{(job.Cost_Driver_Total || 0).toLocaleString()}</span>
+                                            <span className="text-6xl font-black text-white tracking-tighter leading-none italic">฿{(job?.Cost_Driver_Total || 0).toLocaleString()}</span>
                                             <div className="px-3 py-1.5 bg-primary rounded-xl text-white font-black text-[10px] uppercase tracking-widest mb-2 shadow-lg shadow-primary/30 rotate-2">
-                                                PREMIUM RATE
+                                                อัตราพิเศษ
                                             </div>
                                         </div>
                                     </div>
@@ -268,4 +268,3 @@ export function JobDetailClient({ job, success }: JobDetailClientProps) {
         </div>
     )
 }
-

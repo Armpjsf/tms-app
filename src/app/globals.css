@@ -1,6 +1,15 @@
 @import "tailwindcss";
 @plugin "tailwindcss-animate";
 
+/* EMERGENCY UI LOCK FIX - Prevents invisible backdrops from freezing the app */
+body[style*="pointer-events: none"] {
+  pointer-events: auto !important;
+}
+[data-radix-focus-guard], [role="presentation"]:empty {
+  display: none !important;
+}
+/* END FIX */
+
 @custom-variant dark (&:is(.dark *));
 
 @theme {

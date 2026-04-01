@@ -28,11 +28,13 @@ import {
   Zap,
   Bot,
   Settings,
+  Loader2,
 } from "lucide-react"
 
 import { SidebarProfile } from "./sidebar-profile"
 import { getUserRole } from "@/lib/permissions"
 import { useLanguage } from "@/components/providers/language-provider"
+import { getPermissionsByRole } from "@/lib/actions/permission-actions"
 
 interface NavItem {
   titleKey: string
@@ -71,6 +73,7 @@ const navigation: NavGroup[] = [
     items: [
       { titleKey: "navigation.routes", href: "/routes", icon: <Navigation size={20} /> },
       { titleKey: "navigation.drivers", href: "/drivers", icon: <Users size={20} /> },
+      { titleKey: "navigation.driver_leaves", href: "/admin/driver-leaves", icon: <CalendarDays size={20} /> },
       { titleKey: "navigation.customers", href: "/settings/customers", icon: <Building size={20} /> },
       { titleKey: "navigation.fleet", href: "/vehicles", icon: <Truck size={20} /> },
       { titleKey: "navigation.checks", href: "/admin/vehicle-checks", icon: <CheckCircle2 size={20} /> },
@@ -103,24 +106,6 @@ const navigation: NavGroup[] = [
   },
 ]
 
-const customerNavigation: NavGroup[] = [
-    {
-      titleKey: "nav_groups.client_portal",
-      items: [
-        { titleKey: "navigation.dashboard", href: "/dashboard", icon: <LayoutDashboard size={20} /> },
-        { titleKey: "navigation.monitoring", href: "/monitoring", icon: <Activity size={20} />, badge: "common.live", badgeColor: "green" },
-        { titleKey: "navigation.routes", href: "/routes", icon: <Navigation size={20} /> },
-        { titleKey: "navigation.history", href: "/jobs/history", icon: <History size={20} /> },
-      ],
-    },
-    {
-        titleKey: "nav_groups.documents",
-        items: [
-            { titleKey: "navigation.pod", href: "/pod", icon: <FileText size={20} /> },
-        ]
-    }
-]
-
 interface SidebarProps {
   collapsed?: boolean
   onToggle?: () => void
@@ -130,52 +115,48 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
   const pathname = usePathname()
   const { t } = useLanguage()
   const [sidebarState, setSidebarState] = React.useState<{
-    userRole: number | null
-    isCustomerUser: boolean
-    roleLoaded: boolean
+    allowedMenus: string[] | null
+    isLoaded: boolean
   }>({
-    userRole: null,
-    isCustomerUser: false,
-    roleLoaded: false
+    allowedMenus: null,
+    isLoaded: false
   })
 
   React.useEffect(() => {
-    async function checkRole() {
+    async function loadPermissions() {
         try {
-            const role = await getUserRole()
-            const { isCustomer } = await import("@/lib/permissions")
             const { getUserProfile } = await import("@/lib/supabase/users")
-            
             const profile = await getUserProfile()
-            const isCust = (await isCustomer()) || (Number(role) === 7) || (profile?.Role === 'Customer')
             
-            setSidebarState({
-                userRole: role || (profile?.Role === 'Customer' ? 7 : null),
-                isCustomerUser: !!isCust,
-                roleLoaded: true
-            })
-        } catch {
-            setSidebarState(prev => ({ ...prev, roleLoaded: true }))
+            if (profile?.Role) {
+                // If Admin, usually allow all, but still fetch from DB for flexibility
+                const perms = await getPermissionsByRole(profile.Role)
+                setSidebarState({
+                    allowedMenus: perms,
+                    isLoaded: true
+                })
+            } else {
+                setSidebarState({ allowedMenus: [], isLoaded: true })
+            }
+        } catch (error) {
+            console.error("Sidebar permission error:", error)
+            setSidebarState({ allowedMenus: [], isLoaded: true })
         }
     }
-    checkRole()
+    loadPermissions()
   }, [])
 
-  const { userRole, isCustomerUser, roleLoaded } = sidebarState
-  const activeNavigation = isCustomerUser ? customerNavigation : navigation
+  const { allowedMenus, isLoaded } = sidebarState
 
-  const filteredNavigation = activeNavigation.filter(group => {
-    if (!roleLoaded || userRole === null) return true 
-    if (isCustomerUser) return true
-    if (Number(userRole) === 7) return group.titleKey === "nav_groups.client_portal" || group.titleKey === "nav_groups.documents"
-    if (group.titleKey === "nav_groups.intelligence") return [1, 2].includes(userRole)
-    if (group.titleKey === "nav_groups.financial") return [1, 2, 4].includes(userRole)
-    if (group.titleKey === "nav_groups.settings") return [1, 2].includes(userRole)
-    if (group.titleKey === "nav_groups.operations" || group.titleKey === "nav_groups.asset_control") {
-        if (userRole === 4 || userRole === 7) return false
-    }
-    return true
-  })
+  // Filter navigation based on allowedMenus from database
+  const filteredNavigation = navigation.map(group => ({
+    ...group,
+    items: group.items.filter(item => {
+        if (!isLoaded) return true // Show all during skeleton
+        if (!allowedMenus) return true // Default if no perms set yet (e.g. Admin)
+        return allowedMenus.includes(item.titleKey)
+    })
+  })).filter(group => group.items.length > 0)
 
   return (
     <motion.aside
@@ -187,6 +168,7 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
         "bg-secondary border-r border-border text-secondary-foreground shadow-2xl transition-all duration-500"
       )}
     >
+      {/* Header Container */}
       <div className={cn(
         "relative flex flex-col items-center justify-center border-b border-border bg-background/80 backdrop-blur-3xl overflow-hidden transition-all duration-500",
         collapsed ? "h-20" : "h-40"
@@ -225,7 +207,7 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
 
       <nav className="flex-1 overflow-y-auto pt-8 pb-4 px-4 custom-scrollbar">
         <AnimatePresence mode="wait">
-            {!roleLoaded ? (
+            {!isLoaded ? (
               <motion.div key="skeleton" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
                 <SidebarSkeleton collapsed={collapsed} />
               </motion.div>

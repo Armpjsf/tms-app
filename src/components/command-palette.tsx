@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react"
 import { useRouter } from "next/navigation"
+import { motion, AnimatePresence } from "framer-motion"
 import { globalSearch, SearchResult } from "@/lib/actions/command-actions"
 import {
   Search,
@@ -172,122 +173,129 @@ export function CommandPalette() {
     }
   }
 
-  if (!open) return null
-
   return (
-    <>
-      {/* Backdrop */}
-      <div
-        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 animate-in fade-in duration-200"
-        onClick={() => setOpen(false)}
-      />
+    <AnimatePresence>
+      {open && (
+        <div className="fixed inset-0 z-[9999] overflow-y-auto">
+          {/* Backdrop */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm"
+            onClick={() => setOpen(false)}
+          />
 
-      {/* Palette */}
-      <div className="fixed inset-x-0 top-[15%] mx-auto max-w-xl z-50 px-4 animate-in slide-in-from-top-4 fade-in duration-300">
-        <div className="bg-card/95 backdrop-blur-xl border border-slate-700/50 rounded-2xl shadow-2xl shadow-2xl overflow-hidden">
-          {/* Search Input */}
-          <div className="flex items-center gap-3 px-4 py-3 border-b border-slate-700/50">
-            <Search className="w-5 h-5 text-gray-400 flex-shrink-0" />
-            <input
-              ref={inputRef}
-              type="text"
-              value={query}
-              onChange={(e) => handleQueryChange(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="ค้นหางาน, ลูกค้า, คนขับ... หรือเลือกเมนู"
-              className="flex-1 bg-transparent text-white placeholder:text-muted-foreground outline-none text-xl"
-            />
-            {loading && <Loader2 className="w-4 h-4 text-gray-400 animate-spin flex-shrink-0" />}
-            <kbd className="hidden md:flex items-center gap-1 px-2 py-1 text-base font-bold font-bold text-muted-foreground bg-slate-800 rounded-lg border border-slate-700">
-              ESC
-            </kbd>
-          </div>
-
-          {/* Results */}
-          <div className="max-h-[400px] overflow-y-auto p-2">
-            {/* Quick Actions (when no query) */}
-            {query.length < 2 && (
-              <div>
-                <p className="px-3 py-2 text-base font-bold font-black text-muted-foreground uppercase tracking-widest">
-                  Quick Actions
-                </p>
-                {QUICK_ACTIONS.map((action, i) => {
-                  const Icon = action.icon
-                  return (
-                    <button
-                      key={action.id}
-                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-colors ${
-                        selectedIndex === i ? 'bg-muted/80 text-foreground' : 'text-gray-300 hover:bg-muted/50'
-                      }`}
-                      onClick={() => handleSelect(action)}
-                    >
-                      <div className="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center flex-shrink-0">
-                        <Icon className="w-4 h-4 text-gray-400" />
-                      </div>
-                      <span className="text-xl font-medium flex-1">{action.title}</span>
-                      <ArrowRight className="w-3 h-3 text-gray-600" />
-                    </button>
-                  )
-                })}
+          {/* Palette Container */}
+          <div className="flex min-h-full items-start justify-center p-4 pt-[15%]">
+            <motion.div 
+              initial={{ scale: 0.95, opacity: 0, y: -20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: -20 }}
+              className="relative w-full max-w-xl bg-card/95 backdrop-blur-xl border border-slate-700/50 rounded-2xl shadow-2xl overflow-hidden"
+            >
+              {/* Search Input */}
+              <div className="flex items-center gap-3 px-4 py-3 border-b border-slate-700/50">
+                <Search className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={query}
+                  onChange={(e) => handleQueryChange(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder="ค้นหางาน, ลูกค้า, คนขับ... หรือเลือกเมนู"
+                  className="flex-1 bg-transparent text-white placeholder:text-muted-foreground outline-none text-xl"
+                />
+                {loading && <Loader2 className="w-4 h-4 text-gray-400 animate-spin flex-shrink-0" />}
+                <kbd className="hidden md:flex items-center gap-1 px-2 py-1 text-base font-bold text-muted-foreground bg-slate-800 rounded-lg border border-slate-700">
+                  ESC
+                </kbd>
               </div>
-            )}
 
-            {/* Search Results */}
-            {query.length >= 2 && results.length > 0 && (
-              <div>
-                <p className="px-3 py-2 text-base font-bold font-black text-muted-foreground uppercase tracking-widest">
-                  ผลลัพธ์ ({results.length})
-                </p>
-                {results.map((result, i) => {
-                  const Icon = TYPE_ICONS[result.type] || Package
-                  const colorClass = TYPE_COLORS[result.type] || 'text-gray-400 bg-gray-500/10'
-                  return (
-                    <button
-                      key={`${result.type}-${result.id}`}
-                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-colors ${
-                        selectedIndex === i ? 'bg-muted/80 text-foreground' : 'text-gray-300 hover:bg-muted/50'
-                      }`}
-                      onClick={() => handleSelect(result)}
-                    >
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${colorClass}`}>
-                        <Icon className="w-4 h-4" />
+              {/* Results Content */}
+              <div className="max-h-[400px] overflow-y-auto p-2">
+                {query.length < 2 ? (
+                  <div>
+                    <p className="px-3 py-2 text-base font-bold font-black text-muted-foreground uppercase tracking-widest">
+                      Quick Actions
+                    </p>
+                    {filteredQuickActions.map((action, i) => {
+                      const Icon = action.icon
+                      return (
+                        <button
+                          key={action.id}
+                          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-colors ${
+                            selectedIndex === i ? 'bg-primary/20 text-foreground' : 'text-gray-300 hover:bg-muted/50'
+                          }`}
+                          onClick={() => handleSelect(action)}
+                        >
+                          <div className="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center flex-shrink-0">
+                            <Icon className="w-4 h-4 text-gray-400" />
+                          </div>
+                          <span className="text-xl font-medium flex-1">{action.title}</span>
+                          <ArrowRight className="w-3 h-3 text-gray-600" />
+                        </button>
+                      )
+                    })}
+                  </div>
+                ) : (
+                  <>
+                    {results.length > 0 ? (
+                      <div>
+                        <p className="px-3 py-2 text-base font-bold font-black text-muted-foreground uppercase tracking-widest">
+                          ผลลัพธ์ ({results.length})
+                        </p>
+                        {results.map((result, i) => {
+                          const Icon = TYPE_ICONS[result.type] || Package
+                          const colorClass = TYPE_COLORS[result.type] || 'text-gray-400 bg-gray-500/10'
+                          return (
+                            <button
+                              key={`${result.type}-${result.id}`}
+                              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-colors ${
+                                selectedIndex === i ? 'bg-primary/20 text-foreground' : 'text-gray-300 hover:bg-muted/50'
+                              }`}
+                              onClick={() => handleSelect(result)}
+                            >
+                              <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${colorClass}`}>
+                                <Icon className="w-4 h-4" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-xl font-bold truncate">{result.title}</p>
+                                <p className="text-base font-bold text-muted-foreground truncate">{result.subtitle}</p>
+                              </div>
+                              <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full ${colorClass}`}>
+                                {TYPE_LABELS[result.type] || result.type}
+                              </span>
+                            </button>
+                          )
+                        })}
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xl font-bold truncate">{result.title}</p>
-                        <p className="text-base font-bold text-muted-foreground truncate">{result.subtitle}</p>
+                    ) : !loading && (
+                      <div className="p-8 text-center">
+                        <Search className="w-8 h-8 text-gray-600 mx-auto mb-2" />
+                        <p className="text-gray-400 text-xl">ไม่พบผลลัพธ์สำหรับ &quot;{query}&quot;</p>
                       </div>
-                      <span className={`text-base font-bold font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${colorClass}`}>
-                        {TYPE_LABELS[result.type] || result.type}
-                      </span>
-                    </button>
-                  )
-                })}
+                    )}
+                  </>
+                )}
               </div>
-            )}
 
-            {/* No results */}
-            {query.length >= 2 && !loading && results.length === 0 && (
-              <div className="p-8 text-center">
-                <Search className="w-8 h-8 text-gray-600 mx-auto mb-2" />
-                <p className="text-gray-400 text-xl">ไม่พบผลลัพธ์สำหรับ &quot;{query}&quot;</p>
+              {/* Footer */}
+              <div className="px-4 py-2 border-t border-slate-700/50 flex items-center justify-between text-base font-bold text-muted-foreground">
+                <div className="flex items-center gap-3">
+                  <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 bg-slate-800 rounded font-bold text-[10px]">↑↓</kbd> เลือก</span>
+                  <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 bg-slate-800 rounded font-bold text-[10px]">Enter</kbd> เปิด</span>
+                  <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 bg-slate-800 rounded font-bold text-[10px]">Esc</kbd> ปิด</span>
+                </div>
+                <div className="flex items-center gap-1 text-primary/60">
+                  <Command className="w-3 h-3" /> <span className="text-[10px] font-black">LOGIS-PRO</span>
+                </div>
               </div>
-            )}
-          </div>
-
-          {/* Footer */}
-          <div className="px-4 py-2 border-t border-slate-700/50 flex items-center justify-between text-base font-bold text-muted-foreground">
-            <div className="flex items-center gap-3">
-              <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 bg-slate-800 rounded font-bold">↑↓</kbd> เลือก</span>
-              <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 bg-slate-800 rounded font-bold">Enter</kbd> เปิด</span>
-              <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 bg-slate-800 rounded font-bold">Esc</kbd> ปิด</span>
-            </div>
-            <div className="flex items-center gap-1 text-violet-400">
-              <Command className="w-3 h-3" /> TMS 2026
-            </div>
+            </motion.div>
           </div>
         </div>
-      </div>
-    </>
+      )}
+    </AnimatePresence>
   )
 }
 
