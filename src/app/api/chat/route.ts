@@ -4,12 +4,11 @@ import { getSession } from '@/lib/session'
 import { GoogleGenerativeAI } from "@google/generative-ai"
 import { aiToolExecutors } from '@/lib/ai/tools'
 
-// Models to try in order - newest/most available first
+// Models to try in order - stable versions prioritized
 const GEMINI_MODELS = [
-    "gemini-2.0-flash-exp",
     "gemini-2.0-flash",
-    "gemini-1.5-flash-latest",
     "gemini-1.5-flash",
+    "gemini-1.5-pro",
     "gemini-1.0-pro",
 ]
 
@@ -22,9 +21,10 @@ export async function POST(req: NextRequest) {
         const { message } = body
         if (!message) return NextResponse.json({ error: 'Message is required' }, { status: 400 })
         
-        const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY
+        // Use server-side key if available, fallback to public key
+        const apiKey = process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY
         if (!apiKey) {
-            return NextResponse.json({ response: "ขออภัยครับ ไม่พบ API Key ในระบบ" })
+            return NextResponse.json({ response: "AI System: ไม่พบ API Key ในการตั้งค่าระบบ" })
         }
 
         const cookieStore = await cookies()
@@ -170,20 +170,28 @@ ${JSON.stringify(workforce ?? {})}
         // 3. CALL GEMINI WITH FALLBACK
         // =====================================================================
         const genAI = new GoogleGenerativeAI(apiKey)
-        let lastError: Error | null = null
 
         for (const modelName of GEMINI_MODELS) {
             try {
-                console.log(`[AI Chat] Trying model: ${modelName}...`)
+                console.log(`[AI Chat] Connecting via: ${modelName}...`)
                 const model = genAI.getGenerativeModel({ model: modelName })
-                const result = await model.generateContent([systemPrompt, `คำถามจากแอดมิน: ${message}`])
+                const result = await model.generateContent([systemPrompt, `User Request: ${message}`])
                 const responseText = result.response.text()
-                console.log(`[AI Chat] Success with: ${modelName}`)
-                return NextResponse.json({ response: responseText })
+                
+                if (responseText) {
+                    console.log(`[AI Chat] Success with: ${modelName}`)
+                    return NextResponse.json({ response: responseText })
+                }
             } catch (err: any) {
-                console.warn(`[AI Chat] ${modelName} failed: ${err.message}`)
-                lastError = err
-                if (!err.message?.includes('404')) break
+                const errMsg = err.message || ''
+                console.warn(`[AI Chat] ${modelName} failed: ${errMsg}`)
+                
+                // Critical failures (Auth/Quota) should stop the loop early
+                if (errMsg.includes('429') || errMsg.includes('403') || errMsg.includes('API key')) {
+                    console.error('[AI Chat] Terminating model loop due to critical API error.')
+                    break
+                }
+                continue 
             }
         }
 

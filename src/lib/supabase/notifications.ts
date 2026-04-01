@@ -340,3 +340,26 @@ export async function getUnreadCount(): Promise<number> {
   const notifications = await getNotifications()
   return notifications.filter(n => !n.read).length
 }
+
+export async function markAllNotificationsAsRead() {
+    try {
+        const isAdmin = await isAnyAdmin()
+        const supabase = isAdmin ? createAdminClient() : await createClient()
+
+        // 1. Mark Chat messages as read
+        const { tableName: chatTableName, columns: chatCols } = await getChatSchema(supabase)
+        await supabase
+            .from(chatTableName)
+            .update({ [chatCols.is_read]: true })
+            .eq(chatCols.receiver_id, 'admin')
+            .eq(chatCols.is_read, false)
+
+        // 2. Clear any persistent SOS or active alerts if applicable
+        // (For now, we mostly deal with Chat as the primary 'read/unread' state)
+        
+        return { success: true }
+    } catch (err) {
+        console.error("Error marking alerts as read:", err)
+        return { success: false, error: err }
+    }
+}

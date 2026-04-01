@@ -50,7 +50,7 @@ export default function ThemeSettingsPage() {
             <div className="relative z-10 space-y-8">
                 <button onClick={() => router.back()} className="inline-flex items-center gap-2 text-muted-foreground hover:text-primary transition-all font-black uppercase tracking-[0.4em] text-base font-bold group/back italic">
                     <ArrowLeft className="w-4 h-4 group-hover/back:-translate-x-1 transition-transform" /> 
-                    Command Control
+                    ย้อนกลับ
                 </button>
                 <div className="flex items-center gap-6">
                     <div className="p-4 bg-primary/20 rounded-[2.5rem] border-2 border-primary/30 shadow-[0_0_40px_rgba(255,30,133,0.2)] text-primary group-hover:scale-110 transition-all duration-500">
@@ -58,9 +58,9 @@ export default function ThemeSettingsPage() {
                     </div>
                     <div>
                         <h1 className="text-5xl font-black text-foreground tracking-widest uppercase leading-none italic premium-text-gradient">
-                            Aesthetic Core
+                            การแสดงผล
                         </h1>
-                        <p className="text-base font-bold font-black text-primary uppercase tracking-[0.6em] mt-2 opacity-80 italic">UI Geometry & Visual Synthesis Parameters</p>
+                        <p className="text-base font-bold font-black text-primary uppercase tracking-[0.6em] mt-2 opacity-80 italic">ปรับแต่งอินเตอร์เฟสและรูปแบบสีของระบบ</p>
                     </div>
                 </div>
             </div>
@@ -68,11 +68,11 @@ export default function ThemeSettingsPage() {
             <div className="flex flex-col items-end gap-6 relative z-10">
                 <div className="bg-muted/50 border border-border/10 px-6 py-3 rounded-2xl flex items-center gap-3 backdrop-blur-md">
                     <div className="w-2 h-2 rounded-full bg-primary animate-pulse shadow-[0_0_10px_rgba(255,30,133,1)]" />
-                    <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest italic">VISUAL_ENGINE: STABLE</span>
+                    <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest italic">สถานะ: ปกติ</span>
                 </div>
                 <div className="flex items-center gap-4 bg-primary/10 p-4 rounded-2xl border border-primary/20">
                    <Cpu className="text-primary" size={18} />
-                   <span className="text-base font-bold font-black text-foreground uppercase tracking-[0.3em] italic">Rendering: GPU_ACCEL</span>
+                   <span className="text-base font-bold font-black text-foreground uppercase tracking-[0.3em] italic">การประมวลผล: GPU_ACCEL</span>
                 </div>
             </div>
         </div>
@@ -98,15 +98,15 @@ export default function ThemeSettingsPage() {
                         "text-2xl font-black uppercase tracking-widest italic transition-colors",
                         theme === 'light' ? "text-primary" : "text-foreground"
                     )}>
-                        Solar Flux
+                        โหมดสว่าง
                     </h3>
                     <p className="text-base font-bold font-black text-muted-foreground uppercase tracking-[0.4em] leading-loose italic">
-                        High-luminance interface for outdoor operations and standard visibility.
+                        อินเตอร์เฟสความสว่างสูง เหมาะสำหรับการใช้งานกลางแจ้งหรือในที่สว่าง
                     </p>
                 </div>
                 {theme === 'light' && (
                     <div className="px-5 py-1.5 rounded-full bg-primary/20 text-primary text-base font-bold font-black uppercase tracking-widest border border-primary/30 animate-pulse italic">
-                        PROTOCOL_ACTIVE
+                        เปิดใช้งานอยู่
                     </div>
                 )}
              </div>
@@ -135,15 +135,15 @@ export default function ThemeSettingsPage() {
                         "text-2xl font-black uppercase tracking-widest italic transition-colors",
                         theme === 'dark' ? "text-primary" : "text-foreground"
                     )}>
-                        Trench Protocol
+                        โหมดมืด
                     </h3>
                     <p className="text-base font-bold font-black text-muted-foreground uppercase tracking-[0.4em] leading-loose italic">
-                        Low-luminance aesthetic for command center focus and energy efficiency.
+                        โทนสีเข้มพรีเมียม ช่วยถนอมสายตาและประหยัดพลังงานหน้าจอ
                     </p>
                 </div>
                 {theme === 'dark' && (
                     <div className="px-5 py-1.5 rounded-full bg-primary/20 text-primary text-base font-bold font-black uppercase tracking-widest border border-primary/30 animate-pulse italic">
-                        PROTOCOL_ACTIVE
+                        เปิดใช้งานอยู่
                     </div>
                 )}
              </div>
@@ -172,15 +172,15 @@ export default function ThemeSettingsPage() {
                         "text-2xl font-black uppercase tracking-widest italic transition-colors",
                         theme === 'system' ? "text-primary" : "text-foreground"
                     )}>
-                        Neural Link
+                        ตามระบบ
                     </h3>
                     <p className="text-base font-bold font-black text-muted-foreground uppercase tracking-[0.4em] leading-loose italic">
-                        Synchronize aesthetic synthesis with host OS environmental parameters.
+                        ปรับเปลี่ยนรูปแบบสีโดยอัตโนมัติตามการตั้งค่าของอุปกรณ์คุณ
                     </p>
                 </div>
                 {theme === 'system' && (
                     <div className="px-5 py-1.5 rounded-full bg-primary/20 text-primary text-base font-bold font-black uppercase tracking-widest border border-primary/30 animate-pulse italic">
-                        PROTOCOL_ACTIVE
+                        เปิดใช้งานอยู่
                     </div>
                 )}
              </div>
@@ -197,18 +197,17 @@ export default function ThemeSettingsPage() {
                 <Sparkles size={32} />
             </div>
             <div className="space-y-4 text-center md:text-left flex-1">
-                <p className="text-xl font-black text-indigo-400 italic uppercase tracking-widest">VISUAL_ENGINE_INTEGRITY</p>
+                <p className="text-xl font-black text-indigo-400 italic uppercase tracking-widest">ข้อมูลทางเทคนิค</p>
                 <p className="text-xl font-bold text-muted-foreground leading-relaxed uppercase tracking-wider italic">
-                    All UI geometry is rendered using high-fidelity tactical shading. <br />
-                    Switching protocols will trigger a global state recalculation for optimal performance.
+                    รูปทรงและเลเยอร์ทั้งหมดถูกเรนเดอร์ด้วยระบบ Tactical Shading ความละเอียดสูง <br />
+                    การเปลี่ยนรูปแบบจะทำการคำนวณการแสดงผลใหม่ทั้งหมดเพื่อให้ได้ประสิทธิภาพสูงสุด
                 </p>
             </div>
             <PremiumButton variant="outline" className="h-14 px-10 rounded-2xl border-border/10 text-foreground gap-3 uppercase font-black text-base font-bold tracking-[0.3em] ml-auto italic">
-                <Activity size={18} /> CALIBRATE_RENDERER
+                <Activity size={18} /> ปรับจูนการแสดงผล
             </PremiumButton>
         </div>
       </div>
     </DashboardLayout>
   )
 }
-

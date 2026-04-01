@@ -55,6 +55,18 @@ export function NotificationDropdown() {
   const [dismissed, setDismissed] = useState<Set<string>>(new Set())
   const dropdownRef = useRef<HTMLDivElement>(null)
 
+  // Load dismissed state from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem('dismissed_notifications')
+    if (saved) {
+      try {
+        setDismissed(new Set(JSON.parse(saved)))
+      } catch (e) {
+        console.error("Failed to parse dismissed notifications", e)
+      }
+    }
+  }, [])
+
   // Close on outside click
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -156,11 +168,24 @@ export function NotificationDropdown() {
   const handleDismiss = (id: string, e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
-    setDismissed(prev => new Set(prev).add(id))
+    const next = new Set(dismissed)
+    next.add(id)
+    setDismissed(next)
+    localStorage.setItem('dismissed_notifications', JSON.stringify(Array.from(next)))
   }
 
-  const handleDismissAll = () => {
-    setDismissed(new Set(notifications.map(n => n.id)))
+  const handleDismissAll = async () => {
+    const allIds = notifications.map(n => n.id)
+    const next = new Set(allIds)
+    setDismissed(next)
+    localStorage.setItem('dismissed_notifications', JSON.stringify(allIds))
+    
+    // Server-side persistent clear
+    try {
+      await fetch('/api/notifications', { method: 'POST' })
+    } catch (err) {
+      console.error("Failed to clear notifications on server", err)
+    }
   }
 
   return (

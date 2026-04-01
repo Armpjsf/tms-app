@@ -65,7 +65,7 @@ export function GlobalAIAssistant() {
                             }}
                             exit={{ opacity: 0, scale: 0.9, y: 20 }}
                             className={cn(
-                                "mb-4 lg:mb-6 bg-background/95 backdrop-blur-3xl border border-border/10 rounded-[2rem] shadow-[0_40px_80px_rgba(0,0,0,0.3)] flex flex-col overflow-hidden",
+                                "mb-4 lg:mb-6 bg-background/98 backdrop-blur-3xl border border-border/20 rounded-[2rem] shadow-[0_40px_80px_rgba(0,0,0,0.4)] flex flex-col overflow-hidden",
                                 isMinimized && "rounded-full"
                             )}
                         >
@@ -125,8 +125,10 @@ export function GlobalAIAssistant() {
                                                     {msg.role === 'user' ? 'U' : <Bot size={16} />}
                                                 </div>
                                                 <div className={cn(
-                                                    "max-w-[85%] lg:max-w-[80%] p-4 rounded-2xl text-sm font-medium leading-relaxed",
-                                                    msg.role === 'user' ? 'bg-primary text-white rounded-tr-none' : 'bg-white border border-border/10 text-foreground rounded-tl-none shadow-sm'
+                                                    "max-w-[85%] lg:max-w-[80%] p-4 lg:p-5 rounded-2xl text-[15px] lg:text-base font-medium leading-relaxed tracking-wide",
+                                                    msg.role === 'user' 
+                                                        ? 'bg-gradient-to-br from-primary to-primary/90 text-white rounded-tr-none shadow-md' 
+                                                        : 'bg-white border border-border/20 text-foreground rounded-tl-none shadow-sm'
                                                 )}>
                                                     {msg.content}
                                                 </div>
@@ -137,9 +139,9 @@ export function GlobalAIAssistant() {
                                                 <div className="w-8 h-8 rounded-lg bg-white border border-border/10 flex items-center justify-center text-primary">
                                                     <Bot size={16} />
                                                 </div>
-                                                <div className="bg-white border border-border/10 p-4 rounded-2xl rounded-tl-none flex gap-3 items-center shadow-sm">
+                                                <div className="bg-white border border-border/20 p-4 lg:p-5 rounded-2xl rounded-tl-none flex gap-3 items-center shadow-sm">
                                                     <Loader2 className="w-4 h-4 animate-spin text-primary" />
-                                                    <span className="text-xs font-bold text-muted-foreground italic">กำลังค้นหาข้อมูล...</span>
+                                                    <span className="text-sm font-bold text-muted-foreground italic">กำลังค้นหาข้อมูลพรีเมียมให้คุณ...</span>
                                                 </div>
                                             </div>
                                         )}
@@ -152,8 +154,8 @@ export function GlobalAIAssistant() {
                                                 value={input}
                                                 onChange={(e) => setInput(e.target.value)}
                                                 onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                                                placeholder="สอบถามข้อมูลที่นี่..." 
-                                                className="flex-1 bg-muted/30 border-border/10 text-foreground placeholder:text-muted-foreground/60 h-12 rounded-xl text-sm font-medium focus:ring-primary/10 transition-all"
+                                                placeholder="พิมพ์คำสั่งหรือถามคำถามกับ AI..." 
+                                                className="flex-1 bg-muted/30 border-border/20 text-foreground placeholder:text-muted-foreground h-12 lg:h-14 rounded-xl text-base font-medium focus:ring-primary/10 transition-all shadow-inner"
                                             />
                                             <Button 
                                                 onClick={handleSend}

@@ -60,7 +60,7 @@ export default function NotificationSettingsPage() {
             <div className="relative z-10 space-y-8">
                 <button onClick={() => router.back()} className="inline-flex items-center gap-2 text-muted-foreground hover:text-primary transition-all font-black uppercase tracking-[0.4em] text-base font-bold group/back italic">
                     <ArrowLeft className="w-4 h-4 group-hover/back:-translate-x-1 transition-transform" /> 
-                    {t('settings_pages.company.command_control')}
+                    {t('common.back')}
                 </button>
                 <div className="flex items-center gap-6">
                     <div className="p-4 bg-primary/20 rounded-[2.5rem] border-2 border-primary/30 shadow-[0_0_40px_rgba(255,30,133,0.2)] text-primary group-hover:scale-110 transition-all duration-500">
@@ -82,7 +82,7 @@ export default function NotificationSettingsPage() {
                 </div>
                 <div className="flex items-center gap-4 bg-primary/10 p-4 rounded-2xl border border-primary/20">
                    <Target className="text-primary" size={18} />
-                   <span className="text-base font-bold font-black text-foreground uppercase tracking-[0.3em] italic">Precision Signal Targeting</span>
+                   <span className="text-base font-bold font-black text-foreground uppercase tracking-[0.3em] italic">กำหนดกลุ่มเป้าหมายแจ้งเตือน</span>
                 </div>
             </div>
         </div>
@@ -100,9 +100,9 @@ export default function NotificationSettingsPage() {
                                         <div className="w-12 h-12 rounded-2xl bg-primary/20 flex items-center justify-center text-primary border border-primary/30 shadow-xl group-hover/alert:rotate-6 transition-transform">
                                              <Zap size={24} strokeWidth={2.5} />
                                         </div>
-                                        <h2 className="text-3xl font-black text-foreground tracking-widest uppercase italic border-b-2 border-primary/20 pb-2">Protocol Routing Control</h2>
+                                        <h2 className="text-3xl font-black text-foreground tracking-widest uppercase italic border-b-2 border-primary/20 pb-2">การตั้งค่าช่องทางแจ้งเตือน</h2>
                                    </div>
-                                   <p className="text-xl font-bold text-muted-foreground uppercase tracking-widest italic ml-16">Configure how the mission-critical signal stream is distributed across your hardware array.</p>
+                                   <p className="text-xl font-bold text-muted-foreground uppercase tracking-widest italic ml-16">กำหนดรูปแบบการรับข้อมูลสำคัญจากระบบไปยังอุปกรณ์ต่างๆ ของคุณ</p>
                               </div>
 
                               <div className="space-y-6">
@@ -156,7 +156,7 @@ export default function NotificationSettingsPage() {
                                                     settings[pref.id as keyof NotificationSettings] ? "text-foreground" : "text-muted-foreground"
                                                 )}>
                                                     {pref.label}
-                                                    {pref.isCritical && <span className="ml-4 text-base font-bold font-black text-rose-500 bg-rose-500/10 px-3 py-1 rounded-lg border border-rose-500/20">PRIORITY_ALPHA</span>}
+                                                    {pref.isCritical && <span className="ml-4 text-base font-bold font-black text-rose-500 bg-rose-500/10 px-3 py-1 rounded-lg border border-rose-500/20">ด่วนที่สุด</span>}
                                                 </h3>
                                                 <p className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest leading-relaxed italic border-l-2 border-border/5 pl-4">
                                                     {pref.desc}
@@ -203,7 +203,7 @@ export default function NotificationSettingsPage() {
                     {t('settings_pages.notifications.advisory_desc')}
                 </p>
             </div>
-            <PremiumButton variant="outline" className="h-14 px-10 rounded-2xl border-border/10 text-foreground gap-3 uppercase font-black text-base font-bold tracking-[0.3em] ml-auto italic">
+            <PremiumButton variant="outline" className="h-14 px-10 rounded-2xl border-border/10 text-foreground gap-3 uppercase font-black text-base font-bold tracking-[0.3em] ml-auto italic" onClick={() => router.push('/notifications')}>
                 <Activity size={18} /> {t('settings_pages.notifications.view_stream')}
             </PremiumButton>
         </div>
@@ -211,4 +211,3 @@ export default function NotificationSettingsPage() {
     </DashboardLayout>
   )
 }
-

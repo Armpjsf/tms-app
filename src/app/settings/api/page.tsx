@@ -5,7 +5,21 @@ import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { PremiumCard } from "@/components/ui/premium-card"
 import { PremiumButton } from "@/components/ui/premium-button"
 import { Input } from "@/components/ui/input"
-import { Globe, ArrowLeft, Copy, RefreshCw, Key, ShieldCheck, Activity, Zap, Link as LinkIcon, Cpu } from "lucide-react"
+import { 
+  Globe, 
+  ArrowLeft, 
+  Copy, 
+  RefreshCw, 
+  Key, 
+  ShieldCheck, 
+  Activity, 
+  Zap, 
+  Link as LinkIcon, 
+  Cpu, 
+  FileText, 
+  Loader2, 
+  AlertCircle 
+} from "lucide-react"
 import { useRouter } from "next/navigation"
 import { getSetting, saveSetting } from "@/lib/supabase/system_settings"
 import { toast } from "sonner"
@@ -187,43 +201,5 @@ export default function ApiSettingsPage() {
   )
 }
 
-function Loader2(props: any) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M21 12a9 9 0 1 1-6.219-8.56" />
-    </svg>
-  )
-}
 
-function AlertCircle(props: any) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <circle cx="12" cy="12" r="10" />
-      <line x1="12" y1="8" x2="12" y2="12" />
-      <line x1="12" y1="16" x2="12.01" y2="16" />
-    </svg>
-  )
-}
 

@@ -170,9 +170,9 @@ export function JobDetailClient({ job, success }: JobDetailClientProps) {
                                         <div className="p-3 bg-accent/10 rounded-2xl text-accent shrink-0">
                                             <MapPin size={22} strokeWidth={2.5} />
                                         </div>
-                                        <div className="flex-1">
+                                        <div className="flex-1 min-w-0">
                                             <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">สถานที่นำส่ง</p>
-                                            <p className="text-foreground font-bold text-base leading-snug italic">{job?.Dest_Location || job?.Route_Name}</p>
+                                            <p className="text-foreground font-bold text-base leading-snug italic break-words">{job?.Dest_Location || job?.Route_Name}</p>
                                         </div>
                                     </div>
                                     <div className="flex items-center justify-between p-6 rounded-[2rem] bg-emerald-500/5 border border-emerald-500/10">
@@ -180,13 +180,13 @@ export function JobDetailClient({ job, success }: JobDetailClientProps) {
                                             <div className="p-3 bg-emerald-500/20 rounded-2xl text-emerald-500 shrink-0">
                                                 <Phone size={22} strokeWidth={2.5} />
                                             </div>
-                                            <div className="truncate">
+                                            <div className="min-w-0">
                                                 <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-0.5">เบอร์โทรติดต่อ</p>
-                                                <p className="text-emerald-500 font-black text-lg italic tracking-widest">ติดต่อลูกค้า</p>
+                                                <p className="text-emerald-600 font-black text-lg italic tracking-widest truncate">ติดต่อลูกค้า</p>
                                             </div>
                                         </div>
-                                        <button className="px-8 h-14 bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl font-black text-sm uppercase tracking-widest shadow-lg shadow-emerald-500/20 active:scale-95 transition-all shrink-0">
-                                            โทรออก
+                                        <button className="px-6 h-14 bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl font-black text-sm uppercase tracking-widest shadow-lg shadow-emerald-500/20 active:scale-95 transition-all shrink-0">
+                                            โทร
                                         </button>
                                     </div>
                                 </div>
@@ -206,7 +206,7 @@ export function JobDetailClient({ job, success }: JobDetailClientProps) {
                                         </div>
                                         <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">น้ำหนักรวม</p>
                                         <div className="flex items-baseline gap-1">
-                                            <h5 className="text-3xl font-black text-foreground tracking-tighter italic leading-none">{job?.Weight_Kg?.toLocaleString() || '0.0'}</h5>
+                                            <h5 className="text-2xl font-black text-foreground tracking-tighter italic leading-none">{job?.Weight_Kg?.toLocaleString() || '0.0'}</h5>
                                             <span className="text-[10px] font-black text-muted-foreground">KG</span>
                                         </div>
                                     </div>
@@ -216,7 +216,7 @@ export function JobDetailClient({ job, success }: JobDetailClientProps) {
                                         </div>
                                         <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">ปริมาตรรวม</p>
                                         <div className="flex items-baseline gap-1">
-                                            <h5 className="text-3xl font-black text-foreground tracking-tighter italic leading-none">{job?.Volume_Cbm || '0.0'}</h5>
+                                            <h5 className="text-2xl font-black text-foreground tracking-tighter italic leading-none">{job?.Volume_Cbm || '0.0'}</h5>
                                             <span className="text-[10px] font-black text-muted-foreground">CBM</span>
                                         </div>
                                     </div>
@@ -225,15 +225,15 @@ export function JobDetailClient({ job, success }: JobDetailClientProps) {
                                 <div className="p-6 bg-card border border-border/10 rounded-[2rem]">
                                     <div className="flex items-center gap-2 mb-3">
                                         <ClipboardCheck size={18} className="text-primary" strokeWidth={2.5} />
-                                        <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">หมายเหตุ / คำแนะนำพิเศษ</p>
+                                        <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">หมายเหตุ / บันทึก</p>
                                     </div>
-                                    <p className="text-foreground font-bold leading-relaxed text-sm italic">{job?.Notes || "ไม่มีข้อมูลเพิ่มเติม"}</p>
+                                    <p className="text-foreground font-bold leading-relaxed text-sm italic break-words">{job?.Notes || "ไม่มีข้อมูลเพิ่มเติม"}</p>
                                 </div>
                             </div>
 
                             {/* Revenue Highlight Card */}
                             {job?.Show_Price_To_Driver && (
-                                <div className="relative group p-8 rounded-[3.5rem] bg-foreground border border-primary/30 overflow-hidden shadow-2xl shadow-foreground/20">
+                                <div className="relative group p-8 rounded-[3.5rem] bg-slate-900 border border-primary/30 overflow-hidden shadow-2xl shadow-foreground/20">
                                     <div className="absolute top-0 right-0 p-10 opacity-10 pointer-events-none group-hover:scale-125 transition-transform duration-1000">
                                         <TrendingUp size={120} className="text-primary" />
                                     </div>
@@ -242,12 +242,12 @@ export function JobDetailClient({ job, success }: JobDetailClientProps) {
                                             <div className="w-8 h-8 rounded-xl bg-primary/20 flex items-center justify-center">
                                                 <TrendingUp size={18} className="text-primary" strokeWidth={2.5} />
                                             </div>
-                                            <h4 className="text-xs font-black uppercase tracking-[0.2em] text-white italic">ค่าตอบแทนที่จะได้รับ</h4>
+                                            <h4 className="text-xs font-black uppercase tracking-[0.2em] text-white/70 italic">ค่าตอบแทนที่จะได้รับ</h4>
                                         </div>
                                         <div className="flex items-end gap-3">
-                                            <span className="text-6xl font-black text-white tracking-tighter leading-none italic">฿{(job?.Cost_Driver_Total || 0).toLocaleString()}</span>
-                                            <div className="px-3 py-1.5 bg-primary rounded-xl text-white font-black text-[10px] uppercase tracking-widest mb-2 shadow-lg shadow-primary/30 rotate-2">
-                                                อัตราพิเศษ
+                                            <span className="text-5xl font-black text-white tracking-tighter leading-none italic">฿{(job?.Cost_Driver_Total || 0).toLocaleString()}</span>
+                                            <div className="px-3 py-1.5 bg-primary rounded-xl text-white font-black text-[10px] uppercase tracking-widest mb-2 shadow-lg shadow-primary/30 rotate-2 shrink-0">
+                                                เรทพิเศษ
                                             </div>
                                         </div>
                                     </div>

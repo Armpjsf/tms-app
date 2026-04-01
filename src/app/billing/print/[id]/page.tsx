@@ -3,6 +3,7 @@ import { notFound } from "next/navigation"
 import { AutoPrint } from "@/components/utils/auto-print"
 import { PrintAction } from "./print-button"
 import { dictionaries, Language } from "@/lib/i18n/dictionaries"
+import { Phone, Mail, User, FileText, CreditCard, MessageSquare, PenTool } from "lucide-react"
 
 export const dynamic = 'force-dynamic'
 
@@ -11,13 +12,59 @@ type Props = {
     searchParams: Promise<{ lang?: string }>;
 }
 
+function ArabicNumberToText(Number: number) {
+    const numStr = Number.toFixed(2);
+    const parts = numStr.split('.');
+    const integerPart = parts[0];
+    const fractionalPart = parts[1];
+
+    const numbers = ['ศูนย์', 'หนึ่ง', 'สอง', 'สาม', 'สี่', 'ห้า', 'หก', 'เจ็ด', 'แปด', 'เก้า'];
+    const positions = ['', 'สิบ', 'ร้อย', 'พัน', 'หมื่น', 'แสน', 'ล้าน'];
+
+    function readNumber(num: string) {
+        if (num === '0' || num === '00') return '';
+        let result = '';
+        let len = num.length;
+        for (let i = 0; i < len; i++) {
+            const digit = parseInt(num.charAt(i), 10);
+            const pos = (len - i - 1) % 6;
+            const isMillion = (len - i - 1) >= 6 && pos === 0;
+            
+            if (digit !== 0) {
+                if (pos === 1 && digit === 1) {
+                    result += 'สิบ';
+                } else if (pos === 1 && digit === 2) {
+                    result += 'ยี่สิบ';
+                } else if (pos === 0 && digit === 1 && len > 1 && num.charAt(len-2) !== '0') {
+                    result += 'เอ็ด';
+                } else {
+                    result += numbers[digit] + positions[pos];
+                }
+            }
+            if (isMillion) {
+                result += 'ล้าน';
+            }
+        }
+        return result;
+    }
+
+    let text = readNumber(integerPart);
+    if (text === '') text = 'ศูนย์';
+    text += 'บาท';
+    if (fractionalPart === '00') {
+        text += 'ถ้วน';
+    } else {
+        text += readNumber(fractionalPart) + 'สตางค์';
+    }
+    return text;
+}
+
 export default async function BillingPrintPage(props: Props) {
     const params = await props.params;
     const searchParams = await props.searchParams;
     const { id } = params
     const lang = (searchParams?.lang as Language) || 'th'
     const dict = dictionaries[lang] || dictionaries.th
-    const t = dict.billing_note
     
     const data = await getBillingNoteByIdWithJobs(id)
 
@@ -26,16 +73,6 @@ export default async function BillingPrintPage(props: Props) {
     }
 
     const { note, jobs, company } = data
-
-    // CO2 Extraction Helper
-    const extractCO2 = (notes?: string | null): number => {
-        if (!notes) return 0
-        const match = notes.match(/\[ESG\] ปล่อย CO2: (\d+\.?\d*) kg/)
-        if (match) return parseFloat(match[1])
-        return 0
-    }
-
-    const calculateCO2 = (dist?: number | null) => (Number(dist) || 0) * 0.12
 
     // Calculate totals dynamically to ensure consistency with displayed items
     const subtotal = jobs.reduce((sum, job) => {
@@ -61,33 +98,30 @@ export default async function BillingPrintPage(props: Props) {
         return sum + base + extra
     }, 0)
 
-    const wht = subtotal * 0.01
+    const wht = subtotal * 0.01 // Assuming 1% WHT for transport
     const netTotal = subtotal - wht
-
-    const totalCO2 = jobs.reduce((sum, job) => {
-        const fromNote = extractCO2(job.Notes)
-        if (fromNote > 0) return sum + fromNote
-        return sum + calculateCO2(job.Est_Distance_KM)
-    }, 0)
 
     const localeStr = lang === 'th' ? 'th-TH' : 'en-US'
     const displayCompanyName = (lang === 'en' && company?.company_name_en) 
         ? company.company_name_en 
         : (company?.company_name || '')
 
+    const issueDate = new Date(note.Billing_Date);
+    const dueDate = new Date(issueDate.getTime() + (note.Credit_Days || 15) * 24 * 60 * 60 * 1000);
+
     return (
-        <div className="bg-white min-h-screen p-8 text-black print:p-0 print-container">
+        <div className="bg-white min-h-screen p-8 text-black print:p-0 print-container font-sans">
             <AutoPrint />
             <div className="fixed top-4 right-4 print:hidden flex gap-2">
                 <PrintAction />
             </div>
             
             {/* A4 Page Container */}
-            <div id="printable-content" className="max-w-[210mm] mx-auto bg-white p-4 print:w-full print:max-w-none print:p-0">
+            <div id="printable-content" className="max-w-[210mm] mx-auto bg-white p-6 print:w-full print:max-w-none print:p-0 text-sm">
                 
-                {/* Header with Logo */}
-                <div className="flex justify-between items-center mb-6 border-b-2 border-slate-800 pb-4">
-                    <div className="flex items-center gap-6">
+                {/* 1. Header Section */}
+                <div className="flex justify-between items-start mb-8">
+                    <div className="flex items-center gap-4">
                         {company?.logo_url ? (
                             // eslint-disable-next-line @next/next/no-img-element
                             <img 
@@ -97,66 +131,91 @@ export default async function BillingPrintPage(props: Props) {
                                 style={{ display: 'block' }}
                             />
                         ) : company?.company_name ? (
-                             <div className="h-16 w-16 bg-slate-100 flex items-center justify-center rounded text-xs font-bold text-muted-foreground uppercase text-center p-2">NO LOGO</div>
+                             <div className="h-16 px-4 bg-slate-900 text-white flex flex-col items-center justify-center font-black uppercase text-center rounded">
+                                <span className="text-xl leading-none tracking-widest text-red-500">D<span className="text-white">D</span></span>
+                                <span className="text-[8px] mt-1 opacity-80">TRANSPORT</span>
+                             </div>
                         ) : null}
-                        <div>
-                            <h1 className="text-3xl font-black text-slate-900 tracking-tight leading-none uppercase">{t.title}</h1>
-                            {lang === 'th' && <p className="text-sm font-bold text-slate-500 tracking-[0.2em] mt-1">BILLING NOTE</p>}
-                        </div>
                     </div>
                     <div className="text-right">
-                        <div className="bg-slate-100 text-slate-900 px-4 py-2 rounded text-xl font-bold inline-block border border-slate-200">
-                            # {note.Billing_Note_ID}
-                        </div>
-                        <div className="text-base font-bold text-slate-500 mt-2">
-                            {t.date}: {new Date(note.Billing_Date).toLocaleDateString(localeStr)}
-                        </div>
+                        <div className="text-sm text-slate-600 mb-1 font-bold">(ต้นฉบับ)</div>
+                        <div className="text-5xl font-bold text-blue-500 tracking-tight">ใบแจ้งหนี้</div>
                     </div>
                 </div>
 
-                {/* Addresses - Compact */}
-                <div className="grid grid-cols-2 gap-6 mb-8">
-                    <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                        <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-2">{t.bill_from}</h3>
-                        {company ? (
-                            <div className="text-base text-slate-700 leading-snug">
-                                <p className="font-bold text-slate-900 text-lg mb-1">{displayCompanyName}</p>
-                                <p className="text-base line-clamp-2 mb-2">{company.address}</p>
-                                <div className="pt-2 border-t border-slate-200 flex flex-wrap gap-x-4 gap-y-1 text-sm font-bold text-slate-600">
-                                    <span>{t.tax_id_label}: {company.tax_id}</span>
-                                    {company.phone && <span>{t.tel_label}: {company.phone}</span>}
+                {/* 2. Info Section */}
+                <div className="flex justify-between gap-6 mb-8 text-slate-800 text-[13px]">
+                    <div className="flex-1 space-y-4">
+                        {/* Seller */}
+                        <div className="grid grid-cols-[100px_1fr] gap-x-2 gap-y-1">
+                            <div className="font-bold">ผู้ขาย :</div>
+                            <div className="font-bold">{displayCompanyName}</div>
+                            <div className="font-bold">ที่อยู่ :</div>
+                            <div>{company?.address || '-'}</div>
+                            <div className="font-bold">เลขที่ภาษี :</div>
+                            <div className="flex justify-between">
+                                <span>{company?.tax_id || '-'}</span>
+                                <div className="flex gap-4 text-slate-500 ml-4">
+                                    <span className="flex items-center gap-1"><Phone size={12} /> -</span>
+                                    <span className="flex items-center gap-1"><Mail size={12} /> -</span>
+                                    <span className="flex items-center gap-1"><GlobeIcon size={12} /> -</span>
                                 </div>
                             </div>
-                        ) : (
-                            <p className="text-base font-bold text-red-500">({t.set_company_info})</p>
-                        )}
+                        </div>
+                        
+                        {/* Customer */}
+                        <div className="grid grid-cols-[100px_1fr] gap-x-2 gap-y-1 mt-6">
+                            <div className="font-bold">ลูกค้า :</div>
+                            <div className="font-bold">{note.Customer_Name}</div>
+                            <div className="font-bold">ที่อยู่ :</div>
+                            <div>{note.Customer_Address || '-'}</div>
+                            <div className="font-bold">เลขที่ภาษี :</div>
+                            <div className="flex justify-between">
+                                <span>{note.Customer_Tax_ID || '-'}</span>
+                                <div className="flex gap-4 text-slate-500 ml-4">
+                                    <span className="flex items-center gap-1"><Phone size={12} /> -</span>
+                                    <span className="flex items-center gap-1"><Mail size={12} /> -</span>
+                                    <span className="flex items-center gap-1"><GlobeIcon size={12} /> -</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                        <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-2">{t.bill_to}</h3>
-                        <div className="text-base text-slate-700 leading-snug">
-                            <p className="font-bold text-slate-900 text-lg mb-1">{note.Customer_Name}</p>
-                            {note.Customer_Address ? (
-                                <>
-                                    <p className="text-base line-clamp-2 mb-2">{note.Customer_Address}</p>
-                                    <div className="pt-2 border-t border-slate-200 font-bold text-sm text-slate-600">
-                                        {t.tax_id_label}: {note.Customer_Tax_ID || '-'}
-                                    </div>
-                                </>
-                            ) : (
-                                <span className="text-slate-400 text-base italic">{t.no_address}</span>
-                            )}
+                    
+                    <div className="w-[320px]">
+                        {/* Doc Info Box */}
+                        <div className="bg-slate-100/80 p-4 rounded-lg border border-slate-200 mb-4">
+                            <div className="grid grid-cols-[130px_1fr] gap-y-1.5">
+                                <div className="font-bold text-slate-700">เลขที่เอกสาร :</div>
+                                <div>{note.Billing_Note_ID}</div>
+                                <div className="font-bold text-slate-700">วันที่ออก :</div>
+                                <div>{issueDate.toLocaleDateString(localeStr)}</div>
+                                <div className="font-bold text-slate-700">เครดิต :</div>
+                                <div>{note.Credit_Days || '15'} วัน</div>
+                                <div className="font-bold text-slate-700">วันที่ครบกำหนด :</div>
+                                <div>{dueDate.toLocaleDateString(localeStr)}</div>
+                                <div className="font-bold text-slate-700">อ้างอิง :</div>
+                                <div>-</div>
+                            </div>
+                        </div>
+                        {/* Contact Info */}
+                        <div className="pl-4 border-l-2 border-slate-200">
+                            <div className="font-bold mb-2">ติดต่อกลับที่ :</div>
+                            <div className="flex items-center gap-3 mb-1.5"><User size={14} className="text-slate-600"/> {company?.contact_name || 'Admin'}</div>
+                            <div className="flex items-center gap-3 mb-1.5"><Phone size={14} className="text-slate-600"/> {company?.phone || '-'}</div>
+                            <div className="flex items-center gap-3"><Mail size={14} className="text-slate-600"/> {company?.email || '-'}</div>
                         </div>
                     </div>
                 </div>
 
-                {/* Table - Very Compact */}
+                {/* 3. Items Table (Kept original logic, styled to match sample) */}
                 <table className="w-full mb-8 border-collapse">
                     <thead>
-                        <tr className="bg-slate-800 text-white text-xs font-black uppercase tracking-widest">
-                            <th className="py-3 px-4 text-left rounded-tl">{t.no}</th>
-                            <th className="py-3 px-4 text-center">{t.date}</th>
-                            <th className="py-3 px-4 text-left">{t.description}</th>
-                            <th className="py-3 px-4 text-right rounded-tr">{t.amount}</th>
+                        <tr className="bg-[#eef2ff] text-slate-800 text-[13px] border-b-2 border-slate-300">
+                            <th className="py-2 px-3 text-left font-bold w-12">ลำดับ</th>
+                            <th className="py-2 px-3 text-left font-bold">คำอธิบาย (วันที่ดำเนินการ)</th>
+                            <th className="py-2 px-3 text-center font-bold w-24">จำนวน</th>
+                            <th className="py-2 px-3 text-right font-bold w-32">ราคา/หน่วย</th>
+                            <th className="py-2 px-3 text-right font-bold w-32">มูลค่าก่อนภาษี</th>
                         </tr>
                     </thead>
                     {jobs.map((job, index) => {
@@ -179,137 +238,155 @@ export default async function BillingPrintPage(props: Props) {
                             const chargeableExtras = extraCosts.filter(c => (Number(c.charge_cust) || 0) > 0)
 
                             return (
-                                <tbody key={job.Job_ID} className="text-base border-b border-slate-100 italic-none">
+                                <tbody key={job.Job_ID} className="text-[13px] border-b border-slate-100">
                                     <tr>
-                                        <td className="py-3 px-4 align-top font-bold text-slate-400">{index + 1}</td>
-                                        <td className="py-3 px-4 text-center align-top whitespace-nowrap text-slate-600">
-                                            {new Date(job.Plan_Date).toLocaleDateString(localeStr)}
+                                        <td className="py-3 px-3 align-top text-center">{index + 1}</td>
+                                        <td className="py-3 px-3 align-top">
+                                            <div className="font-bold">{lang === 'th' ? 'ค่าขนส่งสินค้า' : 'Freight Service'} (Job: {job.Job_ID})</div>
+                                            <div className="text-slate-600 mt-1">-- ดำเนินการวันที่ {new Date(job.Plan_Date).toLocaleDateString(localeStr)} ({job.Route_Name})</div>
                                         </td>
-                                        <td className="py-3 px-4">
-                                            <div className="font-bold text-slate-900">{lang === 'th' ? 'ค่าขนส่ง' : 'Freight Service'} (Job: {job.Job_ID})</div>
-                                            <div className="text-slate-500 text-sm mt-0.5">{job.Route_Name}</div>
+                                        <td className="py-3 px-3 text-center align-top">1.00</td>
+                                        <td className="py-3 px-3 text-right align-top">
+                                            {job.Price_Cust_Total?.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                         </td>
-                                        <td className="py-3 px-4 text-right align-top font-black text-slate-900">
+                                        <td className="py-3 px-3 text-right align-top">
                                             {job.Price_Cust_Total?.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                         </td>
                                     </tr>
                                     {chargeableExtras.map((extra, i) => (
-                                        <tr key={`${job.Job_ID}-extra-${i}`} className="text-slate-500 bg-slate-50/30 text-sm">
-                                            <td className="py-1.5 px-4" colSpan={2}></td>
-                                            <td className="py-1.5 px-4 flex items-center gap-2">
-                                                <span className="text-slate-300">↳</span>
-                                                <span>{extra.type}</span>
+                                        <tr key={`${job.Job_ID}-extra-${i}`} className="text-slate-600 text-[13px]">
+                                            <td className="py-1 px-3"></td>
+                                            <td className="py-1 px-3 pl-6">
+                                                -- {extra.type}
                                             </td>
-                                            <td className="py-1.5 px-4 text-right font-bold">{Number(extra.charge_cust).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                                            <td className="py-1 px-3 text-center">1.00</td>
+                                            <td className="py-1 px-3 text-right">{Number(extra.charge_cust).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                                            <td className="py-1 px-3 text-right">{Number(extra.charge_cust).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
                                         </tr>
                                     ))}
+                                    {chargeableExtras.length > 0 && <tr><td colSpan={5} className="h-2"></td></tr>}
                                 </tbody>
                             )
                         })}
                 </table>
 
-                {/* ESG Section (NEW) */}
-                <div className="mb-8 p-6 rounded-2xl bg-emerald-50 border-2 border-emerald-100/50 flex items-center justify-between gap-8 relative overflow-hidden group page-break-avoid">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-200/20 blur-3xl rounded-full -mr-16 -mt-16" />
-                    <div className="flex items-center gap-6 relative z-10">
-                        <div className="w-14 h-14 bg-white rounded-2xl shadow-sm border border-emerald-100 flex items-center justify-center text-emerald-600">
-                            <span className="text-2xl font-black">CO₂</span>
-                        </div>
-                        <div>
-                            <h4 className="text-sm font-black text-emerald-800 uppercase tracking-widest italic mb-1">{t.co2_summary_title}</h4>
-                            <p className="text-xs text-emerald-600 font-bold uppercase tracking-widest opacity-70">LogisPro ESG Protocol v2.5</p>
-                        </div>
+                {/* 4. Summary Section */}
+                <div className="border-t border-slate-200 pt-4 mt-8 flex gap-4 text-[13px]">
+                    <div className="w-8 flex justify-center mt-0.5">
+                        <FileText size={18} className="text-slate-800" />
                     </div>
-                    <div className="text-right relative z-10">
-                        <div className="text-3xl font-black text-emerald-900 leading-none mb-1">
-                            {totalCO2.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                            <span className="text-sm font-bold text-emerald-600/60 uppercase ml-2 tracking-widest">{t.co2_unit}</span>
+                    <div className="font-bold w-20">สรุป</div>
+                    <div className="flex-1">
+                        <div className="flex justify-between items-center mb-3">
+                            <div className="font-bold">มูลค่าไม่มีหรือยกเว้นภาษี</div>
+                            <div className="pr-4">{subtotal.toLocaleString(undefined, { minimumFractionDigits: 2 })} บาท</div>
                         </div>
-                        <p className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.3em]">{t.co2_total_label}</p>
-                    </div>
-                </div>
-
-                {/* Totals and Remarks - Side by Side */}
-                <div className="flex justify-between items-start gap-12 mb-8 break-inside-avoid">
-                    <div className="flex-1 bg-slate-50 p-5 rounded-xl border border-slate-200">
-                        <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 italic">{t.remarks}</h4>
-                        <div className="text-sm text-slate-700 leading-relaxed space-y-2">
-                            <p className="flex items-start gap-2">
-                                <span className="text-primary font-bold">•</span>
-                                {t.payment_method}
-                            </p>
-                            {company?.bank_name && (
-                                <div className="mt-4 pt-4 border-t border-slate-200">
-                                    <div className="flex justify-between flex-wrap gap-2">
-                                        <div>
-                                            <p className="font-bold text-slate-900">{t.bank}: {company.bank_name}</p>
-                                            <p className="text-xs text-slate-500 uppercase tracking-widest mt-0.5">{t.account_name}: {company.bank_account_name}</p>
-                                        </div>
-                                        <div className="text-right">
-                                            <p className="text-lg font-black text-slate-900 tracking-wider">
-                                                {company.bank_account_no}
-                                            </p>
-                                            <p className="text-[10px] text-slate-400 uppercase font-black tracking-widest">Digital Settlement ID</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
+                        <div className="flex justify-between items-center mb-6">
+                            <div className="font-bold">จำนวนเงินทั้งสิ้น</div>
+                            <div className="text-slate-600 flex-1 text-center italic">{ArabicNumberToText(subtotal)}</div>
+                            <div className="bg-[#eef2ff] px-4 py-3 rounded w-72 flex justify-between items-center">
+                                <span className="font-bold">จำนวนเงินทั้งสิ้น</span>
+                                <span className="text-xl font-bold text-blue-600 tracking-tight">{subtotal.toLocaleString(undefined, { minimumFractionDigits: 2 })} <span className="text-sm text-slate-800 font-normal">บาท</span></span>
+                            </div>
                         </div>
-                    </div>
-
-                    <div className="w-72 space-y-2">
-                        <div className="flex justify-between text-base font-bold text-slate-500 uppercase tracking-widest">
-                            <span className="text-xs">{t.subtotal}</span>
-                            <span className="text-slate-900">{subtotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                        <div className="flex justify-end mb-2">
+                            <div className="w-72 flex justify-between pr-4">
+                                <span className="font-bold">จำนวนเงินที่หัก ณ ที่จ่าย (1%)</span>
+                                <span>{wht.toLocaleString(undefined, { minimumFractionDigits: 2 })} บาท</span>
+                            </div>
                         </div>
-                        
-                        <div className="flex justify-between text-base font-bold text-rose-500 uppercase tracking-widest border-t border-dashed border-slate-200 pt-2">
-                            <span className="text-[10px]">{t.wht}</span>
-                            <span>- {wht.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
-                        </div>
-
-                        <div className="flex justify-between items-end text-slate-900 border-t-2 border-slate-900 pt-4 mt-2">
-                            <span className="text-xs font-black uppercase tracking-[0.2em] text-slate-400 mb-1">{t.net_total_label}</span>
-                            <div className="text-right">
-                                <span className="text-2xl font-black italic-none leading-none">
-                                    <span className="text-sm font-bold mr-1 text-slate-400 italic">฿</span>
-                                    {netTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                </span>
+                        <div className="flex justify-end">
+                            <div className="w-72 flex justify-between pr-4">
+                                <span className="font-bold">จำนวนเงินที่ชำระ</span>
+                                <span className="font-bold">{netTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })} บาท</span>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                {/* Signatures Area - Compact */}
-                <div className="grid grid-cols-2 gap-12 mt-12 pt-12 border-t border-slate-100 page-break-avoid">
-                    <div className="text-center">
-                        <div className="h-16 border-b border-dashed border-slate-300 mb-3 mx-8"></div>
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-1">
-                            {lang === 'th' ? 'Authorized Signature' : 'ENTITY VERIFIER'}
-                        </p>
-                        <p className="text-base font-bold text-slate-700 uppercase tracking-widest italic">{t.authorized_signature}</p>
+                {/* 5. Payment Section */}
+                <div className="border-t border-slate-200 pt-4 mt-8 flex gap-4 text-[13px] page-break-avoid">
+                    <div className="w-8 flex justify-center mt-0.5">
+                        <CreditCard size={18} className="text-slate-800" />
                     </div>
-                    <div className="text-center">
-                        <div className="h-16 border-b border-dashed border-slate-300 mb-3 mx-8"></div>
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-1">
-                            {lang === 'th' ? 'Receiver Signature' : 'CLIENT ACKNOWLEDGMENT'}
-                        </p>
-                        <p className="text-base font-bold text-slate-700 uppercase tracking-widest italic">{t.receiver_signature}</p>
+                    <div className="font-bold w-20">ชำระเงิน</div>
+                    <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 bg-purple-600 rounded-full flex items-center justify-center text-white font-bold text-xs border-2 border-purple-200 shadow-sm">
+                            SCB
+                        </div>
+                        <div>
+                            <div className="font-bold text-slate-800">{company?.bank_name || 'ธนาคารไทยพาณิชย์'}</div>
+                            <div className="font-bold text-slate-800 mt-0.5">ออมทรัพย์ {company?.bank_account_no || '-'}</div>
+                            <div className="text-slate-600 mt-0.5">{company?.bank_account_name || '-'}</div>
+                        </div>
                     </div>
                 </div>
 
-                {/* Secure Footer */}
-                <div className="mt-16 text-center opacity-30 flex flex-col items-center gap-2 print:hidden">
-                    <div className="h-px w-20 bg-slate-300 mb-2"></div>
-                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.5em]">LogisPro Fiscal Protocol v4.2</p>
-                    <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest italic">Digitally encrypted & verified cloud document</p>
+                {/* 6. Notes Section */}
+                <div className="border-t border-slate-200 pt-4 mt-8 flex gap-4 text-[13px] page-break-avoid">
+                    <div className="w-8 flex justify-center mt-0.5">
+                        <MessageSquare size={18} className="text-slate-800" />
+                    </div>
+                    <div className="font-bold w-20">หมายเหตุ</div>
+                    <div className="text-slate-700 whitespace-pre-wrap flex-1 leading-relaxed">
+                        {note.Remarks || company?.invoice_notes || '"DD TRANSPORT ขอแจ้งการปรับเปลี่ยนสัญลักษณ์องค์กรใหม่ (LOGO)\nเพื่อให้มีความทันสมัย และเพื่อการสื่อสารที่ชัดเจนยิ่งขึ้น"\nตั้งแต่วันที่ 15 สิงหาคม 2567 เป็นต้นไป จึงขอเรียนแจ้งลูกค้าทุกท่านมา ณ โอกาสนี้'}
+                    </div>
                 </div>
+
+                {/* 7. Signatures Section */}
+                <div className="border-t border-slate-200 pt-4 mt-8 flex gap-4 text-[13px] page-break-avoid">
+                    <div className="w-8 flex justify-center mt-0.5">
+                        <PenTool size={18} className="text-slate-800" />
+                    </div>
+                    <div className="font-bold w-20">รับรอง</div>
+                    <div className="flex-1 flex gap-6">
+                        <div className="w-24 shrink-0 flex flex-col items-center">
+                            <div className="text-[10px] text-slate-500 mb-1 text-center font-bold">สแกนเพื่อเปิดเว็บไซต์</div>
+                            {/* Placeholder for QR Code */}
+                            <div className="w-20 h-20 bg-slate-100 flex items-center justify-center text-[10px] text-center p-2 border border-slate-200">
+                                <img src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent('https://ddservicegroup.com')}`} alt="QR Code" className="w-full h-full object-cover" />
+                            </div>
+                        </div>
+                        <div className="flex-1 grid grid-cols-5 gap-3 text-center text-xs items-end">
+                            <div>
+                                <div className="h-16 border-b border-dashed border-slate-400 mb-2 mx-2"></div>
+                                <div className="font-bold mb-1">ผู้ออกเอกสาร (ผู้ขาย)</div>
+                                <div className="text-slate-600">{company?.contact_name || '-'}</div>
+                                <div className="text-slate-500 mt-0.5">{issueDate.toLocaleDateString(localeStr)}</div>
+                            </div>
+                            <div>
+                                <div className="h-16 border-b border-dashed border-slate-400 mb-2 mx-2"></div>
+                                <div className="font-bold mb-1">ผู้อนุมัติเอกสาร (ผู้ขาย)</div>
+                                <div className="text-slate-600">{company?.contact_name || '-'}</div>
+                                <div className="text-slate-500 mt-0.5">{issueDate.toLocaleDateString(localeStr)}</div>
+                            </div>
+                            <div>
+                                <div className="h-16 flex items-center justify-center mb-2">
+                                    <div className="w-16 h-16 rounded-full border-2 border-red-500 text-red-500 flex items-center justify-center text-[8px] font-bold p-1 opacity-40 rotate-[-15deg]">
+                                        COMPANY<br/>STAMP
+                                    </div>
+                                </div>
+                                <div className="font-bold">ตราประทับ (ผู้ขาย)</div>
+                            </div>
+                            <div>
+                                <div className="h-16 border-b border-dashed border-slate-400 mb-2 mx-2"></div>
+                                <div className="font-bold mb-1">ผู้รับเอกสาร (ลูกค้า)</div>
+                                <div className="text-slate-600 line-clamp-1 px-1">{note.Customer_Name}</div>
+                            </div>
+                            <div>
+                                <div className="h-16 border border-dashed border-slate-300 mb-2 bg-slate-50/50"></div>
+                                <div className="font-bold">ตราประทับ (ลูกค้า)</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
 
             <style type="text/css" media="print">{`
                 @page { 
                     size: A4; 
-                    margin: 5mm 10mm; 
+                    margin: 10mm; 
                 }
                 body { 
                     visibility: hidden; 
@@ -335,13 +412,30 @@ export default async function BillingPrintPage(props: Props) {
                     display: block !important;
                     visibility: visible !important;
                     opacity: 1 !important;
-                    height: 18mm !important; 
-                    width: auto !important;
-                    max-width: 65mm !important;
-                    object-fit: contain !important;
                 }
-                .italic-none { font-style: normal !important; }
             `}</style>
         </div>
     )
 }
+
+function GlobeIcon(props: any) {
+  return (
+    <svg
+      {...props}
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <circle cx="12" cy="12" r="10" />
+      <line x1="2" y1="12" x2="22" y2="12" />
+      <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+    </svg>
+  )
+}
+

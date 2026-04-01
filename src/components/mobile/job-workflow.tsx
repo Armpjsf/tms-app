@@ -47,20 +47,20 @@ export function JobWorkflow({ currentStatus, className }: JobWorkflowProps) {
           const StepIcon = step.icon
 
           return (
-            <div key={step.status} className="flex flex-col items-center relative z-10 w-1/5">
+            <div key={step.status} className="flex flex-col items-center relative z-10 w-1/5 px-1">
               <div 
                 className={cn(
                   "w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-500 border-2 shadow-2xl",
                   isCompleted ? "bg-primary border-primary text-white" : 
-                  isActive ? "bg-secondary border-primary/50 text-primary ring-8 ring-primary/10 animate-pulse" : 
+                  isActive ? "bg-card border-primary/50 text-primary ring-8 ring-primary/5 animate-pulse" : 
                   "bg-card border-border/5 text-muted-foreground"
                 )}
               >
                 <StepIcon size={20} className={isActive ? "animate-bounce" : ""} />
               </div>
               <p className={cn(
-                "mt-3 text-[10px] font-bold font-black text-center uppercase tracking-widest transition-colors duration-500",
-                isCompleted || isActive ? "text-white" : "text-muted-foreground"
+                "mt-3 text-[9px] font-black text-center uppercase tracking-wider transition-colors duration-500 break-words leading-tight",
+                isCompleted || isActive ? "text-primary" : "text-muted-foreground"
               )}>
                 {step.label}
               </p>
@@ -71,13 +71,16 @@ export function JobWorkflow({ currentStatus, className }: JobWorkflowProps) {
       
       {/* Tactical Guidance Overlay */}
       {currentIndex < STEPS.length - 1 && normalizedStatus !== 'Completed' && (
-        <div className="mt-10 p-6 glass-panel border-primary/20 rounded-[2rem] flex items-start gap-5 shadow-[0_20px_50px_rgba(0,0,0,0.3)] animate-in slide-in-from-bottom-2 duration-500 delay-300">
-          <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center flex-shrink-0">
-             <Clock className="text-primary animate-spin-slow" size={18} />
+        <div className="mt-10 p-6 bg-card border-2 border-primary/10 rounded-[2.5rem] flex items-start gap-5 shadow-xl relative overflow-hidden">
+          <div className="absolute top-0 right-0 p-4 opacity-5">
+             <Clock size={80} />
           </div>
-          <div className="space-y-1">
-            <p className="text-base font-bold font-black text-primary uppercase tracking-[0.3em]">ขั้นตอนปัจจุบัน:</p>
-            <p className="text-lg font-bold text-muted-foreground font-bold leading-relaxed">
+          <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center flex-shrink-0 text-primary">
+             <Clock className="animate-spin-slow" size={22} strokeWidth={2.5} />
+          </div>
+          <div className="space-y-2 relative z-10">
+            <p className="text-xs font-black text-primary uppercase tracking-[0.3em]">ขั้นตอนปัจจุบัน</p>
+            <p className="text-base font-bold text-foreground leading-relaxed">
                {currentIndex === -1 ? 'ตรวจพบงานใหม่ กรุณากด "รับงาน" เพื่อเริ่มเข้าสู่ระบบการขนส่ง' : 
                 currentIndex === 0 ? 'ยืนยันรับงานเรียบร้อย กรุณาเดินทางไปยังจุดรับสินค้าและแจ้งระบบเมื่อถึงที่หมาย' :
                 currentIndex === 1 ? 'ถึงจุดรับสินค้าแล้ว กรุณาตรวจสอบความถูกต้อง ถ่ายรูปสินค้า และกดออกเดินทาง' :

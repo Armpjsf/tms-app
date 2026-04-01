@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { getNotifications } from '@/lib/supabase/notifications'
+import { getNotifications, markAllNotificationsAsRead } from '@/lib/supabase/notifications'
 import { createClient } from '@/utils/supabase/server'
 import { getUserBranchId, isAdmin } from '@/lib/permissions'
 
@@ -26,6 +26,16 @@ export async function GET() {
     })
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error'
+    return NextResponse.json({ error: message }, { status: 500 })
+  }
+}
+
+export async function POST() {
+  try {
+    const result = await markAllNotificationsAsRead()
+    return NextResponse.json(result)
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Unknown error'
     return NextResponse.json({ error: message }, { status: 500 })
   }
 }

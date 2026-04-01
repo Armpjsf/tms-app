@@ -30,21 +30,21 @@ export default function BackupSettingsPage() {
         a.click()
         document.body.removeChild(a)
         URL.revokeObjectURL(url)
-        toast.success(`Data extraction completed for ${table}`)
+        toast.success(`สำรองข้อมูลตาราง ${table} สำเร็จแล้ว`)
     } catch (error) {
-        toast.error("Extraction failed: " + (error instanceof Error ? error.message : "Unknown error"))
+        toast.error("การสำรองข้อมูลล้มเหลว: " + (error instanceof Error ? error.message : "Unknown error"))
     } finally {
         setLoading(false)
     }
   }
 
   const backupItems = [
-    { label: "Jobs Mission Log", table: "Jobs_Main", desc: "Primary transport operations & job telemetry" },
-    { label: "Operator Registry", table: "Master_Users", desc: "Field personnel credentials & performance history" }, // Changed from Master_Drivers to Master_Users as it's more relevant for "Operator Registry"
-    { label: "Asset Fleet Data", table: "Master_Vehicles", desc: "Global vehicle inventory & maintenance specs" },
-    { label: "Energy Consumption", table: "Fuel_Logs", desc: "Fuel logistics & efficiency monitoring data" },
-    { label: "Maintenance Intel", table: "Repair_Tickets", desc: "Repair history & technical equipment status" },
-    { label: "Entity Database", table: "Master_Customers", desc: "Partner organization & customer identity nexus" },
+    { label: "บันทึกงานขนส่ง", table: "Jobs_Main", desc: "ข้อมูลการดำเนินงานหลักและประวัติงานวิ่งทั้งหมด" },
+    { label: "ทะเบียนผู้ใช้งาน", table: "Master_Users", desc: "ข้อมูลบัญชีผู้ใช้ สิทธิ์ และประวัติพนักงาน" },
+    { label: "คลังข้อมูลยานพาหนะ", table: "Master_Vehicles", desc: "ข้อมูลรถ ทะเบียน และข้อกำหนดทางเทคนิค" },
+    { label: "บันทึกการใช้พลังงาน", table: "Fuel_Logs", desc: "ข้อมูลการเติมน้ำมันและสถิติประสิทธิภาพเชื้อเพลิง" },
+    { label: "ข้อมูลซ่อมบำรุง", table: "Repair_Tickets", desc: "ประวัติการซ่อมและสถานะทางเทคนิคของอุปกรณ์" },
+    { label: "ฐานข้อมูลลูกค้า", table: "Master_Customers", desc: "ข้อมูลบริษัทคู่ค้าและรายละเอียดผู้ว่าจ้าง" },
   ]
 
   return (
@@ -65,7 +65,7 @@ export default function BackupSettingsPage() {
                     </div>
                     <div>
                         <h1 className="text-5xl font-black text-foreground tracking-widest uppercase leading-none italic premium-text-gradient">
-                            Data Vault
+                            คลังข้อมูลระบบ
                         </h1>
                         <p className="text-base font-bold font-black text-emerald-500 uppercase tracking-[0.2em] mt-2 opacity-80 italic italic">{t('settings.items.vault_desc')}</p>
                     </div>
@@ -75,11 +75,11 @@ export default function BackupSettingsPage() {
             <div className="flex flex-col items-end gap-6 relative z-10">
                 <div className="bg-muted/50 border border-border/10 px-6 py-3 rounded-2xl flex items-center gap-3 backdrop-blur-md">
                     <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_10px_rgba(16,185,129,1)]" />
-                    <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest italic">VAULT_STATUS: SECURE_STANDBY</span>
+                    <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest italic">สถานะคลัง: พร้อมใช้งาน</span>
                 </div>
                 <div className="flex items-center gap-4 bg-emerald-500/10 p-4 rounded-2xl border border-emerald-500/20">
                    <ShieldCheck className="text-emerald-500" size={18} />
-                   <span className="text-base font-bold font-black text-foreground uppercase tracking-[0.1em] italic">Encrypted Payload Readiness</span>
+                   <span className="text-base font-bold font-black text-foreground uppercase tracking-[0.1em] italic">ระบบเข้ารหัสข้อมูลเปิดทำงาน</span>
                 </div>
             </div>
         </div>
@@ -94,7 +94,7 @@ export default function BackupSettingsPage() {
                           </div>
                           <div className="flex items-center gap-2 opacity-20 group-hover/vault:opacity-100 transition-opacity">
                              <Zap size={14} className="text-emerald-500" />
-                             <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest italic">READY_FOR_EXPORT</span>
+                             <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest italic">พร้อมส่งออก</span>
                           </div>
                       </div>
                       
@@ -107,8 +107,8 @@ export default function BackupSettingsPage() {
 
                       <div className="space-y-4 pt-4">
                            <div className="flex items-center justify-between text-base font-bold font-black uppercase tracking-[0.1em] text-muted-foreground italic">
-                                <span>PROTOCOL: JSON_UPLINK</span>
-                                <span>STATUS: NOMINAL</span>
+                                <span>โปรโตคอล: JSON_EXPORT</span>
+                                <span>สถานะ: ปกติ</span>
                            </div>
                            <PremiumButton 
                               variant="outline" 
@@ -117,7 +117,7 @@ export default function BackupSettingsPage() {
                               disabled={loading}
                            >
                               {loading ? <Loader2 size={18} className="animate-spin" /> : <Download size={18} />}
-                              {t('common.execute_scan') || 'INITIATE_EXTRACTION'}
+                              ดึงข้อมูลสำรอง
                            </PremiumButton>
                       </div>
                   </div>
@@ -132,18 +132,17 @@ export default function BackupSettingsPage() {
                 <HardDrive size={32} />
             </div>
             <div className="space-y-4 text-center md:text-left flex-1">
-                <p className="text-xl font-black text-emerald-500 italic uppercase tracking-widest">COLD_STORAGE_ADVISORY</p>
+                <p className="text-xl font-black text-emerald-500 italic uppercase tracking-widest">ข้อแนะนำการสำรองข้อมูล</p>
                 <p className="text-xl font-bold text-muted-foreground leading-relaxed uppercase tracking-wider italic">
-                    Backups are captured as high-parity JSON snapshots. For disaster recovery or system migration, ensure payload integrity before deployment to secondary nodes. <br />
-                    Scheduled automated syncs occur every orbital cycle at 00:00 UTC.
+                    ข้อมูลสำรองจะถูกบันทึกในรูปแบบไฟล์ JSON ที่มีความแม่นยำสูง สำหรับการกู้คืนข้อมูลหรือย้ายระบบ กรุณาตรวจสอบความครบถ้วนของข้อมูลก่อนนำไปใช้งานในเครื่องสำรอง <br />
+                    ระบบจะทำการซิงค์ข้อมูลอัตโนมัติทุกๆ รอบวันเวลา 00:00 UTC
                 </p>
             </div>
             <PremiumButton variant="outline" className="h-14 px-10 rounded-2xl border-border/10 text-foreground gap-3 uppercase font-black text-base font-bold tracking-[0.1em] ml-auto italic">
-                <Share2 size={18} /> SYNC_EXTERNAL_VAULT
+                <Share2 size={18} /> ซิงค์ข้อมูลภายนอก
             </PremiumButton>
         </div>
       </div>
     </DashboardLayout>
   )
 }
-
