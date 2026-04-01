@@ -1,7 +1,7 @@
 import { getDriverSession } from "@/lib/actions/auth-actions"
 import { redirect } from "next/navigation"
 import { MobileHeader } from "@/components/mobile/mobile-header"
-import { MapPin, Clock, Search, Truck, ChevronRight } from "lucide-react"
+import { MapPin, Clock, Search, Truck, ChevronRight, ArrowRight, Calendar } from "lucide-react"
 import Link from "next/link"
 import { getDriverJobs } from "@/lib/supabase/jobs"
 import { MobileJobFilter } from "@/components/mobile/job-filter"
@@ -24,91 +24,116 @@ export default async function DriverJobsPage(props: Props) {
 
   return (
     <div className="min-h-screen bg-background pb-32 pt-24 px-6 relative overflow-hidden">
-       {/* Background Decor */}
-      <div className="absolute top-0 right-1/4 w-[500px] h-[500px] bg-primary/10 rounded-full blur-[120px] -translate-y-1/2 pointer-events-none" />
+       {/* High-end Background Decor */}
+      <div className="absolute top-0 right-[-10%] w-[600px] h-[600px] bg-primary/5 rounded-full blur-[140px] -translate-y-1/2 pointer-events-none" />
+      <div className="absolute bottom-0 left-[-10%] w-[400px] h-[400px] bg-accent/5 rounded-full blur-[120px] pointer-events-none" />
       
-      <MobileHeader title="รายการงาน" rightElement={<MobileJobFilter />} />
+      <MobileHeader title="Management" rightElement={<MobileJobFilter />} />
       
-      <div className="relative z-10 space-y-6">
-        {/* Active Title Section */}
+      <div className="relative z-10 space-y-8">
+        {/* Header Section */}
         <div className="flex justify-between items-end px-1">
             <div className="space-y-1">
-                <h2 className="text-4xl font-black text-foreground tracking-tighter uppercase font-display">งานของฉัน</h2>
-                <p className="text-muted-foreground text-base font-bold font-black uppercase tracking-[0.3em]">งานที่ได้รับมอบหมายทั้งหมด</p>
+                <p className="text-accent text-xs font-black uppercase tracking-[0.3em]">LogisPro Fleet</p>
+                <h2 className="text-4xl font-black text-foreground tracking-tighter uppercase italic">รายการงาน</h2>
             </div>
-            <div className="text-right">
-                <div className="text-2xl font-black text-primary leading-none">{jobs.length}</div>
-                <div className="text-base font-bold font-black text-primary uppercase tracking-widest">รายการ</div>
+            <div className="text-right pb-1">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-primary/10 rounded-full border border-primary/20">
+                    <span className="text-primary font-black text-xl leading-none">{jobs.length}</span>
+                    <span className="text-[10px] font-black text-primary uppercase tracking-widest">งาน</span>
+                </div>
             </div>
         </div>
 
-        {/* Search Bar - Aesthetic Placeholder */}
+        {/* Search Bar - Premium Style */}
         <div className="relative group">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
+            <div className="absolute left-5 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors">
+                <Search size={20} />
+            </div>
             <input 
                 type="text" 
                 placeholder="ค้นหาเลขงาน, ชื่อลูกค้า..." 
-                className="w-full h-14 pl-12 pr-6 rounded-2xl bg-muted/50 border border-border/10 text-foreground placeholder:text-muted-foreground outline-none focus:ring-1 focus:ring-primary/40 transition-all font-bold text-xl"
+                className="w-full h-16 pl-14 pr-6 rounded-3xl bg-card/50 backdrop-blur-xl border border-border/10 text-foreground placeholder:text-muted-foreground/60 outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/30 transition-all font-bold text-lg shadow-sm"
             />
         </div>
 
         {/* Job Grid / List */}
         <div className="space-y-6">
             {jobs.length === 0 ? (
-                <div className="text-center py-24 glass-panel rounded-[3rem] border-dashed border-border/10">
-                    <div className="w-16 h-16 bg-muted/50 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <Truck className="text-muted-foreground" size={32} />
+                <div className="text-center py-24 glass-panel rounded-[3rem] border-dashed border-border/20 bg-card/20">
+                    <div className="w-20 h-20 bg-muted/30 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <Truck className="text-muted-foreground/40" size={40} />
                     </div>
-                    <p className="text-muted-foreground font-bold uppercase tracking-widest text-base font-bold">ยังไม่มีงานในรายการ</p>
+                    <p className="text-muted-foreground font-black uppercase tracking-widest text-sm">ไม่พบรายการงานในขณะนี้</p>
                 </div>
             ) : jobs.map((job) => (
-            <Link href={`/mobile/jobs/${job.Job_ID}`} key={job.Job_ID}>
-                <div className="glass-panel p-6 rounded-[2.5rem] active:scale-[0.98] transition-all hover:border-primary/30 group relative overflow-hidden">
-                    <div className="absolute top-0 right-0 p-6 text-primary/5 pointer-events-none group-hover:scale-125 transition-transform duration-700">
-                        <Truck size={60} />
+            <Link href={`/mobile/jobs/${job.Job_ID}`} key={job.Job_ID} className="block group">
+                <div className="glass-panel p-7 rounded-[2.5rem] active:scale-[0.98] transition-all hover:border-primary/40 relative overflow-hidden shadow-lg shadow-black/5 bg-gradient-to-br from-card to-transparent">
+                    {/* Background Icon Watermark */}
+                    <div className="absolute top-0 right-0 p-8 text-primary/5 pointer-events-none group-hover:scale-110 transition-transform duration-700">
+                        <Truck size={80} strokeWidth={1} />
                     </div>
                     
-                    <div className="flex justify-between items-start mb-6">
-                        <div className="flex items-center gap-4">
-                            <div className="w-14 h-14 rounded-2xl bg-muted/50 border border-border/10 flex items-center justify-center shadow-lg group-hover:bg-primary/20 transition-colors">
-                                <span className="text-primary font-black text-lg font-bold">#{job.Job_ID.slice(-4)}</span>
+                    {/* Top Row: Job ID & Status */}
+                    <div className="flex justify-between items-start mb-6 relative z-10">
+                        <div className="space-y-2">
+                            <div className="inline-flex items-center gap-2 px-3 py-1 bg-muted/50 rounded-xl border border-border/10">
+                                <span className="text-primary font-black text-sm italic">#{job.Job_ID.slice(-8)}</span>
                             </div>
-                            <div className="space-y-1">
-                                <h3 className="text-foreground font-black text-lg tracking-tighter line-clamp-1">{job.Customer_Name}</h3>
-                                <div className={cn(
-                                    "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-base font-bold font-black uppercase tracking-widest border",
-                                    job.Job_Status === 'Completed' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 
-                                    job.Job_Status === 'In Progress' ? 'bg-primary/10 text-primary border-primary/20' :
-                                    'bg-muted/50 text-muted-foreground border-border/5'
-                                )}>
-                                    <div className={cn("w-1.5 h-1.5 rounded-full", 
-                                        job.Job_Status === 'Completed' ? 'bg-emerald-500' : 
-                                        job.Job_Status === 'In Progress' ? 'bg-primary animate-pulse' : 
-                                        'bg-slate-500'
-                                    )} />
-                                    {job.Job_Status === 'Completed' ? 'ส่งสำเร็จ' : 
-                                     job.Job_Status === 'In Progress' ? 'กำลังไปส่ง' : 
-                                     'รอเริ่มงาน'}
+                            <h3 className="text-foreground font-black text-xl tracking-tight line-clamp-1 leading-none uppercase italic">
+                                {job.Customer_Name}
+                            </h3>
+                        </div>
+                        <div className={cn(
+                            "px-4 py-1.5 rounded-2xl text-[10px] font-black uppercase tracking-widest border shadow-sm",
+                            job.Job_Status === 'Completed' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' : 
+                            ['In Progress', 'In Transit', 'Arrived'].includes(job.Job_Status) ? 'bg-primary/10 text-primary border-primary/20 animate-pulse' :
+                            'bg-muted/50 text-muted-foreground border-border/10'
+                        )}>
+                            {job.Job_Status === 'Completed' ? 'ส่งสำเร็จ' : 
+                             ['In Progress', 'In Transit', 'Arrived'].includes(job.Job_Status) ? 'กำลังไปส่ง' : 
+                             'รอเริ่มงาน'}
+                        </div>
+                    </div>
+
+                    {/* Route Details */}
+                    <div className="grid grid-cols-1 gap-5 mb-6 relative z-10">
+                        <div className="flex items-center gap-4">
+                            <div className="w-10 h-10 rounded-2xl bg-muted/50 flex flex-col items-center justify-center text-muted-foreground shrink-0 border border-border/10">
+                                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 mb-1" />
+                                <div className="w-0.5 h-3 bg-muted-foreground/20" />
+                                <div className="w-1.5 h-1.5 rounded-full bg-accent mt-1" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">เส้นทางขนส่ง</p>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-foreground font-bold text-sm truncate">{job.Origin_Location || "คลังสินค้า"}</span>
+                                    <ArrowRight size={12} className="text-muted-foreground shrink-0" />
+                                    <span className="text-foreground font-black text-sm truncate italic">{job.Route_Name || job.Dest_Location}</span>
                                 </div>
                             </div>
                         </div>
-                        <ChevronRight className="text-muted-foreground group-hover:text-primary transition-colors" size={20} />
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4 border-t border-border/5 pt-6">
-                        <div className="space-y-1">
-                            <p className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest flex items-center gap-1.5">
-                                <MapPin size={10} className="text-accent" /> จุดส่งของ
-                            </p>
-                            <p className="text-foreground font-bold truncate">{job.Route_Name || job.Dest_Location}</p>
+                    {/* Footer: Date & Action */}
+                    <div className="flex items-center justify-between pt-6 border-t border-border/5 relative z-10">
+                        <div className="flex items-center gap-4">
+                            <div className="flex items-center gap-1.5">
+                                <Calendar size={14} className="text-primary" />
+                                <span className="text-foreground font-black text-xs uppercase italic">
+                                    {job.Plan_Date ? new Date(job.Plan_Date).toLocaleDateString('th-TH', { day: '2-digit', month: 'short' }) : "-"}
+                                </span>
+                            </div>
+                            <div className="w-px h-3 bg-border/20" />
+                            <div className="flex items-center gap-1.5">
+                                <Clock size={14} className="text-accent" />
+                                <span className="text-foreground font-black text-xs uppercase italic">
+                                    {job.Plan_Time || "08:00"}
+                                </span>
+                            </div>
                         </div>
-                        <div className="space-y-1 text-right">
-                            <p className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest flex items-center justify-end gap-1.5">
-                                กำหนดส่ง <Clock size={10} className="text-primary" />
-                            </p>
-                            <p className="text-foreground font-bold">
-                                {job.Plan_Date ? new Date(job.Plan_Date).toLocaleDateString('th-TH', { day: '2-digit', month: 'short' }) : "-"}
-                            </p>
+                        <div className="flex items-center gap-2 text-primary group-hover:gap-3 transition-all font-black text-xs uppercase tracking-widest">
+                            จัดการงาน <ChevronRight size={16} />
                         </div>
                     </div>
                 </div>
@@ -119,4 +144,5 @@ export default async function DriverJobsPage(props: Props) {
     </div>
   )
 }
+
 

@@ -4,20 +4,15 @@ import React, { useState } from "react"
 import { useRouter } from "next/navigation"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { useLanguage } from "@/components/providers/language-provider"
-import { Card, CardContent } from "@/components/ui/card"
 import { PremiumButton } from "@/components/ui/premium-button"
-import { PremiumCard } from "@/components/ui/premium-card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
   Wallet,
   Download,
-  Calendar,
   Truck,
   User,
-  FileText,
   Search,
-  Printer,
   CheckCircle2,
   Clock,
   Banknote,
@@ -29,13 +24,11 @@ import {
   Zap,
   Activity,
   ShieldCheck,
-  TrendingUp,
   Save
 } from "lucide-react"
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
@@ -53,7 +46,6 @@ import { createDriverPayment } from "@/lib/supabase/billing"
 import { CompanyProfile } from "@/lib/supabase/settings"
 import { Subcontractor } from "@/types/subcontractor"
 import { getBankCode } from "@/lib/constants/banks"
-import { cn } from "@/lib/utils"
 import { toast } from "sonner"
 
 const WITHHOLDING_TAX_RATE = 0.01 // 1%
@@ -70,12 +62,11 @@ const getJobTotal = (job: Job) => {
     let extra = 0
     if (job.extra_costs_json) {
         try {
-            let costs: any = job.extra_costs_json
-            if (typeof costs === 'string') {
-                try { costs = JSON.parse(costs) } catch {}
-            }
-            if (typeof costs === 'string') {
-                try { costs = JSON.parse(costs) } catch {}
+            let costs: ExtraCost[] = []
+            if (typeof job.extra_costs_json === 'string') {
+                try { costs = JSON.parse(job.extra_costs_json) } catch {}
+            } else {
+                costs = job.extra_costs_json as ExtraCost[]
             }
             if (Array.isArray(costs)) {
                 extra = costs.reduce((sum: number, c: ExtraCost) => sum + (Number(c.cost_driver) || 0), 0)
@@ -177,8 +168,9 @@ export default function DriverPaymentClient({ initialJobs, drivers, companyProfi
         } else {
             toast.error("Error: " + result.error)
         }
-    } catch (err: any) {
-        toast.error("เกิดข้อผิดพลาด: " + err.message)
+    } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : String(err)
+        toast.error("เกิดข้อผิดพลาด: " + message)
     } finally {
         setLoading(false)
     }
@@ -273,8 +265,8 @@ export default function DriverPaymentClient({ initialJobs, drivers, companyProfi
   // Payment Preview Component
   const PaymentPreview = () => {
     const entityInfo = paymentModel === 'individual' 
-        ? drivers.find(d => d.Driver_Name === selectedEntityId) as any
-        : subcontractors.find(s => s.Sub_ID === selectedEntityId) as any
+        ? drivers.find(d => d.Driver_Name === selectedEntityId)
+        : subcontractors.find(s => s.Sub_ID === selectedEntityId)
     
     const entityName = paymentModel === 'individual'
         ? selectedEntityId
@@ -525,7 +517,7 @@ export default function DriverPaymentClient({ initialJobs, drivers, companyProfi
                     <div className="p-4 bg-slate-100 flex items-center justify-between border-b sticky top-0 z-50 print:hidden text-foreground">
                         <div className="flex items-center gap-3">
                              <ShieldCheck className="text-primary" />
-                             <span className="text-base font-bold font-black uppercase tracking-widest">Digital Audit • Payout Verification v5.1</span>
+                             <DialogTitle className="text-base font-bold font-black uppercase tracking-widest">Digital Audit • Payout Verification v5.1</DialogTitle>
                         </div>
                         <button onClick={() => setShowPreview(false)} className="p-2 hover:bg-slate-200 rounded-lg transition-colors">
                             <Activity size={18} />

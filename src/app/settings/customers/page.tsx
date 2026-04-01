@@ -63,6 +63,7 @@ export default function CustomersSettingsPage() {
     Address: "",
     Email: "",
     Line_User_ID: "",
+    Credit_Term: 30,
   })
   const [saving, setSaving] = useState(false)
 
@@ -96,6 +97,7 @@ export default function CustomersSettingsPage() {
         Address: "",
         Email: "",
         Line_User_ID: "",
+        Credit_Term: 30,
       })
     }
     setIsDialogOpen(true)
@@ -316,6 +318,22 @@ export default function CustomersSettingsPage() {
                     />
                 </div>
               </div>
+
+              <div className="space-y-4">
+                <Label className="text-base font-bold font-black uppercase tracking-[0.1em] text-accent ml-2 flex items-center gap-3">
+                    <span className="w-2 h-2 rounded-full bg-accent animate-pulse" />
+                    Credit Term (Days)
+                </Label>
+                <div className="glass-panel p-1 rounded-2xl border-accent/20 bg-accent/5">
+                    <Input
+                        type="number"
+                        value={formData.Credit_Term || 30}
+                        onChange={(e) => updateForm("Credit_Term", parseInt(e.target.value) || 0)}
+                        placeholder="Enter Credit Term in Days..."
+                        className="bg-transparent border-none text-foreground font-black rounded-xl h-14 px-8 flex-1 focus:bg-accent/10 tracking-normal"
+                    />
+                </div>
+              </div>
             </div>
 
             <DialogFooter className="p-6 sm:p-10 border-t border-border/5 bg-black/40 gap-4 sm:gap-6 flex-row shrink-0">
@@ -395,12 +413,12 @@ export default function CustomersSettingsPage() {
                         <p className="text-base font-bold font-black text-foreground truncate tracking-normal">{customer.Phone || t('settings_pages.customers.status.offline')}</p>
                     </div>
                     <div className="p-6 bg-muted/30 rounded-3xl border border-border/5 group-hover:bg-muted/50 transition-all duration-700 relative overflow-hidden">
-                        <div className="absolute top-0 right-0 w-12 h-12 bg-primary/5 blur-2xl rounded-full" />
+                        <div className="absolute top-0 right-0 w-12 h-12 bg-accent/5 blur-2xl rounded-full" />
                         <div className="flex items-center gap-2 mb-3">
-                            <MapPin size={14} className="text-primary" />
-                            <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-normal leading-none">{t('settings_pages.customers.dialog.branch')}</span>
+                            <Zap size={14} className="text-accent" />
+                            <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-normal leading-none">Credit Term</span>
                         </div>
-                        <p className="text-base font-bold font-black text-foreground truncate tracking-normal">{customer.Branch_ID || "Global"}</p>
+                        <p className="text-base font-bold font-black text-foreground truncate tracking-normal">{customer.Credit_Term || 30} Days</p>
                     </div>
                   </div>
                 </div>

@@ -646,6 +646,7 @@ export async function getJobsForBilling(startDate?: string, endDate?: string): P
             .select('*')
             .in('Job_Status', ['Completed', 'Delivered'])
             .is('Billing_Note_ID', null)
+            .is('Invoice_ID', null)
         
         if (customerId) {
             dbQuery = dbQuery.eq('Customer_ID', customerId)
@@ -768,7 +769,8 @@ export async function getBillableJobs(customerId: string) {
       .select('*')
       .eq('Customer_ID', customerId)
       .is('Invoice_ID', null) 
-      .in('Job_Status', ['Complete', 'Delivered'])
+      .is('Billing_Note_ID', null)
+      .in('Job_Status', ['Completed', 'Delivered'])
 
     if (branchId && branchId !== 'All') {
         dbQuery = dbQuery.eq('Branch_ID', branchId)

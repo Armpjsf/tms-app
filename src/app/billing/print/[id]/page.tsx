@@ -51,8 +51,7 @@ export default async function BillingPrintPage(props: Props) {
         return sum + base + extra
     }, 0)
 
-    const vat = subtotal * 0.07 
-    const total = subtotal + vat
+    const total = subtotal
 
     const localeStr = lang === 'th' ? 'th-TH' : 'en-US'
     const displayCompanyName = (lang === 'en' && company?.company_name_en) 
@@ -225,10 +224,7 @@ export default async function BillingPrintPage(props: Props) {
                             <span className="text-xs">{t.subtotal}</span>
                             <span className="text-slate-900">{subtotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                         </div>
-                        <div className="flex justify-between text-base font-bold text-slate-500 uppercase tracking-widest">
-                            <span className="text-xs">{t.vat}</span>
-                            <span className="text-slate-900">{vat.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
-                        </div>
+
                         <div className="flex justify-between items-end text-slate-900 border-t-2 border-slate-900 pt-4 mt-2">
                             <span className="text-xs font-black uppercase tracking-[0.2em] text-slate-400 mb-1">{t.total}</span>
                             <div className="text-right">

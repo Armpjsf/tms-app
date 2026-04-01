@@ -11,7 +11,6 @@ import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { createClient } from "@/utils/supabase/client"
 import { useLanguage } from "@/components/providers/language-provider"
-import { cn } from "@/lib/utils"
 
 export default function SecuritySettingsPage() {
   const { t } = useLanguage()
@@ -22,15 +21,15 @@ export default function SecuritySettingsPage() {
 
   const handleUpdatePassword = async () => {
     if (!password) {
-        toast.warning(t('settings_pages.roles.toasts.error')) // Reuse generic error or fallback
+        toast.warning(t('shared.toasts.error')) // Using a more generic one if available or fallback
         return
     }
     if (password !== confirmPassword) {
-      toast.warning("Handshake failure: Passwords do not match")
+      toast.warning(t('security.toasts.match_error'))
       return
     }
     if (password.length < 6) {
-      toast.warning("Protocol violation: Password must be at least 6 characters")
+      toast.warning(t('security.toasts.length_error'))
       return
     }
 
@@ -40,14 +39,14 @@ export default function SecuritySettingsPage() {
         const { error } = await supabase.auth.updateUser({ password: password })
 
         if (error) {
-            toast.error("Handshake interrupted: " + error.message)
+            toast.error(t('security.toasts.update_failed') + error.message)
         } else {
-            toast.success("Security protocols recalculated successfully")
+            toast.success(t('security.toasts.update_success'))
             setPassword("")
             setConfirmPassword("")
         }
     } catch (e) {
-        toast.error("Critical Failure: " + (e as Error).message)
+        toast.error(t('security.toasts.critical_failure') + (e as Error).message)
     } finally {
         setLoading(false)
     }
@@ -81,11 +80,11 @@ export default function SecuritySettingsPage() {
             <div className="flex flex-col items-end gap-6 relative z-10">
                 <div className="bg-muted/50 border border-border/10 px-6 py-3 rounded-2xl flex items-center gap-3 backdrop-blur-md">
                     <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_10px_rgba(16,185,129,1)]" />
-                    <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest italic">DEFENSE_ARRAY: ACTIVE</span>
+                    <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest italic">{t('security.defense_status')}</span>
                 </div>
                 <div className="flex items-center gap-4 bg-primary/10 p-4 rounded-2xl border border-primary/20">
                    <ShieldCheck className="text-primary" size={18} />
-                   <span className="text-base font-bold font-black text-foreground uppercase tracking-[0.1em] italic">Encryption: AES-256</span>
+                   <span className="text-base font-bold font-black text-foreground uppercase tracking-[0.1em] italic">{t('security.encryption_label')}</span>
                 </div>
             </div>
         </div>
@@ -104,15 +103,15 @@ export default function SecuritySettingsPage() {
                                         <Key size={40} strokeWidth={2.5} />
                                    </div>
                                    <div className="space-y-2">
-                                        <h2 className="text-4xl font-black text-foreground tracking-[0.2em] uppercase italic">Key Rotation</h2>
-                                        <p className="text-base font-bold font-black text-muted-foreground uppercase tracking-[0.2em] italic">Recalculate Access Vector Parameters</p>
+                                        <h2 className="text-4xl font-black text-foreground tracking-[0.2em] uppercase italic">{t('security.key_rotation_title')}</h2>
+                                        <p className="text-base font-bold font-black text-muted-foreground uppercase tracking-[0.2em] italic">{t('security.key_rotation_desc')}</p>
                                    </div>
                               </div>
 
                               <div className="space-y-10">
                                   <div className="space-y-4">
                                       <Label className="text-base font-bold font-black uppercase text-primary/60 tracking-[0.1em] ml-6 flex items-center gap-2">
-                                          <Lock size={12} /> NEW_ACCESS_KEY
+                                          <Lock size={12} /> {t('security.new_key_label')}
                                       </Label>
                                       <Input 
                                           type="password" 
@@ -124,7 +123,7 @@ export default function SecuritySettingsPage() {
                                   </div>
                                   <div className="space-y-4">
                                       <Label className="text-base font-bold font-black uppercase text-primary/60 tracking-[0.1em] ml-6 flex items-center gap-2">
-                                          <Shield size={12} /> VERIFY_KEY_PARITY
+                                          <Shield size={12} /> {t('security.verify_key_label')}
                                       </Label>
                                       <Input 
                                           type="password" 
@@ -142,7 +141,7 @@ export default function SecuritySettingsPage() {
                                         className="w-full h-20 rounded-[2rem] bg-primary text-foreground font-black italic tracking-[0.2em] shadow-[0_30px_60px_rgba(255,30,133,0.3)] border-0 text-lg gap-6 group/save"
                                     >
                                       {loading ? <Loader2 size={24} className="animate-spin" /> : <Zap size={24} className="group-hover/save:scale-125 transition-transform" />}
-                                      {loading ? "RECALCULATING_ENTROPY..." : "SYNC_NEW_DEFENSE_LAYER"}
+                                      {loading ? t('security.updating_indicator') : t('security.save_button')}
                                     </PremiumButton>
                                   </div>
                               </div>
@@ -157,21 +156,21 @@ export default function SecuritySettingsPage() {
                       <div className="p-10 border-b border-border/5 bg-black/40 flex items-center justify-between">
                           <h3 className="text-xl font-black text-foreground tracking-widest uppercase italic flex items-center gap-3">
                               <Smartphone size={20} className="text-indigo-400" />
-                              Multi-Factor Override
+                              {t('security.mfa_title')}
                           </h3>
                           <div className="px-5 py-1.5 rounded-xl bg-indigo-500/10 text-base font-bold font-black text-indigo-400 uppercase tracking-[0.1em] border border-indigo-500/20 italic">
-                              STATUS: EN-ROUTE
+                              {t('security.mfa_status')}
                           </div>
                       </div>
                       <div className="p-12 flex flex-col md:flex-row items-center justify-between gap-10">
                           <div className="space-y-4 text-center md:text-left">
-                              <p className="text-xl font-black text-foreground uppercase tracking-widest italic">Temporal Token Authentication (2FA)</p>
+                              <p className="text-xl font-black text-foreground uppercase tracking-widest italic">{t('security.mfa_desc_title')}</p>
                               <p className="text-base font-bold font-black text-muted-foreground leading-relaxed uppercase tracking-[0.2em] italic">
-                                  Deploy a secondary hardware-backed authentication layer for mission-critical sessions.
+                                  {t('security.mfa_desc')}
                               </p>
                           </div>
                           <PremiumButton variant="outline" disabled className="h-16 px-10 rounded-2xl border-border/10 text-muted-foreground gap-3 uppercase font-black text-base font-bold tracking-[0.1em] cursor-not-allowed italic">
-                              SYSTEM_ARCHIVE_LOCK
+                              {t('security.system_lock')}
                           </PremiumButton>
                       </div>
                   </PremiumCard>
@@ -185,14 +184,13 @@ export default function SecuritySettingsPage() {
                 <Target size={32} />
             </div>
             <div className="space-y-4 text-center md:text-left flex-1">
-                <p className="text-xl font-black text-primary italic uppercase tracking-widest">SECURITY_INTEGRITY_ADVISORY</p>
+                <p className="text-xl font-black text-primary italic uppercase tracking-widest">{t('security.advisory_title')}</p>
                 <p className="text-xl font-bold text-muted-foreground leading-relaxed uppercase tracking-wider italic">
-                    Key rotation should be performed every 30 orbital cycles to maintain maximum defense parity. <br />
-                    All authentication handshakes are monitored via the central telemetry engine.
+                    {t('security.advisory_desc')}
                 </p>
             </div>
             <PremiumButton variant="outline" className="h-14 px-10 rounded-2xl border-border/10 text-foreground gap-3 uppercase font-black text-base font-bold tracking-[0.1em] ml-auto italic">
-                <Activity size={18} /> VIEW_DEFENSE_LOGS
+                <Activity size={18} /> {t('security.view_logs')}
             </PremiumButton>
         </div>
       </div>

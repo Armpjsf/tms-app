@@ -6,7 +6,8 @@ import { MobileHeader } from "@/components/mobile/mobile-header"
 import { 
     MapPin, Phone, User, Package, CheckCircle, 
     ArrowRight, Info, Truck, Activity, ShieldCheck, 
-    ClipboardCheck, LayoutGrid, Navigation, Scale, Box
+    ClipboardCheck, LayoutGrid, Navigation, Scale, Box,
+    ChevronRight, Calendar, Hash, Target
 } from "lucide-react"
 import { JobActionButton } from "@/components/mobile/job-action-button"
 import { JobWorkflow } from "@/components/mobile/job-workflow"
@@ -30,68 +31,98 @@ export function JobDetailClient({ job, success }: JobDetailClientProps) {
 
     return (
         <div className="min-h-screen bg-background pb-32 pt-24 relative overflow-hidden flex flex-col">
-            {/* Background Decor */}
-            <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[120px] -translate-y-1/2 pointer-events-none" />
-            <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-accent/5 rounded-full blur-[120px] translate-y-1/2 pointer-events-none" />
+            {/* High-end Background Decor */}
+            <div className="absolute top-0 right-[-10%] w-[600px] h-[600px] bg-primary/5 rounded-full blur-[140px] -translate-y-1/2 pointer-events-none" />
+            <div className="absolute bottom-0 left-[-10%] w-[400px] h-[400px] bg-accent/5 rounded-full blur-[120px] pointer-events-none" />
 
-            <MobileHeader title={`งาน #${String(job.Job_ID || '').slice(-6)}`} showBack />
+            <MobileHeader title="Job Detail" showBack />
 
-            {/* Premium Tab Selector */}
-            <div className="px-6 mb-6">
-                <div className="bg-muted/30 backdrop-blur-xl p-1.5 rounded-[2rem] border border-border/5 flex">
+            {/* Premium Sticky Tab Selector */}
+            <div className="px-6 mb-8 mt-2 sticky top-24 z-[50]">
+                <div className="bg-card/40 backdrop-blur-2xl p-2 rounded-[2.5rem] border border-border/10 flex shadow-lg shadow-black/5">
                     <button 
                         onClick={() => setActiveTab('mission')}
                         className={cn(
-                            "flex-1 flex items-center justify-center gap-2 h-14 rounded-[1.5rem] font-black uppercase tracking-widest transition-all text-base font-bold",
-                            activeTab === 'mission' ? "bg-primary text-foreground shadow-xl shadow-primary/20" : "text-muted-foreground"
+                            "flex-1 flex items-center justify-center gap-3 h-16 rounded-[2rem] font-black uppercase tracking-[0.15em] transition-all text-sm italic",
+                            activeTab === 'mission' ? "bg-primary text-white shadow-xl shadow-primary/30 scale-[1.02]" : "text-muted-foreground hover:text-foreground"
                         )}
                     >
-                        <Activity size={18} /> ดำเนินงาน
+                        <Activity size={20} strokeWidth={2.5} /> ดำเนินงาน
                     </button>
                     <button 
                         onClick={() => setActiveTab('info')}
                         className={cn(
-                            "flex-1 flex items-center justify-center gap-2 h-14 rounded-[1.5rem] font-black uppercase tracking-widest transition-all text-base font-bold",
-                            activeTab === 'info' ? "bg-primary text-foreground shadow-xl shadow-primary/20" : "text-muted-foreground"
+                            "flex-1 flex items-center justify-center gap-3 h-16 rounded-[2rem] font-black uppercase tracking-[0.15em] transition-all text-sm italic",
+                            activeTab === 'info' ? "bg-primary text-white shadow-xl shadow-primary/30 scale-[1.02]" : "text-muted-foreground hover:text-foreground"
                         )}
                     >
-                        <Info size={18} /> รายละเอียด
+                        <Info size={20} strokeWidth={2.5} /> ข้อมูลงาน
                     </button>
                 </div>
             </div>
 
-            <div className="flex-1 px-6 overflow-y-auto custom-scrollbar">
+            <div className="flex-1 px-6 overflow-y-auto">
                 <AnimatePresence mode="wait">
                     {activeTab === 'mission' ? (
                         <motion.div 
                             key="mission"
-                            initial={{ opacity: 0, x: -20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            exit={{ opacity: 0, x: 20 }}
-                            className="space-y-6"
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -20 }}
+                            className="space-y-8"
                         >
-                            {/* Success Notification Inline */}
+                            {/* Success Notification Inline - Premium Style */}
                             {success && (
-                                <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-[2rem] p-6 flex items-center gap-4 text-emerald-400 shadow-[0_0_30px_rgba(16,185,129,0.2)] mb-2">
-                                    <CheckCircle className="shrink-0" />
-                                    <div className="text-xl">
-                                        <p className="font-black uppercase tracking-widest text-lg font-bold">สำเร็จแล้ว!</p>
-                                        <p className="opacity-80 font-bold">ข้อมูลถูกซิงค์กับศูนย์ควบคุมแล้ว</p>
+                                <motion.div 
+                                    initial={{ scale: 0.9, opacity: 0 }}
+                                    animate={{ scale: 1, opacity: 1 }}
+                                    className="bg-emerald-500/10 border border-emerald-500/20 rounded-[2.5rem] p-7 flex items-center gap-5 text-emerald-500 shadow-xl shadow-emerald-500/5 mb-2 relative overflow-hidden"
+                                >
+                                    <div className="absolute top-0 right-0 p-4 opacity-10">
+                                        <CheckCircle size={60} />
+                                    </div>
+                                    <div className="w-14 h-14 bg-emerald-500 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-500/30 shrink-0">
+                                        <CheckCircle className="text-white" size={32} />
+                                    </div>
+                                    <div className="relative z-10">
+                                        <p className="font-black uppercase tracking-widest text-base italic leading-tight mb-1">สำเร็จเรียบร้อย!</p>
+                                        <p className="text-muted-foreground text-[10px] font-black uppercase tracking-widest">ข้อมูลถูกส่งไปยังศูนย์ควบคุมแล้ว</p>
+                                    </div>
+                                </motion.div>
+                            )}
+
+                            {/* Job ID Header Card */}
+                            <div className="flex items-center justify-between px-2">
+                                <div className="space-y-1">
+                                    <p className="text-accent text-[10px] font-black uppercase tracking-[0.4em] leading-none">Status Center</p>
+                                    <h2 className="text-4xl font-black text-foreground tracking-tighter uppercase italic leading-none">#{String(job.Job_ID || '').slice(-8)}</h2>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-muted-foreground text-[10px] font-black uppercase tracking-widest mb-1">กำหนดส่ง</p>
+                                    <div className="flex items-center gap-1.5 text-primary">
+                                        <Calendar size={14} strokeWidth={2.5} />
+                                        <span className="font-black text-sm italic">{job.Plan_Date ? new Date(job.Plan_Date).toLocaleDateString('th-TH', { day: '2-digit', month: 'short' }) : "-"}</span>
                                     </div>
                                 </div>
-                            )}
+                            </div>
 
                             <JobWorkflow currentStatus={job.Job_Status || 'New'} />
 
-                            <div className="glass-panel p-8 rounded-[2.5rem] border-border/5 shadow-2xl space-y-6">
-                                <div className="flex items-center justify-between">
+                            <div className="glass-panel p-8 rounded-[3rem] border-primary/10 shadow-2xl space-y-8 relative overflow-hidden">
+                                <div className="absolute top-0 right-0 p-8 text-primary/5 pointer-events-none transform translate-x-4 -translate-y-4">
+                                    <Target size={120} />
+                                </div>
+
+                                <div className="flex items-center justify-between relative z-10">
                                     <div className="flex items-center gap-4">
-                                        <div className="w-12 h-12 rounded-2xl bg-primary/20 flex items-center justify-center">
-                                            <Navigation className="text-primary" size={24} />
+                                        <div className="w-16 h-16 rounded-[1.5rem] bg-primary/20 flex items-center justify-center text-primary shadow-inner">
+                                            <Navigation size={32} strokeWidth={2.5} className="animate-pulse" />
                                         </div>
                                         <div>
-                                            <p className="text-muted-foreground text-xs font-black uppercase tracking-widest">สถานะปัจจุบัน</p>
-                                            <h3 className="text-2xl font-black text-foreground uppercase tracking-tighter">{job.Job_Status}</h3>
+                                            <p className="text-muted-foreground text-[10px] font-black uppercase tracking-widest mb-1">ภารกิจที่กำลังทำ</p>
+                                            <h3 className="text-2xl font-black text-foreground uppercase tracking-tight italic leading-none">
+                                                {job.Job_Status === 'New' ? 'เตรียมเริ่มงาน' : job.Job_Status}
+                                            </h3>
                                         </div>
                                     </div>
                                     <NavigationButton job={job} />
@@ -108,95 +139,116 @@ export function JobDetailClient({ job, success }: JobDetailClientProps) {
                     ) : (
                         <motion.div 
                             key="info"
-                            initial={{ opacity: 0, x: 20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            exit={{ opacity: 0, x: -20 }}
-                            className="space-y-6"
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -20 }}
+                            className="space-y-8 pb-10"
                         >
-                            {/* Customer Brief */}
-                            <div className="glass-panel p-8 rounded-[3rem] space-y-8">
-                                <div className="flex items-center justify-between">
+                            {/* Customer Profile Card */}
+                            <div className="glass-panel p-8 rounded-[3rem] space-y-8 border-primary/10 relative overflow-hidden">
+                                <div className="absolute top-0 right-0 p-8 text-primary/5 pointer-events-none">
+                                    <User size={100} />
+                                </div>
+
+                                <div className="flex items-center justify-between relative z-10">
                                     <div className="flex items-center gap-4">
-                                        <div className="w-14 h-14 rounded-2xl bg-white/5 border border-border/10 flex items-center justify-center shadow-lg">
-                                            <User className="text-primary" size={24} />
+                                        <div className="w-16 h-16 rounded-[1.5rem] bg-card border border-border/10 flex items-center justify-center shadow-lg">
+                                            <User className="text-primary" size={32} strokeWidth={2.5} />
                                         </div>
                                         <div>
-                                            <p className="text-muted-foreground text-xs font-black uppercase tracking-widest">ข้อมูลลูกค้า</p>
-                                            <h3 className="text-2xl font-black text-foreground tracking-tighter leading-none">{job.Customer_Name}</h3>
+                                            <p className="text-muted-foreground text-[10px] font-black uppercase tracking-widest mb-1">ข้อมูลผู้รับสินค้า</p>
+                                            <h3 className="text-2xl font-black text-foreground tracking-tight italic uppercase">{job.Customer_Name}</h3>
                                         </div>
                                     </div>
-                                    <Badge variant="outline" className="border-border/10 text-muted-foreground px-3 py-1 rounded-xl font-bold uppercase">ID: {job.Customer_ID}</Badge>
+                                    <div className="px-3 py-1.5 bg-muted/50 rounded-xl border border-border/10 text-[10px] font-black text-muted-foreground uppercase tracking-widest shrink-0">
+                                        ID: {job.Customer_ID}
+                                    </div>
                                 </div>
                                 
-                                <div className="space-y-4">
-                                    <div className="flex items-start gap-4 p-4 rounded-2xl bg-white/5 border border-border/5">
-                                        <div className="p-2.5 bg-accent/20 rounded-xl text-accent">
-                                            <MapPin size={20} />
+                                <div className="space-y-4 relative z-10">
+                                    <div className="flex items-start gap-4 p-6 rounded-[2rem] bg-card border border-border/5">
+                                        <div className="p-3 bg-accent/10 rounded-2xl text-accent shrink-0">
+                                            <MapPin size={22} strokeWidth={2.5} />
                                         </div>
                                         <div className="flex-1">
-                                            <p className="text-muted-foreground text-xs font-black uppercase tracking-widest">สถานที่ส่ง</p>
-                                            <p className="text-white font-bold leading-relaxed">{job.Dest_Location || job.Route_Name}</p>
+                                            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">สถานที่นำส่ง</p>
+                                            <p className="text-foreground font-bold text-base leading-snug italic">{job.Dest_Location || job.Route_Name}</p>
                                         </div>
                                     </div>
-                                    <div className="flex items-center justify-between p-4 rounded-2xl bg-emerald-500/5 border border-emerald-500/10">
-                                        <div className="flex items-center gap-4">
-                                            <div className="p-2.5 bg-emerald-500/20 rounded-xl text-emerald-400">
-                                                <Phone size={20} />
+                                    <div className="flex items-center justify-between p-6 rounded-[2rem] bg-emerald-500/5 border border-emerald-500/10">
+                                        <div className="flex items-center gap-4 min-w-0">
+                                            <div className="p-3 bg-emerald-500/20 rounded-2xl text-emerald-500 shrink-0">
+                                                <Phone size={22} strokeWidth={2.5} />
                                             </div>
-                                            <div>
-                                                <p className="text-muted-foreground text-xs font-black uppercase tracking-widest">การติดต่อ</p>
-                                                <p className="text-emerald-400 font-black text-base font-bold uppercase tracking-widest">ช่องทางติดต่อลูกค้า</p>
+                                            <div className="truncate">
+                                                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-0.5">เบอร์โทรติดต่อ</p>
+                                                <p className="text-emerald-500 font-black text-lg italic tracking-widest">CONTACT READY</p>
                                             </div>
                                         </div>
-                                        <button className="px-6 h-12 bg-emerald-500/20 rounded-xl text-emerald-400 font-black text-base font-bold uppercase tracking-widest hover:bg-emerald-500/30 active:scale-95 transition-all">โทรออก</button>
+                                        <button className="px-8 h-14 bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl font-black text-sm uppercase tracking-widest shadow-lg shadow-emerald-500/20 active:scale-95 transition-all shrink-0">
+                                            โทรออก
+                                        </button>
                                     </div>
                                 </div>
                             </div>
 
-                            {/* Cargo Payload */}
-                            <div className="glass-panel p-8 rounded-[3rem] space-y-6">
-                                <div className="flex items-center gap-3">
-                                    <div className="p-2 bg-primary/20 rounded-xl">
-                                        <Package size={20} className="text-primary" /> 
-                                    </div>
-                                    <h4 className="text-foreground font-black text-lg font-bold uppercase tracking-widest">ข้อมูลสินค้า</h4>
+                            {/* Cargo Details Grid */}
+                            <div className="glass-panel p-8 rounded-[3rem] space-y-8 border-accent/10">
+                                <div className="flex items-center gap-3 px-1">
+                                    <div className="w-1.5 h-6 bg-accent rounded-full" />
+                                    <h4 className="text-foreground font-black text-xl uppercase tracking-tight italic">รายละเอียดสินค้า</h4>
                                 </div>
                                 
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="p-5 bg-white/5 rounded-2xl border border-border/10 flex flex-col items-center justify-center text-center">
-                                        <Scale className="text-muted-foreground mb-2" size={16} />
-                                        <p className="text-muted-foreground text-xs font-black uppercase tracking-widest mb-1">น้ำหนัก (KG)</p>
-                                        <h5 className="text-2xl font-black text-foreground tracking-tighter">{job.Weight_Kg?.toLocaleString() || '0.0'}</h5>
+                                <div className="grid grid-cols-2 gap-6">
+                                    <div className="p-6 bg-card border border-border/10 rounded-[2rem] flex flex-col items-center justify-center text-center shadow-sm">
+                                        <div className="w-10 h-10 rounded-2xl bg-primary/10 flex items-center justify-center text-primary mb-3">
+                                            <Scale size={20} strokeWidth={2.5} />
+                                        </div>
+                                        <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">น้ำหนักรวม</p>
+                                        <div className="flex items-baseline gap-1">
+                                            <h5 className="text-3xl font-black text-foreground tracking-tighter italic leading-none">{job.Weight_Kg?.toLocaleString() || '0.0'}</h5>
+                                            <span className="text-[10px] font-black text-muted-foreground">KG</span>
+                                        </div>
                                     </div>
-                                    <div className="p-5 bg-white/5 rounded-2xl border border-border/10 flex flex-col items-center justify-center text-center">
-                                        <Box className="text-muted-foreground mb-2" size={16} />
-                                        <p className="text-muted-foreground text-xs font-black uppercase tracking-widest mb-1">ปริมาตร (CBM)</p>
-                                        <h5 className="text-2xl font-black text-accent tracking-tighter">{job.Volume_Cbm || '0.0'}</h5>
+                                    <div className="p-6 bg-card border border-border/10 rounded-[2rem] flex flex-col items-center justify-center text-center shadow-sm">
+                                        <div className="w-10 h-10 rounded-2xl bg-accent/10 flex items-center justify-center text-accent mb-3">
+                                            <Box size={20} strokeWidth={2.5} />
+                                        </div>
+                                        <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">ปริมาตรรวม</p>
+                                        <div className="flex items-baseline gap-1">
+                                            <h5 className="text-3xl font-black text-foreground tracking-tighter italic leading-none">{job.Volume_Cbm || '0.0'}</h5>
+                                            <span className="text-[10px] font-black text-muted-foreground">CBM</span>
+                                        </div>
                                     </div>
                                 </div>
 
-                                <div className="p-5 bg-white/5 rounded-2xl border border-border/10">
-                                    <p className="text-muted-foreground text-xs font-black uppercase tracking-widest mb-3 flex items-center gap-2">
-                                        <ClipboardCheck size={14} /> หมายเหตุ / คำสั่งพิเศษ
-                                    </p>
-                                    <p className="text-muted-foreground font-bold leading-relaxed">{job.Notes || "ไม่มีคำสั่งพิเศษจากศูนย์ควบคุม"}</p>
+                                <div className="p-6 bg-card border border-border/10 rounded-[2rem]">
+                                    <div className="flex items-center gap-2 mb-3">
+                                        <ClipboardCheck size={18} className="text-primary" strokeWidth={2.5} />
+                                        <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">หมายเหตุ / คำแนะนำพิเศษ</p>
+                                    </div>
+                                    <p className="text-foreground font-bold leading-relaxed text-sm italic">{job.Notes || "ไม่มีข้อมูลเพิ่มเติม"}</p>
                                 </div>
                             </div>
 
-                            {/* Revenue (Optional Visibility) */}
+                            {/* Revenue Highlight Card */}
                             {job.Show_Price_To_Driver && (
-                                <div className="relative group p-8 rounded-[3rem] bg-slate-950 border border-primary/20 overflow-hidden shadow-2xl">
-                                    <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none group-hover:scale-125 transition-transform duration-1000">
-                                        <ShieldCheck size={100} className="text-primary" />
+                                <div className="relative group p-8 rounded-[3.5rem] bg-foreground border border-primary/30 overflow-hidden shadow-2xl shadow-foreground/20">
+                                    <div className="absolute top-0 right-0 p-10 opacity-10 pointer-events-none group-hover:scale-125 transition-transform duration-1000">
+                                        <TrendingUp size={120} className="text-primary" />
                                     </div>
-                                    <div className="relative z-10 space-y-4">
-                                        <div className="flex items-center gap-3 text-muted-foreground">
-                                            <Activity size={16} className="text-primary" />
-                                            <h4 className="text-base font-bold font-black uppercase tracking-widest text-base font-bold">ค่าตอบแทนประมาณการ</h4>
+                                    <div className="relative z-10 space-y-6">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 rounded-xl bg-primary/20 flex items-center justify-center">
+                                                <TrendingUp size={18} className="text-primary" strokeWidth={2.5} />
+                                            </div>
+                                            <h4 className="text-xs font-black uppercase tracking-[0.2em] text-white italic">ค่าตอบแทนที่จะได้รับ</h4>
                                         </div>
                                         <div className="flex items-end gap-3">
-                                            <span className="text-6xl font-black text-foreground tracking-tighter leading-none">฿{(job.Cost_Driver_Total || 0).toLocaleString()}</span>
-                                            <span className="bg-primary/20 text-primary px-3 py-1 rounded-lg font-black text-[10px] uppercase tracking-widest mb-1">Fixed Rate</span>
+                                            <span className="text-6xl font-black text-white tracking-tighter leading-none italic">฿{(job.Cost_Driver_Total || 0).toLocaleString()}</span>
+                                            <div className="px-3 py-1.5 bg-primary rounded-xl text-white font-black text-[10px] uppercase tracking-widest mb-2 shadow-lg shadow-primary/30 rotate-2">
+                                                PREMIUM RATE
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -206,8 +258,8 @@ export function JobDetailClient({ job, success }: JobDetailClientProps) {
                 </AnimatePresence>
             </div>
 
-            {/* Global Sticky Action Controls */}
-            <div className="fixed bottom-32 left-6 right-6 z-[100]">
+            {/* Floating Action Center */}
+            <div className="fixed bottom-32 left-6 right-6 z-[100] animate-in slide-in-from-bottom-10 duration-500">
                 <JobActionButton job={{
                     ...job,
                     original_destinations_json: destinations
@@ -216,3 +268,4 @@ export function JobDetailClient({ job, success }: JobDetailClientProps) {
         </div>
     )
 }
+

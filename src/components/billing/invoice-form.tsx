@@ -7,7 +7,6 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
 import { 
   Table, 
@@ -23,7 +22,7 @@ import { CustomerAutocomplete } from "@/components/customer-autocomplete"
 import { toast } from "sonner"
 import { getBillableJobsAction } from "@/app/billing/invoices/actions"
 import { createInvoiceAction } from "@/app/billing/invoices/actions"
-import { CalendarIcon, Loader2, Save, Trash2, Calculator } from "lucide-react"
+import { CalendarIcon, Loader2, Calculator } from "lucide-react"
 import { format } from "date-fns"
 import { th } from "date-fns/locale"
 import { cn } from "@/lib/utils"
@@ -61,10 +60,14 @@ export function InvoiceForm({ customers }: { customers: { Customer_ID: string; C
     }
   }, [customerId])
 
-  // Calculation
+  const parsePrice = (val: string | number | null | undefined) => {
+    if (typeof val === 'number') return val
+    if (typeof val === 'string') return Number(val.replace(/,/g, '')) || 0
+    return 0
+  }
+
   const selectedJobs = availableJobs.filter(j => selectedJobIds.includes(j.Job_ID))
-  
-  const subtotal = selectedJobs.reduce((sum, job) => sum + (Number(job.Price_Cust_Total) || 0), 0)
+  const subtotal = selectedJobs.reduce((sum, job) => sum + parsePrice(job.Price_Cust_Total), 0)
   const vatAmount = subtotal * (vatRate / 100)
   const grandTotal = subtotal + vatAmount
   const whtAmount = subtotal * (whtRate / 100)
@@ -89,7 +92,6 @@ export function InvoiceForm({ customers }: { customers: { Customer_ID: string; C
             Status: 'Draft',
             Notes: notes,
             Items_JSON: selectedJobs as Record<string, unknown>[], // Snapshot
-            Created_By: 'System' as string // Should be user ID
         })
 
         if (!result || !result.success) {
@@ -108,7 +110,7 @@ export function InvoiceForm({ customers }: { customers: { Customer_ID: string; C
   return (
     <div className="space-y-6">
         {/* Customer & Dates */}
-        <Card className="bg-card/50 border-border/10 shadow-2xl backdrop-blur-xl">
+        <Card className="relative z-20 bg-card/50 border-border/10 shadow-2xl backdrop-blur-xl">
             <CardContent className="p-8 grid grid-cols-1 md:grid-cols-3 gap-8">
                 <div className="space-y-3">
                     <Label className="text-muted-foreground font-black uppercase tracking-widest text-base font-bold">ลูกค้า (Customer)</Label>
@@ -155,43 +157,61 @@ export function InvoiceForm({ customers }: { customers: { Customer_ID: string; C
                             <TableHeader className="bg-muted/50">
                                 <TableRow className="border-border/5 hover:bg-transparent">
                                     <TableHead className="w-16 pl-6">
-                                        <Checkbox 
-                                            checked={selectedJobIds.length === availableJobs.length && availableJobs.length > 0}
-                                            onCheckedChange={(checked) => {
-                                                if (checked) setSelectedJobIds(availableJobs.map(j => j.Job_ID))
-                                                else setSelectedJobIds([])
-                                            }}
-                                            className="border-border/20 data-[state=checked]:bg-purple-600 data-[state=checked]:border-purple-600"
-                                        />
-                                    </TableHead>
-                                    <TableHead className="text-muted-foreground font-black uppercase tracking-widest text-base font-bold py-6">Job ID</TableHead>
-                                    <TableHead className="text-muted-foreground font-black uppercase tracking-widest text-base font-bold py-6">วันที่</TableHead>
-                                    <TableHead className="text-muted-foreground font-black uppercase tracking-widest text-base font-bold py-6">เส้นทาง</TableHead>
-                                    <TableHead className="text-right text-muted-foreground font-black uppercase tracking-widest text-base font-bold py-6 pr-8">ราคา</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {availableJobs.map((job) => (
-                                    <TableRow key={job.Job_ID} className="border-border/5 hover:bg-muted/50 transition-colors group">
-                                        <TableCell className="pl-6">
                                             <Checkbox 
-                                                checked={selectedJobIds.includes(job.Job_ID)}
+                                                checked={selectedJobIds.length === availableJobs.length && availableJobs.length > 0}
                                                 onCheckedChange={(checked) => {
-                                                    if (checked) setSelectedJobIds([...selectedJobIds, job.Job_ID])
-                                                    else setSelectedJobIds(selectedJobIds.filter(id => id !== job.Job_ID))
+                                                    if (checked) {
+                                                        setSelectedJobIds(availableJobs.map(j => j.Job_ID))
+                                                    } else {
+                                                        setSelectedJobIds([])
+                                                    }
                                                 }}
                                                 className="border-border/20 data-[state=checked]:bg-purple-600 data-[state=checked]:border-purple-600"
                                             />
-                                        </TableCell>
-                                        <TableCell className="font-black text-muted-foreground text-lg font-bold py-5">{job.Job_ID}</TableCell>
-                                        <TableCell className="text-muted-foreground font-bold">{new Date(job.Plan_Date).toLocaleDateString('th-TH')}</TableCell>
-                                        <TableCell className="max-w-[200px] truncate text-muted-foreground font-medium" title={job.Route_Name}>{job.Route_Name}</TableCell>
-                                        <TableCell className="text-right font-black text-muted-foreground pr-8">
-                                            {Number(job.Price_Cust_Total).toLocaleString()}
-                                        </TableCell>
+                                        </TableHead>
+                                        <TableHead className="text-muted-foreground font-black uppercase tracking-widest text-base font-bold py-6">Job ID</TableHead>
+                                        <TableHead className="text-muted-foreground font-black uppercase tracking-widest text-base font-bold py-6">วันที่</TableHead>
+                                        <TableHead className="text-muted-foreground font-black uppercase tracking-widest text-base font-bold py-6">เส้นทาง</TableHead>
+                                        <TableHead className="text-right text-muted-foreground font-black uppercase tracking-widest text-base font-bold py-6 pr-8">ราคา</TableHead>
                                     </TableRow>
-                                ))}
-                            </TableBody>
+                                </TableHeader>
+                                <TableBody>
+                                    {availableJobs.map((job) => {
+                                        const isSelected = selectedJobIds.includes(job.Job_ID);
+                                        const toggleSelection = () => {
+                                            setSelectedJobIds(prev => 
+                                                prev.includes(job.Job_ID) 
+                                                    ? prev.filter(id => id !== job.Job_ID) 
+                                                    : [...new Set([...prev, job.Job_ID])]
+                                            );
+                                        };
+
+                                        return (
+                                            <TableRow 
+                                                key={job.Job_ID} 
+                                                className={cn(
+                                                    "border-border/5 hover:bg-muted/50 transition-colors group cursor-pointer",
+                                                    isSelected && "bg-purple-500/5 hover:bg-purple-500/10"
+                                                )}
+                                                onClick={toggleSelection}
+                                            >
+                                                <TableCell className="pl-6" onClick={(e) => e.stopPropagation()}>
+                                                    <Checkbox 
+                                                        checked={isSelected}
+                                                        onCheckedChange={toggleSelection}
+                                                        className="border-border/20 data-[state=checked]:bg-purple-600 data-[state=checked]:border-purple-600"
+                                                    />
+                                                </TableCell>
+                                                <TableCell className="font-black text-muted-foreground text-lg font-bold py-5">{job.Job_ID}</TableCell>
+                                                <TableCell className="text-muted-foreground font-bold">{new Date(job.Plan_Date).toLocaleDateString('th-TH')}</TableCell>
+                                                <TableCell className="max-w-[200px] truncate text-muted-foreground font-medium" title={job.Route_Name}>{job.Route_Name}</TableCell>
+                                                <TableCell className="text-right font-black text-muted-foreground pr-8">
+                                                    {Number(job.Price_Cust_Total).toLocaleString()}
+                                                </TableCell>
+                                            </TableRow>
+                                        );
+                                    })}
+                                </TableBody>
                         </Table>
                     </div>
                 )}
@@ -219,7 +239,17 @@ export function InvoiceForm({ customers }: { customers: { Customer_ID: string; C
                     </div>
                     
                     <div className="flex items-center justify-between text-lg font-bold font-bold uppercase tracking-widest">
-                        <span className="text-muted-foreground">VAT {vatRate}%</span>
+                         <div className="flex items-center gap-3">
+                            <span className="text-muted-foreground">VAT</span>
+                            <select 
+                                value={vatRate} 
+                                onChange={(e) => setVatRate(Number(e.target.value))}
+                                className="px-2 py-1 bg-muted/50 border border-border/10 rounded-lg text-muted-foreground text-base font-bold font-black outline-none focus:border-purple-500/50 transition-colors"
+                            >
+                                <option value="0" className="bg-card">0%</option>
+                                <option value="7" className="bg-card">7%</option>
+                            </select>
+                         </div>
                         <span className="text-muted-foreground">฿{vatAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                     </div>
 

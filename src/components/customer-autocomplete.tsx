@@ -1,8 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import { Check, ChevronsUpDown, Search } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { Check, ChevronsUpDown } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
 
@@ -100,7 +99,7 @@ export function CustomerAutocomplete({
       </div>
 
       {open && (
-        <div className="absolute z-50 w-full mt-1 bg-popover border border-border rounded-md shadow-lg max-h-60 overflow-y-auto">
+        <div className="absolute z-[100] w-full mt-1 bg-popover border border-border rounded-md shadow-lg max-h-60 overflow-y-auto">
           {filteredCustomers.length === 0 ? (
             <div className="p-2 text-xl text-muted-foreground font-bold text-center">
                ไม่พบลูกค้าที่ตรงกัน (ใช้ชื่อนี้เป็นลูกค้าใหม่)

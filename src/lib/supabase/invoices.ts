@@ -1,7 +1,7 @@
 'use server'
 
-import { createClient } from '@/utils/supabase/server'
-import { getUserBranchId, isSuperAdmin } from "@/lib/permissions"
+import { createClient, createAdminClient } from '@/utils/supabase/server'
+import { getUserBranchId, isAdmin } from "@/lib/permissions"
 import { logActivity } from './logs'
 
 export type Invoice = {
@@ -31,43 +31,90 @@ export type Invoice = {
 
 export async function getInvoices(page = 1, limit = 20, query = '') {
   try {
-    const supabase = await createClient()
-
-    // Filter by Branch
     const branchId = await getUserBranchId()
-    const isAdmin = await isSuperAdmin()
+    const isAdminUser = await isAdmin()
+    const supabase = isAdminUser ? createAdminClient() : await createClient()
 
-    let queryBuilder = supabase
+    // 1. Fetch Invoices
+    let invQuery = supabase
       .from('invoices')
-      .select('*, Master_Customers(Customer_Name)', { count: 'exact' })
+      .select('*, Master_Customers(Customer_Name)')
     
-    if (branchId && !isAdmin) {
-        queryBuilder = queryBuilder.or(`Branch_ID.eq.${branchId},Branch_ID.is.null`)
-    } else if (!isAdmin && !branchId) {
-        return { data: [], count: 0 }
+    if (branchId && !isAdminUser) {
+        invQuery = invQuery.or(`Branch_ID.eq.${branchId},Branch_ID.is.null`)
+    } else if (!isAdminUser && !branchId) {
+        invQuery = invQuery.eq('id', 'non-existent') // Effectively empty
     }
-
-    let q = queryBuilder.order('Created_At', { ascending: false })
 
     if (query) {
-       q = q.or(`Invoice_ID.ilike.%${query}%,Tax_Invoice_ID.ilike.%${query}%`)
+        invQuery = invQuery.ilike('Invoice_ID', `%${query}%`)
     }
 
-    const { data, error, count } = await q.range((page - 1) * limit, page * limit - 1)
+    // 2. Fetch Billing Notes (to unify)
+    let bnQuery = supabase
+      .from('Billing_Notes')
+      .select('*')
     
-    if (error) {
-        return { data: [], count: 0 }
+    if (branchId && !isAdminUser) {
+        bnQuery = bnQuery.or(`Branch_ID.eq.${branchId},Branch_ID.is.null`)
+    } else if (!isAdminUser && !branchId) {
+        bnQuery = bnQuery.eq('id', 'non-existent')
     }
 
-    // Map customer name
-    const formattedData = data?.map((inv: Invoice & { Master_Customers?: { Customer_Name?: string } }) => ({
+    if (query) {
+        bnQuery = bnQuery.ilike('Billing_Note_ID', `%${query}%`)
+    }
+
+    // Execute concurrently
+    const [invRes, bnRes] = await Promise.all([
+        invQuery.order('Created_At', { ascending: false }),
+        bnQuery.order('Created_At', { ascending: false })
+    ])
+
+    // 3. Merge and Map
+    const mappedInvoices = (invRes.data || []).map(inv => ({
         ...inv,
-        Customer_Name: inv.Master_Customers?.Customer_Name || 'Unknown',
-        customers: inv.Master_Customers
+        Customer_Name: inv.Master_Customers?.Customer_Name || 'Unknown Customer',
+        Type: 'Invoice'
     }))
 
-    return { data: formattedData, count: count || 0 }
-  } catch (error) {
+    const mappedBN = (bnRes.data || []).map(bn => ({
+        Invoice_ID: bn.Billing_Note_ID,
+        Customer_Name: bn.Customer_Name,
+        Issue_Date: bn.Billing_Date,
+        Due_Date: bn.Due_Date,
+        Grand_Total: bn.Total_Amount,
+        Status: bn.Status,
+        Created_At: bn.Created_At,
+        Type: 'BillingNote'
+    }))
+
+    const todayStr = new Date().toISOString().split('T')[0]
+    const todayNum = new Date().setHours(0,0,0,0)
+
+    const combined = [...mappedInvoices, ...mappedBN].map(doc => {
+        // Dynamic Overdue check
+        if (doc.Status !== 'Paid' && doc.Due_Date) {
+            const dueDate = new Date(doc.Due_Date).setHours(0,0,0,0)
+            if (dueDate < todayNum) {
+                return { ...doc, Status: 'Overdue' }
+            }
+        }
+        return doc
+    }).sort((a, b) => 
+        new Date(b.Created_At).getTime() - new Date(a.Created_At).getTime()
+    )
+
+    // Manual Pagination for the combined array
+    const start = (page - 1) * limit
+    const paginated = combined.slice(start, start + limit)
+
+    return { 
+        data: paginated, 
+        count: combined.length 
+    }
+  } catch (err) {
+    console.error('Error fetching unified invoices:', err)
     return { data: [], count: 0 }
   }
 }
@@ -97,7 +144,8 @@ export async function getInvoiceById(id: string) {
 
 export async function createInvoice(invoice: Partial<Invoice>) {
   try {
-    const supabase = await createClient()
+    const isAdminUser = await isAdmin()
+    const supabase = isAdminUser ? createAdminClient() : await createClient()
     
     // Auto-assign Branch_ID if missing
     if (!invoice.Branch_ID) {
@@ -207,3 +255,37 @@ export async function deleteInvoice(id: string) {
       return { success: false, error }
     }
   }
+
+
+export async function confirmInvoicePayment(id: string, type: 'Invoice' | 'BillingNote') {
+    try {
+        const supabase = await createClient()
+        const table = type === 'Invoice' ? 'invoices' : 'Billing_Notes'
+        const idField = type === 'Invoice' ? 'Invoice_ID' : 'Billing_Note_ID'
+
+        const { data, error } = await supabase
+            .from(table)
+            .update({ Status: 'Paid' })
+            .eq(idField, id)
+            .select()
+            .single()
+
+        if (error) throw error
+
+        await logActivity({
+            module: 'Billing',
+            action_type: 'UPDATE',
+            target_id: id,
+            details: {
+                action: 'CONFIRM_PAYMENT',
+                type: type,
+                new_status: 'Paid'
+            }
+        })
+
+        return { success: true, data }
+    } catch (error) {
+        console.error(`Error confirming payment for ${type} ${id}:`, error)
+        return { success: false, error }
+    }
+}

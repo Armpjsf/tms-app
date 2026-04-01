@@ -3,8 +3,12 @@
 import React from "react"
 import { Job } from "@/lib/supabase/jobs"
 import { CompanyProfile } from "@/lib/supabase/settings"
-import { cn } from "@/lib/utils"
-import { Printer, ShieldCheck, Banknote, MapPin, Globe, Phone } from "lucide-react"
+import { ShieldCheck, Banknote, MapPin, Globe, Phone } from "lucide-react"
+
+interface ExtraCost {
+    cost_driver?: string | number
+    type?: string
+}
 
 interface PaymentVoucherProps {
   companyProfile: CompanyProfile | null
@@ -20,23 +24,6 @@ interface PaymentVoucherProps {
   selectedWithholding: number
   selectedNetTotal: number
   t: (key: string) => string
-}
-
-const getJobTotal = (job: Job) => {
-    const basePrice = Number(job.Cost_Driver_Total) || 0
-    let extra = 0
-    if (job.extra_costs_json) {
-        try {
-            let costs: any = job.extra_costs_json
-            if (typeof costs === 'string') {
-                try { costs = JSON.parse(costs) } catch {}
-            }
-            if (Array.isArray(costs)) {
-                extra = costs.reduce((sum: number, c: any) => sum + (Number(c.cost_driver) || 0), 0)
-            }
-        } catch {}
-    }
-    return basePrice + extra
 }
 
 export const PaymentVoucher = ({
@@ -108,12 +95,12 @@ export const PaymentVoucher = ({
             <div className="text-right">
                 <div className="inline-flex items-center gap-2 px-4 py-2 bg-card text-foreground rounded-xl mb-6 shadow-lg shadow-slate-900/20">
                     <Banknote className="w-4 h-4 text-primary" />
-                    <span className="font-black text-base font-bold tracking-[0.2em] uppercase">Voucher Terminal</span>
+                    <span className="font-black text-base font-bold tracking-[0.2em] uppercase">{t('billing_driver.terminal')}</span>
                 </div>
                 <h1 className="text-6xl font-black text-foreground tracking-tighter uppercase mb-1 leading-none">
-                    Payment
+                    {t('billing_driver.title')}
                 </h1>
-                <p className="text-primary font-black text-2xl tracking-[0.1em] mb-6">ใบสำคัญจ่าย</p>
+                <p className="text-primary font-black text-2xl tracking-[0.1em] mb-6">{t('billing_driver.voucher_subtitle')}</p>
                 
                 <div className="flex flex-col items-end gap-2">
                     <div className="px-4 py-1.5 bg-slate-100 text-muted-foreground rounded-lg font-black text-base font-bold tracking-widest border border-slate-200">
@@ -145,7 +132,7 @@ export const PaymentVoucher = ({
                                         <Globe className="w-5 h-5 text-muted-foreground group-hover/bank:text-primary transition-colors" />
                                     </div>
                                     <div>
-                                        <p className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest">Bank Entity</p>
+                                        <p className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest">{t('billing_driver.bank_entity')}</p>
                                         <p className="text-xl font-black text-muted-foreground">{entityInfo.Bank_Name}</p>
                                     </div>
                                 </div>
@@ -156,7 +143,7 @@ export const PaymentVoucher = ({
                                         <ShieldCheck className="w-5 h-5 text-muted-foreground group-hover/acc:text-primary transition-colors" />
                                     </div>
                                     <div>
-                                        <p className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest">Account Structure</p>
+                                        <p className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest">{t('billing_driver.account_structure')}</p>
                                         <div className="flex items-baseline gap-2">
                                             <p className="text-lg font-black text-foreground tracking-wider font-mono">{entityInfo.Bank_Account_No}</p>
                                             <span className="text-base font-bold text-muted-foreground font-bold italic">({entityInfo.Bank_Account_Name || entityName})</span>
@@ -168,7 +155,7 @@ export const PaymentVoucher = ({
                     ) : (
                         <div className="mt-8 p-4 bg-rose-50 border border-rose-100 rounded-2xl flex items-center gap-3">
                             <div className="w-8 h-8 rounded-full bg-rose-500 text-white flex items-center justify-center animate-pulse shrink-0">!</div>
-                            <p className="text-lg font-bold text-rose-600 font-bold italic">* Recipient Identification Failure / Pending Account Data</p>
+                            <p className="text-lg font-bold text-rose-600 font-bold italic">{t('billing_driver.recipient_error')}</p>
                         </div>
                     )}
                 </div>
@@ -178,18 +165,18 @@ export const PaymentVoucher = ({
                  <div className="p-8 rounded-[2rem] border border-slate-100 bg-white flex-1">
                     <div className="space-y-6">
                         <div className="flex justify-between items-center group/item">
-                            <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest group-hover/item:text-primary transition-colors">Execution Date</span>
+                            <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest group-hover/item:text-primary transition-colors">{t('billing_driver.execution_date')}</span>
                             <span className="font-black text-foreground text-xl">{today}</span>
                         </div>
                         <div className="flex justify-between items-center group/item">
-                            <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest group-hover/item:text-primary transition-colors">Currency Matrix</span>
-                            <span className="font-black text-foreground text-xl">THB / บาm</span>
+                            <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest group-hover/item:text-primary transition-colors">{t('billing_driver.currency_matrix')}</span>
+                            <span className="font-black text-foreground text-xl">{t('billing_driver.currency_value')}</span>
                         </div>
                         <div className="flex justify-between items-center group/item">
                             <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest group-hover/item:text-primary transition-colors">{t('billing_driver.payout_logic')}</span>
                             <div className="flex flex-col items-end">
-                                <span className="text-primary font-black text-base font-bold uppercase tracking-[0.2em]">DIRECT TRANSFER</span>
-                                <span className="text-base font-bold text-muted-foreground font-bold uppercase mt-0.5 tracking-tighter">Automated Clearing House</span>
+                                <span className="text-primary font-black text-base font-bold uppercase tracking-[0.2em]">{t('billing_driver.direct_transfer')}</span>
+                                <span className="text-base font-bold text-muted-foreground font-bold uppercase mt-0.5 tracking-tighter">{t('billing_driver.ach_desc')}</span>
                             </div>
                         </div>
                     </div>
@@ -199,8 +186,8 @@ export const PaymentVoucher = ({
                  <div className="h-20 bg-slate-50 rounded-2xl border border-slate-100 flex items-center px-6 gap-4 border-dashed">
                     <div className="w-10 h-10 bg-slate-200 rounded shrink-0 opacity-50" />
                     <div className="space-y-1">
-                        <p className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest">Digital Authenticator</p>
-                        <p className="text-base font-bold font-bold text-muted-foreground leading-tight">Scanned for ledger verification and instant trace</p>
+                        <p className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest">{t('billing_driver.digital_authenticator')}</p>
+                        <p className="text-base font-bold font-bold text-muted-foreground leading-tight">{t('billing_driver.authenticator_desc')}</p>
                     </div>
                  </div>
             </div>
@@ -220,25 +207,64 @@ export const PaymentVoucher = ({
                     </thead>
                     <tbody className="divide-y divide-slate-50">
                         {selectedData.map((item, index) => {
-                            const jobTotal = getJobTotal(item);
+                            const basePrice = Number(item.Cost_Driver_Total) || 0;
+                            const extras: ExtraCost[] = [];
+                            if (item.extra_costs_json) {
+                                try {
+                                    let parsed: ExtraCost[] = [];
+                                    if (typeof item.extra_costs_json === 'string') {
+                                        parsed = JSON.parse(item.extra_costs_json);
+                                    } else {
+                                        parsed = item.extra_costs_json as unknown as ExtraCost[];
+                                    }
+                                    if (Array.isArray(parsed)) extras.push(...parsed);
+                                } catch {}
+                            }
+
                             return (
                                 <React.Fragment key={item.Job_ID}>
+                                    {/* Base Row */}
                                     <tr className="group transition-colors hover:bg-slate-50/50">
                                         <td className="py-6 px-8 font-black text-muted-foreground group-hover:text-primary transition-colors align-top">{index + 1}</td>
                                         <td className="py-6 px-8 align-top">
                                             <div className="font-black text-foreground uppercase tracking-tight text-xl">ID: {item.Job_ID.slice(-8)}</div>
                                             <div className="text-base font-bold text-muted-foreground font-bold mt-1 uppercase tracking-widest flex items-center gap-2">
                                                 <MapPin className="w-2.5 h-3 text-muted-foreground" />
-                                                {item.Route_Name || 'Standard Route'}
+                                                {item.Route_Name || t('billing_driver.standard_route')}
+                                            </div>
+                                            <div className="mt-2 text-primary font-bold text-base flex items-center gap-1.5">
+                                                <div className="w-1.5 h-1.5 rounded-full bg-primary/40" />
+                                                {t('billing_driver.base_payout')}
                                             </div>
                                         </td>
                                         <td className="py-6 px-8 font-bold text-muted-foreground align-top text-base font-bold">
                                             {item.Plan_Date ? new Date(item.Plan_Date).toLocaleDateString('th-TH') : '-'}
                                         </td>
                                         <td className="py-6 px-8 text-right font-black text-foreground align-top text-base">
-                                            {jobTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                            {basePrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                         </td>
                                     </tr>
+
+                                    {/* Extra Rows */}
+                                    {extras.map((extra, eIdx) => (
+                                        <tr key={`extra-${item.Job_ID}-${eIdx}`} className="bg-slate-50/30 border-l-4 border-primary/10">
+                                            <td className="py-3 px-8"></td>
+                                            <td className="py-3 px-8">
+                                                <div className="flex items-center gap-3">
+                                                    <span className="text-primary/40 text-xl font-light">↳</span>
+                                                    <div>
+                                                        <span className="text-base font-bold font-black text-muted-foreground/80 uppercase tracking-widest group-hover:text-primary transition-colors">
+                                                            {extra.type || t('billing_driver.extra_item')}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className="py-3 px-8"></td>
+                                            <td className="py-3 px-8 text-right font-black text-muted-foreground/80 text-base">
+                                                {Number(extra.cost_driver).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                            </td>
+                                        </tr>
+                                    ))}
                                 </React.Fragment>
                             );
                         })}
@@ -252,22 +278,22 @@ export const PaymentVoucher = ({
             <div className="w-[320px] p-10 rounded-[3rem] bg-card text-foreground shadow-2xl shadow-slate-900/30 ring-8 ring-slate-50 transform hover:scale-[1.02] transition-transform duration-500">
                 <div className="space-y-6">
                     <div className="flex justify-between items-center text-muted-foreground group">
-                        <span className="text-foreground transition-colors">Subtotal Matrix</span>
+                        <span className="text-foreground transition-colors">{t('billing_driver.subtotal_matrix')}</span>
                         <span className="font-bold text-xl">{selectedSubtotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                     </div>
                     <div className="flex justify-between items-center text-primary/80 group">
-                        <span className="text-base font-bold font-black uppercase tracking-[0.2em] group-hover:text-primary transition-colors">Tax Retention (1%)</span>
+                        <span className="text-base font-bold font-black uppercase tracking-[0.2em] group-hover:text-primary transition-colors">{t('billing_driver.tax_retention')}</span>
                         <span className="font-bold text-xl">-{selectedWithholding.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                     </div>
                     <div className="h-px bg-muted/80" />
                     <div className="space-y-2 py-2">
                         <div className="flex justify-between items-baseline">
-                            <span className="text-base font-bold font-black text-primary uppercase tracking-[0.3em]">Net Terminal</span>
+                            <span className="text-base font-bold font-black text-primary uppercase tracking-[0.3em]">{t('billing_driver.net_terminal')}</span>
                             <div className="flex flex-col items-end leading-none">
                                 <span className="text-3xl font-black tracking-tighter">
                                     {selectedNetTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                 </span>
-                                <span className="text-base font-bold font-black text-primary uppercase tracking-[0.4em] mt-2">THB / บาm</span>
+                                <span className="text-base font-bold font-black text-primary uppercase tracking-[0.4em] mt-2">{t('billing_driver.currency_value')}</span>
                             </div>
                         </div>
                     </div>
@@ -282,8 +308,8 @@ export const PaymentVoucher = ({
                     <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-slate-50 border-2 border-slate-200 group-hover:border-primary transition-colors" />
                 </div>
                 <div className="space-y-2">
-                    <p className="text-base font-bold font-black text-foreground uppercase tracking-widest">Authorized Executioner</p>
-                    <p className="text-base font-bold text-muted-foreground font-bold uppercase tracking-tighter italic">Fleet Finance Department</p>
+                    <p className="text-base font-bold font-black text-foreground uppercase tracking-widest">{t('billing_driver.authorized_executioner')}</p>
+                    <p className="text-base font-bold text-muted-foreground font-bold uppercase tracking-tighter italic">{t('billing_driver.finance_dept')}</p>
                 </div>
             </div>
             <div className="space-y-12 text-center group">
@@ -291,8 +317,8 @@ export const PaymentVoucher = ({
                     <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-slate-50 border-2 border-slate-200 group-hover:border-primary transition-colors" />
                 </div>
                 <div className="space-y-2">
-                    <p className="text-base font-bold font-black text-foreground uppercase tracking-widest">Payee Verification</p>
-                    <p className="text-base font-bold text-muted-foreground font-bold uppercase tracking-tighter italic">Signature / Digital Confirmation</p>
+                    <p className="text-base font-bold font-black text-foreground uppercase tracking-widest">{t('billing_driver.payee_verification')}</p>
+                    <p className="text-base font-bold text-muted-foreground font-bold uppercase tracking-tighter italic">{t('billing_driver.signature_desc')}</p>
                 </div>
             </div>
         </div>
@@ -300,11 +326,11 @@ export const PaymentVoucher = ({
         {/* Footer Audit Path */}
         <div className="absolute bottom-12 left-16 right-16 flex justify-between items-center border-t border-slate-100 pt-8 opacity-40">
             <p className="text-base font-bold font-black text-muted-foreground uppercase tracking-[0.3em]">
-                System Log: LOGISPRO-FIN-{new Date().toISOString()} | Node: Production
+                {t('billing_driver.system_log')} LOGISPRO-FIN-{new Date().toISOString()} | {t('billing_driver.node_production')}
             </p>
             <div className="flex gap-4 items-center">
                 <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                <p className="text-base font-bold font-black text-muted-foreground uppercase tracking-[0.3em]">Verified Ledger</p>
+                <p className="text-base font-bold font-black text-muted-foreground uppercase tracking-[0.3em]">{t('billing_driver.verified_ledger')}</p>
             </div>
         </div>
     </div>

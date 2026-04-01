@@ -5,43 +5,35 @@ import { useRouter } from "next/navigation"
 import Image from "next/image"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { useLanguage } from "@/components/providers/language-provider"
-import { Card, CardContent } from "@/components/ui/card"
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
-import { PremiumButton } from "@/components/ui/premium-button"
-import { PremiumCard } from "@/components/ui/premium-card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { cn as cnUtil } from "@/lib/utils"
 import {
   Receipt,
   Download,
   Calendar,
   Building2,
-  FileText,
   Search,
   CheckCircle2,
+
   Clock,
   Banknote,
-  Percent,
   Loader2,
   History,
   Eye,
   Zap,
   ShieldCheck,
-  TrendingUp,
   Activity,
-  ArrowRight,
   FileSearch,
-  Save,
-  Plus
+  Save
 } from "lucide-react"
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
+import { PremiumButton } from "@/components/ui/premium-button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import {
   Select,
   SelectContent,
@@ -57,7 +49,7 @@ import { CompanyProfile } from "@/lib/supabase/settings"
 import { Customer } from "@/lib/supabase/customers"
 import { exportToCSV } from "@/lib/utils/export"
 
-const WITHHOLDING_TAX_RATE = 0.01 // 1%
+
 
 interface CustomerBillingClientProps {
     initialJobs: Job[]
@@ -116,12 +108,11 @@ export default function CustomerBillingClient({ initialJobs, companyProfile, cus
       let extra = 0
       if (job.extra_costs_json) {
           try {
-              let costs: any = job.extra_costs_json
-              if (typeof costs === 'string') {
-                  try { costs = JSON.parse(costs) } catch {}
-              }
-              if (typeof costs === 'string') {
-                  try { costs = JSON.parse(costs as string) } catch {}
+              let costs: { charge_cust?: string | number }[] = []
+              if (typeof job.extra_costs_json === 'string') {
+                  try { costs = JSON.parse(job.extra_costs_json) } catch {}
+              } else {
+                  costs = job.extra_costs_json as { charge_cust?: string | number }[]
               }
               if (Array.isArray(costs)) {
                   extra = costs.reduce((sum: number, c: { charge_cust?: string | number }) => sum + (Number(c.charge_cust) || 0), 0)
@@ -140,8 +131,6 @@ export default function CustomerBillingClient({ initialJobs, companyProfile, cus
   // Selected items calculations
   const selectedData = filteredData.filter(i => selectedItems.includes(i.Job_ID))
   const selectedSubtotal = selectedData.reduce((sum, i) => sum + getJobTotal(i), 0)
-  const selectedWithholding = Math.round(selectedSubtotal * WITHHOLDING_TAX_RATE)
-  const selectedNetTotal = selectedSubtotal - selectedWithholding
 
   const toggleItem = (jobId: string) => {
     setSelectedItems(prev => 
@@ -170,8 +159,12 @@ export default function CustomerBillingClient({ initialJobs, companyProfile, cus
     setLoading(true)
     try {
         const today = new Date().toISOString().split('T')[0]
+        const customerData = customers.find(c => c.Customer_Name === selectedCustomer)
+        const creditTerm = customerData?.Credit_Term || 30
+        
+        const billingDate = new Date()
         const dueDateObj = new Date()
-        dueDateObj.setDate(dueDateObj.getDate() + 30)
+        dueDateObj.setDate(billingDate.getDate() + creditTerm)
         const dueDate = dueDateObj.toISOString().split('T')[0]
 
         const result = await createBillingNote(
@@ -188,8 +181,9 @@ export default function CustomerBillingClient({ initialJobs, companyProfile, cus
         } else {
             throw new Error(result.error || 'Failed to create billing note')
         }
-    } catch (err: any) {
-        toast.error("เกิดข้อผิดพลาด: " + err.message)
+    } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : String(err)
+        toast.error("เกิดข้อผิดพลาด: " + message)
     } finally {
         setLoading(false)
     }
@@ -219,8 +213,6 @@ export default function CustomerBillingClient({ initialJobs, companyProfile, cus
   const InvoicePreview = () => {
     const displayData = (isCustomerMode && selectedItems.length === 0) ? filteredData : selectedData
     const subtotal = displayData.reduce((sum, i) => sum + getJobTotal(i), 0)
-    const withholding = Math.round(subtotal * WITHHOLDING_TAX_RATE)
-    const netTotal = subtotal - withholding
 
     const customerInfo = customers.find(c => 
         c.Customer_Name?.trim().toLowerCase() === selectedCustomer?.trim().toLowerCase()
@@ -329,16 +321,13 @@ export default function CustomerBillingClient({ initialJobs, companyProfile, cus
                             if (typeof parsed === 'string') {
                                 try { parsed = JSON.parse(parsed) } catch {}
                             }
-                            if (typeof parsed === 'string') {
-                                try { parsed = JSON.parse(parsed as string) } catch {}
-                            }
                             if (Array.isArray(parsed)) {
                                 extraCosts = parsed
                             }
                         }
                     } catch {}
 
-                    const chargeableExtras = extraCosts.filter((c: any) => Number(c.charge_cust) > 0)
+                    const chargeableExtras = extraCosts.filter((c: ExtraCost) => Number(c.charge_cust) > 0)
 
                     return (
                         <React.Fragment key={job.Job_ID}>
@@ -390,14 +379,10 @@ export default function CustomerBillingClient({ initialJobs, companyProfile, cus
                         <td className="pt-10 pb-4 px-6 text-right font-bold text-muted-foreground uppercase tracking-widest text-base font-bold">Gross Operations Total</td>
                         <td className="pt-10 pb-4 px-6 text-right font-black text-foreground text-lg">{subtotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
                     </tr>
-                    <tr>
-                        <td className="py-3 px-6 text-right font-bold text-muted-foreground uppercase tracking-widest text-base font-bold">Withholding Index (1%)</td>
-                        <td className="py-3 px-6 text-right font-black text-rose-500 text-lg">-{withholding.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-                    </tr>
                     <tr className="bg-background text-foreground rounded-b-3xl">
-                        <td className="py-6 px-6 text-right font-black uppercase tracking-[0.4em] text-base font-bold">Net Settlement Amount</td>
+                        <td className="py-6 px-6 text-right font-black uppercase tracking-[0.4em] text-base font-bold">Total Operations Value</td>
                         <td className="py-6 px-6 text-right font-black text-primary text-3xl">
-                            {netTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                            {subtotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                             <span className="text-lg font-bold font-bold ml-2 opacity-60">THB</span>
                         </td>
                     </tr>
@@ -562,19 +547,7 @@ export default function CustomerBillingClient({ initialJobs, companyProfile, cus
             </div>
         </div>
 
-        <div className="p-8 rounded-[3rem] border border-accent/20 backdrop-blur-3xl shadow-2xl relative overflow-hidden group transition-all hover:scale-[1.03] bg-background/40">
-            <div className="flex items-center justify-between mb-8">
-                <div className="p-4 rounded-2xl shadow-xl transition-all duration-700 group-hover:scale-110 group-hover:rotate-6 bg-accent/20 text-accent">
-                    <Percent size={24} strokeWidth={2.5} />
-                </div>
-                <div className="px-3 py-1 bg-muted/50 rounded-full border border-border/5 text-base font-bold text-accent font-black uppercase tracking-widest italic">WHT RATIO</div>
-            </div>
-            <p className="text-muted-foreground font-black text-base font-bold uppercase tracking-[0.3em] mb-2">{t('billing_customer.unbilled_missions')}</p>
-            <div className="flex items-baseline gap-2">
-                <span className="text-lg font-bold font-black text-muted-foreground mb-1">THB</span>
-                <p className="text-4xl font-black text-foreground tracking-tighter leading-none">{selectedWithholding.toLocaleString()}</p>
-            </div>
-        </div>
+
       </div>
 
       {/* Selected Action Command Bar */}
@@ -588,14 +561,9 @@ export default function CustomerBillingClient({ initialJobs, companyProfile, cus
                         <p className="text-3xl font-black text-foreground tracking-tighter uppercase">฿{selectedSubtotal.toLocaleString()}</p>
                     </div>
                     <div className="h-12 w-px bg-muted/80" />
-                    <div className="space-y-2 text-rose-500">
-                        <p className="text-base font-bold font-black uppercase tracking-[0.4em] opacity-60 text-muted-foreground">Tax Delta (1%)</p>
-                        <p className="text-3xl font-black tracking-tighter uppercase">฿{selectedWithholding.toLocaleString()}</p>
-                    </div>
-                    <div className="h-12 w-px bg-muted/80" />
                     <div className="space-y-2">
-                        <p className="text-base font-bold font-black text-primary uppercase tracking-[0.4em] animate-pulse">Net Liquidity Value</p>
-                        <p className="text-5xl font-black text-primary tracking-tighter uppercase premium-text-gradient">฿{selectedNetTotal.toLocaleString()}</p>
+                        <p className="text-base font-bold font-black text-primary uppercase tracking-[0.4em] animate-pulse">Total Settlement Volume</p>
+                        <p className="text-5xl font-black text-primary tracking-tighter uppercase premium-text-gradient">฿{selectedSubtotal.toLocaleString()}</p>
                     </div>
                 </div>
                 
@@ -726,13 +694,13 @@ export default function CustomerBillingClient({ initialJobs, companyProfile, cus
                         </div>
                     </td>
                     <td className="px-12 py-8 text-center">
-                      <div className={cn(
+                      <div className={cnUtil(
                         "inline-flex items-center gap-2.5 px-6 py-2.5 rounded-[1.5rem] text-base font-bold font-black uppercase tracking-widest border transition-all duration-500 group-hover/row:scale-110",
                         isCustomerMode 
                           ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20 shadow-[0_0_20px_rgba(16,185,129,0.1)]" 
                           : "bg-primary/10 text-primary border-primary/20 shadow-[0_0_20px_rgba(255,30,133,0.1)]"
                       )}>
-                        <span className={cn("w-1.5 h-1.5 rounded-full shadow-[0_0_10px_currentColor]", isCustomerMode ? "bg-emerald-500 animate-pulse" : "bg-primary animate-pulse")} />
+                        <span className={cnUtil("w-1.5 h-1.5 rounded-full shadow-[0_0_10px_currentColor]", isCustomerMode ? "bg-emerald-500 animate-pulse" : "bg-primary animate-pulse")} />
                         {isCustomerMode ? t('billing_customer.settlement_due') : t('billing_customer.unbilled_mission')}
                       </div>
                     </td>

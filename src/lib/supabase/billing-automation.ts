@@ -105,17 +105,32 @@ export async function sendScheduledBillingEmails() {
 
         const { data: notes, error: notesError } = await supabase
             .from('Billing_Notes')
-            .select('*, Master_Customers!left(Email)')
+            .select('*')
             .eq('Status', 'Pending')
             .gte('Created_At', yesterday.toISOString())
         
         if (notesError) throw notesError
         if (!notes || notes.length === 0) return { success: true, count: 0, message: "No notes to send" }
 
+        // Fetch customer emails separately to avoid relationship errors
+        const customerNames = Array.from(new Set(notes.map(n => n.Customer_Name))).filter(Boolean)
+        let emailMap = new Map()
+        
+        if (customerNames.length > 0) {
+            const { data: customers } = await supabase
+                .from('Master_Customers')
+                .select('Customer_Name, Email')
+                .in('Customer_Name', customerNames)
+            
+            if (customers) {
+                emailMap = new Map(customers.map(c => [c.Customer_Name, c.Email]))
+            }
+        }
+
         const sentCount: string[] = []
 
         for (const note of notes) {
-            const customerEmail = note.Master_Customers?.Email || ""
+            const customerEmail = emailMap.get(note.Customer_Name) || ""
             if (!customerEmail) continue
 
             // Parse: "main@email.com, cc1@email.com, cc2@email.com"

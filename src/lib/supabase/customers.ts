@@ -11,6 +11,7 @@ export type Customer = {
   Address: string | null
   Tax_ID: string | null
   Branch_ID: string | null
+  Credit_Term?: number | null
   Is_Active: boolean | null
   Origin_Location?: string | null
   Dest_Location?: string | null
@@ -93,6 +94,7 @@ export async function createCustomer(customerData: Partial<Customer>) {
         Address: customerData.Address,
         Tax_ID: customerData.Tax_ID,
         Branch_ID: customerData.Branch_ID || branchId || 'HQ', // Default to HQ if not found
+        Credit_Term: customerData.Credit_Term || 30 // Default to 30 days if not set
         // Is_Active: true
       })
       .select()
@@ -182,6 +184,7 @@ export async function createBulkCustomers(customers: Record<string, unknown>[]) 
             normalized.Tax_ID = getValue(['tax_id', 'tax', 'เลขผู้เสียภาษี'])
             normalized.Branch_ID = getValue(['branch_id', 'branch', 'สาขา', 'รหัสสาขา'])
             normalized.Line_User_ID = getValue(['line_user_id', 'line_id', 'รหัสไลน์'])
+            normalized.Credit_Term = getValue(['credit_term', 'term', 'credit', 'เครดิต', 'เครดิตเทอม'])
             
             return normalized
         }
@@ -210,7 +213,8 @@ export async function createBulkCustomers(customers: Record<string, unknown>[]) 
                 Address: c.Address,
                 Tax_ID: c.Tax_ID,
                 Branch_ID: c.Branch_ID || branchId || 'HQ',
-                Line_User_ID: c.Line_User_ID
+                Line_User_ID: c.Line_User_ID,
+                Credit_Term: parseInt(c.Credit_Term as string) || 30
              }
         })
 

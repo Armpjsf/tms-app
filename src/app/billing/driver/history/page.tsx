@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { PremiumCard, PremiumCardHeader, PremiumCardTitle } from "@/components/ui/premium-card"
@@ -13,6 +13,13 @@ import {
   TableHeader, 
   TableRow 
 } from "@/components/ui/table"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import {
   Wallet,
   ArrowLeft,
@@ -34,6 +41,7 @@ export default function DriverPaymentHistory() {
   const router = useRouter()
   const [payments, setPayments] = useState<DriverPayment[]>([])
   const [loading, setLoading] = useState(true)
+  const [processingId, setProcessingId] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState("")
   const [isAdmin, setIsAdmin] = useState(false)
   const [statusFilter, setStatusFilter] = useState("all")

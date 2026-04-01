@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react"
 import { Bell, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
+import { toast } from "sonner"
 
 import { Capacitor } from '@capacitor/core'
 import { PushNotifications } from '@capacitor/push-notifications'
@@ -195,44 +196,46 @@ export function PermissionRequester({ driverId }: Props) {
   if (!showPrompt) return null
 
   return (
-    <div className="fixed bottom-20 left-4 right-4 z-50 animate-in slide-in-from-bottom-10 duration-500">
-      <Card className="bg-white border-blue-200 shadow-2xl shadow-blue-900/10 rounded-2xl overflow-hidden">
-        <div className="h-1 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500" />
-        <CardContent className="p-5 flex items-start gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center flex-shrink-0 text-blue-600 border border-blue-100">
-                <Bell size={24} className="animate-bounce" />
-            </div>
-            <div className="flex-1">
-                <div className="flex justify-between items-start mb-1">
-                    <h3 className="font-black text-gray-900 text-base">เปิดรับการแจ้งเตือนงาน</h3>
-                    <button onClick={() => setShowPrompt(false)} className="text-gray-400 hover:text-gray-600 p-1">
-                        <X size={18} />
-                    </button>
+    <div className="fixed inset-x-4 bottom-32 z-[200] animate-in slide-in-from-bottom-20 duration-700 ease-out">
+      <div className="glass-panel rounded-[2.5rem] p-8 space-y-8 shadow-2xl shadow-primary/20 border-primary/20 bg-gradient-to-br from-card to-primary/5">
+        <div className="absolute top-0 right-0 p-8 text-primary/10 pointer-events-none">
+            <Bell size={120} strokeWidth={1} className="rotate-12" />
+        </div>
+        
+        <div className="relative z-10 flex flex-col items-center text-center space-y-4">
+            <div className="w-20 h-20 rounded-3xl bg-primary flex items-center justify-center shadow-xl shadow-primary/30 relative">
+                <Bell size={40} className="text-white animate-pulse" strokeWidth={2.5} />
+                <div className="absolute -top-1 -right-1 w-6 h-6 bg-accent rounded-full border-4 border-background flex items-center justify-center">
+                    <span className="text-[10px] font-black text-white">!</span>
                 </div>
-                <p className="text-xl text-gray-600 mb-4 leading-relaxed font-bold">
-                    เพื่อให้คุณไม่พลาดงานใหม่ ระบบจะแจ้งเตือนทันทีที่มีงานเข้า
+            </div>
+            
+            <div className="space-y-2">
+                <h3 className="text-2xl font-black text-foreground uppercase tracking-tight italic">แจ้งเตือนงานใหม่</h3>
+                <p className="text-muted-foreground text-base font-bold leading-relaxed max-w-[240px]">
+                    เปิดแจ้งเตือนเพื่อให้คุณรับรู้งานใหม่ และสถานะงานได้ทันทีผ่านมือถือ
                 </p>
-                <div className="flex gap-3">
-                    <Button 
-                        size="sm" 
-                        variant="ghost" 
-                        className="flex-1 text-muted-foreground hover:text-gray-800 hover:bg-gray-100 font-bold"
-                        onClick={() => setShowPrompt(false)}
-                    >
-                        ภายหลัง
-                    </Button>
-                    <Button 
-                        size="sm" 
-                        className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-black shadow-md shadow-blue-600/20"
-                        onClick={subscribeToPush}
-                    >
-                        ตกลง เปิดเลย
-                    </Button>
-                </div>
             </div>
-        </CardContent>
-      </Card>
+        </div>
+
+        <div className="relative z-10 grid grid-cols-2 gap-4">
+            <Button 
+                variant="ghost" 
+                className="h-16 rounded-2xl text-muted-foreground font-black uppercase tracking-widest hover:bg-muted/50 transition-all"
+                onClick={() => setShowPrompt(false)}
+            >
+                ไว้ก่อน
+            </Button>
+            <Button 
+                className="h-16 rounded-2xl bg-primary hover:bg-primary/90 text-white font-black uppercase tracking-[0.15em] shadow-xl shadow-primary/20 active:scale-95 transition-all"
+                onClick={subscribeToPush}
+            >
+                เปิดเลย
+            </Button>
+        </div>
+      </div>
     </div>
   )
 }
+
 
