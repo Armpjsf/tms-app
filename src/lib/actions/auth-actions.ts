@@ -90,7 +90,7 @@ export async function loginDriver(formData: FormData) {
   let userData = null
   const { data: userData1 } = await supabase
     .from("Master_Users")
-    .select("Permissions")
+    .select("*")
     .eq("Username", identifier)
     .single()
   userData = userData1
@@ -98,19 +98,22 @@ export async function loginDriver(formData: FormData) {
   if (!userData && driver.Mobile_No) {
     const { data: userData2 } = await supabase
       .from("Master_Users")
-      .select("Permissions")
+      .select("*")
       .eq("Username", driver.Mobile_No)
       .single()
     userData = userData2
   }
 
   // 4. Create Session (Cookie)
+  // Safely get permissions regardless of DB casing
+  const userPermissions = (userData as Record<string, any>)?.Permissions || (userData as Record<string, any>)?.permissions || { show_income: true }
+  
   const sessionData = {
     driverId: driver.Driver_ID,
     driverName: driver.Driver_Name,
     branchId: driver.Branch_ID,
     role: "driver",
-    permissions: userData?.Permissions || { show_income: true } // Default to true if not found for backward compatibility
+    permissions: userPermissions
   }
   
   const cookieStore = await cookies()

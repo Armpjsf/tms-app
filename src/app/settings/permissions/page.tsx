@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect } from "react"
-import { motion } from "framer-motion"
 import { 
     ShieldCheck, 
     ChevronRight, 
@@ -43,59 +42,59 @@ const MODULE_GROUPS = [
   {
     title: "Ops Command",
     items: [
-      { key: "navigation.dashboard", label: "Dashboard", icon: LayoutDashboard },
+      { key: "navigation.dashboard", label: "แดชบอร์ด", icon: LayoutDashboard },
     ]
   },
   {
     title: "Operations",
     items: [
-      { key: "navigation.planning", label: "การวางแผนงาน", icon: CalendarDays },
+      { key: "navigation.planning", label: "วางแผนงาน", icon: CalendarDays },
       { key: "navigation.calendar", label: "ปฏิทินงาน", icon: CalendarDays },
       { key: "navigation.history", label: "ประวัติงาน", icon: History },
-      { key: "navigation.monitoring", label: "ติดตามงาน Real-time", icon: Activity },
-      { key: "navigation.pod", label: "ระบบ POD", icon: FileText },
-      { key: "navigation.notifications", label: "การแจ้งเตือน", icon: AlertTriangle },
-      { key: "navigation.chat", label: "แชท/สื่อสาร", icon: MessageSquare },
+      { key: "navigation.monitoring", label: "ติดตามรถ", icon: Activity },
+      { key: "navigation.pod", label: "หลักฐานการส่งสินค้า (POD)", icon: FileText },
+      { key: "navigation.notifications", label: "แจ้งเตือน & SOS", icon: AlertTriangle },
+      { key: "navigation.chat", label: "แชท", icon: MessageSquare },
     ]
   },
   {
     title: "Asset Control",
     items: [
       { key: "navigation.routes", label: "จัดการเส้นทาง", icon: Navigation },
-      { key: "navigation.drivers", label: "ข้อมูลคนขับ", icon: Users },
+      { key: "navigation.drivers", label: "พนักงานขับรถ", icon: Users },
       { key: "navigation.driver_leaves", label: "จัดการการลา", icon: CalendarDays },
       { key: "navigation.customers", label: "ข้อมูลลูกค้า", icon: Building },
       { key: "navigation.fleet", label: "ยานพาหนะ", icon: Truck },
       { key: "navigation.checks", label: "ตรวจสภาพรถ", icon: CheckCircle2 },
-      { key: "navigation.maintenance", label: "แจ้งซ่อม/บำรุง", icon: Wrench },
-      { key: "navigation.fuel", label: "ข้อมูลน้ำมัน", icon: Fuel },
+      { key: "navigation.maintenance", label: "บันทึกซ่อมบำรุง", icon: Wrench },
+      { key: "navigation.fuel", label: "บันทึกน้ำมัน", icon: Fuel },
     ]
   },
   {
     title: "Intelligence",
     items: [
       { key: "navigation.analytics", label: "วิเคราะห์ข้อมูล", icon: BarChart3 },
-      { key: "navigation.ai", label: "ระบบ AI", icon: Bot },
-      { key: "navigation.reports", label: "รายงานต่างๆ", icon: BarChart3 },
+      { key: "navigation.ai", label: "ผู้ช่วย AI", icon: Bot },
+      { key: "navigation.reports", label: "รายงานสรุป", icon: BarChart3 },
     ]
   },
   {
     title: "Financial",
     items: [
-      { key: "navigation.billing_customer", label: "Billing ลูกค้า", icon: Receipt },
-      { key: "navigation.billing_automation", label: "ระบบ Billing อัตโนมัติ", icon: Zap },
-      { key: "navigation.invoices", label: "จัดการ Invoice", icon: FileText },
+      { key: "navigation.billing_customer", label: "วางบิลลูกค้า", icon: Receipt },
+      { key: "navigation.billing_automation", label: "ระบบวางบิลอัตโนมัติ", icon: Zap },
+      { key: "navigation.invoices", label: "ใบแจ้งหนี้", icon: FileText },
       { key: "navigation.payouts", label: "ค่าเที่ยวคนขับ", icon: Wallet },
     ]
   },
   {
     title: "System Settings",
     items: [
-      { key: "navigation.settings", label: "หน้าตั้งค่าหลัก", icon: Settings },
+      { key: "navigation.settings", label: "ตั้งค่าระบบ", icon: Settings },
       { key: "settings.items.identity", label: "ตั้งค่าโปรไฟล์ส่วนตัว", icon: User },
       { key: "settings.items.company", label: "ข้อมูลบริษัท (Operation)", icon: Building },
       { key: "settings.items.accounting_profile", label: "ข้อมูลฝ่ายบัญชี (Invoice)", icon: Receipt },
-      { key: "settings.items.permissions", label: "จัดการสิทธิ์ (Module Access)", icon: ShieldCheck },
+      { key: "settings.items.permissions", label: "สิทธิ์การใช้งาน", icon: ShieldCheck },
       { key: "settings.items.operators", label: "จัดการผู้ใช้งานระบบ", icon: Users },
       { key: "settings.items.branches", label: "จัดการสาขา/โหนด", icon: Navigation },
       { key: "settings.items.partners", label: "จัดการรถร่วม (Vendor)", icon: Truck },
@@ -124,8 +123,11 @@ export default function PermissionsPage() {
         try {
             const data = await getAllRolePermissions()
             const mapping: Record<string, string[]> = {}
-            data.forEach((item: any) => {
-                mapping[item.Role_Name] = item.Allowed_Menus
+            data.forEach((item: { role_name: string, allowed_menus: string[] }) => {
+                // Database uses lowercase field names: role_name, allowed_menus
+                // We normalize the role keys to match the ROLES array casing
+                const roleKey = ROLES.find(r => r.toLowerCase() === item.role_name.toLowerCase()) || item.role_name
+                mapping[roleKey] = item.allowed_menus
             })
             
             // Set default if empty for Admin

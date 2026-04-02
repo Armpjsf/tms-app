@@ -360,64 +360,73 @@ export async function getJobById(jobId: string): Promise<Job | null> {
         // Use admin client if it's a driver or super admin
         const supabase = (isAdmin || driverSession) ? createAdminClient() : await createClient()
 
-        let baseQuery = supabase
+        // 1. SIMPLE CORE FETCH
+        // We use select('*') first to rule out any join syntax errors
+        const baseQuery = supabase
             .from('Jobs_Main')
-            .select(`
-                *,
-                Master_Customers!left (
-                    Price_Per_Unit
-                )
-            `)
+            .select('*')
             .eq('Job_ID', jobId)
         
         // Apply Filters
         if (isAdmin) {
-            // Admin sees all detail without strict branch filter here
+            // Admin sees all
         } else if (customerId) {
-            baseQuery = baseQuery.eq('Customer_ID', customerId)
+            baseQuery.eq('Customer_ID', customerId)
         } else if (driverSession) {
-            baseQuery = baseQuery.eq('Driver_ID', driverSession.driverId)
+            // DRIVER: Allow if assigned to this driver OR if the job is unassigned (Marketplace/Draft)
+            // This is safer and more flexible for drivers opening links
+            baseQuery.or(`Driver_ID.eq.${driverSession.driverId},Driver_ID.is.null`)
         } else if (branchId && branchId !== 'All') {
-            baseQuery = baseQuery.eq('Branch_ID', branchId)
+            baseQuery.eq('Branch_ID', branchId)
         } else if (!branchId) {
+            // If No session and No branch and Not Admin, return null
             return null
         }
 
         const { data, error: fetchError } = await baseQuery.single()
         
         if (!data || fetchError) {
-            // Second chance: If not found and is admin, try finding strictly by ID
+            // Second chance: If not found and is admin, try finding strictly by ID (Branch override)
             if (isAdmin) {
                 const { data: adminData } = await supabase
                     .from('Jobs_Main')
-                    .select(`
-                        *,
-                        Master_Customers!left (
-                            Price_Per_Unit
-                        )
-                    `)
+                    .select('*')
                     .eq('Job_ID', jobId)
                     .single()
                 
-                if (adminData) {
-                    return {
-                        ...adminData,
-                        Price_Per_Unit: (adminData as (Job & { Master_Customers: { Price_Per_Unit: number } })).Master_Customers?.Price_Per_Unit || 0
-                    } as Job
-                }
+                if (adminData) return await enrichJobWithCustomerData(adminData as Job)
             }
             return null
         }
 
-        // Flatten the joined data
-        return {
-            ...data,
-            Price_Per_Unit: (data as (Job & { Master_Customers: { Price_Per_Unit: number } })).Master_Customers?.Price_Per_Unit || 0
-        } as Job
-    } catch {
+        // 2. SECONDARY ENRICHMENT
+        return await enrichJobWithCustomerData(data as Job)
+    } catch (e) {
+        console.error('[getJobById ERROR]', e)
         return null
     }
 }
+
+async function enrichJobWithCustomerData(job: Job): Promise<Job> {
+    if (!job.Customer_ID) return job
+    
+    try {
+        const supabase = createAdminClient()
+        const { data: customer } = await supabase
+            .from('Master_Customers')
+            .select('Price_Per_Unit')
+            .eq('Customer_ID', job.Customer_ID)
+            .single()
+        
+        return {
+            ...job,
+            Price_Per_Unit: customer?.Price_Per_Unit || 0
+        }
+    } catch {
+        return job
+    }
+}
+
 // สถิติยอดจัดส่งย้อนหลัง 7 วัน
 export async function getWeeklyJobStats(branchId?: string) {
   try {
