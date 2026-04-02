@@ -1,5 +1,5 @@
 import React from "react"
-import { getBillingNoteByIdWithJobs } from "@/lib/supabase/billing"
+import { getPublicBillingNoteById } from "@/lib/supabase/billing"
 import { notFound } from "next/navigation"
 import { dictionaries, Language } from "@/lib/i18n/dictionaries"
 import { 
@@ -67,8 +67,8 @@ export default async function PublicInvoicePage(props: Props) {
     const { id } = params
     const lang = (searchParams?.lang as Language) || 'th'
     
-    // We use the same fetching logic. Internal function handles admin/non-admin client
-    const data = await getBillingNoteByIdWithJobs(id)
+    // Use the public fetcher which uses admin client to bypass RLS for non-logged in users
+    const data = await getPublicBillingNoteById(id)
 
     if (!data) {
         return notFound()

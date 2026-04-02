@@ -653,3 +653,87 @@ export async function recallDriverPayment(id: string) {
         return { success: false, error: getErrorMessage(e) }
     }
 }
+
+export async function getPublicBillingNoteById(id: string) {
+    try {
+        // Use admin client to bypass RLS for public invoice view
+        const supabase = await createAdminClient()
+        
+        // 1. Get Billing Note
+        const { data: note, error: noteError } = await supabase
+            .from('Billing_Notes')
+            .select('*')
+            .eq('Billing_Note_ID', id)
+            .single()
+        
+        if (noteError) throw noteError
+
+        // 2. Get Associated Jobs
+        const { data: jobs, error: jobsError } = await supabase
+            .from('Jobs_Main')
+            .select('*, extra_costs_json')
+            .eq('Billing_Note_ID', id)
+        
+        if (jobsError) throw jobsError
+
+        // 3. Get Accounting Profile (Priority)
+        const { data: acctData } = await supabase
+            .from('System_Settings')
+            .select('value')
+            .eq('key', 'accounting_profile')
+            .maybeSingle()
+
+        // 3.1 Get Company Profile (Fallback)
+        const { data: profileData } = await supabase
+            .from('System_Settings')
+            .select('value')
+            .eq('key', 'company_profile')
+            .maybeSingle()
+
+        let companyProfile = null
+        if (acctData?.value) {
+            try {
+                companyProfile = typeof acctData.value === 'string' ? JSON.parse(acctData.value) : acctData.value
+            } catch {}
+        }
+        
+        if (!companyProfile && profileData?.value) {
+            try {
+                companyProfile = typeof profileData.value === 'string' ? JSON.parse(profileData.value) : profileData.value
+            } catch {}
+        }
+
+        // 4. Get Customer Details
+        let customerEmail = ""
+        let customerAddress = ""
+        let customerTaxId = ""
+
+        if (note && note.Customer_Name) {
+            const { data: customer } = await supabase
+                .from('Master_Customers')
+                .select('Address, Tax_ID, Email') 
+                .eq('Customer_Name', note.Customer_Name)
+                .limit(1)
+                .maybeSingle()
+            
+            if (customer) {
+                customerAddress = customer.Address
+                customerTaxId = customer.Tax_ID
+                customerEmail = customer.Email || ""
+            }
+        }
+
+        const billingNoteWithDetails: BillingNote = {
+            ...note as BillingNote,
+            Customer_Email: customerEmail,
+            Customer_Address: customerAddress,
+            Customer_Tax_ID: customerTaxId
+        }
+
+        return { note: billingNoteWithDetails, jobs: jobs || [], company: companyProfile }
+
+    } catch (error) {
+        console.error("Error fetching public billing note:", error)
+        return null
+    }
+}
