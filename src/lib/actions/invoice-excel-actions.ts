@@ -28,24 +28,39 @@ export async function exportInvoiceExcel(invoiceId: string) {
     try {
         const supabase = createAdminClient()
 
-        // 1. Get Invoice Data
-        const { data: invoice, error: invError } = await supabase
+        // 1. Get Invoice Data (Try both invoices and Billing_Notes tables)
+        let { data: invoice, error: invError } = await supabase
             .from('invoices')
             .select('*, Master_Customers(*)')
             .eq('Invoice_ID', invoiceId)
-            .single()
+            .maybeSingle()
 
-        if (invError || !invoice) throw new Error("Invoice not found")
+        let isBillingNote = false
+        if (!invoice) {
+            const { data: bn, error: bnError } = await supabase
+                .from('Billing_Notes')
+                .select('*')
+                .eq('Billing_Note_ID', invoiceId)
+                .maybeSingle()
+            
+            if (bn) {
+                invoice = bn
+                isBillingNote = true
+            }
+        }
 
-        // 2. Get Jobs
+        if (invError || !invoice) throw new Error("ไม่พบข้อมูลใบแจ้งหนี้/ใบวางบิลในระบบ")
+
+        // 2. Get Jobs (Check both Invoice_ID and Billing_Note_ID)
         const { data: jobs, error: jobsError } = await supabase
             .from('Jobs_Main')
             .select('*')
-            .eq('Invoice_ID', invoiceId)
+            .or(`Invoice_ID.eq."${invoiceId}",Billing_Note_ID.eq."${invoiceId}"`)
 
         if (jobsError) throw jobsError
+        if (!jobs || jobs.length === 0) throw new Error("ไม่พบรายการงานที่เชื่อมโยงกับเอกสารนี้")
 
-        // 3. Get Accounting Profile
+        // 3. Get Accounting Profile (Fallback to default if not set)
         const accountingProfile = await getSystemSetting('accounting_profile', {
             company_name_th: "บริษัท ดีดีเซอร์วิสแอนด์ทรานสปอร์ต จำกัด",
             address: "เลขที่ 99/2 หมู่ที่ 3 ตำบลท่าทราย อำเภอเมือง จังหวัดสมุทรสาคร 74000",
