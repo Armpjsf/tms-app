@@ -149,7 +149,7 @@ export default async function BillingPrintPage(props: Props) {
                     </div>
                     <div className="text-right">
                         <div className="text-sm text-slate-600 mb-1 font-bold">(ต้นฉบับ)</div>
-                        <div className="text-5xl font-bold text-blue-500 tracking-tight">ใบแจ้งหนี้</div>
+                        <div className="text-5xl font-bold text-blue-500 tracking-tight">ใบวางบิล</div>
                     </div>
                 </div>
 
