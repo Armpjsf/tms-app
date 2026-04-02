@@ -75,7 +75,7 @@ export default async function BillingPrintPage(props: Props) {
     const { note, jobs, company } = data
 
     // Unified Data Access (Support both accounting_profile and company_profile)
-    const logoUrl = company?.logo_url || company?.Logo_URL
+    const logoUrl = company?.logo_url || company?.Logo_URL || '/images/account logo.png'
     const sellerName = company?.company_name_th || company?.Company_Name_TH || (lang === 'th' ? company?.company_name : company?.company_name_en)
     const sellerAddress = company?.address || company?.Address
     const sellerTaxId = company?.tax_id || company?.Tax_ID
@@ -166,11 +166,6 @@ export default async function BillingPrintPage(props: Props) {
                             <div className="font-bold">เลขที่ภาษี :</div>
                             <div className="flex justify-between">
                                 <span>{sellerTaxId || '-'}</span>
-                                <div className="flex gap-4 text-slate-500 ml-4">
-                                    <span className="flex items-center gap-1"><Phone size={12} /> {sellerPhone || '-'}</span>
-                                    <span className="flex items-center gap-1"><Mail size={12} /> {sellerEmail || '-'}</span>
-                                    <span className="flex items-center gap-1"><GlobeIcon size={12} /> {sellerWebsite || '-'}</span>
-                                </div>
                             </div>
                         </div>
                         
@@ -183,11 +178,6 @@ export default async function BillingPrintPage(props: Props) {
                             <div className="font-bold">เลขที่ภาษี :</div>
                             <div className="flex justify-between">
                                 <span>{note.Customer_Tax_ID || '-'}</span>
-                                <div className="flex gap-4 text-slate-500 ml-4">
-                                    <span className="flex items-center gap-1"><Phone size={12} /> -</span>
-                                    <span className="flex items-center gap-1"><Mail size={12} /> -</span>
-                                    <span className="flex items-center gap-1"><GlobeIcon size={12} /> -</span>
-                                </div>
                             </div>
                         </div>
                     </div>
@@ -324,12 +314,9 @@ export default async function BillingPrintPage(props: Props) {
                     <div className="flex items-center gap-4">
                         <div className="w-12 h-12 flex items-center justify-center overflow-hidden bg-white p-1 rounded border border-slate-100 shadow-sm">
                             <img 
-                                src="https://i.ibb.co/vzRGrtZ/scb-logo.png" 
+                                src="/images/scb logo.jpg" 
                                 alt="SCB Logo" 
                                 className="w-full h-full object-contain"
-                                onError={(e) => {
-                                    (e.target as HTMLImageElement).src = "https://upload.wikimedia.org/wikipedia/en/thumb/4/4f/Siam_Commercial_Bank_Logo.svg/300px-Siam_Commercial_Bank_Logo.svg.png"
-                                }}
                             />
                         </div>
                         <div>

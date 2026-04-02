@@ -64,17 +64,21 @@ export default function AccountingProfilePage() {
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
+    let isMounted = true
     async function loadData() {
       try {
         const data = await getSystemSetting('accounting_profile', DEFAULT_PROFILE)
-        setProfile(data)
+        if (isMounted) {
+            setProfile(data)
+            setLoading(false)
+        }
       } catch (err) {
         console.error("Load error:", err)
-      } finally {
-        setLoading(false)
+        if (isMounted) setLoading(false)
       }
     }
     loadData()
+    return () => { isMounted = false }
   }, [])
 
   const handleSave = async () => {
