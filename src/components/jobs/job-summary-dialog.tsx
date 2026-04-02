@@ -192,14 +192,14 @@ export function JobSummaryDialog({ open, onOpenChange, job }: JobSummaryDialogPr
                             <div className="mt-1"><div className="w-2 h-2 rounded-full bg-indigo-500 ring-4 ring-indigo-500/20" /></div>
                             <div>
                                 <p className="text-base font-bold uppercase text-muted-foreground font-bold">{t('jobs.dialog.origin')}</p>
-                                <p className="text-lg font-bold text-muted-foreground font-medium">{job.Origin_Location || job.Location_Origin_Name || '-'}</p>
+                                <p className="text-lg font-bold text-muted-foreground font-medium">{job.Origin_Location || '-'}</p>
                             </div>
                         </div>
                         <div className="flex gap-3">
                             <div className="mt-1"><MapPin size={14} className="text-emerald-500" /></div>
                             <div>
                                 <p className="text-base font-bold uppercase text-muted-foreground font-bold">{t('jobs.dialog.destination')}</p>
-                                <p className="text-lg font-bold text-muted-foreground font-bold">{job.Dest_Location || job.Location_Destination_Name || '-'}</p>
+                                <p className="text-lg font-bold text-muted-foreground font-bold">{job.Dest_Location || '-'}</p>
                             </div>
                         </div>
                     </div>
