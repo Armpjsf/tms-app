@@ -35,9 +35,8 @@ export default function JobPickupPage() {
   }, [params.id])
 
   const canSubmit = photos.length > 0 && signature && (
-    (job?.Price_Cust_Total && Number(job.Price_Cust_Total) > 0) || 
-    !(job?.Price_Per_Unit && Number(job.Price_Per_Unit) > 0) || 
-    (loadedQty && Number(loadedQty) > 0)
+    (loadedQty && Number(loadedQty) > 0) ||
+    (!job?.Price_Per_Unit || Number(job.Price_Per_Unit) === 0)
   )
 
   const handleSubmit = async () => {
@@ -163,8 +162,8 @@ export default function JobPickupPage() {
                                 <Box size={24} strokeWidth={2.5} />
                             </div>
                             <div>
-                                <h2 className="font-black uppercase tracking-widest text-sm italic">ระบุจำนวนชิ้นสินค้า</h2>
-                                <p className="text-[10px] font-black text-emerald-500/60 uppercase tracking-widest">คำนวณราคาอัตโนมัติ (฿{job.Price_Per_Unit}/UNIT)</p>
+                                <h2 className="font-black uppercase tracking-widest text-sm italic">ระบุจำนวนสินค้าที่รับจริง</h2>
+                                <p className="text-[10px] font-black text-emerald-500/60 uppercase tracking-widest">นับจำนวนชิ้นและระบุเพื่อยืนยัน</p>
                             </div>
                         </div>
 
@@ -184,13 +183,6 @@ export default function JobPickupPage() {
                                     Units
                                 </div>
                             </div>
-                            {loadedQty && Number(loadedQty) > 0 && (
-                                <div className="flex justify-center animate-in fade-in slide-in-from-top-2 duration-500">
-                                    <div className="px-6 py-2 bg-emerald-500 rounded-full text-[11px] font-black text-white uppercase tracking-widest shadow-lg shadow-emerald-500/20">
-                                        ราคาประมาณกาล: ฿{(Number(loadedQty) * Number(job.Price_Per_Unit)).toLocaleString()}
-                                    </div>
-                                </div>
-                            )}
                         </div>
                     </div>
                 ) : null}

@@ -9,7 +9,7 @@ export async function updateJobStatus(jobId: string, status: string, driverId?: 
     const supabase = createAdminClient()
 
     // 1. Update Job Status
-    const updatePayload: any = { 
+    const updatePayload: Record<string, string | number | boolean | null> = { 
         Job_Status: status,
     }
 
@@ -90,4 +90,28 @@ import { getJobById } from "@/lib/supabase/jobs"
 export async function getJobDetails(jobId: string) {
     const job = await getJobById(jobId)
     return job
+}
+
+export async function createSOSAlert(params: { type: string, lat: number, lng: number, message: string }) {
+    try {
+        const supabase = createAdminClient()
+        // Simple insert for now
+        const { error } = await supabase
+            .from('SOS_Alerts')
+            .insert({
+                Alert_Type: params.type,
+                Latitude: params.lat,
+                Longitude: params.lng,
+                Message: params.message,
+                Is_Active: true
+            })
+
+        if (error) throw error
+
+        revalidatePath('/mobile/jobs')
+        return { success: true }
+    } catch (err) {
+        console.error('SOS failed:', err)
+        return { success: false, message: "SOS Failed" }
+    }
 }

@@ -3,6 +3,7 @@ import { LocationTracker } from "@/components/mobile/location-tracker"
 import { PermissionRequester } from "@/components/mobile/permission-requester"
 import { getDriverSession } from "@/lib/actions/auth-actions"
 import { SyncManager } from "@/components/mobile/sync-manager"
+import { FloatingSOS } from "@/components/mobile/floating-sos"
 
 export default async function MobileLayout({
   children,
@@ -16,6 +17,7 @@ export default async function MobileLayout({
       <SyncManager />
       {session && <LocationTracker driverId={session.driverId} branchId={session.branchId} />}
       {session && <PermissionRequester driverId={session.driverId} />}
+      {session && <FloatingSOS />}
       <main className="flex-1">{children}</main>
       {session && <BottomNav />}
     </div>

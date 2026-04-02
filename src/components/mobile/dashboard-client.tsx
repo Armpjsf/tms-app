@@ -102,84 +102,72 @@ export function DashboardClient({ session, stats, currentJob, activeJobs = [], g
             variants={container}
             initial="hidden"
             animate="show"
-            className="space-y-8 pb-32"
+            className="space-y-6 pb-28"
         >
-            {/* NEW PREMIUM HEADER */}
-            <motion.div variants={item} className="flex items-center justify-between px-2 pt-2">
-                <div className="flex items-center gap-4">
+            {/* COMPACT PREMIUM HEADER */}
+            <motion.div variants={item} className="flex items-center justify-between px-2 pt-1">
+                <div className="flex items-center gap-3">
                     <div className="relative">
                         <Link href="/mobile/profile">
-                            <Avatar className="h-14 w-14 border-2 border-primary/30 ring-4 ring-primary/5 transition-transform active:scale-95">
+                            <Avatar className="h-12 w-12 border-2 border-primary/20 ring-4 ring-primary/5 active:scale-90 transition-all">
                                 <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${session.driverName}`} />
                                 <AvatarFallback className="bg-primary/10 text-primary font-bold">{session.driverName?.charAt(0)}</AvatarFallback>
                             </Avatar>
                         </Link>
-                        <div className="absolute -bottom-1 -right-1 bg-emerald-500 w-5 h-5 rounded-full border-4 border-background flex items-center justify-center">
-                            <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
-                        </div>
+                        <div className="absolute -bottom-0.5 -right-0.5 bg-emerald-500 w-4 h-4 rounded-full border-2 border-background" />
                     </div>
                     <div>
-                        <p className="text-muted-foreground text-sm font-bold uppercase tracking-wider">ยินดีต้อนรับ</p>
-                        <h1 className="text-2xl font-black text-foreground tracking-tight leading-none truncate max-w-[180px]">
-                            คุณ {session.driverName}
+                        <p className="text-muted-foreground text-[10px] font-black uppercase tracking-widest leading-none mb-1">Elite Driver</p>
+                        <h1 className="text-xl font-black text-foreground tracking-tight leading-none truncate max-w-[150px]">
+                            {session.driverName}
                         </h1>
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
-                    <Link href="/mobile/notifications" className="relative p-3 rounded-2xl bg-card border border-border shadow-sm active:scale-90 transition-all">
-                        <Bell size={22} className="text-foreground" />
-                        <span className="absolute top-2.5 right-2.5 w-2.5 h-2.5 bg-accent rounded-full border-2 border-card" />
+                    <Link href="/mobile/notifications" className="relative p-2.5 rounded-xl bg-card border border-border active:scale-90 transition-all">
+                        <Bell size={20} className="text-foreground" />
+                        <span className="absolute top-2 right-2 w-2 h-2 bg-accent rounded-full border-2 border-card" />
                     </Link>
                 </div>
             </motion.div>
 
-            {/* STATUS SUMMARY CARDS */}
-            <motion.div variants={item} className="grid grid-cols-2 gap-4">
-                <div className="glass-panel rounded-[2.5rem] p-6 relative overflow-hidden bg-gradient-to-br from-primary/5 to-transparent">
-                    <div className="absolute top-[-20%] right-[-20%] opacity-10">
-                         <Truck size={100} strokeWidth={1} />
+            {/* COMPACT SUMMARY CARDS */}
+            <motion.div variants={item} className="grid grid-cols-2 gap-3">
+                <div className="glass-panel rounded-3xl p-5 relative overflow-hidden bg-primary/5 border-primary/10">
+                    <div className="relative z-10 space-y-1">
+                        <p className="text-muted-foreground text-[9px] font-black uppercase tracking-widest">งานที่ต้องทำ</p>
+                        <div className="text-3xl font-black text-foreground tracking-tighter leading-none">
+                            {activeJobs.length < 10 ? `0${activeJobs.length}` : activeJobs.length}
+                        </div>
                     </div>
-                    <div className="relative z-10 space-y-2">
-                        <div className="w-10 h-10 rounded-2xl bg-primary/20 flex items-center justify-center text-primary">
-                             <TrendingUp size={20} strokeWidth={2.5} />
-                        </div>
-                        <div>
-                            <div className="text-4xl font-black text-foreground tracking-tighter leading-none">
-                                {activeJobs.length < 10 ? `0${activeJobs.length}` : activeJobs.length}
-                            </div>
-                            <p className="text-muted-foreground text-[10px] font-black uppercase tracking-[0.2em] mt-1">งานที่ต้องทำ</p>
-                        </div>
+                    <div className="absolute -right-2 -bottom-2 opacity-10 rotate-12">
+                         <Truck size={60} />
                     </div>
                 </div>
 
-                <div className="glass-panel rounded-[2.5rem] p-6 relative overflow-hidden bg-gradient-to-br from-accent/5 to-transparent">
-                    <div className="absolute top-[-20%] right-[-20%] opacity-10 text-accent">
-                         <Banknote size={100} strokeWidth={1} />
+                <div className="glass-panel rounded-3xl p-5 relative overflow-hidden bg-accent/5 border-accent/10">
+                    <div className="relative z-10 space-y-1">
+                        <p className="text-muted-foreground text-[9px] font-black uppercase tracking-widest">รายได้วันนี้</p>
+                        <div className="flex items-baseline gap-1">
+                            <span className="text-2xl font-black text-foreground tracking-tighter">฿{todayIncome.toLocaleString()}</span>
+                        </div>
                     </div>
-                    <div className="relative z-10 space-y-2">
-                        <div className="w-10 h-10 rounded-2xl bg-accent/20 flex items-center justify-center text-accent">
-                             <Banknote size={20} strokeWidth={2.5} />
-                        </div>
-                        <div>
-                            <div className="text-3xl font-black text-foreground tracking-tighter leading-none">
-                                {todayIncome.toLocaleString()}
-                            </div>
-                            <p className="text-muted-foreground text-[10px] font-black uppercase tracking-[0.2em] mt-1">รายได้วันนี้ (฿)</p>
-                        </div>
+                    <div className="absolute -right-2 -bottom-2 opacity-10 rotate-12">
+                         <Banknote size={60} />
                     </div>
                 </div>
             </motion.div>
 
-            {/* MAIN ACTION SECTION */}
-            <motion.div variants={item} className="space-y-4">
+            {/* MAIN ACTION SECTION - HIGH CONTRAST */}
+            <motion.div variants={item} className="space-y-3">
                 <div className="flex items-center justify-between px-2">
-                    <h2 className="text-xl font-black text-foreground uppercase tracking-tight flex items-center gap-2">
-                        <div className="w-1.5 h-6 bg-accent rounded-full" />
+                    <h2 className="text-lg font-black text-foreground uppercase tracking-tight flex items-center gap-2">
+                        <div className="w-1 h-5 bg-accent rounded-full" />
                         งานปัจจุบัน
                     </h2>
                     {activeJobs.length > 0 && (
-                        <Link href="/mobile/jobs" className="text-accent text-sm font-black uppercase tracking-widest flex items-center gap-1">
-                            ดูทั้งหมด <ChevronRight size={14} />
+                        <Link href="/mobile/jobs" className="text-accent text-[10px] font-black uppercase tracking-widest flex items-center gap-1">
+                            ดูทั้งหมด <ChevronRight size={12} />
                         </Link>
                     )}
                 </div>
@@ -187,78 +175,60 @@ export function DashboardClient({ session, stats, currentJob, activeJobs = [], g
                 <AnimatePresence mode="wait">
                 {currentJob ? (
                     <motion.div 
-                        initial={{ opacity: 0, scale: 0.95 }}
+                        initial={{ opacity: 0, scale: 0.98 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.95 }}
-                        className="glass-panel rounded-[3rem] p-8 space-y-8 relative overflow-hidden group shadow-xl shadow-primary/5 border-primary/20"
+                        exit={{ opacity: 0, scale: 0.98 }}
+                        className="glass-panel rounded-[2.5rem] p-6 space-y-6 relative overflow-hidden shadow-lg border-primary/30"
                     >
-                        <div className="absolute top-0 right-0 p-8 text-primary/5 pointer-events-none transform translate-x-4 -translate-y-4">
-                            <Truck size={160} />
-                        </div>
-                        
                         {/* Job ID & Status */}
                         <div className="flex items-center justify-between relative z-10">
-                            <div className="flex items-center gap-4">
-                                <div className="w-16 h-16 bg-primary rounded-3xl flex items-center justify-center shadow-lg shadow-primary/30 rotate-3">
-                                    <Star size={28} className="text-white fill-white" />
+                            <div className="flex items-center gap-3">
+                                <div className="w-12 h-12 bg-primary rounded-2xl flex items-center justify-center shadow-lg shadow-primary/20">
+                                    <Star size={22} className="text-white fill-white" />
                                 </div>
                                 <div>
-                                    <h4 className="text-3xl font-black text-foreground tracking-tighter leading-none mb-1">#{currentJob.Job_ID.slice(-6)}</h4>
-                                    <p className="text-muted-foreground text-sm font-bold uppercase tracking-widest truncate max-w-[150px]">
+                                    <h4 className="text-2xl font-black text-foreground tracking-tighter leading-none mb-1">#{currentJob.Job_ID.slice(-6).toUpperCase()}</h4>
+                                    <p className="text-muted-foreground text-xs font-bold truncate max-w-[150px]">
                                         {currentJob.Customer_Name}
                                     </p>
                                 </div>
                             </div>
                             <div className={cn(
-                                "px-4 py-2 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] shadow-lg",
+                                "px-3 py-1.5 rounded-xl font-black text-[9px] uppercase tracking-widest",
                                 ['In Progress', 'In Transit', 'Arrived Pickup', 'Arrived Dropoff'].includes(currentJob.Job_Status)
-                                ? "bg-accent text-white shadow-accent/20 animate-pulse"
+                                ? "bg-accent text-white"
                                 : "bg-muted text-muted-foreground"
                             )}>
-                                {currentJob.Job_Status === 'Assigned' || currentJob.Job_Status === 'New' ? 'รอเริ่มงาน' : 'กำลังไปส่ง'}
+                                {currentJob.Job_Status === 'Assigned' || currentJob.Job_Status === 'New' ? 'รอเริ่มงาน' : 'กำลังดำเนินการ'}
                             </div>
                         </div>
 
-                        {/* Location Progress */}
-                        <div className="space-y-4 relative z-10">
-                            <div className="flex justify-between items-start">
-                                <div className="space-y-1 max-w-[45%]">
-                                    <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest flex items-center gap-1">
-                                        <div className="w-2 h-2 rounded-full bg-emerald-500" /> รับจาก
-                                    </p>
-                                    <p className="text-foreground font-bold text-sm line-clamp-2 leading-tight">
-                                        {currentJob.Origin_Location || "คลังสินค้าหลัก"}
-                                    </p>
-                                </div>
-                                <div className="mt-4 flex-1 flex flex-col items-center px-4">
-                                     <div className="w-full h-1 bg-muted rounded-full overflow-hidden relative">
-                                        <motion.div 
-                                            initial={{ width: 0 }}
-                                            animate={{ width: "60%" }}
-                                            className="h-full bg-primary rounded-full relative"
-                                        >
-                                            <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-primary rounded-full border-2 border-background shadow-glow shadow-primary" />
-                                        </motion.div>
-                                     </div>
-                                     <Truck size={14} className="text-primary mt-2" />
-                                </div>
-                                <div className="space-y-1 max-w-[45%] text-right">
-                                    <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest flex items-center justify-end gap-1">
-                                        ส่งที่ <div className="w-2 h-2 rounded-full bg-accent" />
-                                    </p>
-                                    <p className="text-foreground font-bold text-sm line-clamp-2 leading-tight">
-                                        {currentJob.Dest_Location || "จุดหมายปลายทาง"}
-                                    </p>
-                                </div>
+                        {/* Location Progress - High Contrast for Readability */}
+                        <div className="grid grid-cols-[1fr_auto_1fr] gap-2 items-center bg-muted/30 rounded-2xl p-4 border border-border/50">
+                            <div className="space-y-0.5">
+                                <p className="text-[9px] font-black text-emerald-500 uppercase tracking-widest">รับจาก</p>
+                                <p className="text-foreground font-black text-xs line-clamp-2 leading-tight">
+                                    {currentJob.Origin_Location || "คลังสินค้าหลัก"}
+                                </p>
+                            </div>
+                            <div className="px-2 flex flex-col items-center">
+                                 <ArrowUpRight size={14} className="text-primary" />
+                                 <div className="h-4 w-[1px] bg-border my-1" />
+                            </div>
+                            <div className="space-y-0.5 text-right">
+                                <p className="text-[9px] font-black text-accent uppercase tracking-widest">ส่งที่</p>
+                                <p className="text-foreground font-black text-xs line-clamp-2 leading-tight">
+                                    {currentJob.Dest_Location || "ปลายทาง"}
+                                </p>
                             </div>
                         </div>
 
-                        {/* Large Action Button */}
+                        {/* Direct Management Button */}
                         <div className="relative z-10">
                             <Link href={`/mobile/jobs/${currentJob.Job_ID}`} className="block w-full">
-                                <Button className="w-full h-18 rounded-[2rem] bg-foreground hover:bg-foreground/90 text-white font-black text-lg uppercase tracking-[0.15em] shadow-2xl shadow-foreground/20 group transition-all active:scale-95">
+                                <Button className="w-full h-14 rounded-2xl bg-foreground hover:bg-foreground/90 text-white font-black text-base uppercase tracking-widest shadow-xl active:scale-95 transition-all">
                                     จัดการงานนี้
-                                    <ArrowUpRight className="ml-2 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+                                    <ArrowUpRight className="ml-2 w-4 h-4" />
                                 </Button>
                             </Link>
                         </div>
@@ -267,15 +237,12 @@ export function DashboardClient({ session, stats, currentJob, activeJobs = [], g
                     <motion.div 
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
-                        className="text-center py-20 px-8 glass-panel rounded-[3rem] border-dashed border-border/20"
+                        className="text-center py-12 px-6 glass-panel rounded-[2.5rem] border-dashed border-border/30"
                     >
-                         <div className="w-20 h-20 bg-muted/30 rounded-[2rem] flex items-center justify-center mx-auto mb-6">
-                             <Truck className="text-muted-foreground" size={40} strokeWidth={1.5} />
-                         </div>
-                         <h3 className="text-foreground font-black text-2xl mb-2 italic">พร้อมรับงานใหม่?</h3>
-                         <p className="text-muted-foreground text-base font-bold mb-8">ไม่มีงานค้างในมือ กดที่ตลาดเพื่อรับงาน</p>
+                         <h3 className="text-foreground font-black text-xl mb-1 italic">พร้อมรับงานใหม่?</h3>
+                         <p className="text-muted-foreground text-sm font-bold mb-6">ขณะนี้ไม่มีงานค้างในมือ</p>
                          <Link href="/mobile/marketplace">
-                             <Button className="h-16 px-10 rounded-2xl bg-primary text-white font-black uppercase tracking-widest shadow-xl shadow-primary/30 active:scale-95 transition-all">
+                             <Button className="h-14 px-8 rounded-2xl bg-primary text-white font-black uppercase tracking-widest shadow-lg active:scale-95 transition-all">
                                  เข้าสู่ตลาดรับงาน
                              </Button>
                          </Link>
@@ -284,37 +251,29 @@ export function DashboardClient({ session, stats, currentJob, activeJobs = [], g
                 </AnimatePresence>
             </motion.div>
 
-            {/* QUEUE / SECONDARY JOBS */}
+            {/* COMPACT QUEUE SECTION */}
             {secondaryJobs.length > 0 && (
-                <motion.div variants={item} className="space-y-4">
-                    <h2 className="text-xl font-black text-foreground uppercase tracking-tight flex items-center gap-2 px-2">
-                        <div className="w-1.5 h-6 bg-muted rounded-full" />
+                <motion.div variants={item} className="space-y-3">
+                    <h2 className="text-lg font-black text-foreground uppercase tracking-tight flex items-center gap-2 px-2">
+                        <div className="w-1 h-5 bg-muted rounded-full" />
                         คิวงานถัดไป ({secondaryJobs.length})
                     </h2>
-                    <div className="space-y-4">
+                    <div className="space-y-3">
                         {secondaryJobs.map((job) => (
                             <Link key={job.Job_ID} href={`/mobile/jobs/${job.Job_ID}`}>
-                                <div className="bg-card/40 backdrop-blur-xl border border-border/50 rounded-[2.5rem] p-6 flex items-center justify-between active:scale-[0.98] transition-all group">
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-12 h-12 bg-muted/50 rounded-2xl flex items-center justify-center text-muted-foreground group-hover:bg-accent/10 group-hover:text-accent transition-colors">
-                                            <Clock size={24} />
+                                <div className="bg-card/40 border border-border/50 rounded-3xl p-4 flex items-center justify-between active:scale-[0.98] transition-all">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 bg-muted/50 rounded-xl flex items-center justify-center text-muted-foreground">
+                                            <Clock size={20} />
                                         </div>
                                         <div>
-                                            <h4 className="text-lg font-black text-foreground leading-none mb-1">#{job.Job_ID.slice(-6)}</h4>
-                                            <p className="text-muted-foreground text-[10px] font-black uppercase tracking-widest truncate max-w-[120px]">
+                                            <h4 className="text-base font-black text-foreground leading-none mb-1">#{job.Job_ID.slice(-6).toUpperCase()}</h4>
+                                            <p className="text-muted-foreground text-[9px] font-black uppercase tracking-widest truncate max-w-[120px]">
                                                 {job.Customer_Name}
                                             </p>
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-4">
-                                        <div className="text-right hidden xs:block">
-                                            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">จุดหมาย</p>
-                                            <p className="text-foreground font-bold text-xs truncate max-w-[80px]">{job.Dest_Location}</p>
-                                        </div>
-                                        <div className="p-2 rounded-xl bg-muted/30 text-muted-foreground group-hover:bg-accent/20 group-hover:text-accent transition-all">
-                                            <ChevronRight size={20} />
-                                        </div>
-                                    </div>
+                                    <ChevronRight size={18} className="text-muted-foreground" />
                                 </div>
                             </Link>
                         ))}
@@ -322,43 +281,37 @@ export function DashboardClient({ session, stats, currentJob, activeJobs = [], g
                 </motion.div>
             )}
 
-            {/* GAMIFICATION / RANK SECTION */}
-            <motion.div variants={item} className="glass-panel rounded-[2.5rem] p-6 bg-gradient-to-r from-navy-900 to-primary/20 border-primary/10">
-                <div className="flex items-center justify-between mb-4">
+            {/* COMPACT RANK SECTION */}
+            <motion.div variants={item} className="glass-panel rounded-3xl p-5 bg-navy-900/50 border-primary/10">
+                <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-amber-400/20 flex items-center justify-center text-amber-500">
-                             <ShieldCheck size={24} fill="currentColor" fillOpacity={0.2} />
+                        <div className="w-9 h-9 rounded-full bg-amber-400/10 flex items-center justify-center text-amber-500">
+                             <ShieldCheck size={20} />
                         </div>
                         <div>
-                            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">ระดับคะแนน</p>
-                            <h4 className="text-xl font-black text-foreground italic">{gamification.rank} DRIVER</h4>
+                            <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">ระดับคะแนน</p>
+                            <h4 className="text-base font-black text-foreground italic">{gamification.rank}</h4>
                         </div>
                     </div>
                     <div className="text-right">
-                        <div className="text-2xl font-black text-primary leading-none">{gamification.points}</div>
-                        <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">คะแนนสะสม</p>
+                        <div className="text-xl font-black text-primary leading-none">{gamification.points}</div>
+                        <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">Points</p>
                     </div>
                 </div>
-                <div className="space-y-2">
-                    <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-                        <span>Rank Progress</span>
-                        <span>อีก {gamification.nextRankPoints - gamification.points} แต้มเพื่อเลื่อนระดับ</span>
-                    </div>
-                    <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
-                        <div 
-                            className="h-full bg-amber-400 shadow-[0_0_10px_rgba(251,191,36,0.5)]" 
-                            style={{ width: `${(gamification.points / gamification.nextRankPoints) * 100}%` }} 
-                        />
-                    </div>
+                <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                    <div 
+                        className="h-full bg-amber-400 shadow-[0_0_10px_rgba(251,191,36,0.3)]" 
+                        style={{ width: `${(gamification.points / gamification.nextRankPoints) * 100}%` }} 
+                    />
                 </div>
             </motion.div>
 
-            {/* FLOATING MARKETPLACE BUTTON */}
-            <div className="fixed bottom-32 right-6 z-50">
+            {/* FLOATING MARKETPLACE BUTTON - SLIGHTLY SMALLER */}
+            <div className="fixed bottom-28 right-4 z-50">
                  <Link href="/mobile/marketplace">
-                     <button className="w-20 h-20 rounded-[2rem] bg-accent flex flex-col items-center justify-center text-white shadow-[0_15px_35px_rgba(182,9,0,0.4)] transition-all hover:scale-110 active:scale-90 border-4 border-background group">
-                        <Gavel size={32} strokeWidth={2.5} className="group-hover:rotate-12 transition-transform" />
-                        <span className="text-[8px] font-black uppercase tracking-[0.2em] -mt-0.5">รับงาน</span>
+                     <button className="w-16 h-16 rounded-2xl bg-accent flex flex-col items-center justify-center text-white shadow-xl active:scale-90 border-4 border-background transition-all">
+                        <Gavel size={24} strokeWidth={2.5} />
+                        <span className="text-[7px] font-black uppercase tracking-widest -mt-0.5">รับงาน</span>
                      </button>
                  </Link>
             </div>

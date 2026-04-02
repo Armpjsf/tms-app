@@ -35,19 +35,25 @@ interface JobActionButtonProps {
 
 export function JobActionButton({ job }: JobActionButtonProps) {
   const [loading, setLoading] = useState(false)
+  const [optimisticStatus, setOptimisticStatus] = useState<string | null>(null)
   const router = useRouter()
+
+  const currentStatus = optimisticStatus || job.Job_Status
 
   const handleStatusUpdate = async (newStatus: string) => {
     setLoading(true)
+    setOptimisticStatus(newStatus)
     try {
         const result = await updateJobStatus(job.Job_ID, newStatus)
         if (!result.success) {
             toast.error(result.message)
+            setOptimisticStatus(null)
         } else {
             toast.success("อัปเดตสถานะเรียบร้อย")
         }
     } catch {
         toast.error("เกิดข้อผิดพลาดในการอัปเดตสถานะ")
+        setOptimisticStatus(null)
     } finally {
         setLoading(false)
     }
@@ -59,16 +65,16 @@ export function JobActionButton({ job }: JobActionButtonProps) {
   }
 
 
-  if (job.Job_Status === 'Completed') {
+  if (currentStatus === 'Completed') {
     return (
-        <div className="text-center p-4 bg-emerald-500/10 rounded-xl text-emerald-400 font-medium flex items-center justify-center gap-2">
-            <CheckSquare /> งานเสร็จสิ้นแล้ว
+        <div className="text-center p-3 bg-emerald-500/10 rounded-xl text-emerald-400 font-medium flex items-center justify-center gap-2 text-xs">
+            <CheckSquare size={18} /> งานเสร็จสิ้นแล้ว
         </div>
     )
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
         {/* Dynamic Buttons */}
         {(() => {
             let label = ""
@@ -77,7 +83,7 @@ export function JobActionButton({ job }: JobActionButtonProps) {
             let nextAction = ""
             let onClick = () => {}
 
-            switch(job.Job_Status) {
+            switch(currentStatus) {
                 case 'Assigned': 
                 case 'New':
                     label = "กดรับงาน"
@@ -113,29 +119,28 @@ export function JobActionButton({ job }: JobActionButtonProps) {
                     label = "บันทึกส่งงาน (POD)"
                     icon = <Camera />
                     colorClass = "bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/20"
-                    nextAction = "ขั้นตอนสุดท้าย: ถ่ายรูปหลักฐานการส่งมอบและให้ลูกค้าเซ็นชื่อ"
+                    nextAction = "ขั้นตอนสุดท้าย: ถ่ายรูปหลักฐานการส่งมอบ"
                     onClick = handlePOD
                     break
 
                 default:
                     return (
-                        <Button disabled={true} className="w-full h-14 text-lg bg-slate-700 text-muted-foreground">
-                             ไม่ทราบสถานะ ({job.Job_Status})
+                        <Button disabled={true} className="w-full h-12 text-sm bg-slate-700 text-muted-foreground">
+                             ไม่ทราบสถานะ ({currentStatus})
                         </Button>
                     )
             }
 
             return (
-                <div className="space-y-3">
-
-                    <p className="text-base font-bold text-muted-foreground italic text-center px-4">
+                <div className="space-y-2">
+                    <p className="text-[10px] font-black text-muted-foreground italic text-center px-4 uppercase tracking-[0.2em]">
                         {nextAction}
                     </p>
                     <Button 
                         onClick={onClick}
                         disabled={loading}
                         className={cn(
-                            "w-full h-20 text-xl shadow-[0_20px_50px_-10px_rgba(0,0,0,0.3)] gap-4 font-black uppercase tracking-widest transition-all active:scale-95 rounded-[2rem] relative overflow-hidden group",
+                            "w-full h-16 text-lg shadow-lg gap-4 font-black uppercase tracking-widest transition-all active:scale-95 rounded-2xl relative overflow-hidden group",
                             colorClass
                         )}
                     >
@@ -143,9 +148,9 @@ export function JobActionButton({ job }: JobActionButtonProps) {
                         <div className="absolute inset-0 bg-gradient-to-tr from-white/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                         
                         <div className="relative z-10 flex items-center justify-center gap-4">
-                            {loading ? <Loader2 className="animate-spin w-6 h-6" /> : icon}
+                            {loading ? <Loader2 className="animate-spin w-5 h-5" /> : icon}
                             {label}
-                            <ArrowRight size={24} className="ml-1 opacity-40 group-hover:translate-x-2 transition-transform duration-500" />
+                            <ArrowRight size={20} className="ml-1 opacity-40 group-hover:translate-x-2 transition-transform duration-500" />
                         </div>
                     </Button>
                 </div>
