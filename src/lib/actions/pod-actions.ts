@@ -207,8 +207,8 @@ export async function submitJobPickup(jobId: string, formData: FormData) {
     }
 
     // Only calculate price if admin hasn't set one and we have a unit price + quantity
-    if (adminPrice === 0 && unitPrice > 0 && loadedQty > 0) {
-        updatePayload.Price_Cust_Total = loadedQty * unitPrice
+    if (Number(adminPrice) === 0 && unitPrice > 0 && loadedQty > 0) {
+        updatePayload.Price_Cust_Total = Number((loadedQty * unitPrice).toFixed(2))
     }
 
     const { error } = await supabase
@@ -239,4 +239,45 @@ export async function submitJobPickup(jobId: string, formData: FormData) {
 
     return { error: `บันทึกไม่สำเร็จ (Pickup): ${errorMessage}` }
   }
+}
+
+export async function bulkSyncJobPrices(jobIds: string[]) {
+    if (!jobIds.length) return { success: true, count: 0 }
+    
+    const supabase = createAdminClient()
+    try {
+        // Fetch jobs and their customer unit prices
+        const { data: jobs, error: fetchError } = await supabase
+            .from("Jobs_Main")
+            .select("Job_ID, Price_Cust_Total, Loaded_Qty, Master_Customers(Price_Per_Unit)")
+            .in("Job_ID", jobIds)
+
+        if (fetchError) throw fetchError
+        if (!jobs) return { success: true, count: 0 }
+
+        let updateCount = 0
+        
+        for (const job of jobs) {
+            const typedJob = job as unknown as (Job & { Master_Customers: { Price_Per_Unit: number } | null })
+            const adminPrice = Number(typedJob.Price_Cust_Total || 0)
+            const unitPrice = Number(typedJob.Master_Customers?.Price_Per_Unit || 0)
+            const loadedQty = Number(typedJob.Loaded_Qty || 0)
+
+            if (adminPrice === 0 && unitPrice > 0 && loadedQty > 0) {
+                const calculatedPrice = Number((loadedQty * unitPrice).toFixed(2))
+                const { error: updateError } = await supabase
+                    .from("Jobs_Main")
+                    .update({ Price_Cust_Total: calculatedPrice })
+                    .eq("Job_ID", typedJob.Job_ID)
+                
+                if (!updateError) updateCount++
+            }
+        }
+
+        revalidatePath("/billing/customer")
+        return { success: true, count: updateCount }
+    } catch (error: unknown) {
+        console.error("Bulk sync error:", error)
+        return { success: false, error: error instanceof Error ? error.message : String(error) }
+    }
 }

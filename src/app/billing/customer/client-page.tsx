@@ -23,7 +23,8 @@ import {
   ShieldCheck,
   Activity,
   FileSearch,
-  Save
+  Save,
+  RefreshCw
 } from "lucide-react"
 import {
   Dialog,
@@ -44,6 +45,7 @@ import {
 import { Job } from "@/lib/supabase/jobs"
 import { toast } from "sonner"
 import { createBillingNote } from "@/lib/supabase/billing"
+import { bulkSyncJobPrices } from "@/lib/actions/pod-actions"
 
 import { CompanyProfile } from "@/lib/supabase/settings"
 import { Customer } from "@/lib/supabase/customers"
@@ -66,6 +68,7 @@ export default function CustomerBillingClient({ initialJobs, companyProfile, cus
   const [isCustomerMode, setIsCustomerMode] = useState(false)
   const [selectedItems, setSelectedItems] = useState<string[]>([])
   const [loading, setLoading] = useState(false)
+  const [syncLoading, setSyncLoading] = useState(false)
 
   // Initialize customer mode and selection
   useEffect(() => {
@@ -186,6 +189,38 @@ export default function CustomerBillingClient({ initialJobs, companyProfile, cus
         toast.error("เกิดข้อผิดพลาด: " + message)
     } finally {
         setLoading(false)
+    }
+  }
+
+  const handleSyncPrices = async () => {
+    const jobsToSync = filteredData.filter(job => {
+        const typedJob = job as any
+        const adminPrice = Number(typedJob.Price_Cust_Total || 0)
+        const unitPrice = Number(typedJob.Master_Customers?.Price_Per_Unit || 0)
+        const loadedQty = Number(typedJob.Loaded_Qty || 0)
+        return adminPrice === 0 && unitPrice > 0 && loadedQty > 0
+    }).map(j => j.Job_ID)
+
+    if (jobsToSync.length === 0) {
+        toast.info("ไม่พบรายการที่ต้องคำนวณราคาย้อนหลัง")
+        return
+    }
+
+    if (!confirm(`ตรวจสอบพบ ${jobsToSync.length} รายการที่สามารถคำนวณราคาจากจำนวนชิ้นได้ ต้องการบันทึกราคาทั้งหมดลงระบบทันทีหรือไม่?`)) return
+
+    setSyncLoading(true)
+    try {
+        const result = await bulkSyncJobPrices(jobsToSync)
+        if (result.success) {
+            toast.success(`ซิงค์ข้อมูลสำเร็จ: อัปเดตราคาแล้ว ${result.count} รายการ`)
+            router.refresh()
+        } else {
+            throw new Error(result.error)
+        }
+    } catch (err: any) {
+        toast.error("ซิงค์ไม่สำเร็จ: " + (err.message || String(err)))
+    } finally {
+        setSyncLoading(false)
     }
   }
 
@@ -568,7 +603,15 @@ export default function CustomerBillingClient({ initialJobs, companyProfile, cus
                 </div>
                 
                 <div className="flex items-center gap-6">
-                    <button onClick={clearSelection} className="px-8 py-3 text-foreground transition-colors">
+                    <button 
+                        onClick={handleSyncPrices} 
+                        disabled={syncLoading}
+                        className="px-8 py-3 rounded-2xl border border-primary/20 text-primary hover:bg-primary/5 transition-all flex items-center gap-2 font-black uppercase tracking-widest text-sm"
+                    >
+                        {syncLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw size={16} />}
+                        Sync Prices
+                    </button>
+                    <button onClick={clearSelection} className="px-8 py-3 text-foreground transition-colors font-black uppercase tracking-widest text-sm">
                         {t('billing_customer.abort_selection')}
                     </button>
                     <PremiumButton onClick={handleCreateBilling} disabled={loading} className="h-20 px-12 rounded-[2rem] shadow-[0_20px_40px_rgba(255,30,133,0.3)] text-xl font-black tracking-widest">
@@ -684,8 +727,19 @@ export default function CustomerBillingClient({ initialJobs, companyProfile, cus
                         <p className="text-muted-foreground font-bold text-base font-bold uppercase tracking-tight truncate max-w-[200px]">{item.Route_Name || '-'}</p>
                     </td>
                     <td className="px-8 py-8 text-right font-black text-muted-foreground text-xl">
-                      <span className="text-base font-bold mr-2">THB</span>
-                      {(item.Price_Cust_Total || 0).toLocaleString()}
+                      <div className="flex flex-col items-end">
+                        <div className="flex items-center gap-2">
+                             {Number(item.Price_Cust_Total || 0) === 0 && Number((item as any).Master_Customers?.Price_Per_Unit || 0) > 0 && Number(item.Loaded_Qty || 0) > 0 && (
+                                <div className="p-1 px-2 bg-amber-500/20 text-amber-500 rounded text-[10px] font-black animate-pulse flex items-center gap-1">
+                                    <Zap size={10} /> SUGGESTED
+                                </div>
+                             )}
+                             <span className="text-base font-bold mr-2 text-muted-foreground">THB</span>
+                             <span className={cnUtil(Number(item.Price_Cust_Total || 0) === 0 ? "opacity-30" : "text-foreground")}>
+                                {(item.Price_Cust_Total || 0).toLocaleString()}
+                             </span>
+                        </div>
+                      </div>
                     </td>
                     <td className="px-8 py-8 text-right">
                         <div className="flex flex-col items-end">

@@ -684,7 +684,7 @@ export async function getJobsForBilling(startDate?: string, endDate?: string): P
 
         let dbQuery = supabase
             .from('Jobs_Main')
-            .select('*')
+            .select('*, Master_Customers(Price_Per_Unit)')
             .in('Job_Status', ['Completed', 'Delivered'])
             .is('Billing_Note_ID', null)
             .is('Invoice_ID', null)
