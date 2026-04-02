@@ -65,22 +65,32 @@ export default function AccountingProfilePage() {
 
   useEffect(() => {
     async function loadData() {
-      const data = await getSystemSetting('accounting_profile', DEFAULT_PROFILE)
-      setProfile(data)
-      setLoading(false)
+      try {
+        const data = await getSystemSetting('accounting_profile', DEFAULT_PROFILE)
+        setProfile(data)
+      } catch (err) {
+        console.error("Load error:", err)
+      } finally {
+        setLoading(false)
+      }
     }
     loadData()
   }, [])
 
   const handleSave = async () => {
     setSaving(true)
-    const result = await saveSystemSetting('accounting_profile', profile, 'Accounting Entity Details')
-    setSaving(false)
-    if (result.success) {
-        toast.success("บันทึกข้อมูลบัญชีเรียบร้อยแล้ว")
-    } else {
-        console.error("Save error:", result.error)
-        toast.error(`บันทึกไม่สำเร็จ: ${result.error || 'Unknown Error'}`)
+    try {
+        const result = await saveSystemSetting('accounting_profile', profile, 'Accounting Entity Details')
+        if (result.success) {
+            toast.success("บันทึกข้อมูลบัญชีเรียบร้อยแล้ว")
+        } else {
+            const errorMsg = typeof result.error === 'string' ? result.error : "Unknown Error"
+            toast.error(`บันทึกไม่สำเร็จ: ${errorMsg}`)
+        }
+    } catch (err: any) {
+        toast.error(`เกิดข้อผิดพลาด: ${err.message || 'Internal Server Error'}`)
+    } finally {
+        setSaving(false)
     }
   }
 
