@@ -1,10 +1,9 @@
 import React from "react"
 import { getPublicBillingNoteById } from "@/lib/supabase/billing"
 import { notFound } from "next/navigation"
-import { dictionaries, Language } from "@/lib/i18n/dictionaries"
 import { 
-    Phone, Mail, User, FileText, CreditCard, MessageSquare, PenTool, 
-    Globe as GlobeIcon, CalendarDays, ShieldCheck 
+    Phone, Mail, User, CreditCard, MessageSquare, 
+    CalendarDays, ShieldCheck 
 } from "lucide-react"
 
 export const dynamic = 'force-dynamic'
@@ -65,7 +64,7 @@ export default async function PublicInvoicePage(props: Props) {
     const params = await props.params;
     const searchParams = await props.searchParams;
     const { id } = params
-    const lang = (searchParams?.lang as Language) || 'th'
+    const lang = searchParams?.lang || 'th'
     
     // Use the public fetcher which uses admin client to bypass RLS for non-logged in users
     const data = await getPublicBillingNoteById(id)
@@ -83,7 +82,6 @@ export default async function PublicInvoicePage(props: Props) {
     const sellerTaxId = company?.tax_id || company?.Tax_ID
     const sellerPhone = company?.phone || company?.Phone
     const sellerEmail = company?.email || company?.Email
-    const sellerWebsite = company?.website || company?.Website
     
     const bankName = company?.bank_name || company?.Bank_Name || 'ธนาคารไทยพาณิชย์ (SCB)'
     const bankAccNo = company?.bank_account_no || company?.Bank_Account_No
