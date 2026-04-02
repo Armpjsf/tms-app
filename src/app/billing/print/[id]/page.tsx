@@ -74,6 +74,20 @@ export default async function BillingPrintPage(props: Props) {
 
     const { note, jobs, company } = data
 
+    // Unified Data Access (Support both accounting_profile and company_profile)
+    const logoUrl = company?.logo_url || company?.Logo_URL
+    const sellerName = company?.company_name_th || company?.Company_Name_TH || (lang === 'th' ? company?.company_name : company?.company_name_en)
+    const sellerAddress = company?.address || company?.Address
+    const sellerTaxId = company?.tax_id || company?.Tax_ID
+    const sellerPhone = company?.phone || company?.Phone
+    const sellerEmail = company?.email || company?.Email
+    const sellerWebsite = company?.website || company?.Website
+    
+    const bankName = company?.bank_name || company?.Bank_Name || 'ธนาคารไทยพาณิชย์ (SCB)'
+    const bankAccNo = company?.bank_account_no || company?.Bank_Account_No
+    const bankAccName = company?.bank_account_name || company?.Bank_Account_Name
+    const contactName = company?.contact_name || company?.Contact_Name || 'ฝ่ายบัญชี'
+
     // Calculate totals dynamically to ensure consistency with displayed items
     const subtotal = jobs.reduce((sum, job) => {
         const base = job.Price_Cust_Total || 0
@@ -102,9 +116,6 @@ export default async function BillingPrintPage(props: Props) {
     const netTotal = subtotal - wht
 
     const localeStr = lang === 'th' ? 'th-TH' : 'en-US'
-    const displayCompanyName = (lang === 'en' && company?.company_name_en) 
-        ? company.company_name_en 
-        : (company?.company_name || '')
 
     const issueDate = new Date(note.Billing_Date);
     const dueDate = new Date(issueDate.getTime() + (note.Credit_Days || 15) * 24 * 60 * 60 * 1000);
@@ -122,20 +133,20 @@ export default async function BillingPrintPage(props: Props) {
                 {/* 1. Header Section */}
                 <div className="flex justify-between items-start mb-8">
                     <div className="flex items-center gap-4">
-                        {company?.logo_url ? (
+                        {logoUrl ? (
                             // eslint-disable-next-line @next/next/no-img-element
                             <img 
-                                src={company.logo_url} 
+                                src={logoUrl} 
                                 alt="Company Logo" 
                                 className="h-16 w-auto object-contain print:block" 
                                 style={{ display: 'block' }}
                             />
-                        ) : company?.company_name ? (
+                        ) : (
                              <div className="h-16 px-4 bg-slate-900 text-white flex flex-col items-center justify-center font-black uppercase text-center rounded">
                                 <span className="text-xl leading-none tracking-widest text-red-500">D<span className="text-white">D</span></span>
                                 <span className="text-[8px] mt-1 opacity-80">TRANSPORT</span>
                              </div>
-                        ) : null}
+                        )}
                     </div>
                     <div className="text-right">
                         <div className="text-sm text-slate-600 mb-1 font-bold">(ต้นฉบับ)</div>
@@ -149,16 +160,16 @@ export default async function BillingPrintPage(props: Props) {
                         {/* Seller */}
                         <div className="grid grid-cols-[100px_1fr] gap-x-2 gap-y-1">
                             <div className="font-bold">ผู้ขาย :</div>
-                            <div className="font-bold">{displayCompanyName}</div>
+                            <div className="font-bold">{sellerName}</div>
                             <div className="font-bold">ที่อยู่ :</div>
-                            <div>{company?.address || '-'}</div>
+                            <div>{sellerAddress || '-'}</div>
                             <div className="font-bold">เลขที่ภาษี :</div>
                             <div className="flex justify-between">
-                                <span>{company?.tax_id || '-'}</span>
+                                <span>{sellerTaxId || '-'}</span>
                                 <div className="flex gap-4 text-slate-500 ml-4">
-                                    <span className="flex items-center gap-1"><Phone size={12} /> -</span>
-                                    <span className="flex items-center gap-1"><Mail size={12} /> -</span>
-                                    <span className="flex items-center gap-1"><GlobeIcon size={12} /> -</span>
+                                    <span className="flex items-center gap-1"><Phone size={12} /> {sellerPhone || '-'}</span>
+                                    <span className="flex items-center gap-1"><Mail size={12} /> {sellerEmail || '-'}</span>
+                                    <span className="flex items-center gap-1"><GlobeIcon size={12} /> {sellerWebsite || '-'}</span>
                                 </div>
                             </div>
                         </div>
@@ -200,9 +211,9 @@ export default async function BillingPrintPage(props: Props) {
                         {/* Contact Info */}
                         <div className="pl-4 border-l-2 border-slate-200">
                             <div className="font-bold mb-2">ติดต่อกลับที่ :</div>
-                            <div className="flex items-center gap-3 mb-1.5"><User size={14} className="text-slate-600"/> {company?.contact_name || 'Admin'}</div>
-                            <div className="flex items-center gap-3 mb-1.5"><Phone size={14} className="text-slate-600"/> {company?.phone || '-'}</div>
-                            <div className="flex items-center gap-3"><Mail size={14} className="text-slate-600"/> {company?.email || '-'}</div>
+                            <div className="flex items-center gap-3 mb-1.5"><User size={14} className="text-slate-600"/> {contactName}</div>
+                            <div className="flex items-center gap-3 mb-1.5"><Phone size={14} className="text-slate-600"/> {sellerPhone || '-'}</div>
+                            <div className="flex items-center gap-3"><Mail size={14} className="text-slate-600"/> {sellerEmail || '-'}</div>
                         </div>
                     </div>
                 </div>
@@ -311,17 +322,20 @@ export default async function BillingPrintPage(props: Props) {
                     </div>
                     <div className="font-bold w-20">ชำระเงิน</div>
                     <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 flex items-center justify-center overflow-hidden">
+                        <div className="w-12 h-12 flex items-center justify-center overflow-hidden bg-white p-1 rounded border border-slate-100 shadow-sm">
                             <img 
-                                src="https://upload.wikimedia.org/wikipedia/en/thumb/4/4f/Siam_Commercial_Bank_Logo.svg/1200px-Siam_Commercial_Bank_Logo.svg.png" 
+                                src="https://i.ibb.co/vzRGrtZ/scb-logo.png" 
                                 alt="SCB Logo" 
                                 className="w-full h-full object-contain"
+                                onError={(e) => {
+                                    (e.target as HTMLImageElement).src = "https://upload.wikimedia.org/wikipedia/en/thumb/4/4f/Siam_Commercial_Bank_Logo.svg/300px-Siam_Commercial_Bank_Logo.svg.png"
+                                }}
                             />
                         </div>
                         <div>
-                            <div className="font-bold text-slate-800">{company?.bank_name || 'ธนาคารไทยพาณิชย์'}</div>
-                            <div className="font-bold text-slate-800 mt-0.5">ออมทรัพย์ {company?.bank_account_no || '-'}</div>
-                            <div className="text-slate-600 mt-0.5">{company?.bank_account_name || '-'}</div>
+                            <div className="font-bold text-slate-800">{bankName}</div>
+                            <div className="font-bold text-slate-800 mt-0.5">ออมทรัพย์ {bankAccNo || '-'}</div>
+                            <div className="text-slate-600 mt-0.5">{bankAccName || '-'}</div>
                         </div>
                     </div>
                 </div>
@@ -348,7 +362,7 @@ export default async function BillingPrintPage(props: Props) {
                             <div className="text-[10px] text-slate-500 mb-1 text-center font-bold">สแกนเพื่อเปิดใบวางบิล</div>
                             <div className="w-20 h-20 bg-white flex items-center justify-center p-1 border-2 border-slate-200 rounded-lg shadow-sm overflow-hidden">
                                 <img 
-                                    src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(`${process.env.NEXT_PUBLIC_APP_URL || (typeof window !== 'undefined' ? window.location.origin : '')}/billing/print/${note.Billing_Note_ID}`)}`} 
+                                    src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(`${process.env.NEXT_PUBLIC_APP_URL || (typeof window !== 'undefined' ? window.location.origin : '')}/public/invoice/${note.Billing_Note_ID}`)}`} 
                                     alt="Billing QR Code" 
                                     className="w-full h-full object-contain" 
                                 />
@@ -358,13 +372,13 @@ export default async function BillingPrintPage(props: Props) {
                             <div>
                                 <div className="h-16 border-b border-dashed border-slate-400 mb-2 mx-2"></div>
                                 <div className="font-bold mb-1">ผู้ออกเอกสาร (ผู้ขาย)</div>
-                                <div className="text-slate-600">{company?.contact_name || '-'}</div>
+                                <div className="text-slate-600">{contactName}</div>
                                 <div className="text-slate-500 mt-0.5">{issueDate.toLocaleDateString(localeStr)}</div>
                             </div>
                             <div>
                                 <div className="h-16 border-b border-dashed border-slate-400 mb-2 mx-2"></div>
                                 <div className="font-bold mb-1">ผู้อนุมัติเอกสาร (ผู้ขาย)</div>
-                                <div className="text-slate-600">{company?.contact_name || '-'}</div>
+                                <div className="text-slate-600">{contactName}</div>
                                 <div className="text-slate-500 mt-0.5">{issueDate.toLocaleDateString(localeStr)}</div>
                             </div>
                             <div>

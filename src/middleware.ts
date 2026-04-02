@@ -33,6 +33,7 @@ export async function middleware(request: NextRequest) {
   const isApiRoute = pathname.startsWith('/api')
   const isLoginPage = pathname.startsWith('/login')
   const isPublicTrack = pathname.startsWith('/track')
+  const isPublicInvoice = pathname.startsWith('/public/invoice')
   const isMobile = pathname.startsWith('/mobile')
   const isStaticFile = pathname.includes('.') // Simple check for assets
 
@@ -44,7 +45,7 @@ export async function middleware(request: NextRequest) {
     response = await updateSession(request)
   }
 
-  if (!isApiRoute && !isMobile && !isLoginPage && !isPublicTrack && !isStaticFile && pathname !== '/') {
+  if (!isApiRoute && !isMobile && !isLoginPage && !isPublicTrack && !isPublicInvoice && !isStaticFile && pathname !== '/') {
     const sessionCookie = request.cookies.get('session')
     const driverSession = request.cookies.get('driver_session')
 

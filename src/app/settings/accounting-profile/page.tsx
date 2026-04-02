@@ -22,11 +22,12 @@ import {
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { useLanguage } from "@/components/providers/language-provider"
-import { getSetting, saveSetting } from "@/lib/supabase/system_settings"
+import { getSystemSetting, saveSystemSetting } from "@/lib/actions/system-settings-actions"
 
 interface AccountingProfile {
   company_name_th: string
   company_name_en: string
+  logo_url: string
   tax_id: string
   address: string
   phone: string
@@ -42,6 +43,7 @@ interface AccountingProfile {
 const DEFAULT_PROFILE: AccountingProfile = {
   company_name_th: "",
   company_name_en: "",
+  logo_url: "",
   tax_id: "",
   address: "",
   phone: "",
@@ -63,7 +65,7 @@ export default function AccountingProfilePage() {
 
   useEffect(() => {
     async function loadData() {
-      const data = await getSetting('accounting_profile', DEFAULT_PROFILE)
+      const data = await getSystemSetting('accounting_profile', DEFAULT_PROFILE)
       setProfile(data)
       setLoading(false)
     }
@@ -72,12 +74,13 @@ export default function AccountingProfilePage() {
 
   const handleSave = async () => {
     setSaving(true)
-    const result = await saveSetting('accounting_profile', profile, 'Accounting Entity Details')
+    const result = await saveSystemSetting('accounting_profile', profile, 'Accounting Entity Details')
     setSaving(false)
     if (result.success) {
         toast.success("บันทึกข้อมูลบัญชีเรียบร้อยแล้ว")
     } else {
-        toast.error("บันทึกไม่สำเร็จ: " + result.error)
+        console.error("Save error:", result.error)
+        toast.error(`บันทึกไม่สำเร็จ: ${result.error || 'Unknown Error'}`)
     }
   }
 
@@ -128,6 +131,18 @@ export default function AccountingProfilePage() {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="space-y-2 md:col-span-2">
+                        <label className="text-xs font-black text-muted-foreground uppercase tracking-widest ml-2">URL โลโก้บริษัท (สำหรับใบวางบิล)</label>
+                        <div className="relative group">
+                            <Globe className="absolute left-5 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-blue-500 transition-colors" size={18} />
+                            <input 
+                                value={profile.logo_url}
+                                onChange={e => setProfile({...profile, logo_url: e.target.value})}
+                                className="w-full h-16 pl-14 pr-6 rounded-2xl bg-black/20 border-2 border-transparent focus:border-blue-500/50 outline-none font-bold text-lg transition-all"
+                                placeholder="https://your-domain.com/logo.png"
+                            />
+                        </div>
+                    </div>
                     <div className="space-y-2">
                         <label className="text-xs font-black text-muted-foreground uppercase tracking-widest ml-2">ชื่อบริษัท (ไทย)</label>
                         <div className="relative group">
@@ -186,6 +201,18 @@ export default function AccountingProfilePage() {
                                 onChange={e => setProfile({...profile, phone: e.target.value})}
                                 className="w-full h-16 pl-14 pr-6 rounded-2xl bg-black/20 border-2 border-transparent focus:border-blue-500/50 outline-none font-bold text-lg transition-all"
                                 placeholder="02-XXX-XXXX"
+                            />
+                        </div>
+                    </div>
+                    <div className="space-y-2">
+                        <label className="text-xs font-black text-muted-foreground uppercase tracking-widest ml-2">อีเมลติดต่อ (บัญชี)</label>
+                        <div className="relative group">
+                            <Mail className="absolute left-5 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-blue-500 transition-colors" size={18} />
+                            <input 
+                                value={profile.email}
+                                onChange={e => setProfile({...profile, email: e.target.value})}
+                                className="w-full h-16 pl-14 pr-6 rounded-2xl bg-black/20 border-2 border-transparent focus:border-blue-500/50 outline-none font-bold text-lg transition-all"
+                                placeholder="accounting@company.com"
                             />
                         </div>
                     </div>
