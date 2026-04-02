@@ -349,7 +349,7 @@ export default async function BillingPrintPage(props: Props) {
                             <div className="text-[10px] text-slate-500 mb-1 text-center font-bold">สแกนเพื่อเปิดใบวางบิล</div>
                             <div className="w-20 h-20 bg-white flex items-center justify-center p-1 border-2 border-slate-200 rounded-lg shadow-sm overflow-hidden">
                                 <img 
-                                    src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(`${process.env.NEXT_PUBLIC_APP_URL || (typeof window !== 'undefined' ? window.location.origin : '')}/public/invoice/${note.Billing_Note_ID}`)}`} 
+                                    src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(`https://tms-app-five.vercel.app/public/invoice/${note.Billing_Note_ID}`)}`} 
                                     alt="Billing QR Code" 
                                     className="w-full h-full object-contain" 
                                 />

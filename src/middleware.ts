@@ -41,7 +41,7 @@ export async function middleware(request: NextRequest) {
   // but for main app we rely on our custom session to avoid excessive network calls
   let response = NextResponse.next()
   
-  if (isLoginPage || isApiRoute) {
+  if (isLoginPage || isApiRoute || isPublicInvoice) {
     response = await updateSession(request)
   }
 
