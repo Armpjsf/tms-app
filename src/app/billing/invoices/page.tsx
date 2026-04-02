@@ -21,15 +21,7 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import { getInvoices } from "@/lib/supabase/invoices"
-import { InvoicePaymentAction } from "@/components/billing/invoice-actions"
-import { InvoiceStatusActions } from "@/components/billing/invoice-status-actions"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+import { InvoiceRowActions } from "@/components/billing/invoice-actions"
 import { cn } from "@/lib/utils"
 
 import { dictionaries, Language } from "@/lib/i18n/dictionaries"
@@ -183,7 +175,7 @@ export default async function InvoicesPage({
                   <th className="px-8 py-10 text-base font-bold font-black uppercase tracking-[0.4em] text-muted-foreground text-center">{dict.col_due}</th>
                   <th className="px-8 py-10 text-base font-bold font-black uppercase tracking-[0.4em] text-muted-foreground text-right">{dict.col_value}</th>
                   <th className="px-12 py-10 text-base font-bold font-black uppercase tracking-[0.4em] text-muted-foreground text-center">{dict.col_status}</th>
-                  <th className="px-12 py-10 w-20"></th>
+                  <th className="px-12 py-10 w-32 text-center">จัดการ</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
@@ -242,48 +234,13 @@ export default async function InvoicesPage({
                                 {inv.Status === 'Paid' ? dict.status_paid : inv.Status === 'Overdue' ? dict.status_overdue : dict.status_pending}
                             </div>
                         </td>
-                        <td className="px-12 py-10">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" className="h-12 w-12 p-0 rounded-2xl hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-all">
-                                <span className="sr-only">Open menu</span>
-                                <MoreHorizontal className="h-5 w-5" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="bg-card border-border/10 text-foreground min-w-[200px] p-2 rounded-2xl shadow-2xl ring-1 ring-white/10">
-                              <DropdownMenuLabel className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest px-4 py-3">{dict.vector_command}</DropdownMenuLabel>
-                              <DropdownMenuItem className="focus:bg-primary/20 focus:text-white cursor-pointer rounded-xl px-4 py-3 gap-3 transition-colors" asChild>
-                                <Link href={`/billing/print/${inv.Invoice_ID}?lang=${language}`} target="_blank" className="flex items-center">
-                                  <FileCheck className="h-4 w-4 text-primary" /> 
-                                  <span className="text-base font-bold font-black uppercase tracking-widest">{dict.audit_analytics}</span>
-                                </Link>
-                              </DropdownMenuItem>
-                              <DropdownMenuItem className="focus:bg-primary/20 focus:text-white cursor-pointer rounded-xl px-4 py-3 gap-3 transition-colors" asChild>
-                                <Link href={`/billing/print/${inv.Invoice_ID}?lang=${language}`} target="_blank" className="flex items-center">
-                                  <Download className="h-4 w-4 text-primary" /> 
-                                  <span className="text-base font-bold font-black uppercase tracking-widest">{dict.output_pdf}</span>
-                                </Link>
-                              </DropdownMenuItem>
-                              {inv.Status !== 'Paid' && (
-                                <InvoiceStatusActions 
-                                  id={inv.Invoice_ID} 
-                                  type={inv.Type} 
-                                  label={dict.confirm_payment} 
-                                />
-                              )}
-                              <div className="h-px bg-muted/50 my-2 mx-2" />
-                              <InvoicePaymentAction 
+                        <td className="px-12 py-10 text-center">
+                            <InvoiceRowActions 
                                 id={inv.Invoice_ID} 
                                 type={inv.Type} 
                                 status={inv.Status} 
-                                label={dict.confirm_payment} 
-                              />
-                              <DropdownMenuItem className="focus:bg-rose-500/20 focus:text-rose-500 cursor-pointer rounded-xl px-4 py-3 gap-3 transition-colors">
-                                <Zap className="h-4 w-4" /> 
-                                <span className="text-base font-bold font-black uppercase tracking-widest">{dict.abort_record}</span>
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                                language={language}
+                            />
                         </td>
                       </tr>
                     ))
@@ -313,4 +270,3 @@ export default async function InvoicesPage({
     </DashboardLayout>
   )
 }
-

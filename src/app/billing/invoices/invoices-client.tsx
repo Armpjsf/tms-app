@@ -8,28 +8,15 @@ import { Label } from "@/components/ui/label"
 import { 
   Plus, 
   Search, 
-  Download,
-  MoreHorizontal,
-  FileCheck,
   FileText,
   Zap,
   ShieldCheck,
-  Activity,
-  FileSpreadsheet
+  Activity
 } from "lucide-react"
 import Link from "next/link"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { useLanguage } from "@/components/providers/language-provider"
-import { exportInvoiceExcel } from "@/lib/actions/invoice-excel-actions"
-import { toast } from "sonner"
+import { InvoiceRowActions } from "@/components/billing/invoice-actions"
 
 interface Invoice {
   Invoice_ID: string
@@ -39,6 +26,7 @@ interface Invoice {
   Due_Date?: string
   Grand_Total: number
   Status: string
+  Type: 'Invoice' | 'BillingNote'
 }
 
 interface InvoicesClientProps {
@@ -48,38 +36,6 @@ interface InvoicesClientProps {
 
 export default function InvoicesClient({ initialInvoices, query }: InvoicesClientProps) {
   const { t, language } = useLanguage()
-
-  const handleExportExcel = async (id: string) => {
-    const loadingToast = toast.loading("กำลังเตรียมไฟล์ Excel (ใบแจ้งหนี้)...")
-    try {
-        const result = await exportInvoiceExcel(id)
-        if (result.success && result.data) {
-            // Convert Base64 to Blob
-            const byteCharacters = atob(result.data)
-            const byteNumbers = new Array(byteCharacters.length)
-            for (let i = 0; i < byteCharacters.length; i++) {
-                byteNumbers[i] = byteCharacters.charCodeAt(i)
-            }
-            const byteArray = new Uint8Array(byteNumbers)
-            const blob = new Blob([byteArray], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
-            
-            const url = window.URL.createObjectURL(blob)
-            const a = document.createElement('a')
-            a.href = url
-            a.download = result.fileName || `Invoice_${id}.xlsx`
-            document.body.appendChild(a)
-            a.click()
-            window.URL.revokeObjectURL(url)
-            document.body.removeChild(a)
-            toast.success("ส่งออกไฟล์ Excel สำเร็จ", { id: loadingToast })
-        } else {
-            toast.error("ส่งออกไม่สำเร็จ: " + result.error, { id: loadingToast })
-        }
-    } catch (error) {
-        console.error("Export error:", error)
-        toast.error("เกิดข้อผิดพลาดในการส่งออก", { id: loadingToast })
-    }
-  }
 
   return (
     <DashboardLayout>
@@ -163,7 +119,7 @@ export default function InvoicesClient({ initialInvoices, query }: InvoicesClien
                   <th className="px-8 py-10 text-base font-bold font-black uppercase tracking-[0.4em] text-muted-foreground text-center">{t('invoices.col_due')}</th>
                   <th className="px-8 py-10 text-base font-bold font-black uppercase tracking-[0.4em] text-muted-foreground text-right">{t('invoices.col_value')}</th>
                   <th className="px-12 py-10 text-base font-bold font-black uppercase tracking-[0.4em] text-muted-foreground text-center">{t('invoices.col_status')}</th>
-                  <th className="px-12 py-10 w-20"></th>
+                  <th className="px-12 py-10 w-32 text-center">จัดการ</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
@@ -222,48 +178,13 @@ export default function InvoicesClient({ initialInvoices, query }: InvoicesClien
                                 {inv.Status === 'Paid' ? t('invoices.status_paid') : inv.Status === 'Overdue' ? t('invoices.status_overdue') : t('invoices.status_pending')}
                             </div>
                         </td>
-                        <td className="px-12 py-10">
-                          <div className="flex items-center gap-2">
-                              <Button 
-                                variant="ghost" 
-                                size="sm"
-                                onClick={() => handleExportExcel(inv.Invoice_ID)}
-                                className="h-10 px-3 bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-white border border-emerald-500/20 rounded-xl transition-all active:scale-90"
-                                title="ส่งออก Excel (ใบแจ้งหนี้)"
-                              >
-                                <FileSpreadsheet className="h-5 w-5" />
-                              </Button>
-
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button variant="ghost" className="h-10 w-10 p-0 rounded-xl hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-all">
-                                    <span className="sr-only">Open menu</span>
-                                    <MoreHorizontal className="h-5 w-5" />
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="bg-card border-border/10 text-foreground min-w-[200px] p-2 rounded-2xl shadow-2xl ring-1 ring-white/10">
-                                  <DropdownMenuLabel className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest px-4 py-3">คำสั่งจัดการ</DropdownMenuLabel>
-                                  <DropdownMenuItem 
-                                    className="focus:bg-emerald-500/20 focus:text-emerald-500 cursor-pointer rounded-xl px-4 py-3 gap-3 transition-colors"
-                                    onClick={() => handleExportExcel(inv.Invoice_ID)}
-                                  >
-                                    <FileSpreadsheet className="h-4 w-4 text-emerald-500" /> 
-                                    <span className="text-base font-bold font-black uppercase tracking-widest text-emerald-500">ส่งออก Excel (ใบแจ้งหนี้)</span>
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem className="focus:bg-primary/20 focus:text-white cursor-pointer rounded-xl px-4 py-3 gap-3 transition-colors" asChild>
-                                    <Link href={`/billing/print/${inv.Invoice_ID}?lang=${language}`} target="_blank" className="flex items-center">
-                                      <FileText className="h-4 w-4 text-primary" /> 
-                                      <span className="text-base font-bold font-black uppercase tracking-widest">พิมพ์ใบวางบิล (PDF)</span>
-                                    </Link>
-                                  </DropdownMenuItem>
-                                  <div className="h-px bg-muted/50 my-2 mx-2" />
-                                  <DropdownMenuItem className="focus:bg-rose-500/20 focus:text-rose-500 cursor-pointer rounded-xl px-4 py-3 gap-3 transition-colors">
-                                    <Zap className="h-4 w-4" /> 
-                                    <span className="text-base font-bold font-black uppercase tracking-widest">ยกเลิกรายการ</span>
-                                  </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                          </div>
+                        <td className="px-12 py-10 text-center">
+                            <InvoiceRowActions 
+                                id={inv.Invoice_ID} 
+                                type={inv.Type === 'BillingNote' ? 'BillingNote' : 'Invoice'} 
+                                status={inv.Status} 
+                                language={language}
+                            />
                         </td>
                       </tr>
                     ))
