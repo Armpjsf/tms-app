@@ -1,7 +1,11 @@
+import React from "react"
 import { getBillingNoteByIdWithJobs } from "@/lib/supabase/billing"
 import { notFound } from "next/navigation"
 import { dictionaries, Language } from "@/lib/i18n/dictionaries"
-import { Phone, Mail, User, FileText, CreditCard, MessageSquare, PenTool, Globe as GlobeIcon } from "lucide-react"
+import { 
+    Phone, Mail, User, FileText, CreditCard, MessageSquare, PenTool, 
+    Globe as GlobeIcon, CalendarDays, ShieldCheck 
+} from "lucide-react"
 
 export const dynamic = 'force-dynamic'
 
