@@ -311,8 +311,12 @@ export default async function BillingPrintPage(props: Props) {
                     </div>
                     <div className="font-bold w-20">ชำระเงิน</div>
                     <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 bg-purple-600 rounded-full flex items-center justify-center text-white font-bold text-xs border-2 border-purple-200 shadow-sm">
-                            SCB
+                        <div className="w-12 h-12 flex items-center justify-center overflow-hidden">
+                            <img 
+                                src="https://upload.wikimedia.org/wikipedia/en/thumb/4/4f/Siam_Commercial_Bank_Logo.svg/1200px-Siam_Commercial_Bank_Logo.svg.png" 
+                                alt="SCB Logo" 
+                                className="w-full h-full object-contain"
+                            />
                         </div>
                         <div>
                             <div className="font-bold text-slate-800">{company?.bank_name || 'ธนาคารไทยพาณิชย์'}</div>
@@ -341,10 +345,13 @@ export default async function BillingPrintPage(props: Props) {
                     <div className="font-bold w-20">รับรอง</div>
                     <div className="flex-1 flex gap-6">
                         <div className="w-24 shrink-0 flex flex-col items-center">
-                            <div className="text-[10px] text-slate-500 mb-1 text-center font-bold">สแกนเพื่อเปิดเว็บไซต์</div>
-                            {/* Placeholder for QR Code */}
-                            <div className="w-20 h-20 bg-slate-100 flex items-center justify-center text-[10px] text-center p-2 border border-slate-200">
-                                <img src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent('https://ddservicegroup.com')}`} alt="QR Code" className="w-full h-full object-cover" />
+                            <div className="text-[10px] text-slate-500 mb-1 text-center font-bold">สแกนเพื่อเปิดใบวางบิล</div>
+                            <div className="w-20 h-20 bg-white flex items-center justify-center p-1 border-2 border-slate-200 rounded-lg shadow-sm overflow-hidden">
+                                <img 
+                                    src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(`${process.env.NEXT_PUBLIC_APP_URL || (typeof window !== 'undefined' ? window.location.origin : '')}/billing/print/${note.Billing_Note_ID}`)}`} 
+                                    alt="Billing QR Code" 
+                                    className="w-full h-full object-contain" 
+                                />
                             </div>
                         </div>
                         <div className="flex-1 grid grid-cols-5 gap-3 text-center text-xs items-end">
@@ -371,7 +378,7 @@ export default async function BillingPrintPage(props: Props) {
                             <div>
                                 <div className="h-16 border-b border-dashed border-slate-400 mb-2 mx-2"></div>
                                 <div className="font-bold mb-1">ผู้รับเอกสาร (ลูกค้า)</div>
-                                <div className="text-slate-600 line-clamp-1 px-1">{note.Customer_Name}</div>
+                                <div className="text-slate-600 px-1 break-words">{note.Customer_Name}</div>
                             </div>
                             <div>
                                 <div className="h-16 border border-dashed border-slate-300 mb-2 bg-slate-50/50"></div>

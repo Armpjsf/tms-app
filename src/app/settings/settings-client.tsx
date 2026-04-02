@@ -44,6 +44,7 @@ const settingsSections = [
     icon: Building,
     items: [
         { labelKey: "settings.items.company", descKey: "settings.items.company_desc", path: "/settings/company", permKey: "settings.items.company" },
+        { labelKey: "settings.items.accounting_profile", descKey: "settings.items.accounting_profile_desc", path: "/settings/accounting-profile", permKey: "settings.items.accounting_profile" },
         { labelKey: "settings.items.customers", descKey: "settings.items.customers_desc", path: "/settings/customers", permKey: "settings.items.customers" },
         { labelKey: "settings.items.permissions", descKey: "settings.items.permissions_desc", path: "/settings/permissions", permKey: "settings.items.permissions" },
         { labelKey: "settings.items.operators", descKey: "settings.items.operators_desc", path: "/settings/users", permKey: "settings.items.operators" },

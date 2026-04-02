@@ -320,20 +320,32 @@ export async function getBillingNoteByIdWithJobs(id: string) {
         
         if (jobsError) throw jobsError
 
-        // 3. Get Company Profile
+        // 3. Get Accounting Profile (New priority)
+        const { data: acctData } = await supabase
+            .from('System_Settings')
+            .select('value')
+            .eq('key', 'accounting_profile')
+            .maybeSingle()
+
+        // 3.1 Get Company Profile (Fallback)
         const { data: profileData } = await supabase
             .from('System_Settings')
             .select('value')
             .eq('key', 'company_profile')
-            .single()
+            .maybeSingle()
 
         let companyProfile = null
-        if (profileData?.value) {
+        if (acctData?.value) {
+            try {
+                companyProfile = typeof acctData.value === 'string' ? JSON.parse(acctData.value) : acctData.value
+            } catch {}
+        }
+        
+        // If accounting profile is empty, fallback to company profile
+        if (!companyProfile && profileData?.value) {
             try {
                 companyProfile = typeof profileData.value === 'string' ? JSON.parse(profileData.value) : profileData.value
-            } catch {
-                // Error parsing company profile
-            }
+            } catch {}
         }
 
         // 4. Get Customer Details
@@ -438,20 +450,32 @@ export async function getDriverPaymentByIdWithJobs(id: string) {
         
         if (jobsError) throw jobsError
 
-        // 3. Get Company Profile
+        // 3. Get Accounting Profile (New priority)
+        const { data: acctData } = await supabase
+            .from('System_Settings')
+            .select('value')
+            .eq('key', 'accounting_profile')
+            .maybeSingle()
+
+        // 3.1 Get Company Profile (Fallback)
         const { data: profileData } = await supabase
             .from('System_Settings')
             .select('value')
             .eq('key', 'company_profile')
-            .single()
+            .maybeSingle()
 
         let companyProfile = null
-        if (profileData?.value) {
+        if (acctData?.value) {
+            try {
+                companyProfile = typeof acctData.value === 'string' ? JSON.parse(acctData.value) : acctData.value
+            } catch {}
+        }
+        
+        // If accounting profile is empty, fallback to company profile
+        if (!companyProfile && profileData?.value) {
             try {
                 companyProfile = typeof profileData.value === 'string' ? JSON.parse(profileData.value) : profileData.value
-            } catch {
-                // Error parsing company profile
-            }
+            } catch {}
         }
 
         // 4. Get Payee Details (Bank Info)

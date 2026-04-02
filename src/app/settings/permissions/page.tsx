@@ -93,7 +93,8 @@ const MODULE_GROUPS = [
     items: [
       { key: "navigation.settings", label: "หน้าตั้งค่าหลัก", icon: Settings },
       { key: "settings.items.identity", label: "ตั้งค่าโปรไฟล์ส่วนตัว", icon: User },
-      { key: "settings.items.company", label: "ข้อมูลบริษัท (นิติบุคคล)", icon: Building },
+      { key: "settings.items.company", label: "ข้อมูลบริษัท (Operation)", icon: Building },
+      { key: "settings.items.accounting_profile", label: "ข้อมูลฝ่ายบัญชี (Invoice)", icon: Receipt },
       { key: "settings.items.permissions", label: "จัดการสิทธิ์ (Module Access)", icon: ShieldCheck },
       { key: "settings.items.operators", label: "จัดการผู้ใช้งานระบบ", icon: Users },
       { key: "settings.items.branches", label: "จัดการสาขา/โหนด", icon: Navigation },
