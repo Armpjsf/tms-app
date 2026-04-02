@@ -16,6 +16,12 @@ import { RouteStrip } from "@/components/mobile/route-strip"
 import { Badge } from "@/components/ui/badge"
 import { Job } from "@/lib/supabase/jobs"
 import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
+import { Sparkles, Loader2 } from "lucide-react"
+import { optimizeRoute } from "@/lib/ai/route-optimizer"
+import { updateJob } from "@/app/planning/actions"
+import { toast } from "sonner"
+import { useRouter } from "next/navigation"
 
 interface JobDetailClientProps {
     job: Job
@@ -24,6 +30,61 @@ interface JobDetailClientProps {
 
 export function JobDetailClient({ job, success }: JobDetailClientProps) {
     const [activeTab, setActiveTab] = useState<'mission' | 'info'>('mission')
+    const [optimizing, setOptimizing] = useState(false)
+    const router = useRouter()
+
+    const handleOptimizeRoute = async () => {
+        setOptimizing(true)
+        try {
+            const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
+                navigator.geolocation.getCurrentPosition(resolve, reject);
+            });
+
+            const origin = {
+                name: "Current Location",
+                lat: pos.coords.latitude,
+                lng: pos.coords.longitude
+            };
+
+            const dests = job.original_destinations_json || [];
+            if (!Array.isArray(dests) || dests.length < 2) {
+                toast.info("งานนี้มีจุดหมายเดียว ไม่จำเป็นต้องจัดลำดับใหม่ครับ");
+                return;
+            }
+
+            const validDests = dests.map((d: { name: string, lat: string, lng: string }) => ({
+                name: d.name,
+                lat: parseFloat(d.lat),
+                lng: parseFloat(d.lng)
+            })).filter((d: { lat: number, lng: number }) => !isNaN(d.lat) && !isNaN(d.lng));
+
+            if (validDests.length < dests.length) {
+                toast.warning("บางจุดหมายไม่มีพิกัด (Lat/Lon) กรุณาแจ้งผู้ควบคุมงานก่อนครับ");
+                return;
+            }
+
+            const result = await optimizeRoute(origin, validDests);
+
+            if (result.success) {
+                const reordered = result.optimizedOrder.map(idx => dests[idx]);
+                const updateRes = await updateJob(job.Job_ID, {
+                    original_destinations_json: JSON.stringify(reordered),
+                    Notes: (job.Notes || "") + `\n[AI Optimized: ${new Date().toLocaleTimeString()}]`
+                });
+
+                if (updateRes.success) {
+                    toast.success(`AI จัดลำดับใหม่ ประหยัดเวลาได้ ${result.estimatedDurationMinutes} นาที`);
+                    router.refresh();
+                } else {
+                    toast.error("ไม่สามารถบันทึกลำดับใหม่ได้");
+                }
+            }
+        } catch {
+            toast.error("กรุณาเปิด GPS เพื่อใช้งานการวิเคราะห์เส้นทาง");
+        } finally {
+            setOptimizing(false)
+        }
+    }
 
     const destinations = typeof job?.original_destinations_json === 'string' 
         ? JSON.parse(job.original_destinations_json) 
@@ -71,22 +132,19 @@ export function JobDetailClient({ job, success }: JobDetailClientProps) {
                             exit={{ opacity: 0, y: -20 }}
                             className="space-y-8"
                         >
-                            {/* Success Notification Inline - Premium Style */}
+                            {/* Success Notification Inline - Compact Style */}
                             {success && (
                                 <motion.div 
-                                    initial={{ scale: 0.9, opacity: 0 }}
-                                    animate={{ scale: 1, opacity: 1 }}
-                                    className="bg-emerald-500/10 border border-emerald-500/20 rounded-[2.5rem] p-7 flex items-center gap-5 text-emerald-500 shadow-xl shadow-emerald-500/5 mb-2 relative overflow-hidden"
+                                    initial={{ y: -10, opacity: 0 }}
+                                    animate={{ y: 0, opacity: 1 }}
+                                    className="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-4 flex items-center gap-4 text-emerald-500 mb-2"
                                 >
-                                    <div className="absolute top-0 right-0 p-4 opacity-10">
-                                        <CheckCircle size={60} />
+                                    <div className="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/20 shrink-0">
+                                        <CheckCircle className="text-white" size={20} />
                                     </div>
-                                    <div className="w-14 h-14 bg-emerald-500 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-500/30 shrink-0">
-                                        <CheckCircle className="text-white" size={32} />
-                                    </div>
-                                    <div className="relative z-10">
-                                        <p className="font-black uppercase tracking-widest text-base italic leading-tight mb-1">สำเร็จเรียบร้อย!</p>
-                                        <p className="text-muted-foreground text-[10px] font-black uppercase tracking-widest">ข้อมูลถูกส่งไปยังศูนย์ควบคุมแล้ว</p>
+                                    <div>
+                                        <p className="font-black uppercase tracking-widest text-sm italic leading-tight">ทำรายการสำเร็จ!</p>
+                                        <p className="text-muted-foreground text-[8px] font-black uppercase tracking-widest">ข้อมูลถูกส่งเข้าระบบแล้ว</p>
                                     </div>
                                 </motion.div>
                             )}
@@ -134,6 +192,19 @@ export function JobDetailClient({ job, success }: JobDetailClientProps) {
                                     destinations={destinations}
                                     status={job?.Job_Status}
                                 />
+
+                                {/* AI Button inside mission card - Non-floating */}
+                                {(job?.Job_Status === 'Accepted' || job?.Job_Status === 'In Transit' || job?.Job_Status === 'Arrived Pickup') && (
+                                    <Button
+                                        variant="outline"
+                                        onClick={handleOptimizeRoute}
+                                        disabled={optimizing}
+                                        className="w-full h-12 rounded-2xl border-emerald-500/20 bg-emerald-500/5 text-emerald-600 font-black gap-2 hover:bg-emerald-500/10 transition-all border-dashed text-xs uppercase tracking-widest mt-4"
+                                    >
+                                        {optimizing ? <Loader2 size={14} className="animate-spin" /> : <Sparkles className="text-emerald-500" size={14} />}
+                                        วิเคราะห์เส้นทางด้วย AI
+                                    </Button>
+                                )}
                             </div>
                         </motion.div>
                     ) : (
@@ -263,7 +334,7 @@ export function JobDetailClient({ job, success }: JobDetailClientProps) {
                 <JobActionButton job={{
                     ...job,
                     original_destinations_json: destinations
-                } as any} />
+                } as Parameters<typeof JobActionButton>[0]['job']} />
             </div>
         </div>
     )

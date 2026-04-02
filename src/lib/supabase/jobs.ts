@@ -374,7 +374,7 @@ export async function getJobById(jobId: string): Promise<Job | null> {
         const { data, error: fetchError } = await query
             .select(`
                 *,
-                Master_Customers (
+                Master_Customers!left (
                     Price_Per_Unit
                 )
             `)
@@ -388,7 +388,7 @@ export async function getJobById(jobId: string): Promise<Job | null> {
                     .from('Jobs_Main')
                     .select(`
                         *,
-                        Master_Customers (
+                        Master_Customers!left (
                             Price_Per_Unit
                         )
                     `)

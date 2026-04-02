@@ -12,9 +12,6 @@ import {
 import { updateJobStatus } from "@/app/mobile/jobs/actions"
 import { useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { optimizeRoute } from "@/lib/ai/route-optimizer"
-import { updateJob } from "@/app/planning/actions"
-import { Sparkles } from "lucide-react"
 import { toast } from "sonner"
 
 interface Destination {
@@ -61,64 +58,6 @@ export function JobActionButton({ job }: JobActionButtonProps) {
     router.push(`/mobile/jobs/${job.Job_ID}/complete`)
   }
 
-  const handleOptimizeRoute = async () => {
-    setLoading(true)
-    try {
-        // 1. Get current position
-        const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
-            navigator.geolocation.getCurrentPosition(resolve, reject);
-        });
-
-        const origin = {
-            name: "Current Location",
-            lat: pos.coords.latitude,
-            lng: pos.coords.longitude
-        };
-
-        // 2. Prepare destinations
-        const dests = job.original_destinations_json || [];
-        if (!Array.isArray(dests) || dests.length < 2) {
-            toast.info("งานนี้มีจุดหมายเดียว ไม่จำเป็นต้องจัดลำดับใหม่ครับ");
-            return;
-        }
-
-        // Validate if all dests have lat/lng
-        const validDests = dests.map(d => ({
-            name: d.name,
-            lat: parseFloat(d.lat),
-            lng: parseFloat(d.lng)
-        })).filter(d => !isNaN(d.lat) && !isNaN(d.lng));
-
-        if (validDests.length < dests.length) {
-            toast.warning("บางจุดหมายไม่มีพิกัด (Lat/Lon) กรุณาแจ้งผู้ควบคุมงานเพื่ออัปเดตข้อมูลพิกัดก่อนครับ");
-            return;
-        }
-
-        // 3. Call AI Optimizer
-        const result = await optimizeRoute(origin, validDests);
-
-        if (result.success) {
-            const reordered = result.optimizedOrder.map(idx => dests[idx]);
-            
-            // 4. Update Job in DB
-            const updateRes = await updateJob(job.Job_ID, {
-                original_destinations_json: JSON.stringify(reordered),
-                Notes: (job.Notes || "") + `\n[AI Optimized Route: ${new Date().toLocaleTimeString()}]`
-            });
-
-            if (updateRes.success) {
-                toast.success(`AI จัดลำดับเส้นทางใหม่พื่อประหยัดเวลาไปได้ประมาณ ${result.estimatedDurationMinutes} นาที`);
-                router.refresh();
-            } else {
-                toast.error("ไม่สามารถบันทึกลำดับเส้นทางใหม่ได้");
-            }
-        }
-    } catch {
-        toast.error("ไม่สามารถเข้าถึงตำแหน่งปัจจุบันของคุณได้ กรุณาเปิด GPS");
-    } finally {
-        setLoading(false)
-    }
-  }
 
   if (job.Job_Status === 'Completed') {
     return (
@@ -188,18 +127,6 @@ export function JobActionButton({ job }: JobActionButtonProps) {
 
             return (
                 <div className="space-y-3">
-                    {/* Route Optimization Option */}
-                    {(job.Job_Status === 'Accepted' || job.Job_Status === 'In Transit' || job.Job_Status === 'Arrived Pickup') && (
-                        <Button
-                            variant="outline"
-                            onClick={handleOptimizeRoute}
-                            disabled={loading}
-                            className="w-full h-14 rounded-2xl border-emerald-500/30 bg-emerald-50/50 text-emerald-700 font-black gap-2 hover:bg-emerald-100 transition-all border-dashed"
-                        >
-                            <Sparkles className="text-emerald-500 animate-pulse" size={18} />
-                            วิเคราะห์เส้นทางที่ดีที่สุดด้วย AI
-                        </Button>
-                    )}
 
                     <p className="text-base font-bold text-muted-foreground italic text-center px-4">
                         {nextAction}
