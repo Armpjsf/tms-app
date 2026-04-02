@@ -22,6 +22,8 @@ export interface Job {
     Notes?: string | null;
     Weight_Kg?: number | null;
     Volume_Cbm?: number | null;
+    Loaded_Qty?: number | null;
+    Price_Per_Unit?: number | null;
 }
 
 export interface Billing_Note {

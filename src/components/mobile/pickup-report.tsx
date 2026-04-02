@@ -7,9 +7,10 @@ type Props = {
   job: Job
   photos: string[] // Object URLs
   signature: string | null // Object URL
+  loadedQty?: number
 }
 
-export const PickupReport = forwardRef<HTMLDivElement, Props>(({ job, photos, signature }, ref) => {
+export const PickupReport = forwardRef<HTMLDivElement, Props>(({ job, photos, signature, loadedQty }, ref) => {
   return (
     <div ref={ref} className="bg-white text-black p-8 font-sans w-[800px] mx-auto absolute top-[-9999px] left-[-9999px]">
       {/* Header */}
@@ -74,7 +75,9 @@ export const PickupReport = forwardRef<HTMLDivElement, Props>(({ job, photos, si
                 <tr>
                     <td className="p-2 text-center">1</td>
                     <td className="p-2">{job.Route_Name || "สินค้าทั่วไป (General Cargo)"}</td>
-                    <td className="p-2 text-right">{job.Total_Drop || 1} Drop</td>
+                    <td className="p-2 text-right">
+                        {loadedQty && loadedQty > 0 ? `${loadedQty.toLocaleString()} Units` : `${job.Total_Drop || 1} Drop`}
+                    </td>
                     <td className="p-2 text-center text-amber-600 font-bold">รับสินค้าแล้ว</td>
                 </tr>
             </tbody>

@@ -12,7 +12,8 @@ export const sanitizeJobData = (data: Record<string, unknown>) => {
         'Pickup_Lat', 'Pickup_Lon', 'Branch_ID', 'Created_At', 'lat', 'lon', 
         'Expire_Date', 'Failed_Reason', 'Failed_Time', 'Rating', 
         'Payment_Date', 'Billing_Date',
-        'Verification_Status', 'Verified_By', 'Verified_At'
+        'Verification_Status', 'Verified_By', 'Verified_At',
+        'Loaded_Qty'
     ]
     
     Object.keys(data).forEach(key => {

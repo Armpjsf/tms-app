@@ -189,15 +189,26 @@ export async function submitJobPickup(jobId: string, formData: FormData) {
       uploadWarning = `อัปโหลดหลักฐานไม่สำเร็จ: ${errMsg}`
     }
 
+    const { data: jobData } = await supabase.from("Jobs_Main").select("Price_Cust_Total, Master_Customers(Price_Per_Unit)").eq("Job_ID", jobId).single()
+    const adminPrice = Number(jobData?.Price_Cust_Total || 0)
+    const unitPrice = Number((jobData as { Master_Customers: { Price_Per_Unit: number } | null } | null)?.Master_Customers?.Price_Per_Unit || 0)
+    const loadedQty = Number(formData.get("loaded_qty") || 0)
+
     const clientTimestamp = formData.get("actualCompletionTime") as string
     const now = clientTimestamp ? new Date(clientTimestamp) : new Date()
     const timeString = now.toTimeString().split(' ')[0] 
-    
+
     const updatePayload: Record<string, unknown> = {
       Job_Status: 'In Transit',
       Pickup_Photo_Url: photoUrls.join(','),
       Pickup_Signature_Url: signatureUrl,
-      Actual_Pickup_Time: timeString
+      Actual_Pickup_Time: timeString,
+      Loaded_Qty: loadedQty > 0 ? loadedQty : null
+    }
+
+    // Only calculate price if admin hasn't set one and we have a unit price + quantity
+    if (adminPrice === 0 && unitPrice > 0 && loadedQty > 0) {
+        updatePayload.Price_Cust_Total = loadedQty * unitPrice
     }
 
     const { error } = await supabase

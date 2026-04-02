@@ -68,6 +68,8 @@ export type Job = {
   Verification_Note?: string | null
   Verified_By?: string | null
   Verified_At?: string | null
+  Loaded_Qty?: number | null
+  Price_Per_Unit?: number | null
 }
 
 // Removed duplicate definition
@@ -369,19 +371,45 @@ export async function getJobById(jobId: string): Promise<Job | null> {
             return null
         }
 
-        const { data } = await query
+        const { data, error: fetchError } = await query
+            .select(`
+                *,
+                Master_Customers (
+                    Price_Per_Unit
+                )
+            `)
             .single()
         
-        if (!data) {
+        if (!data || fetchError) {
             // Second chance: If not found and is admin, try finding without branch filter
             // (in case it was created in another branch)
             if (isAdmin) {
-                const { data: adminData } = await supabase.from('Jobs_Main').select('*').eq('Job_ID', jobId).single()
-                return adminData
+                const { data: adminData } = await supabase
+                    .from('Jobs_Main')
+                    .select(`
+                        *,
+                        Master_Customers (
+                            Price_Per_Unit
+                        )
+                    `)
+                    .eq('Job_ID', jobId)
+                    .single()
+                
+                if (adminData) {
+                    return {
+                        ...adminData,
+                        Price_Per_Unit: (adminData as (Job & { Master_Customers: { Price_Per_Unit: number } })).Master_Customers?.Price_Per_Unit || 0
+                    } as Job
+                }
             }
             return null
         }
-        return data
+
+        // Flatten the joined data
+        return {
+            ...data,
+            Price_Per_Unit: (data as (Job & { Master_Customers: { Price_Per_Unit: number } })).Master_Customers?.Price_Per_Unit || 0
+        } as Job
     } catch {
         return null
     }

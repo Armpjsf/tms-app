@@ -11,14 +11,17 @@ import { toast } from "sonner"
 import { submitJobPickup } from "@/lib/actions/pod-actions"
 import { getJobDetails } from "@/app/mobile/jobs/actions"
 import { Job } from "@/lib/supabase/jobs"
-import { Loader2, Box } from "lucide-react"
+import { Loader2, Box, Info } from "lucide-react"
 import html2canvas from "html2canvas"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 
 export default function JobPickupPage() {
   const router = useRouter()
   const params = useParams<{ id: string }>()
   const [photos, setPhotos] = useState<File[]>([])
   const [signature, setSignature] = useState<Blob | null>(null)
+  const [loadedQty, setLoadedQty] = useState<string>("")
   const [loading, setLoading] = useState(false)
   
   // Job Data for Report
@@ -31,8 +34,14 @@ export default function JobPickupPage() {
     }
   }, [params.id])
 
+  const canSubmit = photos.length > 0 && signature && (
+    (job?.Price_Cust_Total && Number(job.Price_Cust_Total) > 0) || 
+    !(job?.Price_Per_Unit && Number(job.Price_Per_Unit) > 0) || 
+    (loadedQty && Number(loadedQty) > 0)
+  )
+
   const handleSubmit = async () => {
-    if (photos.length === 0 || !signature) return
+    if (!canSubmit) return
 
     setLoading(true)
     
@@ -69,6 +78,11 @@ export default function JobPickupPage() {
         
         // 3. Append Signature
         formData.append("signature", signature, "signature.png")
+        
+        // 4. Append Quantity
+        if (loadedQty) {
+            formData.append("loaded_qty", loadedQty)
+        }
         
         const result = await submitJobPickup(params.id, formData)
         
@@ -107,6 +121,7 @@ export default function JobPickupPage() {
                 job={job} 
                 photos={photos.map(f => URL.createObjectURL(f))} 
                 signature={signature ? URL.createObjectURL(signature) : null} 
+                loadedQty={parseFloat(loadedQty) || 0}
              />
           </div>
       )}
@@ -125,6 +140,62 @@ export default function JobPickupPage() {
 
             <CameraInput onImagesChange={setPhotos} maxImages={10} />
         </section>
+
+        {/* Quantify Input Section */}
+        {job && (
+            <section className="space-y-4">
+                {job.Price_Cust_Total && Number(job.Price_Cust_Total) > 0 ? (
+                    <div className="p-6 bg-blue-500/10 border border-blue-500/20 rounded-[2.5rem] flex items-start gap-4">
+                        <div className="w-12 h-12 bg-blue-500 rounded-2xl flex items-center justify-center shrink-0 shadow-lg shadow-blue-500/20">
+                            <Info className="text-white" size={24} />
+                        </div>
+                        <div>
+                            <p className="font-black text-white uppercase tracking-widest text-sm mb-1 italic">ราคาถูกกำหนดโดยแอดมินแล้ว</p>
+                            <p className="text-blue-300 text-[11px] font-black uppercase tracking-widest leading-relaxed">
+                                หากต้องการแก้ไขราคาหรือจำนวน กรุณาติดต่อแอดมินโดยตรง
+                            </p>
+                        </div>
+                    </div>
+                ) : job.Price_Per_Unit && Number(job.Price_Per_Unit) > 0 ? (
+                    <div className="glass-panel p-8 rounded-[3rem] border-emerald-500/20 space-y-6 relative overflow-hidden bg-emerald-500/[0.03]">
+                        <div className="flex items-center gap-4 text-emerald-500">
+                            <div className="w-12 h-12 rounded-2xl bg-emerald-500/20 flex items-center justify-center">
+                                <Box size={24} strokeWidth={2.5} />
+                            </div>
+                            <div>
+                                <h2 className="font-black uppercase tracking-widest text-sm italic">ระบุจำนวนชิ้นสินค้า</h2>
+                                <p className="text-[10px] font-black text-emerald-500/60 uppercase tracking-widest">คำนวณราคาอัตโนมัติ (฿{job.Price_Per_Unit}/UNIT)</p>
+                            </div>
+                        </div>
+
+                        <div className="space-y-3">
+                            <Label htmlFor="loadedQty" className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] ml-2">ระบุจำนวนจริง (Units / Pieces)</Label>
+                            <div className="relative">
+                                <Input
+                                    id="loadedQty"
+                                    type="number"
+                                    step="0.01"
+                                    value={loadedQty}
+                                    onChange={(e) => setLoadedQty(e.target.value)}
+                                    placeholder="ใส่จำนวนชิ้นที่นี่..."
+                                    className="h-20 bg-slate-900/50 border-emerald-500/20 rounded-[2rem] text-3xl font-black text-white px-8 placeholder:text-slate-700 focus:border-emerald-500 focus:ring-emerald-500/20 transition-all text-center italic"
+                                />
+                                <div className="absolute right-8 top-1/2 -translate-y-1/2 text-emerald-500 font-black text-sm uppercase tracking-widest pointer-events-none opacity-40">
+                                    Units
+                                </div>
+                            </div>
+                            {loadedQty && Number(loadedQty) > 0 && (
+                                <div className="flex justify-center animate-in fade-in slide-in-from-top-2 duration-500">
+                                    <div className="px-6 py-2 bg-emerald-500 rounded-full text-[11px] font-black text-white uppercase tracking-widest shadow-lg shadow-emerald-500/20">
+                                        ราคาประมาณกาล: ฿{(Number(loadedQty) * Number(job.Price_Per_Unit)).toLocaleString()}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                ) : null}
+            </section>
+        )}
 
         <section>
             <h2 className="text-muted-foreground font-bold mb-2">2. ลายเซ็นผู้ส่งของ</h2>

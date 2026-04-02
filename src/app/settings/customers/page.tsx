@@ -64,6 +64,7 @@ export default function CustomersSettingsPage() {
     Email: "",
     Line_User_ID: "",
     Credit_Term: 30,
+    Price_Per_Unit: 0,
   })
   const [saving, setSaving] = useState(false)
 
@@ -98,6 +99,7 @@ export default function CustomersSettingsPage() {
         Email: "",
         Line_User_ID: "",
         Credit_Term: 30,
+        Price_Per_Unit: 0,
       })
     }
     setIsDialogOpen(true)
@@ -319,19 +321,38 @@ export default function CustomersSettingsPage() {
                 </div>
               </div>
 
-              <div className="space-y-4">
-                <Label className="text-base font-bold font-black uppercase tracking-[0.1em] text-accent ml-2 flex items-center gap-3">
-                    <span className="w-2 h-2 rounded-full bg-accent animate-pulse" />
-                    Credit Term (Days)
-                </Label>
-                <div className="glass-panel p-1 rounded-2xl border-accent/20 bg-accent/5">
-                    <Input
-                        type="number"
-                        value={formData.Credit_Term || 30}
-                        onChange={(e) => updateForm("Credit_Term", parseInt(e.target.value) || 0)}
-                        placeholder="Enter Credit Term in Days..."
-                        className="bg-transparent border-none text-foreground font-black rounded-xl h-14 px-8 flex-1 focus:bg-accent/10 tracking-normal"
-                    />
+              <div className="grid grid-cols-2 gap-10">
+                <div className="space-y-4">
+                  <Label className="text-base font-bold font-black uppercase tracking-[0.1em] text-accent ml-2 flex items-center gap-3">
+                      <span className="w-2 h-2 rounded-full bg-accent animate-pulse" />
+                      Credit Term (Days)
+                  </Label>
+                  <div className="glass-panel p-1 rounded-2xl border-accent/20 bg-accent/5">
+                      <Input
+                          type="number"
+                          value={formData.Credit_Term || 30}
+                          onChange={(e) => updateForm("Credit_Term", parseInt(e.target.value) || 0)}
+                          placeholder="Enter Credit Term in Days..."
+                          className="bg-transparent border-none text-foreground font-black rounded-xl h-14 px-8 flex-1 focus:bg-accent/10 tracking-normal"
+                      />
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <Label className="text-base font-bold font-black uppercase tracking-[0.1em] text-emerald-500 ml-2 flex items-center gap-3">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                      Price Per Unit (฿)
+                  </Label>
+                  <div className="glass-panel p-1 rounded-2xl border-emerald-500/20 bg-emerald-500/5">
+                      <Input
+                          type="number"
+                          step="0.01"
+                          value={formData.Price_Per_Unit || 0}
+                          onChange={(e) => updateForm("Price_Per_Unit", parseFloat(e.target.value) || 0)}
+                          placeholder="0.00"
+                          className="bg-transparent border-none text-foreground font-black rounded-xl h-14 px-8 flex-1 focus:bg-emerald-500/10 tracking-normal"
+                      />
+                  </div>
                 </div>
               </div>
             </div>
@@ -434,7 +455,9 @@ export default function CustomersSettingsPage() {
                 </div>
                 <div className="flex items-center gap-2 px-4 py-2 bg-primary/20 text-primary rounded-2xl shadow-lg shadow-primary/5 ring-1 ring-primary/30">
                     <Zap size={14} className="animate-pulse" />
-                    <span className="text-base font-bold font-black tracking-normal">{t('settings_pages.customers.status.connected')}</span>
+                    <span className="text-base font-bold font-black tracking-normal">
+                        {customer.Price_Per_Unit && customer.Price_Per_Unit > 0 ? `฿${customer.Price_Per_Unit}/UNIT` : t('settings_pages.customers.status.connected')}
+                    </span>
                 </div>
               </div>
             </div>
