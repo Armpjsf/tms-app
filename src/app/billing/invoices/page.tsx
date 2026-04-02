@@ -1,29 +1,22 @@
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { cookies } from "next/headers"
-import { Button } from "@/components/ui/button"
-import { PremiumButton } from "@/components/ui/premium-button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { 
   Plus, 
-  Search, 
-  Download,
-  MoreHorizontal,
-  FileCheck,
   FileText,
-  Zap,
-  ShieldCheck,
-  Activity,
   AlertTriangle,
   Banknote,
-  AlertCircle,
-  Clock
+  Activity,
+  Search,
+  ShieldCheck,
+  Zap
 } from "lucide-react"
 import Link from "next/link"
 import { getInvoices } from "@/lib/supabase/invoices"
 import { InvoiceRowActions } from "@/components/billing/invoice-actions"
+import { PremiumButton } from "@/components/ui/premium-button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
-
 import { dictionaries, Language } from "@/lib/i18n/dictionaries"
 
 interface Invoice {
@@ -36,6 +29,8 @@ interface Invoice {
   Status: string
   Type: 'Invoice' | 'BillingNote'
 }
+
+export const dynamic = 'force-dynamic'
 
 export default async function InvoicesPage({
   searchParams,
@@ -102,10 +97,6 @@ export default async function InvoicesPage({
                 <p className="text-base font-bold font-black text-rose-500 uppercase tracking-[0.3em]">{dict.overdue_summary.replace('{{count}}', overdueCount.toString())}</p>
                 <h4 className="text-4xl font-black text-foreground tracking-tighter uppercase">ATTENTION REQUIRED</h4>
               </div>
-            </div>
-            <div className="text-right relative z-10">
-               <p className="text-base font-bold font-black text-muted-foreground uppercase mb-1 tracking-widest italic">Action Needed</p>
-               <p className="text-2xl font-black text-rose-500 tracking-tighter">FOLLOW UP NOW</p>
             </div>
           </div>
 
@@ -175,7 +166,7 @@ export default async function InvoicesPage({
                   <th className="px-8 py-10 text-base font-bold font-black uppercase tracking-[0.4em] text-muted-foreground text-center">{dict.col_due}</th>
                   <th className="px-8 py-10 text-base font-bold font-black uppercase tracking-[0.4em] text-muted-foreground text-right">{dict.col_value}</th>
                   <th className="px-12 py-10 text-base font-bold font-black uppercase tracking-[0.4em] text-muted-foreground text-center">{dict.col_status}</th>
-                  <th className="px-12 py-10 w-32 text-center">จัดการ</th>
+                  <th className="px-12 py-10 w-32 text-center text-muted-foreground uppercase text-[10px] font-black tracking-widest">จัดการ</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
@@ -191,7 +182,7 @@ export default async function InvoicesPage({
                         </td>
                     </tr>
                 ) : (
-                    (safeInvoices as Invoice[]).map((inv: Invoice) => (
+                    safeInvoices.map((inv: Invoice) => (
                       <tr key={inv.Invoice_ID} className="group/row hover:bg-primary/[0.03] transition-all duration-500">
                         <td className="px-12 py-10">
                             <div className="flex flex-col gap-1">

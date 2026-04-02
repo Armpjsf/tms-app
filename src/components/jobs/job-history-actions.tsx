@@ -78,15 +78,17 @@ export function JobHistoryActions({ job, drivers, vehicles, customers, routes, c
       )}
 
       {/* 2. Job Detail / Edit Button */}
-      <Button
-        variant="ghost"
-        size="sm"
-        className="h-10 w-10 p-0 text-muted-foreground hover:text-foreground hover:bg-muted/80 border border-border/10 bg-muted/50"
-        onClick={() => setOpen(true)}
-        title="ดูรายละเอียด/แก้ไข"
-      >
-        <ExternalLink className="h-5 w-5" />
-      </Button>
+      {job.Billing_Notes?.Status !== 'Paid' && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-10 w-10 p-0 text-muted-foreground hover:text-foreground hover:bg-muted/80 border border-border/10 bg-muted/50"
+            onClick={() => setOpen(true)}
+            title="ดูรายละเอียด/แก้ไข"
+          >
+            <ExternalLink className="h-5 w-5" />
+          </Button>
+      )}
 
       {/* 2.5. Admin Verification Button */}
       {isFinished && (

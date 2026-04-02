@@ -1,202 +1,151 @@
 'use server'
 
 import { createAdminClient } from '@/utils/supabase/server'
-import * as XLSX from 'xlsx'
+import ExcelJS from 'exceljs'
 import { getSystemSetting } from './system-settings-actions'
-
-interface ExtraCost {
-    type: string
-    charge_cust: number
-}
-
-interface Job {
-    Job_ID: string
-    Plan_Date: string
-    Vehicle_Type: string
-    Total_Drop: number
-    Origin_Location: string
-    Dest_Location: string
-    Est_Distance_KM?: number
-    Price_Cust_Total: number
-    extra_costs_json?: any
-    Charge_Labor?: number
-    Charge_Wait?: number
-    Price_Cust_Other?: number
-}
+import fs from 'fs'
+import path from 'path'
 
 export async function exportInvoiceExcel(invoiceId: string) {
     try {
         const supabase = createAdminClient()
 
-        // 1. Get Invoice Data (Try both invoices and Billing_Notes tables)
-        let { data: invoice, error: invError } = await supabase
-            .from('invoices')
-            .select('*, Master_Customers(*)')
-            .eq('Invoice_ID', invoiceId)
-            .maybeSingle()
+        // 1. Get Data
+        const { data: invoice } = await supabase.from('invoices').select('*, Master_Customers(*)').eq('Invoice_ID', invoiceId).maybeSingle()
+        const { data: bn } = !invoice ? await supabase.from('Billing_Notes').select('*').eq('Billing_Note_ID', invoiceId).maybeSingle() : { data: null }
+        const finalDoc = invoice || bn
+        if (!finalDoc) throw new Error("ไม่พบข้อมูลเอกสาร")
 
-        let isBillingNote = false
-        if (!invoice) {
-            const { data: bn, error: bnError } = await supabase
-                .from('Billing_Notes')
-                .select('*')
-                .eq('Billing_Note_ID', invoiceId)
-                .maybeSingle()
-            
-            if (bn) {
-                invoice = bn
-                isBillingNote = true
-            }
-        }
+        const { data: jobs } = await supabase.from('Jobs_Main').select('*').or(`Invoice_ID.eq."${invoiceId}",Billing_Note_ID.eq."${invoiceId}"`)
+        if (!jobs || jobs.length === 0) throw new Error("ไม่พบรายการงาน")
 
-        if (invError || !invoice) throw new Error("ไม่พบข้อมูลใบแจ้งหนี้/ใบวางบิลในระบบ")
-
-        // 2. Get Jobs (Check both Invoice_ID and Billing_Note_ID)
-        const { data: jobs, error: jobsError } = await supabase
-            .from('Jobs_Main')
-            .select('*')
-            .or(`Invoice_ID.eq."${invoiceId}",Billing_Note_ID.eq."${invoiceId}"`)
-
-        if (jobsError) throw jobsError
-        if (!jobs || jobs.length === 0) throw new Error("ไม่พบรายการงานที่เชื่อมโยงกับเอกสารนี้")
-
-        // 3. Get Accounting Profile (Fallback to default if not set)
         const accountingProfile = await getSystemSetting('accounting_profile', {
             company_name_th: "บริษัท ดีดีเซอร์วิสแอนด์ทรานสปอร์ต จำกัด",
             address: "เลขที่ 99/2 หมู่ที่ 3 ตำบลท่าทราย อำเภอเมือง จังหวัดสมุทรสาคร 74000",
             tax_id: "0745559001353 (สำนักงานใหญ่)"
         })
 
-        // 4. Prepare Data & Dynamic Columns
-        const hasLabor = jobs.some(j => (j.Charge_Labor || 0) > 0 || checkExtra(j, 'Labor'))
-        const hasWait = jobs.some(j => (j.Charge_Wait || 0) > 0 || checkExtra(j, 'Wait') || checkExtra(j, 'Overtime'))
-        const hasExtraDrop = jobs.some(j => checkExtra(j, 'Extra Dropoff') || checkExtra(j, 'เพิ่มจุดลงของ'))
-        const hasOther = jobs.some(j => (j.Price_Cust_Other || 0) > 0 || checkExtra(j, 'Other'))
+        // 2. Load Template
+        const templatePath = path.join(process.cwd(), 'src', 'lib', 'templates', 'invoice_template.xlsx')
+        if (!fs.existsSync(templatePath)) throw new Error("Template file not found")
+        
+        const workbook = new ExcelJS.Workbook()
+        await workbook.xlsx.readFile(templatePath)
+        const worksheet = workbook.getWorksheet(1)
+        if (!worksheet) throw new Error("Worksheet not found")
 
-        // Helper to check extra_costs_json
-        function checkExtra(job: any, type: string) {
-            if (!job.extra_costs_json) return false
-            let costs = job.extra_costs_json
-            if (typeof costs === 'string') {
-                try { costs = JSON.parse(costs) } catch { return false }
+        // 3. Robust Range Clear (To prevent Shared Formula errors and TypeErrors)
+        // Clear columns H (8) through M (13) for rows 10 to 27
+        for (let r = 10; r <= 27; r++) {
+            for (let c = 8; c <= 13; c++) {
+                const cell = worksheet.getCell(r, c)
+                cell.value = null // Directly setting to null clears both value and formula safely
             }
-            if (Array.isArray(costs)) {
-                return costs.some((c: any) => c.type?.toLowerCase().includes(type.toLowerCase()) && (c.charge_cust || 0) > 0)
-            }
-            return false
         }
 
-        function getExtraValue(job: any, type: string) {
+        // 4. Helper for Extra Costs Data
+        function getExtraJsonValue(job: any, keywords: string[]) {
             if (!job.extra_costs_json) return 0
             let costs = job.extra_costs_json
-            if (typeof costs === 'string') {
-                try { costs = JSON.parse(costs) } catch { return 0 }
-            }
+            if (typeof costs === 'string') { try { costs = JSON.parse(costs) } catch { return 0 } }
             if (Array.isArray(costs)) {
                 return costs
-                    .filter((c: any) => c.type?.toLowerCase().includes(type.toLowerCase()))
+                    .filter((c: any) => keywords.some(k => c.type?.toLowerCase().includes(k.toLowerCase())))
                     .reduce((sum: number, c: any) => sum + (Number(c.charge_cust) || 0), 0)
             }
             return 0
         }
 
-        // Header Rows (Matching Sample)
-        const rows: any[][] = [
-            ['ต้นฉบับ'],
-            ['ใบแจ้งหนี้ ค่าขนส่ง '],
-            ['', '', accountingProfile.company_name_th, '', '', '', '', 'วันที่ ' + new Date(invoice.Issue_Date).toLocaleDateString('th-TH'), '', '', 'เลขที่ ' + invoice.Invoice_ID],
-            ['', '', '', '', '', '', '', 'ชื่อลูกค้า', invoice.Master_Customers?.Customer_Name || invoice.Customer_Name],
-            ['', '', accountingProfile.address, '', '', '', '', 'ที่อยู่', invoice.Master_Customers?.Address || '-'],
-            [`เลขที่ประจำตัวผู้เสียภาษี : ${accountingProfile.tax_id}`, '', '', '', '', '', '', 'เลขที่ประจำตัวผู้เสียภาษี : ' + (invoice.Master_Customers?.Tax_ID || '-')],
-            [] // Spacer
-        ]
+        // Identify categories
+        const hasExtraDrop = jobs.some(j => (Number(j.Price_Cust_Extra) || 0) > 0 || getExtraJsonValue(j, ['extra dropoff', 'เพิ่มจุด']) > 0)
+        const hasLabor = jobs.some(j => (Number(j.Charge_Labor) || 0) > 0 || getExtraJsonValue(j, ['labor', 'แรงงาน']) > 0)
+        const hasWait = jobs.some(j => (Number(j.Charge_Wait) || 0) > 0 || getExtraJsonValue(j, ['wait', 'รอลง', 'overtime']) > 0)
+        const hasOther = jobs.some(j => (Number(j.Price_Cust_Other) || 0) > 0 || getExtraJsonValue(j, ['other', 'อื่นๆ', 'expressway', 'parking']) > 0)
 
-        // Dynamic Table Headers
-        const tableHeader = [
-            'ลำดับ',
-            'วันที่',
-            'ประเภทรถ',
-            'จำนวนจุดลงสินค้า',
-            'ต้นทาง',
-            'ปลายทาง',
-            'ปริมาณคาร์บอนฟุตพริ้น (kgCO2e)',
-            'ค่าจ้าง'
-        ]
-
-        if (hasExtraDrop) tableHeader.push('เพิ่มจุดลงของ')
-        if (hasLabor) tableHeader.push('แรงงานยกของ')
-        if (hasWait) tableHeader.push('รอลงเกินเวลา')
-        if (hasOther) tableHeader.push('อื่นๆ')
+        // 5. Fill Headers
+        worksheet.getCell('C3').value = accountingProfile.company_name_th
+        worksheet.getCell('C5').value = accountingProfile.address
+        worksheet.getCell('A6').value = `เลขที่ประจำตัวผู้เสียภาษี : ${accountingProfile.tax_id}`
         
-        tableHeader.push('ค่าจ้างรวม')
-        rows.push(tableHeader)
+        const docDate = new Date(finalDoc.Issue_Date || finalDoc.Billing_Date).toLocaleDateString('th-TH')
+        worksheet.getCell('H3').value = `วันที่ ${docDate}`
+        worksheet.getCell('K3').value = `เลขที่ ${finalDoc.Invoice_ID || finalDoc.Billing_Note_ID}`
+        
+        worksheet.getCell('I4').value = finalDoc.Master_Customers?.Customer_Name || finalDoc.Customer_Name || '-'
+        worksheet.getCell('I5').value = finalDoc.Master_Customers?.Address || finalDoc.Customer_Address || '-'
+        worksheet.getCell('H6').value = `เลขที่ประจำตัวผู้เสียภาษี :  ${finalDoc.Master_Customers?.Tax_ID || finalDoc.Customer_Tax_ID || '-'}`
 
-        // Job Rows
+        // Dynamic Table Headers (H7 to L7)
+        worksheet.getCell('H7').value = 'ค่าจ้าง'
+        worksheet.getCell('I7').value = hasExtraDrop ? 'เพิ่มจุดลงของ' : '-'
+        worksheet.getCell('J7').value = hasLabor ? 'แรงงานยกของ' : '-'
+        worksheet.getCell('K7').value = hasWait ? 'รอลงเกินเวลา' : '-'
+        worksheet.getCell('L7').value = hasOther ? 'อื่นๆ' : '-'
+        worksheet.getCell('M7').value = 'ค่าจ้างรวม'
+
+        // 6. Fill Job Data (Rows 10 to 26)
         jobs.forEach((job, index) => {
-            const row = [
-                index + 1,
-                new Date(job.Plan_Date).toLocaleDateString('th-TH'),
-                job.Vehicle_Type || '-',
-                job.Total_Drop || 1,
-                job.Origin_Location || '-',
-                job.Dest_Location || job.Route_Name || '-',
-                (Number(job.Est_Distance_KM) || 0) * 0.12, // CO2 formula
-                job.Price_Cust_Total || 0
-            ]
+            const r = 10 + index
+            if (r > 26) return
 
-            if (hasExtraDrop) row.push(getExtraValue(job, 'Extra Dropoff') + getExtraValue(job, 'เพิ่มจุดลงของ'))
-            if (hasLabor) row.push((job.Charge_Labor || 0) + getExtraValue(job, 'Labor'))
-            if (hasWait) row.push((job.Charge_Wait || 0) + getExtraValue(job, 'Wait') + getExtraValue(job, 'Overtime'))
-            if (hasOther) row.push((job.Price_Cust_Other || 0) + getExtraValue(job, 'Other') + getExtraValue(job, 'Expressway') + getExtraValue(job, 'Parking'))
+            worksheet.getCell(`A${r}`).value = index + 1
+            worksheet.getCell(`B${r}`).value = new Date(job.Plan_Date).toLocaleDateString('th-TH')
+            worksheet.getCell(`C${r}`).value = job.Vehicle_Type || '-'
+            worksheet.getCell(`D${r}`).value = Number(job.Total_Drop || 1)
+            worksheet.getCell(`E${r}`).value = job.Origin_Location || '-'
+            worksheet.getCell(`F${r}`).value = job.Dest_Location || job.Route_Name || '-'
             
-            // Total for this job
-            const total = Number(row[7]) + 
-                         (hasExtraDrop ? Number(row[tableHeader.indexOf('เพิ่มจุดลงของ')]) : 0) +
-                         (hasLabor ? Number(row[tableHeader.indexOf('แรงงานยกของ')]) : 0) +
-                         (hasWait ? Number(row[tableHeader.indexOf('รอลงเกินเวลา')]) : 0) +
-                         (hasOther ? Number(row[tableHeader.indexOf('อื่นๆ')]) : 0)
+            const co2 = Number(((Number(job.Est_Distance_KM) || 0) * 0.12).toFixed(2))
+            worksheet.getCell(`G${r}`).value = co2
             
-            row.push(total)
-            rows.push(row)
+            const basePrice = Number(job.Price_Cust_Total || 0)
+            const extraDrop = hasExtraDrop ? (Number(job.Price_Cust_Extra || 0) + getExtraJsonValue(job, ['extra dropoff', 'เพิ่มจุด'])) : 0
+            const labor = hasLabor ? (Number(job.Charge_Labor || 0) + getExtraJsonValue(job, ['labor', 'แรงงาน'])) : 0
+            const waitTime = hasWait ? (Number(job.Charge_Wait || 0) + getExtraJsonValue(job, ['wait', 'รอลง', 'overtime'])) : 0
+            const other = hasOther ? (Number(job.Price_Cust_Other || 0) + getExtraJsonValue(job, ['other', 'อื่นๆ', 'expressway', 'parking'])) : 0
+
+            worksheet.getCell(`H${r}`).value = basePrice > 0 ? basePrice : null
+            worksheet.getCell(`I${r}`).value = extraDrop > 0 ? extraDrop : null
+            worksheet.getCell(`J${r}`).value = labor > 0 ? labor : null
+            worksheet.getCell(`K${r}`).value = waitTime > 0 ? waitTime : null
+            worksheet.getCell(`L${r}`).value = other > 0 ? other : null
+            
+            const rowTotal = basePrice + extraDrop + labor + waitTime + other
+            worksheet.getCell(`M${r}`).value = rowTotal
+            
+            // Apply number format
+            ;['H', 'I', 'J', 'K', 'L', 'M'].forEach(col => {
+                const cell = worksheet.getCell(`${col}${r}`)
+                cell.numFmt = '#,##0.00'
+            })
         })
 
-        // Footer / Summary
-        rows.push([])
-        const totalRow = new Array(tableHeader.length).fill('')
-        totalRow[tableHeader.length - 2] = 'รวมเงินทั้งสิ้น'
-        totalRow[tableHeader.length - 1] = invoice.Grand_Total
-        rows.push(totalRow)
+        // 7. Summary Totals (Row 27)
+        const totals = jobs.reduce((acc, j) => {
+            acc.base += Number(j.Price_Cust_Total || 0)
+            acc.extra += (hasExtraDrop ? (Number(j.Price_Cust_Extra || 0) + getExtraJsonValue(j, ['extra dropoff', 'เพิ่มจุด'])) : 0)
+            acc.labor += (hasLabor ? (Number(j.Charge_Labor || 0) + getExtraJsonValue(j, ['labor', 'แรงงาน'])) : 0)
+            acc.wait += (hasWait ? (Number(j.Charge_Wait || 0) + getExtraJsonValue(j, ['wait', 'รอลง', 'overtime'])) : 0)
+            acc.other += (hasOther ? (Number(j.Price_Cust_Other || 0) + getExtraJsonValue(j, ['other', 'อื่นๆ', 'expressway', 'parking'])) : 0)
+            return acc
+        }, { base: 0, extra: 0, labor: 0, wait: 0, other: 0 })
 
-        // Create Workbook
-        const worksheet = XLSX.utils.aoa_to_sheet(rows)
+        worksheet.getCell('H27').value = totals.base
+        worksheet.getCell('I27').value = totals.extra
+        worksheet.getCell('J27').value = totals.labor
+        worksheet.getCell('K27').value = totals.wait
+        worksheet.getCell('L27').value = totals.other
+        worksheet.getCell('M27').value = totals.base + totals.extra + totals.labor + totals.wait + totals.other
+
+        ;['H', 'I', 'J', 'K', 'L', 'M'].forEach(col => {
+            worksheet.getCell(`${col}27`).numFmt = '#,##0.00'
+        })
+
+        // 8. Write to Buffer and Return as Base64
+        const buffer = await workbook.xlsx.writeBuffer()
+        const base64 = Buffer.from(buffer).toString('base64')
         
-        // Basic Styling (Column Widths)
-        const colWidths = [
-            { wch: 6 },  // No
-            { wch: 12 }, // Date
-            { wch: 15 }, // Vehicle Type
-            { wch: 15 }, // Drops
-            { wch: 25 }, // Origin
-            { wch: 25 }, // Destination
-            { wch: 20 }, // CO2
-            { wch: 12 }, // Price
-        ]
-        // Add widths for dynamic columns
-        if (hasExtraDrop) colWidths.push({ wch: 12 })
-        if (hasLabor) colWidths.push({ wch: 12 })
-        if (hasWait) colWidths.push({ wch: 12 })
-        if (hasOther) colWidths.push({ wch: 12 })
-        colWidths.push({ wch: 15 }) // Total
-
-        worksheet['!cols'] = colWidths
-
-        const workbook = XLSX.utils.book_new()
-        XLSX.utils.book_append_sheet(workbook, worksheet, 'Invoice')
-
-        // Generate Base64
-        const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'base64' })
-        
-        return { success: true, data: excelBuffer, fileName: `Invoice_${invoiceId}.xlsx` }
+        return { success: true, data: base64, fileName: `Invoice_${invoiceId}.xlsx` }
 
     } catch (error: any) {
         console.error("Excel Export Error:", error)

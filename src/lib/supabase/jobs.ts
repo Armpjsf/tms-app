@@ -70,6 +70,9 @@ export type Job = {
   Verified_At?: string | null
   Loaded_Qty?: number | null
   Price_Per_Unit?: number | null
+  Billing_Notes?: {
+    Status: string
+  } | null
 }
 
 // Removed duplicate definition
@@ -165,7 +168,10 @@ export async function getAllJobs(
     
     let dbQuery = supabase
       .from('Jobs_Main')
-      .select('*', { count: 'exact' })
+      .select(`
+        *,
+        Billing_Notes!Billing_Note_ID(Status)
+      `, { count: 'exact' })
     
     if (customerId) {
         dbQuery = dbQuery.eq('Customer_ID', customerId)
@@ -354,35 +360,33 @@ export async function getJobById(jobId: string): Promise<Job | null> {
         // Use admin client if it's a driver or super admin
         const supabase = (isAdmin || driverSession) ? createAdminClient() : await createClient()
 
-        let query = supabase
+        let baseQuery = supabase
             .from('Jobs_Main')
-            .select('*')
-            .eq('Job_ID', jobId)
-        
-        if (isAdmin) {
-            // No filter for Super Admin in detail view to avoid 404
-        } else if (customerId) {
-            query = query.eq('Customer_ID', customerId)
-        } else if (driverSession) {
-            query = query.eq('Driver_ID', driverSession.driverId)
-        } else if (branchId && branchId !== 'All') {
-            query = query.eq('Branch_ID', branchId)
-        } else if (!branchId) {
-            return null
-        }
-
-        const { data, error: fetchError } = await query
             .select(`
                 *,
                 Master_Customers!left (
                     Price_Per_Unit
                 )
             `)
-            .single()
+            .eq('Job_ID', jobId)
+        
+        // Apply Filters
+        if (isAdmin) {
+            // Admin sees all detail without strict branch filter here
+        } else if (customerId) {
+            baseQuery = baseQuery.eq('Customer_ID', customerId)
+        } else if (driverSession) {
+            baseQuery = baseQuery.eq('Driver_ID', driverSession.driverId)
+        } else if (branchId && branchId !== 'All') {
+            baseQuery = baseQuery.eq('Branch_ID', branchId)
+        } else if (!branchId) {
+            return null
+        }
+
+        const { data, error: fetchError } = await baseQuery.single()
         
         if (!data || fetchError) {
-            // Second chance: If not found and is admin, try finding without branch filter
-            // (in case it was created in another branch)
+            // Second chance: If not found and is admin, try finding strictly by ID
             if (isAdmin) {
                 const { data: adminData } = await supabase
                     .from('Jobs_Main')
