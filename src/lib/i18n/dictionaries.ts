@@ -792,9 +792,6 @@ export const dictionaries = {
         auth_level: 'ระดับการยืนยันตัวตน',
         edit_matrix: 'แก้ไขข้อมูลโปรไฟล์',
         core_protocols: 'กฎเกณฑ์หลัก',
-        backup_node: 'สำรองข้อมูล',
-        api_signal: 'การเชื่อมต่อ API',
-        terminate: 'ออกจากระบบ',
         temporal_id: 'รหัสประจำตัว (Temporal ID)',
         identified: 'ยืนยันตัวตนแล้ว',
         secure_pending: 'รอการเชื่อมต่อปลอดภัย',
@@ -843,7 +840,7 @@ export const dictionaries = {
             vault_desc: 'จัดการการสำรองข้อมูลและรหัสลับ',
         },
         backup_node: 'สำรองข้อมูล',
-        api_signal: 'เชื่อมต่อ API',
+        api_signal: 'การเชื่อมต่อ API',
         terminate: 'ออกจากระบบ',
         roles_list: {
             'Super Admin': 'ผู้ดูแลระบบสูงสุด',
@@ -1669,7 +1666,56 @@ export const dictionaries = {
                 confirm_del: 'ยืนยันการลบประเภทรายการนี้?'
             }
         },
+        notifications: {
+            title: 'การตั้งค่าแจ้งเตือน',
+            subtitle: 'กำหนดช่องทางสื่อสารและระบบเฝ้าระวังความปลอดภัย',
+            monitor_status: 'สถานะระบบเฝ้าระวัง: ปกติ',
+            precision_targeting: 'กำหนดกลุ่มเป้าหมายแจ้งเตือน',
+            routing_control: 'การตั้งค่าช่องทางแจ้งเตือน',
+            routing_desc: 'กำหนดรูปแบบการรับข้อมูลสำคัญจากระบบไปยังอุปกรณ์ต่างๆ ของคุณ',
+            push_label: 'แจ้งเตือนผ่านบราวเซอร์/มือถือ (REST)',
+            push_desc: 'รับข้อมูลแบบเรียลไทม์ผ่านคอมพิวเตอร์และโทรศัพท์มือถือ',
+            email_label: 'ระบบส่งอีเมล (SMTP)',
+            email_desc: 'รับสรุปรายงานรายวันและรายงานโลจิสติกส์สำคัญ',
+            sos_label: 'โปรโตคอลฉุกเฉิน (SOS)',
+            sos_desc: 'สำคัญ: เปิดใช้งานเสียงและสัญญาณเตือนทันทีเมื่อเกิดเหตุฉุกเฉินในภาคสนาม',
+            temporal_label: 'รายงานสรุปภารกิจรายวัน',
+            temporal_desc: 'ส่งสรุปภาพรวมการดำเนินงานทุกวันเวลา 08:00 UTC',
+            advisory: 'ข้อแนะนำความปลอดภัยระบบแจ้งเตือน',
+            advisory_desc: 'การปิดการแจ้งเตือน SOS อาจทำให้การตอบสนองต่อเหตุฉุกเฉินล่าช้าลง บันทึกการแจ้งเตือนทั้งหมดจะถูกเก็บไว้เป็นเวลา 90 วันเพื่อการตรวจสอบย้อนหลัง',
+            view_stream: 'ดูประวัติการแจ้งเตือน',
+            syncing: 'กำลังซิงค์โปรโตคอล...',
+            commit_config: 'บันทึกการตั้งค่าระบบใหม่',
+            critical: 'ด่วนที่สุด',
+            toasts: {
+                synced: 'บันทึกการตั้งค่าการแจ้งเตือนเรียบร้อยแล้ว'
+            }
+        },
+        api: {
+            title: 'การเชื่อมต่อ API',
+            subtitle: 'การเชื่อมต่อโหนดภายนอกและการส่งสัญญาณที่ปลอดภัย',
+            back_cmd: 'ย้อนกลับไปยังศูนย์ควบคุม',
+            nominal_state: 'สถานะปกติ',
+            payload_protocol: 'โปรโตคอลการรับส่งข้อมูลที่มีการเข้ารหัส',
+            token_label: 'โทเค็นการเข้าถึงหลัก',
+            token_desc: 'จำเป็นสำหรับการเชื่อมต่อโหนด ERP ภายนอก, ระบบติดตามดาวเทียม และการรวมข้อมูลทางไกลเชิงพื้นที่',
+            encryption_active: 'การเข้ารหัส RSA: เปิดใช้งาน',
+            copy_buffer: 'คัดลอกไปยังบัฟเฟอร์',
+            critical_security: 'คำเตือน: การแบ่งปันโทเค็นนี้จะให้สิทธิ์การเข้าถึงระบบหลักทั้งหมดโดยสมบูรณ์ อย่าใช้งานในสภาพแวดล้อมที่ไม่ปลอดภัย',
+            lifecycle_mgmt: 'การจัดการวงจรความปลอดภัย',
+            token_stability: 'ความเสถียรของโทเค็น: ปกติ',
+            regenerate_btn: 'สร้างรหัสใหม่ (REGENERATE)',
+            advisory_title: 'ข้อแนะนำการเชื่อมต่อ',
+            advisory_desc: 'ระบบ API Interlink รองรับการรับส่งสัญญาณแบบ RESTful ผ่าน GraphQL และโปรโตคอล HTTP มาตรฐาน',
+            rate_limit_note: 'มีการจำกัดจำนวนครั้งการเรียกใช้ (Rate limits) ที่ระดับโหนดเพื่อความเสถียรของระบบโดยรวม',
+            docs_note: 'โปรดอ้างอิงเอกสาร Intelligence สำหรับวิธีการเชื่อมต่อ',
+            view_docs: 'ดูเอกสารประกอบ',
+            confirm_regen: 'การสร้างคีย์ใหม่จะทำให้คีย์เดิมใช้งานไม่ได้ ยืนยันหรือไม่?',
+            toast_new_key: 'สร้างรหัสความปลอดภัยใหม่เรียบร้อยแล้ว',
+            toast_copied: 'คัดลอกรหัส API แล้ว'
+        }
     },
+
     months: {
       jan: 'มกราคม',
       feb: 'กุมภาพันธ์',
@@ -2513,9 +2559,6 @@ export const dictionaries = {
         auth_level: 'Auth Level',
         edit_matrix: 'Edit Profile',
         core_protocols: 'Main Rules',
-        backup_node: 'Backup',
-        api_signal: 'API Conn',
-        terminate: 'Logout',
         temporal_id: 'Temporal ID',
         identified: 'IDENTIFIED',
         secure_pending: 'SECURE_CHANNEL_PENDING',
@@ -2947,16 +2990,7 @@ export const dictionaries = {
         secure_link: 'Secure',
         integrity: 'Integrity',
     },
-    notifications: {
-        critical: 'Critical',
-        warning: 'Warning',
-        protocol: 'Protocol',
-        compliance_decay: 'Issues',
-        audit_failure: 'Failed',
-        lifecycle_service: 'Maint Due',
-        status: 'Status',
-        node_type: 'Type',
-    },
+
     settings_pages: {
         subcontractors: {
             title: 'Subcontractors',
@@ -3359,7 +3393,56 @@ export const dictionaries = {
                 confirm_del: 'Delete?'
             }
         },
+        notifications: {
+            title: 'Notification Control',
+            subtitle: 'Configure channel routing and security alerts',
+            monitor_status: 'Monitor Status: Nominal',
+            precision_targeting: 'Target Notification Groups',
+            routing_control: 'Notification Channel Setup',
+            routing_desc: 'Configure how you receive critical system information across your devices.',
+            push_label: 'Browser/Mobile Push (REST)',
+            push_desc: 'Receive urgent real-time signals on desktop and mobile',
+            email_label: 'Email Relay (SMTP)',
+            email_desc: 'Synchronize daily summaries and critical logistics reports',
+            sos_label: 'Emergency Protocols (SOS)',
+            sos_desc: 'CRITICAL: Trigger instant audio/visual alerts for field personnel distress',
+            temporal_label: 'Automated Daily Summary',
+            temporal_desc: 'Relay operational mission overview at 08:00 UTC',
+            advisory: 'NOTIFICATION_INTEGRITY_ADVISORY',
+            advisory_desc: 'Deactivating SOS alerts may impede field support response vectors. All notification logs are archived for 90 days for audit compliance.',
+            view_stream: 'VIEW_ALERT_STREAM',
+            syncing: 'SYNCING_PROTOCOLS...',
+            commit_config: 'COMMIT_SYSTEM_CONFIG',
+            critical: 'Critical',
+            toasts: {
+                synced: 'Notification protocols synchronized'
+            }
+        },
+        api: {
+            title: 'API Interlink',
+            subtitle: 'External Node Integration & Secure Signal Nexus',
+            back_cmd: 'Back to Command Control',
+            nominal_state: 'INTERLINK_STATE: NOMINAL',
+            payload_protocol: 'Encrypted Payload Protocol',
+            token_label: 'Master Access Token',
+            token_desc: 'Required for external ERP nodes, satellite tracking systems, and spatial telemetry integrations.',
+            encryption_active: 'RSA_ENCRYPTION: ACTIVE',
+            copy_buffer: 'BUFFER_COPY',
+            critical_security: 'CRITICAL: SHARING THIS TOKEN GRANTS FULL OPERATIONAL ACCESS TO THE CORE SYSTEM. DO NOT DEPLOY IN NON-SECURE ENVIRONMENTS.',
+            lifecycle_mgmt: 'Security Lifecycle Management',
+            token_stability: 'TOKEN_STABILITY: NOMINAL',
+            regenerate_btn: 'REGENERATE_ACCESS_CORE',
+            advisory_title: 'INTERLINK_ADVISORY',
+            advisory_desc: 'The API Interlink supports RESTful signal transmissions via GraphQL and traditional HTTP protocols.',
+            rate_limit_note: 'Rate limits are enforced at the node level to ensure global system stability.',
+            docs_note: 'Refer to the Intelligence Documentation for implementation vectors.',
+            view_docs: 'VIEW_DOCS',
+            confirm_regen: 'Generating a new key will invalidate the existing one. Confirm?',
+            toast_new_key: 'Generated new encrypted access key',
+            toast_copied: 'API Key copied to local buffer'
+        }
     },
+
     months: {
       jan: 'January',
       feb: 'February',

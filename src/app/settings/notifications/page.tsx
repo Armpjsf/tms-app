@@ -11,6 +11,8 @@ import { useLanguage } from "@/components/providers/language-provider"
 import { getSetting, saveSetting } from "@/lib/supabase/system_settings"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
+import { createClient } from "@/utils/supabase/client"
+import { PushTestButton } from "@/components/settings/push-test-button"
 
 interface NotificationSettings {
   push_enabled: boolean
@@ -32,6 +34,14 @@ export default function NotificationSettingsPage() {
   const [settings, setSettings] = useState<NotificationSettings>(DEFAULT_SETTINGS)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [currentUser, setCurrentUser] = useState<{ id: string } | null>(null)
+
+  useEffect(() => {
+    const supabase = createClient()
+    supabase.auth.getUser().then(({ data }: { data: { user: any } }) => {
+      if (data.user) setCurrentUser({ id: data.user.id })
+    })
+  }, [])
 
   const loadSettings = useCallback(async () => {
     const data = await getSetting('notification_settings', DEFAULT_SETTINGS)
@@ -82,7 +92,7 @@ export default function NotificationSettingsPage() {
                 </div>
                 <div className="flex items-center gap-4 bg-primary/10 p-4 rounded-2xl border border-primary/20">
                    <Target className="text-primary" size={18} />
-                   <span className="text-base font-bold font-black text-foreground uppercase tracking-[0.3em] italic">กำหนดกลุ่มเป้าหมายแจ้งเตือน</span>
+                   <span className="text-base font-bold font-black text-foreground uppercase tracking-[0.3em] italic">{t('settings_pages.notifications.precision_targeting')}</span>
                 </div>
             </div>
         </div>
@@ -100,9 +110,9 @@ export default function NotificationSettingsPage() {
                                         <div className="w-12 h-12 rounded-2xl bg-primary/20 flex items-center justify-center text-primary border border-primary/30 shadow-xl group-hover/alert:rotate-6 transition-transform">
                                              <Zap size={24} strokeWidth={2.5} />
                                         </div>
-                                        <h2 className="text-3xl font-black text-foreground tracking-widest uppercase italic border-b-2 border-primary/20 pb-2">การตั้งค่าช่องทางแจ้งเตือน</h2>
+                                        <h2 className="text-3xl font-black text-foreground tracking-widest uppercase italic border-b-2 border-primary/20 pb-2">{t('settings_pages.notifications.routing_control')}</h2>
                                    </div>
-                                   <p className="text-xl font-bold text-muted-foreground uppercase tracking-widest italic ml-16">กำหนดรูปแบบการรับข้อมูลสำคัญจากระบบไปยังอุปกรณ์ต่างๆ ของคุณ</p>
+                                   <p className="text-xl font-bold text-muted-foreground uppercase tracking-widest italic ml-16">{t('settings_pages.notifications.routing_desc')}</p>
                               </div>
 
                               <div className="space-y-6">
@@ -156,7 +166,7 @@ export default function NotificationSettingsPage() {
                                                     settings[pref.id as keyof NotificationSettings] ? "text-foreground" : "text-muted-foreground"
                                                 )}>
                                                     {pref.label}
-                                                    {pref.isCritical && <span className="ml-4 text-base font-bold font-black text-rose-500 bg-rose-500/10 px-3 py-1 rounded-lg border border-rose-500/20">ด่วนที่สุด</span>}
+                                                    {pref.isCritical && <span className="ml-4 text-base font-bold font-black text-rose-500 bg-rose-500/10 px-3 py-1 rounded-lg border border-rose-500/20">{t('settings_pages.notifications.critical')}</span>}
                                                 </h3>
                                                 <p className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest leading-relaxed italic border-l-2 border-border/5 pl-4">
                                                     {pref.desc}
@@ -184,6 +194,10 @@ export default function NotificationSettingsPage() {
                                     {saving ? <Loader2 size={24} className="animate-spin" /> : <Save size={24} className="group-hover/save:scale-125 transition-transform" />}
                                     {saving ? t('settings_pages.notifications.syncing') : t('settings_pages.notifications.commit_config')}
                                   </PremiumButton>
+                              </div>
+
+                              <div className="pt-6 border-t border-border/5">
+                                  <PushTestButton userId={currentUser?.id} />
                               </div>
                           </div>
                       </div>

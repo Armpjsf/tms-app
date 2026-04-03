@@ -539,3 +539,34 @@ export async function notifySilentSOS(
 
     return { success: true }
 }
+
+/**
+ * Send a Test Push Notification to the current user
+ * Used for system diagnostics across Web, PWA, and APK.
+ */
+export async function testPushNotification(target: { driverId?: string; userId?: string }) {
+    const payload: PushPayload = {
+        title: '🧪 ทดสอบระบบแจ้งเตือน (Push Test)',
+        body: `ทดสอบสำเร็จ! สัญญาณถูกส่งจากระบบเมื่อ ${new Date().toLocaleTimeString('th-TH')}`,
+        url: '/settings/notifications',
+        type: 'general',
+        tag: 'push_test'
+    }
+
+    if (target.driverId) {
+        return await sendPushToDriver(target.driverId, payload)
+    } else if (target.userId) {
+        const supabase = await createAdminClient()
+        const { data: sub } = await supabase
+            .from('Push_Subscriptions')
+            .select('*')
+            .eq('User_ID', target.userId)
+            .single()
+
+        if (!sub) return { success: false, reason: 'no_subscription' }
+        const result = await sendWebPush(sub, payload)
+        return result.success ? { success: true } : { success: false, reason: 'send_failed' }
+    }
+
+    return { success: false, reason: 'invalid_target' }
+}
