@@ -694,6 +694,13 @@ export function JobDialog({
     }
   }
 
+  const handleNextTab = () => {
+    const currentIndex = tabs.findIndex(t => t.id === activeTab)
+    if (currentIndex < tabs.length - 1) {
+        setActiveTab(tabs[currentIndex + 1].id)
+    }
+  }
+
 
   const tabs = [
     { id: 'info', label: t('jobs.dialog.tabs.info'), icon: <FileText className="w-4 h-4" /> },
@@ -907,45 +914,6 @@ export function JobDialog({
                 />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-                 <div className="space-y-4">
-                    <Label className="text-primary text-2xl font-black uppercase tracking-normal">{t('jobs.dialog.weight')}</Label>
-                    <Input
-                        type="number"
-                        value={formData.Weight_Kg}
-                        onChange={(e) => setFormData({ ...formData, Weight_Kg: Number(e.target.value) })}
-                        placeholder="0.0"
-                        className="bg-background border-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-xl h-14"
-                    />
-                 </div>
-                 <div className="space-y-4">
-                    <Label className="text-primary text-2xl font-black uppercase tracking-normal">{t('jobs.dialog.volume')}</Label>
-                    <Input
-                        type="number"
-                        value={formData.Volume_Cbm}
-                        onChange={(e) => setFormData({ ...formData, Volume_Cbm: Number(e.target.value) })}
-                        placeholder="0.0"
-                        step="0.01"
-                        className="bg-background border-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-xl h-14"
-                    />
-                 </div>
-                 <div className="space-y-4">
-                    <Label className="text-blue-500 text-2xl font-black uppercase tracking-normal flex items-center gap-2">
-                        <MapPin className="w-5 h-5" /> {t('jobs.dialog.distance')} (KM)
-                    </Label>
-                    <div className="relative">
-                        <Input
-                            type="number"
-                            value={formData.Est_Distance_KM}
-                            readOnly
-                            className="bg-blue-500/5 border-blue-500/30 text-blue-600 dark:text-blue-400 text-xl h-14 font-black cursor-not-allowed"
-                        />
-                        <div className="absolute right-3 top-1/2 -translate-y-1/2 text-blue-500/50 text-base font-bold uppercase animate-pulse">
-                            Auto
-                        </div>
-                    </div>
-                 </div>
-              </div>
             </div>
           )}
 
@@ -1105,6 +1073,49 @@ export function JobDialog({
                             </div>
                         </div>
                         ))}
+                    </div>
+
+                    <div className="h-px bg-border my-8" />
+
+                    {/* Weight, Volume, Distance Moved Here */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-10 p-6 bg-muted/20 border border-border/5 rounded-[2rem]">
+                        <div className="space-y-4">
+                            <Label className="text-primary text-2xl font-black uppercase tracking-normal">{t('jobs.dialog.weight') || 'Weight (KG)'}</Label>
+                            <Input
+                                type="number"
+                                value={formData.Weight_Kg}
+                                onChange={(e) => setFormData({ ...formData, Weight_Kg: Number(e.target.value) })}
+                                placeholder="0.0"
+                                className="bg-background border-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-xl h-14"
+                            />
+                        </div>
+                        <div className="space-y-4">
+                            <Label className="text-primary text-2xl font-black uppercase tracking-normal">{t('jobs.dialog.volume') || 'Volume (CBM)'}</Label>
+                            <Input
+                                type="number"
+                                value={formData.Volume_Cbm}
+                                onChange={(e) => setFormData({ ...formData, Volume_Cbm: Number(e.target.value) })}
+                                placeholder="0.0"
+                                step="0.01"
+                                className="bg-background border-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-xl h-14"
+                            />
+                        </div>
+                        <div className="space-y-4">
+                            <Label className="text-blue-500 text-2xl font-black uppercase tracking-normal flex items-center gap-2">
+                                <MapPin className="w-5 h-5" /> {t('jobs.dialog.distance_km') || t('jobs.dialog.distance') || 'Distance (KM)'}
+                            </Label>
+                            <div className="relative">
+                                <Input
+                                    type="number"
+                                    value={formData.Est_Distance_KM}
+                                    readOnly
+                                    className="bg-blue-500/5 border-blue-500/30 text-blue-600 dark:text-blue-400 text-xl h-14 font-black cursor-not-allowed"
+                                />
+                                <div className="absolute right-3 top-1/2 -translate-y-1/2 text-blue-500/50 text-base font-bold uppercase animate-pulse">
+                                    Auto
+                                </div>
+                            </div>
+                        </div>
                     </div>
                    </>
                  )
@@ -1615,6 +1626,19 @@ export function JobDialog({
                     {loading && <Loader2 className="w-5 h-5 mr-3 animate-spin" />}
                     {internalMode === 'create' ? t('jobs.dialog.execute') : t('jobs.dialog.sync')}
                 </Button>
+
+                {/* Navigation Button */}
+                {tabs.findIndex(t => t.id === activeTab) < tabs.length - 1 && (
+                    <Button
+                        type="button"
+                        variant="link"
+                        onClick={handleNextTab}
+                        className="text-primary font-black text-xl flex items-center gap-2 hover:no-underline group"
+                    >
+                        <span>{t('common.next') || 'ถัดไป'}</span>
+                        <Package className="w-5 h-5 transition-transform group-hover:translate-x-1" />
+                    </Button>
+                )}
             </div>
           </div>
         </form>

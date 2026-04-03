@@ -193,7 +193,10 @@ export default function CustomerBillingClient({ initialJobs, companyProfile, cus
   }
 
   const handleSyncPrices = async () => {
-    const jobsToSync = filteredData.filter(job => {
+    // If items are selected, sync only those. Otherwise sync all filtered data.
+    const sourceData = selectedItems.length > 0 ? selectedData : filteredData
+    
+    const jobsToSync = sourceData.filter(job => {
         const typedJob = job as any
         const adminPrice = Number(typedJob.Price_Cust_Total || 0)
         const unitPrice = Number(typedJob.Master_Customers?.Price_Per_Unit || 0)
@@ -202,11 +205,15 @@ export default function CustomerBillingClient({ initialJobs, companyProfile, cus
     }).map(j => j.Job_ID)
 
     if (jobsToSync.length === 0) {
-        toast.info("ไม่พบรายการที่ต้องคำนวณราคาย้อนหลัง")
+        toast.info(selectedItems.length > 0 ? "รายการที่เลือกไม่มีข้อมูลราคาย้อนหลังที่สามารถซิงค์ได้" : "ไม่พบรายการที่ต้องคำนวณราคาย้อนหลังในตารางนี้")
         return
     }
 
-    if (!confirm(`ตรวจสอบพบ ${jobsToSync.length} รายการที่สามารถคำนวณราคาจากจำนวนชิ้นได้ ต้องการบันทึกราคาทั้งหมดลงระบบทันทีหรือไม่?`)) return
+    const confirmMsg = selectedItems.length > 0 
+        ? `ต้องการคำนวณราคาสำหรับ ${jobsToSync.length} รายการที่เลือกไว้หรือไม่?`
+        : `ตรวจสอบพบ ${jobsToSync.length} รายการในตารางปัจจุบันที่สามารถคำนวณราคาได้ ต้องการบันทึกราคาทั้งหมดลงระบบทันทีหรือไม่?`
+
+    if (!confirm(confirmMsg)) return
 
     setSyncLoading(true)
     try {
@@ -634,8 +641,19 @@ export default function CustomerBillingClient({ initialJobs, companyProfile, cus
           <div className="flex items-center flex-wrap gap-4">
             {!isCustomerMode && (
               <PremiumButton variant="outline" size="sm" onClick={selectAll} className="h-12 px-8 rounded-xl border-border/5 bg-muted/50 text-base font-bold font-black tracking-widest uppercase">
-                {t('billing_customer.select_complete')}
+                {t('billing_customer.select_all') || 'SELECT ALL'}
               </PremiumButton>
+            )}
+
+            {!isCustomerMode && (
+              <button 
+                  onClick={handleSyncPrices}
+                  disabled={syncLoading}
+                  className="h-12 px-8 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-500 hover:bg-amber-500/20 transition-all text-base font-bold font-black tracking-widest uppercase flex items-center gap-3 disabled:opacity-30"
+              >
+                {syncLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap size={16} />} 
+                {t('billing_customer.sync_prices') || 'INTEL SYNC'}
+              </button>
             )}
             
             <Dialog open={showPreview} onOpenChange={setShowPreview}>

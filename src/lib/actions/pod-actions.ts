@@ -3,6 +3,20 @@
 import { createAdminClient } from "@/utils/supabase/server"
 import { revalidatePath } from "next/cache"
 import { uploadFileToSupabase } from "@/lib/actions/supabase-upload"
+import { Job } from "@/lib/supabase/jobs"
+
+/**
+ * Helper to update or append quantity remark to notes
+ */
+function updateNotesWithQty(currentNotes: string, qty: number): string {
+    if (qty <= 0) return currentNotes
+    
+    const qtyRemark = `(จำนวน ${qty} ชิ้น)`
+    const cleanNotes = currentNotes ? currentNotes.replace(/\(จำนวน\s*\d+\s*ชิ้น\)/g, '').trim() : ''
+    
+    if (!cleanNotes) return qtyRemark
+    return `${cleanNotes} ${qtyRemark}`
+}
 
 export async function submitJobPOD(jobId: string, formData: FormData) {
   const supabase = createAdminClient()
@@ -189,8 +203,9 @@ export async function submitJobPickup(jobId: string, formData: FormData) {
       uploadWarning = `อัปโหลดหลักฐานไม่สำเร็จ: ${errMsg}`
     }
 
-    const { data: jobData } = await supabase.from("Jobs_Main").select("Price_Cust_Total, Master_Customers(Price_Per_Unit)").eq("Job_ID", jobId).single()
+    const { data: jobData } = await supabase.from("Jobs_Main").select("Price_Cust_Total, Notes, Master_Customers(Price_Per_Unit)").eq("Job_ID", jobId).single()
     const adminPrice = Number(jobData?.Price_Cust_Total || 0)
+    const currentNotes = jobData?.Notes || ""
     const unitPrice = Number((jobData as { Master_Customers: { Price_Per_Unit: number } | null } | null)?.Master_Customers?.Price_Per_Unit || 0)
     const loadedQty = Number(formData.get("loaded_qty") || 0)
 
@@ -209,6 +224,11 @@ export async function submitJobPickup(jobId: string, formData: FormData) {
     // Only calculate price if admin hasn't set one and we have a unit price + quantity
     if (Number(adminPrice) === 0 && unitPrice > 0 && loadedQty > 0) {
         updatePayload.Price_Cust_Total = Number((loadedQty * unitPrice).toFixed(2))
+    }
+
+    // Auto-update Notes with quantity remark
+    if (loadedQty > 0) {
+        updatePayload.Notes = updateNotesWithQty(currentNotes, loadedQty)
     }
 
     const { error } = await supabase
@@ -249,7 +269,7 @@ export async function bulkSyncJobPrices(jobIds: string[]) {
         // Fetch jobs and their customer unit prices
         const { data: jobs, error: fetchError } = await supabase
             .from("Jobs_Main")
-            .select("Job_ID, Price_Cust_Total, Loaded_Qty, Master_Customers(Price_Per_Unit)")
+            .select("Job_ID, Price_Cust_Total, Notes, Loaded_Qty, Master_Customers(Price_Per_Unit)")
             .in("Job_ID", jobIds)
 
         if (fetchError) throw fetchError
@@ -263,11 +283,18 @@ export async function bulkSyncJobPrices(jobIds: string[]) {
             const unitPrice = Number(typedJob.Master_Customers?.Price_Per_Unit || 0)
             const loadedQty = Number(typedJob.Loaded_Qty || 0)
 
-            if (adminPrice === 0 && unitPrice > 0 && loadedQty > 0) {
-                const calculatedPrice = Number((loadedQty * unitPrice).toFixed(2))
+            if (loadedQty > 0) {
+                const updateData: Record<string, any> = {
+                    Notes: updateNotesWithQty(typedJob.Notes || "", loadedQty)
+                }
+
+                if (adminPrice === 0 && unitPrice > 0) {
+                    updateData.Price_Cust_Total = Number((loadedQty * unitPrice).toFixed(2))
+                }
+
                 const { error: updateError } = await supabase
                     .from("Jobs_Main")
-                    .update({ Price_Cust_Total: calculatedPrice })
+                    .update(updateData)
                     .eq("Job_ID", typedJob.Job_ID)
                 
                 if (!updateError) updateCount++
