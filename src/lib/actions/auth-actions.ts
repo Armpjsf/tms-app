@@ -1,7 +1,22 @@
 'use server'
 
 import { getSession } from "@/lib/session"
-import { cookies } from "next/headers"
+// next/headers is imported dynamically inside the action to avoid build issues
+
+export async function getDriverSession() {
+  try {
+    const { cookies } = await import("next/headers")
+    const cookieStore = await cookies()
+    const driverCookie = cookieStore.get('driver_session')?.value
+    if (driverCookie) {
+      return JSON.parse(driverCookie)
+    }
+    return null
+  } catch (error) {
+    console.error("[AUTH] Failed to get driver session:", error)
+    return null
+  }
+}
 
 export async function getPushIdentityAction() {
   try {
@@ -17,20 +32,12 @@ export async function getPushIdentityAction() {
     }
 
     // 2. Check Driver Session (Stored as plain JSON in 'driver_session' cookie)
-    const cookieStore = await cookies()
-    const driverCookie = cookieStore.get('driver_session')?.value
-    if (driverCookie) {
-      try {
-        const driverSession = JSON.parse(driverCookie)
-        if (driverSession.driverId) {
-          return {
-            driverId: driverSession.driverId,
-            isDriver: true,
-            username: driverSession.driverName
-          }
-        }
-      } catch {
-        // Fallback or ignore malformed driver cookie
+    const driverSession = await getDriverSession()
+    if (driverSession && driverSession.driverId) {
+      return {
+        driverId: driverSession.driverId,
+        isDriver: true,
+        username: driverSession.driverName
       }
     }
 

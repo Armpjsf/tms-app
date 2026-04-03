@@ -4,9 +4,8 @@ import { useState, useEffect } from "react"
 import { Send, Loader2, ShieldCheck, AlertCircle, Bell } from "lucide-react"
 import { PremiumButton } from "@/components/ui/premium-button"
 import { toast } from "sonner"
-import { testPushNotification } from "@/lib/actions/push-actions"
-import { getPushIdentityAction } from "@/lib/actions/auth-actions"
 import { cn } from "@/lib/utils"
+// Note: Server actions are imported dynamically below to avoid build errors with server-only dependencies
 
 interface Props {
   driverId?: string | null
@@ -39,6 +38,7 @@ export function PushTestButton({ driverId: initialDriverId, userId: initialUserI
 
     const identifyUser = async () => {
       try {
+        const { getPushIdentityAction } = await import("@/lib/actions/auth-actions")
         const session = await getPushIdentityAction()
         if (session) {
           if (session.isDriver && session.driverId) {
@@ -134,6 +134,7 @@ export function PushTestButton({ driverId: initialDriverId, userId: initialUserI
         }
       }
 
+      const { testPushNotification } = await import("@/lib/actions/push-actions")
       const result = await testPushNotification({ 
         driverId: driverId || undefined, 
         userId: userId || undefined 
