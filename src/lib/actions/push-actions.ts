@@ -107,16 +107,19 @@ export async function savePushSubscription(driverId: string, subscription: PushS
     const supabase = await createAdminClient()
     const isFCM = subscription.isFCM === true
 
+    // Manual Upsert Pattern: Delete existing endpoint to avoid uniqueness issues (Postgres 42P10)
+    await supabase.from('Push_Subscriptions').delete().eq('Endpoint', subscription.endpoint)
+
     const { error } = await supabase
         .from('Push_Subscriptions')
-        .upsert({
+        .insert({
             Driver_ID: driverId,
             User_ID: null,
             Endpoint: subscription.endpoint,
             Keys_P256dh: subscription.keys?.p256dh || '',
             Keys_Auth: isFCM ? 'FCM' : (subscription.keys?.auth || ''),
             Updated_At: new Date().toISOString()
-        }, { onConflict: 'Driver_ID' })
+        })
 
     if (error) {
         return { success: false, error: error.message }
@@ -130,16 +133,19 @@ export async function savePushSubscription(driverId: string, subscription: PushS
 export async function saveAdminPushSubscription(userId: string, subscription: PushSubscription) {
     const supabase = await createAdminClient()
 
+    // Manual Upsert Pattern: Delete existing endpoint to avoid uniqueness issues (Postgres 42P10)
+    await supabase.from('Push_Subscriptions').delete().eq('Endpoint', subscription.endpoint)
+
     const { error } = await supabase
         .from('Push_Subscriptions')
-        .upsert({
+        .insert({
             Driver_ID: null,
             User_ID: userId,
             Endpoint: subscription.endpoint,
             Keys_P256dh: subscription.keys?.p256dh || '',
             Keys_Auth: subscription.keys?.auth || '',
             Updated_At: new Date().toISOString()
-        }, { onConflict: 'User_ID' })
+        })
 
     if (error) {
         return { success: false, error: error.message }
@@ -208,26 +214,35 @@ export async function sendPushToDriver(driverId: string, payload: PushPayload) {
 export async function sendPushToAdmins(payload: PushPayload, branchId?: string | null) {
     const supabase = await createAdminClient()
 
-    // Query both subscriptions AND user profiles to filter by branch/role
-    const { data: subs, error } = await supabase
+    // 1. Fetch all admin subscriptions (Web Push)
+    // We fetch them all because the DB join is broken and identity is ambiguous (User_ID vs Username)
+    const { data: subs, error: subError } = await supabase
         .from('Push_Subscriptions')
-        .select(`
-            *,
-            Master_Users:User_ID (
-                Branch_ID,
-                Role
-            )
-        `)
+        .select('*')
         .not('User_ID', 'is', null)
 
-    if (error || !subs || subs.length === 0) {
+    if (subError || !subs || subs.length === 0) {
         console.log('[PUSH] No admin subscriptions found')
         return { success: false, reason: 'no_admin_subscriptions' }
     }
 
-    // Filter recipients based on branch and role
+    // 2. Fetch all admin profiles to match filters (Role, Branch)
+    const { data: profiles, error: profileError } = await supabase
+        .from('Master_Users')
+        .select('Username, User_ID, Branch_ID, Role')
+
+    if (profileError || !profiles) {
+        console.log('[PUSH] Could not fetch user profiles for join')
+        return { success: false, reason: 'profile_lookup_failed' }
+    }
+
+    // 3. Manual Join & Filter in memory
     const recipients = subs.filter(sub => {
-        const profile = (sub as any).Master_Users
+        // Match subscription's User_ID with Master_Users.Username OR User_ID (UUID)
+        const profile = profiles.find(p => 
+            p.Username === sub.User_ID || (p.User_ID && p.User_ID === sub.User_ID)
+        )
+        
         if (!profile) return false // No linked profile, skip
 
         // Super Admins see EVERYTHING
@@ -241,7 +256,7 @@ export async function sendPushToAdmins(payload: PushPayload, branchId?: string |
     })
 
     if (recipients.length === 0) {
-        console.log(`[PUSH] No admins found for branch: ${branchId}`)
+        console.log(`[PUSH] No matching admin recipients found for branch: ${branchId}`)
         return { success: true, reason: 'no_matching_recipients' }
     }
 
@@ -252,7 +267,7 @@ export async function sendPushToAdmins(payload: PushPayload, branchId?: string |
             const result = await sendWebPush(sub, { ...payload, url: payload.url || '/chat' })
             // Clean up expired subscriptions
             if (!result.success && (result.statusCode === 404 || result.statusCode === 410)) {
-                await supabase.from('Push_Subscriptions').delete().eq('User_ID', sub.User_ID)
+                await supabase.from('Push_Subscriptions').delete().eq('Endpoint', sub.Endpoint)
             }
             return result
         })
@@ -557,11 +572,14 @@ export async function testPushNotification(target: { driverId?: string; userId?:
         return await sendPushToDriver(target.driverId, payload)
     } else if (target.userId) {
         const supabase = await createAdminClient()
+        // Pick the LATEST registration for this user (since we now allow multiple/manual inserts)
         const { data: sub } = await supabase
             .from('Push_Subscriptions')
             .select('*')
             .eq('User_ID', target.userId)
-            .single()
+            .order('Updated_At', { ascending: false })
+            .limit(1)
+            .maybeSingle()
 
         if (!sub) return { success: false, reason: 'no_subscription' }
         const result = await sendWebPush(sub, payload)

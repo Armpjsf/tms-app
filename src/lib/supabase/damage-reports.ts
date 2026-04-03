@@ -82,21 +82,38 @@ export async function createDamageReport(data: {
         const { createAdminClient } = await import('@/utils/supabase/server')
         const adminSupabase = createAdminClient()
         
-        // Fetch driver's branch
+        // Fetch driver's branch for filtering
         const { data: driver } = await adminSupabase
             .from('Master_Drivers')
             .select('Branch_ID')
             .eq('Driver_ID', data.Driver_ID)
             .single()
 
+        // 1. Send Push Notification
         await sendPushToAdmins({
             title: `📦❌ แจ้งสินค้าเสียหาย`,
             body: `คนขับ: ${data.Driver_Name} แจ้งเหตุ: ${data.Reason_Category}`,
             url: '/reports',
             type: 'standard'
         }, driver?.Branch_ID)
+
+        // 2. Log Activity (This also populates the Admin Bell Icon via getNotifications)
+        const { logActivity } = await import('@/lib/supabase/logs')
+        await logActivity({
+          module: 'Reports',
+          action_type: 'CREATE',
+          target_id: data.Driver_ID,
+          branch_id: driver?.Branch_ID,
+          details: {
+            alert_type: 'DAMAGE',
+            driver_name: data.Driver_Name,
+            reason: data.Reason_Category,
+            message: `คนขับ: ${data.Driver_Name} แจ้งเหตุ: ${data.Reason_Category}`
+          }
+        })
+
     } catch (e) {
-        console.error("Push broadcast failed:", e)
+        console.error("Notification broadcast failed:", e)
     }
 
     return { success: true }

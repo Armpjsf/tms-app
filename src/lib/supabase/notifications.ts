@@ -29,41 +29,84 @@ export async function getNotifications(): Promise<AppNotification[]> {
   const today = now.toISOString().split('T')[0]
 
   try {
-    // 1. SOS Alerts (Critical) — last 24 hours from System_Logs
+    // 1. Admin Alerts (Critical/Warning) — last 24 hours from System_Logs
     const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString()
-    const { data: sosLogs } = await supabase
+    const { data: adminLogs } = await supabase
       .from('System_Logs')
       .select('*')
-      .eq('module', 'Jobs')
-      .eq('action_type', 'UPDATE')
+      .in('module', ['Jobs', 'Fuel', 'Reports', 'Maintenance'])
       .gte('created_at', yesterday)
       .order('created_at', { ascending: false })
 
-    if (sosLogs) {
-      console.log(`[DEBUG] Found ${sosLogs.length} SOS logs in System_Logs`)
-      sosLogs.forEach(log => {
+    if (adminLogs) {
+      adminLogs.forEach(log => {
         const details = log.details || {}
-        if (details.alert_type === 'SOS' || details.alert_type === 'SILENT_SOS') {
-          // Filter by branch (Flexible comparison)
-          if (isAdmin && selectedBranch && selectedBranch !== 'All') {
-              if (String(log.branch_id) !== String(selectedBranch)) return
-          } else if (branchId && !isAdmin) {
-              if (String(log.branch_id) !== String(branchId)) return
-          }
+        
+        // Filter by branch (Flexible comparison)
+        if (isAdmin && selectedBranch && selectedBranch !== 'All') {
+            if (String(log.branch_id) !== String(selectedBranch)) return
+        } else if (branchId && !isAdmin) {
+            if (String(log.branch_id) !== String(branchId)) return
+        }
 
-          console.log(`[DEBUG] Adding SOS notification for ${details.driver_name}`)
+        // --- MAP LOG TO NOTIFICATION ---
+        
+        // SOS
+        if (details.alert_type === 'SOS' || details.alert_type === 'SILENT_SOS') {
           notifications.push({
             id: `sos-log-${log.id}`,
             type: 'sos',
-            title: `🆘 SOS: ${details.driver_name || 'คนขับ'}`,
+            title: `🆘 SOS: ${details.driver_name || log.username || 'คนขับ'}`,
             message: details.alert_type === 'SILENT_SOS' 
               ? `แจ้งเหตุฉุกเฉิน (ไม่สะดวกคุย): ${details.address || 'ไม่ทราบตำแหน่ง'}`
-              : `พนักงานกดโทรฉุกเฉินหาแอดมิน`,
+              : (details.message || `พนักงานกดโทรฉุกเฉินหาแอดมิน`),
             timestamp: log.created_at,
             read: false,
             href: `/monitoring?driver=${log.target_id}`,
             severity: 'critical'
           })
+        }
+
+        // FUEL
+        else if (details.alert_type === 'FUEL' || log.module === 'Fuel') {
+           notifications.push({
+             id: `fuel-log-${log.id}`,
+             type: 'system',
+             title: `⛽ แจ้งเติมน้ำมันใหม่`,
+             message: details.message || `${details.vehicle || 'ไม่ระบุทะเบียน'} • ${details.amount || '0'} บาท`,
+             timestamp: log.created_at,
+             read: false,
+             href: '/fuel',
+             severity: 'info'
+           })
+        }
+
+        // DAMAGE / REPAIR
+        else if (details.alert_type === 'DAMAGE' || log.module === 'Reports') {
+           notifications.push({
+             id: `damage-log-${log.id}`,
+             type: 'maintenance',
+             title: `📦❌ สินค้าเสียหาย/แจ้งซ่อม`,
+             message: details.message || `${details.driver_name || 'คนขับ'} แจ้งเหตุ: ${details.reason || 'ไม่ระบุ'}`,
+             timestamp: log.created_at,
+             read: false,
+             href: '/reports',
+             severity: 'warning'
+           })
+        }
+
+        // LEAVE
+        else if (details.alert_type === 'LEAVE') {
+           notifications.push({
+             id: `leave-log-${log.id}`,
+             type: 'system',
+             title: `📅 แจ้งลางานใหม่`,
+             message: details.message || `${details.driver_name || 'คนขับ'} ขอลา: ${details.type || 'ไม่ระบุ'}`,
+             timestamp: log.created_at,
+             read: false,
+             href: '/drivers',
+             severity: 'info'
+           })
         }
       })
     }

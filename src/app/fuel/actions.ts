@@ -64,18 +64,20 @@ export async function createFuelLog(data: FuelFormData) {
             type: 'standard'
         }, branchId)
     } catch (e) {
-        console.error("Push broadcast failed:", e)
+        console.error("Notification broadcast failed:", e)
     }
 
-    // Log the activity
+    // Log the activity (This also populates the Admin Bell Icon via getNotifications)
     await logActivity({
       module: 'Fuel',
       action_type: 'CREATE',
       target_id: logId,
+      branch_id: branchId === 'All' ? undefined : branchId,
       details: {
-        driver: data.Driver_ID,
+        alert_type: 'FUEL',
         vehicle: data.Vehicle_Plate,
-        amount: data.Total_Amount
+        amount: data.Liter,
+        message: `ทะเบียน: ${data.Vehicle_Plate} • จำนวน: ${data.Liter} ลิตร`
       }
     })
 

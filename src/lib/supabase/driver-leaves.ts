@@ -89,14 +89,30 @@ export async function createLeaveRequest(data: {
             .eq('Driver_ID', data.Driver_ID)
             .single()
 
+        // 1. Send Push Notification
         await sendPushToAdmins({
             title: `📅 แจ้งลางานใหม่: ${data.Driver_Name}`,
             body: `ประเภท: ${data.Leave_Type} (${data.Start_Date} ถึง ${data.End_Date})`,
             url: '/drivers',
             type: 'standard'
         }, driver?.Branch_ID)
+
+        // 2. Log Activity (This also populates the Admin Bell Icon via getNotifications)
+        const { logActivity } = await import('@/lib/supabase/logs')
+        await logActivity({
+          module: 'Reports',
+          action_type: 'CREATE',
+          target_id: data.Driver_ID,
+          branch_id: driver?.Branch_ID,
+          details: {
+            alert_type: 'LEAVE',
+            driver_name: data.Driver_Name,
+            type: data.Leave_Type,
+            message: `${data.Driver_Name} ขอลา: ${data.Leave_Type} (${data.Start_Date} ถึง ${data.End_Date})`
+          }
+        })
     } catch (e) {
-        console.error("Push broadcast failed:", e)
+        console.error("Notification broadcast failed:", e)
     }
 
     return { success: true }

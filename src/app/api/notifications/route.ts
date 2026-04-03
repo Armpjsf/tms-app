@@ -1,22 +1,22 @@
 import { NextResponse } from 'next/server'
+import { getSession } from '@/lib/session'
 import { getNotifications, markAllNotificationsAsRead } from '@/lib/supabase/notifications'
-import { createClient } from '@/utils/supabase/server'
 import { getUserBranchId, isAdmin } from '@/lib/permissions'
 
 export const dynamic = 'force-dynamic'
 
 export async function GET() {
   try {
-    const [notifications, supabase, branchId, isAdminUser] = await Promise.all([
+    const [notifications, branchId, isAdminUser, session] = await Promise.all([
       getNotifications(),
-      createClient(),
       getUserBranchId(),
-      isAdmin()
+      isAdmin(),
+      getSession()
     ])
 
-    // Get current user ID for admin push subscription
-    const { data: { user } } = await supabase.auth.getUser()
-    const userId = user?.id || null
+    // Get current user ID (Username) for admin push subscription
+    // Using session.userId (Username) instead of supabase UUID to match Master_Users
+    const userId = session?.userId || null
 
     return NextResponse.json({ 
       notifications, 
