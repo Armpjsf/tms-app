@@ -21,11 +21,13 @@ import {
   AlertCircle 
 } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { useLanguage } from "@/components/providers/language-provider"
 import { getSetting, saveSetting } from "@/lib/supabase/system_settings"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 
 export default function ApiSettingsPage() {
+  const { t } = useLanguage()
   const router = useRouter()
   const [apiKey, setApiKey] = useState("loading...")
   const [loading, setLoading] = useState(true)
@@ -41,16 +43,16 @@ export default function ApiSettingsPage() {
   }, [loadInfo])
 
   const generateNewKey = async () => {
-    if (!confirm("การสร้างคีย์ใหม่จะทำให้คีย์เดิมใช้งานไม่ได้ ยืนยันหรือไม่?")) return
+    if (!confirm(t('settings_pages.api.confirm_regen'))) return
     const newKey = `tms_live_${Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)}`
     setApiKey(newKey)
     await saveSetting('api_key', newKey, 'Public API Key')
-    toast.success("Generated new encrypted access key")
+    toast.success(t('settings_pages.api.toast_new_key'))
   }
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text)
-    toast.success("API Key copied to local buffer")
+    toast.success(t('settings_pages.api.toast_copied'))
   }
 
   if (loading) {
@@ -73,7 +75,7 @@ export default function ApiSettingsPage() {
             <div className="relative z-10 space-y-8">
                 <button onClick={() => router.back()} className="inline-flex items-center gap-2 text-muted-foreground hover:text-primary transition-all font-black uppercase tracking-[0.4em] text-base font-bold group/back italic">
                     <ArrowLeft className="w-4 h-4 group-hover/back:-translate-x-1 transition-transform" /> 
-                    Command Control
+                    {t('settings_pages.api.back_cmd')}
                 </button>
                 <div className="flex items-center gap-6">
                     <div className="p-4 bg-primary/20 rounded-[2.5rem] border-2 border-primary/30 shadow-[0_0_40px_rgba(255,30,133,0.2)] text-primary group-hover:scale-110 transition-all duration-500">
@@ -81,9 +83,9 @@ export default function ApiSettingsPage() {
                     </div>
                     <div>
                         <h1 className="text-5xl font-black text-foreground tracking-widest uppercase leading-none italic premium-text-gradient">
-                            API Interlink
+                            {t('settings_pages.api.title')}
                         </h1>
-                        <p className="text-base font-bold font-black text-primary uppercase tracking-[0.6em] mt-2 opacity-80 italic italic">External Node Integration & Secure Signal Nexus</p>
+                        <p className="text-base font-bold font-black text-primary uppercase tracking-[0.6em] mt-2 opacity-80 italic italic">{t('settings_pages.api.subtitle')}</p>
                     </div>
                 </div>
             </div>
@@ -91,11 +93,11 @@ export default function ApiSettingsPage() {
             <div className="flex flex-col items-end gap-6 relative z-10">
                 <div className="bg-muted/50 border border-border/10 px-6 py-3 rounded-2xl flex items-center gap-3 backdrop-blur-md">
                     <div className="w-2 h-2 rounded-full bg-primary animate-pulse shadow-[0_0_10px_rgba(255,30,133,1)]" />
-                    <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest italic">INTERLINK_STATE: NOMINAL</span>
+                    <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest italic">{t('settings_pages.api.nominal_state')}</span>
                 </div>
                 <div className="flex items-center gap-4 bg-primary/10 p-4 rounded-2xl border border-primary/20">
                    <ShieldCheck className="text-primary" size={18} />
-                   <span className="text-base font-bold font-black text-foreground uppercase tracking-[0.3em] italic">Encrypted Payload Protocol</span>
+                   <span className="text-base font-bold font-black text-foreground uppercase tracking-[0.3em] italic">{t('settings_pages.api.payload_protocol')}</span>
                 </div>
             </div>
         </div>
@@ -115,15 +117,15 @@ export default function ApiSettingsPage() {
                                           <div className="p-3 bg-primary/20 rounded-2xl text-primary border border-primary/30">
                                               <Key size={32} strokeWidth={2.5} />
                                           </div>
-                                          <h2 className="text-3xl font-black text-foreground tracking-widest uppercase italic">Master Access Token</h2>
+                                          <h2 className="text-3xl font-black text-foreground tracking-widest uppercase italic">{t('settings_pages.api.token_label')}</h2>
                                       </div>
                                       <p className="text-xl font-bold text-muted-foreground uppercase tracking-widest italic leading-relaxed">
-                                          Required for external ERP nodes, satellite tracking systems, and spatial telemetry integrations.
+                                          {t('settings_pages.api.token_desc')}
                                       </p>
                                   </div>
                                   <div className="flex items-center gap-3 px-6 py-3 bg-muted/50 rounded-2xl border border-border/10">
                                        <Cpu size={18} className="text-primary" />
-                                       <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest italic">RSA_ENCRYPTION: ACTIVE</span>
+                                       <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest italic">{t('settings_pages.api.encryption_active')}</span>
                                   </div>
                               </div>
 
@@ -143,7 +145,7 @@ export default function ApiSettingsPage() {
                                              onClick={() => copyToClipboard(apiKey)}
                                              className="h-14 px-8 rounded-2xl bg-muted/50 border-border/5 hover:bg-primary hover:text-foreground transition-all text-base font-bold font-black uppercase tracking-widest italic"
                                           >
-                                              <Copy size={16} className="mr-3" /> BUFFER_COPY
+                                              <Copy size={16} className="mr-3" /> {t('settings_pages.api.copy_buffer')}
                                           </PremiumButton>
                                       </div>
                                   </div>
@@ -151,17 +153,17 @@ export default function ApiSettingsPage() {
                                   <div className="flex items-center gap-4 p-6 bg-rose-500/5 border border-rose-500/10 rounded-3xl group/warn">
                                        <AlertCircle size={20} className="text-rose-500 group-hover:rotate-12 transition-transform" />
                                        <p className="text-base font-bold font-black text-rose-500/60 uppercase tracking-widest leading-relaxed italic">
-                                          CRITICAL: SHARING THIS TOKEN GRANTS FULL OPERATIONAL ACCESS TO THE CORE SYSTEM. DO NOT DEPLOY IN NON-SECURE ENVIRONMENTS.
+                                          {t('settings_pages.api.critical_security')}
                                        </p>
                                   </div>
                               </div>
 
                               <div className="pt-10 border-t border-border/5 flex flex-col md:flex-row md:items-center justify-between gap-8">
                                   <div className="space-y-2">
-                                      <p className="text-base font-bold font-black text-muted-foreground uppercase tracking-[0.4em] italic mb-2">Security Lifecycle Management</p>
+                                      <p className="text-base font-bold font-black text-muted-foreground uppercase tracking-[0.4em] italic mb-2">{t('settings_pages.api.lifecycle_mgmt')}</p>
                                       <div className="flex items-center gap-4">
                                           <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,1)]" />
-                                          <span className="text-lg font-bold font-black text-foreground uppercase tracking-widest italic">TOKEN_STABILITY: NOMINAL</span>
+                                          <span className="text-lg font-bold font-black text-foreground uppercase tracking-widest italic">{t('settings_pages.api.token_stability')}</span>
                                       </div>
                                   </div>
                                   <PremiumButton 
@@ -169,7 +171,7 @@ export default function ApiSettingsPage() {
                                       className="h-16 px-10 rounded-[1.5rem] border-rose-500/30 text-rose-500 bg-rose-500/5 hover:bg-rose-600 hover:text-foreground transition-all text-lg font-bold font-black uppercase tracking-[0.2em] italic gap-4"
                                       onClick={generateNewKey}
                                   >
-                                      <RefreshCw size={20} className="group-hover/api:rotate-180 transition-transform duration-1000" /> REGENERATE_ACCESS_CORE
+                                      <RefreshCw size={20} className="group-hover/api:rotate-180 transition-transform duration-1000" /> {t('settings_pages.api.regenerate_btn')}
                                   </PremiumButton>
                               </div>
                           </div>
@@ -185,15 +187,15 @@ export default function ApiSettingsPage() {
                 <Activity size={32} />
             </div>
             <div className="space-y-4 text-center md:text-left flex-1">
-                <p className="text-xl font-black text-primary italic uppercase tracking-widest">INTERLINK_ADVISORY</p>
+                <p className="text-xl font-black text-primary italic uppercase tracking-widest">{t('settings_pages.api.advisory_title')}</p>
                 <p className="text-xl font-bold text-muted-foreground leading-relaxed uppercase tracking-wider italic">
-                    The API Interlink supports RESTful signal transmissions via GraphQL and traditional HTTP protocols. <br />
-                    Rate limits are enforced at the node level to ensure global system stability. <br />
-                    Refer to the Intelligence Documentation for implementation vectors.
+                    {t('settings_pages.api.advisory_desc')} <br />
+                    {t('settings_pages.api.rate_limit_note')} <br />
+                    {t('settings_pages.api.docs_note')}
                 </p>
             </div>
             <PremiumButton variant="outline" className="h-14 px-10 rounded-2xl border-border/10 text-foreground gap-3 uppercase font-black text-base font-bold tracking-[0.3em] ml-auto italic">
-                <FileText size={18} /> VIEW_DOCS
+                <FileText size={18} /> {t('settings_pages.api.view_docs')}
             </PremiumButton>
         </div>
       </div>

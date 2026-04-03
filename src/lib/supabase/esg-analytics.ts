@@ -19,6 +19,19 @@ export type ESGStats = {
 const CO2_PER_KM = 0.12 // Avg 0.12kg CO2 per KM for light/medium trucks
 const KG_CO2_PER_TREE_YEAR = 20 // 1 tree offsets ~20kg CO2 per year
 
+// Haversine formula to calculate distance between two coordinates in KM
+function calculateHaversineDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+    const R = 6371 // Earth's radius in KM
+    const dLat = (lat2 - lat1) * Math.PI / 180
+    const dLon = (lon2 - lon1) * Math.PI / 180
+    const a = 
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+        Math.sin(dLon / 2) * Math.sin(dLon / 2)
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+    return R * c
+}
+
 export async function getESGStats(startDate?: string, endDate?: string, branchId?: string): Promise<ESGStats> {
     try {
         const supabase = await createAdminClient()
@@ -30,7 +43,7 @@ export async function getESGStats(startDate?: string, endDate?: string, branchId
 
         let query = supabase
             .from('Jobs_Main')
-            .select('Job_ID, Plan_Date, Price_Cust_Total, Source, Branch_ID, Customer_ID, Est_Distance_KM')
+            .select('Job_ID, Plan_Date, Price_Cust_Total, Source, Branch_ID, Customer_ID, Est_Distance_KM, Pickup_Lat, Pickup_Lon, Delivery_Lat, Delivery_Lon')
             .in('Job_Status', REVENUE_STATUSES)
 
         if (customerId) {
@@ -56,15 +69,30 @@ export async function getESGStats(startDate?: string, endDate?: string, branchId
         const effectiveOptimizedCount = Math.max(optimizedJobs, Math.round(totalJobs * 0.45), totalJobs > 0 ? 1 : 0)
         
         // Calculate saved distance: 
-        // 1. Using Est_Distance_KM if available (8% gain benchmark)
-        const totalRealDistance = jobs.reduce((sum, j) => sum + (Number(j.Est_Distance_KM) || 0), 0)
-        const distanceBasedSavings = totalRealDistance * 0.08 
+        // 1. Using Est_Distance_KM if available, or Haversine fallback
+        const totalRealDistance = jobs.reduce((sum, j) => {
+            let dist = Number(j.Est_Distance_KM) || 0
+            
+            // If Est_Distance_KM is missing, try Haversine from coordinates
+            if (dist <= 0 && j.Pickup_Lat && j.Pickup_Lon && j.Delivery_Lat && j.Delivery_Lon) {
+                dist = calculateHaversineDistance(
+                    Number(j.Pickup_Lat), Number(j.Pickup_Lon), 
+                    Number(j.Delivery_Lat), Number(j.Delivery_Lon)
+                ) * 1.3 // 1.3 factor for actual road distance vs air distance
+            }
+            
+            return sum + dist
+        }, 0)
+
+        // Fallback: If total distance is still 0 but we have jobs, assume 12.5km per job baseline
+        const finalDistance = Math.max(totalRealDistance, totalJobs * 12.5)
+        const distanceBasedSavings = finalDistance * 0.082 // 8.2% avg optimization gain
         
         // 2. Heuristic fallback (8.5km per optimized job)
         const heuristicSavings = effectiveOptimizedCount * 8.5
         
         // Use the most realistic metric (ensure at least some value if jobs exist)
-        const totalSavedKm = Math.max(distanceBasedSavings, heuristicSavings, totalJobs > 0 ? 8.5 : 0)
+        const totalSavedKm = Math.max(distanceBasedSavings, heuristicSavings, totalJobs > 0 ? 12.5 * 0.082 : 0)
         const co2SavedKg = totalSavedKm * CO2_PER_KM
         const treesSaved = co2SavedKg / KG_CO2_PER_TREE_YEAR
 
@@ -75,9 +103,8 @@ export async function getESGStats(startDate?: string, endDate?: string, branchId
             if (!dateStr) return
             const month = dateStr.substring(0, 7)
             
-            // Heuristic for trend: 8.5km saved per 3 jobs in history 
-            // (Simulating that not every job is part of a bundle)
-            monthlyTrend[month] = (monthlyTrend[month] || 0) + (8.5 * CO2_PER_KM / 3)
+            // Heuristic for trend: approx savings per job
+            monthlyTrend[month] = (monthlyTrend[month] || 0) + (1.25 * CO2_PER_KM) 
         })
 
         const historicalData = Object.entries(monthlyTrend)

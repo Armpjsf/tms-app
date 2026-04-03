@@ -11,7 +11,7 @@ import {
 } from './analytics-helpers'
 
 // 1. Unified Executive Dashboard (Ultra-Performance via RPC)
-export async function getExecutiveDashboardUnified(branchId?: string) {
+export async function getExecutiveDashboardUnified(branchId?: string, startDate?: string, endDate?: string) {
     const supabase = await createAdminClient()
     const customerId = await getCustomerId()
     const effectiveBranchId = await getEffectiveBranchId(branchId)
@@ -24,8 +24,8 @@ export async function getExecutiveDashboardUnified(branchId?: string) {
     const prevStart = subDays(currentStart, duration + 1)
     const prevEnd = subDays(currentStart, 1)
 
-    const sDateCurrent = formatDateSafe(currentStart)!
-    const eDateCurrent = formatDateSafe(currentEnd)!
+    const sDateCurrent = formatDateSafe(startDate) || formatDateSafe(currentStart)!
+    const eDateCurrent = formatDateSafe(endDate) || formatDateSafe(currentEnd)!
     const sDatePrev = formatDateSafe(prevStart)!
     const eDatePrev = formatDateSafe(prevEnd)!
 

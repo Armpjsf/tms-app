@@ -68,7 +68,7 @@ function StaffLoginContent() {
                         src="/logo2.png" 
                         alt="LogisPro" 
                         fill 
-                        className="object-contain logo-pure mix-blend-multiply dark:mix-blend-normal dark:brightness-110" 
+                        className="object-contain logo-pure transition-all duration-700 dark:brightness-110" 
                     />
                 </div>
             </div>
@@ -89,8 +89,8 @@ function StaffLoginContent() {
                 className="group cursor-pointer relative overflow-hidden glass-panel rounded-[3rem] p-8 transition-all duration-500 hover:shadow-[0_20px_60px_rgba(255,30,133,0.15)] hover:-translate-y-3 text-center flex flex-col items-center gap-6"
             >
                 <div className="absolute inset-0 bg-gradient-to-br from-primary/[0.05] to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                <div className="w-16 h-16 bg-card border border-border/10 rounded-2xl flex items-center justify-center shadow-2xl group-hover:rotate-6 group-hover:bg-primary transition-all duration-700">
-                    <Truck className="text-white w-8 h-8" strokeWidth={2.5} />
+                <div className="w-16 h-16 bg-primary/10 border border-primary/20 rounded-2xl flex items-center justify-center shadow-2xl group-hover:rotate-6 group-hover:bg-primary transition-all duration-700">
+                    <Truck className="text-primary group-hover:text-white w-8 h-8" strokeWidth={2.5} />
                 </div>
                 <div className="space-y-1">
                     <h2 className="text-3xl font-black text-accent tracking-tighter">DRIVER</h2>
@@ -107,8 +107,8 @@ function StaffLoginContent() {
                 className="group cursor-pointer relative overflow-hidden glass-panel rounded-[3rem] p-8 transition-all duration-500 hover:shadow-[0_20px_60px_rgba(59,130,246,0.15)] hover:-translate-y-3 text-center flex flex-col items-center gap-6"
             >
                 <div className="absolute inset-0 bg-gradient-to-br from-blue-500/[0.05] to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                <div className="w-16 h-16 bg-card border border-border/10 rounded-2xl flex items-center justify-center shadow-2xl group-hover:scale-110 group-hover:bg-blue-600 transition-all duration-700">
-                    <Building className="text-white w-8 h-8" strokeWidth={2.5} />
+                <div className="w-16 h-16 bg-blue-500/10 border border-blue-500/20 rounded-2xl flex items-center justify-center shadow-2xl group-hover:scale-110 group-hover:bg-blue-600 transition-all duration-700">
+                    <Building className="text-blue-600 group-hover:text-white w-8 h-8" strokeWidth={2.5} />
                 </div>
                 <div className="space-y-1">
                     <h2 className="text-3xl font-black text-accent tracking-tighter">CUSTOMER</h2>
@@ -125,8 +125,8 @@ function StaffLoginContent() {
                 className="group cursor-pointer relative overflow-hidden glass-panel rounded-[3rem] p-8 transition-all duration-500 hover:shadow-[0_20px_60px_rgba(147,51,234,0.15)] hover:-translate-y-3 text-center flex flex-col items-center gap-6"
             >
                 <div className="absolute inset-0 bg-gradient-to-br from-accent/[0.05] to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                <div className="w-16 h-16 bg-card border border-border/10 rounded-2xl flex items-center justify-center shadow-2xl group-hover:-rotate-6 group-hover:bg-accent transition-all duration-700">
-                    <Shield className="text-white w-8 h-8" strokeWidth={2.5} />
+                <div className="w-16 h-16 bg-accent/10 border border-accent/20 rounded-2xl flex items-center justify-center shadow-2xl group-hover:-rotate-6 group-hover:bg-accent transition-all duration-700">
+                    <Shield className="text-accent group-hover:text-white w-8 h-8" strokeWidth={2.5} />
                 </div>
                 <div className="space-y-1">
                     <h2 className="text-3xl font-black text-accent tracking-tighter">ADMIN</h2>
@@ -186,6 +186,7 @@ function StaffLoginContent() {
                                 {error === 'Invalid credentials' ? 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง' : 
                                  error === 'session_missing' ? 'กรุณาเข้าสู่ระบบก่อนใช้งาน' :
                                  error === 'session_invalid' ? 'เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่' : 
+                                 error.includes('not linked') ? 'บัญชีของคุณยังไม่ได้ผูกกับโปรไฟล์ลูกค้า กรุณาติดต่อแอดมิน' :
                                  error}
                             </div>
                         )}

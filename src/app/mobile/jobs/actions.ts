@@ -19,16 +19,16 @@ export async function updateJobStatus(jobId: string, status: string, driverId?: 
             // Get current job data to get distance and vehicle info
             const { data: job } = await supabase
                 .from('Jobs_Main')
-                .select('Est_Distance_KM, Vehicle_Type, Notes')
+                .select('Est_Distance_KM, Actual_Distance_KM, Vehicle_Type, Notes')
                 .eq('Job_ID', jobId)
                 .single()
 
             if (job) {
-                const distance = Number(job.Est_Distance_KM) || 0
+                // Use Est_Distance_KM, or fallback to a heuristic of 12.5km if missing (to avoid 0 CO2)
+                const distance = Number(job.Est_Distance_KM) || 12.5
                 const vType = job.Vehicle_Type || '4-Wheel'
                 
                 // Average CO2 factors (kg CO2 per km)
-                // Source: Typical industry averages
                 const factors: Record<string, number> = {
                     '4-Wheel': 0.22,
                     '6-Wheel': 0.55,

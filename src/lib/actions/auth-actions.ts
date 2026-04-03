@@ -122,9 +122,9 @@ export async function loginDriver(formData: FormData) {
 
   cookieStore.set("driver_session", JSON.stringify(sessionData), { 
     httpOnly: true, 
-    secure: process.env.NODE_ENV === "production",
+    secure: true, // Always true for PWA features
     expires,
-    maxAge: 7 * 24 * 60 * 60, // 7 days in seconds
+    maxAge: 30 * 24 * 60 * 60, // Extend to 30 days for better driver UX
     sameSite: "lax",
     path: "/",
     priority: "high"
@@ -200,11 +200,12 @@ export async function loginWithQRToken(token: string) {
 
       cookieStore.set("driver_session", JSON.stringify(sessionData), {
           httpOnly: true,
-          secure: process.env.NODE_ENV === "production",
+          secure: true,
           expires,
-          maxAge: 7 * 24 * 60 * 60,
+          maxAge: 30 * 24 * 60 * 60,
           sameSite: "lax",
           path: "/",
+          priority: "high"
       })
 
       return { success: true }
@@ -212,4 +213,39 @@ export async function loginWithQRToken(token: string) {
       console.error("QR Login Error:", error)
       return { error: "รหัส QR ไม่ถูกต้อง" }
   }
+}
+
+export async function recoverDriverSession(driverId: string) {
+    if (!driverId) return { success: false }
+
+    const supabase = createAdminClient()
+    const { data: driver, error } = await supabase
+        .from("Master_Drivers")
+        .select("*")
+        .eq("Driver_ID", driverId)
+        .single()
+
+    if (error || !driver) return { success: false }
+
+    const sessionData = {
+        driverId: driver.Driver_ID,
+        driverName: driver.Driver_Name,
+        branchId: driver.Branch_ID,
+        role: "driver",
+    }
+
+    const cookieStore = await cookies()
+    const expires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+
+    cookieStore.set("driver_session", JSON.stringify(sessionData), {
+        httpOnly: true,
+        secure: true,
+        expires,
+        maxAge: 30 * 24 * 60 * 60,
+        sameSite: "lax",
+        path: "/",
+        priority: "high"
+    })
+
+    return { success: true }
 }

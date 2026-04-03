@@ -4,7 +4,6 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import Link from "next/link"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -36,9 +35,9 @@ import {
   Target,
   ShieldCheck,
   Cpu,
-  Activity,
   ChevronLeft,
-  Sparkles
+  Sparkles,
+  Search
 } from "lucide-react"
 import { CustomerAutocomplete } from "@/components/customer-autocomplete"
 import { AiSuggestionCard } from "@/components/planning/ai-suggestion-card"
@@ -46,8 +45,12 @@ import { DriverSuggestion } from "@/lib/ai/ai-assign"
 import { PremiumCard } from "@/components/ui/premium-card"
 import { PremiumButton } from "@/components/ui/premium-button"
 import { cn } from "@/lib/utils"
-import { DashboardLayout } from "@/components/layout/dashboard-layout"
+// import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { motion, AnimatePresence } from "framer-motion"
+import { geocodeAddress } from "@/lib/ai/geocoding"
+import { getDrivingDistance } from "@/lib/ai/distance"
+
+// Step indicator component with LogisPro aesthetics
 
 // Step indicator component with LogisPro aesthetics
 function StepIndicator({ steps, currentStep }: { steps: string[], currentStep: number }) {
@@ -178,6 +181,67 @@ export default function CreateJobPage() {
     setFormData(prev => ({ ...prev, [field]: value }))
   }
 
+  const handleGeocodeOrigin = async () => {
+    if (!formData.Origin_Location) return
+    setLoading(true)
+    try {
+      const res = await geocodeAddress(formData.Origin_Location)
+      if (res) {
+        setFormData(prev => ({
+          ...prev,
+          Pickup_Lat: res.lat,
+          Pickup_Lon: res.lng
+        }))
+        toast.success('Origin Vector Locked')
+      } else {
+        toast.error('Origin coordinates not found')
+      }
+    } catch {
+      toast.error('Geocoding system failure')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleGeocodeDestination = async () => {
+    if (!formData.Dest_Location) return
+    setLoading(true)
+    try {
+      const res = await geocodeAddress(formData.Dest_Location)
+      if (res) {
+        setFormData(prev => ({
+          ...prev,
+          Delivery_Lat: res.lat,
+          Delivery_Lon: res.lng
+        }))
+        toast.success('Target Destination Vector Locked')
+      } else {
+        toast.error('Destination coordinates not found')
+      }
+    } catch {
+      toast.error('Geocoding system failure')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // AUTO-DISTANCE: Sync distance when coordinates are updated
+  useEffect(() => {
+    const calculateDistance = async () => {
+      if (formData.Pickup_Lat && formData.Pickup_Lon && formData.Delivery_Lat && formData.Delivery_Lon) {
+        const points = [
+          { lat: formData.Pickup_Lat, lng: formData.Pickup_Lon },
+          { lat: formData.Delivery_Lat, lng: formData.Delivery_Lon }
+        ]
+        const dist = await getDrivingDistance(points)
+        if (dist !== null) {
+          updateForm('Est_Distance_KM', dist)
+        }
+      }
+    }
+    calculateDistance()
+  }, [formData.Pickup_Lat, formData.Pickup_Lon, formData.Delivery_Lat, formData.Delivery_Lon])
+
   const handleSubmit = async () => {
     setLoading(true)
     try {
@@ -266,18 +330,18 @@ export default function CreateJobPage() {
             >
                 <PremiumCard className="bg-background/40 border-2 border-border/5 shadow-3xl rounded-[4rem] overflow-hidden max-w-5xl mx-auto">
                     <div className="p-12 space-y-12">
-                        {/* Step 1: Mission Parameters */}
-                        {currentStep === 0 && (
-                            <div className="space-y-10">
-                                <div className="flex items-center gap-5 border-l-4 border-primary pl-8">
-                                    <div className="p-4 bg-primary/10 rounded-2xl text-primary border border-primary/20 shadow-inner">
-                                        <Package size={28} />
-                                    </div>
-                                    <div>
-                                        <h2 className="text-3xl font-black text-foreground italic uppercase tracking-[0.2em]">Mission Intel</h2>
-                                        <p className="text-base font-bold font-black text-muted-foreground uppercase tracking-[0.4em] mt-1 italic">Define core logistical parameters</p>
-                                    </div>
+                    {/* Step 1: Mission Parameters */}
+                    {currentStep === 0 && (
+                        <div className="space-y-10">
+                            <div className="flex items-center gap-5 border-l-4 border-primary pl-8">
+                                <div className="p-4 bg-primary/10 rounded-2xl text-primary border border-primary/20 shadow-inner">
+                                    <Package size={28} />
                                 </div>
+                                <div>
+                                    <h2 className="text-3xl font-black text-foreground italic uppercase tracking-[0.2em]">Mission Intel</h2>
+                                    <p className="text-base font-bold font-black text-muted-foreground uppercase tracking-[0.4em] mt-1 italic">Define core logistical parameters</p>
+                                </div>
+                            </div>
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                                     <div className="space-y-3 group">
@@ -428,12 +492,21 @@ export default function CreateJobPage() {
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                                         <div className="space-y-4">
                                             <Label className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest ml-4 italic">Origin Source</Label>
-                                            <Input 
-                                                placeholder="START_NODE..."
-                                                value={formData.Origin_Location}
-                                                onChange={(e) => updateForm('Origin_Location', e.target.value)}
-                                                className="h-16 bg-background/50 border-border/5 rounded-3xl px-8 text-xl font-black text-foreground italic shadow-inner uppercase tracking-widest"
-                                            />
+                                            <div className="flex gap-4">
+                                                <Input 
+                                                    placeholder="START_NODE..."
+                                                    value={formData.Origin_Location}
+                                                    onChange={(e) => updateForm('Origin_Location', e.target.value)}
+                                                    className="h-16 bg-background/50 border-border/5 rounded-3xl px-8 text-xl font-black text-foreground italic shadow-inner uppercase tracking-widest flex-1"
+                                                />
+                                                <Button 
+                                                    type="button"
+                                                    onClick={handleGeocodeOrigin}
+                                                    className="h-16 w-16 bg-primary/20 text-primary border-2 border-primary/30 rounded-3xl hover:bg-primary/30 transition-all flex items-center justify-center p-0"
+                                                >
+                                                    <Search size={24} strokeWidth={2.5} />
+                                                </Button>
+                                            </div>
                                             {formData.Pickup_Lat && (
                                                 <div className="inline-flex items-center gap-3 px-4 py-1.5 bg-emerald-500/10 rounded-xl border border-emerald-500/20 text-base font-bold font-black text-emerald-500 uppercase italic">
                                                     <Target className="w-3 h-3" /> LAT_LONG_SYNC: {formData.Pickup_Lat}, {formData.Pickup_Lon}
@@ -442,12 +515,21 @@ export default function CreateJobPage() {
                                         </div>
                                         <div className="space-y-4">
                                             <Label className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest ml-4 italic">Target Destination</Label>
-                                            <Input 
-                                                placeholder="END_NODE..."
-                                                value={formData.Dest_Location}
-                                                onChange={(e) => updateForm('Dest_Location', e.target.value)}
-                                                className="h-16 bg-background/50 border-border/5 rounded-3xl px-8 text-xl font-black text-foreground italic shadow-inner uppercase tracking-widest"
-                                            />
+                                            <div className="flex gap-4">
+                                                <Input 
+                                                    placeholder="END_NODE..."
+                                                    value={formData.Dest_Location}
+                                                    onChange={(e) => updateForm('Dest_Location', e.target.value)}
+                                                    className="h-16 bg-background/50 border-border/5 rounded-3xl px-8 text-xl font-black text-foreground italic shadow-inner uppercase tracking-widest flex-1"
+                                                />
+                                                <Button 
+                                                    type="button"
+                                                    onClick={handleGeocodeDestination}
+                                                    className="h-16 w-16 bg-primary/20 text-primary border-2 border-primary/30 rounded-3xl hover:bg-primary/30 transition-all flex items-center justify-center p-0"
+                                                >
+                                                    <Search size={24} strokeWidth={2.5} />
+                                                </Button>
+                                            </div>
                                             {formData.Delivery_Lat && (
                                                 <div className="inline-flex items-center gap-3 px-4 py-1.5 bg-rose-500/10 rounded-xl border border-rose-500/20 text-base font-bold font-black text-rose-500 uppercase italic ml-auto">
                                                     <Target className="w-3 h-3" /> DEST_VECTOR_LOCK: {formData.Delivery_Lat}, {formData.Delivery_Lon}
@@ -582,27 +664,21 @@ export default function CreateJobPage() {
                                         />
                                     </div>
                                 </div>
-
-                                <div className="p-10 rounded-[3rem] bg-muted/50 border border-border/10 flex items-center justify-between group/toggle relative overflow-hidden">
-                                    <div className="absolute top-0 right-0 w-40 h-full bg-emerald-500/[0.03] blur-3xl" />
-                                    <div className="flex items-center gap-6 relative z-10">
-                                        <div className="w-16 h-16 rounded-[1.5rem] bg-emerald-500/10 flex items-center justify-center text-emerald-500 border border-emerald-500/20 shadow-inner group-hover/toggle:scale-110 transition-all">
-                                            <Eye size={32} />
-                                        </div>
-                                        <div>
-                                            <Label className="text-xl font-black text-white italic uppercase tracking-widest cursor-pointer" htmlFor="show-price">
-                                                Visual Transparency
-                                            </Label>
-                                            <p className="text-base font-bold font-black text-muted-foreground uppercase tracking-[0.4em] mt-1">Reveal yield metrics to operator node</p>
+                                    <div className="p-10 rounded-[3rem] bg-muted/50 border border-border/10 flex items-center justify-between group/toggle relative overflow-hidden">
+                                        <div className="absolute top-0 right-0 w-40 h-full bg-emerald-500/[0.03] blur-3xl" />
+                                        <div className="flex items-center gap-6 relative z-10">
+                                            <div className="w-16 h-16 rounded-[1.5rem] bg-emerald-500/10 flex items-center justify-center text-emerald-500 border border-emerald-500/20 shadow-inner group-hover/toggle:scale-110 transition-all">
+                                                <Eye size={32} />
+                                            </div>
+                                            <div>
+                                                <Label className="text-xl font-black text-white italic uppercase tracking-widest cursor-pointer" htmlFor="show-price">
+                                                    Visual Transparency
+                                                </Label>
+                                                <p className="text-base font-bold font-black text-muted-foreground uppercase tracking-[0.4em] mt-1">Reveal yield metrics to operator node</p>
+                                            </div>
                                         </div>
                                     </div>
-                                    <Switch 
-                                        id="show-price"
-                                        checked={formData.Show_Price_To_Driver}
-                                        onCheckedChange={(val) => updateForm('Show_Price_To_Driver', val)}
-                                        className="scale-125 data-[state=checked]:bg-emerald-500 relative z-10"
-                                    />
-                                </div>
+
 
                                 <div className="space-y-3 group">
                                     <Label className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest ml-4 flex items-center gap-2 italic">
@@ -618,18 +694,18 @@ export default function CreateJobPage() {
                             </div>
                         )}
 
-                        {/* Step 4: Confirmation */}
-                        {currentStep === 3 && (
-                            <div className="space-y-12">
-                                <div className="flex items-center gap-5 border-l-4 border-amber-500/50 pl-8">
-                                    <div className="p-4 bg-amber-500/10 rounded-2xl text-amber-500 border border-amber-500/20 shadow-inner">
-                                        <CheckCircle2 size={28} />
-                                    </div>
-                                    <div>
-                                        <h2 className="text-3xl font-black text-foreground italic uppercase tracking-[0.2em]">Sync Registry</h2>
-                                        <p className="text-base font-bold font-black text-muted-foreground uppercase tracking-[0.4em] mt-1 italic">Review & broadcast mission state</p>
-                                    </div>
+                    {/* Step 4: Confirmation */}
+                    {currentStep === 3 && (
+                        <div className="space-y-12">
+                            <div className="flex items-center gap-5 border-l-4 border-amber-500/50 pl-8">
+                                <div className="p-4 bg-amber-500/10 rounded-2xl text-amber-500 border border-amber-500/20 shadow-inner">
+                                    <CheckCircle2 size={28} />
                                 </div>
+                                <div>
+                                    <h2 className="text-3xl font-black text-foreground italic uppercase tracking-[0.2em]">Sync Registry</h2>
+                                    <p className="text-base font-bold font-black text-muted-foreground uppercase tracking-[0.4em] mt-1 italic">Review & broadcast mission state</p>
+                                </div>
+                            </div>
 
                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
                                     <PremiumCard className="p-10 bg-muted/50 border-border/10 rounded-[3rem] group/card relative overflow-hidden">

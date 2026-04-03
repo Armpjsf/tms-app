@@ -12,70 +12,91 @@ export function LocationTracker({ driverId }: { driverId?: string, branchId?: st
   
   const lastUpdateRef = useRef<number>(0)
   const lastPosRef = useRef<{ lat: number; lng: number } | null>(null)
+  const wakeLockRef = useRef<any>(null) // Using any here because WakeLockSentinel might not be in all lib types
   
   useEffect(() => {
-    if (!driverId) return
-
-    if (!("geolocation" in navigator)) {
-      setTimeout(() => setStatus("error"), 0)
-      return
-    }
-
-    if (status === "idle") {
-        setTimeout(() => setStatus("tracking"), 0)
-    }
-
+    // 1. Setup WatchPosition
     const watchId = navigator.geolocation.watchPosition(
         async (position) => {
             const { latitude, longitude, speed } = position.coords
-            
-            const now = Date.now()
-            const timeDiff = now - lastUpdateRef.current
-            const isTime = timeDiff > UPDATE_INTERVAL
-            const isDistance = lastPosRef.current 
-                ? Math.abs(latitude - lastPosRef.current.lat) + Math.abs(longitude - lastPosRef.current.lng) > MIN_DISTANCE
-                : true
-
-            if (isTime || isDistance) {
-                lastUpdateRef.current = now
-                lastPosRef.current = { lat: latitude, lng: longitude }
-
-                try {
-                    // Send both to log and master update
-                    await saveGPSLog({
-                        driverId: driverId,
-                        lat: latitude,
-                        lng: longitude,
-                        speed: speed || 0,
-                    })
-
-                    const res = await updateDriverLocation(driverId, latitude, longitude)
-                    if (res.success) {
-                        setStatus("tracking")
-                    } else {
-                        setStatus("error")
-                        console.error('[DEBUG] updateDriverLocation fail')
-                    }
-                } catch (e) {
-                    setStatus("error")
-                    console.warn('[DEBUG] updateDriverLocation exception:', e)
-                }
-            }
+            processLocationUpdate(latitude, longitude, speed || 0)
         },
         (err) => {
-            // Use warn to avoid blocking the UI with Next.js Error Overlay
-            console.warn('[DEBUG] Geolocation error:', err.code, err.message)
+            console.warn('[PWA] Geolocation watch error:', err.code, err.message)
             setStatus("error")
         },
         {
             enableHighAccuracy: true,
-            timeout: 20000,
-            maximumAge: 10000
+            timeout: 15000,
+            maximumAge: 5000
         }
     )
 
+    // 2. Setup Visibility Catch-up
+    const handleVisibilityChange = () => {
+        if (document.visibilityState === "visible") {
+            console.log("[PWA] Resumed: Catching up GPS...")
+            navigator.geolocation.getCurrentPosition(
+                (pos) => processLocationUpdate(pos.coords.latitude, pos.coords.longitude, pos.coords.speed || 0),
+                null,
+                { enableHighAccuracy: true }
+            )
+            // Re-acquire wake lock if needed
+            requestWakeLock()
+        }
+    }
+
+    // 3. Screen Wake Lock
+    const requestWakeLock = async () => {
+        if ('wakeLock' in navigator) {
+            try {
+                wakeLockRef.current = await (navigator as any).wakeLock.request('screen')
+                console.log("[PWA] Screen Wake Lock acquired")
+            } catch (err) {
+                console.warn("[PWA] Wake Lock failed:", err)
+            }
+        }
+    }
+
+    const processLocationUpdate = async (lat: number, lng: number, speed: number) => {
+        const now = Date.now()
+        const timeDiff = now - lastUpdateRef.current
+        const isTime = timeDiff > UPDATE_INTERVAL
+        const isDistance = lastPosRef.current 
+            ? Math.abs(lat - lastPosRef.current.lat) + Math.abs(lng - lastPosRef.current.lng) > MIN_DISTANCE
+            : true
+
+        if (isTime || isDistance) {
+            lastUpdateRef.current = now
+            lastPosRef.current = { lat, lng }
+
+            try {
+                await saveGPSLog({
+                    driverId: driverId!,
+                    lat: lat,
+                    lng: lng,
+                    speed: speed,
+                })
+
+                const res = await updateDriverLocation(driverId!, lat, lng)
+                if (res.success) setStatus("tracking")
+                else setStatus("error")
+            } catch {
+                setStatus("error")
+            }
+        }
+    }
+
+    document.addEventListener("visibilitychange", handleVisibilityChange)
+    requestWakeLock()
+
     return () => {
         if (watchId) navigator.geolocation.clearWatch(watchId)
+        document.removeEventListener("visibilitychange", handleVisibilityChange)
+        if (wakeLockRef.current) {
+            wakeLockRef.current.release()
+            wakeLockRef.current = null
+        }
     }
   }, [driverId])
 

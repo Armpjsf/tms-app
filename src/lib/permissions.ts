@@ -79,6 +79,7 @@ export async function isAdmin() {
 
 export async function isCustomer() {
     const session = await getSession()
-    const result = !!session?.customerId || Number(session?.roleId) === 7
+    // Strictly verify customer ID exists and is not a restriction placeholder
+    const result = (!!session?.customerId && session.customerId !== 'FORCED_RESTRICTION') || Number(session?.roleId) === 7
     return result
 }

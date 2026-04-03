@@ -22,7 +22,7 @@ import { CustomerAutocomplete } from "@/components/customer-autocomplete"
 import { toast } from "sonner"
 import { getBillableJobsAction } from "@/app/billing/invoices/actions"
 import { createInvoiceAction } from "@/app/billing/invoices/actions"
-import { CalendarIcon, Loader2, Calculator } from "lucide-react"
+import { CalendarIcon, Loader2, Calculator, Zap, RefreshCw } from "lucide-react"
 import { format } from "date-fns"
 import { th } from "date-fns/locale"
 import { cn } from "@/lib/utils"
@@ -34,7 +34,7 @@ export function InvoiceForm({ customers }: { customers: { Customer_ID: string; C
   
   // Data State
   const [customerId, setCustomerId] = useState("")
-  const [availableJobs, setAvailableJobs] = useState<{ Job_ID: string; Customer_Name: string; Price_Cust_Total: number }[]>([])
+  const [availableJobs, setAvailableJobs] = useState<(Record<string, any>)[]>([])
   const [selectedJobIds, setSelectedJobIds] = useState<string[]>([])
   
   // Invoice Details
@@ -141,8 +141,34 @@ export function InvoiceForm({ customers }: { customers: { Customer_ID: string; C
                         <Calculator className="w-5 h-5 text-purple-400" />
                         รายการงานที่วางบิลได้ ({availableJobs.length})
                     </h3>
-                    <div className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest">
-                        เลือก {selectedJobs.length} รายการ
+                    <div className="flex items-center gap-4">
+                        <button 
+                            type="button"
+                            disabled={availableJobs.length === 0}
+                            onClick={() => {
+                                const calculable = availableJobs.filter(j => Number(j.Price_Cust_Total || 0) === 0 && Number(j.Price_Per_Unit || 0) > 0 && Number(j.Loaded_Qty || 0) > 0)
+                                if (calculable.length === 0) {
+                                    toast.info("ไม่พบรายการที่แนะนำให้คำนวณราคาย้อนหลัง")
+                                    return
+                                }
+                                if (confirm(`คุณต้องการใช้ราคาแนะนำสำหรับ ${calculable.length} รายการที่ราคาเป็น 0 หรือไม่? (จะเป็นการคำนวณชั่วคราวในหน้านี้)`)) {
+                                    setAvailableJobs(prev => prev.map(j => {
+                                        if (Number(j.Price_Cust_Total || 0) === 0 && Number(j.Price_Per_Unit || 0) > 0 && Number(j.Loaded_Qty || 0) > 0) {
+                                            return { ...j, Price_Cust_Total: Number((Number(j.Loaded_Qty) * Number(j.Price_Per_Unit)).toFixed(2)) }
+                                        }
+                                        return j
+                                    }))
+                                    toast.success("ปรับปรุงราคาชั่วคราวเรียบร้อย")
+                                }
+                            }}
+                            className="bg-amber-500/10 text-amber-500 px-6 py-2 rounded-xl text-sm font-black uppercase tracking-widest border border-amber-500/20 hover:bg-amber-500/20 transition-all flex items-center gap-2 group"
+                        >
+                            <RefreshCw size={14} className="group-hover:rotate-180 transition-transform duration-700" />
+                            Sync Item Prices
+                        </button>
+                        <div className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest">
+                            เลือก {selectedJobs.length} รายการ
+                        </div>
                     </div>
                 </div>
                 
@@ -206,7 +232,18 @@ export function InvoiceForm({ customers }: { customers: { Customer_ID: string; C
                                                 <TableCell className="text-muted-foreground font-bold">{new Date(job.Plan_Date).toLocaleDateString('th-TH')}</TableCell>
                                                 <TableCell className="max-w-[200px] truncate text-muted-foreground font-medium" title={job.Route_Name}>{job.Route_Name}</TableCell>
                                                 <TableCell className="text-right font-black text-muted-foreground pr-8">
-                                                    {Number(job.Price_Cust_Total).toLocaleString()}
+                                                    <div className="flex flex-col items-end">
+                                                        <div className="flex items-center gap-2">
+                                                            {Number(job.Price_Cust_Total || 0) === 0 && Number(job.Price_Per_Unit || 0) > 0 && Number(job.Loaded_Qty || 0) > 0 && (
+                                                                <div className="p-1 px-2 bg-amber-500/20 text-amber-500 rounded text-[9px] font-black animate-pulse flex items-center gap-1 uppercase tracking-tight">
+                                                                    <Zap size={10} /> Suggested
+                                                                </div>
+                                                            )}
+                                                            <span className={cn(Number(job.Price_Cust_Total || 0) === 0 ? "opacity-30" : "text-foreground")}>
+                                                                {Number(job.Price_Cust_Total || 0).toLocaleString()}
+                                                            </span>
+                                                        </div>
+                                                    </div>
                                                 </TableCell>
                                             </TableRow>
                                         );

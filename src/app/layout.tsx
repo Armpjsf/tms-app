@@ -46,6 +46,7 @@ export default function RootLayout({
     <html lang="th" suppressHydrationWarning tabIndex={-1}>
       <body
         className={`${outfit.variable} ${prompt.variable} font-sans antialiased`}
+        suppressHydrationWarning
       >
         <ClientProviders>
           {children}

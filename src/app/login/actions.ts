@@ -86,8 +86,13 @@ export async function login(formData: FormData) {
   
   // SECURITY: If role is Customer, ensure customerId is strictly enforced
   const finalCustomerId = (users.Role === 'Customer' || roleId === 7) 
-    ? (customerId ? String(customerId) : 'FORCED_RESTRICTION') 
+    ? (customerId ? String(customerId) : null) 
     : (customerId ? String(customerId) : null)
+
+  // CRITICAL: Prevent login for customers with missing IDs
+  if ((users.Role === 'Customer' || roleId === 7) && !finalCustomerId) {
+      redirect('/login?error=Account not linked to a customer profile. Please contact support.')
+  }
   
   await createSession(
     users.Username, 

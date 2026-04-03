@@ -214,8 +214,8 @@ export async function getAllJobs(
   }
 }
 
-// นับสถิติงานวันนี้
-export async function getTodayJobStats(branchId?: string) {
+// นับสถิติงานตามช่วงเวลา (Default: วันนี้)
+export async function getTodayJobStats(branchId?: string, startDate?: string, endDate?: string) {
   try {
     const isAdmin = await isSuperAdmin()
     const supabase = isAdmin ? await createAdminClient() : await createClient()
@@ -226,7 +226,12 @@ export async function getTodayJobStats(branchId?: string) {
     let dbQuery = supabase
       .from('Jobs_Main')
       .select('Job_Status')
-      .eq('Plan_Date', today)
+
+    if (startDate && endDate) {
+        dbQuery = dbQuery.gte('Plan_Date', startDate).lte('Plan_Date', endDate)
+    } else {
+        dbQuery = dbQuery.eq('Plan_Date', today)
+    }
 
     if (customerId) {
         dbQuery = dbQuery.eq('Customer_ID', customerId)
@@ -684,7 +689,7 @@ export async function getJobsForBilling(startDate?: string, endDate?: string): P
 
         let dbQuery = supabase
             .from('Jobs_Main')
-            .select('*, Master_Customers(Price_Per_Unit)')
+            .select('*')
             .in('Job_Status', ['Completed', 'Delivered'])
             .is('Billing_Note_ID', null)
             .is('Invoice_ID', null)
@@ -709,11 +714,30 @@ export async function getJobsForBilling(startDate?: string, endDate?: string): P
         
         const { data } = await query
         
-        if (!data) {
+        if (!data || data.length === 0) {
             return []
         }
+
+        // Safer approach: Fetch Unit Prices separately to avoid join errors breaking the page
+        try {
+            const customerIds = [...new Set(data.filter(j => j.Customer_ID).map(j => j.Customer_ID))]
+            const { data: customerPrices } = await supabase
+                .from('Master_Customers')
+                .select('Customer_ID, Price_Per_Unit')
+                .in('Customer_ID', customerIds)
+
+            if (customerPrices) {
+                const priceMap = new Map(customerPrices.map(c => [c.Customer_ID, c.Price_Per_Unit]))
+                return data.map(job => ({
+                    ...job,
+                    Price_Per_Unit: priceMap.get(job.Customer_ID) || 0
+                })) as Job[]
+            }
+        } catch (e) {
+            console.error("Mapping unit prices failed:", e)
+        }
         
-        return data || []
+        return data as Job[]
     } catch {
         return []
     }
@@ -822,11 +846,29 @@ export async function getBillableJobs(customerId: string) {
     const { data } = await dbQuery
       .order('Plan_Date', { ascending: true })
 
-    if (data === null) {
+    if (!data || data.length === 0) {
       return []
     }
+
+    // Safer approach: Map unit prices
+    try {
+        const { data: customerPrices } = await supabase
+            .from('Master_Customers')
+            .select('Customer_ID, Price_Per_Unit')
+            .eq('Customer_ID', customerId)
+            .single()
+
+        if (customerPrices) {
+            return data.map(job => ({
+                ...job,
+                Price_Per_Unit: (customerPrices as { Price_Per_Unit: number }).Price_Per_Unit || 0
+            })) as Job[]
+        }
+    } catch (e) {
+        console.error("Mapping unit prices failed for billing:", e)
+    }
     
-    return data || []
+    return data as Job[]
   } catch {
     return []
   }

@@ -7,10 +7,11 @@ export default function manifest(): MetadataRoute.Manifest {
     name: 'LOGIS-PRO Driver',
     short_name: 'LOGIS Driver',
     description: 'Driver Application for LOGIS-PRO TMS',
-    start_url: '/login',
+    start_url: '/mobile/dashboard',
+    scope: '/',
     display: 'standalone',
-    background_color: '#0f172a',
-    theme_color: '#0f172a',
+    background_color: '#001E4C',
+    theme_color: '#001E4C',
     orientation: 'portrait',
     icons: [
       {

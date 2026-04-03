@@ -13,9 +13,9 @@ export type FinancialJob = {
 
 // Revenue-generating statuses used across all analytics
 export const REVENUE_STATUSES = [
-    'Completed', 'Delivered', 'Finished', 'Closed', 'Complete', 'Success', 'Done',
-    'completed', 'delivered', 'finished', 'closed', 'complete', 'success', 'done',
-    'เสร็จสิ้น', 'เรียบร้อย', 'ส่งสำเร็จ', 'ปิดงาน', 'สำเร็จ'
+    'Completed', 'Delivered', 'Finished', 'Closed', 'Complete', 'Success', 'Done', 'Finish', 'Arrived', 'Arrived Destination',
+    'completed', 'delivered', 'finished', 'closed', 'complete', 'success', 'done', 'finish', 'arrived',
+    'เสร็จสิ้น', 'เรียบร้อย', 'ส่งสำเร็จ', 'ปิดงาน', 'สำเร็จ', 'ถึงที่หมาย', 'ถึงจุดหมาย', 'ถึงที่ส่ง', 'จบงาน'
 ]
 
 // Date helpers to avoid extra dependencies
