@@ -106,24 +106,28 @@ export async function exportInvoiceExcel(invoiceId: string) {
         // 6. Fill Job Data (Rows 10 to 26)
         const summaryTotals = { base: 0, extra: 0, labor: 0, wait: 0, other: 0, grand: 0 }
 
+        console.log(`[DEBUG] Processing ${jobs.length} jobs for Excel export`)
+
         jobs.forEach((job, index) => {
             const r = 10 + index
             if (r > 26) return
 
-            worksheet.getCell(`A${r}`).value = index + 1
-            worksheet.getCell(`B${r}`).value = new Date(job.Plan_Date).toLocaleDateString('th-TH')
-            worksheet.getCell(`C${r}`).value = job.Vehicle_Type || '-'
-            worksheet.getCell(`D${r}`).value = Number(job.Total_Drop || 1)
-            worksheet.getCell(`E${r}`).value = job.Origin_Location || '-'
-            worksheet.getCell(`F${r}`).value = job.Dest_Location || job.Route_Name || '-'
+            const row = worksheet.getRow(r)
+            
+            // Basic Info (Column A-G)
+            row.getCell('A').value = index + 1
+            row.getCell('B').value = job.Plan_Date ? new Date(job.Plan_Date).toLocaleDateString('th-TH') : '-'
+            row.getCell('C').value = job.Vehicle_Type || '-'
+            row.getCell('D').value = Number(job.Total_Drop || 1)
+            row.getCell('E').value = job.Origin_Location || '-'
+            row.getCell('F').value = job.Dest_Location || job.Route_Name || '-'
             
             const co2 = Number(((Number(job.Est_Distance_KM) || 0) * 0.12).toFixed(2))
-            worksheet.getCell(`G${r}`).value = co2
+            row.getCell('G').value = co2
             
             // Financial Data Mapping
-            // Priority: Price_Cust_Total -> (Price_Per_Unit * Quantity) -> 0
+            // Logic: Use Price_Cust_Total, if 0 try fallback calculation
             let basePrice = Number(job.Price_Cust_Total || 0)
-            
             if (basePrice === 0) {
                 const qty = Number(job.Weight_Kg || job.Volume_Cbm || job.Loaded_Qty || 0)
                 const unitPrice = Number(job.Price_Per_Unit || 0)
@@ -139,13 +143,21 @@ export async function exportInvoiceExcel(invoiceId: string) {
 
             const rowTotal = basePrice + extraDrop + labor + waitTime + other
 
-            worksheet.getCell(`H${r}`).value = basePrice > 0 ? basePrice : (basePrice === 0 ? 0 : null)
-            worksheet.getCell(`I${r}`).value = extraDrop > 0 ? extraDrop : (extraDrop === 0 ? null : null)
-            worksheet.getCell(`J${r}`).value = labor > 0 ? labor : (labor === 0 ? null : null)
-            worksheet.getCell(`K${r}`).value = waitTime > 0 ? waitTime : (waitTime === 0 ? null : null)
-            worksheet.getCell(`L${r}`).value = other > 0 ? other : (other === 0 ? null : null)
-            worksheet.getCell(`M${r}`).value = rowTotal
+            // Set Values (H-M)
+            row.getCell('H').value = basePrice > 0 ? basePrice : (basePrice === 0 ? 0 : null)
+            row.getCell('I').value = extraDrop > 0 ? extraDrop : null
+            row.getCell('J').value = labor > 0 ? labor : null
+            row.getCell('K').value = waitTime > 0 ? waitTime : null
+            row.getCell('L').value = other > 0 ? other : null
+            row.getCell('M').value = rowTotal
             
+            // Format
+            ;['H', 'I', 'J', 'K', 'L', 'M'].forEach(col => {
+                row.getCell(col).numFmt = '#,##0.00'
+            })
+
+            row.commit() // Ensure changes are applied to the row
+
             // Accumulate totals
             summaryTotals.base += basePrice
             summaryTotals.extra += extraDrop
@@ -153,25 +165,21 @@ export async function exportInvoiceExcel(invoiceId: string) {
             summaryTotals.wait += waitTime
             summaryTotals.other += other
             summaryTotals.grand += rowTotal
-
-            // Apply number format
-            ;['H', 'I', 'J', 'K', 'L', 'M'].forEach(col => {
-                const cell = worksheet.getCell(`${col}${r}`)
-                cell.numFmt = '#,##0.00'
-            })
         })
 
         // 7. Summary Totals (Row 27)
-        worksheet.getCell('H27').value = summaryTotals.base
-        worksheet.getCell('I27').value = summaryTotals.extra
-        worksheet.getCell('J27').value = summaryTotals.labor
-        worksheet.getCell('K27').value = summaryTotals.wait
-        worksheet.getCell('L27').value = summaryTotals.other
-        worksheet.getCell('M27').value = summaryTotals.grand
+        const summaryRow = worksheet.getRow(27)
+        summaryRow.getCell('H').value = summaryTotals.base
+        summaryRow.getCell('I').value = summaryTotals.extra
+        summaryRow.getCell('J').value = summaryTotals.labor
+        summaryRow.getCell('K').value = summaryTotals.wait
+        summaryRow.getCell('L').value = summaryTotals.other
+        summaryRow.getCell('M').value = summaryTotals.grand
 
         ;['H', 'I', 'J', 'K', 'L', 'M'].forEach(col => {
-            worksheet.getCell(`${col}27`).numFmt = '#,##0.00'
+            summaryRow.getCell(col).numFmt = '#,##0.00'
         })
+        summaryRow.commit()
 
         // 8. Write to Buffer and Return as Base64
         const buffer = await workbook.xlsx.writeBuffer()
