@@ -108,7 +108,16 @@ export function InvoiceForm({ customers, initialData, onSuccess }: InvoiceFormPr
             Net_Total: netTotal,
             Status: 'Draft',
             Notes: notes,
-            Items_JSON: selectedJobs as Record<string, unknown>[],
+            Items_JSON: selectedJobs.map(job => {
+                const storedPrice = parsePrice(job.Price_Cust_Total)
+                const qty = Number(job.Weight_Kg || job.Volume_Cbm || job.Loaded_Qty || 0)
+                const unitPrice = Number(job.Price_Per_Unit || 0)
+                
+                return {
+                    ...job,
+                    Price_Cust_Total: storedPrice > 0 ? storedPrice : (unitPrice * qty)
+                }
+            }), // Enhanced Snapshot
         })
 
         if (!result || !result.success) {

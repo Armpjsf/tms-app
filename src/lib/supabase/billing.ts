@@ -353,6 +353,27 @@ export async function getBillingNoteByIdWithJobs(id: string) {
             
             if (jobsError) throw jobsError
             jobs = dbJobs || []
+
+            // Enrich with Unit Prices from Master_Customers
+            try {
+                const uniqueCustomerIds = Array.from(new Set(jobs.filter(j => j.Customer_ID).map(j => j.Customer_ID)))
+                if (uniqueCustomerIds.length > 0) {
+                    const { data: customerPrices } = await supabase
+                        .from('Master_Customers')
+                        .select('Customer_ID, Price_Per_Unit')
+                        .in('Customer_ID', uniqueCustomerIds)
+
+                    if (customerPrices) {
+                        const priceMap = new Map(customerPrices.map(c => [c.Customer_ID, c.Price_Per_Unit]))
+                        jobs = jobs.map(job => ({
+                            ...job,
+                            Price_Per_Unit: job.Price_Per_Unit || priceMap.get(job.Customer_ID) || 0
+                        }))
+                    }
+                }
+            } catch (e) {
+                console.error("Enriching unit prices failed in getBillingNoteByIdWithJobs:", e)
+            }
         }
 
         // 3. Get Accounting Profile (New priority)
@@ -704,12 +725,34 @@ export async function getPublicBillingNoteById(id: string) {
         if (noteError) throw noteError
 
         // 2. Get Associated Jobs
-        const { data: jobs, error: jobsError } = await supabase
+        const { data: dbJobs, error: jobsError } = await supabase
             .from('Jobs_Main')
             .select('*, extra_costs_json')
             .eq('Billing_Note_ID', id)
         
         if (jobsError) throw jobsError
+        let jobs = dbJobs || []
+
+        // Enrich with Unit Prices from Master_Customers
+        try {
+            const uniqueCustomerIds = Array.from(new Set(jobs.filter(j => j.Customer_ID).map(j => j.Customer_ID)))
+            if (uniqueCustomerIds.length > 0) {
+                const { data: customerPrices } = await supabase
+                    .from('Master_Customers')
+                    .select('Customer_ID, Price_Per_Unit')
+                    .in('Customer_ID', uniqueCustomerIds)
+
+                if (customerPrices) {
+                    const priceMap = new Map(customerPrices.map(c => [c.Customer_ID, c.Price_Per_Unit]))
+                    jobs = jobs.map(job => ({
+                        ...job,
+                        Price_Per_Unit: job.Price_Per_Unit || priceMap.get(job.Customer_ID) || 0
+                    }))
+                }
+            }
+        } catch (e) {
+            console.error("Enriching unit prices failed in getPublicBillingNoteById:", e)
+        }
 
         // 3. Get Accounting Profile (Priority)
         const { data: acctData } = await supabase

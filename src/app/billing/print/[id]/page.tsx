@@ -94,35 +94,62 @@ export default async function BillingPrintPage(props: Props) {
     jobs.forEach((job) => {
         const qty = Number(job.Weight_Kg || job.Volume_Cbm || job.Loaded_Qty || 1)
         const unitPrice = Number(job.Price_Per_Unit || 0)
-        const isPerItem = unitPrice > 0
-        const basePrice = isPerItem ? (qty * unitPrice) : Number(job.Price_Cust_Total || 0)
         
-        // 1. Main Freight Item
+        // 1. Main Freight Item (High-resilience calculation)
+        let basePrice = Number(job.Price_Cust_Total || 0)
+        if (basePrice <= 0 && unitPrice > 0) {
+            basePrice = qty * unitPrice
+        }
+
         displayItems.push({
             id: job.Job_ID,
             description: `${lang === 'th' ? 'ค่าขนส่งสินค้า' : 'Freight Service'} (Job: ${job.Job_ID})`,
             subDescription: `-- ดำเนินการวันที่ ${new Date(job.Plan_Date).toLocaleDateString(lang === 'th' ? 'th-TH' : 'en-US')} (${job.Route_Name})`,
-            qty: isPerItem ? qty : 1,
-            unitPrice: isPerItem ? unitPrice : basePrice,
+            qty: (basePrice > 0 && unitPrice > 0) ? qty : 1,
+            unitPrice: (basePrice > 0 && unitPrice > 0) ? unitPrice : basePrice,
             total: basePrice,
             isExtra: false
         })
         totalPreTax += basePrice
 
-        // 2. Extra Costs for this job
-        let extras: any[] = []
+        // 2. Standard Extra Cost Columns
+        const EXPENSE_MAP: Record<string, string> = {
+            'Price_Cust_Extra': 'เพิ่มจุดลงของ',
+            'Charge_Labor': 'แรงงานยกของ',
+            'Charge_Wait': 'รอลงเกินเวลา',
+            'Price_Cust_Other': 'อื่นๆ'
+        }
+
+        const standardExtras = ['Price_Cust_Extra', 'Charge_Labor', 'Charge_Wait', 'Price_Cust_Other']
+        standardExtras.forEach(col => {
+            const val = Number(job[col] || 0)
+            if (val > 0) {
+                displayItems.push({
+                    id: `${job.Job_ID}-${col}`,
+                    description: `↳ ${lang === 'th' ? EXPENSE_MAP[col] : col.replace(/_/g, ' ')}`,
+                    qty: 1,
+                    unitPrice: val,
+                    total: val,
+                    isExtra: true
+                })
+                totalPreTax += val
+            }
+        })
+
+        // 3. Extra Costs from JSON
+        let jsonExtras: any[] = []
         try {
             if (job.extra_costs_json) {
                 let costs = job.extra_costs_json
                 if (typeof costs === 'string') { try { costs = JSON.parse(costs) } catch {} }
-                if (Array.isArray(costs)) extras = costs
+                if (Array.isArray(costs)) jsonExtras = costs
             }
         } catch {}
 
-        extras.filter(e => Number(e.charge_cust) > 0).forEach((extra) => {
+        jsonExtras.filter(e => Number(e.charge_cust) > 0).forEach((extra) => {
             const extraVal = Number(extra.charge_cust)
             displayItems.push({
-                id: `${job.Job_ID}-extra`,
+                id: `${job.Job_ID}-json-extra`,
                 description: `↳ ${extra.type || (lang === 'th' ? 'ค่าใช้จ่ายเพิ่มเติม' : 'Extra Cost')}`,
                 qty: 1,
                 unitPrice: extraVal,
