@@ -14,6 +14,7 @@ export type Invoice = {
   VAT_Rate: number
   VAT_Amount: number
   Grand_Total: number
+  Discount_Amount: number
   WHT_Rate: number
   WHT_Amount: number
   Net_Total: number

@@ -17,6 +17,13 @@ import {
 } from "@/components/ui/table"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { CustomerAutocomplete } from "@/components/customer-autocomplete"
 import { toast } from "sonner"
 import { getBillableJobsAction } from "@/app/billing/invoices/actions"
@@ -49,6 +56,7 @@ export function InvoiceForm({ customers, initialData, onSuccess }: InvoiceFormPr
   const [issueDate, setIssueDate] = useState<Date>(new Date())
   const [dueDate, setDueDate] = useState<Date>(new Date(new Date().setDate(new Date().getDate() + 30)))
   const [vatRate, setVatRate] = useState(0)
+  const [discountAmount, setDiscountAmount] = useState(0)
   const [whtRate, setWhtRate] = useState(0)
   const [notes, setNotes] = useState("")
 
@@ -85,9 +93,10 @@ export function InvoiceForm({ customers, initialData, onSuccess }: InvoiceFormPr
       return sum + calculatedPrice
   }, 0)
   
-  const vatAmount = subtotal * (vatRate / 100)
-  const grandTotal = subtotal + vatAmount
-  const whtAmount = subtotal * (whtRate / 100)
+  const totalAfterDiscount = subtotal - discountAmount
+  const vatAmount = totalAfterDiscount * (vatRate / 100)
+  const grandTotal = totalAfterDiscount + vatAmount
+  const whtAmount = totalAfterDiscount * (whtRate / 100)
   const netTotal = grandTotal - whtAmount
 
   const handleSubmit = async () => {
@@ -100,6 +109,7 @@ export function InvoiceForm({ customers, initialData, onSuccess }: InvoiceFormPr
             Issue_Date: issueDate.toISOString(),
             Due_Date: dueDate.toISOString(),
             Subtotal: subtotal,
+            Discount_Amount: discountAmount,
             VAT_Rate: vatRate,
             VAT_Amount: vatAmount,
             Grand_Total: grandTotal,
@@ -302,6 +312,34 @@ export function InvoiceForm({ customers, initialData, onSuccess }: InvoiceFormPr
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="md:col-span-2 space-y-6">
+                 <div className="grid grid-cols-2 gap-6">
+                    <div className="space-y-3">
+                        <Label className="text-muted-foreground font-black uppercase tracking-widest text-base font-bold">ภาษี (%)</Label>
+                        <Select
+                            value={String(vatRate)}
+                            onValueChange={(v: string) => setVatRate(Number(v))}
+                        >
+                            <SelectTrigger className="bg-card/50 border-border/10 rounded-2xl h-16 font-bold text-muted-foreground focus:ring-purple-500/20">
+                                <SelectValue placeholder="เลือกอัตราภาษี" />
+                            </SelectTrigger>
+                            <SelectContent className="bg-card border-border/10">
+                                <SelectItem value="0" className="font-bold">ไม่มี (0%)</SelectItem>
+                                <SelectItem value="7" className="font-bold">ภาษี 7%</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div className="space-y-3">
+                        <Label className="text-muted-foreground font-black uppercase tracking-widest text-base font-bold">ส่วนลด (Discount THB)</Label>
+                        <Input 
+                            type="number"
+                            value={discountAmount} 
+                            onChange={(e) => setDiscountAmount(Number(e.target.value))} 
+                            className="bg-card/50 border-border/10 rounded-2xl h-16 font-bold text-muted-foreground focus:ring-purple-500/20" 
+                            placeholder="0.00"
+                        />
+                    </div>
+                 </div>
+
                  <div className="space-y-3">
                     <Label className="text-muted-foreground font-black uppercase tracking-widest text-base font-bold">หมายเหตุ (Notes)</Label>
                     <Input 
@@ -314,9 +352,28 @@ export function InvoiceForm({ customers, initialData, onSuccess }: InvoiceFormPr
             </div>
             <Card className="bg-card border-border/10 shadow-2xl overflow-hidden rounded-3xl border-t-emerald-500/30 border-t-2">
                 <CardContent className="p-8 space-y-6">
-                    <div className="flex justify-between text-2xl font-black text-muted-foreground uppercase tracking-widest pt-4">
+                     <div className="space-y-2 pb-4">
+                        <div className="flex justify-between text-base font-bold text-muted-foreground uppercase tracking-widest">
+                            <span>ราคารับจ้างขนส่ง</span>
+                            <span>฿{subtotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                        </div>
+                        {discountAmount > 0 && (
+                            <div className="flex justify-between text-base font-bold text-amber-500 uppercase tracking-widest">
+                                <span>ส่วนลด</span>
+                                <span>-฿{discountAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                            </div>
+                        )}
+                        {vatRate > 0 && (
+                            <div className="flex justify-between text-base font-bold text-muted-foreground uppercase tracking-widest">
+                                <span>ภาษีมูลค่าเพิ่ม ({vatRate}%)</span>
+                                <span>฿{vatAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="flex justify-between text-2xl font-black text-muted-foreground uppercase tracking-widest pt-4 border-t border-border/10">
                         <span>ยอดรวมสุทธิ</span>
-                        <span className="text-foreground">฿{subtotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                        <span className="text-foreground">฿{grandTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                     </div>
 
                     <div className="border-t border-border/5 pt-6 space-y-4">

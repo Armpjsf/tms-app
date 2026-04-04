@@ -24,7 +24,7 @@ function ArabicNumberToText(Number: number) {
     function readNumber(num: string) {
         if (num === '0' || num === '00') return '';
         let result = '';
-        let len = num.length;
+        const len = num.length;
         for (let i = 0; i < len; i++) {
             const digit = parseInt(num.charAt(i), 10);
             const pos = (len - i - 1) % 6;
@@ -87,30 +87,60 @@ export default async function BillingPrintPage(props: Props) {
     const bankAccName = company?.bank_account_name || company?.Bank_Account_Name
     const contactName = company?.contact_name || company?.Contact_Name || 'ฝ่ายบัญชี'
 
-    // Process items into a displayable format
-    const displayItems: any[] = []
-    let totalPreTax = 0
+    // Map for aggregating items by category
+    const aggregatedItems = new Map<string, { 
+        description: string; 
+        subDescription?: string; 
+        qty: number; 
+        unitPrice: number; 
+        totalBeforeTax: number; 
+        isExtra: boolean; 
+    }>()
+
+    let minDate: Date | null = null
+    let maxDate: Date | null = null
+
+    // Helper to format date range in Thai/BE
+    function formatBEDateRange(start: Date, end: Date) {
+        const sD = start.getDate()
+        const eD = end.getDate()
+        const sM = start.getMonth() + 1
+        const sY = start.getFullYear() + 543
+        
+        if (sD === eD && start.getMonth() === end.getMonth()) {
+            return `${sD}/${sM}/${sY}`
+        }
+        return `${sD}-${eD}/${sM}/${sY}`
+    }
 
     jobs.forEach((job) => {
+        const jobDate = new Date(job.Plan_Date)
+        if (!minDate || jobDate < minDate) minDate = jobDate
+        if (!maxDate || jobDate > maxDate) maxDate = jobDate
+
         const qty = Number(job.Weight_Kg || job.Volume_Cbm || job.Loaded_Qty || 1)
         const unitPrice = Number(job.Price_Per_Unit || 0)
         
-        // 1. Main Freight Item (High-resilience calculation)
+        // 1. Freight (Sum into single row)
         let basePrice = Number(job.Price_Cust_Total || 0)
         if (basePrice <= 0 && unitPrice > 0) {
             basePrice = qty * unitPrice
         }
 
-        displayItems.push({
-            id: job.Job_ID,
-            description: `${lang === 'th' ? 'ค่าขนส่งสินค้า' : 'Freight Service'} (Job: ${job.Job_ID})`,
-            subDescription: `-- ดำเนินการวันที่ ${new Date(job.Plan_Date).toLocaleDateString(lang === 'th' ? 'th-TH' : 'en-US')} (${job.Route_Name})`,
-            qty: (basePrice > 0 && unitPrice > 0) ? qty : 1,
-            unitPrice: (basePrice > 0 && unitPrice > 0) ? unitPrice : basePrice,
-            total: basePrice,
-            isExtra: false
-        })
-        totalPreTax += basePrice
+        const freightKey = 'FREIGHT'
+        const existingFreight = aggregatedItems.get(freightKey)
+        if (existingFreight) {
+            existingFreight.qty += 1
+            existingFreight.totalBeforeTax += basePrice
+        } else {
+            aggregatedItems.set(freightKey, {
+                description: `ค่าขนส่งสินค้า (${job.Customer_ID || 'P00001'})`,
+                qty: 1,
+                unitPrice: 0, // Calculated later
+                totalBeforeTax: basePrice,
+                isExtra: false
+            })
+        }
 
         // 2. Standard Extra Cost Columns
         const EXPENSE_MAP: Record<string, string> = {
@@ -124,19 +154,24 @@ export default async function BillingPrintPage(props: Props) {
         standardExtras.forEach(col => {
             const val = Number(job[col] || 0)
             if (val > 0) {
-                displayItems.push({
-                    id: `${job.Job_ID}-${col}`,
-                    description: `↳ ${lang === 'th' ? EXPENSE_MAP[col] : col.replace(/_/g, ' ')}`,
-                    qty: 1,
-                    unitPrice: val,
-                    total: val,
-                    isExtra: true
-                })
-                totalPreTax += val
+                const key = `EXTRA-${col}`
+                const existing = aggregatedItems.get(key)
+                if (existing) {
+                    existing.qty += 1
+                    existing.totalBeforeTax += val
+                } else {
+                    aggregatedItems.set(key, {
+                        description: lang === 'th' ? EXPENSE_MAP[col] : col.replace(/_/g, ' '),
+                        qty: 1,
+                        unitPrice: 0,
+                        totalBeforeTax: val,
+                        isExtra: true
+                    })
+                }
             }
         })
 
-        // 3. Extra Costs from JSON
+        // 3. JSON Extras
         let jsonExtras: any[] = []
         try {
             if (job.extra_costs_json) {
@@ -147,21 +182,43 @@ export default async function BillingPrintPage(props: Props) {
         } catch {}
 
         jsonExtras.filter(e => Number(e.charge_cust) > 0).forEach((extra) => {
-            const extraVal = Number(extra.charge_cust)
-            displayItems.push({
-                id: `${job.Job_ID}-json-extra`,
-                description: `↳ ${extra.type || (lang === 'th' ? 'ค่าใช้จ่ายเพิ่มเติม' : 'Extra Cost')}`,
-                qty: 1,
-                unitPrice: extraVal,
-                total: extraVal,
-                isExtra: true
-            })
-            totalPreTax += extraVal
+            const val = Number(extra.charge_cust)
+            const typeLabel = extra.type || (lang === 'th' ? 'ค่าใช้จ่ายเพิ่มเติม' : 'Extra Cost')
+            const mappedLabel = typeLabel === 'Pallet' ? 'ค่าพาเลท' : typeLabel
+            const key = `JSON-${mappedLabel}`
+            
+            const existing = aggregatedItems.get(key)
+            if (existing) {
+                existing.qty = (existing.qty || 0) + 1
+                existing.totalBeforeTax += val
+            } else {
+                aggregatedItems.set(key, {
+                    description: mappedLabel,
+                    qty: 1,
+                    unitPrice: 0,
+                    totalBeforeTax: val,
+                    isExtra: true
+                })
+            }
         })
     })
 
-    const wht = totalPreTax * 0.01 
-    const netTotal = totalPreTax - wht
+    // Finalize description with date range for main freight
+    const freightItem = aggregatedItems.get('FREIGHT')
+    if (freightItem && minDate && maxDate) {
+        freightItem.subDescription = `--ค่าขนส่งสินค้า วันที่ ${formatBEDateRange(minDate, maxDate)}`
+    }
+
+    // Convert Map to list for display
+    const displayItems = Array.from(aggregatedItems.values()).map(item => ({
+        ...item,
+        unitPrice: item.totalBeforeTax / item.qty 
+    }))
+    
+    const totalPreTax = displayItems.reduce((acc, curr) => acc + curr.totalBeforeTax, 0)
+
+    const wht = note.WHT_Amount ?? ((totalPreTax - (note.Discount_Amount || 0)) * (note.WHT_Rate || 1) / 100)
+    const netTotal = (note.Total_Amount || (totalPreTax - (note.Discount_Amount || 0) + (note.VAT_Amount || 0))) - wht
 
     const localeStr = lang === 'th' ? 'th-TH' : 'en-US'
     const issueDate = new Date(note.Billing_Date);
@@ -248,21 +305,25 @@ export default async function BillingPrintPage(props: Props) {
                             <th className="py-2 px-3 text-left font-bold w-12">ลำดับ</th>
                             <th className="py-2 px-3 text-left font-bold">คำอธิบาย</th>
                             <th className="py-2 px-3 text-center font-bold w-24">จำนวน</th>
-                            <th className="py-2 px-3 text-right font-bold w-32">ราคา/หน่วย</th>
+                            <th className="py-2 px-3 text-right font-bold w-32">ราคา</th>
+                            <th className="py-2 px-3 text-right font-bold w-24">ส่วนลด</th>
+                            <th className="py-2 px-3 text-center font-bold w-24">VAT</th>
                             <th className="py-2 px-3 text-right font-bold w-32">มูลค่าก่อนภาษี</th>
                         </tr>
                     </thead>
                     <tbody className="text-[13px]">
                         {displayItems.map((item, idx) => (
-                            <tr key={idx} className={`border-b border-slate-100 ${item.isExtra ? 'text-slate-600 italic' : 'font-semibold'}`}>
-                                <td className="py-3 px-3 text-center align-top">{!item.isExtra ? displayItems.filter(x => !x.isExtra).indexOf(item) + 1 : ''}</td>
+                            <tr key={idx} className={`border-b border-slate-100 ${item.isExtra ? 'text-slate-600' : 'font-semibold'}`}>
+                                <td className="py-3 px-3 text-center align-top">{idx + 1}</td>
                                 <td className="py-3 px-3 align-top">
                                     <div>{item.description}</div>
                                     {item.subDescription && <div className="text-[11px] text-slate-500 font-normal mt-0.5">{item.subDescription}</div>}
                                 </td>
                                 <td className="py-3 px-3 text-center align-top">{item.qty.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
                                 <td className="py-3 px-3 text-right align-top">{item.unitPrice.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-                                <td className="py-3 px-3 text-right align-top">{item.total.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                                <td className="py-3 px-3 text-right align-top">0.00</td>
+                                <td className="py-3 px-3 text-center align-top">ไม่มี</td>
+                                <td className="py-3 px-3 text-right align-top">{item.totalBeforeTax.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
                             </tr>
                         ))}
                     </tbody>
@@ -273,28 +334,40 @@ export default async function BillingPrintPage(props: Props) {
                     <div className="w-8 flex justify-center mt-0.5"><FileText size={18} className="text-slate-800" /></div>
                     <div className="font-bold w-20">สรุป</div>
                     <div className="flex-1">
-                        <div className="flex justify-between items-center mb-3">
-                            <div className="font-bold">มูลค่าไม่มีหรือยกเว้นภาษี</div>
-                            <div className="pr-4">{totalPreTax.toLocaleString(undefined, { minimumFractionDigits: 2 })} บาท</div>
+                        <div className="flex justify-between items-center mb-1">
+                            <span className="font-bold text-slate-700">มูลค่าก่อนส่วนลด (Gross Amount)</span>
+                            <span className="pr-4">{totalPreTax.toLocaleString(undefined, { minimumFractionDigits: 2 })} บาท</span>
                         </div>
+                        <div className="flex justify-between items-center mb-1 text-slate-500 italic">
+                            <span>ส่วนลด (Discount)</span>
+                            <span className="pr-4">{(note.Discount_Amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })} บาท</span>
+                        </div>
+                        <div className="flex justify-between items-center mb-1">
+                            <span className="font-bold text-slate-700">มูลค่าหลังหักส่วนลด (Net Amount)</span>
+                            <span className="pr-4">{(totalPreTax - (note.Discount_Amount || 0)).toLocaleString(undefined, { minimumFractionDigits: 2 })} บาท</span>
+                        </div>
+                        <div className="flex justify-between items-center mb-3 text-slate-500 italic">
+                            <span>ภาษีมูลค่าเพิ่ม (VAT {note.VAT_Rate || 0}%)</span>
+                            <span className="pr-4">{(note.VAT_Amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })} บาท</span>
+                        </div>
+
                         <div className="flex justify-between items-center mb-6">
                             <div className="font-bold">จำนวนเงินทั้งสิ้น</div>
-                            <div className="text-slate-600 flex-1 text-center italic">{ArabicNumberToText(totalPreTax)}</div>
-                            <div className="bg-[#eef2ff] px-4 py-3 rounded w-72 flex justify-between items-center">
+                            <div className="text-slate-600 flex-1 text-center italic">{ArabicNumberToText(note.Total_Amount || totalPreTax)}</div>
+                            <div className="bg-[#eef2ff] px-4 py-3 rounded w-80 flex justify-between items-center">
                                 <span className="font-bold">จำนวนเงินทั้งสิ้น</span>
-                                <span className="text-xl font-bold text-blue-600 tracking-tight">{totalPreTax.toLocaleString(undefined, { minimumFractionDigits: 2 })} <span className="text-sm text-slate-800 font-normal">บาท</span></span>
+                                <span className="text-xl font-bold text-blue-600 tracking-tight">{(note.Total_Amount || totalPreTax).toLocaleString(undefined, { minimumFractionDigits: 2 })} <span className="text-sm text-slate-800 font-normal">บาท</span></span>
                             </div>
                         </div>
-                        <div className="flex justify-end mb-2">
-                            <div className="w-72 flex justify-between pr-4">
-                                <span className="font-bold">จำนวนเงินที่หัก ณ ที่จ่าย (1%)</span>
+
+                        <div className="flex flex-col items-end gap-1">
+                            <div className="w-80 flex justify-between pr-4 border-b border-dashed border-slate-200 pb-1">
+                                <span className="font-bold text-slate-700">หัก ณ ที่จ่าย (WHT {note.WHT_Rate || 1}%)</span>
                                 <span>{wht.toLocaleString(undefined, { minimumFractionDigits: 2 })} บาท</span>
                             </div>
-                        </div>
-                        <div className="flex justify-end">
-                            <div className="w-72 flex justify-between pr-4">
-                                <span className="font-bold">จำนวนเงินที่ชำระ</span>
-                                <span className="font-bold">{netTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })} บาท</span>
+                            <div className="w-80 flex justify-between pr-4 pt-1">
+                                <span className="font-bold text-lg text-blue-800">ยอดชำระสุทธิ</span>
+                                <span className="font-bold text-lg text-blue-800">{netTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })} บาท</span>
                             </div>
                         </div>
                     </div>

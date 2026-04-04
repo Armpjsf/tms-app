@@ -187,13 +187,15 @@ export async function exportInvoiceExcel(invoiceId: string) {
         worksheet.getCell('I5').value = finalDoc.Master_Customers?.Address || finalDoc.Customer_Address || '-'
         worksheet.getCell('H6').value = `เลขที่ประจำตัวผู้เสียภาษี :  ${finalDoc.Master_Customers?.Tax_ID || finalDoc.Customer_Tax_ID || '-'}`
 
-        // Final Font Polish
+        // Final Font Polish: Force everything to size 10
         worksheet.eachRow((row) => {
             row.eachCell((cell) => {
-                if (!cell.font || cell.font.name !== 'Sarabun') {
-                    const isBold = cell.font?.bold || false
-                    const fontSize = cell.font?.size || 10
-                    cell.font = { name: 'Sarabun', size: fontSize, bold: isBold }
+                const isBold = cell.font?.bold || false
+                cell.font = { 
+                    name: 'Sarabun', 
+                    size: 10, 
+                    bold: isBold,
+                    color: cell.font?.color
                 }
             })
         })

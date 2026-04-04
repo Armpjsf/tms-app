@@ -18,6 +18,13 @@ export interface BillingNote {
   Customer_Email?: string
   Customer_Address?: string
   Customer_Tax_ID?: string
+  Credit_Days?: number
+  Remarks?: string
+  VAT_Rate?: number
+  VAT_Amount?: number
+  Discount_Amount?: number
+  WHT_Rate?: number
+  WHT_Amount?: number
 }
 
 function getErrorMessage(e: any): string {
@@ -326,7 +333,12 @@ export async function getBillingNoteByIdWithJobs(id: string) {
                 Status: inv.Status,
                 Customer_Address: inv.Master_Customers?.Address,
                 Customer_Tax_ID: inv.Master_Customers?.Tax_ID,
-                Remarks: inv.Notes
+                Remarks: inv.Notes,
+                VAT_Rate: inv.VAT_Rate,
+                VAT_Amount: inv.VAT_Amount,
+                Discount_Amount: inv.Discount_Amount,
+                WHT_Rate: inv.WHT_Rate,
+                WHT_Amount: inv.WHT_Amount
             }
 
             if (inv.Items_JSON && Array.isArray(inv.Items_JSON)) {

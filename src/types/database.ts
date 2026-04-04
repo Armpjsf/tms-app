@@ -6,6 +6,7 @@ export interface Job {
     Price_Cust_Total?: string | number | null;
     Cost_Driver_Total?: string | number | null;
     extra_costs_json?: unknown;
+    Customer_ID?: string | null;
     Customer_Name?: string | null;
     Dest_Location?: string | null;
     Origin_Location?: string | null;
@@ -24,6 +25,10 @@ export interface Job {
     Volume_Cbm?: number | null;
     Loaded_Qty?: number | null;
     Price_Per_Unit?: number | null;
+    Price_Cust_Extra?: number | null;
+    Charge_Labor?: number | null;
+    Charge_Wait?: number | null;
+    Price_Cust_Other?: number | null;
 }
 
 export interface Billing_Note {
@@ -33,6 +38,12 @@ export interface Billing_Note {
     Due_Date?: string | null;
     Total_Amount?: number | null;
     Customer_Address?: string | null;
+    Customer_Tax_ID?: string | null;
+    Credit_Days?: number | null;
+    Remarks?: string | null;
+    VAT_Rate?: number | null;
+    VAT_Amount?: number | null;
+    Discount_Amount?: number | null;
 }
 
 export interface Driver_Payment {
