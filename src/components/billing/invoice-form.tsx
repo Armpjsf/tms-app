@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useEffect } from "react"
@@ -27,40 +26,43 @@ import { format } from "date-fns"
 import { th } from "date-fns/locale"
 import { cn } from "@/lib/utils"
 
-export function InvoiceForm({ customers }: { customers: { Customer_ID: string; Customer_Name: string }[] }) {
+interface InvoiceFormProps {
+    customers: { Customer_ID: string; Customer_Name: string }[]
+    initialData?: {
+        customerId?: string
+        jobIds?: string[]
+    }
+    onSuccess?: () => void
+}
+
+export function InvoiceForm({ customers, initialData, onSuccess }: InvoiceFormProps) {
   const searchParams = useSearchParams()
-  const initialCustomerId = searchParams.get('customer') || ""
-  const initialJobIds = searchParams.get('jobs')?.split(',') || []
+  const initialCustomerId = initialData?.customerId || searchParams.get('customer') || ""
+  const initialJobIds = initialData?.jobIds || searchParams.get('jobs')?.split(',') || []
   
-  // Navigation
   const router = useRouter()
 
-  // State
   const [customerId, setCustomerId] = useState(initialCustomerId)
   const [availableJobs, setAvailableJobs] = useState<(Record<string, any>)[]>([])
   const [selectedJobIds, setSelectedJobIds] = useState<string[]>(initialJobIds)
   
-  // Invoice Details
   const [issueDate, setIssueDate] = useState<Date>(new Date())
   const [dueDate, setDueDate] = useState<Date>(new Date(new Date().setDate(new Date().getDate() + 30)))
-  const [vatRate, setVatRate] = useState(7)
+  const [vatRate, setVatRate] = useState(0)
   const [whtRate, setWhtRate] = useState(0)
   const [notes, setNotes] = useState("")
 
-  // Status
   const [fetchingJobs, setFetchingJobs] = useState(false)
   const [loading, setLoading] = useState(false)
 
-  // Fetch Jobs when Customer Changes
   useEffect(() => {
     if (customerId) {
         setFetchingJobs(true)
         getBillableJobsAction(customerId).then(jobs => {
             setAvailableJobs(jobs || [])
             setFetchingJobs(false)
-            // If we have initial jobs from URL, keep them. Otherwise clear.
-            if (initialJobIds.length === 0) {
-                setSelectedJobIds([])
+            if (initialJobIds.length > 0 && selectedJobIds.length === 0) {
+                setSelectedJobIds(initialJobIds)
             }
         })
     } else {
@@ -79,11 +81,10 @@ export function InvoiceForm({ customers }: { customers: { Customer_ID: string; C
   const subtotal = selectedJobs.reduce((sum, job) => {
       const storedPrice = parsePrice(job.Price_Cust_Total)
       if (storedPrice > 0) return sum + storedPrice
-      
-      // Auto-calculate for subtotal if stored price is 0
       const calculatedPrice = (Number(job.Price_Per_Unit || 0) * Number(job.Loaded_Qty || 0))
       return sum + calculatedPrice
   }, 0)
+  
   const vatAmount = subtotal * (vatRate / 100)
   const grandTotal = subtotal + vatAmount
   const whtAmount = subtotal * (whtRate / 100)
@@ -107,14 +108,19 @@ export function InvoiceForm({ customers }: { customers: { Customer_ID: string; C
             Net_Total: netTotal,
             Status: 'Draft',
             Notes: notes,
-            Items_JSON: selectedJobs as Record<string, unknown>[], // Snapshot
+            Items_JSON: selectedJobs as Record<string, unknown>[],
         })
 
         if (!result || !result.success) {
             toast.error("Error creating invoice: " + ((result?.error as Error)?.message || JSON.stringify(result?.error || 'Unknown error')))
         } else {
-            router.push('/billing/invoices')
-            router.refresh()
+            toast.success("สร้างใบแจ้งหนี้เรียบร้อยแล้ว")
+            if (onSuccess) {
+                onSuccess()
+            } else {
+                router.push('/billing/invoices')
+                router.refresh()
+            }
         }
     } catch (e) {
         toast.error("Exception: " + e)
@@ -125,7 +131,6 @@ export function InvoiceForm({ customers }: { customers: { Customer_ID: string; C
 
   return (
     <div className="space-y-6">
-        {/* Customer & Dates */}
         <Card className="relative z-20 bg-card/50 border-border/10 shadow-2xl backdrop-blur-xl">
             <CardContent className="p-8 grid grid-cols-1 md:grid-cols-3 gap-8">
                 <div className="space-y-3">
@@ -149,7 +154,6 @@ export function InvoiceForm({ customers }: { customers: { Customer_ID: string; C
             </CardContent>
         </Card>
 
-        {/* Job Selection */}
         <Card className="bg-card/50 border-border/10 shadow-2xl overflow-hidden rounded-3xl">
             <CardContent className="p-0">
                 <div className="p-6 border-b border-border/5 flex justify-between items-center bg-muted/50">
@@ -183,7 +187,7 @@ export function InvoiceForm({ customers }: { customers: { Customer_ID: string; C
                             Sync Item Prices
                         </button>
                         <div className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest">
-                            เลือก {selectedJobs.length} รายการ
+                            เลือก {selectedJobIds.length} รายการ
                         </div>
                     </div>
                 </div>
@@ -287,7 +291,6 @@ export function InvoiceForm({ customers }: { customers: { Customer_ID: string; C
             </CardContent>
         </Card>
 
-        {/* Totals & Actions */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="md:col-span-2 space-y-6">
                  <div className="space-y-3">
@@ -300,63 +303,23 @@ export function InvoiceForm({ customers }: { customers: { Customer_ID: string; C
                     />
                  </div>
             </div>
-            <Card className="bg-card border-border/10 shadow-2xl overflow-hidden rounded-3xl border-t-purple-500/30 border-t-2">
+            <Card className="bg-card border-border/10 shadow-2xl overflow-hidden rounded-3xl border-t-emerald-500/30 border-t-2">
                 <CardContent className="p-8 space-y-6">
-                    <div className="flex justify-between text-lg font-bold font-bold text-muted-foreground uppercase tracking-widest">
-                        <span>รวมราคา ({selectedJobs.length} รายการ)</span>
-                        <span className="text-muted-foreground">฿{subtotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
-                    </div>
-                    
-                    <div className="flex items-center justify-between text-lg font-bold font-bold uppercase tracking-widest">
-                         <div className="flex items-center gap-3">
-                            <span className="text-muted-foreground">VAT</span>
-                            <select 
-                                value={vatRate} 
-                                onChange={(e) => setVatRate(Number(e.target.value))}
-                                className="px-2 py-1 bg-muted/50 border border-border/10 rounded-lg text-muted-foreground text-base font-bold font-black outline-none focus:border-purple-500/50 transition-colors"
-                            >
-                                <option value="0" className="bg-card">0%</option>
-                                <option value="7" className="bg-card">7%</option>
-                            </select>
-                         </div>
-                        <span className="text-muted-foreground">฿{vatAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                    <div className="flex justify-between text-2xl font-black text-muted-foreground uppercase tracking-widest pt-4">
+                        <span>ยอดรวมสุทธิ</span>
+                        <span className="text-foreground">฿{subtotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                     </div>
 
-                    <div className="flex items-center justify-between text-lg font-bold font-bold uppercase tracking-widest">
-                         <div className="flex items-center gap-3">
-                            <span className="text-muted-foreground">หัก ณ ที่จ่าย</span>
-                            <select 
-                                value={whtRate} 
-                                onChange={(e) => setWhtRate(Number(e.target.value))}
-                                className="px-2 py-1 bg-muted/50 border border-border/10 rounded-lg text-muted-foreground text-base font-bold font-black outline-none focus:border-purple-500/50 transition-colors"
-                            >
-                                <option value="0" className="bg-card">0%</option>
-                                <option value="1" className="bg-card">1% (ขนส่ง)</option>
-                                <option value="3" className="bg-card">3% (บริการ)</option>
-                                <option value="5" className="bg-card">5% (ค่าเช่า)</option>
-                            </select>
-                         </div>
-                         <span className="text-rose-400">-฿{whtAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                    <div className="border-t border-border/5 pt-6 space-y-4">
+                        <Button 
+                            onClick={handleSubmit} 
+                            disabled={loading || selectedJobs.length === 0}
+                            className="w-full h-14 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-foreground font-bold rounded-2xl shadow-xl shadow-emerald-500/20 transition-all active:scale-[0.98]"
+                        >
+                            {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            สร้างใบแจ้งหนี้ (Create Invoice)
+                        </Button>
                     </div>
-
-                    <div className="border-t border-border/5 pt-6 flex justify-between items-end">
-                        <div className="space-y-1">
-                            <div className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest underline decoration-purple-500/30 underline-offset-4">ยอดชำระสุทธิ (Net Total)</div>
-                            <div className="text-base font-bold font-bold text-muted-foreground uppercase tracking-tighter">(Grand Total: {grandTotal.toLocaleString()})</div>
-                        </div>
-                        <div className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500 drop-shadow-sm">
-                            {netTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                        </div>
-                    </div>
-
-                    <Button 
-                        onClick={handleSubmit} 
-                        disabled={loading || selectedJobs.length === 0}
-                        className="w-full h-14 bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400 text-foreground font-bold rounded-2xl shadow-xl shadow-purple-500/20 transition-all active:scale-[0.98]"
-                    >
-                        {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        สร้างใบกำกับภาษี (Create Invoice)
-                    </Button>
                 </CardContent>
             </Card>
         </div>
@@ -391,4 +354,3 @@ function DateCallbackSelect({ date, setDate }: { date: Date | undefined, setDate
       </Popover>
     )
 }
-

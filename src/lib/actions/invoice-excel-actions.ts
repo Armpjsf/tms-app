@@ -187,7 +187,7 @@ export async function exportInvoiceExcel(invoiceId: string) {
         worksheet.getCell('I5').value = finalDoc.Master_Customers?.Address || finalDoc.Customer_Address || '-'
         worksheet.getCell('H6').value = `เลขที่ประจำตัวผู้เสียภาษี :  ${finalDoc.Master_Customers?.Tax_ID || finalDoc.Customer_Tax_ID || '-'}`
 
-        // 3. Visuals: Final Font Polish & Auto-fit logic
+        // Final Font Polish
         worksheet.eachRow((row) => {
             row.eachCell((cell) => {
                 if (!cell.font || cell.font.name !== 'Sarabun') {
@@ -196,18 +196,6 @@ export async function exportInvoiceExcel(invoiceId: string) {
                     cell.font = { name: 'Sarabun', size: fontSize, bold: isBold }
                 }
             })
-        })
-
-        // Simple Auto-fit Columns
-        worksheet.columns.forEach(column => {
-            let maxColumnLength = 0
-            if (column.eachCell) {
-                column.eachCell({ includeEmpty: true }, (cell) => {
-                    const columnLength = cell.value ? cell.value.toString().length : 10
-                    if (columnLength > maxColumnLength) maxColumnLength = columnLength
-                })
-                column.width = maxColumnLength < 12 ? 12 : maxColumnLength + 2
-            }
         })
 
         const buffer = await workbook.xlsx.writeBuffer()
