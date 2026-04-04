@@ -32,35 +32,13 @@ export async function exportInvoiceExcel(invoiceId: string) {
             tax_id: "0745559001353 (สำนักงานใหญ่)"
         })
 
-        // 2. Load Template
-        // Vercel deployment hardened path hunting logic
-        const pathsToTry = [
-            path.join(process.cwd(), 'src', 'lib', 'templates', 'invoice_template.xlsx'),
-            path.join(process.cwd(), 'public', 'templates', 'invoice_template.xlsx'),
-            path.join(process.cwd(), '.next', 'server', 'chunks', 'invoice_template.xlsx'),
-            path.resolve(__dirname, 'invoice_template.xlsx'),
-        ]
-
-        let templatePath = ""
-        for (const p of pathsToTry) {
-            if (fs.existsSync(p)) {
-                templatePath = p
-                break
-            }
-        }
-        
-        if (!templatePath) {
-            // Ultimate diagnostic if all fail
-            const rootFiles = fs.readdirSync(process.cwd()).join(', ')
-            throw new Error(`Excel template not found. Tried paths: ${pathsToTry.join(' | ')}. Root files: ${rootFiles}. Current: ${process.cwd()}`)
-        }
-
+        // 2. Load Template (Vercel Fix: Use Embedded Base64 Asset)
         const workbook = new ExcelJS.Workbook()
         try {
-            const templateBuffer = fs.readFileSync(templatePath)
+            const templateBuffer = Buffer.from(INVOICE_TEMPLATE_BASE64, 'base64')
             await workbook.xlsx.load(templateBuffer)
         } catch (readError: any) {
-            throw new Error(`Failed to read/load template: ${readError.message}`)
+            throw new Error(`Failed to load embedded template: ${readError.message}`)
         }
 
         const worksheet = workbook.getWorksheet(1)
