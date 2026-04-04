@@ -33,12 +33,26 @@ export async function exportInvoiceExcel(invoiceId: string) {
         })
 
         // 2. Load Template
-        // Vercel deployment hardened path logic
-        const templatePath = path.resolve(process.cwd(), 'public', 'templates', 'invoice_template.xlsx')
+        // Vercel deployment hardened path hunting logic
+        const pathsToTry = [
+            path.join(process.cwd(), 'src', 'lib', 'templates', 'invoice_template.xlsx'),
+            path.join(process.cwd(), 'public', 'templates', 'invoice_template.xlsx'),
+            path.join(process.cwd(), '.next', 'server', 'chunks', 'invoice_template.xlsx'),
+            path.resolve(__dirname, 'invoice_template.xlsx'),
+        ]
+
+        let templatePath = ""
+        for (const p of pathsToTry) {
+            if (fs.existsSync(p)) {
+                templatePath = p
+                break
+            }
+        }
         
-        if (!fs.existsSync(templatePath)) {
-            // Internal diagnostic for Vercel
-            throw new Error(`Excel template not found at: ${templatePath}. Current directory: ${process.cwd()}`)
+        if (!templatePath) {
+            // Ultimate diagnostic if all fail
+            const rootFiles = fs.readdirSync(process.cwd()).join(', ')
+            throw new Error(`Excel template not found. Tried paths: ${pathsToTry.join(' | ')}. Root files: ${rootFiles}. Current: ${process.cwd()}`)
         }
 
         const workbook = new ExcelJS.Workbook()
