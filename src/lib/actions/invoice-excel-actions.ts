@@ -32,7 +32,8 @@ export async function exportInvoiceExcel(invoiceId: string) {
         })
 
         // 2. Load Template
-        const templatePath = path.join(process.cwd(), 'src', 'lib', 'templates', 'invoice_template.xlsx')
+        // Fix: Use public folder for reliable access in Production (Vercel)
+        const templatePath = path.join(process.cwd(), 'public', 'templates', 'invoice_template.xlsx')
         const workbook = new ExcelJS.Workbook()
         await workbook.xlsx.readFile(templatePath)
         const worksheet = workbook.getWorksheet(1)
