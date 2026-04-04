@@ -33,6 +33,8 @@ export async function exportInvoiceExcel(invoiceId: string) {
         })
 
         // 2. Load Template (Vercel Fix: Use Embedded Base64 Asset)
+        console.log(`[DEBUG] Embedded Template available: ${!!INVOICE_TEMPLATE_BASE64}, length: ${INVOICE_TEMPLATE_BASE64?.length}`)
+        
         const workbook = new ExcelJS.Workbook()
         try {
             const templateBuffer = Buffer.from(INVOICE_TEMPLATE_BASE64, 'base64')
