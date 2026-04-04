@@ -213,8 +213,9 @@ export function InvoiceForm({ customers }: { customers: { Customer_ID: string; C
                                         </TableHead>
                                         <TableHead className="text-muted-foreground font-black uppercase tracking-widest text-base font-bold py-6">Job ID</TableHead>
                                         <TableHead className="text-muted-foreground font-black uppercase tracking-widest text-base font-bold py-6">วันที่</TableHead>
-                                        <TableHead className="text-muted-foreground font-black uppercase tracking-widest text-base font-bold py-6">เส้นทาง</TableHead>
-                                        <TableHead className="text-right text-muted-foreground font-black uppercase tracking-widest text-base font-bold py-6 pr-8">ราคา</TableHead>
+                                        <TableHead className="text-muted-foreground font-black uppercase tracking-widest text-base font-bold py-6 text-center">จำนวน</TableHead>
+                                        <TableHead className="text-muted-foreground font-black uppercase tracking-widest text-base font-bold py-6 text-right">ราคา/หน่วย</TableHead>
+                                        <TableHead className="text-right text-muted-foreground font-black uppercase tracking-widest text-base font-bold py-6 pr-8">ราคารวม</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -227,6 +228,11 @@ export function InvoiceForm({ customers }: { customers: { Customer_ID: string; C
                                                     : [...new Set([...prev, job.Job_ID])]
                                             );
                                         };
+
+                                        const qty = Number(job.Weight_Kg || job.Volume_Cbm || job.Loaded_Qty || 1)
+                                        const unitPrice = Number(job.Price_Per_Unit || 0)
+                                        const storedPrice = Number(job.Price_Cust_Total || 0)
+                                        const isPerItem = unitPrice > 0
 
                                         return (
                                             <TableRow 
@@ -244,19 +250,29 @@ export function InvoiceForm({ customers }: { customers: { Customer_ID: string; C
                                                         className="border-border/20 data-[state=checked]:bg-purple-600 data-[state=checked]:border-purple-600"
                                                     />
                                                 </TableCell>
-                                                <TableCell className="font-black text-muted-foreground text-lg font-bold py-5">{job.Job_ID}</TableCell>
+                                                <TableCell className="font-black text-muted-foreground text-lg font-bold py-5">
+                                                    <div className="flex flex-col">
+                                                        <span>{job.Job_ID}</span>
+                                                        <span className="text-[10px] uppercase opacity-50">{job.Route_Name}</span>
+                                                    </div>
+                                                </TableCell>
                                                 <TableCell className="text-muted-foreground font-bold">{new Date(job.Plan_Date).toLocaleDateString('th-TH')}</TableCell>
-                                                <TableCell className="max-w-[200px] truncate text-muted-foreground font-medium" title={job.Route_Name}>{job.Route_Name}</TableCell>
+                                                <TableCell className="text-center font-bold text-muted-foreground">
+                                                    {isPerItem ? qty.toLocaleString() : '1 (เที่ยว)'}
+                                                </TableCell>
+                                                <TableCell className="text-right font-bold text-muted-foreground">
+                                                    {isPerItem ? unitPrice.toLocaleString(undefined, { minimumFractionDigits: 2 }) : '-'}
+                                                </TableCell>
                                                 <TableCell className="text-right font-black text-muted-foreground pr-8">
                                                     <div className="flex flex-col items-end">
                                                         <div className="flex items-center gap-2">
-                                                            {Number(job.Price_Cust_Total || 0) === 0 && Number(job.Price_Per_Unit || 0) > 0 && Number(job.Loaded_Qty || 0) > 0 && (
+                                                            {storedPrice === 0 && isPerItem && (
                                                                 <div className="p-1 px-2 bg-amber-500/20 text-amber-500 rounded text-[9px] font-black animate-pulse flex items-center gap-1 uppercase tracking-tight">
-                                                                    <Zap size={10} /> Suggested
+                                                                    <Zap size={10} /> Auto-Cal
                                                                 </div>
                                                             )}
-                                                            <span className={cn(Number(job.Price_Cust_Total || 0) === 0 ? "opacity-30" : "text-foreground")}>
-                                                                {Number(job.Price_Cust_Total || 0).toLocaleString()}
+                                                            <span className={cn(storedPrice === 0 && !isPerItem ? "opacity-30" : "text-foreground")}>
+                                                                {(storedPrice || (isPerItem ? qty * unitPrice : 0)).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                                             </span>
                                                         </div>
                                                     </div>

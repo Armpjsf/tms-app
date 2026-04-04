@@ -3,8 +3,7 @@
 import { createAdminClient } from '@/utils/supabase/server'
 import ExcelJS from 'exceljs'
 import { getSystemSetting } from './system-settings-actions'
-import fs from 'fs'
-import path from 'path'
+import { INVOICE_TEMPLATE_BASE64 } from '../templates/invoice_template_base64'
 
 export async function exportInvoiceExcel(invoiceId: string) {
     try {
@@ -16,14 +15,7 @@ export async function exportInvoiceExcel(invoiceId: string) {
         const finalDoc = invoice || bn
         if (!finalDoc) throw new Error("ไม่พบข้อมูลเอกสาร")
 
-        // 1.1 Data Source Selection (Snapshot preferred)
-        let jobs: any[] = []
-        if (invoice?.Items_JSON && Array.isArray(invoice.Items_JSON)) {
-            jobs = invoice.Items_JSON
-        } else {
-            const { data: dbJobs } = await supabase.from('Jobs_Main').select('*').or(`Invoice_ID.eq."${invoiceId}",Billing_Note_ID.eq."${invoiceId}"`)
-            jobs = dbJobs || []
-        }
+        const { data: jobs } = await supabase.from('Jobs_Main').select('*').or(`Invoice_ID.eq."${invoiceId}",Billing_Note_ID.eq."${invoiceId}"`)
         if (!jobs || jobs.length === 0) throw new Error("ไม่พบรายการงาน")
 
         const accountingProfile = await getSystemSetting('accounting_profile', {
@@ -32,13 +24,15 @@ export async function exportInvoiceExcel(invoiceId: string) {
             tax_id: "0745559001353 (สำนักงานใหญ่)"
         })
 
-        // 2. Load Template (Using standard fs read)
-        const templatePath = path.join(process.cwd(), 'src', 'lib', 'templates', 'invoice_template.xlsx')
-        if (!fs.existsSync(templatePath)) throw new Error(`Template file not found at ${templatePath}`)
-        
-        const fileBuffer = fs.readFileSync(templatePath)
+        // 2. Load Template (Vercel Fix: Use Embedded Base64 Asset)
         const workbook = new ExcelJS.Workbook()
-        await workbook.xlsx.load(fileBuffer)
+        try {
+            const templateBuffer = Buffer.from(INVOICE_TEMPLATE_BASE64, 'base64')
+            await workbook.xlsx.load(templateBuffer)
+        } catch (readError: any) {
+            console.error("[DEBUG] Failed to load template buffer:", readError.message)
+            throw new Error("ระบบไม่สามารถประมวลผลไฟล์แม่แบบได้")
+        }
         
         const worksheet = workbook.getWorksheet(1)
         if (!worksheet) throw new Error("Worksheet not found")
@@ -102,7 +96,7 @@ export async function exportInvoiceExcel(invoiceId: string) {
         worksheet.getCell('H6').value = `เลขที่ประจำตัวผู้เสียภาษี :  ${finalDoc.Master_Customers?.Tax_ID || finalDoc.Customer_Tax_ID || '-'}`
 
         // Dynamic Table Headers (H7 to L7)
-        worksheet.getCell('H7').value = 'ค่าขนส่ง'
+        worksheet.getCell('H7').value = 'ค่าจ้าง'
         worksheet.getCell('I7').value = hasExtraDrop ? 'เพิ่มจุดลงของ' : '-'
         worksheet.getCell('J7').value = hasLabor ? 'แรงงานยกของ' : '-'
         worksheet.getCell('K7').value = hasWait ? 'รอลงเกินเวลา' : '-'
@@ -126,15 +120,7 @@ export async function exportInvoiceExcel(invoiceId: string) {
             const co2 = Number(((Number(job.Est_Distance_KM) || 0) * 0.12).toFixed(2))
             worksheet.getCell(`G${r}`).value = co2
             
-            // Financial Data Mapping
-            // Fallback: If Price_Cust_Total is 0, try recalculating from Price_Per_Unit
-            let basePrice = Number(job.Price_Cust_Total || 0)
-            if (basePrice === 0) {
-                const qty = Number(job.Weight_Kg || job.Volume_Cbm || job.Loaded_Qty || 1)
-                const unitPrice = Number(job.Price_Per_Unit || 0)
-                if (unitPrice > 0) basePrice = Number((qty * unitPrice).toFixed(2))
-            }
-
+            const basePrice = Number(job.Price_Cust_Total || 0)
             const extraDrop = hasExtraDrop ? (Number(job.Price_Cust_Extra || 0) + getExtraJsonValue(job, CATEGORIES.EXTRA_DROP)) : 0
             const labor = hasLabor ? (Number(job.Charge_Labor || 0) + getExtraJsonValue(job, CATEGORIES.LABOR)) : 0
             const waitTime = hasWait ? (Number(job.Charge_Wait || 0) + getExtraJsonValue(job, CATEGORIES.WAIT)) : 0
