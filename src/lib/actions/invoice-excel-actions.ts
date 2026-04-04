@@ -120,7 +120,18 @@ export async function exportInvoiceExcel(invoiceId: string) {
             const co2 = Number(((Number(job.Est_Distance_KM) || 0) * 0.12).toFixed(2))
             worksheet.getCell(`G${r}`).value = co2
             
-            const basePrice = Number(job.Price_Cust_Total || 0)
+            // Financial Data Mapping
+            // Priority: Price_Cust_Total -> (Price_Per_Unit * Quantity) -> 0
+            let basePrice = Number(job.Price_Cust_Total || 0)
+            
+            if (basePrice === 0) {
+                const qty = Number(job.Weight_Kg || job.Volume_Cbm || job.Loaded_Qty || 0)
+                const unitPrice = Number(job.Price_Per_Unit || 0)
+                if (unitPrice > 0 && qty > 0) {
+                    basePrice = Number((qty * unitPrice).toFixed(2))
+                }
+            }
+
             const extraDrop = hasExtraDrop ? (Number(job.Price_Cust_Extra || 0) + getExtraJsonValue(job, CATEGORIES.EXTRA_DROP)) : 0
             const labor = hasLabor ? (Number(job.Charge_Labor || 0) + getExtraJsonValue(job, CATEGORIES.LABOR)) : 0
             const waitTime = hasWait ? (Number(job.Charge_Wait || 0) + getExtraJsonValue(job, CATEGORIES.WAIT)) : 0
@@ -128,11 +139,11 @@ export async function exportInvoiceExcel(invoiceId: string) {
 
             const rowTotal = basePrice + extraDrop + labor + waitTime + other
 
-            worksheet.getCell(`H${r}`).value = basePrice > 0 ? basePrice : null
-            worksheet.getCell(`I${r}`).value = extraDrop > 0 ? extraDrop : null
-            worksheet.getCell(`J${r}`).value = labor > 0 ? labor : null
-            worksheet.getCell(`K${r}`).value = waitTime > 0 ? waitTime : null
-            worksheet.getCell(`L${r}`).value = other > 0 ? other : null
+            worksheet.getCell(`H${r}`).value = basePrice > 0 ? basePrice : (basePrice === 0 ? 0 : null)
+            worksheet.getCell(`I${r}`).value = extraDrop > 0 ? extraDrop : (extraDrop === 0 ? null : null)
+            worksheet.getCell(`J${r}`).value = labor > 0 ? labor : (labor === 0 ? null : null)
+            worksheet.getCell(`K${r}`).value = waitTime > 0 ? waitTime : (waitTime === 0 ? null : null)
+            worksheet.getCell(`L${r}`).value = other > 0 ? other : (other === 0 ? null : null)
             worksheet.getCell(`M${r}`).value = rowTotal
             
             // Accumulate totals
