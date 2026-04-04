@@ -1,6 +1,7 @@
 'use server'
 
 import { createAdminClient } from "@/utils/supabase/server"
+import { getNextInvoiceId } from "./invoices"
 import { BillingNote } from "./billing"
 import { sendBillingEmail } from "../actions/email-actions"
 import { Job } from "@/types/database"
@@ -52,11 +53,8 @@ export async function generateMonthlyBillingNotes() {
                 return sum + base + extra
             }, 0)
 
-            // Generate BN ID
-            const dateObj = new Date()
-            const ym = dateObj.toISOString().slice(0, 7).replace('-', '')
-            const randomSuffix = Math.floor(Math.random() * 10000).toString().padStart(4, '0')
-            const billingNoteId = `BN-AUTO-${ym}-${randomSuffix}`
+            // Generate Structured ID: INV_[Branch]-[YYYYMM]-[Counter] (Consistent with Manual)
+            const billingNoteId = await getNextInvoiceId(customerJobs[0].Branch_ID)
 
             // Insert Billing Note
             const { error: insertError } = await supabase

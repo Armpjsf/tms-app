@@ -2,7 +2,8 @@ import { getInvoiceById } from "@/lib/supabase/invoices"
 import { PrintButton } from "@/components/billing/print-button"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft } from "lucide-react"
+import { ArrowLeft, CheckCircle2 } from "lucide-react"
+import { ConfirmInvoiceButton } from "@/components/billing/confirm-invoice-button"
 import { cookies } from "next/headers"
 import { dictionaries, Language } from "@/lib/i18n/dictionaries"
 import { createClient } from "@/utils/supabase/server"
@@ -51,7 +52,15 @@ export default async function InvoiceViewPage({ params }: { params: Promise<{ id
                     <ArrowLeft className="mr-2 h-4 w-4" /> {dict.common?.back || 'Back'}
                 </Button>
             </Link>
-            <PrintButton />
+            <div className="flex gap-3">
+                {invoice.Status === 'Confirmed' && (
+                    <div className="flex items-center gap-2 px-4 py-2 bg-emerald-500/10 text-emerald-500 rounded-lg border border-emerald-500/20 font-black uppercase text-xs">
+                        <CheckCircle2 size={16} /> ยืนยันความถูกต้องแล้ว
+                    </div>
+                )}
+                <ConfirmInvoiceButton invoiceId={invoice.Invoice_ID} status={invoice.Status} />
+                <PrintButton />
+            </div>
         </div>
 
         {/* Invoice Paper */}

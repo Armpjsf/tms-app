@@ -93,8 +93,19 @@ export async function createJob(data: JobFormData) {
     if (vehicle) subId = vehicle.Sub_ID || null
   }
 
+  // Get Customer Unit Price for auto-calculation if total is 0
+  let unitPrice = 0
+  if ((!data.Price_Cust_Total || Number(data.Price_Cust_Total) === 0) && data.Customer_ID) {
+    const { data: customer } = await supabase
+      .from('Master_Customers')
+      .select('Price_Per_Unit')
+      .eq('Customer_ID', data.Customer_ID)
+      .single()
+    if (customer) unitPrice = customer.Price_Per_Unit || 0
+  }
+
   // Attempt 1
-  const { error: error1 } = await supabase.from('Jobs_Main').insert(buildInsertPayload(data, driverName, subId))
+  const { error: error1 } = await supabase.from('Jobs_Main').insert(buildInsertPayload(data, driverName, subId, unitPrice))
   
   if (!error1) {
       // Send push notification to the assigned driver
@@ -114,7 +125,7 @@ export async function createJob(data: JobFormData) {
   // If duplicate key (23505), try regenerating ID once
   if (error1.code === '23505') {
       const newId = `${data.Job_ID}-${Math.floor(Math.random() * 1000)}`
-      const { error: error2 } = await supabase.from('Jobs_Main').insert(buildInsertPayload({ ...data, Job_ID: newId }, driverName, subId))
+      const { error: error2 } = await supabase.from('Jobs_Main').insert(buildInsertPayload({ ...data, Job_ID: newId }, driverName, subId, unitPrice))
       
       if (!error2) {
           revalidatePath('/planning')
@@ -126,7 +137,17 @@ export async function createJob(data: JobFormData) {
   return { success: false, message: `Failed to create job: ${error1.message}` }
 }
 
-function buildInsertPayload(data: JobFormData, driverName: string, subId: string | null) {
+function buildInsertPayload(data: JobFormData, driverName: string, subId: string | null, unitPrice: number = 0) {
+  let custTotal = Number(data.Price_Cust_Total) || 0
+  
+  // Auto-calculate if total is 0 but we have quantity and unit price
+  if (custTotal === 0 && unitPrice > 0) {
+      const qty = Number(data.Weight_Kg || data.Volume_Cbm || 0)
+      if (qty > 0) {
+          custTotal = Number((qty * unitPrice).toFixed(2))
+      }
+  }
+
   return {
       Job_ID: data.Job_ID,
       Plan_Date: data.Plan_Date,
@@ -141,7 +162,7 @@ function buildInsertPayload(data: JobFormData, driverName: string, subId: string
       Job_Status: 'New',
       Cargo_Type: data.Cargo_Type,
       Notes: data.Notes,
-      Price_Cust_Total: data.Price_Cust_Total || 0,
+      Price_Cust_Total: custTotal,
       Cost_Driver_Total: data.Cost_Driver_Total || 0,
       original_origins_json: parseIfString(data.original_origins_json),
       original_destinations_json: parseIfString(data.original_destinations_json),
@@ -229,7 +250,7 @@ export async function createBulkJobs(jobs: Partial<JobFormData>[]) {
       const rowKeys = Object.keys(row)
       for (const key of keys) {
         const foundKey = rowKeys.find(k => k.toLowerCase().replace(/\s+/g, '_') === key.toLowerCase().replace(/\s+/g, '_'))
-        const rowAsRecord = row as unknown as Record<string, unknown>
+        const rowAsRecord = row as Record<string, unknown>
         if (foundKey && rowAsRecord[foundKey] !== undefined && rowAsRecord[foundKey] !== null) {
           return rowAsRecord[foundKey]
         }
@@ -302,13 +323,31 @@ export async function createBulkJobs(jobs: Partial<JobFormData>[]) {
     return sanitized
   }).filter(j => j.Customer_Name)
 
-  if (cleanData.length === 0) {
+  // Fetch Customer unit prices for auto-calculation
+  const uniqueCustIds = Array.from(new Set(cleanData.filter(j => j.Customer_ID).map(j => j.Customer_ID)))
+  const { data: custPrices } = await supabase.from('Master_Customers').select('Customer_ID, Price_Per_Unit').in('Customer_ID', uniqueCustIds)
+  const customerPriceMap = new Map(custPrices?.map(c => [c.Customer_ID, c.Price_Per_Unit]) || [])
+
+  // Apply Auto-calculation
+  const finalizedData = cleanData.map(j => {
+    let total = Number(j.Price_Cust_Total) || 0
+    if (total === 0 && j.Customer_ID) {
+        const unitPrice = customerPriceMap.get(j.Customer_ID) || 0
+        const qty = Number(j.Weight_Kg || j.Volume_Cbm || 0)
+        if (unitPrice > 0 && qty > 0) {
+            total = Number((qty * unitPrice).toFixed(2))
+        }
+    }
+    return { ...j, Price_Cust_Total: total }
+  })
+
+  if (finalizedData.length === 0) {
      return { success: false, message: 'ไม่พบข้อมูลที่ถูกต้อง (ต้องระบุชื่อลูกค้า)' }
   }
 
   const { error } = await supabase
     .from('Jobs_Main')
-    .upsert(cleanData, { onConflict: 'Job_ID' })
+    .upsert(finalizedData, { onConflict: 'Job_ID' })
 
   if (error) {
     return { success: false, message: `Failed to import: ${error.message}` }
@@ -316,7 +355,7 @@ export async function createBulkJobs(jobs: Partial<JobFormData>[]) {
 
   // Auto-save locations from the batch
   const locationsToSave: { name: string, lat: number, lng: number }[] = []
-  cleanData.forEach(j => {
+  finalizedData.forEach(j => {
       if (j.Origin_Location && j.Pickup_Lat && j.Pickup_Lon) {
           locationsToSave.push({ name: j.Origin_Location, lat: j.Pickup_Lat, lng: j.Pickup_Lon })
       }
@@ -333,7 +372,7 @@ export async function createBulkJobs(jobs: Partial<JobFormData>[]) {
   // Audit: Log any backdated job entries
   const today = new Date()
   today.setHours(0, 0, 0, 0)
-  const backdatedJobs = cleanData.filter(j => {
+  const backdatedJobs = finalizedData.filter(j => {
     if (!j.Plan_Date) return false
     const planDate = new Date(j.Plan_Date)
     planDate.setHours(0, 0, 0, 0)
@@ -357,14 +396,14 @@ export async function createBulkJobs(jobs: Partial<JobFormData>[]) {
           created_at_actual: new Date().toISOString(),
           note: `Admin created job for past date (${j.Plan_Date}) on ${new Date().toLocaleDateString('th-TH')}`
         }
-      }).catch(() => {
+      }).catch((_err: unknown) => {
           // Log failed
       })
     }
   }
 
   revalidatePath('/planning')
-  return { success: true, message: `Successfully imported ${cleanData.length} jobs` }
+  return { success: true, message: `Successfully imported ${finalizedData.length} jobs` }
 }
 
 export async function updateJob(jobId: string, data: Partial<JobFormData>) {
@@ -402,6 +441,20 @@ export async function updateJob(jobId: string, data: Partial<JobFormData>) {
     if (vehicle) updateData.Sub_ID = vehicle.Sub_ID || null
   }
   
+  // Auto-calculate Price_Cust_Total for updates if total is 0 and we have unit price info
+  if ((!updateData.Price_Cust_Total || Number(updateData.Price_Cust_Total) === 0)) {
+     const targetCustomerId = updateData.Customer_ID || (await supabase.from('Jobs_Main').select('Customer_ID').eq('Job_ID', jobId).single()).data?.Customer_ID
+     if (targetCustomerId) {
+         const { data: customer } = await supabase.from('Master_Customers').select('Price_Per_Unit').eq('Customer_ID', targetCustomerId).single()
+         const unitPrice = customer?.Price_Per_Unit || 0
+         const qty = Number(updateData.Weight_Kg || updateData.Volume_Cbm || (await supabase.from('Jobs_Main').select('Weight_Kg').eq('Job_ID', jobId).single()).data?.Weight_Kg || 0)
+         
+         if (unitPrice > 0 && qty > 0) {
+             updateData.Price_Cust_Total = Number((qty * unitPrice).toFixed(2))
+         }
+     }
+  }
+
   const { error } = await supabase
     .from('Jobs_Main')
     .update(updateData)

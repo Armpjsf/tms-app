@@ -89,7 +89,6 @@ export async function getInvoices(page = 1, limit = 20, query = '') {
         Type: 'BillingNote'
     }))
 
-    const todayStr = new Date().toISOString().split('T')[0]
     const todayNum = new Date().setHours(0,0,0,0)
 
     const combined = [...mappedInvoices, ...mappedBN].map(doc => {
@@ -117,6 +116,51 @@ export async function getInvoices(page = 1, limit = 20, query = '') {
     console.error('Error fetching unified invoices:', err)
     return { data: [], count: 0 }
   }
+}
+
+export async function getNextInvoiceId(branchId: string | null) {
+    const supabase = createAdminClient()
+    
+    // 1. Resolve Branch Code (Extract from parentheses in Branch_Name)
+    let branchCode = 'HQ'
+    if (branchId && branchId !== 'All') {
+        const { data: branch } = await supabase
+            .from('Master_Branches')
+            .select('Branch_Name')
+            .eq('Branch_ID', branchId)
+            .maybeSingle()
+        
+        if (branch?.Branch_Name) {
+            const match = branch.Branch_Name.match(/\(([^)]+)\)/)
+            branchCode = match ? match[1].toUpperCase() : branch.Branch_Name.slice(0, 3).toUpperCase()
+        }
+    }
+
+    const now = new Date()
+    const yyyy = now.getFullYear()
+    const mm = String(now.getMonth() + 1).padStart(2, '0')
+    const prefix = `INV_${branchCode}-${yyyy}${mm}-`
+    const yearlyPrefix = `INV_${branchCode}-${yyyy}`
+
+    // Search for the last sequence in the current year for this branch
+    const { data: lastInvoice } = await supabase
+        .from('invoices')
+        .select('Invoice_ID')
+        .like('Invoice_ID', `${yearlyPrefix}%`)
+        .order('Invoice_ID', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+
+    let nextNum = 1
+    if (lastInvoice) {
+        const parts = lastInvoice.Invoice_ID.split('-')
+        const lastSeq = parseInt(parts[parts.length - 1], 10)
+        if (!isNaN(lastSeq)) {
+            nextNum = lastSeq + 1
+        }
+    }
+
+    return `${prefix}${String(nextNum).padStart(3, '0')}`
 }
 
 export async function getInvoiceById(id: string) {
@@ -147,17 +191,14 @@ export async function createInvoice(invoice: Partial<Invoice>) {
     const isAdminUser = await isAdmin()
     const supabase = isAdminUser ? createAdminClient() : await createClient()
     
-    // Auto-assign Branch_ID if missing
+    // 1. Auto-assign Branch_ID if missing
     if (!invoice.Branch_ID) {
         invoice.Branch_ID = await getUserBranchId()
     }
 
-    // Generate ID if not present (simple logic for now)
+    // 2. Generate Structured ID: INV_[Branch]-[YYYYMM]-[Counter]
     if (!invoice.Invoice_ID) {
-        // In real app, use a sequence or generate unique ID
-        const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '')
-        const random = Math.floor(Math.random() * 1000)
-        invoice.Invoice_ID = `INV-${dateStr}-${random}`
+        invoice.Invoice_ID = await getNextInvoiceId(invoice.Branch_ID ?? null)
     }
 
     const { data, error } = await supabase

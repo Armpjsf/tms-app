@@ -2,7 +2,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -28,14 +28,17 @@ import { th } from "date-fns/locale"
 import { cn } from "@/lib/utils"
 
 export function InvoiceForm({ customers }: { customers: { Customer_ID: string; Customer_Name: string }[] }) {
-  const router = useRouter()
-  const [loading, setLoading] = useState(false)
-  const [fetchingJobs, setFetchingJobs] = useState(false)
+  const searchParams = useSearchParams()
+  const initialCustomerId = searchParams.get('customer') || ""
+  const initialJobIds = searchParams.get('jobs')?.split(',') || []
   
-  // Data State
-  const [customerId, setCustomerId] = useState("")
+  // Navigation
+  const router = useRouter()
+
+  // State
+  const [customerId, setCustomerId] = useState(initialCustomerId)
   const [availableJobs, setAvailableJobs] = useState<(Record<string, any>)[]>([])
-  const [selectedJobIds, setSelectedJobIds] = useState<string[]>([])
+  const [selectedJobIds, setSelectedJobIds] = useState<string[]>(initialJobIds)
   
   // Invoice Details
   const [issueDate, setIssueDate] = useState<Date>(new Date())
@@ -44,6 +47,10 @@ export function InvoiceForm({ customers }: { customers: { Customer_ID: string; C
   const [whtRate, setWhtRate] = useState(0)
   const [notes, setNotes] = useState("")
 
+  // Status
+  const [fetchingJobs, setFetchingJobs] = useState(false)
+  const [loading, setLoading] = useState(false)
+
   // Fetch Jobs when Customer Changes
   useEffect(() => {
     if (customerId) {
@@ -51,14 +58,16 @@ export function InvoiceForm({ customers }: { customers: { Customer_ID: string; C
         getBillableJobsAction(customerId).then(jobs => {
             setAvailableJobs(jobs || [])
             setFetchingJobs(false)
-            // Auto Select All? Maybe not.
-            setSelectedJobIds([])
+            // If we have initial jobs from URL, keep them. Otherwise clear.
+            if (initialJobIds.length === 0) {
+                setSelectedJobIds([])
+            }
         })
     } else {
         setAvailableJobs([])
         setSelectedJobIds([])
     }
-  }, [customerId])
+  }, [customerId, initialJobIds.length])
 
   const parsePrice = (val: string | number | null | undefined) => {
     if (typeof val === 'number') return val
@@ -67,7 +76,14 @@ export function InvoiceForm({ customers }: { customers: { Customer_ID: string; C
   }
 
   const selectedJobs = availableJobs.filter(j => selectedJobIds.includes(j.Job_ID))
-  const subtotal = selectedJobs.reduce((sum, job) => sum + parsePrice(job.Price_Cust_Total), 0)
+  const subtotal = selectedJobs.reduce((sum, job) => {
+      const storedPrice = parsePrice(job.Price_Cust_Total)
+      if (storedPrice > 0) return sum + storedPrice
+      
+      // Auto-calculate for subtotal if stored price is 0
+      const calculatedPrice = (Number(job.Price_Per_Unit || 0) * Number(job.Loaded_Qty || 0))
+      return sum + calculatedPrice
+  }, 0)
   const vatAmount = subtotal * (vatRate / 100)
   const grandTotal = subtotal + vatAmount
   const whtAmount = subtotal * (whtRate / 100)
@@ -117,18 +133,18 @@ export function InvoiceForm({ customers }: { customers: { Customer_ID: string; C
                     <CustomerAutocomplete 
                         value={customerId}
                         onChange={setCustomerId}
-                        customers={customers}
+                        customers={customers as any}
                         onSelect={(c) => setCustomerId(c.Customer_ID)}
                         className="bg-muted/50 border-border/10 rounded-2xl h-14 font-bold text-muted-foreground placeholder:text-muted-foreground focus:ring-purple-500/20"
                     />
                 </div>
                 <div className="space-y-3">
                     <Label className="text-muted-foreground font-black uppercase tracking-widest text-base font-bold">วันที่ออกเอกสาร (Issue Date)</Label>
-                    <DateCallbackSelect date={issueDate} setDate={setIssueDate} />
+                    <DateCallbackSelect date={issueDate} setDate={(d) => d && setIssueDate(d)} />
                 </div>
                 <div className="space-y-3">
                     <Label className="text-muted-foreground font-black uppercase tracking-widest text-base font-bold">วันครบกำหนด (Due Date)</Label>
-                    <DateCallbackSelect date={dueDate} setDate={setDueDate} />
+                    <DateCallbackSelect date={dueDate} setDate={(d) => d && setDueDate(d)} />
                 </div>
             </CardContent>
         </Card>

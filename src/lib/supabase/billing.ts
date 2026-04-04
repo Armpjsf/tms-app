@@ -303,22 +303,57 @@ export async function getBillingNoteByIdWithJobs(id: string) {
         const admin = await isAdmin()
         const supabase = admin ? await createAdminClient() : await createClient()
         
-        // 1. Get Billing Note
-        const { data: note, error: noteError } = await supabase
-            .from('Billing_Notes')
-            .select('*')
-            .eq('Billing_Note_ID', id)
-            .single()
-        
-        if (noteError) throw noteError
+        let note: any = null
+        let jobs: any[] = []
 
-        // 2. Get Associated Jobs
-        const { data: jobs, error: jobsError } = await supabase
-            .from('Jobs_Main')
-            .select('*, extra_costs_json')
-            .eq('Billing_Note_ID', id)
-        
-        if (jobsError) throw jobsError
+        // 1. Detect Type and Get Data
+        if (id.startsWith('INV-')) {
+            // It's an Invoice ID
+            const { data: inv, error: invError } = await supabase
+                .from('invoices')
+                .select('*, Master_Customers(*)')
+                .eq('Invoice_ID', id)
+                .single()
+            
+            if (invError) throw invError
+            
+            note = {
+                Billing_Note_ID: inv.Invoice_ID,
+                Customer_Name: inv.Master_Customers?.Customer_Name || inv.Customer_Name,
+                Billing_Date: inv.Issue_Date,
+                Due_Date: inv.Due_Date,
+                Total_Amount: inv.Grand_Total,
+                Status: inv.Status,
+                Customer_Address: inv.Master_Customers?.Address,
+                Customer_Tax_ID: inv.Master_Customers?.Tax_ID,
+                Remarks: inv.Notes
+            }
+
+            if (inv.Items_JSON && Array.isArray(inv.Items_JSON)) {
+                jobs = inv.Items_JSON
+            }
+        } else {
+            // It's a Billing Note ID (or fallback)
+            const { data: bn, error: bnError } = await supabase
+                .from('Billing_Notes')
+                .select('*')
+                .eq('Billing_Note_ID', id)
+                .single()
+            
+            if (bnError) throw bnError
+            note = bn
+        }
+
+        // 2. Get Jobs if not already loaded from snapshot
+        if (jobs.length === 0) {
+            const { data: dbJobs, error: jobsError } = await supabase
+                .from('Jobs_Main')
+                .select('*, extra_costs_json')
+                .or(`Billing_Note_ID.eq."${id}",Invoice_ID.eq."${id}"`)
+            
+            if (jobsError) throw jobsError
+            jobs = dbJobs || []
+        }
 
         // 3. Get Accounting Profile (New priority)
         const { data: acctData } = await supabase

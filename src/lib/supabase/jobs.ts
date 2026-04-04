@@ -571,11 +571,30 @@ export async function createJob(jobData: Partial<Job>) {
         const randomSuffix = Math.floor(Math.random() * 10000).toString().padStart(4, '0')
         const newJobId = `JOB-${dateStr}-${randomSuffix}`
 
+        const branchId = await getUserBranchId() || 'HQ'
+        let custTotal = Number(jobData.Price_Cust_Total) || 0
+
+        // Auto-calculate if total is 0 but we have customer and quantity
+        if (custTotal === 0 && jobData.Customer_ID) {
+            const { data: customer } = await supabase
+                .from('Master_Customers')
+                .select('Price_Per_Unit')
+                .eq('Customer_ID', jobData.Customer_ID)
+                .single()
+            if (customer?.Price_Per_Unit) {
+                const qty = Number(jobData.Weight_Kg || jobData.Volume_Cbm || jobData.Loaded_Qty || 0)
+                if (qty > 0) {
+                    custTotal = Number((qty * customer.Price_Per_Unit).toFixed(2))
+                }
+            }
+        }
+
         const sanitized = sanitizeJobData({
             ...jobData,
             Job_ID: newJobId,
             Job_Status: 'New',
-            Branch_ID: await getUserBranchId() || 'HQ',
+            Branch_ID: branchId,
+            Price_Cust_Total: custTotal,
             Created_At: new Date().toISOString()
         })
 
@@ -680,11 +699,12 @@ export async function getAllVehicles() {
 }
 
 // ดึงข้อมูลสำหรับหน้า Billing (Completed/Delivered)
-export async function getJobsForBilling(startDate?: string, endDate?: string): Promise<Job[]> {
+export async function getJobsForBilling(explicitCustomerId?: string, startDate?: string, endDate?: string): Promise<Job[]> {
     try {
         const isAdmin = await isSuperAdmin()
         const branchId = await getUserBranchId()
-        const customerId = await getCustomerId()
+        const sessionCustomerId = await getCustomerId()
+        const customerId = explicitCustomerId || sessionCustomerId
         const supabase = isAdmin ? await createAdminClient() : await createClient()
 
         let dbQuery = supabase
@@ -821,21 +841,31 @@ export async function getDriverDashboardStats(driverId: string) {
   }
 }
 
-// Get billable jobs for a customer
-export async function getBillableJobs(customerId: string) {
+// Get billable jobs (Complete/Delivered and NOT yet invoiced)
+export async function getBillableJobs(customerId?: string, startDate?: string, endDate?: string) {
   try {
     const isAdmin = await isSuperAdmin()
     const branchId = await getUserBranchId()
     const supabase = isAdmin ? await createAdminClient() : await createClient()
 
-    // Get jobs that are Complete/Delivered and NOT yet invoiced
     let dbQuery = supabase
       .from('Jobs_Main')
       .select('*')
-      .eq('Customer_ID', customerId)
       .is('Invoice_ID', null) 
       .is('Billing_Note_ID', null)
       .in('Job_Status', ['Completed', 'Delivered'])
+
+    if (customerId && customerId !== 'all') {
+        dbQuery = dbQuery.eq('Customer_ID', customerId)
+    }
+
+    if (startDate) {
+        dbQuery = dbQuery.gte('Plan_Date', startDate)
+    }
+
+    if (endDate) {
+        dbQuery = dbQuery.lte('Plan_Date', endDate)
+    }
 
     if (branchId && branchId !== 'All') {
         dbQuery = dbQuery.eq('Branch_ID', branchId)
@@ -843,29 +873,31 @@ export async function getBillableJobs(customerId: string) {
         return []
     }
 
-    const { data } = await dbQuery
-      .order('Plan_Date', { ascending: true })
+    const { data, error } = await dbQuery
+      .order('Plan_Date', { ascending: false })
 
-    if (!data || data.length === 0) {
+    if (error || !data || data.length === 0) {
       return []
     }
 
-    // Safer approach: Map unit prices
+    // Map unit prices from Master_Customers
     try {
+        const uniqueCustomerIds = Array.from(new Set(data.filter(j => j.Customer_ID).map(j => j.Customer_ID)))
+        
         const { data: customerPrices } = await supabase
             .from('Master_Customers')
             .select('Customer_ID, Price_Per_Unit')
-            .eq('Customer_ID', customerId)
-            .single()
+            .in('Customer_ID', uniqueCustomerIds)
 
         if (customerPrices) {
+            const priceMap = new Map(customerPrices.map(c => [c.Customer_ID, c.Price_Per_Unit]))
             return data.map(job => ({
                 ...job,
-                Price_Per_Unit: (customerPrices as { Price_Per_Unit: number }).Price_Per_Unit || 0
+                Price_Per_Unit: priceMap.get(job.Customer_ID) || 0
             })) as Job[]
         }
     } catch (e) {
-        console.error("Mapping unit prices failed for billing:", e)
+        console.error("Mapping unit prices failed for billable jobs:", e)
     }
     
     return data as Job[]
