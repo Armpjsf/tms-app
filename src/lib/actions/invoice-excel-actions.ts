@@ -4,6 +4,7 @@ import { createAdminClient } from '@/utils/supabase/server'
 import ExcelJS from 'exceljs'
 import { getSystemSetting } from './system-settings-actions'
 import path from 'path'
+import fs from 'fs'
 
 export async function exportInvoiceExcel(invoiceId: string) {
     try {
@@ -32,12 +33,24 @@ export async function exportInvoiceExcel(invoiceId: string) {
         })
 
         // 2. Load Template
-        // Fix: Use public folder for reliable access in Production (Vercel)
-        const templatePath = path.join(process.cwd(), 'public', 'templates', 'invoice_template.xlsx')
+        // Vercel deployment hardened path logic
+        const templatePath = path.resolve(process.cwd(), 'public', 'templates', 'invoice_template.xlsx')
+        
+        if (!fs.existsSync(templatePath)) {
+            // Internal diagnostic for Vercel
+            throw new Error(`Excel template not found at: ${templatePath}. Current directory: ${process.cwd()}`)
+        }
+
         const workbook = new ExcelJS.Workbook()
-        await workbook.xlsx.readFile(templatePath)
+        try {
+            const templateBuffer = fs.readFileSync(templatePath)
+            await workbook.xlsx.load(templateBuffer)
+        } catch (readError: any) {
+            throw new Error(`Failed to read/load template: ${readError.message}`)
+        }
+
         const worksheet = workbook.getWorksheet(1)
-        if (!worksheet) throw new Error("Worksheet not found")
+        if (!worksheet) throw new Error("Worksheet not found in template")
 
         // 3. Clear Data Area (H10:M27)
         for (let r = 10; r <= 27; r++) {
@@ -128,8 +141,17 @@ export async function exportInvoiceExcel(invoiceId: string) {
             worksheet.getCell(`G${r}`).value = Number(((Number(job.Est_Distance_KM) || 0) * 0.12).toFixed(2))
 
             // 6.2 Pricing Math (Total = Base + Extras)
-            // Fix: Treat Price_Cust_Total in DB as the BASE FREIGHT (per user feedback)
-            const baseFreight = Number(job.Price_Cust_Total || 0)
+            // Fix: Fallback to calculated price if Price_Cust_Total is zero or missing
+            let baseFreight = Number(job.Price_Cust_Total || 0)
+            
+            if (baseFreight === 0) {
+                const qty = Number(job.Weight_Kg || job.Volume_Cbm || job.Loaded_Qty || 1)
+                const unitPrice = Number(job.Price_Per_Unit || 0)
+                if (unitPrice > 0) {
+                    baseFreight = Number((qty * unitPrice).toFixed(2))
+                }
+            }
+
             const extraDrop = hasExtraDrop ? (Number(job.Price_Cust_Extra || 0) + getCatExtra(job, CATEGORIES.EXTRA_DROP)) : 0
             const labor = hasLabor ? (Number(job.Charge_Labor || 0) + getCatExtra(job, CATEGORIES.LABOR)) : 0
             const waitTime = hasWait ? (Number(job.Charge_Wait || 0) + getCatExtra(job, CATEGORIES.WAIT)) : 0

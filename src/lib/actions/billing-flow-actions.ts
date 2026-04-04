@@ -73,10 +73,20 @@ export async function confirmInvoiceAndCreateBillingNote(invoiceId: string) {
                     if (!item.Job_ID) return null
                     
                     // Comprehensive Sync: Update all price fields and the raw extra_costs_json
+                    // Fix: Fallback calculation if snapshot price is 0
+                    let priceTotal = Number(item.Price_Cust_Total || 0)
+                    if (priceTotal === 0) {
+                        const qty = Number(item.Weight_Kg || item.Volume_Cbm || item.Loaded_Qty || 1)
+                        const unitPrice = Number(item.Price_Per_Unit || 0)
+                        if (unitPrice > 0) {
+                            priceTotal = Number((qty * unitPrice).toFixed(2))
+                        }
+                    }
+
                     return supabase
                         .from('Jobs_Main')
                         .update({ 
-                            Price_Cust_Total: Number(item.Price_Cust_Total || 0),
+                            Price_Cust_Total: priceTotal,
                             Price_Per_Unit: Number(item.Price_Per_Unit || 0),
                             Price_Cust_Extra: Number(item.Price_Cust_Extra || 0),
                             Charge_Labor: Number(item.Charge_Labor || 0),
