@@ -29,6 +29,8 @@ import { Job, JobAssignment } from "@/lib/supabase/jobs"
 import { Route } from "@/lib/supabase/routes"
 import { Subcontractor } from "@/types/subcontractor"
 import { getFuelPrice, getSuggestedRate } from "@/lib/actions/fuel-actions"
+import { getVehicleTypes, VehicleType as MasterVehicleType } from "@/lib/actions/vehicle-type-actions"
+import { Settings as SettingsIcon } from "lucide-react"
 import { 
   Loader2, 
   Plus, 
@@ -267,8 +269,15 @@ export function JobDialog({
   const [fuelError, setFuelError] = useState<string | null>(null)
   const [suggestedRate, setSuggestedRate] = useState<number | null>(null)
   const [checkingRate, setCheckingRate] = useState(false)
+  const [masterVehicleTypes, setMasterVehicleTypes] = useState<MasterVehicleType[]>([])
 
   // 3. Effects (Must be after state declarations)
+  // Fetch master vehicle types
+  useEffect(() => {
+    getVehicleTypes().then(types => {
+      setMasterVehicleTypes(types || [])
+    })
+  }, [])
   // Fetch fuel price for plan date
   useEffect(() => {
     if (show && formData.Plan_Date) {
@@ -294,7 +303,7 @@ export function JobDialog({
       const routeLookupName = officialRoute ? officialRoute.Route_Name : `${origin.name.trim()} - ${destination.name.trim()}`
       
       setCheckingRate(true)
-      getSuggestedRate(formData.Customer_ID, routeLookupName, fuelPrice)
+      getSuggestedRate(formData.Customer_ID, routeLookupName, fuelPrice, formData.Vehicle_Type)
         .then(rate => {
             setSuggestedRate(rate)
             setCheckingRate(false)
@@ -302,7 +311,7 @@ export function JobDialog({
     } else {
         setSuggestedRate(null)
     }
-  }, [formData.Customer_ID, origins, destinations, fuelPrice, routes])
+  }, [formData.Customer_ID, formData.Vehicle_Type, origins, destinations, fuelPrice, routes])
 
   // Job Bundling State
   const [nearbyJobs, setNearbyJobs] = useState<Array<{ Job_ID: string; Customer_Name: string | null }>>([])
@@ -600,7 +609,33 @@ export function JobDialog({
     }
   }
 
-  const addExtraCost = () => setExtraCosts([...extraCosts, { type: EXPENSE_TYPES[0], cost_driver: 0, charge_cust: 0 }])
+  const addExtraCost = () => {
+    setExtraCosts([...extraCosts, { type: 'Other', cost_driver: 0, charge_cust: 0 }])
+  }
+
+  const handleEditRates = () => {
+    if (!formData.Customer_ID) {
+      toast.error("โปรดเลือกลูกค้าก่อน")
+      return
+    }
+    
+    // Find route name logic copied from suggested rate effect
+    const origin = origins[0]
+    const destination = destinations[destinations.length - 1]
+    let routeParam = ""
+    
+    if (origin?.name && destination?.name) {
+      const officialRoute = routes.find(r => 
+        (r.Origin?.trim() === origin.name.trim() && r.Destination?.trim() === destination.name.trim()) ||
+        (r.Route_Name === `${origin.name.trim()} - ${destination.name.trim()}`)
+      )
+      routeParam = officialRoute ? officialRoute.Route_Name : `${origin.name.trim()} - ${destination.name.trim()}`
+    }
+
+    const url = `/settings/customers?id=${formData.Customer_ID}&tab=fuel-matrix${routeParam ? `&route=${encodeURIComponent(routeParam)}` : ''}${formData.Vehicle_Type ? `&vtype=${encodeURIComponent(formData.Vehicle_Type)}` : ''}`
+    window.open(url, '_blank')
+  }
+
   const removeExtraCost = (index: number) => setExtraCosts(extraCosts.filter((_, i) => i !== index))
   const updateExtraCost = (index: number, field: keyof ExtraCost, value: string | number) => {
     const updated = [...extraCosts]
@@ -1330,8 +1365,8 @@ export function JobDialog({
                                 className="w-full h-14 px-3 rounded-md bg-background border border-input text-foreground text-2xl font-black"
                             >
                                 <option value="">{t('jobs.dialog.all_types')}</option>
-                                {Array.from(new Set(vehicles.map((v) => v.Vehicle_Type).filter((vt): vt is string => !!vt))).map((type) => (
-                                <option key={type} value={type}>{type}</option>
+                                {masterVehicleTypes.map((type) => (
+                                <option key={type.type_id} value={type.type_name}>{type.type_name}</option>
                                 ))}
                             </select>
                         </div>
@@ -1569,6 +1604,16 @@ export function JobDialog({
                                   <>
                                       <span className="mx-3 opacity-20">|</span>
                                       เรทแนะนำ: <span className="text-emerald-500">{suggestedRate.toLocaleString()}฿</span>
+                                      <Button 
+                                        type="button" 
+                                        variant="ghost" 
+                                        size="sm" 
+                                        onClick={handleEditRates}
+                                        className="ml-2 h-8 w-8 p-0 text-primary hover:bg-primary/10 rounded-full"
+                                        title="แก้ไขเรท/สัญญา"
+                                      >
+                                        <SettingsIcon size={16} />
+                                      </Button>
                                   </>
                               )}
                           </p>

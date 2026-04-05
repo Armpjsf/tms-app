@@ -200,7 +200,7 @@ export async function getFuelPrice(date?: string) {
 /**
  * Match a fuel price against a route's matrix to get suggested rate
  */
-export async function getSuggestedRate(customerId: string, routeName: string, fuelPrice: number) {
+export async function getSuggestedRate(customerId: string, routeName: string, fuelPrice: number, vehicleType: string = '4-Wheel') {
     if (!customerId || !routeName || !fuelPrice) return null
 
     const supabase = createAdminClient()
@@ -209,6 +209,7 @@ export async function getSuggestedRate(customerId: string, routeName: string, fu
         .select('Fuel_Rate_Matrix')
         .eq('Customer_ID', customerId)
         .eq('Route_Name', routeName)
+        .ilike('Vehicle_Type', vehicleType) // Use ilike for case-insensitivity
         .maybeSingle()
 
     if (error) {
@@ -263,9 +264,9 @@ export async function getCustomerMatrices(customerId: string) {
 }
 
 /**
- * Save or update a matrix for [Customer + Route]
+ * Save or update a matrix for [Customer + Route + Vehicle_Type]
  */
-export async function saveCustomerMatrix(customerId: string, routeName: string, matrix: any[]) {
+export async function saveCustomerMatrix(customerId: string, routeName: string, vehicleType: string, matrix: any[]) {
     try {
         const supabase = createAdminClient()
         
@@ -277,8 +278,8 @@ export async function saveCustomerMatrix(customerId: string, routeName: string, 
         }))
 
         // Verify we have required IDs
-        if (!customerId || !routeName) {
-            return { success: false, error: "Missing Customer ID or Route Name" }
+        if (!customerId || !routeName || !vehicleType) {
+            return { success: false, error: "Missing Customer ID, Route Name, or Vehicle Type" }
         }
 
         const { data, error } = await supabase
@@ -286,10 +287,11 @@ export async function saveCustomerMatrix(customerId: string, routeName: string, 
             .upsert({
                 Customer_ID: customerId,
                 Route_Name: routeName,
+                Vehicle_Type: vehicleType,
                 Fuel_Rate_Matrix: cleanMatrix,
                 Updated_At: new Date().toISOString()
             }, { 
-                onConflict: 'Customer_ID,Route_Name' 
+                onConflict: 'Customer_ID,Route_Name,Vehicle_Type' 
             })
             .select()
             .single()
