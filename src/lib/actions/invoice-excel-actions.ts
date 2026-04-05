@@ -60,13 +60,34 @@ export async function exportInvoiceExcel(invoiceId: string) {
         // 3. Clear Dynamic Range ONLY (Protect Main Headers)
         // Clear only I7-L7 (Dynamic headers)
         for (let c = 9; c <= 12; c++) { worksheet.getRow(7).getCell(c).value = null }
-        // Clear data rows 10-26
+        // Clear data rows 10-26 (Template default)
         for (let r = 10; r <= 26; r++) {
             const row = worksheet.getRow(r)
             for (let c = 1; c <= 13; c++) { row.getCell(c).value = null }
         }
 
-        // 4. Identify Extra Cost Types (Thai labels)
+        // 4. Handle Dynamic Rows for > 17 jobs
+        const jobsCount = jobs.length
+        const templateRows = 17
+        if (jobsCount > templateRows) {
+            const extraRowsNeeded = jobsCount - templateRows
+            // Insert rows at row 27 (shifting footer and others down)
+            worksheet.insertRows(27, Array(extraRowsNeeded).fill([]))
+            
+            // Clone Styles from Row 10 to new rows
+            const sourceRow = worksheet.getRow(10)
+            for (let i = 0; i < extraRowsNeeded; i++) {
+                const targetRow = worksheet.getRow(27 + i)
+                targetRow.height = sourceRow.height
+                sourceRow.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+                    const targetCell = targetRow.getCell(colNumber)
+                    targetCell.style = { ...cell.style }
+                    targetCell.font = { name: 'Sarabun', size: 10, bold: cell.font?.bold }
+                })
+            }
+        }
+
+        // 5. Identify Extra Cost Types (Thai labels)
         const extraTypesSet = new Set<string>()
         jobs.forEach(job => {
             ['Price_Cust_Extra', 'Charge_Labor', 'Charge_Wait', 'Price_Cust_Other'].forEach(col => {
@@ -104,12 +125,11 @@ export async function exportInvoiceExcel(invoiceId: string) {
             cell.font = { name: 'Sarabun', bold: true, size: 10 }
         }
 
-        // 5. Fill Job Data
+        // 6. Fill Job Data
         const summaryTotals: any = { 8: 0, 9: 0, 10: 0, 11: 0, 12: 0, 13: 0 }
 
         jobs.forEach((job, index) => {
             const r = 10 + index
-            if (r > 26) return
             const row = worksheet.getRow(r)
 
             row.getCell(1).value = index + 1
@@ -169,15 +189,16 @@ export async function exportInvoiceExcel(invoiceId: string) {
             })
         })
 
-        // 6. Summary Row
-        const footerRow = worksheet.getRow(27)
+        // 7. Summary Row (Dynamic Position)
+        const footerRowIndex = 10 + Math.max(templateRows, jobsCount)
+        const footerRow = worksheet.getRow(footerRowIndex)
         for (let c = 8; c <= 13; c++) {
             footerRow.getCell(c).value = summaryTotals[c]
             footerRow.getCell(c).font = { name: 'Sarabun', bold: true, size: 10 }
             footerRow.getCell(c).numFmt = '#,##0.00'
         }
 
-        // 7. Static Headers
+        // 8. Static Headers
         worksheet.getCell('C3').value = accountingProfile.company_name_th
         worksheet.getCell('C5').value = accountingProfile.address
         worksheet.getCell('A6').value = `เลขที่ประจำตัวผู้เสียภาษี : ${accountingProfile.tax_id}`
@@ -187,7 +208,25 @@ export async function exportInvoiceExcel(invoiceId: string) {
         worksheet.getCell('I5').value = finalDoc.Master_Customers?.Address || finalDoc.Customer_Address || '-'
         worksheet.getCell('H6').value = `เลขที่ประจำตัวผู้เสียภาษี :  ${finalDoc.Master_Customers?.Tax_ID || finalDoc.Customer_Tax_ID || '-'}`
 
-        // Final Font Polish: Force everything to size 10
+        // 9. Auto-fit Column Widths
+        worksheet.columns.forEach((column, i) => {
+            let maxColumnLength = 0
+            column.eachCell?.({ includeEmpty: false }, (cell) => {
+                const cellValue = cell.value ? cell.value.toString() : ''
+                // Thai characters adjustment (rudimentary)
+                const charCount = cellValue.split('').reduce((acc, char) => {
+                    return acc + (char.charCodeAt(0) > 128 ? 1.5 : 1)
+                }, 0)
+                if (charCount > maxColumnLength) {
+                    maxColumnLength = charCount
+                }
+            })
+            // Set cap and floor for width
+            const newWidth = Math.min(Math.max(maxColumnLength + 4, 10), 60)
+            column.width = newWidth
+        })
+
+        // 10. Final Font Polish: Ensure all fonts are Sarabun size 10
         worksheet.eachRow((row) => {
             row.eachCell((cell) => {
                 const isBold = cell.font?.bold || false
