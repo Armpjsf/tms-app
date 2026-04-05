@@ -14,6 +14,26 @@ async function getCookieStore() {
 }
 
 /**
+ * Get the current admin session from the cookie.
+ * Returns the session object if found and the user is an admin or superadmin.
+ */
+export async function getAdminSession() {
+  try {
+    const session = await getSession()
+    if (!session || !session.userId) return null
+    
+    // Roles 1 (Superadmin) and 2 (Admin) are allowed
+    if (session.roleId === 1 || session.roleId === 2) {
+      return session
+    }
+    return null
+  } catch (error) {
+    console.error("[AUTH] Failed to get admin session:", error)
+    return null
+  }
+}
+
+/**
  * RESTORED: Get current driver session from cookies
  */
 export async function getDriverSession() {

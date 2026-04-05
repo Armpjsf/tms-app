@@ -39,6 +39,8 @@ import { useLanguage } from "@/components/providers/language-provider"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
 import { Customer } from "@/lib/supabase/customers"
+import { Tabs, TabsContent, List as TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { CustomerFuelMatrix } from "@/components/settings/customer-fuel-matrix"
 
 interface ExecutiveKPIs {
   revenue: { current: number; previous: number; growth: number; target: number; attainment: number; };
@@ -136,7 +138,7 @@ export default function CustomersSettingsPage() {
     }
   }
 
-  const updateForm = (key: string, value: string) => {
+  const updateForm = (key: string, value: any) => {
     setFormData((prev: Partial<Customer>) => ({ ...prev, [key]: value }))
   }
 
@@ -240,11 +242,6 @@ export default function CustomersSettingsPage() {
                 </DialogHeader>
             </div>
 
-import { Tabs, TabsContent, List as TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { CustomerFuelMatrix } from "@/components/settings/customer-fuel-matrix"
-
-export default function CustomersSettingsPage() {
-...
             <div className="p-6 sm:p-10 space-y-6 custom-scrollbar flex-1 min-h-0 overflow-y-auto">
               <Tabs defaultValue="info" className="w-full">
                 <div className="flex justify-center mb-8">

@@ -25,16 +25,45 @@ export async function syncDailyFuelPrices() {
         if (!response.ok) throw new Error(`API Error: ${response.status}`)
         
         const data = await response.json()
-        const oilData = data.response
-        const ptt = oilData['PTT'] || oilData['ปตท.']
+        console.log('[FUEL_SYNC] Received API data:', JSON.stringify(data).substring(0, 200) + '...')
         
-        if (!ptt) throw new Error("PTT data not found in API response")
-        
-        // Target: Diesel B7
-        const price = ptt['Diesel B7'] || ptt['ดีเซล B7'] || ptt['Diesel']
-        if (!price) throw new Error("Diesel B7 price not found")
+        // Handle multiple response structures (Standard or Nested)
+        const stations = data.response?.stations || data.stations || data.response || data
+        if (!stations || (typeof stations !== 'object')) {
+            console.error('[FUEL_SYNC] Invalid stations data format:', data)
+            throw new Error("Invalid API response structure")
+        }
 
-        const dieselPrice = parseFloat(price)
+        // Search for PTT brand in various possible keys
+        const ptt = stations.ptt || stations['PTT'] || stations['ปตท.'] || stations.ปตท
+        if (!ptt) {
+            console.error('[FUEL_SYNC] PTT brand not found in stations:', Object.keys(stations))
+            throw new Error("PTT brand data missing from API")
+        }
+        
+        // Extraction Logic for Diesel Price
+        const getPriceValue = (item: any) => {
+            if (!item) return null
+            if (typeof item === 'string' || typeof item === 'number') return parseFloat(item.toString())
+            if (item.price) return parseFloat(item.price.toString())
+            return null
+        }
+
+        // Priority: Diesel B7 -> Diesel -> First Diesel-like product
+        let dieselPrice = getPriceValue(ptt.diesel_b7 || ptt['ดีเซล B7'] || ptt['ดีเซล หมุนเร็ว B7'])
+        if (!dieselPrice) dieselPrice = getPriceValue(ptt.diesel || ptt['ดีเซล'])
+        
+        // Ultimate fallback: Search keys for 'Diesel' or 'ดีเซล'
+        if (!dieselPrice) {
+            const dieselKey = Object.keys(ptt).find(k => k.toLowerCase().includes('diesel') || k.includes('ดีเซล'))
+            if (dieselKey) dieselPrice = getPriceValue(ptt[dieselKey])
+        }
+
+        if (!dieselPrice || isNaN(dieselPrice)) {
+            console.error('[FUEL_SYNC] Failed to extract a valid diesel price from:', ptt)
+            throw new Error("Valid diesel price not found in PTT data")
+        }
+
         const today = new Date().toISOString().split('T')[0] // YYYY-MM-DD
 
         const supabase = createAdminClient()
@@ -93,6 +122,12 @@ export async function getFuelPrice(date?: string) {
             .order('Date', { ascending: false })
             .limit(1)
             .maybeSingle()
+        
+        // If still nothing, trigger a sync
+        if (!latest) {
+            const syncResult = await syncDailyFuelPrices()
+            if (syncResult.success) return syncResult.price
+        }
         
         return latest?.Price || 0
     }
@@ -171,4 +206,3 @@ export async function deleteCustomerMatrix(id: string) {
     if (error) return { success: false, error: error.message }
     return { success: true }
 }
-
