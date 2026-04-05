@@ -240,121 +240,147 @@ export default function CustomersSettingsPage() {
                 </DialogHeader>
             </div>
 
+import { Tabs, TabsContent, List as TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { CustomerFuelMatrix } from "@/components/settings/customer-fuel-matrix"
+
+export default function CustomersSettingsPage() {
+...
             <div className="p-6 sm:p-10 space-y-6 custom-scrollbar flex-1 min-h-0 overflow-y-auto">
-              <div className="space-y-4">
-                <Label className="text-base font-bold font-black uppercase tracking-tight text-muted-foreground ml-2">{t('settings_pages.customers.dialog.name')}</Label>
-                <div className="glass-panel p-1 rounded-2xl border-border/5">
-                    <Input
-                    value={formData.Customer_Name}
-                    onChange={(e) => updateForm("Customer_Name", e.target.value)}
-                    placeholder={t('settings_pages.customers.dialog.name_placeholder')}
-                    className="bg-transparent border-none text-2xl font-black tracking-tighter rounded-xl h-16 px-8 focus:bg-muted/50 transition-all text-foreground placeholder:text-muted-foreground"
-                    />
+              <Tabs defaultValue="info" className="w-full">
+                <div className="flex justify-center mb-8">
+                    <div className="bg-muted/50 p-1.5 rounded-2xl border border-border/5">
+                        <TabsTrigger value="info" className="px-8 py-3 rounded-xl text-sm font-black uppercase tracking-widest data-[state=active]:bg-primary data-[state=active]:text-white transition-all">
+                            ข้อมูลทั่วไป
+                        </TabsTrigger>
+                        <TabsTrigger value="rates" disabled={!editingCustomer} className="px-8 py-3 rounded-xl text-sm font-black uppercase tracking-widest data-[state=active]:bg-primary data-[state=active]:text-white transition-all">
+                            เรทน้ำมัน (Fuel Matrix)
+                        </TabsTrigger>
+                    </div>
                 </div>
-              </div>
 
-              <div className="grid grid-cols-2 gap-10">
-                <div className="space-y-4">
-                  <Label className="text-base font-bold font-black uppercase tracking-tight text-muted-foreground ml-2">{t('settings_pages.customers.dialog.phone')}</Label>
-                  <Input
-                    value={formData.Phone || ""}
-                    onChange={(e) => updateForm("Phone", e.target.value)}
-                    placeholder="+66 XXX-XXXX"
-                    className="bg-muted/50 border-border/5 rounded-2xl h-14 font-black px-8 text-foreground focus:ring-primary/40 focus:bg-secondary/50 transition-all uppercase tracking-normal text-xl"
-                  />
-                </div>
-                <div className="space-y-4">
-                  <Label className="text-base font-bold font-black uppercase tracking-tight text-muted-foreground ml-2">{t('settings_pages.customers.dialog.email')}</Label>
-                  <Input
-                    value={formData.Email || ""}
-                    onChange={(e) => updateForm("Email", e.target.value)}
-                    placeholder="partner@logispro.matrix"
-                    className="bg-muted/50 border-border/5 rounded-2xl h-14 font-black px-8 text-foreground focus:ring-primary/40 focus:bg-secondary/50 transition-all uppercase tracking-normal text-xl"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <Label className="text-base font-bold font-black uppercase tracking-tight text-muted-foreground ml-2">{t('settings_pages.customers.dialog.address')}</Label>
-                <Textarea
-                  value={formData.Address || ""}
-                  onChange={(e) => updateForm("Address", e.target.value)}
-                  placeholder="SPECIFY FULL OPERATIONAL COORDINATES..."
-                  className="bg-muted/50 border-border/5 rounded-[2rem] min-h-[140px] font-bold p-8 text-foreground focus:ring-primary/40 focus:bg-secondary/50 transition-all uppercase tracking-wide leading-relaxed text-xl placeholder:text-muted-foreground"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-10">
-                <div className="space-y-4">
-                  <Label className="text-base font-bold font-black uppercase tracking-tight text-muted-foreground ml-2">{t('settings_pages.customers.dialog.branch')}</Label>
-                  <Input
-                    value={formData.Customer_ID || ""}
-                    onChange={(e) => updateForm("Customer_ID", e.target.value)}
-                    placeholder="SYSTEM GENERATED"
-                    className="bg-muted/50 border-border/5 rounded-2xl h-14 font-black px-8 text-foreground focus:ring-primary/40 focus:bg-secondary/50 transition-all uppercase tracking-normal text-xl"
-                    disabled={!!editingCustomer}
-                  />
-                </div>
-                 <div className="space-y-4">
-                   <Label className="text-base font-bold font-black uppercase tracking-tight text-muted-foreground ml-2">{t('settings_pages.customers.dialog.tax_id')}</Label>
-                  <Input
-                    value={formData.Tax_ID || ""}
-                    onChange={(e) => updateForm("Tax_ID", e.target.value)}
-                    placeholder="13-DIGIT VERIFIER"
-                    className="bg-muted/50 border-border/5 rounded-2xl h-14 font-black px-8 text-foreground focus:ring-primary/40 focus:bg-secondary/50 transition-all uppercase tracking-normal text-xl"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <Label className="text-base font-bold font-black uppercase tracking-[0.1em] text-primary ml-2 flex items-center gap-3">
-                    <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                    {t('settings_pages.customers.dialog.line_id')}
-                </Label>
-                <div className="glass-panel p-1 rounded-2xl border-primary/20 bg-primary/5">
-                    <Input
-                        value={formData.Line_User_ID || ""}
-                        onChange={(e) => updateForm("Line_User_ID", e.target.value)}
-                        placeholder="ENTER LINE U-VECTOR..."
-                        className="bg-transparent border-none text-foreground font-black rounded-xl h-14 px-8 flex-1 focus:bg-primary/10 tracking-normal"
-                    />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-10">
-                <div className="space-y-4">
-                  <Label className="text-base font-bold font-black uppercase tracking-[0.1em] text-accent ml-2 flex items-center gap-3">
-                      <span className="w-2 h-2 rounded-full bg-accent animate-pulse" />
-                      Credit Term (Days)
-                  </Label>
-                  <div className="glass-panel p-1 rounded-2xl border-accent/20 bg-accent/5">
-                      <Input
-                          type="number"
-                          value={formData.Credit_Term || 30}
-                          onChange={(e) => updateForm("Credit_Term", parseInt(e.target.value) || 0)}
-                          placeholder="Enter Credit Term in Days..."
-                          className="bg-transparent border-none text-foreground font-black rounded-xl h-14 px-8 flex-1 focus:bg-accent/10 tracking-normal"
-                      />
+                <TabsContent value="info" className="space-y-6 animate-in fade-in slide-in-from-left-2 duration-500">
+                  <div className="space-y-4">
+                    <Label className="text-base font-bold font-black uppercase tracking-tight text-muted-foreground ml-2">{t('settings_pages.customers.dialog.name')}</Label>
+                    <div className="glass-panel p-1 rounded-2xl border-border/5">
+                        <Input
+                        value={formData.Customer_Name}
+                        onChange={(e) => updateForm("Customer_Name", e.target.value)}
+                        placeholder={t('settings_pages.customers.dialog.name_placeholder')}
+                        className="bg-transparent border-none text-2xl font-black tracking-tighter rounded-xl h-16 px-8 focus:bg-muted/50 transition-all text-foreground placeholder:text-muted-foreground"
+                        />
+                    </div>
                   </div>
-                </div>
 
-                <div className="space-y-4">
-                  <Label className="text-base font-bold font-black uppercase tracking-[0.1em] text-emerald-500 ml-2 flex items-center gap-3">
-                      <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                      Price Per Unit (฿)
-                  </Label>
-                  <div className="glass-panel p-1 rounded-2xl border-emerald-500/20 bg-emerald-500/5">
+                  <div className="grid grid-cols-2 gap-10">
+                    <div className="space-y-4">
+                      <Label className="text-base font-bold font-black uppercase tracking-tight text-muted-foreground ml-2">{t('settings_pages.customers.dialog.phone')}</Label>
                       <Input
-                          type="number"
-                          step="0.01"
-                          value={formData.Price_Per_Unit || 0}
-                          onChange={(e) => updateForm("Price_Per_Unit", parseFloat(e.target.value) || 0)}
-                          placeholder="0.00"
-                          className="bg-transparent border-none text-foreground font-black rounded-xl h-14 px-8 flex-1 focus:bg-emerald-500/10 tracking-normal"
+                        value={formData.Phone || ""}
+                        onChange={(e) => updateForm("Phone", e.target.value)}
+                        placeholder="+66 XXX-XXXX"
+                        className="bg-muted/50 border-border/5 rounded-2xl h-14 font-black px-8 text-foreground focus:ring-primary/40 focus:bg-secondary/50 transition-all uppercase tracking-normal text-xl"
                       />
+                    </div>
+                    <div className="space-y-4">
+                      <Label className="text-base font-bold font-black uppercase tracking-tight text-muted-foreground ml-2">{t('settings_pages.customers.dialog.email')}</Label>
+                      <Input
+                        value={formData.Email || ""}
+                        onChange={(e) => updateForm("Email", e.target.value)}
+                        placeholder="partner@logispro.matrix"
+                        className="bg-muted/50 border-border/5 rounded-2xl h-14 font-black px-8 text-foreground focus:ring-primary/40 focus:bg-secondary/50 transition-all uppercase tracking-normal text-xl"
+                      />
+                    </div>
                   </div>
-                </div>
-              </div>
+
+                  <div className="space-y-4">
+                    <Label className="text-base font-bold font-black uppercase tracking-tight text-muted-foreground ml-2">{t('settings_pages.customers.dialog.address')}</Label>
+                    <Textarea
+                      value={formData.Address || ""}
+                      onChange={(e) => updateForm("Address", e.target.value)}
+                      placeholder="SPECIFY FULL OPERATIONAL COORDINATES..."
+                      className="bg-muted/50 border-border/5 rounded-[2rem] min-h-[140px] font-bold p-8 text-foreground focus:ring-primary/40 focus:bg-secondary/50 transition-all uppercase tracking-wide leading-relaxed text-xl placeholder:text-muted-foreground"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-10">
+                    <div className="space-y-4">
+                      <Label className="text-base font-bold font-black uppercase tracking-tight text-muted-foreground ml-2">{t('settings_pages.customers.dialog.branch')}</Label>
+                      <Input
+                        value={formData.Customer_ID || ""}
+                        onChange={(e) => updateForm("Customer_ID", e.target.value)}
+                        placeholder="SYSTEM GENERATED"
+                        className="bg-muted/50 border-border/5 rounded-2xl h-14 font-black px-8 text-foreground focus:ring-primary/40 focus:bg-secondary/50 transition-all uppercase tracking-normal text-xl"
+                        disabled={!!editingCustomer}
+                      />
+                    </div>
+                     <div className="space-y-4">
+                       <Label className="text-base font-bold font-black uppercase tracking-tight text-muted-foreground ml-2">{t('settings_pages.customers.dialog.tax_id')}</Label>
+                      <Input
+                        value={formData.Tax_ID || ""}
+                        onChange={(e) => updateForm("Tax_ID", e.target.value)}
+                        placeholder="13-DIGIT VERIFIER"
+                        className="bg-muted/50 border-border/5 rounded-2xl h-14 font-black px-8 text-foreground focus:ring-primary/40 focus:bg-secondary/50 transition-all uppercase tracking-normal text-xl"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <Label className="text-base font-bold font-black uppercase tracking-[0.1em] text-primary ml-2 flex items-center gap-3">
+                        <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                        {t('settings_pages.customers.dialog.line_id')}
+                    </Label>
+                    <div className="glass-panel p-1 rounded-2xl border-primary/20 bg-primary/5">
+                        <Input
+                            value={formData.Line_User_ID || ""}
+                            onChange={(e) => updateForm("Line_User_ID", e.target.value)}
+                            placeholder="ENTER LINE U-VECTOR..."
+                            className="bg-transparent border-none text-foreground font-black rounded-xl h-14 px-8 flex-1 focus:bg-primary/10 tracking-normal"
+                        />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-10">
+                    <div className="space-y-4">
+                      <Label className="text-base font-bold font-black uppercase tracking-[0.1em] text-accent ml-2 flex items-center gap-3">
+                          <span className="w-2 h-2 rounded-full bg-accent animate-pulse" />
+                          Credit Term (Days)
+                      </Label>
+                      <div className="glass-panel p-1 rounded-2xl border-accent/20 bg-accent/5">
+                          <Input
+                              type="number"
+                              value={formData.Credit_Term || 30}
+                              onChange={(e) => updateForm("Credit_Term", parseInt(e.target.value) || 0)}
+                              placeholder="Enter Credit Term in Days..."
+                              className="bg-transparent border-none text-foreground font-black rounded-xl h-14 px-8 flex-1 focus:bg-accent/10 tracking-normal"
+                          />
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <Label className="text-base font-bold font-black uppercase tracking-[0.1em] text-emerald-500 ml-2 flex items-center gap-3">
+                          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                          Price Per Unit (฿)
+                      </Label>
+                      <div className="glass-panel p-1 rounded-2xl border-emerald-500/20 bg-emerald-500/5">
+                          <Input
+                              type="number"
+                              step="0.01"
+                              value={formData.Price_Per_Unit || 0}
+                              onChange={(e) => updateForm("Price_Per_Unit", parseFloat(e.target.value) || 0)}
+                              placeholder="0.00"
+                              className="bg-transparent border-none text-foreground font-black rounded-xl h-14 px-8 flex-1 focus:bg-emerald-500/10 tracking-normal"
+                          />
+                      </div>
+                    </div>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="rates" className="animate-in fade-in slide-in-from-right-2 duration-500">
+                    {editingCustomer && (
+                        <CustomerFuelMatrix customerId={editingCustomer.Customer_ID} customerName={editingCustomer.Customer_Name} />
+                    )}
+                </TabsContent>
+              </Tabs>
             </div>
 
             <DialogFooter className="p-6 sm:p-10 border-t border-border/5 bg-black/40 gap-4 sm:gap-6 flex-row shrink-0">

@@ -81,7 +81,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             </div>
           </div>
       </motion.main>
-      <GlobalAIAssistant />
+      {/* <GlobalAIAssistant /> */}
     </div>
   )
 }

@@ -28,6 +28,7 @@ import { useLanguage } from "@/components/providers/language-provider"
 import { Job, JobAssignment } from "@/lib/supabase/jobs"
 import { Route } from "@/lib/supabase/routes"
 import { Subcontractor } from "@/types/subcontractor"
+import { getFuelPrice, getSuggestedRate } from "@/lib/actions/fuel-actions"
 import { 
   Loader2, 
   Plus, 
@@ -41,14 +42,16 @@ import {
   Banknote,
   FileText,
   Trash2,
-
+  Fuel,
   Link as LinkIcon,
   Check,
   Eye,
   EyeOff,
   Activity,
   History,
-  ShieldCheck
+  ShieldCheck,
+  Zap,
+  Info
 } from "lucide-react"
 import { JobTimeline } from "./job-timeline"
 
@@ -133,7 +136,23 @@ export function JobDialog({
   const setShow = isControlled ? setControlledOpen! : setOpen
   const [copied, setCopied] = useState(false)
 
-  // Form State
+  // 1. Helper to safely parse JSON (Must be defined before state initialization)
+  const parseJson = (val: string | unknown[] | Record<string, any> | null | undefined, defaultVal: any) => {
+    if (!val) return defaultVal
+    if (Array.isArray(val)) return val
+    if (typeof val === 'object' && val !== null) return [val] // Wrap single object as array if needed
+    if (typeof val === 'string') {
+      try {
+        const parsed = JSON.parse(val)
+        return Array.isArray(parsed) ? parsed : [parsed]
+      } catch {
+        return defaultVal
+      }
+    }
+    return defaultVal
+  }
+
+  // 2. State Declarations
   const [formData, setFormData] = useState({
     Job_ID: job?.Job_ID || '', // Empty for new jobs to allow manual entry or auto-gen
     Plan_Date: job?.Pickup_Date || job?.Plan_Date || defaultDate || new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' }),
@@ -165,37 +184,6 @@ export function JobDialog({
     Cost_Driver_Extra: job?.Cost_Driver_Extra || 0,
   })
 
-  // Multi-Assignment State
-  const [assignments, setAssignments] = useState<JobAssignment[]>(
-    job?.assignments && job.assignments.length > 0
-      ? job.assignments
-      : [{ 
-          Vehicle_Type: '4-Wheel', 
-          Vehicle_Plate: '', 
-          Driver_ID: '', 
-          Sub_ID: '', 
-          Show_Price_To_Driver: true,
-          Cost_Driver_Total: job?.Cost_Driver_Total ? Number(job.Cost_Driver_Total) : 0,
-          Price_Cust_Total: job?.Price_Cust_Total ? Number(job.Price_Cust_Total) : 0
-        }]
-  )
-
-  // Helper to safely parse JSON or return existing array
-  const parseJson = (val: string | unknown[] | Record<string, any> | null | undefined, defaultVal: any) => {
-    if (!val) return defaultVal
-    if (Array.isArray(val)) return val
-    if (typeof val === 'object' && val !== null) return [val] // Wrap single object as array if needed
-    if (typeof val === 'string') {
-      try {
-        const parsed = JSON.parse(val)
-        return Array.isArray(parsed) ? parsed : [parsed]
-      } catch {
-        return defaultVal
-      }
-    }
-    return defaultVal
-  }
-
   // Multi-point origins
   const [origins, setOrigins] = useState<LocationPoint[]>(() => {
     const fromJson = parseJson((job?.origins || job?.original_origins_json) as string | unknown[], []) as LocationPoint[]
@@ -220,10 +208,58 @@ export function JobDialog({
     return [{ name: '', lat: '', lng: '' }]
   })
 
+  // Multi-Assignment State
+  const [assignments, setAssignments] = useState<JobAssignment[]>(
+    job?.assignments && job.assignments.length > 0
+      ? job.assignments
+      : [{ 
+          Vehicle_Type: '4-Wheel', 
+          Vehicle_Plate: '', 
+          Driver_ID: '', 
+          Sub_ID: '', 
+          Show_Price_To_Driver: true,
+          Cost_Driver_Total: job?.Cost_Driver_Total ? Number(job.Cost_Driver_Total) : 0,
+          Price_Cust_Total: job?.Price_Cust_Total ? Number(job.Price_Cust_Total) : 0
+        }]
+  )
+
   // Extra costs
   const [extraCosts, setExtraCosts] = useState<ExtraCost[]>(
     parseJson((job?.extra_costs || job?.extra_costs_json) as string | unknown[], []) as ExtraCost[]
   )
+
+  // Fuel Suggestion State
+  const [fuelPrice, setFuelPrice] = useState<number | null>(null)
+  const [suggestedRate, setSuggestedRate] = useState<number | null>(null)
+  const [checkingRate, setCheckingRate] = useState(false)
+
+  // 3. Effects (Must be after state declarations)
+  // Fetch fuel price for plan date
+  useEffect(() => {
+    if (show && formData.Plan_Date) {
+        getFuelPrice(formData.Plan_Date).then(price => {
+            setFuelPrice(price)
+        })
+    }
+  }, [show, formData.Plan_Date])
+
+  // Check for suggested rate
+  useEffect(() => {
+    // Construct route name from endpoints
+    const routeName = (origins[0]?.name && destinations[destinations.length-1]?.name) 
+        ? `${origins[0].name} → ${destinations[destinations.length-1].name}`
+        : ""
+
+    if (formData.Customer_ID && routeName && fuelPrice) {
+        setCheckingRate(true)
+        getSuggestedRate(formData.Customer_ID, routeName, fuelPrice).then(rate => {
+            setSuggestedRate(rate)
+            setCheckingRate(false)
+        })
+    } else {
+        setSuggestedRate(null)
+    }
+  }, [formData.Customer_ID, origins, destinations, fuelPrice])
 
   // Job Bundling State
   const [nearbyJobs, setNearbyJobs] = useState<Array<{ Job_ID: string; Customer_Name: string | null }>>([])
@@ -1471,6 +1507,47 @@ export function JobDialog({
           {/* Tab: ราคา */}
           {activeTab === 'price' && (
             <div className="space-y-6">
+              {/* Smart Fuel Hint */}
+              {(fuelPrice !== null || suggestedRate !== null) && (
+                <div className="p-6 bg-primary/5 border border-primary/20 rounded-[2rem] flex flex-col md:flex-row md:items-center justify-between gap-6 animate-in fade-in zoom-in-95 duration-500">
+                    <div className="flex items-center gap-6">
+                        <div className="p-4 bg-primary/20 rounded-2xl shadow-lg ring-1 ring-primary/30">
+                            <Fuel className="text-primary w-8 h-8" strokeWidth={2.5} />
+                        </div>
+                        <div>
+                            <div className="flex items-center gap-2 mb-1">
+                                <span className="text-primary font-black uppercase tracking-widest text-sm">Fuel Intel Intelligence</span>
+                                {checkingRate && <Loader2 className="w-3 h-3 animate-spin text-primary" />}
+                            </div>
+                            <p className="text-2xl font-black text-foreground tracking-tight">
+                                ดีเซล B7: <span className="text-primary">{fuelPrice?.toFixed(2)}฿</span>
+                                {suggestedRate && (
+                                    <>
+                                        <span className="mx-3 opacity-20">|</span>
+                                        เรทแนะนำ: <span className="text-emerald-500">{suggestedRate.toLocaleString()}฿</span>
+                                    </>
+                                )}
+                            </p>
+                            {!suggestedRate && !checkingRate && (
+                                <p className="text-sm font-bold text-muted-foreground mt-1 uppercase tracking-tight flex items-center gap-1">
+                                    <Info size={14} /> ยังไม่ได้ตั้งค่า Matrix สำหรับเส้นทางนี้
+                                </p>
+                            )}
+                        </div>
+                    </div>
+                    {suggestedRate && (
+                        <Button 
+                            type="button"
+                            onClick={() => updateAssignment(0, 'Price_Cust_Total', suggestedRate)}
+                            className="bg-emerald-600 hover:bg-emerald-500 text-white font-black rounded-xl h-14 px-8 shadow-xl shadow-emerald-500/20 gap-3 group"
+                        >
+                            <Zap size={20} className="group-hover:scale-125 transition-transform" />
+                            ใช้ราคาแนะนำนี้
+                        </Button>
+                    )}
+                </div>
+              )}
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="space-y-2">
                   <Label className="text-xl font-black text-primary/80 uppercase tracking-normal">{t('jobs.dialog.price_cust')} (THB)</Label>

@@ -19,7 +19,7 @@ export default async function MobileLayout({
       <SessionStabilizer session={session} />
       {session && <LocationTracker driverId={session.driverId} branchId={session.branchId} />}
       {session && <PermissionRequester driverId={session.driverId} />}
-      {session && <FloatingSOS />}
+      {/* {session && <FloatingSOS />} */}
       <main className="flex-1">{children}</main>
       {session && <BottomNav />}
     </div>
