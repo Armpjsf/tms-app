@@ -5,6 +5,7 @@ import { getUserBranchId, isAdmin, isSuperAdmin } from "@/lib/permissions"
 import { accountingService } from "@/services/accounting"
 import { Job, Driver_Payment } from "@/types/database"
 import { logActivity } from "./logs"
+import { revalidatePath } from "next/cache"
 
 export interface BillingNote {
   Billing_Note_ID: string
@@ -586,7 +587,9 @@ export async function getDriverPaymentByIdWithJobs(id: string) {
 
 export async function updateBillingNoteStatus(id: string, status: string) {
     try {
-        const supabase = await createClient()
+        const admin = await isAdmin()
+        const supabase = admin ? await createAdminClient() : await createClient()
+
         const { error } = await supabase
             .from('Billing_Notes')
             .update({ 
@@ -608,6 +611,7 @@ export async function updateBillingNoteStatus(id: string, status: string) {
             }
         })
 
+        revalidatePath('/billing/customer/history')
         return { success: true }
     } catch (e: unknown) {
         return { success: false, error: getErrorMessage(e) }
@@ -616,7 +620,9 @@ export async function updateBillingNoteStatus(id: string, status: string) {
 
 export async function updateDriverPaymentStatus(id: string, status: string) {
     try {
-        const supabase = await createClient()
+        const admin = await isAdmin()
+        const supabase = admin ? await createAdminClient() : await createClient()
+
         const { error } = await supabase
             .from('Driver_Payments')
             .update({ 
@@ -638,6 +644,7 @@ export async function updateDriverPaymentStatus(id: string, status: string) {
             }
         })
 
+        revalidatePath('/billing/driver/history')
         return { success: true }
     } catch (e: unknown) {
         return { success: false, error: getErrorMessage(e) }
@@ -646,10 +653,10 @@ export async function updateDriverPaymentStatus(id: string, status: string) {
 
 export async function recallBillingNote(id: string) {
     try {
-        const isAdmin = await isSuperAdmin()
-        if (!isAdmin) throw new Error("Only SuperAdmins can recall billing notes")
+        const admin = await isSuperAdmin()
+        if (!admin) throw new Error("Only SuperAdmins can recall billing notes")
 
-        const supabase = await createClient()
+        const supabase = await createAdminClient()
 
         // 1. Unlink jobs
         const { error: unlinkError } = await supabase
@@ -677,6 +684,7 @@ export async function recallBillingNote(id: string) {
             }
         })
 
+        revalidatePath('/billing/customer/history')
         return { success: true }
     } catch (e: unknown) {
         return { success: false, error: getErrorMessage(e) }
@@ -685,10 +693,10 @@ export async function recallBillingNote(id: string) {
 
 export async function recallDriverPayment(id: string) {
     try {
-        const isAdmin = await isSuperAdmin()
-        if (!isAdmin) throw new Error("Only SuperAdmins can recall payments")
+        const admin = await isSuperAdmin()
+        if (!admin) throw new Error("Only SuperAdmins can recall payments")
 
-        const supabase = await createClient()
+        const supabase = await createAdminClient()
 
         // 1. Unlink jobs
         const { error: unlinkError } = await supabase
@@ -716,6 +724,7 @@ export async function recallDriverPayment(id: string) {
             }
         })
 
+        revalidatePath('/billing/driver/history')
         return { success: true }
     } catch (e: unknown) {
         return { success: false, error: getErrorMessage(e) }

@@ -1,6 +1,5 @@
 import { getBillingNoteByIdWithJobs } from "@/lib/supabase/billing"
 import { notFound } from "next/navigation"
-import { AutoPrint } from "@/components/utils/auto-print"
 import { PrintAction } from "./print-button"
 import { dictionaries, Language } from "@/lib/i18n/dictionaries"
 import { Phone, Mail, User, FileText, CreditCard, MessageSquare, PenTool, Globe as GlobeIcon } from "lucide-react"
@@ -226,7 +225,6 @@ export default async function BillingPrintPage(props: Props) {
 
     return (
         <div className="bg-white min-h-screen p-8 text-black print:p-0 print-container font-sans">
-            <AutoPrint />
             <div className="fixed top-4 right-4 print:hidden flex gap-2">
                 <PrintAction />
             </div>
