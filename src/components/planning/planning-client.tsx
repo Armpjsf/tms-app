@@ -12,7 +12,8 @@ import {
     Inbox,
     Clock,
     Truck,
-    CheckCircle2
+    CheckCircle2,
+    FileSpreadsheet
 } from "lucide-react"
 import { Job } from "@/lib/supabase/jobs"
 import { Driver } from "@/lib/supabase/drivers"
@@ -28,6 +29,8 @@ import { useRouter } from "next/navigation"
 import { useRealtime } from "@/hooks/useRealtime"
 import { RealtimeIndicator } from "@/components/ui/realtime-indicator"
 import { useLanguage } from "@/components/providers/language-provider"
+import { ExcelImport } from "@/components/ui/excel-import"
+import { PremiumButton } from "../ui/premium-button"
 
 interface PlanningClientProps {
     stats: {
@@ -73,7 +76,8 @@ export function PlanningClient({
     jobCreationData,
     canViewPrice,
     canDelete,
-    canCreate
+    canCreate,
+    createBulkJobs
 }: PlanningClientProps) {
     const { drivers, vehicles, customers, routes, subcontractors } = jobCreationData
     const [view, setView] = useState<'list' | 'kanban' | 'requests'>('list')
@@ -157,6 +161,31 @@ export function PlanningClient({
 
                     {canCreate && (
                         <div className="flex items-center gap-3 ml-2">
+                            <ExcelImport 
+                                trigger={
+                                    <PremiumButton variant="outline" className="h-12 sm:h-14 px-6 sm:px-8 rounded-xl sm:rounded-2xl border-border/10 hover:border-primary/50 text-muted-foreground gap-3">
+                                        <FileSpreadsheet size={18} /> {t('common.tactical.bulk_import') || 'Import'}
+                                    </PremiumButton>
+                                }
+                                title={t('planning.import_title') || 'Import Jobs'}
+                                onImport={createBulkJobs}
+                                templateData={[{
+                                    Job_ID: "JOB-001",
+                                    Plan_Date: new Date().toISOString().split('T')[0],
+                                    Customer_Name: "บริษัท สยามคูโบต้าคอร์ปอเรชั่น จำกัด",
+                                    Route_Name: "BKK-CNX",
+                                    Driver_ID: "D001",
+                                    Vehicle_Plate: "80-1234 กทม.",
+                                    Weight_Kg: 1500,
+                                    Volume_Cbm: 10,
+                                    Price_Cust_Total: 5500,
+                                    Cost_Driver_Total: 3500,
+                                    Ref_No: "SO-12345",
+                                    Notes: "ด่วนพิเศษ",
+                                    Branch_ID: "HQ"
+                                }]}
+                                templateFilename="logispro_jobs_template.xlsx"
+                            />
                             <JobDialog 
                                 drivers={drivers} 
                                 vehicles={vehicles} 
@@ -164,7 +193,7 @@ export function PlanningClient({
                                 routes={routes}
                                 subcontractors={subcontractors}
                                 trigger={
-                                    <button className="flex items-center gap-2 bg-card text-foreground px-6 py-3 rounded-2xl font-black text-xl hover:bg-primary hover:text-white transition-all shadow-xl active:scale-95 group">
+                                    <button className="flex items-center gap-2 bg-card text-foreground px-6 py-3 rounded-2xl font-black text-xl hover:bg-primary hover:text-white transition-all shadow-xl active:scale-95 group whitespace-nowrap">
                                         <Plus size={18} className="group-hover:rotate-90 transition-transform duration-300" />
                                         {t('planning.new_job')}
                                     </button>

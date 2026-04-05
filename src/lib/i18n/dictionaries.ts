@@ -77,7 +77,8 @@ export const dictionaries = {
           v_matrix_id: 'รหัสเมทริกซ์ (V_MATRIX_ID)',
           no_intel: '// ไม่มีข้อมูลระบุ (NO_INTEL)',
           fleet_spec_node: 'โหนดข้อมูลข้อกำหนดและขีดความสามารถกองรถ',
-          system_ready: 'ระบบพร้อมทำงาน (SYSTEM_READY)'
+          system_ready: 'ระบบพร้อมทำงาน (SYSTEM_READY)',
+          bulk_import: 'นำเข้าข้อมูลไฟล์'
       },
       network_stable: 'การเชื่อมต่อปกติ',
       financial_node: 'สรุปการเงิน',
@@ -1839,7 +1840,12 @@ export const dictionaries = {
           remove_link: '-- REMOVE_LINKAGE --',
           deploy_status: 'Deployment Status',
           node_active: 'NODE_ACTIVE',
-          node_deactivated: 'NODE_DEACTIVATED'
+          node_deactivated: 'NODE_DEACTIVATED',
+          v_matrix_id: 'V_MATRIX_ID',
+          no_intel: '// NO_INTEL',
+          fleet_spec_node: 'Fleet Specification Node',
+          system_ready: 'System Ready (SYSTEM_READY)',
+          bulk_import: 'Bulk Import'
       },
       sync_complete: 'Sync Complete',
       sync_active: 'Active',

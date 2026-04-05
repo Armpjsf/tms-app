@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { PremiumButton } from "@/components/ui/premium-button"
 import { Input } from "@/components/ui/input"
@@ -50,6 +50,7 @@ interface ExecutiveKPIs {
 
 export default function CustomersSettingsPage() {
   const { t } = useLanguage()
+  const fuelMatrixRef = useRef<any>(null)
   const [customers, setCustomers] = useState<Customer[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
@@ -111,17 +112,31 @@ export default function CustomersSettingsPage() {
     if (!formData.Customer_Name) return toast.warning(t('common.error'))
     setSaving(true)
     try {
+      // 1. Save Fuel Matrix logic (via ref)
+      if (fuelMatrixRef.current) {
+          const matrixResult = await fuelMatrixRef.current.handleSave()
+          if (!matrixResult?.success) {
+              setSaving(false)
+              // The toast is already handled inside CustomerFuelMatrix
+              return 
+          }
+      }
+
+      // 2. Save Main Customer Data
       if (editingCustomer) {
-        await updateCustomer(formData.Customer_ID!, formData)
+        const result = await updateCustomer(formData.Customer_ID!, formData)
+        if (!result.success) throw new Error(result.error?.message || 'Update failed')
         toast.success(t('common.toast.success_edit'))
       } else {
-        await createCustomer(formData)
+        const result = await createCustomer(formData)
+        if (!result.success) throw new Error(result.error?.message || 'Create failed')
         toast.success(t('common.toast.success_save'))
       }
       setIsDialogOpen(false)
       loadCustomers()
-    } catch {
-      toast.error(t('common.toast.error_save'))
+    } catch (e: any) {
+      console.error('Save error:', e)
+      toast.error(t('common.toast.error_save') + ": " + (e.message || 'Unknown error'))
     } finally {
       setSaving(false)
     }
@@ -171,6 +186,17 @@ export default function CustomersSettingsPage() {
                 }
                 title={t('settings_pages.customers.import_title')}
                 onImport={createBulkCustomers}
+                templateData={[{
+                    Customer_ID: "CUST-001",
+                    Customer_Name: "บริษัท ตัวอย่าง จำกัด",
+                    Tax_ID: "1234567890123",
+                    Phone: "02-123-4567",
+                    Address: "123 ถ.สุขุมวิท แขวงคลองเตย เขตคลองเตย กรุงเทพฯ 10110",
+                    Email: "contact@example.com",
+                    Line_User_ID: "@example_line",
+                    Credit_Term: 30,
+                    Price_Per_Unit: 1500.00
+                }]}
                 templateFilename="logispro_client_template.xlsx"
             />
             <PremiumButton onClick={() => handleOpenDialog()} className="h-14 px-10 rounded-2xl shadow-xl shadow-primary/20">
@@ -229,7 +255,7 @@ export default function CustomersSettingsPage() {
       </div>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent className="bg-background border border-border/5 text-foreground max-w-3xl max-h-[85vh] shadow-[0_50px_100px_rgba(0,0,0,0.5)] rounded-[3rem] sm:rounded-[4rem] p-0 overflow-hidden ring-1 ring-white/10 flex flex-col">
+          <DialogContent className="bg-background border border-border/5 text-foreground max-w-6xl max-h-[90vh] shadow-[0_50px_100px_rgba(0,0,0,0.5)] rounded-[3rem] sm:rounded-[4rem] p-0 overflow-hidden ring-1 ring-white/10 flex flex-col">
             <div className="bg-card p-6 sm:p-10 text-foreground relative overflow-hidden border-b border-border/5 shrink-0">
                 <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent pointer-events-none" />
                 <DialogHeader>
@@ -374,7 +400,11 @@ export default function CustomersSettingsPage() {
 
                 <TabsContent value="rates" className="animate-in fade-in slide-in-from-right-2 duration-500">
                     {editingCustomer && (
-                        <CustomerFuelMatrix customerId={editingCustomer.Customer_ID} customerName={editingCustomer.Customer_Name} />
+                        <CustomerFuelMatrix 
+                            ref={fuelMatrixRef}
+                            customerId={editingCustomer.Customer_ID} 
+                            customerName={editingCustomer.Customer_Name} 
+                        />
                     )}
                 </TabsContent>
               </Tabs>

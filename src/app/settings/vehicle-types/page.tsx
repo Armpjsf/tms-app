@@ -18,7 +18,8 @@ import {
     Target,
     Settings2,
     Database,
-    Save
+    Save,
+    FileSpreadsheet
 } from "lucide-react"
 import { 
     Dialog, 
@@ -26,11 +27,12 @@ import {
     DialogHeader, 
     DialogTitle 
 } from "@/components/ui/dialog"
-import { getVehicleTypes, createVehicleType, updateVehicleType, deleteVehicleType, VehicleType } from "@/lib/actions/vehicle-type-actions"
+import { getVehicleTypes, createVehicleType, updateVehicleType, deleteVehicleType, VehicleType, createBulkVehicleTypes } from "@/lib/actions/vehicle-type-actions"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 import { useLanguage } from "@/components/providers/language-provider"
+import { ExcelImport } from "@/components/ui/excel-import"
 
 export default function VehicleTypesPage() {
   const { t } = useLanguage()
@@ -151,10 +153,28 @@ export default function VehicleTypesPage() {
                     <div className="w-2 h-2 rounded-full bg-primary animate-pulse shadow-[0_0_10px_rgba(255,30,133,1)]" />
                     <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest italic">{t('common.tactical.system_ready')}</span>
                 </div>
-                <PremiumButton onClick={handleOpenCreate} className="h-16 px-12 rounded-2xl bg-primary text-foreground border-0 shadow-[0_20px_50px_rgba(255,30,133,0.3)] gap-4 text-xl tracking-widest">
-                    <Plus size={24} strokeWidth={3} />
-                    {t('settings_pages.vehicle_types.add_type')}
-                </PremiumButton>
+                <div className="flex gap-4">
+                    <ExcelImport 
+                        trigger={
+                            <PremiumButton variant="outline" className="h-16 px-10 rounded-2xl border-white/20 bg-white/10 hover:bg-white/20 text-white font-black text-xl gap-3">
+                                <FileSpreadsheet size={24} strokeWidth={3} />
+                                {t('common.tactical.bulk_import') || 'Import'}
+                            </PremiumButton>
+                        }
+                        title={t('settings_pages.vehicle_types.import_title') || 'Import Vehicle Types'}
+                        onImport={createBulkVehicleTypes}
+                        templateData={[{
+                            type_name: "4-Wheel",
+                            description: "4-Wheel Truck (1.5 Ton)",
+                            active_status: "Active"
+                        }]}
+                        templateFilename="logispro_vehicle_types_template.xlsx"
+                    />
+                    <PremiumButton onClick={handleOpenCreate} className="h-16 px-12 rounded-2xl bg-primary text-foreground border-0 shadow-[0_20px_50px_rgba(255,30,133,0.3)] gap-4 text-xl tracking-widest">
+                        <Plus size={24} strokeWidth={3} />
+                        {t('settings_pages.vehicle_types.add_type')}
+                    </PremiumButton>
+                </div>
             </div>
         </div>
 

@@ -2,7 +2,7 @@ import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { DriversContent } from "@/components/drivers/drivers-content"
 import { isAdmin } from "@/lib/permissions"
 import { getAllBranches, Branch } from "@/lib/supabase/branches"
-import { getAllDrivers } from "@/lib/supabase/drivers"
+import { getAllDrivers, createBulkDrivers } from "@/lib/supabase/drivers"
 import { getAllVehicles } from "@/lib/supabase/vehicles"
 import { getAllSubcontractors } from "@/lib/supabase/subcontractors"
 
@@ -38,6 +38,7 @@ export default async function DriversPage(props: Props) {
         vehicles={vehicles}
         subcontractors={subcontractors}
         branchId={searchParams.branchId as string}
+        createBulkDrivers={createBulkDrivers}
       />
     </DashboardLayout>
   )

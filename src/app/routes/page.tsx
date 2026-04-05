@@ -196,6 +196,19 @@ export default function RoutesPage() {
                 }
                 title={t('routes.spatial_import')}
                 onImport={createBulkRoutes}
+                templateData={[{
+                    Route_Name: "BKK-CNX-001",
+                    Branch_ID: "HQ",
+                    Origin: "กรุงเทพฯ",
+                    Origin_Lat: 13.7563,
+                    Origin_Lon: 100.5018,
+                    Map_Link_Origin: "https://maps.google.com/?q=13.7563,100.5018",
+                    Destination: "เชียงใหม่",
+                    Dest_Lat: 18.7883,
+                    Dest_Lon: 98.9853,
+                    Map_Link_Destination: "https://maps.google.com/?q=18.7883,98.9853",
+                    Distance_KM: 685.5
+                }]}
                 templateFilename="logispro_routes_template.xlsx"
             />
             <PremiumButton onClick={() => handleOpenDialog()} className="h-14 px-10 rounded-2xl shadow-xl shadow-primary/20">

@@ -361,3 +361,79 @@ export async function getDriverEfficiencySummary(branchId?: string) {
         return { avgSuccess: 0, avgOnTime: 0, totalDrivers: 0 }
     }
 }
+
+/**
+ * Create multiple drivers in bulk
+ */
+export async function createBulkDrivers(drivers: Partial<Driver>[]) {
+  const isSuper = await isSuperAdmin()
+  const isAdminUser = await isAdmin()
+  const supabase = (isSuper || isAdminUser) ? await createAdminClient() : await createClient()
+
+  const branchId = await getUserBranchId()
+  const effectiveBranchId = (branchId && branchId !== 'All') ? branchId : null
+
+  const normalizeData = (row: any) => {
+    const normalized: Record<string, any> = {}
+    const getValue = (keys: string[]) => {
+      const rowKeys = Object.keys(row)
+      for (const key of keys) {
+        const foundKey = rowKeys.find(k => k.toLowerCase().replace(/\s+/g, '_') === key.toLowerCase().replace(/\s+/g, '_'))
+        if (foundKey && row[foundKey] !== undefined && row[foundKey] !== null) {
+          return row[foundKey]
+        }
+      }
+      return undefined
+    }
+
+    normalized.Driver_ID = getValue(['Driver_ID', 'id', 'รหัสคนขับ', 'รหัสพนักงาน'])
+    normalized.Driver_Name = getValue(['Driver_Name', 'name', 'ชื่อคนขับ', 'ชื่อ-นามสกุล'])
+    normalized.Mobile_No = getValue(['Mobile_No', 'phone', 'mobile', 'เบอร์โทรศัพท์', 'เบอร์โทร'])
+    normalized.Password = getValue(['Password', 'pass', 'รหัสผ่าน'])
+    normalized.Vehicle_Plate = getValue(['Vehicle_Plate', 'plate', 'ทะเบียนรถ', 'ทะเบียน'])
+    normalized.Vehicle_Type = getValue(['Vehicle_Type', 'type', 'ประเภทรถ'])
+    normalized.Active_Status = getValue(['Active_Status', 'status', 'สถานะ']) || 'Active'
+    normalized.Branch_ID = getValue(['Branch_ID', 'branch', 'สาขา']) || effectiveBranchId
+    normalized.Sub_ID = getValue(['Sub_ID', 'subcontractor', 'รหัสผู้รับเหมาช่วง'])
+    normalized.Expire_Date = getValue(['Expire_Date', 'licence_expiry', 'วันหมดอายุใบขับขี่'])
+    normalized.Bank_Name = getValue(['Bank_Name', 'bank', 'ธนาคาร'])
+    normalized.Bank_Account_No = getValue(['Bank_Account_No', 'account_no', 'เลขบัญชี'])
+    normalized.Bank_Account_Name = getValue(['Bank_Account_Name', 'account_name', 'ชื่อบัญชี'])
+
+    return normalized
+  }
+
+  const cleanData = drivers.map(d => {
+    const data = normalizeData(d)
+    return {
+      Driver_ID: data.Driver_ID || `DRV-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      Driver_Name: data.Driver_Name || 'Unknown Driver',
+      Mobile_No: data.Mobile_No || '',
+      Password: String(data.Password || '123456'),
+      Vehicle_Plate: data.Vehicle_Plate || null,
+      Vehicle_Type: data.Vehicle_Type || '4-Wheel',
+      Active_Status: data.Active_Status,
+      Branch_ID: data.Branch_ID,
+      Sub_ID: data.Sub_ID || null,
+      Expire_Date: data.Expire_Date || null,
+      Bank_Name: data.Bank_Name || null,
+      Bank_Account_No: data.Bank_Account_No || null,
+      Bank_Account_Name: data.Bank_Account_Name || null,
+      Role: 'Driver'
+    }
+  })
+
+  if (cleanData.length === 0) {
+    return { success: false, message: 'No valid driver data found' }
+  }
+
+  const { error } = await supabase
+    .from('Master_Drivers')
+    .upsert(cleanData, { onConflict: 'Driver_ID' })
+
+  if (error) {
+    return { success: false, message: `Failed to import drivers: ${error.message}` }
+  }
+
+  return { success: true, message: `Successfully imported ${cleanData.length} drivers` }
+}

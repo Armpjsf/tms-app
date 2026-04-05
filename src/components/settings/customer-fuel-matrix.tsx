@@ -1,14 +1,12 @@
 
 "use client"
 
-import { useState, useEffect } from "react"
-import { PremiumButton } from "@/components/ui/premium-button"
+import { useState, useEffect, forwardRef, useImperativeHandle } from "react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { 
     Plus, 
     Trash2, 
-    Save, 
     Fuel, 
     Navigation,
     Loader2,
@@ -19,8 +17,16 @@ import {
 } from "lucide-react"
 import { getCustomerMatrices, saveCustomerMatrix, deleteCustomerMatrix } from "@/lib/actions/fuel-actions"
 import { getAllRoutes } from "@/lib/supabase/routes"
+import { getCustomer } from "@/lib/supabase/customers"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 interface MatrixRow {
     min: number
@@ -33,31 +39,74 @@ interface CustomerFuelMatrixProps {
     customerName: string
 }
 
-export function CustomerFuelMatrix({ customerId, customerName }: CustomerFuelMatrixProps) {
+export const CustomerFuelMatrix = forwardRef(({ customerId, customerName }: CustomerFuelMatrixProps, ref) => {
     const [matrices, setMatrices] = useState<any[]>([])
     const [routes, setRoutes] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
     const [activeRoute, setActiveRoute] = useState<string>("")
     const [currentMatrix, setCurrentMatrix] = useState<MatrixRow[]>([])
-
+    const [customerBranch, setCustomerBranch] = useState<string | null>(null)
+    
     useEffect(() => {
         const loadData = async () => {
             setLoading(true)
-            const [matrixData, routesData] = await Promise.all([
-                getCustomerMatrices(customerId),
-                getAllRoutes()
-            ])
-            setMatrices(matrixData)
-            setRoutes(routesData.data)
-            setLoading(false)
+            try {
+                const customer = await getCustomer(customerId)
+                const branchId = customer?.Branch_ID || null
+                setCustomerBranch(branchId)
+
+                const [matrixData, routesData] = await Promise.all([
+                    getCustomerMatrices(customerId),
+                    getAllRoutes(undefined, undefined, undefined, branchId || undefined)
+                ])
+                
+                setMatrices(matrixData)
+                setRoutes(routesData.data || [])
+            } catch (error) {
+                console.error("Failed to load fuel matrix data:", error)
+            } finally {
+                setLoading(false)
+            }
         }
         loadData()
     }, [customerId])
 
-    const handleSelectRoute = (route: any) => {
-        setActiveRoute(route.Route_Name)
-        const existing = matrices.find(m => m.Route_Name === route.Route_Name)
+    useImperativeHandle(ref, () => ({
+        async handleSave() {
+            if (!activeRoute || activeRoute === "none") return { success: true }; 
+            if (!currentMatrix || currentMatrix.length === 0) return { success: true };
+
+            setSaving(true)
+            try {
+                const result = await saveCustomerMatrix(customerId, activeRoute, currentMatrix)
+                if (result.success) {
+                    const updated = await getCustomerMatrices(customerId)
+                    setMatrices(updated)
+                    toast.success("บันทึกข้อมูลเรียบร้อยแล้ว")
+                    setSaving(false)
+                    return { success: true }
+                } else {
+                    setSaving(false)
+                    toast.error("บันทึกล้มเหลว: " + result.error)
+                    return { success: false, error: result.error }
+                }
+            } catch (err: any) {
+                setSaving(false)
+                toast.error("เกิดข้อผิดพลาดในการบันทึก")
+                return { success: false, error: err.message }
+            }
+        }
+    }));
+
+    const handleSelectRoute = (routeName: string) => {
+        if (routeName === "none") {
+            setActiveRoute("")
+            setCurrentMatrix([])
+            return
+        }
+        setActiveRoute(routeName)
+        const existing = matrices.find(m => m.Route_Name === routeName)
         if (existing) {
             setCurrentMatrix(existing.Fuel_Rate_Matrix)
         } else {
@@ -67,10 +116,11 @@ export function CustomerFuelMatrix({ customerId, customerName }: CustomerFuelMat
 
     const addRow = () => {
         const lastRow = currentMatrix[currentMatrix.length - 1]
+        const nextMin = lastRow ? (isNaN(lastRow.max) ? 0 : Number((lastRow.max + 0.01).toFixed(2))) : 0
         setCurrentMatrix([...currentMatrix, { 
-            min: lastRow ? lastRow.max + 0.01 : 0, 
-            max: lastRow ? lastRow.max + 3 : 0, 
-            price: 0 
+            min: nextMin, 
+            max: Number((nextMin + 3).toFixed(2)), 
+            price: lastRow ? lastRow.price : 0
         }])
     }
 
@@ -78,234 +128,223 @@ export function CustomerFuelMatrix({ customerId, customerName }: CustomerFuelMat
         setCurrentMatrix(currentMatrix.filter((_, i) => i !== index))
     }
 
-    const updateRow = (index: number, field: keyof MatrixRow, value: number) => {
+    const updateRow = (index: number, field: keyof MatrixRow, value: string) => {
         const next = [...currentMatrix]
-        next[index] = { ...next[index], [field]: value }
+        const numVal = parseFloat(value)
+        const val = isNaN(numVal) ? 0 : numVal
+        next[index] = { ...next[index], [field]: val }
         setCurrentMatrix(next)
     }
 
-    const handleSave = async () => {
-        if (!activeRoute) return toast.error("กรุณาเลือกเส้นทาง")
-        if (currentMatrix.length === 0) return toast.error("กรุณาเพิ่มอย่างน้อย 1 แถว")
-
+    const handleDeleteMatrix = async () => {
+        const matrix = matrices.find(m => m.Route_Name === activeRoute)
+        if (!matrix) return
+        if (!confirm("ยืนยันการลบเรทราคาทั้งหมดของเส้นทางนี้?")) return
+        
         setSaving(true)
-        const result = await saveCustomerMatrix(customerId, activeRoute, currentMatrix)
+        const result = await deleteCustomerMatrix(matrix.ID)
         if (result.success) {
-            toast.success("บันทึกเรทราคาน้ำมันเรียบร้อย")
-            // Refresh local matrices
-            const updated = await getCustomerMatrices(customerId)
-            setMatrices(updated)
+            toast.success("ลบข้อมูลเรียบร้อย")
+            setMatrices(matrices.filter(m => m.ID !== matrix.ID))
+            setCurrentMatrix([{ min: 0, max: 0, price: 0 }])
         } else {
-            toast.error("เกิดข้อผิดพลาด: " + result.error)
+            toast.error("ลบข้อมูลล้มเหลว")
         }
         setSaving(false)
     }
 
-    const handleDelete = async (id: string) => {
-        if (!confirm("ยืนยันการลบ Matrix นี้?")) return
-        const result = await deleteCustomerMatrix(id)
-        if (result.success) {
-            toast.success("ลบเรียบร้อย")
-            setMatrices(matrices.filter(m => m.ID !== id))
-            if (activeRoute && matrices.find(m => m.ID === id)?.Route_Name === activeRoute) {
-                setActiveRoute("")
-                setCurrentMatrix([])
-            }
-        }
-    }
-
-    if (loading) return (
-        <div className="p-20 flex flex-col items-center justify-center gap-4">
-            <Loader2 className="animate-spin text-primary" size={40} />
-            <p className="text-muted-foreground font-black uppercase tracking-widest">กำลังโหลดข้อมูลเรทราคา...</p>
-        </div>
-    )
-
     const selectedRouteData = routes.find(r => r.Route_Name === activeRoute)
 
+    // Main Render with Single Return Path to avoid React Hook mismatch
     return (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 min-h-[500px]">
-            {/* Sidebar: Routes List */}
-            <div className="lg:col-span-1 space-y-4">
-                <div className="p-6 bg-card border border-border/10 rounded-[2rem] shadow-xl">
-                    <h3 className="text-xl font-black text-foreground mb-6 uppercase tracking-tighter flex items-center gap-3">
-                        <Navigation className="text-primary" size={20} strokeWidth={2.5} />
-                        เส้นทาง (Routes)
-                    </h3>
-                    
-                    <div className="space-y-3 max-h-[500px] overflow-y-auto custom-scrollbar pr-2">
-                        {routes.map((route) => {
-                            const hasMatrix = matrices.some(m => m.Route_Name === route.Route_Name)
-                            const isSelected = activeRoute === route.Route_Name
-
-                            return (
-                                <button
-                                    key={route.Route_Name}
-                                    onClick={() => handleSelectRoute(route)}
-                                    className={cn(
-                                        "w-full p-4 rounded-2xl border transition-all text-left flex flex-col gap-2 group relative overflow-hidden",
-                                        isSelected 
-                                            ? "bg-primary border-primary text-foreground shadow-lg shadow-primary/20 scale-[1.02]" 
-                                            : "bg-muted/30 border-border/5 text-muted-foreground hover:bg-muted/50"
-                                    )}
-                                >
-                                    <div className="flex items-center justify-between w-full">
-                                        <div className="flex items-center gap-2">
-                                            <div className={cn("w-2 h-2 rounded-full", isSelected ? "bg-white animate-pulse" : "bg-primary")} />
-                                            <span className="font-black text-lg tracking-tight uppercase line-clamp-1">{route.Route_Name}</span>
-                                        </div>
-                                        {hasMatrix && !isSelected && (
-                                            <div className="p-1 bg-emerald-500/20 rounded-full">
-                                                <Save size={10} className="text-emerald-500" />
-                                            </div>
-                                        )}
-                                    </div>
-                                    
-                                    <div className={cn(
-                                        "flex flex-col gap-1 pl-4 border-l-2 transition-colors",
-                                        isSelected ? "border-white/20" : "border-primary/20"
-                                    )}>
-                                        <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-widest opacity-80">
-                                            <span className={isSelected ? "text-white/60" : "text-primary"}>จาก:</span>
-                                            <span className="truncate">{route.Origin || 'ไม่ระบุ'}</span>
-                                        </div>
-                                        <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-widest opacity-80">
-                                            <span className={isSelected ? "text-white/60" : "text-accent"}>ไป:</span>
-                                            <span className="truncate">{route.Destination || 'ไม่ระบุ'}</span>
-                                        </div>
-                                    </div>
-
-                                    {hasMatrix && (
-                                        <div className={cn(
-                                            "mt-1 text-[9px] font-black uppercase tracking-[0.2em] text-right w-full",
-                                            isSelected ? "text-white/40" : "text-emerald-500/50"
-                                        )}>
-                                            • MATRIX CONFIGURED •
-                                        </div>
-                                    )}
-                                </button>
-                            )
-                        })}
+        <div className="flex flex-col gap-10 min-h-[650px] w-full p-4 lg:p-4">
+            {loading ? (
+                <div className="p-20 flex-1 flex flex-col items-center justify-center gap-6 min-h-[500px]">
+                    <div className="relative">
+                        <Loader2 className="animate-spin text-primary" size={64} strokeWidth={1} />
+                        <Fuel className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-primary opacity-50" size={24} />
+                    </div>
+                    <div className="text-center animate-pulse">
+                        <p className="text-foreground font-black text-xl uppercase tracking-tighter">กำลังโหลดข้อมูลเรทราคา...</p>
+                        <p className="text-muted-foreground text-xs font-bold uppercase tracking-[0.3em] mt-1">กรุณารอสักครู่ (Branch Filter Active)</p>
                     </div>
                 </div>
-            </div>
-
-            {/* Main: Matrix Editor */}
-            <div className="lg:col-span-2">
-                {activeRoute ? (
-                    <div className="p-8 bg-card border border-border/10 rounded-[3rem] shadow-2xl relative overflow-hidden h-full flex flex-col">
-                        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 blur-[100px] pointer-events-none" />
+            ) : (
+                <>
+                    {/* Header: Route Selection Dropdown */}
+                    <div className="p-8 bg-card/40 backdrop-blur-3xl border border-white/10 rounded-[2.5rem] shadow-[0_20px_60px_rgba(0,0,0,0.1)] relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 w-[30rem] h-[30rem] bg-primary/5 blur-[100px] -translate-y-1/2 translate-x-1/2 pointer-events-none" />
                         
-                        <div className="flex flex-col xl:flex-row xl:items-start justify-between mb-10 gap-8 relative z-10">
-                            <div className="space-y-6 flex-1">
-                                <div>
-                                    <p className="text-primary font-black text-sm uppercase tracking-[0.3em] mb-1">Fuel Price Escalator</p>
-                                    <h3 className="text-4xl font-black text-foreground tracking-tighter uppercase">{activeRoute}</h3>
+                        <div className="relative z-10 flex flex-col lg:flex-row lg:items-end justify-between gap-6">
+                            <div className="flex-1 space-y-4">
+                                <div className="flex items-center gap-3 ml-1">
+                                    <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center">
+                                        <span className="text-[10px] font-black text-primary">01</span>
+                                    </div>
+                                    <Label className="text-primary font-black uppercase tracking-[0.3em] text-[10px]">เลือกเส้นทางขนส่งสำหรับลูกค้ารายนี้</Label>
                                 </div>
                                 
-                                <div className="flex items-center gap-6 bg-muted/30 p-6 rounded-[2rem] border border-border/5 shadow-inner">
-                                    <div className="flex flex-col flex-1">
-                                        <div className="flex items-center gap-2 mb-1">
-                                            <MapPin size={12} className="text-primary" />
-                                            <span className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">ต้นทาง (Origin)</span>
+                                <Select value={activeRoute || "none"} onValueChange={handleSelectRoute}>
+                                    <SelectTrigger className="w-full h-20 bg-muted/20 border-border/5 text-2xl font-black rounded-2xl px-8 uppercase tracking-tighter hover:bg-card hover:translate-y-[-2px] transition-all duration-300 shadow-inner group/trigger">
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary group-hover/trigger:scale-110 transition-transform">
+                                                <Navigation size={20} strokeWidth={2.5} />
+                                            </div>
+                                            <SelectValue placeholder="ค้นหาและเลือกเส้นทาง..." />
                                         </div>
-                                        <span className="text-xl font-black text-foreground uppercase tracking-tight truncate">{selectedRouteData?.Origin || 'ไม่ระบุ'}</span>
+                                    </SelectTrigger>
+                                    <SelectContent className="bg-card border-border/10 max-h-[400px] rounded-2xl shadow-3xl p-2">
+                                        <SelectItem value="none" className="font-bold text-muted-foreground py-4 rounded-xl opacity-50">-- เลือกเส้นทาง (สาขา: {customerBranch || 'ทั้งหมด'}) --</SelectItem>
+                                        {routes.map(r => (
+                                            <SelectItem key={r.Route_Name} value={r.Route_Name} className="py-4 focus:bg-primary/10 rounded-xl mb-1">
+                                                <div className="flex items-center justify-between w-full pr-4">
+                                                    <div className="flex flex-col gap-0.5">
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="font-black text-lg uppercase tracking-tighter">{r.Route_Name}</span>
+                                                            {matrices.some(m => m.Route_Name === r.Route_Name) && (
+                                                                <span className="px-2 py-0.5 bg-green-500/10 text-green-500 text-[8px] font-black uppercase rounded border border-green-500/20">Configured</span>
+                                                            )}
+                                                        </div>
+                                                        <span className="text-[10px] font-bold text-muted-foreground uppercase opacity-60 flex items-center gap-1">
+                                                            {r.Origin || '-'} <ChevronRight size={8} /> {r.Destination || '-'}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                            {activeRoute && (
+                                <button 
+                                    type="button"
+                                    onClick={handleDeleteMatrix}
+                                    disabled={!matrices.some(m => m.Route_Name === activeRoute) || saving}
+                                    className="h-20 px-6 rounded-2xl bg-rose-500/5 text-rose-500 border border-rose-500/10 hover:bg-rose-500 hover:text-white transition-all disabled:opacity-30 flex items-center justify-center shadow-lg active:scale-95"
+                                >
+                                    <Trash2 size={24} strokeWidth={2} />
+                                </button>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Matrix Editor Area */}
+                    {activeRoute ? (
+                        <div className="flex-1 p-6 lg:p-10 bg-card/60 backdrop-blur-md border border-white/10 rounded-[3rem] shadow-3xl relative overflow-hidden animate-in fade-in slide-in-from-bottom-8 duration-700">
+                            <div className="absolute inset-x-0 top-0 h-[15rem] bg-gradient-to-b from-primary/[0.02] to-transparent pointer-events-none" />
+                            
+                            <div className="flex flex-col gap-10 relative z-10">
+                                {/* Route Info Visualizer */}
+                                <div className="flex flex-col md:flex-row items-center justify-between gap-6 bg-black/10 p-8 rounded-[2rem] border border-white/5 shadow-inner">
+                                    <div className="flex items-center gap-6">
+                                        <div className="w-16 h-16 rounded-2xl bg-primary/20 flex items-center justify-center text-primary shadow-lg ring-1 ring-primary/30">
+                                            <MapPin size={28} strokeWidth={2.5} />
+                                        </div>
+                                        <div className="flex flex-col">
+                                            <span className="text-[9px] font-black text-primary uppercase tracking-[0.3em] mb-1 opacity-70">ORIGIN</span>
+                                            <span className="text-2xl font-black text-foreground uppercase tracking-tighter">{selectedRouteData?.Origin || 'N/A'}</span>
+                                        </div>
                                     </div>
                                     
-                                    <div className="p-3 bg-muted/50 rounded-full border border-border/10">
-                                        <ArrowRight size={20} className="text-muted-foreground opacity-30" />
-                                    </div>
+                                    <ChevronRight className="text-muted-foreground/20 hidden md:block" size={32} strokeWidth={1} />
 
-                                    <div className="flex flex-col flex-1 text-right">
-                                        <div className="flex items-center gap-2 mb-1 justify-end">
-                                            <span className="text-[10px] font-black text-accent uppercase tracking-[0.2em]">ปลายทาง (Destination)</span>
-                                            <MapPin size={12} className="text-accent" />
+                                    <div className="flex items-center gap-6 md:text-right">
+                                        <div className="flex flex-col">
+                                            <span className="text-[9px] font-black text-accent uppercase tracking-[0.3em] mb-1 opacity-70">DESTINATION</span>
+                                            <span className="text-2xl font-black text-foreground uppercase tracking-tighter">{selectedRouteData?.Destination || 'N/A'}</span>
                                         </div>
-                                        <span className="text-xl font-black text-foreground uppercase tracking-tight truncate">{selectedRouteData?.Destination || 'ไม่ระบุ'}</span>
+                                        <div className="w-16 h-16 rounded-2xl bg-accent/20 flex items-center justify-center text-accent shadow-lg ring-1 ring-accent/30">
+                                            <MapPin size={28} strokeWidth={2.5} />
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                            <PremiumButton onClick={handleSave} disabled={saving} className="rounded-2xl px-8 shadow-xl shadow-primary/20 h-20 text-xl font-black uppercase tracking-widest shrink-0">
-                                {saving ? <Loader2 size={24} className="animate-spin mr-3" /> : <Save size={24} className="mr-3" />}
-                                บันทึกเรทน้ำมัน
-                            </PremiumButton>
-                        </div>
 
-                        <div className="flex-1 space-y-4 relative z-10">
-                            <div className="grid grid-cols-12 gap-4 px-4 mb-2">
-                                <div className="col-span-4 text-xs font-black text-muted-foreground uppercase tracking-widest">ช่วงราคาน้ำมันต่ำสุด (฿)</div>
-                                <div className="col-span-4 text-xs font-black text-muted-foreground uppercase tracking-widest">ช่วงราคาน้ำมันสูงสุด (฿)</div>
-                                <div className="col-span-3 text-xs font-black text-muted-foreground uppercase tracking-widest text-right">ค่าขนส่ง (฿)</div>
-                                <div className="col-span-1"></div>
-                            </div>
-
-                            <div className="space-y-3 max-h-[400px] overflow-y-auto custom-scrollbar pr-2">
-                                {currentMatrix.map((row, idx) => (
-                                    <div key={idx} className="grid grid-cols-12 gap-4 items-center bg-muted/20 p-2 rounded-2xl border border-border/5 hover:bg-muted/40 transition-all group/row">
-                                        <div className="col-span-4">
-                                            <Input
-                                                type="number"
-                                                step="0.01"
-                                                value={row.min}
-                                                onChange={(e) => updateRow(idx, 'min', parseFloat(e.target.value))}
-                                                className="bg-background/50 border-none h-14 font-black text-xl focus:ring-primary/30 rounded-xl"
-                                            />
-                                        </div>
-                                        <div className="col-span-4">
-                                            <Input
-                                                type="number"
-                                                step="0.01"
-                                                value={row.max}
-                                                onChange={(e) => updateRow(idx, 'max', parseFloat(e.target.value))}
-                                                className="bg-background/50 border-none h-14 font-black text-xl focus:ring-primary/30 rounded-xl"
-                                            />
-                                        </div>
-                                        <div className="col-span-3">
-                                            <Input
-                                                type="number"
-                                                value={row.price}
-                                                onChange={(e) => updateRow(idx, 'price', parseFloat(e.target.value))}
-                                                className="bg-background/50 border-none h-14 font-black text-2xl text-right text-primary focus:ring-primary/30 rounded-xl"
-                                            />
-                                        </div>
-                                        <div className="col-span-1 flex justify-center">
-                                            <button onClick={() => removeRow(idx)} className="text-muted-foreground hover:text-rose-500 transition-colors opacity-0 group-hover/row:opacity-100 p-2">
-                                                <Trash2 size={20} />
-                                            </button>
-                                        </div>
+                                {/* Matrix Content */}
+                                <div className="space-y-6">
+                                    <div className="grid grid-cols-12 gap-4 px-8 mb-2">
+                                        <div className="col-span-4 text-[9px] font-black text-muted-foreground uppercase tracking-[0.2em]">เริ่มช่วงราคาน้ำมัน (฿)</div>
+                                        <div className="col-span-4 text-[9px] font-black text-muted-foreground uppercase tracking-[0.2em]">จบช่วงราคาน้ำมัน (฿)</div>
+                                        <div className="col-span-4 text-[9px] font-black text-primary uppercase tracking-[0.2em]">ค่าขนส่งสุทธิ (฿)</div>
                                     </div>
-                                ))}
 
-                                <button 
-                                    onClick={addRow}
-                                    className="w-full py-5 border-2 border-dashed border-border/10 rounded-[1.5rem] text-muted-foreground hover:text-primary hover:border-primary/30 hover:bg-primary/5 transition-all font-black uppercase tracking-widest text-sm flex items-center justify-center gap-3 mt-4"
-                                >
-                                    <Plus size={20} strokeWidth={3} />
-                                    เพิ่มช่วงราคาใหม่
-                                </button>
-                            </div>
-                        </div>
+                                    <div className="space-y-4 max-h-[500px] overflow-y-auto custom-scrollbar p-1">
+                                        {currentMatrix.map((row, idx) => (
+                                            <div key={idx} className="grid grid-cols-12 gap-4 items-center bg-black/10 p-5 rounded-[1.5rem] border border-white/5 hover:bg-black/20 transition-all group/row relative">
+                                                <div className="col-span-4">
+                                                    <div className="relative">
+                                                        <Fuel className="absolute left-5 top-1/2 -translate-y-1/2 text-muted-foreground/30" size={18} />
+                                                        <Input
+                                                            type="number"
+                                                            step="0.01"
+                                                            value={isNaN(row.min) ? "" : row.min}
+                                                            onChange={(e) => updateRow(idx, 'min', e.target.value)}
+                                                            className="bg-background/20 border-border/5 h-14 pl-12 text-xl font-black rounded-xl focus:ring-primary/40 shadow-inner"
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <div className="col-span-4">
+                                                    <div className="relative">
+                                                        <ArrowRight className="absolute left-5 top-1/2 -translate-y-1/2 text-muted-foreground/30" size={18} />
+                                                        <Input
+                                                            type="number"
+                                                            step="0.01"
+                                                            value={isNaN(row.max) ? "" : row.max}
+                                                            onChange={(e) => updateRow(idx, 'max', e.target.value)}
+                                                            className="bg-background/20 border-border/5 h-14 pl-12 text-xl font-black rounded-xl focus:ring-accent/40 shadow-inner"
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <div className="col-span-3">
+                                                    <Input
+                                                        type="number"
+                                                        value={isNaN(row.price) ? "" : row.price}
+                                                        onChange={(e) => updateRow(idx, 'price', e.target.value)}
+                                                        className="bg-primary/5 border-primary/10 h-14 text-2xl font-black text-right text-primary rounded-xl pr-6"
+                                                    />
+                                                </div>
+                                                <div className="col-span-1 flex justify-end">
+                                                    <button 
+                                                        type="button"
+                                                        onClick={() => removeRow(idx)} 
+                                                        className="w-10 h-10 rounded-lg flex items-center justify-center text-muted-foreground/20 hover:bg-rose-500/10 hover:text-rose-500 transition-all"
+                                                    >
+                                                        <Trash2 size={18} />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ))}
 
-                        <div className="mt-8 p-6 bg-primary/5 rounded-[2rem] border border-primary/10">
-                            <div className="flex gap-4 items-start text-primary">
-                                <AlertCircle className="shrink-0 mt-1" size={20} />
-                                <div className="text-sm">
-                                    <p className="font-black uppercase tracking-tight mb-1">คำแนะนำการตั้งค่า</p>
-                                    <p className="opacity-70 font-bold leading-relaxed">ระบบจะใช้ราคาน้ำมัน Diesel B7 ใน กทม. ประจำวันที่วางแผนงาน มาเทียบกับช่วงราคาที่ตั้งไว้เพื่อแนะนำค่าขนส่งที่เหมาะสม</p>
+                                        <button 
+                                            type="button"
+                                            onClick={addRow}
+                                            className="w-full py-8 border-2 border-dashed border-primary/10 rounded-[2rem] text-muted-foreground hover:text-primary hover:border-primary/40 hover:bg-primary/5 transition-all font-black uppercase tracking-[0.3em] text-[10px] flex items-center justify-center gap-3 mt-6 group"
+                                        >
+                                            <Plus size={18} strokeWidth={3} className="group-hover:scale-125 transition-transform" />
+                                            เพิ่มช่วงราคาใหม่ (Add Range)
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div className="mt-4 p-6 bg-primary/5 rounded-[2rem] border border-primary/10 flex gap-4 items-center">
+                                    <AlertCircle className="text-primary shrink-0 opacity-50" size={24} />
+                                    <p className="text-xs text-muted-foreground font-medium">
+                                        * ระบบจะเลือกราคาให้อัตโนมัติตามราคาน้ำมัน ณ วันที่วิ่งงาน โดยตรวจสอบจากช่วงราคาน้ำมันที่คุณกำหนดไว้ด้านบน
+                                    </p>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                ) : (
-                    <div className="h-full flex flex-col items-center justify-center text-center p-20 glass-panel border-dashed border-border/10 rounded-[3rem] opacity-40 grayscale group hover:grayscale-0 hover:opacity-100 transition-all duration-700">
-                        <div className="w-32 h-32 rounded-[2.5rem] bg-muted/50 flex items-center justify-center mb-10 group-hover:bg-primary/20 transition-all duration-700 shadow-2xl">
-                            <Fuel size={64} className="text-primary group-hover:scale-110 transition-transform duration-1000" />
+                    ) : (
+                        <div className="flex-1 flex flex-col items-center justify-center text-center p-20 glass-panel border-dashed border-border/10 rounded-[3rem] opacity-40 group hover:opacity-100 transition-all duration-700">
+                            <Navigation size={60} className="text-primary/20 mb-8 group-hover:scale-110 group-hover:text-primary/40 transition-all duration-700" />
+                            <h3 className="text-2xl font-black text-foreground uppercase tracking-tighter mb-2">เลือกเส้นทางงาน</h3>
+                            <p className="text-muted-foreground font-bold uppercase tracking-widest text-[10px] max-w-xs mx-auto opacity-50">โปรดเลือกเส้นทางด้านบนเพื่อจัดการราคาตามค่าน้ำมัน</p>
                         </div>
-                        <h3 className="text-3xl font-black text-foreground uppercase tracking-tighter mb-4">ยังไม่ได้เลือกเส้นทาง</h3>
-                        <p className="text-muted-foreground font-bold uppercase tracking-widest text-lg max-w-sm mx-auto leading-relaxed">โปรดเลือกเส้นทางจากแถบด้านซ้าย เพื่อจัดการ Matrix เรทน้ำมันสำหรับลูกค้ารายนี้</p>
-                    </div>
-                )}
-            </div>
+                    )}
+                </>
+            )}
         </div>
     )
-}
+});
+
+CustomerFuelMatrix.displayName = "CustomerFuelMatrix";

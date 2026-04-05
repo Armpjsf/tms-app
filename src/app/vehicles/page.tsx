@@ -13,14 +13,17 @@ import {
     Settings2, 
     ShieldCheck, 
     Wrench, 
-    AlertTriangle 
+    AlertTriangle,
+    FileSpreadsheet
 } from "lucide-react"
-import { getAllVehicles } from "@/lib/supabase/vehicles"
+import { getAllVehicles, createBulkVehicles } from "@/lib/supabase/vehicles"
 import type { Vehicle } from "@/lib/supabase/vehicles"
 import { Badge } from "@/components/ui/badge"
 import { VehicleActions } from "@/components/vehicles/vehicle-actions"
 import { useBranch } from "@/components/providers/branch-provider"
 import { useLanguage } from "@/components/providers/language-provider"
+import { ExcelImport } from "@/components/ui/excel-import"
+import { PremiumButton } from "@/components/ui/premium-button"
 
 export default function VehiclesPage() {
   const [vehicles, setVehicles] = useState<Vehicle[]>([])
@@ -64,7 +67,29 @@ export default function VehiclesPage() {
                 </h1>
             </div>
 
-            <div className="relative z-10">
+            <div className="relative z-10 flex items-center gap-4">
+                <ExcelImport 
+                    trigger={
+                        <PremiumButton variant="outline" className="h-14 px-8 rounded-2xl border-white/20 bg-white/10 hover:bg-white/20 text-white font-black text-xl gap-3">
+                            <FileSpreadsheet size={20} />
+                            {t('common.tactical.bulk_import') || 'Import'}
+                        </PremiumButton>
+                    }
+                    title={t('vehicles.import_title') || 'Import Vehicles'}
+                    onImport={createBulkVehicles}
+                    templateData={[{
+                        Vehicle_Plate: "80-1234 กทม.",
+                        Vehicle_Type: "4-Wheel",
+                        Brand: "Toyota",
+                        Model: "Hilux Revo",
+                        Max_Weight_kg: 1500,
+                        Max_Volume_cbm: 10,
+                        Driver_ID: "DRV-001",
+                        Sub_ID: "SUB-001",
+                        Branch_ID: "HQ"
+                    }]}
+                    templateFilename="logispro_vehicles_template.xlsx"
+                />
                 <VehicleDialog 
                     onSuccess={() => setRefreshTrigger(prev => prev + 1)}
                     trigger={

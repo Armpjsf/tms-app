@@ -5,8 +5,7 @@ import { Driver } from "@/lib/supabase/drivers"
 import { PremiumCard } from "@/components/ui/premium-card"
 import { PremiumButton } from "@/components/ui/premium-button"
 import { 
-    Users, Phone, Truck, ShieldCheck, Zap, Award, 
-    Search, Plus, Filter, Download, Edit, Trash2
+    Search, Plus, Filter, Download, Edit, Trash2, FileSpreadsheet
 } from "lucide-react"
 import { deleteDriver } from "@/app/drivers/actions"
 import { toast } from "sonner"
@@ -15,6 +14,7 @@ import { DriverDialog } from "./driver-dialog"
 import { Pagination } from "@/components/ui/pagination"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useLanguage } from "@/components/providers/language-provider"
+import { ExcelImport } from "../ui/excel-import"
 
 type DriversContentProps = {
   drivers: Driver[]
@@ -24,9 +24,10 @@ type DriversContentProps = {
   subcontractors?: { Sub_ID: string; Sub_Name: string }[]
   userId?: string
   branchId?: string
+  createBulkDrivers?: (data: Partial<Driver>[]) => Promise<{ success: boolean; message: string }>
 }
 
-export function DriversContent({ drivers, count, branches, vehicles = [], subcontractors = [], userId, branchId }: DriversContentProps) {
+export function DriversContent({ drivers, count, branches, vehicles = [], subcontractors = [], userId, branchId, createBulkDrivers }: DriversContentProps) {
   const { t } = useLanguage()
   const [isAdmin] = useState(true)
   const [deletingId, setDeletingId] = useState<string | null>(null)
@@ -122,10 +123,32 @@ export function DriversContent({ drivers, count, branches, vehicles = [], subcon
         </div>
 
         <div className="flex items-center gap-4 w-full md:w-auto">
-            <PremiumButton variant="outline" className="h-14 px-8 rounded-2xl border-border/10 hover:bg-muted/50 text-muted-foreground text-base font-bold font-black uppercase tracking-widest gap-2">
-                <Download size={16} />
-                {t('common.success')}
-            </PremiumButton>
+            {createBulkDrivers && (
+                <ExcelImport 
+                    trigger={
+                        <PremiumButton variant="outline" className="h-14 px-8 rounded-2xl border-border/10 hover:bg-muted/50 text-muted-foreground text-base font-bold font-black uppercase tracking-widest gap-3">
+                            <FileSpreadsheet size={18} />
+                            {t('common.tactical.bulk_import') || 'Import'}
+                        </PremiumButton>
+                    }
+                    title={t('drivers.import_title') || 'Import Drivers'}
+                    onImport={createBulkDrivers}
+                    templateData={[{
+                        Driver_ID: "DRV-001",
+                        Driver_Name: "สมชาย เข็มกลัด",
+                        Mobile_No: "0812345678",
+                        Password: "pass-1234",
+                        Vehicle_Plate: "80-1234 กทม.",
+                        Expire_Date: "2025-12-31",
+                        Branch_ID: "HQ",
+                        Sub_ID: "SUB-001",
+                        Bank_Name: "K-Bank",
+                        Bank_Account_No: "123-4-56789-0",
+                        Bank_Account_Name: "สมชาย เข็มกลัด"
+                    }]}
+                    templateFilename="logispro_drivers_template.xlsx"
+                />
+            )}
             <DriverDialog 
                 mode="create"
                 vehicles={vehicles}

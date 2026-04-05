@@ -313,3 +313,72 @@ export async function getSampledVehicleUtilization(providedBranchId?: string) {
     return null
   }
 }
+
+/**
+ * Create multiple vehicles in bulk
+ */
+export async function createBulkVehicles(vehicles: Partial<Vehicle>[]) {
+  const isSuper = await isSuperAdmin()
+  const isAdminUser = await isAdmin()
+  const supabase = (isSuper || isAdminUser) ? await createAdminClient() : await createClient()
+
+  const branchId = await getUserBranchId()
+  const effectiveBranchId = (branchId && branchId !== 'All') ? branchId : null
+
+  const normalizeData = (row: any) => {
+    const normalized: Record<string, any> = {}
+    const getValue = (keys: string[]) => {
+      const rowKeys = Object.keys(row)
+      for (const key of keys) {
+        const foundKey = rowKeys.find(k => k.toLowerCase().replace(/\s+/g, '_') === key.toLowerCase().replace(/\s+/g, '_'))
+        if (foundKey && row[foundKey] !== undefined && row[foundKey] !== null) {
+          return row[foundKey]
+        }
+      }
+      return undefined
+    }
+
+    normalized.Vehicle_Plate = getValue(['Vehicle_Plate', 'plate', 'ทะเบียนรถ', 'ทะเบียน'])
+    normalized.Vehicle_Type = getValue(['Vehicle_Type', 'type', 'ประเภทรถ'])
+    normalized.Brand = getValue(['Brand', 'brand', 'ยี่ห้อ'])
+    normalized.Model = getValue(['Model', 'model', 'รุ่น'])
+    normalized.Max_Weight_kg = getValue(['Max_Weight_kg', 'weight', 'น้ำหนักบรรทุก', 'น้ำหนัก'])
+    normalized.Max_Volume_cbm = getValue(['Max_Volume_cbm', 'volume', 'ปริมาตรบรรทุก', 'คิว'])
+    normalized.Driver_ID = getValue(['Driver_ID', 'driver_id', 'รหัสคนขับ'])
+    normalized.Sub_ID = getValue(['Sub_ID', 'sub_id', 'รหัสผู้รับเหมาช่วง'])
+    normalized.Active_Status = getValue(['Active_Status', 'status', 'สถานะ']) || 'Active'
+    normalized.Branch_ID = getValue(['Branch_ID', 'branch', 'สาขา']) || effectiveBranchId
+
+    return normalized
+  }
+
+  const cleanData = vehicles.map(v => {
+    const data = normalizeData(v)
+    return {
+      Vehicle_Plate: data.Vehicle_Plate,
+      Vehicle_Type: data.Vehicle_Type || '4-Wheel',
+      Brand: data.Brand || null,
+      Model: data.Model || null,
+      Max_Weight_kg: Number(data.Max_Weight_kg) || null,
+      Max_Volume_cbm: Number(data.Max_Volume_cbm) || null,
+      Driver_ID: data.Driver_ID || null,
+      Sub_ID: data.Sub_ID || null,
+      Active_Status: data.Active_Status,
+      Branch_ID: data.Branch_ID
+    }
+  }).filter(v => v.Vehicle_Plate)
+
+  if (cleanData.length === 0) {
+    return { success: false, message: 'No valid vehicle data found (Missing Plate)' }
+  }
+
+  const { error } = await supabase
+    .from('Master_Vehicles')
+    .upsert(cleanData, { onConflict: 'Vehicle_Plate' })
+
+  if (error) {
+    return { success: false, message: `Failed to import vehicles: ${error.message}` }
+  }
+
+  return { success: true, message: `Successfully imported ${cleanData.length} vehicles` }
+}

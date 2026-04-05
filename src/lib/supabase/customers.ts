@@ -259,6 +259,26 @@ export async function createBulkCustomers(customers: Record<string, unknown>[]) 
     }
 }
 
+
+export async function getCustomer(customerId: string) {
+    try {
+        const isSuper = await isSuperAdmin()
+        const isAdminUser = await isAdmin()
+        const supabase = (isSuper || isAdminUser) ? await createAdminClient() : await createClient()
+        
+        const { data, error } = await supabase
+            .from('Master_Customers')
+            .select('*')
+            .eq('Customer_ID', customerId)
+            .single()
+        
+        if (error) return null
+        return data as Customer
+    } catch {
+        return null
+    }
+}
+
 export async function getCustomerName(customerId: string) {
     try {
         const supabase = await createAdminClient()

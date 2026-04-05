@@ -193,7 +193,7 @@ export default function UserSettingsPage() {
                             }
                             title={t('settings_pages.users.import_title')}
                             onImport={createBulkUsers}
-                            templateData={[{ Username: "user01", Name: "นาย สมชาย ใจดี", Branch: "สำนักงานใหญ่", Role: "Staff", Password: "password123", Active_Status: "Active", Customer_ID: "" }]}
+                            templateData={[{ Username: "user01", Name: "นาย สมชาย ใจดี", Branch_ID: "HQ", Role: "Staff", Password: "password123", Active_Status: "Active", Customer_ID: "" }]}
                             templateFilename="template_users.xlsx"
                         />
                         <PremiumButton onClick={() => handleOpenDialog()} className="h-14 px-8 rounded-2xl gap-3 shadow-[0_15px_30px_rgba(255,30,133,0.3)] bg-primary text-foreground border-0">

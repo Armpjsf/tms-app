@@ -88,3 +88,59 @@ export async function deleteVehicleType(id: number) {
   revalidatePath('/vehicles')
   return { success: true, message: 'ลบข้อมูลสำเร็จ' }
 }
+
+/**
+ * Create multiple vehicle types in bulk
+ */
+export async function createBulkVehicleTypes(types: Partial<VehicleType>[]) {
+    try {
+        const adminStatus = await isAdmin()
+        const supabase = adminStatus ? createAdminClient() : await createClient()
+
+        const normalizeData = (row: any) => {
+            const normalized: Record<string, any> = {}
+            const getValue = (keys: string[]) => {
+                const rowKeys = Object.keys(row)
+                for (const key of keys) {
+                    const foundKey = rowKeys.find(k => k.toLowerCase().replace(/\s+/g, '_') === key.toLowerCase().replace(/\s+/g, '_'))
+                    if (foundKey && row[foundKey] !== undefined && row[foundKey] !== null) {
+                        return row[foundKey]
+                    }
+                }
+                return undefined
+            }
+
+            normalized.type_name = getValue(['type_name', 'name', 'ประเภทรถ', 'ชื่อประเภทรถ'])
+            normalized.description = getValue(['description', 'desc', 'รายละเอียด', 'คำอธิบาย'])
+            normalized.active_status = getValue(['active_status', 'status', 'สถานะ']) || 'Active'
+
+            return normalized
+        }
+
+        const cleanData = types.map(t => {
+            const data = normalizeData(t)
+            return {
+                type_name: data.type_name,
+                description: data.description || null,
+                active_status: data.active_status
+            }
+        }).filter(t => t.type_name)
+
+        if (cleanData.length === 0) {
+            return { success: false, message: 'ไม่พบข้อมูลที่ถูกต้อง (ต้องระบุชื่อประเภทรถ)' }
+        }
+
+        const { error } = await supabase
+            .from("Master_Vehicle_Types")
+            .upsert(cleanData, { onConflict: 'type_name' })
+
+        if (error) throw error
+        
+        revalidatePath("/settings/vehicle-types")
+        revalidatePath("/vehicles")
+        return { success: true, message: `นำเข้าประเภทรถ ${cleanData.length} รายการสำเร็จ` }
+    } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : String(error)
+        return { success: false, message: message }
+    }
+}

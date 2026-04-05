@@ -20,7 +20,8 @@ import {
     Zap,
     Activity,
     Globe,
-    Save
+    Save,
+    FileSpreadsheet
 } from "lucide-react"
 import {
   Select,
@@ -30,7 +31,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { getAllSubcontractors } from "@/lib/supabase/subcontractors"
-import { createSubcontractor, updateSubcontractor, deleteSubcontractor } from "@/lib/actions/subcontractor-actions"
+import { createSubcontractor, updateSubcontractor, deleteSubcontractor, createBulkSubcontractors } from "@/lib/actions/subcontractor-actions"
 import { getSubcontractorPerformance, getOperationalStats } from "@/lib/supabase/analytics"
 import { Subcontractor } from "@/types/subcontractor"
 import { useBranch } from "@/components/providers/branch-provider"
@@ -38,6 +39,7 @@ import { useLanguage } from "@/components/providers/language-provider"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
 import { BANKS } from "@/lib/constants/banks"
+import { ExcelImport } from "@/components/ui/excel-import"
 
 export default function SubcontractorsPage() {
     const { selectedBranch, branches } = useBranch()
@@ -166,6 +168,26 @@ export default function SubcontractorsPage() {
                 </div>
 
                 <div className="flex flex-wrap gap-4 relative z-10">
+                    <ExcelImport 
+                        trigger={
+                            <PremiumButton variant="outline" className="h-14 px-10 rounded-2xl border-white/20 bg-white/10 hover:bg-white/20 text-white font-black text-xl gap-3">
+                                <FileSpreadsheet size={24} />
+                                {t('common.tactical.bulk_import') || 'Import'}
+                            </PremiumButton>
+                        }
+                        title={t('settings_pages.subcontractors.import_title') || 'Import Subcontractors'}
+                        onImport={createBulkSubcontractors}
+                        templateData={[{
+                            Sub_ID: "SUB-001",
+                            Sub_Name: "บริษัท ขนส่ง จำกัด",
+                            Tax_ID: "1234567890123",
+                            Bank_Name: "K-Bank",
+                            Bank_Account_No: "123-4-56789-0",
+                            Bank_Account_Name: "บริษัท ขนส่ง จำกัด",
+                            Branch_ID: "HQ"
+                        }]}
+                        templateFilename="logispro_subcontractors_template.xlsx"
+                    />
                     <PremiumButton onClick={() => handleOpenDialog()} className="h-14 px-10 rounded-2xl shadow-xl shadow-primary/20">
                         <Plus size={24} className="mr-3" strokeWidth={3} />
                         {t('settings_pages.subcontractors.add_partner')}

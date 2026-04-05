@@ -130,6 +130,39 @@ export function JobDialog({
   useEffect(() => {
     setInternalMode(mode)
   }, [mode])
+
+  // Initial Fuel Fetch
+  useEffect(() => {
+    let isMounted = true;
+    setIsSyncingFuel(true)
+    
+    // Add a client-side safety timeout to prevent "stuck" UI
+    const timeoutId = setTimeout(() => {
+      if (isMounted) {
+          setIsSyncingFuel(false)
+          if (!fuelPrice) setFuelError('การเชื่อมต่อล่าช้า')
+      }
+    }, 15000);
+
+    getFuelPrice()
+      .then(price => {
+        if (isMounted) {
+            setFuelPrice(price)
+            if (!price) setFuelError('ไม่พบข้อมูลราคา')
+        }
+      })
+      .catch(err => {
+        if (isMounted) setFuelError(err.message)
+      })
+      .finally(() => {
+        if (isMounted) {
+            setIsSyncingFuel(false)
+            clearTimeout(timeoutId)
+        }
+      })
+    
+    return () => { isMounted = false; clearTimeout(timeoutId); }
+  }, [])
   
   const isControlled = controlledOpen !== undefined
   const show = isControlled ? controlledOpen : open
@@ -230,6 +263,8 @@ export function JobDialog({
 
   // Fuel Suggestion State
   const [fuelPrice, setFuelPrice] = useState<number | null>(null)
+  const [isSyncingFuel, setIsSyncingFuel] = useState(false)
+  const [fuelError, setFuelError] = useState<string | null>(null)
   const [suggestedRate, setSuggestedRate] = useState<number | null>(null)
   const [checkingRate, setCheckingRate] = useState(false)
 
@@ -245,21 +280,29 @@ export function JobDialog({
 
   // Check for suggested rate
   useEffect(() => {
-    // Construct route name from endpoints
-    const routeName = (origins[0]?.name && destinations[destinations.length-1]?.name) 
-        ? `${origins[0].name} → ${destinations[destinations.length-1].name}`
-        : ""
-
-    if (formData.Customer_ID && routeName && fuelPrice) {
-        setCheckingRate(true)
-        getSuggestedRate(formData.Customer_ID, routeName, fuelPrice).then(rate => {
+    const origin = origins[0]
+    const destination = destinations[destinations.length - 1]
+    
+    if (formData.Customer_ID && origin?.name && destination?.name && fuelPrice) {
+      // Find the official route name (e.g. BARSEALE1) from Master_Routes
+      // instead of using a naive concatenation.
+      const officialRoute = routes.find(r => 
+        (r.Origin?.trim() === origin.name.trim() && r.Destination?.trim() === destination.name.trim()) ||
+        (r.Route_Name === `${origin.name.trim()} - ${destination.name.trim()}`)
+      )
+      
+      const routeLookupName = officialRoute ? officialRoute.Route_Name : `${origin.name.trim()} - ${destination.name.trim()}`
+      
+      setCheckingRate(true)
+      getSuggestedRate(formData.Customer_ID, routeLookupName, fuelPrice)
+        .then(rate => {
             setSuggestedRate(rate)
             setCheckingRate(false)
         })
     } else {
         setSuggestedRate(null)
     }
-  }, [formData.Customer_ID, origins, destinations, fuelPrice])
+  }, [formData.Customer_ID, origins, destinations, fuelPrice, routes])
 
   // Job Bundling State
   const [nearbyJobs, setNearbyJobs] = useState<Array<{ Job_ID: string; Customer_Name: string | null }>>([])
@@ -1507,46 +1550,64 @@ export function JobDialog({
           {/* Tab: ราคา */}
           {activeTab === 'price' && (
             <div className="space-y-6">
-              {/* Smart Fuel Hint */}
-              {(fuelPrice !== null || suggestedRate !== null) && (
-                <div className="p-6 bg-primary/5 border border-primary/20 rounded-[2rem] flex flex-col md:flex-row md:items-center justify-between gap-6 animate-in fade-in zoom-in-95 duration-500">
-                    <div className="flex items-center gap-6">
-                        <div className="p-4 bg-primary/20 rounded-2xl shadow-lg ring-1 ring-primary/30">
-                            <Fuel className="text-primary w-8 h-8" strokeWidth={2.5} />
-                        </div>
-                        <div>
-                            <div className="flex items-center gap-2 mb-1">
-                                <span className="text-primary font-black uppercase tracking-widest text-sm">Fuel Intel Intelligence</span>
-                                {checkingRate && <Loader2 className="w-3 h-3 animate-spin text-primary" />}
-                            </div>
-                            <p className="text-2xl font-black text-foreground tracking-tight">
-                                ดีเซล B7: <span className="text-primary">{fuelPrice?.toFixed(2)}฿</span>
-                                {suggestedRate && (
-                                    <>
-                                        <span className="mx-3 opacity-20">|</span>
-                                        เรทแนะนำ: <span className="text-emerald-500">{suggestedRate.toLocaleString()}฿</span>
-                                    </>
-                                )}
-                            </p>
-                            {!suggestedRate && !checkingRate && (
-                                <p className="text-sm font-bold text-muted-foreground mt-1 uppercase tracking-tight flex items-center gap-1">
-                                    <Info size={14} /> ยังไม่ได้ตั้งค่า Matrix สำหรับเส้นทางนี้
-                                </p>
-                            )}
-                        </div>
-                    </div>
-                    {suggestedRate && (
-                        <Button 
-                            type="button"
-                            onClick={() => updateAssignment(0, 'Price_Cust_Total', suggestedRate)}
-                            className="bg-emerald-600 hover:bg-emerald-500 text-white font-black rounded-xl h-14 px-8 shadow-xl shadow-emerald-500/20 gap-3 group"
-                        >
-                            <Zap size={20} className="group-hover:scale-125 transition-transform" />
-                            ใช้ราคาแนะนำนี้
-                        </Button>
-                    )}
-                </div>
-              )}
+              {/* Smart Fuel Hint - Always show in price tab to avoid "missing" state */}
+              <div className="p-6 bg-primary/5 border border-primary/20 rounded-[2rem] flex flex-col md:flex-row md:items-center justify-between gap-6 animate-in fade-in zoom-in-95 duration-500">
+                  <div className="flex items-center gap-6">
+                      <div className="p-4 bg-primary/20 rounded-2xl shadow-lg ring-1 ring-primary/30">
+                          <Fuel className="text-primary w-8 h-8" strokeWidth={2.5} />
+                      </div>
+                      <div>
+                          <div className="flex items-center gap-2 mb-1">
+                              <span className="text-primary font-black uppercase tracking-widest text-sm">Fuel Intel Intelligence</span>
+                              {(checkingRate || isSyncingFuel) && <Loader2 className="w-3 h-3 animate-spin text-primary" />}
+                          </div>
+                          <p className="text-2xl font-black text-foreground tracking-tight">
+                              ดีเซล B7: <span className="text-primary">
+                                {fuelPrice ? `${fuelPrice.toFixed(2)}฿` : (isSyncingFuel ? 'กำลังดึงข้อมูลล่าสุด...' : 'ยังไม่มีข้อมูล')}
+                              </span>
+                              {suggestedRate && (
+                                  <>
+                                      <span className="mx-3 opacity-20">|</span>
+                                      เรทแนะนำ: <span className="text-emerald-500">{suggestedRate.toLocaleString()}฿</span>
+                                  </>
+                              )}
+                          </p>
+                          {!fuelPrice && !isSyncingFuel && (
+                              <p className="text-sm font-bold text-amber-600 mt-1 uppercase tracking-tight flex items-center gap-1">
+                                  <Info size={14} /> ยังไม่มีข้อมูลราคาสำหรับวันนี้ 
+                                  <Button 
+                                    variant="link" 
+                                    size="sm" 
+                                    className="h-auto p-0 text-amber-600 underline font-black"
+                                    onClick={async () => {
+                                      setIsSyncingFuel(true)
+                                      const price = await getFuelPrice()
+                                      setFuelPrice(price)
+                                      setIsSyncingFuel(false)
+                                    }}
+                                  >
+                                    คลิกเพื่อดึงข้อมูลใหม่
+                                  </Button>
+                              </p>
+                          )}
+                          {!suggestedRate && fuelPrice && !checkingRate && (
+                              <p className="text-sm font-bold text-muted-foreground mt-1 uppercase tracking-tight flex items-center gap-1">
+                                  <Info size={14} /> ยังไม่ได้ตั้งค่า Matrix สำหรับเส้นทางนี้
+                              </p>
+                          )}
+                      </div>
+                  </div>
+                  {suggestedRate && (
+                      <Button 
+                          type="button"
+                          onClick={() => updateAssignment(0, 'Price_Cust_Total', suggestedRate)}
+                          className="bg-emerald-600 hover:bg-emerald-500 text-white font-black rounded-xl h-14 px-8 shadow-xl shadow-emerald-500/20 gap-3 group"
+                      >
+                          <Zap size={20} className="group-hover:scale-125 transition-transform" />
+                          ใช้ราคาแนะนำนี้
+                      </Button>
+                  )}
+              </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="space-y-2">
