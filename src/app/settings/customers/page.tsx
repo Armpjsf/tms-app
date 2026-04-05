@@ -245,14 +245,14 @@ export default function CustomersSettingsPage() {
             <div className="p-6 sm:p-10 space-y-6 custom-scrollbar flex-1 min-h-0 overflow-y-auto">
               <Tabs defaultValue="info" className="w-full">
                 <div className="flex justify-center mb-8">
-                    <div className="bg-muted/50 p-1.5 rounded-2xl border border-border/5">
+                    <TabsList className="bg-muted/50 p-1.5 rounded-2xl border border-border/5 h-auto">
                         <TabsTrigger value="info" className="px-8 py-3 rounded-xl text-sm font-black uppercase tracking-widest data-[state=active]:bg-primary data-[state=active]:text-white transition-all">
                             ข้อมูลทั่วไป
                         </TabsTrigger>
                         <TabsTrigger value="rates" disabled={!editingCustomer} className="px-8 py-3 rounded-xl text-sm font-black uppercase tracking-widest data-[state=active]:bg-primary data-[state=active]:text-white transition-all">
                             เรทน้ำมัน (Fuel Matrix)
                         </TabsTrigger>
-                    </div>
+                    </TabsList>
                 </div>
 
                 <TabsContent value="info" className="space-y-6 animate-in fade-in slide-in-from-left-2 duration-500">
