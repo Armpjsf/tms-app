@@ -29,32 +29,33 @@ export function NavigationButton({ job }: NavigationButtonProps) {
         const isAndroid = /Android/i.test(navigator.userAgent);
         const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
 
-        // Standard Google Maps URL (Most compatible)
+        // Standard Universal URL
         const universalUrl = `https://www.google.com/maps/search/?api=1&query=${destinationQuery}`;
 
         if (isAndroid) {
-            // For Android, we must use window.open to force handoff to system browser (Chrome/Maps)
-            // as internal WebViews often fail to resolve intent:// schemes via window.location.href
-            const newWindow = window.open(universalUrl, '_blank', 'noopener,noreferrer');
-            if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
-                // Pop-up blocked or not handled, fallback to geo: or location.href
-                window.location.href = `geo:0,0?q=${destinationQuery}`;
-                // Secondary fallback to standard URL if geo fails
-                setTimeout(() => {
-                    if (document.visibilityState === 'visible') {
-                        window.location.href = universalUrl;
-                    }
-                }, 1000);
-            }
+            // Android Direct Intent for Navigation (Avoids browser double-opening)
+            const intentUrl = `google.navigation:q=${destinationQuery}`;
+            window.location.href = intentUrl;
+            
+            // Optional fallback after a delay if the app didn't open
+            setTimeout(() => {
+                if (document.visibilityState === 'visible') {
+                    // Only open web map if we are still in the app (intent failed)
+                    window.location.href = universalUrl;
+                }
+            }, 1500);
         } else if (isIOS) {
-            // For iOS, try to open in app first, then fallback to web maps
-            window.location.href = `comgooglemaps://?daddr=${destinationQuery}&directionsmode=driving`;
+            // iOS: Try Google Maps app first, then fallback to Apple Maps or Web
+            const googleMapsAppUrl = `comgooglemaps://?daddr=${destinationQuery}&directionsmode=driving`;
+            window.location.href = googleMapsAppUrl;
+            
             setTimeout(() => {
                 if (document.visibilityState === 'visible') {
                     window.location.href = `https://maps.apple.com/?daddr=${destinationQuery}`;
                 }
-            }, 500);
+            }, 1000);
         } else {
+            // Desktop/Other
             window.open(universalUrl, '_blank');
         }
     }
