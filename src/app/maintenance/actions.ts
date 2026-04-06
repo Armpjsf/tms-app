@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache'
 import { getUserBranchId } from '@/lib/permissions'
 import { createNotification } from '@/lib/actions/notification-actions'
 import { logActivity } from '@/lib/supabase/logs'
+import { analyzeMaintenanceLog } from '@/lib/actions/fleet-intelligence-actions'
 
 export type TicketFormData = {
   Date_Report: string | null
@@ -119,12 +120,17 @@ export async function updateRepairTicket(ticketId: string, data: TicketUpdateDat
       Date_Report: data.Date_Report
     })
     .eq('Ticket_ID', ticketId)
+if (error) {
+  return { success: false, message: `Failed to update ticket: ${error.message}` }
+}
 
-  if (error) {
-    return { success: false, message: `Failed to update ticket: ${error.message}` }
-  }
+// Trigger Intelligence Analysis if Completed
+if (data.Status === 'Completed') {
+    analyzeMaintenanceLog(ticketId).catch(err => console.error("Maint analysis failed:", err))
+}
 
-  // If status is Completed, check if we need to release vehicle? 
+// If status is Completed, check if we need to release vehicle? 
+...
   // For now, let's just update the ticket. 
   // Ideally, if finished, Vehicle Status might need to go back to 'Active'.
   if (data.Status === 'Completed' && data.Vehicle_Plate) {

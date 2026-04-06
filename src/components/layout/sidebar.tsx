@@ -76,6 +76,7 @@ const navigation: NavGroup[] = [
       { titleKey: "navigation.driver_leaves", href: "/admin/driver-leaves", icon: <CalendarDays size={20} /> },
       { titleKey: "navigation.customers", href: "/settings/customers", icon: <Building size={20} /> },
       { titleKey: "navigation.fleet", href: "/vehicles", icon: <Truck size={20} /> },
+      { titleKey: "navigation.fleet_intelligence", href: "/vehicles/intelligence", icon: <Zap size={20} /> },
       { titleKey: "navigation.checks", href: "/admin/vehicle-checks", icon: <CheckCircle2 size={20} /> },
       { titleKey: "navigation.maintenance", href: "/maintenance", icon: <Wrench size={20} /> },
       { titleKey: "navigation.fuel", href: "/fuel", icon: <Fuel size={20} /> },
@@ -102,6 +103,7 @@ const navigation: NavGroup[] = [
     titleKey: "nav_groups.settings",
     items: [
       { titleKey: "navigation.settings", href: "/settings", icon: <Settings size={20} /> },
+      { titleKey: "navigation.fleet_standards", href: "/settings/fleet-standards", icon: <ShieldCheck size={20} /> },
     ],
   },
 ]

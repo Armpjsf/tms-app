@@ -5,10 +5,13 @@ import {
     Activity, 
     AlertCircle, 
     TrendingUp,
-    Users
+    Users,
+    ShieldCheck,
+    Zap
 } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { useLanguage } from "@/components/providers/language-provider"
+import { cn } from "@/lib/utils"
 
 interface DailySummaryProps {
     stats: {
@@ -25,10 +28,11 @@ interface DailySummaryProps {
     }
     biddingCount: number
     sosCount: number
+    fleetAlertsCount: number
     customerMode?: boolean
 }
 
-export function DailySummary({ stats, driverStats, biddingCount, sosCount, customerMode = false }: DailySummaryProps) {
+export function DailySummary({ stats, driverStats, biddingCount, sosCount, fleetAlertsCount, customerMode = false }: DailySummaryProps) {
     const { t } = useLanguage()
     
     const deliveryRate = stats.total > 0 ? Math.round((stats.delivered / stats.total) * 100) : 0
@@ -164,29 +168,52 @@ export function DailySummary({ stats, driverStats, biddingCount, sosCount, custo
                 </motion.div>
             )}
 
-            {/* Critical Alerts Card (2x1) - HIDE FOR CUSTOMERS OR REPOSITION */}
+            {/* Fleet Intelligence Card (1x1) - NEW */}
             {!customerMode && (
-                <motion.div variants={item} className="md:col-span-2 md:row-span-1">
-                    <Card variant="glass" className={`h-full border-l-4 ${sosCount > 0 ? 'border-l-rose-500 bg-rose-500/5' : 'border-l-indigo-500'}`}>
-                        <CardContent className="h-full flex items-center justify-between p-8">
-                            <div className="flex items-center gap-6">
-                                <div className={`p-4 rounded-2xl ${sosCount > 0 ? 'bg-rose-500/20 text-rose-500 animate-pulse' : 'bg-indigo-500/20 text-indigo-500'}`}>
-                                    <AlertCircle size={32} />
+                <motion.div variants={item} className="md:col-span-1 md:row-span-1">
+                    <Card 
+                        variant="default" 
+                        className={cn(
+                            "h-full border-0 group transition-colors cursor-pointer",
+                            fleetAlertsCount > 0 ? "bg-rose-600 hover:bg-rose-700" : "bg-emerald-600 hover:bg-emerald-700"
+                        )}
+                        onClick={() => window.location.href = '/vehicles/intelligence'}
+                    >
+                        <CardContent className="h-full flex flex-col justify-between p-8 text-white">
+                            <div className="flex items-center justify-between">
+                                <div className="p-2 bg-white/20 rounded-xl backdrop-blur-md">
+                                    <Zap size={20} />
                                 </div>
-                                <div>
-                                    <h3 className="text-2xl font-black uppercase tracking-tighter">
-                                        {sosCount > 0 ? t('dashboard.critical_alerts') : t('dashboard.all_systems_clear')}
-                                    </h3>
-                                    <p className="text-muted-foreground font-bold uppercase tracking-widest text-xs">
-                                        {sosCount > 0 ? t('dashboard.sos_reporting') : 'Operational integrity confirmed'}
-                                    </p>
-                                </div>
+                                <span className="text-xs font-black uppercase tracking-widest opacity-60">Fleet Intel</span>
                             </div>
-                            {sosCount === 0 && (
-                                <div className="hidden lg:flex items-center gap-2 px-4 py-2 bg-emerald-500/10 text-emerald-600 rounded-full text-xs font-black uppercase italic">
-                                    Tactical_Safe
+                            <div>
+                                <p className="text-4xl font-black mb-1">{fleetAlertsCount}</p>
+                                <p className="text-sm font-bold opacity-80 uppercase tracking-widest leading-tight">
+                                    {fleetAlertsCount > 0 ? "พบความผิดปกติ" : "สถานะปกติ"}
+                                </p>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </motion.div>
+            )}
+
+            {/* Critical Alerts Card (1x1) - REPOSITIONED */}
+            {!customerMode && (
+                <motion.div variants={item} className="md:col-span-1 md:row-span-1">
+                    <Card variant="glass" className={`h-full border-l-4 ${sosCount > 0 ? 'border-l-rose-500 bg-rose-500/5' : 'border-l-indigo-500'}`}>
+                        <CardContent className="h-full flex flex-col justify-between p-8">
+                            <div className="flex items-center justify-between">
+                                <div className={`p-2 rounded-xl ${sosCount > 0 ? 'bg-rose-500/20 text-rose-500 animate-pulse' : 'bg-indigo-500/20 text-indigo-500'}`}>
+                                    <AlertCircle size={20} />
                                 </div>
-                            )}
+                                <span className="text-xs font-black text-muted-foreground uppercase tracking-widest opacity-60">SOS Signal</span>
+                            </div>
+                            <div>
+                                <p className={cn("text-4xl font-black mb-1", sosCount > 0 ? "text-rose-500" : "text-foreground")}>{sosCount}</p>
+                                <p className="text-sm font-bold text-muted-foreground uppercase tracking-widest leading-tight">
+                                    {t('dashboard.sos_reporting')}
+                                </p>
+                            </div>
                         </CardContent>
                     </Card>
                 </motion.div>

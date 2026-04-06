@@ -51,6 +51,7 @@ const settingsSections = [
         { labelKey: "settings.items.branches", descKey: "settings.items.branches_desc", path: "/settings/branches", permKey: "settings.items.branches" },
         { labelKey: "settings.items.partners", descKey: "settings.items.partners_desc", path: "/settings/subcontractors", permKey: "settings.items.partners" },
         { labelKey: "settings.items.vehicles", descKey: "settings.items.vehicles_desc", path: "/settings/vehicle-types", permKey: "settings.items.vehicles" },
+        { labelKey: "settings.items.fleet_standards", descKey: "settings.items.fleet_standards_desc", path: "/settings/fleet-standards", permKey: "settings.items.fleet_standards" },
     ]
   },
   {

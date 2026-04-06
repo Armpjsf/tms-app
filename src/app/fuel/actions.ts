@@ -6,6 +6,7 @@ import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { getUserBranchId } from '@/lib/permissions'
 import { logActivity } from '@/lib/supabase/logs'
+import { analyzeFuelLog } from '@/lib/actions/fleet-intelligence-actions'
 
 export type FuelFormData = {
   Date_Time: string | null
@@ -53,6 +54,9 @@ export async function createFuelLog(data: FuelFormData) {
     if (error) {
       return { success: false, message: `Failed to create log: ${error.message}` }
     }
+
+    // Trigger Intelligence Analysis
+    analyzeFuelLog(logId).catch(err => console.error("Fuel analysis failed:", err))
 
     // Trigger Admin Alert (Push & Toast)
     try {
@@ -109,6 +113,9 @@ export async function updateFuelLog(logId: string, data: FuelFormData) {
   if (error) {
     return { success: false, message: 'Failed to update log' }
   }
+
+  // Trigger Intelligence Analysis
+  analyzeFuelLog(logId).catch(err => console.error("Fuel analysis failed:", err))
 
   // Log the activity
   await logActivity({

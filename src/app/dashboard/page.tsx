@@ -13,6 +13,7 @@ import { useBranch } from "@/components/providers/branch-provider"
 import { useLanguage } from "@/components/providers/language-provider"
 import { Calendar, Filter, X, AlertTriangle } from "lucide-react"
 import { getActiveFleetStatus } from "@/lib/supabase/gps"
+import { getActiveFleetAlerts } from "@/lib/actions/fleet-intelligence-actions"
 
 interface DashboardData {
   unified: {
@@ -40,6 +41,7 @@ interface DashboardData {
     pending: number
     sos: number
   }
+  fleetAlertsCount: number
   driverStats: {
     total: number
     active: number
@@ -76,7 +78,7 @@ export default function DashboardPage() {
       
       const { getESGStats } = await import("@/lib/supabase/esg-analytics")
 
-      const [unified, sosIds, marketplaceJobs, customerMode, custId, dailyStats, driverStats, esgStats] = await Promise.all([
+      const [unified, sosIds, marketplaceJobs, customerMode, custId, dailyStats, driverStats, esgStats, fleetAlerts] = await Promise.all([
         getExecutiveDashboardUnified(currentBranchId, startDate || undefined, endDate || undefined),
         getSOSDriverIds(),
         getMarketplaceJobs(currentBranchId),
@@ -84,7 +86,8 @@ export default function DashboardPage() {
         getCustomerId(),
         getTodayJobStats(currentBranchId, startDate || undefined, endDate || undefined),
         getDriverStats(currentBranchId),
-        getESGStats(startDate || undefined, endDate || undefined, currentBranchId)
+        getESGStats(startDate || undefined, endDate || undefined, currentBranchId),
+        getActiveFleetAlerts()
       ])
 
       let custName: string | null = custId;
@@ -104,6 +107,7 @@ export default function DashboardPage() {
         custId: custId || null, 
         custName: custName || null, 
         dailyStats: dailyStats || { total: 0, delivered: 0, inProgress: 0, pending: 0, sos: 0 }, 
+        fleetAlertsCount: fleetAlerts?.length || 0,
         driverStats: driverStats || { total: 0, active: 0, onJob: 0 },
         fleetStatus: fleetStatus || [],
         esgStats: esgStats || { co2SavedKg: 0, treesSaved: 0, totalSavedKm: 0 }
@@ -132,7 +136,7 @@ export default function DashboardPage() {
 
   if (!data) return null;
 
-  const { unified, sosIds, marketplaceJobs, customerMode, custId, custName, dailyStats, driverStats, fleetStatus, esgStats } = data;
+  const { unified, sosIds, marketplaceJobs, customerMode, custId, custName, dailyStats, fleetAlertsCount, driverStats, fleetStatus, esgStats } = data;
 
   // Handle Missing Customer Profile Error
   if (customerMode && (!custId || custId === 'FORCED_RESTRICTION')) {
@@ -222,6 +226,7 @@ export default function DashboardPage() {
         jobStats={dailyStats}
         driverStats={driverStats}
         sosCount={sosIds.length}
+        fleetAlertsCount={fleetAlertsCount}
         weeklyStats={unified.trend ?? []}
         fleetStatus={fleetStatus}
         marketplaceJobs={marketplaceJobs ?? []}

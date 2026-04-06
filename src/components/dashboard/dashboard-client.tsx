@@ -62,6 +62,7 @@ interface DashboardClientProps {
         onJob: number
     }
     sosCount: number
+    fleetAlertsCount: number
     weeklyStats: {
         date: string
         total: number
@@ -84,6 +85,7 @@ export function DashboardClient({
     jobStats, 
     driverStats,
     sosCount,
+    fleetAlertsCount,
     weeklyStats, 
     fleetStatus,
     marketplaceJobs,
@@ -156,6 +158,7 @@ export function DashboardClient({
                     driverStats={driverStats}
                     biddingCount={marketplaceJobs.length}
                     sosCount={sosCount}
+                    fleetAlertsCount={fleetAlertsCount}
                     customerMode={customerMode}
                 />
             </div>
