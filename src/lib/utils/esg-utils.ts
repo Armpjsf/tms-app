@@ -10,8 +10,7 @@ export type ESGImpact = {
     carbonScore: number // 0-100
 }
 
-// Average CO2 emission per KM for different vehicle types (KG/KM)
-const CO2_COEFFICIENTS: Record<string, number> = {
+export const CO2_COEFFICIENTS: Record<string, number> = {
     '4-Wheel': 0.17,
     '6-Wheel': 0.25,
     '10-Wheel': 0.45,
@@ -19,7 +18,7 @@ const CO2_COEFFICIENTS: Record<string, number> = {
     'default': 0.20
 }
 
-const FUEL_EFFICIENCY: Record<string, number> = {
+export const FUEL_EFFICIENCY: Record<string, number> = {
     '4-Wheel': 12, // KM/L
     '6-Wheel': 8,
     '10-Wheel': 4,

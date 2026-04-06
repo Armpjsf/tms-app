@@ -2,6 +2,7 @@
 
 import { createAdminClient } from '@/utils/supabase/server'
 import { getEffectiveBranchId, REVENUE_STATUSES } from './analytics-helpers'
+import { CO2_COEFFICIENTS } from '../utils/esg-utils'
 
 /**
  * ESG Intelligence Engine - TMS 2026
@@ -16,8 +17,7 @@ export type ESGStats = {
     historicalData: { month: string; co2Saved: number }[]
 }
 
-const CO2_PER_KM = 0.12 // Avg 0.12kg CO2 per KM for light/medium trucks
-const KG_CO2_PER_TREE_YEAR = 20 // 1 tree offsets ~20kg CO2 per year
+const KG_CO2_PER_TREE_YEAR = 22 // 1 tree offsets ~22kg CO2 per year (updated from 20 for consistency)
 
 // Haversine formula to calculate distance between two coordinates in KM
 function calculateHaversineDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
@@ -43,7 +43,7 @@ export async function getESGStats(startDate?: string, endDate?: string, branchId
 
         let query = supabase
             .from('Jobs_Main')
-            .select('Job_ID, Plan_Date, Price_Cust_Total, Source, Branch_ID, Customer_ID, Est_Distance_KM, Pickup_Lat, Pickup_Lon, Delivery_Lat, Delivery_Lon')
+            .select('Job_ID, Plan_Date, Price_Cust_Total, Source, Branch_ID, Customer_ID, Est_Distance_KM, Pickup_Lat, Pickup_Lon, Delivery_Lat, Delivery_Lon, Vehicle_Type')
             .in('Job_Status', REVENUE_STATUSES)
 
         if (customerId) {
@@ -68,32 +68,26 @@ export async function getESGStats(startDate?: string, endDate?: string, branchId
         const optimizedJobs = jobs.filter(j => j.Source === 'Enterprise_API' || j.Source === 'AI_Batch').length
         const effectiveOptimizedCount = Math.max(optimizedJobs, Math.round(totalJobs * 0.45), totalJobs > 0 ? 1 : 0)
         
-        // Calculate saved distance: 
-        // 1. Using Est_Distance_KM if available, or Haversine fallback
-        const totalRealDistance = jobs.reduce((sum, j) => {
-            let dist = Number(j.Est_Distance_KM) || 0
+        // Calculate real CO2 saved based on vehicle types
+        const co2SavedKg = jobs.reduce((sum, j) => {
+            const vType = j.Vehicle_Type || 'default'
+            const rate = CO2_COEFFICIENTS[vType] || CO2_COEFFICIENTS['default']
             
-            // If Est_Distance_KM is missing, try Haversine from coordinates
+            // We use the same 'distanceBasedSavings' logic per job: 8.2% of the distance is "saved"
+            let dist = Number(j.Est_Distance_KM) || 0
             if (dist <= 0 && j.Pickup_Lat && j.Pickup_Lon && j.Delivery_Lat && j.Delivery_Lon) {
                 dist = calculateHaversineDistance(
                     Number(j.Pickup_Lat), Number(j.Pickup_Lon), 
                     Number(j.Delivery_Lat), Number(j.Delivery_Lon)
-                ) * 1.3 // 1.3 factor for actual road distance vs air distance
+                ) * 1.3
             }
+            if (dist <= 0) dist = 12.5 // Baseline fallback per job
             
-            return sum + dist
+            const savedKm = dist * 0.082
+            return sum + (savedKm * rate)
         }, 0)
 
-        // Fallback: If total distance is still 0 but we have jobs, assume 12.5km per job baseline
-        const finalDistance = Math.max(totalRealDistance, totalJobs * 12.5)
-        const distanceBasedSavings = finalDistance * 0.082 // 8.2% avg optimization gain
-        
-        // 2. Heuristic fallback (8.5km per optimized job)
-        const heuristicSavings = effectiveOptimizedCount * 8.5
-        
-        // Use the most realistic metric (ensure at least some value if jobs exist)
-        const totalSavedKm = Math.max(distanceBasedSavings, heuristicSavings, totalJobs > 0 ? 12.5 * 0.082 : 0)
-        const co2SavedKg = totalSavedKm * CO2_PER_KM
+        const totalSavedKm = co2SavedKg / 0.17 // Reverse heuristic for total KM saved metric
         const treesSaved = co2SavedKg / KG_CO2_PER_TREE_YEAR
 
         // 2. Historical Trend (Grouped by Month)
@@ -103,8 +97,11 @@ export async function getESGStats(startDate?: string, endDate?: string, branchId
             if (!dateStr) return
             const month = dateStr.substring(0, 7)
             
-            // Heuristic for trend: approx savings per job
-            monthlyTrend[month] = (monthlyTrend[month] || 0) + (1.25 * CO2_PER_KM) 
+            const vType = j.Vehicle_Type || 'default'
+            const rate = CO2_COEFFICIENTS[vType] || CO2_COEFFICIENTS['default']
+            
+            // Heuristic for trend: approx savings per job (1.25km saved per job average)
+            monthlyTrend[month] = (monthlyTrend[month] || 0) + (1.25 * rate) 
         })
 
         const historicalData = Object.entries(monthlyTrend)

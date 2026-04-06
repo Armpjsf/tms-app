@@ -22,7 +22,12 @@ import { Customer } from "@/lib/supabase/customers"
 import { AiSuggestionCard } from "@/components/planning/ai-suggestion-card"
 import { geocodeAddress } from "@/lib/ai/geocoding"
 import { getDrivingDistance } from "@/lib/ai/distance"
-import { Search as SearchIcon } from "lucide-react"
+import { 
+  Activity, AlertTriangle, Banknote, Building2, Calendar, Check, Eye, EyeOff, 
+  FileText, Fuel, History, Info, Link as LinkIcon, Loader2, MapPin, Package, 
+  Plus, Search as SearchIcon, Settings as SettingsIcon, ShieldCheck, Trash2, 
+  Truck, User, X, Zap 
+} from "lucide-react"
 import { toast } from "sonner"
 import { useLanguage } from "@/components/providers/language-provider"
 
@@ -31,31 +36,6 @@ import { Route } from "@/lib/supabase/routes"
 import { Subcontractor } from "@/types/subcontractor"
 import { getFuelPrice, getSuggestedRate } from "@/lib/actions/fuel-actions"
 import { getVehicleTypes, VehicleType as MasterVehicleType } from "@/lib/actions/vehicle-type-actions"
-import { Settings as SettingsIcon } from "lucide-react"
-import { 
-  Loader2, 
-  Plus, 
-  X, 
-  MapPin, 
-  Truck,
-  User, 
-  Package,
-  Building2,
-  Calendar,
-  Banknote,
-  FileText,
-  Trash2,
-  Fuel,
-  Link as LinkIcon,
-  Check,
-  Eye,
-  EyeOff,
-  Activity,
-  History,
-  ShieldCheck,
-  Zap,
-  Info
-} from "lucide-react"
 import { JobTimeline } from "./job-timeline"
 
 type LocationPoint = {
@@ -122,7 +102,7 @@ export function JobDialog({
   defaultDate
 }: JobDialogProps) {
   const { branches, isAdmin } = useBranch()
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [open, setOpen] = useState(false)
@@ -1220,15 +1200,41 @@ export function JobDialog({
                                 <MapPin className="w-5 h-5" /> {t('jobs.dialog.distance_km') || t('jobs.dialog.distance') || 'Distance (KM)'}
                             </Label>
                             <div className="relative">
-                                <Input
-                                    type="number"
-                                    value={formData.Est_Distance_KM}
-                                    readOnly
-                                    className="bg-blue-500/5 border-blue-500/30 text-blue-600 dark:text-blue-400 text-xl h-14 font-black cursor-not-allowed"
-                                />
-                                <div className="absolute right-3 top-1/2 -translate-y-1/2 text-blue-500/50 text-base font-bold uppercase animate-pulse">
-                                    Auto
-                                </div>
+                                {(() => {
+                                    const isCollision = origins[0]?.lat && destinations[0]?.lat && 
+                                                      origins[0].lat === destinations[0].lat && 
+                                                      origins[0].lng === destinations[0].lng;
+                                    
+                                    return (
+                                        <>
+                                            <Input
+                                                type="number"
+                                                value={formData.Est_Distance_KM}
+                                                readOnly
+                                                className={cn(
+                                                    "bg-blue-500/5 border-blue-500/30 text-blue-600 dark:text-blue-400 text-xl h-14 font-black cursor-not-allowed",
+                                                    isCollision && "border-destructive/50 text-destructive bg-destructive/10"
+                                                )}
+                                            />
+                                            {isCollision ? (
+                                                <div className="absolute right-3 top-1/2 -translate-y-1/2 text-destructive text-sm font-black uppercase flex items-center gap-1">
+                                                    <AlertTriangle className="w-4 h-4" /> {language === 'th' ? 'พิกัดซ้ำกัน' : 'Coord Collision'}
+                                                </div>
+                                            ) : (
+                                                <div className="absolute right-3 top-1/2 -translate-y-1/2 text-blue-500/50 text-base font-bold uppercase animate-pulse">
+                                                    Auto
+                                                </div>
+                                            )}
+                                            {isCollision && (
+                                                <p className="text-xs font-bold text-destructive mt-1 italic">
+                                                    {language === 'th' 
+                                                        ? "* ต้นทางและปลายทางจุดเดียวกัน โปรดปรับพิกัดด้วยตนเอง" 
+                                                        : "* Origin & Dest are same point. Please adjust coordinates manually."}
+                                                </p>
+                                            )}
+                                        </>
+                                    )
+                                })()}
                             </div>
                         </div>
                     </div>

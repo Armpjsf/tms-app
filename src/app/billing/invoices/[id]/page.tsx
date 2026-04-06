@@ -7,6 +7,7 @@ import { ConfirmInvoiceButton } from "@/components/billing/confirm-invoice-butto
 import { cookies } from "next/headers"
 import { dictionaries, Language } from "@/lib/i18n/dictionaries"
 import { createClient } from "@/utils/supabase/server"
+import { CO2_COEFFICIENTS } from "@/lib/utils/esg-utils"
 
 export default async function InvoiceViewPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = await params
@@ -23,7 +24,7 @@ export default async function InvoiceViewPage({ params }: { params: Promise<{ id
   const supabase = await createClient()
   const { data: jobs } = await supabase
     .from('Jobs_Main')
-    .select('Job_ID, Notes, Est_Distance_KM')
+    .select('Job_ID, Notes, Est_Distance_KM, Vehicle_Type')
     .eq('Invoice_ID', invoice.Invoice_ID)
 
   // CO2 Calculation Logic
@@ -33,12 +34,15 @@ export default async function InvoiceViewPage({ params }: { params: Promise<{ id
     if (match) return parseFloat(match[1])
     return 0
   }
-  const calculateCO2 = (dist?: number | null) => (Number(dist) || 0) * 0.12
+  const calculateCO2 = (dist?: number | null, vType?: string | null) => {
+    const coefficient = CO2_COEFFICIENTS[vType || 'default'] || CO2_COEFFICIENTS['default']
+    return (Number(dist) || 0) * coefficient
+  }
 
   const totalCO2 = (jobs || []).reduce((sum, job) => {
     const fromNote = extractCO2(job.Notes)
     if (fromNote > 0) return sum + fromNote
-    return sum + calculateCO2(job.Est_Distance_KM)
+    return sum + calculateCO2(job.Est_Distance_KM, job.Vehicle_Type)
   }, 0)
 
   const localeStr = lang === 'th' ? 'th-TH' : 'en-US'
