@@ -27,9 +27,9 @@ export function Header({ sidebarCollapsed = false }: HeaderProps) {
   return (
     <header
       className={cn(
-        "fixed top-0 right-0 h-24 z-50 flex items-center justify-between px-10 font-sans",
+        "fixed top-0 right-0 h-20 z-50 flex items-center justify-between px-6 font-sans",
         "bg-background/80 backdrop-blur-3xl border-b border-border shadow-[0_10px_40px_rgba(0,0,0,0.1)] dark:shadow-[0_10px_40px_rgba(0,0,0,0.3)] transition-all duration-300",
-        sidebarCollapsed ? "left-24" : "left-[320px]"
+        sidebarCollapsed ? "left-20" : "left-[240px]"
       )}
       style={{ transition: "left 0.5s ease-in-out" }}
     >

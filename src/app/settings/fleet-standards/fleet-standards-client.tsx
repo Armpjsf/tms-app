@@ -103,9 +103,9 @@ export function FleetStandardsClient({
     }
 
     return (
-        <div className="space-y-12 pb-20 font-sans">
+        <div className="space-y-8 pb-10 font-sans">
             {/* Tactical Header */}
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-10 bg-background/60 backdrop-blur-3xl p-12 rounded-[4rem] border border-border/5 shadow-2xl relative group ring-1 ring-border/5">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 bg-background/60 backdrop-blur-xl p-8 rounded-[2rem] border border-border/5 shadow-xl relative group ring-1 ring-border/5">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 blur-[100px] pointer-events-none" />
                 <div className="relative z-10 space-y-4">
                     <div className="flex items-center gap-4">
@@ -114,23 +114,23 @@ export function FleetStandardsClient({
                         </div>
                         <h2 className="text-base font-bold font-black text-primary uppercase tracking-[0.4em]">Fleet Intelligence Standard</h2>
                     </div>
-                    <h1 className="text-6xl font-black text-foreground tracking-tighter flex items-center gap-5 uppercase premium-text-gradient">
+                    <h1 className="text-4xl font-black text-foreground tracking-tight flex items-center gap-4 uppercase premium-text-gradient">
                         เกณฑ์มาตรฐานยานพาหนะ
                     </h1>
-                    <p className="text-muted-foreground font-bold text-xl tracking-wide opacity-80 uppercase leading-relaxed max-w-2xl">
-                        ตั้งค่าเกณฑ์ชี้วัดเพื่อใช้ในระบบวิเคราะห์ความผิดปกติและการแจ้งเตือนอัจฉริยะ (Anomaly Detection)
+                    <p className="text-muted-foreground font-bold text-lg tracking-wide opacity-80 uppercase leading-relaxed max-w-2xl">
+                        ตั้งค่าเกณฑ์ชี้วัดเพื่อใช้ในระบบวิเคราะห์และการแจ้งเตือนอัจฉริยะ (Anomaly Detection)
                     </p>
                 </div>
             </div>
 
             <Tabs defaultValue="fuel" className="w-full">
-                <div className="flex justify-center mb-12">
-                    <TabsList className="bg-muted/50 p-2 rounded-[2rem] border border-border/5 h-auto flex gap-2">
-                        <TabsTrigger value="fuel" className="px-10 py-4 rounded-[1.5rem] text-lg font-black uppercase tracking-widest data-[state=active]:bg-primary data-[state=active]:text-white shadow-xl transition-all flex items-center gap-3">
-                            <Fuel size={20} /> เกณฑ์น้ำมัน (Fuel)
+                <div className="flex justify-center mb-8">
+                    <TabsList className="bg-muted/50 p-2 rounded-[1.5rem] border border-border/5 h-auto flex gap-1">
+                        <TabsTrigger value="fuel" className="px-8 py-3 rounded-[1rem] text-base font-black uppercase tracking-wider data-[state=active]:bg-primary data-[state=active]:text-white shadow-lg transition-all flex items-center gap-2">
+                            <Fuel size={18} /> เกณฑ์น้ำมัน (Fuel)
                         </TabsTrigger>
-                        <TabsTrigger value="maintenance" className="px-10 py-4 rounded-[1.5rem] text-lg font-black uppercase tracking-widest data-[state=active]:bg-primary data-[state=active]:text-white shadow-xl transition-all flex items-center gap-3">
-                            <Wrench size={20} /> เกณฑ์บำรุงรักษา (Maint)
+                        <TabsTrigger value="maintenance" className="px-8 py-3 rounded-[1rem] text-base font-black uppercase tracking-wider data-[state=active]:bg-primary data-[state=active]:text-white shadow-lg transition-all flex items-center gap-2">
+                            <Wrench size={18} /> เกณฑ์บำรุงรักษา (Maint)
                         </TabsTrigger>
                     </TabsList>
                 </div>
@@ -147,8 +147,8 @@ export function FleetStandardsClient({
                                 <p className="text-muted-foreground text-sm font-bold uppercase tracking-widest">เลือกประเภทรถจากฐานข้อมูลหลักเพื่อระบุเป้าหมาย กม./ลิตร</p>
                             </div>
                         </div>
-                        <PremiumButton onClick={addFuelRow} className="rounded-2xl h-16 px-10 shadow-xl shadow-primary/20 text-lg font-black uppercase tracking-widest">
-                            <Plus size={24} className="mr-3" strokeWidth={3} />
+                        <PremiumButton onClick={addFuelRow} className="rounded-xl h-14 px-8 shadow-lg shadow-primary/20 text-base font-black uppercase tracking-wider">
+                            <Plus size={20} className="mr-2" strokeWidth={3} />
                             เพิ่มประเภทรถ
                         </PremiumButton>
                     </div>
@@ -162,9 +162,9 @@ export function FleetStandardsClient({
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-10">
                             {fuelData.map((std, idx) => (
-                                <Card key={idx} className="bg-card border border-border/10 rounded-[3.5rem] shadow-2xl overflow-hidden hover:scale-[1.02] transition-all duration-500 relative hover:ring-1 hover:ring-primary/30">
+                                <Card key={idx} className="bg-card border border-border/10 rounded-[2.5rem] shadow-xl overflow-hidden hover:scale-[1.01] transition-all duration-500 relative hover:ring-1 hover:ring-primary/20">
                                     <div className="absolute top-0 right-0 w-48 h-48 bg-primary/5 blur-[80px] pointer-events-none" />
-                                    <CardContent className="p-10 space-y-10">
+                                    <CardContent className="p-8 space-y-8">
                                         <div className="flex items-center justify-between">
                                             <div className="p-5 bg-primary/20 rounded-3xl text-primary shadow-inner ring-1 ring-primary/20">
                                                 <Activity size={28} strokeWidth={2.5} />
@@ -183,7 +183,7 @@ export function FleetStandardsClient({
                                                 value={std.Vehicle_Type} 
                                                 onValueChange={(val) => updateFuel(idx, 'Vehicle_Type', val)}
                                             >
-                                                <SelectTrigger className="h-16 bg-muted/30 border-border/5 text-2xl font-black rounded-2xl px-6 uppercase tracking-tighter hover:bg-muted/50 transition-all">
+                                                <SelectTrigger className="h-14 bg-muted/20 border-border/5 text-xl font-black rounded-xl px-5 uppercase tracking-tight hover:bg-muted/40 transition-all">
                                                     <SelectValue placeholder="เลือกประเภทรถ..." />
                                                 </SelectTrigger>
                                                 <SelectContent className="bg-card border-border/10">
@@ -206,7 +206,7 @@ export function FleetStandardsClient({
                                                         step="0.1"
                                                         value={std.Standard_KM_L}
                                                         onChange={(e) => updateFuel(idx, 'Standard_KM_L', e.target.value)}
-                                                        className="bg-muted/30 border-none h-20 text-5xl font-black rounded-[1.5rem] text-center focus:ring-primary/30 text-primary"
+                                                        className="bg-muted/20 border-none h-16 text-4xl font-black rounded-xl text-center focus:ring-primary/20 text-primary"
                                                     />
                                                     <div className="absolute right-6 top-1/2 -translate-y-1/2 text-xs font-black text-muted-foreground uppercase opacity-40">KM / Liters</div>
                                                 </div>
@@ -218,7 +218,7 @@ export function FleetStandardsClient({
                                                         type="number" 
                                                         value={std.Warning_Threshold_Percent}
                                                         onChange={(e) => updateFuel(idx, 'Warning_Threshold_Percent', e.target.value)}
-                                                        className="bg-muted/30 border-none h-16 text-3xl font-black rounded-[1.2rem] text-center focus:ring-primary/30"
+                                                        className="bg-muted/20 border-none h-14 text-2xl font-black rounded-xl text-center focus:ring-primary/20"
                                                     />
                                                     <div className="absolute right-6 top-1/2 -translate-y-1/2 text-xs font-black text-muted-foreground uppercase opacity-40">% Variance</div>
                                                 </div>
@@ -228,7 +228,7 @@ export function FleetStandardsClient({
                                         <PremiumButton 
                                             onClick={() => handleSaveFuel(idx)} 
                                             disabled={saving}
-                                            className="w-full h-16 rounded-2xl shadow-xl shadow-primary/20 text-foreground text-lg font-black uppercase tracking-widest"
+                                            className="w-full h-14 rounded-xl shadow-lg shadow-primary/20 text-foreground text-base font-black uppercase tracking-wider"
                                         >
                                             {saving ? <Loader2 className="animate-spin mr-3" /> : <Save size={24} className="mr-3" />}
                                             อัปเดตเกณฑ์มาตรฐาน
@@ -246,11 +246,11 @@ export function FleetStandardsClient({
                         <table className="w-full text-left border-collapse min-w-[1000px]">
                             <thead>
                                 <tr className="bg-muted/30 border-b border-border/5">
-                                    <th className="px-10 py-10 text-sm font-black uppercase tracking-widest text-muted-foreground">รายการอะไหล่ / บริการ</th>
-                                    <th className="px-8 py-10 text-sm font-black uppercase tracking-widest text-muted-foreground">ระยะมาตรฐาน (KM)</th>
-                                    <th className="px-8 py-10 text-sm font-black uppercase tracking-widest text-muted-foreground">เวลามาตรฐาน (เดือน)</th>
-                                    <th className="px-8 py-10 text-sm font-black uppercase tracking-widest text-muted-foreground">เตือนก่อนถึง (KM)</th>
-                                    <th className="px-8 py-10 text-sm font-black uppercase tracking-widest text-muted-foreground text-center">จัดการ</th>
+                                    <th className="px-8 py-8 text-xs font-black uppercase tracking-wider text-muted-foreground">รายการอะไหล่ / บริการ</th>
+                                    <th className="px-6 py-8 text-xs font-black uppercase tracking-wider text-muted-foreground">ระยะมาตรฐาน (KM)</th>
+                                    <th className="px-6 py-8 text-xs font-black uppercase tracking-wider text-muted-foreground">เวลามาตรฐาน (เดือน)</th>
+                                    <th className="px-6 py-8 text-xs font-black uppercase tracking-wider text-muted-foreground">เตือนก่อนถึง (KM)</th>
+                                    <th className="px-6 py-8 text-xs font-black uppercase tracking-wider text-muted-foreground text-center">จัดการ</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-white/5">
@@ -316,10 +316,10 @@ export function FleetStandardsClient({
                                 ))}
                             </tbody>
                         </table>
-                        <div className="p-12 bg-muted/30 flex justify-between items-center border-t border-border/5">
-                            <div className="flex items-center gap-4">
-                                <ShieldCheck className="text-primary" size={28} />
-                                <p className="text-muted-foreground text-base font-bold uppercase tracking-widest leading-relaxed">
+                        <div className="p-8 bg-muted/20 flex justify-between items-center border-t border-border/5">
+                            <div className="flex items-center gap-3">
+                                <ShieldCheck className="text-primary" size={24} />
+                                <p className="text-muted-foreground text-sm font-bold uppercase tracking-wider leading-relaxed">
                                     รายการเหล่านี้จะใช้ในการแจ้งเตือน <span className="text-primary">Predictive Maintenance</span><br/>
                                     เพื่อรักษาความพร้อมของยานพาหนะให้สูงสุด
                                 </p>
@@ -327,9 +327,9 @@ export function FleetStandardsClient({
                             <button 
                                 type="button"
                                 onClick={addMaintRow}
-                                className="flex items-center gap-4 px-12 py-6 bg-primary text-white rounded-[2rem] font-black uppercase tracking-widest shadow-[0_20px_50px_rgba(255,30,133,0.3)] hover:scale-[1.05] active:scale-95 transition-all text-lg"
+                                className="flex items-center gap-3 px-10 py-4 bg-primary text-white rounded-2xl font-black uppercase tracking-wider shadow-lg hover:scale-[1.05] active:scale-95 transition-all text-base"
                             >
-                                <Plus size={28} strokeWidth={3} /> เพิ่มรายการบำรุงรักษา
+                                <Plus size={24} strokeWidth={3} /> เพิ่มรายการบำรุงรักษา
                             </button>
                         </div>
                     </div>
@@ -342,15 +342,15 @@ export function FleetStandardsClient({
                     <div className="absolute top-0 right-0 p-16 opacity-[0.03] group-hover:rotate-12 transition-transform duration-1000 group-hover:scale-110">
                         <Activity size={320} />
                     </div>
-                    <div className="relative z-10 space-y-6">
-                        <h3 className="text-4xl font-black text-foreground uppercase tracking-tighter italic">Intelligence Core Analysis</h3>
-                        <p className="text-muted-foreground text-xl leading-relaxed max-w-2xl font-bold uppercase tracking-wide opacity-80">
-                            ระบบ Fleet Intel จะนำข้อมูล กม./ลิตร ที่คุณตั้งไว้ ไปวิเคราะห์พฤติกรรมการขับขี่และประสิทธิภาพเครื่องยนต์โดยอัตโนมัติ 
-                            หากพบความเบี่ยงเบนเกินกว่าที่กำหนด ระบบจะสร้าง Alert สีแดงแจ้งเตือนคุณที่หน้าแดชบอร์ดทันที
+                    <div className="relative z-10 space-y-4">
+                        <h3 className="text-3xl font-black text-foreground uppercase tracking-tight italic">Intelligence Core Analysis</h3>
+                        <p className="text-muted-foreground text-lg leading-relaxed max-w-2xl font-bold uppercase tracking-wide opacity-80">
+                            ระบบ Fleet Intel จะนำข้อมูล กม./ลิตร ที่คุณตั้งไว้ ไปวิเคราะห์ประสิทธิภาพเครื่องยนต์อัตโนมัติ 
+                            หากพบความเบี่ยงเบน ระบบจะสร้าง Alert แจ้งเตือนคุณที่หน้าแดชบอร์ดทันที
                         </p>
-                        <div className="pt-6 flex items-center gap-6 text-primary font-black uppercase tracking-[0.3em] text-lg group-hover:gap-10 transition-all cursor-pointer">
+                        <div className="pt-4 flex items-center gap-4 text-primary font-black uppercase tracking-widest text-base group-hover:gap-6 transition-all cursor-pointer">
                             <span>Open Risk Dashboard</span>
-                            <ArrowRight size={28} />
+                            <ArrowRight size={24} />
                         </div>
                     </div>
                 </div>

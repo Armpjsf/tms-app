@@ -157,21 +157,36 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
     })
   })).filter(group => group.items.length > 0)
 
+  // Waterfall animation variants
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.05,
+        delayChildren: 0.2
+      }
+    }
+  }
+
   return (
     <motion.aside
-      initial={{ x: -280 }}
-      animate={{ x: 0, width: collapsed ? 100 : 320 }}
+      initial={{ x: -240 }}
+      animate={{ x: 0, width: collapsed ? 80 : 240 }}
       transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
       className={cn(
-        "fixed top-0 left-0 h-screen z-[1000] flex flex-col font-sans",
-        "bg-secondary border-r border-border text-secondary-foreground shadow-2xl transition-all duration-500"  
+        "h-screen z-[1000] flex flex-col font-sans",
+        "glass-elite" // Premium utility class from globals.css
       )}
     >
-      {/* Header Container */}
+      {/* Header Container - Elite Version */}
       <div className={cn(
-        "relative flex flex-col items-center justify-center border-b border-border bg-background/80 backdrop-blur-3xl overflow-hidden transition-all duration-500",
-        collapsed ? "h-20" : "h-40"
+        "relative flex flex-col items-center justify-center border-b border-border bg-background/40 backdrop-blur-md overflow-hidden transition-all duration-500",
+        collapsed ? "h-16" : "h-32"
       )}>
+        {/* Elite Ambient Glow behind Logo */}
+        <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_center,_var(--color-primary)_0%,_transparent_70%)] animate-pulse" />
+        
         <button
           onClick={onToggle}
           className={cn(
@@ -185,26 +200,34 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
           />
         </button>
 
-        <div className={cn(
-            "relative flex items-center justify-center logo-container-pure transition-all duration-700",        
-            "bg-muted rounded-full shadow-lg border border-border/10",
-            collapsed ? "w-12 h-12 p-2" : "w-36 h-36 p-4"
-        )}>
-          <div className="relative w-full h-full rounded-full overflow-hidden bg-background/20 flex items-center justify-center">
+        <motion.div 
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ type: "spring", stiffness: 100 }}
+            className={cn(
+                "relative flex items-center justify-center logo-container-pure transition-all duration-700",        
+                "bg-muted/30 rounded-full shadow-lg border border-border/10 overflow-hidden",
+                collapsed ? "w-10 h-10 p-1.5" : "w-24 h-24 p-3"
+            )}
+        >
+          {/* Scanning line effect */}
+          {!collapsed && <div className="absolute inset-0 w-full bg-gradient-to-b from-transparent via-primary/20 to-transparent h-1/2 animate-scan-line pointer-events-none" />}
+          
+          <div className="relative w-full h-full rounded-full overflow-hidden bg-background/10 flex items-center justify-center z-10">
             <Image
               src="/logo2.png"
               alt="LogisPro"
               fill
               className={cn(
                 "object-contain logo-pure transition-all duration-700 hover:scale-110",
-                "mix-blend-multiply dark:mix-blend-normal dark:brightness-110"
+                "mix-blend-multiply dark:mix-blend-normal dark:brightness-125"
               )}
             />
           </div>
-        </div>
+        </motion.div>
       </div>
 
-      <nav className="flex-1 overflow-y-auto pt-8 pb-4 px-4 custom-scrollbar">
+      <nav className="flex-1 overflow-y-auto pt-6 pb-4 px-3 custom-scrollbar">
         <AnimatePresence mode="wait">
             {!isLoaded ? (
               <motion.div key="skeleton" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
@@ -212,32 +235,54 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
               </motion.div>
             ) : (
               <motion.div
-                key="nav"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="space-y-8"
+                variants={containerVariants}
+                initial="hidden"
+                animate="show"
+                className="space-y-6"
               >
-                {filteredNavigation.map((group) => (
-                  <div key={group.titleKey} className="space-y-4">
+                {filteredNavigation.map((group, groupIdx) => (
+                  <motion.div 
+                    key={group.titleKey} 
+                    variants={{
+                        hidden: { opacity: 0, y: 30, scale: 0.95 },
+                        show: { opacity: 1, y: 0, scale: 1 }
+                    }}
+                    whileHover={{ 
+                        scale: 1.02,
+                        transition: { type: "spring", stiffness: 400, damping: 10 }
+                    }}
+                    className="glass-category-card glass-shine p-2 group/card"
+                    transition={{ 
+                        delay: 0.1 * groupIdx,
+                        type: "spring",
+                        stiffness: 100,
+                        damping: 15
+                    }}
+                  >
                     {!collapsed && (
-                      <h2 className="px-4 text-base font-bold font-black uppercase tracking-[0.4em] text-accent/90">
-                        {t(group.titleKey)}
-                      </h2>
+                        <h3 className="category-title transition-colors duration-500 group-hover/card:text-primary/60">
+                            {t(group.titleKey)}
+                        </h3>
                     )}
-                    <div className="space-y-2">
+                    <div className="space-y-1.5">
                       {group.items.map((item) => (
-                         <SidebarItem key={item.href} item={item} collapsed={collapsed} pathname={pathname} t={t} />
+                         <SidebarItem 
+                            key={item.href} 
+                            item={item} 
+                            collapsed={collapsed} 
+                            pathname={pathname} 
+                            t={t} 
+                         />
                       ))}
                     </div>
-                  </div>
+                  </motion.div>
                 ))}
               </motion.div>
             )}
         </AnimatePresence>
       </nav>
 
-      <div className="p-6 border-t border-border bg-background/80">
+      <div className="p-5 border-t border-border bg-background/20 backdrop-blur-sm">
         <SidebarProfile collapsed={collapsed} />
       </div>
     </motion.aside>
@@ -246,49 +291,69 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
 
 function SidebarItem({ item, collapsed, pathname, t }: { item: NavItem, collapsed: boolean, pathname: string | null, t: any }) {
     const isActive = pathname === item.href
+    
     return (
         <Link href={item.href} prefetch={true} className="block group">
-            <div className={cn(
-                "relative flex items-center gap-4 px-4 h-14 rounded-2xl transition-all duration-300 overflow-hidden",
+            <motion.div 
+                whileHover={{ x: 4 }}
+                whileTap={{ scale: 0.98 }}
+                className={cn(
+                    "relative flex items-center gap-3 px-3 h-11 rounded-xl transition-all duration-300 overflow-hidden",
                     isActive
-                    ? "bg-primary/10 text-accent shadow-[inset_0_0_20px_rgba(182,9,0,0.05)]"
-                    : "text-secondary-foreground hover:bg-muted hover:text-foreground"
-            )}>
+                        ? "nav-item-active glow-active"
+                        : "text-secondary-foreground/70 hover:bg-muted/50 hover:text-foreground"
+                )}
+            >
+                {/* Active Indicator Layer */}
                 {isActive && (
-                <motion.div
-                    layoutId="active-nav"
-                    className="absolute left-0 top-3 bottom-3 w-1 bg-accent rounded-r-full shadow-[0_0_15px_rgba(182,9,0,0.8)]"
-                />
+                <>
+                    <motion.div
+                        layoutId="active-nav-glow"
+                        className="absolute inset-0 bg-primary/5 dark:bg-primary/10 pointer-events-none"
+                    />
+                    <motion.div
+                        layoutId="active-indicator"
+                        className="absolute left-0 top-2 bottom-2 w-1 bg-primary rounded-r-full shadow-[0_0_15px_rgba(var(--primary),0.8)]"
+                    />
+                </>
                 )}
 
                 <div className={cn(
-                    "flex-shrink-0 transition-transform duration-300",
-                    isActive ? "text-primary scale-110" : "group-hover:scale-110 group-hover:text-primary/70"   
+                    "flex-shrink-0 transition-all duration-300 z-10",
+                    isActive ? "text-primary scale-110" : "group-hover:scale-110 group-hover:text-primary/80"   
                 )}>
                     {item.icon}
                 </div>
 
                 {!collapsed && (
                 <span className={cn(
-                    "text-xl font-black tracking-tight",
-                    isActive ? "text-accent" : "text-secondary-foreground group-hover:text-foreground"
+                    "text-lg font-bold tracking-normal z-10 transition-colors duration-300",
+                    isActive ? "text-accent dark:text-foreground font-black" : "text-secondary-foreground/80 group-hover:text-foreground"
                 )}>
                     {t(item.titleKey)}
                 </span>
                 )}
 
                 {item.badge && !collapsed && (
-                <span className={cn(
-                    "ml-auto px-2 py-0.5 text-base font-bold font-black rounded-lg border",
-                    item.badgeColor === "red" && "bg-destructive/10 text-destructive border-destructive/20",    
-                    item.badgeColor === "blue" && "bg-blue-500/10 text-blue-500 border-blue-500/20",
-                    item.badgeColor === "green" && "bg-primary/10 text-primary border-primary/20",
-                    item.badgeColor === "yellow" && "bg-yellow-500/10 text-yellow-500 border-yellow-500/20"     
-                )}>
-                    {typeof item.badge === 'string' ? t(item.badge) : item.badge}
-                </span>
+                <motion.span 
+                    initial={{ scale: 0.8 }}
+                    animate={{ scale: [1, 1.1, 1] }}
+                    transition={{ repeat: Infinity, duration: 2 }}
+                    className={cn(
+                        "ml-auto px-1.5 py-0.5 text-[9px] font-black rounded-md border z-10",
+                        item.badgeColor === "red" && "bg-destructive/20 text-destructive border-destructive/30 shadow-[0_0_10px_rgba(182,9,0,0.2)]",    
+                        item.badgeColor === "blue" && "bg-blue-500/20 text-blue-500 border-blue-500/30",
+                        item.badgeColor === "green" && "bg-primary/20 text-primary border-primary/30",
+                        item.badgeColor === "yellow" && "bg-yellow-500/20 text-yellow-500 border-yellow-500/30"     
+                    )}
+                >
+                    {typeof item.badge === 'string' ? t(item.badge).toUpperCase() : item.badge}
+                </motion.span>
                 )}
-            </div>
+                
+                {/* Glass shine hover effect */}
+                <div className="absolute inset-0 opacity-0 group-hover:opacity-10 pointer-events-none bg-gradient-to-r from-transparent via-white to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+            </motion.div>
         </Link>
     )
 }
@@ -298,13 +363,13 @@ function SidebarSkeleton({ collapsed }: { collapsed: boolean }) {
     <div className="space-y-8 px-2">
       {[1, 2, 3].map((i) => (
         <div key={i} className="space-y-4">
-          {!collapsed && <div className="h-2 w-20 bg-muted rounded-full animate-pulse ml-4" />}
+          {!collapsed && <div className="h-2 w-20 bg-muted/40 rounded-full animate-pulse ml-4" />}
           {[1, 2].map((j) => (
             <div
               key={j}
               className={cn(
-                "h-14 bg-muted/50 rounded-2xl animate-pulse border border-border/5",
-                collapsed ? "w-14 mx-auto" : "w-full"
+                "h-11 bg-muted/20 rounded-xl animate-pulse border border-border/5",
+                collapsed ? "w-11 mx-auto" : "w-full"
               )}
             />
           ))}

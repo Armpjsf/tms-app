@@ -31,10 +31,10 @@ export function PremiumButton({
   }
 
   const sizes = {
-    sm: "px-4 py-2 text-xl",
-    md: "px-6 py-3 text-base",
-    lg: "px-8 py-4 text-lg",
-    xl: "px-10 py-5 text-xl",
+    sm: "px-3 py-1.5 text-sm",
+    md: "px-5 py-2.5 text-sm",
+    lg: "px-6 py-3.5 text-base",
+    xl: "px-8 py-4 text-lg",
     icon: "h-16 w-16 p-0",
   }
 
@@ -44,7 +44,8 @@ export function PremiumButton({
       whileTap={{ scale: 0.98 }}
       disabled={disabled || loading}
       className={cn(
-        "rounded-2xl font-black uppercase tracking-normal flex items-center justify-center gap-2 transition-all duration-300 relative overflow-hidden group",
+        "rounded-xl font-black uppercase tracking-wider flex items-center justify-center gap-2 transition-all duration-300 relative overflow-hidden group",
+        "antialiased [backface-visibility:hidden] [transform-style:preserve-3d]", // Force hardware acceleration for sharpness
         variants[variant],
         sizes[size],
         (disabled || loading) && "opacity-50 cursor-not-allowed grayscale",

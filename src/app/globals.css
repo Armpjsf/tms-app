@@ -81,10 +81,10 @@ body[style*="pointer-events: none"] {
   --muted: 216 100% 95%;
   --muted-foreground: 216 100% 30%;
   
-  --border: 216 100% 15% / 0.15;
-  --input: 216 100% 15% / 0.05;
+  --border: 216 100% 15% / 0.12;
+  --input: 216 100% 15% / 0.04;
   --ring: 225 100% 31%;
-  --radius: 2rem;
+  --radius: 1.25rem;
 
   --gradient-elite: radial-gradient(at 0% 0%, rgba(0, 39, 156, 0.03) 0px, transparent 50%),
                     radial-gradient(at 100% 0%, rgba(0, 30, 76, 0.03) 0px, transparent 50%);
@@ -132,16 +132,16 @@ body[style*="pointer-events: none"] {
     outline: none !important;
   }
   html {
-    -webkit-font-smoothing: antialiased;
+    -webkit-font-smoothing: initial; /* Let browser decide for subpixel accuracy at 75% scale */
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
   }
   body {
-    @apply bg-background text-foreground antialiased selection:bg-primary/30;
+    @apply bg-background text-foreground selection:bg-primary/30;
     font-family: var(--font-prompt), var(--font-outfit), ui-sans-serif, system-ui, sans-serif !important;
     background-image: var(--gradient-elite);
-    min-height: 100dvh; /* Use dynamic viewport height for mobile */
-    font-size: 16px;
+    min-height: 100dvh;
+    font-size: 15px; /* Slightly smaller base font for compaction */
     
     /* Native App Feel for Mobile/PWA */
     -webkit-touch-callout: none; /* iOS Safari */
@@ -181,19 +181,80 @@ body[style*="pointer-events: none"] {
 }
 
 @layer utilities {
-  .glass-panel {
-    @apply bg-card/60 backdrop-blur-2xl border border-border relative overflow-hidden;
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.05);
+  .glass-elite {
+    @apply bg-background/70 backdrop-blur-xl border-r border-border transition-all duration-500 relative overflow-hidden;
+    box-shadow: 10px 0 40px rgba(0, 0, 0, 0.05); /* Light mode shadow */
   }
-  .dark .glass-panel {
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+  .dark .glass-elite {
+    @apply bg-secondary/80 border-border/30;
+    box-shadow: 15px 0 60px rgba(0, 0, 0, 0.5), inset -1px 0 0 rgba(255, 255, 255, 0.05); /* Dark mode separation */
   }
-  .inner-glow {
-    box-shadow: inset 0 0 30px rgba(255, 255, 255, 0.03);
+  
+  .glow-active {
+    box-shadow: 0 0 25px rgba(0, 39, 156, 0.2), inset 0 0 10px rgba(182, 9, 0, 0.05);
   }
-  .primary-glow {
-    filter: drop-shadow(0 0 15px rgba(0, 39, 156, 0.4));
-    @apply animate-pulse-gentle;
+  .dark .glow-active {
+    box-shadow: 0 0 35px rgba(0, 39, 156, 0.4), inset 0 0 20px rgba(182, 9, 0, 0.1);
+  }
+
+  .nav-item-active {
+    background: linear-gradient(135deg, hsl(var(--primary) / 0.15), hsl(var(--accent) / 0.05));
+    @apply border border-primary/20 backdrop-blur-md;
+  }
+  .dark .nav-item-active {
+    background: linear-gradient(135deg, hsl(var(--primary) / 0.2), hsl(var(--accent) / 0.1));
+    @apply border border-primary/30;
+  }
+
+  /* Glass Category Card - Segmented Sidebar Style */
+  .glass-category-card {
+    @apply bg-white/60 dark:bg-slate-900/40 backdrop-blur-xl rounded-[2.5rem] border border-slate-200/60 dark:border-white/5 transition-all duration-700 overflow-hidden mb-5 relative;
+    box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.05), 0 4px 10px -2px rgba(0, 0, 0, 0.02);
+  }
+
+  .glass-category-card::before {
+    content: "";
+    @apply absolute inset-0 bg-gradient-to-tr from-primary/5 via-transparent to-accent/5 opacity-0 transition-opacity duration-700;
+  }
+
+  .glass-category-card:hover::before {
+    @apply opacity-100;
+  }
+
+  /* Spectacular Shine Animation */
+  .glass-shine::after {
+    content: "";
+    @apply absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent;
+    animation: shine 8s infinite ease-in-out;
+  }
+
+  @keyframes shine {
+    0% { transform: translateX(-100%) skewX(-25deg); }
+    30% { transform: translateX(200%) skewX(-25deg); }
+    100% { transform: translateX(200%) skewX(-25deg); }
+  }
+
+  .glass-category-card:hover {
+    @apply border-primary/40 dark:border-primary/20 scale-[1.02];
+    box-shadow: 0 20px 50px -10px rgba(0, 39, 156, 0.15), 0 0 20px rgba(0, 39, 156, 0.1);
+  }
+  .dark .glass-category-card:hover {
+    box-shadow: 0 30px 80px -20px rgba(0, 0, 0, 0.8), 0 0 30px rgba(0, 39, 156, 0.2);
+  }
+
+  .category-title {
+    @apply text-[9px] font-black text-muted-foreground/40 uppercase tracking-[0.35em] pl-5 mb-4 select-none;
+  }
+
+  .waterfall-in {
+    animation: waterfall 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  @keyframes waterfall {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
   }
 }
 

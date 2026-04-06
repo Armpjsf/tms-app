@@ -23,8 +23,8 @@ export function ClientProviders({ children }: ClientProvidersProps) {
         <LanguageProvider>
           <BranchProvider>
             {children}
-            <GlobalClientComponents />
           </BranchProvider>
+          <GlobalClientComponents />
         </LanguageProvider>
       </ErrorBoundary>
     </ThemeProvider>

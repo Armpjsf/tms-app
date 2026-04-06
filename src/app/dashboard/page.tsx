@@ -166,7 +166,7 @@ export default function DashboardPage() {
   return (
     <DashboardLayout>
       {/* Tactical Date Range Selection Bar */}
-      <div className="mb-10 flex flex-col md:flex-row items-center justify-between gap-6 bg-background/50 backdrop-blur-3xl p-6 rounded-[2.5rem] border border-border/5 shadow-2xl overflow-hidden group">
+      <div className="mb-6 flex flex-col md:flex-row items-center justify-between gap-4 bg-background/50 backdrop-blur-3xl p-4 rounded-[2rem] border border-border/5 shadow-2xl overflow-hidden group">
           <div className="absolute top-0 right-0 w-64 h-full bg-primary/5 blur-3xl pointer-events-none" />
           
           <div className="flex items-center gap-4 relative z-10">

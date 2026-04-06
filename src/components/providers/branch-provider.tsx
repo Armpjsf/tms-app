@@ -1,6 +1,6 @@
 "use client"
 
-import React, { createContext, useContext, useState, useEffect } from "react"
+import React, { createContext, useContext, useState, useEffect, useCallback, Suspense } from "react"
 import { getAllBranches, Branch } from "@/lib/supabase/branches"
 import { getCurrentUserRole } from "@/lib/supabase/routes"
 import Cookies from "js-cookie"
@@ -22,87 +22,85 @@ const BranchContext = createContext<BranchContextType>({
   isLoading: true
 })
 
-export function BranchProviderInner({ children, initialBranchParam }: { children: React.ReactNode, initialBranchParam: string | null }) {
+/**
+ * Surgical Component to isolate useSearchParams suspension.
+ * This prevents the entire provider tree from unmounting during hydration.
+ */
+function BranchParamSync({ 
+    onParamFound,
+    branches 
+}: { 
+    onParamFound: (branch: string) => void,
+    branches: Branch[]
+}) {
+  const searchParams = useSearchParams()
+  const branchParam = searchParams.get('branch')
+
+  useEffect(() => {
+    if (branchParam && (branchParam === 'All' || branches.some(b => b.Branch_ID === branchParam))) {
+        onParamFound(branchParam)
+    }
+  }, [branchParam, branches, onParamFound])
+
+  return null
+}
+
+export function BranchProvider({ children }: { children: React.ReactNode }) {
   const [selectedBranch, setSelectedBranchState] = useState<string>("All")
   const [branches, setBranches] = useState<Branch[]>([])
   const [isAdmin, setIsAdmin] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const router = useRouter()
-  // useSearchParams is now handled by the wrapper
+
+  const init = useCallback(async () => {
+    try {
+        const [fetchedBranches, roleId] = await Promise.all([
+            getAllBranches(),
+            getCurrentUserRole()
+        ])
+        
+        setBranches(fetchedBranches || [])
+        setIsAdmin(roleId === 1)
+
+        // Only sync from cookie if not already set by URL param
+        const savedBranch = Cookies.get("selectedBranch")
+        if (savedBranch && (savedBranch === 'All' || fetchedBranches.some((b: Branch) => b.Branch_ID === savedBranch))) {
+            setSelectedBranchState(prev => prev === 'All' ? savedBranch : prev)
+        }
+    } catch {
+        // Silently fail
+    } finally {
+        setIsLoading(false)
+    }
+  }, [])
 
   useEffect(() => {
-    let isMounted = true
-    async function init() {
-        try {
-            const [fetchedBranches, roleId] = await Promise.all([
-                getAllBranches(),
-                getCurrentUserRole()
-            ])
-            
-            if (!isMounted) return
-
-            setBranches(fetchedBranches || [])
-            setIsAdmin(roleId === 1)
-
-          // 1. Priority: URL Search Parameter (passed as prop)
-          const urlBranch = initialBranchParam
-          // 2. Secondary: Cookie
-          const savedBranch = Cookies.get("selectedBranch")
-          
-          let finalBranch = 'All'
-          
-          if (urlBranch && (urlBranch === 'All' || fetchedBranches.some((b: Branch) => b.Branch_ID === urlBranch))) {
-              finalBranch = urlBranch
-          } else if (savedBranch && (savedBranch === 'All' || fetchedBranches.some((b: Branch) => b.Branch_ID === savedBranch))) {
-              finalBranch = savedBranch
-          }
-
-          setSelectedBranchState(finalBranch)
-          if (finalBranch !== savedBranch) {
-              Cookies.set("selectedBranch", finalBranch, { expires: 365 })
-          }
-      } catch {
-          // Continue without logging
-      } finally {
-          if (isMounted) setIsLoading(false)
-      }
-    }
     init()
-    return () => { isMounted = false }
-  }, [initialBranchParam])
+  }, [init])
 
-  const setSelectedBranch = (branchId: string) => {
+  const setSelectedBranch = useCallback((branchId: string) => {
     setSelectedBranchState(branchId)
     Cookies.set("selectedBranch", branchId, { expires: 365 })
     
-    // Explicitly update URL to trigger server component re-render
+    // Update URL to trigger server components
     const url = new URL(window.location.href)
     url.searchParams.set('branch', branchId)
     router.push(url.pathname + url.search)
-    
     router.refresh()
-  }
+  }, [router])
 
   return (
     <BranchContext.Provider value={{ selectedBranch, setSelectedBranch, branches, isAdmin, isLoading }}>
+      {/* Isolate SearchParams suspension here */}
+      <Suspense fallback={null}>
+        <BranchParamSync 
+            branches={branches} 
+            onParamFound={setSelectedBranchState} 
+        />
+      </Suspense>
       {children}
     </BranchContext.Provider>
   )
 }
 
 export const useBranch = () => useContext(BranchContext)
-
-function BranchProviderWrapper({ children }: { children: React.ReactNode }) {
-  const searchParams = useSearchParams()
-  const branchParam = searchParams.get('branch')
-  return <BranchProviderInner initialBranchParam={branchParam}>{children}</BranchProviderInner>
-}
-
-export function BranchProvider({ children }: { children: React.ReactNode }) {
-  return (
-    <React.Suspense fallback={null}>
-      <BranchProviderWrapper>{children}</BranchProviderWrapper>
-    </React.Suspense>
-  )
-}
-

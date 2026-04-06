@@ -4,8 +4,6 @@ import * as React from "react"
 import { motion } from "framer-motion"
 import { Sidebar } from "./sidebar"
 import { Header } from "./header"
-import { GlobalAIAssistant } from "@/components/chat/global-ai-assistant"
-import { cn } from "@/lib/utils"
 
 interface DashboardLayoutProps {
   children: React.ReactNode
@@ -31,8 +29,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground transition-colors duration-300 selection:bg-primary/30 font-sans">
-      {/* Elite Background Infrastructure */}
+    <div className="h-screen w-full bg-background text-foreground transition-colors duration-300 selection:bg-primary/30 font-sans overflow-hidden flex flex-col">
+      {/* Elite Background Infrastructure (Fixed behind everything) */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
         {/* Elite Ambient Glows - BRAND BLUE/NAVY THEME */}
         <div className="absolute top-[-10%] left-[-5%] w-[60%] h-[60%] bg-primary/10 dark:bg-primary/10 rounded-full blur-[120px] animate-pulse pointer-events-none" />
@@ -55,32 +53,35 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         />
       </div>
 
-      {/* Sidebar */}
-      <Sidebar 
-          collapsed={sidebarCollapsed} 
-          onToggle={handleToggle} 
-      />
-
-      {/* Header */}
+      {/* Header (Top Level) */}
       <Header sidebarCollapsed={sidebarCollapsed} />
 
-      {/* Main Content Area */}
-      <motion.main
-          initial={{ opacity: 0 }}
-          animate={isMounted ? { opacity: 1 } : { opacity: 0 }}
-          transition={{ duration: 0.5, ease: "easeOut" }}
-          className={cn(
-            "relative pt-16 min-h-screen transition-all duration-500 ease-in-out",
-            sidebarCollapsed ? "pl-[100px]" : "pl-[320px]"
-          )}
-      >
-          {/* Elite Content Spacing */}
-          <div className="relative z-20 min-h-[calc(100vh-64px)]">
-            <div className="p-10 lg:p-14 max-w-[2000px] mx-auto">
-                {children}
+      <div className="relative flex flex-1 h-full overflow-hidden">
+        {/* Sidebar Space Controller (This pushes the content) */}
+        <div 
+            className="h-full shrink-0 transition-all duration-500 ease-in-out relative z-30"
+            style={{ width: sidebarCollapsed ? '80px' : '240px' }}
+        >
+            <Sidebar 
+                collapsed={sidebarCollapsed} 
+                onToggle={handleToggle} 
+            />
+        </div>
+
+        {/* Main Content Area (Independent Scroll) */}
+        <motion.main
+            initial={{ opacity: 0 }}
+            animate={isMounted ? { opacity: 1 } : { opacity: 0 }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
+            className="flex-1 h-full overflow-y-auto custom-scrollbar pt-20 relative z-20"
+        >
+            <div className="relative">
+                <div className="p-4 lg:p-6 max-w-[2000px] min-h-full">
+                    {children}
+                </div>
             </div>
-          </div>
-      </motion.main>
+        </motion.main>
+      </div>
       {/* <GlobalAIAssistant /> */}
     </div>
   )
