@@ -21,6 +21,7 @@ import { Vehicle } from "@/lib/supabase/vehicles"
 import { Customer } from "@/lib/supabase/customers"
 import { AiSuggestionCard } from "@/components/planning/ai-suggestion-card"
 import { geocodeAddress } from "@/lib/ai/geocoding"
+import { extractCoordsFromUrl } from "@/lib/utils"
 import { getDrivingDistance } from "@/lib/ai/distance"
 import { 
   Activity, AlertTriangle, Banknote, Building2, Calendar, Check, Eye, EyeOff, 
@@ -535,6 +536,52 @@ export function JobDialog({
     setOrigins(updated)
   }
 
+  const handleOriginNameChange = (index: number, val: string) => {
+    const name = val.trim();
+    updateOrigin(index, 'name', name);
+
+    // 1. Direct URL Detection & Extraction
+    if (name.startsWith('http')) {
+        const coords = extractCoordsFromUrl(name);
+        if (coords) {
+            updateOrigin(index, 'lat', coords.lat.toString());
+            updateOrigin(index, 'lng', coords.lng.toString());
+            toast.success("ดึงพิกัดจาก Google Maps สำเร็จ");
+            return;
+        }
+    }
+
+    // 2. Master Route Lookup
+    if (routes && routes.length > 0) {
+        // Find if this name matches an Origin or Destination in our master list
+        const masterMatch = routes.find(r => 
+            (r.Origin && r.Origin.trim() === name) || 
+            (r.Destination && r.Destination.trim() === name)
+        );
+
+        if (masterMatch) {
+            const isOriginMatch = masterMatch.Origin?.trim() === name;
+            const lat = isOriginMatch ? masterMatch.Origin_Lat : masterMatch.Dest_Lat;
+            const lng = isOriginMatch ? masterMatch.Origin_Lon : masterMatch.Dest_Lon;
+            const link = isOriginMatch ? masterMatch.Map_Link_Origin : masterMatch.Map_Link_Destination;
+
+            if (lat && lng) {
+                updateOrigin(index, 'lat', lat.toString());
+                updateOrigin(index, 'lng', lng.toString());
+                toast.success(`ใช้พิกัดจากมาสเตอร์: ${name}`);
+            } else if (link) {
+                // Fallback to extraction from link in master data
+                const coords = extractCoordsFromUrl(link);
+                if (coords) {
+                    updateOrigin(index, 'lat', coords.lat.toString());
+                    updateOrigin(index, 'lng', coords.lng.toString());
+                    toast.success(`ดึงพิกัดจากลิงก์มาสเตอร์: ${name}`);
+                }
+            }
+        }
+    }
+  }
+
   const addDestination = () => setDestinations([...destinations, { name: '', lat: '', lng: '' }])
   const removeDestination = (index: number) => {
     if (destinations.length > 1) setDestinations(destinations.filter((_, i) => i !== index))
@@ -543,6 +590,51 @@ export function JobDialog({
     const updated = [...destinations]
     updated[index][field] = value
     setDestinations(updated)
+  }
+
+  const handleDestinationNameChange = (index: number, val: string) => {
+    const name = val.trim();
+    updateDestination(index, 'name', name);
+
+    // 1. Direct URL Detection & Extraction
+    if (name.startsWith('http')) {
+        const coords = extractCoordsFromUrl(name);
+        if (coords) {
+            updateDestination(index, 'lat', coords.lat.toString());
+            updateDestination(index, 'lng', coords.lng.toString());
+            toast.success("ดึงพิกัดจาก Google Maps สำเร็จ");
+            return;
+        }
+    }
+
+    // 2. Master Route Lookup
+    if (routes && routes.length > 0) {
+        const masterMatch = routes.find(r => 
+            (r.Destination && r.Destination.trim() === name) || 
+            (r.Origin && r.Origin.trim() === name)
+        );
+
+        if (masterMatch) {
+            const isDestMatch = masterMatch.Destination?.trim() === name;
+            const lat = isDestMatch ? masterMatch.Dest_Lat : masterMatch.Origin_Lat;
+            const lng = isDestMatch ? masterMatch.Dest_Lon : masterMatch.Origin_Lon;
+            const link = isDestMatch ? masterMatch.Map_Link_Destination : masterMatch.Map_Link_Origin;
+
+            if (lat && lng) {
+                updateDestination(index, 'lat', lat.toString());
+                updateDestination(index, 'lng', lng.toString());
+                toast.success(`ใช้พิกัดจากมาสเตอร์: ${name}`);
+            } else if (link) {
+                // Fallback to extraction from link in master data
+                const coords = extractCoordsFromUrl(link);
+                if (coords) {
+                    updateDestination(index, 'lat', coords.lat.toString());
+                    updateDestination(index, 'lng', coords.lng.toString());
+                    toast.success(`ดึงพิกัดจากลิงก์มาสเตอร์: ${name}`);
+                }
+            }
+        }
+    }
   }
 
   const addAssignment = () => {
@@ -1049,7 +1141,7 @@ export function JobDialog({
                                 <LocationAutocomplete
                                     placeholder={t('jobs.dialog.location_placeholder')}
                                     value={origin.name}
-                                    onChange={(val) => updateOrigin(index, 'name', val)}
+                                    onChange={(val) => handleOriginNameChange(index, val)}
                                     locations={originLocations}
                                     className="bg-background border-input text-xl h-14"
                                 />
@@ -1119,7 +1211,7 @@ export function JobDialog({
                                 <LocationAutocomplete
                                     placeholder={t('jobs.dialog.location_placeholder')}
                                     value={dest.name}
-                                    onChange={(val) => updateDestination(index, 'name', val)}
+                                    onChange={(val) => handleDestinationNameChange(index, val)}
                                     locations={destinationLocations}
                                     className="bg-background border-input text-xl h-14"
                                 />

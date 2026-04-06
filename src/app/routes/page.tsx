@@ -43,6 +43,8 @@ import {
   getUniqueLocations,
   Route,
 } from "@/lib/supabase/routes"
+import { extractCoordsFromUrl } from "@/lib/utils"
+import { geocodeAddress } from "@/lib/ai/geocoding"
 import { ExcelImport } from "@/components/ui/excel-import"
 import { LocationAutocomplete } from "@/components/location-autocomplete"
 import { useBranch } from "@/components/providers/branch-provider"
@@ -100,7 +102,26 @@ export default function RoutesPage() {
   }, [searchQuery, selectedBranch, fetchData])
 
   const updateForm = (field: keyof Route, data: string | number | null) => {
-    setFormData(prev => ({ ...prev, [field]: data }))
+    setFormData(prev => {
+        const newData = { ...prev, [field]: data };
+        
+        // AUTO-EXTRACT: If pasting into a Map_Link field, try to extract coords
+        if (typeof data === 'string' && (field === 'Map_Link_Origin' || field === 'Map_Link_Destination')) {
+            const coords = extractCoordsFromUrl(data);
+            if (coords) {
+                if (field === 'Map_Link_Origin') {
+                    newData.Origin_Lat = coords.lat;
+                    newData.Origin_Lon = coords.lng;
+                    toast.success("ดึงพิกัดต้นทางจากลิงก์สำเร็จ");
+                } else {
+                    newData.Dest_Lat = coords.lat;
+                    newData.Dest_Lon = coords.lng;
+                    toast.success("ดึงพิกัดปลายทางจากลิงก์สำเร็จ");
+                }
+            }
+        }
+        return newData;
+    });
   }
 
   const resetForm = () => {
