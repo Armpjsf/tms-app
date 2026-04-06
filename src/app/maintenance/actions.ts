@@ -130,7 +130,6 @@ if (data.Status === 'Completed') {
 }
 
 // If status is Completed, check if we need to release vehicle? 
-...
   // For now, let's just update the ticket. 
   // Ideally, if finished, Vehicle Status might need to go back to 'Active'.
   if (data.Status === 'Completed' && data.Vehicle_Plate) {
