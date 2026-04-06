@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
+import { cn } from "@/lib/utils"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
@@ -1342,18 +1343,50 @@ export function JobDialog({
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
                         <div className="space-y-4">
                             <Label className="flex items-center gap-2 text-2xl font-black text-primary uppercase tracking-normal">
-                                <Building2 className="w-6 h-6" /> {t('jobs.dialog.carrier')}
+                                <Building2 className="w-6 h-6" /> {t('jobs.dialog.carrier_type') || 'ประเภทผู้ให้บริการ'}
                             </Label>
-                            <select
-                                value={assignment.Sub_ID || ""}
-                                onChange={(e) => updateAssignment(index, 'Sub_ID', e.target.value)}
-                                className="w-full h-14 px-3 rounded-md bg-background border border-input text-foreground text-2xl font-black"
-                            >
-                                <option value="">{t('jobs.dialog.internal')}</option>
-                                {subcontractors.map((sub) => (
-                                    <option key={sub.Sub_ID} value={sub.Sub_ID}>{sub.Sub_Name}</option>
-                                ))}
-                            </select>
+                            <div className="flex p-1 bg-muted rounded-xl border border-border h-14">
+                                <button
+                                    type="button"
+                                    onClick={() => updateAssignment(index, 'Sub_ID', '')}
+                                    className={cn(
+                                        "flex-1 rounded-lg text-lg font-black transition-all",
+                                        !assignment.Sub_ID 
+                                            ? "bg-background text-primary shadow-sm" 
+                                            : "text-muted-foreground hover:bg-background/50"
+                                    )}
+                                >
+                                    {t('jobs.dialog.individual') || 'รายคัน (Internal)'}
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        if (subcontractors.length > 0 && !assignment.Sub_ID) {
+                                            updateAssignment(index, 'Sub_ID', subcontractors[0].Sub_ID)
+                                        }
+                                    }}
+                                    className={cn(
+                                        "flex-1 rounded-lg text-lg font-black transition-all",
+                                        assignment.Sub_ID 
+                                            ? "bg-background text-primary shadow-sm" 
+                                            : "text-muted-foreground hover:bg-background/50"
+                                    )}
+                                >
+                                    {t('jobs.dialog.subcontractor') || 'บริษัทรถร่วม'}
+                                </button>
+                            </div>
+                            
+                            {assignment.Sub_ID && (
+                                <select
+                                    value={assignment.Sub_ID}
+                                    onChange={(e) => updateAssignment(index, 'Sub_ID', e.target.value)}
+                                    className="w-full h-12 px-3 rounded-md bg-background border border-indigo-500/30 text-foreground text-xl font-black animate-in fade-in slide-in-from-top-2 duration-300"
+                                >
+                                    {subcontractors.map((sub) => (
+                                        <option key={sub.Sub_ID} value={sub.Sub_ID}>{sub.Sub_Name}</option>
+                                    ))}
+                                </select>
+                            )}
                         </div>
                         <div className="space-y-4">
                             <Label className="flex items-center gap-2 text-2xl font-black text-primary uppercase tracking-normal">
@@ -1377,76 +1410,96 @@ export function JobDialog({
                             <Label className="flex items-center gap-2 text-2xl font-black text-primary uppercase tracking-normal">
                                 <Truck className="w-6 h-6" /> {t('jobs.dialog.vehicle_plate')}
                             </Label>
-                            <VehicleAutocomplete
-                                value={assignment.Vehicle_Plate}
-                                onChange={(val) => updateAssignment(index, 'Vehicle_Plate', val)}
-                                vehicles={vehicles.filter((v) => {
-                                    const subMatch = !assignment.Sub_ID ? (!v.Sub_ID) : v.Sub_ID === assignment.Sub_ID
-                                    const typeMatch = !assignment.Vehicle_Type || v.Vehicle_Type === assignment.Vehicle_Type
-                                    return subMatch && typeMatch
-                                })}
-                                onSelect={(v) => {
-                                    const newAssignments = [...assignments]
-                                    const current = newAssignments[index]
-                                    newAssignments[index] = {
-                                        ...current,
-                                        Vehicle_Plate: v.Vehicle_Plate,
-                                        Vehicle_Type: v.Vehicle_Type || current.Vehicle_Type,
-                                        Sub_ID: v.Sub_ID || current.Sub_ID,
-                                        Driver_ID: v.Driver_ID || current.Driver_ID
-                                    }
-                                    setAssignments(newAssignments)
-                                    if (index === 0) {
-                                        setFormData(prev => ({
-                                            ...prev,
+                            <div className="relative group/field">
+                                <VehicleAutocomplete
+                                    value={assignment.Vehicle_Plate}
+                                    onChange={(val) => updateAssignment(index, 'Vehicle_Plate', val)}
+                                    vehicles={vehicles.filter((v) => {
+                                        const subMatch = !assignment.Sub_ID ? (!v.Sub_ID) : v.Sub_ID === assignment.Sub_ID
+                                        const typeMatch = !assignment.Vehicle_Type || v.Vehicle_Type === assignment.Vehicle_Type
+                                        return subMatch && typeMatch
+                                    })}
+                                    onSelect={(v) => {
+                                        const newAssignments = [...assignments]
+                                        const current = newAssignments[index]
+                                        newAssignments[index] = {
+                                            ...current,
                                             Vehicle_Plate: v.Vehicle_Plate,
-                                            Vehicle_Type: v.Vehicle_Type || prev.Vehicle_Type,
-                                            Sub_ID: v.Sub_ID || prev.Sub_ID,
-                                            Driver_ID: v.Driver_ID || prev.Driver_ID
-                                        }))
-                                    }
-                                }}
-                                placeholder={t('jobs.dialog.vehicle_plate_placeholder')}
-                                className="bg-background border-input text-2xl h-14"
-                            />
+                                            Vehicle_Type: v.Vehicle_Type || current.Vehicle_Type,
+                                            Sub_ID: v.Sub_ID || current.Sub_ID,
+                                            Driver_ID: v.Driver_ID || current.Driver_ID
+                                        }
+                                        setAssignments(newAssignments)
+                                        if (index === 0) {
+                                            setFormData(prev => ({
+                                                ...prev,
+                                                Vehicle_Plate: v.Vehicle_Plate,
+                                                Vehicle_Type: v.Vehicle_Type || prev.Vehicle_Type,
+                                                Sub_ID: v.Sub_ID || prev.Sub_ID,
+                                                Driver_ID: v.Driver_ID || prev.Driver_ID
+                                            }))
+                                        }
+                                        if (v.Driver_ID) {
+                                            toast.info(t('jobs.dialog.auto_filled_driver') || 'ดึงข้อมูลคนขับที่ผูกไว้ให้อัตโนมัติ', { icon: <User className="w-4 h-4" /> })
+                                        }
+                                    }}
+                                    placeholder={t('jobs.dialog.vehicle_plate_placeholder')}
+                                    className="bg-background border-input text-2xl h-14"
+                                />
+                                {assignment.Vehicle_Plate && vehicles.find(v => v.Vehicle_Plate === assignment.Vehicle_Plate)?.Driver_ID === assignment.Driver_ID && assignment.Driver_ID && (
+                                    <div className="absolute -top-3 right-4 bg-emerald-500 text-white text-[10px] px-2 py-0.5 rounded-full font-black flex items-center gap-1 shadow-sm animate-in zoom-in-50">
+                                        <LinkIcon className="w-2.5 h-2.5" /> {t('jobs.dialog.linked') || 'LINKED'}
+                                    </div>
+                                )}
+                            </div>
                         </div>
                         <div className="space-y-4">
                             <Label className="flex items-center gap-2 text-2xl font-black text-primary uppercase tracking-normal">
                                 <User className="w-6 h-6" /> {t('jobs.dialog.driver')}
                             </Label>
-                            <DriverAutocomplete
-                                value={assignment.Driver_ID}
-                                onChange={(val) => updateAssignment(index, 'Driver_ID', val)}
-                                drivers={drivers.filter((d) => {
-                                    const subMatch = !assignment.Sub_ID ? (!d.Sub_ID) : d.Sub_ID === assignment.Sub_ID
-                                    return subMatch
-                                })}
-                                onSelect={(d) => {
-                                    const newAssignments = [...assignments]
-                                    const current = newAssignments[index]
-                                    const assignedVehicle = d.Vehicle_Plate ? vehicles.find(v => v.Vehicle_Plate === d.Vehicle_Plate) : null
-                                    newAssignments[index] = {
-                                        ...current,
-                                        Driver_ID: d.Driver_ID,
-                                        Sub_ID: d.Sub_ID || current.Sub_ID,
-                                        Vehicle_Plate: assignedVehicle ? assignedVehicle.Vehicle_Plate : (d.Vehicle_Plate || current.Vehicle_Plate),
-                                        Vehicle_Type: (assignedVehicle ? assignedVehicle.Vehicle_Type : (d.Vehicle_Type || current.Vehicle_Type)) || "",
-                                        Show_Price_To_Driver: d.Show_Price_Default ?? current.Show_Price_To_Driver
-                                    }
-                                    setAssignments(newAssignments)
-                                    if (index === 0) {
-                                        setFormData(prev => ({
-                                            ...prev,
+                            <div className="relative group/field">
+                                <DriverAutocomplete
+                                    value={assignment.Driver_ID}
+                                    onChange={(val) => updateAssignment(index, 'Driver_ID', val)}
+                                    drivers={drivers.filter((d) => {
+                                        const subMatch = !assignment.Sub_ID ? (!d.Sub_ID) : d.Sub_ID === assignment.Sub_ID
+                                        return subMatch
+                                    })}
+                                    onSelect={(d) => {
+                                        const newAssignments = [...assignments]
+                                        const current = newAssignments[index]
+                                        const assignedVehicle = d.Vehicle_Plate ? vehicles.find(v => v.Vehicle_Plate === d.Vehicle_Plate) : null
+                                        newAssignments[index] = {
+                                            ...current,
                                             Driver_ID: d.Driver_ID,
-                                            Sub_ID: d.Sub_ID || prev.Sub_ID,
-                                            Vehicle_Plate: assignedVehicle ? assignedVehicle.Vehicle_Plate : (d.Vehicle_Plate || prev.Vehicle_Plate),
-                                            Vehicle_Type: (assignedVehicle ? assignedVehicle.Vehicle_Type : (d.Vehicle_Type || prev.Vehicle_Type)) || "",
-                                            Show_Price_To_Driver: d.Show_Price_Default ?? prev.Show_Price_To_Driver
-                                        }))
-                                    }
-                                }}
-                                className="bg-background border-input text-2xl h-14"
-                            />
+                                            Sub_ID: d.Sub_ID || current.Sub_ID,
+                                            Vehicle_Plate: assignedVehicle ? assignedVehicle.Vehicle_Plate : (d.Vehicle_Plate || current.Vehicle_Plate),
+                                            Vehicle_Type: (assignedVehicle ? assignedVehicle.Vehicle_Type : (d.Vehicle_Type || current.Vehicle_Type)) || "",
+                                            Show_Price_To_Driver: d.Show_Price_Default ?? current.Show_Price_To_Driver
+                                        }
+                                        setAssignments(newAssignments)
+                                        if (index === 0) {
+                                            setFormData(prev => ({
+                                                ...prev,
+                                                Driver_ID: d.Driver_ID,
+                                                Sub_ID: d.Sub_ID || prev.Sub_ID,
+                                                Vehicle_Plate: assignedVehicle ? assignedVehicle.Vehicle_Plate : (d.Vehicle_Plate || prev.Vehicle_Plate),
+                                                Vehicle_Type: (assignedVehicle ? assignedVehicle.Vehicle_Type : (d.Vehicle_Type || prev.Vehicle_Type)) || "",
+                                                Show_Price_To_Driver: d.Show_Price_Default ?? prev.Show_Price_To_Driver
+                                            }))
+                                        }
+                                        if (assignedVehicle || d.Vehicle_Plate) {
+                                            toast.info(t('jobs.dialog.auto_filled_vehicle') || 'ดึงข้อมูลรถที่ผูกไว้ให้อัตโนมัติ', { icon: <Truck className="w-4 h-4" /> })
+                                        }
+                                    }}
+                                    className="bg-background border-input text-2xl h-14"
+                                />
+                                {assignment.Driver_ID && drivers.find(d => d.Driver_ID === assignment.Driver_ID)?.Vehicle_Plate === assignment.Vehicle_Plate && assignment.Vehicle_Plate && (
+                                    <div className="absolute -top-3 right-4 bg-emerald-500 text-white text-[10px] px-2 py-0.5 rounded-full font-black flex items-center gap-1 shadow-sm animate-in zoom-in-50">
+                                        <LinkIcon className="w-2.5 h-2.5" /> {t('jobs.dialog.linked') || 'LINKED'}
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </div>
 

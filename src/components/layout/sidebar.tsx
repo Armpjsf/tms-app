@@ -28,11 +28,10 @@ import {
   Zap,
   Bot,
   Settings,
-  Loader2,
+  ShieldCheck,
 } from "lucide-react"
 
 import { SidebarProfile } from "./sidebar-profile"
-import { getUserRole } from "@/lib/permissions"
 import { useLanguage } from "@/components/providers/language-provider"
 import { getPermissionsByRole } from "@/lib/actions/permission-actions"
 
@@ -65,7 +64,7 @@ const navigation: NavGroup[] = [
       { titleKey: "navigation.monitoring", href: "/monitoring", icon: <Activity size={20} />, badge: "common.live", badgeColor: "green" },
       { titleKey: "navigation.pod", href: "/pod", icon: <FileText size={20} /> },
       { titleKey: "navigation.notifications", href: "/notifications", icon: <AlertTriangle size={20} />, badgeColor: "red" },
-      { titleKey: "navigation.chat", href: "/chat", icon: <MessageSquare size={20} />, badgeColor: "blue" },
+      { titleKey: "navigation.chat", href: "/chat", icon: <MessageSquare size={20} />, badgeColor: "blue" },    
     ],
   },
   {
@@ -73,11 +72,11 @@ const navigation: NavGroup[] = [
     items: [
       { titleKey: "navigation.routes", href: "/routes", icon: <Navigation size={20} /> },
       { titleKey: "navigation.drivers", href: "/drivers", icon: <Users size={20} /> },
-      { titleKey: "navigation.driver_leaves", href: "/admin/driver-leaves", icon: <CalendarDays size={20} /> },
+      { titleKey: "navigation.driver_leaves", href: "/admin/driver-leaves", icon: <CalendarDays size={20} /> }, 
       { titleKey: "navigation.customers", href: "/settings/customers", icon: <Building size={20} /> },
       { titleKey: "navigation.fleet", href: "/vehicles", icon: <Truck size={20} /> },
-      { titleKey: "navigation.fleet_intelligence", href: "/vehicles/intelligence", icon: <Zap size={20} /> },
-      { titleKey: "navigation.checks", href: "/admin/vehicle-checks", icon: <CheckCircle2 size={20} /> },
+      { titleKey: "navigation.fleet_intelligence", href: "/vehicles/intelligence", icon: <Zap size={20} /> },   
+      { titleKey: "navigation.checks", href: "/admin/vehicle-checks", icon: <CheckCircle2 size={20} /> },       
       { titleKey: "navigation.maintenance", href: "/maintenance", icon: <Wrench size={20} /> },
       { titleKey: "navigation.fuel", href: "/fuel", icon: <Fuel size={20} /> },
     ],
@@ -86,14 +85,14 @@ const navigation: NavGroup[] = [
     titleKey: "nav_groups.intelligence",
     items: [
       { titleKey: "navigation.analytics", href: "/admin/analytics", icon: <BarChart3 size={20} />, badgeColor: "blue" },
-      { titleKey: "navigation.ai", href: "/intelligence", icon: <Bot size={20} />, badgeColor: "green" },
+      { titleKey: "navigation.ai", href: "/intelligence", icon: <Bot size={20} />, badgeColor: "green" },       
       { titleKey: "navigation.reports", href: "/reports", icon: <BarChart3 size={20} /> },
     ],
   },
   {
     titleKey: "nav_groups.financial",
     items: [
-      { titleKey: "navigation.billing_customer", href: "/billing/customer", icon: <Receipt size={20} /> },
+      { titleKey: "navigation.billing_customer", href: "/billing/customer", icon: <Receipt size={20} /> },      
       { titleKey: "navigation.billing_automation", href: "/billing/automation", icon: <Zap size={20} />, badge: "common.new", badgeColor: "yellow" },
       { titleKey: "navigation.invoices", href: "/billing/invoices", icon: <FileText size={20} /> },
       { titleKey: "navigation.payouts", href: "/billing/driver", icon: <Wallet size={20} /> },
@@ -129,9 +128,8 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
         try {
             const { getUserProfile } = await import("@/lib/supabase/users")
             const profile = await getUserProfile()
-            
+
             if (profile?.Role) {
-                // If Admin, usually allow all, but still fetch from DB for flexibility
                 const perms = await getPermissionsByRole(profile.Role)
                 setSidebarState({
                     allowedMenus: perms,
@@ -150,12 +148,11 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
 
   const { allowedMenus, isLoaded } = sidebarState
 
-  // Filter navigation based on allowedMenus from database
   const filteredNavigation = navigation.map(group => ({
     ...group,
     items: group.items.filter(item => {
-        if (!isLoaded) return true // Show all during skeleton
-        if (!allowedMenus) return true // Default if no perms set yet (e.g. Admin)
+        if (!isLoaded) return true 
+        if (!allowedMenus) return true 
         return allowedMenus.includes(item.titleKey)
     })
   })).filter(group => group.items.length > 0)
@@ -167,7 +164,7 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
       transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
       className={cn(
         "fixed top-0 left-0 h-screen z-[1000] flex flex-col font-sans",
-        "bg-secondary border-r border-border text-secondary-foreground shadow-2xl transition-all duration-500"
+        "bg-secondary border-r border-border text-secondary-foreground shadow-2xl transition-all duration-500"  
       )}
     >
       {/* Header Container */}
@@ -189,19 +186,19 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
         </button>
 
         <div className={cn(
-            "relative flex items-center justify-center logo-container-pure transition-all duration-700",
+            "relative flex items-center justify-center logo-container-pure transition-all duration-700",        
             "bg-muted rounded-full shadow-lg border border-border/10",
             collapsed ? "w-12 h-12 p-2" : "w-36 h-36 p-4"
         )}>
           <div className="relative w-full h-full rounded-full overflow-hidden bg-background/20 flex items-center justify-center">
-            <Image 
-              src="/logo2.png" 
-              alt="LogisPro" 
-              fill 
+            <Image
+              src="/logo2.png"
+              alt="LogisPro"
+              fill
               className={cn(
                 "object-contain logo-pure transition-all duration-700 hover:scale-110",
                 "mix-blend-multiply dark:mix-blend-normal dark:brightness-110"
-              )} 
+              )}
             />
           </div>
         </div>
@@ -214,10 +211,10 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
                 <SidebarSkeleton collapsed={collapsed} />
               </motion.div>
             ) : (
-              <motion.div 
+              <motion.div
                 key="nav"
-                initial={{ opacity: 0 }} 
-                animate={{ opacity: 1 }} 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 className="space-y-8"
               >
@@ -258,19 +255,19 @@ function SidebarItem({ item, collapsed, pathname, t }: { item: NavItem, collapse
                     : "text-secondary-foreground hover:bg-muted hover:text-foreground"
             )}>
                 {isActive && (
-                <motion.div 
+                <motion.div
                     layoutId="active-nav"
                     className="absolute left-0 top-3 bottom-3 w-1 bg-accent rounded-r-full shadow-[0_0_15px_rgba(182,9,0,0.8)]"
                 />
                 )}
-                
+
                 <div className={cn(
                     "flex-shrink-0 transition-transform duration-300",
-                    isActive ? "text-primary scale-110" : "group-hover:scale-110 group-hover:text-primary/70"
+                    isActive ? "text-primary scale-110" : "group-hover:scale-110 group-hover:text-primary/70"   
                 )}>
                     {item.icon}
                 </div>
-                
+
                 {!collapsed && (
                 <span className={cn(
                     "text-xl font-black tracking-tight",
@@ -279,14 +276,14 @@ function SidebarItem({ item, collapsed, pathname, t }: { item: NavItem, collapse
                     {t(item.titleKey)}
                 </span>
                 )}
-                
+
                 {item.badge && !collapsed && (
                 <span className={cn(
                     "ml-auto px-2 py-0.5 text-base font-bold font-black rounded-lg border",
-                    item.badgeColor === "red" && "bg-destructive/10 text-destructive border-destructive/20",
+                    item.badgeColor === "red" && "bg-destructive/10 text-destructive border-destructive/20",    
                     item.badgeColor === "blue" && "bg-blue-500/10 text-blue-500 border-blue-500/20",
                     item.badgeColor === "green" && "bg-primary/10 text-primary border-primary/20",
-                    item.badgeColor === "yellow" && "bg-yellow-500/10 text-yellow-500 border-yellow-500/20"
+                    item.badgeColor === "yellow" && "bg-yellow-500/10 text-yellow-500 border-yellow-500/20"     
                 )}>
                     {typeof item.badge === 'string' ? t(item.badge) : item.badge}
                 </span>

@@ -4,11 +4,17 @@
 import { createAdminClient } from "@/utils/supabase/server"
 import { logActivity } from "@/lib/supabase/logs"
 
+import { getVehicleTypes } from "./vehicle-type-actions"
+
 /**
  * FUEL STANDARDS
  */
 export async function getFuelStandards() {
     const supabase = createAdminClient()
+    
+    // Auto-sync with Vehicle_Types table first
+    await syncWithVehicleTypes()
+
     const { data, error } = await supabase
         .from('Fleet_Fuel_Standards')
         .select('*')
@@ -17,6 +23,39 @@ export async function getFuelStandards() {
     if (error) return []
     return data
 }
+
+/**
+ * Ensure every entry in Vehicle_Types has a record in Fleet_Fuel_Standards
+ */
+export async function syncWithVehicleTypes() {
+    const supabase = createAdminClient()
+    try {
+        const vehicleTypes = await getVehicleTypes()
+        if (!vehicleTypes || vehicleTypes.length === 0) return
+
+        const { data: existingStandards } = await supabase
+            .from('Fleet_Fuel_Standards')
+            .select('Vehicle_Type')
+        
+        const existingNames = new Set(existingStandards?.map(s => s.Vehicle_Type) || [])
+        
+        const toInsert = vehicleTypes
+            .filter(t => !existingNames.has(t.type_name))
+            .map(t => ({
+                Vehicle_Type: t.type_name,
+                Standard_KM_L: 10.0, // Default
+                Warning_Threshold_Percent: 15.0
+            }))
+        
+        if (toInsert.length > 0) {
+            await supabase.from('Fleet_Fuel_Standards').insert(toInsert)
+            console.log(`[FLEET_INTEL] Synced ${toInsert.length} new vehicle types to standards.`)
+        }
+    } catch (e) {
+        console.error("[FLEET_INTEL] Sync with types failed:", e)
+    }
+}
+
 
 export async function saveFuelStandard(standard: any) {
     const supabase = createAdminClient()

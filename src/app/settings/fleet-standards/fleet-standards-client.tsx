@@ -1,7 +1,7 @@
 
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { PremiumButton } from "@/components/ui/premium-button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -16,18 +16,39 @@ import {
     AlertTriangle,
     Activity,
     ArrowRight,
-    Loader2
+    Loader2,
+    ChevronDown
 } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent } from "@/components/ui/card"
+import { 
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
 import { saveFuelStandard, saveMaintenanceStandard, deleteMaintenanceStandard } from "@/lib/actions/fleet-intelligence-actions"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 
-export function FleetStandardsClient({ initialFuel, initialMaintenance }: { initialFuel: any[], initialMaintenance: any[] }) {
-    const [fuelData, setFuelData] = useState(initialFuel)
-    const [maintData, setMaintData] = useState(initialMaintenance)
+export function FleetStandardsClient({ 
+    initialFuel, 
+    initialMaintenance,
+    masterVehicleTypes = [] 
+}: { 
+    initialFuel: any[], 
+    initialMaintenance: any[],
+    masterVehicleTypes?: any[]
+}) {
+    const [fuelData, setFuelData] = useState<any[]>(Array.isArray(initialFuel) ? initialFuel : [])
+    const [maintData, setMaintData] = useState<any[]>(Array.isArray(initialMaintenance) ? initialMaintenance : [])
     const [saving, setSaving] = useState(false)
+
+    useEffect(() => {
+        if (initialFuel) setFuelData(initialFuel)
+        if (initialMaintenance) setMaintData(initialMaintenance)
+    }, [initialFuel, initialMaintenance])
 
     // Fuel Actions
     const updateFuel = (index: number, field: string, value: any) => {
@@ -37,11 +58,13 @@ export function FleetStandardsClient({ initialFuel, initialMaintenance }: { init
     }
 
     const handleSaveFuel = async (index: number) => {
+        const record = fuelData[index]
+        if (!record.Vehicle_Type || record.Vehicle_Type === 'none') return toast.warning("โปรดเลือกประเภทรถ")
+        
         setSaving(true)
-        const result = await saveFuelStandard(fuelData[index])
+        const result = await saveFuelStandard(record)
         if (result.success) {
             toast.success("บันทึกเกณฑ์น้ำมันเรียบร้อย")
-            // Update the record with any server-side defaults if needed
             if (result.data) {
                 const next = [...fuelData]
                 next[index] = result.data
@@ -53,7 +76,11 @@ export function FleetStandardsClient({ initialFuel, initialMaintenance }: { init
     }
 
     const addFuelRow = () => {
-        setFuelData([{ Vehicle_Type: "ประเภทรถใหม่", Standard_KM_L: 10, Warning_Threshold_Percent: 15 }, ...fuelData])
+        setFuelData([{ Vehicle_Type: "none", Standard_KM_L: 10, Warning_Threshold_Percent: 15 }, ...fuelData])
+    }
+
+    const removeFuelLocal = (index: number) => {
+        setFuelData(fuelData.filter((_, i) => i !== index))
     }
 
     // Maintenance Actions
@@ -72,11 +99,11 @@ export function FleetStandardsClient({ initialFuel, initialMaintenance }: { init
     }
 
     const addMaintRow = () => {
-        setMaintData([...maintData, { Component_Name: "อะไหล่ใหม่", Standard_KM: 10000, Standard_Months: 12, Alert_Before_KM: 1000, Alert_Before_Days: 15 }])
+        setMaintData([...maintData, { Component_Name: "", Standard_KM: 10000, Standard_Months: 12, Alert_Before_KM: 1000, Alert_Before_Days: 15 }])
     }
 
     return (
-        <div className="space-y-12 pb-20">
+        <div className="space-y-12 pb-20 font-sans">
             {/* Tactical Header */}
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-10 bg-background/60 backdrop-blur-3xl p-12 rounded-[4rem] border border-border/5 shadow-2xl relative group ring-1 ring-border/5">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 blur-[100px] pointer-events-none" />
@@ -110,10 +137,19 @@ export function FleetStandardsClient({ initialFuel, initialMaintenance }: { init
 
                 {/* FUEL TAB */}
                 <TabsContent value="fuel" className="animate-in fade-in zoom-in-95 duration-500">
-                    <div className="flex justify-end mb-8">
-                        <PremiumButton onClick={addFuelRow} className="rounded-2xl px-8 shadow-lg shadow-primary/20">
-                            <Plus size={20} className="mr-2" strokeWidth={3} />
-                            เพิ่มเกณฑ์ประเภทรถ
+                    <div className="flex justify-between items-center mb-10 px-6">
+                        <div className="flex items-center gap-4">
+                            <div className="p-3 bg-blue-500/10 rounded-2xl text-blue-400">
+                                <Info size={24} />
+                            </div>
+                            <div>
+                                <p className="text-foreground font-black uppercase tracking-tight text-lg">รายการเกณฑ์แยกตามประเภทรถ</p>
+                                <p className="text-muted-foreground text-sm font-bold uppercase tracking-widest">เลือกประเภทรถจากฐานข้อมูลหลักเพื่อระบุเป้าหมาย กม./ลิตร</p>
+                            </div>
+                        </div>
+                        <PremiumButton onClick={addFuelRow} className="rounded-2xl h-16 px-10 shadow-xl shadow-primary/20 text-lg font-black uppercase tracking-widest">
+                            <Plus size={24} className="mr-3" strokeWidth={3} />
+                            เพิ่มประเภทรถ
                         </PremiumButton>
                     </div>
 
@@ -121,60 +157,81 @@ export function FleetStandardsClient({ initialFuel, initialMaintenance }: { init
                         <div className="py-40 text-center glass-panel rounded-[4rem] border-dashed border-border/5 opacity-30 flex flex-col items-center gap-6">
                             <Fuel size={80} className="text-muted-foreground" />
                             <p className="text-2xl font-black uppercase tracking-tighter">ยังไม่มีข้อมูลเกณฑ์น้ำมัน</p>
-                            <button onClick={addFuelRow} className="text-primary font-black uppercase tracking-widest underline underline-offset-8 decoration-2">กดเพื่อเพิ่มรายการแรก</button>
+                            <button onClick={addFuelRow} className="text-primary font-black uppercase tracking-widest underline underline-offset-8 decoration-2">กดเพื่อเริ่มเพิ่มรายการ</button>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-8">
+                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-10">
                             {fuelData.map((std, idx) => (
-                                <Card key={idx} className="bg-card border-border/10 rounded-[3rem] shadow-2xl overflow-hidden hover:scale-[1.02] transition-transform duration-500 relative">
-                                    <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 blur-3xl pointer-events-none" />
-                                    <CardContent className="p-8 space-y-8">
+                                <Card key={idx} className="bg-card border border-border/10 rounded-[3.5rem] shadow-2xl overflow-hidden hover:scale-[1.02] transition-all duration-500 relative hover:ring-1 hover:ring-primary/30">
+                                    <div className="absolute top-0 right-0 w-48 h-48 bg-primary/5 blur-[80px] pointer-events-none" />
+                                    <CardContent className="p-10 space-y-10">
                                         <div className="flex items-center justify-between">
-                                            <div className="p-4 bg-primary/20 rounded-2xl text-primary shadow-inner">
-                                                <Activity size={24} strokeWidth={2.5} />
+                                            <div className="p-5 bg-primary/20 rounded-3xl text-primary shadow-inner ring-1 ring-primary/20">
+                                                <Activity size={28} strokeWidth={2.5} />
                                             </div>
-                                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground bg-muted/50 px-3 py-1 rounded-full">Fuel Matrix</span>
+                                            <button 
+                                                onClick={() => removeFuelLocal(idx)}
+                                                className="w-12 h-12 rounded-2xl flex items-center justify-center text-muted-foreground hover:bg-rose-500/10 hover:text-rose-500 transition-all border border-transparent hover:border-rose-500/20"
+                                            >
+                                                <Trash2 size={22} />
+                                            </button>
                                         </div>
 
-                                        <div className="space-y-2">
-                                            <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">ประเภทรถ (Vehicle Type)</Label>
-                                            <Input 
-                                                value={std.Vehicle_Type}
-                                                onChange={(e) => updateFuel(idx, 'Vehicle_Type', e.target.value)}
-                                                className="bg-transparent border-none text-3xl font-black text-foreground tracking-tighter p-0 h-auto focus:ring-0 uppercase"
-                                                placeholder="ระบุประเภทรถ..."
-                                            />
+                                        <div className="space-y-4">
+                                            <Label className="text-[11px] font-black uppercase tracking-[0.2em] text-primary ml-1">ขั้นตอนที่ 1: เลือกประเภทรถ (Vehicle Type)</Label>
+                                            <Select 
+                                                value={std.Vehicle_Type} 
+                                                onValueChange={(val) => updateFuel(idx, 'Vehicle_Type', val)}
+                                            >
+                                                <SelectTrigger className="h-16 bg-muted/30 border-border/5 text-2xl font-black rounded-2xl px-6 uppercase tracking-tighter hover:bg-muted/50 transition-all">
+                                                    <SelectValue placeholder="เลือกประเภทรถ..." />
+                                                </SelectTrigger>
+                                                <SelectContent className="bg-card border-border/10">
+                                                    <SelectItem value="none" disabled className="font-bold opacity-50">-- เลือกประเภทรถ --</SelectItem>
+                                                    {masterVehicleTypes.map(vt => (
+                                                        <SelectItem key={vt.type_id} value={vt.type_name} className="py-4 font-black uppercase tracking-tight focus:bg-primary/10">
+                                                            {vt.type_name}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
                                         </div>
 
-                                        <div className="space-y-6">
-                                            <div className="space-y-3">
-                                                <Label className="text-xs font-black uppercase tracking-widest text-primary">อัตราสิ้นเปลืองมาตรฐาน (KM/L)</Label>
-                                                <Input 
-                                                    type="number" 
-                                                    step="0.1"
-                                                    value={std.Standard_KM_L}
-                                                    onChange={(e) => updateFuel(idx, 'Standard_KM_L', e.target.value)}
-                                                    className="bg-muted/30 border-none h-14 text-2xl font-black rounded-2xl text-center focus:ring-primary/30"
-                                                />
+                                        <div className="grid grid-cols-1 gap-8">
+                                            <div className="space-y-4">
+                                                <Label className="text-[11px] font-black uppercase tracking-[0.2em] text-muted-foreground ml-1">ขั้นตอนที่ 2: ตั้งเกณฑ์สิ้นเปลือง (Target KM/L)</Label>
+                                                <div className="relative">
+                                                    <Input 
+                                                        type="number" 
+                                                        step="0.1"
+                                                        value={std.Standard_KM_L}
+                                                        onChange={(e) => updateFuel(idx, 'Standard_KM_L', e.target.value)}
+                                                        className="bg-muted/30 border-none h-20 text-5xl font-black rounded-[1.5rem] text-center focus:ring-primary/30 text-primary"
+                                                    />
+                                                    <div className="absolute right-6 top-1/2 -translate-y-1/2 text-xs font-black text-muted-foreground uppercase opacity-40">KM / Liters</div>
+                                                </div>
                                             </div>
-                                            <div className="space-y-3">
-                                                <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground">เกณฑ์แจ้งเตือนเบี่ยงเบน (%)</Label>
-                                                <Input 
-                                                    type="number" 
-                                                    value={std.Warning_Threshold_Percent}
-                                                    onChange={(e) => updateFuel(idx, 'Warning_Threshold_Percent', e.target.value)}
-                                                    className="bg-muted/30 border-none h-14 text-2xl font-black rounded-2xl text-center focus:ring-primary/30"
-                                                />
+                                            <div className="space-y-4">
+                                                <Label className="text-[11px] font-black uppercase tracking-[0.2em] text-muted-foreground ml-1">ขั้นตอนที่ 3: เกณฑ์ความเสี่ยง (Warning Threshold %)</Label>
+                                                <div className="relative">
+                                                    <Input 
+                                                        type="number" 
+                                                        value={std.Warning_Threshold_Percent}
+                                                        onChange={(e) => updateFuel(idx, 'Warning_Threshold_Percent', e.target.value)}
+                                                        className="bg-muted/30 border-none h-16 text-3xl font-black rounded-[1.2rem] text-center focus:ring-primary/30"
+                                                    />
+                                                    <div className="absolute right-6 top-1/2 -translate-y-1/2 text-xs font-black text-muted-foreground uppercase opacity-40">% Variance</div>
+                                                </div>
                                             </div>
                                         </div>
 
                                         <PremiumButton 
                                             onClick={() => handleSaveFuel(idx)} 
                                             disabled={saving}
-                                            className="w-full h-14 rounded-2xl shadow-lg shadow-primary/20"
+                                            className="w-full h-16 rounded-2xl shadow-xl shadow-primary/20 text-foreground text-lg font-black uppercase tracking-widest"
                                         >
-                                            {saving ? <Loader2 className="animate-spin" /> : <Save size={20} className="mr-2" />}
-                                            อัปเดตเกณฑ์
+                                            {saving ? <Loader2 className="animate-spin mr-3" /> : <Save size={24} className="mr-3" />}
+                                            อัปเดตเกณฑ์มาตรฐาน
                                         </PremiumButton>
                                     </CardContent>
                                 </Card>
@@ -189,53 +246,54 @@ export function FleetStandardsClient({ initialFuel, initialMaintenance }: { init
                         <table className="w-full text-left border-collapse min-w-[1000px]">
                             <thead>
                                 <tr className="bg-muted/30 border-b border-border/5">
-                                    <th className="px-10 py-8 text-sm font-black uppercase tracking-widest text-muted-foreground">รายการอะไหล่ / บริการ</th>
-                                    <th className="px-8 py-8 text-sm font-black uppercase tracking-widest text-muted-foreground">ระยะมาตรฐาน (KM)</th>
-                                    <th className="px-8 py-8 text-sm font-black uppercase tracking-widest text-muted-foreground">เวลามาตรฐาน (เดือน)</th>
-                                    <th className="px-8 py-8 text-sm font-black uppercase tracking-widest text-muted-foreground">เตือนก่อนถึง (KM)</th>
-                                    <th className="px-8 py-8 text-sm font-black uppercase tracking-widest text-muted-foreground text-center">จัดการ</th>
+                                    <th className="px-10 py-10 text-sm font-black uppercase tracking-widest text-muted-foreground">รายการอะไหล่ / บริการ</th>
+                                    <th className="px-8 py-10 text-sm font-black uppercase tracking-widest text-muted-foreground">ระยะมาตรฐาน (KM)</th>
+                                    <th className="px-8 py-10 text-sm font-black uppercase tracking-widest text-muted-foreground">เวลามาตรฐาน (เดือน)</th>
+                                    <th className="px-8 py-10 text-sm font-black uppercase tracking-widest text-muted-foreground">เตือนก่อนถึง (KM)</th>
+                                    <th className="px-8 py-10 text-sm font-black uppercase tracking-widest text-muted-foreground text-center">จัดการ</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-white/5">
                                 {maintData.map((std, idx) => (
-                                    <tr key={idx} className="group hover:bg-primary/[0.02] transition-colors">
-                                        <td className="px-10 py-6">
+                                    <tr key={idx} className="group hover:bg-primary/[0.02] transition-all duration-500">
+                                        <td className="px-10 py-8">
                                             <Input 
                                                 value={std.Component_Name}
                                                 onChange={(e) => updateMaint(idx, 'Component_Name', e.target.value)}
-                                                className="bg-transparent border-none text-xl font-black uppercase tracking-tighter h-12 focus:bg-muted/50"
+                                                placeholder="เช่น ยาง, น้ำมันเครื่อง..."
+                                                className="bg-transparent border-none text-2xl font-black uppercase tracking-tighter h-14 focus:bg-muted/50 rounded-xl px-4"
                                             />
                                         </td>
-                                        <td className="px-8 py-6">
+                                        <td className="px-8 py-8">
                                             <Input 
                                                 type="number"
                                                 value={std.Standard_KM || ""}
                                                 onChange={(e) => updateMaint(idx, 'Standard_KM', e.target.value)}
                                                 placeholder="N/A"
-                                                className="bg-muted/30 border-none text-xl font-black text-center h-12 rounded-xl focus:ring-primary/30"
+                                                className="bg-muted/30 border-none text-2xl font-black text-center h-14 rounded-2xl focus:ring-primary/30"
                                             />
                                         </td>
-                                        <td className="px-8 py-6">
+                                        <td className="px-8 py-8">
                                             <Input 
                                                 type="number"
                                                 value={std.Standard_Months || ""}
                                                 onChange={(e) => updateMaint(idx, 'Standard_Months', e.target.value)}
                                                 placeholder="N/A"
-                                                className="bg-muted/30 border-none text-xl font-black text-center h-12 rounded-xl focus:ring-primary/30"
+                                                className="bg-muted/30 border-none text-2xl font-black text-center h-14 rounded-2xl focus:ring-primary/30"
                                             />
                                         </td>
-                                        <td className="px-8 py-6">
+                                        <td className="px-8 py-8">
                                             <Input 
                                                 type="number"
                                                 value={std.Alert_Before_KM}
                                                 onChange={(e) => updateMaint(idx, 'Alert_Before_KM', e.target.value)}
-                                                className="bg-muted/30 border-none text-xl font-black text-center h-12 rounded-xl focus:ring-primary/30 text-primary"
+                                                className="bg-muted/30 border-none text-2xl font-black text-center h-14 rounded-2xl focus:ring-primary/30 text-primary"
                                             />
                                         </td>
-                                        <td className="px-8 py-6">
-                                            <div className="flex items-center justify-center gap-3">
-                                                <button type="button" onClick={() => handleSaveMaint(idx)} className="p-3 bg-emerald-500/10 text-emerald-500 rounded-xl hover:bg-emerald-500 hover:text-white transition-all shadow-lg">
-                                                    <Save size={18} />
+                                        <td className="px-8 py-8 text-center">
+                                            <div className="flex items-center justify-center gap-4">
+                                                <button type="button" onClick={() => handleSaveMaint(idx)} className="w-14 h-14 bg-emerald-500/10 text-emerald-500 rounded-2xl hover:bg-emerald-500 hover:text-white transition-all shadow-lg flex items-center justify-center border border-emerald-500/20">
+                                                    <Save size={24} />
                                                 </button>
                                                 <button 
                                                     type="button"
@@ -248,9 +306,9 @@ export function FleetStandardsClient({ initialFuel, initialMaintenance }: { init
                                                             }
                                                         }
                                                     }}
-                                                    className="p-3 bg-rose-500/10 text-rose-500 rounded-xl hover:bg-rose-500 hover:text-white transition-all shadow-lg"
+                                                    className="w-14 h-14 bg-rose-500/10 text-rose-500 rounded-2xl hover:bg-rose-500 hover:text-white transition-all shadow-lg flex items-center justify-center border border-rose-500/20"
                                                 >
-                                                    <Trash2 size={18} />
+                                                    <Trash2 size={24} />
                                                 </button>
                                             </div>
                                         </td>
@@ -258,60 +316,67 @@ export function FleetStandardsClient({ initialFuel, initialMaintenance }: { init
                                 ))}
                             </tbody>
                         </table>
-                        <div className="p-10 bg-muted/30 flex justify-between items-center">
-                            <p className="text-muted-foreground text-sm font-bold uppercase tracking-widest flex items-center gap-2">
-                                <Info size={16} /> รายการเหล่านี้จะใช้ในการแจ้งเตือน Predictive Maintenance ในเมนู Mobile ของคนขับ
-                            </p>
+                        <div className="p-12 bg-muted/30 flex justify-between items-center border-t border-border/5">
+                            <div className="flex items-center gap-4">
+                                <ShieldCheck className="text-primary" size={28} />
+                                <p className="text-muted-foreground text-base font-bold uppercase tracking-widest leading-relaxed">
+                                    รายการเหล่านี้จะใช้ในการแจ้งเตือน <span className="text-primary">Predictive Maintenance</span><br/>
+                                    เพื่อรักษาความพร้อมของยานพาหนะให้สูงสุด
+                                </p>
+                            </div>
                             <button 
                                 type="button"
                                 onClick={addMaintRow}
-                                className="flex items-center gap-3 px-8 py-4 bg-primary text-white rounded-[1.5rem] font-black uppercase tracking-widest shadow-xl shadow-primary/20 hover:scale-[1.05] transition-all"
+                                className="flex items-center gap-4 px-12 py-6 bg-primary text-white rounded-[2rem] font-black uppercase tracking-widest shadow-[0_20px_50px_rgba(255,30,133,0.3)] hover:scale-[1.05] active:scale-95 transition-all text-lg"
                             >
-                                <Plus size={20} strokeWidth={3} /> เพิ่มรายการเกณฑ์
+                                <Plus size={28} strokeWidth={3} /> เพิ่มรายการบำรุงรักษา
                             </button>
                         </div>
                     </div>
                 </TabsContent>
             </Tabs>
 
-            {/* Recommendation Cards */}
+            {/* Matrix Insights */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-                <div className="lg:col-span-2 p-10 bg-gradient-to-br from-primary/20 to-accent/10 border border-primary/20 rounded-[3rem] shadow-2xl relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 p-10 opacity-10 group-hover:rotate-12 transition-transform duration-1000">
-                        <Activity size={160} />
+                <div className="lg:col-span-2 p-12 bg-gradient-to-br from-primary/20 via-primary/5 to-transparent border border-primary/20 rounded-[4rem] shadow-2xl relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 p-16 opacity-[0.03] group-hover:rotate-12 transition-transform duration-1000 group-hover:scale-110">
+                        <Activity size={320} />
                     </div>
-                    <h3 className="text-3xl font-black text-foreground mb-4 uppercase tracking-tighter">การทำงานของระบบวิเคราะห์</h3>
-                    <p className="text-muted-foreground text-lg leading-relaxed mb-8 max-w-xl">
-                        เมื่อแอดมินหรือคนขับบันทึกข้อมูล "เติมน้ำมัน" หรือ "ซ่อมบำรุง" ระบบจะนำข้อมูลไปเทียบกับเกณฑ์ด้านบนทันที 
-                        หากพบว่ามีการใช้ทรัพยากรสูงกว่าเกณฑ์ที่ตั้งไว้ หรือ อะไหล่หมดอายุก่อนกำหนด ระบบจะสร้าง **Intelligence Alert** ให้แอดมินตรวจสอบทันที
-                    </p>
-                    <div className="flex items-center gap-4 text-primary font-black uppercase tracking-widest">
-                        <span>ดูแดชบอร์ดความเสี่ยง</span>
-                        <ArrowRight size={20} />
+                    <div className="relative z-10 space-y-6">
+                        <h3 className="text-4xl font-black text-foreground uppercase tracking-tighter italic">Intelligence Core Analysis</h3>
+                        <p className="text-muted-foreground text-xl leading-relaxed max-w-2xl font-bold uppercase tracking-wide opacity-80">
+                            ระบบ Fleet Intel จะนำข้อมูล กม./ลิตร ที่คุณตั้งไว้ ไปวิเคราะห์พฤติกรรมการขับขี่และประสิทธิภาพเครื่องยนต์โดยอัตโนมัติ 
+                            หากพบความเบี่ยงเบนเกินกว่าที่กำหนด ระบบจะสร้าง Alert สีแดงแจ้งเตือนคุณที่หน้าแดชบอร์ดทันที
+                        </p>
+                        <div className="pt-6 flex items-center gap-6 text-primary font-black uppercase tracking-[0.3em] text-lg group-hover:gap-10 transition-all cursor-pointer">
+                            <span>Open Risk Dashboard</span>
+                            <ArrowRight size={28} />
+                        </div>
                     </div>
                 </div>
 
-                <div className="p-10 bg-card border border-border/10 rounded-[3rem] shadow-2xl flex flex-col justify-center gap-6">
-                    <div className="flex items-center gap-4">
-                        <div className="p-3 bg-amber-500/20 rounded-2xl text-amber-500">
-                            <AlertTriangle size={24} />
+                <div className="p-12 bg-card border border-border/10 rounded-[4rem] shadow-2xl flex flex-col justify-center gap-8 relative overflow-hidden">
+                    <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-amber-500/5 blur-3xl rounded-full" />
+                    <div className="flex items-center gap-5">
+                        <div className="p-4 bg-amber-500/20 rounded-2xl text-amber-500 shadow-inner">
+                            <AlertTriangle size={32} />
                         </div>
-                        <h4 className="text-xl font-black text-foreground uppercase tracking-tight">เกณฑ์ที่แนะนำ (Industry Standard)</h4>
+                        <h4 className="text-2xl font-black text-foreground uppercase tracking-tight leading-none">Global Standards</h4>
                     </div>
-                    <ul className="space-y-4">
-                        <li className="flex justify-between text-sm">
-                            <span className="text-muted-foreground font-bold uppercase tracking-widest">ยางรถบรรทุก</span>
-                            <span className="text-foreground font-black">50,000 - 80,000 KM</span>
-                        </li>
-                        <li className="flex justify-between text-sm">
-                            <span className="text-muted-foreground font-bold uppercase tracking-widest">น้ำมันเครื่องสังเคราะห์</span>
-                            <span className="text-foreground font-black">10,000 - 15,000 KM</span>
-                        </li>
-                        <li className="flex justify-between text-sm">
-                            <span className="text-muted-foreground font-bold uppercase tracking-widest">แบตเตอรี่</span>
-                            <span className="text-foreground font-black">18 - 24 เดือน</span>
-                        </li>
-                    </ul>
+                    <div className="space-y-6">
+                        <div className="p-6 bg-muted/30 rounded-3xl border border-border/5 space-y-1 group hover:bg-muted/50 transition-colors">
+                            <p className="text-muted-foreground text-[10px] font-black uppercase tracking-[0.2em]">ยางรถบรรทุก (Truck Tires)</p>
+                            <p className="text-xl font-black text-foreground tracking-tight uppercase italic">50,000 - 80,000 KM</p>
+                        </div>
+                        <div className="p-6 bg-muted/30 rounded-3xl border border-border/5 space-y-1 group hover:bg-muted/50 transition-colors">
+                            <p className="text-muted-foreground text-[10px] font-black uppercase tracking-[0.2em]">น้ำมันเครื่อง (Synthetic Oil)</p>
+                            <p className="text-xl font-black text-foreground tracking-tight uppercase italic">10,000 - 15,000 KM</p>
+                        </div>
+                        <div className="p-6 bg-muted/30 rounded-3xl border border-border/5 space-y-1 group hover:bg-muted/50 transition-colors">
+                            <p className="text-muted-foreground text-[10px] font-black uppercase tracking-[0.2em]">แบตเตอรี่ (Battery Life)</p>
+                            <p className="text-xl font-black text-foreground tracking-tight uppercase italic">18 - 24 Months</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

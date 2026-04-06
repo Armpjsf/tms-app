@@ -229,52 +229,52 @@ export default async function BillingPrintPage(props: Props) {
                 <PrintAction />
             </div>
             
-            <div id="printable-content" className="max-w-[210mm] mx-auto bg-white p-6 print:w-full print:max-w-none print:p-0 text-sm">
+            <div id="printable-content" className="max-w-[210mm] mx-auto bg-white p-4 print:w-full print:max-w-none print:p-0 text-[12px]">
                 
                 {/* 1. Header Section */}
-                <div className="flex justify-between items-start mb-8">
+                <div className="flex justify-between items-start mb-4">
                     <div className="flex items-center gap-4">
                         {logoUrl && (
                             // eslint-disable-next-line @next/next/no-img-element
                             <img 
                                 src={logoUrl} 
                                 alt="Company Logo" 
-                                className="h-16 w-auto object-contain print:block" 
+                                className="h-12 w-auto object-contain print:block" 
                                 style={{ display: 'block' }}
                             />
                         )}
                     </div>
                     <div className="text-right">
-                        <div className="text-sm text-slate-600 mb-1 font-bold">(ต้นฉบับ)</div>
-                        <div className="text-5xl font-bold text-blue-500 tracking-tight">ใบวางบิล</div>
+                        <div className="text-[11px] text-slate-600 mb-0 font-bold">(ต้นฉบับ)</div>
+                        <div className="text-4xl font-bold text-blue-500 tracking-tight leading-none">ใบวางบิล</div>
                     </div>
                 </div>
 
                 {/* 2. Info Section */}
-                <div className="flex justify-between gap-6 mb-8 text-slate-800 text-[13px]">
-                    <div className="flex-1 space-y-4">
-                        <div className="grid grid-cols-[100px_1fr] gap-x-2 gap-y-1">
+                <div className="flex justify-between gap-4 mb-4 text-slate-800 text-[12px]">
+                    <div className="flex-1 space-y-2">
+                        <div className="grid grid-cols-[80px_1fr] gap-x-2 gap-y-0.5">
                             <div className="font-bold">ผู้ขาย :</div>
                             <div className="font-bold">{sellerName}</div>
                             <div className="font-bold">ที่อยู่ :</div>
-                            <div>{sellerAddress || '-'}</div>
+                            <div className="leading-tight">{sellerAddress || '-'}</div>
                             <div className="font-bold">เลขที่ภาษี :</div>
                             <div>{sellerTaxId || '-'}</div>
                         </div>
                         
-                        <div className="grid grid-cols-[100px_1fr] gap-x-2 gap-y-1 mt-6">
+                        <div className="grid grid-cols-[80px_1fr] gap-x-2 gap-y-0.5 mt-2">
                             <div className="font-bold">ลูกค้า :</div>
                             <div className="font-bold">{note.Customer_Name}</div>
                             <div className="font-bold">ที่อยู่ :</div>
-                            <div>{note.Customer_Address || '-'}</div>
+                            <div className="leading-tight">{note.Customer_Address || '-'}</div>
                             <div className="font-bold">เลขที่ภาษี :</div>
                             <div>{note.Customer_Tax_ID || '-'}</div>
                         </div>
                     </div>
                     
-                    <div className="w-[320px]">
-                        <div className="bg-slate-100/80 p-4 rounded-lg border border-slate-200 mb-4">
-                            <div className="grid grid-cols-[130px_1fr] gap-y-1.5">
+                    <div className="w-[280px]">
+                        <div className="bg-slate-100/80 p-3 rounded-lg border border-slate-200 mb-2">
+                            <div className="grid grid-cols-[110px_1fr] gap-y-1">
                                 <div className="font-bold text-slate-700">เลขที่เอกสาร :</div>
                                 <div>{note.Billing_Note_ID}</div>
                                 <div className="font-bold text-slate-700">วันที่ออก :</div>
@@ -283,100 +283,98 @@ export default async function BillingPrintPage(props: Props) {
                                 <div>{note.Credit_Days || '15'} วัน</div>
                                 <div className="font-bold text-slate-700">วันที่ครบกำหนด :</div>
                                 <div>{dueDate.toLocaleDateString(localeStr)}</div>
-                                <div className="font-bold text-slate-700">อ้างอิง :</div>
-                                <div>-</div>
                             </div>
                         </div>
-                        <div className="pl-4 border-l-2 border-slate-200">
-                            <div className="font-bold mb-2">ติดต่อกลับที่ :</div>
-                            <div className="flex items-center gap-3 mb-1.5"><User size={14} className="text-slate-600"/> {contactName}</div>
-                            <div className="flex items-center gap-3 mb-1.5"><Phone size={14} className="text-slate-600"/> {sellerPhone || '-'}</div>
-                            <div className="flex items-center gap-3"><Mail size={14} className="text-slate-600"/> {sellerEmail || '-'}</div>
+                        <div className="pl-3 border-l-2 border-slate-200 text-[11px]">
+                            <div className="font-bold mb-1">ติดต่อกลับที่ :</div>
+                            <div className="flex items-center gap-2 mb-0.5"><User size={12} className="text-slate-600"/> {contactName}</div>
+                            <div className="flex items-center gap-2 mb-0.5"><Phone size={12} className="text-slate-600"/> {sellerPhone || '-'}</div>
+                            <div className="flex items-center gap-2"><Mail size={12} className="text-slate-600"/> {sellerEmail || '-'}</div>
                         </div>
                     </div>
                 </div>
 
                 {/* 3. Items Table */}
-                <table className="w-full mb-8 border-collapse">
+                <table className="w-full mb-4 border-collapse">
                     <thead>
-                        <tr className="bg-[#eef2ff] text-slate-800 text-[13px] border-b-2 border-slate-300">
-                            <th className="py-2 px-3 text-left font-bold w-12">ลำดับ</th>
-                            <th className="py-2 px-3 text-left font-bold">คำอธิบาย</th>
-                            <th className="py-2 px-3 text-center font-bold w-24">จำนวน</th>
-                            <th className="py-2 px-3 text-right font-bold w-32">ราคา</th>
-                            <th className="py-2 px-3 text-right font-bold w-24">ส่วนลด</th>
-                            <th className="py-2 px-3 text-center font-bold w-24">VAT</th>
-                            <th className="py-2 px-3 text-right font-bold w-32">มูลค่าก่อนภาษี</th>
+                        <tr className="bg-[#eef2ff] text-slate-800 text-[12px] border-b-2 border-slate-300">
+                            <th className="py-1.5 px-2 text-left font-bold w-10">ลำดับ</th>
+                            <th className="py-1.5 px-2 text-left font-bold">คำอธิบาย</th>
+                            <th className="py-1.5 px-2 text-center font-bold w-20">จำนวน</th>
+                            <th className="py-1.5 px-2 text-right font-bold w-28">ราคา</th>
+                            <th className="py-1.5 px-2 text-right font-bold w-20">ส่วนลด</th>
+                            <th className="py-1.5 px-2 text-center font-bold w-20">VAT</th>
+                            <th className="py-1.5 px-2 text-right font-bold w-28">มูลค่าก่อนภาษี</th>
                         </tr>
                     </thead>
-                    <tbody className="text-[13px]">
+                    <tbody className="text-[12px]">
                         {displayItems.map((item, idx) => (
-                            <tr key={idx} className={`border-b border-slate-100 ${item.isExtra ? 'text-slate-600' : 'font-semibold'}`}>
-                                <td className="py-3 px-3 text-center align-top">{idx + 1}</td>
-                                <td className="py-3 px-3 align-top">
-                                    <div>{item.description}</div>
-                                    {item.subDescription && <div className="text-[11px] text-slate-500 font-normal mt-0.5">{item.subDescription}</div>}
+                            <tr key={idx} className={`border-b border-slate-100 ${item.isExtra ? 'text-slate-600 italic' : 'font-semibold'}`}>
+                                <td className="py-1.5 px-2 text-center align-top">{idx + 1}</td>
+                                <td className="py-1.5 px-2 align-top">
+                                    <div className="leading-tight">{item.description}</div>
+                                    {item.subDescription && <div className="text-[10px] text-slate-500 font-normal mt-0">{item.subDescription}</div>}
                                 </td>
-                                <td className="py-3 px-3 text-center align-top">{item.qty.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-                                <td className="py-3 px-3 text-right align-top">{item.unitPrice.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-                                <td className="py-3 px-3 text-right align-top">0.00</td>
-                                <td className="py-3 px-3 text-center align-top">ไม่มี</td>
-                                <td className="py-3 px-3 text-right align-top">{item.totalBeforeTax.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                                <td className="py-1.5 px-2 text-center align-top">{item.qty.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                                <td className="py-1.5 px-2 text-right align-top">{item.unitPrice.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                                <td className="py-1.5 px-2 text-right align-top">0.00</td>
+                                <td className="py-1.5 px-2 text-center align-top">ไม่มี</td>
+                                <td className="py-1.5 px-2 text-right align-top">{item.totalBeforeTax.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
                             </tr>
                         ))}
                     </tbody>
                 </table>
 
                 {/* 4. Summary Section */}
-                <div className="border-t border-slate-200 pt-4 mt-8 flex gap-4 text-[13px]">
-                    <div className="w-8 flex justify-center mt-0.5"><FileText size={18} className="text-slate-800" /></div>
-                    <div className="font-bold w-20">สรุป</div>
+                <div className="border-t border-slate-200 pt-3 mt-4 flex gap-4 text-[12px]">
+                    <div className="w-6 flex justify-center mt-0.5"><FileText size={16} className="text-slate-800" /></div>
+                    <div className="font-bold w-16">สรุป</div>
                     <div className="flex-1">
-                        <div className="flex justify-between items-center mb-1">
+                        <div className="flex justify-between items-center mb-0.5">
                             <span className="font-bold text-slate-700">มูลค่าก่อนส่วนลด (Gross Amount)</span>
                             <span className="pr-4">{totalPreTax.toLocaleString(undefined, { minimumFractionDigits: 2 })} บาท</span>
                         </div>
-                        <div className="flex justify-between items-center mb-1 text-slate-500 italic">
+                        <div className="flex justify-between items-center mb-0.5 text-slate-500 italic text-[11px]">
                             <span>ส่วนลด (Discount)</span>
                             <span className="pr-4">{(note.Discount_Amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })} บาท</span>
                         </div>
-                        <div className="flex justify-between items-center mb-1">
+                        <div className="flex justify-between items-center mb-0.5">
                             <span className="font-bold text-slate-700">มูลค่าหลังหักส่วนลด (Net Amount)</span>
                             <span className="pr-4">{(totalPreTax - (note.Discount_Amount || 0)).toLocaleString(undefined, { minimumFractionDigits: 2 })} บาท</span>
                         </div>
-                        <div className="flex justify-between items-center mb-3 text-slate-500 italic">
+                        <div className="flex justify-between items-center mb-2 text-slate-500 italic text-[11px]">
                             <span>ภาษีมูลค่าเพิ่ม (VAT {note.VAT_Rate || 0}%)</span>
                             <span className="pr-4">{(note.VAT_Amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })} บาท</span>
                         </div>
 
-                        <div className="flex justify-between items-center mb-6">
+                        <div className="flex justify-between items-center mb-4">
                             <div className="font-bold">จำนวนเงินทั้งสิ้น</div>
-                            <div className="text-slate-600 flex-1 text-center italic">{ArabicNumberToText(note.Total_Amount || totalPreTax)}</div>
-                            <div className="bg-[#eef2ff] px-4 py-3 rounded w-80 flex justify-between items-center">
+                            <div className="text-slate-600 flex-1 text-center italic text-[11px] px-2">{ArabicNumberToText(note.Total_Amount || totalPreTax)}</div>
+                            <div className="bg-[#eef2ff] px-3 py-2 rounded w-72 flex justify-between items-center border border-blue-100">
                                 <span className="font-bold">จำนวนเงินทั้งสิ้น</span>
-                                <span className="text-xl font-bold text-blue-600 tracking-tight">{(note.Total_Amount || totalPreTax).toLocaleString(undefined, { minimumFractionDigits: 2 })} <span className="text-sm text-slate-800 font-normal">บาท</span></span>
+                                <span className="text-lg font-bold text-blue-600 tracking-tight">{(note.Total_Amount || totalPreTax).toLocaleString(undefined, { minimumFractionDigits: 2 })} <span className="text-[10px] text-slate-800 font-normal">บาท</span></span>
                             </div>
                         </div>
 
-                        <div className="flex flex-col items-end gap-1">
-                            <div className="w-80 flex justify-between pr-4 border-b border-dashed border-slate-200 pb-1">
+                        <div className="flex flex-col items-end gap-0.5">
+                            <div className="w-72 flex justify-between pr-4 border-b border-dashed border-slate-200 pb-0.5 text-[11px]">
                                 <span className="font-bold text-slate-700">หัก ณ ที่จ่าย (WHT {note.WHT_Rate || 1}%)</span>
                                 <span>{wht.toLocaleString(undefined, { minimumFractionDigits: 2 })} บาท</span>
                             </div>
-                            <div className="w-80 flex justify-between pr-4 pt-1">
-                                <span className="font-bold text-lg text-blue-800">ยอดชำระสุทธิ</span>
-                                <span className="font-bold text-lg text-blue-800">{netTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })} บาท</span>
+                            <div className="w-72 flex justify-between pr-4 pt-0.5">
+                                <span className="font-bold text-base text-blue-800">ยอดชำระสุทธิ</span>
+                                <span className="font-bold text-base text-blue-800">{netTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })} บาท</span>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 {/* 5. Payment Section */}
-                <div className="border-t border-slate-200 pt-4 mt-8 flex gap-4 text-[13px] page-break-avoid">
-                    <div className="w-8 flex justify-center mt-0.5"><CreditCard size={18} className="text-slate-800" /></div>
-                    <div className="font-bold w-20">ชำระเงิน</div>
-                    <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 flex items-center justify-center overflow-hidden bg-white p-1 rounded border border-slate-100 shadow-sm">
+                <div className="border-t border-slate-200 pt-3 mt-4 flex gap-4 text-[12px] page-break-avoid">
+                    <div className="w-6 flex justify-center mt-0.5"><CreditCard size={16} className="text-slate-800" /></div>
+                    <div className="font-bold w-16">ชำระเงิน</div>
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 flex items-center justify-center overflow-hidden bg-white p-1 rounded border border-slate-100">
                             <img 
                                 src="/images/scb logo.jpg" 
                                 alt="SCB Logo" 
@@ -384,66 +382,66 @@ export default async function BillingPrintPage(props: Props) {
                             />
                         </div>
                         <div>
-                            <div className="font-bold text-slate-800">{bankName}</div>
-                            <div className="font-bold text-slate-800 mt-0.5">ออมทรัพย์ {bankAccNo || '-'}</div>
-                            <div className="text-slate-600 mt-0.5">{bankAccName || '-'}</div>
+                            <div className="font-bold text-slate-800 leading-none">{bankName}</div>
+                            <div className="font-bold text-slate-800 mt-1 leading-none text-[11px]">ออมทรัพย์ {bankAccNo || '-'}</div>
+                            <div className="text-slate-600 mt-0.5 leading-none text-[10px]">{bankAccName || '-'}</div>
                         </div>
                     </div>
                 </div>
 
                 {/* 6. Notes Section */}
-                <div className="border-t border-slate-200 pt-4 mt-8 flex gap-4 text-[13px] page-break-avoid">
-                    <div className="w-8 flex justify-center mt-0.5"><MessageSquare size={18} className="text-slate-800" /></div>
-                    <div className="font-bold w-20">หมายเหตุ</div>
-                    <div className="text-slate-700 whitespace-pre-wrap flex-1 leading-relaxed italic">
+                <div className="border-t border-slate-200 pt-3 mt-4 flex gap-4 text-[11px] page-break-avoid">
+                    <div className="w-6 flex justify-center mt-0.5"><MessageSquare size={16} className="text-slate-800" /></div>
+                    <div className="font-bold w-16">หมายเหตุ</div>
+                    <div className="text-slate-700 whitespace-pre-wrap flex-1 leading-relaxed italic opacity-80">
                         {note.Remarks || company?.invoice_notes || '"DD TRANSPORT ขอแจ้งการปรับเปลี่ยนสัญลักษณ์องค์กรใหม่ (LOGO)...'}
                     </div>
                 </div>
 
                 {/* 7. Signatures Section */}
-                <div className="border-t border-slate-200 pt-4 mt-8 flex gap-4 text-[13px] page-break-avoid">
-                    <div className="w-8 flex justify-center mt-0.5"><PenTool size={18} className="text-slate-800" /></div>
-                    <div className="font-bold w-20">รับรอง</div>
-                    <div className="flex-1 flex gap-6">
+                <div className="border-t border-slate-200 pt-3 mt-4 flex gap-4 text-[11px] page-break-avoid">
+                    <div className="w-6 flex justify-center mt-0.5"><PenTool size={16} className="text-slate-800" /></div>
+                    <div className="font-bold w-16">รับรอง</div>
+                    <div className="flex-1 flex gap-4">
                         <div className="w-24 shrink-0 flex flex-col items-center">
-                            <div className="text-[10px] text-slate-500 mb-1 text-center font-bold">สแกนเพื่อเปิดใบวางบิล</div>
+                            <div className="text-[10px] text-slate-500 mb-1 text-center font-bold">สแกนเปิดเอกสาร</div>
                             <div className="w-20 h-20 bg-white flex items-center justify-center p-1 border-2 border-slate-200 rounded-lg shadow-sm overflow-hidden">
                                 <img 
-                                    src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(`https://tms-app-five.vercel.app/public/invoice/${note.Billing_Note_ID}`)}`} 
+                                    src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(`https://tms-app-five.vercel.app/public/invoice/${note.Billing_Note_ID}?lang=${lang}&mode=print`)}`} 
                                     alt="Billing QR Code" 
                                     className="w-full h-full object-contain" 
                                 />
                             </div>
                         </div>
-                        <div className="flex-1 grid grid-cols-5 gap-3 text-center text-xs items-end">
+                        <div className="flex-1 grid grid-cols-5 gap-2 text-center text-[10px] items-end pb-1">
                             <div>
-                                <div className="h-16 border-b border-dashed border-slate-400 mb-2 mx-2"></div>
-                                <div className="font-bold mb-1">ผู้ออกเอกสาร (ผู้ขาย)</div>
-                                <div className="text-slate-600">{contactName}</div>
-                                <div className="text-slate-500 mt-0.5">{issueDate.toLocaleDateString(localeStr)}</div>
+                                <div className="h-10 border-b border-dashed border-slate-400 mb-1 mx-1"></div>
+                                <div className="font-bold mb-0.5 whitespace-nowrap">ผู้ออกเอกสาร (ผู้ขาย)</div>
+                                <div className="text-slate-600 truncate">{contactName}</div>
+                                <div className="text-slate-500 text-[9px]">{issueDate.toLocaleDateString(localeStr)}</div>
                             </div>
                             <div>
-                                <div className="h-16 border-b border-dashed border-slate-400 mb-2 mx-2"></div>
-                                <div className="font-bold mb-1">ผู้อนุมัติเอกสาร (ผู้ขาย)</div>
-                                <div className="text-slate-600">{contactName}</div>
-                                <div className="text-slate-500 mt-0.5">{issueDate.toLocaleDateString(localeStr)}</div>
+                                <div className="h-10 border-b border-dashed border-slate-400 mb-1 mx-1"></div>
+                                <div className="font-bold mb-0.5 whitespace-nowrap">ผู้อนุมัติ (ผู้ขาย)</div>
+                                <div className="text-slate-600 truncate">{contactName}</div>
+                                <div className="text-slate-500 text-[9px]">{issueDate.toLocaleDateString(localeStr)}</div>
                             </div>
-                            <div>
-                                <div className="h-16 flex items-center justify-center mb-2">
-                                    <div className="w-16 h-16 rounded-full border-2 border-red-500 text-red-500 flex items-center justify-center text-[8px] font-bold p-1 opacity-40 rotate-[-15deg]">
+                            <div className="flex flex-col items-center">
+                                <div className="h-10 flex items-center justify-center mb-1">
+                                    <div className="w-12 h-12 rounded-full border-2 border-red-500 text-red-500 flex items-center justify-center text-[7px] font-bold p-1 opacity-30 rotate-[-15deg]">
                                         COMPANY<br/>STAMP
                                     </div>
                                 </div>
-                                <div className="font-bold">ตราประทับ (ผู้ขาย)</div>
+                                <div className="font-bold whitespace-nowrap">ตราประทับ</div>
                             </div>
                             <div>
-                                <div className="h-16 border-b border-dashed border-slate-400 mb-2 mx-2"></div>
-                                <div className="font-bold mb-1">ผู้รับเอกสาร (ลูกค้า)</div>
-                                <div className="text-slate-600 px-1 break-words">{note.Customer_Name}</div>
+                                <div className="h-10 border-b border-dashed border-slate-400 mb-1 mx-1"></div>
+                                <div className="font-bold mb-0.5 whitespace-nowrap">ผู้รับ (ลูกค้า)</div>
+                                <div className="text-slate-600 truncate px-1">{note.Customer_Name}</div>
                             </div>
                             <div>
-                                <div className="h-16 border border-dashed border-slate-300 mb-2 bg-slate-50/50"></div>
-                                <div className="font-bold">ตราประทับ (ลูกค้า)</div>
+                                <div className="h-10 border border-dashed border-slate-300 mb-1 bg-slate-50/50"></div>
+                                <div className="font-bold whitespace-nowrap">ตราประทับ (ลูกค้า)</div>
                             </div>
                         </div>
                     </div>
@@ -451,12 +449,14 @@ export default async function BillingPrintPage(props: Props) {
             </div>
 
             <style type="text/css" media="print">{`
-                @page { size: A4; margin: 10mm; }
+                @page { size: A4; margin: 5mm 8mm; }
                 body { visibility: hidden; background: white !important; -webkit-print-color-adjust: exact !important; }
                 #printable-content, #printable-content * { visibility: visible; }
-                #printable-content { position: absolute; left: 0; top: 0; width: 100%; background: white !important; }
+                #printable-content { position: absolute; left: 0; top: 0; width: 100%; background: white !important; padding: 0 !important; }
                 .page-break-avoid { break-inside: avoid; }
                 img { display: block !important; opacity: 1 !important; }
+                table { page-break-inside: auto; }
+                tr { page-break-inside: avoid; page-break-after: auto; }
             `}</style>
         </div>
     )
