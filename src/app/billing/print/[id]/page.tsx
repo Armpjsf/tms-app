@@ -69,9 +69,10 @@ export default async function BillingPrintPage(props: Props) {
     const data = await getBillingNoteByIdWithJobs(id)
 
     // Get current host for QR code
-    const host = (await headers()).get('host')
-    const protocol = process.env.NODE_ENV === 'development' ? 'http' : 'https'
-    const baseUrl = `${protocol}://${host}`
+    const host = (await headers()).get('host') || ''
+    const isIP = /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}(?::[0-9]+)?$/.test(host) || host.startsWith('localhost')
+    const proto = (await headers()).get('x-forwarded-proto') || (isIP ? 'http' : (process.env.NODE_ENV === 'development' ? 'http' : 'https'))
+    const baseUrl = `${proto}://${host}`
 
 
     if (!data) {

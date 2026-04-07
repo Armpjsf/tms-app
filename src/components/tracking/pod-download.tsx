@@ -266,7 +266,7 @@ export function PODDownloadButton({ job }: PODDownloadButtonProps) {
 
         const linkP = document.createElement('p')
         linkP.style.cssText = 'color: #6366f1; font-weight: 800; font-size: 12px; margin-bottom: 15px;'
-        linkP.textContent = `Official Tracking: https://${window.location.host}/track/${job.jobId}`
+        linkP.textContent = `Official Tracking: ${window.location.protocol}//${window.location.host}/track/${job.jobId}`
         footer.appendChild(linkP)
 
         const genP = document.createElement('p')

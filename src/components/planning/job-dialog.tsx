@@ -415,7 +415,7 @@ export function JobDialog({
     } else if (internalMode === 'create' && !job) {
       console.log('[JobDialog DEBUG] Syncing CREATE Data');
       setFormData({
-        Job_ID: '',
+        Job_ID: generateJobId(),
         Plan_Date: defaultDate || new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' }),
         Delivery_Date: defaultDate || new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' }),
         Customer_ID: '',

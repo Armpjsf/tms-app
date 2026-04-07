@@ -69,7 +69,7 @@ export async function submitJobFeedback(
 export async function getPublicJobDetails(
   jobId: string,
 ): Promise<PublicJobDetails | null> {
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   // Query Jobs_Main with all relevant columns
   const { data: job, error } = await supabase
