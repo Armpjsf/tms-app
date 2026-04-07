@@ -4,6 +4,7 @@ import { createAdminClient } from "@/utils/supabase/server"
 import { revalidatePath } from "next/cache"
 import { uploadFileToSupabase } from "@/lib/actions/supabase-upload"
 import { Job } from "@/lib/supabase/jobs"
+import { calculateJobCO2 } from "@/app/mobile/jobs/actions"
 
 /**
  * Helper to update or append quantity remark to notes
@@ -115,6 +116,19 @@ export async function submitJobPOD(jobId: string, formData: FormData) {
       .eq("Job_ID", jobId)
 
     if (updateError) throw updateError
+
+    // 1.2 Calculate CO2
+    try {
+        const co2Data = await calculateJobCO2(supabase, jobId)
+        if (co2Data) {
+            const { data: job } = await supabase.from('Jobs_Main').select('Notes').eq('Job_ID', jobId).single()
+            await supabase.from('Jobs_Main').update({
+                Notes: job?.Notes ? `${job.Notes}\n${co2Data.note}` : co2Data.note
+            }).eq('Job_ID', jobId)
+        }
+    } catch (e) {
+        console.error("POD CO2 Calc error:", e)
+    }
 
     revalidatePath("/mobile/jobs")
     return { success: true }
@@ -269,7 +283,7 @@ export async function bulkSyncJobPrices(jobIds: string[]) {
             const loadedQty = Number(typedJob.Loaded_Qty || 0)
 
             if (loadedQty > 0) {
-                const updateData: Record<string, any> = {
+                const updateData: Record<string, string | number | boolean | null> = {
                     Notes: updateNotesWithQty(typedJob.Notes || "", loadedQty)
                 }
 

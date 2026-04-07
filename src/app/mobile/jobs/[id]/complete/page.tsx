@@ -52,8 +52,8 @@ export default function JobCompletePage() {
       try {
           const result = await analyzePODImage(file)
           setVerificationResult(result)
-      } catch (_error) {
-          // AI Verification failed silently
+      } catch (err) {
+          console.error("AI Analysis failed:", err)
       } finally {
           setVerifying(false)
       }
@@ -103,7 +103,8 @@ export default function JobCompletePage() {
                     return new Promise<Blob | null>(resolve => 
                         canvas.toBlob(resolve, 'image/jpeg', 0.8)
                     )
-                } catch (_err) {
+                } catch (err) {
+                    console.error("Capture effort failed:", err)
                     if (retryCount < 1) return captureReport(retryCount + 1)
                     return null
                 }
@@ -117,9 +118,9 @@ export default function JobCompletePage() {
                 } else {
                     // Report too small or empty
                 }
-            } catch (_err) {
-                // Report generation failed
-            }
+                } catch (err) {
+                    console.error("Inner capture error:", err)
+                }
         }
 
         // Photos are already compressed by CameraInput component
@@ -135,9 +136,6 @@ export default function JobCompletePage() {
         const result = await submitJobPOD(params.id, formData)
         
         if (result.success) {
-          if (result.warning) {
-            toast.warning(String(result.warning)) 
-          }
           router.push(`/mobile/jobs/${params.id}?success=pod`)
         } else {
           toast.error(typeof result.error === 'string' ? result.error : JSON.stringify(result.error))
@@ -239,7 +237,7 @@ export default function JobCompletePage() {
                                 <div className="flex items-center gap-2">
                                     <BrainCircuit size={16} className={verificationResult.isValid ? "text-emerald-400" : "text-amber-400"} />
                                     <span className={`text-xl font-bold ${verificationResult.isValid ? "text-emerald-400" : "text-amber-400"}`}>
-                                        AI Score: {verificationResult.score}/100
+                                        คะแนน AI: {verificationResult.score}/100
                                     </span>
                                 </div>
                                 {verificationResult.isValid && <CheckCircle size={16} className="text-emerald-500" />}

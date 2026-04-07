@@ -27,7 +27,7 @@ export function MobileHeader({ title, showBack, rightElement }: Props) {
   }
 
   return (
-    <header className="fixed top-0 left-0 right-0 h-20 bg-background/80 backdrop-blur-2xl border-b border-border flex items-center justify-between px-6 z-[100] transition-colors duration-300">
+    <header className="fixed top-0 left-0 right-0 h-[72px] bg-background/80 backdrop-blur-2xl border-b border-border flex items-center justify-between px-6 z-[100] transition-colors duration-300">
       <div className="flex items-center gap-4">
         {showBack && (
             <button 
@@ -41,7 +41,7 @@ export function MobileHeader({ title, showBack, rightElement }: Props) {
             <h1 className="font-black text-accent text-xl tracking-tighter uppercase leading-none italic truncate">{title}</h1>
             <span 
                 onClick={clearCache}
-                className="text-[8px] font-black text-primary italic cursor-pointer hover:opacity-80 transition-opacity uppercase tracking-[0.2em] mt-1.5"
+                className="text-[8px] font-black text-primary italic cursor-pointer hover:opacity-80 transition-opacity uppercase tracking-[0.2em] mt-0.5"
             >
                 LOGIS-PRO v1.2.5
             </span>

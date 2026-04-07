@@ -2,7 +2,7 @@
 
 import { useState, useEffect, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { Lock, User, Shield, Fingerprint, QrCode, Phone, Headphones } from "lucide-react"
+import { Lock, User, Shield, Phone, Headphones } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -13,9 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { loginDriver, loginWithQRToken } from "@/lib/actions/auth-actions"
-import { authenticateBiometrics } from "@/lib/webauthn-client"
-import { QRScannerModal } from "@/components/mobile/qr-scanner-modal"
+import { loginDriver } from "@/lib/actions/auth-actions"
 import { useLanguage } from "@/components/providers/language-provider"
 import { cn } from "@/lib/utils"
 import Image from "next/image"
@@ -27,7 +25,6 @@ function DriverLoginContent() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const [isForgotOpen, setIsForgotOpen] = useState(false)
-  const [isQRScannerOpen, setIsQRScannerOpen] = useState(false)
   const [identifier, setIdentifier] = useState("")
 
   const urlError = searchParams.get("error")
@@ -61,54 +58,7 @@ function DriverLoginContent() {
     }
   }
 
-  async function handleBiometricLogin() {
-    if (!identifier) {
-      setError("กรุณากรอก 'รหัสพนักงาน' หรือ 'เบอร์โทรศัพท์' ก่อนสแกนนิ้ว/หน้า")
-      return
-    }
 
-    setLoading(true)
-    setError("")
-    try {
-      const result = await authenticateBiometrics(identifier)
-      if (result.success) {
-        router.push("/mobile/dashboard")
-      } else {
-        setError("การยืนยันตัวตนขัดข้อง")
-        setLoading(false)
-      }
-    } catch (err: unknown) {
-      console.error("Biometric Login Error:", err)
-      const errMessage = err instanceof Error ? err.message : ""
-      
-      if (errMessage.includes("NotAllowedError") || errMessage.includes("SecurityError")) {
-        setError("การเข้าใช้ระบบสแกนถูกปฏิเสธ")
-      } else if (errMessage.includes("InvalidStateError") || errMessage.includes("not found")) {
-        setError("ไม่พบข้อมูลการสแกนนิ้ว/หน้า กรุณาเข้าสู่ระบบด้วยรหัสผ่านก่อนเพื่อลงทะเบียน")
-      } else {
-        setError("ไม่สามารถสแกนได้ในขณะนี้ กรุณาใช้รหัสผ่านแทน")
-      }
-      setLoading(false)
-    }
-  }
-
-  async function handleQRScanSuccess(decodedText: string) {
-    setLoading(true)
-    setError("")
-    try {
-      const result = await loginWithQRToken(decodedText)
-      if (result.success) {
-        router.push("/mobile/dashboard")
-      } else {
-        setError(result.error || "รหัส QR ไม่ถูกต้อง")
-        setLoading(false)
-      }
-    } catch (err: unknown) {
-      console.error(err)
-      setError("เกิดข้อผิดพลาดในการเข้าสู่ระบบด้วย QR")
-      setLoading(false)
-    }
-  }
 
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6 relative overflow-hidden">
@@ -196,31 +146,7 @@ function DriverLoginContent() {
               {loading ? "กำลังตรวจสอบ..." : "เข้าสู่ระบบ"}
             </Button>
 
-            <div className="relative py-2">
-              <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-border/5"></div></div>
-              <div className="relative flex justify-center text-base font-bold font-black uppercase tracking-[0.4em]"><span className="bg-background px-4 text-muted-foreground">หรือเข้าสู่ระบบด้วย</span></div>
-            </div>
 
-            <div className="grid grid-cols-2 gap-4">
-               <button 
-                 type="button" 
-                 onClick={handleBiometricLogin}
-                 disabled={loading}
-                 className="flex items-center justify-center gap-2 h-14 rounded-2xl bg-muted/20 border border-border hover:bg-muted/30 transition-all disabled:opacity-50"
-               >
-                  <Fingerprint size={16} className="text-primary" />
-                  <span className="text-base font-bold font-black text-foreground uppercase tracking-widest pt-0.5">สแกนนิ้ว/หน้า</span>
-               </button>
-               <button 
-                 type="button" 
-                 onClick={() => setIsQRScannerOpen(true)}
-                 disabled={loading}
-                 className="flex items-center justify-center gap-2 h-14 rounded-2xl bg-muted/20 border border-border hover:bg-muted/30 transition-all disabled:opacity-50"
-               >
-                  <QrCode size={16} className="text-accent" />
-                  <span className="text-base font-bold font-black text-foreground uppercase tracking-widest pt-0.5">สแกนคิวอาร์</span>
-               </button>
-            </div>
           </form>
         </div>
 
@@ -281,12 +207,7 @@ function DriverLoginContent() {
         </DialogContent>
       </Dialog>
 
-      {/* QR Scanner Modal */}
-      <QRScannerModal 
-        isOpen={isQRScannerOpen} 
-        onOpenChange={setIsQRScannerOpen}
-        onScanSuccess={handleQRScanSuccess}
-      />
+
     </div>
   )
 }

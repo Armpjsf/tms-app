@@ -41,7 +41,7 @@ export function MarketplaceClient({ initialJobs, driverId, driverName }: Marketp
             try {
                 const bids = await getMyBidsForJobs(driverId)
                 const bidMap: Record<string, number> = {}
-                bids.forEach((b: any) => {
+                bids.forEach((b: { job_id: string, bid_amount: number }) => {
                     bidMap[b.job_id] = b.bid_amount
                 })
                 setMyBids(bidMap)
@@ -91,6 +91,7 @@ export function MarketplaceClient({ initialJobs, driverId, driverName }: Marketp
                 toast.error(result.message)
             }
         } catch (err) {
+            console.error("Bidding error:", err)
             toast.error("เกิดข้อผิดพลาดในการเชื่อมต่อระบบ")
         } finally {
             setIsSubmitting(false)
@@ -104,8 +105,8 @@ export function MarketplaceClient({ initialJobs, driverId, driverName }: Marketp
             <div className="pt-20 px-4 space-y-4">
                 <div className="flex items-center justify-between">
                     <div>
-                        <h2 className="font-bold text-gray-900 text-lg">Unassigned Jobs</h2>
-                        <p className="text-lg font-bold text-muted-foreground">งานที่พร้อมให้คุณรับ</p>
+                        <h2 className="font-bold text-gray-900 text-lg">งานที่ยังไม่มีคนรับ</h2>
+                        <p className="text-lg font-bold text-muted-foreground">งานที่พร้อมให้คุณกดรับ</p>
                     </div>
                     <Badge variant="outline" className="bg-emerald-50 text-emerald-600 border-none">
                         {jobs.length} งานใหม่
@@ -147,7 +148,7 @@ export function MarketplaceClient({ initialJobs, driverId, driverName }: Marketp
                                                     </div>
                                                     {currentBid && (
                                                         <Badge className="bg-emerald-500 text-white border-none text-base font-bold">
-                                                            BIDDED: ฿{currentBid.toLocaleString()}
+                                                            ประมูลแล้ว: ฿{currentBid.toLocaleString()}
                                                         </Badge>
                                                     )}
                                                 </div>

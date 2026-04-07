@@ -1,19 +1,19 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useEffect, useMemo } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { 
     Truck, MapPin, 
-    LayoutGrid, Bell, Gavel, Clock, Star, Banknote, 
-    ChevronRight, ArrowUpRight, TrendingUp, ShieldCheck
+    Bell, Gavel, Clock, Star, Banknote, 
+    ChevronRight, ArrowUpRight, ShieldCheck
 } from "lucide-react"
-import Link from "next/link"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { useLanguage } from "@/components/providers/language-provider"
 import { createClient } from "@/utils/supabase/client"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
+import Link from "next/link"
+import { Job } from "@/lib/supabase/jobs"
 
 interface DashboardClientProps {
     session: {
@@ -32,7 +32,7 @@ interface DashboardClientProps {
         Dest_Location?: string
         Route_Name?: string
     } | null
-    activeJobs?: any[]
+    activeJobs?: Job[]
     gamification: {
         points: number
         rank: string
@@ -57,9 +57,15 @@ const item = {
     show: { opacity: 1, y: 0 }
 }
 
-export function DashboardClient({ session, stats, currentJob, activeJobs = [], gamification, todayIncome }: DashboardClientProps) {
-    const { t } = useLanguage()
+export function DashboardClient({ session, currentJob, activeJobs = [], gamification, todayIncome }: Omit<DashboardClientProps, 'stats'>) {
     const supabase = createClient()
+
+    const greeting = useMemo(() => {
+        const hour = new Date().getHours()
+        if (hour >= 5 && hour < 12) return "สวัสดีตอนเช้า"
+        if (hour >= 12 && hour < 17) return "สวัสดีตอนบ่าย"
+        return "สวัสดีตอนเย็น"
+    }, [])
 
     // Real-time Chat Notification for Driver
     useEffect(() => {
@@ -117,7 +123,9 @@ export function DashboardClient({ session, stats, currentJob, activeJobs = [], g
                         <div className="absolute -bottom-0.5 -right-0.5 bg-emerald-500 w-4 h-4 rounded-full border-2 border-background" />
                     </div>
                     <div>
-                        <p className="text-muted-foreground text-[10px] font-black uppercase tracking-widest leading-none mb-1.5 opacity-60">Elite Driver</p>
+                        <p className="text-muted-foreground text-[10px] font-black uppercase tracking-widest leading-none mb-1.5 opacity-60">
+                            {greeting || "สวัสดีคุณ"}
+                        </p>
                         <h1 className="text-2xl font-black text-foreground tracking-tight leading-none truncate max-w-[180px]">
                             {session.driverName}
                         </h1>
@@ -224,7 +232,7 @@ export function DashboardClient({ session, stats, currentJob, activeJobs = [], g
                                 <div className="flex-1 min-w-0">
                                     <p className="text-[10px] font-black text-accent/70 uppercase tracking-widest mb-1">จุดส่งสินค้า</p>
                                     <p className="text-foreground font-black text-sm break-words leading-snug">
-                                        {currentJob.Dest_Location || "ปลายทางปลายทาง"}
+                                        {currentJob.Dest_Location || "ปลายทางส่งสินค้า"}
                                     </p>
                                 </div>
                             </div>
@@ -321,9 +329,13 @@ export function DashboardClient({ session, stats, currentJob, activeJobs = [], g
             {/* FLOATING MARKETPLACE BUTTON - IMPROVED POSITION */}
             <div className="fixed bottom-[130px] right-6 z-[140]">
                  <Link href="/mobile/marketplace">
-                     <button className="w-18 h-18 rounded-[2rem] bg-accent flex flex-col items-center justify-center text-white shadow-2xl active:scale-90 border-[6px] border-background transition-all hover:brightness-110">
-                        <Gavel size={28} strokeWidth={2.5} />
-                        <span className="text-[8px] font-black uppercase tracking-widest -mt-0.5">รับงาน</span>
+                     <button className="w-18 h-18 rounded-[2rem] bg-accent flex flex-col items-center justify-center text-white shadow-2xl active:scale-95 border-[6px] border-background transition-all hover:brightness-110 relative group overflow-hidden">
+                        {/* Pulse Effect */}
+                        <div className="absolute inset-0 bg-white/20 rounded-full animate-ping opacity-0 group-hover:opacity-40 transition-opacity duration-1000" />
+                        <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent pointer-events-none" />
+                        
+                        <Gavel size={28} strokeWidth={2.5} className="relative z-10" />
+                        <span className="text-[8px] font-black uppercase tracking-widest -mt-0.5 relative z-10">รับงาน</span>
                      </button>
                  </Link>
             </div>

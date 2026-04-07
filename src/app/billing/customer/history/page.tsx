@@ -378,7 +378,7 @@ export default function CustomerBillingHistory() {
                                 </PremiumButton>
                             </Link>
 
-                            {isAdmin && (
+                            {isAdmin && note.Status !== 'Paid' && (
                                 <PremiumButton 
                                     size="sm" 
                                     variant="danger" 

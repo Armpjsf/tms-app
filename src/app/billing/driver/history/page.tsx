@@ -360,7 +360,7 @@ export default function DriverPaymentHistory() {
                                     <Printer className="w-4 h-4" />
                                 </PremiumButton>
 
-                                {isAdmin && (
+                                {isAdmin && item.Status !== 'Paid' && (
                                     <PremiumButton 
                                         size="sm" 
                                         variant="ghost" 

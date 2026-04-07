@@ -4,6 +4,44 @@ import { createAdminClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { notifyAdminJobStatus } from '@/lib/actions/push-actions'
 
+import { SupabaseClient } from '@supabase/supabase-js'
+
+/**
+ * Helper to calculate CO2 based on distance and vehicle type
+ */
+export async function calculateJobCO2(supabase: SupabaseClient, jobId: string) {
+    try {
+        const { data: job } = await supabase
+            .from('Jobs_Main')
+            .select('Est_Distance_KM, Actual_Distance_KM, Vehicle_Type')
+            .eq('Job_ID', jobId)
+            .single()
+
+        if (!job) return null
+
+        const distance = Number(job.Est_Distance_KM) || 12.5
+        const vType = job.Vehicle_Type || '4-Wheel'
+        
+        const factors: Record<string, number> = {
+            '4-Wheel': 0.22,
+            '6-Wheel': 0.55,
+            '10-Wheel': 0.95,
+            'Trailer': 1.15
+        }
+
+        const factor = factors[vType as keyof typeof factors] || 0.22
+        const co2Amount = Number((distance * factor).toFixed(2))
+        
+        return {
+            amount: co2Amount,
+            note: `[ESG] ปล่อย CO2: ${co2Amount} kg`
+        }
+    } catch (e) {
+        console.error('[ESG] CO2 Calculation failed:', e)
+        return null
+    }
+}
+
 export async function updateJobStatus(jobId: string, status: string, driverId?: string) {
   try {
     const supabase = createAdminClient()
@@ -15,38 +53,10 @@ export async function updateJobStatus(jobId: string, status: string, driverId?: 
 
     // 1.1 Automatic CO2 Calculation on Completion
     if (status === 'Completed') {
-        try {
-            // Get current job data to get distance and vehicle info
-            const { data: job } = await supabase
-                .from('Jobs_Main')
-                .select('Est_Distance_KM, Actual_Distance_KM, Vehicle_Type, Notes')
-                .eq('Job_ID', jobId)
-                .single()
-
-            if (job) {
-                // Use Est_Distance_KM, or fallback to a heuristic of 12.5km if missing (to avoid 0 CO2)
-                const distance = Number(job.Est_Distance_KM) || 12.5
-                const vType = job.Vehicle_Type || '4-Wheel'
-                
-                // Average CO2 factors (kg CO2 per km)
-                const factors: Record<string, number> = {
-                    '4-Wheel': 0.22,
-                    '6-Wheel': 0.55,
-                    '10-Wheel': 0.95,
-                    'Trailer': 1.15
-                }
-
-                const factor = factors[vType as keyof typeof factors] || 0.22
-                const co2Amount = Number((distance * factor).toFixed(2))
-
-                // Append CO2 info to Notes if no dedicated column exists
-                const co2Note = `[ESG] ปล่อย CO2: ${co2Amount} kg`
-                updatePayload.Notes = job.Notes ? `${job.Notes}\n${co2Note}` : co2Note
-                
-                console.log(`[ESG] Calculated CO2 for ${jobId}: ${co2Amount}kg (Dist: ${distance}km, Type: ${vType})`)
-            }
-        } catch (e) {
-            console.error('[ESG] CO2 Calculation failed:', e)
+        const co2Data = await calculateJobCO2(supabase, jobId)
+        if (co2Data) {
+            const { data: currentJob } = await supabase.from('Jobs_Main').select('Notes').eq('Job_ID', jobId).single()
+            updatePayload.Notes = currentJob?.Notes ? `${currentJob.Notes}\n${co2Data.note}` : co2Data.note
         }
     }
 

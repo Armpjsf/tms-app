@@ -6,7 +6,7 @@ import { MobileHeader } from "@/components/mobile/mobile-header"
 import { 
     MapPin, Phone, User, CheckCircle, 
     Info, Activity, Navigation, 
-    TrendingUp, Sparkles, Loader2, Target
+    TrendingUp, Target, Copy
 } from "lucide-react"
 import { JobActionButton } from "@/components/mobile/job-action-button"
 import { JobWorkflow } from "@/components/mobile/job-workflow"
@@ -14,9 +14,7 @@ import { NavigationButton } from "@/components/mobile/navigation-button"
 import { RouteStrip } from "@/components/mobile/route-strip"
 import { Job } from "@/lib/supabase/jobs"
 import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
-import { useRouter } from "next/navigation"
 
 interface JobDetailClientProps {
     job: Job
@@ -25,15 +23,13 @@ interface JobDetailClientProps {
 
 export function JobDetailClient({ job, success }: JobDetailClientProps) {
     const [activeTab, setActiveTab] = useState<'mission' | 'info'>('mission')
-    const [optimizing, setOptimizing] = useState(false)
-    const router = useRouter()
 
     const destinations = typeof job?.original_destinations_json === 'string' 
         ? JSON.parse(job.original_destinations_json) 
         : job?.original_destinations_json || [];
 
     return (
-        <div className="min-h-screen bg-background pb-40 pt-24 relative overflow-hidden flex flex-col">
+        <div className="min-h-screen bg-background pb-40 pt-[72px] relative overflow-hidden flex flex-col">
             {/* Background Decor */}
             <div className="absolute top-0 right-[-10%] w-[600px] h-[600px] bg-primary/5 rounded-full blur-[140px] -translate-y-1/2 pointer-events-none" />
             <div className="absolute bottom-0 left-[-10%] w-[400px] h-[400px] bg-accent/5 rounded-full blur-[120px] pointer-events-none" />
@@ -41,7 +37,7 @@ export function JobDetailClient({ job, success }: JobDetailClientProps) {
             <MobileHeader title="รายละเอียดภารกิจ" showBack />
 
             {/* STICKY TAB SELECTOR */}
-            <div className="px-5 mb-8 mt-2 sticky top-24 z-[50]">
+            <div className="px-5 mb-6 mt-1 sticky top-[72px] z-[50]">
                 <div className="bg-card/80 backdrop-blur-xl p-2 rounded-2xl border border-border/10 flex shadow-lg ring-1 ring-white/5">
                     <button 
                         onClick={() => setActiveTab('mission')}
@@ -64,7 +60,7 @@ export function JobDetailClient({ job, success }: JobDetailClientProps) {
                 </div>
             </div>
 
-            <div className="flex-1 px-6 overflow-y-auto space-y-8 pb-10">
+            <div className="flex-1 px-6 overflow-y-auto space-y-6 pb-10">
                 <AnimatePresence mode="wait">
                     {activeTab === 'mission' ? (
                         <motion.div 
@@ -72,7 +68,7 @@ export function JobDetailClient({ job, success }: JobDetailClientProps) {
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -20 }}
-                            className="space-y-10"
+                            className="space-y-6"
                         >
                              {/* Success Notification */}
                              {success && (
@@ -91,13 +87,24 @@ export function JobDetailClient({ job, success }: JobDetailClientProps) {
                             {/* Job ID Header */}
                             <div className="flex items-end justify-between px-2">
                                 <div className="space-y-1">
-                                    <p className="text-accent text-[10px] font-black uppercase tracking-[0.4em] leading-none opacity-70">Job ID Descriptor</p>
-                                    <h2 className="text-4xl font-black text-foreground tracking-tighter uppercase italic leading-none">
-                                        #{String(job?.Job_ID || '').slice(-8).toUpperCase()}
-                                    </h2>
+                                    <p className="text-accent text-[10px] font-black uppercase tracking-[0.4em] leading-none opacity-70">รหัสงาน</p>
+                                    <div className="flex items-center gap-2">
+                                        <h2 className="text-4xl font-black text-foreground tracking-tighter uppercase italic leading-none">
+                                            #{String(job?.Job_ID || '').slice(-8).toUpperCase()}
+                                        </h2>
+                                        <button 
+                                            onClick={() => {
+                                                navigator.clipboard.writeText(job?.Job_ID || '')
+                                                toast.success("คัดลอกรหัสงานเรียบร้อย")
+                                            }}
+                                            className="p-2 bg-card border border-border/10 rounded-xl text-muted-foreground active:scale-95 transition-all shadow-sm"
+                                        >
+                                            <Copy size={16} />
+                                        </button>
+                                    </div>
                                 </div>
                                 <div className="text-right pb-1">
-                                    <p className="text-muted-foreground text-[10px] font-black uppercase tracking-widest mb-1 opacity-60">Plan Date</p>
+                                    <p className="text-muted-foreground text-[10px] font-black uppercase tracking-widest mb-1 opacity-60">วันที่วางแผน</p>
                                     <span className="font-black text-sm text-primary italic bg-primary/10 px-3 py-1 rounded-lg">
                                         {job?.Plan_Date ? new Date(job.Plan_Date).toLocaleDateString('th-TH', { day: '2-digit', month: 'short' }) : "-"}
                                     </span>
@@ -117,9 +124,9 @@ export function JobDetailClient({ job, success }: JobDetailClientProps) {
                                             <Navigation size={28} strokeWidth={2.5} className="animate-pulse" />
                                         </div>
                                         <div>
-                                            <p className="text-muted-foreground text-[10px] font-black uppercase tracking-widest mb-1 opacity-70">Operational Status</p>
+                                            <p className="text-muted-foreground text-[10px] font-black uppercase tracking-widest mb-1 opacity-70">สถานะการดำเนินงาน</p>
                                             <h3 className="text-2xl font-black text-foreground uppercase tracking-tight italic leading-none">
-                                                {job?.Job_Status === 'New' || job?.Job_Status === 'Assigned' ? 'W_PENDING' : job?.Job_Status.toUpperCase()}
+                                                {job?.Job_Status === 'New' || job?.Job_Status === 'Assigned' ? 'รอดำเนินการ' : job?.Job_Status.toUpperCase()}
                                             </h3>
                                         </div>
                                     </div>
@@ -152,7 +159,7 @@ export function JobDetailClient({ job, success }: JobDetailClientProps) {
                                             <User className="text-primary" size={28} strokeWidth={2.5} />
                                         </div>
                                         <div>
-                                            <p className="text-muted-foreground text-[10px] font-black uppercase tracking-widest mb-1.5 opacity-70">Client Entity</p>
+                                            <p className="text-muted-foreground text-[10px] font-black uppercase tracking-widest mb-1.5 opacity-70">ข้อมูลลูกค้า</p>
                                             <h3 className="text-2xl font-black text-foreground tracking-tight italic uppercase leading-none">{job?.Customer_Name}</h3>
                                         </div>
                                     </div>
@@ -175,12 +182,12 @@ export function JobDetailClient({ job, success }: JobDetailClientProps) {
                                                 <Phone size={20} className="text-emerald-500 shrink-0" />
                                             </div>
                                             <div className="min-w-0">
-                                                <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest mb-1 opacity-70">Voice Channel</p>
-                                                <p className="text-emerald-600 font-black text-lg italic tracking-widest truncate">CONTACT CLIENT</p>
+                                                <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest mb-1 opacity-70">ช่องทางการติดต่อ</p>
+                                                <p className="text-emerald-600 font-black text-lg italic tracking-widest truncate">ติดต่อลูกค้า</p>
                                             </div>
                                         </div>
                                         <button className="px-6 h-12 bg-emerald-600 text-white rounded-xl font-black text-xs uppercase tracking-widest shadow-lg active:scale-95 transition-all border-b-4 border-emerald-800/40">
-                                            DIAL
+                                            โทรออก
                                         </button>
                                     </div>
                                 </div>
@@ -189,23 +196,23 @@ export function JobDetailClient({ job, success }: JobDetailClientProps) {
                             <div className="glass-panel p-7 rounded-[2.5rem] space-y-6 border-accent/10 shadow-lg bg-card/40">
                                 <div className="grid grid-cols-2 gap-6">
                                     <div className="p-5 bg-card border border-border/10 rounded-2xl flex flex-col items-center justify-center text-center shadow-sm">
-                                        <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-2 opacity-70">Mass Load</p>
+                                        <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-2 opacity-70">น้ำหนักสินค้า</p>
                                         <div className="flex items-baseline gap-1.5">
                                             <h5 className="text-3xl font-black text-foreground italic leading-none">{job?.Weight_Kg?.toLocaleString() || '0.0'}</h5>
-                                            <span className="text-[10px] font-black text-muted-foreground uppercase">KG</span>
+                                            <span className="text-[10px] font-black text-muted-foreground uppercase">กก.</span>
                                         </div>
                                     </div>
                                     <div className="p-5 bg-card border border-border/10 rounded-2xl flex flex-col items-center justify-center text-center shadow-sm">
-                                        <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-2 opacity-70">Volume</p>
+                                        <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-2 opacity-70">ปริมาตร</p>
                                         <div className="flex items-baseline gap-1.5">
                                             <h5 className="text-3xl font-black text-foreground italic leading-none">{job?.Volume_Cbm || '0.0'}</h5>
-                                            <span className="text-[10px] font-black text-muted-foreground uppercase">CBM</span>
+                                            <span className="text-[10px] font-black text-muted-foreground uppercase">คิว</span>
                                         </div>
                                     </div>
                                 </div>
                                 <div className="p-6 bg-card/60 border border-border/10 rounded-2xl shadow-inner">
-                                    <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-2 opacity-70">Mission Protocol Notes</p>
-                                    <p className="text-foreground font-bold leading-relaxed text-sm italic break-words">{job?.Notes || "No tactical notes available."}</p>
+                                    <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-2 opacity-70">บันทึกเพิ่มเติม</p>
+                                    <p className="text-foreground font-bold leading-relaxed text-sm italic break-words">{job?.Notes || "ไม่มีบันทึกเพิ่มเติม"}</p>
                                 </div>
                             </div>
 
@@ -218,13 +225,13 @@ export function JobDetailClient({ job, success }: JobDetailClientProps) {
                                             <TrendingUp size={24} className="text-primary" />
                                         </div>
                                         <div>
-                                            <p className="text-[9px] font-black uppercase tracking-[0.4em] text-white/50 mb-0.5">Asset Compensation</p>
-                                            <h4 className="text-sm font-black uppercase tracking-widest text-white italic">PAYOUT_CREDIT</h4>
+                                            <p className="text-[9px] font-black uppercase tracking-[0.4em] text-white/50 mb-0.5">ผลตอบแทนภารกิจ</p>
+                                            <h4 className="text-sm font-black uppercase tracking-widest text-white italic">รายได้งานนี้</h4>
                                         </div>
                                     </div>
                                     <div className="flex items-baseline gap-2 relative z-10">
                                         <span className="text-4xl font-black text-white tracking-tighter italic">฿{(job?.Cost_Driver_Total || 0).toLocaleString()}</span>
-                                        <div className="px-3 py-1 bg-primary rounded-lg text-white font-black text-[9px] uppercase tracking-widest shadow-lg shadow-primary/40">ELITE</div>
+                                        <div className="px-3 py-1 bg-primary rounded-lg text-white font-black text-[9px] uppercase tracking-widest shadow-lg shadow-primary/40">VIP</div>
                                     </div>
                                 </div>
                             )}

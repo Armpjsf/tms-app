@@ -1,14 +1,12 @@
 "use client"
 
-import { useState } from "react"
-import { Fuel, Wrench, ClipboardCheck, Bell, Settings, ChevronRight, LogOut, AlertTriangle, User, Banknote, BookOpen, LayoutGrid, Star, Calendar, ShieldAlert, Fingerprint } from "lucide-react"
+import { Fuel, Wrench, ClipboardCheck, Bell, Settings, ChevronRight, LogOut, AlertTriangle, User, Banknote, BookOpen, LayoutGrid, Star, Calendar, ShieldAlert } from "lucide-react"
 import { toast } from "sonner"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { logoutDriver } from "@/lib/actions/auth-actions"
-import { registerBiometrics } from "@/lib/webauthn-client"
 
 interface ProfileContentProps {
   session: {
@@ -26,28 +24,7 @@ interface ProfileContentProps {
 }
 
 export function ProfileContent({ session, score, unreadChatCount = 0 }: ProfileContentProps) {
-  const [registering, setRegistering] = useState(false)
 
-  const handleRegisterBiometrics = async () => {
-    try {
-      setRegistering(true)
-      const result = await registerBiometrics()
-      if (result.success) {
-        toast.success("ลงทะเบียนสแกนนิ้ว/หน้าสำเร็จแล้ว!")
-      } else {
-        toast.error("การลงทะเบียนขัดข้อง กรุณาลองใหม่อีกครั้ง")
-      }
-    } catch (error: any) {
-      console.error(error)
-      if (error.message?.includes('not found')) {
-         toast.error("ระบบฐานข้อมูลยังไม่รองรับ Biometrics (กรุณาแจ้ง Admin ติดตั้ง Table)")
-      } else {
-         toast.error(error.message || "เกิดข้อผิดพลาดในการลงทะเบียน")
-      }
-    } finally {
-      setRegistering(false)
-    }
-  }
 
   const handleSubscribePush = async () => {
     try {
@@ -99,9 +76,10 @@ export function ProfileContent({ session, score, unreadChatCount = 0 }: ProfileC
       } else {
         toast.error("บันทึกข้อมูลไม่สำเร็จ กรุณาลองใหม่อีกครั้ง")
       }
-    } catch (error: any) {
-      console.error(error)
-      toast.error(error.message || "เกิดข้อผิดพลาดในการเปิดแจ้งเตือน")
+    } catch (error: unknown) {
+      const err = error as Error
+      console.error(err)
+      toast.error(err.message || "เกิดข้อผิดพลาดในการเปิดแจ้งเตือน")
     }
   }
 
@@ -119,14 +97,14 @@ export function ProfileContent({ session, score, unreadChatCount = 0 }: ProfileC
         toast.error("ส่งไม่สำเร็จ: " + (result.reason || "ไม่พบข้อมูลเครื่องของคุณ"))
       }
     } catch (err) {
+      console.error(err)
       toast.error("เกิดข้อผิดพลาดในการส่ง")
     }
   }
 
   const menuItems = [
     { icon: Bell, label: "เปิดรับการแจ้งเตือนงาน", action: handleSubscribePush, color: 'text-blue-500' },
-    { icon: Bell, label: "ทดสอบแจ้งเตือน (Test)", action: handleTestPush, color: 'text-orange-500' },
-    { icon: Fingerprint, label: "ลงทะเบียนสแกนนิ้ว/หน้า", action: handleRegisterBiometrics, color: 'text-primary' },
+    {icon: Bell, label: "ทดสอบการแจ้งเตือน (ทดสอบ)", action: handleTestPush, color: 'text-orange-500' },
     { icon: LayoutGrid, label: "รับงานกลาง (ประมูล)", href: "/mobile/marketplace" },
     { icon: Star, label: "คะแนนและผลงาน", href: "/mobile/kpi" },
     { icon: Banknote, label: "รายได้และเบี้ยเลี้ยง", href: "/mobile/income-summary" },
@@ -166,7 +144,7 @@ export function ProfileContent({ session, score, unreadChatCount = 0 }: ProfileC
             </Avatar>
             <div className="text-foreground">
               <h1 className="text-xl font-bold">{session.driverName}</h1>
-              <p className="text-blue-200 text-xl">Driver ID: {session.driverId}</p>
+              <p className="text-blue-200 text-xl italic font-black uppercase tracking-tighter">รหัสพนักงาน: {session.driverId}</p>
             </div>
           </div>
         </CardContent>
@@ -237,7 +215,6 @@ export function ProfileContent({ session, score, unreadChatCount = 0 }: ProfileC
                 <button 
                   key={index} 
                   onClick={item.action}
-                  disabled={registering}
                   className="w-full disabled:opacity-50"
                 >
                   {Content}

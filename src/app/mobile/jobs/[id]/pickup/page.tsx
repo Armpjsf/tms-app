@@ -168,7 +168,7 @@ export default function JobPickupPage() {
                         </div>
 
                         <div className="space-y-3">
-                            <Label htmlFor="loadedQty" className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] ml-2">ระบุจำนวนจริง (Units / Pieces)</Label>
+                            <Label htmlFor="loadedQty" className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] ml-2">ระบุจำนวนจริง (ชิ้น)</Label>
                             <div className="relative">
                                 <Input
                                     id="loadedQty"
@@ -180,7 +180,7 @@ export default function JobPickupPage() {
                                     className="h-20 bg-slate-900/50 border-emerald-500/20 rounded-[2rem] text-3xl font-black text-white px-8 placeholder:text-slate-700 focus:border-emerald-500 focus:ring-emerald-500/20 transition-all text-center italic"
                                 />
                                 <div className="absolute right-8 top-1/2 -translate-y-1/2 text-emerald-500 font-black text-sm uppercase tracking-widest pointer-events-none opacity-40">
-                                    Units
+                                    ชิ้น
                                 </div>
                             </div>
                         </div>
