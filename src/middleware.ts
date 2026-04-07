@@ -65,7 +65,7 @@ export async function middleware(request: NextRequest) {
         }
       }
 
-      const loginUrl = new URL('/login?error=session_missing', request.url)
+      const loginUrl = new URL('/login', request.url)
       return NextResponse.redirect(loginUrl)
     }
 

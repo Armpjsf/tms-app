@@ -29,15 +29,15 @@ export function JobDetailClient({ job, success }: JobDetailClientProps) {
         : job?.original_destinations_json || [];
 
     return (
-        <div className="min-h-screen bg-background pb-40 pt-[72px] relative overflow-hidden flex flex-col">
+        <div className="min-h-screen bg-background pb-40 pt-[calc(64px+env(safe-area-inset-top))] relative overflow-hidden flex flex-col">
             {/* Background Decor */}
             <div className="absolute top-0 right-[-10%] w-[600px] h-[600px] bg-primary/5 rounded-full blur-[140px] -translate-y-1/2 pointer-events-none" />
             <div className="absolute bottom-0 left-[-10%] w-[400px] h-[400px] bg-accent/5 rounded-full blur-[120px] pointer-events-none" />
 
             <MobileHeader title="รายละเอียดภารกิจ" showBack />
 
-            {/* STICKY TAB SELECTOR */}
-            <div className="px-5 mb-6 mt-1 sticky top-[72px] z-[50]">
+            {/* STICKY TAB SELECTOR - Tighter integration */}
+            <div className="px-4 mb-2 mt-[-12px] sticky top-[calc(64px+env(safe-area-inset-top))] z-[50]">
                 <div className="bg-card/80 backdrop-blur-xl p-2 rounded-2xl border border-border/10 flex shadow-lg ring-1 ring-white/5">
                     <button 
                         onClick={() => setActiveTab('mission')}
@@ -60,7 +60,7 @@ export function JobDetailClient({ job, success }: JobDetailClientProps) {
                 </div>
             </div>
 
-            <div className="flex-1 px-6 overflow-y-auto space-y-6 pb-10">
+            <div className="flex-1 px-6 overflow-y-auto space-y-6 pb-10 pt-2">
                 <AnimatePresence mode="wait">
                     {activeTab === 'mission' ? (
                         <motion.div 
@@ -86,8 +86,8 @@ export function JobDetailClient({ job, success }: JobDetailClientProps) {
 
                             {/* Job ID Header */}
                             <div className="flex items-end justify-between px-2">
-                                <div className="space-y-1">
-                                    <p className="text-accent text-[10px] font-black uppercase tracking-[0.4em] leading-none opacity-70">รหัสงาน</p>
+                                <div className="space-y-0">
+                                    <p className="text-accent text-[10px] font-black uppercase tracking-[0.4em] leading-none opacity-70 mb-2">รหัสงาน</p>
                                     <div className="flex items-center gap-2">
                                         <h2 className="text-4xl font-black text-foreground tracking-tighter uppercase italic leading-none">
                                             #{String(job?.Job_ID || '').slice(-8).toUpperCase()}
@@ -242,7 +242,7 @@ export function JobDetailClient({ job, success }: JobDetailClientProps) {
 
             {/* FLOATING ACTION CENTER - RELIABLE POSITIONING */}
             <div className="fixed bottom-[100px] left-6 right-6 z-[140] animate-in slide-in-from-bottom-10 duration-700">
-                <div className="shadow-[0_-20px_50px_rgba(0,0,0,0.3)] rounded-[2.5rem]">
+                <div className="shadow-[0_-20px_50px_rgba(0,0,0,0.3)] rounded-[2.5rem] bg-background/50 backdrop-blur-md">
                     <JobActionButton job={{
                         ...job,
                         original_destinations_json: destinations

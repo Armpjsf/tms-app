@@ -108,7 +108,7 @@ export function DashboardClient({ session, currentJob, activeJobs = [], gamifica
             variants={container}
             initial="hidden"
             animate="show"
-            className="space-y-8 pb-32"
+            className="space-y-8 pb-32 pt-[env(safe-area-inset-top)]"
         >
             {/* HEADER - CLEANER & LARGER */}
             <motion.div variants={item} className="flex items-center justify-between px-2 pt-2">
