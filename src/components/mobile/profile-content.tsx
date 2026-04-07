@@ -128,6 +128,8 @@ export function ProfileContent({ session, score, unreadChatCount = 0 }: ProfileC
   }
 
   const handleLogout = async () => {
+    // Clear session recovery data
+    localStorage.removeItem("logis_driver_session_v1")
     await logoutDriver()
   }
 

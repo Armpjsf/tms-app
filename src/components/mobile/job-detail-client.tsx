@@ -29,38 +29,38 @@ export function JobDetailClient({ job, success }: JobDetailClientProps) {
         : job?.original_destinations_json || [];
 
     return (
-        <div className="min-h-screen bg-background pb-40 pt-[calc(64px+env(safe-area-inset-top))] relative overflow-hidden flex flex-col">
+        <div className="min-h-screen bg-background pb-40 pt-[calc(56px+env(safe-area-inset-top))] relative overflow-hidden flex flex-col">
             {/* Background Decor */}
             <div className="absolute top-0 right-[-10%] w-[600px] h-[600px] bg-primary/5 rounded-full blur-[140px] -translate-y-1/2 pointer-events-none" />
             <div className="absolute bottom-0 left-[-10%] w-[400px] h-[400px] bg-accent/5 rounded-full blur-[120px] pointer-events-none" />
 
             <MobileHeader title="รายละเอียดภารกิจ" showBack />
 
-            {/* STICKY TAB SELECTOR - Tighter integration */}
-            <div className="px-4 mb-2 mt-[-12px] sticky top-[calc(64px+env(safe-area-inset-top))] z-[50]">
-                <div className="bg-card/80 backdrop-blur-xl p-2 rounded-2xl border border-border/10 flex shadow-lg ring-1 ring-white/5">
-                    <button 
-                        onClick={() => setActiveTab('mission')}
-                        className={cn(
-                            "flex-1 flex items-center justify-center gap-3 h-14 rounded-xl font-black uppercase tracking-widest transition-all text-sm italic",
-                            activeTab === 'mission' ? "bg-primary text-white shadow-lg" : "text-muted-foreground hover:text-foreground"
-                        )}
-                    >
-                        <Activity size={20} /> ดำเนินงาน
-                    </button>
-                    <button 
-                        onClick={() => setActiveTab('info')}
-                        className={cn(
-                            "flex-1 flex items-center justify-center gap-3 h-14 rounded-xl font-black uppercase tracking-widest transition-all text-sm italic",
-                            activeTab === 'info' ? "bg-primary text-white shadow-lg" : "text-muted-foreground hover:text-foreground"
-                        )}
-                    >
-                        <Info size={20} /> ข้อมูลงาน
-                    </button>
+            <div className="flex-1 px-6 overflow-y-auto pb-10 pt-4">
+                {/* TAB SELECTOR - INTEGRATED INTO SCROLL FLOW */}
+                <div className="mb-8">
+                    <div className="bg-card/80 backdrop-blur-xl p-1.5 rounded-2xl border border-border/10 flex shadow-md ring-1 ring-white/5">
+                        <button 
+                            onClick={() => setActiveTab('mission')}
+                            className={cn(
+                                "flex-1 flex items-center justify-center gap-3 h-12 rounded-xl font-black uppercase tracking-widest transition-all text-xs italic",
+                                activeTab === 'mission' ? "bg-primary text-white shadow-lg" : "text-muted-foreground hover:text-foreground"
+                            )}
+                        >
+                            <Activity size={18} /> ดำเนินงาน
+                        </button>
+                        <button 
+                            onClick={() => setActiveTab('info')}
+                            className={cn(
+                                "flex-1 flex items-center justify-center gap-3 h-12 rounded-xl font-black uppercase tracking-widest transition-all text-xs italic",
+                                activeTab === 'info' ? "bg-primary text-white shadow-lg" : "text-muted-foreground hover:text-foreground"
+                            )}
+                        >
+                            <Info size={18} /> ข้อมูลงาน
+                        </button>
+                    </div>
                 </div>
-            </div>
 
-            <div className="flex-1 px-6 overflow-y-auto space-y-6 pb-10 pt-2">
                 <AnimatePresence mode="wait">
                     {activeTab === 'mission' ? (
                         <motion.div 
@@ -241,8 +241,8 @@ export function JobDetailClient({ job, success }: JobDetailClientProps) {
             </div>
 
             {/* FLOATING ACTION CENTER - RELIABLE POSITIONING */}
-            <div className="fixed bottom-[100px] left-6 right-6 z-[140] animate-in slide-in-from-bottom-10 duration-700">
-                <div className="shadow-[0_-20px_50px_rgba(0,0,0,0.3)] rounded-[2.5rem] bg-background/50 backdrop-blur-md">
+            <div className="fixed bottom-[110px] left-6 right-6 z-[140] animate-in slide-in-from-bottom-10 duration-700">
+                <div className="shadow-[0_-20px_60px_rgba(0,0,0,0.4)] rounded-[2.5rem] bg-background/30 backdrop-blur-xl border border-white/5 overflow-hidden">
                     <JobActionButton job={{
                         ...job,
                         original_destinations_json: destinations

@@ -49,7 +49,8 @@ export function SessionStabilizer({ session }: { session: Session | null }) {
                 const result = await recoverDriverSession(driverId)
                 if (result.success) {
                   console.log("[PWA] Session recovered successfully")
-                  router.refresh() // Force server components to re-run
+                  // Use window.location.reload() for a more stable full-state recovery
+                  window.location.reload()
                 }
               }
             } catch (e) {
