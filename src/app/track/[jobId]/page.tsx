@@ -9,12 +9,12 @@ import {
   Camera, 
   User, 
   CheckCircle2, 
-  ClipboardList,
   ExternalLink,
-  Zap,
   Activity,
   ShieldCheck,
-  Target
+  Target,
+  Clock,
+  Navigation
 } from "lucide-react"
 import Image from "next/image"
 import Link from 'next/link'
@@ -33,28 +33,27 @@ export default async function TrackingPage(props: { params: Promise<{ jobId: str
 
   if (!job) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[80vh] text-center space-y-8 px-4 bg-background">
-        <div className="bg-muted/5 p-12 rounded-[4rem] border border-border/5 shadow-3xl relative group">
-            <div className="absolute inset-0 bg-primary/5 blur-3xl rounded-full" />
-            <Package className="h-24 w-24 text-muted-foreground/30 mx-auto relative z-10 group-hover:scale-110 transition-transform duration-1000" strokeWidth={1} />
+      <div className="flex flex-col items-center justify-center min-h-[80vh] text-center space-y-6 px-4">
+        <div className="bg-slate-100 p-10 rounded-full border border-slate-200 relative group">
+            <Package className="h-16 w-16 text-slate-300 mx-auto" strokeWidth={1.5} />
         </div>
-        <div className="space-y-3">
-            <h1 className="text-4xl font-black text-foreground tracking-tighter uppercase italic">Target Not Found</h1>
-            <p className="text-muted-foreground max-w-xs font-bold uppercase tracking-widest text-lg font-bold leading-relaxed italic">ไม่พบข้อมูลงานขนส่งในระบบ Neural Grid กรุณาตรวจสอบ ID หรือลองใหม่อีกครั้ง</p>
+        <div className="space-y-2">
+            <h1 className="text-3xl font-bold text-slate-900 tracking-tight">ไม่พบข้อมูลงาน</h1>
+            <p className="text-slate-500 max-w-xs font-medium leading-relaxed">กรุณาตรวจสอบหมายเลขติดตามงาน หรือติดต่อเจ้าหน้าที่เพื่อสอบถามข้อมูล</p>
         </div>
-        <Link href="/" className="px-10 py-4 bg-muted/5 rounded-2xl border border-border/10 text-primary font-black uppercase tracking-[0.3em] text-base font-bold hover:bg-primary hover:text-primary-foreground transition-all shadow-xl">
-            Return to Command Center
+        <Link href="/" className="px-8 py-3 bg-white rounded-xl border border-slate-200 text-slate-600 font-bold hover:bg-slate-50 transition-all shadow-sm">
+            กลับสู่หน้าหลัก
         </Link>
       </div>
     )
   }
 
   const steps = [
-    { key: 'New', label: 'INITIALIZED', icon: <Calendar size={18} /> },
-    { key: 'Assigned', label: 'ASSIGNED', icon: <User size={18} /> },
-    { key: 'Picked Up', label: 'UP_LINKED', icon: <Package size={18} /> },
-    { key: 'In Transit', label: 'EN_ROUTE', icon: <Truck size={18} /> },
-    { key: 'Completed', label: 'TERMINATED', icon: <CheckCircle2 size={18} /> },
+    { key: 'New', label: 'รับงาน', icon: <Calendar size={18} /> },
+    { key: 'Assigned', label: 'จัดรถแล้ว', icon: <User size={18} /> },
+    { key: 'Picked Up', label: 'รับสินค้าแล้ว', icon: <Package size={18} /> },
+    { key: 'In Transit', label: 'กำลังจัดส่ง', icon: <Truck size={18} /> },
+    { key: 'Completed', label: 'ส่งสำเร็จ', icon: <CheckCircle2 size={18} /> },
   ]
 
   const getCurrentStepIndex = () => {
@@ -69,236 +68,186 @@ export default async function TrackingPage(props: { params: Promise<{ jobId: str
   const currentStepIndex = getCurrentStepIndex()
 
   return (
-    <div className="min-h-screen bg-background text-foreground selection:bg-primary selection:text-primary-foreground">
-        <div className="max-w-3xl mx-auto space-y-10 pb-24 px-6 pt-10">
-            {/* Tactical Mission Header */}
-            <div className="relative rounded-[4rem] overflow-hidden bg-card/60 backdrop-blur-3xl border border-border/5 shadow-3xl group ring-1 ring-border/5 hover:ring-primary/20 transition-all duration-700">
-                <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-primary via-indigo-500 to-accent"></div>
-                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent pointer-events-none" />
+    <div className="max-w-4xl mx-auto space-y-6 pb-20 px-2 sm:px-4 md:px-6">
+        {/* Main Info Card */}
+        <div className="relative rounded-3xl overflow-hidden bg-white border border-slate-200 shadow-sm transition-all duration-500">
+            <div className="absolute top-0 left-0 w-full h-1.5 bg-indigo-500"></div>
 
-                <div className="p-12 md:p-16 space-y-10 relative z-10">
-                    <div className="flex flex-col md:flex-row justify-between items-start gap-8">
-                        <div className="space-y-4">
-                            <div className="flex items-center gap-4 text-primary font-black text-base font-bold uppercase tracking-[0.5em] italic">
-                                <div className="w-2.5 h-2.5 rounded-full bg-primary animate-pulse shadow-[0_0_15px_rgba(255,30,133,1)]" />
-                                <span>Tactical Vector Tracking</span>
-                            </div>
-                            <h1 className="text-6xl font-black text-foreground tracking-tighter uppercase italic leading-none">{job.jobId}</h1>
+            <div className="p-6 md:p-10 space-y-8">
+                <div className="flex flex-col sm:flex-row justify-between items-start gap-6">
+                    <div className="space-y-2">
+                        <div className="flex items-center gap-2 text-indigo-600 font-bold text-sm uppercase tracking-wider">
+                            <Activity size={14} className="animate-pulse" />
+                            <span>สถานะการขนส่งล่าสุด</span>
                         </div>
-                        <div className="flex flex-col items-end gap-3">
-                            <Badge className={cn(
-                                "px-8 py-3 rounded-2xl text-base font-bold font-black uppercase tracking-[0.3em] border shadow-2xl transition-all duration-700 italic",
-                                currentStepIndex === 4 
-                                ? 'bg-primary/20 text-primary border-primary/30 shadow-primary/10' 
-                                : 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30'
-                            )}>
-                                {job.status.toUpperCase()}
-                            </Badge>
-                        </div>
+                        <h1 className="text-4xl md:text-5xl font-extrabold text-slate-900 tracking-tight">{job.jobId}</h1>
                     </div>
+                    <Badge className={cn(
+                        "px-6 py-2 rounded-xl text-base font-bold uppercase tracking-wide border shadow-sm transition-all duration-700",
+                        currentStepIndex === 4 
+                        ? 'bg-emerald-50 text-emerald-600 border-emerald-200' 
+                        : 'bg-indigo-50 text-indigo-600 border-indigo-200'
+                    )}>
+                        {job.status.toUpperCase()}
+                    </Badge>
+                </div>
 
-                    {/* Elite Tactical Stepper */}
-                    <div className="relative px-4 py-8">
-                        <div className="absolute top-1/2 left-10 right-10 h-px bg-border/5 -translate-y-1/2 z-0" />
-                        <div 
-                            className="absolute top-1/2 left-10 h-px bg-primary -translate-y-1/2 z-0 transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(255,30,133,1)]" 
-                            style={{ width: `${(currentStepIndex / 4) * (100 - 18)}%` }}
-                        />
-                        
-                        <div className="flex justify-between relative z-10">
-                            {steps.map((step, idx) => {
-                                const isCompleted = idx <= currentStepIndex
-                                const isCurrent = idx === currentStepIndex
-                                return (
-                                    <div key={step.key} className="flex flex-col items-center group/step">
-                                        <div className={cn(
-                                            "w-12 h-12 rounded-[1.25rem] flex items-center justify-center transition-all duration-700 border-2 relative overflow-hidden",
-                                            isCurrent 
-                                            ? 'bg-primary border-primary/40 text-primary-foreground scale-110 shadow-[0_0_30px_rgba(255,30,133,0.5)] rotate-3' 
-                                            : isCompleted 
-                                            ? 'bg-background border-primary/40 text-primary' 
-                                            : 'bg-background border-border/5 text-muted-foreground/30'
-                                        )}>
-                                            <div className={cn(
-                                                "absolute inset-0 bg-gradient-to-br from-white/10 to-transparent",
-                                                !isCompleted && "opacity-0"
-                                            )} />
-                                            <span className="relative z-10">{step.icon}</span>
-                                        </div>
+                {/* Tracking Stepper */}
+                <div className="relative px-2 py-6">
+                    {/* Background Line */}
+                    <div className="absolute top-1/2 left-8 right-8 h-1 bg-slate-100 -translate-y-1/2 z-0 hidden sm:block" />
+                    
+                    {/* Progress Line */}
+                    <div 
+                        className="absolute top-1/2 left-8 h-1 bg-indigo-500 -translate-y-1/2 z-0 transition-all duration-1000 ease-out hidden sm:block" 
+                        style={{ width: `${(currentStepIndex / 4) * (100 - 16)}%` }}
+                    />
+                    
+                    <div className="flex flex-col sm:flex-row justify-between gap-6 sm:gap-0 relative z-10">
+                        {steps.map((step, idx) => {
+                            const isCompleted = idx <= currentStepIndex
+                            const isCurrent = idx === currentStepIndex
+                            return (
+                                <div key={step.key} className="flex flex-row sm:flex-col items-center gap-4 sm:gap-0 group/step">
+                                    <div className={cn(
+                                        "w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-500 border-2 relative shrink-0",
+                                        isCurrent 
+                                        ? 'bg-indigo-600 border-indigo-600 text-white scale-110 shadow-lg' 
+                                        : isCompleted 
+                                        ? 'bg-white border-indigo-500 text-indigo-600' 
+                                        : 'bg-white border-slate-200 text-slate-300'
+                                    )}>
+                                        <span className="relative z-10">{step.icon}</span>
+                                    </div>
+                                    <div className="flex flex-col sm:items-center">
                                         <span className={cn(
-                                            "text-base font-bold mt-4 font-black transition-colors uppercase tracking-[0.2em] italic",
-                                            isCompleted ? 'text-primary opacity-60' : 'text-muted-foreground/30'
+                                            "text-sm font-bold sm:mt-4 transition-colors uppercase tracking-wide",
+                                            isCompleted ? 'text-indigo-600' : 'text-slate-300'
                                         )}>
                                             {step.label}
                                         </span>
+                                        {/* Mobile view only detail */}
+                                        {isCurrent && (
+                                             <span className="text-[10px] text-slate-400 sm:hidden">สถานะปัจจุบัน</span>
+                                        )}
                                     </div>
-                                )
-                            })}
-                        </div>
+                                </div>
+                            )
+                        })}
                     </div>
                 </div>
             </div>
+        </div>
 
-            {/* Tactical Map Container */}
-            {job.lastLocation && (
-                <div className="bg-card/40 border border-border/5 overflow-hidden shadow-3xl rounded-[4rem] group hover:border-primary/20 transition-all duration-700">
-                    <div className="px-10 py-6 border-b border-border/5 flex justify-between items-center bg-muted/5">
-                        <div className="flex items-center gap-4 text-foreground font-black text-lg font-bold uppercase tracking-[0.2em] italic">
-                            <Target size={18} className="text-primary animate-pulse" strokeWidth={3} />
-                            <span>Spatial Vector Fix</span>
-                        </div>
-                        <div className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest italic flex items-center gap-3">
-                            <Activity size={12} className="text-primary" />
-                            SYNC_TIME: {new Date(job.lastLocation.timestamp).toLocaleTimeString('en-US', { hour12: false })}
-                        </div>
+        {/* Map Container */}
+        {job.lastLocation && (
+            <div className="bg-white border border-slate-200 overflow-hidden shadow-sm rounded-3xl group transition-all duration-500">
+                <div className="px-6 py-4 border-b border-slate-200 flex justify-between items-center bg-slate-50/50">
+                    <div className="flex items-center gap-2 text-slate-900 font-bold text-sm uppercase tracking-wider">
+                        <Navigation size={16} className="text-indigo-600" />
+                        <span>ตำแหน่งปัจจุบัน</span>
                     </div>
-                    <div className="h-[400px] w-full relative">
-                        <div className="absolute inset-0 bg-primary/5 pointer-events-none group-hover:opacity-0 transition-opacity" />
-                        <TrackingMap 
-                            lastLocation={job.lastLocation}
-                            driverName={job.driverName}
-                            status={job.status}
-                        />
+                    <div className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                        <Clock size={12} />
+                        อัพเดทเมื่อ: {new Date(job.lastLocation.timestamp).toLocaleTimeString('th-TH', { hour12: false })}
                     </div>
                 </div>
-            )}
+                <div className="h-[350px] w-full relative">
+                    <TrackingMap 
+                        lastLocation={job.lastLocation}
+                        driverName={job.driverName}
+                        status={job.status}
+                    />
+                </div>
+            </div>
+        )}
 
-            {/* Mission Intelligence Matrix */}
-            <div className="grid grid-cols-1 gap-10">
-                <section className="bg-card/40 border border-border/5 rounded-[4rem] p-12 shadow-3xl space-y-10 relative overflow-hidden group">
-                        <div className="absolute top-0 right-0 p-8 opacity-5 text-primary pointer-events-none group-hover:scale-110 transition-transform duration-1000">
-                            <ShieldCheck size={120} />
+        {/* Information Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <section className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
+                <h3 className="text-lg font-bold text-slate-900 border-l-4 border-indigo-500 pl-4 uppercase tracking-tight">ข้อมูลการขนส่ง</h3>
+                
+                <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                        <p className="text-[10px] font-bold uppercase text-slate-400 mb-1 tracking-wider">หมายเลขรถ</p>
+                        <p className="text-base font-bold text-slate-900">{job.vehiclePlate.toUpperCase()}</p>
+                    </div>
+                    <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                        <p className="text-[10px] font-bold uppercase text-slate-400 mb-1 tracking-wider">พนักงานขับรถ</p>
+                        <p className="text-base font-bold text-slate-900">{job.driverName || 'กำลังมอบหมาย'}</p>
+                    </div>
+                </div>
+
+                <div className="space-y-4">
+                    <div className="flex gap-4 p-5 bg-slate-50/50 rounded-2xl border border-slate-100 group">
+                        <div className="mt-1"><div className="w-3 h-3 rounded-full bg-slate-400" /></div>
+                        <div>
+                            <p className="text-[10px] font-bold uppercase text-slate-400 mb-1 tracking-wider">ต้นทาง</p>
+                            <p className="text-sm text-slate-600 font-medium break-words">{job.origin}</p>
                         </div>
-                        <div className="flex items-center gap-6 text-foreground font-black text-lg border-l-4 border-primary pl-6 uppercase tracking-tighter italic relative">
-                            <div className={cn(
-                                "w-40 h-40 transition-all duration-700 logo-container-pure",
-                                "bg-white rounded-full shadow-2xl ring-1 ring-border/5",
-                                "dark:bg-white/10 dark:backdrop-blur-3xl dark:border dark:border-white/20 dark:shadow-[0_0_50px_rgba(255,255,255,0.1)]",
-                                "p-6"
-                            )}>
-                                <div className="relative w-full h-full rounded-full overflow-hidden bg-white/5 flex items-center justify-center">
-                                    <Image src="/logo-tactical.png" alt="LogisPro Logo" fill className="object-contain p-2 mix-blend-multiply dark:mix-blend-normal dark:brightness-110" />
+                    </div>
+                    <div className="flex gap-4 p-5 bg-indigo-50/30 rounded-2xl border border-indigo-100 group">
+                        <div className="mt-1"><MapPin size={16} className="text-indigo-500" /></div>
+                        <div>
+                            <p className="text-[10px] font-bold uppercase text-indigo-400 mb-1 tracking-wider">ปลายทาง</p>
+                            <p className="text-sm text-slate-900 font-bold break-words">{job.destination}</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* Photos & Evidence */}
+            {(job.pickupPhotos.length > 0 || job.podPhotos.length > 0 || job.signature || job.pickupSignature) && (
+                <section className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
+                    <h3 className="text-lg font-bold text-slate-900 border-l-4 border-emerald-500 pl-4 uppercase tracking-tight">หลักฐานการขนส่ง</h3>
+
+                    <div className="space-y-6">
+                        {job.podPhotos.length > 0 && (
+                            <div className="space-y-3">
+                                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">ภาพถ่ายยืนยันการส่งสินค้า</p>
+                                <div className="grid grid-cols-2 gap-3">
+                                    {job.podPhotos.map((url, i) => (
+                                        <div key={i} className="aspect-video relative rounded-xl overflow-hidden border border-slate-100 bg-slate-50 shadow-inner group cursor-pointer">
+                                            <Image src={url} alt="POD" fill className="object-cover transition-transform group-hover:scale-105" />
+                                            <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                                <ExternalLink size={20} className="text-white" />
+                                            </div>
+                                        </div>
+                                    ))}
                                 </div>
                             </div>
-                            <span>Logistics Intelligence</span>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-8">
-                            <div className="bg-muted/5 p-6 rounded-3xl border border-border/5 hover:bg-muted/10 transition-all duration-500">
-                                <p className="text-base font-bold uppercase font-black text-muted-foreground mb-2 tracking-widest italic">Asset Descriptor</p>
-                                <p className="text-lg font-black text-foreground italic tracking-tight">{job.vehiclePlate.toUpperCase()}</p>
-                            </div>
-                            <div className="bg-muted/5 p-6 rounded-3xl border border-border/5 hover:bg-muted/10 transition-all duration-500">
-                                <p className="text-base font-bold uppercase font-black text-muted-foreground mb-2 tracking-widest italic">Mission Specialist</p>
-                                <p className="text-lg font-black text-foreground italic tracking-tight">{job.driverName?.toUpperCase() || 'UNASSIGNED'}</p>
-                            </div>
-                        </div>
-
-                        <div className="space-y-6">
-                            <div className="flex gap-6 p-8 bg-indigo-500/5 rounded-[2.5rem] border border-indigo-500/10 hover:bg-indigo-500/10 transition-all group/item">
-                                <div className="mt-1"><div className="w-4 h-4 rounded-full bg-indigo-500 ring-4 ring-indigo-500/20 group-hover/item:animate-pulse" /></div>
-                                <div>
-                                    <p className="text-base font-bold uppercase font-black text-muted-foreground mb-2 tracking-widest italic">Origin Node (Inception)</p>
-                                    <p className="text-xl text-muted-foreground font-bold uppercase tracking-tight">{job.origin}</p>
+                        )}
+                        
+                        {job.signature && (
+                            <div className="space-y-3">
+                                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider text-center">ลายเซ็นผู้รับสินค้า</p>
+                                <div className="h-24 bg-slate-50 rounded-xl overflow-hidden relative border border-slate-100">
+                                    <Image src={job.signature} alt="POD Sig" fill className="object-contain p-4" />
                                 </div>
                             </div>
-                            <div className="flex gap-6 p-8 bg-primary/5 rounded-[2.5rem] border border-primary/10 hover:bg-primary/10 transition-all group/item">
-                                <div className="mt-1"><MapPin size={20} className="text-primary group-hover/item:animate-bounce" strokeWidth={3} /></div>
-                                <div>
-                                    <p className="text-base font-bold uppercase font-black text-muted-foreground mb-2 tracking-widest italic">Destination Node (Terminus)</p>
-                                    <p className="text-lg text-foreground font-black uppercase tracking-tight italic">{job.destination}</p>
-                                </div>
-                            </div>
-                        </div>
+                        )}
+                    </div>
                 </section>
+            )}
+        </div>
 
-                {/* Media Archive (Photos) */}
-                {(job.pickupPhotos.length > 0 || job.podPhotos.length > 0) && (
-                    <section className="bg-card/40 border border-border/5 rounded-[4rem] p-12 shadow-3xl space-y-10 relative overflow-hidden group">
-                            <div className="absolute top-0 right-0 p-8 opacity-5 text-accent pointer-events-none group-hover:scale-110 transition-transform duration-1000">
-                                <Camera size={120} />
-                            </div>
-                            <div className="flex items-center gap-4 text-foreground font-black text-lg border-l-4 border-accent pl-6 uppercase tracking-tighter italic">
-                                <Camera size={24} className="text-accent" strokeWidth={3} />
-                                <span>Visual Mission Matrix</span>
-                            </div>
-
-                            <div className="space-y-12">
-                                {job.pickupPhotos.length > 0 && (
-                                    <div className="space-y-6">
-                                        <p className="text-base font-bold font-black text-muted-foreground px-2 uppercase tracking-[0.3em] italic">Inception Point Data (Pickup)</p>
-                                        <div className="grid grid-cols-2 gap-6">
-                                            {job.pickupPhotos.map((url, i) => (
-                                                <div key={i} className="aspect-video relative rounded-[2rem] overflow-hidden border border-border/5 bg-background/40 shadow-inner group/photo cursor-pointer">
-                                                    <Image src={url} alt="Pickup" fill className="object-cover transition-transform duration-700 group-hover/photo:scale-110" />
-                                                    <div className="absolute inset-0 bg-primary/20 opacity-0 group-hover/photo:opacity-100 transition-opacity flex items-center justify-center">
-                                                        <ExternalLink size={24} className="text-primary-foreground" strokeWidth={3} />
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-
-                                {job.podPhotos.length > 0 && (
-                                    <div className="space-y-6">
-                                        <p className="text-base font-bold font-black text-muted-foreground px-2 uppercase tracking-[0.3em] italic">Terminus Point Data (POD)</p>
-                                        <div className="grid grid-cols-2 gap-6">
-                                            {job.podPhotos.map((url, i) => (
-                                                <div key={i} className="aspect-video relative rounded-[2rem] overflow-hidden border border-border/5 bg-background/40 shadow-inner group/photo cursor-pointer">
-                                                    <Image src={url} alt="POD" fill className="object-cover transition-transform duration-700 group-hover/photo:scale-110" />
-                                                    <div className="absolute inset-0 bg-primary/20 opacity-0 group-hover/photo:opacity-100 transition-opacity flex items-center justify-center">
-                                                        <ExternalLink size={24} className="text-primary-foreground" strokeWidth={3} />
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-                                
-                                {(job.signature || job.pickupSignature) && (
-                                    <div className="grid grid-cols-2 gap-8 pt-4">
-                                        {job.pickupSignature && (
-                                            <div className="space-y-4">
-                                                <p className="text-base font-bold uppercase font-black text-muted-foreground text-center tracking-widest italic">Inception Identifier</p>
-                                                <div className="h-28 bg-white/[0.9] rounded-[1.5rem] overflow-hidden relative border border-border/10 group-hover:bg-white transition-colors duration-500">
-                                                    <Image src={job.pickupSignature} alt="Pickup Sig" fill className="object-contain p-6" />
-                                                </div>
-                                            </div>
-                                        )}
-                                        {job.signature && (
-                                            <div className="space-y-4">
-                                                <p className="text-base font-bold uppercase font-black text-muted-foreground text-center tracking-widest italic">Terminus Identifier</p>
-                                                <div className="h-28 bg-white/[0.9] rounded-[1.5rem] overflow-hidden relative border border-border/10 group-hover:bg-white transition-colors duration-500">
-                                                    <Image src={job.signature} alt="POD Sig" fill className="object-contain p-6" />
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
-                            </div>
-                    </section>
-                )}
-
-                {currentStepIndex === 4 && (
-                    <div className="space-y-10 pt-6 animate-in fade-in slide-in-from-bottom-10 duration-1000">
-                        <PODDownloadButton job={job} />
-                        <FeedbackForm jobId={job.jobId} />
-                    </div>
-                )}
+        {currentStepIndex === 4 && (
+            <div className="space-y-6 pt-4 animate-in fade-in slide-in-from-bottom-5 duration-700">
+                <PODDownloadButton job={job} />
+                <FeedbackForm jobId={job.jobId} />
             </div>
+        )}
 
-            {/* Tactical Footer */}
-            <div className="text-center pt-16 flex flex-col items-center gap-6">
-                <div className="flex items-center gap-6 opacity-20">
-                    <div className="w-12 h-px bg-border" />
-                    <Zap size={14} className="text-primary" />
-                    <div className="w-12 h-px bg-border" />
-                </div>
-                <p className="text-base font-bold text-muted-foreground font-black uppercase tracking-[0.6em] italic">
-                    © 2026 LOGISPRO ELITE • SPATIAL INTELLIGENCE GRID
-                </p>
+        {/* Footer */}
+        <div className="text-center pt-10 pb-10 flex flex-col items-center gap-4 opacity-50">
+            <div className="flex items-center gap-4">
+                <div className="w-8 h-px bg-slate-200" />
+                <Package size={14} className="text-slate-400" />
+                <div className="w-8 h-px bg-slate-200" />
             </div>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">
+                พัฒนาระบบโดย LOGISPRO TMS • 2026
+            </p>
         </div>
 
         <ShareTrackingButton jobId={job.jobId} />

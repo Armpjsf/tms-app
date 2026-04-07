@@ -399,7 +399,7 @@ export default async function BillingPrintPage(props: Props) {
                 </div>
 
                 {/* 6. Notes Section */}
-                <div className="border-t border-slate-200 pt-3 mt-4 flex gap-4 text-[11px] page-break-avoid">
+                <div className="border-t border-slate-200 pt-3 mt-4 flex gap-4 text-[11px]">
                     <div className="w-6 flex justify-center mt-0.5"><MessageSquare size={16} className="text-slate-800" /></div>
                     <div className="font-bold w-16">หมายเหตุ</div>
                     <div className="text-slate-700 whitespace-pre-wrap flex-1 leading-relaxed italic opacity-80">
@@ -415,10 +415,10 @@ export default async function BillingPrintPage(props: Props) {
                         <div className="w-24 shrink-0 flex flex-col items-center">
                             <div className="text-[10px] text-slate-500 mb-1 text-center font-bold">สแกนเปิดเอกสาร</div>
                             <div className="w-20 h-20 bg-white flex items-center justify-center p-1 border-2 border-slate-200 rounded-lg shadow-sm overflow-hidden">
-                                <img 
-                                    src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(`${baseUrl}/public/invoice/${note.Billing_Note_ID}?lang=${lang}&mode=print`)}`} 
-                                    alt="Billing QR Code" 
-                                    className="w-full h-full object-contain" 
+                                <img
+                                    src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(`${baseUrl}/public/invoice/${note.Billing_Note_ID}?lang=${lang}&mode=print`)}`}
+                                    alt="Billing QR Code"
+                                    className="w-full h-full object-contain"
                                 />
                             </div>
                         </div>
@@ -435,15 +435,22 @@ export default async function BillingPrintPage(props: Props) {
                                 <div className="text-slate-600 truncate">{contactName}</div>
                                 <div className="text-slate-500 text-[9px]">{issueDate.toLocaleDateString(localeStr)}</div>
                             </div>
-                            <div className="flex flex-col items-center">
+                            <div className="flex flex-col items-center relative">
                                 <div className="h-10 flex items-center justify-center mb-1">
-                                    <div className="w-12 h-12 rounded-full border-2 border-red-500 text-red-500 flex items-center justify-center text-[7px] font-bold p-1 opacity-30 rotate-[-15deg]">
-                                        COMPANY<br/>STAMP
-                                    </div>
+                                    {company?.stamp_url ? (
+                                        <img 
+                                            src={company.stamp_url} 
+                                            alt="Company Stamp" 
+                                            className="absolute w-20 h-20 object-contain opacity-70 -top-6 rotate-[-10deg] pointer-events-none"
+                                        />
+                                    ) : (
+                                        <div className="w-12 h-12 rounded-full border-2 border-red-500 text-red-500 flex items-center justify-center text-[7px] font-bold p-1 opacity-30 rotate-[-15deg]">
+                                            COMPANY<br/>STAMP
+                                        </div>
+                                    )}
                                 </div>
-                                <div className="font-bold whitespace-nowrap">ตราประทับ</div>
-                            </div>
-                            <div>
+                                <div className="font-bold whitespace-nowrap mt-4">ตราประทับ</div>
+                            </div>                            <div>
                                 <div className="h-10 border-b border-dashed border-slate-400 mb-1 mx-1"></div>
                                 <div className="font-bold mb-0.5 whitespace-nowrap">ผู้รับ (ลูกค้า)</div>
                                 <div className="text-slate-600 truncate px-1">{note.Customer_Name}</div>
@@ -455,18 +462,17 @@ export default async function BillingPrintPage(props: Props) {
                         </div>
                     </div>
                 </div>
-            </div>
+                </div>
 
-            <style type="text/css" media="print">{`
+                <style type="text/css" media="print">{`
                 @page { size: A4; margin: 5mm 8mm; }
                 body { visibility: hidden; background: white !important; -webkit-print-color-adjust: exact !important; }
                 #printable-content, #printable-content * { visibility: visible; }
-                #printable-content { position: absolute; left: 0; top: 0; width: 100%; background: white !important; padding: 0 !important; }
+                #printable-content { width: 100%; background: white !important; padding: 0 !important; }
                 .page-break-avoid { break-inside: avoid; }
                 img { display: block !important; opacity: 1 !important; }
                 table { page-break-inside: auto; }
                 tr { page-break-inside: avoid; page-break-after: auto; }
-            `}</style>
-        </div>
+                `}</style>        </div>
     )
 }

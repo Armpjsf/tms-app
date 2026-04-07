@@ -28,96 +28,43 @@ export function JobDetailClient({ job, success }: JobDetailClientProps) {
     const [optimizing, setOptimizing] = useState(false)
     const router = useRouter()
 
-    const handleOptimizeRoute = async () => {
-        setOptimizing(true)
-        try {
-            const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
-                navigator.geolocation.getCurrentPosition(resolve, reject);
-            });
-
-            const origin = {
-                name: "Current Location",
-                lat: pos.coords.latitude,
-                lng: pos.coords.longitude
-            };
-
-            const dests = job.original_destinations_json || [];
-            if (!Array.isArray(dests) || dests.length < 2) {
-                toast.info("งานนี้มีจุดหมายเดียว ไม่จำเป็นต้องจัดลำดับใหม่ครับ");
-                return;
-            }
-
-            const validDests = dests.map((d: { name: string, lat: string, lng: string }) => ({
-                name: d.name,
-                lat: parseFloat(d.lat),
-                lng: parseFloat(d.lng)
-            })).filter((d: { lat: number, lng: number }) => !isNaN(d.lat) && !isNaN(d.lng));
-
-            if (validDests.length < dests.length) {
-                toast.warning("บางจุดหมายไม่มีพิกัด (Lat/Lon) กรุณาแจ้งผู้ควบคุมงานก่อนครับ");
-                return;
-            }
-
-            const result = await optimizeRoute(origin, validDests);
-
-            if (result.success) {
-                const reordered = result.optimizedOrder.map(idx => dests[idx]);
-                const updateRes = await updateJob(job.Job_ID, {
-                    original_destinations_json: JSON.stringify(reordered),
-                    Notes: (job.Notes || "") + `\n[AI Optimized: ${new Date().toLocaleTimeString()}]`
-                });
-
-                if (updateRes.success) {
-                    toast.success(`AI จัดลำดับใหม่ ประหยัดเวลาได้ ${result.estimatedDurationMinutes} นาที`);
-                    router.refresh();
-                } else {
-                    toast.error("ไม่สามารถบันทึกลำดับใหม่ได้");
-                }
-            }
-        } catch {
-            toast.error("กรุณาเปิด GPS เพื่อใช้งานการวิเคราะห์เส้นทาง");
-        } finally {
-            setOptimizing(false)
-        }
-    }
-
     const destinations = typeof job?.original_destinations_json === 'string' 
         ? JSON.parse(job.original_destinations_json) 
         : job?.original_destinations_json || [];
 
     return (
-        <div className="min-h-screen bg-background pb-32 pt-24 relative overflow-hidden flex flex-col">
-            {/* High-end Background Decor */}
+        <div className="min-h-screen bg-background pb-40 pt-24 relative overflow-hidden flex flex-col">
+            {/* Background Decor */}
             <div className="absolute top-0 right-[-10%] w-[600px] h-[600px] bg-primary/5 rounded-full blur-[140px] -translate-y-1/2 pointer-events-none" />
             <div className="absolute bottom-0 left-[-10%] w-[400px] h-[400px] bg-accent/5 rounded-full blur-[120px] pointer-events-none" />
 
-            <MobileHeader title="รายละเอียดงาน" showBack />
+            <MobileHeader title="รายละเอียดภารกิจ" showBack />
 
-            {/* COMPACT STICKY TAB SELECTOR */}
-            <div className="px-5 mb-6 mt-1 sticky top-24 z-[50]">
-                <div className="bg-card/60 backdrop-blur-3xl p-1.5 rounded-2xl border border-border/10 flex shadow-md">
+            {/* STICKY TAB SELECTOR */}
+            <div className="px-5 mb-8 mt-2 sticky top-24 z-[50]">
+                <div className="bg-card/80 backdrop-blur-xl p-2 rounded-2xl border border-border/10 flex shadow-lg ring-1 ring-white/5">
                     <button 
                         onClick={() => setActiveTab('mission')}
                         className={cn(
-                            "flex-1 flex items-center justify-center gap-2 h-14 rounded-xl font-black uppercase tracking-widest transition-all text-xs italic",
+                            "flex-1 flex items-center justify-center gap-3 h-14 rounded-xl font-black uppercase tracking-widest transition-all text-sm italic",
                             activeTab === 'mission' ? "bg-primary text-white shadow-lg" : "text-muted-foreground hover:text-foreground"
                         )}
                     >
-                        <Activity size={18} /> ดำเนินงาน
+                        <Activity size={20} /> ดำเนินงาน
                     </button>
                     <button 
                         onClick={() => setActiveTab('info')}
                         className={cn(
-                            "flex-1 flex items-center justify-center gap-2 h-14 rounded-xl font-black uppercase tracking-widest transition-all text-xs italic",
+                            "flex-1 flex items-center justify-center gap-3 h-14 rounded-xl font-black uppercase tracking-widest transition-all text-sm italic",
                             activeTab === 'info' ? "bg-primary text-white shadow-lg" : "text-muted-foreground hover:text-foreground"
                         )}
                     >
-                        <Info size={18} /> ข้อมูลงาน
+                        <Info size={20} /> ข้อมูลงาน
                     </button>
                 </div>
             </div>
 
-            <div className="flex-1 px-6 overflow-y-auto">
+            <div className="flex-1 px-6 overflow-y-auto space-y-8 pb-10">
                 <AnimatePresence mode="wait">
                     {activeTab === 'mission' ? (
                         <motion.div 
@@ -125,31 +72,33 @@ export function JobDetailClient({ job, success }: JobDetailClientProps) {
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -20 }}
-                            className="space-y-8"
+                            className="space-y-10"
                         >
-                             {/* Success Notification Inline - Ultra Compact */}
+                             {/* Success Notification */}
                              {success && (
                                  <motion.div 
-                                     initial={{ scale: 0.9, opacity: 0 }}
+                                     initial={{ scale: 0.95, opacity: 0 }}
                                      animate={{ scale: 1, opacity: 1 }}
-                                     className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3 flex items-center gap-3 text-emerald-500 mb-2"
+                                     className="bg-emerald-500/10 border border-emerald-500/30 rounded-2xl p-4 flex items-center gap-4 text-emerald-500 shadow-sm"
                                  >
-                                     <CheckCircle size={18} />
-                                     <p className="font-black uppercase tracking-widest text-[10px] italic">ทำรายการสำเร็จ!</p>
+                                     <div className="w-10 h-10 bg-emerald-500/20 rounded-xl flex items-center justify-center">
+                                         <CheckCircle size={22} />
+                                     </div>
+                                     <p className="font-black uppercase tracking-widest text-xs italic">อัพเดทสถานะสำเร็จ!</p>
                                  </motion.div>
                              )}
 
-                            {/* Job ID Header - More Compact */}
-                            <div className="flex items-end justify-between px-1">
-                                <div className="space-y-0.5">
-                                    <p className="text-accent text-[9px] font-black uppercase tracking-[0.3em] leading-none">Job No.</p>
-                                    <h2 className="text-3xl font-black text-foreground tracking-tighter uppercase italic leading-none">
+                            {/* Job ID Header */}
+                            <div className="flex items-end justify-between px-2">
+                                <div className="space-y-1">
+                                    <p className="text-accent text-[10px] font-black uppercase tracking-[0.4em] leading-none opacity-70">Job ID Descriptor</p>
+                                    <h2 className="text-4xl font-black text-foreground tracking-tighter uppercase italic leading-none">
                                         #{String(job?.Job_ID || '').slice(-8).toUpperCase()}
                                     </h2>
                                 </div>
                                 <div className="text-right pb-1">
-                                    <p className="text-muted-foreground text-[8px] font-black uppercase tracking-widest mb-0.5">Plan Date</p>
-                                    <span className="font-black text-xs text-primary italic">
+                                    <p className="text-muted-foreground text-[10px] font-black uppercase tracking-widest mb-1 opacity-60">Plan Date</p>
+                                    <span className="font-black text-sm text-primary italic bg-primary/10 px-3 py-1 rounded-lg">
                                         {job?.Plan_Date ? new Date(job.Plan_Date).toLocaleDateString('th-TH', { day: '2-digit', month: 'short' }) : "-"}
                                     </span>
                                 </div>
@@ -157,44 +106,34 @@ export function JobDetailClient({ job, success }: JobDetailClientProps) {
 
                             <JobWorkflow currentStatus={job?.Job_Status || 'New'} />
 
-                            <div className="glass-panel p-8 rounded-[3rem] border-primary/10 shadow-2xl space-y-8 relative overflow-hidden">
-                                <div className="absolute top-0 right-0 p-8 text-primary/5 pointer-events-none transform translate-x-4 -translate-y-4">
-                                    <Target size={120} />
+                            <div className="glass-panel p-8 rounded-[3rem] border-primary/20 shadow-xl bg-card/40 backdrop-blur-md space-y-8 relative overflow-hidden">
+                                <div className="absolute top-0 right-0 p-10 text-primary/5 pointer-events-none transform translate-x-4 -translate-y-4">
+                                    <Target size={160} />
                                 </div>
 
                                 <div className="flex items-center justify-between relative z-10">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary shadow-inner">
-                                            <Navigation size={24} strokeWidth={2.5} className="animate-pulse" />
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-14 h-14 rounded-2xl bg-primary/20 flex items-center justify-center text-primary shadow-inner border border-primary/10">
+                                            <Navigation size={28} strokeWidth={2.5} className="animate-pulse" />
                                         </div>
                                         <div>
-                                            <p className="text-muted-foreground text-[9px] font-black uppercase tracking-widest mb-0.5">สถานะปัจจุบัน</p>
-                                            <h3 className="text-xl font-black text-foreground uppercase tracking-tight italic leading-none">
-                                                {job?.Job_Status === 'New' || job?.Job_Status === 'Assigned' ? 'รอเริ่มงาน' : job?.Job_Status}
+                                            <p className="text-muted-foreground text-[10px] font-black uppercase tracking-widest mb-1 opacity-70">Operational Status</p>
+                                            <h3 className="text-2xl font-black text-foreground uppercase tracking-tight italic leading-none">
+                                                {job?.Job_Status === 'New' || job?.Job_Status === 'Assigned' ? 'W_PENDING' : job?.Job_Status.toUpperCase()}
                                             </h3>
                                         </div>
                                     </div>
                                     <NavigationButton job={job} />
                                 </div>
 
-                                <RouteStrip 
-                                    origin={job?.Origin_Location}
-                                    destination={job?.Dest_Location || job?.Route_Name}
-                                    destinations={destinations}
-                                    status={job?.Job_Status}
-                                />
-
-                                {(job?.Job_Status === 'Accepted' || job?.Job_Status === 'In Transit' || job?.Job_Status === 'Arrived Pickup') && (
-                                    <Button
-                                        variant="outline"
-                                        onClick={handleOptimizeRoute}
-                                        disabled={optimizing}
-                                        className="w-full h-11 rounded-xl border-emerald-500/20 bg-emerald-500/5 text-emerald-600 font-black gap-2 text-[10px] uppercase tracking-widest border-dashed"
-                                    >
-                                        {optimizing ? <Loader2 size={12} className="animate-spin" /> : <Sparkles className="text-emerald-500" size={12} />}
-                                        AI ช่วยจัดลำดับเส้นทาง
-                                    </Button>
-                                )}
+                                <div className="pt-2">
+                                    <RouteStrip 
+                                        origin={job?.Origin_Location}
+                                        destination={job?.Dest_Location || job?.Route_Name}
+                                        destinations={destinations}
+                                        status={job?.Job_Status}
+                                    />
+                                </div>
                             </div>
                         </motion.div>
                     ) : (
@@ -203,83 +142,89 @@ export function JobDetailClient({ job, success }: JobDetailClientProps) {
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -20 }}
-                            className="space-y-8 pb-10"
+                            className="space-y-8"
                         >
-                            {/* Customer Card - Compact */}
-                            <div className="glass-panel p-6 rounded-[2rem] space-y-6 border-primary/10">
+                            {/* Customer Card */}
+                            <div className="glass-panel p-7 rounded-[2.5rem] space-y-8 border-primary/10 shadow-lg bg-card/40">
                                 <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-12 h-12 rounded-xl bg-card border border-border/10 flex items-center justify-center shadow-lg">
-                                            <User className="text-primary" size={24} strokeWidth={2.5} />
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-14 h-14 rounded-2xl bg-card border border-border/10 flex items-center justify-center shadow-md">
+                                            <User className="text-primary" size={28} strokeWidth={2.5} />
                                         </div>
                                         <div>
-                                            <p className="text-muted-foreground text-[9px] font-black uppercase tracking-widest mb-0.5">ผู้รับสินค้า</p>
-                                            <h3 className="text-xl font-black text-foreground tracking-tight italic uppercase">{job?.Customer_Name}</h3>
+                                            <p className="text-muted-foreground text-[10px] font-black uppercase tracking-widest mb-1.5 opacity-70">Client Entity</p>
+                                            <h3 className="text-2xl font-black text-foreground tracking-tight italic uppercase leading-none">{job?.Customer_Name}</h3>
                                         </div>
                                     </div>
-                                    <div className="px-2 py-1 bg-muted rounded-lg text-[8px] font-black text-foreground uppercase tracking-widest">
-                                        ID: {job?.Customer_ID}
+                                    <div className="px-3 py-1.5 bg-muted rounded-xl text-[10px] font-black text-foreground uppercase tracking-widest border border-border/50">
+                                        {job?.Customer_ID}
                                     </div>
                                 </div>
                                 
-                                <div className="space-y-3">
-                                    <div className="flex items-start gap-3 p-4 rounded-2xl bg-card border border-border/5">
-                                        <MapPin size={18} className="text-accent shrink-0 mt-0.5" />
+                                <div className="space-y-4">
+                                    <div className="flex items-start gap-4 p-5 rounded-2xl bg-card/60 border border-border/10 shadow-inner">
+                                        <MapPin size={22} className="text-accent shrink-0 mt-0.5" />
                                         <div className="flex-1 min-w-0">
-                                            <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest mb-0.5">พิกัดส่งของ</p>
-                                            <p className="text-foreground font-bold text-xs leading-snug italic break-words line-clamp-3">{job?.Dest_Location || job?.Route_Name}</p>
+                                            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1.5 opacity-60">Terminus Location</p>
+                                            <p className="text-foreground font-bold text-sm leading-snug italic break-words">{job?.Dest_Location || job?.Route_Name}</p>
                                         </div>
                                     </div>
-                                    <div className="flex items-center justify-between p-4 rounded-2xl bg-emerald-500/5 border border-emerald-500/10">
-                                        <div className="flex items-center gap-3 min-w-0">
-                                            <Phone size={18} className="text-emerald-500 shrink-0" />
+                                    <div className="flex items-center justify-between p-5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 shadow-sm">
+                                        <div className="flex items-center gap-4 min-w-0">
+                                            <div className="w-10 h-10 bg-emerald-500/20 rounded-xl flex items-center justify-center">
+                                                <Phone size={20} className="text-emerald-500 shrink-0" />
+                                            </div>
                                             <div className="min-w-0">
-                                                <p className="text-[8px] font-black text-muted-foreground uppercase tracking-widest mb-0.5">เบอร์โทร</p>
-                                                <p className="text-emerald-600 font-black text-base italic tracking-widest truncate">ติดต่อลูกค้า</p>
+                                                <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest mb-1 opacity-70">Voice Channel</p>
+                                                <p className="text-emerald-600 font-black text-lg italic tracking-widest truncate">CONTACT CLIENT</p>
                                             </div>
                                         </div>
-                                        <button className="px-4 h-10 bg-emerald-500 text-white rounded-xl font-black text-[10px] uppercase tracking-widest shadow-md">
-                                            โทรออก
+                                        <button className="px-6 h-12 bg-emerald-600 text-white rounded-xl font-black text-xs uppercase tracking-widest shadow-lg active:scale-95 transition-all border-b-4 border-emerald-800/40">
+                                            DIAL
                                         </button>
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="glass-panel p-6 rounded-[2rem] space-y-4 border-accent/10">
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="p-4 bg-card border border-border/10 rounded-2xl flex flex-col items-center justify-center text-center">
-                                        <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest mb-1">น้ำหนัก</p>
-                                        <div className="flex items-baseline gap-1">
-                                            <h5 className="text-xl font-black text-foreground italic leading-none">{job?.Weight_Kg?.toLocaleString() || '0.0'}</h5>
-                                            <span className="text-[8px] font-black text-muted-foreground">KG</span>
+                            <div className="glass-panel p-7 rounded-[2.5rem] space-y-6 border-accent/10 shadow-lg bg-card/40">
+                                <div className="grid grid-cols-2 gap-6">
+                                    <div className="p-5 bg-card border border-border/10 rounded-2xl flex flex-col items-center justify-center text-center shadow-sm">
+                                        <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-2 opacity-70">Mass Load</p>
+                                        <div className="flex items-baseline gap-1.5">
+                                            <h5 className="text-3xl font-black text-foreground italic leading-none">{job?.Weight_Kg?.toLocaleString() || '0.0'}</h5>
+                                            <span className="text-[10px] font-black text-muted-foreground uppercase">KG</span>
                                         </div>
                                     </div>
-                                    <div className="p-4 bg-card border border-border/10 rounded-2xl flex flex-col items-center justify-center text-center">
-                                        <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest mb-1">ปริมาตร</p>
-                                        <div className="flex items-baseline gap-1">
-                                            <h5 className="text-xl font-black text-foreground italic leading-none">{job?.Volume_Cbm || '0.0'}</h5>
-                                            <span className="text-[8px] font-black text-muted-foreground">CBM</span>
+                                    <div className="p-5 bg-card border border-border/10 rounded-2xl flex flex-col items-center justify-center text-center shadow-sm">
+                                        <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-2 opacity-70">Volume</p>
+                                        <div className="flex items-baseline gap-1.5">
+                                            <h5 className="text-3xl font-black text-foreground italic leading-none">{job?.Volume_Cbm || '0.0'}</h5>
+                                            <span className="text-[10px] font-black text-muted-foreground uppercase">CBM</span>
                                         </div>
                                     </div>
                                 </div>
-                                <div className="p-4 bg-card border border-border/10 rounded-2xl">
-                                    <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest mb-1">บันทึกเพิ่มเติม</p>
-                                    <p className="text-foreground font-bold leading-relaxed text-[11px] italic break-words">{job?.Notes || "ไม่มีข้อมูล"}</p>
+                                <div className="p-6 bg-card/60 border border-border/10 rounded-2xl shadow-inner">
+                                    <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-2 opacity-70">Mission Protocol Notes</p>
+                                    <p className="text-foreground font-bold leading-relaxed text-sm italic break-words">{job?.Notes || "No tactical notes available."}</p>
                                 </div>
                             </div>
 
-                            {/* Payout Highlight - Compact Slim */}
+                            {/* Payout - High visibility */}
                             {job?.Show_Price_To_Driver && (
-                                <div className="p-6 rounded-[2rem] bg-slate-900 border border-primary/20 flex items-center justify-between shadow-lg">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
-                                            <TrendingUp size={16} className="text-primary" />
+                                <div className="p-7 rounded-[2.5rem] bg-slate-900 border border-primary/30 flex items-center justify-between shadow-2xl relative overflow-hidden group">
+                                    <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+                                    <div className="flex items-center gap-4 relative z-10">
+                                        <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center border border-primary/20 shadow-inner">
+                                            <TrendingUp size={24} className="text-primary" />
                                         </div>
-                                        <h4 className="text-[10px] font-black uppercase tracking-widest text-white/70 italic">ค่าตอบแทน</h4>
+                                        <div>
+                                            <p className="text-[9px] font-black uppercase tracking-[0.4em] text-white/50 mb-0.5">Asset Compensation</p>
+                                            <h4 className="text-sm font-black uppercase tracking-widest text-white italic">PAYOUT_CREDIT</h4>
+                                        </div>
                                     </div>
-                                    <div className="flex items-baseline gap-2">
-                                        <span className="text-2xl font-black text-white tracking-tighter italic">฿{(job?.Cost_Driver_Total || 0).toLocaleString()}</span>
-                                        <div className="px-2 py-0.5 bg-primary rounded-md text-white font-black text-[7px] uppercase tracking-widest">PRO</div>
+                                    <div className="flex items-baseline gap-2 relative z-10">
+                                        <span className="text-4xl font-black text-white tracking-tighter italic">฿{(job?.Cost_Driver_Total || 0).toLocaleString()}</span>
+                                        <div className="px-3 py-1 bg-primary rounded-lg text-white font-black text-[9px] uppercase tracking-widest shadow-lg shadow-primary/40">ELITE</div>
                                     </div>
                                 </div>
                             )}
@@ -288,12 +233,14 @@ export function JobDetailClient({ job, success }: JobDetailClientProps) {
                 </AnimatePresence>
             </div>
 
-            {/* Floating Action Center */}
-            <div className="fixed bottom-32 left-6 right-6 z-[100] animate-in slide-in-from-bottom-10 duration-500">
-                <JobActionButton job={{
-                    ...job,
-                    original_destinations_json: destinations
-                } as Parameters<typeof JobActionButton>[0]['job']} />
+            {/* FLOATING ACTION CENTER - RELIABLE POSITIONING */}
+            <div className="fixed bottom-[100px] left-6 right-6 z-[140] animate-in slide-in-from-bottom-10 duration-700">
+                <div className="shadow-[0_-20px_50px_rgba(0,0,0,0.3)] rounded-[2.5rem]">
+                    <JobActionButton job={{
+                        ...job,
+                        original_destinations_json: destinations
+                    } as Parameters<typeof JobActionButton>[0]['job']} />
+                </div>
             </div>
         </div>
     )

@@ -28,6 +28,7 @@ interface AccountingProfile {
   company_name_th: string
   company_name_en: string
   logo_url: string
+  stamp_url: string
   tax_id: string
   address: string
   phone: string
@@ -44,6 +45,7 @@ const DEFAULT_PROFILE: AccountingProfile = {
   company_name_th: "",
   company_name_en: "",
   logo_url: "",
+  stamp_url: "",
   tax_id: "",
   address: "",
   phone: "",
@@ -145,7 +147,7 @@ export default function AccountingProfilePage() {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <div className="space-y-2 md:col-span-2">
+                    <div className="space-y-2">
                         <label className="text-xs font-black text-muted-foreground uppercase tracking-widest ml-2">URL โลโก้บริษัท (สำหรับใบวางบิล)</label>
                         <div className="relative group">
                             <Globe className="absolute left-5 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-blue-500 transition-colors" size={18} />
@@ -154,6 +156,18 @@ export default function AccountingProfilePage() {
                                 onChange={e => setProfile({...profile, logo_url: e.target.value})}
                                 className="w-full h-16 pl-14 pr-6 rounded-2xl bg-black/20 border-2 border-transparent focus:border-blue-500/50 outline-none font-bold text-lg transition-all"
                                 placeholder="https://your-domain.com/logo.png"
+                            />
+                        </div>
+                    </div>
+                    <div className="space-y-2">
+                        <label className="text-xs font-black text-muted-foreground uppercase tracking-widest ml-2">URL ตราประทับบริษัท (Stamp)</label>
+                        <div className="relative group">
+                            <ShieldCheck className="absolute left-5 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-blue-500 transition-colors" size={18} />
+                            <input 
+                                value={profile.stamp_url || ''}
+                                onChange={e => setProfile({...profile, stamp_url: e.target.value})}
+                                className="w-full h-16 pl-14 pr-6 rounded-2xl bg-black/20 border-2 border-transparent focus:border-blue-500/50 outline-none font-bold text-lg transition-all"
+                                placeholder="https://your-domain.com/stamp.png"
                             />
                         </div>
                     </div>

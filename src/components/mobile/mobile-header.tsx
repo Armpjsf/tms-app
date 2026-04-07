@@ -37,13 +37,13 @@ export function MobileHeader({ title, showBack, rightElement }: Props) {
                 <ChevronLeft size={20} />
             </button>
         )}
-        <div className="flex flex-col">
-            <h1 className="font-black text-accent text-xl tracking-tighter uppercase leading-none italic">{title}</h1>
+        <div className="flex flex-col min-w-0">
+            <h1 className="font-black text-accent text-xl tracking-tighter uppercase leading-none italic truncate">{title}</h1>
             <span 
                 onClick={clearCache}
-                className="text-base font-bold text-primary italic font-black cursor-pointer hover:opacity-80 transition-opacity uppercase tracking-widest mt-1"
+                className="text-[8px] font-black text-primary italic cursor-pointer hover:opacity-80 transition-opacity uppercase tracking-[0.2em] mt-1.5"
             >
-                LOGIS-PRO v1.2.0
+                LOGIS-PRO v1.2.5
             </span>
         </div>
       </div>

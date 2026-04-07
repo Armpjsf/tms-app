@@ -323,8 +323,8 @@ export default async function PublicInvoicePage(props: Props) {
                         <div className="p-6 bg-slate-50 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">
                             <div className="absolute top-0 right-0 p-4 opacity-[0.03] rotate-12"><MessageSquare size={80} /></div>
                             <h4 className="font-black text-[10px] uppercase tracking-widest text-slate-400 mb-2">หมายเหตุ / Notes</h4>
-                            <p className="text-sm text-slate-600 leading-relaxed italic">
-                                {note.Remarks || company?.invoice_notes || 'กรุณาชำระเงินภายในวันที่กำหนด'}
+                            <p className="text-sm text-slate-600 leading-relaxed italic whitespace-pre-wrap">
+                                {note.Remarks || company?.invoice_notes || '"DD TRANSPORT ขอแจ้งการปรับเปลี่ยนสัญลักษณ์องค์กรใหม่ (LOGO) เพื่อเพิ่มความทันสมัยและสอดคล้องกับวิสัยทัศน์การเติบโตของบริษัทในอนาคต โดยมีผลตั้งแต่วันที่ 1 เมษายน 2567 เป็นต้นไป"'}
                             </p>
                         </div>
                         

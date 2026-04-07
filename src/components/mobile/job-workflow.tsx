@@ -59,7 +59,7 @@ export function JobWorkflow({ currentStatus, className }: JobWorkflowProps) {
                 <StepIcon size={20} className={isActive ? "animate-bounce" : ""} />
               </div>
               <p className={cn(
-                "mt-3 text-[9px] font-black text-center uppercase tracking-wider transition-colors duration-500 break-words leading-tight",
+                "mt-3 text-[11px] font-black text-center uppercase tracking-wider transition-colors duration-500 break-words leading-tight",
                 isCompleted || isActive ? "text-primary" : "text-muted-foreground"
               )}>
                 {step.label}
@@ -69,23 +69,23 @@ export function JobWorkflow({ currentStatus, className }: JobWorkflowProps) {
         })}
       </div>
       
-      {/* Tactical Guidance Overlay */}
+      {/* Guidance Overlay - LARGER & CLEARER */}
       {currentIndex < STEPS.length - 1 && normalizedStatus !== 'Completed' && (
-        <div className="mt-10 p-6 bg-card border-2 border-primary/10 rounded-[2.5rem] flex items-start gap-5 shadow-xl relative overflow-hidden">
+        <div className="mt-10 p-7 bg-card border-2 border-primary/20 rounded-[2.5rem] flex items-start gap-6 shadow-2xl relative overflow-hidden ring-1 ring-white/5">
           <div className="absolute top-0 right-0 p-4 opacity-5">
-             <Clock size={80} />
+             <Clock size={100} />
           </div>
-          <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center flex-shrink-0 text-primary">
-             <Clock className="animate-spin-slow" size={22} strokeWidth={2.5} />
+          <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center flex-shrink-0 text-primary border border-primary/10 shadow-inner">
+             <Clock className="animate-spin-slow" size={26} strokeWidth={2.5} />
           </div>
           <div className="space-y-2 relative z-10">
-            <p className="text-xs font-black text-primary uppercase tracking-[0.3em]">ขั้นตอนปัจจุบัน</p>
-            <p className="text-base font-bold text-foreground leading-relaxed">
-               {currentIndex === -1 ? 'ตรวจพบงานใหม่ กรุณากด "รับงาน" เพื่อเริ่มเข้าสู่ระบบการขนส่ง' : 
-                currentIndex === 0 ? 'ยืนยันรับงานเรียบร้อย กรุณาเดินทางไปยังจุดรับสินค้าและแจ้งระบบเมื่อถึงที่หมาย' :
-                currentIndex === 1 ? 'ถึงจุดรับสินค้าแล้ว กรุณาตรวจสอบความถูกต้อง ถ่ายรูปสินค้า และกดออกเดินทาง' :
-                currentIndex === 2 ? 'กำลังอยู่ระหว่างการขนส่ง กรุณานำทางไปยังจุดหมายปลายทางและแจ้งระบบเมื่อถึง' :
-                'ถึงจุดหมายแล้ว กรุณาทำการส่งมอบ ถ่ายรูปหลักฐาน และให้ลูกค้าเซ็นชื่อเพื่อจบงาน'}
+            <p className="text-xs font-black text-primary uppercase tracking-[0.4em] opacity-70">Mission Protocol</p>
+            <p className="text-lg font-bold text-foreground leading-relaxed italic">
+               {currentIndex === -1 ? 'ตรวจพบงานใหม่ กรุณากด "รับงาน" เพื่อเริ่มภารกิจ' : 
+                currentIndex === 0 ? 'ยืนยันรับงานแล้ว เดินทางไปยังจุดรับสินค้าและแจ้งระบบเมื่อถึง' :
+                currentIndex === 1 ? 'ถึงจุดรับแล้ว ตรวจสอบสินค้า ถ่ายรูป และกดออกเดินทาง' :
+                currentIndex === 2 ? 'อยู่ระหว่างการจัดส่ง นำทางไปยังจุดหมายและแจ้งเมื่อถึง' :
+                'ถึงจุดหมายแล้ว ส่งมอบสินค้า ถ่ายรูป และให้ลูกค้าเซ็นชื่อเพื่อปิดงาน'}
             </p>
           </div>
         </div>
