@@ -3,6 +3,8 @@ import { notFound } from "next/navigation"
 import { PrintAction } from "./print-button"
 import { dictionaries, Language } from "@/lib/i18n/dictionaries"
 import { Phone, Mail, User, FileText, CreditCard, MessageSquare, PenTool, Globe as GlobeIcon } from "lucide-react"
+import { headers } from "next/headers"
+
 
 export const dynamic = 'force-dynamic'
 
@@ -65,6 +67,12 @@ export default async function BillingPrintPage(props: Props) {
     const lang = (searchParams?.lang as Language) || 'th'
     
     const data = await getBillingNoteByIdWithJobs(id)
+
+    // Get current host for QR code
+    const host = (await headers()).get('host')
+    const protocol = process.env.NODE_ENV === 'development' ? 'http' : 'https'
+    const baseUrl = `${protocol}://${host}`
+
 
     if (!data) {
         return notFound()
@@ -407,7 +415,7 @@ export default async function BillingPrintPage(props: Props) {
                             <div className="text-[10px] text-slate-500 mb-1 text-center font-bold">สแกนเปิดเอกสาร</div>
                             <div className="w-20 h-20 bg-white flex items-center justify-center p-1 border-2 border-slate-200 rounded-lg shadow-sm overflow-hidden">
                                 <img 
-                                    src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(`https://tms-app-five.vercel.app/public/invoice/${note.Billing_Note_ID}?lang=${lang}&mode=print`)}`} 
+                                    src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(`${baseUrl}/public/invoice/${note.Billing_Note_ID}?lang=${lang}&mode=print`)}`} 
                                     alt="Billing QR Code" 
                                     className="w-full h-full object-contain" 
                                 />

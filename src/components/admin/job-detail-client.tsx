@@ -11,6 +11,8 @@ import { PremiumCard } from "@/components/ui/premium-card"
 import { PremiumButton } from "@/components/ui/premium-button"
 import { cn } from "@/lib/utils"
 import { useLanguage } from "@/components/providers/language-provider"
+import { PODDownloadButton } from "@/components/tracking/pod-download"
+
 
 interface JobDetailClientProps {
   job: any
@@ -172,10 +174,28 @@ export function JobDetailClient({ job, routeHistory }: JobDetailClientProps) {
                                             </div>
                                         </div>
                                     ) : (
-                                        <div className="p-20 text-center text-muted-foreground border-2 border-dashed border-border/5 rounded-[2.5rem] bg-black/20 italic font-black uppercase tracking-widest text-base font-bold">
-                                            {t('job_detail.report_missing')}
+                                        <div className="space-y-4">
+                                            <div className="p-10 text-center text-muted-foreground border-2 border-dashed border-border/5 rounded-[2.5rem] bg-black/20 italic font-black uppercase tracking-widest text-sm font-bold">
+                                                {t('job_detail.report_missing')}
+                                            </div>
+                                            <PODDownloadButton job={{
+                                                jobId: job.Job_ID,
+                                                customerName: job.Customer_Name,
+                                                origin: job.Origin_Location || job.Location_Origin_Name,
+                                                destination: job.Dest_Location || job.Location_Destination_Name,
+                                                status: job.Job_Status,
+                                                planDate: job.Plan_Date,
+                                                deliveryDate: job.Actual_Delivery_Time ? `${job.Delivery_Date} ${job.Actual_Delivery_Time}` : job.Delivery_Date,
+                                                driverName: job.Driver_Name,
+                                                vehiclePlate: job.Vehicle_Plate,
+                                                podPhotos: job.Photo_Proof_Url ? job.Photo_Proof_Url.split(',') : [],
+                                                signature: job.Signature_Url,
+                                                pickupSignature: job.Pickup_Signature_Url,
+                                                notes: job.Notes
+                                            }} />
                                         </div>
                                     )}
+
                                 </div>
 
                                 {/* Personnel Authentication (Signature) */}

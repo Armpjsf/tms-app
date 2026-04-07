@@ -116,23 +116,8 @@ export async function submitJobPOD(jobId: string, formData: FormData) {
 
     if (updateError) throw updateError
 
-    let warning = ""
-    // Important: Await the report generation to prevent race conditions
-    // This ensures the worker doesn't terminate before the PDF is uploaded
-    try {
-        const { generateJobPDF } = await import("@/lib/actions/report-actions")
-        const reportResult = await generateJobPDF(jobId)
-        if (reportResult.success) {
-            // Success
-        } else {
-            warning = `ใบงาน PDF ไม่ถูกสร้าง: ${reportResult.error}`
-        }
-    } catch {
-        warning = "เกิดข้อผิดพลาดในการสร้างใบงาน PDF"
-    }
-
     revalidatePath("/mobile/jobs")
-    return warning ? { success: true, warning } : { success: true }
+    return { success: true }
   } catch (error: unknown) {
     let errorMessage = "เกิดข้อผิดพลาดในการบันทึกข้อมูล"
     if (typeof error === 'string') errorMessage = error
