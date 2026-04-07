@@ -1,0 +1,28 @@
+name: Data Retention Cleanup
+
+on:
+  schedule:
+    - cron: '0 17 * * *' # รันทุกวันเวลา 00:00 (เวลาไทย)
+  workflow_dispatch: # อนุญาตให้กดรันเองได้จากหน้า GitHub Actions
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Run Cleanup Script
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: npx tsx scripts/cleanup-system.ts
