@@ -30,6 +30,9 @@ export default async function FleetStatusPage() {
           <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 blur-3xl rounded-full -mr-20 -mt-20 pointer-events-none" />
           
           <div className="relative z-10">
+            <Link href="/reports" className="flex items-center gap-2 text-blue-400 hover:text-foreground font-bold font-black uppercase tracking-[0.2em] mb-4 w-fit group/back">
+              <ArrowLeft className="w-4 h-4 group-hover/back:-translate-x-1 transition-transform" /> Reports Hub
+            </Link>
             <h1 className="text-5xl font-black text-foreground mb-2 tracking-tighter flex items-center gap-4">
               <div className="p-3 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-3xl shadow-2xl shadow-blue-500/20 text-white transform group-hover:scale-110 transition-transform duration-500">
                 <Truck size={36} />

@@ -1,11 +1,13 @@
 import { createClient } from "@/utils/supabase/server"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Calendar, User, Clock, FileText } from "lucide-react"
+import { Calendar, User, Clock, FileText, ArrowLeft } from "lucide-react"
 import { redirect } from "next/navigation"
 import { getAdminSession } from "@/lib/actions/auth-actions"
 import { cn } from "@/lib/utils"
 import { LeaveActionsClient } from "./leave-actions-client"
+import { DashboardLayout } from "@/components/layout/dashboard-layout"
+import Link from "next/link"
 
 export const dynamic = 'force-dynamic'
 
@@ -26,20 +28,26 @@ export default async function AdminLeavesPage() {
     .order('Created_At', { ascending: false })
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-20 pt-24 px-6">
-      <div className="max-w-4xl mx-auto space-y-8">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-                <h1 className="text-4xl font-black text-slate-900 tracking-tighter uppercase italic leading-none">จัดการการลา</h1>
-                <p className="text-slate-500 font-bold mt-2">อนุมัติหรือปฏิเสธคำขอลาของพนักงานขับรถ</p>
-            </div>
-            <div className="flex items-center gap-2 bg-white p-2 rounded-2xl border shadow-sm">
-                <div className="px-4 py-2 bg-primary/10 rounded-xl">
-                    <span className="text-primary font-black">{leaves?.filter(l => l.Status === 'Pending').length || 0} รายการรอตรวจ</span>
-                </div>
-            </div>
-        </div>
+    <DashboardLayout>
+      <div className="min-h-screen bg-transparent pb-20 pt-4 px-4 lg:px-10">
+        <div className="max-w-4xl mx-auto space-y-8">
+          <Link href="/drivers" className="inline-flex items-center gap-2 text-muted-foreground hover:text-primary transition-all font-bold mb-2 group">
+              <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+              กลับหน้าพนักงานขับรถ
+          </Link>
 
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div>
+                  <h1 className="text-4xl font-black text-slate-900 tracking-tighter uppercase italic leading-none">จัดการการลา</h1>
+                  <p className="text-slate-500 font-bold mt-2">อนุมัติหรือปฏิเสธคำขอลาของพนักงานขับรถ</p>
+              </div>
+              <div className="flex items-center gap-2 bg-white p-2 rounded-2xl border shadow-sm">
+                  <div className="px-4 py-2 bg-primary/10 rounded-xl">
+                      <span className="text-primary font-black">{leaves?.filter(l => l.Status === 'Pending').length || 0} รายการรอตรวจ</span>
+                  </div>
+              </div>
+          </div>
+...
         <div className="grid gap-6">
             {(!leaves || leaves.length === 0) ? (
                 <div className="bg-white rounded-[2.5rem] p-20 text-center border-2 border-dashed">
