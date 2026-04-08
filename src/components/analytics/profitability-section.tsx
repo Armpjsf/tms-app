@@ -195,8 +195,8 @@ export function ProfitabilitySection({ data = [], financials, startDate, endDate
                         <ResponsiveContainer width="100%" height="100%">
                             <BarChart data={topPerformers} layout="vertical" margin={{ left: 40, right: 40 }}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" horizontal={false} />
-                                <XAxis type="number" stroke="#475569" fontSize={11} fontWeight="900" tickLine={false} axisLine={false} />
-                                <YAxis dataKey="plate" type="category" stroke="#fff" width={100} fontSize={11} fontWeight="900" tickLine={false} axisLine={false} className="uppercase italic" />
+                                <XAxis type="number" stroke="#1e293b" fontSize={11} fontWeight="900" tickLine={false} axisLine={false} />
+                                <YAxis dataKey="plate" type="category" stroke="#1e293b" width={100} fontSize={11} fontWeight="900" tickLine={false} axisLine={false} className="uppercase italic" />
                                 <Tooltip 
                                     cursor={{ fill: 'rgba(255,255,255,0.03)' }}
                                     contentStyle={{ 
@@ -207,6 +207,7 @@ export function ProfitabilitySection({ data = [], financials, startDate, endDate
                                         backdropFilter: 'blur(12px)',
                                         padding: '20px'
                                     }}
+                                    labelStyle={{ color: '#fff', marginBottom: '8px', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '8px', fontWeight: '900' }}
                                     itemStyle={{ fontSize: '11px', fontWeight: '900', textTransform: 'uppercase', color: '#fff' }}
                                     formatter={(value: number | string) => [`฿${Number(value || 0).toLocaleString()}`, t('common.net_margin')]}
                                 />
@@ -254,6 +255,7 @@ export function ProfitabilitySection({ data = [], financials, startDate, endDate
                                     </Pie>
                                     <Tooltip 
                                         contentStyle={{ backgroundColor: 'rgba(2, 6, 23, 0.95)', border: '2px solid rgba(255,255,255,0.1)', borderRadius: '24px', backdropFilter: 'blur(12px)' }}
+                                        labelStyle={{ color: '#fff', fontWeight: '900', marginBottom: '4px' }}
                                         itemStyle={{ fontSize: '11px', fontWeight: '900', textTransform: 'uppercase', color: '#fff' }}
                                         formatter={(value: number | string) => [`฿${Number(value || 0).toLocaleString()}`, t('settings.items.accounting')]}
                                     />

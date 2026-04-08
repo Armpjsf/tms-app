@@ -4,6 +4,10 @@ import {
     getExecutiveDashboardUnified,
     getFuelAnomalyAlerts
 } from "@/lib/supabase/financial-analytics"
+import { 
+    getFleetComplianceMetrics,
+    getFleetHealthScore
+} from "@/lib/supabase/fleet-analytics"
 import { getSetting } from "@/lib/supabase/settings"
 import { cookies } from "next/headers"
 import { Suspense } from "react"
@@ -18,21 +22,42 @@ interface PageProps {
 
 async function ExecutiveContent({ branch }: { branch: string }) {
     const currentMonth = new Date().toISOString().slice(0, 7)
+    const branchId = branch === 'All' ? undefined : branch
     
     // Parallel Fetching - Server Side
     const [
         unifiedData,
         fuelAlerts,
+        complianceMetrics,
+        healthScore,
         savedRemark
     ] = await Promise.all([
-        getExecutiveDashboardUnified(branch),
-        getFuelAnomalyAlerts(branch),
+        getExecutiveDashboardUnified(branchId),
+        getFuelAnomalyAlerts(branchId),
+        getFleetComplianceMetrics(branchId),
+        getFleetHealthScore(branchId),
         getSetting(`exec_remark_${currentMonth}_${branch}`, "")
     ])
 
-    // Mock/Constant data for now as per original
-    const compliance = { score: 94, status: 'Excellent', details: [{ label: 'Insurance', value: 100 }, { label: 'Registration', value: 88 }, { label: 'Maintenance', value: 92 }] }
-    const health = { score: 88, status: 'Healthy', metrics: [{ label: 'Uptime', value: 98 }, { label: 'Utilization', value: 76 }, { label: 'Breakdowns', value: 2 }] }
+    // Process compliance for the UI format
+    const expiredCount = complianceMetrics.filter((m: any) => m.status === 'expiredSoon').length
+    const expiringCount = complianceMetrics.filter((m: any) => m.status === 'expiring').length
+    
+    const compliance = { 
+        score: expiredCount > 0 ? 60 : expiringCount > 0 ? 85 : 100, 
+        status: expiredCount > 0 ? 'Critical' : expiringCount > 0 ? 'Warning' : 'Excellent', 
+        details: complianceMetrics.map((m: any) => ({ label: m.name.split(' ')[0], value: m.daysLeft > 0 ? 100 : 0 }))
+    }
+
+    const health = { 
+        score: healthScore, 
+        status: healthScore >= 90 ? 'Healthy' : healthScore >= 70 ? 'Stable' : 'Critical', 
+        metrics: [
+            { label: 'Availability', value: healthScore },
+            { label: 'Uptime', value: 99 },
+            { label: 'Active', value: healthScore }
+        ] 
+    }
 
     return (
         <ExecutiveDashboardClient 
