@@ -1,6 +1,6 @@
 "use client"
 
-import React, { createContext, useContext, useState, useEffect, useCallback, Suspense } from "react"
+import React, { createContext, useContext, useState, useEffect, useCallback, Suspense, useTransition } from "react"
 import { getAllBranches, Branch } from "@/lib/supabase/branches"
 import { getCurrentUserRole } from "@/lib/supabase/routes"
 import Cookies from "js-cookie"
@@ -12,6 +12,7 @@ interface BranchContextType {
   branches: Branch[]
   isAdmin: boolean
   isLoading: boolean
+  isPending: boolean
 }
 
 const BranchContext = createContext<BranchContextType>({
@@ -19,7 +20,8 @@ const BranchContext = createContext<BranchContextType>({
   setSelectedBranch: () => {},
   branches: [],
   isAdmin: false,
-  isLoading: true
+  isLoading: true,
+  isPending: false
 })
 
 /**
@@ -50,6 +52,7 @@ export function BranchProvider({ children }: { children: React.ReactNode }) {
   const [branches, setBranches] = useState<Branch[]>([])
   const [isAdmin, setIsAdmin] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
+  const [isPending, startTransition] = useTransition()
   const router = useRouter()
 
   const init = useCallback(async () => {
@@ -82,15 +85,17 @@ export function BranchProvider({ children }: { children: React.ReactNode }) {
     setSelectedBranchState(branchId)
     Cookies.set("selectedBranch", branchId, { expires: 365 })
     
-    // Update URL to trigger server components
-    const url = new URL(window.location.href)
-    url.searchParams.set('branch', branchId)
-    router.push(url.pathname + url.search)
-    router.refresh()
+    // Use transition for non-blocking navigation/refresh
+    startTransition(() => {
+        const url = new URL(window.location.href)
+        url.searchParams.set('branch', branchId)
+        router.push(url.pathname + url.search)
+        router.refresh()
+    })
   }, [router])
 
   return (
-    <BranchContext.Provider value={{ selectedBranch, setSelectedBranch, branches, isAdmin, isLoading }}>
+    <BranchContext.Provider value={{ selectedBranch, setSelectedBranch, branches, isAdmin, isLoading, isPending }}>
       {/* Isolate SearchParams suspension here */}
       <Suspense fallback={null}>
         <BranchParamSync 

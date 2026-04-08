@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { cn } from "@/lib/utils"
-import { Search, Building2 } from "lucide-react"
+import { Search, Building2, Loader2 } from "lucide-react"
 import { useBranch } from "@/components/providers/branch-provider"
 import { useLanguage } from "@/components/providers/language-provider"
 import { NotificationDropdown } from "@/components/notifications/notification-dropdown"
@@ -21,7 +21,7 @@ interface HeaderProps {
 }
 
 export function Header({ sidebarCollapsed = false }: HeaderProps) {
-  const { selectedBranch, setSelectedBranch, branches, isAdmin } = useBranch()
+  const { selectedBranch, setSelectedBranch, branches, isAdmin, isPending } = useBranch()
   const { t } = useLanguage()
 
   return (
@@ -51,13 +51,21 @@ export function Header({ sidebarCollapsed = false }: HeaderProps) {
                 <Select 
                     value={selectedBranch} 
                     onValueChange={setSelectedBranch}
+                    disabled={isPending}
                 >
                     <SelectTrigger className="bg-muted border-border text-foreground h-14 w-full focus:ring-1 focus:ring-primary/40 hover:bg-muted/80 transition-all rounded-2xl group">
                             <div className="flex items-center gap-3 truncate">
                             <div className="p-2 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors">
-                                <Building2 className="w-4 h-4 text-primary shrink-0" />
+                                {isPending ? (
+                                    <Loader2 className="w-4 h-4 text-primary animate-spin" />
+                                ) : (
+                                    <Building2 className="w-4 h-4 text-primary shrink-0" />
+                                )}
                             </div>
-                             <span className="truncate font-black text-accent text-sm font-bold uppercase tracking-normal">
+                             <span className={cn(
+                                 "truncate font-black text-accent text-sm font-bold uppercase tracking-normal",
+                                 isPending && "opacity-50"
+                             )}>
                                 {selectedBranch === 'All' ? t('header.all_branches') : branches.find(b => b.Branch_ID === selectedBranch)?.Branch_Name || selectedBranch}
                             </span>
                             </div>

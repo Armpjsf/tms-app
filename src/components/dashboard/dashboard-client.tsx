@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion, Variants } from "framer-motion"
 import {
   Activity,
@@ -9,7 +9,10 @@ import {
   Leaf,
   LayoutGrid,
   CheckCircle2,
-  AlertTriangle
+  AlertTriangle,
+  Calendar,
+  Filter,
+  X
 } from "lucide-react"
 import { WeeklyShipmentChart } from "@/components/dashboard/charts/weekly-shipment-chart"
 import { DashboardMap } from "@/components/dashboard/dashboard-map"
@@ -19,6 +22,7 @@ import { Job } from "@/lib/supabase/jobs"
 import { cn } from "@/lib/utils"
 import { useLanguage } from "@/components/providers/language-provider"
 import { RequestShipmentDialog } from "./request-shipment-dialog"
+import { useRouter, useSearchParams } from "next/navigation"
 
 const container: Variants = {
     hidden: { opacity: 0 },
@@ -76,6 +80,8 @@ interface DashboardClientProps {
         co2Saved: number
         treesSaved: number
     }
+    initialStart?: string
+    initialEnd?: string
 }
 
 export function DashboardClient({ 
@@ -90,10 +96,45 @@ export function DashboardClient({
     fleetStatus,
     marketplaceJobs,
     fleetHealth,
-    esg
+    esg,
+    initialStart = "",
+    initialEnd = ""
 }: DashboardClientProps) {
     const { t } = useLanguage()
+    const router = useRouter()
+    const searchParams = useSearchParams()
     const [isRequestDialogOpen, setIsRequestDialogOpen] = useState(false)
+    const [startDate, setStartDate] = useState(initialStart)
+    const [endDate, setEndDate] = useState(initialEnd)
+    const [isSyncing, setIsSyncing] = useState(false)
+
+    // Sync local state if props change (e.g. navigation)
+    useEffect(() => {
+        setStartDate(initialStart)
+        setEndDate(initialEnd)
+    }, [initialStart, initialEnd])
+
+    const handleSync = () => {
+        setIsSyncing(true)
+        const params = new URLSearchParams(searchParams.toString())
+        if (startDate) params.set('start', startDate)
+        else params.delete('start')
+        
+        if (endDate) params.set('end', endDate)
+        else params.delete('end')
+        
+        router.push(`/dashboard?${params.toString()}`)
+        setTimeout(() => setIsSyncing(false), 1000)
+    }
+
+    const handleReset = () => {
+        setStartDate("")
+        setEndDate("")
+        const params = new URLSearchParams(searchParams.toString())
+        params.delete('start')
+        params.delete('end')
+        router.push(`/dashboard?${params.toString()}`)
+    }
 
     // Fallback to static values if data is not available
     const esgData = esg || { fuelSaved: 285, co2Saved: 1420, treesSaved: 68.2 }
@@ -102,6 +143,64 @@ export function DashboardClient({
         <div className="space-y-12 font-sans">
             <RequestShipmentDialog open={isRequestDialogOpen} onOpenChange={setIsRequestDialogOpen} />
             
+            {/* Tactical Range Selector - SERVER SYNCED */}
+            <div className="mb-6 flex flex-col md:flex-row items-center justify-between gap-4 bg-background/50 backdrop-blur-3xl p-4 rounded-[2rem] border border-border/5 shadow-2xl overflow-hidden group">
+                <div className="absolute top-0 right-0 w-64 h-full bg-primary/5 blur-3xl pointer-events-none" />
+                
+                <div className="flex items-center gap-4 relative z-10">
+                    <div className="p-3 bg-primary/20 rounded-2xl border border-primary/30 text-primary">
+                        <Calendar size={20} />
+                    </div>
+                    <div>
+                        <h3 className="text-lg font-black text-foreground tracking-widest uppercase italic">Tactical Range</h3>
+                        <p className="text-xs font-bold font-black text-muted-foreground uppercase tracking-[0.2em] italic">Analyze Historical Vectors</p>
+                    </div>
+                </div>
+
+                <div className="flex flex-col sm:flex-row items-center gap-4 relative z-10 w-full md:w-auto">
+                    <div className="flex items-center gap-3 w-full sm:w-64 bg-background/50 border border-border/10 rounded-2xl px-4 h-12 hover:border-primary/30 transition-all group/input">
+                        <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest italic whitespace-nowrap">START:</span>
+                        <input 
+                            type="date"
+                            value={startDate}
+                            onChange={(e) => setStartDate(e.target.value)}
+                            className="bg-transparent border-none focus:ring-0 text-sm font-black uppercase text-foreground w-full cursor-pointer"
+                        />
+                    </div>
+                    <div className="flex items-center gap-3 w-full sm:w-64 bg-background/50 border border-border/10 rounded-2xl px-4 h-12 hover:border-primary/30 transition-all group/input">
+                        <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest italic whitespace-nowrap">END:</span>
+                        <input 
+                            type="date"
+                            value={endDate}
+                            onChange={(e) => setEndDate(e.target.value)}
+                            className="bg-transparent border-none focus:ring-0 text-sm font-black uppercase text-foreground w-full cursor-pointer"
+                        />
+                    </div>
+                    
+                    {(startDate || endDate) && (
+                        <button 
+                            onClick={handleReset}
+                            className="p-3 bg-rose-500/10 text-rose-500 border border-rose-500/20 rounded-2xl hover:bg-rose-500 hover:text-white transition-all group/reset"
+                            title="Reset Range"
+                        >
+                            <X size={20} className="group-hover/reset:rotate-90 transition-transform" />
+                        </button>
+                    )}
+                    
+                    <button 
+                        onClick={handleSync}
+                        disabled={isSyncing}
+                        className={cn(
+                            "px-6 h-12 bg-primary text-black font-black uppercase tracking-widest text-xs rounded-2xl hover:bg-primary/80 transition-all flex items-center gap-2 shadow-[0_0_20px_rgba(255,30,133,0.3)]",
+                            isSyncing && "opacity-50 cursor-not-allowed"
+                        )}
+                    >
+                        <Filter size={14} strokeWidth={3} />
+                        {isSyncing ? "SYNCING..." : "SYNC_DATA"}
+                    </button>
+                </div>
+            </div>
+
             {/* Elite Command Header */}
             <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8">
                 <div className="space-y-4">
