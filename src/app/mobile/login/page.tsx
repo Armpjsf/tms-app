@@ -150,10 +150,18 @@ function DriverLoginContent() {
           </form>
         </div>
 
-        <div className="text-center pt-4">
+        <div className="text-center pt-4 space-y-4">
            <p className="text-base font-bold text-muted-foreground font-medium">
              หากยังไม่มีบัญชี? <button onClick={() => router.push('/mobile/apply')} className="text-primary font-black uppercase tracking-widest">ลงทะเบียนสมัครคนขับ</button>
            </p>
+           <div className="pt-2">
+             <button 
+                onClick={() => router.push('/login?type=staff')} 
+                className="text-muted-foreground/60 hover:text-primary text-sm font-black uppercase tracking-[0.2em] transition-colors"
+             >
+                Customer or Staff Portal? Login here
+             </button>
+           </div>
         </div>
 
         <div className="flex justify-center gap-8 pt-10 border-t border-border/5">
