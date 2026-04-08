@@ -5,7 +5,9 @@ import {
   Settings,
   UserCheck,
   CheckCircle2,
+  ArrowLeft
 } from "lucide-react"
+import Link from "next/link"
 import { getVehicleStats, getAllVehiclesFromTable } from "@/lib/supabase/vehicles"
 import { getDriverStats, getAllDriversFromTable } from "@/lib/supabase/drivers"
 import { StatsGrid } from "@/components/ui/stats-grid"
@@ -151,4 +153,3 @@ export default async function FleetStatusPage() {
     </DashboardLayout>
   )
 }
-
