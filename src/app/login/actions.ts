@@ -29,12 +29,23 @@ export async function login(formData: FormData) {
 
   // 2. Verify Password
   let isValid = false
+  const dbPassword = users.Password || ""
+
   try {
-    if (users.Password && users.Password.startsWith('$argon2')) {
-       isValid = await argon2.verify(users.Password, data.password)
+    if (dbPassword.startsWith('$argon2')) {
+       isValid = await argon2.verify(dbPassword, data.password)
     } else {
-       console.warn(`[AUTH] Login failed: Password format mismatch for ${data.email}`)
-       isValid = false 
+       // Plain-text password fallback
+       isValid = data.password === dbPassword
+       
+       // Auto-migrate to Argon2
+       if (isValid && data.password) {
+         const hashedPassword = await argon2.hash(data.password)
+         await supabase
+           .from('Master_Users')
+           .update({ Password: hashedPassword })
+           .eq('Username', users.Username)
+       }
     }
   } catch (err) {
     console.error(`[AUTH] Argon2 Error:`, err)
@@ -68,7 +79,7 @@ export async function login(formData: FormData) {
   }
 
   // 2. Fetch Role Permissions from correct table
-  let rolePermissions: Record<string, boolean> = {}
+  const rolePermissions: Record<string, boolean> = {}
   if (trimmedRole) {
       try {
         const { data: rolePerms } = await supabase
@@ -90,9 +101,6 @@ export async function login(formData: FormData) {
 
   const branchId = users.Branch_ID || users.branch_id || null
   const customerId = users.Customer_ID || users.customer_id || null
-  
-  // MERGE Role Permissions with User Specific Permissions
-  const permissions = { ...rolePermissions, ...(users.Permissions || {}) }
   
   // SECURITY: If role is Customer, ensure customerId is strictly enforced
   const isCustomerRole = trimmedRole.toLowerCase() === 'customer' || roleId === 7
