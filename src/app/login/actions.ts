@@ -49,37 +49,42 @@ export async function login(formData: FormData) {
   // 3. Create Session (Custom)
   // Map string Role to numeric Role_ID if Role_ID is missing
   let roleId = users.Role_ID
-  if ((roleId === undefined || roleId === null) && users.Role) {
+  const trimmedRole = users.Role?.trim() || ''
+  
+  if ((roleId === undefined || roleId === null) && trimmedRole) {
     const roleMap: Record<string, number> = {
-      'Super Admin': 1,
-      'Admin': 2,
-      'Dispatcher': 3,
-      'Accountant': 4,
-      'Staff': 5,
-      'Driver': 6,
-      'Customer': 7
+      'super admin': 1,
+      'admin': 2,
+      'executive': 3,
+      'dispatcher': 3,
+      'accountant': 4,
+      'staff': 5,
+      'driver': 6,
+      'customer': 7
     }
-    const cleanRole = users.Role.trim();
-    roleId = roleMap[cleanRole] || 5
+    roleId = roleMap[trimmedRole.toLowerCase()] || 5
   } else if (roleId === undefined || roleId === null) {
     roleId = 5
   }
 
-  // 2. Fetch Role Permissions
-  let rolePermissions = {}
-  if (users.Role) {
+  // 2. Fetch Role Permissions from correct table
+  let rolePermissions: Record<string, boolean> = {}
+  if (trimmedRole) {
       try {
         const { data: rolePerms } = await supabase
-            .from('Master_Role_Permissions')
-            .select('Permissions')
-            .eq('Role', users.Role)
-            .single()
+            .from('role_permissions')
+            .select('allowed_menus')
+            .ilike('role_name', trimmedRole)
+            .maybeSingle()
         
-        if (rolePerms) {
-            rolePermissions = rolePerms.Permissions
+        if (rolePerms?.allowed_menus) {
+            // Convert array of allowed menus to boolean map
+            rolePerms.allowed_menus.forEach((menu: string) => {
+                rolePermissions[menu] = true
+            })
         }
-      } catch {
-          // Failed to load role permissions
+      } catch (err) {
+          console.error(`[AUTH] Failed to load role permissions for ${trimmedRole}:`, err)
       }
   }
 
@@ -90,15 +95,13 @@ export async function login(formData: FormData) {
   const permissions = { ...rolePermissions, ...(users.Permissions || {}) }
   
   // SECURITY: If role is Customer, ensure customerId is strictly enforced
-  const trimmedRole = users.Role?.trim()
-  const finalCustomerId = (trimmedRole === 'Customer' || roleId === 7) 
-    ? (customerId ? String(customerId) : null) 
-    : (customerId ? String(customerId) : null)
+  const isCustomerRole = trimmedRole.toLowerCase() === 'customer' || roleId === 7
+  const finalCustomerId = customerId ? String(customerId) : null
 
   // CRITICAL: Prevent login for customers with missing IDs
-  if ((trimmedRole === 'Customer' || roleId === 7) && !finalCustomerId) {
+  if (isCustomerRole && !finalCustomerId) {
       console.warn(`[AUTH] Login failed: Customer ${data.email} is missing a Customer_ID linking.`)
-      redirect('/login?error=Account not linked to a customer profile. Please contact support.')
+      redirect('/login?error=บัญชีของคุณยังไม่ได้ผูกกับโปรไฟล์ลูกค้า กรุณาติดต่อแอดมินให้ระบุรหัสลูกค้าในหน้าจัดการผู้ใช้')
   }
   
   await createSession(

@@ -126,6 +126,12 @@ export default function UserSettingsPage() {
         if (!formData.Username || !formData.Name || !formData.Branch_ID || !formData.Role) {
             return toast.warning("กรุณากรอกข้อมูลให้ครบถ้วน")
         }
+
+        // Enforce Customer Link for Customer Role
+        if (formData.Role === 'Customer' && !formData.Customer_ID) {
+            return toast.warning("กรุณาเลือกชื่อลูกค้าที่ต้องการผูกกับบัญชีนี้ ในหัวข้อด้านล่าง")
+        }
+
         if (!editingUser && !formData.Password) {
             return toast.warning("กรุณากำหนดรหัสผ่าน")
         }
