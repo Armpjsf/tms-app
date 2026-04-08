@@ -15,30 +15,34 @@ export async function login(formData: FormData) {
     password: formData.get('password') as string,
   }
 
-  // 1. Query Master_Users
+  // 1. Query Master_Users with Case-Insensitive Username
   const { data: users, error } = await supabase
     .from('Master_Users')
     .select('*')
-    .eq('Username', data.email)
-    .single()
+    .ilike('Username', data.email)
+    .maybeSingle()
 
   if (error || !users) {
+    console.warn(`[AUTH] Login failed: User not found (${data.email})`)
     redirect('/login?error=Invalid credentials')
   }
 
-  // ... (Password verification logic) ...
+  // 2. Verify Password
   let isValid = false
   try {
-    if (users.Password.startsWith('$argon2')) {
+    if (users.Password && users.Password.startsWith('$argon2')) {
        isValid = await argon2.verify(users.Password, data.password)
     } else {
+       console.warn(`[AUTH] Login failed: Password format mismatch for ${data.email}`)
        isValid = false 
     }
-  } catch {
+  } catch (err) {
+    console.error(`[AUTH] Argon2 Error:`, err)
     isValid = false
   }
 
   if (!isValid) {
+    console.warn(`[AUTH] Login failed: Invalid password for ${data.email}`)
     redirect('/login?error=Invalid credentials')
   }
 
@@ -55,7 +59,8 @@ export async function login(formData: FormData) {
       'Driver': 6,
       'Customer': 7
     }
-    roleId = roleMap[users.Role] || 5
+    const cleanRole = users.Role.trim();
+    roleId = roleMap[cleanRole] || 5
   } else if (roleId === undefined || roleId === null) {
     roleId = 5
   }
@@ -85,12 +90,14 @@ export async function login(formData: FormData) {
   const permissions = { ...rolePermissions, ...(users.Permissions || {}) }
   
   // SECURITY: If role is Customer, ensure customerId is strictly enforced
-  const finalCustomerId = (users.Role === 'Customer' || roleId === 7) 
+  const trimmedRole = users.Role?.trim()
+  const finalCustomerId = (trimmedRole === 'Customer' || roleId === 7) 
     ? (customerId ? String(customerId) : null) 
     : (customerId ? String(customerId) : null)
 
   // CRITICAL: Prevent login for customers with missing IDs
-  if ((users.Role === 'Customer' || roleId === 7) && !finalCustomerId) {
+  if ((trimmedRole === 'Customer' || roleId === 7) && !finalCustomerId) {
+      console.warn(`[AUTH] Login failed: Customer ${data.email} is missing a Customer_ID linking.`)
       redirect('/login?error=Account not linked to a customer profile. Please contact support.')
   }
   
