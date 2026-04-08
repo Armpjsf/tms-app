@@ -142,7 +142,7 @@ export function MonthFilter() {
       <Button 
         variant="ghost" 
         size="icon" 
-        className="h-8 w-8 hover:bg-gray-100 text-muted-foreground hover:text-white"
+        className="h-8 w-8 hover:bg-gray-100 text-muted-foreground hover:text-gray-900"
         onClick={handleNextMonth}
         disabled={isPending}
       >

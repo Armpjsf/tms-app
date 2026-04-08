@@ -136,7 +136,7 @@ export function WorkforceSection({ data }: { data: WorkforceAnalytics }) {
                             </div>
                             <div>
                                 <div className="flex items-center gap-3">
-                                    <span className="text-white font-black text-xl tracking-tight uppercase italic">{d.name}</span>
+                                    <span className="text-foreground font-black text-xl tracking-tight uppercase italic">{d.name}</span>
                                      <span className="text-base font-bold font-black text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">
                                          {d.successRate.toFixed(0)}% {t('common.sync')}
                                      </span>
@@ -185,7 +185,7 @@ export function WorkforceSection({ data }: { data: WorkforceAnalytics }) {
                                 {d.name.slice(0, 2)}
                             </div>
                             <div>
-                                <div className="text-white font-black text-xl tracking-tight uppercase italic">{d.name}</div>
+                                <div className="text-foreground font-black text-xl tracking-tight uppercase italic">{d.name}</div>
                                 <div className={cn(
                                     "text-base font-bold font-black mt-2 bg-opacity-10 px-3 py-1 rounded-lg w-fit italic border uppercase",
                                     d.issue === 'ใบขับขี่หมดอายุ' ? "text-rose-400 bg-rose-500/10 border-rose-500/20" : "text-amber-400 bg-amber-500/10 border-amber-500/20"

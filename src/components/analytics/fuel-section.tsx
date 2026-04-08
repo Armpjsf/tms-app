@@ -86,59 +86,59 @@ export function FuelSection({ data }: { data: FuelAnalytics }) {
         {/* Efficiency - TRAFFIC LIGHT */}
         <PremiumCard className={cn(
             "border-none shadow-2xl relative overflow-hidden group p-8 rounded-br-[3rem] rounded-tl-[1.5rem] transition-all duration-500",
-            avgKmPerLiter < 5 ? "bg-accent text-foreground" : "bg-card"
+            avgKmPerLiter < 5 ? "bg-accent text-white" : "bg-card text-foreground"
         )}>
             <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent pointer-events-none" />
             <div className="flex items-center justify-between mb-6 relative z-10">
               <div className="space-y-1">
-                <span className={cn(avgKmPerLiter < 5 ? "text-foreground/80" : "text-emerald-400")}>
+                <span className={cn(avgKmPerLiter < 5 ? "text-white/80" : "text-emerald-400")}>
                     {t('fuel.asset_efficiency')}
                 </span>
-                <p className={cn(avgKmPerLiter < 5 ? "text-foreground/60" : "text-muted-foreground")}>
+                <p className={cn(avgKmPerLiter < 5 ? "text-white/60" : "text-muted-foreground")}>
                     {t('fuel.km_liter_yield')}
                 </p>
               </div>
-              <div className={cn("p-2 rounded-xl shadow-lg", avgKmPerLiter < 5 ? "bg-muted/80 text-foreground" : "bg-emerald-500/10 text-emerald-400")}>
+              <div className={cn("p-2 rounded-xl shadow-lg", avgKmPerLiter < 5 ? "bg-muted/80 text-slate-900" : "bg-emerald-500/10 text-emerald-400")}>
                 <GaugeCircle size={16} />
               </div>
             </div>
-            <div className="text-4xl font-black text-foreground tracking-tighter relative z-10 italic">{avgKmPerLiter.toFixed(2)}</div>
+            <div className="text-4xl font-black tracking-tighter relative z-10 italic">{avgKmPerLiter.toFixed(2)}</div>
             <div className="flex items-center gap-2 mt-4 relative z-10">
-                <p className={cn(
+                <div className={cn(
                     "text-base font-bold font-black uppercase italic flex items-center gap-2",
                     avgKmPerLiter < 5 ? "text-white animate-pulse" : "text-emerald-400"
                 )}>
                     <Activity size={10} strokeWidth={3} /> {avgKmPerLiter < 5 ? t('dashboard.status_degraded') : t('dashboard.system_optimal')}
-                </p>
+                </div>
             </div>
         </PremiumCard>
 
         {/* Anomalies */}
         <PremiumCard className={cn(
             "border-none shadow-2xl relative overflow-hidden group p-8 rounded-br-[3rem] rounded-tl-[1.5rem] transition-all duration-500",
-            anomalies.length > 0 ? "bg-accent text-foreground" : "bg-card"
+            anomalies.length > 0 ? "bg-accent text-white" : "bg-card text-foreground"
         )}>
             <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent pointer-events-none" />
             <div className="flex items-center justify-between mb-6 relative z-10">
               <div className="space-y-1">
-                <span className={cn("text-base font-bold font-black uppercase italic", anomalies.length > 0 ? "text-red-100" : "text-muted-foreground")}>
+                <span className={cn("text-base font-bold font-black uppercase italic", anomalies.length > 0 ? "text-white" : "text-muted-foreground")}>
                     {t('fuel.integrity_alerts')}
                 </span>
-                <p className={cn("text-base font-bold font-bold uppercase italic", anomalies.length > 0 ? "text-red-200" : "text-muted-foreground")}>
+                <p className={cn("text-base font-bold font-bold uppercase italic", anomalies.length > 0 ? "text-white/70" : "text-muted-foreground")}>
                     {t('fuel.consumption_divergence')}
                 </p>
               </div>
-              <div className={cn("p-2 rounded-xl shadow-lg", anomalies.length > 0 ? "bg-muted/80 text-foreground" : "bg-red-500/10 text-red-500")}>
+              <div className={cn("p-2 rounded-xl shadow-lg", anomalies.length > 0 ? "bg-muted/80 text-slate-900" : "bg-red-500/10 text-red-500")}>
                 <AlertTriangle size={16} />
               </div>
             </div>
-            <div className={cn("text-4xl font-black tracking-tighter relative z-10 italic", anomalies.length > 0 ? "text-foreground" : "text-white/20")}>
+            <div className={cn("text-4xl font-black tracking-tighter relative z-10 italic", anomalies.length > 0 ? "text-white" : "text-foreground/20")}>
                 {anomalies.length}
             </div>
             <div className="flex items-center gap-2 mt-4 relative z-10">
-                <p className={cn(anomalies.length > 0 ? "text-foreground animate-pulse" : "text-muted-foreground")}>
+                <div className={cn(anomalies.length > 0 ? "text-white animate-pulse" : "text-muted-foreground")}>
                     {anomalies.length > 0 ? t('dashboard.critical_review') : t('dashboard.no_anomalies')}
-                </p>
+                </div>
             </div>
         </PremiumCard>
       </div>

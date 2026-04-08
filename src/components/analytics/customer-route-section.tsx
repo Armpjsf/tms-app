@@ -63,7 +63,7 @@ export function CustomerRouteSection({
                                 #{i + 1}
                             </div>
                             <div>
-                                <div className="text-white font-black text-xl tracking-tight uppercase italic group-hover/cust:text-purple-400 transition-colors">{c.name}</div>
+                                <div className="text-foreground font-black text-xl tracking-tight uppercase italic group-hover/cust:text-purple-400 transition-colors">{c.name}</div>
                                 <div className="text-base font-bold text-muted-foreground font-black mt-2 italic uppercase">
                                     {t('dashboard.mission_volume')}: {c.jobCount}
                                 </div>
@@ -108,7 +108,7 @@ export function CustomerRouteSection({
                                 {r.route.slice(0, 2)}
                             </div>
                             <div>
-                                <div className="text-white font-black text-xl tracking-tight uppercase italic">{r.route}</div>
+                                <div className="text-foreground font-black text-xl tracking-tight uppercase italic">{r.route}</div>
                                 <div className="flex items-center gap-3 mt-2">
                                     <span className="text-base font-bold font-black text-muted-foreground bg-muted/50 px-2 py-0.5 rounded-full border border-border/10 uppercase">
                                         {r.count} {t('dashboard.missions')}

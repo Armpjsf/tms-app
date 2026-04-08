@@ -116,23 +116,23 @@ export function BillingSection({ data }: { data: BillingAnalytics }) {
          {/* Overdue Alert - TRAFFIC LIGHT */}
          <PremiumCard className={cn(
              "border-none shadow-2xl relative overflow-hidden group p-8 rounded-br-[3rem] rounded-tl-[1.5rem] transition-all duration-500",
-             accountsReceivable.aging['90+'] > 50000 ? "bg-red-600 text-foreground" : accountsReceivable.aging['90+'] > 0 ? "bg-amber-600 text-foreground" : "bg-background"
+             accountsReceivable.aging['90+'] > 50000 ? "bg-red-600 text-white" : accountsReceivable.aging['90+'] > 0 ? "bg-amber-600 text-white" : "bg-background text-foreground"
          )}>
             <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent pointer-events-none" />
             <div className="flex items-center justify-between mb-6 relative z-10">
               <div className="space-y-1">
-                <span className="text-foreground font-bold font-black uppercase italic">{t('billing.critical_exposure')}</span>
-                <p className="text-white/60 text-[10px] font-bold uppercase italic">{t('billing.strategic_risk')}</p>
+                <span className="font-bold font-black uppercase italic">{t('billing.critical_exposure')}</span>
+                <p className={cn("text-[10px] font-bold uppercase italic", accountsReceivable.aging['90+'] > 0 ? "text-white/60" : "text-muted-foreground")}>{t('billing.strategic_risk')}</p>
               </div>
-              <div className="p-2 bg-muted/80 rounded-xl text-foreground shadow-lg">
+              <div className="p-2 bg-muted/80 rounded-xl text-slate-900 shadow-lg">
                 <AlertCircle size={16} />
               </div>
             </div>
-            <div className="text-3xl font-black text-foreground tracking-tighter relative z-10 animate-pulse">฿{accountsReceivable.aging['90+'].toLocaleString()}</div>
+            <div className="text-3xl font-black tracking-tighter relative z-10 animate-pulse">฿{accountsReceivable.aging['90+'].toLocaleString()}</div>
             <div className="flex items-center gap-2 mt-4 relative z-10">
-                    <p className="text-foreground">
+                    <div className="flex items-center gap-1">
                         <Clock size={10} strokeWidth={3} /> {t('billing.recovery_required')}
-                    </p>
+                    </div>
             </div>
         </PremiumCard>
       </div>
@@ -202,13 +202,13 @@ export function BillingSection({ data }: { data: BillingAnalytics }) {
                     accountsReceivable.recentUnpaid.map((inv) => (
                         <div key={inv.id} className="p-8 flex items-center justify-between group/inv hover:bg-muted/50 transition-all border-l-4 border-transparent hover:border-rose-500">
                             <div>
-                                <div className="text-white font-black text-xl tracking-tight group-hover/inv:text-rose-400 transition-colors uppercase">{inv.customer}</div>
+                                <div className="text-foreground font-black text-xl tracking-tight group-hover/inv:text-rose-400 transition-colors uppercase">{inv.customer}</div>
                                  <div className="text-base font-bold text-rose-400 font-black mt-2 bg-rose-500/10 px-2 py-1 rounded-md w-fit italic border border-rose-500/20 uppercase">
                                    {t('billing.exposure_relative')}: {inv.daysOverdue} Days
                                 </div>
                             </div>
                             <div className="text-right">
-                                <div className="text-xl font-black text-white tracking-tighter">฿{inv.amount.toLocaleString()}</div>
+                                <div className="text-xl font-black text-foreground tracking-tighter">฿{inv.amount.toLocaleString()}</div>
                                  <div className="text-base font-bold text-muted-foreground font-black mt-1 uppercase italic">ENTITY_ID: {inv.id}</div>
                             </div>
                         </div>

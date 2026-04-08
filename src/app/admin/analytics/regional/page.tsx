@@ -241,7 +241,7 @@ export default async function RegionalAnalyticsPage(props: { searchParams: Promi
               <div className="h-px w-40 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
               <ShieldCheck size={24} className="text-emerald-500" />
           </div>
-          <p className="text-[12px] font-black text-white uppercase tracking-[0.8em] italic mb-4">Geographical Sentiment Archive // v6.0-TACTICAL</p>
+          <p className="text-[12px] font-black text-foreground uppercase tracking-[0.8em] italic mb-4">Geographical Sentiment Archive // v6.0-TACTICAL</p>
           <p className="text-base font-bold font-bold text-muted-foreground uppercase tracking-widest italic leading-relaxed text-center max-w-2xl px-12">
               All regional metrics are computed via real-time node synchronization. <br />
               Efficiency vectors include completion delta, fuel telemetry, and personnel engagement scores.

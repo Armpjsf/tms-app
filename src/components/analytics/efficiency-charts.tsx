@@ -92,11 +92,11 @@ export function EfficiencyCharts({ data }: { data: { date: string; revenue: numb
                         <div className="space-y-4">
                             <div className="flex justify-between gap-8">
                                 <span className="text-muted-foreground text-base font-bold font-bold uppercase">{t('charts.unit_cost')}</span>
-                                <span className="text-white font-black italic">฿{data.costPerJob.toLocaleString()}</span>
+                                <span className="text-foreground font-black italic">฿{data.costPerJob.toLocaleString()}</span>
                             </div>
                             <div className="flex justify-between gap-8">
                                 <span className="text-muted-foreground text-base font-bold font-bold uppercase">{t('charts.unit_revenue')}</span>
-                                <span className="text-white font-black italic">฿{data.revenuePerJob.toLocaleString()}</span>
+                                <span className="text-foreground font-black italic">฿{data.revenuePerJob.toLocaleString()}</span>
                             </div>
                             <div className="pt-2 border-t border-slate-800 flex justify-between gap-8">
                                 <span className="text-emerald-400 text-base font-bold font-black uppercase">{t('charts.margin_yield')}</span>
@@ -145,10 +145,10 @@ export function EfficiencyCharts({ data }: { data: { date: string; revenue: numb
                    <p className="text-base font-bold text-emerald-400 font-black uppercase tracking-widest mt-2">{t('charts.margin_yield')}</p>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4 pt-6 border-t border-slate-900">
+                <div className="grid grid-cols-2 gap-4 pt-6 border-t border-border">
                     <div>
                         <p className="text-base font-bold text-muted-foreground font-black uppercase tracking-widest mb-1">{t('charts.volatility')}</p>
-                        <p className="text-xl font-black text-white italic">{t('charts.low_stable')}</p>
+                        <p className="text-xl font-black text-foreground italic">{t('charts.low_stable')}</p>
                     </div>
                     <div>
                         <p className="text-base font-bold text-muted-foreground font-black uppercase tracking-widest mb-1">{t('charts.optimization')}</p>

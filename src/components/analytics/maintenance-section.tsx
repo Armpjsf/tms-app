@@ -44,29 +44,29 @@ export function MaintenanceSection({ data }: { data: MaintenanceScheduleData }) 
         {/* Critical Maintenance */}
         <PremiumCard className={cn(
              "border-none shadow-2xl relative overflow-hidden group p-8 rounded-br-[3rem] rounded-tl-[1.5rem] transition-all duration-500",
-             overdue.length > 0 ? "bg-red-600 text-foreground" : "bg-background"
+             overdue.length > 0 ? "bg-red-600 text-white" : "bg-background text-foreground"
         )}>
             <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent pointer-events-none" />
             <div className="flex items-center justify-between mb-6 relative z-10">
               <div className="space-y-1">
-                <span className={cn("text-base font-bold font-black uppercase italic", overdue.length > 0 ? "text-red-100" : "text-muted-foreground")}>
+                <span className={cn("text-base font-bold font-black uppercase italic", overdue.length > 0 ? "text-white/90" : "text-muted-foreground")}>
                     {t('dashboard.overdue_exposure')}
                 </span>
-                <p className={cn("text-base font-bold font-bold uppercase italic", overdue.length > 0 ? "text-red-200" : "text-muted-foreground")}>
+                <p className={cn("text-base font-bold font-bold uppercase italic", overdue.length > 0 ? "text-white/70" : "text-muted-foreground")}>
                     {t('dashboard.strategic_service_breach')}
                 </p>
               </div>
-              <div className={cn("p-2 rounded-xl shadow-lg", overdue.length > 0 ? "bg-muted/80 text-foreground" : "bg-red-500/10 text-red-500")}>
+              <div className={cn("p-2 rounded-xl shadow-lg", overdue.length > 0 ? "bg-muted/80 text-slate-900" : "bg-red-500/10 text-red-500")}>
                 <AlertTriangle size={16} />
               </div>
             </div>
-            <div className={cn("text-3xl font-black tracking-tighter relative z-10 italic", overdue.length > 0 ? "text-foreground" : "text-white/20")}>
+            <div className={cn("text-3xl font-black tracking-tighter relative z-10 italic", overdue.length > 0 ? "text-white" : "text-foreground/20")}>
                 {overdue.length} {t('dashboard.alerts_label')}
             </div>
             <div className="flex items-center gap-2 mt-4 relative z-10">
-                <p className={cn(overdue.length > 0 ? "text-foreground animate-pulse" : "text-muted-foreground")}>
+                <div className={cn(overdue.length > 0 ? "text-white animate-pulse" : "text-muted-foreground")}>
                     {overdue.length > 0 ? t('dashboard.critical_review') : t('dashboard.system_optimal')}
-                </p>
+                </div>
             </div>
         </PremiumCard>
 
@@ -138,7 +138,7 @@ export function MaintenanceSection({ data }: { data: MaintenanceScheduleData }) 
                             </div>
                             <div>
                                 <div className="flex items-center gap-3">
-                                    <span className="text-white font-black text-xl tracking-tight uppercase italic">{item.vehicle_plate}</span>
+                                    <span className="text-foreground font-black text-xl tracking-tight uppercase italic">{item.vehicle_plate}</span>
                                     <span className="text-base font-bold font-black text-muted-foreground border border-border/10 px-2 py-0.5 rounded-full">{item.vehicle_type}</span>
                                 </div>
                                 <div className="text-base font-bold text-amber-400 font-black mt-2 bg-amber-500/10 px-3 py-1 rounded-lg w-fit italic border border-amber-500/20 uppercase">

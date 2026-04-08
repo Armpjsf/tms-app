@@ -163,7 +163,7 @@ export function SafetySection({ data }: { data: SafetyAnalytics }) {
                             </div>
                             <div>
                                 <div className="flex items-center gap-3">
-                                    <span className="text-white font-black text-xl tracking-tight uppercase italic">{alert.driver}</span>
+                                    <span className="text-foreground font-black text-xl tracking-tight uppercase italic">{alert.driver}</span>
                                     <span className="text-base font-bold font-black text-muted-foreground border border-border/10 px-2 py-0.5 rounded-full">{alert.vehicle}</span>
                                 </div>
                                 <div className="text-base font-bold text-rose-400 font-black mt-2 bg-rose-500/10 px-3 py-1 rounded-lg w-fit italic border border-rose-500/20 uppercase">
