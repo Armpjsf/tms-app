@@ -27,39 +27,73 @@ async function DashboardContent({ branch, start, end }: { branch?: string, start
   const currentBranchId = branch === 'All' ? undefined : branch
   
   // Parallel Fetching - Server Side (Ultra Fast)
-  const [
-    unified, 
-    sosIds, 
-    marketplaceJobs, 
-    customerMode, 
-    custId, 
-    dailyStats, 
-    driverStats, 
-    esgStats, 
-    fleetAlerts
-  ] = await Promise.all([
-    getExecutiveDashboardUnified(currentBranchId, start || undefined, end || undefined),
-    getSOSDriverIds(),
-    getMarketplaceJobs(currentBranchId),
-    isCustomer(),
-    getCustomerId(),
-    getTodayJobStats(currentBranchId, start || undefined, end || undefined),
-    getDriverStats(currentBranchId),
-    getESGStats(start || undefined, end || undefined, currentBranchId),
-    getActiveFleetAlerts()
-  ])
+  // Wrap in try-catch to prevent crash if one service fails
+  let unified, sosIds, marketplaceJobs, customerMode, custId, dailyStats, driverStats, esgStats, fleetAlerts;
+
+  try {
+    const results = await Promise.allSettled([
+      getExecutiveDashboardUnified(currentBranchId, start || undefined, end || undefined),
+      getSOSDriverIds(),
+      getMarketplaceJobs(currentBranchId),
+      isCustomer(),
+      getCustomerId(),
+      getTodayJobStats(currentBranchId, start || undefined, end || undefined),
+      getDriverStats(currentBranchId),
+      getESGStats(start || undefined, end || undefined, currentBranchId),
+      getActiveFleetAlerts()
+    ]);
+
+    // Map results with fallbacks
+    unified = results[0].status === 'fulfilled' ? results[0].value : { 
+        financial: { revenue: 0, netProfit: 0 }, 
+        trend: [], 
+        kpi: { margin: { current: 0 }, revenue: { current: 0 }, profit: { current: 0 }, jobs: { current: 0 } },
+        esg: { fuelSaved: 0, co2Saved: 0, treesSaved: 0 }
+    };
+    sosIds = results[1].status === 'fulfilled' ? results[1].value : [];
+    marketplaceJobs = results[2].status === 'fulfilled' ? results[2].value : [];
+    customerMode = results[3].status === 'fulfilled' ? results[3].value : false;
+    custId = results[4].status === 'fulfilled' ? results[4].value : null;
+    dailyStats = results[5].status === 'fulfilled' ? results[5].value : { total: 0, delivered: 0, inProgress: 0, pending: 0, sos: 0 };
+    driverStats = results[6].status === 'fulfilled' ? results[6].value : { total: 0, active: 0, onJob: 0 };
+    esgStats = results[7].status === 'fulfilled' ? results[7].value : { co2SavedKg: 0, treesSaved: 0 };
+    fleetAlerts = results[8].status === 'fulfilled' ? results[8].value : [];
+
+  } catch (error) {
+    console.error("[Dashboard] Critical data fetch error:", error);
+    // Set absolute minimums to keep UI alive
+    customerMode = false;
+    custId = null;
+    dailyStats = { total: 0, delivered: 0, inProgress: 0, pending: 0, sos: 0 };
+    driverStats = { total: 0, active: 0, onJob: 0 };
+    sosIds = [];
+    marketplaceJobs = [];
+    unified = { financial: { revenue: 0, netProfit: 0 }, trend: [], kpi: { margin: { current: 0 } } };
+    esgStats = { co2SavedKg: 0, treesSaved: 0 };
+    fleetAlerts = [];
+  }
 
   let custName: string | null = custId;
   if (customerMode && custId) {
-      custName = await getCustomerName(custId) || custId
+      try {
+        custName = await getCustomerName(custId) || custId
+      } catch {
+        custName = custId
+      }
   }
 
   // Fetch Live Fleet GPS Status
-  const fleetStatus = await getActiveFleetStatus(currentBranchId, customerMode ? custId : null)
+  let fleetStatus = [];
+  try {
+    fleetStatus = await getActiveFleetStatus(currentBranchId, customerMode ? custId : null)
+  } catch (e) {
+    console.warn("[Dashboard] GPS Status fetch failed", e);
+  }
 
   // Handle Missing Customer Profile Error
   if (customerMode && (!custId || custId === 'FORCED_RESTRICTION')) {
     return (
+      <DashboardLayout>
          <div className="flex flex-col items-center justify-center min-h-[60vh] text-center p-10 bg-background/50 backdrop-blur-3xl rounded-[3rem] border border-border/10 shadow-2xl">
             <div className="w-24 h-24 bg-rose-500/20 text-rose-500 rounded-full flex items-center justify-center mb-8 animate-bounce">
                 <AlertTriangle size={48} />
@@ -77,6 +111,7 @@ async function DashboardContent({ branch, start, end }: { branch?: string, start
                 </a>
             </div>
          </div>
+      </DashboardLayout>
     )
   }
 

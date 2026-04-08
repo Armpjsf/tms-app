@@ -52,11 +52,23 @@ export async function getUserId() {
 export async function hasPermission(permission: string) {
     const session = await getSession()
     if (!session) return false
-    
-    // Super Admin (Role 1) always has all permissions
+
+    // Super admin has all permissions
     if (session.roleId === 1) return true
-    
-    return !!session?.permissions?.[permission]
+
+    try {
+        // Fetch permissions from DB since they are no longer in the session cookie
+        const { getPermissionsByRole } = await import("@/lib/actions/permission-actions")
+        const { getUserProfile } = await import("@/lib/supabase/users")
+        const profile = await getUserProfile()
+
+        if (!profile?.Role) return false
+
+        const allowedMenus = await getPermissionsByRole(profile.Role)
+        return !!allowedMenus?.includes(permission)
+    } catch {
+        return false
+    }
 }
 
 export async function isSuperAdmin() {
@@ -79,7 +91,13 @@ export async function isAdmin() {
 
 export async function isCustomer() {
     const session = await getSession()
-    // Strictly verify customer ID exists and is not a restriction placeholder
-    const result = (!!session?.customerId && session.customerId !== 'FORCED_RESTRICTION') || Number(session?.roleId) === 7
-    return result
+    if (!session) return false
+    
+    // Check if role is explicitly 'Customer' (ID 7)
+    const hasCustomerRole = Number(session.roleId) === 7
+    
+    // Or if they have a customerId assigned
+    const hasCustomerId = !!session.customerId && session.customerId !== 'FORCED_RESTRICTION'
+    
+    return hasCustomerRole || hasCustomerId
 }

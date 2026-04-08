@@ -109,8 +109,7 @@ export async function login(formData: FormData) {
     roleId, 
     branchId ? String(branchId) : null, 
     users.Username, 
-    finalCustomerId, 
-    permissions
+    finalCustomerId
   )
 
   // Log successful login
