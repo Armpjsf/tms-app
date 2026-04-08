@@ -1,4 +1,3 @@
-import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { DashboardClient } from "@/components/dashboard/dashboard-client"
 import { getExecutiveDashboardUnified } from "@/lib/supabase/financial-analytics"
 import { getSOSDriverIds } from "@/lib/supabase/sos"
@@ -9,14 +8,13 @@ import { isCustomer, getCustomerId } from "@/lib/permissions"
 import { getActiveFleetStatus } from "@/lib/supabase/gps"
 import { getActiveFleetAlerts } from "@/lib/actions/fleet-intelligence-actions"
 import { getESGStats } from "@/lib/supabase/esg-analytics"
-import { cookies } from "next/headers"
 import { AlertTriangle } from "lucide-react"
 
 export async function DashboardContent({ branch, start, end }: { branch?: string, start?: string, end?: string }) {
   const currentBranchId = branch === 'All' ? undefined : branch
   
   // Parallel Fetching - Server Side (Ultra Fast)
-  let unified, sosIds, marketplaceJobs, customerMode, custId, dailyStats, driverStats, esgStats, fleetAlerts;
+  let unified, sosIds, marketplaceJobs, customerMode, custId, dailyStats, driverStats, fleetAlerts;
 
   try {
     const results = await Promise.allSettled([
@@ -44,7 +42,6 @@ export async function DashboardContent({ branch, start, end }: { branch?: string
     custId = results[4].status === 'fulfilled' ? results[4].value : null;
     dailyStats = results[5].status === 'fulfilled' ? results[5].value : { total: 0, delivered: 0, inProgress: 0, pending: 0, sos: 0 };
     driverStats = results[6].status === 'fulfilled' ? results[6].value : { total: 0, active: 0, onJob: 0 };
-    esgStats = results[7].status === 'fulfilled' ? results[7].value : { co2SavedKg: 0, treesSaved: 0 };
     fleetAlerts = results[8].status === 'fulfilled' ? results[8].value : [];
 
   } catch (error) {
@@ -56,7 +53,6 @@ export async function DashboardContent({ branch, start, end }: { branch?: string
     sosIds = [];
     marketplaceJobs = [];
     unified = { financial: { revenue: 0, netProfit: 0 }, trend: [], kpi: { margin: { current: 0 } } };
-    esgStats = { co2SavedKg: 0, treesSaved: 0 };
     fleetAlerts = [];
   }
 
@@ -80,17 +76,15 @@ export async function DashboardContent({ branch, start, end }: { branch?: string
   // Handle Missing Customer Profile Error
   if (customerMode && (!custId || custId === 'FORCED_RESTRICTION')) {
     return (
-      <DashboardLayout>
-         <div className="flex flex-col items-center justify-center min-h-[60vh] text-center p-10 bg-background/50 backdrop-blur-3xl rounded-[3rem] border border-border/10 shadow-2xl">
-            <div className="w-24 h-24 bg-rose-500/20 text-rose-500 rounded-full flex items-center justify-center mb-8 animate-bounce">
-                <AlertTriangle size={48} />
-            </div>
-            <h1 className="text-4xl font-black text-foreground mb-4 uppercase italic">SECURITY RESTRICTION</h1>
-            <p className="text-muted-foreground max-w-md text-lg font-bold">
-               User account detected as CUSTOMER but no Customer ID is linked. Access denied for data integrity.
-            </p>
-         </div>
-      </DashboardLayout>
+       <div className="flex flex-col items-center justify-center min-h-[60vh] text-center p-10 bg-background/50 backdrop-blur-3xl rounded-[3rem] border border-border/10 shadow-2xl">
+          <div className="w-24 h-24 bg-rose-500/20 text-rose-500 rounded-full flex items-center justify-center mb-8 animate-bounce">
+              <AlertTriangle size={48} />
+          </div>
+          <h1 className="text-4xl font-black text-foreground mb-4 uppercase italic">SECURITY RESTRICTION</h1>
+          <p className="text-muted-foreground max-w-md text-lg font-bold">
+             User account detected as CUSTOMER but no Customer ID is linked. Access denied for data integrity.
+          </p>
+       </div>
     )
   }
 

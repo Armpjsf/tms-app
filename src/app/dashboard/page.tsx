@@ -1,4 +1,3 @@
-import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { cookies } from "next/headers"
 import { Suspense } from "react"
 import { Loader2 } from "lucide-react"
@@ -23,18 +22,16 @@ export default async function DashboardPage(props: PageProps) {
   const end = searchParams.end || undefined
 
   return (
-    <DashboardLayout>
-      <Suspense fallback={
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <Loader2 className="animate-spin text-primary" size={48} />
-        </div>
-      }>
-        <DashboardContent 
-            branch={branch} 
-            start={start} 
-            end={end} 
-        />
-      </Suspense>
-    </DashboardLayout>
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <Loader2 className="animate-spin text-primary" size={48} />
+      </div>
+    }>
+      <DashboardContent 
+          branch={branch} 
+          start={start} 
+          end={end} 
+      />
+    </Suspense>
   )
 }
