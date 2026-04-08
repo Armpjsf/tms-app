@@ -64,4 +64,3 @@ export default async function PlanningPage(props: PageProps) {
     </DashboardLayout>
   )
 }
-}
