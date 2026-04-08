@@ -21,7 +21,8 @@ import {
     Activity,
     Globe,
     Save,
-    FileSpreadsheet
+    FileSpreadsheet,
+    ArrowLeft
 } from "lucide-react"
 import {
   Select,
@@ -40,6 +41,8 @@ import { cn } from "@/lib/utils"
 import { toast } from "sonner"
 import { BANKS } from "@/lib/constants/banks"
 import { ExcelImport } from "@/components/ui/excel-import"
+import { useRouter } from "next/navigation"
+import Link from "next/link"
 
 export default function SubcontractorsPage() {
     const { selectedBranch, branches } = useBranch()
@@ -152,7 +155,11 @@ export default function SubcontractorsPage() {
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-10 mb-16 bg-background/60 backdrop-blur-3xl p-12 rounded-[4rem] border border-border/5 shadow-2xl relative group ring-1 ring-border/5 hover:ring-primary/20 transition-all duration-700">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 blur-[100px] pointer-events-none" />
                 
-                <div className="relative z-10 space-y-4">
+                <div className="relative z-10 space-y-8">
+                    <button onClick={() => router.back()} className="inline-flex items-center gap-2 text-muted-foreground hover:text-primary transition-all font-black uppercase tracking-[0.1em] text-base font-bold group/back italic">
+                        <ArrowLeft className="w-4 h-4 group-hover/back:-translate-x-1 transition-transform" /> 
+                        ย้อนกลับ
+                    </button>
                     <div className="flex items-center gap-3">
                         <div className="p-2 bg-primary/20 rounded-xl shadow-lg">
                             <Network className="text-primary" size={20} />

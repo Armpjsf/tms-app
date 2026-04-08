@@ -17,7 +17,8 @@ import {
     Activity,
     ArrowRight,
     Loader2,
-    ChevronDown
+    ChevronDown,
+    ArrowLeft
 } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent } from "@/components/ui/card"
@@ -108,6 +109,10 @@ export function FleetStandardsClient({
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 bg-background/60 backdrop-blur-xl p-8 rounded-[2rem] border border-border/5 shadow-xl relative group ring-1 ring-border/5">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 blur-[100px] pointer-events-none" />
                 <div className="relative z-10 space-y-4">
+                    <button onClick={() => window.history.back()} className="inline-flex items-center gap-2 text-muted-foreground hover:text-primary transition-all font-black uppercase tracking-[0.4em] text-base font-bold group/back italic">
+                        <ArrowLeft className="w-4 h-4 group-hover/back:-translate-x-1 transition-transform" /> 
+                        ย้อนกลับ
+                    </button>
                     <div className="flex items-center gap-4">
                         <div className="p-2 bg-primary/20 rounded-xl shadow-lg">
                             <ShieldCheck className="text-primary" size={20} />

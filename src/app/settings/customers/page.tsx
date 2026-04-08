@@ -23,7 +23,8 @@ import {
     Zap,
     Users,
     Activity,
-    ShieldCheck
+    ShieldCheck,
+    ArrowLeft
 } from "lucide-react"
 import {
   Dialog,
@@ -41,6 +42,8 @@ import { toast } from "sonner"
 import { Customer } from "@/lib/supabase/customers"
 import { Tabs, TabsContent, List as TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { CustomerFuelMatrix } from "@/components/settings/customer-fuel-matrix"
+import Link from "next/link"
+import { useRouter } from "next/navigation"
 
 interface ExecutiveKPIs {
   revenue: { current: number; previous: number; growth: number; target: number; attainment: number; };
@@ -163,7 +166,11 @@ export default function CustomersSettingsPage() {
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-10 mb-16 bg-background/60 backdrop-blur-3xl p-12 rounded-[4rem] border border-border/5 shadow-2xl relative group ring-1 ring-border/5 hover:ring-primary/20 transition-all duration-700">
         <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 blur-[100px] pointer-events-none" />
         
-        <div className="relative z-10 space-y-4">
+        <div className="relative z-10 space-y-8">
+            <button onClick={() => router.back()} className="inline-flex items-center gap-2 text-muted-foreground hover:text-primary transition-all font-black uppercase tracking-[0.1em] text-base font-bold group/back italic">
+                <ArrowLeft className="w-4 h-4 group-hover/back:-translate-x-1 transition-transform" /> 
+                ย้อนกลับ
+            </button>
             <div className="flex items-center gap-3">
                 <div className="p-2 bg-primary/20 rounded-xl shadow-lg">
                     <Users className="text-primary" size={20} />

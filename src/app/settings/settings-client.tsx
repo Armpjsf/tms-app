@@ -22,13 +22,15 @@ import {
   Navigation,
   Truck,
   Receipt,
-  Zap
+  Zap,
+  ArrowLeft
 } from "lucide-react"
 import { getUserProfile, UserProfile } from "@/lib/supabase/users"
 import { PremiumButton } from "@/components/ui/premium-button"
 import { PremiumCard } from "@/components/ui/premium-card"
 import { useLanguage } from "@/components/providers/language-provider"
 import { getPermissionsByRole } from "@/lib/actions/permission-actions"
+import Link from "next/link"
 
 const settingsSections = [
   {
@@ -127,6 +129,10 @@ export default function SettingsPage() {
         <div className="absolute top-0 right-0 w-80 h-80 bg-primary/10 blur-[120px] rounded-full -mr-40 -mt-40 pointer-events-none" />
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-10 relative z-10">
           <div>
+            <Link href="/dashboard" className="inline-flex items-center gap-2 text-muted-foreground hover:text-primary transition-all font-black uppercase tracking-[0.4em] text-sm font-bold group/back italic mb-6">
+                <ArrowLeft className="w-4 h-4 group-hover/back:-translate-x-1 transition-transform" /> 
+                COMMAND_CENTRE
+            </Link>
             <div className="flex items-center gap-6 mb-4">
                <div className="p-4 bg-primary/20 rounded-[2rem] border-2 border-primary/30 shadow-[0_0_40px_rgba(255,30,133,0.2)] text-primary">
                   <SettingsIcon size={40} strokeWidth={2.5} />

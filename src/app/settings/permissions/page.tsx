@@ -29,7 +29,8 @@ import {
     RefreshCw,
     User,
     Database,
-    Shield
+    Shield,
+    ArrowLeft
 } from "lucide-react"
 import { PremiumCard } from "@/components/ui/premium-card"
 import { Button } from "@/components/ui/button"
@@ -37,6 +38,8 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 import { getAllRolePermissions, saveRolePermissions } from "@/lib/actions/permission-actions"
+import { DashboardLayout } from "@/components/layout/dashboard-layout"
+import Link from "next/link"
 
 const MODULE_GROUPS = [
   {
@@ -180,28 +183,36 @@ export default function PermissionsPage() {
 
     if (loading) {
         return (
-            <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-slate-50">
-                <Loader2 className="w-12 h-12 text-primary animate-spin" />
-                <p className="text-slate-500 font-bold animate-pulse uppercase tracking-[0.2em]">กำลังซิงค์ข้อมูลสิทธิ์...</p>
-            </div>
+            <DashboardLayout>
+                <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4 bg-transparent">
+                    <Loader2 className="w-12 h-12 text-primary animate-spin" />
+                    <p className="text-slate-500 font-bold animate-pulse uppercase tracking-[0.2em]">กำลังซิงค์ข้อมูลสิทธิ์...</p>
+                </div>
+            </DashboardLayout>
         )
     }
 
     return (
-        <div className="min-h-screen bg-slate-50 pb-20 pt-24 px-8">
-            <div className="max-w-6xl mx-auto space-y-10">
+        <DashboardLayout>
+            <div className="space-y-10 pb-20 p-4 lg:p-10">
+                <Link href="/settings" className="inline-flex items-center gap-2 text-muted-foreground hover:text-primary transition-all font-black uppercase tracking-[0.4em] text-base font-bold group/back italic mb-2">
+                    <ArrowLeft className="w-4 h-4 group-hover/back:-translate-x-1 transition-transform" /> 
+                    กลับหน้าตั้งค่า
+                </Link>
+
                 {/* Header */}
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white p-10 rounded-[3rem] border shadow-xl shadow-slate-200/50">
-                    <div className="flex items-center gap-6">
-                        <div className="w-20 h-20 bg-primary/10 rounded-3xl flex items-center justify-center text-primary shadow-inner">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-background/60 backdrop-blur-3xl p-10 rounded-br-[6rem] rounded-tl-[3rem] border border-border/5 shadow-2xl relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 w-80 h-80 bg-primary/10 blur-[120px] rounded-full -mr-40 -mt-40 pointer-events-none" />
+                    <div className="flex items-center gap-6 relative z-10">
+                        <div className="w-20 h-20 bg-primary/10 rounded-3xl flex items-center justify-center text-primary shadow-inner border border-primary/20">
                             <ShieldCheck size={40} strokeWidth={2.5} />
                         </div>
                         <div>
-                            <h1 className="text-4xl font-black text-slate-900 tracking-tighter uppercase italic leading-none">ตั้งค่าสิทธิ์ผู้ใช้งาน</h1>
-                            <p className="text-slate-500 font-bold mt-2 uppercase tracking-widest text-sm">การจัดการโมดูลตามกลุ่มพนักงาน</p>
+                            <h1 className="text-4xl font-black text-foreground tracking-tighter uppercase italic leading-none">ตั้งค่าสิทธิ์ผู้ใช้งาน</h1>
+                            <p className="text-primary/80 font-bold mt-2 uppercase tracking-widest text-sm italic">การจัดการโมดูลตามกลุ่มพนักงาน</p>
                         </div>
                     </div>
-                    <div className="flex gap-3">
+                    <div className="flex gap-3 relative z-10">
                         <Button 
                             variant="outline"
                             onClick={loadPermissions}
@@ -232,7 +243,7 @@ export default function PermissionsPage() {
                                     "w-full h-16 px-6 rounded-2xl flex items-center justify-between font-black uppercase tracking-widest transition-all active:scale-95",
                                     selectedRole === role 
                                     ? "bg-foreground text-white shadow-2xl shadow-foreground/20 scale-[1.02]" 
-                                    : "bg-white text-slate-500 border border-slate-200 hover:bg-slate-50"
+                                    : "bg-background/40 text-slate-500 border border-border/10 hover:bg-muted/50"
                                 )}
                             >
                                 {role}
@@ -247,7 +258,7 @@ export default function PermissionsPage() {
                             <div key={group.title} className="space-y-6">
                                 <div className="flex items-center gap-4 px-2">
                                     <div className="w-1.5 h-6 bg-accent rounded-full" />
-                                    <h2 className="text-2xl font-black text-slate-900 uppercase italic tracking-tighter">{group.title}</h2>
+                                    <h2 className="text-2xl font-black text-foreground uppercase italic tracking-tighter">{group.title}</h2>
                                 </div>
                                 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -260,21 +271,21 @@ export default function PermissionsPage() {
                                                 className={cn(
                                                     "group p-6 rounded-3xl border-2 transition-all cursor-pointer flex items-center justify-between",
                                                     isAllowed 
-                                                    ? "bg-white border-primary shadow-lg shadow-primary/5" 
-                                                    : "bg-slate-100/50 border-transparent hover:border-slate-200"
+                                                    ? "bg-card border-primary shadow-lg shadow-primary/5" 
+                                                    : "bg-muted/30 border-transparent hover:border-border/20"
                                                 )}
                                             >
                                                 <div className="flex items-center gap-4">
                                                     <div className={cn(
                                                         "w-12 h-12 rounded-xl flex items-center justify-center transition-colors",
-                                                        isAllowed ? "bg-primary text-white" : "bg-slate-200 text-slate-400 group-hover:bg-slate-300"
+                                                        isAllowed ? "bg-primary text-white" : "bg-muted text-slate-400 group-hover:bg-muted/80"
                                                     )}>
                                                         <item.icon size={22} />
                                                     </div>
                                                     <div>
                                                         <p className={cn(
                                                             "font-black text-lg leading-none transition-colors",
-                                                            isAllowed ? "text-slate-900" : "text-slate-400"
+                                                            isAllowed ? "text-foreground" : "text-slate-400"
                                                         )}>
                                                             {item.label}
                                                         </p>
@@ -295,6 +306,6 @@ export default function PermissionsPage() {
                     </div>
                 </div>
             </div>
-        </div>
+        </DashboardLayout>
     )
 }

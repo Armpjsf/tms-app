@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Users, Plus, Edit, Trash2, Search, Loader2, Shield, Fingerprint, Activity, FileSpreadsheet, Key, ShieldCheck } from "lucide-react"
+import { Users, Plus, Edit, Trash2, Search, Loader2, Shield, Fingerprint, Activity, FileSpreadsheet, Key, ShieldCheck, ArrowLeft } from "lucide-react"
 import { createUser, updateUser, deleteUser, UserData, getCurrentUserRole, createBulkUsers, getUsers } from "@/lib/actions/user-actions"
 import { Customer } from "@/lib/supabase/customers"
 import { ExcelImport } from "@/components/ui/excel-import"
@@ -19,6 +19,8 @@ import { getRolePermissions } from "@/lib/actions/permission-actions"
 import { toast } from "sonner"
 import { useLanguage } from "@/components/providers/language-provider"
 import { cn } from "@/lib/utils"
+import { useRouter } from "next/navigation"
+import Link from "next/link"
 
 export default function UserSettingsPage() {
     const { branches, isAdmin, selectedBranch } = useBranch()
@@ -171,6 +173,10 @@ export default function UserSettingsPage() {
                     <div className="absolute top-0 right-0 w-80 h-80 bg-primary/10 blur-[120px] rounded-full -mr-40 -mt-40 pointer-events-none" />
                     
                     <div className="relative z-10 space-y-8">
+                        <button onClick={() => router.back()} className="inline-flex items-center gap-2 text-muted-foreground hover:text-primary transition-all font-black uppercase tracking-[0.1em] text-base font-bold group/back italic">
+                            <ArrowLeft className="w-4 h-4 group-hover/back:-translate-x-1 transition-transform" /> 
+                            ย้อนกลับ
+                        </button>
                         <div className="flex items-center gap-6">
                             <div className="p-4 bg-primary/20 rounded-[2.5rem] border-2 border-primary/30 shadow-[0_0_40px_rgba(255,30,133,0.2)] text-primary group-hover:scale-110 transition-all duration-500">
                                 <Users size={42} strokeWidth={2.5} />
