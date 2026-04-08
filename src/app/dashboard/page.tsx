@@ -1,4 +1,3 @@
-import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { DashboardClient } from "@/components/dashboard/dashboard-client"
 import { getExecutiveDashboardUnified } from "@/lib/supabase/financial-analytics"
 import { getSOSDriverIds } from "@/lib/supabase/sos"
@@ -27,7 +26,6 @@ async function DashboardContent({ branch, start, end }: { branch?: string, start
   const currentBranchId = branch === 'All' ? undefined : branch
   
   // Parallel Fetching - Server Side (Ultra Fast)
-  // Wrap in try-catch to prevent crash if one service fails
   let unified, sosIds, marketplaceJobs, customerMode, custId, dailyStats, driverStats, esgStats, fleetAlerts;
 
   try {
@@ -61,14 +59,13 @@ async function DashboardContent({ branch, start, end }: { branch?: string, start
 
   } catch (error) {
     console.error("[Dashboard] Critical data fetch error:", error);
-    // Set absolute minimums to keep UI alive
     customerMode = false;
     custId = null;
     dailyStats = { total: 0, delivered: 0, inProgress: 0, pending: 0, sos: 0 };
     driverStats = { total: 0, active: 0, onJob: 0 };
     sosIds = [];
     marketplaceJobs = [];
-    unified = { financial: { revenue: 0, netProfit: 0 }, trend: [], kpi: { margin: { current: 0 } } };
+    unified = { financial: { revenue: 0, netProfit: 0 }, trend: [], kpi: { margin: { current: 0 } }, esg: { fuelSaved: 0, co2Saved: 0, treesSaved: 0 } };
     esgStats = { co2SavedKg: 0, treesSaved: 0 };
     fleetAlerts = [];
   }
@@ -93,7 +90,6 @@ async function DashboardContent({ branch, start, end }: { branch?: string, start
   // Handle Missing Customer Profile Error
   if (customerMode && (!custId || custId === 'FORCED_RESTRICTION')) {
     return (
-      <DashboardLayout>
          <div className="flex flex-col items-center justify-center min-h-[60vh] text-center p-10 bg-background/50 backdrop-blur-3xl rounded-[3rem] border border-border/10 shadow-2xl">
             <div className="w-24 h-24 bg-rose-500/20 text-rose-500 rounded-full flex items-center justify-center mb-8 animate-bounce">
                 <AlertTriangle size={48} />
@@ -111,7 +107,6 @@ async function DashboardContent({ branch, start, end }: { branch?: string, start
                 </a>
             </div>
          </div>
-      </DashboardLayout>
     )
   }
 
@@ -133,7 +128,6 @@ async function DashboardContent({ branch, start, end }: { branch?: string, start
         treesSaved: esgStats?.treesSaved || 0,
         fuelSaved: Math.round((esgStats?.co2SavedKg || 0) / 2.68)
       }}
-      // Initial dates for hydration if needed
       initialStart={start}
       initialEnd={end}
     />
@@ -144,23 +138,20 @@ export default async function DashboardPage(props: PageProps) {
   const searchParams = await props.searchParams
   const cookieStore = await cookies()
   
-  // Resolve branch: URL priority, then Cookie, then 'All'
   const branch = searchParams.branch || cookieStore.get('selectedBranch')?.value || 'All'
   const start = searchParams.start
   const end = searchParams.end
 
   return (
-    <DashboardLayout>
-      <Suspense fallback={
-        <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
-            <div className="w-16 h-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
-            <p className="text-primary animate-pulse font-black uppercase tracking-[0.3em] text-lg">
-                INITIALIZING_NEURAL_GRID...
-            </p>
-        </div>
-      }>
-        <DashboardContent branch={branch} start={start} end={end} />
-      </Suspense>
-    </DashboardLayout>
+    <Suspense fallback={
+      <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
+          <div className="w-16 h-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+          <p className="text-primary animate-pulse font-black uppercase tracking-[0.3em] text-lg">
+              INITIALIZING_NEURAL_GRID...
+          </p>
+      </div>
+    }>
+      <DashboardContent branch={branch} start={start} end={end} />
+    </Suspense>
   )
 }

@@ -1,4 +1,3 @@
-import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { ExecutiveDashboardClient } from "@/components/dashboard/executive-dashboard-client"
 import { 
     getExecutiveDashboardUnified,
@@ -75,17 +74,15 @@ export default async function ExecutiveDashboardPage(props: PageProps) {
     const branch = searchParams.branch || cookieStore.get('selectedBranch')?.value || 'All'
 
     return (
-        <DashboardLayout>
-            <Suspense fallback={
-                <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
-                    <div className="w-16 h-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
-                    <p className="text-primary animate-pulse font-black uppercase tracking-[0.3em] text-lg">
-                        LOADING_EXECUTIVE_INTELLIGENCE...
-                    </p>
-                </div>
-            }>
-                <ExecutiveContent branch={branch} />
-            </Suspense>
-        </DashboardLayout>
+        <Suspense fallback={
+            <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
+                <div className="w-16 h-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+                <p className="text-primary animate-pulse font-black uppercase tracking-[0.3em] text-lg">
+                    LOADING_EXECUTIVE_INTELLIGENCE...
+                </p>
+            </div>
+        }>
+            <ExecutiveContent branch={branch} />
+        </Suspense>
     )
 }

@@ -1,7 +1,6 @@
 import { Suspense } from "react"
 import { isSuperAdmin } from "@/lib/permissions"
 import { cookies } from "next/headers"
-import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { DashboardContent } from "@/components/analytics/dashboard-content"
 import { getMaintenanceSchedule } from "@/lib/supabase/maintenance-schedule"
 import { AnalyticsClient } from "./analytics-client"
@@ -16,23 +15,21 @@ export default async function AnalyticsPage(props: { searchParams: Promise<{ [ke
   const maintenance = await getMaintenanceSchedule()
 
   return (
-    <DashboardLayout>
-      <div className="space-y-12 pb-20 p-4 lg:p-10 bg-background">
-          <AnalyticsClient 
-              overdueCount={maintenance.overdue.length} 
-              isSuperAdmin={superAdmin} 
-          />
+    <div className="space-y-12 pb-20 p-4 lg:p-10 bg-background">
+        <AnalyticsClient 
+            overdueCount={maintenance.overdue.length} 
+            isSuperAdmin={superAdmin} 
+        />
 
-          {/* Main Intelligence Grid */}
-          <Suspense fallback={<AnalyticsContentSkeleton />}>
-              <DashboardContent 
-                  startDate={searchParams.startDate} 
-                  endDate={searchParams.endDate} 
-                  branchId={branchId} 
-              />
-          </Suspense>
-      </div>
-    </DashboardLayout>
+        {/* Main Intelligence Grid */}
+        <Suspense fallback={<AnalyticsContentSkeleton />}>
+            <DashboardContent 
+                startDate={searchParams.startDate} 
+                endDate={searchParams.endDate} 
+                branchId={branchId} 
+            />
+        </Suspense>
+    </div>
   )
 }
 
