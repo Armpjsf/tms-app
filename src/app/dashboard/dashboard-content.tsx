@@ -8,9 +8,24 @@ import { isCustomer, getCustomerId } from "@/lib/permissions"
 import { getActiveFleetStatus } from "@/lib/supabase/gps"
 import { getActiveFleetAlerts } from "@/lib/actions/fleet-intelligence-actions"
 import { getESGStats } from "@/lib/supabase/esg-analytics"
+import { cookies } from "next/headers"
 import { AlertTriangle } from "lucide-react"
 
-export async function DashboardContent({ branch, start, end }: { branch?: string, start?: string, end?: string }) {
+interface DashboardContentProps {
+  searchParams: { 
+    branch?: string; 
+    start?: string; 
+    end?: string; 
+  }
+}
+
+export async function DashboardContent({ searchParams }: DashboardContentProps) {
+  // Resolve branch from searchParams or cookies here (100% Server Side)
+  const cookieStore = await cookies()
+  const branch = searchParams.branch || cookieStore.get('selectedBranch')?.value || 'All'
+  const start = searchParams.start
+  const end = searchParams.end
+  
   const currentBranchId = branch === 'All' ? undefined : branch
   
   // Parallel Fetching - Server Side (Ultra Fast)

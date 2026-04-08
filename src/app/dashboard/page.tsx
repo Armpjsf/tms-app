@@ -1,4 +1,3 @@
-import { cookies } from "next/headers"
 import { Suspense } from "react"
 import { Loader2 } from "lucide-react"
 import { DashboardContent } from "./dashboard-content"
@@ -15,11 +14,6 @@ interface PageProps {
 
 export default async function DashboardPage(props: PageProps) {
   const searchParams = await props.searchParams
-  const cookieStore = await cookies()
-  
-  const branch = searchParams.branch || cookieStore.get('selectedBranch')?.value || 'All'
-  const start = searchParams.start || undefined
-  const end = searchParams.end || undefined
 
   return (
     <Suspense fallback={
@@ -27,11 +21,7 @@ export default async function DashboardPage(props: PageProps) {
         <Loader2 className="animate-spin text-primary" size={48} />
       </div>
     }>
-      <DashboardContent 
-          branch={branch} 
-          start={start} 
-          end={end} 
-      />
+      <DashboardContent searchParams={searchParams} />
     </Suspense>
   )
 }
