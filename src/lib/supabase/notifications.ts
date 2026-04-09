@@ -68,7 +68,7 @@ export async function getNotifications(): Promise<AppNotification[]> {
         }
 
         // FUEL
-        else if (details.alert_type === 'FUEL' || log.module === 'Fuel') {
+        else if (log.module === 'Fuel' && log.action_type === 'CREATE') {
            notifications.push({
              id: `fuel-log-${log.id}`,
              type: 'system',
