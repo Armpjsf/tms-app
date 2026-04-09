@@ -10,8 +10,11 @@ import {
   Users,
   Truck,
   ShieldCheck,
-  Zap
+  Zap,
+  DollarSign,
+  ArrowRight
 } from "lucide-react"
+import Link from "next/link"
 import { getAllJobs } from "@/lib/supabase/jobs"
 import { getDriverStats } from "@/lib/supabase/drivers"
 import { getVehicleStats } from "@/lib/supabase/vehicles"
@@ -79,6 +82,13 @@ export default async function ReportsPage() {
         </div>
 
         <div className="flex flex-wrap gap-4 relative z-10">
+          <Link href="/reports/cost-per-trip">
+            <button className="h-16 px-8 rounded-2xl bg-violet-500 text-white font-black uppercase tracking-widest hover:bg-violet-600 transition-all shadow-[0_20px_40px_rgba(139,92,246,0.3)] flex items-center gap-3 group/btn">
+                <DollarSign size={20} className="group-hover/btn:scale-110 transition-transform" />
+                Profit Analysis
+                <ArrowRight size={18} className="ml-2 group-hover/btn:translate-x-1 transition-transform" />
+            </button>
+          </Link>
           <div className="flex items-center gap-4 bg-muted/50 p-4 rounded-2xl border border-border/10 backdrop-blur-md">
             <div className="flex items-center gap-3">
                 <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_12px_rgba(16,185,129,1)]" />

@@ -41,10 +41,15 @@ export default async function CostPerTripPage() {
         </div>
 
         {/* Summary Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
           <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
             <p className="text-base font-bold font-black text-gray-400 uppercase tracking-widest mb-1">จำนวนเที่ยว</p>
             <p className="text-3xl font-black text-gray-900">{summary.totalTrips}</p>
+          </div>
+          <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
+            <p className="text-base font-bold font-black text-gray-400 uppercase tracking-widest mb-1">ระยะทางรวม</p>
+            <p className="text-2xl font-black text-slate-700">{(summary.totalDistance || 0).toLocaleString()} KM</p>
+            <p className="text-sm font-bold text-muted-foreground mt-1">฿{summary.avgCostPerKm.toFixed(2)} / KM</p>
           </div>
           <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
             <p className="text-base font-bold font-black text-gray-400 uppercase tracking-widest mb-1">รายได้รวม</p>
@@ -60,15 +65,18 @@ export default async function CostPerTripPage() {
               ฿{formatMoney(summary.totalProfit)}
             </p>
             <p className="text-lg font-bold text-muted-foreground mt-1">
-              เฉลี่ย ฿{formatMoney(summary.avgProfitPerTrip)}/เที่ยว ({Math.round(summary.avgProfitPct)}%)
+              {Math.round(summary.avgProfitPct)}% Margin
             </p>
           </div>
         </div>
 
         {/* Cost Breakdown Table */}
         <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-violet-50 to-white">
-            <h2 className="font-black text-gray-900">รายละเอียดต้นทุนแต่ละเที่ยว</h2>
+          <div className="px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-violet-50 to-white flex justify-between items-center">
+            <h2 className="font-black text-gray-900">รายละเอียดกำไร-ขาดทุนรายเที่ยว (Dynamic Profitability)</h2>
+            <div className="text-xs font-bold text-muted-foreground bg-gray-100 px-3 py-1 rounded-full italic">
+              *ต้นทุนซ่อมบำรุงเป็นการประมาณการตามระยะทางวิ่งจริง
+            </div>
           </div>
 
           {trips.length === 0 ? (
@@ -81,53 +89,46 @@ export default async function CostPerTripPage() {
               <table className="w-full text-xl">
                 <thead>
                   <tr className="bg-gray-50/80 text-lg font-bold text-muted-foreground uppercase tracking-wider">
-                    <th className="text-left px-4 py-3 font-black">วันที่</th>
-                    <th className="text-left px-4 py-3 font-black">ลูกค้า</th>
-                    <th className="text-left px-4 py-3 font-black">เส้นทาง</th>
-                    <th className="text-left px-4 py-3 font-black">คนขับ / รถ</th>
-                    <th className="text-right px-4 py-3 font-black">รายได้</th>
+                    <th className="text-left px-4 py-3 font-black">วันที่ / งาน</th>
+                    <th className="text-left px-4 py-3 font-black">ลูกค้า / เส้นทาง</th>
+                    <th className="text-right px-4 py-3 font-black">ระยะทาง</th>
+                    <th className="text-right px-4 py-3 font-black text-blue-600">รายได้</th>
                     <th className="text-right px-4 py-3 font-black">ค่าคนขับ</th>
                     <th className="text-right px-4 py-3 font-black">น้ำมัน</th>
-                    <th className="text-right px-4 py-3 font-black">ทางด่วน</th>
-                    <th className="text-right px-4 py-3 font-black">ต้นทุนรวม</th>
+                    <th className="text-right px-4 py-3 font-black">ซ่อมบำรุง*</th>
+                    <th className="text-right px-4 py-3 font-black text-red-500">ต้นทุนรวม</th>
                     <th className="text-right px-4 py-3 font-black">กำไร</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
                   {trips.map(trip => (
-                    <tr key={trip.Job_ID} className="hover:bg-gray-50/50 transition-colors">
-                      <td className="px-4 py-3 whitespace-nowrap text-lg font-bold text-muted-foreground">
-                        {trip.Plan_Date ? new Date(trip.Plan_Date + 'T00:00:00').toLocaleDateString('th-TH', { day: 'numeric', month: 'short' }) : '-'}
-                      </td>
-                      <td className="px-4 py-3 font-medium text-gray-900 max-w-[150px] truncate">
-                        {trip.Customer_Name || '-'}
+                    <tr key={trip.Job_ID} className={`hover:bg-gray-50/50 transition-colors ${trip.profit < 0 ? 'bg-rose-50/30' : ''}`}>
+                      <td className="px-4 py-3">
+                        <p className="text-lg font-bold text-muted-foreground">
+                          {trip.Plan_Date ? new Date(trip.Plan_Date + 'T00:00:00').toLocaleDateString('th-TH', { day: 'numeric', month: 'short' }) : '-'}
+                        </p>
+                        <p className="text-xs font-black uppercase tracking-widest">{trip.Job_ID}</p>
                       </td>
                       <td className="px-4 py-3">
-                        <span className="flex items-center gap-1 text-lg font-bold text-muted-foreground">
-                          <MapPin size={12} /> {trip.Route_Name || '-'}
+                        <p className="font-medium text-gray-900 max-w-[150px] truncate">{trip.Customer_Name || '-'}</p>
+                        <span className="flex items-center gap-1 text-sm font-bold text-muted-foreground truncate">
+                          <MapPin size={10} /> {trip.Route_Name || '-'}
                         </span>
                       </td>
-                      <td className="px-4 py-3">
-                        <div className="text-lg font-bold">
-                          <span className="flex items-center gap-1 text-gray-600">
-                            <User size={10} /> {trip.Driver_Name || '-'}
-                          </span>
-                          <span className="flex items-center gap-1 text-gray-400 mt-0.5">
-                            <Truck size={10} /> {trip.Vehicle_Plate || '-'}
-                          </span>
-                        </div>
+                      <td className="px-4 py-3 text-right font-bold text-slate-500">
+                        {trip.distance_km.toLocaleString()} KM
                       </td>
                       <td className="px-4 py-3 text-right font-bold text-blue-600 whitespace-nowrap">
-                        ฿{formatMoney(trip.Cost_Customer_Total || 0)}
+                        ฿{formatMoney(trip.Cost_Customer_Total)}
                       </td>
                       <td className="px-4 py-3 text-right text-gray-600 whitespace-nowrap">
-                        ฿{formatMoney(trip.Cost_Driver_Total || 0)}
+                        ฿{formatMoney(trip.Cost_Driver_Total + trip.extra_cost)}
                       </td>
                       <td className="px-4 py-3 text-right text-gray-600 whitespace-nowrap">
-                        {trip.fuel_cost > 0 ? `฿${formatMoney(trip.fuel_cost)}` : '-'}
+                        ฿{formatMoney(trip.fuel_cost)}
                       </td>
-                      <td className="px-4 py-3 text-right text-gray-600 whitespace-nowrap">
-                        {trip.toll_cost > 0 ? `฿${formatMoney(trip.toll_cost)}` : '-'}
+                      <td className="px-4 py-3 text-right text-gray-400 italic whitespace-nowrap">
+                        ฿{formatMoney(trip.maint_est)}
                       </td>
                       <td className="px-4 py-3 text-right font-bold text-red-500 whitespace-nowrap">
                         ฿{formatMoney(trip.total_cost)}
@@ -143,7 +144,7 @@ export default async function CostPerTripPage() {
                             ฿{formatMoney(trip.profit)}
                           </span>
                         </div>
-                        <p className="text-base font-bold text-gray-400">{trip.profit_pct}%</p>
+                        <p className={`text-base font-bold ${trip.profit >= 0 ? 'text-gray-400' : 'text-red-400'}`}>{trip.profit_pct}%</p>
                       </td>
                     </tr>
                   ))}
@@ -151,6 +152,66 @@ export default async function CostPerTripPage() {
               </table>
             </div>
           )}
+        </div>
+        {/* Actionable Insights */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Top Loss Makers */}
+          <div className="bg-white rounded-3xl border border-red-100 shadow-sm overflow-hidden">
+            <div className="px-6 py-4 bg-red-50 border-b border-red-100">
+              <h3 className="font-black text-red-700 flex items-center gap-2">
+                <TrendingDown size={18} /> เที่ยวรถที่ขาดทุนหรือกำไรต่ำ (Attention Required)
+              </h3>
+            </div>
+            <div className="p-4 space-y-3">
+              {trips.filter(t => t.profit_pct < 10).slice(0, 5).map(trip => (
+                <div key={trip.Job_ID} className="flex items-center justify-between p-3 bg-gray-50 rounded-2xl">
+                  <div>
+                    <p className="font-black text-gray-900 text-sm">{trip.Route_Name || 'Unknown Route'}</p>
+                    <p className="text-xs font-bold text-muted-foreground">{trip.Customer_Name}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className={`font-black ${trip.profit < 0 ? 'text-red-600' : 'text-amber-600'}`}>
+                      {trip.profit_pct}% Margin
+                    </p>
+                    <p className="text-[10px] font-bold text-gray-400">Loss: ฿{formatMoney(Math.abs(trip.profit))}</p>
+                  </div>
+                </div>
+              ))}
+              {trips.filter(t => t.profit_pct < 10).length === 0 && (
+                <p className="text-center py-6 text-gray-400 font-bold italic text-sm">Excellent! No loss-making trips found.</p>
+              )}
+            </div>
+          </div>
+
+          {/* Most Profitable Customers */}
+          <div className="bg-white rounded-3xl border border-emerald-100 shadow-sm overflow-hidden">
+            <div className="px-6 py-4 bg-emerald-50 border-b border-emerald-100">
+              <h3 className="font-black text-emerald-700 flex items-center gap-2">
+                <TrendingUp size={18} /> ลูกค้าที่ทำกำไรสูงสุด (Star Accounts)
+              </h3>
+            </div>
+            <div className="p-4 space-y-3">
+              {Array.from(trips.reduce((acc, trip) => {
+                const name = trip.Customer_Name || 'Unknown'
+                if (!acc.has(name)) acc.set(name, { name, profit: 0, revenue: 0 })
+                const entry = acc.get(name)
+                entry.profit += trip.profit
+                entry.revenue += trip.Cost_Customer_Total
+                return acc
+              }, new Map()).values())
+              .sort((a: any, b: any) => b.profit - a.profit)
+              .slice(0, 5)
+              .map((cust: any) => (
+                <div key={cust.name} className="flex items-center justify-between p-3 bg-gray-50 rounded-2xl">
+                  <p className="font-black text-gray-900 text-sm">{cust.name}</p>
+                  <div className="text-right">
+                    <p className="font-black text-emerald-600">฿{formatMoney(cust.profit)}</p>
+                    <p className="text-[10px] font-bold text-gray-400">{Math.round((cust.profit / cust.revenue) * 100)}% Average Margin</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     </DashboardLayout>
