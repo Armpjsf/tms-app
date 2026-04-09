@@ -17,6 +17,7 @@ export type RepairTicket = {
   Cost_Total: number | null
   Date_Finish: string | null
   Remark: string | null
+  Odometer?: number | null
 }
 
 // ดึง Repair Tickets ทั้งหมด (pagination + search + filters)

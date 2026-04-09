@@ -243,22 +243,21 @@ export async function analyzeMaintenanceLog(ticketId: string) {
             .eq('Ticket_ID', ticketId)
             .single()
         
-        if (!ticket || ticket.Status !== 'Completed') return { success: true } // Only analyze completed repairs
+        if (!ticket || ticket.Status !== 'Completed') return { success: true } 
 
         // 2. Identify component and standard
-        // Use Issue_Type to match Component_Name
         const { data: standard } = await supabase
             .from('Fleet_Maintenance_Standards')
             .select('*')
             .ilike('Component_Name', `%${ticket.Issue_Type}%`)
             .maybeSingle()
         
-        if (!standard) return { success: true } // No standard defined for this type
+        if (!standard) return { success: true } 
 
-        // 3. Find last time this component was serviced for this vehicle
+        // 3. Find last time this component was serviced
         const { data: prevRepair } = await supabase
             .from('Repair_Tickets')
-            .select('Date_Finish, Date_Report') // Assuming we might need odometer if added later
+            .select('Date_Finish, Date_Report, Odometer')
             .eq('Vehicle_Plate', ticket.Vehicle_Plate)
             .eq('Status', 'Completed')
             .eq('Issue_Type', ticket.Issue_Type)
@@ -267,21 +266,46 @@ export async function analyzeMaintenanceLog(ticketId: string) {
             .limit(1)
             .maybeSingle()
         
-        if (prevRepair && standard.Standard_Months) {
+        if (prevRepair) {
             const lastDate = new Date(prevRepair.Date_Finish || prevRepair.Date_Report)
             const currDate = new Date(ticket.Date_Finish || ticket.Date_Report)
             const monthsDiff = (currDate.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24 * 30.44)
+            
+            const lastOdo = prevRepair.Odometer
+            const currOdo = ticket.Odometer
+            const kmDiff = (lastOdo && currOdo) ? (currOdo - lastOdo) : null
 
-            if (monthsDiff < standard.Standard_Months * 0.6) { // Early failure (less than 60% of expected life)
+            let isAnomaly = false
+            let reason = ""
+            let severity: 'WARNING' | 'CRITICAL' = 'WARNING'
+
+            // Check Months
+            if (standard.Standard_Months && monthsDiff < standard.Standard_Months * 0.7) {
+                isAnomaly = true
+                reason = `เปลี่ยนเร็วกว่ากำหนดตามเวลา (รอบใช้งานเพียง ${monthsDiff.toFixed(1)} / ${standard.Standard_Months} เดือน)`
+                if (monthsDiff < standard.Standard_Months * 0.4) severity = 'CRITICAL'
+            }
+
+            // Check KM (Priority if available)
+            if (standard.Standard_KM && kmDiff !== null && kmDiff < standard.Standard_KM * 0.7) {
+                isAnomaly = true
+                reason = `เปลี่ยนเร็วกว่ากำหนดตามระยะทาง (วิ่งไปเพียง ${kmDiff.toLocaleString()} / ${standard.Standard_KM.toLocaleString()} กม.)`
+                if (kmDiff < standard.Standard_KM * 0.4) severity = 'CRITICAL'
+            }
+
+            if (isAnomaly) {
                 await supabase.from('Fleet_Intelligence_Alerts').insert({
                     Vehicle_Plate: ticket.Vehicle_Plate,
-                    Alert_Type: 'MAINTENANCE_LIFESPAN',
-                    Severity: 'WARNING',
-                    Message: `เปลี่ยน${ticket.Issue_Type}เร็วกว่ากำหนด (รอบใช้งานเพียง ${monthsDiff.toFixed(1)} เดือน)`,
+                    Alert_Type: 'MAINTENANCE_LIFESPAN_ANOMALY',
+                    Severity: severity,
+                    Message: `${ticket.Issue_Type}: ${reason}`,
                     Details: {
                         actual_months: monthsDiff,
                         target_months: standard.Standard_Months,
-                        ticket_id: ticketId
+                        actual_km: kmDiff,
+                        target_km: standard.Standard_KM,
+                        ticket_id: ticketId,
+                        prev_ticket_date: lastDate.toISOString()
                     }
                 })
             }

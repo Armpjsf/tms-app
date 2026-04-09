@@ -20,7 +20,7 @@ export async function getFleetHealthAlerts(): Promise<HealthAlert[]> {
         const supabase = isAdmin ? await createAdminClient() : await createClient()
         const branchId = await getUserBranchId()
 
-        // 1. Fetch all active vehicles for the branch
+        // 1. Fetch all active vehicles
         let vehicleQuery = supabase
             .from('Master_Vehicles')
             .select(`
@@ -45,14 +45,22 @@ export async function getFleetHealthAlerts(): Promise<HealthAlert[]> {
         const { data: vehicles, error: vError } = await vehicleQuery
         if (vError || !vehicles) return []
 
-        // 2. Fetch driver names for mapping
-        const { data: drivers } = await supabase
-            .from('Master_Drivers')
-            .select('Driver_ID, Driver_Name')
-        
+        // 2. Fetch driver names and maintenance standards
+        const { data: drivers } = await supabase.from('Master_Drivers').select('Driver_ID, Driver_Name')
         const driverMap = new Map(drivers?.map(d => [d.Driver_ID, d.Driver_Name]) || [])
 
-        // 3. Fetch active repair tickets
+        const { data: standards } = await supabase.from('Fleet_Maintenance_Standards').select('*')
+        
+        // 3. Fetch all completed repair tickets for these vehicles to calculate component health
+        const vehiclePlates = vehicles.map(v => v.Vehicle_Plate)
+        const { data: completedRepairs } = await supabase
+            .from('Repair_Tickets')
+            .select('Vehicle_Plate, Issue_Type, Date_Finish, Date_Report, Odometer')
+            .in('Vehicle_Plate', vehiclePlates)
+            .eq('Status', 'Completed')
+            .order('Date_Report', { ascending: false })
+
+        // 4. Fetch active repair tickets for current issues
         let repairQuery = supabase
             .from('Repair_Tickets')
             .select('Vehicle_Plate, Issue_Type, Priority, Status')
@@ -61,8 +69,7 @@ export async function getFleetHealthAlerts(): Promise<HealthAlert[]> {
         if (branchId && branchId !== 'All') {
             repairQuery = repairQuery.eq('Branch_ID', branchId)
         }
-
-        const { data: repairs } = await repairQuery
+        const { data: activeRepairs } = await repairQuery
 
         const alerts: HealthAlert[] = []
         const now = new Date()
@@ -71,14 +78,13 @@ export async function getFleetHealthAlerts(): Promise<HealthAlert[]> {
         vehicles.forEach(v => {
             const driverName = v.Driver_ID ? driverMap.get(v.Driver_ID) : undefined
 
-            // Compliance Checks
-            const checks = [
-                { type: 'Insurance', date: v.Insurance_Expiry },
-                { type: 'Tax', date: v.Tax_Expiry },
-                { type: 'ACT', date: v.Act_Expiry }
+            // --- A. Compliance Checks ---
+            const complianceFields = [
+                { type: 'ประกันภัย', date: v.Insurance_Expiry },
+                { type: 'ภาษีรถ', date: v.Tax_Expiry },
+                { type: 'พ.ร.บ.', date: v.Act_Expiry }
             ]
-
-            checks.forEach(check => {
+            complianceFields.forEach(check => {
                 if (check.date) {
                     const expiry = new Date(check.date)
                     if (expiry < now) {
@@ -87,7 +93,7 @@ export async function getFleetHealthAlerts(): Promise<HealthAlert[]> {
                             driver_id: v.Driver_ID,
                             driver_name: driverName,
                             issue_type: 'compliance',
-                            description: `${check.type} Expired`,
+                            description: `${check.type} หมดอายุ`,
                             priority: 'high',
                             expiry_date: check.date
                         })
@@ -97,7 +103,7 @@ export async function getFleetHealthAlerts(): Promise<HealthAlert[]> {
                             driver_id: v.Driver_ID,
                             driver_name: driverName,
                             issue_type: 'compliance',
-                            description: `${check.type} Expiring Soon`,
+                            description: `${check.type} ใกล้หมดอายุ`,
                             priority: 'medium',
                             expiry_date: check.date
                         })
@@ -105,41 +111,78 @@ export async function getFleetHealthAlerts(): Promise<HealthAlert[]> {
                 }
             })
 
-            // Service Checks (Mileage)
-            if (v.Current_Mileage && v.Next_Service_Mileage) {
-                const diff = v.Next_Service_Mileage - v.Current_Mileage
-                if (diff <= 0) {
-                    alerts.push({
-                        vehicle_plate: v.Vehicle_Plate,
-                        driver_id: v.Driver_ID,
-                        driver_name: driverName,
-                        issue_type: 'service',
-                        description: 'Overdue for Service',
-                        priority: 'high',
-                        remaining_km: diff
-                    })
-                } else if (diff <= 1000) {
-                    alerts.push({
-                        vehicle_plate: v.Vehicle_Plate,
-                        driver_id: v.Driver_ID,
-                        driver_name: driverName,
-                        issue_type: 'service',
-                        description: 'Service Due Soon',
-                        priority: 'medium',
-                        remaining_km: diff
-                    })
-                }
+            // --- B. Per-Component Maintenance Tracking ---
+            if (standards && completedRepairs) {
+                standards.forEach(std => {
+                    // Find latest repair for this component on this vehicle
+                    const latestRepair = completedRepairs.find(r => 
+                        r.Vehicle_Plate === v.Vehicle_Plate && 
+                        r.Issue_Type?.toLowerCase().includes(std.Component_Name.toLowerCase())
+                    )
+
+                    if (latestRepair) {
+                        const lastDate = new Date(latestRepair.Date_Finish || latestRepair.Date_Report)
+                        const lastOdo = latestRepair.Odometer || 0
+                        const currOdo = v.Current_Mileage || 0
+
+                        // Check KM
+                        if (std.Standard_KM) {
+                            const kmUsed = currOdo - lastOdo
+                            const kmRemaining = std.Standard_KM - kmUsed
+                            const alertThreshold = std.Alert_Before_KM || 1000
+
+                            if (kmRemaining <= 0) {
+                                alerts.push({
+                                    vehicle_plate: v.Vehicle_Plate,
+                                    driver_id: v.Driver_ID,
+                                    driver_name: driverName,
+                                    issue_type: 'service',
+                                    description: `รอบเปลี่ยน${std.Component_Name} (เกินกำหนด ${Math.abs(kmRemaining).toLocaleString()} กม.)`,
+                                    priority: 'high',
+                                    remaining_km: kmRemaining
+                                })
+                            } else if (kmRemaining <= alertThreshold) {
+                                alerts.push({
+                                    vehicle_plate: v.Vehicle_Plate,
+                                    driver_id: v.Driver_ID,
+                                    driver_name: driverName,
+                                    issue_type: 'service',
+                                    description: `ใกล้ถึงรอบเปลี่ยน${std.Component_Name} (เหลือ ${kmRemaining.toLocaleString()} กม.)`,
+                                    priority: 'medium',
+                                    remaining_km: kmRemaining
+                                })
+                            }
+                        }
+
+                        // Check Months
+                        if (std.Standard_Months) {
+                            const monthsPassed = (now.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24 * 30.44)
+                            const monthsRemaining = std.Standard_Months - monthsPassed
+                            
+                            if (monthsRemaining <= 0) {
+                                alerts.push({
+                                    vehicle_plate: v.Vehicle_Plate,
+                                    driver_id: v.Driver_ID,
+                                    driver_name: driverName,
+                                    issue_type: 'service',
+                                    description: `รอบเปลี่ยน${std.Component_Name} (เกินกำหนด ${Math.abs(Math.round(monthsRemaining))} เดือน)`,
+                                    priority: 'high'
+                                })
+                            }
+                        }
+                    }
+                })
             }
 
-            // Maintenance Checks (Active Tickets)
-            const vehicleRepairs = repairs?.filter(r => r.Vehicle_Plate === v.Vehicle_Plate) || []
+            // --- C. Active Repair Tickets ---
+            const vehicleRepairs = activeRepairs?.filter(r => r.Vehicle_Plate === v.Vehicle_Plate) || []
             vehicleRepairs.forEach(r => {
                 alerts.push({
                     vehicle_plate: v.Vehicle_Plate,
                     driver_id: v.Driver_ID,
                     driver_name: driverName,
                     issue_type: 'maintenance',
-                    description: r.Issue_Type || 'Maintenance Required',
+                    description: `แจ้งซ่อม: ${r.Issue_Type || 'ไม่ระบุอาการ'}`,
                     priority: r.Priority?.toLowerCase() === 'high' ? 'high' : 'medium'
                 })
             })
@@ -150,7 +193,8 @@ export async function getFleetHealthAlerts(): Promise<HealthAlert[]> {
             return priorityMap[a.priority] - priorityMap[b.priority]
         })
 
-    } catch {
+    } catch (e) {
+        console.error('[FLEET_HEALTH] Alert generation failed:', e)
         return []
     }
 }

@@ -377,10 +377,6 @@ export function FleetStandardsClient({
                             <p className="text-muted-foreground text-[10px] font-black uppercase tracking-[0.2em]">น้ำมันเครื่อง (Synthetic Oil)</p>
                             <p className="text-xl font-black text-foreground tracking-tight uppercase italic">10,000 - 15,000 KM</p>
                         </div>
-                        <div className="p-6 bg-muted/30 rounded-3xl border border-border/5 space-y-1 group hover:bg-muted/50 transition-colors">
-                            <p className="text-muted-foreground text-[10px] font-black uppercase tracking-[0.2em]">แบตเตอรี่ (Battery Life)</p>
-                            <p className="text-xl font-black text-foreground tracking-tight uppercase italic">18 - 24 Months</p>
-                        </div>
                     </div>
                 </div>
             </div>

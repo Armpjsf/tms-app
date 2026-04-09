@@ -12,7 +12,6 @@ export type GPSLog = {
   Longitude: number;
   Timestamp: string;
   Job_ID?: string;
-  Battery_Level?: number;
   Speed?: number;
 };
 
@@ -23,7 +22,6 @@ export async function saveGPSLog(data: {
   lat: number;
   lng: number;
   jobId?: string;
-  battery?: number;
   speed?: number;
 }) {
   try {
@@ -38,7 +36,6 @@ export async function saveGPSLog(data: {
         latitude: data.lat,
         longitude: data.lng,
         job_id: data.jobId,
-        battery_level: data.battery,
         speed: data.speed,
         // timestamp is auto-generated
       });
