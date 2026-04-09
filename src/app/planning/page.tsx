@@ -1,6 +1,6 @@
 import { getTodayJobStats, getTodayJobs, getRequestedJobs } from "@/lib/supabase/jobs"
 import { getJobCreationData, createBulkJobs } from "@/app/planning/actions"
-import { hasPermission } from "@/lib/permissions"
+import { hasPermission, isAdmin } from "@/lib/permissions"
 import { PlanningClient } from "@/components/planning/planning-client"
 import { cookies } from "next/headers"
 import { Suspense } from "react"
@@ -16,9 +16,10 @@ interface PageProps {
 
 async function PlanningContent({ branch }: { branch: string }) {
   const currentBranchId = branch === 'All' ? undefined : branch
+  const isAdminUser = await isAdmin()
 
   // Get today's stats, jobs and all requests
-  const [stats, todayJobs, requestedJobs, jobCreationData, canViewPrice, canDelete, canCreate] = await Promise.all([
+  const [stats, todayJobs, requestedJobs, jobCreationData, hasPriceView, hasDelete, hasCreate] = await Promise.all([
     getTodayJobStats(currentBranchId),
     getTodayJobs(currentBranchId),
     getRequestedJobs(currentBranchId),
@@ -27,6 +28,11 @@ async function PlanningContent({ branch }: { branch: string }) {
     hasPermission('job_delete'),
     hasPermission('job_create')
   ])
+
+  // Grant access if either have explicit permission OR is an admin
+  const canViewPrice = isAdminUser || hasPriceView
+  const canDelete = isAdminUser || hasDelete
+  const canCreate = isAdminUser || hasCreate
 
   return (
     <PlanningClient 

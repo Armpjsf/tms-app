@@ -24,11 +24,13 @@ import { useBranch } from "@/components/providers/branch-provider"
 import { useLanguage } from "@/components/providers/language-provider"
 import { ExcelImport } from "@/components/ui/excel-import"
 import { PremiumButton } from "@/components/ui/premium-button"
+import { isAdmin } from "@/lib/permissions"
 
 export default function VehiclesPage() {
   const [vehicles, setVehicles] = useState<Vehicle[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
+  const [isAdminUser, setIsAdminUser] = useState(false)
   const { selectedBranch } = useBranch()
   const { t } = useLanguage()
   const [refreshTrigger, setRefreshTrigger] = useState(0)
@@ -36,8 +38,12 @@ export default function VehiclesPage() {
   useEffect(() => {
     async function loadVehicles() {
       setLoading(true)
-      const data = await getAllVehicles(1, 100, "", selectedBranch)
+      const [data, adminStatus] = await Promise.all([
+        getAllVehicles(1, 100, "", selectedBranch),
+        isAdmin()
+      ])
       setVehicles(data.data || [])
+      setIsAdminUser(adminStatus)
       setLoading(false)
     }
     loadVehicles()
@@ -68,36 +74,40 @@ export default function VehiclesPage() {
             </div>
 
             <div className="relative z-10 flex items-center gap-4">
-                <ExcelImport 
-                    trigger={
-                        <PremiumButton variant="outline" className="h-14 px-8 rounded-2xl border-white/20 bg-white/10 hover:bg-white/20 text-white font-black text-xl gap-3">
-                            <FileSpreadsheet size={20} />
-                            {t('common.tactical.bulk_import') || 'Import'}
-                        </PremiumButton>
-                    }
-                    title={t('vehicles.import_title') || 'Import Vehicles'}
-                    onImport={createBulkVehicles}
-                    templateData={[{
-                        Vehicle_Plate: "80-1234 กทม.",
-                        Vehicle_Type: "4-Wheel",
-                        Brand: "Toyota",
-                        Model: "Hilux Revo",
-                        Max_Weight_kg: 1500,
-                        Max_Volume_cbm: 10,
-                        Driver_ID: "DRV-001",
-                        Sub_ID: "SUB-001",
-                        Branch_ID: "HQ"
-                    }]}
-                    templateFilename="logispro_vehicles_template.xlsx"
-                />
-                <VehicleDialog 
-                    onSuccess={() => setRefreshTrigger(prev => prev + 1)}
-                    trigger={
-                    <button className="flex items-center gap-2 bg-white text-foreground px-8 py-4 rounded-2xl font-black text-xl hover:bg-primary hover:text-foreground transition-all shadow-xl active:scale-95 group/btn">
-                        <Plus size={20} className="group-hover/btn:rotate-90 transition-transform duration-300" />
-                        {t('vehicles.add_vehicle')}
-                    </button>
-                } />
+                {isAdminUser && (
+                  <>
+                    <ExcelImport 
+                        trigger={
+                            <PremiumButton variant="outline" className="h-14 px-8 rounded-2xl border-white/20 bg-white/10 hover:bg-white/20 text-white font-black text-xl gap-3">
+                                <FileSpreadsheet size={20} />
+                                {t('common.tactical.bulk_import') || 'Import'}
+                            </PremiumButton>
+                        }
+                        title={t('vehicles.import_title') || 'Import Vehicles'}
+                        onImport={createBulkVehicles}
+                        templateData={[{
+                            Vehicle_Plate: "80-1234 กทม.",
+                            Vehicle_Type: "4-Wheel",
+                            Brand: "Toyota",
+                            Model: "Hilux Revo",
+                            Max_Weight_kg: 1500,
+                            Max_Volume_cbm: 10,
+                            Driver_ID: "DRV-001",
+                            Sub_ID: "SUB-001",
+                            Branch_ID: "HQ"
+                        }]}
+                        templateFilename="logispro_vehicles_template.xlsx"
+                    />
+                    <VehicleDialog 
+                        onSuccess={() => setRefreshTrigger(prev => prev + 1)}
+                        trigger={
+                        <button className="flex items-center gap-2 bg-white text-foreground px-8 py-4 rounded-2xl font-black text-xl hover:bg-primary hover:text-foreground transition-all shadow-xl active:scale-95 group/btn">
+                            <Plus size={20} className="group-hover/btn:rotate-90 transition-transform duration-300" />
+                            {t('vehicles.add_vehicle')}
+                        </button>
+                    } />
+                  </>
+                )}
             </div>
         </div>
 

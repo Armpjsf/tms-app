@@ -35,7 +35,7 @@ export async function getCurrentUserRole() {
 // Get all routes
 export async function getAllRoutes(page?: number, limit?: number, query?: string, branchId?: string) {
   try {
-    const isAdminUser = await isSuperAdmin()
+    const isAdminUser = await isAdmin()
     const supabase = isAdminUser ? await createAdminClient() : await createClient()
     let queryBuilder = supabase.from('Master_Routes').select('*', { count: 'exact' })
     
@@ -74,7 +74,7 @@ export async function getAllRoutes(page?: number, limit?: number, query?: string
 // Get all branches
 export async function getBranches() {
   try {
-    const isAdminUser = await isSuperAdmin()
+    const isAdminUser = await isAdmin()
     const supabase = isAdminUser ? await createAdminClient() : await createClient()
     const { data, error } = await supabase.from('Master_Branches').select('Branch_ID, Branch_Name').order('Branch_Name')
     
@@ -130,7 +130,7 @@ export async function createRoute(routeData: Partial<Route>) {
 // Update route
 export async function updateRoute(originalRouteName: string, routeData: Partial<Route>) {
   try {
-    const isAdminUser = await isSuperAdmin()
+    const isAdminUser = await isAdmin()
     const supabase = isAdminUser ? await createAdminClient() : await createClient()
     const { data, error } = await supabase
       .from('Master_Routes')
@@ -164,7 +164,7 @@ export async function updateRoute(originalRouteName: string, routeData: Partial<
 // Delete route
 export async function deleteRoute(routeName: string) {
   try {
-    const isAdminUser = await isSuperAdmin()
+    const isAdminUser = await isAdmin()
     const supabase = isAdminUser ? await createAdminClient() : await createClient()
     const { error } = await supabase
       .from('Master_Routes')

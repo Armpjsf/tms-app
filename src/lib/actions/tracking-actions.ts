@@ -124,7 +124,9 @@ export async function getPublicJobDetails(
     vehiclePlate: job.Vehicle_Plate || "-",
     planDate: job.Plan_Date || "-",
     pickupDate: job.Actual_Pickup_Time || null,
-    deliveryDate: job.Actual_Delivery_Time || null,
+    deliveryDate: (job.Delivery_Date && job.Actual_Delivery_Time) 
+      ? `${job.Delivery_Date}T${job.Actual_Delivery_Time}`
+      : (job.Actual_Delivery_Time || null),
     pickupPhotos,
     podPhotos,
     signature: job.Signature_Proof_Url || job.Signature_Url || (job as Record<string, unknown>).signature_url || null,

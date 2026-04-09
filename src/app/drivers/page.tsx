@@ -39,6 +39,7 @@ export default async function DriversPage(props: Props) {
         subcontractors={subcontractors}
         branchId={searchParams.branchId as string}
         createBulkDrivers={createBulkDrivers}
+        isAdminUser={isUserAdmin}
       />
     </DashboardLayout>
   )

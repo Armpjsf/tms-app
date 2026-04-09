@@ -37,9 +37,16 @@ export function PODDownloadButton({ job }: PODDownloadButtonProps) {
                 if (job.planDate && job.planDate !== '-') return job.planDate
                 return 'ไม่ระบุ'
             }
-            // Replace space with T to handle SQL datetime -> ISO conversion
-            const d = new Date(dateStr.replace(' ', 'T'))
-            if (isNaN(d.getTime())) return 'ไม่ระบุ'
+            // Replace space with T to handle SQL datetime -> ISO conversion if needed
+            // Also supports full ISO strings
+            const d = new Date(dateStr.includes('T') ? dateStr : dateStr.replace(' ', 'T'))
+            if (isNaN(d.getTime())) {
+                 // Try parsing as simple time if possible
+                 if (dateStr.match(/^\d{2}:\d{2}/)) {
+                     return dateStr + ' น.'
+                 }
+                 return 'ไม่ระบุ'
+            }
             return d.toLocaleDateString('th-TH', { 
                 year: 'numeric', 
                 month: 'long', 
@@ -53,7 +60,7 @@ export function PODDownloadButton({ job }: PODDownloadButtonProps) {
         
         // Use a hidden div for rendering the PDF content
         const container = document.createElement('div')
-        container.style.padding = '50px'
+        container.style.padding = '40px' // Slightly reduced from 50px
         container.style.border = '1px solid #e2e8f0'
         container.style.position = 'relative'
         container.style.overflow = 'hidden'
@@ -66,7 +73,7 @@ export function PODDownloadButton({ job }: PODDownloadButtonProps) {
 
         // Header
         const header = document.createElement('div')
-        header.style.cssText = 'background: #1e293b; color: white; padding: 50px 40px; margin: -50px -50px 50px -50px; display: flex; justify-content: space-between; align-items: flex-end;'
+        header.style.cssText = 'background: #1e293b; color: white; padding: 40px; margin: -40px -40px 40px -40px; display: flex; justify-content: space-between; align-items: flex-end;'
         
         const headerLeft = document.createElement('div')
         const h1 = document.createElement('h1')
@@ -105,7 +112,7 @@ export function PODDownloadButton({ job }: PODDownloadButtonProps) {
         // Section 1
         container.appendChild(createSectionHeader('1. SHIPMENT & CARRIER DETAILS'))
         const grid1 = document.createElement('div')
-        grid1.style.cssText = 'display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-bottom: 50px;'
+        grid1.style.cssText = 'display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-bottom: 35px;'
         
         const leftCol = document.createElement('div')
         const createField = (label: string, value: string, color = '#64748b', valSize = '13px', valWeight = '600') => {
@@ -141,7 +148,7 @@ export function PODDownloadButton({ job }: PODDownloadButtonProps) {
 
         // Status Summary
         const summary = document.createElement('div')
-        summary.style.cssText = 'display: flex; gap: 25px; margin-bottom: 50px;'
+        summary.style.cssText = 'display: flex; gap: 20px; margin-bottom: 35px;'
         
         const dateBox = document.createElement('div')
         dateBox.style.cssText = 'flex: 2; border: 2px solid #f1f5f9; padding: 25px; border-radius: 20px; background: #f8fafc; border-left: 8px solid #1e293b;'
@@ -172,7 +179,7 @@ export function PODDownloadButton({ job }: PODDownloadButtonProps) {
         if (job.notes) {
             container.appendChild(createSectionHeader('2. JOB REMARKS/NOTES'))
             const notesBox = document.createElement('div')
-            notesBox.style.cssText = 'padding: 25px; background: #fffbeb; border: 1px solid #fef3c7; border-radius: 20px; margin-bottom: 50px;'
+            notesBox.style.cssText = 'padding: 25px; background: #fffbeb; border: 1px solid #fef3c7; border-radius: 20px; margin-bottom: 35px;'
             const pN = document.createElement('p')
             pN.style.cssText = 'margin: 0; font-size: 14px; color: #92400e; font-weight: 700; line-height: 1.6;'
             pN.textContent = job.notes
@@ -295,10 +302,25 @@ export function PODDownloadButton({ job }: PODDownloadButtonProps) {
         const imgData = canvas.toDataURL('image/png')
         const pdf = new jsPDF('p', 'mm', 'a4')
         const pageWidth = pdf.internal.pageSize.getWidth()
+        const pageHeight = pdf.internal.pageSize.getHeight()
         const imgWidth = pageWidth
         const imgHeight = (canvas.height * imgWidth) / canvas.width
 
-        pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight)
+        let heightLeft = imgHeight
+        let position = 0
+
+        // Add first page
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight)
+        heightLeft -= pageHeight
+
+        // Add additional pages if needed
+        while (heightLeft >= 0) {
+            position -= pageHeight
+            pdf.addPage()
+            pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight)
+            heightLeft -= pageHeight
+        }
+
         pdf.save(`POD_${job.jobId}.pdf`)
         
         toast.dismiss(id)

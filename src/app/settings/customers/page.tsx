@@ -45,6 +45,7 @@ import { Tabs, TabsContent, List as TabsList, TabsTrigger } from "@/components/u
 import { CustomerFuelMatrix } from "@/components/settings/customer-fuel-matrix"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { isAdmin } from "@/lib/permissions"
 
 interface ExecutiveKPIs {
   revenue: { current: number; previous: number; growth: number; target: number; attainment: number; };
@@ -61,6 +62,7 @@ export default function CustomersSettingsPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null)
   const [kpis, setKpis] = useState<ExecutiveKPIs | null>(null)
+  const [isAdminUser, setIsAdminUser] = useState(false)
   const [formData, setFormData] = useState<Partial<Customer>>({
     Customer_ID: "",
     Customer_Name: "",
@@ -77,12 +79,14 @@ export default function CustomersSettingsPage() {
 
   const loadCustomers = useCallback(async () => {
     setLoading(true)
-    const [result, kpiData] = await Promise.all([
+    const [result, kpiData, adminStatus] = await Promise.all([
         getAllCustomers(1, 100, searchQuery),
-        getExecutiveKPIs()
+        getExecutiveKPIs(),
+        isAdmin()
     ])
     setCustomers(result.data)
     setKpis(kpiData as unknown as ExecutiveKPIs)
+    setIsAdminUser(adminStatus)
     setLoading(false)
   }, [searchQuery])
 
@@ -185,42 +189,46 @@ export default function CustomersSettingsPage() {
         </div>
 
         <div className="flex flex-wrap gap-4 relative z-10">
-            <ExcelExport 
-                data={customers}
-                filename="logispro_customers_export"
-                trigger={
-                    <PremiumButton variant="outline" className="h-14 px-8 rounded-2xl border-border/5 bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-white transition-all" >
-                        <FileSpreadsheet size={20} className="mr-3" />
-                        Export
-                    </PremiumButton>
-                }
-            />
-            <ExcelImport 
-                trigger={
-                    <PremiumButton variant="outline" className="h-14 px-8 rounded-2xl border-border/5 bg-muted/50 text-muted-foreground hover:bg-secondary/50 hover:text-foreground transition-all" >
-                        <FileSpreadsheet size={20} className="mr-3 opacity-50" /> 
-                        {t('settings_pages.customers.bulk_import')}
-                    </PremiumButton>
-                }
-                title={t('settings_pages.customers.import_title')}
-                onImport={createBulkCustomers}
-                templateData={[{
-                    Customer_ID: "CUST-001",
-                    Customer_Name: "บริษัท ตัวอย่าง จำกัด",
-                    Tax_ID: "1234567890123",
-                    Phone: "02-123-4567",
-                    Address: "123 ถ.สุขุมวิท แขวงคลองเตย เขตคลองเตย กรุงเทพฯ 10110",
-                    Email: "contact@example.com",
-                    Line_User_ID: "@example_line",
-                    Credit_Term: 30,
-                    Price_Per_Unit: 1500.00
-                }]}
-                templateFilename="logispro_client_template.xlsx"
-            />
-            <PremiumButton onClick={() => handleOpenDialog()} className="h-14 px-10 rounded-2xl shadow-xl shadow-primary/20">
-              <Plus size={24} className="mr-3" strokeWidth={3} />
-              {t('settings_pages.customers.add_customer')}
-            </PremiumButton>
+            {isAdminUser && (
+              <>
+                <ExcelExport 
+                    data={customers}
+                    filename="logispro_customers_export"
+                    trigger={
+                        <PremiumButton variant="outline" className="h-14 px-8 rounded-2xl border-border/5 bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-white transition-all" >
+                            <FileSpreadsheet size={20} className="mr-3" />
+                            Export
+                        </PremiumButton>
+                    }
+                />
+                <ExcelImport 
+                    trigger={
+                        <PremiumButton variant="outline" className="h-14 px-8 rounded-2xl border-border/5 bg-muted/50 text-muted-foreground hover:bg-secondary/50 hover:text-foreground transition-all" >
+                            <FileSpreadsheet size={20} className="mr-3 opacity-50" /> 
+                            {t('settings_pages.customers.bulk_import')}
+                        </PremiumButton>
+                    }
+                    title={t('settings_pages.customers.import_title')}
+                    onImport={createBulkCustomers}
+                    templateData={[{
+                        Customer_ID: "CUST-001",
+                        Customer_Name: "บริษัท ตัวอย่าง จำกัด",
+                        Tax_ID: "1234567890123",
+                        Phone: "02-123-4567",
+                        Address: "123 ถ.สุขุมวิท แขวงคลองเตย เขตคลองเตย กรุงเทพฯ 10110",
+                        Email: "contact@example.com",
+                        Line_User_ID: "@example_line",
+                        Credit_Term: 30,
+                        Price_Per_Unit: 1500.00
+                    }]}
+                    templateFilename="logispro_client_template.xlsx"
+                />
+                <PremiumButton onClick={() => handleOpenDialog()} className="h-14 px-10 rounded-2xl shadow-xl shadow-primary/20">
+                  <Plus size={24} className="mr-3" strokeWidth={3} />
+                  {t('settings_pages.customers.add_customer')}
+                </PremiumButton>
+              </>
+            )}
         </div>
       </div>
 

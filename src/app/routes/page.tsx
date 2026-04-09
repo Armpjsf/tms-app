@@ -64,6 +64,7 @@ export default function RoutesPage() {
   const [editingRoute, setEditingRoute] = useState<Route | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [isAdminUser, setIsAdminUser] = useState(false)
   
   const [formData, setFormData] = useState<Partial<Route>>({
     Route_Name: "",
@@ -81,13 +82,15 @@ export default function RoutesPage() {
 
   const fetchData = useCallback(async () => {
     setLoading(true)
-    const [routesData, locationsData] = await Promise.all([
+    const [routesData, locationsData, adminStatus] = await Promise.all([
       getAllRoutes(1, 100, searchQuery, selectedBranch),
-      getUniqueLocations()
+      getUniqueLocations(),
+      isAdmin()
     ])
     
     setRoutes(routesData.data)
     setLocations(locationsData)
+    setIsAdminUser(adminStatus)
     setLoading(false)
   }, [searchQuery, selectedBranch]) 
 
@@ -209,44 +212,48 @@ export default function RoutesPage() {
         </div>
 
         <div className="flex flex-wrap gap-4 relative z-10">
-            <ExcelExport 
-                data={routes}
-                filename="logispro_routes_export"
-                trigger={
-                    <PremiumButton variant="outline" className="h-14 px-8 rounded-2xl border-border/5 bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-white transition-all" >
-                        <FileSpreadsheet size={20} className="mr-3" />
-                        Export
-                    </PremiumButton>
-                }
-            />
-            <ExcelImport 
-                trigger={
-                    <PremiumButton variant="outline" className="h-14 px-8 rounded-2xl border-border/5 bg-muted/50 text-muted-foreground hover:bg-muted/80 hover:text-foreground transition-all">
-                        <FileSpreadsheet size={20} className="mr-3 opacity-50" /> 
-                        {t('routes.spatial_import')}
-                    </PremiumButton>
-                }
-                title={t('routes.spatial_import')}
-                onImport={createBulkRoutes}
-                templateData={[{
-                    Route_Name: "BKK-CNX-001",
-                    Branch_ID: "HQ",
-                    Origin: "กรุงเทพฯ",
-                    Origin_Lat: 13.7563,
-                    Origin_Lon: 100.5018,
-                    Map_Link_Origin: "https://maps.google.com/?q=13.7563,100.5018",
-                    Destination: "เชียงใหม่",
-                    Dest_Lat: 18.7883,
-                    Dest_Lon: 98.9853,
-                    Map_Link_Destination: "https://maps.google.com/?q=18.7883,98.9853",
-                    Distance_KM: 685.5
-                }]}
-                templateFilename="logispro_routes_template.xlsx"
-            />
-            <PremiumButton onClick={() => handleOpenDialog()} className="h-14 px-10 rounded-2xl shadow-xl shadow-primary/20">
-              <Plus size={24} className="mr-3" strokeWidth={3} />
-              {t('routes.enlist_route')}
-            </PremiumButton>
+            {isAdminUser && (
+              <>
+                <ExcelExport 
+                    data={routes}
+                    filename="logispro_routes_export"
+                    trigger={
+                        <PremiumButton variant="outline" className="h-14 px-8 rounded-2xl border-border/5 bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-white transition-all" >
+                            <FileSpreadsheet size={20} className="mr-3" />
+                            Export
+                        </PremiumButton>
+                    }
+                />
+                <ExcelImport 
+                    trigger={
+                        <PremiumButton variant="outline" className="h-14 px-8 rounded-2xl border-border/5 bg-muted/50 text-muted-foreground hover:bg-muted/80 hover:text-foreground transition-all">
+                            <FileSpreadsheet size={20} className="mr-3 opacity-50" /> 
+                            {t('routes.spatial_import')}
+                        </PremiumButton>
+                    }
+                    title={t('routes.spatial_import')}
+                    onImport={createBulkRoutes}
+                    templateData={[{
+                        Route_Name: "BKK-CNX-001",
+                        Branch_ID: "HQ",
+                        Origin: "กรุงเทพฯ",
+                        Origin_Lat: 13.7563,
+                        Origin_Lon: 100.5018,
+                        Map_Link_Origin: "https://maps.google.com/?q=13.7563,100.5018",
+                        Destination: "เชียงใหม่",
+                        Dest_Lat: 18.7883,
+                        Dest_Lon: 98.9853,
+                        Map_Link_Destination: "https://maps.google.com/?q=18.7883,98.9853",
+                        Distance_KM: 685.5
+                    }]}
+                    templateFilename="logispro_routes_template.xlsx"
+                />
+                <PremiumButton onClick={() => handleOpenDialog()} className="h-14 px-10 rounded-2xl shadow-xl shadow-primary/20">
+                  <Plus size={24} className="mr-3" strokeWidth={3} />
+                  {t('routes.enlist_route')}
+                </PremiumButton>
+              </>
+            )}
         </div>
       </div>
 

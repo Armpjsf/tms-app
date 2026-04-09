@@ -25,11 +25,21 @@ type DriversContentProps = {
   userId?: string
   branchId?: string
   createBulkDrivers?: (data: Partial<Driver>[]) => Promise<{ success: boolean; message: string }>
+  isAdminUser?: boolean
 }
 
-export function DriversContent({ drivers, count, branches, vehicles = [], subcontractors = [], userId, branchId, createBulkDrivers }: DriversContentProps) {
+export function DriversContent({ 
+    drivers, 
+    count, 
+    branches, 
+    vehicles = [], 
+    subcontractors = [], 
+    userId, 
+    branchId, 
+    createBulkDrivers,
+    isAdminUser = false 
+}: DriversContentProps) {
   const { t } = useLanguage()
-  const [isAdmin] = useState(true)
   const [deletingId, setDeletingId] = useState<string | null>(null)
 
   const handleDelete = async (id: string, name: string) => {
@@ -123,44 +133,48 @@ export function DriversContent({ drivers, count, branches, vehicles = [], subcon
         </div>
 
         <div className="flex items-center gap-4 w-full md:w-auto">
-            {createBulkDrivers && (
-                <ExcelImport 
+            {isAdminUser && (
+              <>
+                {createBulkDrivers && (
+                    <ExcelImport 
+                        trigger={
+                            <PremiumButton variant="outline" className="h-14 px-8 rounded-2xl border-border/10 hover:bg-muted/50 text-muted-foreground text-base font-bold font-black uppercase tracking-widest gap-3">
+                                <FileSpreadsheet size={18} />
+                                {t('common.tactical.bulk_import') || 'Import'}
+                            </PremiumButton>
+                        }
+                        title={t('drivers.import_title') || 'Import Drivers'}
+                        onImport={createBulkDrivers}
+                        templateData={[{
+                            Driver_ID: "DRV-001",
+                            Driver_Name: "สมชาย เข็มกลัด",
+                            Mobile_No: "0812345678",
+                            Password: "pass-1234",
+                            Vehicle_Plate: "80-1234 กทม.",
+                            Expire_Date: "2025-12-31",
+                            Branch_ID: "HQ",
+                            Sub_ID: "SUB-001",
+                            Bank_Name: "K-Bank",
+                            Bank_Account_No: "123-4-56789-0",
+                            Bank_Account_Name: "สมชาย เข็มกลัด"
+                        }]}
+                        templateFilename="logispro_drivers_template.xlsx"
+                    />
+                )}
+                <DriverDialog 
+                    mode="create"
+                    vehicles={vehicles}
+                    branches={branches}
+                    subcontractors={subcontractors}
                     trigger={
-                        <PremiumButton variant="outline" className="h-14 px-8 rounded-2xl border-border/10 hover:bg-muted/50 text-muted-foreground text-base font-bold font-black uppercase tracking-widest gap-3">
-                            <FileSpreadsheet size={18} />
-                            {t('common.tactical.bulk_import') || 'Import'}
+                        <PremiumButton className="h-14 px-10 rounded-2xl bg-primary hover:brightness-110 text-foreground font-bold font-black uppercase tracking-widest gap-3 shadow-[0_10px_30px_rgba(255,30,133,0.3)]">
+                            <Plus size={20} strokeWidth={3} />
+                            {t('common.success')}
                         </PremiumButton>
                     }
-                    title={t('drivers.import_title') || 'Import Drivers'}
-                    onImport={createBulkDrivers}
-                    templateData={[{
-                        Driver_ID: "DRV-001",
-                        Driver_Name: "สมชาย เข็มกลัด",
-                        Mobile_No: "0812345678",
-                        Password: "pass-1234",
-                        Vehicle_Plate: "80-1234 กทม.",
-                        Expire_Date: "2025-12-31",
-                        Branch_ID: "HQ",
-                        Sub_ID: "SUB-001",
-                        Bank_Name: "K-Bank",
-                        Bank_Account_No: "123-4-56789-0",
-                        Bank_Account_Name: "สมชาย เข็มกลัด"
-                    }]}
-                    templateFilename="logispro_drivers_template.xlsx"
                 />
+              </>
             )}
-            <DriverDialog 
-                mode="create"
-                vehicles={vehicles}
-                branches={branches}
-                subcontractors={subcontractors}
-                trigger={
-                    <PremiumButton className="h-14 px-10 rounded-2xl bg-primary hover:brightness-110 text-foreground font-bold font-black uppercase tracking-widest gap-3 shadow-[0_10px_30px_rgba(255,30,133,0.3)]">
-                        <Plus size={20} strokeWidth={3} />
-                        {t('common.success')}
-                    </PremiumButton>
-                }
-            />
         </div>
       </div>
 
