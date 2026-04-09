@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, Suspense } from "react"
+import { useState, useEffect, Suspense, useActionState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Shield, X, Truck, Building } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -13,10 +13,11 @@ import Image from "next/image"
 function StaffLoginContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const [loading, setLoading] = useState(false)
   const [activeTab, setActiveTab] = useState<'info' | 'staff_form'>('info')
+  const [state, formAction, isPending] = useActionState(login, undefined)
   
-  const error = searchParams.get("error")
+  const queryError = searchParams.get("error")
+  const error = state?.error || queryError
 
   // Mobile detection and redirect
   useEffect(() => {
@@ -37,12 +38,6 @@ function StaffLoginContent() {
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, [router]);
-
-  async function handleSubmit(formData: FormData) {
-    setLoading(true)
-    await login(formData)
-    setLoading(false)
-  }
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-6 relative overflow-hidden bg-background">
@@ -158,7 +153,7 @@ function StaffLoginContent() {
                         <p className="text-xl text-muted-foreground font-medium tracking-tight">Enterprise staff authentication</p>
                     </div>
 
-                    <form action={handleSubmit} className="space-y-6">
+                    <form action={formAction} className="space-y-6">
                         <div className="space-y-3 text-left">
                             <Label htmlFor="email" className="text-muted-foreground text-base font-bold font-black uppercase tracking-normal ml-1">Username / Fleet ID</Label>
                             <Input 
@@ -190,8 +185,8 @@ function StaffLoginContent() {
                                  error}
                             </div>
                         )}
-                        <Button type="submit" className="w-full h-14 bg-primary hover:brightness-110 text-foreground rounded-2xl shadow-xl shadow-primary/20 transition-all hover:scale-[1.02] active:scale-[0.98]" disabled={loading}>
-                            {loading ? "AUTHENTICATING..." : "CONFIRM LOGIN"}
+                        <Button type="submit" className="w-full h-14 bg-primary hover:brightness-110 text-foreground rounded-2xl shadow-xl shadow-primary/20 transition-all hover:scale-[1.02] active:scale-[0.98]" disabled={isPending}>
+                            {isPending ? "AUTHENTICATING..." : "CONFIRM LOGIN"}
                         </Button>
                     </form>
                 </div>

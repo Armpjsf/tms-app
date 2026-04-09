@@ -84,7 +84,7 @@ export async function getTodayJobs(): Promise<Job[]> {
     const isAdmin = await isSuperAdmin()
     const branchId = await getUserBranchId()
     const customerId = await getCustomerId()
-    const supabase = isAdmin ? await createAdminClient() : await createClient()
+    const supabase = (isAdmin || customerId) ? await createAdminClient() : await createClient()
     
     const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' })
     
@@ -120,7 +120,7 @@ export async function getJobsByStatus(status: string): Promise<Job[]> {
     const isAdmin = await isSuperAdmin()
     const branchId = await getUserBranchId()
     const customerId = await getCustomerId()
-    const supabase = isAdmin ? await createAdminClient() : await createClient()
+    const supabase = (isAdmin || customerId) ? await createAdminClient() : await createClient()
 
     let dbQuery = supabase
       .from('Jobs_Main')
@@ -162,7 +162,7 @@ export async function getAllJobs(
     const isAdmin = await isSuperAdmin()
     const branchId = await getUserBranchId()
     const customerId = await getCustomerId()
-    const supabase = isAdmin ? await createAdminClient() : await createClient()
+    const supabase = (isAdmin || customerId) ? await createAdminClient() : await createClient()
     
     const offset = (page - 1) * limit
     
@@ -218,10 +218,10 @@ export async function getAllJobs(
 export async function getTodayJobStats(branchId?: string, startDate?: string, endDate?: string) {
   try {
     const isAdmin = await isSuperAdmin()
-    const supabase = isAdmin ? await createAdminClient() : await createClient()
-    const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' })
     const userBranchId = await getUserBranchId()
     const customerId = await getCustomerId()
+    const supabase = (isAdmin || customerId) ? await createAdminClient() : await createClient()
+    const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' })
     
     let dbQuery = supabase
       .from('Jobs_Main')
@@ -267,10 +267,10 @@ export async function getTodayJobStats(branchId?: string, startDate?: string, en
 export async function getTodayFinancials(branchId?: string) {
   try {
     const isAdmin = await isSuperAdmin()
-    const supabase = isAdmin ? await createAdminClient() : await createClient()
-    const today = new Date().toISOString().split('T')[0]
     const userBranchId = await getUserBranchId()
     const customerId = await getCustomerId()
+    const supabase = (isAdmin || customerId) ? await createAdminClient() : await createClient()
+    const today = new Date().toISOString().split('T')[0]
 
     let dbQuery = supabase
       .from('Jobs_Main')
@@ -438,7 +438,7 @@ export async function getWeeklyJobStats(branchId?: string) {
     const isAdmin = await isSuperAdmin()
     const userBranchId = await getUserBranchId()
     const customerId = await getCustomerId()
-    const supabase = isAdmin ? await createAdminClient() : await createClient()
+    const supabase = (isAdmin || customerId) ? await createAdminClient() : await createClient()
     
     const today = new Date()
     const sevenDaysAgo = new Date(today)
@@ -504,7 +504,7 @@ export async function getJobStatusDistribution(branchId?: string) {
         const isAdmin = await isSuperAdmin()
         const userBranchId = await getUserBranchId()
         const customerId = await getCustomerId()
-        const supabase = isAdmin ? await createAdminClient() : await createClient()
+        const supabase = (isAdmin || customerId) ? await createAdminClient() : await createClient()
 
         let dbQuery = supabase
             .from('Jobs_Main')

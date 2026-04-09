@@ -20,9 +20,10 @@ interface DashboardContentProps {
 }
 
 export async function DashboardContent({ searchParams }: DashboardContentProps) {
-  // Resolve branch from searchParams or cookies here (100% Server Side)
+  // Directly resolve branch from cookies (Safe since this is a Server Component)
   const cookieStore = await cookies()
-  const branch = searchParams.branch || cookieStore.get('selectedBranch')?.value || 'All'
+  const branchFromCookie = cookieStore.get('selectedBranch')?.value || 'All'
+  const branch = searchParams.branch || branchFromCookie || 'All'
   const start = searchParams.start
   const end = searchParams.end
   

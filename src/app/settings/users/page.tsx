@@ -11,20 +11,20 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Users, Plus, Edit, Trash2, Search, Loader2, Shield, Fingerprint, Activity, FileSpreadsheet, Key, ShieldCheck, ArrowLeft } from "lucide-react"
 import { createUser, updateUser, deleteUser, UserData, getCurrentUserRole, createBulkUsers, getUsers } from "@/lib/actions/user-actions"
 import { Customer } from "@/lib/supabase/customers"
+import { fetchCustomerList } from "@/lib/actions/customer-fetcher"
 import { ExcelImport } from "@/components/ui/excel-import"
 import { useBranch } from "@/components/providers/branch-provider"
-import { createClient } from "@/utils/supabase/client"
 import { STANDARD_ROLES, StandardRole } from "@/types/role"
 import { getRolePermissions } from "@/lib/actions/permission-actions"
 import { toast } from "sonner"
 import { useLanguage } from "@/components/providers/language-provider"
 import { cn } from "@/lib/utils"
 import { useRouter } from "next/navigation"
-import Link from "next/link"
 
 export default function UserSettingsPage() {
-    const { branches, isAdmin, selectedBranch } = useBranch()
+    const { branches, selectedBranch } = useBranch()
     const { t } = useLanguage()
+    const router = useRouter()
     const [userList, setUserList] = useState<(UserData & { Master_Customers?: { Customer_Name: string } | null })[]>([])
     const [customers, setCustomers] = useState<Customer[]>([])
     const [currentRoleId, setCurrentRoleId] = useState<number | null>(null)
@@ -51,12 +51,10 @@ export default function UserSettingsPage() {
     const loadData = useCallback(async () => {
         setLoading(true)
         try {
-            const supabase = createClient()
             const usersData = await getUsers(selectedBranch === 'All' ? undefined : selectedBranch)
-            const customersQuery = supabase.from('Master_Customers').select('*').order('Customer_Name').limit(1000)
-
+            
             const [customersResult, userInfo, rolesResult] = await Promise.all([
-                customersQuery,
+                fetchCustomerList(),
                 getCurrentUserRole(),
                 getRolePermissions()
             ])
@@ -116,6 +114,7 @@ export default function UserSettingsPage() {
         setFormData(prev => ({
             ...prev,
             Role: standardRole,
+            Customer_ID: standardRole === 'Customer' ? prev.Customer_ID : null, // Reset if not customer
             Permissions: allRolePermissions[role] || prev.Permissions || {}
         }))
     }
@@ -370,7 +369,7 @@ export default function UserSettingsPage() {
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-10">
                             <div className="space-y-3">
                                 <Label className="text-sm sm:text-base font-bold font-black text-muted-foreground uppercase tracking-tight ml-2 sm:ml-4">{t('settings_pages.users.dialog.branch')}</Label>
-                                {isAdmin ? (
+                                {(currentRoleId === 1 || currentRoleId === 2) ? (
                                     <Select 
                                         value={formData.Branch_ID || ""} 
                                         onValueChange={v => setFormData({...formData, Branch_ID: v})}
@@ -391,6 +390,7 @@ export default function UserSettingsPage() {
                                         value={formData.Branch_ID || ""} 
                                         onChange={e => setFormData({...formData, Branch_ID: e.target.value})}
                                         className="h-14 sm:h-16 rounded-2xl bg-muted border-border/5 text-foreground font-black italic tracking-normal pl-6 shadow-inner" 
+                                        disabled={currentRoleId !== 1}
                                     />
                                 )}
                             </div>
@@ -414,26 +414,51 @@ export default function UserSettingsPage() {
                             </div>
                         </div>
 
-                        {/* Customer Link (Optional) */}
-                        <div className="space-y-3 p-6 sm:p-8 rounded-[2rem] sm:rounded-[2.5rem] bg-primary/5 border-2 border-primary/10 shadow-inner group/client">
-                            <div className="flex items-center gap-3 mb-2 ml-4">
-                                <Key size={14} className="text-primary group-hover/client:rotate-45 transition-transform" />
-                                <Label className="text-sm sm:text-base font-bold font-black text-primary uppercase tracking-widest">{t('common.tactical.ext_client_link')}</Label>
+                        {/* Customer Link (Optional or Required for Customer Role) */}
+                        <div className={cn(
+                            "space-y-3 p-6 sm:p-8 rounded-[2rem] sm:rounded-[2.5rem] border-2 shadow-inner group/client transition-all duration-500",
+                            formData.Role === 'Customer' 
+                                ? "bg-primary/10 border-primary animate-pulse shadow-[0_0_30px_rgba(255,30,133,0.15)]" 
+                                : "bg-primary/5 border-primary/10"
+                        )}>
+                            <div className="flex items-center justify-between gap-3 mb-2 ml-4">
+                                <div className="flex items-center gap-3">
+                                    <Key size={14} className={cn("text-primary transition-transform", formData.Role === 'Customer' && "rotate-45")} />
+                                    <Label className={cn(
+                                        "text-sm sm:text-base font-bold font-black uppercase tracking-widest",
+                                        formData.Role === 'Customer' ? "text-primary" : "text-muted-foreground"
+                                    )}>
+                                        {t('common.tactical.ext_client_link')}
+                                        {formData.Role === 'Customer' && <span className="text-rose-500 ml-2 animate-bounce inline-block">*</span>}
+                                    </Label>
+                                </div>
+                                {formData.Role === 'Customer' && (
+                                    <span className="text-[10px] font-black uppercase bg-primary text-foreground px-2 py-0.5 rounded-md italic">Mandatory</span>
+                                )}
                             </div>
                             <Select 
                                 value={formData.Customer_ID || "none"} 
                                 onValueChange={v => setFormData({...formData, Customer_ID: v === "none" ? null : v})}
                             >
-                                <SelectTrigger className="h-14 sm:h-16 rounded-2xl bg-muted border-border/5 text-foreground font-black uppercase italic tracking-normal shadow-inner">
-                                    <SelectValue placeholder={t('common.tactical.synergy_link')} />
+                                <SelectTrigger className={cn(
+                                    "h-14 sm:h-16 rounded-2xl bg-muted border-border/5 text-foreground font-black uppercase italic tracking-normal shadow-inner",
+                                    formData.Role === 'Customer' && !formData.Customer_ID && "border-rose-500/50 shake-subtle"
+                                )}>
+                                    <SelectValue placeholder={customers.length > 0 ? t('common.tactical.synergy_link') : "--- NO CUSTOMERS FOUND ERROR ---"} />
                                 </SelectTrigger>
                                 <SelectContent className="bg-popover border-border/10 text-foreground">
                                     <SelectItem value="none" className="font-black italic uppercase tracking-normal text-muted-foreground underline">{t('common.tactical.remove_link')}</SelectItem>
-                                    {customers.map(c => (
-                                        <SelectItem key={c.Customer_ID} value={c.Customer_ID} className="font-black italic uppercase tracking-normal">
-                                            {c.Customer_Name}
-                                        </SelectItem>
-                                    ))}
+                                    {customers.length === 0 ? (
+                                        <div className="p-4 text-center text-rose-500 font-black uppercase italic text-sm">
+                                            No customers found! Please add customers first.
+                                        </div>
+                                    ) : (
+                                        customers.map(c => (
+                                            <SelectItem key={c.Customer_ID} value={c.Customer_ID} className="font-black italic uppercase tracking-normal">
+                                                {c.Customer_Name}
+                                            </SelectItem>
+                                        ))
+                                    )}
                                 </SelectContent>
                             </Select>
                         </div>
