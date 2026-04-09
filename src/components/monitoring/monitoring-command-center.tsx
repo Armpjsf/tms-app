@@ -1,10 +1,11 @@
 "use client"
 
 import { useMemo, useState, useRef } from 'react'
-import { 
-    Search, 
-    Activity, 
-    Truck
+import {
+    Search,
+    Activity,
+    Truck,
+    FileSpreadsheet
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useSearchParams } from 'next/navigation'
@@ -19,6 +20,7 @@ import { RealtimeIndicator } from "@/components/ui/realtime-indicator"
 import { toast } from "sonner"
 import { calculateSafetyScore } from "@/services/safety-scoring"
 import { Button } from "@/components/ui/button"
+import { ExcelExport } from "@/components/ui/excel-export"
 
 export type DriverWithGPS = Driver & {
     Latitude: number | null
@@ -182,7 +184,18 @@ export function MonitoringCommandCenter({
                             </div>
                             {t('monitoring.title')}
                         </h2>
-                        <RealtimeIndicator isLive={true} className="bg-muted/50 border-border/10 text-primary" />
+                        <div className="flex items-center gap-2">
+                            <ExcelExport 
+                                data={driversWithGPS}
+                                filename="logispro_live_tracking_export"
+                                trigger={
+                                    <button className="p-2 rounded-xl bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-white transition-all flex items-center justify-center">
+                                        <FileSpreadsheet size={16} />
+                                    </button>
+                                }
+                            />
+                            <RealtimeIndicator isLive={true} className="bg-muted/50 border-border/10 text-primary" />
+                        </div>
                     </div>
 
                     <div className="relative group">

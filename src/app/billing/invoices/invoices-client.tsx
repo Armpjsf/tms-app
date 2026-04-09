@@ -34,6 +34,8 @@ import {
 import { getBillableJobsAction } from "./actions"
 import { toast } from "sonner"
 import { InvoiceForm } from "@/components/billing/invoice-form"
+import { ExcelExport } from "@/components/ui/excel-export"
+import { FileSpreadsheet } from "lucide-react"
 
 interface Invoice {
   Invoice_ID: string
@@ -123,6 +125,16 @@ export default function InvoicesClient({ initialInvoices, billableJobs, customer
         </div>
 
         <div className="flex flex-wrap gap-4 relative z-10">
+            <ExcelExport 
+                data={filteredInvoices}
+                filename="logispro_invoices_export"
+                trigger={
+                    <PremiumButton variant="outline" className="h-20 px-10 rounded-[2rem] border-border/5 bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-white transition-all duration-300 ring-1 ring-border/5" >
+                        <FileSpreadsheet size={24} className="mr-3" />
+                        <span className="font-black uppercase tracking-widest text-base font-bold">EXPORT</span>
+                    </PremiumButton>
+                }
+            />
             <PremiumButton 
                 variant="outline"
                 onClick={handleSync}

@@ -34,6 +34,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog"
 import { ExcelImport } from "@/components/ui/excel-import"
+import { ExcelExport } from "@/components/ui/excel-export"
 import { createBulkCustomers, getAllCustomers, createCustomer, updateCustomer, deleteCustomer } from "@/lib/supabase/customers"
 import { getExecutiveKPIs } from "@/lib/supabase/analytics"
 import { useLanguage } from "@/components/providers/language-provider"
@@ -184,6 +185,16 @@ export default function CustomersSettingsPage() {
         </div>
 
         <div className="flex flex-wrap gap-4 relative z-10">
+            <ExcelExport 
+                data={customers}
+                filename="logispro_customers_export"
+                trigger={
+                    <PremiumButton variant="outline" className="h-14 px-8 rounded-2xl border-border/5 bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-white transition-all" >
+                        <FileSpreadsheet size={20} className="mr-3" />
+                        Export
+                    </PremiumButton>
+                }
+            />
             <ExcelImport 
                 trigger={
                     <PremiumButton variant="outline" className="h-14 px-8 rounded-2xl border-border/5 bg-muted/50 text-muted-foreground hover:bg-secondary/50 hover:text-foreground transition-all" >

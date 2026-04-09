@@ -148,10 +148,16 @@ export async function getFilteredReportData(filters: ReportFilters): Promise<{
             vehicle_plate: v.Vehicle_Plate,
             vehicle_type: v.Vehicle_Type,
             status: v.Active_Status,
-            insurance_expiry: v.Insurance_Expiry,
-            registration_expiry: v.Tax_Expiry
+            brand: v.brand || v.Brand,
+            model: v.model || v.Model,
+            engine_no: v.engine_no || v.Engine_No,
+            chassis_no: v.chassis_no || v.Chassis_No,
+            max_weight_kg: v.max_weight_kg || v.Max_Weight_kg,
+            owner: v.Sub_ID ? 'รถร่วม' : 'รถบริษัท',
+            insurance_expiry: v.Insurance_Expiry || v.insurance_expiry,
+            registration_expiry: v.Tax_Expiry || v.tax_expiry
           })), 
-          columns: ['vehicle_plate', 'vehicle_type', 'status', 'insurance_expiry', 'registration_expiry'],
+          columns: ['vehicle_plate', 'vehicle_type', 'owner', 'brand', 'model', 'engine_no', 'chassis_no', 'max_weight_kg', 'status', 'insurance_expiry', 'registration_expiry'],
           debug: { admin, effectiveBranch, count: data?.length || 0 }
         }
       }

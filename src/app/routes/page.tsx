@@ -46,6 +46,7 @@ import {
 import { extractCoordsFromUrl } from "@/lib/utils"
 import { geocodeAddress } from "@/lib/ai/geocoding"
 import { ExcelImport } from "@/components/ui/excel-import"
+import { ExcelExport } from "@/components/ui/excel-export"
 import { LocationAutocomplete } from "@/components/location-autocomplete"
 import { useBranch } from "@/components/providers/branch-provider"
 import { useLanguage } from "@/components/providers/language-provider"
@@ -208,6 +209,16 @@ export default function RoutesPage() {
         </div>
 
         <div className="flex flex-wrap gap-4 relative z-10">
+            <ExcelExport 
+                data={routes}
+                filename="logispro_routes_export"
+                trigger={
+                    <PremiumButton variant="outline" className="h-14 px-8 rounded-2xl border-border/5 bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-white transition-all" >
+                        <FileSpreadsheet size={20} className="mr-3" />
+                        Export
+                    </PremiumButton>
+                }
+            />
             <ExcelImport 
                 trigger={
                     <PremiumButton variant="outline" className="h-14 px-8 rounded-2xl border-border/5 bg-muted/50 text-muted-foreground hover:bg-muted/80 hover:text-foreground transition-all">

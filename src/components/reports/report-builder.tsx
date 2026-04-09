@@ -30,51 +30,7 @@ import { jsPDF } from 'jspdf'
 import html2canvas from 'html2canvas'
 import * as XLSX from 'xlsx'
 
-// Helper: column display names (Thai)
-const columnLabels: Record<string, string> = {
-  Job_ID: 'รหัสงาน',
-  Plan_Date: 'วันที่',
-  Customer_Name: 'ลูกค้า',
-  Origin_Location: 'ต้นทาง',
-  Dest_Location: 'ปลายทาง',
-  Route_Name: 'เส้นทาง',
-  Driver_Name: 'คนขับ',
-  Driver_ID: 'รหัสคนขับ',
-  Vehicle_Plate: 'ทะเบียนรถ',
-  Job_Status: 'สถานะ',
-  Total_Cost: 'ราคา',
-  Mobile_No: 'เบอร์โทร',
-  License_No: 'เลขใบขับขี่',
-  License_Expiry: 'หมดอายุใบขับขี่',
-  Status: 'สถานะ',
-  vehicle_plate: 'ทะเบียนรถ',
-  vehicle_type: 'ประเภท',
-  status: 'สถานะ',
-  fuel_type: 'ชนิดน้ำมัน',
-  insurance_expiry: 'ประกันหมดอายุ',
-  registration_expiry: 'ทะเบียนหมดอายุ',
-  fuel_date: 'วันที่เติม',
-  driver_name: 'คนขับ',
-  liters: 'ลิตร',
-  amount: 'จำนวนเงิน',
-  station: 'ปั๊ม',
-  maintenance_type: 'ประเภทซ่อม',
-  description: 'รายละเอียด',
-  priority: 'ความเร่งด่วน',
-  cost: 'ค่าใช้จ่าย',
-  created_at: 'วันที่แจ้ง',
-  owner: 'ประเภทรถ/เจ้าของ',
-  fuel_cost: 'ค่าน้ำมัน',
-  maintenance_cost: 'ค่าซ่อมบำรุง',
-  extra_cost: 'ค่าใช้จ่ายอื่นๆ',
-  total_cost: 'รวมค่าใช้จ่าย',
-  price_per_liter: 'ราคา/ลิตร',
-  odometer: 'เลขไมล์',
-  Price_Cust_Total: 'ค่าเที่ยว',
-  Extra_Cost_Amount: 'ค่าใช้จ่ายพิเศษ',
-  Toll_Amount: 'ค่าทางด่วน',
-  Distance_Km: 'ระยะทาง (KM)',
-}
+import { REPORT_COLUMN_LABELS as columnLabels } from "@/lib/constants/report-columns"
 
 const reportTypes = [
   { key: 'jobs', label: 'งานจัดส่ง', icon: Package, color: 'indigo', hasDate: true, hasStatus: true },
@@ -149,6 +105,17 @@ function exportToCSV(data: Record<string, unknown>[], columns: string[], fileNam
 function exportToExcel(data: Record<string, unknown>[], columns: string[], fileName: string) {
   const headers = columns.map(c => columnLabels[c] || c)
   const rows = data.map(row => columns.map(col => row[col]))
+  
+  // Calculate summary row
+  const summaryRow = columns.map((col, index) => {
+    if (index === 0) return 'รวม'
+    const isNumeric = col.toLowerCase().includes('cost') || col === 'amount' || col === 'Price_Cust_Total' || col.startsWith('Extra_') || col === 'Liters' || col === 'liters';
+    if (!isNumeric) return ''
+    const total = data.reduce((sum, row) => sum + (Number(row[col]) || 0), 0)
+    return total
+  })
+  rows.push(summaryRow)
+
   const ws = XLSX.utils.aoa_to_sheet([headers, ...rows])
   const wb = XLSX.utils.book_new()
   XLSX.utils.book_append_sheet(wb, ws, "Report")

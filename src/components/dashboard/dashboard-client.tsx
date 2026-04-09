@@ -23,6 +23,7 @@ import { cn } from "@/lib/utils"
 import { useLanguage } from "@/components/providers/language-provider"
 import { RequestShipmentDialog } from "./request-shipment-dialog"
 import { useRouter, useSearchParams } from "next/navigation"
+import { ExcelExport } from "@/components/ui/excel-export"
 
 const container: Variants = {
     hidden: { opacity: 0 },
@@ -198,6 +199,17 @@ export function DashboardClient({
                         <Filter size={14} strokeWidth={3} />
                         {isSyncing ? "SYNCING..." : "SYNC_DATA"}
                     </button>
+                    
+                    <ExcelExport 
+                        data={weeklyStats.length ? weeklyStats : [{ message: "No data in selected range" }]}
+                        filename="logispro_dashboard_summary"
+                        trigger={
+                            <button className="px-6 h-12 bg-emerald-500/10 text-emerald-500 font-black uppercase tracking-widest text-xs rounded-2xl hover:bg-emerald-500 hover:text-white transition-all flex items-center gap-2">
+                                <FileSpreadsheet size={16} />
+                                EXPORT
+                            </button>
+                        }
+                    />
                 </div>
             </div>
 
