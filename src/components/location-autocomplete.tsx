@@ -53,10 +53,7 @@ export function LocationAutocomplete({
 
   // Update query when value changes from outside
   useEffect(() => {
-     if (value && value !== query) {
-         setQuery(value)
-     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    setQuery(value || "")
   }, [value])
 
   const handleSelect = (location: string) => {

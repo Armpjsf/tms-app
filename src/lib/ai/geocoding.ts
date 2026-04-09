@@ -28,6 +28,8 @@ export async function geocodeAddress(address: string, context?: string): Promise
     };
   }
 
+  const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
   const performSearch = async (query: string) => {
     try {
       const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1&addressdetails=1&countrycodes=th`;
@@ -36,6 +38,12 @@ export async function geocodeAddress(address: string, context?: string): Promise
           'User-Agent': 'TMS-Logistics-Platform-v2 (contact@logispro-epod.app)' 
         }
       });
+      
+      if (response.status === 429) {
+        console.warn('[Geocoding] Rate limited (429). Waiting...');
+        return 'rate-limited';
+      }
+
       if (!response.ok) return null;
       const data = await response.json();
       if (data && data.length > 0) {
@@ -55,14 +63,15 @@ export async function geocodeAddress(address: string, context?: string): Promise
         };
       }
       return null;
-    } catch {
+    } catch (err) {
+      console.error('[Geocoding] Fetch Error:', err);
       return null;
     }
   };
 
   // Helper for Gemini Cleaning
   const cleanWithAI = async (addr: string): Promise<string | null> => {
-    const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
+    const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
     if (!apiKey) return null;
     try {
         const genAI = new GoogleGenerativeAI(apiKey);
@@ -84,12 +93,15 @@ export async function geocodeAddress(address: string, context?: string): Promise
   
   // 1. Full address (Best chance)
   let result = await performSearch(cleanAddress);
-  if (result) return result;
+  if (result === 'rate-limited') { await sleep(1500); result = await performSearch(cleanAddress); }
+  if (result && typeof result !== 'string') return result;
 
   // 2. Address + Context
   if (context) {
+    await sleep(1000); // Respect OSM 1req/sec limit
     result = await performSearch(`${cleanAddress} ${context}`);
-    if (result) return result;
+    if (result === 'rate-limited') { await sleep(1500); result = await performSearch(`${cleanAddress} ${context}`); }
+    if (result && typeof result !== 'string') return result;
   }
 
   // 3. Smart Cleanup (Regex based)
@@ -100,25 +112,32 @@ export async function geocodeAddress(address: string, context?: string): Promise
   for (const s of engSuffixes) { const regex = new RegExp(s.replace('.', '\\.'), 'gi'); strippedAddress = strippedAddress.replace(regex, '').trim(); }
   
   if (strippedAddress !== cleanAddress) {
+    await sleep(1000);
     result = await performSearch(strippedAddress);
-    if (result) return result;
+    if (result === 'rate-limited') { await sleep(1500); result = await performSearch(strippedAddress); }
+    if (result && typeof result !== 'string') return result;
   }
 
   // 4. Gemini Fallback (The "Magic" Step)
   console.log('[Geocoding] Using Gemini for:', cleanAddress);
   const aiSearchString = await cleanWithAI(cleanAddress);
   if (aiSearchString) {
+      await sleep(1000);
       result = await performSearch(aiSearchString);
-      if (result) return result;
+      if (result === 'rate-limited') { await sleep(1500); result = await performSearch(aiSearchString); }
+      if (result && typeof result !== 'string') return result;
   }
 
   // 5. Last Resort tokenization
   const tokens = cleanAddress.split(' ');
   if (tokens.length > 2) {
     const fallbackQuery = tokens.slice(-2).join(' '); 
+    await sleep(1000);
     result = await performSearch(fallbackQuery);
-    if (result) return result;
+    if (result === 'rate-limited') { await sleep(1500); result = await performSearch(fallbackQuery); }
+    if (result && typeof result !== 'string') return result;
   }
 
   return null;
 }
+

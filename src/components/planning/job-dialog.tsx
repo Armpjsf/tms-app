@@ -531,9 +531,11 @@ export function JobDialog({
     if (origins.length > 1) setOrigins(origins.filter((_, i) => i !== index))
   }
   const updateOrigin = (index: number, field: keyof LocationPoint, value: string) => {
-    const updated = [...origins]
-    updated[index][field] = value
-    setOrigins(updated)
+    setOrigins(prev => {
+        const updated = [...prev]
+        updated[index] = { ...updated[index], [field]: value }
+        return updated
+    })
   }
 
   const handleOriginNameChange = (index: number, val: string) => {
@@ -587,9 +589,11 @@ export function JobDialog({
     if (destinations.length > 1) setDestinations(destinations.filter((_, i) => i !== index))
   }
   const updateDestination = (index: number, field: keyof LocationPoint, value: string) => {
-    const updated = [...destinations]
-    updated[index][field] = value
-    setDestinations(updated)
+    setDestinations(prev => {
+        const updated = [...prev]
+        updated[index] = { ...updated[index], [field]: value }
+        return updated
+    })
   }
 
   const handleDestinationNameChange = (index: number, val: string) => {
@@ -656,25 +660,27 @@ export function JobDialog({
   }
 
   const updateAssignment = (index: number, field: keyof JobAssignment, value: string | boolean | number) => {
-    const newAssignments = [...assignments]
-    newAssignments[index] = { ...newAssignments[index], [field]: value } as JobAssignment
-    
-    // AUTO-CAPACITY LOGIC: If vehicle type changes and current values are 0, auto-fill from standard capacities
-    if (field === 'Vehicle_Type' && typeof value === 'string') {
-        const capacity = VEHICLE_CAPACITIES[value]
-        if (capacity) {
-            // Only update Weight if currently 0 or default
-            if (Number(formData.Weight_Kg) === 0) {
-                setFormData(prev => ({ ...prev, Weight_Kg: capacity.weight }))
-            }
-            // Only update Volume if currently 0 or default
-            if (Number(formData.Volume_Cbm) === 0) {
-                setFormData(prev => ({ ...prev, Volume_Cbm: capacity.volume }))
+    setAssignments(prev => {
+        const newAssignments = [...prev]
+        newAssignments[index] = { ...newAssignments[index], [field]: value } as JobAssignment
+        
+        // AUTO-CAPACITY LOGIC: If vehicle type changes and current values are 0, auto-fill from standard capacities
+        if (field === 'Vehicle_Type' && typeof value === 'string') {
+            const capacity = VEHICLE_CAPACITIES[value]
+            if (capacity) {
+                // Only update Weight if currently 0 or default
+                if (Number(formData.Weight_Kg) === 0) {
+                    setFormData(f => ({ ...f, Weight_Kg: capacity.weight }))
+                }
+                // Only update Volume if currently 0 or default
+                if (Number(formData.Volume_Cbm) === 0) {
+                    setFormData(f => ({ ...f, Volume_Cbm: capacity.volume }))
+                }
             }
         }
-    }
-
-    setAssignments(newAssignments)
+        
+        return newAssignments
+    })
     
     // Sync first assignment to main form data for backward compatibility / validation
     if (index === 0 && (typeof value === 'string' || typeof value === 'number')) {
@@ -758,13 +764,22 @@ export function JobDialog({
       Customer_Name: customer.Customer_Name
     }))
 
-    // Autofill Origin if empty
-    if (customer.Origin_Location && origins.length === 1 && !origins[0].name) {
-       setOrigins([{ name: customer.Origin_Location, lat: '', lng: '' }])
+    // Autofill Origin if empty OR if same location name but coords missing
+    if (customer.Origin_Location) {
+        const currentOrigin = origins[0]?.name || "";
+        const isSamePlace = currentOrigin.trim() === customer.Origin_Location.trim();
+        
+        // Case 1: Empty origin - fill it
+        if (!currentOrigin) {
+            setOrigins([{ name: customer.Origin_Location, lat: '', lng: '' }]);
+        } 
+        // Case 2: Same place but lat/lng missing - keep it (optional: could re-fill if we had master lat/lng in customer record)
+        // Case 3: Different place - ask or just update? For now, if empty, we update. 
+        // If not empty and DIFFERENT, we probably shouldn't overwrite without asking, but the current logic was doing nothing.
     }
     
     // Autofill Destination if empty
-    if (customer.Dest_Location && destinations.length === 1 && !destinations[0].name) {
+    if (customer.Dest_Location && !destinations[0]?.name) {
        setDestinations([{ name: customer.Dest_Location, lat: '', lng: '' }])
     }
   }
