@@ -197,7 +197,7 @@ export async function getDetailedDriverAnalytics(startDate?: string, endDate?: s
     const eDate = formatDateSafe(endDate)
 
     const [driversResult, jobsResult] = await Promise.all([
-        supabase.from('Master_Drivers').select('Driver_ID, Driver_Name, Vehicle_Plate, Vehicle_Type, Branch_ID, Active_Status'),
+        supabase.from('Master_Drivers').select('Driver_ID, Driver_Name, Vehicle_Plate, Vehicle_Type, Branch_ID, Active_Status, Sub_ID'),
         supabase.from('Jobs_Main')
             .select('Driver_ID, Job_Status, Plan_Date, Actual_Delivery_Time, Cost_Driver_Total, Rating, Est_Distance_KM, Weight_Kg')
             .gte('Plan_Date', sDate || '')
@@ -208,7 +208,7 @@ export async function getDetailedDriverAnalytics(startDate?: string, endDate?: s
     if (jobsResult.error) return []
 
     const driverStats: Record<string, {
-        driverId: string, name: string, plate: string, type: string,
+        driverId: string, name: string, plate: string, type: string, subId: string | null,
         totalJobs: number, completedJobs: number, cancelledJobs: number, onTimeJobs: number,
         totalEarnings: number, totalDistance: number, totalWeight: number, ratings: number[], avgRating: number
     }> = {}
@@ -218,6 +218,7 @@ export async function getDetailedDriverAnalytics(startDate?: string, endDate?: s
         
         driverStats[d.Driver_ID] = {
             driverId: d.Driver_ID, name: d.Driver_Name || 'N/A', plate: d.Vehicle_Plate || '-', type: d.Vehicle_Type || '-',
+            subId: d.Sub_ID || null,
             totalJobs: 0, completedJobs: 0, cancelledJobs: 0, onTimeJobs: 0,
             totalEarnings: 0, totalDistance: 0, totalWeight: 0, ratings: [], avgRating: 0
         }

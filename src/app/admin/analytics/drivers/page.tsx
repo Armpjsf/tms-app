@@ -2,9 +2,10 @@ import { Suspense } from "react"
 import { getDetailedDriverAnalytics } from "@/lib/supabase/analytics"
 import { cookies } from "next/headers"
 import { isSuperAdmin } from "@/lib/permissions"
+import { evaluateDriverPerformance } from "@/services/driver-evaluation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, Trophy, Medal, Star, TrendingUp, Package, Clock, ShieldCheck, MapPin, Search, Zap, Target, Cpu, Activity, User } from "lucide-react"
+import { ArrowLeft, Trophy, Medal, Star, TrendingUp, Package, Clock, ShieldCheck, MapPin, Search, Zap, Target, Cpu, Activity, User, Coins, FileCheck } from "lucide-react"
 import { MonthFilter } from "@/components/analytics/month-filter"
 import { PremiumCard } from "@/components/ui/premium-card"
 import { PremiumButton } from "@/components/ui/premium-button"
@@ -47,7 +48,19 @@ export default async function DriverLeaderboardPage(props: {
   const startDate = searchParams.startDate
   const endDate = searchParams.endDate
 
-  const drivers = await getDetailedDriverAnalytics(startDate, endDate, branchId)
+  const rawDrivers = await getDetailedDriverAnalytics(startDate, endDate, branchId)
+  
+  const drivers = rawDrivers.map(d => {
+    const evaluation = evaluateDriverPerformance({
+        completedJobs: d.completedJobs,
+        totalJobs: d.totalJobs,
+        onTimeJobs: d.onTimeJobs,
+        avgRating: d.avgRating,
+        totalEarnings: d.totalEarnings,
+        isSubcontractor: !!d.subId
+    })
+    return { ...d, evaluation }
+  })
 
   const topThree = drivers.slice(0, 3)
   const rest = drivers.slice(3)
@@ -71,7 +84,7 @@ export default async function DriverLeaderboardPage(props: {
                 </div>
                 <div>
                   <h1 className="text-5xl font-black text-foreground tracking-widest uppercase leading-none italic premium-text-gradient">Operator Matrix</h1>
-                  <p className="text-base font-bold font-black text-primary uppercase tracking-[0.6em] mt-2 opacity-80 italic italic">Performance Intelligence & Rewards {branchId !== 'All' ? `// ${branchId}` : ''}</p>
+                  <p className="text-base font-bold font-black text-primary uppercase tracking-[0.6em] mt-2 opacity-80 italic">Performance Intelligence & Rewards {branchId !== 'All' ? `// ${branchId}` : ''}</p>
                 </div>
               </div>
             </div>
@@ -95,7 +108,7 @@ export default async function DriverLeaderboardPage(props: {
                   idx === 0 ? "bg-primary text-white border-primary/40 shadow-primary/20" :
                   idx === 1 ? "bg-slate-300 text-black border-slate-200/40" : "bg-amber-700 text-white border-amber-600/40"
               )}>
-                  {idx === 0 ? <Trophy size={24} /> : <Medal size={24} />}
+                  <span className="text-xl font-black">{driver.evaluation.grade}</span>
               </div>
 
               <div className="flex flex-col items-center text-center mt-6">
@@ -104,21 +117,35 @@ export default async function DriverLeaderboardPage(props: {
                       {driver.name.slice(0, 1)}
                   </div>
                   <h3 className="text-3xl font-black text-foreground uppercase tracking-tight mb-2 group-hover:text-primary transition-colors">{driver.name}</h3>
-                  <Badge variant="outline" className="bg-primary/5 border-primary/20 text-primary font-black uppercase tracking-widest px-4 py-1.5 rounded-xl mb-8 shadow-sm">
-                      {idx === 0 ? "Fleet Vanguard" : idx === 1 ? "Elite Operative" : "Tactical Specialist"}
+                  <Badge variant="outline" className={cn(
+                    "font-black uppercase tracking-widest px-4 py-1.5 rounded-xl mb-8 shadow-sm",
+                    driver.subId ? "bg-amber-500/10 border-amber-500/20 text-amber-500" : "bg-primary/10 border-primary/20 text-primary"
+                  )}>
+                      {driver.subId ? "Subcontractor Unit" : "Company Asset"}
                   </Badge>
+
+                  <div className="w-full space-y-4 mb-8">
+                    {driver.subId ? (
+                        <div className="p-4 bg-emerald-500/10 rounded-2xl border border-emerald-500/20">
+                            <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Renewal Index</p>
+                            <p className="text-2xl font-black text-emerald-400 italic">{driver.evaluation.renewalIndex}%</p>
+                        </div>
+                    ) : (
+                        <div className="p-4 bg-indigo-500/10 rounded-2xl border border-indigo-500/20">
+                            <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest">Estimated Incentive</p>
+                            <p className="text-2xl font-black text-indigo-400 italic">฿{driver.evaluation.incentiveAmount?.toLocaleString()}</p>
+                        </div>
+                    )}
+                  </div>
 
                   <div className="grid grid-cols-2 gap-6 w-full pt-8 border-t border-border/5">
                       <div className="space-y-1">
-                          <p className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest italic">{t('dashboard.missions')}</p>
+                          <p className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest italic">Missions</p>
                           <p className="text-3xl font-black text-foreground tracking-tighter italic">{driver.jobsCount}</p>
                       </div>
                       <div className="space-y-1">
-                          <p className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest italic">Rating</p>
-                          <div className="flex items-center justify-center gap-1">
-                              <Star size={18} className="text-amber-400 fill-amber-400" />
-                              <span className="text-3xl font-black text-foreground tracking-tighter italic">4.9</span>
-                          </div>
+                          <p className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest italic">Efficiency</p>
+                          <p className="text-3xl font-black text-foreground tracking-tighter italic">{driver.evaluation.score}%</p>
                       </div>
                   </div>
               </div>
@@ -132,21 +159,12 @@ export default async function DriverLeaderboardPage(props: {
             <div className="absolute top-0 right-0 w-80 h-full bg-primary/[0.03] blur-3xl pointer-events-none" />
             <div className="flex items-center gap-6 relative z-10">
               <div className="p-4 bg-muted/50 rounded-2xl text-primary border border-border/10 shadow-inner group-hover/register:rotate-12 transition-transform duration-500">
-                <User size={28} />
+                <Activity size={28} />
               </div>
               <div>
                 <h2 className="text-3xl font-black text-foreground tracking-[0.2em] uppercase italic">Operative Register</h2>
                 <p className="text-base font-bold font-black text-muted-foreground uppercase tracking-[0.5em] mt-2 italic">Full performance metrics for all tactical units</p>
               </div>
-            </div>
-            <div className="flex items-center gap-4 relative z-10">
-                <div className="relative">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
-                    <input 
-                        placeholder="FILTER_OPERATIVES..." 
-                        className="bg-black/40 border border-border/10 rounded-2xl pl-12 pr-6 h-14 text-white font-black uppercase tracking-widest focus:border-primary/50 transition-all outline-none"
-                    />
-                </div>
             </div>
           </div>
 
@@ -154,11 +172,11 @@ export default async function DriverLeaderboardPage(props: {
             <Table>
               <TableHeader className="bg-black/20 border-b border-border/5">
                 <TableRow className="hover:bg-transparent border-none">
-                  <TableHead className="h-20 px-12 text-base font-bold font-black text-muted-foreground uppercase tracking-widest italic">{t('dashboard.unit_designation')}</TableHead>
-                  <TableHead className="h-20 px-8 text-center text-base font-bold font-black text-muted-foreground uppercase tracking-widest italic">{t('dashboard.mission_volume')}</TableHead>
-                  <TableHead className="h-20 px-8 text-right text-base font-bold font-black text-muted-foreground uppercase tracking-widest italic">{t('dashboard.aggregate_revenue')}</TableHead>
-                  <TableHead className="h-20 px-8 text-center text-base font-bold font-black text-muted-foreground uppercase tracking-widest italic">Success Rate</TableHead>
-                  <TableHead className="h-20 px-12 text-right text-base font-bold font-black text-muted-foreground uppercase tracking-widest italic">Trend</TableHead>
+                  <TableHead className="h-20 px-12 text-base font-bold font-black text-muted-foreground uppercase tracking-widest italic">Unit Designation</TableHead>
+                  <TableHead className="h-20 px-8 text-center text-base font-bold font-black text-muted-foreground uppercase tracking-widest italic">Efficiency</TableHead>
+                  <TableHead className="h-20 px-8 text-right text-base font-bold font-black text-muted-foreground uppercase tracking-widest italic">Type</TableHead>
+                  <TableHead className="h-20 px-8 text-center text-base font-bold font-black text-muted-foreground uppercase tracking-widest italic">Admin Review</TableHead>
+                  <TableHead className="h-20 px-12 text-right text-base font-bold font-black text-muted-foreground uppercase tracking-widest italic">Incentive / Status</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -167,33 +185,61 @@ export default async function DriverLeaderboardPage(props: {
                     <TableCell className="py-10 px-12">
                       <div className="flex items-center gap-6">
                         <div className="w-14 h-14 rounded-2xl bg-muted/50 flex items-center justify-center font-black text-xl italic border border-border/5 group-hover:border-primary/30 transition-all">
-                          {driver.name.slice(0, 1)}
+                          {driver.evaluation.grade}
                         </div>
                         <div>
                           <p className="text-xl font-black text-foreground uppercase italic tracking-tight">{driver.name}</p>
-                          <p className="text-base font-bold font-bold text-muted-foreground uppercase tracking-widest italic">ID: {driver.driverId.slice(-6).toUpperCase()}</p>
+                          <p className="text-base font-bold font-bold text-muted-foreground uppercase tracking-widest italic">PLATE: {driver.plate}</p>
                         </div>
                       </div>
                     </TableCell>
                     <TableCell className="text-center py-10 px-8">
-                      <span className="text-2xl font-black text-foreground italic">{driver.jobsCount}</span>
-                    </TableCell>
-                    <TableCell className="text-right py-10 px-8 font-mono">
-                      <span className="text-2xl font-black text-primary italic">฿{driver.totalRevenue.toLocaleString()}</span>
-                    </TableCell>
-                    <TableCell className="py-10 px-8">
                         <div className="flex flex-col items-center gap-3">
-                            <span className="text-base font-bold font-black text-emerald-400">98.4%</span>
+                            <span className="text-base font-bold font-black text-primary">{driver.evaluation.score}%</span>
                             <div className="w-24 h-1.5 bg-background rounded-full overflow-hidden border border-border/5">
-                                <div className="h-full bg-emerald-500 rounded-full" style={{ width: '98.4%' }} />
+                                <div className={cn(
+                                    "h-full rounded-full transition-all duration-1000",
+                                    driver.evaluation.score > 80 ? "bg-emerald-500" : driver.evaluation.score > 60 ? "bg-amber-500" : "bg-rose-500"
+                                )} style={{ width: `${driver.evaluation.score}%` }} />
                             </div>
                         </div>
                     </TableCell>
-                    <TableCell className="py-10 px-12 text-right">
-                        <div className="flex items-center justify-end gap-3 text-emerald-400">
-                            <TrendingUp size={20} strokeWidth={3} />
-                            <span className="text-xl font-black italic">+12.5%</span>
+                    <TableCell className="text-right py-10 px-8">
+                        <Badge variant="outline" className={cn(
+                            "font-black uppercase tracking-widest",
+                            driver.subId ? "border-amber-500/30 text-amber-500" : "border-indigo-500/30 text-indigo-500"
+                        )}>
+                            {driver.subId ? "Subcon" : "Company"}
+                        </Badge>
+                    </TableCell>
+                    <TableCell className="py-10 px-8">
+                        <div className="flex flex-col items-center gap-1">
+                            {driver.subId ? (
+                                <>
+                                    <FileCheck className={cn("w-5 h-5", driver.evaluation.renewalIndex! > 75 ? "text-emerald-500" : "text-amber-500")} />
+                                    <span className="text-[10px] font-black uppercase text-muted-foreground">Renewal Score: {driver.evaluation.renewalIndex}%</span>
+                                </>
+                            ) : (
+                                <>
+                                    <Coins className="w-5 h-5 text-indigo-500" />
+                                    <span className="text-[10px] font-black uppercase text-muted-foreground">Grade Point {driver.evaluation.grade}</span>
+                                </>
+                            )}
                         </div>
+                    </TableCell>
+                    <TableCell className="py-10 px-12 text-right">
+                        {driver.subId ? (
+                            <span className={cn(
+                                "text-xl font-black italic",
+                                driver.evaluation.renewalIndex! > 75 ? "text-emerald-400" : "text-rose-400"
+                            )}>
+                                {driver.evaluation.renewalIndex! > 75 ? "RECOMMEND_RENEW" : "REVIEW_CONTRACT"}
+                            </span>
+                        ) : (
+                            <span className="text-xl font-black text-indigo-400 italic">
+                                ฿{driver.evaluation.incentiveAmount?.toLocaleString()}
+                            </span>
+                        )}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -220,7 +266,7 @@ export default async function DriverLeaderboardPage(props: {
                 <Cpu size={28} className="text-indigo-500" />
             </div>
             <p className="text-[12px] font-black text-white uppercase tracking-[0.8em] italic mb-6">Operative Sentiment Grid // v12.2-STABLE</p>
-            <p className="text-base font-bold font-bold text-muted-foreground uppercase tracking-widest italic leading-relaxed text-center max-w-3xl px-12">
+            <p className="text-base font-bold text-muted-foreground uppercase tracking-widest italic leading-relaxed text-center max-w-3xl px-12">
                 All performance vectors are recalculated via real-time personnel synchronization. <br />
                 Metrics include mission delta, safety adherence, and client satisfaction scores.
             </p>

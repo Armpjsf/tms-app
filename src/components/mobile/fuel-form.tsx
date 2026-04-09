@@ -11,6 +11,8 @@ import { Loader2, Fuel, User } from "lucide-react"
 import { createFuelLog } from "@/app/fuel/actions"
 import { toast } from "sonner"
 import { uploadImageToDrive } from "@/lib/actions/upload-actions"
+import { parseFuelReceiptWithAI } from "@/lib/ai/fuel-ocr"
+import { cn } from "@/lib/utils"
 
 interface MobileFuelFormProps {
   driverId: string
@@ -21,12 +23,42 @@ interface MobileFuelFormProps {
 export function MobileFuelForm({ driverId, driverName, defaultVehiclePlate }: MobileFuelFormProps) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
+  const [scanning, setScanning] = useState(false)
   const [amount, setAmount] = useState("")
   const [liters, setLiters] = useState("")
   const [mileage, setMileage] = useState("")
   const [station, setStation] = useState("")
   const [plate, setPlate] = useState(defaultVehiclePlate || "")
   const [photo, setPhoto] = useState<File | null>(null)
+
+  const handleScan = async () => {
+    if (!photo) return toast.error("โปรดถ่ายรูปหรือเลือกรูปใบเสร็จก่อนสแกน")
+    
+    setScanning(true)
+    try {
+        const reader = new FileReader()
+        const base64Promise = new Promise<string>((resolve) => {
+            reader.onload = () => resolve(reader.result as string)
+            reader.readAsDataURL(photo)
+        })
+        const base64 = await base64Promise
+        
+        const result = await parseFuelReceiptWithAI(base64, photo.type)
+        
+        if (result.amount) setAmount(String(result.amount))
+        if (result.liters) setLiters(String(result.liters))
+        if (result.stationName) setStation(result.stationName)
+        if (result.mileage) setMileage(String(result.mileage))
+        if (result.plateNumber) setPlate(result.plateNumber)
+        
+        toast.success("AI สแกนข้อมูลเรียบร้อยแล้ว โปรดตรวจสอบความถูกต้อง")
+    } catch (error) {
+        console.error("Scan error:", error)
+        toast.error("ไม่สามารถสแกนได้ โปรดกรอกข้อมูลด้วยตนเอง")
+    } finally {
+        setScanning(false)
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
