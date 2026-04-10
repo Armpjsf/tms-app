@@ -1,6 +1,5 @@
 export const dynamic = 'force-dynamic'
 
-import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { MessageSquare, ArrowLeft, Heart, ShieldCheck, Activity, Brain, Target, Zap } from "lucide-react"
 import Link from "next/link"
 import { PremiumCard } from "@/components/ui/premium-card"
@@ -9,8 +8,7 @@ import { cn } from "@/lib/utils"
 
 export default function UserFeedbackPage() {
   return (
-    <DashboardLayout>
-      <div className="space-y-12 pb-20 p-4 lg:p-10">
+    <div className="space-y-12 pb-20 p-4 lg:p-10">
         {/* Tactical Elite Header */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-10 bg-background/60 backdrop-blur-3xl p-10 rounded-br-[6rem] rounded-tl-[3rem] border border-purple-500/20 shadow-[0_30px_60px_rgba(168,85,247,0.15)] relative overflow-hidden group">
             <div className="absolute top-0 right-0 w-80 h-80 bg-purple-500/10 blur-[120px] rounded-full -mr-40 -mt-40 pointer-events-none" />
@@ -108,7 +106,5 @@ export default function UserFeedbackPage() {
           </div>
         </PremiumCard>
       </div>
-    </DashboardLayout>
   )
 }
-

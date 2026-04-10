@@ -5,7 +5,8 @@ import { Driver } from "@/lib/supabase/drivers"
 import { PremiumCard } from "@/components/ui/premium-card"
 import { PremiumButton } from "@/components/ui/premium-button"
 import { 
-    Search, Plus, Filter, Download, Edit, Trash2, FileSpreadsheet
+    Search, Plus, Filter, Download, Edit, Trash2, FileSpreadsheet,
+    Users, Zap, ShieldCheck, Award, Truck, Phone
 } from "lucide-react"
 import { deleteDriver } from "@/app/drivers/actions"
 import { toast } from "sonner"
@@ -75,7 +76,7 @@ export function DriversContent({
                   <Users className="text-white" size={24} />
               </div>
               <Badge className="bg-primary/20 text-primary border-primary/30 py-1 px-4 text-base font-bold font-black tracking-widest uppercase">
-                {isAdmin ? "COMMAND CENTER" : "BASE OPERATIONS"}
+                {isAdminUser ? "COMMAND CENTER" : "BASE OPERATIONS"}
               </Badge>
           </div>
           <h1 className="text-6xl font-black text-foreground tracking-tighter uppercase">

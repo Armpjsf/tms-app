@@ -56,11 +56,19 @@ export function BranchProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter()
 
   const init = useCallback(async () => {
+    // Add a race condition to prevent permanent hang if network is unstable
+    const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error("Init Timeout")), 10000)
+    )
+
     try {
-        const [fetchedBranches, roleId] = await Promise.all([
-            getAllBranches(),
-            getCurrentUserRole()
-        ])
+        const [fetchedBranches, roleId] = await Promise.race([
+            Promise.all([
+                getAllBranches(),
+                getCurrentUserRole()
+            ]),
+            timeoutPromise
+        ]) as [Branch[], number]
         
         setBranches(fetchedBranches || [])
         setIsAdmin(roleId === 1)
@@ -70,12 +78,14 @@ export function BranchProvider({ children }: { children: React.ReactNode }) {
         if (savedBranch && (savedBranch === 'All' || fetchedBranches.some((b: Branch) => b.Branch_ID === savedBranch))) {
             setSelectedBranchState(prev => prev === 'All' ? savedBranch : prev)
         }
-    } catch {
-        // Silently fail
+    } catch (error) {
+        console.warn("BranchProvider initialization partial failure or timeout:", error)
+        // Set defaults if we timed out
+        if (branches.length === 0) setBranches([])
     } finally {
         setIsLoading(false)
     }
-  }, [])
+  }, [branches.length])
 
   useEffect(() => {
     init()

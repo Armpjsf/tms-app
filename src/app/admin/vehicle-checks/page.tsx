@@ -1,5 +1,4 @@
 import { createAdminClient } from "@/utils/supabase/server"
-import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { ChecksClient } from "./checks-client"
 import { ShieldCheck } from "lucide-react"
 
@@ -16,7 +15,7 @@ export default async function AdminVehicleChecksPage() {
             .limit(100)
 
         return (
-            <DashboardLayout>
+            <>
                 <ChecksClient checks={checks || []} />
                 
                 <div className="mt-12 text-center mb-20 px-4">
@@ -24,17 +23,15 @@ export default async function AdminVehicleChecksPage() {
                         <ShieldCheck size={14} /> Encrypted Tactical Ledger Node v4.2
                     </div>
                 </div>
-            </DashboardLayout>
+            </>
         )
     } catch {
         return (
-            <DashboardLayout>
-                <div className="p-20 text-center space-y-6">
-                    <ShieldCheck size={64} className="mx-auto text-primary animate-pulse" />
-                    <h1 className="text-3xl font-black text-foreground italic uppercase tracking-tighter">Emergency Hub Lock</h1>
-                    <p className="text-muted-foreground font-black uppercase tracking-widest text-lg font-bold">Registry synchronization protocol failed. Seek administrative uplink.</p>
-                </div>
-            </DashboardLayout>
+            <div className="p-20 text-center space-y-6">
+                <ShieldCheck size={64} className="mx-auto text-primary animate-pulse" />
+                <h1 className="text-3xl font-black text-foreground italic uppercase tracking-tighter">Emergency Hub Lock</h1>
+                <p className="text-muted-foreground font-black uppercase tracking-widest text-lg font-bold">Registry synchronization protocol failed. Seek administrative uplink.</p>
+            </div>
         )
     }
 }

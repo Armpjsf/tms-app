@@ -12,7 +12,6 @@ import { PremiumButton } from "@/components/ui/premium-button"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { DashboardLayout } from "@/components/layout/dashboard-layout"
 
 export const dynamic = "force-dynamic"
 
@@ -26,22 +25,20 @@ export default async function DriverLeaderboardPage(props: {
 
   if (!isAdmin) {
     return (
-      <DashboardLayout>
-        <div className="flex flex-col items-center justify-center min-h-[60vh] p-10 bg-background">
-          <PremiumCard className="bg-rose-500/10 border-rose-500/30 max-w-md p-12 text-center space-y-8 rounded-[3rem]">
-              <ShieldCheck size={64} className="mx-auto text-rose-500 animate-pulse" />
-              <div className="space-y-2">
-                  <h1 className="text-3xl font-black text-foreground italic uppercase tracking-tighter">Access Denied</h1>
-                  <p className="text-muted-foreground font-black uppercase tracking-widest text-base font-bold leading-relaxed italic">Strategic clearance insufficient. Terminal locked for security protocol.</p>
-              </div>
-              <Link href="/dashboard" className="block">
-                  <PremiumButton variant="outline" className="w-full h-14 rounded-2xl border-border/10 text-white font-black uppercase tracking-[0.2em] italic">
-                      RETURN_SAFE_ZONE
-                  </PremiumButton>
-              </Link>
-          </PremiumCard>
-        </div>
-      </DashboardLayout>
+      <div className="flex flex-col items-center justify-center min-h-[60vh] p-10 bg-background">
+        <PremiumCard className="bg-rose-500/10 border-rose-500/30 max-w-md p-12 text-center space-y-8 rounded-[3rem]">
+            <ShieldCheck size={64} className="mx-auto text-rose-500 animate-pulse" />
+            <div className="space-y-2">
+                <h1 className="text-3xl font-black text-foreground italic uppercase tracking-tighter">Access Denied</h1>
+                <p className="text-muted-foreground font-black uppercase tracking-widest text-base font-bold leading-relaxed italic">Strategic clearance insufficient. Terminal locked for security protocol.</p>
+            </div>
+            <Link href="/dashboard" className="block">
+                <PremiumButton variant="outline" className="w-full h-14 rounded-2xl border-border/10 text-white font-black uppercase tracking-[0.2em] italic">
+                    RETURN_SAFE_ZONE
+                </PremiumButton>
+            </Link>
+        </PremiumCard>
+      </div>
     )
   }
 
@@ -66,8 +63,7 @@ export default async function DriverLeaderboardPage(props: {
   const rest = drivers.slice(3)
 
   return (
-    <DashboardLayout>
-      <div className="space-y-12 pb-32 p-4 lg:p-10 bg-background">
+    <div className="space-y-12 pb-32 p-4 lg:p-10 bg-background">
         {/* Tactical Header */}
         <div className="bg-background/60 backdrop-blur-3xl p-10 rounded-br-[6rem] rounded-tl-[3rem] border border-border/5 shadow-2xl relative overflow-hidden group">
           <div className="absolute top-0 right-0 w-80 h-80 bg-primary/10 blur-[120px] rounded-full -mr-40 -mt-40 pointer-events-none" />
@@ -270,8 +266,7 @@ export default async function DriverLeaderboardPage(props: {
                 All performance vectors are recalculated via real-time personnel synchronization. <br />
                 Metrics include mission delta, safety adherence, and client satisfaction scores.
             </p>
-        </div>
       </div>
-    </DashboardLayout>
+    </div>
   )
 }

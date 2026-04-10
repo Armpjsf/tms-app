@@ -6,7 +6,6 @@ import { redirect } from "next/navigation"
 import { getAdminSession } from "@/lib/actions/auth-actions"
 import { cn } from "@/lib/utils"
 import { LeaveActionsClient } from "./leave-actions-client"
-import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import Link from "next/link"
 
 export const dynamic = 'force-dynamic'
@@ -28,27 +27,38 @@ export default async function AdminLeavesPage() {
     .order('Created_At', { ascending: false })
 
   return (
-    <DashboardLayout>
-      <div className="min-h-screen bg-transparent pb-20 pt-4 px-4 lg:px-10">
-        <div className="max-w-4xl mx-auto space-y-8">
-          <Link href="/drivers" className="inline-flex items-center gap-2 text-muted-foreground hover:text-primary transition-all font-bold mb-2 group">
-              <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-              กลับหน้าพนักงานขับรถ
-          </Link>
+    <div className="space-y-12 pb-32 p-4 lg:p-10">
+        {/* Tactical Elite Header */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-10 bg-background/60 backdrop-blur-3xl p-10 rounded-br-[6rem] rounded-tl-[3rem] border border-primary/20 shadow-2xl relative overflow-hidden group">
+            <div className="absolute top-0 right-0 w-80 h-80 bg-primary/10 blur-[120px] rounded-full -mr-40 -mt-40 pointer-events-none" />
+            
+            <div className="relative z-10 space-y-8">
+                <Link href="/dashboard" className="inline-flex items-center gap-2 text-muted-foreground hover:text-primary transition-all font-black uppercase tracking-[0.4em] text-base font-bold group/back italic">
+                    <ArrowLeft className="w-4 h-4 group-hover/back:-translate-x-1 transition-transform" /> 
+                    Command Centre
+                </Link>
+                <div className="flex items-center gap-6">
+                    <div className="p-4 bg-primary/20 rounded-[2.5rem] border-2 border-primary/30 shadow-[0_0_40px_rgba(255,30,133,0.3)] text-primary group-hover:scale-110 transition-all duration-500">
+                        <Calendar size={42} strokeWidth={2.5} />
+                    </div>
+                    <div>
+                        <h1 className="text-5xl font-black text-foreground tracking-widest uppercase leading-none italic premium-text-gradient">
+                            Personnel Leaves
+                        </h1>
+                        <p className="text-base font-bold font-black text-primary uppercase tracking-[0.6em] mt-2 opacity-80 italic italic">Operator Availability & Schedule Matrix</p>
+                    </div>
+                </div>
+            </div>
 
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <div>
-                  <h1 className="text-4xl font-black text-slate-900 tracking-tighter uppercase italic leading-none">จัดการการลา</h1>
-                  <p className="text-slate-500 font-bold mt-2">อนุมัติหรือปฏิเสธคำขอลาของพนักงานขับรถ</p>
-              </div>
-              <div className="flex items-center gap-2 bg-white p-2 rounded-2xl border shadow-sm">
-                  <div className="px-4 py-2 bg-primary/10 rounded-xl">
-                      <span className="text-primary font-black">{leaves?.filter(l => l.Status === 'Pending').length || 0} รายการรอตรวจ</span>
-                  </div>
-              </div>
-          </div>
+            <div className="flex flex-col items-end gap-4 relative z-10">
+                <div className="bg-primary/10 border border-primary/20 px-8 py-4 rounded-2xl flex items-center gap-4 backdrop-blur-md">
+                    <div className="w-2 h-2 rounded-full bg-primary animate-pulse shadow-[0_0_10px_rgba(255,30,133,1)]" />
+                    <span className="text-primary font-black uppercase tracking-widest italic">{leaves?.filter(l => l.Status === 'Pending').length || 0} รายการรอตรวจ</span>
+                </div>
+            </div>
+        </div>
 
-          <div className="grid gap-6">
+        <div className="grid gap-6">
               {(!leaves || leaves.length === 0) ? (
                   <div className="bg-white rounded-[2.5rem] p-20 text-center border-2 border-dashed">
                       <Calendar className="mx-auto mb-4 text-slate-300" size={64} />
@@ -133,8 +143,6 @@ export default async function AdminLeavesPage() {
                   ))
               )}
           </div>
-        </div>
-      </div>
-    </DashboardLayout>
+    </div>
   )
 }

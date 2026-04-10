@@ -1,6 +1,5 @@
 export const dynamic = 'force-dynamic'
 
-import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { getDamageReports } from "@/lib/supabase/damage-reports"
 import { AlertOctagon, ArrowLeft, User, CheckCircle2, XCircle, Clock, Truck, FileText, Search, ShieldAlert, Target, ShieldCheck, Zap } from "lucide-react"
 import Link from "next/link"
@@ -65,8 +64,7 @@ export default async function DamageReportsPage() {
   const pendingCount = reports.filter(r => r.Status === 'Pending').length
 
   return (
-    <DashboardLayout>
-      <div className="space-y-12 pb-20 p-4 lg:p-10">
+    <div className="space-y-12 pb-20 p-4 lg:p-10">
         {/* Tactical Elite Header */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-10 bg-background/60 backdrop-blur-3xl p-10 rounded-br-[6rem] rounded-tl-[3rem] border border-rose-500/20 shadow-[0_30px_60px_rgba(244,63,94,0.15)] relative overflow-hidden group">
             <div className="absolute top-0 right-0 w-80 h-80 bg-rose-500/10 blur-[120px] rounded-full -mr-40 -mt-40 pointer-events-none" />
@@ -238,7 +236,6 @@ export default async function DamageReportsPage() {
           </div>
         </PremiumCard>
       </div>
-    </DashboardLayout>
   )
 }
 
