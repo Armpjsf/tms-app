@@ -129,10 +129,11 @@ export function JobDialog({
     }, 15000);
 
     getFuelPrice()
-      .then(price => {
+      .then(data => {
         if (isMounted) {
-            setFuelPrice(price)
-            if (!price) setFuelError('ไม่พบข้อมูลราคา')
+            setFuelPrice(data.price)
+            setFuelPriceTomorrow(data.priceTomorrow)
+            if (!data.price) setFuelError('ไม่พบข้อมูลราคา')
         }
       })
       .catch(err => {
@@ -247,6 +248,7 @@ export function JobDialog({
 
   // Fuel Suggestion State
   const [fuelPrice, setFuelPrice] = useState<number | null>(null)
+  const [fuelPriceTomorrow, setFuelPriceTomorrow] = useState<number | null>(null)
   const [isSyncingFuel, setIsSyncingFuel] = useState(false)
   const [fuelError, setFuelError] = useState<string | null>(null)
   const [suggestedRate, setSuggestedRate] = useState<number | null>(null)
@@ -263,8 +265,9 @@ export function JobDialog({
   // Fetch fuel price for plan date
   useEffect(() => {
     if (show && formData.Plan_Date) {
-        getFuelPrice(formData.Plan_Date).then(price => {
-            setFuelPrice(price)
+        getFuelPrice(formData.Plan_Date).then(data => {
+            setFuelPrice(data.price)
+            setFuelPriceTomorrow(data.priceTomorrow)
         })
     }
   }, [show, formData.Plan_Date])
@@ -1766,6 +1769,15 @@ export function JobDialog({
                               ดีเซล B7: <span className="text-primary">
                                 {fuelPrice ? `${fuelPrice.toFixed(2)}฿` : (isSyncingFuel ? 'กำลังดึงข้อมูลล่าสุด...' : 'ยังไม่มีข้อมูล')}
                               </span>
+                              {fuelPriceTomorrow && fuelPriceTomorrow !== fuelPrice && (
+                                <span className={cn(
+                                  "ml-2 text-sm font-bold px-2 py-0.5 rounded-full",
+                                  fuelPriceTomorrow > (fuelPrice || 0) ? "bg-red-100 text-red-600" : "bg-emerald-100 text-emerald-600"
+                                )}>
+                                  พรุ่งนี้: {fuelPriceTomorrow.toFixed(2)} 
+                                  ({fuelPriceTomorrow > (fuelPrice || 0) ? '+' : ''}{(fuelPriceTomorrow - (fuelPrice || 0)).toFixed(2)})
+                                </span>
+                              )}
                               {suggestedRate && (
                                   <>
                                       <span className="mx-3 opacity-20">|</span>
@@ -1792,8 +1804,9 @@ export function JobDialog({
                                     className="h-auto p-0 text-amber-600 underline font-black"
                                     onClick={async () => {
                                       setIsSyncingFuel(true)
-                                      const price = await getFuelPrice()
-                                      setFuelPrice(price)
+                                      const data = await getFuelPrice()
+                                      setFuelPrice(data.price)
+                                      setFuelPriceTomorrow(data.priceTomorrow)
                                       setIsSyncingFuel(false)
                                     }}
                                   >

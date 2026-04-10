@@ -54,9 +54,16 @@ export function MaintenanceDialog({
   const [loading, setLoading] = useState(false)
   const [internalOpen, setInternalOpen] = useState(false)
   
+  // Hooks must be called before any potential early returns or conditional assignments
   const isControlled = open !== undefined
   const show = isControlled ? open : internalOpen
-  const setShow = isControlled ? onOpenChange! : setInternalOpen
+  const setShow = (val: boolean) => {
+    if (isControlled && onOpenChange) {
+        onOpenChange(val)
+    } else {
+        setInternalOpen(val)
+    }
+  }
 
   const [formData, setFormData] = useState({
     Date_Report: new Date().toISOString().slice(0, 16),

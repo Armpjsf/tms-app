@@ -7,6 +7,7 @@ export type DailyFuelPrice = {
     Date: string
     Fuel_Type: string
     Price: number
+    Price_Tomorrow?: number
     Updated_At?: string
 }
 
@@ -16,21 +17,27 @@ const log = (msg: string) => console.log(`[FUEL_SERVICE] ${msg}`)
  * Sync daily fuel prices from Kapook Gas Price website
  */
 export async function syncDailyFuelPrices() {
-    log('Starting fuel price synchronization...')
+    log('Starting fuel price synchronization (Bangchak API)...')
     
     try {
         const syncDate = new Date().toISOString().split('T')[0]
-        const url = "https://gasprice.kapook.com/gasprice.php"
-        log(`Fetching from Kapook: ${url}`)
+        const url = "https://oil-price.bangchak.co.th/ApiOilPrice2/th"
+        log(`Fetching from Bangchak API: ${url}`)
 
-        // Add a timeout to prevent hanging
         const controller = new AbortController()
-        const timeoutId = setTimeout(() => controller.abort(), 10000) // 10s timeout
+        const timeoutId = setTimeout(() => controller.abort(), 10000)
 
         const response = await fetch(url, {
-            headers: {
+            headers: { 
+                'Accept': 'application/json, text/plain, */*',
+                'Accept-Language': 'th-TH,th;q=0.9,en-US;q=0.8,en;q=0.7',
+                'Cache-Control': 'no-cache',
+                'Pragma': 'no-cache',
+                'Referer': 'https://www.bangchak.co.th/',
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+                'sec-ch-ua': '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
+                'sec-ch-ua-mobile': '?0',
+                'sec-ch-ua-platform': '"Windows"'
             },
             signal: controller.signal
         })
@@ -38,131 +45,98 @@ export async function syncDailyFuelPrices() {
         clearTimeout(timeoutId)
         
         if (!response.ok) {
-            throw new Error(`Kapook returned status: ${response.status}`)
+            throw new Error(`Bangchak API returned status: ${response.status}`)
         }
 
-        const html = await response.text()
-        log(`HTML received (${html.length} chars)`)
-
-        // Improved Scraping: Kapook uses <li> or <tr> with various spacings
-        // We look for "ดีเซล" or "diesel" and capture the next decimal number
-        // Example: <li>ดีเซล 50.54</li> or <tr><td>ดีเซล</td><td>50.54</td></tr>
+        const data = await response.json()
+        log(`Bangchak Data Received: ${JSON.stringify(data).substring(0, 200)}...`)
         
-        const sections = [
-            { key: 'ptt', label: 'PTT' },
-            { key: 'bcp', label: 'BCP' },
-            { key: 'pt', label: 'PT' },
-            { key: 'shell', label: 'Shell' }
-        ]
-
-        let extractedPrice = 0
+        // Bangchak Response contains 'OilList'
+        const oilList = data.OilList || []
         
-        for (const station of sections) {
-            log(`Trying station: ${station.label} (${station.key})`)
-            const sectionRegex = new RegExp(`<a\\s+name="${station.key}"[^>]*>([\\s\\S]*?)(?=<a\\s+name=|$)`, 'i')
-            const sectionMatch = html.match(sectionRegex)
-            if (!sectionMatch) continue
-
-            const sectionHtml = sectionMatch[1]
-            // Pattern: Find "ดีเซล" followed by any characters that are NOT another fuel name, then a price
-            // We want to skip "ดีเซลพรีเมียม" - we do this by finding the most specific match
-            const priceRegex = /(ดีเซล|diesel|เชลล์ ฟิวเซฟ ดีเซล)[\s\S]{0,100}?>\s*([\d,]+\.\d{2})/gi
-            let match
-            const candidates: { name: string, price: number, isPremium: boolean }[] = []
-
-            while ((match = priceRegex.exec(sectionHtml)) !== null) {
-                const fullName = match[1].toLowerCase()
-                // Use a larger context to check for premium keywords
-                // Get the surrounding text (about 40 chars before)
-                const startPos = Math.max(0, match.index - 40)
-                const context = sectionHtml.substring(startPos, match.index + 20).toLowerCase()
-                
-                const isPremium = context.includes('พรีเมียม') || context.includes('premium') || 
-                                  context.includes('v-power') || context.includes('ซูเปอร์') ||
-                                  context.includes('super')
-                
-                const price = parseFloat(match[2].replace(/,/g, ''))
-                
-                if (price > 20) {
-                    candidates.push({ name: fullName, price, isPremium })
-                }
-            }
-
-            // Find first non-premium
-            const standard = candidates.find(c => !c.isPremium)
-            if (standard) {
-                log(`Found standard price at ${station.label}: ${standard.price}`)
-                extractedPrice = standard.price
-                break
-            }
+        if (oilList.length === 0) {
+            log('WARNING: Bangchak API returned an EMPTY OilList.')
+            throw new Error("Empty oil list from Bangchak API")
         }
 
-        if (extractedPrice === 0) {
-            log('No station-specific price found, trying global search...')
-            // Try specific Diesel B7 keys first
-            const b7Regex = /(ดีเซล B7|ดีเซล\s*B7|Diesel\s*B7)[\s\S]{0,100}?>\s*([\d,]+\.\d{2})/gi
-            let m;
-            while ((m = b7Regex.exec(html)) !== null) {
-                const price = parseFloat(m[2].replace(/,/g, ''))
-                if (price > 25 && price < 60) {
-                    extractedPrice = price
-                    log(`Found Diesel B7 specific match: ${extractedPrice}`)
-                    break
-                }
-            }
+        // LOG ALL OILS FOR DEBUGGING
+        log('--- START OIL LIST ---')
+        oilList.forEach((o: any) => log(`- ${o.OilName}: Today=${o.PriceToday}, Tomorrow=${o.PriceTomorrow}`))
+        log('--- END OIL LIST ---')
+
+        // We look for 'ไฮดีเซล S' which is the standard diesel (expected 48.40)
+        // We prioritize exact matches to avoid picking up subsidized/wrong types
+        const standardDiesel = oilList.find((oil: any) => oil.OilName === 'ไฮดีเซล S') 
+            || oilList.find((oil: any) => oil.OilName.includes('ดีเซล') && !oil.OilName.includes('พรีเมียม') && !oil.OilName.includes('B20'))
+
+        if (!standardDiesel) {
+            log('Standard Diesel not found in Bangchak API response.')
+            throw new Error("Could not find standard diesel price in Bangchak API")
         }
 
-        if (extractedPrice === 0) {
-            log('Trying wider global match...')
-            const globalRegex = /(ดีเซล\s*|diesel\s*)[^<]{0,50}?([\d,]+\.\d{2})/gi
-            let m2;
-            while ((m2 = globalRegex.exec(html)) !== null) {
-                const price = parseFloat(m2[2].replace(/,/g, ''))
-                const context = m2[0].toLowerCase()
-                const isPremium = context.includes('พรีเมียม') || context.includes('premium') || 
-                                  context.includes('v-power') || context.includes('ซูเปอร์')
-                if (price > 20 && !isPremium) {
-                    extractedPrice = price
-                    log(`Found global diesel match: ${extractedPrice}`)
-                    break
-                }
-            }
-        }
+        const dieselPrice = parseFloat(standardDiesel.PriceToday)
+        const dieselPriceTomorrow = parseFloat(standardDiesel.PriceTomorrow)
+        
+        log(`Extracted from Bangchak: Today=${dieselPrice}, Tomorrow=${dieselPriceTomorrow}`)
 
-        const dieselPrice = extractedPrice || 32.94 // Realistic fallback for current subsidized diesel B7 price
-
-        if (dieselPrice === 0) {
-            throw new Error("Could not find any standard diesel price in Kapook HTML")
+        if (isNaN(dieselPrice) || dieselPrice === 0) {
+            throw new Error("Invalid diesel price received from Bangchak")
         }
         
         const supabase = createAdminClient()
         
-        log(`Updating DB for ${syncDate} with price ${dieselPrice}...`)
+        log(`Updating DB for ${syncDate} with Today: ${dieselPrice}, Tomorrow: ${dieselPriceTomorrow}...`)
+        
+        // We use upsert on (Date, Fuel_Type) if unique constraint exists, 
+        // else we just update the record for today.
         const { error: upsertError } = await supabase
             .from('daily_fuel_prices')
             .upsert({
                 Date: syncDate,
                 Fuel_Type: 'Diesel B7',
                 Price: dieselPrice,
+                Price_Tomorrow: dieselPriceTomorrow,
                 Updated_At: new Date().toISOString()
-            })
+            }, { onConflict: 'Date' })
 
         if (upsertError) {
             console.error('[FUEL_SYNC] DB Error:', upsertError)
-            throw upsertError
+            // If the column Price_Tomorrow doesn't exist yet, we try without it to avoid crashing the whole system
+            if (upsertError.message.includes('Price_Tomorrow')) {
+                log('Price_Tomorrow column missing, falling back to standard Price update...')
+                await supabase
+                    .from('daily_fuel_prices')
+                    .upsert({
+                        Date: syncDate,
+                        Fuel_Type: 'Diesel B7',
+                        Price: dieselPrice,
+                        Updated_At: new Date().toISOString()
+                    }, { onConflict: 'Date' })
+            } else {
+                throw upsertError
+            }
         }
 
         await logActivity({
             module: 'Fuel',
             action_type: 'UPDATE',
             target_id: syncDate,
-            details: { type: 'Fuel Price', price: dieselPrice, source: 'Kapook Scraper' }
+            details: { 
+                type: 'Fuel Price', 
+                price: dieselPrice, 
+                priceTomorrow: dieselPriceTomorrow,
+                source: 'Bangchak API' 
+            }
         })
 
-        return { success: true, price: dieselPrice }
+        return { 
+            success: true, 
+            price: dieselPrice, 
+            priceTomorrow: dieselPriceTomorrow 
+        }
 
     } catch (error: any) {
-        log(`Scraping failed: ${error.message}`)
+        log(`Sync failed: ${error.message}`)
         return { success: false, error: error.message }
     }
 }
@@ -178,7 +152,7 @@ export async function getFuelPrice(date?: string) {
     // 1. Try DB first for the exact date
     const { data, error } = await supabase
         .from('daily_fuel_prices')
-        .select('Price')
+        .select('Price, Price_Tomorrow')
         .eq('Date', targetDate)
         .maybeSingle()
 
@@ -188,29 +162,47 @@ export async function getFuelPrice(date?: string) {
     
     if (data?.Price) {
         console.log(`[FUEL_ACTION] Found price in DB for ${targetDate}: ${data.Price}`)
-        return data.Price
+        return { 
+            price: data.Price, 
+            priceTomorrow: data.Price_Tomorrow || null 
+        }
     }
 
     console.log(`[FUEL_ACTION] No price in DB for ${targetDate}, triggering sync...`)
     const syncResult = await syncDailyFuelPrices()
     if (syncResult.success) {
-        // If the date we wanted was today, return the newly synced price
+        // If the date we wanted was today, return the newly synced prices
         const todayStr = new Date().toISOString().split('T')[0]
         if (targetDate === todayStr) {
-            return syncResult.price
+            return { 
+                price: syncResult.price, 
+                priceTomorrow: syncResult.priceTomorrow || null 
+            }
         }
     }
 
     // 3. Last Fallback: Get the latest *real* price ever saved in the DB
     const { data: latest, error: lastError } = await supabase
         .from('daily_fuel_prices')
-        .select('Price')
+        .select('Price, Price_Tomorrow')
         .order('Date', { ascending: false })
         .limit(1)
         .maybeSingle()
     
     if (lastError) console.error('[FUEL_ACTION] getFuelPrice Fallback Error:', lastError)
-    return (latest?.Price as number) || null
+    
+    return {
+        price: (latest?.Price as number) || null, // NO FALLBACK to fake values. If null, UI shows 0/Error.
+        priceTomorrow: (latest?.Price_Tomorrow as number) || null
+    }
+}
+
+/**
+ * Compatibility wrapper to return just the price number for existing callers
+ */
+export async function getFuelPriceNumber(date?: string): Promise<number | null> {
+    const res = await getFuelPrice(date)
+    return res.price
 }
 
 /**
