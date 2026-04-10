@@ -27,6 +27,8 @@ export async function getJobsForMonth(year: number, month: number) {
   const lastDay = new Date(year, month, 0)
   const lastDayStr = `${year}-${String(month).padStart(2, '0')}-${String(lastDay.getDate()).padStart(2, '0')}`
 
+  console.log(`[DEBUG] getJobsForMonth params:`, { year, month, firstDay, lastDayStr, customerId, userBranchId })
+
   let query = supabase
     .from('Jobs_Main')
     .select('Job_ID, Plan_Date, Job_Status, Customer_Name, Driver_Name, Route_Name, Vehicle_Plate, Origin_Location, Dest_Location')
@@ -41,7 +43,17 @@ export async function getJobsForMonth(year: number, month: number) {
   }
 
   const { data, error } = await query
-  if (error) return []
+  
+  if (error) {
+    console.error('[DEBUG] getJobsForMonth error:', {
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code,
+        query: { firstDay, lastDayStr, customerId, userBranchId }
+    })
+    return []
+  }
   
   return (data || []) as CalendarJob[]
 }
