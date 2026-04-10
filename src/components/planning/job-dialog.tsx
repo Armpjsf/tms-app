@@ -1456,7 +1456,7 @@ export function JobDialog({
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
                         <div className="space-y-4">
                             <Label className="flex items-center gap-2 text-2xl font-black text-primary uppercase tracking-normal">
-                                <Building2 className="w-6 h-6" /> {t('jobs.dialog.carrier_type') || 'ประเภทผู้ให้บริการ'}
+                                <Building2 className="w-6 h-6" /> {t('assignments.carrier_type') || 'ประเภทผู้ให้บริการ'}
                             </Label>
                             <div className="flex p-1 bg-muted rounded-xl border border-border h-14">
                                 <button
@@ -1469,7 +1469,7 @@ export function JobDialog({
                                             : "text-muted-foreground hover:bg-background/50"
                                     )}
                                 >
-                                    {t('jobs.dialog.individual') || 'รายคัน (Internal)'}
+                                    {t('assignments.individual') || 'รายคัน (Internal)'}
                                 </button>
                                 <button
                                     type="button"
@@ -1485,7 +1485,7 @@ export function JobDialog({
                                             : "text-muted-foreground hover:bg-background/50"
                                     )}
                                 >
-                                    {t('jobs.dialog.subcontractor') || 'บริษัทรถร่วม'}
+                                    {t('assignments.subcontractor') || 'บริษัทรถร่วม'}
                                 </button>
                             </div>
                             

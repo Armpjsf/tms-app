@@ -11,7 +11,6 @@ export type RepairTicket = {
   Vehicle_Plate: string | null
   Issue_Type: string | null
   Description: string | null
-  Priority: string | null
   Photo_Url: string | null
   Status: string | null
   Approver: string | null
@@ -19,6 +18,7 @@ export type RepairTicket = {
   Date_Finish: string | null
   Remark: string | null
   Odometer?: number | null
+  Branch_ID?: string | null
 }
 
 // ดึง Repair Tickets ทั้งหมด (pagination + search + filters)

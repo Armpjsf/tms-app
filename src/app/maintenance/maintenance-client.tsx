@@ -189,103 +189,109 @@ export function MaintenanceClient({
              <ShieldAlert className="w-20 h-20 text-foreground/5 mx-auto mb-6 animate-pulse" />
              <p className="text-muted-foreground font-black uppercase tracking-[0.4em] text-lg font-bold">{t('common.no_data')}</p>
           </div>
-        ) : tickets.map((ticket: RepairTicket) => (
-          <PremiumCard key={ticket.Ticket_ID} className="bg-background p-0 overflow-hidden group border-2 border-border/5 rounded-br-[4rem] rounded-tl-[2rem] shadow-3xl relative hover:border-amber-500/30 transition-all duration-500">
-            <div className="absolute top-6 right-6 z-20">
-                 <MaintenanceActions 
-                    ticket={ticket} 
-                    drivers={drivers} 
-                    vehicles={vehicles} 
-                 />
-            </div>
-            
-            <div className="p-10 space-y-8">
-              <div className="flex items-start gap-6">
-                <div className={cn(
-                  "w-20 h-20 rounded-3xl flex items-center justify-center shadow-2xl transform group-hover:scale-110 group-hover:-rotate-3 transition-all duration-700 border-2",
-                  ticket.Priority === 'High' ? 'bg-rose-500/20 border-rose-500/30 text-rose-500 shadow-rose-500/10' : 'bg-muted/50 border-border/10 text-foreground'
-                )}>
-                  {ticket.Priority === 'High' ? <AlertTriangle size={36} className="animate-pulse" /> : <Wrench size={36} />}
+        ) : tickets.map((ticket: RepairTicket) => {
+          // Extract priority from Description if possible (e.g. "[Priority: High] ...")
+          const priorityMatch = ticket.Description?.match(/\[Priority: (\w+)\]/)
+          const effectivePriority = priorityMatch ? priorityMatch[1] : 'Medium'
+
+          return (
+            <PremiumCard key={ticket.Ticket_ID} className="bg-background p-0 overflow-hidden group border-2 border-border/5 rounded-br-[4rem] rounded-tl-[2rem] shadow-3xl relative hover:border-amber-500/30 transition-all duration-500">
+              <div className="absolute top-6 right-6 z-20">
+                  <MaintenanceActions 
+                      ticket={{ ...ticket, Priority: effectivePriority } as any} 
+                      drivers={drivers} 
+                      vehicles={vehicles} 
+                  />
+              </div>
+              
+              <div className="p-10 space-y-8">
+                <div className="flex items-start gap-6">
+                  <div className={cn(
+                    "w-20 h-20 rounded-3xl flex items-center justify-center shadow-2xl transform group-hover:scale-110 group-hover:-rotate-3 transition-all duration-700 border-2",
+                    effectivePriority === 'High' ? 'bg-rose-500/20 border-rose-500/30 text-rose-500 shadow-rose-500/10' : 'bg-muted/50 border-border/10 text-foreground'
+                  )}>
+                    {effectivePriority === 'High' ? <AlertTriangle size={36} className="animate-pulse" /> : <Wrench size={36} />}
+                  </div>
+                  <div className="space-y-2">
+                    <h3 className="text-3xl font-black text-foreground italic tracking-widest uppercase leading-none">{ticket.Vehicle_Plate || "VOID_ID"}</h3>
+                    <div className="flex flex-wrap items-center gap-3">
+                        <span className="text-base font-bold font-black text-muted-foreground font-mono tracking-widest uppercase italic bg-muted/50 px-2 py-0.5 rounded-lg border border-border/5">ID: {ticket.Ticket_ID}</span>
+                        <span className="text-base font-bold font-black text-amber-500/80 uppercase tracking-widest bg-amber-500/10 px-2 py-0.5 rounded-lg border border-amber-500/10">{ticket.Issue_Type}</span>
+                    </div>
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <h3 className="text-3xl font-black text-foreground italic tracking-widest uppercase leading-none">{ticket.Vehicle_Plate || "VOID_ID"}</h3>
-                  <div className="flex flex-wrap items-center gap-3">
-                      <span className="text-base font-bold font-black text-muted-foreground font-mono tracking-widest uppercase italic bg-muted/50 px-2 py-0.5 rounded-lg border border-border/5">ID: {ticket.Ticket_ID}</span>
-                      <span className="text-base font-bold font-black text-amber-500/80 uppercase tracking-widest bg-amber-500/10 px-2 py-0.5 rounded-lg border border-amber-500/10">{ticket.Issue_Type}</span>
+
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                      <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                      <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-[0.3em]">{t('common.status')}</span>
+                  </div>
+                  <span className={cn(
+                      "px-4 py-1.5 rounded-xl text-base font-bold font-black uppercase tracking-widest border transition-all duration-500 shadow-2xl",
+                      ticket.Status === 'Completed' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30 shadow-emerald-500/10' :
+                      ticket.Status === 'In Progress' ? 'bg-blue-500/20 text-blue-400 border-blue-500/30 shadow-blue-500/10' :
+                      ticket.Status === 'Rejected' ? 'bg-rose-500/20 text-rose-500 border-rose-500/30 shadow-rose-500/10' :
+                      'bg-amber-500/20 text-amber-500 border-amber-500/30 shadow-amber-500/10'
+                  )}>
+                      {ticket.Status === 'Completed' ? t('maintenance.stats.complete') : 
+                      ticket.Status === 'In Progress' ? t('maintenance.stats.active') :
+                      ticket.Status === 'Pending' ? t('maintenance.stats.pending') : ticket.Status?.toUpperCase()}
+                  </span>
+                </div>
+
+                <div className="space-y-6">
+                  {ticket.Photo_Url && (
+                      <div className="relative w-full h-56 rounded-[2.5rem] overflow-hidden border-2 border-border/10 bg-black/40 shadow-inner group-hover:border-primary/40 transition-all duration-700">
+                          <Image 
+                              src={(() => {
+                                  try {
+                                      if (ticket.Photo_Url.startsWith('[') && ticket.Photo_Url.endsWith(']')) {
+                                          const parsed = JSON.parse(ticket.Photo_Url)
+                                          return Array.isArray(parsed) && parsed.length > 0 ? parsed[0] : ticket.Photo_Url
+                                      }
+                                      return ticket.Photo_Url
+                                  } catch {
+                                      return ticket.Photo_Url
+                                  }
+                              })()}
+                              alt="Issue Photo" 
+                              fill 
+                              className="object-cover transform group-hover:scale-110 transition-transform duration-1000"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </div>
+                  )}
+                  <div className="relative">
+                      <p className="text-xl text-muted-foreground font-black italic uppercase leading-relaxed bg-muted/50 p-8 rounded-[2.5rem] border-2 border-border/5 relative overflow-hidden group-hover:bg-muted/80 transition-all duration-500 min-h-[120px]">
+                          <span className="absolute -top-3 -left-2 text-6xl text-foreground/5 font-black leading-none select-none tracking-tighter italic">ISSUE</span>
+                          <span className="relative z-10">{ticket.Description || t('common.no_data')}</span>
+                      </p>
+                  </div>
+
+                  <div className="flex items-center justify-between text-lg font-bold pt-6 border-t border-border/5">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-muted/50 rounded-xl border border-border/10">
+                          <Clock size={16} className="text-muted-foreground" />
+                        </div>
+                        <span className="font-black uppercase tracking-[0.2em] text-base font-bold text-muted-foreground">
+                          {ticket.Date_Report ? new Date(ticket.Date_Report).toLocaleDateString(t('common.loading') === 'กำลังประมวลผล...' ? 'th-TH' : 'en-US') : "VOID_DATE"}
+                        </span>
+                      </div>
+                      {Number(ticket.Cost_Total) > 0 ? (
+                          <div className="bg-emerald-500/10 px-5 py-3 rounded-2xl border-2 border-emerald-500/20 shadow-xl group-hover:scale-110 transition-transform">
+                              <span className="text-emerald-400 font-black text-2xl tracking-tighter italic leading-none">฿{Number(ticket.Cost_Total).toLocaleString()}</span>
+                          </div>
+                      ) : (
+                          <div className="flex items-center gap-3 font-black text-muted-foreground uppercase tracking-[0.4em] text-base font-bold italic">
+                            {t('maintenance.cost_tbd')}
+                          </div>
+                      )}
                   </div>
                 </div>
               </div>
-
-              <div className="flex items-center justify-between">
-                 <div className="flex items-center gap-3">
-                    <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-                    <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-[0.3em]">{t('common.status')}</span>
-                 </div>
-                 <span className={cn(
-                    "px-4 py-1.5 rounded-xl text-base font-bold font-black uppercase tracking-widest border transition-all duration-500 shadow-2xl",
-                    ticket.Status === 'Completed' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30 shadow-emerald-500/10' :
-                    ticket.Status === 'In Progress' ? 'bg-blue-500/20 text-blue-400 border-blue-500/30 shadow-blue-500/10' :
-                    ticket.Status === 'Rejected' ? 'bg-rose-500/20 text-rose-500 border-rose-500/30 shadow-rose-500/10' :
-                    'bg-amber-500/20 text-amber-500 border-amber-500/30 shadow-amber-500/10'
-                 )}>
-                    {ticket.Status === 'Completed' ? t('maintenance.stats.complete') : 
-                     ticket.Status === 'In Progress' ? t('maintenance.stats.active') :
-                     ticket.Status === 'Pending' ? t('maintenance.stats.pending') : ticket.Status?.toUpperCase()}
-                 </span>
-              </div>
-
-              <div className="space-y-6">
-                 {ticket.Photo_Url && (
-                    <div className="relative w-full h-56 rounded-[2.5rem] overflow-hidden border-2 border-border/10 bg-black/40 shadow-inner group-hover:border-primary/40 transition-all duration-700">
-                        <Image 
-                            src={(() => {
-                                try {
-                                    if (ticket.Photo_Url.startsWith('[') && ticket.Photo_Url.endsWith(']')) {
-                                        const parsed = JSON.parse(ticket.Photo_Url)
-                                        return Array.isArray(parsed) && parsed.length > 0 ? parsed[0] : ticket.Photo_Url
-                                    }
-                                    return ticket.Photo_Url
-                                } catch {
-                                    return ticket.Photo_Url
-                                }
-                            })()}
-                            alt="Issue Photo" 
-                            fill 
-                            className="object-cover transform group-hover:scale-110 transition-transform duration-1000"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </div>
-                 )}
-                 <div className="relative">
-                    <p className="text-xl text-muted-foreground font-black italic uppercase leading-relaxed bg-muted/50 p-8 rounded-[2.5rem] border-2 border-border/5 relative overflow-hidden group-hover:bg-muted/80 transition-all duration-500 min-h-[120px]">
-                        <span className="absolute -top-3 -left-2 text-6xl text-foreground/5 font-black leading-none select-none tracking-tighter italic">ISSUE</span>
-                        <span className="relative z-10">{ticket.Description || t('common.no_data')}</span>
-                    </p>
-                 </div>
-
-                 <div className="flex items-center justify-between text-lg font-bold pt-6 border-t border-border/5">
-                    <div className="flex items-center gap-3">
-                       <div className="p-2 bg-muted/50 rounded-xl border border-border/10">
-                         <Clock size={16} className="text-muted-foreground" />
-                       </div>
-                       <span className="font-black uppercase tracking-[0.2em] text-base font-bold text-muted-foreground">
-                        {ticket.Date_Report ? new Date(ticket.Date_Report).toLocaleDateString(t('common.loading') === 'กำลังประมวลผล...' ? 'th-TH' : 'en-US') : "VOID_DATE"}
-                       </span>
-                    </div>
-                    {Number(ticket.Cost_Total) > 0 ? (
-                        <div className="bg-emerald-500/10 px-5 py-3 rounded-2xl border-2 border-emerald-500/20 shadow-xl group-hover:scale-110 transition-transform">
-                            <span className="text-emerald-400 font-black text-2xl tracking-tighter italic leading-none">฿{Number(ticket.Cost_Total).toLocaleString()}</span>
-                        </div>
-                    ) : (
-                        <div className="flex items-center gap-3 font-black text-muted-foreground uppercase tracking-[0.4em] text-base font-bold italic">
-                           {t('maintenance.cost_tbd')}
-                        </div>
-                    )}
-                 </div>
-              </div>
-            </div>
-          </PremiumCard>
-        ))}
+            </PremiumCard>
+          )
+        })}
       </div>
       
       <div className="flex justify-center pt-8">
@@ -327,4 +333,3 @@ export function MaintenanceClient({
     </div>
   )
 }
-

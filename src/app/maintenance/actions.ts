@@ -121,10 +121,10 @@ export async function updateRepairTicket(ticketId: string, data: TicketUpdateDat
       // Allow updating basic info too if needed
       Issue_Type: data.Issue_Type,
       Description: data.Description,
-      Priority: data.Priority,
       Driver_ID: data.Driver_ID || null,
       Vehicle_Plate: data.Vehicle_Plate || null,
-      Date_Report: data.Date_Report
+      Date_Report: data.Date_Report,
+      Branch_ID: data.Branch_ID || undefined
     })
     .eq('Ticket_ID', ticketId)
 if (error) {

@@ -151,7 +151,11 @@ export const dictionaries = {
       account_name: 'ชื่อบัญชี',
       account_no: 'เลขที่บัญชี',
       no_address: 'ไม่พบที่อยู่ลูกค้า',
-      set_company_info: 'กรุณาตั้งค่าข้อมูลบริษัท',
+    },
+    assignments: {
+      carrier_type: 'ประเภทผู้ให้บริการ',
+      individual: 'รถบริษัท/รายคัน',
+      subcontractor: 'บริษัทรถร่วม',
     },
     header: {
       command_centre: 'ศูนย์ควบคุมการดำเนินงาน',
@@ -2013,6 +2017,11 @@ export const dictionaries = {
       request_mission: 'New Job',
       routes: 'Routes',
       billing_automation: 'Billing Automation',
+    },
+    assignments: {
+      carrier_type: 'Carrier Type',
+      individual: 'Internal / Individual',
+      subcontractor: 'Subcontractor',
     },
     automation: {
       title: 'Billing Automation Hub',
