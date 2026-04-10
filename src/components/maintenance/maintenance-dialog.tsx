@@ -102,13 +102,24 @@ export function MaintenanceDialog({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    if (!formData.Date_Report) return toast.error("โปรดระบุวันที่แจ้งซ่อม")
+    if (!formData.Description) return toast.error("โปรดระบุรายละเอียดอาการ")
+    if (!formData.Vehicle_Plate) return toast.error("โปรดระบุทะเบียนรถ")
+
     setLoading(true)
 
     try {
       const payload = {
         ...formData,
-        Date_Report: new Date(formData.Date_Report).toISOString()
+        Date_Report: new Date(formData.Date_Report).toISOString(),
+        // Convert empty strings to null for DB foreign keys
+        Driver_ID: formData.Driver_ID || null,
+        Vehicle_Plate: formData.Vehicle_Plate || null,
+        Cost_Total: Number(formData.Cost_Total) || 0
       }
+
+      console.log("[MAINTENANCE] Submitting payload:", payload)
 
       let result;
       if (initialData) {
@@ -136,11 +147,12 @@ export function MaintenanceDialog({
         }
         router.refresh()
       } else {
-        toast.error(result?.message || 'เกิดข้อผิดพลาด กรุณาลองใหม่')
+        console.error("[MAINTENANCE] Submit failed:", result?.message)
+        toast.error(result?.message || 'เกิดข้อผิดพลาดในการบันทึกข้อมูล')
       }
-    } catch (err) {
+    } catch (err: any) {
       Logger.error("Maintenance submit error:", err)
-      toast.error('เกิดข้อผิดพลาดในการเชื่อมต่อระบบ')
+      toast.error('เกิดข้อผิดพลาด: ' + (err.message || 'การเชื่อมต่อขัดข้อง'))
     } finally {
       setLoading(false)
     }
@@ -189,27 +201,35 @@ export function MaintenanceDialog({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
                 <Label className="text-muted-foreground font-black uppercase tracking-widest ml-1">{t('maintenance.reporter')}</Label>
-                <Select value={formData.Driver_ID || undefined} onValueChange={(val) => setFormData({ ...formData, Driver_ID: val })}>
+                <Select value={formData.Driver_ID || ""} onValueChange={(val) => setFormData({ ...formData, Driver_ID: val })}>
                     <SelectTrigger className="h-12 border-border/10 bg-muted/50 text-foreground rounded-xl">
                         <SelectValue placeholder={t('maintenance.placeholder_driver')} />
                     </SelectTrigger>
                     <SelectContent className="bg-card border-border/10 text-foreground">
-                        {drivers.map((d: Driver) => (
-                            <SelectItem key={d.Driver_ID} value={d.Driver_ID}>{d.Driver_Name}</SelectItem>
-                        ))}
+                        {drivers && drivers.length > 0 ? (
+                            drivers.map((d: Driver) => (
+                                <SelectItem key={d.Driver_ID} value={d.Driver_ID}>{d.Driver_Name}</SelectItem>
+                            ))
+                        ) : (
+                            <SelectItem value="none" disabled>ไม่มีข้อมูลคนขับ</SelectItem>
+                        )}
                     </SelectContent>
                 </Select>
             </div>
             <div className="space-y-2">
                 <Label className="text-muted-foreground font-black uppercase tracking-widest ml-1">{t('maintenance.vehicle')}</Label>
-                <Select value={formData.Vehicle_Plate || undefined} onValueChange={(val) => setFormData({ ...formData, Vehicle_Plate: val })}>
+                <Select value={formData.Vehicle_Plate || ""} onValueChange={(val) => setFormData({ ...formData, Vehicle_Plate: val })}>
                     <SelectTrigger className="h-12 border-border/10 bg-muted/50 text-foreground rounded-xl">
                         <SelectValue placeholder={t('maintenance.placeholder_vehicle')} />
                     </SelectTrigger>
                     <SelectContent className="bg-card border-border/10 text-foreground">
-                        {vehicles.map((v: { Vehicle_Plate: string }) => (
-                            <SelectItem key={v.Vehicle_Plate} value={v.Vehicle_Plate}>{v.Vehicle_Plate}</SelectItem>
-                        ))}
+                        {vehicles && vehicles.length > 0 ? (
+                            vehicles.map((v: { Vehicle_Plate: string }) => (
+                                <SelectItem key={v.Vehicle_Plate} value={v.Vehicle_Plate}>{v.Vehicle_Plate}</SelectItem>
+                            ))
+                        ) : (
+                            <SelectItem value="none" disabled>ไม่มีข้อมูลรถ</SelectItem>
+                        )}
                     </SelectContent>
                 </Select>
             </div>
