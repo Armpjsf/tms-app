@@ -26,7 +26,7 @@ import { getDrivingDistance } from "@/lib/ai/distance"
 import { 
   Activity, AlertTriangle, Banknote, Building2, Calendar, Check, Eye, EyeOff, 
   FileText, Fuel, History, Info, Link as LinkIcon, Loader2, MapPin, Package, 
-  Plus, Search as SearchIcon, Settings as SettingsIcon, ShieldCheck, Trash2, 
+  Plus, RefreshCw, Search as SearchIcon, Settings as SettingsIcon, ShieldCheck, Trash2, 
   Truck, User, X, Zap 
 } from "lucide-react"
 import { toast } from "sonner"
@@ -35,7 +35,7 @@ import { useLanguage } from "@/components/providers/language-provider"
 import { Job, JobAssignment } from "@/lib/supabase/jobs"
 import { Route } from "@/lib/supabase/routes"
 import { Subcontractor } from "@/types/subcontractor"
-import { getFuelPrice, getSuggestedRate } from "@/lib/actions/fuel-actions"
+import { getFuelPrice, getSuggestedRate, syncDailyFuelPrices } from "@/lib/actions/fuel-actions"
 import { getVehicleTypes, VehicleType as MasterVehicleType } from "@/lib/actions/vehicle-type-actions"
 import { JobTimeline } from "./job-timeline"
 
@@ -296,7 +296,27 @@ export function JobDialog({
     } else {
         setSuggestedRate(null)
     }
-  }, [formData.Customer_ID, formData.Vehicle_Type, origins, destinations, fuelPrice, routes])
+  }, [formData.Customer_ID, formData.Vehicle_Type, origins, destinations, fuelPrice, routes])  // 4. Handlers
+  const handleSyncFuel = async () => {
+    if (isSyncingFuel) return
+    setIsSyncingFuel(true)
+    const syncToast = toast.loading('กำลังดึงราคาน้ำมันจากบางจาก...')
+    try {
+      const result = await syncDailyFuelPrices(formData.Plan_Date)
+      if (result.success) {
+        setFuelPrice(result.price || null)
+        setFuelPriceTomorrow(result.priceTomorrow || null)
+        toast.success(t('auth.success') || 'อัปเดตแก๊สโซฮอล์/ดีเซลสำเร็จ', { id: syncToast })
+      } else {
+        toast.error(result.error || 'ไม่สามารถดึงข้อมูลได้', { id: syncToast })
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Error syncing fuel', { id: syncToast })
+    } finally {
+      setIsSyncingFuel(false)
+    }
+  }
+
 
   // Job Bundling State
   const [nearbyJobs, setNearbyJobs] = useState<Array<{ Job_ID: string; Customer_Name: string | null }>>([])
@@ -1763,21 +1783,46 @@ export function JobDialog({
                       <div>
                           <div className="flex items-center gap-2 mb-1">
                               <span className="text-primary font-black uppercase tracking-widest text-sm">Fuel Intel Intelligence</span>
-                              {(checkingRate || isSyncingFuel) && <Loader2 className="w-3 h-3 animate-spin text-primary" />}
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                disabled={isSyncingFuel}
+                                onClick={handleSyncFuel}
+                                className="h-6 w-6 p-0 text-primary hover:bg-primary/10 rounded-full group"
+                                title="อัปเดตราคาน้ำมันจากบางจาก"
+                              >
+                                <RefreshCw className={cn("w-3.5 h-3.5", isSyncingFuel && "animate-spin")} />
+                              </Button>
+                              {checkingRate && <Loader2 className="w-3 h-3 animate-spin text-primary/50" />}
                           </div>
                           <p className="text-2xl font-black text-foreground tracking-tight">
                               ดีเซล B7: <span className="text-primary">
                                 {fuelPrice ? `${fuelPrice.toFixed(2)}฿` : (isSyncingFuel ? 'กำลังดึงข้อมูลล่าสุด...' : 'ยังไม่มีข้อมูล')}
                               </span>
-                              {fuelPriceTomorrow && fuelPriceTomorrow !== fuelPrice && (
-                                <span className={cn(
-                                  "ml-2 text-sm font-bold px-2 py-0.5 rounded-full",
-                                  fuelPriceTomorrow > (fuelPrice || 0) ? "bg-red-100 text-red-600" : "bg-emerald-100 text-emerald-600"
-                                )}>
-                                  พรุ่งนี้: {fuelPriceTomorrow.toFixed(2)} 
-                                  ({fuelPriceTomorrow > (fuelPrice || 0) ? '+' : ''}{(fuelPriceTomorrow - (fuelPrice || 0)).toFixed(2)})
-                                </span>
-                              )}
+                              <span className={cn(
+                                "ml-2 text-sm font-bold px-3 py-1 rounded-full border transition-all",
+                                fuelPriceTomorrow === null
+                                  ? "bg-slate-50 text-slate-400 border-dashed border-slate-200"
+                                  : !fuelPrice || fuelPriceTomorrow === fuelPrice 
+                                    ? "bg-slate-100 text-slate-500 border-slate-200 shadow-sm" 
+                                    : fuelPriceTomorrow > fuelPrice 
+                                      ? "bg-red-50 text-red-600 border-red-100 shadow-sm" 
+                                      : "bg-emerald-50 text-emerald-600 border-emerald-100 shadow-sm"
+                              )}>
+                                {fuelPriceTomorrow === null ? (
+                                  <>พรุ่งนี้: <span className="italic font-medium">รอประกาศราคา</span></>
+                                ) : (!fuelPrice || fuelPriceTomorrow === fuelPrice ? (
+                                  <>พรุ่งนี้: <span className="underline">ไม่ปรับราคา</span></>
+                                ) : (
+                                  <>
+                                    พรุ่งนี้: {fuelPriceTomorrow.toFixed(2)} 
+                                    <span className="ml-1 opacity-70 font-black">
+                                      ({fuelPriceTomorrow > fuelPrice ? '+' : ''}{(fuelPriceTomorrow - fuelPrice).toFixed(2)})
+                                    </span>
+                                  </>
+                                ))}
+                              </span>
                               {suggestedRate && (
                                   <>
                                       <span className="mx-3 opacity-20">|</span>

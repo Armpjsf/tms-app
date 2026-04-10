@@ -103,30 +103,30 @@ export function PlanningClient({
             variants={container}
             initial="hidden"
             animate="show"
-            className="space-y-8 pb-20"
+            className="space-y-6 pb-20"
         >
             {/* Planning Command Header */}
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
                 <div>
-                    <h1 className="text-4xl font-black text-foreground tracking-tight flex items-center gap-3 italic">
-                        <Calendar className="text-primary" size={32} />
+                    <h1 className="text-3xl font-black text-foreground tracking-tight flex items-center gap-3 italic uppercase premium-text-gradient">
+                        <Calendar className="text-primary" size={24} />
                         {t('planning.title')}
                     </h1>
-                    <div className="flex items-center gap-3 mt-2">
+                    <div className="flex items-center gap-2 mt-1">
                         <RealtimeIndicator isLive={true} className="bg-muted/50 border-border/10" />
-                        <p className="text-muted-foreground font-bold uppercase tracking-[0.3em] text-base font-bold">
+                        <p className="text-muted-foreground font-black uppercase tracking-[0.3em] text-[10px] italic">
                             {t('planning.mission_orchestration')}
                         </p>
                     </div>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-3">
-                    <div className="flex bg-muted/50 p-1.5 rounded-2xl border border-border/10 shadow-inner">
+                    <div className="flex bg-muted/50 p-1 rounded-xl border border-border/10 shadow-inner">
                         <button
                             onClick={() => setView('list')}
                             className={cn(
-                                "flex items-center gap-2 px-4 py-2 rounded-xl text-lg font-bold font-black transition-all",
-                                view === 'list' ? "bg-primary text-white shadow-lg" : "text-muted-foreground hover:text-muted-foreground"
+                                "flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all",
+                                view === 'list' ? "bg-primary text-white shadow-lg" : "text-muted-foreground hover:text-foreground"
                             )}
                         >
                             <List size={14} />
@@ -135,8 +135,8 @@ export function PlanningClient({
                         <button
                             onClick={() => setView('kanban')}
                             className={cn(
-                                "flex items-center gap-2 px-4 py-2 rounded-xl text-lg font-bold font-black transition-all",
-                                view === 'kanban' ? "bg-primary text-white shadow-lg" : "text-muted-foreground hover:text-muted-foreground"
+                                "flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all",
+                                view === 'kanban' ? "bg-primary text-white shadow-lg" : "text-muted-foreground hover:text-foreground"
                             )}
                         >
                             <LayoutGrid size={14} />
@@ -145,14 +145,14 @@ export function PlanningClient({
                         <button
                             onClick={() => setView('requests')}
                             className={cn(
-                                "flex items-center gap-2 px-4 py-2 rounded-xl text-lg font-bold font-black transition-all relative",
-                                view === 'requests' ? "bg-primary text-white shadow-lg" : "text-muted-foreground hover:text-muted-foreground"
+                                "flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all relative",
+                                view === 'requests' ? "bg-primary text-white shadow-lg" : "text-muted-foreground hover:text-foreground"
                             )}
                         >
                             <Inbox size={14} />
                             {t('planning.requests')}
                             {requestCount > 0 && (
-                                <span className="absolute -top-1 -right-1 w-4 h-4 bg-rose-500 text-base font-bold flex items-center justify-center rounded-full border-2 border-background">
+                                <span className="absolute -top-1 -right-1 w-4 h-4 bg-rose-500 text-[10px] font-black flex items-center justify-center rounded-full border-2 border-background">
                                     {requestCount}
                                 </span>
                             )}
@@ -160,11 +160,11 @@ export function PlanningClient({
                     </div>
 
                     {canCreate && (
-                        <div className="flex items-center gap-3 ml-2">
+                        <div className="flex items-center gap-2 ml-2">
                             <ExcelImport 
                                 trigger={
-                                    <PremiumButton variant="outline" className="h-12 sm:h-14 px-6 sm:px-8 rounded-xl sm:rounded-2xl border-border/10 hover:border-primary/50 text-muted-foreground gap-3">
-                                        <FileSpreadsheet size={18} /> {t('common.tactical.bulk_import') || 'Import'}
+                                    <PremiumButton variant="outline" className="h-11 px-5 rounded-xl border-border/10 hover:border-primary/50 text-muted-foreground gap-2 text-xs font-black uppercase tracking-widest">
+                                        <FileSpreadsheet size={16} /> {t('common.tactical.bulk_import') || 'Import'}
                                     </PremiumButton>
                                 }
                                 title={t('planning.import_title') || 'Import Jobs'}
@@ -193,8 +193,8 @@ export function PlanningClient({
                                 routes={routes}
                                 subcontractors={subcontractors}
                                 trigger={
-                                    <button className="flex items-center gap-2 bg-card text-foreground px-6 py-3 rounded-2xl font-black text-xl hover:bg-primary hover:text-white transition-all shadow-xl active:scale-95 group whitespace-nowrap">
-                                        <Plus size={18} className="group-hover:rotate-90 transition-transform duration-300" />
+                                    <button className="flex items-center gap-2 bg-primary text-foreground px-6 py-2.5 h-11 rounded-xl font-black text-xs uppercase tracking-widest hover:brightness-110 transition-all shadow-lg active:scale-95 group whitespace-nowrap">
+                                        <Plus size={16} className="group-hover:rotate-90 transition-transform duration-300" strokeWidth={3} />
                                         {t('planning.new_job')}
                                     </button>
                                 }
@@ -209,25 +209,25 @@ export function PlanningClient({
                 <StatCard 
                     label={t('planning.stats_total')}
                     value={stats.total} 
-                    icon={<Zap size={20} />}
+                    icon={<Zap size={18} />}
                     color="primary"
                 />
                 <StatCard 
                     label={t('planning.stats_pending')}
                     value={stats.pending} 
-                    icon={<Clock size={20} />}
+                    icon={<Clock size={18} />}
                     color="yellow"
                 />
                 <StatCard 
                     label={t('planning.stats_in_progress')}
                     value={stats.inProgress} 
-                    icon={<Truck size={20} />}
+                    icon={<Truck size={18} />}
                     color="blue"
                 />
                 <StatCard 
                     label={t('planning.stats_delivered')}
                     value={stats.delivered} 
-                    icon={<CheckCircle2 size={20} />}
+                    icon={<CheckCircle2 size={18} />}
                     color="green"
                 />
             </div>
@@ -274,19 +274,19 @@ function StatCard({ label, value, icon, color }: { label: string, value: number,
     return (
         <motion.div 
             variants={item}
-            className="bg-muted/40 backdrop-blur-md border border-border/5 p-6 rounded-[2.5rem] relative overflow-hidden group hover:bg-muted transition-all duration-500"
+            className="bg-muted/40 backdrop-blur-md border border-border/5 p-4 rounded-xl relative overflow-hidden group hover:bg-muted transition-all duration-500"
         >
-            <div className={cn("absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-30 transition-opacity", colorMap[color])}>
+            <div className={cn("absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-30 transition-opacity", colorMap[color])}>
                 {icon}
             </div>
             <div className="relative z-10">
-                <p className="text-base font-bold font-black text-muted-foreground uppercase tracking-[0.3em] mb-2">{label}</p>
-                <div className="flex items-baseline gap-2">
-                    <span className="text-4xl font-black text-foreground tracking-tighter italic">{value}</span>
-                    <span className="text-muted-foreground text-base font-bold font-black uppercase tracking-widest">{t('common.units')}</span>
+                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] mb-1">{label}</p>
+                <div className="flex items-baseline gap-1.5">
+                    <span className="text-2xl font-black text-foreground tracking-tighter italic">{value}</span>
+                    <span className="text-muted-foreground text-[10px] font-bold font-black uppercase tracking-widest">{t('common.units')}</span>
                 </div>
             </div>
-            <div className={cn("absolute bottom-0 left-0 h-1 w-0 group-hover:w-full transition-all duration-700", 
+            <div className={cn("absolute bottom-0 left-0 h-0.5 w-0 group-hover:w-full transition-all duration-700", 
                 color === 'primary' ? 'bg-primary' : 
                 color === 'yellow' ? 'bg-amber-500' : 
                 color === 'blue' ? 'bg-blue-500' : 'bg-emerald-500'

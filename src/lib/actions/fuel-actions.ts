@@ -16,17 +16,14 @@ const log = (msg: string) => console.log(`[FUEL_SERVICE] ${msg}`)
 /**
  * Sync daily fuel prices from Kapook Gas Price website
  */
-export async function syncDailyFuelPrices() {
-    log('Starting fuel price synchronization (Bangchak API)...')
-    
+async function fetchFromBangchak() {
+    const url = "https://www.bangchak.co.th/api/oilprice"
+    log(`Attempting Bangchak API: ${url}`)
+
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 8000)
+
     try {
-        const syncDate = new Date().toISOString().split('T')[0]
-        const url = "https://oil-price.bangchak.co.th/ApiOilPrice2/th"
-        log(`Fetching from Bangchak API: ${url}`)
-
-        const controller = new AbortController()
-        const timeoutId = setTimeout(() => controller.abort(), 10000)
-
         const response = await fetch(url, {
             headers: { 
                 'Accept': 'application/json, text/plain, */*',
@@ -35,60 +32,130 @@ export async function syncDailyFuelPrices() {
                 'Pragma': 'no-cache',
                 'Referer': 'https://www.bangchak.co.th/',
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                'sec-ch-ua': '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
-                'sec-ch-ua-mobile': '?0',
-                'sec-ch-ua-platform': '"Windows"'
+                'X-Requested-With': 'XMLHttpRequest'
             },
             signal: controller.signal
         })
         
         clearTimeout(timeoutId)
         
-        if (!response.ok) {
-            throw new Error(`Bangchak API returned status: ${response.status}`)
+        const contentType = response.headers.get('content-type')
+        if (!response.ok || !contentType?.includes('application/json')) {
+            throw new Error(`Invalid response/blocked (Status: ${response.status})`)
         }
 
         const data = await response.json()
-        log(`Bangchak Data Received: ${JSON.stringify(data).substring(0, 200)}...`)
+        const oilList = data.data?.items || []
         
-        // Bangchak Response contains 'OilList'
-        const oilList = data.OilList || []
-        
-        if (oilList.length === 0) {
-            log('WARNING: Bangchak API returned an EMPTY OilList.')
-            throw new Error("Empty oil list from Bangchak API")
-        }
-
-        // LOG ALL OILS FOR DEBUGGING
-        log('--- START OIL LIST ---')
-        oilList.forEach((o: any) => log(`- ${o.OilName}: Today=${o.PriceToday}, Tomorrow=${o.PriceTomorrow}`))
-        log('--- END OIL LIST ---')
-
-        // We look for 'ไฮดีเซล S' which is the standard diesel (expected 48.40)
-        // We prioritize exact matches to avoid picking up subsidized/wrong types
         const standardDiesel = oilList.find((oil: any) => oil.OilName === 'ไฮดีเซล S') 
             || oilList.find((oil: any) => oil.OilName.includes('ดีเซล') && !oil.OilName.includes('พรีเมียม') && !oil.OilName.includes('B20'))
 
-        if (!standardDiesel) {
-            log('Standard Diesel not found in Bangchak API response.')
-            throw new Error("Could not find standard diesel price in Bangchak API")
+        if (!standardDiesel) throw new Error("Diesel not found in JSON")
+
+        return {
+            today: parseFloat(standardDiesel.PriceToday),
+            tomorrow: parseFloat(standardDiesel.PriceTomorrow)
+        }
+    } catch (err: any) {
+        log(`Bangchak Attempt Failed: ${err.message}`)
+        return null
+    }
+}
+
+async function fetchFromKapook() {
+    const url = "https://gasprice.kapook.com/gasprice.php"
+    log(`Attempting Kapook Scraper: ${url}`)
+
+    try {
+        const response = await fetch(url, {
+            headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' }
+        })
+        const html = await response.text()
+        
+        // 1. Brand Isolation: Target "Bangchak" (บางจาก) block
+        // We look for common identifiers used in their HTML/anchors
+        let targetArea = html
+        const bcpMarkers = ['บางจาก', 'bcp', 'bangchak']
+        for (const marker of bcpMarkers) {
+            const index = html.toLowerCase().indexOf(marker)
+            if (index !== -1) {
+                targetArea = html.substring(index, index + 5000) // Larger window for multi-fuel lists
+                break
+            }
         }
 
-        const dieselPrice = parseFloat(standardDiesel.PriceToday)
-        const dieselPriceTomorrow = parseFloat(standardDiesel.PriceTomorrow)
-        
-        log(`Extracted from Bangchak: Today=${dieselPrice}, Tomorrow=${dieselPriceTomorrow}`)
+        // 2. Exact Label Extraction
+        // Kapook uses <span>ดีเซล</span> for the standard one.
+        // We use ">ดีเซล</span>" to ensure it's NOT "ดีเซลพรีเมียม" or "ดีเซล B7"
+        const regexes = [
+            />ดีเซล<\/span>.*?([\d.]{4,6})/, // Strict tag match
+            /ดีเซล.*?(\d{2}\.\d{2})/         // Fallback decimal match
+        ]
 
-        if (isNaN(dieselPrice) || dieselPrice === 0) {
-            throw new Error("Invalid diesel price received from Bangchak")
+        let price = null
+        for (const regex of regexes) {
+            const match = targetArea.match(regex)
+            if (match) {
+                const p = parseFloat(match[1])
+                // Sanity check: Today's Diesel (Apr 2026) should be 30-55 range.
+                // Anything higher is likely "Premium" (6x)
+                if (p > 25 && p < 55) {
+                    price = p
+                    break
+                }
+            }
         }
+
+        // 3. Final Page-Wide Fallback (If brand section failed)
+        if (!price) {
+            log('Brand-specific match failed, searching page-wide for strict Diesel label...')
+            const pageMatch = html.match(/>ดีเซล<\/span>.*?(\d{2}\.\d{2})/)
+            if (pageMatch) price = parseFloat(pageMatch[1])
+        }
+
+        if (!price) throw new Error("Could not parse valid Diesel price from Kapook")
+
+        return {
+            today: price,
+            tomorrow: null
+        }
+    } catch (err: any) {
+        log(`Kapook Attempt Failed: ${err.message}`)
+        return null
+    }
+}
+
+/**
+ * Sync daily fuel prices from multiple sources
+ */
+export async function syncDailyFuelPrices() {
+    log('Starting multi-source fuel synchronization...')
+    
+    try {
+        const syncDate = new Date().toISOString().split('T')[0]
         
+        // TRY SOURCE 1: BANGCHAK
+        let result = await fetchFromBangchak()
+        let source = 'Bangchak'
+
+        // TRY SOURCE 2: KAPOOK (Fallback)
+        if (!result) {
+            log('S1 Failed. Switching to Source 2: Kapook...')
+            result = await fetchFromKapook()
+            source = 'Kapook'
+        }
+
+        if (!result || !result.today) {
+            throw new Error("All fuel sources failed or returned empty data")
+        }
+
+        const dieselPrice = result.today
+        const dieselPriceTomorrow = result.tomorrow
+        
+        log(`Successfully fetched from ${source}: Today=${dieselPrice}, Tomorrow=${dieselPriceTomorrow}`)
+
         const supabase = createAdminClient()
         
-        log(`Updating DB for ${syncDate} with Today: ${dieselPrice}, Tomorrow: ${dieselPriceTomorrow}...`)
-        
-        // We use upsert on (Date, Fuel_Type) if unique constraint exists, 
-        // else we just update the record for today.
         const { error: upsertError } = await supabase
             .from('daily_fuel_prices')
             .upsert({
@@ -101,9 +168,7 @@ export async function syncDailyFuelPrices() {
 
         if (upsertError) {
             console.error('[FUEL_SYNC] DB Error:', upsertError)
-            // If the column Price_Tomorrow doesn't exist yet, we try without it to avoid crashing the whole system
             if (upsertError.message.includes('Price_Tomorrow')) {
-                log('Price_Tomorrow column missing, falling back to standard Price update...')
                 await supabase
                     .from('daily_fuel_prices')
                     .upsert({
@@ -121,19 +186,10 @@ export async function syncDailyFuelPrices() {
             module: 'Fuel',
             action_type: 'UPDATE',
             target_id: syncDate,
-            details: { 
-                type: 'Fuel Price', 
-                price: dieselPrice, 
-                priceTomorrow: dieselPriceTomorrow,
-                source: 'Bangchak API' 
-            }
+            details: { type: 'Fuel Price', price: dieselPrice, priceTomorrow: dieselPriceTomorrow, source }
         })
 
-        return { 
-            success: true, 
-            price: dieselPrice, 
-            priceTomorrow: dieselPriceTomorrow 
-        }
+        return { success: true, price: dieselPrice, priceTomorrow: dieselPriceTomorrow }
 
     } catch (error: any) {
         log(`Sync failed: ${error.message}`)

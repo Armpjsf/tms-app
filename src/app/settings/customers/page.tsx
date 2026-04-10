@@ -168,43 +168,43 @@ export default function CustomersSettingsPage() {
   return (
     <DashboardLayout>
       {/* Tactical CRM Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-10 mb-16 bg-background/60 backdrop-blur-3xl p-12 rounded-[4rem] border border-border/5 shadow-2xl relative group ring-1 ring-border/5 hover:ring-primary/20 transition-all duration-700">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-10 bg-background/60 backdrop-blur-3xl p-8 rounded-3xl border border-border/5 shadow-xl relative group ring-1 ring-border/5 hover:ring-primary/20 transition-all duration-700">
         <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 blur-[100px] pointer-events-none" />
         
-        <div className="relative z-10 space-y-8">
-            <button onClick={() => router.back()} className="inline-flex items-center gap-2 text-muted-foreground hover:text-primary transition-all font-black uppercase tracking-[0.1em] text-base font-bold group/back italic">
-                <ArrowLeft className="w-4 h-4 group-hover/back:-translate-x-1 transition-transform" /> 
+        <div className="relative z-10 space-y-4">
+            <button onClick={() => router.back()} className="inline-flex items-center gap-2 text-muted-foreground hover:text-primary transition-all font-black uppercase tracking-[0.1em] text-xs font-bold group/back italic">
+                <ArrowLeft className="w-3.5 h-3.5 group-hover/back:-translate-x-1 transition-transform" /> 
                 ย้อนกลับ
             </button>
-            <div className="flex items-center gap-3">
-                <div className="p-2 bg-primary/20 rounded-xl shadow-lg">
-                    <Users className="text-primary" size={20} />
+            <div className="flex items-center gap-2">
+                <div className="p-1.5 bg-primary/20 rounded-lg shadow-lg">
+                    <Users className="text-primary" size={16} />
                 </div>
-                <h2 className="text-base font-bold font-black text-primary uppercase tracking-tight">{t('settings_pages.customers.title')}</h2>
+                <h2 className="text-xs font-bold font-black text-primary uppercase tracking-tight">{t('settings_pages.customers.title')}</h2>
             </div>
-            <h1 className="text-6xl font-black text-foreground tracking-tighter flex items-center gap-5 uppercase premium-text-gradient">
+            <h1 className="text-3xl lg:text-4xl font-black text-foreground tracking-tighter flex items-center gap-4 uppercase premium-text-gradient italic leading-none">
                 {t('settings_pages.customers.title')}
             </h1>
-            <p className="text-muted-foreground font-bold text-xl tracking-wide opacity-80 uppercase leading-relaxed">{t('settings_pages.customers.subtitle')}</p>
+            <p className="text-muted-foreground font-bold text-sm tracking-wide opacity-80 uppercase leading-relaxed italic">{t('settings_pages.customers.subtitle')}</p>
         </div>
 
-        <div className="flex flex-wrap gap-4 relative z-10">
+        <div className="flex flex-wrap gap-3 relative z-10">
             {isAdminUser && (
               <>
                 <ExcelExport 
                     data={customers}
                     filename="logispro_customers_export"
                     trigger={
-                        <PremiumButton variant="outline" className="h-14 px-8 rounded-2xl border-border/5 bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-white transition-all" >
-                            <FileSpreadsheet size={20} className="mr-3" />
+                        <PremiumButton variant="outline" className="h-11 px-5 rounded-xl border-border/5 bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-white transition-all text-[10px] font-black uppercase tracking-widest" >
+                            <FileSpreadsheet size={16} className="mr-2" />
                             Export
                         </PremiumButton>
                     }
                 />
                 <ExcelImport 
                     trigger={
-                        <PremiumButton variant="outline" className="h-14 px-8 rounded-2xl border-border/5 bg-muted/50 text-muted-foreground hover:bg-secondary/50 hover:text-foreground transition-all" >
-                            <FileSpreadsheet size={20} className="mr-3 opacity-50" /> 
+                        <PremiumButton variant="outline" className="h-11 px-5 rounded-xl border-border/5 bg-muted/50 text-muted-foreground hover:bg-secondary/50 hover:text-foreground transition-all text-[10px] font-black uppercase tracking-widest" >
+                            <FileSpreadsheet size={16} className="mr-2 opacity-50" /> 
                             {t('settings_pages.customers.bulk_import')}
                         </PremiumButton>
                     }
@@ -223,8 +223,8 @@ export default function CustomersSettingsPage() {
                     }]}
                     templateFilename="logispro_client_template.xlsx"
                 />
-                <PremiumButton onClick={() => handleOpenDialog()} className="h-14 px-10 rounded-2xl shadow-xl shadow-primary/20">
-                  <Plus size={24} className="mr-3" strokeWidth={3} />
+                <PremiumButton onClick={() => handleOpenDialog()} className="h-11 px-6 rounded-xl shadow-lg bg-primary text-foreground font-black uppercase tracking-widest text-[10px]">
+                  <Plus size={18} className="mr-2" strokeWidth={3} />
                   {t('settings_pages.customers.add_customer')}
                 </PremiumButton>
               </>
@@ -234,30 +234,30 @@ export default function CustomersSettingsPage() {
 
       {/* Analytics Matrix */}
       {!loading && kpis && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
             {[
                 { label: t('settings_pages.customers.stats.count'), value: customers.length, icon: Building2, color: "text-primary", bg: "bg-primary/20", border: "border-primary/20", trend: `+${kpis?.revenue?.growth?.toFixed(1) || '0.0'}%` },
                 { label: t('settings_pages.customers.stats.yield'), value: `฿${kpis?.revenue?.current?.toLocaleString() || '0'}`, icon: CreditCard, color: "text-accent", bg: "bg-accent/20", border: "border-accent/20", trend: "High Performance" },
                 { label: t('settings_pages.customers.stats.margin'), value: `${kpis?.margin?.current?.toFixed(1) || '0.0'}%`, icon: TrendingUp, color: "text-primary", bg: "bg-primary/10", border: "border-primary/10", trend: "OPTIMIZED" },
             ].map((stat, idx) => (
               <div key={idx} className={cn(
-                  "p-8 rounded-[3rem] border backdrop-blur-3xl shadow-2xl relative overflow-hidden group transition-all hover:scale-[1.03] bg-background/40",
+                  "p-6 rounded-2xl border backdrop-blur-3xl shadow-xl relative overflow-hidden group transition-all hover:scale-[1.02] bg-background/40",
                   stat.border
               )}>
-                    <div className="flex items-center justify-between mb-8">
+                    <div className="flex items-center justify-between mb-6">
                         <div className={cn(
-                            "p-4 rounded-2xl shadow-xl transition-all duration-700 group-hover:scale-110 group-hover:rotate-6",
+                            "p-3 rounded-xl shadow-lg transition-all duration-700 group-hover:scale-110 group-hover:rotate-6",
                             stat.bg, stat.color
                         )}>
-                            <stat.icon size={24} strokeWidth={2.5} />
+                            <stat.icon size={20} strokeWidth={2.5} />
                         </div>
-                        <div className="flex items-center gap-1.5 px-3 py-1 bg-muted/50 rounded-full border border-border/5">
-                             <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-normal italic">{stat.trend}</span>
+                        <div className="flex items-center gap-1.5 px-2 py-0.5 bg-muted/50 rounded-full border border-border/5">
+                             <span className="text-[9px] font-black text-muted-foreground uppercase tracking-normal italic">{stat.trend}</span>
                         </div>
                     </div>
                     <div className="relative z-10">
-                        <p className="text-muted-foreground font-black text-base font-bold uppercase tracking-tight mb-2">{stat.label}</p>
-                        <p className="text-4xl font-black text-foreground tracking-tighter leading-none">{stat.value}</p>
+                        <p className="text-muted-foreground font-black text-[10px] font-bold uppercase tracking-tight mb-1">{stat.label}</p>
+                        <p className="text-2xl font-black text-foreground tracking-tighter leading-none">{stat.value}</p>
                     </div>
                 </div>
             ))}
@@ -265,16 +265,16 @@ export default function CustomersSettingsPage() {
       )}
 
       {/* Global Search Interface */}
-      <div className="mb-12 relative group max-w-2xl">
+      <div className="mb-8 relative group max-w-xl">
         <div className="absolute inset-x-0 bottom-0 h-1 bg-primary blur-3xl opacity-20 pointer-events-none" />
-        <div className="relative glass-panel rounded-3xl p-1 border-border/5">
-            <div className="flex items-center gap-4 px-6">
-                <Search className="text-primary opacity-50" size={24} />
+        <div className="relative glass-panel rounded-2xl p-0.5 border-border/5">
+            <div className="flex items-center gap-3 px-4">
+                <Search className="text-primary opacity-50" size={18} />
                 <Input
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder={t('settings_pages.customers.search_placeholder')}
-                    className="bg-transparent border-none text-2xl font-black text-foreground px-4 h-20 placeholder:text-muted-foreground tracking-tighter uppercase focus-visible:ring-0"
+                    className="bg-transparent border-none text-base font-black text-foreground px-2 h-12 placeholder:text-muted-foreground tracking-tight uppercase focus-visible:ring-0"
                 />
             </div>
         </div>
@@ -455,86 +455,80 @@ export default function CustomersSettingsPage() {
              <p className="mt-10 text-muted-foreground font-black uppercase tracking-widest text-base font-bold animate-pulse">{t('settings_pages.customers.status.syncing')}</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {customers.map((customer) => (
-            <div key={customer.Customer_ID} className="p-0 overflow-hidden group border border-border/5 bg-background/40 backdrop-blur-2xl rounded-[3.5rem] shadow-2xl relative hover:shadow-[0_45px_100px_-20px_rgba(255,30,133,0.1)] transition-all duration-700 hover:ring-1 hover:ring-primary/30">
-              <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary to-accent opacity-0 group-hover:opacity-100 transition-all duration-700" />
-              <div className="p-10">
-                <div className="flex items-start justify-between mb-10">
-                  <div className="flex items-center gap-6">
-                    <div className="w-16 h-16 rounded-[1.5rem] bg-muted/50 border border-border/5 flex items-center justify-center text-foreground font-bold group-hover:bg-primary transition-all duration-700 relative overflow-hidden shadow-xl">
+            <div key={customer.Customer_ID} className="p-0 overflow-hidden group border border-border/5 bg-background/40 backdrop-blur-2xl rounded-2xl shadow-lg relative hover:shadow-xl transition-all duration-700 hover:ring-1 hover:ring-primary/30">
+              <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-primary to-accent opacity-0 group-hover:opacity-100 transition-all duration-700" />
+              <div className="p-6">
+                <div className="flex items-start justify-between mb-6">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-xl bg-muted/50 border border-border/5 flex items-center justify-center text-foreground font-bold group-hover:bg-primary transition-all duration-700 relative overflow-hidden shadow-lg">
                       <div className="absolute inset-0 bg-gradient-to-br from-primary/30 to-transparent" />
-                      <Building2 size={28} className="relative z-10" strokeWidth={2.5} />
+                      <Building2 size={20} className="relative z-10" strokeWidth={2.5} />
                     </div>
                     <div>
-                      <h3 className="text-2xl font-black text-foreground tracking-tighter group-hover:text-primary transition-colors line-clamp-1 duration-500 uppercase font-display">{customer.Customer_Name}</h3>
-                      <div className="flex items-center gap-3 mt-2">
-                          <span className="text-muted-foreground font-black text-base font-bold uppercase tracking-wide">{customer.Customer_ID}</span>
-                          <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse shadow-[0_0_10px_rgba(255,30,133,1)]" />
-                          <span className="text-primary font-black text-base font-bold uppercase tracking-wide italic opacity-70">{t('settings_pages.customers.status.strategic')}</span>
+                      <h3 className="text-lg font-black text-foreground tracking-tighter group-hover:text-primary transition-colors line-clamp-1 duration-500 uppercase italic font-display">{customer.Customer_Name}</h3>
+                      <div className="flex items-center gap-2 mt-0.5">
+                          <span className="text-muted-foreground font-black text-[10px] uppercase tracking-wide">{customer.Customer_ID}</span>
+                          <div className="w-1 h-1 rounded-full bg-primary animate-pulse" />
+                          <span className="text-primary font-black text-[10px] uppercase tracking-wide italic opacity-70">{t('settings_pages.customers.status.strategic')}</span>
                       </div>
                     </div>
                   </div>
-                  <div className="opacity-0 group-hover:opacity-100 transition-all duration-700 translate-y-3 group-hover:translate-y-0 flex flex-col gap-3">
+                  <div className="opacity-0 group-hover:opacity-100 transition-all duration-700 translate-y-2 group-hover:translate-y-0 flex flex-col gap-2">
                     <button 
-                        className="h-10 w-10 flex items-center justify-center rounded-xl bg-muted/50 border border-border/10 text-muted-foreground hover:bg-primary hover:text-foreground transition-all shadow-lg"
+                        className="h-8 w-8 flex items-center justify-center rounded-lg bg-muted/50 border border-border/10 text-muted-foreground hover:bg-primary hover:text-foreground transition-all shadow-md"
                         onClick={() => handleOpenDialog(customer)}
                     >
-                        <Edit size={16} />
+                        <Edit size={14} />
                     </button>
                     <button 
-                        className="h-10 w-10 flex items-center justify-center rounded-xl bg-muted/50 border border-border/10 text-rose-800 hover:bg-rose-500 hover:text-foreground transition-all shadow-lg"
+                        className="h-8 w-8 flex items-center justify-center rounded-lg bg-muted/50 border border-border/10 text-rose-800 hover:bg-rose-500 hover:text-foreground transition-all shadow-md"
                         onClick={() => handleDelete(customer.Customer_ID)}
                     >
-                        <Trash2 size={16} />
+                        <Trash2 size={14} />
                     </button>
                   </div>
                 </div>
 
-                <div className="space-y-6 mb-4">
-                  <div className="p-6 bg-muted/30 rounded-3xl border border-border/5 group-hover:bg-muted/50 transition-all duration-700 flex items-center gap-5 relative overflow-hidden">
-                        <div className="absolute top-0 right-0 w-20 h-20 bg-primary/5 blur-3xl rounded-full" />
-                        <div className="p-3 bg-primary/10 rounded-2xl text-primary shadow-inner ring-1 ring-primary/20">
-                            <ShieldCheck size={18} strokeWidth={2.5} />
+                <div className="space-y-4 mb-2">
+                  <div className="p-4 bg-muted/30 rounded-xl border border-border/5 group-hover:bg-muted/50 transition-all duration-700 flex items-center gap-4 relative overflow-hidden">
+                        <div className="p-2 bg-primary/10 rounded-lg text-primary shadow-inner ring-1 ring-primary/20">
+                            <ShieldCheck size={14} strokeWidth={2.5} />
                         </div>
                         <div>
-                            <p className="text-base font-bold font-black text-muted-foreground uppercase tracking-wide mb-1">{t('settings_pages.customers.dialog.tax_id')}</p>
-                            <p className="text-xl font-black text-foreground tracking-tight">{customer.Tax_ID || t('settings_pages.customers.status.unverified')}</p>
+                            <p className="text-[9px] font-black text-muted-foreground uppercase tracking-wide mb-0.5">{t('settings_pages.customers.dialog.tax_id')}</p>
+                            <p className="text-sm font-black text-foreground tracking-tight">{customer.Tax_ID || t('settings_pages.customers.status.unverified')}</p>
                         </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-5">
-                    <div className="p-6 bg-muted/30 rounded-3xl border border-border/5 group-hover:bg-muted/50 transition-all duration-700 relative overflow-hidden">
-                        <div className="absolute top-0 right-0 w-12 h-12 bg-accent/5 blur-2xl rounded-full" />
-                        <div className="flex items-center gap-2 mb-3">
-                            <Phone size={14} className="text-accent" />
-                            <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-normal leading-none">{t('settings_pages.customers.dialog.phone')}</span>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="p-4 bg-muted/30 rounded-xl border border-border/5 group-hover:bg-muted/50 transition-all duration-700 relative overflow-hidden">
+                        <div className="flex items-center gap-2 mb-1">
+                            <Phone size={12} className="text-accent" />
+                            <span className="text-[9px] font-black text-muted-foreground uppercase tracking-normal leading-none">{t('settings_pages.customers.dialog.phone')}</span>
                         </div>
-                        <p className="text-base font-bold font-black text-foreground truncate tracking-normal">{customer.Phone || t('settings_pages.customers.status.offline')}</p>
+                        <p className="text-[11px] font-black text-foreground truncate tracking-normal">{customer.Phone || t('settings_pages.customers.status.offline')}</p>
                     </div>
-                    <div className="p-6 bg-muted/30 rounded-3xl border border-border/5 group-hover:bg-muted/50 transition-all duration-700 relative overflow-hidden">
-                        <div className="absolute top-0 right-0 w-12 h-12 bg-accent/5 blur-2xl rounded-full" />
-                        <div className="flex items-center gap-2 mb-3">
-                            <Zap size={14} className="text-accent" />
-                            <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-normal leading-none">Credit Term</span>
+                    <div className="p-4 bg-muted/30 rounded-xl border border-border/5 group-hover:bg-muted/50 transition-all duration-700 relative overflow-hidden">
+                        <div className="flex items-center gap-2 mb-1">
+                            <Zap size={12} className="text-accent" />
+                            <span className="text-[9px] font-black text-muted-foreground uppercase tracking-normal leading-none">Credit Term</span>
                         </div>
-                        <p className="text-base font-bold font-black text-foreground truncate tracking-normal">{customer.Credit_Term || 30} Days</p>
+                        <p className="text-[11px] font-black text-foreground truncate tracking-normal">{customer.Credit_Term || 30} Days</p>
                     </div>
                   </div>
                 </div>
               </div>
 
               {/* High-End Tactical Footer */}
-              <div className="px-10 py-6 bg-muted/30 border-t border-border/5 flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                    <div className="p-2 bg-muted/50 rounded-xl border border-border/5">
-                        <Mail size={12} className="text-muted-foreground group-hover:text-primary transition-colors" />
-                    </div>
-                    <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-normal truncate max-w-[160px] italic group-hover:text-muted-foreground transition-colors">{customer.Email || "registry-pending@logispro.io"}</span>
+              <div className="px-6 py-4 bg-muted/30 border-t border-border/5 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                    <Mail size={10} className="text-muted-foreground opacity-40" />
+                    <span className="text-[9px] font-black text-muted-foreground uppercase tracking-normal truncate max-w-[140px] italic">{customer.Email || "registry-pending@logispro.io"}</span>
                 </div>
-                <div className="flex items-center gap-2 px-4 py-2 bg-primary/20 text-primary rounded-2xl shadow-lg shadow-primary/5 ring-1 ring-primary/30">
-                    <Zap size={14} className="animate-pulse" />
-                    <span className="text-base font-bold font-black tracking-normal">
+                <div className="flex items-center gap-2 px-3 py-1 bg-primary/20 text-primary rounded-lg shadow-lg ring-1 ring-primary/30">
+                    <span className="text-[9px] font-black tracking-normal">
                         {customer.Price_Per_Unit && customer.Price_Per_Unit > 0 ? `฿${customer.Price_Per_Unit}/UNIT` : t('settings_pages.customers.status.connected')}
                     </span>
                 </div>
@@ -544,9 +538,9 @@ export default function CustomersSettingsPage() {
           
           {/* Enhanced Empty State */}
           {customers.length === 0 && (
-            <div className="col-span-full text-center py-40 glass-panel rounded-[4rem] border-dashed border-border/5 group">
-              <Activity className="w-20 h-20 text-muted-foreground mx-auto mb-8 opacity-20 group-hover:scale-110 transition-transform duration-1000" />
-              <p className="text-muted-foreground font-black uppercase tracking-widest text-base font-bold">{t('settings_pages.customers.status.empty')}</p>
+            <div className="col-span-full text-center py-24 glass-panel rounded-3xl border-dashed border-border/5 group">
+              <Activity className="w-12 h-12 text-muted-foreground mx-auto mb-4 opacity-20 group-hover:scale-110 transition-transform duration-1000" />
+              <p className="text-muted-foreground font-black uppercase tracking-widest text-xs">{t('settings_pages.customers.status.empty')}</p>
             </div>
           )}
         </div>

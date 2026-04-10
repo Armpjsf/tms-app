@@ -65,59 +65,59 @@ export function RecentJobItem({ job, drivers, vehicles, customers, routes, subco
     <>
       <div 
         onClick={handleOpen}
-        className="px-8 py-10 transition-all cursor-pointer group relative overflow-hidden border-b border-border/5 last:border-0 bg-background"
+        className="px-6 py-4 transition-all cursor-pointer group relative overflow-hidden border-b border-border/5 last:border-0 bg-background hover:bg-muted/30"
       >
         {/* Hover Highlight Accent */}
-        <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary opacity-0 group-hover:opacity-100 transition-opacity shadow-[0_0_15px_rgba(255,30,133,1)]" />
+        <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary opacity-0 group-hover:opacity-100 transition-opacity shadow-[0_0_10px_rgba(255,30,133,1)]" />
 
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8 relative z-10 w-full">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10 w-full">
           
           {/* Section 1: Identifier & Customer */}
-          <div className="flex items-center gap-8 min-w-[30%]">
-            <div className="w-16 h-16 rounded-full bg-primary flex items-center justify-center shadow-[0_0_30px_rgba(255,30,133,0.3)] border border-primary/50">
-              <Package size={28} strokeWidth={2.5} className="text-foreground" />
+          <div className="flex items-center gap-4 min-w-[30%]">
+            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/20">
+              <Package size={18} className="text-primary" />
             </div>
             <div>
-                <p className="text-primary font-black text-3xl tracking-tighter transition-colors uppercase font-display break-all leading-none mb-1">
+                <p className="text-primary font-black text-base tracking-tight transition-colors uppercase leading-none mb-1">
                     {job.Job_ID}
                 </p>
-                <p className="text-foreground font-bold text-xl tracking-tight opacity-90">
+                <p className="text-foreground font-bold text-sm truncate max-w-[200px]">
                     {job.Customer_Name || t('jobs.unassigned_client')}
                 </p>
             </div>
           </div>
 
           {/* Section 2: Technical Metrics */}
-          <div className="flex flex-1 items-center justify-center gap-16 xl:gap-24">
+          <div className="flex flex-1 items-center justify-center gap-8 xl:gap-12">
             <div className="text-right">
-                <p className="text-base font-black text-muted-foreground uppercase tracking-widest mb-1.5">{t('jobs.label_route_node')}</p>
-                <p className="text-lg font-black text-foreground uppercase tracking-tighter whitespace-nowrap">
+                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-0.5">{t('jobs.label_route_node')}</p>
+                <p className="text-xs font-black text-foreground uppercase tracking-tighter whitespace-nowrap">
                     {job.Route_Name || "UNASSIGNED GRID"}
                 </p>
             </div>
-            <div className="h-10 w-px bg-muted/80" />
+            <div className="h-6 w-px bg-muted/50" />
             <div className="text-right">
-                <p className="text-base font-black text-muted-foreground uppercase tracking-widest mb-1.5">{t('jobs.label_assigned_unit')}</p>
-                <p className="text-lg font-black text-foreground uppercase tracking-tighter whitespace-nowrap">
+                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-0.5">{t('jobs.label_assigned_unit')}</p>
+                <p className="text-xs font-black text-foreground uppercase tracking-tighter whitespace-nowrap">
                     {job.Vehicle_Plate || "ASSET-TBD"}
                 </p>
             </div>
           </div>
 
           {/* Section 3: Status & Date */}
-          <div className="flex flex-col items-end gap-3 min-w-[180px]">
-            <button className={cn(
-                "px-10 py-4 rounded-full text-base font-black uppercase tracking-[0.2em] transition-all border shadow-lg bg-muted/50 text-muted-foreground border-border/10",
-                (job.Job_Status === 'Complete' || job.Job_Status === 'Delivered') && 'bg-muted/80 text-foreground border-border/20'
-            )}>
-              {getStatusLabel(job.Job_Status)}
-            </button>
+          <div className="flex flex-row lg:flex-col items-center lg:items-end gap-2 min-w-[180px]">
             <div className="flex items-center gap-2 pr-2">
-                <div className="w-3 h-3 rounded-full bg-primary shadow-[0_0_10px_rgba(255,30,133,0.5)]" />
-                <p className="text-base font-black text-muted-foreground uppercase tracking-[0.2em]">
+                <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">
                     {job.Plan_Date ? new Date(job.Plan_Date).toLocaleDateString('en-GB') : "PENDING"}
                 </p>
             </div>
+            <button className={cn(
+                "px-6 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all border shadow-sm bg-muted/50 text-muted-foreground border-border/10",
+                (job.Job_Status === 'Complete' || job.Job_Status === 'Delivered') && 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
+            )}>
+              {getStatusLabel(job.Job_Status)}
+            </button>
           </div>
 
         </div>

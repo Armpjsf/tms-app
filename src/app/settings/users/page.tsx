@@ -172,34 +172,34 @@ export default function UserSettingsPage() {
 
     return (
         <DashboardLayout>
-            <div className="space-y-12 pb-20 p-4 lg:p-10">
+            <div className="space-y-8 pb-20 p-4 lg:p-10">
                 {/* Tactical Registry Header */}
-                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-10 bg-background/60 backdrop-blur-3xl p-10 rounded-br-[6rem] rounded-tl-[3rem] border border-border/5 shadow-2xl relative overflow-hidden group">
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 bg-background/60 backdrop-blur-3xl p-8 rounded-3xl border border-border/5 shadow-xl relative overflow-hidden group">
                     <div className="absolute top-0 right-0 w-80 h-80 bg-primary/10 blur-[120px] rounded-full -mr-40 -mt-40 pointer-events-none" />
                     
-                    <div className="relative z-10 space-y-8">
-                        <button onClick={() => router.back()} className="inline-flex items-center gap-2 text-muted-foreground hover:text-primary transition-all font-black uppercase tracking-[0.1em] text-base font-bold group/back italic">
-                            <ArrowLeft className="w-4 h-4 group-hover/back:-translate-x-1 transition-transform" /> 
+                    <div className="relative z-10 space-y-4">
+                        <button onClick={() => router.back()} className="inline-flex items-center gap-2 text-muted-foreground hover:text-primary transition-all font-black uppercase tracking-[0.1em] text-[10px] font-bold group/back italic leading-none">
+                            <ArrowLeft className="w-3.5 h-3.5 group-hover/back:-translate-x-1 transition-transform" /> 
                             ย้อนกลับ
                         </button>
-                        <div className="flex items-center gap-6">
-                            <div className="p-4 bg-primary/20 rounded-[2.5rem] border-2 border-primary/30 shadow-[0_0_40px_rgba(255,30,133,0.2)] text-primary group-hover:scale-110 transition-all duration-500">
-                                <Users size={42} strokeWidth={2.5} />
+                        <div className="flex items-center gap-4">
+                            <div className="p-2 bg-primary/20 rounded-xl border-2 border-primary/30 shadow-[0_0_20px_rgba(255,30,133,0.2)] text-primary group-hover:scale-110 transition-all duration-500">
+                                <Users size={24} strokeWidth={2.5} />
                             </div>
                             <div>
-                                <h1 className="text-5xl font-black text-foreground uppercase leading-none italic premium-text-gradient">
+                                <h1 className="text-3xl lg:text-4xl font-black text-foreground uppercase leading-none italic premium-text-gradient">
                                     {t('settings_pages.users.title')}
                                 </h1>
-                                <p className="text-base font-bold font-black text-primary uppercase tracking-wide mt-2 opacity-80 italic">{t('settings_pages.users.subtitle')}</p>
+                                <p className="text-[10px] font-black text-primary uppercase tracking-wide mt-1 opacity-80 italic">{t('settings_pages.users.subtitle')}</p>
                             </div>
                         </div>
                     </div>
 
-                    <div className="flex flex-wrap gap-4 relative z-10">
+                    <div className="flex flex-wrap gap-3 relative z-10">
                         <ExcelImport 
                             trigger={
-                                <PremiumButton variant="outline" className="h-14 px-8 rounded-2xl border-border/10 hover:border-primary/50 text-muted-foreground gap-3">
-                                    <FileSpreadsheet size={20} /> {t('settings_pages.users.bulk_import')}
+                                <PremiumButton variant="outline" className="h-11 px-5 rounded-xl border-border/10 hover:border-primary/50 text-muted-foreground gap-2 text-[10px] font-black uppercase tracking-widest">
+                                    <FileSpreadsheet size={16} /> {t('settings_pages.users.bulk_import')}
                                 </PremiumButton>
                             }
                             title={t('settings_pages.users.import_title')}
@@ -207,84 +207,84 @@ export default function UserSettingsPage() {
                             templateData={[{ Username: "user01", Name: "นาย สมชาย ใจดี", Branch_ID: "HQ", Role: "Staff", Password: "password123", Active_Status: "Active", Customer_ID: "" }]}
                             templateFilename="template_users.xlsx"
                         />
-                        <PremiumButton onClick={() => handleOpenDialog()} className="h-14 px-8 rounded-2xl gap-3 shadow-[0_15px_30px_rgba(255,30,133,0.3)] bg-primary text-foreground border-0">
-                            <Plus size={20} /> {t('settings_pages.users.add_user')}
+                        <PremiumButton onClick={() => handleOpenDialog()} className="h-11 px-6 rounded-xl gap-2 shadow-lg bg-primary text-foreground border-0 text-[10px] font-black uppercase tracking-widest">
+                            <Plus size={16} strokeWidth={3} /> {t('settings_pages.users.add_user')}
                         </PremiumButton>
                     </div>
                 </div>
 
                 {/* Filter Matrix */}
-                <div className="bg-background/40 p-8 rounded-[3rem] border border-border/5 shadow-2xl relative overflow-hidden backdrop-blur-xl">
+                <div className="bg-background/40 p-4 rounded-2xl border border-border/5 shadow-lg relative overflow-hidden backdrop-blur-xl max-w-xl">
                     <div className="relative group w-full">
-                        <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors" size={24} />
-                        <Input 
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors" size={18} />
+                        <input 
                             autoComplete="off"
                             placeholder={t('settings_pages.users.search_placeholder')}
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full h-18 bg-background border-border/5 rounded-3xl pl-16 pr-8 text-xl font-black uppercase tracking-wide focus:border-primary/50 transition-all text-foreground placeholder:text-muted-foreground italic shadow-inner"
+                            className="w-full h-11 bg-transparent border-none pl-12 pr-4 text-sm font-black uppercase tracking-wide transition-all text-foreground placeholder:text-muted-foreground italic outline-none"
                         />
                     </div>
                 </div>
 
                 {/* Registry Table */}
-                <PremiumCard className="bg-background/40 border-2 border-border/5 shadow-3xl rounded-[4rem] overflow-hidden group/registry">
-                    <div className="p-10 border-b border-border/5 bg-black/40 flex items-center justify-between relative overflow-hidden">
+                <PremiumCard className="bg-background/40 border border-border/5 shadow-xl rounded-3xl overflow-hidden group/registry">
+                    <div className="p-6 border-b border-border/5 bg-black/40 flex items-center justify-between relative overflow-hidden">
                         <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 blur-[80px] pointer-events-none" />
-                        <div className="flex items-center gap-5 relative z-10">
-                            <Fingerprint size={24} className="text-primary animate-pulse" />
-                            <h2 className="text-2xl font-black text-foreground tracking-normal uppercase italic">{t('settings_pages.users.registry_title')}</h2>
+                        <div className="flex items-center gap-4 relative z-10">
+                            <Fingerprint size={20} className="text-primary animate-pulse" />
+                            <h2 className="text-lg font-black text-foreground tracking-normal uppercase italic">{t('settings_pages.users.registry_title')}</h2>
                         </div>
-                        <div className="flex items-center gap-3 px-5 py-2 bg-muted/50 rounded-full border border-border/10 relative z-10">
-                            <Activity size={14} className="text-primary" />
-                            <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-normal">{t('common.tactical.realtime_active')}</span>
+                        <div className="flex items-center gap-2 px-3 py-1 bg-muted/50 rounded-full border border-border/10 relative z-10">
+                            <Activity size={12} className="text-primary" />
+                            <span className="text-[10px] font-black text-muted-foreground uppercase tracking-normal italic">{t('common.tactical.realtime_active')}</span>
                         </div>
                     </div>
 
-                    <div className="relative w-full overflow-auto">
-                        <table className="w-full text-xl text-left border-collapse">
+                    <div className="relative w-full overflow-auto custom-scrollbar">
+                        <table className="w-full text-sm text-left border-collapse">
                             <thead>
-                                <tr className="bg-black/20 text-[12px] font-black uppercase tracking-tight text-muted-foreground border-b border-border/5">
-                                    <th className="px-10 py-8">{t('settings_pages.users.table.vector_id')}</th>
-                                    <th className="px-10 py-8">{t('settings_pages.users.table.identity')}</th>
-                                    <th className="px-10 py-8">{t('settings_pages.users.table.hub')}</th>
-                                    <th className="px-10 py-8">{t('settings_pages.users.table.role')}</th>
-                                    <th className="px-10 py-8">{t('settings_pages.users.table.status')}</th>
-                                    <th className="px-10 py-8 text-right">{t('settings_pages.users.table.actions')}</th>
+                                <tr className="bg-black/20 text-[10px] font-black uppercase tracking-widest text-muted-foreground border-b border-border/5 italic">
+                                    <th className="px-8 py-4">{t('settings_pages.users.table.vector_id')}</th>
+                                    <th className="px-6 py-4">{t('settings_pages.users.table.identity')}</th>
+                                    <th className="px-6 py-4">{t('settings_pages.users.table.hub')}</th>
+                                    <th className="px-6 py-4">{t('settings_pages.users.table.role')}</th>
+                                    <th className="px-6 py-4">{t('settings_pages.users.table.status')}</th>
+                                    <th className="px-8 py-4 text-right">{t('settings_pages.users.table.actions')}</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-white/[0.02]">
                                 {loading ? (
-                                    <tr><td colSpan={6} className="text-center py-20 opacity-30"><Loader2 className="w-8 h-8 animate-spin mx-auto text-primary" /></td></tr>
+                                    <tr><td colSpan={6} className="text-center py-16 opacity-30"><Loader2 className="w-6 h-6 animate-spin mx-auto text-primary" /></td></tr>
                                 ) : filteredUsers.length === 0 ? (
-                                    <tr><td colSpan={6} className="text-center py-20 opacity-30 italic font-black uppercase tracking-normal text-foreground">{t('common.tactical.registry_void')}</td></tr>
+                                    <tr><td colSpan={6} className="text-center py-16 opacity-30 italic font-black uppercase tracking-normal text-foreground">{t('common.tactical.registry_void')}</td></tr>
                                 ) : (
                                     filteredUsers.map((user) => (
                                         <tr key={user.Username} className="group/row hover:bg-muted/40 transition-all duration-300">
-                                            <td className="px-10 py-8">
+                                            <td className="px-8 py-4">
                                                 <div className="flex flex-col">
-                                                    <span className="text-primary font-black tracking-normal uppercase italic group-hover/row:scale-110 origin-left transition-transform inline-block">
+                                                    <span className="text-primary font-black tracking-normal uppercase italic group-hover/row:scale-105 origin-left transition-transform inline-block">
                                                         {user.Username}
                                                     </span>
                                                     {user.Customer_ID && (
-                                                        <div className="text-base font-bold text-accent font-black uppercase tracking-tighter mt-1 opacity-60">
+                                                        <div className="text-[9px] font-black text-accent uppercase tracking-tight mt-0.5 opacity-60">
                                                             {t('common.tactical.ext_client')}: {user.Master_Customers?.Customer_Name || user.Customer_ID}
                                                         </div>
                                                     )}
                                                 </div>
                                             </td>
-                                            <td className="px-10 py-8 font-black text-foreground uppercase tracking-tight italic">{user.Name}</td>
-                                            <td className="px-10 py-8 text-muted-foreground font-black uppercase tracking-normal text-lg font-bold">
+                                            <td className="px-6 py-4 font-black text-foreground uppercase tracking-tight italic">{user.Name}</td>
+                                            <td className="px-6 py-4 text-muted-foreground font-black uppercase tracking-normal text-xs font-bold">
                                                 {user.Branch_ID || t('common.tactical.global_node')}
                                             </td>
-                                            <td className="px-10 py-8">
-                                                <div className="px-4 py-1.5 rounded-xl bg-primary/10 text-primary border border-primary/20 text-base font-bold font-black uppercase tracking-normal italic shadow-[0_0_15px_rgba(255,30,133,0.1)] w-fit">
+                                            <td className="px-6 py-4">
+                                                <div className="px-3 py-1 rounded-lg bg-primary/10 text-primary border border-primary/20 text-[10px] font-black uppercase tracking-normal italic shadow-[0_0_10px_rgba(255,30,133,0.1)] w-fit">
                                                     {t(`settings.roles_list.${user.Role}` as any) || user.Role || t('common.tactical.no_roles')}
                                                 </div>
                                             </td>
-                                            <td className="px-10 py-8">
+                                            <td className="px-6 py-4">
                                                 <div className={cn(
-                                                    "px-3 py-1 rounded-full text-base font-bold font-black uppercase tracking-normal border w-fit italic",
+                                                    "px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-normal border w-fit italic",
                                                     user.Active_Status === 'Active' 
                                                         ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' 
                                                         : 'bg-rose-500/10 text-rose-400 border-rose-500/20 animate-pulse'
@@ -292,26 +292,22 @@ export default function UserSettingsPage() {
                                                     {user.Active_Status === 'Active' ? t('common.tactical.active') : t('common.tactical.inactive')}
                                                 </div>
                                             </td>
-                                             <td className="px-10 py-8 text-right">
-                                                 <div className="flex items-center justify-end gap-3 opacity-20 group-hover/row:opacity-100 transition-opacity">
-                                                     <PremiumButton 
-                                                        variant="outline" 
-                                                        size="icon" 
+                                             <td className="px-8 py-4 text-right">
+                                                 <div className="flex items-center justify-end gap-2 opacity-20 group-hover/row:opacity-100 transition-opacity">
+                                                     <button 
                                                         onClick={() => handleOpenDialog(user)} 
-                                                        className="h-12 w-12 rounded-2xl bg-muted/50 border-border/5 hover:bg-primary text-foreground disabled:opacity-30 transition-all shadow-lg"
+                                                        className="p-2 rounded-lg bg-muted/50 border border-border/5 hover:bg-primary hover:text-black disabled:opacity-30 transition-all shadow-md"
                                                         disabled={(user.Role === "Super Admin" || user.Role === "Admin") && currentRoleId !== 1}
                                                      >
-                                                         <Edit size={18} />
-                                                     </PremiumButton>
-                                                     <PremiumButton 
-                                                        variant="outline" 
-                                                        size="icon" 
+                                                         <Edit size={14} />
+                                                     </button>
+                                                     <button 
                                                         onClick={() => handleDelete(user.Username)} 
-                                                        className="h-12 w-12 rounded-2xl bg-muted/50 border-border/5 hover:bg-rose-600 text-foreground disabled:opacity-30 transition-all shadow-lg"
+                                                        className="p-2 rounded-lg bg-muted/50 border border-border/5 hover:bg-rose-600 hover:text-white disabled:opacity-30 transition-all shadow-md"
                                                         disabled={(user.Role === "Super Admin" || user.Role === "Admin") && currentRoleId !== 1}
                                                      >
-                                                         <Trash2 size={18} />
-                                                     </PremiumButton>
+                                                         <Trash2 size={14} />
+                                                     </button>
                                                  </div>
                                              </td>
                                         </tr>

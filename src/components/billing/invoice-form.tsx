@@ -150,37 +150,37 @@ export function InvoiceForm({ customers, initialData, onSuccess }: InvoiceFormPr
 
   return (
     <div className="space-y-6">
-        <Card className="relative z-20 bg-card/50 border-border/10 shadow-2xl backdrop-blur-xl">
-            <CardContent className="p-8 grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div className="space-y-3">
-                    <Label className="text-muted-foreground font-black uppercase tracking-widest text-base font-bold">ลูกค้า (Customer)</Label>
+        <Card className="relative z-20 bg-card/50 border-border/10 shadow-xl backdrop-blur-xl rounded-2xl">
+            <CardContent className="p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="space-y-2">
+                    <Label className="text-muted-foreground font-black uppercase tracking-widest text-[10px] font-bold ml-1">ลูกค้า (Customer)</Label>
                     <CustomerAutocomplete 
                         value={customerId}
                         onChange={setCustomerId}
                         customers={customers as any}
                         onSelect={(c) => setCustomerId(c.Customer_ID)}
-                        className="bg-muted/50 border-border/10 rounded-2xl h-14 font-bold text-muted-foreground placeholder:text-muted-foreground focus:ring-purple-500/20"
+                        className="bg-muted/50 border-border/10 rounded-xl h-11 text-xs font-bold text-muted-foreground placeholder:text-muted-foreground focus:ring-purple-500/20"
                     />
                 </div>
-                <div className="space-y-3">
-                    <Label className="text-muted-foreground font-black uppercase tracking-widest text-base font-bold">วันที่ออกเอกสาร (Issue Date)</Label>
+                <div className="space-y-2">
+                    <Label className="text-muted-foreground font-black uppercase tracking-widest text-[10px] font-bold ml-1">วันที่ออกเอกสาร (Issue Date)</Label>
                     <DateCallbackSelect date={issueDate} setDate={(d) => d && setIssueDate(d)} />
                 </div>
-                <div className="space-y-3">
-                    <Label className="text-muted-foreground font-black uppercase tracking-widest text-base font-bold">วันครบกำหนด (Due Date)</Label>
+                <div className="space-y-2">
+                    <Label className="text-muted-foreground font-black uppercase tracking-widest text-[10px] font-bold ml-1">วันครบกำหนด (Due Date)</Label>
                     <DateCallbackSelect date={dueDate} setDate={(d) => d && setDueDate(d)} />
                 </div>
             </CardContent>
         </Card>
 
-        <Card className="bg-card/50 border-border/10 shadow-2xl overflow-hidden rounded-3xl">
+        <Card className="bg-card/50 border-border/10 shadow-xl overflow-hidden rounded-2xl">
             <CardContent className="p-0">
-                <div className="p-6 border-b border-border/5 flex justify-between items-center bg-muted/50">
-                    <h3 className="font-black text-muted-foreground flex items-center gap-3 uppercase tracking-widest text-lg font-bold">
-                        <Calculator className="w-5 h-5 text-purple-400" />
+                <div className="p-4 border-b border-border/5 flex justify-between items-center bg-muted/50">
+                    <h3 className="font-black text-muted-foreground flex items-center gap-2 uppercase tracking-widest text-sm font-bold">
+                        <Calculator className="w-4 h-4 text-purple-400" />
                         รายการงานที่วางบิลได้ ({availableJobs.length})
                     </h3>
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-3">
                         <button 
                             type="button"
                             disabled={availableJobs.length === 0}
@@ -200,28 +200,28 @@ export function InvoiceForm({ customers, initialData, onSuccess }: InvoiceFormPr
                                     toast.success("ปรับปรุงราคาชั่วคราวเรียบร้อย")
                                 }
                             }}
-                            className="bg-amber-500/10 text-amber-500 px-6 py-2 rounded-xl text-sm font-black uppercase tracking-widest border border-amber-500/20 hover:bg-amber-500/20 transition-all flex items-center gap-2 group"
+                            className="bg-amber-500/10 text-amber-500 px-4 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest border border-amber-500/20 hover:bg-amber-500/20 transition-all flex items-center gap-1.5 group"
                         >
-                            <RefreshCw size={14} className="group-hover:rotate-180 transition-transform duration-700" />
+                            <RefreshCw size={12} className="group-hover:rotate-180 transition-transform duration-700" />
                             Sync Item Prices
                         </button>
-                        <div className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest">
+                        <div className="text-[10px] font-bold font-black text-muted-foreground uppercase tracking-widest bg-muted p-1.5 rounded-md border border-border/5">
                             เลือก {selectedJobIds.length} รายการ
                         </div>
                     </div>
                 </div>
                 
                 {fetchingJobs ? (
-                    <div className="p-12 flex flex-col items-center justify-center text-muted-foreground gap-3">
-                        <Loader2 className="animate-spin w-8 h-8 text-purple-500" />
-                        <span className="font-bold uppercase tracking-widest text-base font-bold">กำลังโหลดข้อมูลงาน...</span>
+                    <div className="p-10 flex flex-col items-center justify-center text-muted-foreground gap-2">
+                        <Loader2 className="animate-spin w-6 h-6 text-purple-500" />
+                        <span className="font-bold uppercase tracking-widest text-xs">กำลังโหลดข้อมูลงาน...</span>
                     </div>
                 ) : (
                     <div className="p-0">
                         <Table>
-                            <TableHeader className="bg-muted/50">
+                            <TableHeader className="bg-muted/30">
                                 <TableRow className="border-border/5 hover:bg-transparent">
-                                    <TableHead className="w-16 pl-6">
+                                    <TableHead className="w-12 pl-4">
                                             <Checkbox 
                                                 checked={selectedJobIds.length === availableJobs.length && availableJobs.length > 0}
                                                 onCheckedChange={(checked) => {
@@ -231,14 +231,14 @@ export function InvoiceForm({ customers, initialData, onSuccess }: InvoiceFormPr
                                                         setSelectedJobIds([])
                                                     }
                                                 }}
-                                                className="border-border/20 data-[state=checked]:bg-purple-600 data-[state=checked]:border-purple-600"
+                                                className="border-border/20 scale-90 data-[state=checked]:bg-purple-600 data-[state=checked]:border-purple-600"
                                             />
                                         </TableHead>
-                                        <TableHead className="text-muted-foreground font-black uppercase tracking-widest text-base font-bold py-6">Job ID</TableHead>
-                                        <TableHead className="text-muted-foreground font-black uppercase tracking-widest text-base font-bold py-6">วันที่</TableHead>
-                                        <TableHead className="text-muted-foreground font-black uppercase tracking-widest text-base font-bold py-6 text-center">จำนวน</TableHead>
-                                        <TableHead className="text-muted-foreground font-black uppercase tracking-widest text-base font-bold py-6 text-right">ราคา/หน่วย</TableHead>
-                                        <TableHead className="text-right text-muted-foreground font-black uppercase tracking-widest text-base font-bold py-6 pr-8">ราคารวม</TableHead>
+                                        <TableHead className="text-muted-foreground font-black uppercase tracking-widest text-[10px] py-3">Job ID</TableHead>
+                                        <TableHead className="text-muted-foreground font-black uppercase tracking-widest text-[10px] py-3">วันที่</TableHead>
+                                        <TableHead className="text-muted-foreground font-black uppercase tracking-widest text-[10px] py-3 text-center">จำนวน</TableHead>
+                                        <TableHead className="text-muted-foreground font-black uppercase tracking-widest text-[10px] py-3 text-right">ราคา/หน่วย</TableHead>
+                                        <TableHead className="text-right text-muted-foreground font-black uppercase tracking-widest text-[10px] py-3 pr-6">ราคารวม</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -266,35 +266,35 @@ export function InvoiceForm({ customers, initialData, onSuccess }: InvoiceFormPr
                                                 )}
                                                 onClick={toggleSelection}
                                             >
-                                                <TableCell className="pl-6" onClick={(e) => e.stopPropagation()}>
+                                                <TableCell className="pl-4" onClick={(e) => e.stopPropagation()}>
                                                     <Checkbox 
                                                         checked={isSelected}
                                                         onCheckedChange={toggleSelection}
-                                                        className="border-border/20 data-[state=checked]:bg-purple-600 data-[state=checked]:border-purple-600"
+                                                        className="border-border/20 scale-90 data-[state=checked]:bg-purple-600 data-[state=checked]:border-purple-600"
                                                     />
                                                 </TableCell>
-                                                <TableCell className="font-black text-muted-foreground text-lg font-bold py-5">
+                                                <TableCell className="font-black text-muted-foreground text-xs py-3">
                                                     <div className="flex flex-col">
                                                         <span>{job.Job_ID}</span>
-                                                        <span className="text-[10px] uppercase opacity-50">{job.Route_Name}</span>
+                                                        <span className="text-[8px] uppercase opacity-50 truncate max-w-[120px]">{job.Route_Name}</span>
                                                     </div>
                                                 </TableCell>
-                                                <TableCell className="text-muted-foreground font-bold">{new Date(job.Plan_Date).toLocaleDateString('th-TH')}</TableCell>
-                                                <TableCell className="text-center font-bold text-muted-foreground">
+                                                <TableCell className="text-muted-foreground font-bold text-[10px]">{new Date(job.Plan_Date).toLocaleDateString('th-TH')}</TableCell>
+                                                <TableCell className="text-center font-bold text-muted-foreground text-[10px]">
                                                     {isPerItem ? qty.toLocaleString() : '1 (เที่ยว)'}
                                                 </TableCell>
-                                                <TableCell className="text-right font-bold text-muted-foreground">
+                                                <TableCell className="text-right font-bold text-muted-foreground text-[10px]">
                                                     {isPerItem ? unitPrice.toLocaleString(undefined, { minimumFractionDigits: 2 }) : '-'}
                                                 </TableCell>
-                                                <TableCell className="text-right font-black text-muted-foreground pr-8">
+                                                <TableCell className="text-right font-black text-muted-foreground pr-6">
                                                     <div className="flex flex-col items-end">
-                                                        <div className="flex items-center gap-2">
+                                                        <div className="flex items-center gap-1.5">
                                                             {storedPrice === 0 && isPerItem && (
-                                                                <div className="p-1 px-2 bg-amber-500/20 text-amber-500 rounded text-[9px] font-black animate-pulse flex items-center gap-1 uppercase tracking-tight">
-                                                                    <Zap size={10} /> Auto-Cal
+                                                                <div className="p-0.5 px-1 bg-amber-500/20 text-amber-500 rounded-[2px] text-[7px] font-black animate-pulse flex items-center gap-0.5 uppercase tracking-tight">
+                                                                    <Zap size={8} /> Auto
                                                                 </div>
                                                             )}
-                                                            <span className={cn(storedPrice === 0 && !isPerItem ? "opacity-30" : "text-foreground")}>
+                                                            <span className={cn("text-xs", storedPrice === 0 && !isPerItem ? "opacity-30" : "text-foreground")}>
                                                                 {(storedPrice || (isPerItem ? qty * unitPrice : 0)).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                                             </span>
                                                         </div>
@@ -310,80 +310,80 @@ export function InvoiceForm({ customers, initialData, onSuccess }: InvoiceFormPr
             </CardContent>
         </Card>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="md:col-span-2 space-y-6">
-                 <div className="grid grid-cols-2 gap-6">
-                    <div className="space-y-3">
-                        <Label className="text-muted-foreground font-black uppercase tracking-widest text-base font-bold">ภาษี (%)</Label>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="md:col-span-2 space-y-4">
+                 <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                        <Label className="text-muted-foreground font-black uppercase tracking-widest text-[10px] font-bold ml-1">ภาษี (%)</Label>
                         <Select
                             value={String(vatRate)}
                             onValueChange={(v: string) => setVatRate(Number(v))}
                         >
-                            <SelectTrigger className="bg-card/50 border-border/10 rounded-2xl h-16 font-bold text-muted-foreground focus:ring-purple-500/20">
+                            <SelectTrigger className="bg-card/50 border-border/10 rounded-xl h-11 text-xs font-bold text-muted-foreground focus:ring-purple-500/20">
                                 <SelectValue placeholder="เลือกอัตราภาษี" />
                             </SelectTrigger>
                             <SelectContent className="bg-card border-border/10">
-                                <SelectItem value="0" className="font-bold">ไม่มี (0%)</SelectItem>
-                                <SelectItem value="7" className="font-bold">ภาษี 7%</SelectItem>
+                                <SelectItem value="0" className="text-xs font-bold">ไม่มี (0%)</SelectItem>
+                                <SelectItem value="7" className="text-xs font-bold">ภาษี 7%</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
-                    <div className="space-y-3">
-                        <Label className="text-muted-foreground font-black uppercase tracking-widest text-base font-bold">ส่วนลด (Discount THB)</Label>
+                    <div className="space-y-2">
+                        <Label className="text-muted-foreground font-black uppercase tracking-widest text-[10px] font-bold ml-1">ส่วนลด (Discount THB)</Label>
                         <Input 
                             type="number"
                             value={discountAmount} 
                             onChange={(e) => setDiscountAmount(e.target.value === "" ? "" : Number(e.target.value))} 
-                            className="bg-card/50 border-border/10 rounded-2xl h-16 font-bold text-muted-foreground focus:ring-purple-500/20" 
+                            className="bg-card/50 border-border/10 rounded-xl h-11 text-xs font-bold text-muted-foreground focus:ring-purple-500/20" 
                             placeholder="0.00"
                         />
                     </div>
                  </div>
 
-                 <div className="space-y-3">
-                    <Label className="text-muted-foreground font-black uppercase tracking-widest text-base font-bold">หมายเหตุ (Notes)</Label>
+                 <div className="space-y-2">
+                    <Label className="text-muted-foreground font-black uppercase tracking-widest text-[10px] font-bold ml-1">หมายเหตุ (Notes)</Label>
                     <Input 
                         value={notes} 
                         onChange={(e) => setNotes(e.target.value)} 
-                        className="bg-card/50 border-border/10 rounded-2xl h-16 font-bold text-muted-foreground placeholder:text-muted-foreground focus:ring-purple-500/20" 
-                        placeholder="ระบุหมายเหตุ หรือ รายละเอียดเพิ่มเติม..."
+                        className="bg-card/50 border-border/10 rounded-xl h-11 text-xs font-bold text-muted-foreground placeholder:text-muted-foreground focus:ring-purple-500/20" 
+                        placeholder="ระบุหมายเหตุ..."
                     />
                  </div>
             </div>
-            <Card className="bg-card border-border/10 shadow-2xl overflow-hidden rounded-3xl border-t-emerald-500/30 border-t-2">
-                <CardContent className="p-8 space-y-6">
-                     <div className="space-y-2 pb-4">
-                        <div className="flex justify-between text-base font-bold text-muted-foreground uppercase tracking-widest">
+            <Card className="bg-card border-border/10 shadow-xl overflow-hidden rounded-2xl border-t-emerald-500/30 border-t-2">
+                <CardContent className="p-6 space-y-4">
+                     <div className="space-y-1.5 pb-3">
+                        <div className="flex justify-between text-[10px] font-black text-muted-foreground uppercase tracking-widest">
                             <span>ราคารับจ้างขนส่ง</span>
                             <span>฿{subtotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                         </div>
-                        {discountAmount > 0 && (
-                            <div className="flex justify-between text-base font-bold text-amber-500 uppercase tracking-widest">
+                        {Number(discountAmount) > 0 && (
+                            <div className="flex justify-between text-[10px] font-black text-amber-500 uppercase tracking-widest">
                                 <span>ส่วนลด</span>
-                                <span>-฿{discountAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                                <span>-฿{Number(discountAmount).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                             </div>
                         )}
                         {vatRate > 0 && (
-                            <div className="flex justify-between text-base font-bold text-muted-foreground uppercase tracking-widest">
+                            <div className="flex justify-between text-[10px] font-black text-muted-foreground uppercase tracking-widest">
                                 <span>ภาษีมูลค่าเพิ่ม ({vatRate}%)</span>
                                 <span>฿{vatAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                             </div>
                         )}
                     </div>
 
-                    <div className="flex justify-between text-2xl font-black text-muted-foreground uppercase tracking-widest pt-4 border-t border-border/10">
-                        <span>ยอดรวมสุทธิ</span>
-                        <span className="text-foreground">฿{grandTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                    <div className="flex justify-between text-xl font-black text-muted-foreground uppercase tracking-widest pt-3 border-t border-border/10">
+                        <span className="text-xs">ยอดรวมสุทธิ</span>
+                        <span className="text-foreground italic">฿{grandTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                     </div>
 
-                    <div className="border-t border-border/5 pt-6 space-y-4">
+                    <div className="border-t border-border/5 pt-4">
                         <Button 
                             onClick={handleSubmit} 
                             disabled={loading || selectedJobs.length === 0}
-                            className="w-full h-14 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-foreground font-bold rounded-2xl shadow-xl shadow-emerald-500/20 transition-all active:scale-[0.98]"
+                            className="w-full h-11 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs uppercase tracking-widest rounded-xl shadow-lg transition-all active:scale-[0.98]"
                         >
-                            {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            สร้างใบแจ้งหนี้ (Create Invoice)
+                            {loading && <Loader2 className="mr-2 h-3 w-3 animate-spin" />}
+                            สร้างใบแจ้งหนี้ (CREATE)
                         </Button>
                     </div>
                 </CardContent>
@@ -394,21 +394,22 @@ export function InvoiceForm({ customers, initialData, onSuccess }: InvoiceFormPr
 }
 
 function DateCallbackSelect({ date, setDate }: { date: Date | undefined, setDate: (d: Date | undefined) => void }) {
+    const { t } = useLanguage()
     return (
         <Popover>
         <PopoverTrigger asChild>
           <Button
             variant={"outline"}
             className={cn(
-              "w-full h-14 justify-start text-left font-bold bg-muted/50 border-border/10 hover:bg-muted/80 rounded-2xl text-muted-foreground transition-all",
+              "w-full h-11 justify-start text-left font-black text-xs bg-muted/50 border-border/10 hover:bg-muted/80 rounded-xl text-muted-foreground transition-all uppercase tracking-widest",
               !date && "text-muted-foreground"
             )}
           >
-            <CalendarIcon className="mr-3 h-5 w-5 text-purple-400" />
+            <CalendarIcon className="mr-2 h-4 w-4 text-purple-400" />
             {date ? format(date, "PPP", { locale: th }) : <span>เลือกวันที่</span>}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-auto p-0 bg-card border-border/10 rounded-3xl shadow-2xl overflow-hidden" align="start">
+        <PopoverContent className="w-auto p-0 bg-card border-border/10 rounded-2xl shadow-xl overflow-hidden" align="start">
           <Calendar
             mode="single"
             selected={date}

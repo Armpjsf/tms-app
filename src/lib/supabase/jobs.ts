@@ -946,12 +946,13 @@ export async function getMarketplaceJobs(providedBranchId?: string): Promise<Job
 }
 
 // ดึงการขอรถที่รอดำเนินการ (Requested) ทั้งหมด โดยไม่จำกัดวันที่
-export async function getRequestedJobs(): Promise<Job[]> {
+export async function getRequestedJobs(providedBranchId?: string): Promise<Job[]> {
     try {
         const isSuper = await isSuperAdmin()
         const supabase = createAdminClient()
-        const branchId = await getUserBranchId()
+        const userBranchId = await getUserBranchId()
         const customerId = await getCustomerId()
+        const branchId = providedBranchId && providedBranchId !== 'All' ? providedBranchId : userBranchId
 
         let dbQuery = supabase
             .from('Jobs_Main')
@@ -969,7 +970,12 @@ export async function getRequestedJobs(): Promise<Job[]> {
         const { data, error } = await dbQuery.order('Created_At', { ascending: false })
 
         if (error) {
-            console.error('[DEBUG] getRequestedJobs select error:', error)
+            console.error('[DEBUG] getRequestedJobs select error:', {
+                message: error.message,
+                details: error.details,
+                hint: error.hint,
+                code: error.code
+            })
             return []
         }
 

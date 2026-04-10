@@ -193,41 +193,41 @@ export default function RoutesPage() {
   return (
     <DashboardLayout>
       {/* Tactical Route Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-10 mb-16 bg-background/60 backdrop-blur-3xl p-12 rounded-[4rem] border border-border/5 shadow-2xl relative group ring-1 ring-border/5 hover:ring-primary/20 transition-all duration-700">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-10 bg-background/60 backdrop-blur-3xl p-8 rounded-3xl border border-border/5 shadow-xl relative group ring-1 ring-border/5 hover:ring-primary/20 transition-all duration-700">
         <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 blur-[100px] pointer-events-none" />
         
         <div className="relative z-10 space-y-4">
-            <div className="flex items-center gap-3">
-                <div className="p-2 bg-primary/20 rounded-xl shadow-lg">
-                    <Navigation className="text-primary" size={20} />
+            <div className="flex items-center gap-2">
+                <div className="p-1.5 bg-primary/20 rounded-lg shadow-lg">
+                    <Navigation className="text-primary" size={16} />
                 </div>
-                <h2 className="text-base font-bold font-black text-primary uppercase tracking-tight">{t('routes.geospatial_matrix')}</h2>
+                <h2 className="text-xs font-bold font-black text-primary uppercase tracking-tight">{t('routes.geospatial_matrix')}</h2>
             </div>
-            <h1 className="text-6xl font-black text-foreground tracking-tighter flex items-center gap-5 uppercase premium-text-gradient">
+            <h1 className="text-3xl lg:text-4xl font-black text-foreground tracking-tighter flex items-center gap-4 uppercase premium-text-gradient italic leading-none">
                 {t('routes.title')}
             </h1>
-            <p className="text-muted-foreground font-bold text-xl tracking-normal opacity-80 uppercase leading-relaxed">
+            <p className="text-muted-foreground font-bold text-sm tracking-normal opacity-80 uppercase leading-relaxed italic">
               {t('routes.subtitle')}
             </p>
         </div>
 
-        <div className="flex flex-wrap gap-4 relative z-10">
+        <div className="flex flex-wrap gap-3 relative z-10">
             {isAdminUser && (
               <>
                 <ExcelExport 
                     data={routes}
                     filename="logispro_routes_export"
                     trigger={
-                        <PremiumButton variant="outline" className="h-14 px-8 rounded-2xl border-border/5 bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-white transition-all" >
-                            <FileSpreadsheet size={20} className="mr-3" />
+                        <PremiumButton variant="outline" className="h-11 px-5 rounded-xl border-border/5 bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-white transition-all text-[10px] font-black uppercase tracking-widest" >
+                            <FileSpreadsheet size={16} className="mr-2" />
                             Export
                         </PremiumButton>
                     }
                 />
                 <ExcelImport 
                     trigger={
-                        <PremiumButton variant="outline" className="h-14 px-8 rounded-2xl border-border/5 bg-muted/50 text-muted-foreground hover:bg-muted/80 hover:text-foreground transition-all">
-                            <FileSpreadsheet size={20} className="mr-3 opacity-50" /> 
+                        <PremiumButton variant="outline" className="h-11 px-5 rounded-xl border-border/5 bg-muted/50 text-muted-foreground hover:bg-muted/80 hover:text-foreground transition-all text-[10px] font-black uppercase tracking-widest">
+                            <FileSpreadsheet size={16} className="mr-2 opacity-50" /> 
                             {t('routes.spatial_import')}
                         </PremiumButton>
                     }
@@ -248,8 +248,8 @@ export default function RoutesPage() {
                     }]}
                     templateFilename="logispro_routes_template.xlsx"
                 />
-                <PremiumButton onClick={() => handleOpenDialog()} className="h-14 px-10 rounded-2xl shadow-xl shadow-primary/20">
-                  <Plus size={24} className="mr-3" strokeWidth={3} />
+                <PremiumButton onClick={() => handleOpenDialog()} className="h-11 px-6 rounded-xl shadow-lg bg-primary text-foreground font-black uppercase tracking-widest text-[10px]">
+                  <Plus size={18} className="mr-2" strokeWidth={3} />
                   {t('routes.enlist_route')}
                 </PremiumButton>
               </>
@@ -258,16 +258,16 @@ export default function RoutesPage() {
       </div>
 
       {/* Navigation Command Grid */}
-      <div className="mb-12 relative group max-w-2xl">
+      <div className="mb-8 relative group max-w-xl">
         <div className="absolute inset-x-0 bottom-0 h-1 bg-primary blur-3xl opacity-20 pointer-events-none" />
-        <div className="relative glass-panel rounded-3xl p-1 border-border/5">
-            <div className="flex items-center gap-4 px-6">
-                <Search className="text-primary opacity-50" size={24} />
+        <div className="relative glass-panel rounded-2xl p-0.5 border-border/5">
+            <div className="flex items-center gap-3 px-4">
+                <Search className="text-primary opacity-50" size={18} />
                 <Input
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder={t('routes.search_placeholder')}
-                    className="bg-transparent border-none text-2xl font-black text-foreground px-4 h-20 placeholder:text-muted-foreground tracking-tighter uppercase focus-visible:ring-0"
+                    className="bg-transparent border-none text-base font-black text-foreground px-2 h-12 placeholder:text-muted-foreground tracking-tight uppercase focus-visible:ring-0"
                 />
             </div>
         </div>
@@ -461,27 +461,27 @@ export default function RoutesPage() {
                  <p className="mt-10 text-muted-foreground font-black uppercase tracking-wide text-base font-bold animate-pulse">{t('routes.scanning')}</p>
             </div>
           ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {routes.map((route) => (
-            <div key={route.Route_Name} className="p-0 overflow-hidden group border border-border/5 bg-background/40 backdrop-blur-2xl rounded-[3.5rem] shadow-2xl relative hover:shadow-[0_45px_100px_-20px_rgba(255,30,133,0.1)] transition-all duration-700 hover:ring-1 hover:ring-primary/30">
-              <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary to-accent opacity-0 group-hover:opacity-100 transition-all duration-700" />
-              <div className="p-10">
-                <div className="flex items-start justify-between mb-8">
-                  <div className="flex items-center gap-6">
-                    <div className="w-16 h-16 rounded-[1.5rem] bg-muted/50 border border-border/5 flex items-center justify-center text-foreground font-bold group-hover:bg-primary transition-all duration-700 relative overflow-hidden shadow-xl">
+            <div key={route.Route_Name} className="p-0 overflow-hidden group border border-border/5 bg-background/40 backdrop-blur-2xl rounded-2xl shadow-lg relative hover:shadow-xl transition-all duration-700 hover:ring-1 hover:ring-primary/30">
+              <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-primary to-accent opacity-0 group-hover:opacity-100 transition-all duration-700" />
+              <div className="p-6">
+                <div className="flex items-start justify-between mb-6">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-xl bg-muted/50 border border-border/5 flex items-center justify-center text-foreground font-bold group-hover:bg-primary transition-all duration-700 relative overflow-hidden shadow-lg">
                       <div className="absolute inset-0 bg-gradient-to-br from-primary/30 to-transparent" />
-                      <MapPin size={28} className="relative z-10" strokeWidth={2.5} />
+                      <MapPin size={20} className="relative z-10" strokeWidth={2.5} />
                     </div>
                     <div>
-                      <h3 className="text-2xl font-black text-foreground tracking-tighter group-hover:text-primary transition-colors line-clamp-1 duration-500 uppercase font-display">{route.Route_Name}</h3>
-                      <div className="flex items-center gap-3 mt-2">
-                          <span className="text-muted-foreground font-black text-base font-bold uppercase tracking-tight italic">{route.Branch_ID || "HQ-CENTER"}</span>
+                      <h3 className="text-lg font-black text-foreground tracking-tighter group-hover:text-primary transition-colors line-clamp-1 duration-500 uppercase italic font-display">{route.Route_Name}</h3>
+                      <div className="flex items-center gap-2 mt-0.5">
+                          <span className="text-muted-foreground font-black text-[9px] uppercase tracking-tight italic">{route.Branch_ID || "HQ-CENTER"}</span>
                           {route.Distance_KM !== null && (
                             <>
-                                <div className="w-1.5 h-1.5 rounded-full bg-primary/40" />
-                                <div className="flex items-center gap-2">
+                                <div className="w-1 h-1 rounded-full bg-primary/40" />
+                                <div className="flex items-center gap-1.5">
                                     <Ruler size={10} className="text-primary/60" />
-                                    <span className="text-primary font-black text-base font-bold uppercase tracking-tight">{route.Distance_KM} {t('common.baht') === 'บาท' ? 'กม.' : 'KM'}</span>
+                                    <span className="text-primary font-black text-[10px] uppercase tracking-tight">{route.Distance_KM} {t('common.baht') === 'บาท' ? 'กม.' : 'KM'}</span>
                                 </div>
                             </>
                           )}
@@ -491,52 +491,52 @@ export default function RoutesPage() {
                 </div>
 
                 {/* Spatial Vector Visualization */}
-                <div className="space-y-6 relative mb-8">
-                    <div className="absolute left-[7px] top-4 bottom-4 w-px bg-gradient-to-b from-primary via-white/10 to-accent opacity-40" />
+                <div className="space-y-4 relative mb-6">
+                    <div className="absolute left-[5px] top-3 bottom-3 w-px bg-gradient-to-b from-primary via-white/10 to-accent opacity-40" />
                     
-                    <div className="flex flex-col gap-1 pl-8 relative">
-                        <div className="absolute left-[-2px] top-1 w-5 h-5 bg-background border border-primary/40 rounded-full flex items-center justify-center">
-                            <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+                    <div className="flex flex-col gap-0.5 pl-6 relative">
+                        <div className="absolute left-[-2px] top-1 w-4 h-4 bg-background border border-primary/40 rounded-full flex items-center justify-center">
+                            <div className="w-1 h-1 rounded-full bg-primary" />
                         </div>
                         <div className="flex items-center justify-between">
-                            <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-tight">{t('routes.card.inception')}</span>
+                            <span className="text-[9px] font-black text-muted-foreground uppercase tracking-tight">{t('routes.card.inception')}</span>
                             {route.Map_Link_Origin && (
-                                <a href={route.Map_Link_Origin} target="_blank" rel="noopener noreferrer" className="p-1.5 bg-muted/50 rounded-lg text-primary hover:bg-primary hover:text-foreground transition-all">
-                                    <Globe size={12} />
+                                <a href={route.Map_Link_Origin} target="_blank" rel="noopener noreferrer" className="p-1 bg-muted/50 rounded-md text-primary hover:bg-primary hover:text-foreground transition-all">
+                                    <Globe size={10} />
                                 </a>
                             )}
                         </div>
-                        <p className="text-xl font-black text-muted-foreground uppercase tracking-tight">{route.Origin || "GLOBAL GRID-START"}</p>
+                        <p className="text-sm font-black text-muted-foreground uppercase tracking-tight">{route.Origin || "GLOBAL GRID-START"}</p>
                     </div>
 
-                    <div className="flex flex-col gap-1 pl-8 relative">
-                        <div className="absolute left-[-2px] top-1 w-5 h-5 bg-background border border-accent/40 rounded-full flex items-center justify-center">
-                            <div className="w-1.5 h-1.5 rounded-full bg-accent" />
+                    <div className="flex flex-col gap-0.5 pl-6 relative">
+                        <div className="absolute left-[-2px] top-1 w-4 h-4 bg-background border border-accent/40 rounded-full flex items-center justify-center">
+                            <div className="w-1 h-1 rounded-full bg-accent" />
                         </div>
                         <div className="flex items-center justify-between">
-                            <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-tight">{t('routes.card.terminus')}</span>
+                            <span className="text-[9px] font-black text-muted-foreground uppercase tracking-tight">{t('routes.card.terminus')}</span>
                             {route.Map_Link_Destination && (
-                                <a href={route.Map_Link_Destination} target="_blank" rel="noopener noreferrer" className="p-1.5 bg-muted/50 rounded-lg text-accent hover:bg-accent hover:text-foreground transition-all">
-                                    <Globe size={12} />
+                                <a href={route.Map_Link_Destination} target="_blank" rel="noopener noreferrer" className="p-1 bg-muted/50 rounded-md text-accent hover:bg-accent hover:text-foreground transition-all">
+                                    <Globe size={10} />
                                 </a>
                             )}
                         </div>
-                        <p className="text-xl font-black text-muted-foreground uppercase tracking-tight">{route.Destination || "GLOBAL GRID-END"}</p>
+                        <p className="text-sm font-black text-muted-foreground uppercase tracking-tight">{route.Destination || "GLOBAL GRID-END"}</p>
                     </div>
                 </div>
 
-                <div className="flex gap-4 pt-6 border-t border-border/5">
+                <div className="flex gap-2 pt-4 border-t border-border/5">
                   <button 
-                    className="flex-1 h-14 bg-muted/50 border border-border/5 rounded-2xl text-base font-bold font-black uppercase tracking-tight text-muted-foreground hover:bg-primary/20 hover:text-primary transition-all flex items-center justify-center gap-3"
+                    className="flex-1 h-10 bg-muted/50 border border-border/5 rounded-xl text-[10px] font-black uppercase tracking-tight text-muted-foreground hover:bg-primary/20 hover:text-primary transition-all flex items-center justify-center gap-2"
                     onClick={() => handleOpenDialog(route)}
                   >
-                    <Edit size={16} /> {t('routes.card.refine')}
+                    <Edit size={14} /> {t('routes.card.refine')}
                   </button>
                   <button 
-                    className="h-14 w-14 bg-muted/50 border border-border/5 rounded-2xl flex items-center justify-center text-rose-800 hover:bg-rose-500 hover:text-foreground transition-all shadow-lg"
+                    className="h-10 w-10 bg-muted/50 border border-border/5 rounded-xl flex items-center justify-center text-rose-800 hover:bg-rose-500 hover:text-foreground transition-all shadow-md"
                     onClick={() => handleDelete(route.Route_Name)}
                   >
-                    <Trash2 size={18} />
+                    <Trash2 size={14} />
                   </button>
                 </div>
               </div>
@@ -545,9 +545,9 @@ export default function RoutesPage() {
           
           {/* Enhanced Empty State */}
           {routes.length === 0 && (
-            <div className="col-span-full text-center py-40 glass-panel rounded-[4rem] border-dashed border-border/5 group">
-              <Activity className="w-20 h-20 text-muted-foreground mx-auto mb-8 opacity-20 group-hover:scale-110 transition-transform duration-1000" />
-              <p className="text-muted-foreground font-black uppercase tracking-wide text-base font-bold">{t('routes.empty')}</p>
+            <div className="col-span-full text-center py-24 glass-panel rounded-3xl border-dashed border-border/5 group">
+              <Activity className="w-12 h-12 text-muted-foreground mx-auto mb-4 opacity-20 group-hover:scale-110 transition-transform duration-1000" />
+              <p className="text-muted-foreground font-black uppercase tracking-wide text-xs">{t('routes.empty')}</p>
             </div>
           )}
         </div>

@@ -63,84 +63,84 @@ export default async function ReportsPage() {
   return (
     <DashboardLayout>
       {/* Elite Tactical Reporting Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-10 mb-16 bg-background/60 backdrop-blur-3xl p-12 rounded-[4rem] border border-border/5 shadow-2xl relative group ring-1 ring-border/5 hover:ring-primary/20 transition-all duration-700">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-10 bg-background/60 backdrop-blur-3xl p-8 rounded-3xl border border-border/5 shadow-xl relative group ring-1 ring-border/5 hover:ring-primary/20 transition-all duration-700">
         <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 blur-[100px] pointer-events-none" />
         
-        <div className="relative z-10 space-y-4">
-            <div className="flex items-center gap-3">
-                <div className="p-2 bg-primary/20 rounded-xl shadow-lg">
-                    <BarChart3 className="text-primary" size={20} />
+        <div className="relative z-10 space-y-2">
+            <div className="flex items-center gap-2">
+                <div className="p-1.5 bg-primary/20 rounded-lg shadow-lg">
+                    <BarChart3 className="text-primary" size={16} />
                 </div>
-                <h2 className="text-base font-bold font-black text-primary uppercase tracking-[0.4em]">Operations Intelligence Archive</h2>
+                <h2 className="text-[10px] font-bold font-black text-primary uppercase tracking-[0.4em]">Operations Intelligence Archive</h2>
             </div>
-            <h1 className="text-6xl font-black text-foreground tracking-tighter flex items-center gap-5 uppercase premium-text-gradient">
+            <h1 className="text-3xl lg:text-4xl font-black text-foreground tracking-tighter flex items-center gap-4 uppercase premium-text-gradient italic leading-none">
                 Reporting Hub
             </h1>
-            <p className="text-muted-foreground font-bold text-xl tracking-wide opacity-80 uppercase tracking-widest leading-relaxed">
-              Strategic Analytics & Tactical Data Extraction Interface
+            <p className="text-muted-foreground font-bold text-sm tracking-wide opacity-80 uppercase tracking-widest leading-relaxed italic">
+              Strategic Analytics & Tactical Data Extraction
             </p>
         </div>
 
-        <div className="flex flex-wrap gap-4 relative z-10">
+        <div className="flex flex-wrap gap-3 relative z-10">
           <Link href="/reports/cost-per-trip">
-            <button className="h-16 px-8 rounded-2xl bg-violet-500 text-white font-black uppercase tracking-widest hover:bg-violet-600 transition-all shadow-[0_20px_40px_rgba(139,92,246,0.3)] flex items-center gap-3 group/btn">
-                <DollarSign size={20} className="group-hover/btn:scale-110 transition-transform" />
+            <button className="h-11 px-6 rounded-xl bg-violet-500 text-white font-black uppercase tracking-widest hover:bg-violet-600 transition-all shadow-lg flex items-center gap-2 group/btn text-[10px]">
+                <DollarSign size={16} className="group-hover/btn:scale-110 transition-transform" />
                 Profit Analysis
-                <ArrowRight size={18} className="ml-2 group-hover/btn:translate-x-1 transition-transform" />
+                <ArrowRight size={14} className="ml-1 group-hover/btn:translate-x-1 transition-transform" />
             </button>
           </Link>
-          <div className="flex items-center gap-4 bg-muted/50 p-4 rounded-2xl border border-border/10 backdrop-blur-md">
-            <div className="flex items-center gap-3">
-                <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_12px_rgba(16,185,129,1)]" />
-                <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest">Live Engine</span>
+          <div className="flex items-center gap-3 bg-muted/50 p-2.5 rounded-xl border border-border/10 backdrop-blur-md">
+            <div className="flex items-center gap-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="text-[10px] font-bold font-black text-muted-foreground uppercase tracking-widest">Live Engine</span>
             </div>
-            <div className="w-px h-6 bg-muted/80" />
-            <div className="flex items-center gap-3">
-                <ShieldCheck size={14} className="text-primary" />
-                <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest italic">Encrypted_Export</span>
+            <div className="w-px h-4 bg-muted/80" />
+            <div className="flex items-center gap-2">
+                <ShieldCheck size={12} className="text-primary" />
+                <span className="text-[10px] font-bold font-black text-muted-foreground uppercase tracking-widest italic">Encrypted</span>
             </div>
           </div>
         </div>
       </div>
 
       <StatsGrid columns={5} stats={[
-        { label: "Fleet Missions", value: jobCount || 0, icon: <Package size={20} />, color: "indigo" },
-        { label: `Elite Units (${driverStats.active})`, value: driverStats.total, icon: <Users size={20} />, color: "blue" },
-        { label: `Asset Fleet (${vehicleStats.active})`, value: vehicleStats.total, icon: <Truck size={20} />, color: "purple" },
-        { label: "Today Energy Log", value: `฿${fuelStats.totalAmount.toLocaleString()}`, icon: <Fuel size={20} />, color: "emerald" },
-        { label: "Integrity Queue", value: maintenanceStats.pending, icon: <Wrench size={20} />, color: "amber" },
+        { label: "Fleet Missions", value: jobCount || 0, icon: <Package size={16} />, color: "indigo" },
+        { label: `Units (${driverStats.active})`, value: driverStats.total, icon: <Users size={16} />, color: "blue" },
+        { label: `Fleet (${vehicleStats.active})`, value: vehicleStats.total, icon: <Truck size={16} />, color: "purple" },
+        { label: "Energy Log", value: `฿${fuelStats.totalAmount.toLocaleString()}`, icon: <Fuel size={16} />, color: "emerald" },
+        { label: "Integrity", value: maintenanceStats.pending, icon: <Wrench size={16} />, color: "amber" },
       ]} />
 
-      <div className="space-y-12">
-        <div className="flex items-center gap-4 mb-2">
-            <div className="w-1.5 h-10 bg-primary rounded-full shadow-[0_0_15px_rgba(255,30,133,0.8)]" />
+      <div className="space-y-8 mt-10">
+        <div className="flex items-center gap-3 mb-1">
+            <div className="w-1 h-8 bg-primary rounded-full shadow-[0_0_15px_rgba(255,30,133,0.8)]" />
             <div>
-                <h3 className="text-3xl font-black text-foreground tracking-tighter uppercase font-display">Strategic Report Configurator</h3>
-                <p className="text-muted-foreground text-base font-bold font-black uppercase tracking-[0.4em] mt-1 italic">Define Parameters for Intelligence Extraction</p>
+                <h3 className="text-xl font-black text-foreground tracking-tighter uppercase italic">Strategic Configurator</h3>
+                <p className="text-muted-foreground text-[10px] font-black uppercase tracking-[0.4em] mt-0.5 italic">Define Parameters for Extraction</p>
             </div>
         </div>
-        <div className="glass-panel p-2 rounded-[4rem] border-border/5 bg-background/20 shadow-3xl">
+        <div className="glass-panel p-0.5 rounded-3xl border border-border/5 bg-background/20 shadow-2xl">
             <ReportBuilder />
         </div>
       </div>
 
       {/* Activity Log Section */}
-      <div className="mt-20 space-y-12">
-        <div className="flex items-center gap-4 mb-2">
-            <div className="w-1.5 h-10 bg-accent rounded-full shadow-[0_0_15px_rgba(182,9,0,0.8)]" />
+      <div className="mt-16 space-y-8">
+        <div className="flex items-center gap-3 mb-1">
+            <div className="w-1 h-8 bg-accent rounded-full shadow-[0_0_15px_rgba(182,9,0,0.8)]" />
             <div>
-                <h3 className="text-3xl font-black text-foreground tracking-tighter uppercase font-display">System Activity Log</h3>
-                <p className="text-muted-foreground text-base font-bold font-black uppercase tracking-[0.4em] mt-1 italic">Real-time Operational Stream & Audit Trail</p>
+                <h3 className="text-xl font-black text-foreground tracking-tighter uppercase italic">System Activity Log</h3>
+                <p className="text-muted-foreground text-[10px] font-black uppercase tracking-[0.4em] mt-0.5 italic">Real-time Operational Stream</p>
             </div>
         </div>
-        <div className="glass-panel p-10 rounded-[4rem] border-border/5 bg-background/20 shadow-3xl">
+        <div className="glass-panel p-6 rounded-3xl border border-border/5 bg-background/20 shadow-2xl">
             <ActivityFeed jobStats={jobStats} sosCount={sosIds.length} logs={logs} />
         </div>
       </div>
 
-      <div className="mt-20 text-center mb-24">
-        <div className="inline-flex items-center gap-4 px-8 py-3 glass-panel rounded-full text-base font-bold font-black text-muted-foreground uppercase tracking-[0.6em] opacity-40 hover:opacity-100 transition-opacity">
-            <Zap size={14} className="text-primary" /> Intelligence Core v9.4 • Mission Critical Analytics
+      <div className="mt-16 text-center mb-20">
+        <div className="inline-flex items-center gap-3 px-6 py-2 glass-panel rounded-full text-[10px] font-black text-muted-foreground uppercase tracking-[0.6em] opacity-40 hover:opacity-100 transition-opacity">
+            <Zap size={12} className="text-primary" /> Intelligence Core v9.4 • Matrix Synced
         </div>
       </div>
     </DashboardLayout>

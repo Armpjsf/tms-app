@@ -43,28 +43,33 @@ export function JobGrid({
     const { t } = useLanguage()
     
     return (
-        <PremiumCard dark={true} className="p-0 overflow-hidden shadow-[0_30px_100px_rgba(0,0,0,0.1)] border-none rounded-br-[5rem] rounded-tl-[3rem]">
-            <PremiumCardHeader className="p-8 border-b border-slate-50 bg-background relative overflow-hidden flex flex-row items-center justify-between">
-                <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 to-transparent pointer-events-none" />
-                <PremiumCardTitle icon={<Package className="text-emerald-600" />} className="text-emerald-950 relative z-10 flex-1">
-                   {view === 'requests' ? t('jobs.head_requests') : t('jobs.head_live_feed')}
-                </PremiumCardTitle>
+        <PremiumCard dark={true} className="p-0 overflow-hidden shadow-xl border-none rounded-2xl">
+            <PremiumCardHeader className="p-5 border-b border-white/5 bg-background/40 relative overflow-hidden flex flex-row items-center justify-between">
+                <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent pointer-events-none" />
+                <div className="flex items-center gap-3 relative z-10 flex-1">
+                   <div className="p-2 bg-primary/20 rounded-lg">
+                      <Package className="text-primary" size={18} />
+                   </div>
+                   <h2 className="text-lg font-black text-foreground tracking-tight uppercase italic premium-text-gradient">
+                      {view === 'requests' ? t('jobs.head_requests') : t('jobs.head_live_feed')}
+                   </h2>
+                </div>
                 <Link href="/jobs/history" className="relative z-10">
-                    <PremiumButton variant="ghost" size="sm" className="text-base tracking-[0.2em] text-muted-foreground hover:text-foreground hover:bg-muted/50">
-                        {t('navigation.history').toUpperCase()} <ArrowRight className="w-5 h-5 ml-2" />
+                    <PremiumButton variant="ghost" size="sm" className="text-[10px] font-black tracking-[0.2em] text-muted-foreground hover:text-foreground hover:bg-muted/50 h-9">
+                        {t('navigation.history').toUpperCase()} <ArrowRight className="w-4 h-4 ml-2" />
                     </PremiumButton>
                 </Link>
             </PremiumCardHeader>
                 
                 {jobs.length === 0 ? (
-                    <div className="text-center py-20 bg-background/20">
-                        <div className="bg-white w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-6 border border-gray-200 shadow-inner">
-                            <Package className="w-10 h-10 text-gray-400" />
+                    <div className="text-center py-16 bg-background/20">
+                        <div className="bg-muted/50 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-border/5">
+                            <Package className="w-8 h-8 text-muted-foreground opacity-20" />
                         </div>
-                        <p className="text-xl text-muted-foreground font-bold mb-6">
+                        <p className="text-base text-muted-foreground font-bold mb-4 uppercase tracking-widest opacity-60">
                             {view === 'requests' ? t('jobs.dialog.zero_missions') : t('common.no_data')}
                         </p>
-                        <div className="flex justify-center gap-3">
+                        <div className="flex justify-center gap-2">
                             {view !== 'requests' && (
                                 <JobDialog 
                                     drivers={drivers} 
@@ -74,8 +79,8 @@ export function JobGrid({
                                     subcontractors={subcontractors}
                                     trigger={
                                         canCreate ? (
-                                            <PremiumButton className="h-16 px-12 rounded-2xl text-lg">
-                                                <Plus size={28} className="mr-2" />
+                                            <PremiumButton className="h-11 px-8 rounded-xl text-xs font-black uppercase tracking-widest">
+                                                <Plus size={18} className="mr-2" />
                                                 {t('planning.new_job')}
                                             </PremiumButton>
                                         ) : <></>
@@ -109,9 +114,9 @@ export function JobGrid({
                 )}
                 
                 {jobs.length > 0 && (
-                    <div className="p-8 bg-gray-50/30 text-center border-t border-gray-50">
-                        <p className="text-base font-black text-muted-foreground uppercase tracking-[0.3em] mt-2 group-hover:text-muted-foreground transition-colors">
-                            Logistics Intelligence Engine • Today&apos;s Activity
+                    <div className="p-4 bg-muted/30 text-center border-t border-border/5">
+                        <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.4em] opacity-40 group-hover:text-muted-foreground transition-colors italic">
+                            Logistics Intelligence Engine • Global Synchronized Nodes
                         </p>
                     </div>
                 )}

@@ -173,14 +173,14 @@ export function MonitoringCommandCenter({
     const alertCount = jobs.filter(j => j.Job_Status === 'SOS' || j.Job_Status === 'Failed').length
 
     return (
-        <div className="flex h-[calc(100vh-64px)] bg-background text-muted-foreground overflow-hidden font-sans rounded-[2.5rem] border border-border/5 shadow-2xl relative z-10">
+        <div className="flex h-[calc(100vh-64px)] bg-background text-muted-foreground overflow-hidden font-sans rounded-3xl border border-border/5 shadow-2xl relative z-10">
             {/* 1. Tactical Sidebar */}
-            <div className="w-[400px] border-r border-border/5 flex flex-col bg-background/50 backdrop-blur-2xl">
-                <div className="p-8 border-b border-border/5">
-                    <div className="flex items-center justify-between mb-8">
-                        <h2 className="text-2xl font-black text-foreground tracking-tight flex items-center gap-3 italic">
-                            <div className="p-2.5 bg-primary/20 rounded-2xl border border-primary/30 shadow-[0_0_20px_rgba(255,30,133,0.2)]">
-                                <Activity className="text-primary" size={24} />
+            <div className="w-[320px] border-r border-border/5 flex flex-col bg-background/50 backdrop-blur-2xl">
+                <div className="p-6 border-b border-border/5">
+                    <div className="flex items-center justify-between mb-6">
+                        <h2 className="text-xl font-black text-foreground tracking-tight flex items-center gap-2 italic">
+                            <div className="p-2 bg-primary/20 rounded-xl border border-primary/30 shadow-[0_0_20px_rgba(255,30,133,0.2)]">
+                                <Activity className="text-primary" size={18} />
                             </div>
                             {t('monitoring.title')}
                         </h2>
@@ -189,34 +189,34 @@ export function MonitoringCommandCenter({
                                 data={driversWithGPS}
                                 filename="logispro_live_tracking_export"
                                 trigger={
-                                    <button className="p-2 rounded-xl bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-white transition-all flex items-center justify-center">
-                                        <FileSpreadsheet size={16} />
+                                    <button className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-white transition-all flex items-center justify-center">
+                                        <FileSpreadsheet size={14} />
                                     </button>
                                 }
                             />
-                            <RealtimeIndicator isLive={true} className="bg-muted/50 border-border/10 text-primary" />
+                            <RealtimeIndicator isLive={true} className="bg-muted/50 border-border/10 text-primary scale-75 origin-right" />
                         </div>
                     </div>
 
                     <div className="relative group">
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors" size={16} />
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors" size={14} />
                         <input 
                             type="text" 
                             placeholder={t('common.search')}
-                            className="w-full bg-muted/50 border border-border/10 rounded-2xl py-4 pl-12 pr-4 text-xl focus:outline-none focus:border-primary/50 focus:bg-muted/80 transition-all placeholder:text-muted-foreground font-bold"
+                            className="w-full h-10 bg-muted/50 border border-border/10 rounded-xl pl-10 pr-3 text-xs font-black uppercase tracking-widest focus:outline-none focus:border-primary/50 focus:bg-muted/80 transition-all placeholder:text-muted-foreground outline-none"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                         />
                     </div>
 
-                    <div className="flex gap-2 mt-8 overflow-x-auto pb-2 custom-scrollbar">
+                    <div className="flex gap-1.5 mt-6 overflow-x-auto pb-1 custom-scrollbar">
                         <FilterButton active={filter === 'all'} onClick={() => setFilter('all')} label={t('common.all')} />
                         <FilterButton active={filter === 'drivers'} onClick={() => setFilter('drivers')} label={t('monitoring.active_fleet')} color="blue" />
                         <FilterButton active={filter === 'alerts'} onClick={() => setFilter('alerts')} label={t('monitoring.alerts')} count={alertCount} color="rose" />
                     </div>
                 </div>
 
-                <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar">
+                <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
                     {(filter === 'all' || filter === 'drivers') ? (
                         driversWithGPS
                             .filter(d => filter === 'all' || d.status === 'Online')
@@ -224,36 +224,34 @@ export function MonitoringCommandCenter({
                                 <div key={driver.Driver_ID} 
                                      onClick={() => handleDriverClick(driver)}
                                      className={cn(
-                                        "bg-muted/50 border border-border/10 p-4 rounded-3xl hover:bg-muted/80 transition-all cursor-pointer group",
-                                        selectedId === driver.Driver_ID && "ring-2 ring-primary bg-primary/5"
+                                        "bg-muted/50 border border-border/10 p-3 rounded-2xl hover:bg-muted/80 transition-all cursor-pointer group",
+                                        selectedId === driver.Driver_ID && "ring-1 ring-primary bg-primary/5"
                                      )}>
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-3">
                                             <div className="relative">
-                                                <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/20">
-                                                    <Truck size={20} className="text-primary" />
+                                                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/20">
+                                                    <Truck size={16} className="text-primary" />
                                                 </div>
-                                                <div className={cn("absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-[#050110]", driver.status === 'Online' ? "bg-emerald-500" : "bg-slate-500")} />
+                                                <div className={cn("absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-[#050110]", driver.status === 'Online' ? "bg-emerald-500" : "bg-slate-500")} />
                                             </div>
                                             <div>
-                                                <p className="text-xl font-black text-foreground">{driver.Driver_Name}</p>
-                                                <p className="text-lg font-bold text-muted-foreground uppercase tracking-tighter">{driver.Vehicle_Plate}</p>
+                                                <p className="text-sm font-black text-foreground uppercase">{driver.Driver_Name}</p>
+                                                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight">{driver.Vehicle_Plate}</p>
                                             </div>
                                         </div>
-                                        <div className="flex flex-col items-end gap-2">
+                                        <div className="flex flex-col items-end gap-1.5 scale-90 origin-right">
                                             <SafetyScoreBadge metrics={calculateSafetyScore(driver)} />
                                             {driver.Latitude && driver.Longitude && (
-                                                <Button 
-                                                    variant="outline" 
-                                                    size="sm" 
-                                                    className="h-8 px-3 text-[10px] font-bold border-primary/20 text-primary hover:bg-primary/5 rounded-xl transition-all"
+                                                <button 
+                                                    className="px-2 py-1 text-[8px] font-black uppercase tracking-widest border border-primary/20 text-primary hover:bg-primary hover:text-white rounded-md transition-all whitespace-nowrap"
                                                     onClick={(e: React.MouseEvent) => {
                                                         e.stopPropagation()
                                                         window.open(`https://www.google.com/maps/search/?api=1&query=${driver.Latitude},${driver.Longitude}`, '_blank')
                                                     }}
                                                 >
-                                                    OPEN MAPS
-                                                </Button>
+                                                    MAPS
+                                                </button>
                                             )}
                                         </div>
                                     </div>
@@ -264,22 +262,22 @@ export function MonitoringCommandCenter({
                             <div key={job.Job_ID}
                                  onClick={() => handleJobClick(job)}
                                  className={cn(
-                                    "bg-rose-500/5 border border-rose-500/10 p-4 rounded-3xl hover:bg-rose-500/10 transition-all cursor-pointer group",
-                                    selectedId === job.Job_ID && "ring-2 ring-rose-500"
+                                    "bg-rose-500/5 border border-rose-500/10 p-3 rounded-2xl hover:bg-rose-500/10 transition-all cursor-pointer group",
+                                    selectedId === job.Job_ID && "ring-1 ring-rose-500"
                                  )}>
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-3">
-                                        <div className="p-3 bg-rose-500/20 rounded-2xl text-rose-500">
-                                            <Activity size={20} />
+                                        <div className="p-2 bg-rose-500/20 rounded-xl text-rose-500">
+                                            <Activity size={16} />
                                         </div>
                                         <div>
-                                            <p className="text-xl font-black text-foreground">{job.Job_ID}</p>
-                                            <p className="text-lg font-bold text-rose-500 uppercase">{job.Job_Status}</p>
+                                            <p className="text-sm font-black text-foreground">{job.Job_ID}</p>
+                                            <p className="text-[10px] font-bold text-rose-500 uppercase tracking-widest">{job.Job_Status}</p>
                                         </div>
                                     </div>
                                     <div className="text-right">
-                                        <p className="text-base font-bold text-foreground truncate max-w-[150px]">{job.Dest_Location}</p>
-                                        <p className="text-xs font-bold text-muted-foreground">{job.Driver_Name || 'No Driver'}</p>
+                                        <p className="text-[10px] font-bold text-foreground truncate max-w-[100px]">{job.Dest_Location}</p>
+                                        <p className="text-[8px] font-black text-muted-foreground uppercase opacity-60">{job.Driver_Name || 'No Driver'}</p>
                                     </div>
                                 </div>
                             </div>
@@ -305,14 +303,14 @@ function FilterButton({ active, onClick, label, count, color = "primary" }: any)
         <button 
             onClick={onClick}
             className={cn(
-                "px-5 py-2.5 rounded-xl text-lg font-bold font-black uppercase tracking-[0.15em] whitespace-nowrap transition-all border flex items-center gap-2",
+                "px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest whitespace-nowrap transition-all border flex items-center gap-1.5",
                 active 
-                    ? `bg-primary text-white border-primary shadow-lg shadow-primary/20 scale-105` 
-                    : "bg-muted/50 border-border/10 text-muted-foreground hover:text-muted-foreground"
+                    ? `bg-primary text-white border-primary shadow-lg shadow-primary/20` 
+                    : "bg-muted/50 border-border/10 text-muted-foreground hover:text-foreground"
             )}
         >
             {label}
-            {count > 0 && <span className="px-1.5 py-0.5 bg-white text-rose-500 rounded-md text-base font-bold">{count}</span>}
+            {count > 0 && <span className="px-1 py-0.5 bg-white text-rose-500 rounded-md text-[9px] font-black">{count}</span>}
         </button>
     )
 }
