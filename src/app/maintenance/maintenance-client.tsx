@@ -100,7 +100,7 @@ export function MaintenanceClient({
         {[
           { label: t('maintenance.stats.total'), value: stats.total, icon: Wrench, color: "amber" },
           { label: t('maintenance.stats.pending'), value: stats.pending, icon: AlertTriangle, color: "rose" },
-          { label: t('maintenance.stats.active'), value: stats.inProgress, icon: Loader2, color: "blue" },
+          { label: t('maintenance.stats.active'), value: stats.inProgress, icon: Clock, color: "blue" },
           { label: t('maintenance.stats.complete'), value: stats.completed, icon: CheckCircle2, color: "emerald" },
         ].map((stat, idx) => (
           <PremiumCard key={idx} className="bg-background border-2 border-border/5 p-8 relative overflow-hidden group hover:border-border/20 transition-all">
@@ -112,7 +112,7 @@ export function MaintenanceClient({
                     stat.color === 'blue' ? "bg-blue-500/20 text-blue-500 border border-blue-500/30 shadow-blue-500/10" : 
                     "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 shadow-emerald-500/10"
                 )}>
-                    <stat.icon size={28} className={stat.icon === Loader2 ? 'animate-spin' : ''} />
+                    <stat.icon size={28} />
                 </div>
                 <div className="flex items-center gap-2 px-3 py-1 bg-muted/50 rounded-full border border-border/10">
                     <Activity size={14} className="text-muted-foreground" />

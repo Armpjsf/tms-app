@@ -14,6 +14,8 @@ import { ImageUpload } from "@/components/ui/image-upload"
 import Logger from "@/lib/utils/logger"
 import { useLanguage } from "@/components/providers/language-provider"
 
+import { toast } from "sonner"
+
 import { Driver } from "@/lib/supabase/drivers"
 
 export interface MaintenanceTicket {
@@ -108,31 +110,37 @@ export function MaintenanceDialog({
         Date_Report: new Date(formData.Date_Report).toISOString()
       }
 
+      let result;
       if (initialData) {
-        await updateRepairTicket(initialData.Ticket_ID, payload)
+        result = await updateRepairTicket(initialData.Ticket_ID, payload)
       } else {
-        await createRepairTicket(payload)
+        result = await createRepairTicket(payload)
       }
       
-      setShow(false)
-      if (!isControlled && !initialData) {
-        setFormData({
-            Date_Report: new Date().toISOString().slice(0, 16),
-            Driver_ID: '',
-            Vehicle_Plate: '',
-            Issue_Type: 'Engine',
-            Description: '',
-            Priority: 'Medium',
-            Photo_Url: '',
-            Status: 'Pending',
-            Cost_Total: 0,
-            Remark: ''
-        })
+      if (result && result.success) {
+        toast.success(initialData ? 'อัปเดตข้อมูลเรียบร้อยแล้ว' : 'ส่งแจ้งซ่อมเรียบร้อยแล้ว')
+        setShow(false)
+        if (!isControlled && !initialData) {
+          setFormData({
+              Date_Report: new Date().toISOString().slice(0, 16),
+              Driver_ID: '',
+              Vehicle_Plate: '',
+              Issue_Type: 'Engine',
+              Description: '',
+              Priority: 'Medium',
+              Photo_Url: '',
+              Status: 'Pending',
+              Cost_Total: 0,
+              Remark: ''
+          })
+        }
+        router.refresh()
+      } else {
+        toast.error(result?.message || 'เกิดข้อผิดพลาด กรุณาลองใหม่')
       }
-      router.refresh()
     } catch (err) {
       Logger.error("Maintenance submit error:", err)
-      // toast.error('เกิดข้อผิดพลาด กรุณาลองใหม่')
+      toast.error('เกิดข้อผิดพลาดในการเชื่อมต่อระบบ')
     } finally {
       setLoading(false)
     }

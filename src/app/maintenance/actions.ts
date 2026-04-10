@@ -105,12 +105,17 @@ export type TicketUpdateData = TicketFormData & {
 
 export async function updateRepairTicket(ticketId: string, data: TicketUpdateData) {
   const supabase = createAdminClient()
+  
+  // Explicitly parse Cost_Total to ensure it's a number and not NaN
+  const costTotal = data.Cost_Total !== undefined ? (parseFloat(String(data.Cost_Total)) || 0) : undefined
+
+  console.log(`[MAINTENANCE] Updating Ticket ${ticketId}:`, { status: data.Status, cost: costTotal })
 
   const { error } = await supabase
     .from('Repair_Tickets')
     .update({
       Status: data.Status,
-      Cost_Total: data.Cost_Total !== undefined ? (Number(data.Cost_Total) || 0) : undefined,
+      Cost_Total: costTotal,
       Remark: data.Remark || null,
       Date_Finish: data.Date_Finish || null,
       // Allow updating basic info too if needed
