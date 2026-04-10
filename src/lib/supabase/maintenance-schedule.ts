@@ -90,7 +90,7 @@ export async function getMaintenanceSchedule(): Promise<MaintenanceScheduleData>
   ).length
   const totalCostThisMonth = recentTickets
     .filter(t => t.Status === 'Completed' || t.Status === 'เสร็จสิ้น')
-    .reduce((s, t) => s + (t.Cost_Total || 0), 0)
+    .reduce((s, t) => s + (Number(t.Cost_Total) || 0), 0)
 
   // Build scheduled services from vehicle data
   const services: ScheduledService[] = []
@@ -168,7 +168,7 @@ export async function getMaintenanceSchedule(): Promise<MaintenanceScheduleData>
     if (t.Status === 'Pending' || t.Status === 'In Progress' || t.Status === 'รอดำเนินการ' || t.Status === 'กำลังซ่อม') {
       entry.openTickets++
     }
-    entry.totalCost += t.Cost_Total || 0
+    entry.totalCost += Number(t.Cost_Total) || 0
     if (!entry.lastRepair || (t.Date_Report && t.Date_Report > entry.lastRepair)) {
       entry.lastRepair = t.Date_Report
     }

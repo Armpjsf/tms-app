@@ -272,9 +272,9 @@ export function MaintenanceClient({
                         {ticket.Date_Report ? new Date(ticket.Date_Report).toLocaleDateString(t('common.loading') === 'กำลังประมวลผล...' ? 'th-TH' : 'en-US') : "VOID_DATE"}
                        </span>
                     </div>
-                    {ticket.Cost_Total && ticket.Cost_Total > 0 ? (
+                    {Number(ticket.Cost_Total) > 0 ? (
                         <div className="bg-emerald-500/10 px-5 py-3 rounded-2xl border-2 border-emerald-500/20 shadow-xl group-hover:scale-110 transition-transform">
-                            <span className="text-emerald-400 font-black text-2xl tracking-tighter italic leading-none">฿{ticket.Cost_Total.toLocaleString()}</span>
+                            <span className="text-emerald-400 font-black text-2xl tracking-tighter italic leading-none">฿{Number(ticket.Cost_Total).toLocaleString()}</span>
                         </div>
                     ) : (
                         <div className="flex items-center gap-3 font-black text-muted-foreground uppercase tracking-[0.4em] text-base font-bold italic">
