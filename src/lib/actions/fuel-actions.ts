@@ -66,7 +66,7 @@ export async function syncDailyFuelPrices() {
             const sectionHtml = sectionMatch[1]
             // Pattern: Find "ดีเซล" followed by any characters that are NOT another fuel name, then a price
             // We want to skip "ดีเซลพรีเมียม" - we do this by finding the most specific match
-            const priceRegex = /(ดีเซล|diesel|เชลล์ ฟิวเซฟ ดีเซล)[\s\S]*?>\s*([\d,]+\.\d{2})/gi
+            const priceRegex = /(ดีเซล|diesel|เชลล์ ฟิวเซฟ ดีเซล)[\s\S]{0,100}?>\s*([\d,]+\.\d{2})/gi
             let match
             const candidates: { name: string, price: number, isPremium: boolean }[] = []
 
@@ -100,11 +100,13 @@ export async function syncDailyFuelPrices() {
         if (extractedPrice === 0) {
             // Last ditch effort: search the whole HTML for any "ดีเซล" followed by a price that isn't premium
             log('No station-specific price found, trying global search...')
-            const globalRegex = /(ดีเซล\s*|diesel\s*)[^\d\s<]*([\d,]+\.\d{2})/gi
+            const globalRegex = /(ดีเซล\s*|diesel\s*)[^<]{0,50}?([\d,]+\.\d{2})/gi
             let m;
             while ((m = globalRegex.exec(html)) !== null) {
                 const price = parseFloat(m[2].replace(/,/g, ''))
-                const isPremium = m[0].includes('พรีเมียม') || m[0].includes('premium')
+                const context = m[0].toLowerCase()
+                const isPremium = context.includes('พรีเมียม') || context.includes('premium') || 
+                                  context.includes('v-power') || context.includes('ซูเปอร์')
                 if (price > 20 && !isPremium) {
                     extractedPrice = price
                     log(`Found global price match: ${extractedPrice}`)
