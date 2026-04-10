@@ -272,8 +272,11 @@ export function MaintenanceDialog({
                          <Input
                             id="Cost_Total"
                             type="number"
-                            value={formData.Cost_Total}
-                            onChange={(e) => setFormData({ ...formData, Cost_Total: parseFloat(e.target.value) || 0 })}
+                            value={formData.Cost_Total === 0 ? '' : formData.Cost_Total}
+                            onChange={(e) => {
+                                const val = e.target.value;
+                                setFormData({ ...formData, Cost_Total: val === '' ? 0 : parseFloat(val) })
+                            }}
                             className="h-12 bg-muted/50 border-border/10 text-foreground rounded-xl focus:ring-amber-500/40"
                          />
                     </div>

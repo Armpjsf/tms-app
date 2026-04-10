@@ -16,6 +16,7 @@ export type TicketFormData = {
   Priority: string | null
   Odometer?: number | null
   Photo_Url?: string | null
+  Cost_Total?: number | null
 }
 
 export async function createRepairTicket(data: TicketFormData) {
@@ -35,6 +36,7 @@ export async function createRepairTicket(data: TicketFormData) {
         Issue_Type: data.Issue_Type,
         Description: `[Priority: ${data.Priority}] ${data.Odometer ? '[Odo: ' + data.Odometer + '] ' : ''}${data.Description}`,
         Photo_Url: data.Photo_Url || null,
+        Cost_Total: data.Cost_Total || 0,
         Status: 'Pending',
         Branch_ID: branchId === 'All' ? null : branchId
       })
@@ -108,7 +110,7 @@ export async function updateRepairTicket(ticketId: string, data: TicketUpdateDat
     .from('Repair_Tickets')
     .update({
       Status: data.Status,
-      Cost_Total: data.Cost_Total || 0,
+      Cost_Total: data.Cost_Total !== undefined ? (data.Cost_Total || 0) : undefined,
       Remark: data.Remark || null,
       Date_Finish: data.Date_Finish || null,
       // Allow updating basic info too if needed
