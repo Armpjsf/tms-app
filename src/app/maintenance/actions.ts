@@ -102,7 +102,7 @@ export type TicketUpdateData = TicketFormData & {
 }
 
 export async function updateRepairTicket(ticketId: string, data: TicketUpdateData) {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
 
   const { error } = await supabase
     .from('Repair_Tickets')
@@ -156,7 +156,7 @@ if (data.Status === 'Completed') {
 }
 
 export async function deleteRepairTicket(ticketId: string) {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
 
   const { error } = await supabase
     .from('Repair_Tickets')

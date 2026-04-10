@@ -1,7 +1,8 @@
 "use server"
 
-import { createClient } from '@/utils/supabase/server'
+import { createAdminClient } from '@/utils/supabase/server'
 import { getUserBranchId, isSuperAdmin } from "@/lib/permissions"
+import { cookies } from 'next/headers'
 
 export type RepairTicket = {
   Ticket_ID: string
@@ -30,18 +31,24 @@ export async function getAllRepairTickets(
   status?: string
 ): Promise<{ data: RepairTicket[], count: number }> {
   try {
-    const supabase = await createClient()
+    const supabase = await createAdminClient()
     const offset = (page - 1) * limit
     
     // Filter by Branch
     const branchId = await getUserBranchId()
     const isAdmin = await isSuperAdmin()
+    const cookieStore = await cookies()
+    const selectedBranch = cookieStore.get('selectedBranch')?.value
     
     let dbQuery = supabase
       .from('Repair_Tickets')
       .select('*', { count: 'exact' })
     
-    if (branchId && branchId !== 'All') {
+    if (isAdmin) {
+      if (selectedBranch && selectedBranch !== 'All') {
+        dbQuery = dbQuery.eq('Branch_ID', selectedBranch)
+      }
+    } else if (branchId && branchId !== 'All') {
         dbQuery = dbQuery.eq('Branch_ID', branchId)
     } else if (!isAdmin && !branchId) {
         return { data: [], count: 0 }
@@ -113,14 +120,20 @@ export async function getPendingRepairTickets(): Promise<RepairTicket[]> {
 // นับสถิติ Repair Tickets
 export async function getRepairTicketStats() {
   try {
-    const supabase = await createClient()
+    const supabase = await createAdminClient()
     
     const branchId = await getUserBranchId()
     const isAdmin = await isSuperAdmin()
+    const cookieStore = await cookies()
+    const selectedBranch = cookieStore.get('selectedBranch')?.value
     
     let query = supabase.from('Repair_Tickets').select('Status')
 
-    if (branchId && branchId !== 'All') {
+    if (isAdmin) {
+      if (selectedBranch && selectedBranch !== 'All') {
+        query = query.eq('Branch_ID', selectedBranch)
+      }
+    } else if (branchId && branchId !== 'All') {
         query = query.eq('Branch_ID', branchId)
     } else if (!isAdmin && !branchId) {
         return { total: 0, pending: 0, inProgress: 0, completed: 0 }

@@ -61,25 +61,45 @@ export function MaintenanceActions({ ticket, drivers, vehicles }: MaintenanceAct
     }
   }
 
-  // Inline Quick Actions for Pending Tickets
-  if (ticket.Status === 'Pending') {
+  const isPending = ticket.Status === 'Pending' || ticket.Status === 'รอดำเนินการ'
+  const isInProgress = ticket.Status === 'In Progress' || ticket.Status === 'กำลังซ่อม'
+
+  // Inline Quick Actions for Pending/In Progress Tickets
+  if (isPending || isInProgress) {
     return (
         <div className="flex gap-2">
-            <Button 
-                disabled={loading}
-                onClick={() => handleStatusUpdate('In Progress')}
-                className="bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs uppercase tracking-widest h-10 px-4 rounded-xl shadow-lg shadow-emerald-600/20 active:scale-95 transition-all"
-            >
-                {loading ? <Loader2 className="animate-spin h-3 w-3" /> : 'อนุมัติ'}
-            </Button>
-            <Button 
-                disabled={loading}
-                variant="outline"
-                onClick={() => handleStatusUpdate('Rejected')}
-                className="border-2 border-red-200 text-red-600 hover:bg-red-50 font-black text-xs uppercase tracking-widest h-10 px-4 rounded-xl active:scale-95 transition-all"
-            >
-                {loading ? <Loader2 className="animate-spin h-3 w-3" /> : 'ปฏิเสธ'}
-            </Button>
+            {isPending ? (
+              <>
+                <Button 
+                    disabled={loading}
+                    onClick={() => handleStatusUpdate('In Progress')}
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs uppercase tracking-widest h-10 px-4 rounded-xl shadow-lg shadow-emerald-600/20 active:scale-95 transition-all"
+                >
+                    {loading ? <Loader2 className="animate-spin h-3 w-3" /> : 'อนุมัติ'}
+                </Button>
+                <Button 
+                    disabled={loading}
+                    variant="outline"
+                    onClick={() => handleStatusUpdate('Rejected')}
+                    className="border-2 border-red-200 text-red-600 hover:bg-red-50 font-black text-xs uppercase tracking-widest h-10 px-4 rounded-xl active:scale-95 transition-all"
+                >
+                    {loading ? <Loader2 className="animate-spin h-3 w-3" /> : 'ปฏิเสธ'}
+                </Button>
+              </>
+            ) : (
+              <Button 
+                  disabled={loading}
+                  onClick={() => handleStatusUpdate('Completed')}
+                  className="bg-emerald-500 hover:bg-emerald-600 text-white font-black text-xs uppercase tracking-widest h-10 px-4 rounded-xl shadow-lg shadow-emerald-500/20 active:scale-95 transition-all"
+              >
+                  {loading ? <Loader2 className="animate-spin h-3 w-3" /> : (
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 size={14} />
+                      ซ่อมเสร็จแล้ว
+                    </div>
+                  )}
+              </Button>
+            )}
             
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
