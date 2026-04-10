@@ -81,6 +81,20 @@ export async function getNotifications(): Promise<AppNotification[]> {
            })
         }
 
+        // LEAVE
+        else if (details.alert_type === 'LEAVE') {
+           notifications.push({
+             id: `leave-log-${log.id}`,
+             type: 'system',
+             title: `📅 แจ้งลางานใหม่`,
+             message: details.message || `${details.driver_name || 'คนขับ'} ขอลา: ${details.type || 'ไม่ระบุ'}`,
+             timestamp: log.created_at,
+             read: false,
+             href: '/admin/driver-leaves',
+             severity: 'info'
+           })
+        }
+
         // DAMAGE / REPAIR
         else if (details.alert_type === 'DAMAGE' || log.module === 'Reports') {
            notifications.push({
@@ -92,20 +106,6 @@ export async function getNotifications(): Promise<AppNotification[]> {
              read: false,
              href: '/reports',
              severity: 'warning'
-           })
-        }
-
-        // LEAVE
-        else if (details.alert_type === 'LEAVE') {
-           notifications.push({
-             id: `leave-log-${log.id}`,
-             type: 'system',
-             title: `📅 แจ้งลางานใหม่`,
-             message: details.message || `${details.driver_name || 'คนขับ'} ขอลา: ${details.type || 'ไม่ระบุ'}`,
-             timestamp: log.created_at,
-             read: false,
-             href: '/drivers',
-             severity: 'info'
            })
         }
       })

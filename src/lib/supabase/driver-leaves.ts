@@ -93,7 +93,7 @@ export async function createLeaveRequest(data: {
         await sendPushToAdmins({
             title: `📅 แจ้งลางานใหม่: ${data.Driver_Name}`,
             body: `ประเภท: ${data.Leave_Type} (${data.Start_Date} ถึง ${data.End_Date})`,
-            url: '/drivers',
+            url: '/admin/driver-leaves',
             type: 'standard'
         }, driver?.Branch_ID)
 

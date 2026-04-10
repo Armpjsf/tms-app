@@ -17,14 +17,8 @@ export default async function AdminLeavesPage() {
   const supabase = await createClient()
   const { data: leaves, error } = await supabase
     .from('Driver_Leaves')
-    .select(`
-      *,
-      Drivers:Driver_ID (
-        Driver_Name,
-        Phone_Number
-      )
-    `)
-    .order('Created_At', { ascending: false })
+    .select('*')
+    .order('created_at', { ascending: false })
 
   return (
     <div className="space-y-12 pb-32 p-4 lg:p-10">
@@ -87,11 +81,9 @@ export default async function AdminLeavesPage() {
                                               )} />
                                           </div>
                                           <div>
-                                              <h3 className="text-2xl font-black text-slate-900 leading-tight">คุณ {leave.Drivers?.Driver_Name || 'ไม่ระบุชื่อ'}</h3>
+                                              <h3 className="text-2xl font-black text-slate-900 leading-tight">คุณ {leave.Driver_Name || 'ไม่ระบุชื่อ'}</h3>
                                               <div className="flex items-center gap-2 text-slate-500 text-sm font-bold">
                                                   <Badge variant="secondary" className="rounded-lg">{leave.Leave_Type}</Badge>
-                                                  <span>•</span>
-                                                  <span>{leave.Drivers?.Phone_Number || 'ไม่มีเบอร์ติดต่อ'}</span>
                                               </div>
                                           </div>
                                       </div>
