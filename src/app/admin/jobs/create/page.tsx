@@ -45,6 +45,7 @@ import { DriverSuggestion } from "@/lib/ai/ai-assign"
 import { PremiumCard } from "@/components/ui/premium-card"
 import { PremiumButton } from "@/components/ui/premium-button"
 import { cn } from "@/lib/utils"
+import { motion, AnimatePresence } from "framer-motion"
 import { createAdminJob } from "@/lib/actions/job-actions"
 import { geocodeAddress } from "@/lib/ai/geocoding"
 
