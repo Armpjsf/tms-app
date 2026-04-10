@@ -1,4 +1,4 @@
-import { createClient } from "@/utils/supabase/server"
+import { createClient, createAdminClient } from "@/utils/supabase/server"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Calendar, User, Clock, FileText, ArrowLeft } from "lucide-react"
@@ -14,11 +14,11 @@ export default async function AdminLeavesPage() {
   const session = await getAdminSession()
   if (!session) redirect("/login")
 
-  const supabase = await createClient()
+  const supabase = await createAdminClient()
   const { data: leaves, error } = await supabase
     .from('Driver_Leaves')
     .select('*')
-    .order('created_at', { ascending: false })
+    .order('Created_At', { ascending: false })
 
   return (
     <div className="space-y-12 pb-32 p-4 lg:p-10">
