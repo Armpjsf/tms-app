@@ -56,7 +56,7 @@ export function InvoiceForm({ customers, initialData, onSuccess }: InvoiceFormPr
   const [issueDate, setIssueDate] = useState<Date>(new Date())
   const [dueDate, setDueDate] = useState<Date>(new Date(new Date().setDate(new Date().getDate() + 30)))
   const [vatRate, setVatRate] = useState(0)
-  const [discountAmount, setDiscountAmount] = useState(0)
+  const [discountAmount, setDiscountAmount] = useState<number | "">("")
   const [whtRate, setWhtRate] = useState(0)
   const [notes, setNotes] = useState("")
 
@@ -333,7 +333,7 @@ export function InvoiceForm({ customers, initialData, onSuccess }: InvoiceFormPr
                         <Input 
                             type="number"
                             value={discountAmount} 
-                            onChange={(e) => setDiscountAmount(Number(e.target.value))} 
+                            onChange={(e) => setDiscountAmount(e.target.value === "" ? "" : Number(e.target.value))} 
                             className="bg-card/50 border-border/10 rounded-2xl h-16 font-bold text-muted-foreground focus:ring-purple-500/20" 
                             placeholder="0.00"
                         />

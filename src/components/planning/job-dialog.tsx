@@ -185,20 +185,20 @@ export function JobDialog({
 
     Cargo_Type: job?.Cargo_Type || '',
     Notes: job?.Notes || '',
-    Price_Cust_Total: job?.Price_Cust_Total || 0,
-    Cost_Driver_Total: job?.Cost_Driver_Total || 0,
+    Price_Cust_Total: job?.Price_Cust_Total || '',
+    Cost_Driver_Total: job?.Cost_Driver_Total || '',
     Job_Status: job?.Job_Status || 'New',
-    Weight_Kg: job?.Weight_Kg || 0,
-    Volume_Cbm: job?.Volume_Cbm || 0,
+    Weight_Kg: job?.Weight_Kg || '',
+    Volume_Cbm: job?.Volume_Cbm || '',
     Zone: job?.Zone || '',
     Branch_ID: job?.Branch_ID || '',
     Delivery_Lat: job?.Delivery_Lat || null,
     Delivery_Lon: job?.Delivery_Lon || null,
     Sub_ID: job?.Sub_ID || '',
     Show_Price_To_Driver: job?.Show_Price_To_Driver !== false,
-    Est_Distance_KM: job?.Est_Distance_KM || 0,
-    Price_Cust_Extra: job?.Price_Cust_Extra || 0,
-    Cost_Driver_Extra: job?.Cost_Driver_Extra || 0,
+    Est_Distance_KM: job?.Est_Distance_KM || '',
+    Price_Cust_Extra: job?.Price_Cust_Extra || '',
+    Cost_Driver_Extra: job?.Cost_Driver_Extra || '',
   })
 
   // Multi-point origins
@@ -1285,8 +1285,8 @@ export function JobDialog({
                             <Label className="text-primary text-2xl font-black uppercase tracking-normal">{t('jobs.dialog.weight') || 'Weight (KG)'}</Label>
                             <Input
                                 type="number"
-                                value={formData.Weight_Kg}
-                                onChange={(e) => setFormData({ ...formData, Weight_Kg: Number(e.target.value) })}
+                                value={formData.Weight_Kg || ""}
+                                onChange={(e) => setFormData({ ...formData, Weight_Kg: e.target.value === "" ? "" : Number(e.target.value) })}
                                 placeholder="0.0"
                                 className="bg-background border-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-xl h-14"
                             />
@@ -1295,8 +1295,8 @@ export function JobDialog({
                             <Label className="text-primary text-2xl font-black uppercase tracking-normal">{t('jobs.dialog.volume') || 'Volume (CBM)'}</Label>
                             <Input
                                 type="number"
-                                value={formData.Volume_Cbm}
-                                onChange={(e) => setFormData({ ...formData, Volume_Cbm: Number(e.target.value) })}
+                                value={formData.Volume_Cbm || ""}
+                                onChange={(e) => setFormData({ ...formData, Volume_Cbm: e.target.value === "" ? "" : Number(e.target.value) })}
                                 placeholder="0.0"
                                 step="0.01"
                                 className="bg-background border-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-xl h-14"
@@ -1825,8 +1825,8 @@ export function JobDialog({
                   <Label className="text-xl font-black text-primary/80 uppercase tracking-normal">{t('jobs.dialog.price_cust')} (THB)</Label>
                   <Input
                     type="number"
-                    value={formData.Price_Cust_Total}
-                    onChange={(e) => updateAssignment(0, 'Price_Cust_Total', Number(e.target.value))}
+                    value={formData.Price_Cust_Total || ""}
+                    onChange={(e) => updateAssignment(0, 'Price_Cust_Total', e.target.value === "" ? "" : Number(e.target.value))}
                     className="bg-background border-input text-xl h-14"
                   />
                 </div>
@@ -1834,8 +1834,8 @@ export function JobDialog({
                    <Label className="text-xl font-black text-primary/80 uppercase tracking-normal">{t('jobs.dialog.cost_driver')} (THB)</Label>
                    <Input
                     type="number"
-                    value={formData.Cost_Driver_Total}
-                    onChange={(e) => updateAssignment(0, 'Cost_Driver_Total', Number(e.target.value))}
+                    value={formData.Cost_Driver_Total || ""}
+                    onChange={(e) => updateAssignment(0, 'Cost_Driver_Total', e.target.value === "" ? "" : Number(e.target.value))}
                     className="bg-background border-input text-xl h-14"
                   />
                 </div>

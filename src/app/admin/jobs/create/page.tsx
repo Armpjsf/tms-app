@@ -64,17 +64,17 @@ interface JobForm {
   Driver_ID: string
   Driver_Name: string
   Vehicle_Plate: string
-  Price_Cust_Total: number
-  Cost_Driver_Total: number
+  Price_Cust_Total: number | string
+  Cost_Driver_Total: number | string
   Cargo_Type: string
   Notes: string
   Priority: 'Normal' | 'High' | 'Urgent'
-  Weight: number
+  Weight: number | string
   Pickup_Lat?: number
   Pickup_Lon?: number
   Delivery_Lat?: number
   Delivery_Lon?: number
-  Est_Distance_KM: number
+  Est_Distance_KM: number | string
   Show_Price_To_Driver: boolean
 }
 
@@ -138,13 +138,13 @@ export default function CreateJobPage() {
     Driver_ID: '',
     Driver_Name: '',
     Vehicle_Plate: '',
-    Price_Cust_Total: 0,
-    Cost_Driver_Total: 0,
+    Price_Cust_Total: '',
+    Cost_Driver_Total: '',
     Cargo_Type: '',
     Notes: '',
     Priority: 'Normal',
-    Weight: 0,
-    Est_Distance_KM: 0,
+    Weight: '',
+    Est_Distance_KM: '',
     Show_Price_To_Driver: true
   })
 
@@ -183,9 +183,8 @@ export default function CreateJobPage() {
         Route_Name: route.Route_Name,
         Origin_Location: route.Origin || '',
         Dest_Location: route.Destination || '',
-        Est_Distance_KM: Number(route.Distance_KM) || 0,
-        Pickup_Lat: Number(route.Origin_Lat) || undefined,
-        Pickup_Lon: Number(route.Origin_Lon) || undefined,
+        Est_Distance_KM: route.Distance_KM || '',
+        Pickup_Lat: Number(route.Origin_Lat) || undefined,        Pickup_Lon: Number(route.Origin_Lon) || undefined,
         Delivery_Lat: Number(route.Dest_Lat) || undefined,
         Delivery_Lon: Number(route.Dest_Lon) || undefined,
       }))

@@ -72,8 +72,8 @@ export default function CustomersSettingsPage() {
     Address: "",
     Email: "",
     Line_User_ID: "",
-    Credit_Term: 30,
-    Price_Per_Unit: 0,
+    Credit_Term: undefined,
+    Price_Per_Unit: undefined,
   })
   const [saving, setSaving] = useState(false)
 
@@ -397,8 +397,8 @@ export default function CustomersSettingsPage() {
                       <div className="glass-panel p-1 rounded-2xl border-accent/20 bg-accent/5">
                           <Input
                               type="number"
-                              value={formData.Credit_Term || 30}
-                              onChange={(e) => updateForm("Credit_Term", parseInt(e.target.value) || 0)}
+                              value={formData.Credit_Term ?? ""}
+                              onChange={(e) => updateForm("Credit_Term", e.target.value === "" ? undefined : parseInt(e.target.value))}
                               placeholder="Enter Credit Term in Days..."
                               className="bg-transparent border-none text-foreground font-black rounded-xl h-14 px-8 flex-1 focus:bg-accent/10 tracking-normal"
                           />
@@ -414,8 +414,8 @@ export default function CustomersSettingsPage() {
                           <Input
                               type="number"
                               step="0.01"
-                              value={formData.Price_Per_Unit || 0}
-                              onChange={(e) => updateForm("Price_Per_Unit", parseFloat(e.target.value) || 0)}
+                              value={formData.Price_Per_Unit ?? ""}
+                              onChange={(e) => updateForm("Price_Per_Unit", e.target.value === "" ? undefined : parseFloat(e.target.value))}
                               placeholder="0.00"
                               className="bg-transparent border-none text-foreground font-black rounded-xl h-14 px-8 flex-1 focus:bg-emerald-500/10 tracking-normal"
                           />

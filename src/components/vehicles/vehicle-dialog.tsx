@@ -62,12 +62,12 @@ export function VehicleDialog({
     Brand: vehicle?.Brand || '',
     Model: vehicle?.Model || '',
     Active_Status: vehicle?.Active_Status || 'Active',
-    Current_Mileage: vehicle?.Current_Mileage || 0,
-    Next_Service_Mileage: vehicle?.Next_Service_Mileage || 0,
+    Current_Mileage: vehicle?.Current_Mileage || '',
+    Next_Service_Mileage: vehicle?.Next_Service_Mileage || '',
     Branch_ID: vehicle?.Branch_ID || '',
     Sub_ID: vehicle?.Sub_ID || '',
-    Max_Weight_kg: vehicle?.Max_Weight_kg || 0,
-    Max_Volume_cbm: vehicle?.Max_Volume_cbm || 0,
+    Max_Weight_kg: vehicle?.Max_Weight_kg || '',
+    Max_Volume_cbm: vehicle?.Max_Volume_cbm || '',
     Tax_Expiry: vehicle?.Tax_Expiry || '',
     Insurance_Expiry: vehicle?.Insurance_Expiry || '',
     Act_Expiry: vehicle?.Act_Expiry || ''
@@ -223,8 +223,8 @@ export function VehicleDialog({
                 <Input
                 id="Current_Mileage"
                 type="number"
-                value={formData.Current_Mileage}
-                onChange={(e) => setFormData({ ...formData, Current_Mileage: Number(e.target.value) })}
+                value={formData.Current_Mileage || ""}
+                onChange={(e) => setFormData({ ...formData, Current_Mileage: e.target.value === "" ? "" : Number(e.target.value) })}
                 className="h-12 px-6 rounded-xl bg-muted/50 border-border/10 text-foreground focus:ring-primary/40"
                 />
             </div>
@@ -233,8 +233,8 @@ export function VehicleDialog({
                 <Input
                 id="Next_Service_Mileage"
                 type="number"
-                value={formData.Next_Service_Mileage}
-                onChange={(e) => setFormData({ ...formData, Next_Service_Mileage: Number(e.target.value) })}
+                value={formData.Next_Service_Mileage || ""}
+                onChange={(e) => setFormData({ ...formData, Next_Service_Mileage: e.target.value === "" ? "" : Number(e.target.value) })}
                 className="h-12 px-6 rounded-xl bg-muted/50 border-border/10 text-foreground focus:ring-primary/40"
                 />
             </div>
@@ -248,8 +248,8 @@ export function VehicleDialog({
                     <Input
                         id="Max_Weight_kg"
                         type="number"
-                        value={formData.Max_Weight_kg}
-                        onChange={(e) => setFormData({ ...formData, Max_Weight_kg: Number(e.target.value) })}
+                        value={formData.Max_Weight_kg || ""}
+                        onChange={(e) => setFormData({ ...formData, Max_Weight_kg: e.target.value === "" ? "" : Number(e.target.value) })}
                         placeholder="e.g. 1500"
                         className="h-12 pl-12 rounded-xl bg-emerald-500/5 border-emerald-500/10 text-emerald-400 placeholder:text-emerald-900/40"
                     />
@@ -262,8 +262,8 @@ export function VehicleDialog({
                     <Input
                         id="Max_Volume_cbm"
                         type="number"
-                        value={formData.Max_Volume_cbm}
-                        onChange={(e) => setFormData({ ...formData, Max_Volume_cbm: Number(e.target.value) })}
+                        value={formData.Max_Volume_cbm || ""}
+                        onChange={(e) => setFormData({ ...formData, Max_Volume_cbm: e.target.value === "" ? "" : Number(e.target.value) })}
                         placeholder="e.g. 2.5"
                         step="0.1"
                         className="h-12 pl-12 rounded-xl bg-emerald-500/5 border-emerald-500/10 text-emerald-400 placeholder:text-emerald-900/40"
