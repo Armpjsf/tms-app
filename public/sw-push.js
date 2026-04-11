@@ -3,6 +3,10 @@
 // Handles Web Push for both Admin (desktop) and Driver (mobile web)
 // ─────────────────────────────────────────────────────────────────
 
+// ── Lifecycle Management: Force immediate update ──
+self.addEventListener("install", () => self.skipWaiting());
+self.addEventListener("activate", (event) => event.waitUntil(self.clients.claim()));
+
 self.addEventListener("push", function (event) {
   console.log("[SW] Push Received.");
 
@@ -51,6 +55,7 @@ self.addEventListener("push", function (event) {
     vibrate,
     requireInteraction: notifType === "sos" || notifType === "new_job",  // Persistent for critical events
     silent: false,
+    sound: notifType === "sos" ? "/sounds/emergency.mp3" : "/sounds/notification.mp3", // Hint for some browsers
     data: {
       url:         data.url || "/",
       type:        notifType,
@@ -62,8 +67,50 @@ self.addEventListener("push", function (event) {
     renotify: true,
   };
 
+  // ── Broadcast to active clients to trigger custom sound ──
+  // Redundant Dual-Signaling Strategy for maximum reliability
   event.waitUntil(
-    self.registration.showNotification(title, options)
+    Promise.all([
+      // 1. Using BroadcastChannel (Broad focus)
+      (async () => {
+        try {
+          const channel = new BroadcastChannel("notification_channel");
+          channel.postMessage({
+            type: "PUSH_RECEIVED",
+            notification: {
+              title,
+              body: options.body,
+              type: notifType,
+              data: options.data
+            }
+          });
+          channel.close();
+        } catch (err) {
+          console.error("[SW] BroadcastChannel error:", err);
+        }
+      })(),
+
+      // 2. Using clients.postMessage (Direct focus)
+      (async () => {
+        try {
+          const windowClients = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+          windowClients.forEach((client) => {
+            client.postMessage({
+              type: "PUSH_RECEIVED",
+              notification: {
+                title,
+                body: options.body,
+                type: notifType,
+                data: options.data
+              }
+            });
+          });
+        } catch (err) {
+          console.error("[SW] direct client postMessage error:", err);
+        }
+      })()
+    ])
+    .then(() => self.registration.showNotification(title, options))
   );
 });
 

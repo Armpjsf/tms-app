@@ -53,66 +53,82 @@ export async function getExecutiveDashboardUnified(branchId?: string, startDate?
             console.warn('[getExecutiveDashboardUnified] RPC failed, using manual fallback:', rpcError.message)
         }
         
-        // Manual fallback to keep dashboard alive with strict security filtering
-        let query = supabase
-            .from('Jobs_Main')
-            .select('Price_Cust_Total, Cost_Driver_Total, Price_Cust_Extra, Cost_Driver_Extra, Job_Status, Plan_Date, Est_Distance_KM')
-            .gte('Plan_Date', sDateCurrent)
-            .lte('Plan_Date', eDateCurrent)
-        
-        // SECURITY: Apply strict isolation for customers and branches
-        if (finalCustomerId) {
-            query = query.eq('Customer_ID', finalCustomerId)
-        }
-        if (effectiveBranchId) {
-            query = query.eq('Branch_ID', effectiveBranchId)
-        }
-        
-        const { data: fallbackJobs } = await query
-        const jobs = fallbackJobs || []
-        const revenue = jobs.filter(j => REVENUE_STATUSES.includes(j.Job_Status || '')).reduce((sum, j) => sum + (Number(j.Price_Cust_Total) || 0), 0)
-        const cost = jobs.filter(j => REVENUE_STATUSES.includes(j.Job_Status || '')).reduce((sum, j) => sum + (Number(j.Cost_Driver_Total) || 0) + (Number(j.Price_Cust_Extra) || 0) + (Number(j.Cost_Driver_Extra) || 0), 0)
-        
-        // Calculate status distribution and daily trend for the fallback
-        const statusMap: Record<string, number> = {}
-        const trendMap: Record<string, { total: number, completed: number }> = {}
-        
-        jobs.forEach(j => {
-            const s = j.Job_Status || 'Unknown'
-            statusMap[s] = (statusMap[s] || 0) + 1
+        // Manual fallback: Fetch Current & Previous for Comparison
+        const fetchRange = async (start: string, end: string) => {
+            let query = supabase
+                .from('Jobs_Main')
+                .select('Price_Cust_Total, Cost_Driver_Total, Price_Cust_Extra, Cost_Driver_Extra, Job_Status, Plan_Date, Est_Distance_KM')
+                .gte('Plan_Date', start)
+                .lte('Plan_Date', end)
             
+            if (finalCustomerId) query = query.eq('Customer_ID', finalCustomerId)
+            if (effectiveBranchId) query = query.eq('Branch_ID', effectiveBranchId)
+            
+            const { data } = await query
+            return data || []
+        }
+
+        const [currJobs, prevJobs] = await Promise.all([
+            fetchRange(sDateCurrent, eDateCurrent),
+            fetchRange(sDatePrev, eDatePrev)
+        ])
+
+        const calcStats = (jobs: any[]) => {
+            const revenue = jobs.filter(j => REVENUE_STATUSES.includes(j.Job_Status || '')).reduce((sum, j) => sum + (Number(j.Price_Cust_Total) || 0), 0)
+            const cost = jobs.filter(j => REVENUE_STATUSES.includes(j.Job_Status || '')).reduce((sum, j) => sum + (Number(j.Cost_Driver_Total) || 0) + (Number(j.Price_Cust_Extra) || 0) + (Number(j.Cost_Driver_Extra) || 0), 0)
+            const distance = jobs.reduce((sum, j) => sum + (Number(j.Est_Distance_KM) || 0), 0)
+            return { revenue, cost, profit: revenue - cost, distance, count: jobs.length }
+        }
+
+        const curr = calcStats(currJobs)
+        const prev = calcStats(prevJobs)
+
+        const calculateGrowth = (c: number, p: number) => {
+            if (p <= 0) return c > 0 ? 100 : 0
+            return ((c - p) / p) * 100
+        }
+
+        // Trend calculation
+        const trendMap: Record<string, { total: number, completed: number }> = {}
+        currJobs.forEach(j => {
             const d = j.Plan_Date ? String(j.Plan_Date).split('T')[0] : 'Unknown'
             if (d !== 'Unknown') {
                 if (!trendMap[d]) trendMap[d] = { total: 0, completed: 0 }
                 trendMap[d].total++
-                if (REVENUE_STATUSES.includes(s)) trendMap[d].completed++
+                if (REVENUE_STATUSES.includes(j.Job_Status)) trendMap[d].completed++
             }
         })
+        const trend = Object.entries(trendMap).map(([date, counts]) => ({ date, ...counts })).sort((a, b) => a.date.localeCompare(b.date))
 
-        const trend = Object.entries(trendMap)
-            .map(([date, counts]) => ({ date, ...counts }))
-            .sort((a, b) => a.date.localeCompare(b.date))
+        // Status Distribution
+        const statusMap: Record<string, number> = {}
+        currJobs.forEach(j => {
+            const s = j.Job_Status || 'Unknown'
+            statusMap[s] = (statusMap[s] || 0) + 1
+        })
+
+        // ESG Heuristics
+        const co2Saved = curr.distance * 0.082 * 0.12
+        const fuelSaved = co2Saved / 2.68
+        const treesSaved = co2Saved / 20.2
 
         return {
             financial: { 
-                revenue, 
-                cost: { total: cost, driver: cost, extra: 0, fuel: 0, maintenance: 0 }, 
-                netProfit: revenue - cost, 
-                profitMargin: revenue > 0 ? ((revenue - cost) / revenue) * 100 : 0 
+                revenue: curr.revenue, 
+                cost: { total: curr.cost, driver: curr.cost, extra: 0, fuel: 0, maintenance: 0 }, 
+                netProfit: curr.profit, 
+                profitMargin: curr.revenue > 0 ? (curr.profit / curr.revenue) * 100 : 0 
             },
             trend, 
-            esg: {
-                fuelSaved: Math.round((jobs.reduce((sum, j) => sum + (Number(j.Est_Distance_KM) || 0), 0) / 5.5) * 0.08),
-                co2Saved: Math.round(((jobs.reduce((sum, j) => sum + (Number(j.Est_Distance_KM) || 0), 0) / 5.5) * 0.08) * 2.68),
-                treesSaved: Number(((((jobs.reduce((sum, j) => sum + (Number(j.Est_Distance_KM) || 0), 0) / 5.5) * 0.08) * 2.68) / 20.2).toFixed(1))
-            },
             statusDist: Object.entries(statusMap).map(([name, value]) => ({ name, value })),
             kpi: { 
-                revenue: { current: revenue, previous: 0, growth: 0, target: 250000, attainment: (revenue / 250000) * 100 }, 
-                profit: { current: revenue - cost, previous: 0, growth: 0 }, 
-                margin: { current: revenue > 0 ? ((revenue - cost) / revenue) * 100 : 0, growth: 0, target: 15 }, 
-                jobs: { current: jobs.length } 
-            }
+                revenue: { current: curr.revenue, previous: prev.revenue, growth: calculateGrowth(curr.revenue, prev.revenue), target: 250000, attainment: (curr.revenue / 250000) * 100 }, 
+                profit: { current: curr.profit, previous: prev.profit, growth: calculateGrowth(curr.profit, prev.profit) }, 
+                margin: { current: curr.revenue > 0 ? (curr.profit / curr.revenue) * 100 : 0, growth: calculateGrowth(curr.profit / (curr.revenue || 1), prev.profit / (prev.revenue || 1)), target: 15 }, 
+                jobs: { current: curr.count } 
+            },
+            esg: { fuelSaved: Math.round(fuelSaved), co2Saved: Math.round(co2Saved), treesSaved: Number(treesSaved.toFixed(1)) },
+            vehicles: []
         }
     }
 

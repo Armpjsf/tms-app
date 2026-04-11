@@ -36,8 +36,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         <div className="absolute top-[-10%] left-[-5%] w-[60%] h-[60%] bg-primary/10 dark:bg-primary/10 rounded-full blur-[120px] animate-pulse pointer-events-none" />
         <div className="absolute bottom-[-10%] right-[-5%] w-[50%] h-[50%] bg-secondary/20 dark:bg-secondary/20 rounded-full blur-[100px] animate-pulse delay-700 pointer-events-none" />
         
-        {/* Subtle Static Noise Overlay */}
-        <div className="absolute inset-0 opacity-[0.01] dark:opacity-[0.01] pointer-events-none bg-[url('https://grainy-gradients.vercel.app/noise.svg')]" />
+        {/* Subtle Static Noise Overlay (Hidden due to external asset failure) */}
+        {/* <div className="absolute inset-0 opacity-[0.01] dark:opacity-[0.01] pointer-events-none bg-[url('https://grainy-gradients.vercel.app/noise.svg')]" /> */}
 
         {/* Elite Scanning Line (Futuristic Touch) - BRAND BLUE */}
         <div className="absolute inset-0 opacity-[0.008] bg-[linear-gradient(to_bottom,transparent_0%,rgba(0,39,156,0.2)_50%,transparent_100%)] bg-[length:100%_12px] animate-[scan_15s_linear_infinite]" />

@@ -162,8 +162,8 @@ export function ExecutiveDashboardClient({ initialData, initialRemark, branchId,
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Revenue Trend Chart */}
                 <PremiumCard className="lg:col-span-2 p-8" title={t('dashboard.revenue_trend')}>
-                    <div className="h-[350px] mt-6">
-                        <ResponsiveContainer width="100%" height="100%">
+                    <div className="h-[350px] mt-6 relative">
+                        <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                             <AreaChart data={data.trend}>
                                 <defs>
                                     <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">

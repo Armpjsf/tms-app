@@ -191,8 +191,8 @@ export function ProfitabilitySection({ data = [], financials, startDate, endDate
                             </div>
                         </div>
                     </div>
-                    <div className="p-12 h-[450px]">
-                        <ResponsiveContainer width="100%" height="100%">
+                    <div className="p-12 h-[450px] relative">
+                        <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                             <BarChart data={topPerformers} layout="vertical" margin={{ left: 40, right: 40 }}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" horizontal={false} />
                                 <XAxis type="number" stroke="#1e293b" fontSize={11} fontWeight="900" tickLine={false} axisLine={false} />
@@ -237,7 +237,7 @@ export function ProfitabilitySection({ data = [], financials, startDate, endDate
                     </div>
                     <div className="p-10">
                         <div className="h-[280px] relative">
-                            <ResponsiveContainer width="100%" height="100%">
+                            <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                                 <PieChart>
                                     <Pie
                                         data={costBreakdownData}

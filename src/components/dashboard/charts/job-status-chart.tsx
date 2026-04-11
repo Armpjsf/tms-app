@@ -18,7 +18,8 @@ export function JobStatusChart({ data }: { data: StatusData[] }) {
   }
 
   return (
-    <ResponsiveContainer width="100%" height={350}>
+    <div className="w-full h-[350px] relative">
+        <ResponsiveContainer width="100%" height="100%" minWidth={0}>
       <PieChart>
         <Pie
           data={data}

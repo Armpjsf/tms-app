@@ -46,7 +46,7 @@ const TYPE_LABELS = {
 }
 
 export function NotificationsClient({ alerts = [] }: { alerts: any[] }) {
-  const [pushStatus, setPushStatus] = useState<string>(typeof window !== 'undefined' ? Notification.permission : 'default')
+  const [pushStatus, setPushStatus] = useState<string>('default')
   const [isRegistering, setIsRegistering] = useState(false)
   const { t } = useLanguage()
 
@@ -189,7 +189,7 @@ export function NotificationsClient({ alerts = [] }: { alerts: any[] }) {
                ) : (
                   <PremiumButton 
                      onClick={handleEnablePush}
-                     isLoading={isRegistering}
+                     loading={isRegistering}
                      variant="primary" 
                      className="w-full h-16 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white font-black text-lg uppercase tracking-[0.2em] shadow-[0_10px_30px_rgba(59,130,246,0.3)]"
                   >

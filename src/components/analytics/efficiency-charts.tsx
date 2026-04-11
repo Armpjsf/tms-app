@@ -46,8 +46,8 @@ export function EfficiencyCharts({ data }: { data: { date: string; revenue: numb
              </div>
            </div>
         </div>
-        <div className="p-10 h-[450px]">
-          <ResponsiveContainer width="100%" height="100%">
+        <div className="p-10 h-[450px] relative">
+          <ResponsiveContainer width="100%" height="100%" minWidth={0}>
             <ScatterChart margin={{ top: 40, right: 40, bottom: 40, left: 0 }}>
               <defs>
                 <linearGradient id="scatterGradient" x1="0" y1="0" x2="1" y2="1">

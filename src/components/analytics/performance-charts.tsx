@@ -49,8 +49,8 @@ export function PerformanceCharts({ data }: { data: PerformanceData[] }) {
                 </div>
             </div>
         </div>
-        <div className="p-10 h-[350px]">
-          <ResponsiveContainer width="100%" height="100%">
+        <div className="p-10 h-[350px] relative">
+          <ResponsiveContainer width="100%" height="100%" minWidth={0}>
             <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
               <XAxis 
@@ -102,8 +102,8 @@ export function PerformanceCharts({ data }: { data: PerformanceData[] }) {
                 </div>
             </div>
         </div>
-        <div className="p-10 h-[350px]">
-          <ResponsiveContainer width="100%" height="100%">
+        <div className="p-10 h-[350px] relative">
+          <ResponsiveContainer width="100%" height="100%" minWidth={0}>
             <LineChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
               <XAxis 

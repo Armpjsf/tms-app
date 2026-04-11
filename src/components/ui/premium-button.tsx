@@ -21,6 +21,8 @@ export function PremiumButton({
   disabled,
   ...props 
 }: PremiumButtonProps) {
+  // Filter out custom props that shouldn't reach the DOM
+  const { isLoading, ...domProps } = props as any;
   
   const variants = {
     primary: "bg-primary text-white shadow-lg shadow-primary/25 hover:brightness-110",
@@ -51,7 +53,7 @@ export function PremiumButton({
         (disabled || loading) && "opacity-50 cursor-not-allowed grayscale",
         className
       )}
-      {...props}
+      {...domProps}
     >
       {/* Premium Shine Overlay */}
       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out pointer-events-none" />

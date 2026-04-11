@@ -13,8 +13,8 @@ export function RevenueTrendChart({ data }: { data: RevenueData[] }) {
   const { t } = useLanguage()
 
   return (
-    <div className="h-[500px] w-full min-h-[400px]">
-      <ResponsiveContainer width="100%" height="100%">
+    <div className="h-[500px] w-full min-h-[400px] relative">
+      <ResponsiveContainer width="100%" height="100%" minWidth={0}>
         <AreaChart
           data={data}
           margin={{ top: 40, right: 40, left: 0, bottom: 20 }}

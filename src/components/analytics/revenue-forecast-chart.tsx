@@ -48,8 +48,8 @@ export function RevenueForecastChart({ data = [] }: Props) {
                 </div>
             </div>
             
-            <div className="p-12 h-[450px]">
-                <ResponsiveContainer width="100%" height="100%">
+            <div className="p-12 h-[450px] relative">
+                <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                     <AreaChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 0 }}>
                         <defs>
                             <linearGradient id="colorActual" x1="0" y1="0" x2="0" y2="1">

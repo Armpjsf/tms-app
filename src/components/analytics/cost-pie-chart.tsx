@@ -16,9 +16,9 @@ export function CostBreakdownChart({ data }: { data: CostData }) {
   ].filter(item => item.value > 0)
 
   return (
-    <div className="h-[450px] w-full min-h-[400px]">
+    <div className="h-[450px] w-full min-h-[400px] relative">
         {chartData.length > 0 ? (
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                 <PieChart>
                 <Pie
                     data={chartData}
