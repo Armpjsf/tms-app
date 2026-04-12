@@ -40,6 +40,7 @@ import { toast } from "sonner"
 import { useRealtime } from "@/hooks/useRealtime"
 import { RealtimeIndicator } from "@/components/ui/realtime-indicator"
 import { AnimatedNumber } from "@/components/ui/animated-number"
+import { ChartContainer } from "@/components/ui/chart-container"
 import { useLanguage } from "@/components/providers/language-provider"
 import { cn } from "@/lib/utils"
 import { useRouter } from "next/navigation"
@@ -162,8 +163,9 @@ export function ExecutiveDashboardClient({ initialData, initialRemark, branchId,
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Revenue Trend Chart */}
                 <PremiumCard className="lg:col-span-2 p-8" title={t('dashboard.revenue_trend')}>
-                    <div className="h-[350px] mt-6 relative">
-                        <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+                    <div className="mt-6">
+                        <ChartContainer height={350}>
+                        <ResponsiveContainer width="100%" height="100%">
                             <AreaChart data={data.trend}>
                                 <defs>
                                     <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
@@ -188,6 +190,7 @@ export function ExecutiveDashboardClient({ initialData, initialRemark, branchId,
                                 <Area type="monotone" dataKey="revenue" stroke="#ff1e85" strokeWidth={4} fillOpacity={1} fill="url(#colorRev)" />
                             </AreaChart>
                         </ResponsiveContainer>
+                        </ChartContainer>
                     </div>
                 </PremiumCard>
 

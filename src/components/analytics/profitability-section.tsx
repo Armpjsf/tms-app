@@ -1,6 +1,7 @@
 "use client"
 
 import { PremiumCard } from "@/components/ui/premium-card"
+import { ChartContainer } from "@/components/ui/chart-container"
 import { useLanguage } from "@/components/providers/language-provider"
 import { 
   BarChart, 
@@ -191,8 +192,9 @@ export function ProfitabilitySection({ data = [], financials, startDate, endDate
                             </div>
                         </div>
                     </div>
-                    <div className="p-12 h-[450px] relative">
-                        <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+                    <div className="p-12">
+                        <ChartContainer height={450}>
+                        <ResponsiveContainer width="100%" height="100%">
                             <BarChart data={topPerformers} layout="vertical" margin={{ left: 40, right: 40 }}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" horizontal={false} />
                                 <XAxis type="number" stroke="#1e293b" fontSize={11} fontWeight="900" tickLine={false} axisLine={false} />
@@ -218,6 +220,7 @@ export function ProfitabilitySection({ data = [], financials, startDate, endDate
                                 </Bar>
                             </BarChart>
                         </ResponsiveContainer>
+                        </ChartContainer>
                     </div>
                 </PremiumCard>
 
@@ -236,8 +239,8 @@ export function ProfitabilitySection({ data = [], financials, startDate, endDate
                         </div>
                     </div>
                     <div className="p-10">
-                        <div className="h-[280px] relative">
-                            <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+                        <ChartContainer height={280}>
+                            <ResponsiveContainer width="100%" height="100%">
                                 <PieChart>
                                     <Pie
                                         data={costBreakdownData}
@@ -261,13 +264,13 @@ export function ProfitabilitySection({ data = [], financials, startDate, endDate
                                     />
                                 </PieChart>
                             </ResponsiveContainer>
+                        </ChartContainer>
                             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                                 <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-[0.2em] leading-none mb-1">TOTAL OpEx</span>
                                 <span className="text-3xl font-black text-foreground tracking-tighter italic">
                                     ฿{(financials.cost.total / 1000).toFixed(0)}K
                                 </span>
                             </div>
-                        </div>
                         
                         <div className="space-y-4 mt-8">
                             {costBreakdownData.map((item) => (

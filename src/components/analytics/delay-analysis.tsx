@@ -1,6 +1,7 @@
 "use client"
 
 import { PremiumCard } from "@/components/ui/premium-card"
+import { ChartContainer } from "@/components/ui/chart-container"
 import { useLanguage } from "@/components/providers/language-provider"
 import { 
   PieChart, 
@@ -62,8 +63,8 @@ export function DelayAnalysis({ data = [] }: Props) {
             </div>
             
             <div className="p-10">
-                <div className="h-[350px] relative">
-                    <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+                <ChartContainer height={350}>
+                    <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
                             <Pie
                                 data={data}
@@ -99,11 +100,11 @@ export function DelayAnalysis({ data = [] }: Props) {
                             />
                         </PieChart>
                     </ResponsiveContainer>
-                    <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none pr-32">
+                </ChartContainer>
+                    <div className="text-center mt-4 pointer-events-none">
                         <span className="text-base font-bold font-black text-muted-foreground uppercase leading-none mb-1">TOTAL</span>
-                        <span className="text-4xl font-black text-foreground tracking-tighter italic">{total}</span>
+                        <span className="text-4xl font-black text-foreground tracking-tighter italic ml-2">{total}</span>
                     </div>
-                </div>
 
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-8">
                     {data.slice(0, 6).map((item, index) => (

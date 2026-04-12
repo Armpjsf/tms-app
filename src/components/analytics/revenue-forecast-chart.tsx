@@ -1,6 +1,7 @@
 "use client"
 
 import { PremiumCard } from "@/components/ui/premium-card"
+import { ChartContainer } from "@/components/ui/chart-container"
 import { useLanguage } from "@/components/providers/language-provider"
 import {
   XAxis,
@@ -48,8 +49,9 @@ export function RevenueForecastChart({ data = [] }: Props) {
                 </div>
             </div>
             
-            <div className="p-12 h-[450px] relative">
-                <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+            <div className="p-12">
+                <ChartContainer height={450}>
+                <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 0 }}>
                         <defs>
                             <linearGradient id="colorActual" x1="0" y1="0" x2="0" y2="1">
@@ -117,6 +119,7 @@ export function RevenueForecastChart({ data = [] }: Props) {
                         />
                     </AreaChart>
                 </ResponsiveContainer>
+                </ChartContainer>
             </div>
             
             <div className="p-10 bg-muted/30 border-t border-border/5">

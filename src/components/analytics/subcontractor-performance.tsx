@@ -1,6 +1,7 @@
 "use client"
 
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
+import { ChartContainer } from "@/components/ui/chart-container";
 import { useLanguage } from '@/components/providers/language-provider';
 
 type SubPerItem = {
@@ -20,7 +21,8 @@ export function SubcontractorPerformance({ data }: { data: SubPerItem[] }) {
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
-            <div className="h-[250px] w-full relative">
+            <div className="h-[250px] w-full">
+                <ChartContainer height={250}>
                 <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                         <Pie
@@ -54,6 +56,7 @@ export function SubcontractorPerformance({ data }: { data: SubPerItem[] }) {
                         />
                     </PieChart>
                 </ResponsiveContainer>
+                </ChartContainer>
             </div>
             <div className="space-y-4">
                 {data.map((item, index) => (

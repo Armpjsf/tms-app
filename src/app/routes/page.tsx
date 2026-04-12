@@ -49,6 +49,7 @@ import { ExcelImport } from "@/components/ui/excel-import"
 import { ExcelExport } from "@/components/ui/excel-export"
 import { LocationAutocomplete } from "@/components/location-autocomplete"
 import { useBranch } from "@/components/providers/branch-provider"
+import { isAdmin } from "@/lib/permissions"
 import { useLanguage } from "@/components/providers/language-provider"
 import { toast } from "sonner"
 

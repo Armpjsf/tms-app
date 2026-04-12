@@ -49,8 +49,9 @@ export function PerformanceCharts({ data }: { data: PerformanceData[] }) {
                 </div>
             </div>
         </div>
-        <div className="p-10 h-[350px] relative">
-          <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+        <div className="p-10">
+          <ChartContainer height={350}>
+          <ResponsiveContainer width="100%" height="100%">
             <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
               <XAxis 
@@ -85,6 +86,7 @@ export function PerformanceCharts({ data }: { data: PerformanceData[] }) {
               <Bar dataKey="lateJobs" name={t('charts.delayed')} stackId="a" fill="#f59e0b" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
+          </ChartContainer>
         </div>
       </PremiumCard>
 
@@ -102,8 +104,9 @@ export function PerformanceCharts({ data }: { data: PerformanceData[] }) {
                 </div>
             </div>
         </div>
-        <div className="p-10 h-[350px] relative">
-          <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+        <div className="p-10">
+          <ChartContainer height={350}>
+          <ResponsiveContainer width="100%" height="100%">
             <LineChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
               <XAxis 
@@ -145,6 +148,7 @@ export function PerformanceCharts({ data }: { data: PerformanceData[] }) {
               />
             </LineChart>
           </ResponsiveContainer>
+          </ChartContainer>
         </div>
       </PremiumCard>
     </div>

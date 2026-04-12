@@ -1,6 +1,7 @@
 "use client"
 
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts'
+import { ChartContainer } from "@/components/ui/chart-container"
 
 type CostData = {
   driver: number
@@ -16,9 +17,9 @@ export function CostBreakdownChart({ data }: { data: CostData }) {
   ].filter(item => item.value > 0)
 
   return (
-    <div className="h-[450px] w-full min-h-[400px] relative">
+    <ChartContainer height={450}>
         {chartData.length > 0 ? (
-            <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+            <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                 <Pie
                     data={chartData}
@@ -54,6 +55,6 @@ export function CostBreakdownChart({ data }: { data: CostData }) {
         ) : (
             <div className="text-gray-400 font-medium">ไม่มีข้อมูลต้นทุนในช่วงเวลานี้</div>
         )}
-    </div>
+    </ChartContainer>
   )
 }
