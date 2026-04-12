@@ -41,164 +41,141 @@ export default function PODPage({ pods, stats, count, limit, searchParams }: any
   }
 
   return (
-    <div className="space-y-10 pb-20">
+    <div className="space-y-8 pb-20">
       {/* Tactical Hub Header */}
-      <div className="bg-background p-12 rounded-br-[6rem] rounded-tl-[3rem] border border-border/5 shadow-[0_30px_60px_rgba(0,0,0,0.5)] relative overflow-hidden group">
+      <div className="bg-background p-8 rounded-3xl border border-border/5 shadow-xl relative overflow-hidden group">
         <div className="absolute top-0 right-0 w-80 h-80 bg-primary/10 blur-[120px] rounded-full -mr-40 -mt-40 pointer-events-none" />
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-10 relative z-10">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8 relative z-10">
           <div>
-            <div className="flex items-center gap-6 mb-4">
-               <div className="p-4 bg-primary/20 rounded-[2rem] border-2 border-primary/30 shadow-[0_0_40px_rgba(255,30,133,0.2)] text-primary">
-                  <FileText size={40} strokeWidth={2.5} />
+            <div className="flex items-center gap-4 mb-2">
+               <div className="p-2 bg-primary/20 rounded-xl border-2 border-primary/30 shadow-[0_0_20px_rgba(255,30,133,0.2)] text-primary">
+                  <FileText size={24} strokeWidth={2.5} />
                </div>
                <div>
-                  <h1 className="text-5xl font-black text-foreground tracking-widest uppercase leading-none mb-2">{t('navigation.pod')}</h1>
-                  <p className="text-base font-bold font-black text-primary uppercase tracking-[0.6em] opacity-80 italic">{t('dashboard.subtitle')}</p>
+                  <h1 className="text-3xl lg:text-4xl font-black text-foreground tracking-widest uppercase leading-none mb-1 italic premium-text-gradient">{t('navigation.pod')}</h1>
+                  <p className="text-[10px] font-black text-primary uppercase tracking-[0.6em] opacity-80 italic">{t('dashboard.subtitle')}</p>
                </div>
             </div>
           </div>
-          <div className="flex flex-wrap gap-4">
+          <div className="flex flex-wrap gap-3">
              <PODExport data={pods} />
           </div>
         </div>
       </div>
 
       {/* Intelligence Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
-        <PremiumCard className="p-8 group hover:border-primary/50 transition-all duration-500 border-border/5 bg-muted/50">
-           <div className="flex justify-between items-start mb-4">
-              <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest">{t('pod.total')}</span>
-              <FileText className="text-primary opacity-20 group-hover:opacity-100 transition-opacity" size={20} />
-           </div>
-           <p className="text-5xl font-black text-foreground italic tracking-tighter mb-2">{stats.total}</p>
-           <div className="h-1 w-12 bg-primary rounded-full" />
-        </PremiumCard>
-
-        <PremiumCard className="p-8 group hover:border-emerald-500/50 transition-all duration-500 border-border/5 bg-muted/50 shadow-[inset_0_0_30px_rgba(16,185,129,0.02)]">
-           <div className="flex justify-between items-start mb-4">
-              <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest">{t('pod.completed')}</span>
-              <CheckCircle2 className="text-emerald-400 opacity-20 group-hover:opacity-100 transition-opacity" size={20} />
-           </div>
-           <p className="text-5xl font-black text-emerald-400 italic tracking-tighter mb-2">{stats.complete}</p>
-           <div className="h-1 w-12 bg-emerald-500 rounded-full" />
-        </PremiumCard>
-
-        <PremiumCard className="p-8 group hover:border-primary/50 transition-all duration-500 border-border/5 bg-muted/50">
-           <div className="flex justify-between items-start mb-4">
-              <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest">{t('pod.visual_proof')}</span>
-              <ImageIcon className="text-primary opacity-20 group-hover:opacity-100 transition-opacity" size={20} />
-           </div>
-           <div className="flex items-end gap-3">
-              <p className="text-5xl font-black text-foreground italic tracking-tighter mb-2">{stats.withPhoto}</p>
-              <span className="text-base font-bold font-black text-primary mb-4 uppercase">{t('common.units')}</span>
-           </div>
-           <div className="h-1 w-12 bg-primary/50 rounded-full" />
-        </PremiumCard>
-
-        <PremiumCard className="p-8 group hover:border-primary/50 transition-all duration-500 border-border/5 bg-muted/50">
-           <div className="flex justify-between items-start mb-4">
-              <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest">{t('pod.auth_sig')}</span>
-              <PenTool className="text-primary opacity-20 group-hover:opacity-100 transition-opacity" size={20} />
-           </div>
-           <div className="flex items-end gap-3">
-              <p className="text-5xl font-black text-foreground italic tracking-tighter mb-2">{stats.withSignature}</p>
-              <span className="text-base font-bold font-black text-primary mb-4 uppercase">{t('common.units')}</span>
-           </div>
-           <div className="h-1 w-12 bg-primary/50 rounded-full" />
-        </PremiumCard>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {[
+          { label: t('pod.total'), value: stats.total, icon: FileText, color: "text-primary" },
+          { label: t('pod.completed'), value: stats.complete, icon: CheckCircle2, color: "text-emerald-400" },
+          { label: t('pod.visual_proof'), value: stats.withPhoto, icon: ImageIcon, color: "text-primary", unit: true },
+          { label: t('pod.auth_sig'), value: stats.withSignature, icon: PenTool, color: "text-primary", unit: true },
+        ].map((stat, i) => (
+          <PremiumCard key={i} className="p-5 group hover:border-primary/50 transition-all duration-500 border-border/5 bg-muted/50 rounded-xl">
+             <div className="flex justify-between items-start mb-3">
+                <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest leading-none">{stat.label}</span>
+                <stat.icon className={cn(stat.color, "opacity-20 group-hover:opacity-100 transition-opacity")} size={16} />
+             </div>
+             <div className="flex items-baseline gap-2">
+                <p className={cn("text-3xl font-black italic tracking-tighter mb-1", stat.color)}>{stat.value}</p>
+                {stat.unit && <span className="text-[10px] font-bold font-black text-muted-foreground uppercase">{t('common.units')}</span>}
+             </div>
+             <div className="h-0.5 w-8 bg-primary/40 rounded-full" />
+          </PremiumCard>
+        ))}
       </div>
 
       {/* Filter Matrix */}
-      <div className="bg-background p-8 rounded-[3rem] border border-border/5 shadow-2xl relative overflow-hidden">
+      <div className="bg-background p-6 rounded-2xl border border-border/5 shadow-xl relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent pointer-events-none" />
-        <form className="grid grid-cols-1 md:grid-cols-4 gap-8 items-end relative z-10">
-          <div className="md:col-span-1 space-y-3">
-             <Label className="text-base font-bold font-black text-primary uppercase tracking-[0.4em] ml-4">{t('common.search')}</Label>
+        <form className="grid grid-cols-1 md:grid-cols-4 gap-6 items-end relative z-10">
+          <div className="md:col-span-1 space-y-2">
+             <Label className="text-[10px] font-black text-primary uppercase tracking-[0.4em] ml-2">{t('common.search')}</Label>
              <div className="relative group">
-                <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors group-hover:text-primary" size={18} />
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors group-hover:text-primary" size={16} />
                 <Input 
                    name="q"
                    placeholder={t('common.search')} 
-                   className="pl-14 h-16 bg-muted/50 border-border/5 text-foreground font-black uppercase tracking-widest rounded-2xl focus:bg-muted/80 transition-all border-2 focus:border-primary/30" 
+                   className="pl-11 h-11 bg-muted/50 border-border/5 text-foreground font-black uppercase tracking-widest rounded-xl focus:bg-muted/80 transition-all text-xs outline-none" 
                    defaultValue={searchParams.q as string || ''}
                 />
              </div>
           </div>
-          <div className="space-y-3">
-             <Label className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest ml-4">{t('common.date')}</Label>
+          <div className="space-y-2">
+             <Label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-2">{t('common.date')}</Label>
              <Input 
                 type="date" 
                 name="from" 
                 defaultValue={searchParams.from as string || ''} 
-                className="h-16 bg-muted/50 border-border/5 text-foreground font-black rounded-2xl focus:bg-muted/80 transition-all border-2" 
+                className="h-11 bg-muted/50 border-border/5 text-foreground font-black rounded-xl focus:bg-muted/80 transition-all text-xs" 
              />
           </div>
-          <div className="space-y-3">
-             <Label className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest ml-4">{t('common.date')}</Label>
+          <div className="space-y-2">
+             <Label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-2">{t('common.date')}</Label>
              <Input 
                 type="date" 
                 name="to" 
                 defaultValue={searchParams.to as string || ''} 
-                className="h-16 bg-muted/50 border-border/5 text-foreground font-black rounded-2xl focus:bg-muted/80 transition-all border-2" 
+                className="h-11 bg-muted/50 border-border/5 text-foreground font-black rounded-xl focus:bg-muted/80 transition-all text-xs" 
              />
           </div>
-          <PremiumButton type="submit" className="h-16 rounded-2xl gap-3 shadow-[0_15px_30px_rgba(255,30,133,0.3)]">
-             <Filter size={20} /> {t('common.search')}
+          <PremiumButton type="submit" className="h-11 rounded-xl gap-2 shadow-lg text-xs font-black uppercase tracking-widest">
+             <Filter size={16} /> {t('common.search')}
           </PremiumButton>
         </form>
       </div>
 
       {/* POD Repository Table */}
-      <div className="bg-background rounded-[4rem] border border-border/5 shadow-3xl overflow-hidden">
-        <div className="overflow-x-auto">
+      <div className="bg-background rounded-3xl border border-border/5 shadow-xl overflow-hidden">
+        <div className="overflow-x-auto custom-scrollbar">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-border/5 bg-muted/30">
-                <th className="p-8 text-[12px] font-black text-muted-foreground uppercase tracking-[0.1em]">{t('jobs.col_id')}</th>
-                <th className="p-8 text-[12px] font-black text-muted-foreground uppercase tracking-[0.1em]">{t('common.date')}</th>
-                <th className="p-8 text-[12px] font-black text-muted-foreground uppercase tracking-[0.1em]">{t('navigation.customers')}</th>
-                <th className="p-8 text-[12px] font-black text-muted-foreground uppercase tracking-[0.1em]">{t('navigation.drivers')}</th>
-                <th className="p-8 text-[12px] font-black text-muted-foreground uppercase tracking-[0.1em] text-center">{t('pod.visual_proof')}</th>
-                <th className="p-8 text-[12px] font-black text-muted-foreground uppercase tracking-[0.1em]">{t('common.status')}</th>
-                <th className="p-8 text-right text-[12px] font-black text-muted-foreground uppercase tracking-[0.1em]">{t('common.action')}</th>
+                <th className="px-6 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest italic">{t('jobs.col_id')}</th>
+                <th className="px-4 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest italic">{t('common.date')}</th>
+                <th className="px-4 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest italic">{t('navigation.customers')}</th>
+                <th className="px-4 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest italic">{t('navigation.drivers')}</th>
+                <th className="px-4 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest italic text-center">{t('pod.visual_proof')}</th>
+                <th className="px-4 py-4 text-[10px] font-black text-muted-foreground uppercase tracking-widest italic text-center">{t('common.status')}</th>
+                <th className="px-6 py-4 text-right text-[10px] font-black text-muted-foreground uppercase tracking-widest italic">{t('common.action')}</th>
               </tr>
             </thead>
             <tbody>
               {pods.map((pod: any) => (
                 <tr key={pod.Job_ID} className="border-b border-white/[0.02] hover:bg-muted/40 transition-all group">
-                  <td className="p-8">
+                  <td className="px-6 py-3">
                     <Link href={`/admin/jobs/${pod.Job_ID}`}>
-                       <span className="text-primary font-black text-xl tracking-tighter uppercase group-hover:scale-110 block origin-left transition-transform">
+                       <span className="text-primary font-black text-sm tracking-tighter uppercase group-hover:scale-105 block origin-left transition-transform font-display">
                           {pod.Job_ID}
                        </span>
                     </Link>
                   </td>
-                  <td className="p-8">
+                  <td className="px-4 py-3">
                     <div className="flex flex-col">
-                       <span className="text-lg font-bold font-black text-foreground uppercase tracking-tight">
-                          {pod.Plan_Date ? new Date(pod.Plan_Date).toLocaleDateString(useLanguage().language === 'th' ? 'th-TH' : 'en-US') : "N/A"}
+                       <span className="text-xs font-black text-foreground uppercase tracking-tight italic">
+                          {pod.Plan_Date ? new Date(pod.Plan_Date).toLocaleDateString('th-TH') : "N/A"}
                        </span>
-                       <span className="text-base font-bold font-black text-muted-foreground uppercase">{t('pod.synchronized')}</span>
+                       <span className="text-[9px] font-black text-muted-foreground uppercase opacity-60 tracking-widest">SYNCED</span>
                     </div>
                   </td>
-                  <td className="p-8">
-                     <span className="text-xl font-black text-foreground uppercase tracking-tighter truncate max-w-[200px] block font-sans">
+                  <td className="px-4 py-3">
+                     <span className="text-xs font-black text-foreground uppercase tracking-tight truncate max-w-[180px] block italic">
                         {pod.Customer_Name || t('common.loading')}
                      </span>
                   </td>
-                  <td className="p-8">
-                     <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-base font-bold font-black text-primary border border-primary/30">
+                  <td className="px-4 py-3">
+                     <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-[10px] font-black text-primary border border-primary/30">
                            {pod.Driver_Name?.slice(0,1) || "A"}
                         </div>
-                        <span className="text-lg font-bold font-black text-muted-foreground uppercase tracking-widest">{pod.Driver_Name || t('common.auto')}</span>
+                        <span className="text-[11px] font-black text-muted-foreground uppercase tracking-widest italic">{pod.Driver_Name || t('common.auto')}</span>
                      </div>
                   </td>
-                  <td className="p-8">
-                     <div className="flex items-center justify-center gap-4">
+                  <td className="px-4 py-3 text-center">
+                     <div className="flex items-center justify-center gap-3">
                         {pod.Photo_Proof_Url ? (
                            <div className="group/visual relative">
-                              <div className="w-14 h-14 rounded-2xl border-2 border-border/10 overflow-hidden bg-black shadow-lg relative transition-all group-hover/visual:scale-125 group-hover/visual:rotate-3 z-10 group-hover/visual:border-primary">
+                              <div className="w-10 h-10 rounded-xl border border-border/10 overflow-hidden bg-black shadow-lg relative transition-all group-hover/visual:scale-125 group-hover/visual:rotate-3 z-10 group-hover/visual:border-primary">
                                  <NextImage 
                                     src={pod.Photo_Proof_Url.split(',')[0]} 
                                     alt={t('pod.visual_proof')} 
@@ -206,14 +183,13 @@ export default function PODPage({ pods, stats, count, limit, searchParams }: any
                                     className="object-cover opacity-80 group-hover/visual:opacity-100 transition-opacity" 
                                  />
                               </div>
-                              <div className="absolute inset-0 bg-primary blur-xl opacity-0 group-hover/visual:opacity-40 transition-opacity" />
                            </div>
                         ) : (
-                           <div className="w-10 h-1 border-t border-border/10" />
+                           <div className="w-6 h-px bg-muted/30" />
                         )}
                         {pod.Signature_Url ? (
                            <div className="group/sig relative">
-                              <div className="w-16 h-12 rounded-xl border-2 border-border/10 overflow-hidden bg-white shadow-lg relative transition-all group-hover/sig:scale-125 group-hover/sig:-rotate-3 z-10 group-hover/sig:border-primary">
+                              <div className="w-12 h-9 rounded-lg border border-border/10 overflow-hidden bg-white shadow-lg relative transition-all group-hover/sig:scale-125 group-hover/sig:-rotate-3 z-10 group-hover/sig:border-primary">
                                  <NextImage 
                                     src={pod.Signature_Url} 
                                     alt={t('pod.auth_sig')} 
@@ -221,29 +197,26 @@ export default function PODPage({ pods, stats, count, limit, searchParams }: any
                                     className="object-contain p-1" 
                                  />
                               </div>
-                              <div className="absolute inset-0 bg-primary blur-xl opacity-0 group-hover/sig:opacity-40 transition-opacity" />
                            </div>
                         ) : (
-                           <div className="w-10 h-1 border-t border-border/10" />
+                           <div className="w-6 h-px bg-muted/30" />
                         )}
                      </div>
                   </td>
-                  <td className="p-8">
+                  <td className="px-4 py-3 text-center">
                     <div className={cn(
-                      "flex items-center gap-3 w-fit px-5 py-2 rounded-full border border-border/5",
-                      statusConfig[pod.Job_Status]?.color || 'text-muted-foreground bg-muted/50',
-                      statusConfig[pod.Job_Status]?.glow
+                      "inline-flex items-center gap-2 px-3 py-1 rounded-full border border-border/5 ml-auto",
+                      statusConfig[pod.Job_Status]?.color || 'text-muted-foreground bg-muted/50'
                     )}>
-                       {statusConfig[pod.Job_Status]?.icon}
-                       <span className="text-base font-bold font-black uppercase tracking-[0.2em]">
+                       <span className="text-[9px] font-black uppercase tracking-widest italic whitespace-nowrap">
                           {statusConfig[pod.Job_Status]?.label || pod.Job_Status}
                        </span>
                     </div>
                   </td>
-                  <td className="p-8 text-right">
+                  <td className="px-6 py-3 text-right">
                     <Link href={`/admin/jobs/${pod.Job_ID}`}>
-                       <button className="p-4 rounded-2xl bg-muted/50 hover:bg-primary text-muted-foreground hover:text-foreground transition-all border border-transparent hover:border-primary/50 group/btn">
-                          <ArrowRight size={20} className="transition-transform group-hover/btn:translate-x-1" />
+                       <button className="p-2 rounded-lg bg-muted/50 hover:bg-primary hover:text-black text-muted-foreground transition-all border border-transparent group/btn">
+                          <ArrowRight size={16} className="transition-transform group-hover/btn:translate-x-1" />
                        </button>
                     </Link>
                   </td>
@@ -253,14 +226,14 @@ export default function PODPage({ pods, stats, count, limit, searchParams }: any
           </table>
         </div>
         {pods.length === 0 && (
-          <div className="py-32 text-center opacity-30">
-             <FileText size={64} className="mx-auto mb-6 text-muted-foreground" />
-             <p className="text-lg font-bold font-black uppercase tracking-[0.6em] text-foreground">{t('common.no_data')}</p>
+          <div className="py-24 text-center opacity-30">
+             <FileText size={48} className="mx-auto mb-4 text-muted-foreground" />
+             <p className="text-sm font-black uppercase tracking-[0.4em] text-foreground">{t('common.no_data')}</p>
           </div>
         )}
       </div>
 
-      <div className="p-8 bg-muted/30 border-t border-border/5 rounded-b-[4rem]">
+      <div className="p-4 bg-muted/30 border-t border-border/5 rounded-b-3xl flex justify-center">
          <Pagination totalItems={count} limit={limit} />
       </div>
     </div>

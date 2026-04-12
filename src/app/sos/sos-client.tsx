@@ -56,27 +56,29 @@ export default function SOSPage({ alerts: initialAlerts, activeCount: initialCou
     }
   }, [])
   return (
-    <div className="space-y-12 pb-20">
+    <div className="space-y-8 pb-20">
       {/* Strategic SOS Hub Header */}
-      <div className="bg-card p-12 rounded-br-[6rem] rounded-tl-[3rem] border border-rose-500/20 shadow-[0_30px_60px_rgba(244,63,94,0.2)] relative overflow-hidden group">
+      <div className="bg-card p-8 rounded-3xl border border-rose-500/20 shadow-xl relative overflow-hidden group">
         <div className="absolute top-0 right-0 w-80 h-80 bg-rose-500/10 blur-[120px] rounded-full -mr-40 -mt-40 pointer-events-none" />
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-10 relative z-10">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8 relative z-10">
           <div>
-            <div className="flex items-center gap-6 mb-4">
-               <div className="p-4 bg-rose-500/20 rounded-[2.5rem] border-2 border-rose-500/30 shadow-[0_0_40px_rgba(244,63,94,0.3)] text-rose-500 animate-pulse">
-                  <ShieldAlert size={40} strokeWidth={2.5} />
+            <div className="flex items-center gap-4 mb-2">
+               <div className="p-2 bg-rose-500/20 rounded-xl border-2 border-rose-500/30 shadow-[0_0_20px_rgba(244,63,94,0.3)] text-rose-500 animate-pulse">
+                  <ShieldAlert size={24} strokeWidth={2.5} />
                </div>
                <div>
-                  <h1 className="text-5xl font-black text-foreground tracking-widest uppercase leading-none mb-2">{t('navigation.sos')}</h1>
-                  <p className="text-base font-bold font-black text-rose-500 uppercase tracking-[0.6em] opacity-80 italic">{t('dashboard.subtitle')}</p>
+                  <h1 className="text-3xl lg:text-4xl font-black text-foreground tracking-widest uppercase leading-none mb-1 premium-text-gradient italic">
+                    {t('navigation.sos')}
+                  </h1>
+                  <p className="text-[10px] font-black text-rose-500 uppercase tracking-[0.6em] opacity-80 italic">{t('dashboard.subtitle')}</p>
                </div>
             </div>
           </div>
           
           {activeCount > 0 && (
-            <div className="bg-rose-500/10 border-2 border-rose-500/30 px-8 py-4 rounded-3xl flex items-center gap-4 shadow-[0_0_30px_rgba(244,63,94,0.2)]">
-               <div className="w-4 h-4 rounded-full bg-rose-500 animate-ping" />
-               <span className="text-lg font-black text-rose-500 uppercase tracking-tighter">
+            <div className="bg-rose-500/10 border border-rose-500/30 px-5 py-2 rounded-xl flex items-center gap-3 backdrop-blur-md shadow-lg">
+               <div className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping shadow-[0_0_10px_rgba(244,63,94,1)]" />
+               <span className="text-xs font-black text-rose-500 uppercase tracking-widest italic">
                   {activeCount} {t('monitoring.alerts')}
                </span>
             </div>
@@ -85,119 +87,102 @@ export default function SOSPage({ alerts: initialAlerts, activeCount: initialCou
       </div>
 
       {/* Rapid Intelligence Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-         <PremiumCard className="p-8 bg-rose-500/5 border-rose-500/20 hover:border-rose-500/40 transition-all shadow-[inset_0_0_30px_rgba(244,63,94,0.05)]">
-            <div className="flex justify-between items-start mb-4">
-               <span className="text-base font-bold font-black text-rose-400 uppercase tracking-widest">{t('monitoring.alerts')}</span>
-               <Activity className="text-rose-500 opacity-30" size={24} />
-            </div>
-            <p className="text-6xl font-black text-foreground italic tracking-tighter mb-2">{activeCount}</p>
-            <div className="h-1.5 w-16 bg-rose-500 rounded-full shadow-[0_0_10px_rgba(244,63,94,1)]" />
-         </PremiumCard>
-
-         <PremiumCard className="p-8 bg-amber-500/5 border-amber-500/20 hover:border-amber-500/40 transition-all">
-            <div className="flex justify-between items-start mb-4">
-               <span className="text-base font-bold font-black text-amber-400 uppercase tracking-widest">{t('planning.stats_pending')}</span>
-               <AlertTriangle className="text-amber-500 opacity-30" size={24} />
-            </div>
-            <p className="text-6xl font-black text-foreground italic tracking-tighter mb-2">
-               {alerts.filter((a: any) => a.Job_Status === 'Failed').length}
-            </p>
-            <div className="h-1.5 w-16 bg-amber-500 rounded-full" />
-         </PremiumCard>
-
-         <PremiumCard className="p-8 bg-muted/5 border-border/5 hover:border-border/10 transition-all">
-            <div className="flex justify-between items-start mb-4">
-               <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest">{t('planning.stats_delivered')}</span>
-               <CheckCircle2 className="text-emerald-500 opacity-30" size={24} />
-            </div>
-            <p className="text-6xl font-black text-foreground italic tracking-tighter mb-2">{alerts.length}</p>
-            <div className="h-1.5 w-16 bg-emerald-500/50 rounded-full" />
-         </PremiumCard>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+         {[
+           { label: t('monitoring.alerts'), value: activeCount, icon: Activity, color: "text-rose-400", bg: "bg-rose-500/5", border: "border-rose-500/20" },
+           { label: t('planning.stats_pending'), value: alerts.filter((a: any) => a.Job_Status === 'Failed').length, icon: AlertTriangle, color: "text-amber-400", bg: "bg-amber-500/5", border: "border-amber-500/20" },
+           { label: t('planning.stats_delivered'), value: alerts.length, icon: CheckCircle2, color: "text-emerald-500", bg: "bg-muted/5", border: "border-border/5" }
+         ].map((stat, i) => (
+           <PremiumCard key={i} className={cn("p-5 transition-all shadow-lg rounded-xl border", stat.bg, stat.border)}>
+              <div className="flex justify-between items-start mb-3">
+                 <span className="text-[10px] font-black uppercase tracking-widest leading-none text-muted-foreground">{stat.label}</span>
+                 <stat.icon className={cn(stat.color, "opacity-30")} size={16} />
+              </div>
+              <p className="text-3xl font-black text-foreground italic tracking-tighter mb-1">{stat.value}</p>
+              <div className={cn("h-0.5 w-8 rounded-full", stat.color.replace('text-', 'bg-'))} />
+           </PremiumCard>
+         ))}
       </div>
 
       {/* SOS Signal Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {alerts.length === 0 ? (
-          <div className="col-span-full py-40 text-center opacity-20">
-            <Zap size={80} className="mx-auto text-emerald-500 mb-8 animate-pulse" />
-            <h3 className="text-2xl font-black text-foreground uppercase tracking-[0.8em]">{t('dashboard.system_integrity')}</h3>
-            <p className="text-lg font-bold font-black text-emerald-400 uppercase tracking-[0.4em] mt-4">{t('common.success')}</p>
+          <div className="col-span-full py-24 text-center opacity-20 bg-background/40 rounded-3xl border-2 border-dashed border-border/5">
+            <Zap size={48} className="mx-auto text-emerald-500 mb-4 animate-pulse" />
+            <h3 className="text-sm font-black text-foreground uppercase tracking-[0.8em]">{t('dashboard.system_integrity')}</h3>
+            <p className="text-[10px] font-black text-emerald-400 uppercase tracking-[0.4em] mt-2">{t('common.success')}</p>
           </div>
         ) : alerts.map((alert: any) => (
           <motion.div 
             key={alert.Job_ID}
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            whileHover={{ y: -10 }}
+            whileHover={{ y: -5 }}
             className={cn(
-               "p-10 rounded-[3rem] border-2 bg-gradient-to-br from-background to-card/40 backdrop-blur-3xl relative overflow-hidden transition-all duration-500",
+               "p-6 rounded-2xl border bg-background/40 backdrop-blur-3xl relative overflow-hidden transition-all duration-500 shadow-xl",
                alert.Job_Status === 'SOS' 
-                 ? "border-rose-500 shadow-[0_20px_50px_rgba(244,63,94,0.3)]" 
-                 : "border-border/5 hover:border-border/20 shadow-2xl"
+                 ? "border-rose-500/30 ring-1 ring-rose-500/10 shadow-[0_15px_40px_rgba(244,63,94,0.1)]" 
+                 : "border-border/5 hover:border-border/20 shadow-lg"
             )}
           >
             {/* Status Glint */}
             <div className={cn(
-               "absolute top-0 right-10 w-24 h-6 rounded-b-2xl shadow-[0_0_20px_currentColor]",
+               "absolute top-0 right-8 w-16 h-1 rounded-b-full shadow-[0_0_15px_currentColor]",
                alert.Job_Status === 'SOS' ? "bg-rose-500 text-rose-500" : "bg-amber-500 text-amber-500"
             )} />
 
-            <div className="flex items-start justify-between mb-8">
-               <div className="space-y-1">
-                  <span className="text-base font-bold font-black text-rose-500 uppercase tracking-[0.4em]">{t('sos.sig_analysis')}</span>
-                  <p className="text-lg font-bold font-black text-muted-foreground uppercase tracking-widest">#{alert.Job_ID}</p>
+            <div className="flex items-start justify-between mb-6">
+               <div className="space-y-0.5">
+                  <span className="text-[9px] font-black text-rose-500 uppercase tracking-[0.4em]">{t('sos.sig_analysis')}</span>
+                  <p className="text-sm font-black text-muted-foreground uppercase tracking-widest italic">#{alert.Job_ID}</p>
                </div>
                <div className={cn(
-                  "p-4 rounded-2xl",
-                  alert.Job_Status === 'SOS' ? "bg-rose-500/20 text-rose-500" : "bg-amber-500/20 text-amber-500"
+                  "p-2.5 rounded-xl border",
+                  alert.Job_Status === 'SOS' ? "bg-rose-500/10 text-rose-500 border-rose-500/20" : "bg-amber-500/10 text-amber-500 border-amber-500/20"
                )}>
-                  <ShieldAlert size={28} className={alert.Job_Status === 'SOS' ? "animate-pulse" : ""} />
+                  <ShieldAlert size={18} className={alert.Job_Status === 'SOS' ? "animate-pulse" : ""} />
                </div>
             </div>
 
-            <h3 className="text-2xl font-black text-foreground uppercase tracking-tighter mb-8 leading-none italic">
+            <h3 className="text-xl font-black text-foreground uppercase tracking-tighter mb-6 leading-none italic">
                {alert.Job_Status === 'SOS' ? t('navigation.sos') : t('common.error')}
             </h3>
 
-            <div className="space-y-5 border-t border-border/5 pt-8">
-               <div className="flex items-center gap-4 group/item">
-                  <div className="p-2 bg-muted/5 rounded-lg group-hover/item:bg-primary transition-colors">
-                     <User size={16} className="text-muted-foreground group-hover/item:text-primary-foreground" />
+            <div className="space-y-3 border-t border-border/5 pt-6">
+               <div className="flex items-center gap-3 group/item">
+                  <div className="p-1.5 bg-muted/5 rounded-lg border border-border/5 group-hover/item:bg-primary/20 transition-colors">
+                     <User size={12} className="text-muted-foreground group-hover/item:text-primary" />
                   </div>
-                  <span className="text-lg font-bold font-black text-foreground uppercase tracking-widest">{alert.Driver_Name || t('common.no_data')}</span>
+                  <span className="text-xs font-black text-foreground uppercase tracking-widest italic">{alert.Driver_Name || t('common.no_data')}</span>
                </div>
-               <div className="flex items-center gap-4 group/item">
-                  <div className="p-2 bg-muted/5 rounded-lg group-hover/item:bg-primary transition-colors">
-                     <Truck size={16} className="text-muted-foreground group-hover/item:text-primary-foreground" />
+               <div className="flex items-center gap-3 group/item">
+                  <div className="p-1.5 bg-muted/5 rounded-lg border border-border/5 group-hover/item:bg-primary/20 transition-colors">
+                     <Truck size={12} className="text-muted-foreground group-hover/item:text-primary" />
                   </div>
-                  <span className="text-lg font-bold font-black text-muted-foreground uppercase tracking-widest border-b border-border/10">{alert.Vehicle_Plate || t('common.no_data')}</span>
+                  <span className="text-xs font-black text-foreground uppercase tracking-widest italic">{alert.Vehicle_Plate || t('common.no_data')}</span>
                </div>
-               <div className="flex items-center gap-4 group/item">
-                  <div className="p-2 bg-muted/5 rounded-lg group-hover/item:bg-primary transition-colors">
-                     <MapPin size={16} className="text-muted-foreground group-hover/item:text-primary-foreground" />
+               <div className="flex items-center gap-3 group/item">
+                  <div className="p-1.5 bg-muted/5 rounded-lg border border-border/5 group-hover/item:bg-primary/20 transition-colors">
+                     <MapPin size={12} className="text-muted-foreground group-hover/item:text-primary" />
                   </div>
-                  <span className="text-lg font-bold font-black text-muted-foreground uppercase tracking-tight truncate">{alert.Route_Name || "N/A"}</span>
+                  <span className="text-[11px] font-black text-muted-foreground uppercase tracking-tight truncate max-w-[180px] italic">{alert.Route_Name || "N/A"}</span>
                </div>
             </div>
 
             {alert.Failed_Reason && (
-               <div className="mt-8 p-6 bg-rose-500/10 border border-rose-500/30 rounded-3xl relative overflow-hidden group/reason">
-                  <div className="absolute top-0 right-0 p-2 opacity-10 group-hover/reason:opacity-100 transition-opacity">
-                     <ShieldAlert size={20} className="text-rose-500" />
-                  </div>
-                  <p className="text-base font-bold font-black text-rose-500 uppercase tracking-widest mb-2">{t('common.error')}</p>
-                  <p className="text-lg font-bold font-black text-foreground uppercase leading-relaxed font-sans">{alert.Failed_Reason}</p>
+               <div className="mt-6 p-4 bg-rose-500/5 border border-rose-500/10 rounded-xl relative overflow-hidden group/reason">
+                  <p className="text-[9px] font-black text-rose-500 uppercase tracking-widest mb-1.5">{t('common.error')}</p>
+                  <p className="text-xs font-black text-foreground uppercase leading-relaxed font-sans italic opacity-80">{alert.Failed_Reason}</p>
                </div>
             )}
 
-            <div className="mt-8 grid grid-cols-2 gap-4">
-               <PremiumButton variant="outline" className="h-14 rounded-2xl border-border/10 hover:border-rose-500/50 text-muted-foreground gap-3">
-                  <Phone size={16} /> {t('navigation.chat')}
+            <div className="mt-6 grid grid-cols-2 gap-2">
+               <PremiumButton variant="outline" className="h-10 rounded-xl border-border/10 hover:border-rose-500/50 text-muted-foreground text-[10px] font-black uppercase tracking-widest gap-2">
+                  <Phone size={12} /> {t('navigation.chat')}
                </PremiumButton>
                <Link href={`/admin/jobs/${alert.Job_ID}`} className="block">
-                  <PremiumButton className="h-14 rounded-2xl w-full gap-3 shadow-[0_10px_20px_rgba(255,30,133,0.2)]">
-                     <Target className="w-4 h-4" /> {t('common.view_details')}
+                  <PremiumButton className="h-10 rounded-xl w-full gap-2 shadow-lg text-[10px] font-black uppercase tracking-widest">
+                     <Target className="w-3.5 h-3.5" /> {t('common.view_details')}
                   </PremiumButton>
                </Link>
             </div>

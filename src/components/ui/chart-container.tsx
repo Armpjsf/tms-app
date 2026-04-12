@@ -1,44 +1,59 @@
 "use client"
 
-import { useRef, useState, useEffect, type ReactNode } from "react"
+import React, { useRef, useState, useEffect, type ReactNode } from "react"
 import { cn } from "@/lib/utils"
 
 interface ChartContainerProps {
   children: ReactNode
   className?: string
-  height?: string | number
+  height?: number
 }
 
 /**
- * A mount-safe wrapper for Recharts charts.
- * Delays rendering children until the container has been laid out with positive dimensions,
- * preventing the "width(-1) and height(-1)" console warnings from ResponsiveContainer.
+ * A drop-in replacement for ResponsiveContainer.
+ * Measures the container width via ResizeObserver and passes
+ * explicit numeric width and height to the Recharts chart child.
+ * This eliminates the "width(-1) and height(-1)" warnings entirely.
  */
-export function ChartContainer({ children, className, height = "100%" }: ChartContainerProps) {
+export function ChartContainer({ children, className, height = 350 }: ChartContainerProps) {
   const ref = useRef<HTMLDivElement>(null)
-  const [ready, setReady] = useState(false)
+  const [width, setWidth] = useState(0)
 
   useEffect(() => {
-    // Use requestAnimationFrame to wait for browser layout pass
-    const id = requestAnimationFrame(() => {
-      if (ref.current && ref.current.clientWidth > 0 && ref.current.clientHeight > 0) {
-        setReady(true)
-      } else {
-        // Fallback: try again after a short delay
-        const timer = setTimeout(() => setReady(true), 100)
-        return () => clearTimeout(timer)
+    const el = ref.current
+    if (!el) return
+
+    // Measure immediately if possible
+    const rect = el.getBoundingClientRect()
+    if (rect.width > 0) {
+      setWidth(Math.floor(rect.width))
+    }
+
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const w = Math.floor(entry.contentRect.width)
+        if (w > 0) setWidth(w)
       }
     })
-    return () => cancelAnimationFrame(id)
+
+    observer.observe(el)
+    return () => observer.disconnect()
   }, [])
 
   return (
     <div
       ref={ref}
-      className={cn("w-full relative", className)}
-      style={{ height, minHeight: 0, minWidth: 0 }}
+      className={cn("w-full", className)}
+      style={{ height, minWidth: 0 }}
     >
-      {ready ? children : null}
+      {width > 0
+        ? React.Children.map(children, (child) => {
+            if (React.isValidElement(child) && typeof child.type !== "string") {
+              return React.cloneElement(child as React.ReactElement<any>, { width, height })
+            }
+            return child
+          })
+        : null}
     </div>
   )
 }

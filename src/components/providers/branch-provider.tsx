@@ -56,18 +56,10 @@ export function BranchProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter()
 
   const init = useCallback(async () => {
-    // Add a race condition to prevent permanent hang if network is unstable
-    const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error("Init Timeout")), 30000)
-    )
-
     try {
-        const [fetchedBranches, roleId] = await Promise.race([
-            Promise.all([
-                getAllBranches(),
-                getCurrentUserRole()
-            ]),
-            timeoutPromise
+        const [fetchedBranches, roleId] = await Promise.all([
+            getAllBranches(),
+            getCurrentUserRole()
         ]) as [Branch[], number]
         
         setBranches(fetchedBranches || [])

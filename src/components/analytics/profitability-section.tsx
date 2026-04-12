@@ -10,7 +10,6 @@ import {
   YAxis, 
   CartesianGrid, 
   Tooltip, 
-  ResponsiveContainer,
   Cell,
   PieChart,
   Pie
@@ -194,7 +193,6 @@ export function ProfitabilitySection({ data = [], financials, startDate, endDate
                     </div>
                     <div className="p-12">
                         <ChartContainer height={450}>
-                        <ResponsiveContainer width="100%" height="100%">
                             <BarChart data={topPerformers} layout="vertical" margin={{ left: 40, right: 40 }}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" horizontal={false} />
                                 <XAxis type="number" stroke="#1e293b" fontSize={11} fontWeight="900" tickLine={false} axisLine={false} />
@@ -219,7 +217,6 @@ export function ProfitabilitySection({ data = [], financials, startDate, endDate
                                     ))}
                                 </Bar>
                             </BarChart>
-                        </ResponsiveContainer>
                         </ChartContainer>
                     </div>
                 </PremiumCard>
@@ -240,7 +237,6 @@ export function ProfitabilitySection({ data = [], financials, startDate, endDate
                     </div>
                     <div className="p-10">
                         <ChartContainer height={280}>
-                            <ResponsiveContainer width="100%" height="100%">
                                 <PieChart>
                                     <Pie
                                         data={costBreakdownData}
@@ -263,7 +259,6 @@ export function ProfitabilitySection({ data = [], financials, startDate, endDate
                                         formatter={(value: number | string) => [`฿${Number(value || 0).toLocaleString()}`, t('settings.items.accounting')]}
                                     />
                                 </PieChart>
-                            </ResponsiveContainer>
                         </ChartContainer>
                             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                                 <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-[0.2em] leading-none mb-1">TOTAL OpEx</span>

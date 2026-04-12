@@ -218,6 +218,8 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
               src="/logo2.png"
               alt="LogisPro"
               fill
+              priority
+              loading="eager"
               sizes="(max-width: 768px) 40px, 96px"
               className={cn(
                 "object-contain logo-pure transition-all duration-700 hover:scale-110",

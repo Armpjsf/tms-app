@@ -1,6 +1,6 @@
 "use client"
 
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts'
 import { ChartContainer } from "@/components/ui/chart-container"
 import { useLanguage } from "@/components/providers/language-provider"
 
@@ -15,7 +15,6 @@ export function RevenueTrendChart({ data }: { data: RevenueData[] }) {
 
   return (
     <ChartContainer height={500}>
-      <ResponsiveContainer width="100%" height="100%">
         <AreaChart
           data={data}
           margin={{ top: 40, right: 40, left: 0, bottom: 20 }}
@@ -98,7 +97,6 @@ export function RevenueTrendChart({ data }: { data: RevenueData[] }) {
             className="drop-shadow-[0_0_15px_rgba(112,0,255,0.3)]"
           />
         </AreaChart>
-      </ResponsiveContainer>
     </ChartContainer>
   )
 }

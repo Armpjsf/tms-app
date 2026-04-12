@@ -30,21 +30,21 @@ export function LeaveActionsClient({ leaveId }: LeaveActionsClientProps) {
     }
 
     return (
-        <div className="flex flex-row md:flex-col gap-3 shrink-0">
+        <div className="flex flex-row md:flex-col gap-2 shrink-0">
             <Button 
                 disabled={loading !== null}
                 onClick={() => handleAction('Approved')}
-                className="w-full md:w-32 h-16 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-black uppercase tracking-widest shadow-lg shadow-emerald-600/20 active:scale-95 transition-all"
+                className="w-full md:w-28 h-11 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black uppercase tracking-widest shadow-lg shadow-emerald-600/20 active:scale-95 transition-all text-[10px]"
             >
-                {loading === 'Approve' ? <Loader2 className="animate-spin" /> : 'อนุมัติ'}
+                {loading === 'Approve' ? <Loader2 className="animate-spin w-4 h-4" /> : 'อนุมัติ'}
             </Button>
             <Button 
                 disabled={loading !== null}
                 variant="outline" 
                 onClick={() => handleAction('Rejected')}
-                className="w-full md:w-32 h-16 rounded-2xl border-2 border-red-200 text-red-600 hover:bg-red-50 font-black uppercase tracking-widest active:scale-95 transition-all"
+                className="w-full md:w-28 h-11 rounded-xl border border-red-200 text-red-600 hover:bg-red-50 font-black uppercase tracking-widest active:scale-95 transition-all text-[10px]"
             >
-                {loading === 'Reject' ? <Loader2 className="animate-spin" /> : 'ปฏิเสธ'}
+                {loading === 'Reject' ? <Loader2 className="animate-spin w-4 h-4" /> : 'ปฏิเสธ'}
             </Button>
         </div>
     )

@@ -50,7 +50,7 @@ export async function getExecutiveDashboardUnified(branchId?: string, startDate?
     // Fallback if RPC fails or is missing
     if (rpcError || !currentData) {
         if (rpcError && rpcError.message) {
-            console.warn('[getExecutiveDashboardUnified] RPC failed, using manual fallback:', rpcError.message)
+            console.debug('[getExecutiveDashboardUnified] RPC failed, using manual fallback:', rpcError.message)
         }
         
         // Manual fallback: Fetch Current & Previous for Comparison

@@ -27,7 +27,6 @@ import {
     YAxis, 
     CartesianGrid, 
     Tooltip, 
-    ResponsiveContainer, 
     AreaChart, 
     Area,
     Cell,
@@ -165,7 +164,6 @@ export function ExecutiveDashboardClient({ initialData, initialRemark, branchId,
                 <PremiumCard className="lg:col-span-2 p-8" title={t('dashboard.revenue_trend')}>
                     <div className="mt-6">
                         <ChartContainer height={350}>
-                        <ResponsiveContainer width="100%" height="100%">
                             <AreaChart data={data.trend}>
                                 <defs>
                                     <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
@@ -189,7 +187,6 @@ export function ExecutiveDashboardClient({ initialData, initialRemark, branchId,
                                 />
                                 <Area type="monotone" dataKey="revenue" stroke="#ff1e85" strokeWidth={4} fillOpacity={1} fill="url(#colorRev)" />
                             </AreaChart>
-                        </ResponsiveContainer>
                         </ChartContainer>
                     </div>
                 </PremiumCard>

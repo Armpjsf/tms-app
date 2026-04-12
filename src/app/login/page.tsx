@@ -63,6 +63,8 @@ function StaffLoginContent() {
                         src="/logo2.png" 
                         alt="LogisPro" 
                         fill 
+                        sizes="(max-width: 768px) 100vw, 224px"
+                        priority
                         className="object-contain logo-pure transition-all duration-700 dark:brightness-110" 
                     />
                 </div>

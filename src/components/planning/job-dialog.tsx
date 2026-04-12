@@ -942,6 +942,7 @@ export function JobDialog({
         className="max-w-7xl max-h-[95vh] overflow-y-auto bg-background border-border text-foreground"
         onPointerDownOutside={(e) => e.preventDefault()}
         onEscapeKeyDown={(e) => e.preventDefault()}
+        aria-describedby={undefined}
       >
         <DialogHeader>
           <div className="flex flex-wrap items-start justify-between gap-6 w-full pr-8">

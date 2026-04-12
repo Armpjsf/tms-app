@@ -7,7 +7,6 @@ import {
   PieChart, 
   Pie, 
   Cell, 
-  ResponsiveContainer, 
   Tooltip, 
   Legend 
 } from 'recharts'
@@ -64,7 +63,6 @@ export function DelayAnalysis({ data = [] }: Props) {
             
             <div className="p-10">
                 <ChartContainer height={350}>
-                    <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
                             <Pie
                                 data={data}
@@ -99,7 +97,6 @@ export function DelayAnalysis({ data = [] }: Props) {
                                 formatter={(value) => <span className="text-[11px] font-black text-muted-foreground uppercase italic ml-2">{value}</span>}
                             />
                         </PieChart>
-                    </ResponsiveContainer>
                 </ChartContainer>
                     <div className="text-center mt-4 pointer-events-none">
                         <span className="text-base font-bold font-black text-muted-foreground uppercase leading-none mb-1">TOTAL</span>

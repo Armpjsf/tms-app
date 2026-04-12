@@ -7,12 +7,12 @@ import {
     YAxis, 
     CartesianGrid, 
     Tooltip, 
-    ResponsiveContainer, 
     LineChart, 
     Line,
     Legend
 } from 'recharts'
 import { PremiumCard } from "@/components/ui/premium-card"
+import { ChartContainer } from "@/components/ui/chart-container"
 import { Package, CheckCircle2 } from "lucide-react"
 import { useLanguage } from "@/components/providers/language-provider"
 
@@ -51,7 +51,6 @@ export function PerformanceCharts({ data }: { data: PerformanceData[] }) {
         </div>
         <div className="p-10">
           <ChartContainer height={350}>
-          <ResponsiveContainer width="100%" height="100%">
             <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
               <XAxis 
@@ -85,7 +84,6 @@ export function PerformanceCharts({ data }: { data: PerformanceData[] }) {
               <Bar dataKey="onTimeCount" name={t('charts.nominal_ops')} stackId="a" fill="#10b981" radius={[0, 0, 0, 0]} />
               <Bar dataKey="lateJobs" name={t('charts.delayed')} stackId="a" fill="#f59e0b" radius={[4, 4, 0, 0]} />
             </BarChart>
-          </ResponsiveContainer>
           </ChartContainer>
         </div>
       </PremiumCard>
@@ -106,7 +104,6 @@ export function PerformanceCharts({ data }: { data: PerformanceData[] }) {
         </div>
         <div className="p-10">
           <ChartContainer height={350}>
-          <ResponsiveContainer width="100%" height="100%">
             <LineChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
               <XAxis 
@@ -147,7 +144,6 @@ export function PerformanceCharts({ data }: { data: PerformanceData[] }) {
                 activeDot={{ r: 6, strokeWidth: 0 }}
               />
             </LineChart>
-          </ResponsiveContainer>
           </ChartContainer>
         </div>
       </PremiumCard>

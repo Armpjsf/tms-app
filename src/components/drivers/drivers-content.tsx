@@ -15,6 +15,7 @@ import { DriverDialog } from "./driver-dialog"
 import { Pagination } from "@/components/ui/pagination"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useLanguage } from "@/components/providers/language-provider"
+import { cn } from "@/lib/utils"
 import { ExcelImport } from "../ui/excel-import"
 
 type DriversContentProps = {

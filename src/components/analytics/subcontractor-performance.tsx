@@ -1,6 +1,6 @@
 "use client"
 
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
+import { PieChart, Pie, Cell, Tooltip, Legend } from 'recharts';
 import { ChartContainer } from "@/components/ui/chart-container";
 import { useLanguage } from '@/components/providers/language-provider';
 
@@ -23,7 +23,6 @@ export function SubcontractorPerformance({ data }: { data: SubPerItem[] }) {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
             <div className="h-[250px] w-full">
                 <ChartContainer height={250}>
-                <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                         <Pie
                             data={data}
@@ -55,7 +54,6 @@ export function SubcontractorPerformance({ data }: { data: SubPerItem[] }) {
                             formatter={(value) => <span className="text-[11px] font-black text-muted-foreground uppercase italic ml-2">{value}</span>}
                         />
                     </PieChart>
-                </ResponsiveContainer>
                 </ChartContainer>
             </div>
             <div className="space-y-4">

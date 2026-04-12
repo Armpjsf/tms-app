@@ -1,6 +1,6 @@
 "use client"
 
-import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip, Legend } from "recharts"
+import { Cell, Pie, PieChart, Tooltip, Legend } from "recharts"
 import { ChartContainer } from "@/components/ui/chart-container"
 
 type StatusData = {
@@ -20,7 +20,6 @@ export function JobStatusChart({ data }: { data: StatusData[] }) {
 
   return (
     <ChartContainer height={350}>
-        <ResponsiveContainer width="100%" height="100%">
       <PieChart>
         <Pie
           data={data}
@@ -45,7 +44,6 @@ export function JobStatusChart({ data }: { data: StatusData[] }) {
             iconType="circle"
         />
       </PieChart>
-    </ResponsiveContainer>
     </ChartContainer>
   )
 }

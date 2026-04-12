@@ -1,6 +1,6 @@
 "use client"
 
-import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend } from "recharts"
+import { Bar, BarChart, XAxis, YAxis, Tooltip, Legend } from "recharts"
 import { ChartContainer } from "@/components/ui/chart-container"
 
 type WeeklyStats = {
@@ -20,7 +20,6 @@ export function WeeklyShipmentChart({ data }: { data: WeeklyStats[] }) {
 
   return (
     <ChartContainer height={350}>
-        <ResponsiveContainer width="100%" height="100%">
         <BarChart data={data}>
             <defs>
                 <linearGradient id="barGradientPrimary" x1="0" y1="0" x2="0" y2="1">
@@ -82,7 +81,6 @@ export function WeeklyShipmentChart({ data }: { data: WeeklyStats[] }) {
                 barSize={24}
             />
         </BarChart>
-        </ResponsiveContainer>
     </ChartContainer>
   )
 }
