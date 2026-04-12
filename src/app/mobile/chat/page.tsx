@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Send, User, Bot, Loader2, MessageSquare, Image as ImageIcon, Camera } from "lucide-react"
 import { createClient } from "@/utils/supabase/client" // Client side supabase for realtime
-import { getChatHistory, sendChatMessage, ChatMessage } from "@/lib/actions/chat-actions"
+import { getChatHistory, sendChatMessage, ChatMessage, markChatReadByDriver } from "@/lib/actions/chat-actions"
 import { getDriverSession } from "@/lib/actions/auth-actions"
 import { uploadImageToDrive } from "@/lib/actions/upload-actions"
 import Image from "next/image"
@@ -38,6 +38,10 @@ export default function MobileChatPage() {
         
         const history = await getChatHistory(session.driverId)
         setMessages(history)
+        
+        // Mark as read when entering the chat
+        await markChatReadByDriver(session.driverId)
+        
         setLoading(false)
     }
     init()

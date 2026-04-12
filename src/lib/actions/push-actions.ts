@@ -38,12 +38,16 @@ if (!admin.apps.length) {
             }
         } else {
             const KEY_FILE_PATH = join(process.cwd(), 'service_account.json')
-            const sa = JSON.parse(readFileSync(KEY_FILE_PATH, 'utf8')) as admin.ServiceAccount
-            credential = admin.credential.cert(sa)
+            if (require('fs').existsSync(KEY_FILE_PATH)) {
+                const sa = JSON.parse(readFileSync(KEY_FILE_PATH, 'utf8')) as admin.ServiceAccount
+                credential = admin.credential.cert(sa)
+            }
         }
 
-        admin.initializeApp({ credential })
-        console.log("Firebase Admin Initialized Successfully")
+        if (credential) {
+            admin.initializeApp({ credential })
+            console.log("Firebase Admin Initialized Successfully")
+        }
     } catch (err) {
         console.error("Firebase Admin Initialization Failed:", err)
     }
@@ -107,8 +111,8 @@ export async function savePushSubscription(driverId: string, subscription: PushS
     const supabase = await createAdminClient()
     const isFCM = subscription.isFCM === true
 
-    // Manual Upsert Pattern: Delete existing endpoint to avoid uniqueness issues (Postgres 42P10)
-    await supabase.from('Push_Subscriptions').delete().eq('Endpoint', subscription.endpoint)
+    // Prevents Duplicate Key Constraint Error ("Push_Subscriptions_Driver_ID_key")
+    await supabase.from('Push_Subscriptions').delete().eq('Driver_ID', driverId)
 
     const { error } = await supabase
         .from('Push_Subscriptions')
@@ -133,8 +137,8 @@ export async function savePushSubscription(driverId: string, subscription: PushS
 export async function saveAdminPushSubscription(userId: string, subscription: PushSubscription) {
     const supabase = await createAdminClient()
 
-    // Manual Upsert Pattern: Delete existing endpoint to avoid uniqueness issues (Postgres 42P10)
-    await supabase.from('Push_Subscriptions').delete().eq('Endpoint', subscription.endpoint)
+    // Prevents Duplicate Key Constraint Error on User_ID
+    await supabase.from('Push_Subscriptions').delete().eq('User_ID', userId)
 
     const { error } = await supabase
         .from('Push_Subscriptions')

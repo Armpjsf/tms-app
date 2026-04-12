@@ -6,6 +6,8 @@ import { createDamageReport, getMyDamageReports, DamageReport } from "@/lib/supa
 import { AlertOctagon, CheckCircle2, Send, Camera, FileText, X, Image as ImageIcon, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
+import { Badge } from "@/components/ui/badge"
+import { motion } from "framer-motion"
 import { cn } from "@/lib/utils"
 
 const CATEGORIES = [

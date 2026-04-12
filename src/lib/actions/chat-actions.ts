@@ -112,3 +112,14 @@ export async function markAsReadAction(driverId: string) {
     const { markAsRead } = await import("@/lib/supabase/chat")
     return markAsRead(driverId)
 }
+
+export async function markChatReadByDriver(driverId: string) {
+    const adminSupabase = createAdminClient()
+    const { tableName, columns } = await getChatSchema(adminSupabase)
+    const { error } = await adminSupabase
+        .from(tableName)
+        .update({ [columns.is_read]: true })
+        .eq(columns.receiver_id, driverId)
+        .eq(columns.is_read, false)
+    return { success: !error }
+}

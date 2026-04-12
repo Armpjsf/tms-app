@@ -2,7 +2,7 @@
 
 import { MobileNotificationBadge } from "./notification-badge"
 import { ChevronLeft } from "lucide-react"
-import { useRouter } from "next/navigation"
+import { useRouter, usePathname } from "next/navigation"
 
 type Props = {
   title: string
@@ -12,6 +12,10 @@ type Props = {
 
 export function MobileHeader({ title, showBack, rightElement }: Props) {
   const router = useRouter()
+  const pathname = usePathname()
+  
+  const isMainTab = ['/mobile/dashboard', '/mobile/jobs', '/mobile/profile', '/mobile/login'].includes(pathname)
+  const shouldShowBack = showBack !== undefined ? showBack : !isMainTab
   
   const clearCache = () => {
     if ('serviceWorker' in navigator) {
@@ -29,7 +33,7 @@ export function MobileHeader({ title, showBack, rightElement }: Props) {
   return (
     <header className="fixed top-0 left-0 right-0 h-[calc(56px+env(safe-area-inset-top))] pt-[env(safe-area-inset-top)] bg-background/80 backdrop-blur-2xl border-b border-border flex items-center justify-between px-6 z-[100] transition-colors duration-300">
       <div className="flex items-center gap-4">
-        {showBack && (
+        {shouldShowBack && (
             <button 
                 onClick={() => router.back()}
                 className="w-10 h-10 rounded-2xl bg-card border border-border flex items-center justify-center text-muted-foreground active:scale-95"
