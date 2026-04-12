@@ -125,22 +125,36 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
 
   React.useEffect(() => {
     async function loadPermissions() {
+        // 1. Instant Cache Load
+        const cachedContent = localStorage.getItem("sidebar_permissions")
+        if (cachedContent) {
+            try {
+                const parsed = JSON.parse(cachedContent)
+                setSidebarState({ allowedMenus: parsed, isLoaded: true })
+            } catch (e) {}
+        }
+
+        // 2. Background Fetch & Sync
         try {
             const { getUserProfile } = await import("@/lib/supabase/users")
             const profile = await getUserProfile()
 
             if (profile?.Role) {
                 const perms = await getPermissionsByRole(profile.Role)
+                localStorage.setItem("sidebar_permissions", JSON.stringify(perms))
                 setSidebarState({
                     allowedMenus: perms,
                     isLoaded: true
                 })
             } else {
+                localStorage.setItem("sidebar_permissions", JSON.stringify([]))
                 setSidebarState({ allowedMenus: [], isLoaded: true })
             }
         } catch (error) {
             console.error("Sidebar permission error:", error)
-            setSidebarState({ allowedMenus: [], isLoaded: true })
+            if (!cachedContent) {
+                setSidebarState({ allowedMenus: [], isLoaded: true })
+            }
         }
     }
     loadPermissions()

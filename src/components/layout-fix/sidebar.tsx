@@ -152,6 +152,19 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
 
   React.useEffect(() => {
     async function checkRole() {
+        // 1. Instant Cache Load
+        const cachedRole = localStorage.getItem("sidebar_fix_role")
+        const cachedCustomer = localStorage.getItem("sidebar_fix_isCustomer")
+        
+        if (cachedRole !== null && cachedCustomer !== null) {
+            setSidebarState({
+                userRole: Number(cachedRole),
+                isCustomerUser: cachedCustomer === 'true',
+                roleLoaded: true
+            })
+        }
+
+        // 2. Background Sync
         try {
             const role = await getUserRole()
             const { isCustomer } = await import("@/lib/permissions")
@@ -159,14 +172,20 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
             
             const profile = await getUserProfile()
             const isCust = (await isCustomer()) || (Number(role) === 7) || (profile?.Role === 'Customer')
+            const finalRole = role || (profile?.Role === 'Customer' ? 7 : null)
             
+            if (finalRole !== null) localStorage.setItem("sidebar_fix_role", String(finalRole))
+            localStorage.setItem("sidebar_fix_isCustomer", String(isCust))
+
             setSidebarState({
-                userRole: role || (profile?.Role === 'Customer' ? 7 : null),
+                userRole: finalRole,
                 isCustomerUser: !!isCust,
                 roleLoaded: true
             })
         } catch {
-            setSidebarState(prev => ({ ...prev, roleLoaded: true }))
+            if (!cachedRole) {
+                setSidebarState(prev => ({ ...prev, roleLoaded: true }))
+            }
         }
     }
     checkRole()
