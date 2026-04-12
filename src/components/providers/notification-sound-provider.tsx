@@ -17,6 +17,30 @@ export function NotificationSoundProvider() {
     if (notificationAudio.current) notificationAudio.current.preload = "auto"
     if (emergencyAudio.current) emergencyAudio.current.preload = "auto"
 
+    // ── Unlock Audio on First User Interaction ──
+    const handleFirstInteraction = () => {
+      const unlock = (audio: HTMLAudioElement) => {
+        const prevVolume = audio.volume;
+        audio.volume = 0; // Mute during unlock
+        audio.play().then(() => {
+          audio.pause();
+          audio.currentTime = 0;
+          audio.volume = prevVolume; // Restore volume
+        }).catch(() => {});
+      }
+      
+      if (notificationAudio.current) unlock(notificationAudio.current);
+      if (emergencyAudio.current) unlock(emergencyAudio.current);
+      
+      document.removeEventListener("click", handleFirstInteraction);
+      document.removeEventListener("touchstart", handleFirstInteraction);
+      document.removeEventListener("keydown", handleFirstInteraction);
+    }
+
+    document.addEventListener("click", handleFirstInteraction);
+    document.addEventListener("touchstart", handleFirstInteraction);
+    document.addEventListener("keydown", handleFirstInteraction);
+
     const handleMessage = (data: any, source: string) => {
       // Check if message is of type PUSH_RECEIVED
       if (data && data.type === "PUSH_RECEIVED") {
@@ -31,7 +55,7 @@ export function NotificationSoundProvider() {
               emergencyAudio.current.currentTime = 0
               emergencyAudio.current.play()
                 .then(() => console.log("[SoundProvider] EMERGENCY sound played successfully."))
-                .catch(e => console.error("[SoundProvider] SOS sound BLOCKED by browser:", e.message))
+                .catch(e => console.warn("[SoundProvider] SOS sound BLOCKED by browser:", e.message))
             }
           } else {
             if (notificationAudio.current) {
@@ -39,7 +63,7 @@ export function NotificationSoundProvider() {
               notificationAudio.current.currentTime = 0
               notificationAudio.current.play()
                 .then(() => console.log("[SoundProvider] NOTIFICATION sound played successfully."))
-                .catch(e => console.error("[SoundProvider] Notification sound BLOCKED by browser:", e.message))
+                .catch(e => console.warn("[SoundProvider] Notification sound BLOCKED by browser:", e.message))
             }
           }
         } catch (error) {
@@ -63,6 +87,9 @@ export function NotificationSoundProvider() {
       if ("serviceWorker" in navigator) {
         navigator.serviceWorker.removeEventListener("message", handleSWMessage)
       }
+      document.removeEventListener("click", handleFirstInteraction);
+      document.removeEventListener("touchstart", handleFirstInteraction);
+      document.removeEventListener("keydown", handleFirstInteraction);
     }
   }, [])
 

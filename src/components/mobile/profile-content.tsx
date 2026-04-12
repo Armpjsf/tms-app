@@ -83,41 +83,41 @@ export function ProfileContent({ session, score, unreadChatCount = 0 }: ProfileC
     }
   }
 
-  const handleTestPush = async () => {
-    try {
-      const { sendPushToDriver } = await import("@/lib/actions/push-actions")
-      const result = await sendPushToDriver(session.driverId, {
-        title: "🔔 ทดสอบแจ้งเตือน",
-        body: "หากคุณเห็นข้อความนี้ แสดงว่าระบบแจ้งเตือนของคุณทำงานปกติครับ",
-        url: "/mobile/dashboard"
-      })
-      if (result.success) {
-        toast.success("ส่งข้อความทดสอบแล้ว กรุณารอสักครู่...")
-      } else {
-        toast.error("ส่งไม่สำเร็จ: " + (result.reason || "ไม่พบข้อมูลเครื่องของคุณ"))
-      }
-    } catch (err) {
-      console.error(err)
-      toast.error("เกิดข้อผิดพลาดในการส่ง")
+  const menuGroups = [
+    {
+      title: "การสื่อสารและการแจ้งเตือน",
+      items: [
+        { icon: Bell, label: "เปิดรับการแจ้งเตือนงาน", action: handleSubscribePush, color: 'text-blue-500' },
+        { icon: Bell, label: "ประวัติการแจ้งเตือน", href: "/mobile/notifications" },
+        { icon: User, label: "แชทกับแอดมิน", href: "/mobile/chat", badge: unreadChatCount },
+      ]
+    },
+    {
+      title: "ศูนย์ปฏิบัติการ",
+      items: [
+        { icon: LayoutGrid, label: "รับงานกลาง (ประมูล)", href: "/mobile/marketplace" },
+        { icon: Star, label: "คะแนนและผลงาน", href: "/mobile/kpi" },
+        { icon: Banknote, label: "รายได้และเบี้ยเลี้ยง", href: "/mobile/income-summary" },
+        { icon: Wrench, label: "แจ้งซ่อม/แจ้งเสีย", href: "/mobile/maintenance" },
+        { icon: Fuel, label: "แจ้งเติมน้ำมัน", href: "/mobile/fuel" },
+        { icon: ClipboardCheck, label: "ตรวจเช็คสภาพรถ", href: "/mobile/vehicle-check" },
+      ]
+    },
+    {
+      title: "รายงานเหตุ",
+      items: [
+        { icon: ShieldAlert, label: "แจ้งสินค้าเสียหาย", href: "/mobile/damage-report" },
+        { icon: Calendar, label: "แจ้งลางาน", href: "/mobile/leave" },
+        { icon: AlertTriangle, label: "แจ้งเหตุฉุกเฉิน (SOS)", href: "/mobile/sos", color: 'text-red-500' },
+      ]
+    },
+    {
+      title: "ระบบ",
+      items: [
+        { icon: BookOpen, label: "คู่มือการใช้งาน", href: "/mobile/manual" },
+        { icon: Settings, label: "ตั้งค่าระบบ", href: "/mobile/settings" },
+      ]
     }
-  }
-
-  const menuItems = [
-    { icon: Bell, label: "เปิดรับการแจ้งเตือนงาน", action: handleSubscribePush, color: 'text-blue-500' },
-    {icon: Bell, label: "ทดสอบการแจ้งเตือน (ทดสอบ)", action: handleTestPush, color: 'text-orange-500' },
-    { icon: LayoutGrid, label: "รับงานกลาง (ประมูล)", href: "/mobile/marketplace" },
-    { icon: Star, label: "คะแนนและผลงาน", href: "/mobile/kpi" },
-    { icon: Banknote, label: "รายได้และเบี้ยเลี้ยง", href: "/mobile/income-summary" },
-    { icon: Fuel, label: "แจ้งเติมน้ำมัน", href: "/mobile/fuel" },
-    { icon: Wrench, label: "แจ้งซ่อม/แจ้งเสีย", href: "/mobile/maintenance" },
-    { icon: ClipboardCheck, label: "ตรวจเช็คสภาพรถ", href: "/mobile/vehicle-check" },
-    { icon: ShieldAlert, label: "แจ้งสินค้าเสียหาย", href: "/mobile/damage-report" },
-    { icon: Calendar, label: "แจ้งลางาน", href: "/mobile/leave" },
-    { icon: Bell, label: "การแจ้งเตือน", href: "/mobile/notifications" },
-    { icon: User, label: "แชทกับแอดมิน", href: "/mobile/chat", badge: unreadChatCount },
-    { icon: AlertTriangle, label: "แจ้งเหตุฉุกเฉิน (SOS)", href: "/mobile/sos" },
-    { icon: BookOpen, label: "คู่มือการใช้งาน", href: "/mobile/manual" },
-    { icon: Settings, label: "ตั้งค่าระบบ", href: "/mobile/settings" },
   ]
 
   const handleItemClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
@@ -192,50 +192,57 @@ export function ProfileContent({ session, score, unreadChatCount = 0 }: ProfileC
         </CardContent>
       </Card>
 
-      <Card className="glass-panel border-border/5 mb-4">
-        <CardContent className="py-2">
-          {menuItems.map((item, index) => {
-            const Content = (
-              <div className="flex items-center justify-between py-4 border-b border-border/5 last:border-0 active:bg-muted/50 transition-colors w-full text-left">
-                <div className="flex items-center gap-3 text-foreground">
-                  <item.icon className={`w-5 h-5 ${item.color || 'text-muted-foreground'}`} />
-                  <span className="font-medium">{item.label}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  {item.badge && item.badge > 0 && (
-                    <span className="bg-primary text-foreground font-bold font-black px-2 py-0.5 rounded-full min-w-[20px] text-center shadow-lg shadow-primary/20">
-                      {item.badge}
-                    </span>
-                  )}
-                  <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                </div>
-              </div>
-            )
+      <div className="space-y-4 mb-8">
+        {menuGroups.map((group, groupIndex) => (
+          <div key={groupIndex}>
+            <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-widest pl-2 mb-2">{group.title}</h3>
+            <Card className="glass-panel border-border/5">
+              <CardContent className="py-2">
+                {group.items.map((item, index) => {
+                  const Content = (
+                    <div className="flex items-center justify-between py-4 border-b border-border/5 last:border-0 active:bg-muted/50 transition-colors w-full text-left">
+                      <div className="flex items-center gap-3 text-foreground">
+                        <item.icon className={`w-5 h-5 ${item.color || 'text-muted-foreground'}`} />
+                        <span className="font-medium">{item.label}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {item.badge && item.badge > 0 && (
+                          <span className="bg-primary text-foreground font-bold font-black px-2 py-0.5 rounded-full min-w-[20px] text-center shadow-lg shadow-primary/20">
+                            {item.badge}
+                          </span>
+                        )}
+                        <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                      </div>
+                    </div>
+                  )
 
-            if (item.action) {
-              return (
-                <button 
-                  key={index} 
-                  onClick={item.action}
-                  className="w-full disabled:opacity-50"
-                >
-                  {Content}
-                </button>
-              )
-            }
+                  if ('action' in item) {
+                    return (
+                      <button 
+                        key={index} 
+                        onClick={item.action}
+                        className="w-full disabled:opacity-50"
+                      >
+                        {Content}
+                      </button>
+                    )
+                  }
 
-            return (
-              <Link 
-                key={index} 
-                href={item.href || "#"}
-                onClick={(e) => handleItemClick(e, item.href || "#")}
-              >
-                {Content}
-              </Link>
-            )
-          })}
-        </CardContent>
-      </Card>
+                  return (
+                    <Link 
+                      key={index} 
+                      href={item.href || "#"}
+                      onClick={(e) => handleItemClick(e, item.href || "#")}
+                    >
+                      {Content}
+                    </Link>
+                  )
+                })}
+              </CardContent>
+            </Card>
+          </div>
+        ))}
+      </div>
 
       <div className="pb-8">
         <Button 

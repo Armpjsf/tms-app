@@ -208,7 +208,7 @@ export default async function TrackingPage(props: { params: Promise<{ jobId: str
                                 <div className="grid grid-cols-2 gap-3">
                                     {job.podPhotos.map((url, i) => (
                                         <div key={i} className="aspect-video relative rounded-xl overflow-hidden border border-slate-100 bg-slate-50 shadow-inner group cursor-pointer">
-                                            <Image src={url} alt="POD" fill className="object-cover transition-transform group-hover:scale-105" />
+                                            <Image src={url} alt="POD" fill sizes="(max-width: 768px) 50vw, 300px" className="object-cover transition-transform group-hover:scale-105" />
                                             <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                                 <ExternalLink size={20} className="text-white" />
                                             </div>
@@ -222,7 +222,7 @@ export default async function TrackingPage(props: { params: Promise<{ jobId: str
                             <div className="space-y-3">
                                 <p className="text-xs font-bold text-slate-400 uppercase tracking-wider text-center">ลายเซ็นผู้รับสินค้า</p>
                                 <div className="h-24 bg-slate-50 rounded-xl overflow-hidden relative border border-slate-100">
-                                    <Image src={job.signature} alt="POD Sig" fill className="object-contain p-4" />
+                                    <Image src={job.signature} alt="POD Sig" fill sizes="(max-width: 768px) 100vw, 400px" className="object-contain p-4" />
                                 </div>
                             </div>
                         )}

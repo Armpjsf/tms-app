@@ -13,12 +13,14 @@ export default async function MobileLayout({
   const session = await getDriverSession()
   
   return (
-    <div className="flex flex-col min-h-screen bg-transparent text-foreground pb-32">
+    <div className="flex flex-col h-[100dvh] w-screen overflow-hidden bg-transparent text-foreground relative">
       <SyncManager />
       <SessionStabilizer session={session} />
       {session && <LocationTracker driverId={session.driverId} branchId={session.branchId} />}
       {session && <PermissionRequester driverId={session.driverId} />}
-      <main className="flex-1">{children}</main>
+      <main className="flex-1 overflow-y-auto custom-scrollbar relative z-0 pb-24">
+        {children}
+      </main>
       {session && <BottomNav />}
     </div>
   )

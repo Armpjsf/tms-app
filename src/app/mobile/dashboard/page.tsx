@@ -34,7 +34,7 @@ async function DashboardContent() {
 
 export default function MobileDashboard() {
   return (
-    <div className="relative min-h-screen bg-transparent pb-24 pt-16 px-4 overflow-hidden">
+    <div className="relative w-full bg-transparent pt-16 px-4 overflow-hidden">
       {/* Animated Background Mesh */}
       <div className="fixed inset-0 pointer-events-none">
         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-emerald-500/10 rounded-full blur-[120px] animate-pulse" />

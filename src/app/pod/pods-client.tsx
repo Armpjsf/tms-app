@@ -180,6 +180,7 @@ export default function PODPage({ pods, stats, count, limit, searchParams }: any
                                     src={pod.Photo_Proof_Url.split(',')[0]} 
                                     alt={t('pod.visual_proof')} 
                                     fill 
+                                    sizes="40px"
                                     className="object-cover opacity-80 group-hover/visual:opacity-100 transition-opacity" 
                                  />
                               </div>
@@ -194,6 +195,7 @@ export default function PODPage({ pods, stats, count, limit, searchParams }: any
                                     src={pod.Signature_Url} 
                                     alt={t('pod.auth_sig')} 
                                     fill 
+                                    sizes="48px"
                                     className="object-contain p-1" 
                                  />
                               </div>
