@@ -18,6 +18,10 @@ async function decrypt(session: string | undefined = '') {
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
+  
+  if (pathname.includes('analytics')) {
+    return NextResponse.next()
+  }
 
   // Protect /mobile/* routes (except /mobile/login) — require driver_session cookie
   if (pathname.startsWith('/mobile') && !pathname.startsWith('/mobile/login')) {
@@ -45,7 +49,7 @@ export async function middleware(request: NextRequest) {
     response = await updateSession(request)
   }
 
-  if (!isApiRoute && !isMobile && !isLoginPage && !isPublicTrack && !isPublicInvoice && !isStaticFile && pathname !== '/') {
+  if (!isApiRoute && !isMobile && !isLoginPage && !isPublicTrack && !isPublicInvoice && !isStaticFile && pathname !== '/' && !pathname.includes('analytics')) {
     const sessionCookie = request.cookies.get('session')
     const driverSession = request.cookies.get('driver_session')
 

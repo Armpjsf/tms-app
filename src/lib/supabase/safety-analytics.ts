@@ -3,6 +3,7 @@
 import { createAdminClient } from '@/utils/supabase/server'
 import { getUserBranchId, isSuperAdmin } from '@/lib/permissions'
 import { cookies } from 'next/headers'
+import { REVENUE_STATUSES } from './analytics-helpers'
 
 export type SafetyAnalytics = {
   sos: {
@@ -101,42 +102,27 @@ export async function getSafetyAnalytics(
     }))
 
   // 2. Fetch POD Stats
-  // Completed jobs: Delivered, Complete
-  // Check Photo_Proof_Url and Signature_Url presence
-  // Filter by Actual_Delivery_Time or Plan_Date
-  
-  // Revenue-generating statuses for POD compliance check
-  const revenueStatuses = ['Completed', 'Delivered', 'Finished', 'Closed']
-
+  // TMS 2026: Use standardized REVENUE_STATUSES for cross-language compatibility
   let podQuery = supabase
     .from('Jobs_Main')
     .select('Job_ID, Job_Status, Photo_Proof_Url, Signature_Url')
-    .in('Job_Status', revenueStatuses)
+    .in('Job_Status', REVENUE_STATUSES)
     
   if (startDate) podQuery = podQuery.gte('Plan_Date', startDate)
   if (endDate) podQuery = podQuery.lte('Plan_Date', endDate)
   if (effectiveBranchId) podQuery = podQuery.eq('Branch_ID', effectiveBranchId)
   
-  const { data: podData, error: podError } = await podQuery
-  
-  if (podError) {
-    // Continue with empty data
-  }
+  const { data: podData } = await podQuery
   
   const completedJobs = podData || []
   const totalCompleted = completedJobs.length
   const withPhoto = completedJobs.filter(j => !!j.Photo_Proof_Url).length
   const withSignature = completedJobs.filter(j => !!j.Signature_Url).length
   
-  // Compliance: Must have BOTH (or generally assume Photo is key?) 
-  // Let's say Compliance = (Jobs with Photo OR Signature) / Total? 
-  // Strict compliance: Photo AND Signature? 
-  // Usually Photo is mandatory for ePOD. Let's use Photo as primary compliance metric if strictness not defined.
-  // Let's return strict compliance (Both) for 'complianceRate' to be safe, or just Photo if Signature optional.
-  // Let's do: (withPhoto + withSignature) / (2 * total) * 100? No.
-  // Let's define Compliance as "Has Photo Proof".
-  
-  const complianceRate = totalCompleted > 0 ? (withPhoto / totalCompleted) * 100 : 0
+  // Compliance = BOTH Photo AND Signature present
+  const complianceRate = totalCompleted > 0 
+    ? (completedJobs.filter(j => !!j.Photo_Proof_Url && !!j.Signature_Url).length / totalCompleted) * 100 
+    : 0
 
   return {
     sos: {

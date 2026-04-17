@@ -4,6 +4,7 @@ import { createAdminClient } from '@/utils/supabase/server'
 import { getUserBranchId, isSuperAdmin } from '@/lib/permissions'
 import { cookies } from 'next/headers'
 import { getDriverLeaderboard } from './analytics'
+import { PIPELINE_STATUSES } from './analytics-helpers'
 
 export type WorkforceAnalytics = {
   kpis: {
@@ -61,15 +62,12 @@ export async function getWorkforceAnalytics(
   // KPI: Total Drivers (Filter by Active_Status if provided, otherwise all in branch)
   const totalBox = allDrivers.length // Total headcount in system
   
-  // KPI: Active Today (Drivers with non-cancelled jobs today for the specific branch)
-  const today = new Date().toISOString().split('T')[0]
-  
+  // KPI: Active Now (Drivers with jobs in active state for the specific branch)
   let activeDriversCount = 0
   let activeJobsQueryBuilder = supabase
      .from('Jobs_Main')
      .select('Driver_ID')
-     .eq('Plan_Date', today)
-     .neq('Job_Status', 'Cancelled')
+     .in('Job_Status', PIPELINE_STATUSES)
      .not('Driver_ID', 'is', null)
   
   if (effectiveBranchId) {

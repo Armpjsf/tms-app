@@ -11,11 +11,18 @@ export type FinancialJob = {
     Cost_Driver_Extra?: number | null;
 }
 
-// Revenue-generating statuses used across all analytics
+// Revenue-generating completed statuses
 export const REVENUE_STATUSES = [
     'Completed', 'Delivered', 'Finished', 'Closed', 'Complete', 'Success', 'Done', 'Finish', 'Arrived', 'Arrived Destination',
     'completed', 'delivered', 'finished', 'closed', 'complete', 'success', 'done', 'finish', 'arrived',
     'เสร็จสิ้น', 'เรียบร้อย', 'ส่งสำเร็จ', 'ปิดงาน', 'สำเร็จ', 'ถึงที่หมาย', 'ถึงจุดหมาย', 'ถึงที่ส่ง', 'จบงาน'
+]
+
+// "In-progress" statuses for pipeline revenue
+export const PIPELINE_STATUSES = [
+    'Requested', 'Pending', 'Confirmed', 'Picked Up', 'In Transit', 'Ongoing', 'On Route', 'Assigned',
+    'requested', 'pending', 'confirmed', 'picked up', 'in transit', 'ongoing', 'on route', 'assigned',
+    'ร้องขอ', 'รอพิจารณา', 'รอยืนยัน', 'รับสินค้าแล้ว', 'กำลังเดินทาง', 'กำลังดำเนินการ', 'รับงานแล้ว', 'มอบหมายแล้ว'
 ]
 
 // Date helpers to avoid extra dependencies

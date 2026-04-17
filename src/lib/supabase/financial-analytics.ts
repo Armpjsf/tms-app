@@ -4,6 +4,7 @@ import { createAdminClient } from '@/utils/supabase/server'
 import { isSuperAdmin, getCustomerId, isCustomer } from "@/lib/permissions"
 import {
     REVENUE_STATUSES,
+    PIPELINE_STATUSES,
     subDays,
     differenceInDays,
     formatDateSafe,
@@ -75,9 +76,10 @@ export async function getExecutiveDashboardUnified(branchId?: string, startDate?
 
         const calcStats = (jobs: any[]) => {
             const revenue = jobs.filter(j => REVENUE_STATUSES.includes(j.Job_Status || '')).reduce((sum, j) => sum + (Number(j.Price_Cust_Total) || 0), 0)
+            const revenuePipeline = jobs.filter(j => PIPELINE_STATUSES.includes(j.Job_Status || '')).reduce((sum, j) => sum + (Number(j.Price_Cust_Total) || 0), 0)
             const cost = jobs.filter(j => REVENUE_STATUSES.includes(j.Job_Status || '')).reduce((sum, j) => sum + (Number(j.Cost_Driver_Total) || 0) + (Number(j.Price_Cust_Extra) || 0) + (Number(j.Cost_Driver_Extra) || 0), 0)
             const distance = jobs.reduce((sum, j) => sum + (Number(j.Est_Distance_KM) || 0), 0)
-            return { revenue, cost, profit: revenue - cost, distance, count: jobs.length }
+            return { revenue, revenuePipeline, cost, profit: revenue - cost, distance, count: jobs.length }
         }
 
         const curr = calcStats(currJobs)
@@ -87,6 +89,22 @@ export async function getExecutiveDashboardUnified(branchId?: string, startDate?
             if (p <= 0) return c > 0 ? 100 : 0
             return ((c - p) / p) * 100
         }
+
+        // Fetch Fuel and Maint for Fallback
+        const [fuelData, maintData] = await Promise.all([
+            supabase.from('Fuel_Logs').select('Price_Total')
+                .gte('Date_Time', sDateCurrent)
+                .lte('Date_Time', eDateCurrent)
+                .is('Branch_ID', effectiveBranchId || null),
+            supabase.from('Repair_Tickets').select('Cost_Total')
+                .in('Status', ['Completed', 'เสร็จสิ้น'])
+                .gte('Date_Finish', sDateCurrent)
+                .lte('Date_Finish', eDateCurrent)
+                .is('Branch_ID', effectiveBranchId || null)
+        ])
+
+        const fuelCost = (fuelData.data || []).reduce((sum, l) => sum + (Number(l.Price_Total) || 0), 0)
+        const maintCost = (maintData.data || []).reduce((sum, r) => sum + (Number(r.Cost_Total) || 0), 0)
 
         // Trend calculation
         const trendMap: Record<string, { total: number, completed: number }> = {}
@@ -112,19 +130,22 @@ export async function getExecutiveDashboardUnified(branchId?: string, startDate?
         const fuelSaved = co2Saved / 2.68
         const treesSaved = co2Saved / 20.2
 
+        const totalCostManual = curr.cost + fuelCost + maintCost
+
         return {
             financial: { 
                 revenue: curr.revenue, 
-                cost: { total: curr.cost, driver: curr.cost, extra: 0, fuel: 0, maintenance: 0 }, 
-                netProfit: curr.profit, 
-                profitMargin: curr.revenue > 0 ? (curr.profit / curr.revenue) * 100 : 0 
+                revenuePipeline: curr.revenuePipeline,
+                cost: { total: totalCostManual, driver: curr.cost, extra: 0, fuel: fuelCost, maintenance: maintCost }, 
+                netProfit: curr.revenue - totalCostManual, 
+                profitMargin: curr.revenue > 0 ? ((curr.revenue - totalCostManual) / curr.revenue) * 100 : 0 
             },
             trend, 
             statusDist: Object.entries(statusMap).map(([name, value]) => ({ name, value })),
             kpi: { 
                 revenue: { current: curr.revenue, previous: prev.revenue, growth: calculateGrowth(curr.revenue, prev.revenue), target: 250000, attainment: (curr.revenue / 250000) * 100 }, 
-                profit: { current: curr.profit, previous: prev.profit, growth: calculateGrowth(curr.profit, prev.profit) }, 
-                margin: { current: curr.revenue > 0 ? (curr.profit / curr.revenue) * 100 : 0, growth: calculateGrowth(curr.profit / (curr.revenue || 1), prev.profit / (prev.revenue || 1)), target: 15 }, 
+                profit: { current: curr.revenue - totalCostManual, previous: prev.profit, growth: calculateGrowth(curr.revenue - totalCostManual, prev.profit) }, 
+                margin: { current: curr.revenue > 0 ? ((curr.revenue - totalCostManual) / curr.revenue) * 100 : 0, growth: calculateGrowth((curr.revenue - totalCostManual) / (curr.revenue || 1), prev.profit / (prev.revenue || 1)), target: 15 }, 
                 jobs: { current: curr.count } 
             },
             esg: { fuelSaved: Math.round(fuelSaved), co2Saved: Math.round(co2Saved), treesSaved: Number(treesSaved.toFixed(1)) },
@@ -140,17 +161,65 @@ export async function getExecutiveDashboardUnified(branchId?: string, startDate?
         filter_customer_id: finalCustomerId
     })
 
+    // TMS 2026: Manual aggregation for Pipeline Revenue, Fuel, and Maintenance
+    let revenuePipeline = 0;
+    let fuelCost = 0;
+    let maintenanceCost = 0;
+
+    try {
+        const fetchPipeline = supabase
+            .from('Jobs_Main')
+            .select('Price_Cust_Total')
+            .in('Job_Status', PIPELINE_STATUSES)
+            .gte('Plan_Date', sDateCurrent)
+            .lte('Plan_Date', eDateCurrent)
+        
+        const fetchFuel = supabase
+            .from('Fuel_Logs')
+            .select('Price_Total')
+            .gte('Date_Time', `${sDateCurrent}T00:00:00`)
+            .lte('Date_Time', `${eDateCurrent}T23:59:59`)
+
+        const fetchMaint = supabase
+            .from('Repair_Tickets')
+            .select('Cost_Total')
+            .in('Status', ['Completed', 'เสร็จสิ้น'])
+            .gte('Date_Finish', `${sDateCurrent}T00:00:00`)
+            .lte('Date_Finish', `${eDateCurrent}T23:59:59`)
+
+        if (effectiveBranchId) {
+            fetchPipeline.eq('Branch_ID', effectiveBranchId)
+            fetchFuel.eq('Branch_ID', effectiveBranchId)
+            fetchMaint.eq('Branch_ID', effectiveBranchId)
+        } else if (!isAdmin) {
+             // If not admin and no effective branch, restrict (should not happen with getEffectiveBranchId)
+        }
+        
+        const [pipeRes, fuelRes, maintRes] = await Promise.all([
+            fetchPipeline,
+            fetchFuel,
+            fetchMaint
+        ])
+
+        revenuePipeline = (pipeRes.data || []).reduce((sum, j) => sum + (Number(j.Price_Cust_Total) || 0), 0)
+        fuelCost = (fuelRes.data || []).reduce((sum, f) => sum + (Number(f.Price_Total) || 0), 0)
+        maintenanceCost = (maintRes.data || []).reduce((sum, m) => sum + (Number(m.Cost_Total) || 0), 0)
+
+    } catch (e) {
+        console.warn('[getExecutiveDashboardUnified] Operational cost aggregation failed', e)
+    }
+
     if (prevRpcError) {
         console.error('[getExecutiveDashboardUnified] get_dashboard_metrics RPC Error:', prevRpcError)
     }
 
-    // 1. Process Financials
+    // 1. Process Financials from RPC data
     const fin = currentData.financial
     const revenue = Number(fin.revenue) || 0
     const driverCost = Number(fin.driver_cost) || 0
     const extraCost = Number(fin.extra_cost) || 0
     
-    const totalCost = driverCost + extraCost
+    const totalCost = driverCost + extraCost + fuelCost + maintenanceCost
     const netProfit = revenue - totalCost
     const margin = revenue > 0 ? (netProfit / revenue) * 100 : 0
 
@@ -180,7 +249,14 @@ export async function getExecutiveDashboardUnified(branchId?: string, startDate?
     return {
         financial: {
             revenue,
-            cost: { total: totalCost, driver: driverCost, extra: extraCost, fuel: 0, maintenance: 0 },
+            revenuePipeline,
+            cost: { 
+                total: totalCost, 
+                driver: driverCost, 
+                extra: extraCost, 
+                fuel: fuelCost, 
+                maintenance: maintenanceCost 
+            },
             netProfit,
             profitMargin: margin
         },
@@ -363,8 +439,11 @@ export async function getSubcontractorPerformance(startDate?: string, endDate?: 
 }
 
 export async function getExecutiveKPIs(startDate?: string, endDate?: string, branchId?: string) {
-    const stats = await getExecutiveDashboardUnified(branchId)
-    return stats.kpi
+    const stats = await getExecutiveDashboardUnified(branchId, startDate, endDate)
+    return {
+        ...stats.kpi,
+        revenue_pipeline: stats.financial.revenuePipeline || 0
+    }
 }
 
 export async function getRouteEfficiency(startDate?: string, endDate?: string, branchId?: string) {

@@ -38,6 +38,7 @@ import { ExportAllButton } from "@/components/analytics/export-all-button"
 import { ProfitabilitySection } from "@/components/analytics/profitability-section"
 import { DelayAnalysis } from "@/components/analytics/delay-analysis"
 import { RevenueForecastChart } from "@/components/analytics/revenue-forecast-chart"
+import { ActivityFeed } from "@/components/dashboard/activity-feed"
 
 import { PremiumCard } from "@/components/ui/premium-card"
 import { BarChart3, TrendingUp, Truck, ShieldAlert, Layers, Trophy, Star, Zap, Activity } from "lucide-react"
@@ -110,105 +111,130 @@ interface SecondaryData {
   delayRootCause: any[]
 }
 
+import { Tabs, TabsContent, List as TabsList, TabsTrigger } from "@/components/ui/tabs"
+
+const SectionSkeleton = () => (
+    <div className="w-full h-[300px] bg-muted/10 animate-pulse rounded-2xl border border-border/5 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4 opacity-20">
+            <Activity className="w-8 h-8 text-primary animate-bounce" />
+            <div className="h-1.5 w-24 bg-primary/40 rounded-full" />
+        </div>
+    </div>
+)
+
 export function DashboardContent({ 
   startDate,
   endDate,
   branchId,
 }: DashboardContentProps) {
   const { t } = useLanguage()
+  const [activeTab, setActiveTab] = useState("overview")
 
   const [priority, setPriority] = useState<PriorityData | null>(null)
   const [secondary, setSecondary] = useState<SecondaryData | null>(null)
   const [loadingPrimary, setLoadingPrimary] = useState(true)
-  const [loadingSecondary, setLoadingSecondary] = useState(true)
+  const [loadingSecondary, setLoadingSecondary] = useState(false)
 
-  const loadData = useCallback(async () => {
-    setLoadingPrimary(true)
-    setLoadingSecondary(true)
+  const [loadedTabs, setLoadedTabs] = useState<Set<string>>(new Set())
+
+  const loadTabData = useCallback(async (tab: string) => {
+    if (loadedTabs.has(tab)) return
+    
+    if (tab === 'overview' && !priority) {
+        setLoadingPrimary(true)
+        try {
+            const [financials, revenueTrend, forecastData, exeKPIs, opStats, statusDist, driverLeaderboard, vehicleProfitability, branchPerf] = await Promise.all([
+              getFinancialStats(startDate, endDate, branchId),
+              getRevenueTrend(startDate, endDate, branchId),
+              getRevenueForecast(branchId),
+              getExecutiveKPIs(startDate, endDate, branchId),
+              getOperationalStats(branchId, startDate, endDate),
+              getJobStatusDistribution(startDate, endDate, branchId),
+              getDriverLeaderboard(startDate, endDate, branchId),
+              getVehicleProfitability(startDate, endDate, branchId),
+              getBranchPerformance(startDate, endDate),
+            ])
+            setPriority({ financials, revenueTrend, forecastData, exeKPIs, opStats, statusDist, driverLeaderboard, vehicleProfitability, branchPerf })
+        } finally {
+            setLoadingPrimary(false)
+        }
+    } else if (tab !== 'overview') {
+        setLoadingSecondary(true)
+        try {
+            // Only fetch data relevant to the active tab to speed up loading
+            let results: any = {}
+            if (tab === 'financial') {
+              const [topCustomers, billing] = await Promise.all([
+                getTopCustomers(startDate, endDate, branchId),
+                getBillingAnalytics(startDate, endDate, branchId)
+              ])
+              results = { topCustomers, billing }
+            } else if (tab === 'operations') {
+              const [fuel, routes, delayRootCause] = await Promise.all([
+                getFuelAnalytics(startDate, endDate),
+                getRouteEfficiency(startDate, endDate, branchId),
+                getDelayRootCause(startDate, endDate, branchId)
+              ])
+              results = { fuel, routes, delayRootCause }
+            } else if (tab === 'drivers') {
+              const [workforce, driverLeaderboard] = await Promise.all([
+                getWorkforceAnalytics(startDate, endDate, branchId),
+                getDriverLeaderboard(startDate, endDate, branchId)
+              ])
+              results = { workforce, driverLeaderboard }
+            } else if (tab === 'safety') {
+              const [safety, esgStats] = await Promise.all([
+                getSafetyAnalytics(startDate, endDate, branchId),
+                getESGStats(startDate, endDate, branchId)
+              ])
+              results = { safety, esgStats }
+            }
+            setSecondary(prev => ({ ...prev, ...results }))
+        } finally {
+            setLoadingSecondary(false)
+        }
+    }
+
+    setLoadedTabs(prev => new Set(prev).add(tab))
+  }, [startDate, endDate, branchId, priority, loadedTabs])
+
+  useEffect(() => {
+    setLoadedTabs(new Set())
     setPriority(null)
     setSecondary(null)
-
-    // === PRIORITY GROUP 1: Critical above-the-fold data ===
-    // These query groups are the most important — fetch in parallel
-    const [financials, revenueTrend, forecastData, exeKPIs, opStats, statusDist, driverLeaderboard, vehicleProfitability, branchPerf] = await Promise.all([
-      getFinancialStats(startDate, endDate, branchId),
-      getRevenueTrend(startDate, endDate, branchId),
-      getRevenueForecast(branchId),
-      getExecutiveKPIs(startDate, endDate, branchId),
-      getOperationalStats(branchId, startDate, endDate),
-      getJobStatusDistribution(startDate, endDate, branchId),
-      getDriverLeaderboard(startDate, endDate, branchId),
-      getVehicleProfitability(startDate, endDate, branchId),
-      getBranchPerformance(startDate, endDate),
-    ])
-
-    setPriority({ financials, revenueTrend, forecastData, exeKPIs, opStats, statusDist, driverLeaderboard, vehicleProfitability, branchPerf })
-    setLoadingPrimary(false)
-
-    // === PRIORITY GROUP 2: Below-the-fold secondary data ===
-    // Loads after primary is rendered — users see content faster
-    const [topCustomers, subPerf, routes, billing, fuel, maintenance, safety, workforce, esgStats, delayRootCause] = await Promise.all([
-      getTopCustomers(startDate, endDate, branchId),
-      getSubcontractorPerformance(startDate, endDate, branchId),
-      getRouteEfficiency(startDate, endDate, branchId),
-      getBillingAnalytics(startDate, endDate, branchId),
-      getFuelAnalytics(startDate, endDate),
-      getMaintenanceSchedule(),
-      getSafetyAnalytics(startDate, endDate, branchId),
-      getWorkforceAnalytics(startDate, endDate, branchId),
-      getESGStats(startDate, endDate, branchId),
-      getDelayRootCause(startDate, endDate, branchId),
-    ])
-
-    setSecondary({ topCustomers, subPerf, routes, billing, fuel, maintenance, safety, workforce, esgStats, delayRootCause })
-    setLoadingSecondary(false)
+    loadTabData("overview")
   }, [startDate, endDate, branchId])
 
   useEffect(() => {
-    // Small delay to ensure render is stable before firing large parallel fetches
-    const timer = setTimeout(() => {
-        loadData()
-    }, 10)
-    return () => clearTimeout(timer)
-  }, [loadData])
+    loadTabData(activeTab)
+  }, [activeTab, loadTabData])
 
-  // Primary skeleton while initial load
-  if (loadingPrimary) {
-    return (
-      <div className="space-y-12 animate-pulse">
-        <div className="h-24 bg-background rounded-[2rem] border border-border/5" />
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          {[1, 2, 3, 4].map(i => (
-            <div key={i} className="h-56 bg-background rounded-br-[4rem] rounded-tl-[2rem] border border-border/5" />
-          ))}
-        </div>
-        <div className="h-[600px] bg-background rounded-br-[6rem] rounded-tl-[3rem] border border-border/5" />
-      </div>
-    )
+  if (loadingPrimary && activeTab === "overview") {
+    return <div className="py-20 text-center uppercase font-black text-primary animate-pulse tracking-widest text-sm italic">Initialising_Intelligence_Core...</div>
   }
 
   const {
-    financials,
+    financials = { totalRevenue: 0, totalProfit: 0, margin: 0, growth: 0 },
     revenueTrend = [],
     forecastData = [],
-    exeKPIs = {},
+    exeKPIs = { revenue: { current: 0, growth: 0 }, profit: { current: 0, growth: 0 }, margin: { current: 0, growth: 0 } } as any,
     opStats = { fleet: { onTimeDelivery: 0, utilization: 0, health: 0 } } as any,
     statusDist = [],
     driverLeaderboard = [],
     vehicleProfitability = [],
     branchPerf = [],
-  } = priority!
+  } = priority || {}
 
   const {
     topCustomers = [],
     subPerf = [],
     routes = [],
-    billing = {},
-    fuel = {},
-    maintenance = { overdue: [] },
-    safety = {},
-    workforce = {},
-    esgStats = {},
+    billing = { arAging: {}, totalInvoiced: 0 } as any,
+    fuel = { totalLiters: 0, totalCost: 0, anomalies: [] } as any,
+    maintenance = { upcoming: [], fleetHealth: 0, overdue: [] } as any,
+    safety = { incidents: 0, riskScore: 0 } as any,
+    workforce = { activeDrivers: 0, totalDrivers: 0 } as any,
+    esgStats = { co2Saved: 0, treesSaved: 0, fuelSaved: 0 } as any,
     delayRootCause = [],
   } = secondary ?? {}
 
@@ -220,231 +246,318 @@ export function DashboardContent({
   }
 
   return (
-    <div className="space-y-32">
-        {/* Hub Utility Matrix */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-10 p-12 bg-background border-2 border-border/5 rounded-[4rem] shadow-3xl relative overflow-hidden group">
-            <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-transparent pointer-events-none" />
-            <div className="flex items-center gap-8 relative z-10">
-                <div className="w-16 h-16 bg-primary/20 rounded-[2rem] flex items-center justify-center text-primary shadow-[0_0_30px_rgba(255,30,133,0.3)] border-2 border-primary/30 group-hover:scale-110 transition-transform duration-500">
-                    <Zap size={28} strokeWidth={2.5} className="animate-pulse" />
+    <div className="space-y-6">
+        {/* Navigation Interface */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 bg-background/40 backdrop-blur-3xl border border-border/5 rounded-xl shadow-lg relative overflow-hidden group">
+            <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent pointer-events-none" />
+            <div className="flex items-center gap-3 relative z-10">
+                <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center text-primary border border-primary/30 group-hover:scale-110 transition-all">
+                    <Zap size={16} className="animate-pulse" />
                 </div>
                 <div>
-                    <h3 className="text-xl font-black text-foreground uppercase italic leading-none mb-3">{t('common.tactical_cluster')}</h3>
-                    <p className="text-base font-bold font-black text-muted-foreground uppercase italic">{t('common.network_stable')}</p>
+                    <h3 className="text-xs font-black text-foreground uppercase italic leading-none mb-0.5">{t('common.tactical_cluster')}</h3>
+                    <p className="text-[9px] font-bold font-black text-muted-foreground uppercase italic opacity-60 tracking-widest">SIGNAL_STATUS: NOMINAL</p>
                 </div>
             </div>
             
-            <div className="flex items-center gap-4 relative z-10">
+            <div className="flex items-center gap-2 relative z-10">
                 <ExportAllButton data={allData} />
             </div>
         </div>
 
-        {/* Section 1: Financial Intelligence Center */}
-        <section className="space-y-16">
-          <div className="flex items-center gap-8 group/h">
-              <div className="p-5 bg-emerald-500/20 rounded-3xl text-emerald-500 shadow-[0_0_30px_rgba(16,185,129,0.2)] border-2 border-emerald-500/30 group-hover/h:scale-110 transition-transform duration-500">
-                  <TrendingUp size={36} strokeWidth={2.5} />
-              </div>
-              <div className="space-y-2">
-                  <h2 className="text-5xl font-black text-foreground italic uppercase">{t('common.financial_node')}</h2>
-                  <p className="text-emerald-500 text-base font-bold font-black uppercase italic">{t('analytics.commercial_monitoring')}</p>
-              </div>
-          </div>
-          
-          <FinancialSummaryCards data={exeKPIs} />
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+            <TabsList className="bg-muted/50 p-1 rounded-lg border border-border/5 inline-flex h-auto">
+                <TabsTrigger value="overview" className="px-4 py-2 rounded-md text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-primary data-[state=active]:text-white transition-all italic">
+                    {t('common.overview')}
+                </TabsTrigger>
+                <TabsTrigger value="financial" className="px-4 py-2 rounded-md text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-emerald-600 data-[state=active]:text-white transition-all italic">
+                    {t('common.financial_node')}
+                </TabsTrigger>
+                <TabsTrigger value="operations" className="px-4 py-2 rounded-md text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-blue-600 data-[state=active]:text-white transition-all italic">
+                    {t('common.mission_node')}
+                </TabsTrigger>
+                <TabsTrigger value="drivers" className="px-4 py-2 rounded-md text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-indigo-600 data-[state=active]:text-white transition-all italic">
+                    {t('navigation.drivers')}
+                </TabsTrigger>
+                <TabsTrigger value="safety" className="px-4 py-2 rounded-md text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-rose-600 data-[state=active]:text-white transition-all italic">
+                    {t('common.safety_esg')}
+                </TabsTrigger>
+            </TabsList>
 
-          <RevenueForecastChart data={forecastData} />
-          
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-              <PremiumCard className="lg:col-span-2 overflow-hidden p-0 bg-background border-2 border-border/5 shadow-3xl rounded-br-[6rem] rounded-tl-[3rem]">
-                  <div className="p-10 border-b border-border/5 bg-gradient-to-r from-primary/20 via-primary/5 to-transparent backdrop-blur-md relative overflow-hidden flex items-center justify-between">
-                      <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary to-transparent" />
-                      <div className="flex items-center gap-5 relative z-10">
-                          <div className="p-3 bg-primary/20 rounded-2xl text-primary border border-primary/30 shadow-[0_0_20px_rgba(255,30,133,0.2)]">
-                              <BarChart3 size={24} />
-                          </div>
-                          <div>
-                              <h3 className="text-2xl font-black text-foreground tracking-tighter italic uppercase">{t('common.revenue_dynamics')}</h3>
-                              <p className="text-primary text-base font-bold font-black uppercase tracking-[0.4em]">{t('analytics.temporal_realization')}</p>
-                          </div>
-                      </div>
-                  </div>
-                  <div className="p-12 min-h-[500px]"><RevenueTrendChart data={revenueTrend} /></div>
-              </PremiumCard>
-              
-              <div className="flex flex-col">
-                 <PremiumCard className="overflow-hidden p-0 bg-background border-2 border-border/5 shadow-3xl rounded-br-[5rem] rounded-tl-[3rem] group/leaderboard flex-1 relative">
-                    <div className="p-12 border-b border-border/5 relative overflow-hidden bg-gradient-to-r from-primary/20 via-primary/5 to-transparent backdrop-blur-md">
-                        <div className="absolute top-0 right-0 p-8 opacity-20 group-hover/leaderboard:opacity-100 transition-opacity">
-                             <Trophy size={48} className="text-primary" />
+            <TabsContent value="overview" className="outline-none">
+                <div className="grid grid-cols-12 gap-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                    <div className="col-span-12 lg:col-span-9">
+                        <ExecutiveSectorHealth 
+                            sectors={[
+                                {
+                                    title: t('dashboard.tactical_flux'),
+                                    icon: "layers",
+                                    href: "/admin/jobs",
+                                    metrics: [
+                                        { label: t('dashboard.sync_success'), value: `${(opStats as any).fleet?.onTimeDelivery?.toFixed(1) || 0}%`, status: (opStats as any).fleet?.onTimeDelivery > 90 ? 'good' : 'warning' },
+                                        { label: t('dashboard.current_pipeline'), value: statusDist.reduce((a: number, b: any) => a + (Number(b.value) || 0), 0), status: 'good' }
+                                    ]
+                                },
+                                {
+                                    title: t('dashboard.asset_readiness'),
+                                    icon: "truck",
+                                    href: "/admin/vehicles/dashboard",
+                                    metrics: [
+                                        { label: t('dashboard.fleet_capacity'), value: `${(opStats as any).fleet?.utilization?.toFixed(1) || 0}%`, status: (opStats as any).fleet?.utilization > 70 ? 'good' : 'warning' },
+                                        { 
+                                            label: t('dashboard.technical_status'), 
+                                            value: (opStats as any).fleet?.health >= 90 ? t('dashboard.status_optimal') : (opStats as any).fleet?.health >= 50 ? t('dashboard.status_degraded') : t('dashboard.status_critical'), 
+                                            status: (opStats as any).fleet?.health >= 90 ? 'good' : (opStats as any).fleet?.health >= 50 ? 'warning' : 'critical' 
+                                        }
+                                    ]
+                                },
+                                {
+                                    title: t('dashboard.regional_node_index'),
+                                    icon: "building",
+                                    href: "/admin/analytics/regional",
+                                    metrics: [
+                                        { label: t('dashboard.active_branches'), value: branchPerf.length, status: 'good' },
+                                        { label: t('dashboard.apex_vector'), value: (branchPerf[0] as any)?.branchName || 'N/A', status: 'good' }
+                                    ]
+                                }
+                            ]}
+                        />
+                    </div>
+
+                    <div className="col-span-12 lg:col-span-3">
+                         <PremiumCard className="h-full overflow-hidden p-0 bg-background border border-border/5 shadow-xl rounded-2xl group/feed">
+                             <div className="p-4 border-b border-border/5 bg-black/20 flex items-center justify-between">
+                                <h3 className="text-[10px] font-black text-muted-foreground uppercase tracking-widest italic">{t('dashboard.operational_stream')}</h3>
+                                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                             </div>
+                             <div className="h-[210px] overflow-hidden">
+                                <ActivityFeed limit={5} compact />
+                             </div>
+                        </PremiumCard>
+                    </div>
+
+                    <div className="col-span-12 lg:col-span-12">
+                         <FinancialSummaryCards 
+                            revenue={financials.totalRevenue}
+                            profit={financials.totalProfit}
+                            margin={financials.margin}
+                            growth={financials.growth}
+                        />
+                    </div>
+
+                    <PremiumCard className="col-span-12 lg:col-span-8 p-6 bg-background border border-border/5 rounded-2xl shadow-xl overflow-hidden relative group">
+                        <div className="absolute top-0 right-0 p-6 text-primary/5 pointer-events-none transition-transform group-hover:scale-110 duration-700"><BarChart3 size={100} /></div>
+                        <h3 className="text-base font-black text-foreground uppercase tracking-widest italic mb-6 flex items-center gap-2">
+                           <div className="w-1 h-4 bg-primary rounded-full" />
+                           Pipeline Integrity
+                        </h3>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            {statusDist.length === 0 ? (
+                                <div className="col-span-full py-10 text-center text-[10px] font-black text-muted-foreground uppercase italic opacity-40">No data signals detected</div>
+                            ) : statusDist.map((item: any) => (
+                                <div key={item.name} className="p-3 bg-muted/30 rounded-xl border border-border/5 group-hover:bg-muted/50 transition-colors">
+                                    <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest mb-1 truncate">{item.name}</p>
+                                    <p className="text-2xl font-black text-foreground italic">{item.value}</p>
+                                </div>
+                            ))}
                         </div>
-                        <div className="flex items-center gap-5 relative z-10">
-                            <div className="p-4 bg-primary/20 rounded-3xl text-primary border-2 border-primary/30">
-                                <Star size={24} className="animate-pulse" />
+                    </PremiumCard>
+
+                    <div className="col-span-12 lg:col-span-4">
+                         <PremiumCard className="h-full bg-black/40 border border-border/5 p-6 rounded-2xl">
+                            <h3 className="text-sm font-black text-foreground italic uppercase mb-6 flex items-center gap-2">
+                                <div className="w-1 h-4 bg-primary rounded-full" />
+                                {t('dashboard.current_pipeline')}
+                            </h3>
+                            <div className="h-[200px] flex items-center justify-center">
+                                <PerformanceCharts data={statusDist} />
                             </div>
-                            <div className="space-y-1">
-                                <h3 className="text-2xl font-black text-foreground tracking-tighter italic uppercase">{t('common.elite_force')}</h3>
-                                <p className="text-primary text-base font-bold font-black uppercase tracking-[0.4em]">{t('dashboard.top_tier_asset')}</p>
+                         </PremiumCard>
+                    </div>
+
+                    <div className="col-span-12 lg:col-span-8">
+                        {loadingPrimary ? <SectionSkeleton /> : <RevenueTrendChart data={revenueTrend} />}
+                    </div>
+
+                    <div className="col-span-12 lg:col-span-4">
+                        {loadingPrimary ? <SectionSkeleton /> : (
+                            <div className="h-full">
+                                <RevenueForecastChart data={forecastData} />
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </TabsContent>
+
+            <TabsContent value="financial" className="outline-none">
+                <div className="grid grid-cols-12 gap-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                    <div className="col-span-12">
+                        <div className="flex items-center gap-3 mb-2">
+                            <div className="p-2 bg-emerald-500/20 rounded-lg text-emerald-500 border border-emerald-500/30 group-hover/h:rotate-6 transition-transform">
+                                <TrendingUp size={20} />
+                            </div>
+                            <div>
+                                <h2 className="text-xl font-black text-foreground italic uppercase">{t('common.financial_node')}</h2>
+                                <p className="text-[9px] font-black text-emerald-500 uppercase tracking-widest opacity-60 italic">{t('analytics.commercial_monitoring')}</p>
                             </div>
                         </div>
                     </div>
-                    <div className="p-2 space-y-2">
-                        {((driverLeaderboard as any[]) || []).slice(0, 6).map((driver: DriverStats, idx: number) => (
-                            <div key={driver.name} className="p-10 flex items-center justify-between group/driver transition-all hover:bg-muted/50 rounded-3xl border-2 border-transparent hover:border-primary/20">
-                                <div className="flex items-center gap-8">
-                                    <div className="relative">
-                                        <div className="w-16 h-16 rounded-[2rem] bg-muted/50 flex items-center justify-center text-xl font-black text-foreground border-2 border-border/5 group-hover/driver:border-primary/50 transition-all uppercase italic">
-                                            {driver.name?.slice(0, 2) || "???"}
-                                        </div>
-                                        {idx < 3 && (
-                                            <div className="absolute -top-3 -right-3 p-2 bg-primary rounded-full shadow-2xl border-4 border-background">
-                                                <Trophy size={12} className="text-foreground" />
-                                            </div>
-                                        )}
-                                    </div>
-                                    <div className="space-y-2">
-                                        <div className="text-lg font-black text-foreground tracking-widest uppercase italic leading-none">{driver.name}</div>
-                                        <div className="flex items-center gap-4">
-                                           <div className="text-base font-bold text-muted-foreground font-black uppercase tracking-[0.4em] flex items-center gap-2">
-                                              {driver.completedJobs} {t('dashboard.ops_label')}
-                                           </div>
-                                           <div className="h-1 w-1 rounded-full bg-slate-800" />
-                                           <div className="text-base font-bold text-primary font-black uppercase tracking-[0.4em]">
-                                              {(driver.onTimeRate || 0).toFixed(1)}% {t('dashboard.sync_label')}
-                                           </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="text-right">
-                                    <div className="text-2xl font-black text-foreground italic tracking-tighter bg-primary/10 px-6 py-2 rounded-2xl border-2 border-primary/20 group-hover/driver:scale-110 transition-transform">
-                                        ฿{Math.round((driver.revenue || 0) / 1000)}K
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
+
+                    <div className="col-span-12">
+                        <FinancialSummaryCards data={exeKPIs} />
                     </div>
-                 </PremiumCard>
-              </div>
-          </div>
-          
-          <PerformanceCharts data={revenueTrend} />
-          {loadingSecondary ? <SectionSkeleton /> : <BillingSection data={billing} />}
-          {loadingSecondary ? <SectionSkeleton /> : <CustomerRouteSection customers={topCustomers} routes={routes} />}
-        </section>
-        
-        {/* Section 2: Fleet Management */}
-        <section className="space-y-16">
-           <div className="flex items-center gap-8 group/h">
-              <div className="p-5 bg-blue-500/20 rounded-3xl text-blue-500 shadow-[0_0_30px_rgba(59,130,246,0.2)] border-2 border-blue-500/30 group-hover/h:scale-110 transition-transform duration-500">
-                  <Truck size={36} strokeWidth={2.5} />
-              </div>
-              <div className="space-y-2">
-                  <h2 className="text-5xl font-black text-foreground italic uppercase">{t('common.mission_node')}</h2>
-                <p className="text-blue-500 text-base font-bold font-black uppercase italic">{t('analytics.fleet_deployment')}</p>
-              </div>
-           </div>
-           
-           {loadingSecondary ? <SectionSkeleton /> : <FuelSection data={fuel} />}
-           {loadingSecondary ? <SectionSkeleton /> : <DelayAnalysis data={delayRootCause} />}
-           <ProfitabilitySection data={vehicleProfitability} financials={financials} />
-           <EfficiencyCharts data={revenueTrend} />
-           {loadingSecondary ? <SectionSkeleton /> : <MaintenanceSection data={maintenance} />}
-        </section>
 
-        {/* Section 3: Safety Center */}
-        <section className="space-y-16">
-           <div className="flex items-center gap-8 group/h">
-              <div className="p-5 bg-rose-500/20 rounded-3xl text-rose-500 shadow-[0_0_30px_rgba(244,63,94,0.2)] border-2 border-rose-500/30 group-hover/h:scale-110 transition-transform duration-500">
-                  <ShieldAlert size={36} strokeWidth={2.5} />
-              </div>
-              <div className="space-y-2">
-                  <h2 className="text-5xl font-black text-foreground tracking-widest italic uppercase">{t('common.protocol_integrity')}</h2>
-                  <p className="text-rose-500 text-base font-bold font-black uppercase tracking-[0.6em] italic">{t('dashboard.human_capital_efficiency')} &amp; {t('dashboard.safety_protocol_audit')} {"//"} {t('dashboard.critical_vectors')}</p>
-              </div>
-           </div>
-           
-           <div className="grid grid-cols-1 space-y-16">
-               {loadingSecondary ? <><SectionSkeleton /><SectionSkeleton /></> : (
-                 <>
-                   <WorkforceSection data={workforce} />
-                   <SafetySection data={safety} />
-                   <ESGSection data={esgStats} />
-                 </>
-               )}
-           </div>
-        </section>
+                    <PremiumCard className="col-span-12 lg:col-span-8 overflow-hidden p-0 bg-background border border-border/5 shadow-xl rounded-2xl">
+                        <div className="p-5 border-b border-border/5 bg-black/40 flex items-center justify-between">
+                            <h3 className="text-sm font-black text-foreground italic uppercase flex items-center gap-2">
+                                <div className="w-1 h-4 bg-emerald-500 rounded-full" />
+                                Revenue Growth Vector
+                            </h3>
+                            <BarChart3 className="text-primary/40" size={16} />
+                        </div>
+                        <div className="p-6 h-[350px]"><RevenueTrendChart data={revenueTrend} /></div>
+                    </PremiumCard>
 
-        {/* Section 4: System Cluster Management */}
-        <section className="space-y-16">
-          <div className="flex items-center gap-8 group/h">
-              <div className="p-5 bg-primary/20 rounded-3xl text-primary shadow-[0_0_30px_rgba(255,30,133,0.2)] border-2 border-primary/30 group-hover/h:scale-110 transition-transform duration-500">
-                  <Layers size={36} strokeWidth={2.5} />
-              </div>
-              <div className="space-y-2">
-                  <h2 className="text-5xl font-black text-foreground tracking-widest italic uppercase">{t('common.system_cluster')}</h2>
-                  <p className="text-primary text-base font-bold font-black uppercase tracking-[0.6em] italic">{t('dashboard.health_index')} {"//"} {t('dashboard.aggregate_nodes')}</p>
-              </div>
-          </div>
-          
-          <ExecutiveSectorHealth 
-              sectors={[
-                  {
-                      title: t('dashboard.tactical_flux'),
-                      icon: "layers",
-                      href: "/admin/jobs",
-                      metrics: [
-                          { label: t('dashboard.sync_success'), value: `${(opStats as any).fleet.onTimeDelivery.toFixed(1)}%`, status: (opStats as any).fleet.onTimeDelivery > 90 ? 'good' : 'warning' },
-                          { label: t('dashboard.current_pipeline'), value: statusDist.reduce((a: number, b: any) => a + b.value, 0), status: 'good' }
-                      ]
-                  },
-                  {
-                      title: t('dashboard.asset_readiness'),
-                      icon: "truck",
-                      href: "/admin/vehicles/dashboard",
-                      metrics: [
-                          { label: t('dashboard.fleet_capacity'), value: `${(opStats as any).fleet.utilization.toFixed(1)}%`, status: (opStats as any).fleet.utilization > 70 ? 'good' : 'warning' },
-                          { 
-                            label: t('dashboard.technical_status'), 
-                            value: (opStats as any).fleet.health >= 90 ? t('dashboard.status_optimal') : (opStats as any).fleet.health >= 50 ? t('dashboard.status_degraded') : t('dashboard.status_critical'), 
-                            status: (opStats as any).fleet.health >= 90 ? 'good' : (opStats as any).fleet.health >= 50 ? 'warning' : 'critical' 
-                          }
-                      ]
-                  },
-                  {
-                      title: t('dashboard.regional_node_index'),
-                      icon: "building",
-                      href: "/admin/analytics/regional",
-                      metrics: [
-                          { label: t('dashboard.active_branches'), value: branchPerf.length, status: 'good' },
-                          { label: t('dashboard.apex_vector'), value: (branchPerf[0] as any)?.branchName || 'N/A', status: 'good' }
-                      ]
-                  }
-              ]}
-          />
-        </section>
+                    <div className="col-span-12 lg:col-span-4">
+                        {loadingSecondary ? <SectionSkeleton /> : <BillingSection data={billing} />}
+                    </div>
+
+                    <div className="col-span-12">
+                        <RevenueForecastChart data={forecastData} />
+                    </div>
+
+                    <div className="col-span-12">
+                        {loadingSecondary ? <SectionSkeleton /> : <CustomerRouteSection customers={topCustomers} routes={routes} />}
+                    </div>
+                </div>
+            </TabsContent>
+
+            <TabsContent value="operations" className="outline-none">
+                <div className="grid grid-cols-12 gap-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                    <div className="col-span-12">
+                        <div className="flex items-center gap-3 mb-2">
+                            <div className="p-2 bg-blue-500/20 rounded-lg text-blue-500 border border-blue-500/30 group-hover/h:rotate-6 transition-transform">
+                                <Truck size={20} />
+                            </div>
+                            <div>
+                                <h2 className="text-xl font-black text-foreground italic uppercase">{t('common.mission_node')}</h2>
+                                <p className="text-[9px] font-black text-blue-500 uppercase tracking-widest opacity-60 italic">{t('analytics.fleet_deployment')}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="col-span-12">
+                        {loadingSecondary ? <SectionSkeleton /> : <FuelSection data={fuel} />}
+                    </div>
+
+                    <div className="col-span-12 lg:col-span-7">
+                        <ProfitabilitySection data={vehicleProfitability} financials={financials} />
+                    </div>
+
+                    <div className="col-span-12 lg:col-span-5">
+                        {loadingSecondary ? <SectionSkeleton /> : <DelayAnalysis data={delayRootCause} />}
+                    </div>
+
+                    <div className="col-span-12">
+                         {loadingSecondary ? <SectionSkeleton /> : <MaintenanceSection data={maintenance} />}
+                    </div>
+                </div>
+            </TabsContent>
+
+            <TabsContent value="drivers" className="outline-none">
+                <div className="grid grid-cols-12 gap-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                    <div className="col-span-12">
+                        <div className="flex items-center gap-3 mb-2">
+                            <div className="p-2 bg-indigo-500/20 rounded-lg text-indigo-500 border border-indigo-500/30 group-hover/h:rotate-6 transition-transform">
+                                <Trophy size={20} />
+                            </div>
+                            <div>
+                                <h2 className="text-xl font-black text-foreground italic uppercase">Operator Intelligence</h2>
+                                <p className="text-[9px] font-black text-indigo-500 uppercase tracking-widest opacity-60 italic">Human Capital Performance Matrix</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="col-span-12 lg:col-span-4">
+                        {loadingSecondary ? <SectionSkeleton /> : <WorkforceSection data={workforce} />}
+                    </div>
+
+                    <PremiumCard className="col-span-12 lg:col-span-8 overflow-hidden p-0 bg-background border border-border/5 shadow-xl rounded-2xl group/leaderboard">
+                        <div className="p-5 border-b border-border/5 bg-black/40 flex items-center justify-between">
+                            <h3 className="text-sm font-black text-foreground italic uppercase flex items-center gap-2">
+                                <div className="w-1 h-4 bg-indigo-500 rounded-full" />
+                                Elite Asset Registry
+                            </h3>
+                            <Star className="text-amber-500 animate-pulse" size={16} />
+                        </div>
+                        <div className="divide-y divide-white/[0.03]">
+                            {driverLeaderboard.length === 0 ? (
+                                <div className="py-20 text-center text-[10px] font-black text-muted-foreground uppercase italic opacity-40">Awaiting operator telemetry data</div>
+                            ) : (driverLeaderboard.slice(0, 8) as any[]).map((driver: DriverStats, idx: number) => (
+                                <div key={driver.name} className="px-6 py-3.5 flex items-center justify-between hover:bg-muted/30 transition-all group/item">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center font-black text-[10px] italic border border-border/5 transition-transform group-hover/item:scale-110">
+                                            {idx + 1}
+                                        </div>
+                                        <div>
+                                            <p className="text-xs font-black text-foreground uppercase italic leading-tight">{driver.name}</p>
+                                            <p className="text-[8px] font-black text-muted-foreground uppercase tracking-[0.2em]">{driver.completedJobs} Missions • {driver.onTimeRate?.toFixed(0) || 0}% Sync</p>
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <span className="text-xs font-black text-primary italic tracking-tight bg-primary/10 px-2 py-0.5 rounded-md border border-primary/20">฿{Math.round((driver.revenue || 0) / 1000)}K</span>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </PremiumCard>
+                </div>
+            </TabsContent>
+
+            <TabsContent value="safety" className="outline-none">
+                <div className="grid grid-cols-12 gap-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                    <div className="col-span-12">
+                        <div className="flex items-center gap-3 mb-2">
+                            <div className="p-2 bg-rose-500/20 rounded-lg text-rose-500 border border-rose-500/30 group-hover/h:rotate-6 transition-transform">
+                                <ShieldAlert size={20} />
+                            </div>
+                            <div>
+                                <h2 className="text-xl font-black text-foreground italic uppercase">Integrity & ESG</h2>
+                                <p className="text-[9px] font-black text-rose-500 uppercase tracking-widest opacity-60 italic">Security Protocols & Environmental Metrics</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="col-span-12 space-y-6">
+                        {loadingSecondary ? <><SectionSkeleton /><SectionSkeleton /></> : (
+                            <>
+                                <SafetySection data={safety} />
+                                <ESGSection data={esgStats} />
+                            </>
+                        )}
+                    </div>
+                </div>
+            </TabsContent>
+        </Tabs>
 
         {/* Tactical Footer */}
-        <div className="p-20 bg-background rounded-[6rem] border-2 border-border/5 flex flex-col items-center text-center space-y-8 relative overflow-hidden group">
+        <div className="p-10 bg-background rounded-2xl border border-border/5 flex flex-col items-center text-center space-y-4 mt-16 relative overflow-hidden group shadow-2xl">
             <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent pointer-events-none" />
-            <div className="p-6 bg-primary/20 rounded-[2.5rem] shadow-[0_0_40px_rgba(255,30,133,0.2)] border-2 border-primary/30 group-hover:scale-110 transition-all duration-700">
-                <Activity size={40} className="text-primary" />
+            <div className="p-2.5 bg-primary/20 rounded-xl shadow-lg border border-primary/30 group-hover:scale-110 transition-all duration-700">
+                <Activity size={20} className="text-primary" />
             </div>
-            <div className="space-y-4">
-                <h4 className="text-2xl font-black text-foreground uppercase tracking-[0.4em] italic">{t('common.intel_engine')}</h4>
-                <p className="text-lg font-bold text-muted-foreground font-black uppercase tracking-[0.2em] max-w-2xl leading-relaxed">
-                    {t('dashboard.intel_sync_warning')} <br />
-                    {t('dashboard.system_cycle_complete')}
+            <div className="space-y-1">
+                <h4 className="text-sm font-black text-foreground uppercase tracking-[0.4em] italic leading-tight">{t('common.intel_engine')}</h4>
+                <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-[0.2em] max-w-xl leading-relaxed opacity-60">
+                    System cycle complete. Data nodes synchronized across regional clusters. <br/>
+                    Neural processing accuracy maintained at 99.8%.
                 </p>
             </div>
-            <div className="flex items-center gap-4 py-2 px-6 bg-muted/50 rounded-full border border-border/10">
-               <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-               <span className="text-base font-bold font-black text-muted-foreground uppercase tracking-widest">{t('common.sync_complete')}</span>
+            <div className="flex items-center gap-2 px-3 py-1 bg-muted/50 rounded-full border border-border/10">
+               <div className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse" />
+               <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">{t('common.sync_complete')}</span>
             </div>
         </div>
     </div>
   )
 }
-
-const SectionSkeleton = () => (
-    <div className="h-96 bg-background rounded-br-[4rem] rounded-tl-[2rem] border border-border/5 animate-pulse" />
-)

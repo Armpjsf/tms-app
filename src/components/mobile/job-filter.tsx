@@ -77,16 +77,38 @@ export function MobileJobFilter() {
         </SheetHeader>
         
         <div className="space-y-6 pb-6">
-            {/* Date Filter */}
-            <div className="space-y-2">
-                <Label htmlFor="date" className="text-gray-700">วันที่</Label>
+            {/* Date Filter & Presets */}
+            <div className="space-y-4">
+                <div className="flex justify-between items-end">
+                    <Label htmlFor="date" className="text-gray-700">วันที่</Label>
+                    <div className="flex gap-2">
+                        <button 
+                            type="button" 
+                            onClick={() => setDate(new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' }))}
+                            className="text-[10px] px-2 py-1 bg-gray-100 text-gray-600 rounded-md font-bold uppercase"
+                        >วันนี้</button>
+                        <button 
+                            type="button" 
+                            onClick={() => {
+                                const d = new Date(); d.setDate(d.getDate() + 1);
+                                setDate(d.toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' }));
+                            }}
+                            className="text-[10px] px-2 py-1 bg-gray-100 text-gray-600 rounded-md font-bold uppercase"
+                        >พรุ่งนี้</button>
+                        <button 
+                            type="button" 
+                            onClick={() => setDate("")}
+                            className="text-[10px] px-2 py-1 bg-blue-50 text-blue-600 rounded-md font-bold uppercase"
+                        >ทั้งหมด</button>
+                    </div>
+                </div>
                 <div className="relative">
                     <Input 
                         id="date" 
                         type="date" 
                         value={date}
                         onChange={(e) => setDate(e.target.value)}
-                        className="bg-gray-100 border-gray-200 text-white pl-10 h-12"
+                        className="bg-gray-100 border-gray-200 text-gray-900 pl-10 h-12"
                     />
                     <Calendar className="absolute left-3 top-3.5 text-muted-foreground" size={18} />
                 </div>

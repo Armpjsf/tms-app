@@ -46,64 +46,64 @@ export function ExecutiveSectorHealth({ sectors }: { sectors: SectorHealth[] }) 
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {sectors.map((sector) => {
         const Icon = ICON_MAP[sector.icon] || Layers
         const isOptimal = sector.metrics.every(m => m.status === 'good')
         
         return (
-          <PremiumCard key={sector.title} className="bg-background border-none shadow-2xl relative overflow-hidden group p-0 rounded-br-[4rem] rounded-tl-[2rem]">
+          <PremiumCard key={sector.title} className="bg-background border-none shadow-2xl relative overflow-hidden group p-0 rounded-br-[3rem] rounded-tl-[1.5rem] h-full flex flex-col">
             {/* Dynamic context glow */}
             <div className={cn(
-                "absolute -right-8 -top-8 w-32 h-32 rounded-full blur-3xl opacity-20 transition-opacity duration-700",
+                "absolute -right-8 -top-8 w-32 h-32 rounded-full blur-3xl opacity-10 transition-opacity duration-700",
                 isOptimal ? "bg-emerald-500/30" : "bg-amber-500/30"
             )} />
             
-            <div className="p-8 border-b border-border/5 relative overflow-hidden flex items-center justify-between">
-                <div className="flex items-center gap-4 relative z-10">
-                    <div className="p-2.5 bg-muted/50 rounded-xl text-foreground border border-border/10 group-hover:border-border/20 transition-all">
-                        <Icon size={20} />
+            <div className="p-5 border-b border-border/5 relative overflow-hidden flex items-center justify-between bg-black/20">
+                <div className="flex items-center gap-3 relative z-10">
+                    <div className="p-2 bg-muted/50 rounded-lg text-foreground border border-border/10 group-hover:border-border/20 transition-all">
+                        <Icon size={16} />
                     </div>
                     <div>
-                        <h4 className="text-base font-bold font-black text-foreground uppercase italic leading-none">{sector.title}</h4>
-                        <p className="text-base font-bold text-muted-foreground font-bold uppercase mt-1">{t('dashboard.sector_integrity')}</p>
+                        <h4 className="text-xs font-black text-foreground uppercase italic leading-none">{sector.title}</h4>
+                        <p className="text-[9px] font-black text-muted-foreground uppercase mt-1 tracking-wider opacity-60">NETWORK_CLUSTER</p>
                     </div>
                 </div>
                 <div className="relative z-10">
                     {isOptimal ? (
-                        <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-black text-base font-bold uppercase tracking-tighter italic">
-                            <CheckCircle2 size={10} strokeWidth={3} /> {t('dashboard.status_optimal')}
+                        <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-black text-[8px] uppercase tracking-tighter italic">
+                            <CheckCircle2 size={8} strokeWidth={3} /> OPTIMAL
                         </div>
                     ) : (
-                        <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 font-black text-base font-bold uppercase tracking-tighter italic animate-pulse">
-                            <Activity size={10} strokeWidth={3} /> {t('dashboard.status_attention')}
+                        <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 font-black text-[8px] uppercase tracking-tighter italic animate-pulse">
+                            <Activity size={8} strokeWidth={3} /> ATTENTION
                         </div>
                     )}
                 </div>
             </div>
 
-            <div className="p-8">
-              <div className="grid grid-cols-1 gap-4 mb-8">
+            <div className="p-5 flex-1 flex flex-col">
+              <div className="grid grid-cols-1 gap-3 mb-6 flex-1">
                 {sector.metrics.map((m) => (
-                  <div key={m.label} className="p-5 bg-muted/50 rounded-2xl border border-border/5 group-hover:border-border/10 transition-all">
-                    <div className="flex items-center justify-between mb-3">
-                        <p className="text-base font-bold text-muted-foreground font-black uppercase leading-none">{m.label}</p>
-                        <div className={cn("w-1.5 h-1.5 rounded-full shadow-[0_0_8px_rgba(0,0,0,0.5)]", getStatusColor(m.status))} />
+                  <div key={m.label} className="p-3.5 bg-muted/30 rounded-xl border border-border/5 group-hover:border-border/10 transition-all">
+                    <div className="flex items-center justify-between mb-2">
+                        <p className="text-[9px] font-black text-muted-foreground uppercase leading-none tracking-widest">{m.label}</p>
+                        <div className={cn("w-1 h-1 rounded-full shadow-[0_0_5px_rgba(0,0,0,0.5)]", getStatusColor(m.status))} />
                     </div>
-                    <div className="flex items-center gap-2">
-                       <span className="text-3xl font-black text-foreground tracking-tighter italic leading-none">{m.value}</span>
-                       <span className={cn("text-base font-bold font-black border px-2 py-0.5 rounded-lg uppercase tracking-tighter italic", getStatusText(m.status))}>
-                          {m.status.toUpperCase()}
+                    <div className="flex items-baseline gap-2">
+                       <span className="text-2xl font-black text-foreground tracking-tighter italic leading-none">{m.value}</span>
+                       <span className={cn("text-[8px] font-black border px-1.5 py-0.5 rounded-md uppercase tracking-tighter italic", getStatusText(m.status))}>
+                          {m.status}
                        </span>
                     </div>
                   </div>
                 ))}
               </div>
               
-              <Link href={sector.href} className="block group/link">
-                <button className="w-full h-12 rounded-2xl bg-card border border-slate-800 text-foreground font-black text-base font-bold uppercase italic flex items-center justify-between px-6 group-hover/link:bg-white group-hover/link:text-black transition-all duration-500 overflow-hidden relative">
+              <Link href={sector.href} className="block group/link mt-auto">
+                <button className="w-full h-10 rounded-xl bg-card border border-slate-800 text-foreground font-black text-[10px] uppercase italic flex items-center justify-between px-4 group-hover/link:bg-white group-hover/link:text-black transition-all duration-500 overflow-hidden relative">
                     <span className="relative z-10">{t('dashboard.access_sector')}</span>
-                    <ChevronRight size={14} className="relative z-10 group-hover/link:translate-x-1 transition-transform" />
+                    <ChevronRight size={12} className="relative z-10 group-hover/link:translate-x-1 transition-transform" />
                 </button>
               </Link>
             </div>

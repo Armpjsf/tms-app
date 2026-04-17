@@ -329,10 +329,18 @@ export async function getDriverJobs(
 
     if (options.startDate) {
         query = query.gte('Plan_Date', options.startDate)
+    } else {
+        const past = new Date()
+        past.setDate(past.getDate() - 15)
+        query = query.gte('Plan_Date', past.toISOString().split('T')[0])
     }
 
     if (options.endDate) {
         query = query.lte('Plan_Date', options.endDate)
+    } else {
+        const future = new Date()
+        future.setDate(future.getDate() + 15)
+        query = query.lte('Plan_Date', future.toISOString().split('T')[0])
     }
 
     if (options.status && options.status !== 'All') {

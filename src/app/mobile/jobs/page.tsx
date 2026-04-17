@@ -22,6 +22,19 @@ export default async function DriverJobsPage(props: Props) {
   // Fetch jobs for this driver with filters
   const jobs = await getDriverJobs(session.driverId, { startDate: date, endDate: date, status })
 
+  // Scalability: Hide old completed/cancelled jobs from default view
+  let displayJobs = jobs
+  if (!status || status === 'All') {
+      const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' })
+      displayJobs = jobs.filter(j => {
+          // Keep active jobs regardless of date
+          if (j.Job_Status !== 'Completed' && j.Job_Status !== 'Cancelled') return true;
+          // Keep completed jobs ONLY if it is explicitly the date filtered, or it's today/future
+          if (date) return true; 
+          return j.Plan_Date && j.Plan_Date >= today
+      })
+  }
+
   return (
     <div className="min-h-screen bg-background pb-32 pt-24 px-6 relative overflow-hidden">
        {/* High-end Background Decor */}
@@ -39,7 +52,7 @@ export default async function DriverJobsPage(props: Props) {
             </div>
             <div className="text-right pb-1">
                 <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-primary/10 rounded-full border border-primary/20">
-                    <span className="text-primary font-black text-xl leading-none">{jobs.length}</span>
+                    <span className="text-primary font-black text-xl leading-none">{displayJobs.length}</span>
                     <span className="text-[10px] font-black text-primary uppercase tracking-widest">งาน</span>
                 </div>
             </div>
@@ -59,14 +72,14 @@ export default async function DriverJobsPage(props: Props) {
 
         {/* Job Grid / List */}
         <div className="space-y-6">
-            {jobs.length === 0 ? (
+            {displayJobs.length === 0 ? (
                 <div className="text-center py-24 glass-panel rounded-[3rem] border-dashed border-border/20 bg-card/20">
                     <div className="w-20 h-20 bg-muted/30 rounded-full flex items-center justify-center mx-auto mb-6">
                         <Truck className="text-muted-foreground/40" size={40} />
                     </div>
                     <p className="text-muted-foreground font-black uppercase tracking-widest text-sm">ไม่พบรายการงานในขณะนี้</p>
                 </div>
-            ) : jobs.map((job) => (
+            ) : displayJobs.map((job) => (
             <Link href={`/mobile/jobs/${job.Job_ID}`} key={job.Job_ID} className="block group">
                 <div className="glass-panel p-7 rounded-[2.5rem] active:scale-[0.98] transition-all hover:border-primary/40 relative overflow-hidden shadow-lg shadow-black/5 bg-gradient-to-br from-card to-transparent">
                     {/* Background Icon Watermark */}

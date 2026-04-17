@@ -56,8 +56,8 @@ export async function getFuelAnalytics(dateFrom?: string, dateTo?: string): Prom
   let query = supabase
     .from('Fuel_Logs')
     .select('Vehicle_Plate, Date_Time, Liters, Price_Total, Odometer')
-    .gte('Date_Time', `${from}T00:00:00`)
-    .lte('Date_Time', `${to}T23:59:59`)
+    .gte('Date_Time', from)
+    .lte('Date_Time', to)
     .order('Date_Time', { ascending: false })
     .limit(5000)
 
